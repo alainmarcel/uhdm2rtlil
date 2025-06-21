@@ -88,6 +88,71 @@ struct ReadUHDMPass : public Frontend {
                     yosys_mod->connect(lhs_sig, rhs_sig);
                 }
             }
+
+            if (uhdm_mod->Process_stmts()) {
+                for (auto process : *uhdm_mod->Process_stmts()) {
+                    int proc_type = process->VpiType(); // vpiAlways, vpiAlwaysComb, etc.
+                    RTLIL::Process* yosys_proc = new RTLIL::Process;
+                    yosys_mod->processes[NEW_ID] = yosys_proc;
+
+                    // Handle sensitivity (only for always_ff for now)
+                    if (proc_type == vpiAlwaysFF) {
+                        RTLIL::SyncRule sync;
+                        sync.type = RTLIL::SyncType::STp;
+
+                        // Try to get clock edge
+                        auto sens_list = process->Stmt()->Sensitivity_list();
+                        if (sens_list) {
+                            for (auto sens : *sens_list) {
+                                if (sens->VpiType() == vpiNet) {
+                                    sync.signal = yosys_mod->wires_[RTLIL::escape_id(sens->VpiName())];
+                                }
+                            }
+                        }
+
+                        // Body
+                        if (auto stmt = process->Stmt()) {
+                            if (stmt->VpiType() == vpiBegin) {
+                                for (auto s : *stmt->Stmt()) {
+                                    if (s->VpiType() == vpiBlockingAssign || s->VpiType() == vpiNonBlockingAssign) {
+                                        auto lhs = s->Lhs()->VpiName();
+                                        auto rhs = s->Rhs()->VpiName();
+                                        sync.actions.push_back(RTLIL::SigSig(
+                                            yosys_mod->wires_[RTLIL::escape_id(lhs)],
+                                            yosys_mod->wires_[RTLIL::escape_id(rhs)]
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+
+                        yosys_proc->syncs.push_back(sync);
+                    }
+
+                    // Handle always_comb as combinational process
+                    else if (proc_type == vpiAlwaysComb || proc_type == vpiAlways) {
+                        if (auto stmt = process->Stmt()) {
+                            if (stmt->VpiType() == vpiBegin) {
+                                for (auto s : *stmt->Stmt()) {
+                                    if (s->VpiType() == vpiBlockingAssign) {
+                                        auto lhs = s->Lhs()->VpiName();
+                                        auto rhs = s->Rhs()->VpiName();
+
+                                        RTLIL::SigSig assign(
+                                            yosys_mod->wires_[RTLIL::escape_id(lhs)],
+                                            yosys_mod->wires_[RTLIL::escape_id(rhs)]
+                                        );
+
+                                        yosys_proc->root_case.actions.push_back(assign);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // NOTE: Add support for nested if/case/loops later
+                }
+            }
         }
     }
 };
