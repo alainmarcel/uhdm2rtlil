@@ -1,0 +1,35 @@
+# Test harness for counter example
+# This script tests more complex SystemVerilog constructs
+
+# Read the SystemVerilog file using standard frontend
+read_verilog -sv test/counter/dut.sv
+
+# Create a copy for comparison
+copy counter counter_ref
+
+# Remove original for clean test
+delete counter
+
+# Generate UHDM using Surelog (when available)
+# read_uhdm test/counter/dut.uhdm
+
+# Test the reference design
+select counter_ref
+hierarchy -top counter_ref
+show counter_ref
+stat
+clean
+opt
+
+# Test formal verification constructs
+prep -top counter_ref
+flatten
+write_smt2 -wires counter_ref.smt2
+
+# Test synthesis
+synth -top counter_ref
+clean
+opt
+stat
+
+echo "Counter test completed successfully"

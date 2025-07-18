@@ -1,0 +1,35 @@
+# Test harness for flipflop example
+# This script tests the UHDM frontend with a simple flip-flop
+
+# Read the SystemVerilog file using standard Verilog frontend
+read_verilog test/flipflop/dut.sv
+
+# Create a copy for comparison
+copy flipflop flipflop_ref
+
+# Remove original for clean test
+delete flipflop
+
+# Generate UHDM using Surelog (this would be done externally)
+# For now, we'll test with the existing implementation
+
+# Read the same file using our UHDM frontend (when available)
+# read_uhdm test/flipflop/dut.uhdm
+
+# Compare the two implementations
+# equiv_make flipflop_ref flipflop equiv
+# equiv_simple -seq 10 equiv
+# equiv_induct -seq 10 equiv
+
+# For now, just test basic functionality
+select flipflop_ref
+show
+stat
+clean
+opt
+
+# Test formal verification
+# prep -top flipflop_ref
+# write_smt2 -wires flipflop_ref.smt2
+
+echo "Test completed successfully"

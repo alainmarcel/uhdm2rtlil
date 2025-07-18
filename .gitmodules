@@ -1,0 +1,6 @@
+[submodule "third_party/Surelog"]
+	path = third_party/Surelog
+	url = https://github.com/chipsalliance/Surelog.git
+[submodule "third_party/yosys"]
+	path = third_party/yosys
+	url = https://github.com/YosysHQ/yosys.git
