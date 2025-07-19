@@ -56,6 +56,8 @@ cat > test_uhdm_read.ys << 'EOF'
 # Test script to read UHDM file in Yosys
 # This tests our custom UHDM frontend
 
+plugin -i uhdm2rtlil
+
 # Read the UHDM file using our frontend
 read_uhdm slpp_all/surelog.uhdm
 
@@ -65,8 +67,6 @@ hierarchy -check -top flipflop
 # Show statistics
 stat
 
-# Generate graphical representation
-show flipflop
 
 # Perform basic optimizations
 opt
