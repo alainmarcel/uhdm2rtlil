@@ -90,8 +90,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
     
     switch (op_type) {
         case vpiNotOp:
-            if (operands.size() == 1)
-                return module->Not(NEW_ID, operands[0]);
+            if (operands.size() == 1) {
+                // Create a logic_not cell like the Verilog frontend
+                RTLIL::Cell* not_cell = module->addCell(NEW_ID, ID($logic_not));
+                not_cell->setParam(ID::A_SIGNED, 0);
+                not_cell->setParam(ID::A_WIDTH, operands[0].size());
+                not_cell->setParam(ID::Y_WIDTH, 1);
+                
+                RTLIL::Wire* output_wire = module->addWire(NEW_ID, 1);
+                not_cell->setPort(ID::A, operands[0]);
+                not_cell->setPort(ID::Y, output_wire);
+                
+                return RTLIL::SigSpec(output_wire);
+            }
             break;
         case vpiLogAndOp:
             if (operands.size() == 2)

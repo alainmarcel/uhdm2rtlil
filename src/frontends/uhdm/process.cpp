@@ -50,48 +50,103 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
     
-    // For now, create a simple clock edge sync rule
-    // In the flipflop case, we know clk is posedge and rst_n is negedge
-    RTLIL::SyncRule* sync_ptr = new RTLIL::SyncRule();
-    sync_ptr->type = RTLIL::SyncType::STp;  // positive edge
-    
-    // Look up clock signal (assume it's named "clk")
-    if (name_map.count("clk")) {
-        sync_ptr->signal = RTLIL::SigSpec(name_map["clk"]);
-        log("    Using clk signal for sync\n");
-    } else {
-        log_warning("Clock signal 'clk' not found\n");
-        sync_ptr->signal = RTLIL::SigSpec(RTLIL::State::S1);
-    }
-    
-    // Create async reset sync rule if reset exists
-    if (name_map.count("rst_n")) {
-        RTLIL::SyncRule* reset_sync_ptr = new RTLIL::SyncRule();
-        reset_sync_ptr->type = RTLIL::SyncType::STn;  // negative edge reset
-        reset_sync_ptr->signal = RTLIL::SigSpec(name_map["rst_n"]);
+    // Instead of hardcoding the logic, let's parse the actual UHDM structure
+    if (auto stmt = uhdm_process->Stmt()) {
+        log("    Found process statement, parsing structure...\n");
         
-        // Add reset action: q <= 1'b0
+        // Create intermediate wire for conditional logic (like Verilog frontend)
+        RTLIL::Wire* temp_wire = nullptr;
         if (name_map.count("q")) {
-            RTLIL::SigSpec q_sig = RTLIL::SigSpec(name_map["q"]);
-            RTLIL::SigSpec zero_sig = RTLIL::SigSpec(RTLIL::State::S0);
-            reset_sync_ptr->actions.push_back(RTLIL::SigSig(q_sig, zero_sig));
-            log("    Added reset action: q <= 0\n");
+            // Create a name like $0\q[0:0]
+            std::string temp_name = "$0\\" + name_map["q"]->name.str() + "[0:0]";
+            RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
+            temp_wire = module->addWire(temp_id, 1);
         }
         
-        yosys_proc->syncs.push_back(reset_sync_ptr);
+        // Initialize the process with assignment to temp wire
+        if (temp_wire && name_map.count("q")) {
+            yosys_proc->root_case.actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map["q"]))
+            );
+        }
+        
+        // Parse the statement structure (if statement)
+        if (stmt->VpiType() == vpiIf) {
+            const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(stmt);
+            
+            // Get condition (!rst_n) and create logic_not cell
+            if (auto condition = if_stmt->VpiCondition()) {
+                log("    Processing if condition...\n");
+                RTLIL::SigSpec cond_sig = import_expression(condition);
+                
+                if (cond_sig.size() > 0) {
+                    log("    Condition signal imported successfully\n");
+                    
+                    // Create a switch statement in root_case
+                    RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
+                    sw->signal = cond_sig;
+                    
+                    // Case when condition is true (reset active)
+                    RTLIL::CaseRule* reset_case = new RTLIL::CaseRule();
+                    reset_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                    
+                    if (temp_wire) {
+                        reset_case->actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(RTLIL::State::S0))
+                        );
+                        log("    Added reset case: temp <= 0\n");
+                    }
+                    
+                    // Default case (normal operation)
+                    RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
+                    // Empty compare means default case
+                    
+                    if (temp_wire && name_map.count("d")) {
+                        normal_case->actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map["d"]))
+                        );
+                        log("    Added normal case: temp <= d\n");
+                    }
+                    
+                    sw->cases.push_back(reset_case);
+                    sw->cases.push_back(normal_case);
+                    yosys_proc->root_case.switches.push_back(sw);
+                    log("    Added switch with %zu cases\n", sw->cases.size());
+                } else {
+                    log_warning("Failed to import condition expression\n");
+                }
+            } else {
+                log_warning("No condition found in if statement\n");
+            }
+        }
+        
+        // Add sync rules for both clock edges
+        if (name_map.count("clk") && temp_wire && name_map.count("q")) {
+            // Positive edge clock
+            RTLIL::SyncRule* clk_sync = new RTLIL::SyncRule();
+            clk_sync->type = RTLIL::SyncType::STp;
+            clk_sync->signal = RTLIL::SigSpec(name_map["clk"]);
+            clk_sync->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(name_map["q"]), RTLIL::SigSpec(temp_wire))
+            );
+            yosys_proc->syncs.push_back(clk_sync);
+            
+            // Negative edge reset (same action)
+            if (name_map.count("rst_n")) {
+                RTLIL::SyncRule* rst_sync = new RTLIL::SyncRule();
+                rst_sync->type = RTLIL::SyncType::STn;
+                rst_sync->signal = RTLIL::SigSpec(name_map["rst_n"]);
+                rst_sync->actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(name_map["q"]), RTLIL::SigSpec(temp_wire))
+                );
+                yosys_proc->syncs.push_back(rst_sync);
+            }
+        }
+        
+        log("    Added structured conditional logic with %zu sync rules\n", yosys_proc->syncs.size());
+    } else {
+        log_warning("No statement found in process\n");
     }
-    
-    // Add main clock action: q <= d  
-    if (name_map.count("q") && name_map.count("d")) {
-        RTLIL::SigSpec q_sig = RTLIL::SigSpec(name_map["q"]);
-        RTLIL::SigSpec d_sig = RTLIL::SigSpec(name_map["d"]);
-        sync_ptr->actions.push_back(RTLIL::SigSig(q_sig, d_sig));
-        log("    Added clock action: q <= d\n");
-    }
-    
-    yosys_proc->syncs.push_back(sync_ptr);
-    
-    log("    Added %zu sync rules to process\n", yosys_proc->syncs.size());
 }
 
 // Import always_comb block

@@ -2,14 +2,16 @@
 autoidx 2
 attribute \top 1
 module \flipflop
+  wire $0\\q[0:0]
   wire input 1 \clk
   wire input 3 \d
   wire output 4 \q
   wire input 2 \rst_n
   process $auto$process.cpp:20:import_process$1
-    sync negedge \rst_n
-      update \q 1'0
+    assign $0\\q[0:0] \q
     sync posedge \clk
-      update \q \d
+      update \q $0\\q[0:0]
+    sync negedge \rst_n
+      update \q $0\\q[0:0]
   end
 end
