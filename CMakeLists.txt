@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(INSTALL_DIR ${PROJECT_SOURCE_DIR}/out/current)
+
 # Detect build type, fallback to release
 if(NOT CMAKE_BUILD_TYPE)
   message(WARNING "Build type not set, falling back to Release mode.
@@ -19,12 +21,36 @@ endif()
 add_subdirectory(third_party/Surelog)
 
 # Custom target to build Yosys using its Makefile
-add_custom_target(yosys_build ALL
-    COMMAND $(MAKE) -C ${CMAKE_CURRENT_SOURCE_DIR}/third_party/yosys config-gcc
-    COMMAND $(MAKE) -C ${CMAKE_CURRENT_SOURCE_DIR}/third_party/yosys
-    COMMENT "Building Yosys using Makefile"
-    VERBATIM
-)
+
+if(UHDM2RTLIL_USE_HOST_YOSYS)
+  message("Using HOST YOSYS")
+  find_package(yosys)
+  get_target_property(YOSYS_INCLUDE_DIR yosys::yosys
+                      INTERFACE_INCLUDE_DIRECTORIES)
+else()
+  if(DEFINED YOSYS_CONFIG AND NOT YOSYS_CONFIG STREQUAL "")
+    # Use the Yosys custom location given
+    set(YOSYS_INCLUDE_DIR ${YOSYS_PATH})
+    message("Using YOSYS from ${YOSYS_PATH}")
+  else()
+    message("Using Vendored YOSYS")
+    set(VENDORED_YOSYS 1)
+    set(Yosys_BuildTests
+        OFF
+        CACHE INTERNAL "")
+    set(YOSYS_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/third_party/yosys)
+    set(YOSYS_CONFIG ${PROJECT_SOURCE_DIR}/third_party/yosys/yosys-config)
+    # Build Vendored Yosys if not provided by upper cmake
+    add_custom_target(yosys DEPENDS ${INSTALL_DIR}/bin/yosys)
+    add_custom_command(
+      OUTPUT ${INSTALL_DIR}/bin/yosys
+      COMMAND echo "       Compiling Yosys"
+      COMMAND make CONFIG=gcc PREFIX=${INSTALL_DIR} install -j${CPU_CORES}
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/third_party/yosys"
+      DEPENDS ${PROJECT_SOURCE_DIR}/third_party/yosys/kernel/yosys.cc)
+  endif()
+endif()
+
 
 # Build our main frontend
 set(UHDM_FRONTEND_SOURCES
@@ -36,12 +62,13 @@ set(UHDM_FRONTEND_SOURCES
     src/frontends/uhdm/memory.cpp
 )
 
-add_executable(uhdm2rtlil ${UHDM_FRONTEND_SOURCES})
+# Build as a shared library (Yosys plugin)
+add_library(uhdm2rtlil SHARED ${UHDM_FRONTEND_SOURCES})
 
 # Add dependency on both components
-add_dependencies(uhdm2rtlil surelog yosys_build)
+add_dependencies(uhdm2rtlil surelog yosys)
 
-# Link against Surelog library
+# Link against Surelog library only
 target_link_libraries(uhdm2rtlil surelog)
 
 # Include directories
@@ -54,5 +81,26 @@ target_include_directories(uhdm2rtlil PRIVATE
     third_party/yosys
 )
 
+# Add required Yosys defines
+target_compile_definitions(uhdm2rtlil PRIVATE
+    _YOSYS_
+    YOSYS_ENABLE_TCL=1
+    YOSYS_ENABLE_ABC=1
+    YOSYS_ENABLE_GLOB=1
+    YOSYS_ENABLE_PLUGINS=1
+    YOSYS_ENABLE_READLINE=1
+    YOSYS_ENABLE_COVER=1
+    YOSYS_ENABLE_ZLIB=1
+)
+
+# Set plugin properties
+set_target_properties(uhdm2rtlil PROPERTIES
+    PREFIX ""
+    SUFFIX ".so"
+)
+
+# Link additional system libraries needed for the plugin
+target_link_libraries(uhdm2rtlil dl pthread)
+
 # Installation
-install(TARGETS uhdm2rtlil DESTINATION bin)
+install(TARGETS uhdm2rtlil DESTINATION ${INSTALL_DIR}/share/yosys/plugins)

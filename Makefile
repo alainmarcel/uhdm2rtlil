@@ -1,17 +1,28 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test clean
+.PHONY: all debug test clean plugin
+
+# Use bash as the default shell
+SHELL := /usr/bin/env bash
+
+ifeq ($(CPU_CORES),)
+	CPU_CORES := $(shell nproc)
+	ifeq ($(CPU_CORES),)
+		CPU_CORES := $(shell sysctl -n hw.physicalcpu)
+	endif
+	ifeq ($(CPU_CORES),)
+		CPU_CORES := 2  # Good minimum assumption
+	endif
+endif
 
 # Default target
-all:
+all: build
 	@echo "Building uhdm2rtlil in Release mode..."
-	@mkdir -p build
-	@cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc)
+	@cd build && make -j$(CPU_CORES)
 
 # Debug build target
-debug:
+debug: build-debug
 	@echo "Building uhdm2rtlil in Debug mode..."
-	@mkdir -p build-debug
-	@cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug .. && make -j$(nproc)
+	@cd build-debug && make -j$(CPU_CORES)
 
 # Test target
 test: all
@@ -19,13 +30,17 @@ test: all
 	@cd build && make test
 
 # Create release build directory and configure
-build:
+build: | build/Makefile
+
+build/Makefile:
 	@echo "Configuring Release build..."
 	@mkdir -p build
 	@cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
 
 # Create debug build directory and configure
-build-debug:
+build-debug: | build-debug/Makefile
+
+build-debug/Makefile:
 	@echo "Configuring Debug build..."
 	@mkdir -p build-debug
 	@cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -37,15 +52,21 @@ clean:
 
 # Install target
 install: all
-	@echo "Installing uhdm2rtlil..."
+	@echo "Installing uhdm2rtlil plugin..."
 	cd build && make install
+
+# Plugin target - build and show plugin location
+plugin: all
+	@echo "Plugin built at: $(shell pwd)/build/uhdm2rtlil.so"
+	@echo "To use with Yosys: yosys -m $(shell pwd)/build/uhdm2rtlil.so"
 
 # Help target
 help:
 	@echo "Available targets:"
 	@echo "  all      - Build in Release mode (default)"
 	@echo "  debug    - Build in Debug mode"
+	@echo "  plugin   - Build and show plugin location"
 	@echo "  test     - Run tests"
 	@echo "  clean    - Clean build artifacts"
-	@echo "  install  - Install the built binary"
+	@echo "  install  - Install the plugin"
 	@echo "  help     - Show this help message"

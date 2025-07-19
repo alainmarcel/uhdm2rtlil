@@ -10,14 +10,20 @@
 #ifndef UHDM2RTLIL_H
 #define UHDM2RTLIL_H
 
+#include <uhdm/uhdm.h>
+#include <uhdm/Serializer.h>
+#include <uhdm/vpi_user.h>
+#include <uhdm/uhdm_types.h>
+#include <uhdm/stmt.h>
+#include <uhdm/expr.h>
+#include <uhdm/constant.h>
+#include <uhdm/operation.h>
+#include <uhdm/ref_obj.h>
+
 #include "kernel/yosys.h"
 #include "kernel/sigtools.h"
 #include "kernel/celltypes.h"
 #include "kernel/log.h"
-
-#include <uhdm/uhdm.h>
-#include <uhdm/Serializer.h>
-#include <uhdm/vpi_user.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -36,10 +42,10 @@ struct UhdmClocking {
     bool has_reset = false;
     
     UhdmClocking() {}
-    UhdmClocking(UhdmImporter *importer, const any* sens_list);
+    UhdmClocking(UhdmImporter *importer, const UHDM::any* sens_list);
     
     // Helper methods for analyzing sensitivity lists
-    void analyze_sensitivity_list(UhdmImporter *importer, const VectorOfany* sensitivity);
+    void analyze_sensitivity_list(UhdmImporter *importer, const UHDM::VectorOfany* sensitivity);
     
     // Helper methods for creating flip-flops with proper clocking
     RTLIL::Cell *addDff(IdString name, SigSpec sig_d, SigSpec sig_q, Const init_value = Const());
@@ -64,62 +70,63 @@ struct UhdmImporter {
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
     // Main import functions
-    void import_design(Design* uhdm_design);
-    void import_module(const Module* uhdm_module);
-    void import_port(const port* uhdm_port);
-    void import_net(const net* uhdm_net);
-    void import_process(const process_stmt* uhdm_process);
-    void import_continuous_assign(const cont_assign* uhdm_assign);
-    void import_instance(const module_inst* uhdm_inst);
+    void import_design(UHDM::design* uhdm_design);
+    void import_module(const UHDM::module_inst* uhdm_module);
+    void import_port(const UHDM::port* uhdm_port);
+    void import_net(const UHDM::net* uhdm_net);
+    void import_process(const UHDM::process_stmt* uhdm_process);
+    void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
+    void import_instance(const UHDM::module_inst* uhdm_inst);
     
     // Signal and wire management
-    RTLIL::SigBit get_sig_bit(const any* uhdm_obj);
-    RTLIL::SigSpec get_sig_spec(const any* uhdm_obj, int width = 1);
-    RTLIL::Wire* get_wire(const any* uhdm_obj, int width = 1);
+    RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);
+    RTLIL::SigSpec get_sig_spec(const UHDM::any* uhdm_obj, int width = 1);
+    RTLIL::Wire* get_wire(const UHDM::any* uhdm_obj, int width = 1);
     RTLIL::Wire* create_wire(const std::string& name, int width = 1);
     
     // Expression handling
-    RTLIL::SigSpec import_expression(const expr* uhdm_expr);
-    RTLIL::SigSpec import_constant(const constant* uhdm_const);
-    RTLIL::SigSpec import_operation(const operation* uhdm_op);
-    RTLIL::SigSpec import_ref_obj(const ref_obj* uhdm_ref);
+    RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr);
+    RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
+    RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op);
+    RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref);
     
     // Statement handling
-    void import_statement(const stmt* uhdm_stmt, RTLIL::Process* proc = nullptr);
-    void import_assignment(const assignment* uhdm_assign, RTLIL::Process* proc);
-    void import_if_stmt(const if_stmt* uhdm_if, RTLIL::Process* proc);
-    void import_case_stmt(const case_stmt* uhdm_case, RTLIL::Process* proc);
-    void import_for_stmt(const for_stmt* uhdm_for, RTLIL::Process* proc);
-    void import_while_stmt(const while_stmt* uhdm_while, RTLIL::Process* proc);
+    void import_statement(const UHDM::any* uhdm_stmt, RTLIL::Process* proc = nullptr);
+    void import_assignment(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
+    void import_if_stmt(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
+    void import_case_stmt(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
+    void import_for_stmt(const UHDM::for_stmt* uhdm_for, RTLIL::Process* proc);
+    void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
     
     // Process-specific import functions
-    void import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
-    void import_always_comb(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
-    void import_always(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
-    void import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_always_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_always(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     
     // Statement import for different contexts
-    void import_statement_sync(const stmt* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
-    void import_statement_comb(const stmt* uhdm_stmt, RTLIL::Process* proc);
-    void import_begin_block_sync(const begin* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
-    void import_begin_block_comb(const begin* uhdm_begin, RTLIL::Process* proc);
-    void import_assignment_sync(const assignment* uhdm_assign, RTLIL::SyncRule* sync);
-    void import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc);
-    void import_if_stmt_sync(const if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset);
-    void import_if_stmt_comb(const if_stmt* uhdm_if, RTLIL::Process* proc);
-    void import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
-    void import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc);
+    void import_statement_sync(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
+    void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
+    void import_begin_block_sync(const UHDM::begin* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
+    void import_begin_block_comb(const UHDM::begin* uhdm_begin, RTLIL::Process* proc);
+    void import_assignment_sync(const UHDM::assignment* uhdm_assign, RTLIL::SyncRule* sync);
+    void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
+    void import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset);
+    void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
+    void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
+    void import_case_stmt_comb(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
     
     // Additional expression types
-    RTLIL::SigSpec import_part_select(const part_select* uhdm_part);
-    RTLIL::SigSpec import_bit_select(const bit_select* uhdm_bit);
-    RTLIL::SigSpec import_concat(const concat* uhdm_concat);
+    RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part);
+    RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit);
+    RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat);
     
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);
-    std::string get_name(const any* uhdm_obj);
-    int get_width(const any* uhdm_obj);
-    void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const any* uhdm_obj);
+    std::string get_name(const UHDM::any* uhdm_obj);
+    int get_width(const UHDM::any* uhdm_obj);
+    void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
+    void import_memory_objects(const UHDM::module_inst* uhdm_module);
 };
 
 // Specialized importers for different aspects

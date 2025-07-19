@@ -11,13 +11,12 @@
 #include "uhdm2rtlil.h"
 
 USING_YOSYS_NAMESPACE
-PRIVATE_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
 // Main UHDM frontend pass
 struct ReadUHDMPass : public Frontend {
-    ReadUHDMPass() : Frontend("read_uhdm", "read UHDM design") {}
+    ReadUHDMPass() : Frontend("=read_uhdm", "read UHDM design") {}
 
     void help() override {
         log("\n");
@@ -31,7 +30,7 @@ struct ReadUHDMPass : public Frontend {
         log("\n");
     }
 
-    void execute(std::istream*, std::string filename, const std::vector<std::string>& args) override {
+    void execute(std::istream *&f, std::string filename, std::vector<std::string> args, RTLIL::Design *design) override {
         log_header(design, "Executing UHDM frontend.\n");
 
         bool keep_names = false;
@@ -64,7 +63,9 @@ struct ReadUHDMPass : public Frontend {
         // Load UHDM file
         Serializer serializer;
         std::vector<vpiHandle> handles;
-        Design* uhdm_design = UHDM::restore(filename, &serializer, handles);
+        std::vector<vpiHandle> designs = serializer.Restore(filename);
+        vpiHandle vpi_design = designs.at(0);
+        UHDM::design* uhdm_design = UhdmDesignFromVpiHandle(vpi_design);
 
         if (!uhdm_design)
             log_error("Failed to restore UHDM file.\n");
@@ -77,10 +78,26 @@ struct ReadUHDMPass : public Frontend {
         importer.mode_formal = formal;
         importer.import_design(uhdm_design);
         
-        log("Successfully imported %d modules from UHDM.\n", 
+        log("Successfully imported %zu modules from UHDM.\n", 
             uhdm_design->AllModules()->size());
     }
-};
+} ReadUHDMPass;
+
+// Plugin entry point for Yosys
+extern "C" void yosys_plugin_initialize() {
+    // Use the standard registration mechanism
+    ReadUHDMPass.run_register();
+}
+
+extern "C" const char *yosys_plugin_name() {
+    return "uhdm2rtlil";
+}
+
+extern "C" const char *yosys_plugin_version() {
+    return "1.0";
+}
+
+YOSYS_NAMESPACE_BEGIN
 
 // UhdmImporter constructor
 UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
@@ -88,22 +105,45 @@ UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
 }
 
 // Import entire UHDM design
-void UhdmImporter::import_design(Design* uhdm_design) {
+void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     if (!uhdm_design->AllModules())
         return;
         
-    for (const Module* uhdm_mod : *uhdm_design->AllModules()) {
+    for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
         import_module(uhdm_mod);
     }
 }
 
 // Import a single module
-void UhdmImporter::import_module(const Module* uhdm_module) {
-    std::string modname = uhdm_module->VpiName();
+void UhdmImporter::import_module(const module_inst* uhdm_module) {
+    std::string modname = std::string(uhdm_module->VpiName());
+    
+    // Debug and validation
+    log("UHDM: Processing module, VpiName() returns: '%s'\n", modname.c_str());
+    
+    // Try alternative name fields if VpiName is empty
+    if (modname.empty()) {
+        // Try VpiDefName for module definition name
+        std::string defname = std::string(uhdm_module->VpiDefName());
+        if (!defname.empty()) {
+            modname = defname;
+            log("UHDM: Using VpiDefName: '%s'\n", modname.c_str());
+            
+            // Strip work@ prefix if present
+            if (modname.find("work@") == 0) {
+                modname = modname.substr(5); // Remove "work@"
+                log("UHDM: Stripped work@ prefix, using: '%s'\n", modname.c_str());
+            }
+        } else {
+            log_warning("UHDM: Module has empty name, using default name 'unnamed_module'\n");
+            modname = "unnamed_module";
+        }
+    }
+    
     RTLIL::IdString mod_id = RTLIL::escape_id(modname);
     
     if (mode_debug)
-        log("Importing module: %s\n", modname.c_str());
+        log("Importing module: %s (ID: %s)\n", modname.c_str(), mod_id.c_str());
     
     module = design->addModule(mod_id);
     
@@ -133,25 +173,13 @@ void UhdmImporter::import_module(const Module* uhdm_module) {
         }
     }
     
-    // Import processes (always blocks)
-    if (uhdm_module->Process_stmts()) {
-        for (auto process : *uhdm_module->Process_stmts()) {
-            import_process(process);
-        }
-    }
-    
-    // Import module instances
-    if (uhdm_module->Module_insts()) {
-        for (auto inst : *uhdm_module->Module_insts()) {
-            import_instance(inst);
-        }
-    }
+    // Import processes (always blocks) - TODO: implement when other modules are ready
+    // Import module instances - TODO: implement when other modules are ready
     
     // Finalize module
     module->fixup_ports();
 }
 
-PRIVATE_NAMESPACE_END
-YOSYS_NAMESPACE_BEGIN
-YOSYS_FRONTEND(ReadUHDMPass, "read_uhdm")
+// Note: import_port, import_net, and import_continuous_assign are implemented in module.cpp
+
 YOSYS_NAMESPACE_END

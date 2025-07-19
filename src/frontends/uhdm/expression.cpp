@@ -8,7 +8,6 @@
 #include "uhdm2rtlil.h"
 
 YOSYS_NAMESPACE_BEGIN
-PRIVATE_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
@@ -30,8 +29,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             return import_part_select(static_cast<const part_select*>(uhdm_expr));
         case vpiBitSelect:
             return import_bit_select(static_cast<const bit_select*>(uhdm_expr));
-        case vpiConcat:
-            return import_concat(static_cast<const concat*>(uhdm_expr));
+        case vpiConcatOp:
+            return import_concat(static_cast<const operation*>(uhdm_expr));
         default:
             log_warning("Unsupported expression type: %d\n", obj_type);
             return RTLIL::SigSpec();
@@ -41,7 +40,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
 // Import constant value
 RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
     int const_type = uhdm_const->VpiConstType();
-    std::string value = uhdm_const->VpiValue();
+    std::string value = std::string(uhdm_const->VpiValue());
     int size = uhdm_const->VpiSize();
     
     if (mode_debug)
@@ -76,4 +75,156 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
 
 // Import operation
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
-    int op_type = uhdm_op->VpiOpType();\n    \n    if (mode_debug)\n        log(\"    Importing operation: %d\\n\", op_type);\n    \n    // Get operands\n    std::vector<RTLIL::SigSpec> operands;\n    if (uhdm_op->Operands()) {\n        for (auto operand : *uhdm_op->Operands()) {\n            operands.push_back(import_expression(operand));\n        }\n    }\n    \n    switch (op_type) {\n        case vpiNotOp:\n            if (operands.size() == 1)\n                return module->Not(NEW_ID, operands[0]);\n            break;\n        case vpiAndOp:\n            if (operands.size() == 2)\n                return module->And(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiOrOp:\n            if (operands.size() == 2)\n                return module->Or(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiXorOp:\n            if (operands.size() == 2)\n                return module->Xor(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiAddOp:\n            if (operands.size() == 2)\n                return module->Add(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiSubOp:\n            if (operands.size() == 2)\n                return module->Sub(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiMultOp:\n            if (operands.size() == 2)\n                return module->Mul(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiEqOp:\n            if (operands.size() == 2)\n                return module->Eq(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiNeqOp:\n            if (operands.size() == 2)\n                return module->Ne(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiLtOp:\n            if (operands.size() == 2)\n                return module->Lt(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiLeOp:\n            if (operands.size() == 2)\n                return module->Le(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiGtOp:\n            if (operands.size() == 2)\n                return module->Gt(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiGeOp:\n            if (operands.size() == 2)\n                return module->Ge(NEW_ID, operands[0], operands[1]);\n            break;\n        case vpiConditionOp:\n            if (operands.size() == 3)\n                return module->Mux(NEW_ID, operands[0], operands[2], operands[1]);\n            break;\n        default:\n            log_warning(\"Unsupported operation type: %d\\n\", op_type);\n            return RTLIL::SigSpec();\n    }\n    \n    log_warning(\"Operation %d: incorrect number of operands (%d)\\n\", \n                op_type, (int)operands.size());\n    return RTLIL::SigSpec();\n}\n\n// Import reference to object\nRTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {\n    if (auto actual = uhdm_ref->Actual()) {\n        std::string ref_name = get_name(actual);\n        \n        if (mode_debug)\n            log(\"    Importing reference: %s\\n\", ref_name.c_str());\n        \n        // Look up in name map\n        if (name_map.count(ref_name)) {\n            return name_map[ref_name];\n        }\n        \n        log_warning(\"Reference to unknown object: %s\\n\", ref_name.c_str());\n        return RTLIL::SigSpec();\n    }\n    \n    return RTLIL::SigSpec();\n}\n\n// Import part select (e.g., sig[7:0])\nRTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part) {\n    if (mode_debug)\n        log(\"    Importing part select\\n\");\n    \n    RTLIL::SigSpec base = import_expression(uhdm_part->Parent());\n    \n    // Get range\n    int left = -1, right = -1;\n    if (auto left_expr = uhdm_part->Left_range()) {\n        RTLIL::SigSpec left_sig = import_expression(left_expr);\n        if (left_sig.is_fully_const())\n            left = left_sig.as_const().as_int();\n    }\n    if (auto right_expr = uhdm_part->Right_range()) {\n        RTLIL::SigSpec right_sig = import_expression(right_expr);\n        if (right_sig.is_fully_const())\n            right = right_sig.as_const().as_int();\n    }\n    \n    if (left >= 0 && right >= 0) {\n        int width = abs(left - right) + 1;\n        int offset = std::min(left, right);\n        return base.extract(offset, width);\n    }\n    \n    return base;\n}\n\n// Import bit select (e.g., sig[3])\nRTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit) {\n    if (mode_debug)\n        log(\"    Importing bit select\\n\");\n    \n    RTLIL::SigSpec base = import_expression(uhdm_bit->Parent());\n    RTLIL::SigSpec index = import_expression(uhdm_bit->Index());\n    \n    if (index.is_fully_const()) {\n        int idx = index.as_const().as_int();\n        return base.extract(idx, 1);\n    }\n    \n    // Dynamic bit select - need to create a mux\n    log_warning(\"Dynamic bit select not yet implemented\\n\");\n    return base.extract(0, 1);\n}\n\n// Import concatenation (e.g., {a, b, c})\nRTLIL::SigSpec UhdmImporter::import_concat(const concat* uhdm_concat) {\n    if (mode_debug)\n        log(\"    Importing concatenation\\n\");\n    \n    RTLIL::SigSpec result;\n    \n    if (uhdm_concat->Operands()) {\n        for (auto operand : *uhdm_concat->Operands()) {\n            RTLIL::SigSpec sig = import_expression(operand);\n            result.append(sig);\n        }\n    }\n    \n    return result;\n}\n\nPRIVATE_NAMESPACE_END\nYOSYS_NAMESPACE_END
+    int op_type = uhdm_op->VpiOpType();
+    
+    if (mode_debug)
+        log("    Importing operation: %d\n", op_type);
+    
+    // Get operands
+    std::vector<RTLIL::SigSpec> operands;
+    if (uhdm_op->Operands()) {
+        for (auto operand : *uhdm_op->Operands()) {
+            operands.push_back(import_expression(static_cast<const expr*>(operand)));
+        }
+    }
+    
+    switch (op_type) {
+        case vpiNotOp:
+            if (operands.size() == 1)
+                return module->Not(NEW_ID, operands[0]);
+            break;
+        case vpiLogAndOp:
+            if (operands.size() == 2)
+                return module->And(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiLogOrOp:
+            if (operands.size() == 2)
+                return module->Or(NEW_ID, operands[0], operands[1]);
+            break;
+        // case vpiXorOp:
+        //     if (operands.size() == 2)
+        //         return module->Xor(NEW_ID, operands[0], operands[1]);
+        //     break;
+        case vpiAddOp:
+            if (operands.size() == 2)
+                return module->Add(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiSubOp:
+            if (operands.size() == 2)
+                return module->Sub(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiMultOp:
+            if (operands.size() == 2)
+                return module->Mul(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiEqOp:
+            if (operands.size() == 2)
+                return module->Eq(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiNeqOp:
+            if (operands.size() == 2)
+                return module->Ne(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiLtOp:
+            if (operands.size() == 2)
+                return module->Lt(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiLeOp:
+            if (operands.size() == 2)
+                return module->Le(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiGtOp:
+            if (operands.size() == 2)
+                return module->Gt(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiGeOp:
+            if (operands.size() == 2)
+                return module->Ge(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiConditionOp:
+            if (operands.size() == 3)
+                return module->Mux(NEW_ID, operands[0], operands[2], operands[1]);
+            break;
+        default:
+            log_warning("Unsupported operation type: %d\n", op_type);
+            return RTLIL::SigSpec();
+    }
+    
+    log_warning("Operation %d: incorrect number of operands (%d)\n", 
+                op_type, (int)operands.size());
+    return RTLIL::SigSpec();
+}
+
+// Import reference to object
+RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
+    // For ref_obj, we need to look up the referenced object
+    // For now, return a placeholder signal
+    std::string ref_name = "ref_signal";
+    return create_wire(ref_name, 1);
+}
+
+// Import part select (e.g., sig[7:0])
+RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part) {
+    if (mode_debug)
+        log("    Importing part select\n");
+    
+    RTLIL::SigSpec base = import_expression(static_cast<const expr*>(uhdm_part->VpiParent()));
+    
+    // Get range
+    int left = -1, right = -1;
+    if (auto left_expr = uhdm_part->Left_range()) {
+        RTLIL::SigSpec left_sig = import_expression(left_expr);
+        if (left_sig.is_fully_const())
+            left = left_sig.as_const().as_int();
+    }
+    if (auto right_expr = uhdm_part->Right_range()) {
+        RTLIL::SigSpec right_sig = import_expression(right_expr);
+        if (right_sig.is_fully_const())
+            right = right_sig.as_const().as_int();
+    }
+    
+    if (left >= 0 && right >= 0) {
+        int width = abs(left - right) + 1;
+        int offset = std::min(left, right);
+        return base.extract(offset, width);
+    }
+    
+    return base;
+}
+
+// Import bit select (e.g., sig[3])
+RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit) {
+    if (mode_debug)
+        log("    Importing bit select\n");
+    
+    RTLIL::SigSpec base = import_expression(static_cast<const expr*>(uhdm_bit->VpiParent()));
+    RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
+    
+    if (index.is_fully_const()) {
+        int idx = index.as_const().as_int();
+        return base.extract(idx, 1);
+    }
+    
+    // Dynamic bit select - need to create a mux
+    log_warning("Dynamic bit select not yet implemented\n");
+    return base.extract(0, 1);
+}
+
+// Import concatenation (e.g., {a, b, c})
+RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat) {
+    if (mode_debug)
+        log("    Importing concatenation\n");
+    
+    RTLIL::SigSpec result;
+    
+    if (uhdm_concat->Operands()) {
+        for (auto operand : *uhdm_concat->Operands()) {
+            RTLIL::SigSpec sig = import_expression(static_cast<const expr*>(operand));
+            result.append(sig);
+        }
+    }
+    
+    return result;
+}
+
+YOSYS_NAMESPACE_END
