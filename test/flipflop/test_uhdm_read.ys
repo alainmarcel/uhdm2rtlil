@@ -1,23 +1,8 @@
 # Test script to read UHDM file in Yosys
-# This tests our custom UHDM frontend
-
 plugin -i ../../build/uhdm2rtlil.so
-
-# Read the UHDM file using our frontend
 read_uhdm slpp_all/surelog.uhdm
-
-# Display module information
 hierarchy -check -top flipflop
-
-# Show statistics
 stat
-
-
-# Perform basic optimizations
 opt
-
-# Show final statistics
 stat
-
-# Write RTLIL output for verification
 write_rtlil flipflop_from_uhdm.il

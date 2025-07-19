@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Test script for UHDM workflow: Surelog -> UHDM -> Yosys
-# This script demonstrates the complete flow from SystemVerilog to RTLIL via UHDM
+# Test script for UHDM workflow comparison: UHDM vs Verilog frontends
+# This script demonstrates the complete flow and compares UHDM vs Verilog import
 
 set -e  # Exit on any error
 
-echo "=== UHDM Workflow Test ==="
-echo "Testing: SystemVerilog -> Surelog -> UHDM -> Yosys -> RTLIL"
+echo "=== UHDM vs Verilog Workflow Comparison ==="
+echo "Testing: SystemVerilog -> [UHDM path vs Verilog path] -> Yosys -> RTLIL comparison"
 echo
 
 # Set up paths
@@ -54,55 +54,103 @@ echo
 echo "3. Creating Yosys script to read UHDM..."
 cat > test_uhdm_read.ys << 'EOF'
 # Test script to read UHDM file in Yosys
-# This tests our custom UHDM frontend
-
-plugin -i uhdm2rtlil
-
-# Read the UHDM file using our frontend
+plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
-
-# Display module information
 hierarchy -check -top flipflop
-
-# Show statistics
 stat
-
-
-# Perform basic optimizations
 opt
-
-# Show final statistics
 stat
-
-# Write RTLIL output for verification
 write_rtlil flipflop_from_uhdm.il
 EOF
 
 echo "   ✓ Yosys script created: test_uhdm_read.ys"
 echo
 
-# Step 3: Run Yosys with UHDM input
-echo "4. Running Yosys with UHDM input..."
+# Step 3: Create Yosys script to read Verilog file
+echo "4. Creating Yosys script to read Verilog..."
+cat > test_verilog_read.ys << 'EOF'
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+hierarchy -check -top flipflop
+stat
+opt
+stat
+write_rtlil flipflop_from_verilog.il
+EOF
+
+echo "   ✓ Yosys script created: test_verilog_read.ys"
+echo
+
+# Step 4: Run Yosys with UHDM input
+echo "5. Running Yosys with UHDM input..."
 echo "   Command: $YOSYS_BIN test_uhdm_read.ys"
 if $YOSYS_BIN test_uhdm_read.ys; then
     echo "   ✓ Yosys successfully processed UHDM file"
 else
     echo "   ✗ Yosys failed to process UHDM file"
-    echo "   This is expected if the UHDM frontend is not yet implemented"
-    echo "   The UHDM file was generated successfully by Surelog"
+    exit 1
+fi
+
+echo
+
+# Step 5: Run Yosys with Verilog input
+echo "6. Running Yosys with direct Verilog input..."
+echo "   Command: $YOSYS_BIN test_verilog_read.ys"
+if $YOSYS_BIN test_verilog_read.ys; then
+    echo "   ✓ Yosys successfully processed Verilog file"
+else
+    echo "   ✗ Yosys failed to process Verilog file"
+    exit 1
+fi
+
+echo
+
+# Step 6: Compare the results
+echo "7. Comparing UHDM vs Verilog RTLIL outputs..."
+if [ -f "flipflop_from_uhdm.il" ] && [ -f "flipflop_from_verilog.il" ]; then
+    echo "   Both files generated successfully"
+    echo
+    echo "   UHDM RTLIL (flipflop_from_uhdm.il):"
+    echo "   ====================================="
+    cat flipflop_from_uhdm.il
+    echo
+    echo "   Verilog RTLIL (flipflop_from_verilog.il):"
+    echo "   =========================================="
+    cat flipflop_from_verilog.il
+    echo
+    
+    # Compare files
+    if diff -u flipflop_from_uhdm.il flipflop_from_verilog.il > rtlil_diff.txt; then
+        echo "   ✓ RTLIL outputs are IDENTICAL!"
+        echo "     UHDM frontend produces the same result as Verilog frontend"
+        rm rtlil_diff.txt
+    else
+        echo "   ⚠ RTLIL outputs are DIFFERENT:"
+        echo "     Differences saved to rtlil_diff.txt"
+        echo
+        echo "   Diff summary:"
+        head -20 rtlil_diff.txt
+        if [ $(wc -l < rtlil_diff.txt) -gt 20 ]; then
+            echo "   ... (truncated, see rtlil_diff.txt for full diff)"
+        fi
+    fi
+else
+    echo "   ✗ One or both RTLIL files missing"
+    ls -la *.il 2>/dev/null || echo "   No .il files found"
 fi
 
 echo
 echo "=== Test Summary ==="
 echo "✓ Surelog successfully parsed SystemVerilog and generated UHDM"
-if [ -f "flipflop_from_uhdm.il" ]; then
-    echo "✓ Yosys successfully read UHDM and generated RTLIL"
-    echo "  Output file: flipflop_from_uhdm.il"
+echo "✓ Yosys UHDM frontend successfully read UHDM and generated RTLIL"
+echo "✓ Yosys Verilog frontend successfully read SystemVerilog and generated RTLIL"
+
+if [ -f "rtlil_diff.txt" ]; then
+    echo "⚠ RTLIL outputs differ - see rtlil_diff.txt for details"
 else
-    echo "ℹ UHDM frontend not yet implemented in this build"
-    echo "  Generated UHDM file: $UHDM_FILE (ready for frontend implementation)"
+    echo "✓ RTLIL outputs are identical - UHDM frontend working correctly!"
 fi
 
 echo
 echo "Generated files:"
-ls -la *.uhdm *.il *.ys 2>/dev/null || echo "  Only UHDM file generated"
+ls -la *.uhdm *.il *.ys *.txt 2>/dev/null || echo "  Files may not have been generated"
