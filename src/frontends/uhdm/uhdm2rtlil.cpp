@@ -147,6 +147,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     module = design->addModule(mod_id);
     
+    // Add source attribute to module
+    add_src_attribute(module->attributes, uhdm_module);
+    
     // Clear maps for this module
     net_map.clear();
     wire_map.clear();

@@ -1,0 +1,7 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+hierarchy -check -top flipflop
+stat
+opt
+stat
+write_rtlil flipflop_from_verilog.il
