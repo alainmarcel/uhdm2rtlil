@@ -157,9 +157,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
 
 // Import reference to object
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
-    // For ref_obj, we need to look up the referenced object
-    // For now, return a placeholder signal
-    std::string ref_name = "ref_signal";
+    // Get the referenced object name
+    std::string ref_name = std::string(uhdm_ref->VpiName());
+    
+    if (mode_debug)
+        log("    Importing ref_obj: %s\n", ref_name.c_str());
+    
+    // Look up in name map
+    if (name_map.count(ref_name)) {
+        RTLIL::Wire* wire = name_map[ref_name];
+        return RTLIL::SigSpec(wire);
+    }
+    
+    // If not found, create a new wire
+    log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
     return create_wire(ref_name, 1);
 }
 

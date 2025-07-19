@@ -173,7 +173,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
-    // Import processes (always blocks) - TODO: implement when other modules are ready
+    // Import processes (always blocks)
+    if (uhdm_module->Process()) {
+        for (auto process : *uhdm_module->Process()) {
+            import_process(process);
+        }
+    }
+    
     // Import module instances - TODO: implement when other modules are ready
     
     // Finalize module

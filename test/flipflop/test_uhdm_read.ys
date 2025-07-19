@@ -1,6 +1,8 @@
 # Test script to read UHDM file in Yosys
 # This tests our custom UHDM frontend
-plugin -i uhdm2rtlil
+
+plugin -i ../../build/uhdm2rtlil.so
+
 # Read the UHDM file using our frontend
 read_uhdm slpp_all/surelog.uhdm
 
