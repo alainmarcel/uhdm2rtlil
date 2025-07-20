@@ -68,8 +68,24 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 hex_str = value;
             }
             
-            RTLIL::Const const_val = RTLIL::Const::from_string(hex_str);
-            return RTLIL::SigSpec(const_val);
+            if (mode_debug)
+                log("    Parsed hex_str='%s', creating constant with size=%d\n", hex_str.c_str(), size);
+            
+            // Create hex constant with proper bit width
+            // Convert hex string to integer, then create constant with specified size
+            try {
+                uint64_t hex_val = std::stoull(hex_str, nullptr, 16);
+                RTLIL::Const const_val(hex_val, size > 0 ? size : 32);
+                return RTLIL::SigSpec(const_val);
+            } catch (const std::exception& e) {
+                log_warning("Failed to parse hex value '%s': %s\n", hex_str.c_str(), e.what());
+                // Fallback to string parsing
+                RTLIL::Const const_val = RTLIL::Const::from_string("'h" + hex_str);
+                if (size > 0 && const_val.size() != size) {
+                    const_val = const_val.extract(0, size);
+                }
+                return RTLIL::SigSpec(const_val);
+            }
         }
         case vpiDecConst: {
             int int_val = std::stoi(value);
