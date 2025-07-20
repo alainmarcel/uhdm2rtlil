@@ -38,6 +38,10 @@ jobs:
           libunwind-dev \
           libgoogle-perftools-dev
     
+    - name: Install Python dependencies
+      run: |
+        pip3 install orderedmultidict
+    
     - name: Build project
       run: |
         make
