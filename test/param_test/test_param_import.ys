@@ -1,0 +1,4 @@
+# Test parameter import from UHDM
+plugin -i ../../build/uhdm2rtlil.so
+read_uhdm param_test.uhdm
+write_rtlil param_test_from_uhdm.il

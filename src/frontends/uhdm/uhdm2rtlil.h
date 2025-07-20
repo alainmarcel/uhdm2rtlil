@@ -78,6 +78,7 @@ struct UhdmImporter {
     void import_process(const UHDM::process_stmt* uhdm_process);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     void import_instance(const UHDM::module_inst* uhdm_inst);
+    void import_parameter(const UHDM::any* uhdm_param);
     
     // Signal and wire management
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);

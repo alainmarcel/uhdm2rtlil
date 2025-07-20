@@ -54,8 +54,20 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             return RTLIL::SigSpec(RTLIL::Const::from_string(bin_str));
         }
         case vpiHexConst: {
-            // Remove 'h prefix
-            std::string hex_str = value.substr(2);
+            if (mode_debug)
+                log("    vpiHexConst: value='%s', size=%d\n", value.c_str(), size);
+            
+            std::string hex_str;
+            // Handle UHDM format: "HEX:value" or traditional "'h prefix"
+            if (value.substr(0, 4) == "HEX:") {
+                hex_str = value.substr(4);
+            } else if (value.length() > 2 && value.substr(value.length()-2, 2).find('h') != std::string::npos) {
+                // Remove 'h prefix
+                hex_str = value.substr(2);
+            } else {
+                hex_str = value;
+            }
+            
             RTLIL::Const const_val = RTLIL::Const::from_string(hex_str);
             return RTLIL::SigSpec(const_val);
         }
@@ -66,6 +78,25 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         case vpiIntConst: {
             int int_val = std::stoi(value);
             return RTLIL::SigSpec(RTLIL::Const(int_val, 32));
+        }
+        case vpiUIntConst: {
+            if (mode_debug)
+                log("    vpiUIntConst: value='%s', size=%d\n", value.c_str(), size);
+            try {
+                // Handle UHDM format: "UINT:value"
+                if (value.substr(0, 5) == "UINT:") {
+                    std::string num_str = value.substr(5);
+                    unsigned int uint_val = std::stoul(num_str);
+                    return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
+                } else {
+                    // Handle plain number format
+                    unsigned int uint_val = std::stoul(value);
+                    return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
+                }
+            } catch (const std::exception& e) {
+                log_warning("Failed to parse UInt constant '%s': %s\n", value.c_str(), e.what());
+                return RTLIL::SigSpec(RTLIL::State::Sx);
+            }
         }
         default:
             log_warning("Unsupported constant type: %d\n", const_type);

@@ -173,6 +173,42 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Import parameters
+    if (uhdm_module->Parameters()) {
+        log("UHDM: Found %d parameters to import\n", (int)uhdm_module->Parameters()->size());
+        for (auto param : *uhdm_module->Parameters()) {
+            std::string param_name = std::string(param->VpiName());
+            log("UHDM: About to import parameter: '%s'\n", param_name.c_str());
+            import_parameter(param);
+        }
+    }
+    
+    // Import parameter overrides (param_assigns)
+    if (uhdm_module->Param_assigns()) {
+        log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
+        for (auto param_assign : *uhdm_module->Param_assigns()) {
+            if (param_assign->Lhs() && param_assign->Rhs()) {
+                std::string param_name = std::string(param_assign->Lhs()->VpiName());
+                log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
+                
+                // Get the assigned value
+                RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                if (value_spec.is_fully_const()) {
+                    RTLIL::Const param_value = value_spec.as_const();
+                    // Override the parameter value
+                    RTLIL::IdString param_id = RTLIL::escape_id(param_name);
+                    module->avail_parameters(param_id);
+                    module->parameter_default_values[param_id] = param_value;
+                    log("UHDM: Updated parameter '%s' to value %s\n", 
+                        param_name.c_str(), param_value.as_string().c_str());
+                } else {
+                    log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
+                               param_name.c_str());
+                }
+            }
+        }
+    }
+    
     // Import nets
     if (uhdm_module->Nets()) {
         log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());

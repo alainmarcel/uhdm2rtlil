@@ -113,6 +113,59 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     module->connect(lhs, rhs);
 }
 
+// Import a parameter
+void UhdmImporter::import_parameter(const any* uhdm_param) {
+    if (!uhdm_param) return;
+    
+    std::string param_name = std::string(uhdm_param->VpiName());
+    
+    if (param_name.empty()) {
+        log_warning("UHDM: Parameter has empty name, skipping\n");
+        return;
+    }
+    
+    if (mode_debug)
+        log("  Importing parameter: %s\n", param_name.c_str());
+    
+    // Get the parameter value
+    RTLIL::Const param_value;
+    bool has_value = false;
+    
+    // Try to cast to parameter object
+    if (auto param_obj = dynamic_cast<const UHDM::parameter*>(uhdm_param)) {
+        // Check if parameter has an expression (its value)
+        if (auto expr = param_obj->Expr()) {
+            RTLIL::SigSpec value_spec = import_expression(expr);
+            if (value_spec.is_fully_const()) {
+                param_value = value_spec.as_const();
+                has_value = true;
+                log("UHDM: Parameter '%s' has value: %s\n", param_name.c_str(), 
+                    param_value.as_string().c_str());
+            } else {
+                log_warning("UHDM: Parameter '%s' has non-constant value, defaulting to 0\n", 
+                           param_name.c_str());
+                param_value = RTLIL::Const(0, 32);
+                has_value = true;
+            }
+        } else {
+            log("UHDM: Parameter '%s' has no expression, defaulting to 0\n", param_name.c_str());
+            param_value = RTLIL::Const(0, 32);
+            has_value = true;
+        }
+    }
+    
+    if (has_value) {
+        // Add parameter to module
+        RTLIL::IdString param_id = RTLIL::escape_id(param_name);
+        module->avail_parameters(param_id);
+        module->parameter_default_values[param_id] = param_value;
+        
+        // Log successful parameter import
+        log("UHDM: Added parameter '%s' to module with value %s\n", 
+            param_name.c_str(), param_value.as_string().c_str());
+    }
+}
+
 // Import a module instance
 void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     std::string inst_name = std::string(uhdm_inst->VpiName());
