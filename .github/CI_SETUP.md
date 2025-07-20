@@ -6,7 +6,7 @@ This directory contains GitHub Actions workflows for continuous integration.
 
 ### CI Workflow (`.github/workflows/ci.yml`)
 
-Runs on every push and pull request to `main` and `develop` branches.
+Runs on Ubuntu 24.04 with latest development environment for every push and pull request to `main` and `develop` branches.
 
 **Steps:**
 1. **Checkout**: Fetches code with submodules
@@ -21,7 +21,7 @@ Runs on every push and pull request to `main` and `develop` branches.
 10. **Upload Artifacts**: Saves test results and build artifacts
 
 **Dependencies installed:**
-- Build tools: `build-essential`, `cmake`, `git`, `ccache`
+- Build tools: `build-essential`, `cmake`, `git`, `ccache` (latest versions from Ubuntu 24.04)
 - Languages: `python3`, `python3-pip`
 - Libraries: `libssl-dev`, `zlib1g-dev`, `libtcmalloc-minimal4`, `uuid-dev`
 - Tools: `tcl-dev`, `libffi-dev`, `libreadline-dev`, `bison`, `flex`
@@ -100,7 +100,7 @@ The CI uses multiple caching layers to speed up builds:
 
 You can run the same commands locally:
 ```bash
-# Install dependencies (Ubuntu/Debian)
+# Install dependencies (Ubuntu 24.04 or similar)
 sudo apt-get update && sudo apt-get install -y \
   build-essential cmake git python3 python3-pip pkg-config \
   libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev \

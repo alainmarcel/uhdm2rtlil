@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     
     steps:
     - name: Checkout code
@@ -37,13 +37,7 @@ jobs:
           flex \
           libunwind-dev \
           libgoogle-perftools-dev \
-          ccache \
-          gcc-11 \
-          g++-11
-        
-        # Set GCC 11 as default
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+          ccache
     
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
