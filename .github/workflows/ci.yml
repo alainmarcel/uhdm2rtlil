@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          git \
+          python3 \
+          python3-pip \
+          pkg-config \
+          libssl-dev \
+          zlib1g-dev \
+          libtcmalloc-minimal4 \
+          uuid-dev \
+          tcl-dev \
+          libffi-dev \
+          libreadline-dev \
+          bison \
+          flex \
+          libgoogle-perftools-dev
+    
+    - name: Build project
+      run: |
+        make
+    
+    - name: Run tests
+      run: |
+        cd test
+        bash run_all_tests.sh
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          test/**/rtlil_diff.txt
+          test/**/*_from_uhdm.il
+          test/**/*_from_verilog.il
+        retention-days: 7
+    
+    - name: Upload build artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          out/
+          build/bin/
+        retention-days: 7

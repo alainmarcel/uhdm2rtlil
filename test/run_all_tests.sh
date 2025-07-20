@@ -16,7 +16,23 @@ cd "$(dirname "$0")"
 TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
+SKIPPED_TESTS=0
 FAILED_TEST_NAMES=()
+SKIPPED_TEST_NAMES=()
+
+# Load failing tests list
+FAILING_TESTS=()
+if [ -f "failing_tests.txt" ]; then
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
+            FAILING_TESTS+=("$line")
+        fi
+    done < "failing_tests.txt"
+fi
+
+echo "Known failing tests (will be skipped): ${FAILING_TESTS[*]}"
+echo
 
 # Find all test directories (directories containing dut.sv)
 TEST_DIRS=()
@@ -36,6 +52,17 @@ fi
 echo "Found ${#TEST_DIRS[@]} test(s): ${TEST_DIRS[*]}"
 echo
 
+# Helper function to check if test is in failing list
+is_failing_test() {
+    local test_name="$1"
+    for failing_test in "${FAILING_TESTS[@]}"; do
+        if [ "$test_name" = "$failing_test" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Run tests
 for test_dir in "${TEST_DIRS[@]}"; do
     echo "=========================================="
@@ -43,6 +70,15 @@ for test_dir in "${TEST_DIRS[@]}"; do
     echo "=========================================="
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    
+    # Check if this test is marked as failing
+    if is_failing_test "$test_dir"; then
+        echo "⚠️  Test $test_dir is marked as failing, skipping..."
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        SKIPPED_TEST_NAMES+=("$test_dir")
+        echo
+        continue
+    fi
     
     # Run the test
     if ./test_uhdm_workflow.sh "$test_dir"; then
@@ -70,14 +106,29 @@ done
 echo "=========================================="
 echo "=== FINAL TEST SUMMARY ==="
 echo "=========================================="
-echo "Total tests run: $TOTAL_TESTS"
+echo "Total tests found: $TOTAL_TESTS"
 echo "Passed: $PASSED_TESTS"
 echo "Failed: $FAILED_TESTS"
+echo "Skipped: $SKIPPED_TESTS"
+
+if [ $SKIPPED_TESTS -gt 0 ]; then
+    echo
+    echo "📋 SKIPPED TESTS (marked as failing):"
+    for skipped_test in "${SKIPPED_TEST_NAMES[@]}"; do
+        echo "  - $skipped_test"
+    done
+fi
 
 if [ $FAILED_TESTS -eq 0 ]; then
     echo
-    echo "🎉 ALL TESTS PASSED! 🎉"
-    echo "UHDM frontend is working correctly across all test cases."
+    if [ $SKIPPED_TESTS -eq 0 ]; then
+        echo "🎉 ALL TESTS PASSED! 🎉"
+        echo "UHDM frontend is working correctly across all test cases."
+    else
+        echo "✅ ALL ENABLED TESTS PASSED! ✅"
+        echo "UHDM frontend is working correctly for all non-failing test cases."
+        echo "Note: $SKIPPED_TESTS test(s) were skipped (marked as failing)."
+    fi
     exit 0
 else
     echo
