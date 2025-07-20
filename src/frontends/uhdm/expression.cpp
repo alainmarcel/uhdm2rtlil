@@ -112,10 +112,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
             if (operands.size() == 2)
                 return module->Or(NEW_ID, operands[0], operands[1]);
             break;
-        // case vpiXorOp:
-        //     if (operands.size() == 2)
-        //         return module->Xor(NEW_ID, operands[0], operands[1]);
-        //     break;
+        case vpiBitAndOp:
+            if (operands.size() == 2)
+                return module->And(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiBitOrOp:
+            if (operands.size() == 2)
+                return module->Or(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiBitXorOp:
+            if (operands.size() == 2)
+                return module->Xor(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiBitNegOp:
+            if (operands.size() == 1)
+                return module->Not(NEW_ID, operands[0]);
+            break;
         case vpiAddOp:
             if (operands.size() == 2)
                 return module->Add(NEW_ID, operands[0], operands[1]);
