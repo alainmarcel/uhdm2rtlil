@@ -1,5 +1,0 @@
-if(EXISTS "/home/alain/uhdm2rtlil/build/third_party/Surelog/PreprocessFile_test[1]_tests.cmake")
-  include("/home/alain/uhdm2rtlil/build/third_party/Surelog/PreprocessFile_test[1]_tests.cmake")
-else()
-  add_test(PreprocessFile_test_NOT_BUILT PreprocessFile_test_NOT_BUILT)
-endif()

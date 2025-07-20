@@ -1,2 +1,0 @@
-/usr/bin/ar qc libkj-tls.a CMakeFiles/kj-tls.dir/compat/readiness-io.c++.o CMakeFiles/kj-tls.dir/compat/tls.c++.o
-/usr/bin/ranlib libkj-tls.a

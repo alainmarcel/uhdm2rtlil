@@ -1,5 +1,0 @@
-if(EXISTS "/home/alain/uhdm2rtlil/build/third_party/Surelog/CompileExpression_test[1]_tests.cmake")
-  include("/home/alain/uhdm2rtlil/build/third_party/Surelog/CompileExpression_test[1]_tests.cmake")
-else()
-  add_test(CompileExpression_test_NOT_BUILT CompileExpression_test_NOT_BUILT)
-endif()

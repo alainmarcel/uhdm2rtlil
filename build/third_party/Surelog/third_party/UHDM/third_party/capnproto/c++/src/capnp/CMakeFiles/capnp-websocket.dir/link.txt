@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcapnp-websocket.a CMakeFiles/capnp-websocket.dir/compat/websocket-rpc.c++.o
-/usr/bin/ranlib libcapnp-websocket.a

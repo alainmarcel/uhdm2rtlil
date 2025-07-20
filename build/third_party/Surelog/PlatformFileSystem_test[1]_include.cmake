@@ -1,5 +1,0 @@
-if(EXISTS "/home/alain/uhdm2rtlil/build/third_party/Surelog/PlatformFileSystem_test[1]_tests.cmake")
-  include("/home/alain/uhdm2rtlil/build/third_party/Surelog/PlatformFileSystem_test[1]_tests.cmake")
-else()
-  add_test(PlatformFileSystem_test_NOT_BUILT PlatformFileSystem_test_NOT_BUILT)
-endif()
