@@ -106,12 +106,20 @@ UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
 
 // Import entire UHDM design
 void UhdmImporter::import_design(UHDM::design* uhdm_design) {
-    if (!uhdm_design->AllModules())
+    log("UHDM: Starting import_design\n");
+    
+    if (!uhdm_design->AllModules()) {
+        log("UHDM: No modules found in design\n");
         return;
+    }
+    
+    log("UHDM: Found %d modules in design\n", (int)uhdm_design->AllModules()->size());
         
     for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
+        log("UHDM: About to import module\n");
         import_module(uhdm_mod);
     }
+    log("UHDM: Finished import_design\n");
 }
 
 // Import a single module
@@ -157,14 +165,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Import ports
     if (uhdm_module->Ports()) {
+        log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
         for (auto port : *uhdm_module->Ports()) {
+            std::string port_name = std::string(port->VpiName());
+            log("UHDM: About to import port: '%s'\n", port_name.c_str());
             import_port(port);
         }
     }
     
     // Import nets
     if (uhdm_module->Nets()) {
+        log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());
         for (auto net : *uhdm_module->Nets()) {
+            std::string net_name = std::string(net->VpiName());
+            log("UHDM: About to import net: '%s'\n", net_name.c_str());
             import_net(net);
         }
     }
@@ -176,10 +190,19 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
-    // Import processes (always blocks)
+    // Import processes (always blocks) - re-enabled with debugging
     if (uhdm_module->Process()) {
+        log("UHDM: Found %d processes to import\n", (int)uhdm_module->Process()->size());
         for (auto process : *uhdm_module->Process()) {
-            import_process(process);
+            log("UHDM: About to import process\n");
+            try {
+                import_process(process);
+                log("UHDM: Successfully imported process\n");
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in process import: %s\n", e.what());
+            } catch (...) {
+                log_error("UHDM: Unknown exception in process import\n");
+            }
         }
     }
     

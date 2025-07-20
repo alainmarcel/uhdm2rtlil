@@ -15,7 +15,14 @@ using namespace UHDM;
 void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
     
-    log("  Importing process type: %d\n", proc_type);
+    log("UHDM: === Starting import_process ===\n");
+    log("UHDM: Process type: %d\n", proc_type);
+    log("UHDM: Current module has %d wires before process import\n", (int)module->wires().size());
+    
+    // List current wires for debugging
+    for (auto wire : module->wires()) {
+        log("UHDM: Existing wire: %s (width=%d)\n", wire->name.c_str(), wire->width);
+    }
     
     // Create process with name based on actual source location
     std::string src_info = get_src_attribute(uhdm_process);
@@ -104,7 +111,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Create a name like $0\<signal>[0:0] to match Verilog output exactly
             std::string temp_name = "$0\\" + output_signal_name + "[0:0]";
             RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
-            temp_wire = module->addWire(temp_id, 1);
+            
+            // Check if this wire already exists
+            temp_wire = module->wire(temp_id);
+            if (!temp_wire) {
+                log("UHDM: Creating temp wire '%s'\n", temp_id.c_str());
+                temp_wire = module->addWire(temp_id, 1);
+            } else {
+                log("UHDM: Temp wire '%s' already exists, reusing\n", temp_id.c_str());
+            }
             
             // Add source attribute for the temp wire (using process source info)
             add_src_attribute(temp_wire->attributes, uhdm_process);
@@ -184,7 +199,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Create wire with name based on source location
             std::string not_wire_name_str = "$logic_not$" + stmt_src + "$2_Y";
             RTLIL::IdString not_wire_name = RTLIL::escape_id(not_wire_name_str);
-            RTLIL::Wire* not_output = module->addWire(not_wire_name, 1);
+            
+            // Check if this wire already exists
+            RTLIL::Wire* not_output = module->wire(not_wire_name);
+            if (!not_output) {
+                log("UHDM: Creating logic_not output wire '%s'\n", not_wire_name.c_str());
+                not_output = module->addWire(not_wire_name, 1);
+            } else {
+                log("UHDM: Logic_not output wire '%s' already exists, reusing\n", not_wire_name.c_str());
+            }
             // For logic_not output wire, try to get source from the statement
             add_src_attribute(not_output->attributes, stmt);
             

@@ -25,7 +25,8 @@ fi
 cd "$TEST_DIR"
 
 # Extract module name from directory name (for hierarchy command)
-MODULE_NAME="$TEST_DIR"
+# Remove any trailing slash and extract just the basename
+MODULE_NAME=$(basename "$TEST_DIR" | sed 's|/$||')
 
 echo "=== UHDM vs Verilog Workflow Comparison ==="
 echo "Testing: SystemVerilog -> [UHDM path vs Verilog path] -> Yosys -> RTLIL comparison"

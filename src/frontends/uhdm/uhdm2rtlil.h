@@ -19,6 +19,7 @@
 #include <uhdm/constant.h>
 #include <uhdm/operation.h>
 #include <uhdm/ref_obj.h>
+#include <uhdm/ExprEval.h>
 
 #include "kernel/yosys.h"
 #include "kernel/sigtools.h"
@@ -63,7 +64,7 @@ struct UhdmImporter {
     std::map<std::string, RTLIL::Wire*> name_map;
     
     // Import modes and options
-    bool mode_keep_names = true;
+    bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
     bool mode_debug = false;
     bool mode_formal = false;
     
@@ -136,6 +137,9 @@ struct UhdmImporter {
                                          std::string& input_signal,
                                          std::string& clock_signal, 
                                          std::string& reset_signal);
+    
+    // Width extraction helpers
+    int get_width_from_typespec(const UHDM::any* typespec);
 };
 
 // Specialized importers for different aspects

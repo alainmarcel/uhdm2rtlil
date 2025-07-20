@@ -26,9 +26,7 @@ void UhdmImporter::import_port(const port* uhdm_port) {
         log("  Importing port: %s (dir=%d)\n", portname.c_str(), direction);
     
     // Get port width
-    int width = 1;
-    // Get width from port typespec or range
-    width = 1; // Default width
+    int width = get_width(uhdm_port);
     
     RTLIL::Wire* w = create_wire(portname, width);
     
@@ -66,9 +64,18 @@ void UhdmImporter::import_net(const net* uhdm_net) {
     if (mode_debug)
         log("  Importing net: %s\n", netname.c_str());
     
-    // Skip if already created as port
-    if (name_map.count(netname))
+    // Skip if already created as port or net
+    if (name_map.count(netname)) {
+        log("UHDM: Net '%s' already exists in name_map, skipping\n", netname.c_str());
         return;
+    }
+    
+    // Also check if wire already exists in module
+    RTLIL::IdString wire_id = RTLIL::escape_id(netname);
+    if (module->wire(wire_id)) {
+        log("UHDM: Wire '%s' already exists in module, skipping net import\n", wire_id.c_str());
+        return;
+    }
     
     int width = get_width(uhdm_net);
     RTLIL::Wire* w = create_wire(netname, width);
@@ -145,9 +152,35 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
 
 // Create a wire with the given name and width
 RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width) {
+    log("UHDM: Creating wire '%s' (width=%d, mode_keep_names=%s)\n", 
+        name.c_str(), width, mode_keep_names ? "true" : "false");
+    
+    // First check if we already have this wire by base name
+    RTLIL::IdString base_name = RTLIL::escape_id(name);
+    if (module->wire(base_name)) {
+        log("UHDM: Wire '%s' already exists, returning existing wire\n", base_name.c_str());
+        return module->wire(base_name);
+    }
+    
+    // Generate wire name (with uniquify if needed)
     RTLIL::IdString wire_name = new_id(name);
-    RTLIL::Wire* w = module->addWire(wire_name, width);
-    return w;
+    
+    // Double-check after name generation
+    if (module->wire(wire_name)) {
+        log("UHDM: Wire '%s' already exists after uniquify, returning existing wire\n", wire_name.c_str());
+        return module->wire(wire_name);
+    }
+    
+    log("UHDM: About to call module->addWire('%s', %d)\n", wire_name.c_str(), width);
+    
+    try {
+        RTLIL::Wire* w = module->addWire(wire_name, width);
+        log("UHDM: Successfully created wire '%s'\n", wire_name.c_str());
+        return w;
+    } catch (const std::exception& e) {
+        log_error("UHDM: Failed to create wire '%s': %s\n", wire_name.c_str(), e.what());
+        return nullptr;
+    }
 }
 
 // Generate a new unique ID
@@ -175,14 +208,75 @@ std::string UhdmImporter::get_name(const any* uhdm_obj) {
 
 // Get width from UHDM object
 int UhdmImporter::get_width(const any* uhdm_obj) {
-    // Default to 1 bit
-    int width = 1;
+    if (!uhdm_obj) {
+        log("UHDM: get_width called with null object\n");
+        return 1;
+    }
     
-    // Simplified width calculation
-    // In real implementation, would check typespec, ranges, etc.
-    width = 1;
+    try {
+        log("UHDM: get_width analyzing object type\n");
+        
+        // Check if it's a port and try to get typespec
+        if (auto port = dynamic_cast<const UHDM::port*>(uhdm_obj)) {
+            log("UHDM: Found port object\n");
+            if (auto typespec = port->Typespec()) {
+                log("UHDM: Port has typespec, calling get_width_from_typespec\n");
+                return get_width_from_typespec(typespec);
+            } else {
+                log("UHDM: Port has no typespec\n");
+            }
+        }
+        
+        // Check if it's a net and try to get typespec
+        if (auto net = dynamic_cast<const UHDM::net*>(uhdm_obj)) {
+            log("UHDM: Found net object\n");
+            if (auto typespec = net->Typespec()) {
+                log("UHDM: Net has typespec, calling get_width_from_typespec\n");
+                return get_width_from_typespec(typespec);
+            } else {
+                log("UHDM: Net has no typespec\n");
+            }
+        }
+        
+        log("UHDM: Object is neither port nor net, or no typespec found\n");
+        
+    } catch (...) {
+        log("UHDM: Exception in get_width\n");
+    }
     
-    return width;
+    log("UHDM: Defaulting to width=1\n");
+    return 1;
+}
+
+// Helper function to get width from typespec
+int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec) {
+    if (!typespec) return 1;
+    
+    try {
+        log("UHDM: Analyzing typespec for width determination\n");
+        
+        // Use UHDM::ExprEval to get the actual size of the typespec
+        UHDM::ExprEval eval;
+        bool invalidValue = false;
+        
+        // Call eval.size() like Surelog does
+        // From Surelog: eval.size(typespec, invalidValue, context, nullptr, !sizeMode)
+        uint64_t size = eval.size(typespec, invalidValue, nullptr, nullptr, true);
+        
+        if (!invalidValue && size > 0) {
+            log("UHDM: ExprEval returned size=%llu for typespec\n", (unsigned long long)size);
+            return (int)size;
+        } else {
+            log("UHDM: ExprEval failed or returned invalid size, defaulting to 1\n");
+        }
+        
+    } catch (const std::exception& e) {
+        log("UHDM: Exception in get_width_from_typespec: %s\n", e.what());
+    } catch (...) {
+        log("UHDM: Unknown exception in get_width_from_typespec\n");
+    }
+    
+    return 1;  // Default to 1 bit
 }
 
 // Get source attribute string from UHDM object
