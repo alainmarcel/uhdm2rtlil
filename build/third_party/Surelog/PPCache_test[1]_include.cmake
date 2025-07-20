@@ -1,0 +1,5 @@
+if(EXISTS "/home/alain/uhdm2rtlil/build/third_party/Surelog/PPCache_test[1]_tests.cmake")
+  include("/home/alain/uhdm2rtlil/build/third_party/Surelog/PPCache_test[1]_tests.cmake")
+else()
+  add_test(PPCache_test_NOT_BUILT PPCache_test_NOT_BUILT)
+endif()

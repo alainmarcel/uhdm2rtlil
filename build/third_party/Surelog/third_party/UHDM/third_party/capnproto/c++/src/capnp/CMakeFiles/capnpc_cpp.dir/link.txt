@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/capnpc_cpp.dir/compiler/capnpc-c++.c++.o -o capnpc-c++  libcapnp.a ../kj/libkj.a -lpthread 

@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG  -Wall -O3 -DNDEBUG   CMakeFiles/uhdm-dump.dir/util/uhdm-dump.cpp.o -o bin/uhdm-dump  lib/libuhdm.a third_party/capnproto/c++/src/capnp/libcapnp.a third_party/capnproto/c++/src/kj/libkj.a -ldl -lutil -lm -lrt -lpthread 

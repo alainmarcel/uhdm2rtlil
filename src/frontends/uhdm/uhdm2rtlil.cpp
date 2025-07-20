@@ -219,6 +219,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Import memory objects using analysis pass
+    analyze_and_generate_memories(uhdm_module);
+    
     // Import continuous assignments
     if (uhdm_module->Cont_assigns()) {
         for (auto assign : *uhdm_module->Cont_assigns()) {

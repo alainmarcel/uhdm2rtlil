@@ -1,0 +1,2 @@
+/usr/bin/ar qc libkj-gzip.a CMakeFiles/kj-gzip.dir/compat/gzip.c++.o
+/usr/bin/ranlib libkj-gzip.a

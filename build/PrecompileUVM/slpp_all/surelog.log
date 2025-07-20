@@ -1,0 +1,38 @@
+********************************************
+*  SURELOG SystemVerilog  Compiler/Linter  *
+********************************************
+
+Copyright (c) 2017-2023 Alain Dargelas,
+http://www.apache.org/licenses/LICENSE-2.0
+
+VERSION: 1.84
+BUILT  : Jul 20 2025
+DATE   : 2025-07-20.12:00:52
+COMMAND: -nobuiltin -createcache -parse -nocomp -noelab +incdir+.+1800.2-2017-1.0/src/ 1800.2-2017-1.0/src/uvm_pkg.sv -writepp -mt 0 -o /home/alain/uhdm2rtlil/build/PrecompileUVM
+
+[INF:CM0023] Creating log file "/home/alain/uhdm2rtlil/build/PrecompileUVM/slpp_all/surelog.log".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_recorder_defines.svh:81:13: Unused macro argument "TR_HANDLE".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_packer_defines.svh:496:9: Unused macro argument "TYPE".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_packer_defines.svh:523:9: Unused macro argument "TYPE".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_packer_defines.svh:550:9: Unused macro argument "TYPE".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_object_defines.svh:793:9: Unused macro argument "ARG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_object_defines.svh:793:9: Unused macro argument "FLAG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_object_defines.svh:797:9: Unused macro argument "ARG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_object_defines.svh:806:9: Unused macro argument "OP".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_callback_defines.svh:301:9: Unused macro argument "CB".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_callback_defines.svh:301:9: Unused macro argument "OPER".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_callback_defines.svh:302:9: Unused macro argument "CB".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_callback_defines.svh:302:9: Unused macro argument "OBJ".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/macros/uvm_callback_defines.svh:302:9: Unused macro argument "OPER".
+[NTE:PP0128] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/seq/uvm_sequencer_param_base.svh:126: Non ASCII character detected, replaced by space.
+[WRN:PA0205] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/1800.2-2017-1.0/src/uvm_pkg.sv:28:1: No timescale set for "uvm_pkg".
+[  FATAL] : 0
+[ SYNTAX] : 0
+[  ERROR] : 0
+[WARNING] : 14
+[   NOTE] : 1
+
+********************************************
+*   End SURELOG SVerilog Compiler/Linter   *
+********************************************
+

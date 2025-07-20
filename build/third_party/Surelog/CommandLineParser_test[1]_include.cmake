@@ -1,0 +1,5 @@
+if(EXISTS "/home/alain/uhdm2rtlil/build/third_party/Surelog/CommandLineParser_test[1]_tests.cmake")
+  include("/home/alain/uhdm2rtlil/build/third_party/Surelog/CommandLineParser_test[1]_tests.cmake")
+else()
+  add_test(CommandLineParser_test_NOT_BUILT CommandLineParser_test_NOT_BUILT)
+endif()

@@ -1,0 +1,7 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+hierarchy -check -top simple_memory
+stat
+opt
+stat
+write_rtlil simple_memory_from_verilog.il

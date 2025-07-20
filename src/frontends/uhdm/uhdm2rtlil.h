@@ -141,6 +141,9 @@ struct UhdmImporter {
     
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec);
+    
+    // Memory analysis and generation
+    void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);
 };
 
 // Specialized importers for different aspects

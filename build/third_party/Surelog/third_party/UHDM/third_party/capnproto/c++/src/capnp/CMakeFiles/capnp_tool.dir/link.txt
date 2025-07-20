@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/capnp_tool.dir/compiler/module-loader.c++.o CMakeFiles/capnp_tool.dir/compiler/capnp.c++.o -o capnp  libcapnpc.a libcapnp-json.a libcapnp.a ../kj/libkj.a ../kj/libkj-async.a ../kj/libkj.a -lpthread 

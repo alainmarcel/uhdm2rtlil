@@ -1,0 +1,44 @@
+********************************************
+*  SURELOG SystemVerilog  Compiler/Linter  *
+********************************************
+
+Copyright (c) 2017-2023 Alain Dargelas,
+http://www.apache.org/licenses/LICENSE-2.0
+
+VERSION: 1.84
+BUILT  : Jul 20 2025
+DATE   : 2025-07-20.12:00:52
+COMMAND: -nobuiltin -createcache +incdir+ovm-2.1.2/src/ +incdir+vmm-1.1.1a/sv ovm-2.1.2/src/ovm_pkg.sv -writepp -mt 0 -parse -nocomp -noelab -o /home/alain/uhdm2rtlil/build/PrecompileOVM
+
+[INF:CM0023] Creating log file "/home/alain/uhdm2rtlil/build/PrecompileOVM/slpp_all/surelog.log".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:1208:9: Unused macro argument "FLAG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:1231:9: Unused macro argument "ARG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:1246:9: Unused macro argument "ARG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:1246:9: Unused macro argument "FLAG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:1470:9: Unused macro argument "T".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:2842:9: Unused macro argument "FLAG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:2910:9: Unused macro argument "ARG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_object_defines.svh:2910:9: Unused macro argument "FLAG".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_printer_defines.svh:368:9: Unused macro argument "KEY".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_callback_defines.svh:255:9: Unused macro argument "CB".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_callback_defines.svh:255:9: Unused macro argument "OPER".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_callback_defines.svh:256:9: Unused macro argument "CB".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_callback_defines.svh:256:9: Unused macro argument "OBJ".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/ovm_callback_defines.svh:256:9: Unused macro argument "OPER".
+[WRN:PP0113] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/compatibility/urm_message_defines.svh:111:9: Unused macro argument "HIERARCHY".
+[NTE:PP0128] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/base/ovm_phases.sv:399: Non ASCII character detected, replaced by space.
+[NTE:PP0105] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/tlm/sqr_connections.svh:23:1: Multiply defined macro "SEQ_ITEM_PULL_IMP",
+             /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/macros/tlm_defines.svh:503:9: previous definition.
+[NTE:PP0128] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/methodology/sequences/ovm_sequencer_base.svh:1229: Non ASCII character detected, replaced by space.
+[NTE:PP0128] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/methodology/sequences/ovm_sequence_builtin.svh:32: Non ASCII character detected, replaced by space.
+[WRN:PA0205] /home/alain/uhdm2rtlil/build/third_party/Surelog/bin/ovm-2.1.2/src/ovm_pkg.sv:24:1: No timescale set for "ovm_pkg".
+[  FATAL] : 0
+[ SYNTAX] : 0
+[  ERROR] : 0
+[WARNING] : 16
+[   NOTE] : 4
+
+********************************************
+*   End SURELOG SVerilog Compiler/Linter   *
+********************************************
+

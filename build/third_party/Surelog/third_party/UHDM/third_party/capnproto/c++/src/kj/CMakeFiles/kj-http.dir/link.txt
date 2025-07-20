@@ -1,0 +1,2 @@
+/usr/bin/ar qc libkj-http.a CMakeFiles/kj-http.dir/compat/url.c++.o CMakeFiles/kj-http.dir/compat/http.c++.o
+/usr/bin/ranlib libkj-http.a
