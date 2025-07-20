@@ -37,7 +37,13 @@ jobs:
           flex \
           libunwind-dev \
           libgoogle-perftools-dev \
-          ccache
+          ccache \
+          gcc-11 \
+          g++-11
+        
+        # Set GCC 11 as default
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
     
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
