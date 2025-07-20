@@ -129,6 +129,13 @@ struct UhdmImporter {
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
     std::string get_src_attribute(const UHDM::any* uhdm_obj);
+    
+    // Signal name extraction from UHDM
+    bool extract_signal_names_from_process(const UHDM::any* stmt, 
+                                         std::string& output_signal, 
+                                         std::string& input_signal,
+                                         std::string& clock_signal, 
+                                         std::string& reset_signal);
 };
 
 // Specialized importers for different aspects

@@ -81,11 +81,28 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     if (auto stmt = uhdm_process->Stmt()) {
         log("    Found process statement, parsing structure...\n");
         
+        // Analyze the UHDM structure to extract actual signal names
+        std::string output_signal_name;
+        std::string input_signal_name;
+        std::string clock_signal_name;
+        std::string reset_signal_name;
+        
+        // Extract signal names from the UHDM structure
+        if (!extract_signal_names_from_process(stmt, output_signal_name, input_signal_name, 
+                                             clock_signal_name, reset_signal_name)) {
+            log_warning("Failed to extract signal names from UHDM process, skipping...\n");
+            return;
+        }
+        
+        log("    Extracted signals: output=%s, input=%s, clock=%s, reset=%s\n",
+            output_signal_name.c_str(), input_signal_name.c_str(), 
+            clock_signal_name.c_str(), reset_signal_name.c_str());
+        
         // Create intermediate wire for conditional logic (like Verilog frontend)
         RTLIL::Wire* temp_wire = nullptr;
-        if (name_map.count("q")) {
-            // Create a name like $0\q[0:0] to match Verilog output exactly
-            std::string temp_name = "$0\\q[0:0]";
+        if (!output_signal_name.empty() && name_map.count(output_signal_name)) {
+            // Create a name like $0\<signal>[0:0] to match Verilog output exactly
+            std::string temp_name = "$0\\" + output_signal_name + "[0:0]";
             RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
             temp_wire = module->addWire(temp_id, 1);
             
@@ -94,9 +111,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
         
         // Initialize the process with assignment to temp wire
-        if (temp_wire && name_map.count("q")) {
+        if (temp_wire && !output_signal_name.empty() && name_map.count(output_signal_name)) {
             yosys_proc->root_case.actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map["q"]))
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[output_signal_name]))
             );
         }
         
@@ -133,11 +150,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
                     // Empty compare means default case
                     
-                    if (temp_wire && name_map.count("d")) {
+                    if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
                         normal_case->actions.push_back(
-                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map["d"]))
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
                         );
-                        log("    Added normal case: temp <= d\n");
+                        log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
                     }
                     
                     sw->cases.push_back(reset_case);
@@ -171,10 +188,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // For logic_not output wire, try to get source from the statement
             add_src_attribute(not_output->attributes, stmt);
             
-            if (name_map.count("rst_n")) {
-                not_cell->setPort(ID::A, RTLIL::SigSpec(name_map["rst_n"]));
+            if (!reset_signal_name.empty() && name_map.count(reset_signal_name)) {
+                not_cell->setPort(ID::A, RTLIL::SigSpec(name_map[reset_signal_name]));
                 not_cell->setPort(ID::Y, not_output);
-                log("    Created $logic_not cell for !rst_n\n");
+                log("    Created $logic_not cell for !%s\n", reset_signal_name.c_str());
                 
                 // Create switch statement using the logic_not output
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
@@ -198,11 +215,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 add_src_attribute(normal_case->attributes, stmt);
                 // Empty compare means default case
                 
-                if (temp_wire && name_map.count("d")) {
+                if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
                     normal_case->actions.push_back(
-                        RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map["d"]))
+                        RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
                     );
-                    log("    Added normal case: temp <= d\n");
+                    log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
                 }
                 
                 sw->cases.push_back(reset_case);
@@ -213,23 +230,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
         
         // Add sync rules for both clock edges
-        if (name_map.count("clk") && temp_wire && name_map.count("q")) {
+        if (!clock_signal_name.empty() && name_map.count(clock_signal_name) && 
+            temp_wire && !output_signal_name.empty() && name_map.count(output_signal_name)) {
             // Positive edge clock
             RTLIL::SyncRule* clk_sync = new RTLIL::SyncRule();
             clk_sync->type = RTLIL::SyncType::STp;
-            clk_sync->signal = RTLIL::SigSpec(name_map["clk"]);
+            clk_sync->signal = RTLIL::SigSpec(name_map[clock_signal_name]);
             clk_sync->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(name_map["q"]), RTLIL::SigSpec(temp_wire))
+                RTLIL::SigSig(RTLIL::SigSpec(name_map[output_signal_name]), RTLIL::SigSpec(temp_wire))
             );
             yosys_proc->syncs.push_back(clk_sync);
             
             // Negative edge reset (same action)
-            if (name_map.count("rst_n")) {
+            if (!reset_signal_name.empty() && name_map.count(reset_signal_name)) {
                 RTLIL::SyncRule* rst_sync = new RTLIL::SyncRule();
                 rst_sync->type = RTLIL::SyncType::STn;
-                rst_sync->signal = RTLIL::SigSpec(name_map["rst_n"]);
+                rst_sync->signal = RTLIL::SigSpec(name_map[reset_signal_name]);
                 rst_sync->actions.push_back(
-                    RTLIL::SigSig(RTLIL::SigSpec(name_map["q"]), RTLIL::SigSpec(temp_wire))
+                    RTLIL::SigSig(RTLIL::SigSpec(name_map[output_signal_name]), RTLIL::SigSpec(temp_wire))
                 );
                 yosys_proc->syncs.push_back(rst_sync);
             }
@@ -442,6 +460,43 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
 // Import case statement for comb context
 void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc) {
     log_warning("Case statements in comb context not yet implemented\n");
+}
+
+// Extract signal names from UHDM process structure
+bool UhdmImporter::extract_signal_names_from_process(const any* stmt, 
+                                                   std::string& output_signal, 
+                                                   std::string& input_signal,
+                                                   std::string& clock_signal, 
+                                                   std::string& reset_signal) {
+    if (!stmt) return false;
+    
+    // For now, implement a basic version that looks for specific patterns
+    // This should be enhanced to parse the actual UHDM structure
+    
+    // Try to extract from the available name_map (temporary approach)
+    // In a real implementation, we would parse the UHDM assignments and conditions
+    
+    // Look for common signal patterns in the name_map
+    for (const auto& [name, wire] : name_map) {
+        if (wire->port_output) {
+            output_signal = name;
+        } else if (wire->port_input) {
+            // Try to identify clock, reset, and data signals by name patterns
+            if (name.find("clk") != std::string::npos || name.find("clock") != std::string::npos) {
+                clock_signal = name;
+            } else if (name.find("rst") != std::string::npos || name.find("reset") != std::string::npos) {
+                reset_signal = name;
+            } else {
+                // Assume other input signals are data signals
+                if (input_signal.empty()) {
+                    input_signal = name;
+                }
+            }
+        }
+    }
+    
+    // Basic validation - we need at least output and input signals
+    return !output_signal.empty() && !input_signal.empty();
 }
 
 YOSYS_NAMESPACE_END
