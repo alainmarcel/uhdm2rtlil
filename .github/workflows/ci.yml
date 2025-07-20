@@ -36,15 +36,47 @@ jobs:
           bison \
           flex \
           libunwind-dev \
-          libgoogle-perftools-dev
+          libgoogle-perftools-dev \
+          ccache
+    
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.os }}
+        max-size: 2G
+        
+    - name: Cache build dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          build/
+          third_party/Surelog/build/
+          third_party/yosys/
+          ~/.cache/pip
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', '**/Makefile', '**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
     
     - name: Install Python dependencies
       run: |
         pip3 install orderedmultidict
     
+    - name: Setup ccache environment
+      run: |
+        echo "CC=ccache gcc" >> $GITHUB_ENV
+        echo "CXX=ccache g++" >> $GITHUB_ENV
+        ccache --set-config=cache_dir=$HOME/.ccache
+        ccache --set-config=max_size=2G
+        ccache --set-config=compression=true
+        ccache --zero-stats
+    
     - name: Build project
       run: |
-        make
+        make -j4
+        
+    - name: Print ccache statistics
+      run: |
+        ccache --show-stats
     
     - name: Run tests
       run: |
