@@ -37,7 +37,16 @@ jobs:
           flex \
           libunwind-dev \
           libgoogle-perftools-dev \
-          ccache
+          ccache \
+          g++-9
+    
+    - name: Setup GCC-9
+      shell: bash
+      run: |
+        # Install and setup gcc-9
+        sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
     
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
