@@ -19,20 +19,26 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     
     // Create process with name based on actual source location
     std::string src_info = get_src_attribute(uhdm_process);
-    // Extract just the line number for the process name
-    size_t colon_pos = src_info.find(':');
-    size_t dot_pos = src_info.find('.', colon_pos);
-    std::string line_num = "1";
-    if (colon_pos != std::string::npos && dot_pos != std::string::npos) {
-        line_num = src_info.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+    std::string proc_name_str;
+    
+    if (!src_info.empty()) {
+        // Extract filename and line number from source info
+        size_t colon_pos = src_info.find(':');
+        size_t dot_pos = src_info.find('.', colon_pos);
+        
+        if (colon_pos != std::string::npos && dot_pos != std::string::npos) {
+            std::string filename = src_info.substr(0, colon_pos);
+            std::string line_num = src_info.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+            proc_name_str = "$proc$" + filename + ":" + line_num + "$1";
+        } else {
+            // Fallback if we can't parse the source info properly
+            proc_name_str = "$proc$unknown$1";
+        }
+    } else {
+        // No source info available, use generic name
+        proc_name_str = "$proc$unknown$1";
     }
     
-    std::string filename = "dut.sv";  // Extract from src_info if needed
-    if (colon_pos != std::string::npos) {
-        filename = src_info.substr(0, colon_pos);
-    }
-    
-    std::string proc_name_str = "$proc$" + filename + ":" + line_num + "$1";
     RTLIL::IdString proc_name = RTLIL::escape_id(proc_name_str);
     RTLIL::Process* yosys_proc = module->addProcess(proc_name);
     
