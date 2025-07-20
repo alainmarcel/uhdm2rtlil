@@ -1,15 +1,39 @@
 #!/bin/bash
 
-# Test script for UHDM workflow comparison: UHDM vs Verilog frontends
+# Generic test script for UHDM workflow comparison: UHDM vs Verilog frontends
 # This script demonstrates the complete flow and compares UHDM vs Verilog import
+# Usage: test_uhdm_workflow.sh <test_directory>
 
 set -e  # Exit on any error
 
+# Check if test directory argument is provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <test_directory>"
+    echo "Example: $0 flipflop"
+    exit 1
+fi
+
+TEST_DIR="$1"
+
+# Check if test directory exists
+if [ ! -d "$TEST_DIR" ]; then
+    echo "ERROR: Test directory '$TEST_DIR' does not exist"
+    exit 1
+fi
+
+# Change to test directory
+cd "$TEST_DIR"
+
+# Extract module name from directory name (for hierarchy command)
+MODULE_NAME="$TEST_DIR"
+
 echo "=== UHDM vs Verilog Workflow Comparison ==="
 echo "Testing: SystemVerilog -> [UHDM path vs Verilog path] -> Yosys -> RTLIL comparison"
+echo "Test Directory: $TEST_DIR"
+echo "Module Name: $MODULE_NAME"
 echo
 
-# Set up paths
+# Set up paths (relative to test directory)
 SURELOG_BIN="../../build/third_party/Surelog/bin/surelog"
 YOSYS_BIN="../../out/current/bin/yosys"
 SV_FILE="dut.sv"
@@ -27,13 +51,13 @@ if [ ! -f "$YOSYS_BIN" ]; then
 fi
 
 if [ ! -f "$SV_FILE" ]; then
-    echo "ERROR: SystemVerilog file $SV_FILE not found"
+    echo "ERROR: SystemVerilog file $SV_FILE not found in $TEST_DIR"
     exit 1
 fi
 
 # Clean up previous runs
 echo "1. Cleaning up previous files..."
-rm -f "$UHDM_FILE" *.log *.dot
+rm -f "$UHDM_FILE" *.log *.dot *_from_uhdm.il *_from_verilog.il rtlil_diff.txt test_*_read.ys
 
 # Step 1: Use Surelog to parse SystemVerilog and generate UHDM
 echo "2. Running Surelog to generate UHDM..."
@@ -52,15 +76,15 @@ echo
 
 # Step 2: Create Yosys script to read UHDM file
 echo "3. Creating Yosys script to read UHDM..."
-cat > test_uhdm_read.ys << 'EOF'
+cat > test_uhdm_read.ys << EOF
 # Test script to read UHDM file in Yosys
 plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
-hierarchy -check -top flipflop
+hierarchy -check -top $MODULE_NAME
 stat
 opt
 stat
-write_rtlil flipflop_from_uhdm.il
+write_rtlil ${MODULE_NAME}_from_uhdm.il
 EOF
 
 echo "   ✓ Yosys script created: test_uhdm_read.ys"
@@ -68,14 +92,14 @@ echo
 
 # Step 3: Create Yosys script to read Verilog file
 echo "4. Creating Yosys script to read Verilog..."
-cat > test_verilog_read.ys << 'EOF'
+cat > test_verilog_read.ys << EOF
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
-hierarchy -check -top flipflop
+hierarchy -check -top $MODULE_NAME
 stat
 opt
 stat
-write_rtlil flipflop_from_verilog.il
+write_rtlil ${MODULE_NAME}_from_verilog.il
 EOF
 
 echo "   ✓ Yosys script created: test_verilog_read.ys"
@@ -107,23 +131,27 @@ echo
 
 # Step 6: Compare the results
 echo "7. Comparing UHDM vs Verilog RTLIL outputs..."
-if [ -f "flipflop_from_uhdm.il" ] && [ -f "flipflop_from_verilog.il" ]; then
+UHDM_RTLIL="${MODULE_NAME}_from_uhdm.il"
+VERILOG_RTLIL="${MODULE_NAME}_from_verilog.il"
+
+if [ -f "$UHDM_RTLIL" ] && [ -f "$VERILOG_RTLIL" ]; then
     echo "   Both files generated successfully"
     echo
-    echo "   UHDM RTLIL (flipflop_from_uhdm.il):"
+    echo "   UHDM RTLIL ($UHDM_RTLIL):"
     echo "   ====================================="
-    cat flipflop_from_uhdm.il
+    cat "$UHDM_RTLIL"
     echo
-    echo "   Verilog RTLIL (flipflop_from_verilog.il):"
+    echo "   Verilog RTLIL ($VERILOG_RTLIL):"
     echo "   =========================================="
-    cat flipflop_from_verilog.il
+    cat "$VERILOG_RTLIL"
     echo
     
     # Compare files
-    if diff -u flipflop_from_uhdm.il flipflop_from_verilog.il > rtlil_diff.txt; then
+    if diff -u "$UHDM_RTLIL" "$VERILOG_RTLIL" > rtlil_diff.txt; then
         echo "   ✓ RTLIL outputs are IDENTICAL!"
         echo "     UHDM frontend produces the same result as Verilog frontend"
         rm rtlil_diff.txt
+        RESULT=0
     else
         echo "   ⚠ RTLIL outputs are DIFFERENT:"
         echo "     Differences saved to rtlil_diff.txt"
@@ -133,10 +161,12 @@ if [ -f "flipflop_from_uhdm.il" ] && [ -f "flipflop_from_verilog.il" ]; then
         if [ $(wc -l < rtlil_diff.txt) -gt 20 ]; then
             echo "   ... (truncated, see rtlil_diff.txt for full diff)"
         fi
+        RESULT=1
     fi
 else
     echo "   ✗ One or both RTLIL files missing"
     ls -la *.il 2>/dev/null || echo "   No .il files found"
+    RESULT=1
 fi
 
 echo
@@ -154,3 +184,9 @@ fi
 echo
 echo "Generated files:"
 ls -la *.uhdm *.il *.ys *.txt 2>/dev/null || echo "  Files may not have been generated"
+
+# Return to original directory
+cd ..
+
+# Exit with appropriate code
+exit $RESULT
