@@ -25,6 +25,8 @@ module \simple_memory
   wire input 2 \rst
   attribute \src "dut.sv:8.34-8.36"
   wire input 3 \we
+  attribute \src "unknown_location"
+  memory width 8 size 16 \memory
   attribute \src "dut.sv:19.12-19.26"
   cell $logic_not $logic_not$dut.sv:19.12-19.26$2
     parameter \A_SIGNED 0

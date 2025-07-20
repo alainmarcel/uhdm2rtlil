@@ -3,6 +3,7 @@ autoidx 1
 attribute \top 1
 attribute \src "dut.sv:2.1-27.10"
 module \counter
+  parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   attribute \src "dut.sv:22.5-25.8"
   wire $0\overflow[0:0]
   attribute \src "dut.sv:14.15-14.46"
