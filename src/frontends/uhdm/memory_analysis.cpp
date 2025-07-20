@@ -230,6 +230,10 @@ void UhdmMemoryAnalyzer::analyze_statement_for_memory(const any* statement, cons
 void UhdmMemoryAnalyzer::analyze_assignment_for_memory(const assignment* assign, const std::string& context) {
     if (!assign->Lhs() || !assign->Rhs()) return;
     
+    if (parent->mode_debug) {
+        log("    Analyzing assignment for memory patterns (context: %s)\n", context.c_str());
+    }
+    
     // Check if LHS is memory access (write operation)
     if (auto lhs_ref = dynamic_cast<const ref_obj*>(assign->Lhs())) {
         analyze_hierarchical_access(lhs_ref, context + "_write");
@@ -238,6 +242,17 @@ void UhdmMemoryAnalyzer::analyze_assignment_for_memory(const assignment* assign,
     // Check if RHS contains memory access (read operation)
     if (auto rhs_expr = dynamic_cast<const expr*>(assign->Rhs())) {
         analyze_memory_usage_in_expressions(rhs_expr, context + "_read");
+    }
+    
+    // Check for indexed references which indicate memory access
+    if (assign->Rhs()->VpiType() == vpiIndexedPartSelect || assign->Rhs()->VpiType() == vpiPartSelect) {
+        if (parent->mode_debug) {
+            log("      Found indexed part select - potential memory read\n");
+        }
+        // This could be memory[addr] access - cast to expr*
+        if (auto rhs_expr = dynamic_cast<const expr*>(assign->Rhs())) {
+            analyze_memory_usage_in_expressions(rhs_expr, context + "_indexed_read");
+        }
     }
 }
 
@@ -272,9 +287,42 @@ void UhdmMemoryAnalyzer::analyze_hierarchical_access(const ref_obj* hier_ref, co
 void UhdmMemoryAnalyzer::analyze_memory_usage_in_expressions(const expr* expression, const std::string& context) {
     if (!expression) return;
     
+    if (parent->mode_debug) {
+        log("      Analyzing expression for memory usage (VpiType=%d, context=%s)\n", 
+            expression->VpiType(), context.c_str());
+    }
+    
     // Check if expression is a hierarchical reference to memory
     if (auto hier_ref = dynamic_cast<const ref_obj*>(expression)) {
         analyze_hierarchical_access(hier_ref, context);
+    }
+    
+    // Check for indexed memory access patterns
+    int expr_type = expression->VpiType();
+    if (expr_type == vpiPartSelect || expr_type == vpiIndexedPartSelect || expr_type == vpiBitSelect) {
+        if (parent->mode_debug) {
+            log("        Found select operation - checking if it's memory access\n");
+        }
+        
+        // Try to extract the base object and index
+        // This would require UHDM-specific API calls to get parent/child relationships
+        auto vpi_name = expression->VpiName();
+        std::string expr_name = (!vpi_name.empty()) ? std::string(vpi_name) : "";
+        if (!expr_name.empty() && memories.find(expr_name) != memories.end()) {
+            // Found memory access!
+            MemoryAccess access;
+            access.memory_name = expr_name;
+            access.type = (context.find("write") != std::string::npos) ? 
+                          MemoryAccess::WRITE : MemoryAccess::READ;
+            access.source_location = get_source_location(expression);
+            memory_accesses.push_back(access);
+            
+            if (parent->mode_debug) {
+                log("        Detected %s access to memory %s\n", 
+                    (access.type == MemoryAccess::WRITE) ? "write" : "read",
+                    expr_name.c_str());
+            }
+        }
     }
     
     // Recursively analyze sub-expressions
@@ -345,31 +393,46 @@ void UhdmMemoryAnalyzer::generate_memory_operations() {
     }
 }
 
-// Generate memory read cell
+// Generate memory read cell (following Yosys Verilog frontend pattern)
 void UhdmMemoryAnalyzer::generate_memory_read_cell(const MemoryAccess& access) {
     const auto& mem_info = memories[access.memory_name];
     
-    std::string cell_name = access.memory_name + "_read";
-    RTLIL::Cell* read_cell = module->addCell(parent->new_id(cell_name), ID($memrd));
+    // Generate cell name following Yosys pattern: $memrd$<memory>$<location>$<id>
+    std::stringstream cell_name_stream;
+    cell_name_stream << "$memrd$" << access.memory_name << "$" << access.source_location;
+    std::string cell_name = parent->new_id(cell_name_stream.str()).str();
     
-    // Set parameters
+    RTLIL::Cell* read_cell = module->addCell(cell_name, ID($memrd));
+    
+    // Create data wire following Yosys pattern: <cell_name>_DATA
+    RTLIL::Wire* data_wire = module->addWire(cell_name + "_DATA", mem_info.width);
+    
+    // Set parameters following Yosys Verilog frontend pattern
     read_cell->setParam(ID::MEMID, RTLIL::Const(access.memory_name));
     read_cell->setParam(ID::ABITS, mem_info.addr_width);
     read_cell->setParam(ID::WIDTH, mem_info.width);
-    read_cell->setParam(ID::CLK_ENABLE, 0);  // Async read for now
-    read_cell->setParam(ID::TRANSPARENT, 0);
+    read_cell->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
+    read_cell->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+    read_cell->setParam(ID::TRANSPARENT, RTLIL::Const(0));
     
-    // Create and connect ports
-    RTLIL::Wire* addr_wire = module->addWire(parent->new_id(cell_name + "_addr"), mem_info.addr_width);
-    RTLIL::Wire* data_wire = module->addWire(parent->new_id(cell_name + "_data"), mem_info.width);
+    // Connect ports following Yosys pattern
+    read_cell->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+    read_cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+    read_cell->setPort(ID::DATA, RTLIL::SigSpec(data_wire));
     
+    // For now, create a dummy address signal - this should be extracted from UHDM
+    // This would be replaced with actual address extraction from memory access
+    RTLIL::Wire* addr_wire = module->addWire(parent->new_id("addr"), mem_info.addr_width);
     read_cell->setPort(ID::ADDR, addr_wire);
-    read_cell->setPort(ID::DATA, data_wire);
-    read_cell->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx)); // No clock for async
-    read_cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::Sx));  // No enable for async
+    
+    // Add source attribute to match Verilog frontend
+    if (!access.source_location.empty()) {
+        read_cell->attributes[ID::src] = RTLIL::Const(access.source_location);
+        data_wire->attributes[ID::src] = RTLIL::Const(access.source_location);
+    }
     
     if (parent->mode_debug)
-        log("    Generated read cell for memory %s\n", access.memory_name.c_str());
+        log("    Generated $memrd cell %s for memory %s\n", cell_name.c_str(), access.memory_name.c_str());
 }
 
 // Generate memory write process (simplified)

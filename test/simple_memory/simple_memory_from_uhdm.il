@@ -10,6 +10,7 @@ module \simple_memory
   wire $0\data_out[0:0]
   attribute \src "dut.sv:19.12-19.26"
   wire $logic_not$dut.sv:19.12-19.26$2_Y
+  wire width 8 $memrd$\memory$fallback_DATA
   attribute \src "dut.sv:9.34-9.38"
   wire input 4 \addr
   attribute \src "dut.sv:6.34-6.37"
@@ -35,6 +36,18 @@ module \simple_memory
     connect \A \rst
     connect \Y $logic_not$dut.sv:19.12-19.26$2_Y
   end
+  cell $memrd $memrd$\memory$fallback
+    parameter \ABITS 1
+    parameter \CLK_ENABLE 0
+    parameter \CLK_POLARITY 0
+    parameter \MEMID "\\memory"
+    parameter \TRANSPARENT 0
+    parameter \WIDTH 8
+    connect \ADDR \addr
+    connect \CLK 1'x
+    connect \DATA $memrd$\memory$fallback_DATA
+    connect \EN 1'x
+  end
   attribute \src "dut.sv:19.5-34.8"
   attribute \always_ff 1
   process $proc$dut.sv:19$1
@@ -46,7 +59,7 @@ module \simple_memory
         assign $0\data_out[0:0] 1'0
       attribute \src "dut.sv:19.12-19.26"
       case 
-        assign $0\data_out[0:0] \addr
+        assign $0\data_out[0:0] $memrd$\memory$fallback_DATA [0]
     end
     sync posedge \clk
       update \data_out $0\data_out[0:0]

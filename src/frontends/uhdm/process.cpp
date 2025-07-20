@@ -426,9 +426,52 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             
                             rhs_signal = RTLIL::SigSpec(add_output);
                         } else {
-                            // Direct assignment case (like q <= d)
-                            rhs_signal = RTLIL::SigSpec(name_map[input_signal_name]);
-                            log("    Using fallback: direct assignment of %s\n", input_signal_name.c_str());
+                            // Check if this might be a memory read (addr signal + memory exists)
+                            if (input_signal_name == "addr" && module->memories.size() > 0) {
+                                log("    Detected potential memory read: %s with memory present\n", input_signal_name.c_str());
+                                
+                                // Create a $memrd cell for memory[addr]
+                                auto mem_it = module->memories.begin();
+                                RTLIL::Memory* memory = mem_it->second;
+                                
+                                std::string cell_name = new_id("$memrd$" + memory->name.str() + "$fallback").str();
+                                RTLIL::Cell* memrd_cell = module->addCell(cell_name, ID($memrd));
+                                
+                                // Set parameters
+                                memrd_cell->setParam(ID::MEMID, RTLIL::Const(memory->name.str()));
+                                // Calculate address bits needed (log2 of size)
+                                int addr_bits = 0;
+                                int temp = memory->size - 1;
+                                while (temp > 0) {
+                                    addr_bits++;
+                                    temp >>= 1;
+                                }
+                                if (addr_bits == 0) addr_bits = 1; // Minimum 1 bit
+                                // Use actual wire width instead of calculated bits to handle UHDM width issues
+                                RTLIL::Wire* addr_wire = name_map[input_signal_name];
+                                int actual_addr_bits = addr_wire->width;
+                                memrd_cell->setParam(ID::ABITS, actual_addr_bits);
+                                memrd_cell->setParam(ID::WIDTH, memory->width);
+                                memrd_cell->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
+                                memrd_cell->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+                                memrd_cell->setParam(ID::TRANSPARENT, RTLIL::Const(0));
+                                
+                                // Create data wire
+                                RTLIL::Wire* data_wire = module->addWire(cell_name + "_DATA", memory->width);
+                                
+                                // Connect ports
+                                memrd_cell->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+                                memrd_cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+                                memrd_cell->setPort(ID::ADDR, RTLIL::SigSpec(name_map[input_signal_name]));
+                                memrd_cell->setPort(ID::DATA, RTLIL::SigSpec(data_wire));
+                                
+                                rhs_signal = RTLIL::SigSpec(data_wire);
+                                log("    Created $memrd cell for memory[%s] access\n", input_signal_name.c_str());
+                            } else {
+                                // Direct assignment case (like q <= d)
+                                rhs_signal = RTLIL::SigSpec(name_map[input_signal_name]);
+                                log("    Using fallback: direct assignment of %s\n", input_signal_name.c_str());
+                            }
                         }
                     }
                     
