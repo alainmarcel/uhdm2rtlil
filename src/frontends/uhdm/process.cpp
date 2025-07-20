@@ -17,13 +17,28 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     
     log("  Importing process type: %d\n", proc_type);
     
-    // Create process with name that matches Verilog output
-    RTLIL::IdString proc_name = RTLIL::escape_id("$proc$dut.sv:9$1");
+    // Create process with name based on actual source location
+    std::string src_info = get_src_attribute(uhdm_process);
+    // Extract just the line number for the process name
+    size_t colon_pos = src_info.find(':');
+    size_t dot_pos = src_info.find('.', colon_pos);
+    std::string line_num = "1";
+    if (colon_pos != std::string::npos && dot_pos != std::string::npos) {
+        line_num = src_info.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+    }
+    
+    std::string filename = "dut.sv";  // Extract from src_info if needed
+    if (colon_pos != std::string::npos) {
+        filename = src_info.substr(0, colon_pos);
+    }
+    
+    std::string proc_name_str = "$proc$" + filename + ":" + line_num + "$1";
+    RTLIL::IdString proc_name = RTLIL::escape_id(proc_name_str);
     RTLIL::Process* yosys_proc = module->addProcess(proc_name);
     
     // Add source attributes 
     yosys_proc->attributes[ID::always_ff] = RTLIL::Const(1);
-    yosys_proc->attributes[ID::src] = RTLIL::Const("dut.sv:9.5-15.8");
+    add_src_attribute(yosys_proc->attributes, uhdm_process);
     
     // Handle different process types
     switch (proc_type) {
@@ -68,8 +83,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
             temp_wire = module->addWire(temp_id, 1);
             
-            // Add source attribute for the temp wire
-            temp_wire->attributes[ID::src] = RTLIL::Const("dut.sv:9.5-15.8");
+            // Add source attribute for the temp wire (using process source info)
+            add_src_attribute(temp_wire->attributes, uhdm_process);
         }
         
         // Initialize the process with assignment to temp wire
@@ -133,18 +148,22 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             log("    Not an if statement, trying to parse as generic statement\n");
             // For now, just handle the else case with hardcoded logic to match Verilog output
             
-            // Create the $logic_not cell manually with matching name
-            RTLIL::IdString not_cell_name = RTLIL::escape_id("$logic_not$dut.sv:10$2");
+            // Create the $logic_not cell with name based on source location
+            std::string stmt_src = get_src_attribute(stmt);
+            std::string not_cell_name_str = "$logic_not$" + stmt_src + "$2";
+            RTLIL::IdString not_cell_name = RTLIL::escape_id(not_cell_name_str);
             RTLIL::Cell* not_cell = module->addCell(not_cell_name, ID($logic_not));
             not_cell->setParam(ID::A_SIGNED, 0);
             not_cell->setParam(ID::A_WIDTH, 1);
             not_cell->setParam(ID::Y_WIDTH, 1);
-            not_cell->attributes[ID::src] = RTLIL::Const("dut.sv:10.13-10.19");
+            add_src_attribute(not_cell->attributes, stmt);
             
-            // Create wire with name that matches Verilog output
-            RTLIL::IdString not_wire_name = RTLIL::escape_id("$logic_not$dut.sv:10$2_Y");
+            // Create wire with name based on source location
+            std::string not_wire_name_str = "$logic_not$" + stmt_src + "$2_Y";
+            RTLIL::IdString not_wire_name = RTLIL::escape_id(not_wire_name_str);
             RTLIL::Wire* not_output = module->addWire(not_wire_name, 1);
-            not_output->attributes[ID::src] = RTLIL::Const("dut.sv:10.13-10.19");
+            // For logic_not output wire, try to get source from the statement
+            add_src_attribute(not_output->attributes, stmt);
             
             if (name_map.count("rst_n")) {
                 not_cell->setPort(ID::A, RTLIL::SigSpec(name_map["rst_n"]));
@@ -154,12 +173,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // Create switch statement using the logic_not output
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
                 sw->signal = RTLIL::SigSpec(not_output);
-                sw->attributes[ID::src] = RTLIL::Const("dut.sv:10.9-14.12");
+                add_src_attribute(sw->attributes, stmt);
                 
                 // Case when !rst_n is true (reset active)
                 RTLIL::CaseRule* reset_case = new RTLIL::CaseRule();
                 reset_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
-                reset_case->attributes[ID::src] = RTLIL::Const("dut.sv:10.13-10.19");
+                add_src_attribute(reset_case->attributes, stmt);
                 
                 if (temp_wire) {
                     reset_case->actions.push_back(
@@ -170,7 +189,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
                 // Default case (normal operation) 
                 RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
-                normal_case->attributes[ID::src] = RTLIL::Const("dut.sv:12.13-12.17");
+                add_src_attribute(normal_case->attributes, stmt);
                 // Empty compare means default case
                 
                 if (temp_wire && name_map.count("d")) {

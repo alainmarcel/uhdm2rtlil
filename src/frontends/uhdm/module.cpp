@@ -189,47 +189,36 @@ int UhdmImporter::get_width(const any* uhdm_obj) {
 std::string UhdmImporter::get_src_attribute(const any* uhdm_obj) {
     if (!uhdm_obj) return "";
     
-    // Try to get file location information
-    std::string filename = "dut.sv";  // Default for our test case
-    
-    // UHDM objects should have VpiFile and VpiLineNo, but API may vary
-    // For now, create plausible source locations based on object type
-    int line = 1;
-    int col = 1;
-    int end_line = 1;
-    int end_col = 10;
-    
-    // Estimate source locations based on object type and patterns from Verilog output
-    int obj_type = uhdm_obj->VpiType();
-    switch (obj_type) {
-        case vpiModule:
-            line = 2; col = 1; end_line = 17; end_col = 10;
-            break;
-        case vpiPort:
-            // Estimate port locations based on name
-            if (!uhdm_obj->VpiName().empty()) {
-                std::string port_name = std::string(uhdm_obj->VpiName());
-                if (port_name == "clk") {
-                    line = 3; col = 18; end_line = 3; end_col = 21;
-                } else if (port_name == "rst_n") {
-                    line = 4; col = 18; end_line = 4; end_col = 23;
-                } else if (port_name == "d") {
-                    line = 5; col = 18; end_line = 5; end_col = 19;
-                } else if (port_name == "q") {
-                    line = 6; col = 18; end_line = 6; end_col = 19;
-                }
+    try {
+        // Get the file name
+        std::string filename;
+        if (!uhdm_obj->VpiFile().empty()) {
+            std::string full_path = std::string(uhdm_obj->VpiFile());
+            // Extract just the filename from the path
+            size_t last_slash = full_path.find_last_of("/\\");
+            if (last_slash != std::string::npos) {
+                filename = full_path.substr(last_slash + 1);
+            } else {
+                filename = full_path;
             }
-            break;
-        case vpiProcess:
-            line = 9; col = 5; end_line = 15; end_col = 8;
-            break;
-        default:
-            // Default location
-            break;
+        } else {
+            return "";  // No file info available
+        }
+        
+        // Get line and column information
+        int line = uhdm_obj->VpiLineNo();
+        int col = uhdm_obj->VpiColumnNo();
+        int end_line = uhdm_obj->VpiEndLineNo();
+        int end_col = uhdm_obj->VpiEndColumnNo();
+        
+        // Format the source attribute string
+        return filename + ":" + std::to_string(line) + "." + std::to_string(col) + 
+               "-" + std::to_string(end_line) + "." + std::to_string(end_col);
+               
+    } catch (...) {
+        // If UHDM API access fails, return empty string
+        return "";
     }
-    
-    return filename + ":" + std::to_string(line) + "." + std::to_string(col) + "-" + 
-           std::to_string(end_line) + "." + std::to_string(end_col);
 }
 
 // Add source attribute to RTLIL object
