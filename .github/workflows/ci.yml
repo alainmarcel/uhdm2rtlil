@@ -35,6 +35,7 @@ jobs:
           libreadline-dev \
           bison \
           flex \
+          libunwind-dev \
           libgoogle-perftools-dev
     
     - name: Build project
