@@ -155,37 +155,54 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     // Add source attributes (process type attributes will be set in specific import functions)
     add_src_attribute(yosys_proc->attributes, uhdm_process);
     
-    // For generic vpiAlways blocks, analyze sensitivity list to determine actual type
+    // For generic vpiAlways blocks, check if we can get the specific always type
     if (proc_type == vpiAlways) {
-        // Try to extract clocking information to classify process type
-        log("  Analyzing clocking for process type detection...\n");
-        UhdmClocking clocking(this, uhdm_process);
-        
-        // For now, use a simple heuristic: if we have clk and reset signals in the module,
-        // assume the first process is always_ff (sequential logic)
-        bool has_clk = name_map.find("clk") != name_map.end() || name_map.find("clock") != name_map.end();
-        bool has_reset = name_map.find("reset") != name_map.end() || name_map.find("rst") != name_map.end() || name_map.find("rst_n") != name_map.end();
-        
-        if (has_clk && has_reset) {
-            // Heuristic: The first process is likely the sequential logic (always_ff)
-            // and the remaining processes are combinational (always_comb)
-            static int process_count = 0;
-            process_count++;
-            
-            if (process_count == 1) {
-                proc_type = vpiAlwaysFF;
-                log("  Reclassified as always_ff (heuristic: first process with clk/reset)\n");
-            } else {
-                proc_type = vpiAlwaysComb;
-                log("  Reclassified as always_comb (heuristic: subsequent process)\n");
+        // Try to cast to always object to get the AlwaysType
+        if (auto always_obj = dynamic_cast<const always*>(uhdm_process)) {
+            // Use VpiAlwaysType() method to get the always type
+            try {
+                int always_type = always_obj->VpiAlwaysType();
+                log("  Found VpiAlwaysType: %d (vpiAlways=1, vpiAlwaysComb=2, vpiAlwaysFF=3)\n", always_type);
+                
+                switch (always_type) {
+                    case 2: // vpiAlwaysComb
+                        proc_type = vpiAlwaysComb;
+                        log("  Reclassified as always_comb using VpiAlwaysType\n");
+                        break;
+                    case 3: // vpiAlwaysFF  
+                        proc_type = vpiAlwaysFF;
+                        log("  Reclassified as always_ff using VpiAlwaysType\n");
+                        break;
+                    default:
+                        log("  Unknown VpiAlwaysType: %d, keeping as generic always\n", always_type);
+                        break;
+                }
+            } catch (...) {
+                log("  VpiAlwaysType method failed, using heuristic\n");
+                
+                // Fallback to heuristic approach
+                UhdmClocking clocking(this, uhdm_process);
+                bool has_clk = name_map.find("clk") != name_map.end() || name_map.find("clock") != name_map.end();
+                bool has_reset = name_map.find("reset") != name_map.end() || name_map.find("rst") != name_map.end() || name_map.find("rst_n") != name_map.end();
+                
+                if (has_clk && has_reset) {
+                    static int process_count = 0;
+                    process_count++;
+                    
+                    if (process_count == 1) {
+                        proc_type = vpiAlwaysFF;
+                        log("  Reclassified as always_ff (heuristic: first process with clk/reset)\n");
+                    } else {
+                        proc_type = vpiAlwaysComb;
+                        log("  Reclassified as always_comb (heuristic: subsequent process)\n");
+                    }
+                } else {
+                    proc_type = vpiAlwaysComb; 
+                    log("  Reclassified as always_comb (no clock/reset detected)\n");
+                }
             }
-        } else if (clocking.has_reset || clocking.clock_sig != State::Sx) {
-            proc_type = vpiAlwaysFF;
-            log("  Reclassified as always_ff (found clock=%s, reset=%d)\n", 
-                clocking.clock_sig == State::Sx ? "none" : "present", clocking.has_reset);
         } else {
-            proc_type = vpiAlwaysComb; 
-            log("  Reclassified as always_comb (no clock/reset detected)\n");
+            log("  Failed to cast to always object\n");
         }
     }
     
@@ -839,7 +856,125 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
 
 // Import case statement for comb context
 void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc) {
-    log_warning("Case statements in comb context not yet implemented\n");
+    if (mode_debug)
+        log("    Importing case statement for combinational context\n");
+    
+    // Get the case condition (the signal being switched on)
+    if (auto condition = uhdm_case->VpiCondition()) {
+        RTLIL::SigSpec case_sig = import_expression(condition);
+        
+        if (mode_debug)
+            log("    Case condition signal: %s\n", log_signal(case_sig));
+        
+        // Create a switch statement in the process
+        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+        sw->signal = case_sig;
+        add_src_attribute(sw->attributes, uhdm_case);
+        
+        // Import case items
+        if (auto case_items = uhdm_case->Case_items()) {
+            if (mode_debug)
+                log("    Found %d case items\n", (int)case_items->size());
+            
+            for (auto case_item : *case_items) {
+                if (mode_debug)
+                    log("    Processing case item\n");
+                
+                RTLIL::CaseRule* case_rule = new RTLIL::CaseRule;
+                add_src_attribute(case_rule->attributes, case_item);
+                
+                // Get case expressions (values to match)
+                if (auto exprs = case_item->VpiExprs()) {
+                    for (auto expr : *exprs) {
+                        // Cast to expr type using any_cast
+                        if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
+                            RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                            case_rule->compare.push_back(expr_sig);
+                            
+                            if (mode_debug)
+                                log("      Case value: %s\n", log_signal(expr_sig));
+                        }
+                    }
+                } else {
+                    // This is a default case (no expressions)
+                    if (mode_debug)
+                        log("      Default case\n");
+                }
+                
+                // Import the statement(s) for this case
+                if (auto stmt = case_item->Stmt()) {
+                    if (mode_debug)
+                        log("      Importing case statement\n");
+                    import_statement_comb(stmt, case_rule);
+                }
+                
+                sw->cases.push_back(case_rule);
+            }
+        } else {
+            // No case items found, create empty default case
+            if (mode_debug)
+                log("    No case items found, creating empty default case\n");
+            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+            add_src_attribute(default_case->attributes, uhdm_case);
+            sw->cases.push_back(default_case);
+        }
+        
+        // Add the switch to the process
+        proc->root_case.switches.push_back(sw);
+        
+        if (mode_debug)
+            log("    Case statement implementation complete\n");
+        
+    } else {
+        log_warning("Case statement has no condition\n");
+    }
+}
+
+// Import statement for case rule context
+void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* case_rule) {
+    if (!uhdm_stmt)
+        return;
+    
+    int stmt_type = uhdm_stmt->VpiType();
+    
+    switch (stmt_type) {
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            auto assign = static_cast<const assignment*>(uhdm_stmt);
+            
+            // Get LHS and RHS
+            if (auto lhs_expr = assign->Lhs()) {
+                if (auto rhs_expr = assign->Rhs()) {
+                    // Cast to proper expr type
+                    if (auto lhs = any_cast<const UHDM::expr*>(lhs_expr)) {
+                        if (auto rhs = any_cast<const UHDM::expr*>(rhs_expr)) {
+                            RTLIL::SigSpec lhs_sig = import_expression(lhs);
+                            RTLIL::SigSpec rhs_sig = import_expression(rhs);
+                            
+                            if (mode_debug)
+                                log("        Case assignment: %s = %s\n", log_signal(lhs_sig), log_signal(rhs_sig));
+                            
+                            case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case vpiBegin: {
+            auto begin = static_cast<const UHDM::begin*>(uhdm_stmt);
+            if (auto stmts = begin->Stmts()) {
+                for (auto stmt : *stmts) {
+                    import_statement_comb(stmt, case_rule);
+                }
+            }
+            break;
+        }
+        default:
+            if (mode_debug)
+                log("        Unsupported statement type in case: %d\n", stmt_type);
+            break;
+    }
 }
 
 
