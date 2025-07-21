@@ -79,6 +79,7 @@ struct UhdmImporter {
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     void import_instance(const UHDM::module_inst* uhdm_inst);
     void import_ref_module(const UHDM::ref_module* ref_mod);
+    void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
     
     // Signal and wire management

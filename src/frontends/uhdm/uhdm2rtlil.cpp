@@ -119,7 +119,203 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         log("UHDM: About to import module\n");
         import_module(uhdm_mod);
     }
+    
+    // Post-process to create parameterized modules
+    log("UHDM: Creating parameterized modules\n");
+    create_parameterized_modules();
+    
     log("UHDM: Finished import_design\n");
+}
+
+// Create parameterized modules based on cell parameters
+void UhdmImporter::create_parameterized_modules() {
+    std::map<std::string, std::set<int>> module_widths;
+    
+    // Collect all parameterized cell instances
+    for (auto &mod_pair : design->modules_) {
+        RTLIL::Module* mod = mod_pair.second;
+        for (auto &cell_pair : mod->cells_) {
+            RTLIL::Cell* cell = cell_pair.second;
+            
+            // Check if this cell has a WIDTH parameter
+            if (cell->hasParam(RTLIL::escape_id("WIDTH"))) {
+                std::string base_module = cell->type.str();
+                if (base_module[0] == '\\') base_module = base_module.substr(1);
+                
+                int width = cell->getParam(RTLIL::escape_id("WIDTH")).as_int();
+                module_widths[base_module].insert(width);
+                
+                if (mode_debug)
+                    log("    Found parameterized cell %s/%s: %s with WIDTH=%d\n", 
+                        mod->name.c_str(), cell->name.c_str(), base_module.c_str(), width);
+            }
+        }
+    }
+    
+    // Create parameterized modules for each base module and width combination
+    for (auto &entry : module_widths) {
+        std::string base_module_name = entry.first;
+        std::set<int> widths = entry.second;
+        
+        RTLIL::Module* base_mod = design->module(RTLIL::escape_id(base_module_name));
+        if (!base_mod) {
+            log_warning("Base module '%s' not found for parameterization\n", base_module_name.c_str());
+            continue;
+        }
+        
+        for (int width : widths) {
+            // Generate parameterized module name
+            std::string param_value = stringf("s32'%s", RTLIL::Const(width, 32).as_string().c_str());
+            std::string param_module_name = stringf("$paramod\\%s\\WIDTH=%s", base_module_name.c_str(), param_value.c_str());
+            
+            RTLIL::IdString param_mod_id = RTLIL::escape_id(param_module_name);
+            if (design->module(param_mod_id)) {
+                // Already exists
+                continue;
+            }
+            
+            if (mode_debug)
+                log("    Creating parameterized module: %s\n", param_module_name.c_str());
+            
+            RTLIL::Module* param_mod = design->addModule(param_mod_id);
+            
+            // Copy attributes from base module
+            param_mod->attributes = base_mod->attributes;
+            param_mod->avail_parameters = base_mod->avail_parameters;
+            param_mod->parameter_default_values = base_mod->parameter_default_values;
+            
+            // Update the WIDTH parameter
+            RTLIL::IdString width_param = RTLIL::escape_id("WIDTH");
+            param_mod->parameter_default_values[width_param] = RTLIL::Const(width, 32);
+            
+            // Wire mapping for connection updates
+            std::map<RTLIL::Wire*, RTLIL::Wire*> wire_map;
+            
+            // Copy and resize wires/ports
+            for (auto &wire_pair : base_mod->wires_) {
+                RTLIL::Wire* base_wire = wire_pair.second;
+                RTLIL::Wire* param_wire = param_mod->addWire(base_wire->name, width);
+                param_wire->attributes = base_wire->attributes;
+                param_wire->port_id = base_wire->port_id;
+                param_wire->port_input = base_wire->port_input;
+                param_wire->port_output = base_wire->port_output;
+                wire_map[base_wire] = param_wire;
+            }
+            
+            // Fixup ports
+            param_mod->fixup_ports();
+            
+            // Copy and update cells
+            for (auto &cell_pair : base_mod->cells_) {
+                RTLIL::Cell* base_cell = cell_pair.second;
+                RTLIL::Cell* param_cell = param_mod->addCell(base_cell->name, base_cell->type);
+                param_cell->attributes = base_cell->attributes;
+                param_cell->parameters = base_cell->parameters;
+                
+                // Update width-related parameters
+                for (auto &param_pair : param_cell->parameters) {
+                    if (param_pair.first.in("\\A_WIDTH", "\\B_WIDTH", "\\Y_WIDTH")) {
+                        param_pair.second = RTLIL::Const(width, 32);
+                    }
+                }
+                
+                // Copy connections with wire mapping and width expansion
+                for (auto &conn_pair : base_cell->connections_) {
+                    RTLIL::SigSpec mapped_sig;
+                    for (auto &chunk : conn_pair.second.chunks()) {
+                        if (chunk.wire) {
+                            if (wire_map.count(chunk.wire)) {
+                                RTLIL::Wire* mapped_wire = wire_map[chunk.wire];
+                                // If the original chunk was the full 1-bit wire and the new wire is wider,
+                                // expand to use the full new wire
+                                if (chunk.offset == 0 && chunk.width == chunk.wire->width && 
+                                    chunk.wire->width == 1 && mapped_wire->width > 1) {
+                                    mapped_sig.append(RTLIL::SigChunk(mapped_wire, 0, mapped_wire->width));
+                                } else {
+                                    mapped_sig.append(RTLIL::SigChunk(mapped_wire, chunk.offset, chunk.width));
+                                }
+                            } else {
+                                log_warning("Wire mapping not found for %s\n", chunk.wire->name.c_str());
+                                mapped_sig.append(chunk);
+                            }
+                        } else {
+                            mapped_sig.append(chunk);
+                        }
+                    }
+                    param_cell->setPort(conn_pair.first, mapped_sig);
+                }
+            }
+            
+            // Copy connections with wire mapping and width expansion
+            for (auto &conn : base_mod->connections_) {
+                RTLIL::SigSpec mapped_left, mapped_right;
+                
+                // Map left side with width expansion
+                for (auto &chunk : conn.first.chunks()) {
+                    if (chunk.wire && wire_map.count(chunk.wire)) {
+                        RTLIL::Wire* mapped_wire = wire_map[chunk.wire];
+                        // Expand 1-bit full wire connections to full width
+                        if (chunk.offset == 0 && chunk.width == chunk.wire->width && 
+                            chunk.wire->width == 1 && mapped_wire->width > 1) {
+                            mapped_left.append(RTLIL::SigChunk(mapped_wire, 0, mapped_wire->width));
+                        } else {
+                            mapped_left.append(RTLIL::SigChunk(mapped_wire, chunk.offset, chunk.width));
+                        }
+                    } else {
+                        mapped_left.append(chunk);
+                    }
+                }
+                
+                // Map right side with width expansion
+                for (auto &chunk : conn.second.chunks()) {
+                    if (chunk.wire && wire_map.count(chunk.wire)) {
+                        RTLIL::Wire* mapped_wire = wire_map[chunk.wire];
+                        // Expand 1-bit full wire connections to full width
+                        if (chunk.offset == 0 && chunk.width == chunk.wire->width && 
+                            chunk.wire->width == 1 && mapped_wire->width > 1) {
+                            mapped_right.append(RTLIL::SigChunk(mapped_wire, 0, mapped_wire->width));
+                        } else {
+                            mapped_right.append(RTLIL::SigChunk(mapped_wire, chunk.offset, chunk.width));
+                        }
+                    } else {
+                        mapped_right.append(chunk);
+                    }
+                }
+                
+                param_mod->connect(mapped_left, mapped_right);
+            }
+        }
+    }
+    
+    // Update cell types to reference parameterized modules
+    for (auto &mod_pair : design->modules_) {
+        RTLIL::Module* mod = mod_pair.second;
+        for (auto &cell_pair : mod->cells_) {
+            RTLIL::Cell* cell = cell_pair.second;
+            
+            // Check if this cell has a WIDTH parameter
+            if (cell->hasParam(RTLIL::escape_id("WIDTH"))) {
+                std::string base_module = cell->type.str();
+                if (base_module[0] == '\\') base_module = base_module.substr(1);
+                
+                int width = cell->getParam(RTLIL::escape_id("WIDTH")).as_int();
+                
+                // Generate parameterized module name
+                std::string param_value = stringf("s32'%s", RTLIL::Const(width, 32).as_string().c_str());
+                std::string param_module_name = stringf("$paramod\\%s\\WIDTH=%s", base_module.c_str(), param_value.c_str());
+                
+                // Update cell type to reference parameterized module
+                cell->type = RTLIL::escape_id(param_module_name);
+                
+                // Remove the WIDTH parameter from the cell (it's now part of the module name)
+                cell->parameters.erase(RTLIL::escape_id("WIDTH"));
+                
+                if (mode_debug)
+                    log("    Updated cell %s/%s to use module %s\n", 
+                        mod->name.c_str(), cell->name.c_str(), param_module_name.c_str());
+            }
+        }
+    }
 }
 
 // Import a single module

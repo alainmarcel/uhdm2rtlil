@@ -26,9 +26,25 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
     
     // Check if the ref_module has an actual_group that contains parameters
     if (ref_mod->Actual_group()) {
-        if (mode_debug)
+        if (mode_debug) {
             log("  Found actual_group, investigating for parameters\n");
-        // This would need further investigation into the UHDM structure
+            log("  Actual_group UhdmType: %d\n", ref_mod->Actual_group()->UhdmType());
+            log("  Actual_group VpiType: %d\n", ref_mod->Actual_group()->VpiType());
+        }
+        
+        // Try to cast to different UHDM types to find parameters
+        // actual_group might contain param_assign objects
+        try {
+            if (auto actual_group = ref_mod->Actual_group()) {
+                // Check if it's a param_assign or contains param_assigns
+                if (mode_debug) {
+                    log("  Investigating actual_group for param_assigns...\n");
+                }
+            }
+        } catch (...) {
+            if (mode_debug)
+                log("  Exception while investigating actual_group\n");
+        }
     }
     
     // For now, create a debug log to see what's happening
@@ -38,7 +54,11 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
             ref_mod->Actual_group() ? "yes" : "no");
     }
     
-    // For now, just use the base module name and let Yosys hierarchy pass handle parameterization
+    // Try to infer parameter values from connected signal widths
+    // Store port connections for later processing
+    std::vector<std::pair<std::string, const any*>> port_connections;
+    
+    // We'll generate the module name after inferring parameters
     std::string module_name = base_module_name;
     
     if (mode_debug)
@@ -46,7 +66,9 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
     
     RTLIL::Cell* cell = module->addCell(new_id(inst_name), RTLIL::escape_id(module_name));
     
-    // Import port connections from ref_module
+    // Import port connections from ref_module and infer parameter widths
+    int inferred_width = 1; // default
+    
     if (ref_mod->Ports()) {
         for (auto port : *ref_mod->Ports()) {
             std::string port_name = std::string(port->VpiName());
@@ -56,13 +78,23 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                 RTLIL::SigSpec actual_sig = import_expression(static_cast<const expr*>(port->High_conn()));
                 cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 
+                // Infer width from the first port
+                if (inferred_width == 1) {
+                    inferred_width = actual_sig.size();
+                }
+                
                 if (mode_debug)
-                    log("    Connected port %s\n", port_name.c_str());
+                    log("    Connected port %s (width=%d)\n", port_name.c_str(), actual_sig.size());
             }
         }
     }
     
-    // Don't set parameters here - let Yosys hierarchy pass handle it
+    // Store parameterization info for later processing 
+    if (inferred_width > 1) {
+        cell->setParam(RTLIL::escape_id("WIDTH"), RTLIL::Const(inferred_width, 32));
+        if (mode_debug)
+            log("    Set WIDTH parameter to %d (will create parameterized module later)\n", inferred_width);
+    }
 }
 
 YOSYS_NAMESPACE_END
