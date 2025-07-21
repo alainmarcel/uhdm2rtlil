@@ -12,7 +12,7 @@ module submodule #(
 
 endmodule
 
-module top (
+module simple_hierarchy (
     input  wire [7:0]  a1, b1, c1,
     input  wire [7:0]  a2, b2, c2,
     input  wire [15:0] a3, b3, c3,

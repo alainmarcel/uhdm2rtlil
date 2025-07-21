@@ -78,7 +78,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
 end
 attribute \top 1
 attribute \src "dut.sv:15.1-48.10"
-module \top
+module \simple_hierarchy
   attribute \src "dut.sv:16.24-16.26"
   wire width 8 input 1 \a1
   attribute \src "dut.sv:17.24-17.26"
