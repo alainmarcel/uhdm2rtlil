@@ -23,8 +23,8 @@ module \flipflop
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:9.15-9.46$2_Y
   end
-  attribute \src "dut.sv:9.5-15.8"
   attribute \always_ff 1
+  attribute \src "dut.sv:9.5-15.8"
   process $proc$dut.sv:9$1
     assign $0\q[0:0] \q
     attribute \src "dut.sv:9.15-9.46"

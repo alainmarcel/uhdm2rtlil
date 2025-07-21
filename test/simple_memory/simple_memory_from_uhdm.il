@@ -36,20 +36,19 @@ module \simple_memory
     connect \A \rst
     connect \Y $logic_not$dut.sv:19.12-19.26$2_Y
   end
-  cell $memrd $memrd$\memory$fallback
+  cell $paramod\$memrd\WIDTH=s32'00000000000000000000000000001000 $memrd$\memory$fallback
     parameter \ABITS 1
     parameter \CLK_ENABLE 0
     parameter \CLK_POLARITY 0
     parameter \MEMID "\\memory"
     parameter \TRANSPARENT 0
-    parameter \WIDTH 8
     connect \ADDR \addr
     connect \CLK 1'x
     connect \DATA $memrd$\memory$fallback_DATA
     connect \EN 1'x
   end
-  attribute \src "dut.sv:19.5-34.8"
   attribute \always_ff 1
+  attribute \src "dut.sv:19.5-34.8"
   process $proc$dut.sv:19$1
     assign $0\data_out[0:0] \data_out
     attribute \src "dut.sv:19.12-19.26"

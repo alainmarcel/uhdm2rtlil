@@ -34,8 +34,8 @@ module \simple_counter
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:8.15-8.46$2_Y
   end
-  attribute \src "dut.sv:8.5-14.8"
   attribute \always_ff 1
+  attribute \src "dut.sv:8.5-14.8"
   process $proc$dut.sv:8$1
     assign $0\count[7:0] \count
     attribute \src "dut.sv:8.15-8.46"

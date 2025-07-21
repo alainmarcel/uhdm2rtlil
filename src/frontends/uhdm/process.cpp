@@ -112,7 +112,8 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
     
     log("UHDM: === Starting import_process ===\n");
-    log("UHDM: Process type: %d\n", proc_type);
+    log("UHDM: Process type: %d (vpiAlways=%d, vpiAlwaysFF=%d, vpiAlwaysComb=%d)\n", 
+        proc_type, vpiAlways, vpiAlwaysFF, vpiAlwaysComb);
     log("UHDM: Current module has %d wires before process import\n", (int)module->wires().size());
     
     // List current wires for debugging
@@ -151,9 +152,42 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     RTLIL::IdString proc_name = RTLIL::escape_id(proc_name_str);
     RTLIL::Process* yosys_proc = module->addProcess(proc_name);
     
-    // Add source attributes 
-    yosys_proc->attributes[ID::always_ff] = RTLIL::Const(1);
+    // Add source attributes (process type attributes will be set in specific import functions)
     add_src_attribute(yosys_proc->attributes, uhdm_process);
+    
+    // For generic vpiAlways blocks, analyze sensitivity list to determine actual type
+    if (proc_type == vpiAlways) {
+        // Try to extract clocking information to classify process type
+        log("  Analyzing clocking for process type detection...\n");
+        UhdmClocking clocking(this, uhdm_process);
+        
+        // For now, use a simple heuristic: if we have clk and reset signals in the module,
+        // assume the first process is always_ff (sequential logic)
+        bool has_clk = name_map.find("clk") != name_map.end() || name_map.find("clock") != name_map.end();
+        bool has_reset = name_map.find("reset") != name_map.end() || name_map.find("rst") != name_map.end() || name_map.find("rst_n") != name_map.end();
+        
+        if (has_clk && has_reset) {
+            // Heuristic: The first process is likely the sequential logic (always_ff)
+            // and the remaining processes are combinational (always_comb)
+            static int process_count = 0;
+            process_count++;
+            
+            if (process_count == 1) {
+                proc_type = vpiAlwaysFF;
+                log("  Reclassified as always_ff (heuristic: first process with clk/reset)\n");
+            } else {
+                proc_type = vpiAlwaysComb;
+                log("  Reclassified as always_comb (heuristic: subsequent process)\n");
+            }
+        } else if (clocking.has_reset || clocking.clock_sig != State::Sx) {
+            proc_type = vpiAlwaysFF;
+            log("  Reclassified as always_ff (found clock=%s, reset=%d)\n", 
+                clocking.clock_sig == State::Sx ? "none" : "present", clocking.has_reset);
+        } else {
+            proc_type = vpiAlwaysComb; 
+            log("  Reclassified as always_comb (no clock/reset detected)\n");
+        }
+    }
     
     // Handle different process types
     switch (proc_type) {
@@ -185,6 +219,9 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
+    
+    // Set the always_ff attribute
+    yosys_proc->attributes[ID::always_ff] = RTLIL::Const(1);
     
     // Instead of hardcoding the logic, let's parse the actual UHDM structure
     if (auto stmt = uhdm_process->Stmt()) {
@@ -603,6 +640,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
         log("    Importing always_comb block\n");
+    
+    // Set the always_comb attribute
+    yosys_proc->attributes[ID::always_comb] = RTLIL::Const(1);
     
     // Combinational logic - no sync rules needed
     if (auto stmt = uhdm_process->Stmt()) {

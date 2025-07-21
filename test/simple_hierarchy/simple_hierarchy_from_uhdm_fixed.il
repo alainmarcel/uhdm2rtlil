@@ -4,6 +4,9 @@ attribute \src "dut.sv:1.1-13.10"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3004:And$2
+  wire width 8 $auto$rtlil.cc:3004:And$4
+  wire width 8 $auto$rtlil.cc:3004:And$6
+  wire width 8 $auto$rtlil.cc:3004:And$8
   attribute \src "dut.sv:4.29-4.30"
   wire width 8 input 1 \a
   attribute \src "dut.sv:5.29-5.30"
@@ -30,13 +33,38 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3004:And$2
     connect \B \c
-    connect \Y \out
+    connect \Y $auto$rtlil.cc:3004:And$4
   end
+  cell $and $auto$expression.cpp:164:import_operation$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$rtlil.cc:3004:And$6
+  end
+  cell $and $auto$expression.cpp:164:import_operation$7
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A $auto$rtlil.cc:3004:And$6
+    connect \B \c
+    connect \Y $auto$rtlil.cc:3004:And$8
+  end
+  connect \out $auto$rtlil.cc:3004:And$4
+  connect \out $auto$rtlil.cc:3004:And$8
 end
 attribute \src "dut.sv:1.1-13.10"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3004:And$2
+  wire width 16 $auto$rtlil.cc:3004:And$4
+  wire width 16 $auto$rtlil.cc:3004:And$6
+  wire width 16 $auto$rtlil.cc:3004:And$8
   attribute \src "dut.sv:4.29-4.30"
   wire width 16 input 1 \a
   attribute \src "dut.sv:5.29-5.30"
@@ -63,10 +91,31 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     parameter \Y_WIDTH 16
     connect \A $auto$rtlil.cc:3004:And$2
     connect \B \c
-    connect \Y \out
+    connect \Y $auto$rtlil.cc:3004:And$4
   end
+  cell $and $auto$expression.cpp:164:import_operation$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 16
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$rtlil.cc:3004:And$6
+  end
+  cell $and $auto$expression.cpp:164:import_operation$7
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 16
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A $auto$rtlil.cc:3004:And$6
+    connect \B \c
+    connect \Y $auto$rtlil.cc:3004:And$8
+  end
+  connect \out $auto$rtlil.cc:3004:And$4
+  connect \out $auto$rtlil.cc:3004:And$8
 end
-attribute \top 1
 attribute \src "dut.sv:15.1-48.10"
 module \simple_hierarchy
   attribute \src "dut.sv:16.24-16.26"
@@ -111,4 +160,62 @@ module \simple_hierarchy
     connect \c \c3
     connect \out \out3
   end
+end
+attribute \src "dut.sv:1.1-13.10"
+module \submodule
+  parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
+  wire $auto$rtlil.cc:3004:And$2
+  wire $auto$rtlil.cc:3004:And$4
+  wire $auto$rtlil.cc:3004:And$6
+  wire $auto$rtlil.cc:3004:And$8
+  attribute \src "dut.sv:4.29-4.30"
+  wire input 1 \a
+  attribute \src "dut.sv:5.29-5.30"
+  wire input 2 \b
+  attribute \src "dut.sv:6.29-6.30"
+  wire input 3 \c
+  attribute \src "dut.sv:7.29-7.32"
+  wire output 4 \out
+  cell $and $auto$expression.cpp:164:import_operation$1
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$rtlil.cc:3004:And$2
+  end
+  cell $and $auto$expression.cpp:164:import_operation$3
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3004:And$2
+    connect \B \c
+    connect \Y $auto$rtlil.cc:3004:And$4
+  end
+  cell $and $auto$expression.cpp:164:import_operation$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$rtlil.cc:3004:And$6
+  end
+  cell $and $auto$expression.cpp:164:import_operation$7
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3004:And$6
+    connect \B \c
+    connect \Y $auto$rtlil.cc:3004:And$8
+  end
+  connect \out $auto$rtlil.cc:3004:And$4
+  connect \out $auto$rtlil.cc:3004:And$8
 end

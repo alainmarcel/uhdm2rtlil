@@ -47,6 +47,7 @@ struct UhdmClocking {
     
     // Helper methods for analyzing sensitivity lists
     void analyze_sensitivity_list(UhdmImporter *importer, const UHDM::VectorOfany* sensitivity);
+    void analyze_statement_for_clocking(UhdmImporter *importer, const UHDM::any* stmt);
     
     // Helper methods for creating flip-flops with proper clocking
     RTLIL::Cell *addDff(IdString name, SigSpec sig_d, SigSpec sig_q, Const init_value = Const());

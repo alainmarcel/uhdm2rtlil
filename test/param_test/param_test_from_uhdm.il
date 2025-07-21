@@ -26,8 +26,8 @@ module \param_test
     connect \A \rst
     connect \Y $logic_not$dut.sv:13.12-13.26$2_Y
   end
-  attribute \src "dut.sv:13.5-18.8"
   attribute \always_ff 1
+  attribute \src "dut.sv:13.5-18.8"
   process $proc$dut.sv:13$1
     assign $0\data_out[0:0] \data_out
     attribute \src "dut.sv:13.12-13.26"

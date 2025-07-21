@@ -12,16 +12,79 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Constructor for UhdmClocking
-UhdmClocking::UhdmClocking(UhdmImporter *importer, const any* sens_list) {
+UhdmClocking::UhdmClocking(UhdmImporter *importer, const any* proc_obj) {
     module = importer->module;
     
-    // Extract clocking information from sensitivity list
-    if (auto stmt = dynamic_cast<const process_stmt*>(sens_list)) {
-        if (auto stmt_obj = stmt->Stmt()) {
-            // Sensitivity list extraction would need proper UHDM API
-            // For now, use default clocking
+    // Extract clocking information from process statement
+    if (auto proc = dynamic_cast<const process_stmt*>(proc_obj)) {
+        log("    UhdmClocking: Analyzing process for clocking information\n");
+        
+        // Check if this process has any clocking characteristics
+        // Look for clock/reset references in the statement structure
+        if (auto stmt = proc->Stmt()) {
+            analyze_statement_for_clocking(importer, stmt);
+        }
+        
+        log("    UhdmClocking: Found clock=%s, reset=%s\n", 
+            clock_sig == State::Sx ? "none" : "present",
+            has_reset ? "present" : "none");
+    }
+}
+
+// Analyze a statement recursively to find clocking signals
+void UhdmClocking::analyze_statement_for_clocking(UhdmImporter *importer, const any* stmt) {
+    if (!stmt) return;
+    
+    // Look for references to signals named "clk", "clock", "reset", "rst"
+    // This is a heuristic-based approach since UHDM sensitivity lists are complex
+    
+    // Check if this is a reference to a potential clock/reset signal
+    if (stmt->VpiType() == vpiRefObj) {
+        if (auto ref = dynamic_cast<const ref_obj*>(stmt)) {
+            std::string name = std::string(ref->VpiName());
+            
+            log("    UhdmClocking: Analyzing signal reference: %s\n", name.c_str());
+            
+            if (name.find("clk") != std::string::npos || name.find("clock") != std::string::npos) {
+                clock_sig = importer->get_sig_bit(ref);
+                log("    UhdmClocking: Found potential clock signal: %s\n", name.c_str());
+            } else if (name.find("rst") != std::string::npos || name.find("reset") != std::string::npos) {
+                has_reset = true;
+                reset_sig = importer->get_sig_bit(ref);
+                log("    UhdmClocking: Found potential reset signal: %s\n", name.c_str());
+            }
         }
     }
+    
+    // Recursively analyze child statements
+    // For if statements, analyze condition and branches
+    if (stmt->VpiType() == vpiIf) {
+        if (auto if_stmt = dynamic_cast<const if_else*>(stmt)) {
+            if (auto condition = if_stmt->VpiCondition()) {
+                analyze_statement_for_clocking(importer, condition);
+            }
+            if (auto then_stmt = if_stmt->VpiStmt()) {
+                analyze_statement_for_clocking(importer, then_stmt);
+            }
+            if (auto else_stmt = if_stmt->VpiElseStmt()) {
+                analyze_statement_for_clocking(importer, else_stmt);
+            }
+        }
+    }
+    
+    // For operations, analyze operands
+    if (stmt->VpiType() == vpiOperation) {
+        if (auto op = dynamic_cast<const operation*>(stmt)) {
+            if (auto operands = op->Operands()) {
+                for (auto operand : *operands) {
+                    analyze_statement_for_clocking(importer, operand);
+                }
+            }
+        }
+    }
+    
+    // For other statement types, we could add more specific analysis
+    // but this heuristic should catch most clock/reset signals
 }
 
 // Analyze sensitivity list to extract clock and reset
