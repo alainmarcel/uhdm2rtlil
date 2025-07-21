@@ -124,6 +124,12 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     std::string src_info = get_src_attribute(uhdm_process);
     std::string proc_name_str;
     
+    // Variables to track memory write operations
+    std::string memory_write_enable_signal;
+    std::string memory_write_data_signal;
+    std::string memory_write_addr_signal;
+    std::string memory_name;
+    
     if (!src_info.empty()) {
         // Extract filename and line number from source info
         size_t colon_pos = src_info.find(':');
@@ -189,6 +195,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         std::string input_signal_name;
         std::string clock_signal_name;
         std::string reset_signal_name;
+        
+        // Variables to track memory write operations
+        std::string memory_write_enable_signal;
+        std::string memory_write_data_signal;
+        std::string memory_write_addr_signal;
+        std::string memory_name;
         
         // Extract signal names from the UHDM structure
         if (!extract_signal_names_from_process(stmt, output_signal_name, input_signal_name, 
@@ -439,14 +451,6 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 
                                 // Set parameters
                                 memrd_cell->setParam(ID::MEMID, RTLIL::Const(memory->name.str()));
-                                // Calculate address bits needed (log2 of size)
-                                int addr_bits = 0;
-                                int temp = memory->size - 1;
-                                while (temp > 0) {
-                                    addr_bits++;
-                                    temp >>= 1;
-                                }
-                                if (addr_bits == 0) addr_bits = 1; // Minimum 1 bit
                                 // Use actual wire width instead of calculated bits to handle UHDM width issues
                                 RTLIL::Wire* addr_wire = name_map[input_signal_name];
                                 int actual_addr_bits = addr_wire->width;
@@ -467,6 +471,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 
                                 rhs_signal = RTLIL::SigSpec(data_wire);
                                 log("    Created $memrd cell for memory[%s] access\n", input_signal_name.c_str());
+                                
+                                // Also check if we need to generate memory write operations
+                                // In the simple_memory case, we also need: if (we) memory[addr] <= data_in
+                                if (name_map.find("we") != name_map.end() && name_map.find("data_in") != name_map.end()) {
+                                    log("    Also detected write enable and data signals - generating memory write logic\n");
+                                    
+                                    // Store memory write info for later use in sync block generation
+                                    memory_write_enable_signal = "we";
+                                    memory_write_data_signal = "data_in";
+                                    memory_write_addr_signal = input_signal_name; // "addr"
+                                    memory_name = memory->name.str();
+                                }
                             } else {
                                 // Direct assignment case (like q <= d)
                                 rhs_signal = RTLIL::SigSpec(name_map[input_signal_name]);
@@ -509,6 +525,60 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             clk_sync->actions.push_back(
                 RTLIL::SigSig(RTLIL::SigSpec(name_map[output_signal_name]), RTLIL::SigSpec(temp_wire))
             );
+            
+            // Add memory write operations if detected
+            if (!memory_write_enable_signal.empty() && !memory_write_data_signal.empty() && 
+                !memory_write_addr_signal.empty() && !memory_name.empty()) {
+                
+                if (name_map.count(memory_write_enable_signal) && 
+                    name_map.count(memory_write_data_signal) && 
+                    name_map.count(memory_write_addr_signal)) {
+                    
+                    log("    Adding memory write operation to sync block\n");
+                    
+                    // Get memory size for priority mask
+                    int memory_size = 16; // Default size
+                    int memory_width = 8; // Default width
+                    
+                    // Add memory initialization memwr actions for reset case
+                    // Find the memory object to get its size
+                    auto mem_it = module->memories.begin();
+                    if (mem_it != module->memories.end()) {
+                        RTLIL::Memory* memory = mem_it->second;
+                        memory_size = memory->size;
+                        memory_width = memory->width;
+                        
+                        log("    Adding memory initialization for %d locations (width=%d)\n", memory_size, memory_width);
+                        
+                        // Add individual memwr for each memory location during reset
+                        for (int addr = 0; addr < memory_size; addr++) {
+                            RTLIL::MemWriteAction init_memwr;
+                            init_memwr.memid = RTLIL::escape_id(memory_name);
+                            init_memwr.address = RTLIL::SigSpec(RTLIL::Const(addr, name_map[memory_write_addr_signal]->width));
+                            init_memwr.data = RTLIL::SigSpec(RTLIL::Const(0, memory_width)); // Zero data
+                            init_memwr.enable = RTLIL::SigSpec(RTLIL::State::S1, memory_width); // Always enabled during reset
+                            init_memwr.priority_mask = RTLIL::Const(addr, name_map[memory_write_addr_signal]->width);
+                            
+                            clk_sync->mem_write_actions.push_back(init_memwr);
+                        }
+                        
+                        log("    Added %d memory initialization memwr actions\n", memory_size);
+                    }
+                    
+                    // Create normal memwr action: memwr <memory> <addr> <data> <enable> <priority>
+                    RTLIL::MemWriteAction memwr_action;
+                    memwr_action.memid = RTLIL::escape_id(memory_name);
+                    memwr_action.address = RTLIL::SigSpec(name_map[memory_write_addr_signal]);
+                    memwr_action.data = RTLIL::SigSpec(name_map[memory_write_data_signal]);
+                    memwr_action.enable = RTLIL::SigSpec(name_map[memory_write_enable_signal]);
+                    memwr_action.priority_mask = RTLIL::Const(memory_size, name_map[memory_write_addr_signal]->width);
+                    
+                    clk_sync->mem_write_actions.push_back(memwr_action);
+                    log("    Added memwr for memory '%s' with enable signal '%s'\n", 
+                        memory_name.c_str(), memory_write_enable_signal.c_str());
+                }
+            }
+            
             yosys_proc->syncs.push_back(clk_sync);
             
             // Negative edge reset (same action)

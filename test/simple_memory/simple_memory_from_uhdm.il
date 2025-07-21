@@ -63,6 +63,23 @@ module \simple_memory
     end
     sync posedge \clk
       update \data_out $0\data_out[0:0]
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory 1'0 8'00000000 8'11111111 1'0
+      memwr \memory 1'1 8'00000000 8'11111111 1'1
+      memwr \memory \addr \data_in \we 1'0
     sync negedge \rst
       update \data_out $0\data_out[0:0]
   end
