@@ -61,6 +61,7 @@ set(UHDM_FRONTEND_SOURCES
     src/frontends/uhdm/clocking.cpp
     src/frontends/uhdm/memory.cpp
     src/frontends/uhdm/memory_analysis.cpp
+    src/frontends/uhdm/ref_module.cpp
 )
 
 # Build as a shared library (Yosys plugin)

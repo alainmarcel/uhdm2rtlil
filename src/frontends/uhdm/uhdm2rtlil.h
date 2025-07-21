@@ -78,6 +78,7 @@ struct UhdmImporter {
     void import_process(const UHDM::process_stmt* uhdm_process);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     void import_instance(const UHDM::module_inst* uhdm_inst);
+    void import_ref_module(const UHDM::ref_module* ref_mod);
     void import_parameter(const UHDM::any* uhdm_param);
     
     // Signal and wire management
@@ -144,6 +145,9 @@ struct UhdmImporter {
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);
+    
+    // Parameterized module creation
+    std::string create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module);
 };
 
 // Specialized importers for different aspects

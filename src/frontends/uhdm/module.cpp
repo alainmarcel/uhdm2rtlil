@@ -169,7 +169,46 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
 // Import a module instance
 void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     std::string inst_name = std::string(uhdm_inst->VpiName());
-    std::string module_name = std::string(uhdm_inst->VpiDefName());
+    std::string base_module_name = std::string(uhdm_inst->VpiDefName());
+    
+    // Strip work@ prefix if present
+    if (base_module_name.find("work@") == 0) {
+        base_module_name = base_module_name.substr(5);
+    }
+    
+    // Collect parameters to build parameterized module name
+    std::map<std::string, RTLIL::Const> params;
+    if (uhdm_inst->Param_assigns()) {
+        for (auto param : *uhdm_inst->Param_assigns()) {
+            std::string param_name = std::string(param->Lhs()->VpiName());
+            
+            if (auto rhs = param->Rhs()) {
+                RTLIL::SigSpec value = import_expression(static_cast<const expr*>(rhs));
+                
+                if (value.is_fully_const()) {
+                    params[param_name] = value.as_const();
+                }
+            }
+        }
+    }
+    
+    // Build parameterized module name like Yosys does
+    std::string module_name = base_module_name;
+    if (!params.empty()) {
+        module_name = "$paramod\\" + base_module_name;
+        for (const auto& [pname, pval] : params) {
+            module_name += "\\" + pname + "=";
+            // Format parameter value
+            if (pval.flags & RTLIL::CONST_FLAG_SIGNED) {
+                module_name += "s";
+            }
+            module_name += std::to_string(pval.size()) + "'";
+            // Add binary representation
+            for (int i = pval.size() - 1; i >= 0; i--) {
+                module_name += (pval[i] == RTLIL::State::S1) ? "1" : "0";
+            }
+        }
+    }
     
     if (mode_debug)
         log("  Importing instance: %s of %s\n", inst_name.c_str(), module_name.c_str());
@@ -181,25 +220,20 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         for (auto port : *uhdm_inst->Ports()) {
             std::string port_name = std::string(port->VpiName());
             
-            // Port connection handling would go here
-            // For now, skip port connections as port->Actual() method doesn't exist
+            // Get the actual connection (high_conn)
+            if (port->High_conn()) {
+                RTLIL::SigSpec actual_sig = import_expression(static_cast<const expr*>(port->High_conn()));
+                cell->setPort(RTLIL::escape_id(port_name), actual_sig);
+                
+                if (mode_debug)
+                    log("    Connected port %s\n", port_name.c_str());
+            }
         }
     }
     
-    // Import parameter assignments
-    if (uhdm_inst->Param_assigns()) {
-        for (auto param : *uhdm_inst->Param_assigns()) {
-            std::string param_name = std::string(param->Lhs()->VpiName());
-            
-            if (auto rhs = param->Rhs()) {
-                RTLIL::SigSpec value = import_expression(static_cast<const expr*>(rhs));
-                
-                // Convert to parameter value
-                if (value.is_fully_const()) {
-                    cell->setParam(RTLIL::escape_id(param_name), value.as_const());
-                }
-            }
-        }
+    // Set parameters on the cell
+    for (const auto& [pname, pval] : params) {
+        cell->setParam(RTLIL::escape_id(pname), pval);
     }
 }
 

@@ -245,10 +245,121 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
-    // Import module instances - TODO: implement when other modules are ready
+    // Import continuous assignments
+    if (uhdm_module->Cont_assigns()) {
+        log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
+        for (auto cont_assign : *uhdm_module->Cont_assigns()) {
+            log("UHDM: About to import continuous assignment\n");
+            try {
+                import_continuous_assign(cont_assign);
+                log("UHDM: Successfully imported continuous assignment\n");
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in continuous assignment import: %s\n", e.what());
+            } catch (...) {
+                log_error("UHDM: Unknown exception in continuous assignment import\n");
+            }
+        }
+    }
+    
+    // Import module instances via ref_modules
+    if (uhdm_module->Ref_modules()) {
+        log("UHDM: Found %d ref_modules to import\n", (int)uhdm_module->Ref_modules()->size());
+        for (auto ref_mod : *uhdm_module->Ref_modules()) {
+            log("UHDM: About to import ref_module instance\n");
+            try {
+                import_ref_module(ref_mod);
+                log("UHDM: Successfully imported module instance\n");
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in module instance import: %s\n", e.what());
+            } catch (...) {
+                log_error("UHDM: Unknown exception in module instance import\n");
+            }
+        }
+    }
     
     // Finalize module
     module->fixup_ports();
+}
+
+// Create a parameterized module based on parameter values in the base module
+std::string UhdmImporter::create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module) {
+    if (mode_debug)
+        log("  Creating parameterized module for base: %s\n", base_name.c_str());
+    
+    // Build parameter string like Yosys does
+    std::string param_string = "";
+    for (const auto& [param_name, param_value] : base_module->parameter_default_values) {
+        param_string += "\\" + param_name.str().substr(1) + "="; // Remove leading backslash
+        
+        // Format parameter value (signed 32-bit representation like Yosys)
+        if (param_value.flags & RTLIL::CONST_FLAG_SIGNED) {
+            param_string += "s";
+        }
+        param_string += "32'";
+        
+        // Convert to 32-bit binary representation
+        std::string binary_value = "";
+        int target_width = 32;
+        for (int i = target_width - 1; i >= 0; i--) {
+            if (i < param_value.size()) {
+                binary_value += (param_value[i] == RTLIL::State::S1) ? "1" : "0";
+            } else {
+                binary_value += "0"; // Pad with zeros
+            }
+        }
+        param_string += binary_value;
+    }
+    
+    // Generate parameterized module name
+    std::string param_module_name;
+    if (!param_string.empty()) {
+        param_module_name = "$paramod\\" + base_name + param_string;
+    } else {
+        param_module_name = base_name;
+    }
+    
+    // Create the parameterized module if it doesn't exist
+    RTLIL::IdString param_module_id = RTLIL::escape_id(param_module_name);
+    if (!design->module(param_module_id)) {
+        if (mode_debug)
+            log("    Creating new parameterized module: %s\n", param_module_name.c_str());
+        
+        // Clone the base module
+        RTLIL::Module* param_module = design->addModule(param_module_id);
+        
+        // Copy all the content from base module
+        for (auto& [wire_name, wire] : base_module->wires_) {
+            RTLIL::Wire* new_wire = param_module->addWire(wire_name, wire->width);
+            new_wire->port_input = wire->port_input;
+            new_wire->port_output = wire->port_output;
+            new_wire->port_id = wire->port_id;
+            new_wire->attributes = wire->attributes;
+        }
+        
+        // Copy cells
+        for (auto& [cell_name, cell] : base_module->cells_) {
+            RTLIL::Cell* new_cell = param_module->addCell(cell_name, cell->type);
+            new_cell->parameters = cell->parameters;
+            new_cell->attributes = cell->attributes;
+            for (auto& [port_name, port_sig] : cell->connections_) {
+                new_cell->setPort(port_name, port_sig);
+            }
+        }
+        
+        // Copy parameters with current values
+        for (const auto& [param_name, param_value] : base_module->parameter_default_values) {
+            param_module->avail_parameters(param_name);
+            param_module->parameter_default_values[param_name] = param_value;
+        }
+        
+        // Copy attributes
+        param_module->attributes = base_module->attributes;
+        param_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_name);
+        
+        param_module->fixup_ports();
+    }
+    
+    return param_module_name;
 }
 
 // Note: import_port, import_net, and import_continuous_assign are implemented in module.cpp
