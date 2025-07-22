@@ -19,6 +19,10 @@
 #include <uhdm/constant.h>
 #include <uhdm/operation.h>
 #include <uhdm/ref_obj.h>
+#include <uhdm/hier_path.h>
+#include <uhdm/interface_inst.h>
+#include <uhdm/interface_typespec.h>
+#include <uhdm/ref_typespec.h>
 #include <uhdm/ExprEval.h>
 
 #include "kernel/yosys.h"
@@ -83,6 +87,10 @@ struct UhdmImporter {
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
     
+    // Interface support
+    void import_interface(const UHDM::interface_inst* uhdm_interface);
+    void import_interface_instances(const UHDM::module_inst* uhdm_module);
+    
     // Signal and wire management
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);
     RTLIL::SigSpec get_sig_spec(const UHDM::any* uhdm_obj, int width = 1);
@@ -126,6 +134,7 @@ struct UhdmImporter {
     RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part);
     RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit);
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat);
+    RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier);
     
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);

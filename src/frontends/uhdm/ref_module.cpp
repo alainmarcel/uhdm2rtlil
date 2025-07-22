@@ -75,6 +75,26 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
             
             // Get the actual connection (high_conn)
             if (port->High_conn()) {
+                // First, check if the target port is an interface port by looking at the module definition
+                RTLIL::Module* target_module = design->module(RTLIL::escape_id(module_name));
+                if (target_module) {
+                    RTLIL::Wire* target_port = target_module->wire(RTLIL::escape_id(port_name));
+                    if (target_port && target_port->attributes.count(RTLIL::escape_id("interface_port"))) {
+                        if (mode_debug)
+                            log("    Skipping interface port connection: %s (marked as interface_port)\n", port_name.c_str());
+                        continue;
+                    }
+                }
+                
+                // Also check if this is an interface port connection by type
+                if (auto hier_path = dynamic_cast<const UHDM::hier_path*>(port->High_conn())) {
+                    // Interface ports don't get connected directly
+                    // The individual signals within the interface are connected separately
+                    if (mode_debug)
+                        log("    Skipping interface port connection: %s (hier_path type)\n", port_name.c_str());
+                    continue;
+                }
+                
                 RTLIL::SigSpec actual_sig = import_expression(static_cast<const expr*>(port->High_conn()));
                 cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 

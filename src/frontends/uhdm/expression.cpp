@@ -31,6 +31,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             return import_bit_select(static_cast<const bit_select*>(uhdm_expr));
         case vpiConcatOp:
             return import_concat(static_cast<const operation*>(uhdm_expr));
+        case 5000: // vpiHierPath
+            return import_hier_path(static_cast<const hier_path*>(uhdm_expr));
         default:
             log_warning("Unsupported expression type: %d\n", obj_type);
             return RTLIL::SigSpec();
@@ -306,6 +308,140 @@ RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat) {
     }
     
     return result;
+}
+
+// Import hierarchical path (e.g., bus.a, interface.signal)
+RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier) {
+    if (mode_debug)
+        log("    Importing hier_path\n");
+    
+    // Get the full hierarchical name
+    std::string path_name;
+    std::string_view name_view = uhdm_hier->VpiName();
+    if (!name_view.empty()) {
+        path_name = std::string(name_view);
+    }
+    std::string_view full_name_view = uhdm_hier->VpiFullName();
+    if (!full_name_view.empty()) {
+        path_name = std::string(full_name_view);
+    }
+    
+    if (mode_debug) {
+        log("    hier_path name: '%s'\n", path_name.c_str());
+    }
+    
+    // Try to resolve the hierarchical path to a wire
+    // First attempt: direct lookup in name map
+    if (name_map.count(path_name)) {
+        RTLIL::Wire* wire = name_map[path_name];
+        if (mode_debug)
+            log("    Found wire in name_map: %s\n", wire->name.c_str());
+        return RTLIL::SigSpec(wire);
+    }
+    
+    // Second attempt: resolve through path elements
+    if (auto path_elems = uhdm_hier->Path_elems()) {
+        if (mode_debug)
+            log("    Processing %d path elements\n", (int)path_elems->size());
+        
+        std::string resolved_name;
+        for (size_t i = 0; i < path_elems->size(); i++) {
+            auto elem = path_elems->at(i);
+            
+            // Try to cast to ref_obj to get the name
+            if (auto ref = any_cast<const ref_obj*>(elem)) {
+                std::string elem_name = std::string(ref->VpiName());
+                if (!resolved_name.empty()) {
+                    resolved_name += ".";
+                }
+                resolved_name += elem_name;
+                
+                if (mode_debug)
+                    log("    Path element %d: %s (resolved: %s)\n", (int)i, elem_name.c_str(), resolved_name.c_str());
+            }
+        }
+        
+        // Try the resolved name in the name map
+        if (!resolved_name.empty() && name_map.count(resolved_name)) {
+            RTLIL::Wire* wire = name_map[resolved_name];
+            if (mode_debug)
+                log("    Found resolved wire: %s\n", wire->name.c_str());
+            return RTLIL::SigSpec(wire);
+        }
+        
+        // If resolved name not found, use the full path name
+        if (!resolved_name.empty()) {
+            path_name = resolved_name;
+        }
+    }
+    
+    // Third attempt: check if this is an interface signal
+    // Interface signals have format like "bus1.a", "bus2.b", etc.
+    if (path_name.find('.') != std::string::npos) {
+        // Try to find the wire directly with the hierarchical name
+        std::string escaped_name = RTLIL::escape_id(path_name).substr(1);  // Remove leading backslash
+        
+        // Look for the wire in the current module
+        if (module) {
+            for (auto &wire_pair : module->wires_) {
+                std::string wire_name = wire_pair.first.str();
+                if (wire_name.length() > 1 && wire_name[0] == '\\') {
+                    wire_name = wire_name.substr(1);  // Remove escape character
+                }
+                
+                if (wire_name == path_name || wire_name == escaped_name) {
+                    if (mode_debug)
+                        log("    Found interface signal: %s -> %s\n", path_name.c_str(), wire_pair.second->name.c_str());
+                    return RTLIL::SigSpec(wire_pair.second);
+                }
+            }
+        }
+    }
+    
+    // Fourth attempt: create the wire if it doesn't exist
+    if (mode_debug) {
+        log("    Creating new wire for hier_path: %s\n", path_name.c_str());
+    }
+    
+    // Determine the width - try to get it from the UHDM object
+    int width = 1;  // Default width
+    if (get_width(uhdm_hier) > 0) {
+        width = get_width(uhdm_hier);
+    }
+    
+    // For interface signals (like bus1.a), try to get width from UHDM typespec
+    if (path_name.find('.') != std::string::npos) {
+        if (mode_debug) {
+            log("    Interface signal detected: %s\n", path_name.c_str());
+        }
+        
+        // Try to get width from the hier_path typespec if available
+        if (auto path_elems = uhdm_hier->Path_elems()) {
+            for (auto elem : *path_elems) {
+                if (elem) {
+                    int elem_width = get_width(elem);
+                    if (elem_width > 1) {
+                        width = elem_width;
+                        if (mode_debug) {
+                            log("    Found width from path element: %d\n", width);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If still no width found, default based on interface signals
+        if (width == 1) {
+            width = 8; // Default width for interface signals
+            if (mode_debug) {
+                log("    Using default interface signal width: %d\n", width);
+            }
+        }
+    }
+    
+    RTLIL::Wire* wire = create_wire(path_name, width);
+    return RTLIL::SigSpec(wire);
 }
 
 YOSYS_NAMESPACE_END

@@ -1,0 +1,4983 @@
+[INF:CM0023] Creating log file "/home/alain/uhdm2rtlil/test/simple_interface/slpp_all/surelog.log".
+[WRN:PA0205] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:2:1: No timescale set for "data_bus_if".
+[WRN:PA0205] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:20:1: No timescale set for "submodule".
+[WRN:PA0205] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:30:1: No timescale set for "simple_interface".
+[INF:CP0300] Compilation...
+[INF:CP0304] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:2:1: Compile interface "work@data_bus_if".
+[INF:CP0303] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:30:1: Compile module "work@simple_interface".
+[INF:CP0303] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:20:1: Compile module "work@submodule".
+[INF:CP0302] Compile class "work@mailbox".
+[INF:CP0302] Compile class "work@process".
+[INF:CP0302] Compile class "work@semaphore".
+[INF:EL0526] Design Elaboration...
+[NTE:EL0503] /home/alain/uhdm2rtlil/test/simple_interface/dut.sv:30:1: Top level module "work@simple_interface".
+[NTE:EL0508] Nb Top level modules: 1.
+[NTE:EL0509] Max instance depth: 2.
+[NTE:EL0510] Nb instances: 4.
+[NTE:EL0511] Nb leaf instances: 0.
+[INF:UH0706] Creating UHDM Model...
+[INF:UH0707] Elaborating UHDM...
+[INF:UH0708] Writing UHDM DB: /home/alain/uhdm2rtlil/test/simple_interface/slpp_all/surelog.uhdm ...
+[INF:UH0709] Writing UHDM Html Coverage: /home/alain/uhdm2rtlil/test/simple_interface/slpp_all/checker/surelog.chk.html ...
+[INF:UH0710] Loading UHDM DB: /home/alain/uhdm2rtlil/test/simple_interface/slpp_all/surelog.uhdm ...
+[INF:UH0711] Decompiling UHDM...
+====== UHDM =======
+design: (work@simple_interface)
+|vpiElaborated:1
+|vpiName:work@simple_interface
+|uhdmallPackages:
+\_package: builtin (builtin::)
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiName:builtin
+  |vpiFullName:builtin::
+  |vpiDefName:builtin
+|uhdmtopPackages:
+\_package: builtin (builtin::)
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiName:builtin
+  |vpiFullName:builtin::
+  |vpiDefName:builtin
+  |vpiTop:1
+  |vpiClassDefn:
+  \_class_defn: (builtin::any_sverilog_class)
+    |vpiParent:
+    \_package: builtin (builtin::)
+    |vpiName:any_sverilog_class
+    |vpiFullName:builtin::any_sverilog_class
+  |vpiClassDefn:
+  \_class_defn: (builtin::array)
+    |vpiParent:
+    \_package: builtin (builtin::)
+    |vpiName:array
+    |vpiFullName:builtin::array
+  |vpiClassDefn:
+  \_class_defn: (builtin::queue)
+    |vpiParent:
+    \_package: builtin (builtin::)
+    |vpiName:queue
+    |vpiFullName:builtin::queue
+  |vpiClassDefn:
+  \_class_defn: (builtin::string)
+    |vpiParent:
+    \_package: builtin (builtin::)
+    |vpiName:string
+    |vpiFullName:builtin::string
+  |vpiClassDefn:
+  \_class_defn: (builtin::system)
+    |vpiParent:
+    \_package: builtin (builtin::)
+    |vpiName:system
+    |vpiFullName:builtin::system
+|uhdmallClasses:
+\_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiName:work@mailbox
+  |vpiMethod:
+  \_function: (work@mailbox::new), line:3:5, endln:4:16
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:new
+    |vpiFullName:work@mailbox::new
+    |vpiMethod:1
+    |vpiReturn:
+    \_class_var: (work@mailbox::new), line:3:23, endln:3:28
+      |vpiParent:
+      \_function: (work@mailbox::new), line:3:5, endln:4:16
+      |vpiTypespec:
+      \_ref_typespec: (work@mailbox::new)
+        |vpiParent:
+        \_class_var: (work@mailbox::new), line:3:23, endln:3:28
+        |vpiFullName:work@mailbox::new
+        |vpiActual:
+        \_class_typespec: 
+      |vpiFullName:work@mailbox::new
+    |vpiIODecl:
+    \_io_decl: (bound), line:3:23, endln:3:28
+      |vpiParent:
+      \_function: (work@mailbox::new), line:3:5, endln:4:16
+      |vpiDirection:1
+      |vpiName:bound
+      |vpiExpr:
+      \_constant: , line:3:31, endln:3:32
+        |vpiDecompile:0
+        |vpiSize:64
+        |UINT:0
+        |vpiConstType:9
+      |vpiTypedef:
+      \_ref_typespec: (work@mailbox::new::bound)
+        |vpiParent:
+        \_io_decl: (bound), line:3:23, endln:3:28
+        |vpiFullName:work@mailbox::new::bound
+        |vpiActual:
+        \_int_typespec: , line:3:19, endln:3:22
+  |vpiMethod:
+  \_function: (work@mailbox::num), line:6:5, endln:7:16
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:num
+    |vpiFullName:work@mailbox::num
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_int_var: (work@mailbox::num), line:6:14, endln:6:17
+      |vpiParent:
+      \_function: (work@mailbox::num), line:6:5, endln:7:16
+      |vpiTypespec:
+      \_ref_typespec: (work@mailbox::num)
+        |vpiParent:
+        \_int_var: (work@mailbox::num), line:6:14, endln:6:17
+        |vpiFullName:work@mailbox::num
+        |vpiActual:
+        \_int_typespec: , line:6:14, endln:6:17
+      |vpiFullName:work@mailbox::num
+      |vpiSigned:1
+  |vpiMethod:
+  \_task: (work@mailbox::put), line:9:5, endln:10:12
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:put
+    |vpiFullName:work@mailbox::put
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiIODecl:
+    \_io_decl: (message), line:9:15, endln:9:22
+      |vpiParent:
+      \_task: (work@mailbox::put), line:9:5, endln:10:12
+      |vpiDirection:1
+      |vpiName:message
+  |vpiMethod:
+  \_function: (work@mailbox::try_put), line:12:5, endln:13:16
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:try_put
+    |vpiFullName:work@mailbox::try_put
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_logic_var: (work@mailbox::try_put)
+      |vpiParent:
+      \_function: (work@mailbox::try_put), line:12:5, endln:13:16
+      |vpiFullName:work@mailbox::try_put
+    |vpiIODecl:
+    \_io_decl: (message), line:12:23, endln:12:30
+      |vpiParent:
+      \_function: (work@mailbox::try_put), line:12:5, endln:13:16
+      |vpiDirection:1
+      |vpiName:message
+  |vpiMethod:
+  \_task: (work@mailbox::get), line:15:5, endln:16:12
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:get
+    |vpiFullName:work@mailbox::get
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiIODecl:
+    \_io_decl: (message), line:15:19, endln:15:26
+      |vpiParent:
+      \_task: (work@mailbox::get), line:15:5, endln:16:12
+      |vpiDirection:6
+      |vpiName:message
+  |vpiMethod:
+  \_function: (work@mailbox::try_get), line:18:5, endln:19:16
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:try_get
+    |vpiFullName:work@mailbox::try_get
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_int_var: (work@mailbox::try_get), line:18:14, endln:18:17
+      |vpiParent:
+      \_function: (work@mailbox::try_get), line:18:5, endln:19:16
+      |vpiTypespec:
+      \_ref_typespec: (work@mailbox::try_get)
+        |vpiParent:
+        \_int_var: (work@mailbox::try_get), line:18:14, endln:18:17
+        |vpiFullName:work@mailbox::try_get
+        |vpiActual:
+        \_int_typespec: , line:18:14, endln:18:17
+      |vpiFullName:work@mailbox::try_get
+      |vpiSigned:1
+    |vpiIODecl:
+    \_io_decl: (message), line:18:31, endln:18:38
+      |vpiParent:
+      \_function: (work@mailbox::try_get), line:18:5, endln:19:16
+      |vpiDirection:6
+      |vpiName:message
+  |vpiMethod:
+  \_task: (work@mailbox::peek), line:21:5, endln:22:12
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:peek
+    |vpiFullName:work@mailbox::peek
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiIODecl:
+    \_io_decl: (message), line:21:20, endln:21:27
+      |vpiParent:
+      \_task: (work@mailbox::peek), line:21:5, endln:22:12
+      |vpiDirection:6
+      |vpiName:message
+  |vpiMethod:
+  \_function: (work@mailbox::try_peek), line:24:5, endln:25:16
+    |vpiParent:
+    \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+    |vpiName:try_peek
+    |vpiFullName:work@mailbox::try_peek
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_int_var: (work@mailbox::try_peek), line:24:14, endln:24:17
+      |vpiParent:
+      \_function: (work@mailbox::try_peek), line:24:5, endln:25:16
+      |vpiTypespec:
+      \_ref_typespec: (work@mailbox::try_peek)
+        |vpiParent:
+        \_int_var: (work@mailbox::try_peek), line:24:14, endln:24:17
+        |vpiFullName:work@mailbox::try_peek
+        |vpiActual:
+        \_int_typespec: , line:24:14, endln:24:17
+      |vpiFullName:work@mailbox::try_peek
+      |vpiSigned:1
+    |vpiIODecl:
+    \_io_decl: (message), line:24:31, endln:24:38
+      |vpiParent:
+      \_function: (work@mailbox::try_peek), line:24:5, endln:25:16
+      |vpiDirection:6
+      |vpiName:message
+|uhdmallClasses:
+\_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiName:work@process
+  |vpiTypedef:
+  \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:state
+    |vpiEnumConst:
+    \_enum_const: (FINISHED), line:32:20, endln:32:28
+      |vpiParent:
+      \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiName:FINISHED
+      |INT:0
+      |vpiDecompile:0
+      |vpiSize:64
+    |vpiEnumConst:
+    \_enum_const: (RUNNING), line:32:30, endln:32:37
+      |vpiParent:
+      \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiName:RUNNING
+      |INT:1
+      |vpiDecompile:1
+      |vpiSize:64
+    |vpiEnumConst:
+    \_enum_const: (WAITING), line:32:39, endln:32:46
+      |vpiParent:
+      \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiName:WAITING
+      |INT:2
+      |vpiDecompile:2
+      |vpiSize:64
+    |vpiEnumConst:
+    \_enum_const: (SUSPENDED), line:32:48, endln:32:57
+      |vpiParent:
+      \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiName:SUSPENDED
+      |INT:3
+      |vpiDecompile:3
+      |vpiSize:64
+    |vpiEnumConst:
+    \_enum_const: (KILLED), line:32:59, endln:32:65
+      |vpiParent:
+      \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiName:KILLED
+      |INT:4
+      |vpiDecompile:4
+      |vpiSize:64
+  |vpiMethod:
+  \_function: (work@process::self), line:34:5, endln:34:11
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:self
+    |vpiFullName:work@process::self
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_class_var: (work@process::self), line:34:21, endln:34:28
+      |vpiParent:
+      \_function: (work@process::self), line:34:5, endln:34:11
+      |vpiTypespec:
+      \_ref_typespec: (work@process::self)
+        |vpiParent:
+        \_class_var: (work@process::self), line:34:21, endln:34:28
+        |vpiFullName:work@process::self
+        |vpiActual:
+        \_class_typespec: , line:34:21, endln:34:28
+      |vpiFullName:work@process::self
+  |vpiMethod:
+  \_function: (work@process::status), line:37:5, endln:38:16
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:status
+    |vpiFullName:work@process::status
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_enum_var: (work@process::status), line:37:14, endln:37:19
+      |vpiParent:
+      \_function: (work@process::status), line:37:5, endln:38:16
+      |vpiTypespec:
+      \_ref_typespec: (work@process::status)
+        |vpiParent:
+        \_enum_var: (work@process::status), line:37:14, endln:37:19
+        |vpiFullName:work@process::status
+        |vpiActual:
+        \_enum_typespec: (state), line:32:5, endln:32:74
+      |vpiFullName:work@process::status
+  |vpiMethod:
+  \_task: (work@process::kill), line:40:5, endln:41:12
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:kill
+    |vpiFullName:work@process::kill
+    |vpiMethod:1
+    |vpiVisibility:1
+  |vpiMethod:
+  \_task: (work@process::await), line:43:5, endln:44:12
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:await
+    |vpiFullName:work@process::await
+    |vpiMethod:1
+    |vpiVisibility:1
+  |vpiMethod:
+  \_task: (work@process::suspend), line:46:5, endln:47:12
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:suspend
+    |vpiFullName:work@process::suspend
+    |vpiMethod:1
+    |vpiVisibility:1
+  |vpiMethod:
+  \_task: (work@process::resume), line:49:5, endln:50:12
+    |vpiParent:
+    \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+    |vpiName:resume
+    |vpiFullName:work@process::resume
+    |vpiMethod:1
+    |vpiVisibility:1
+|uhdmallClasses:
+\_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiName:work@semaphore
+  |vpiMethod:
+  \_function: (work@semaphore::new), line:57:5, endln:58:16
+    |vpiParent:
+    \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+    |vpiName:new
+    |vpiFullName:work@semaphore::new
+    |vpiMethod:1
+    |vpiReturn:
+    \_class_var: (work@semaphore::new), line:57:22, endln:57:30
+      |vpiParent:
+      \_function: (work@semaphore::new), line:57:5, endln:58:16
+      |vpiTypespec:
+      \_ref_typespec: (work@semaphore::new)
+        |vpiParent:
+        \_class_var: (work@semaphore::new), line:57:22, endln:57:30
+        |vpiFullName:work@semaphore::new
+        |vpiActual:
+        \_class_typespec: 
+      |vpiFullName:work@semaphore::new
+    |vpiIODecl:
+    \_io_decl: (keyCount), line:57:22, endln:57:30
+      |vpiParent:
+      \_function: (work@semaphore::new), line:57:5, endln:58:16
+      |vpiDirection:1
+      |vpiName:keyCount
+      |vpiExpr:
+      \_constant: , line:57:33, endln:57:34
+        |vpiDecompile:0
+        |vpiSize:64
+        |UINT:0
+        |vpiConstType:9
+      |vpiTypedef:
+      \_ref_typespec: (work@semaphore::new::keyCount)
+        |vpiParent:
+        \_io_decl: (keyCount), line:57:22, endln:57:30
+        |vpiFullName:work@semaphore::new::keyCount
+        |vpiActual:
+        \_int_typespec: , line:57:18, endln:57:21
+  |vpiMethod:
+  \_task: (work@semaphore::put), line:60:5, endln:61:12
+    |vpiParent:
+    \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+    |vpiName:put
+    |vpiFullName:work@semaphore::put
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiIODecl:
+    \_io_decl: (keyCount), line:60:18, endln:60:26
+      |vpiParent:
+      \_task: (work@semaphore::put), line:60:5, endln:61:12
+      |vpiDirection:1
+      |vpiName:keyCount
+      |vpiExpr:
+      \_constant: , line:60:29, endln:60:30
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+      |vpiTypedef:
+      \_ref_typespec: (work@semaphore::put::keyCount)
+        |vpiParent:
+        \_io_decl: (keyCount), line:60:18, endln:60:26
+        |vpiFullName:work@semaphore::put::keyCount
+        |vpiActual:
+        \_int_typespec: , line:60:14, endln:60:17
+  |vpiMethod:
+  \_task: (work@semaphore::get), line:63:5, endln:64:12
+    |vpiParent:
+    \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+    |vpiName:get
+    |vpiFullName:work@semaphore::get
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiIODecl:
+    \_io_decl: (keyCount), line:63:18, endln:63:26
+      |vpiParent:
+      \_task: (work@semaphore::get), line:63:5, endln:64:12
+      |vpiDirection:1
+      |vpiName:keyCount
+      |vpiExpr:
+      \_constant: , line:63:29, endln:63:30
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+      |vpiTypedef:
+      \_ref_typespec: (work@semaphore::get::keyCount)
+        |vpiParent:
+        \_io_decl: (keyCount), line:63:18, endln:63:26
+        |vpiFullName:work@semaphore::get::keyCount
+        |vpiActual:
+        \_int_typespec: , line:63:14, endln:63:17
+  |vpiMethod:
+  \_function: (work@semaphore::try_get), line:66:5, endln:67:16
+    |vpiParent:
+    \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+    |vpiName:try_get
+    |vpiFullName:work@semaphore::try_get
+    |vpiMethod:1
+    |vpiVisibility:1
+    |vpiReturn:
+    \_int_var: (work@semaphore::try_get), line:66:14, endln:66:17
+      |vpiParent:
+      \_function: (work@semaphore::try_get), line:66:5, endln:67:16
+      |vpiTypespec:
+      \_ref_typespec: (work@semaphore::try_get)
+        |vpiParent:
+        \_int_var: (work@semaphore::try_get), line:66:14, endln:66:17
+        |vpiFullName:work@semaphore::try_get
+        |vpiActual:
+        \_int_typespec: , line:66:14, endln:66:17
+      |vpiFullName:work@semaphore::try_get
+      |vpiSigned:1
+    |vpiIODecl:
+    \_io_decl: (keyCount), line:66:30, endln:66:38
+      |vpiParent:
+      \_function: (work@semaphore::try_get), line:66:5, endln:67:16
+      |vpiDirection:1
+      |vpiName:keyCount
+      |vpiExpr:
+      \_constant: , line:66:41, endln:66:42
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+      |vpiTypedef:
+      \_ref_typespec: (work@semaphore::try_get::keyCount)
+        |vpiParent:
+        \_io_decl: (keyCount), line:66:30, endln:66:38
+        |vpiFullName:work@semaphore::try_get::keyCount
+        |vpiActual:
+        \_int_typespec: , line:66:26, endln:66:29
+|uhdmallInterfaces:
+\_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiFullName:work@data_bus_if
+  |vpiParameter:
+  \_parameter: (work@data_bus_if.WIDTH), line:3:15, endln:3:20
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |UINT:8
+    |vpiTypespec:
+    \_ref_typespec: (work@data_bus_if.WIDTH)
+      |vpiParent:
+      \_parameter: (work@data_bus_if.WIDTH), line:3:15, endln:3:20
+      |vpiFullName:work@data_bus_if.WIDTH
+      |vpiActual:
+      \_int_typespec: , line:3:5, endln:3:24
+    |vpiName:WIDTH
+    |vpiFullName:work@data_bus_if.WIDTH
+  |vpiParamAssign:
+  \_param_assign: , line:3:15, endln:3:24
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiRhs:
+    \_constant: , line:3:23, endln:3:24
+      |vpiParent:
+      \_param_assign: , line:3:15, endln:3:24
+      |vpiDecompile:8
+      |vpiSize:64
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@data_bus_if)
+        |vpiParent:
+        \_constant: , line:3:23, endln:3:24
+        |vpiFullName:work@data_bus_if
+        |vpiActual:
+        \_int_typespec: , line:3:5, endln:3:24
+      |vpiConstType:9
+    |vpiLhs:
+    \_parameter: (work@data_bus_if.WIDTH), line:3:15, endln:3:20
+  |vpiDefName:work@data_bus_if
+  |vpiNet:
+  \_logic_net: (work@data_bus_if.a), line:5:23, endln:5:24
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiTypespec:
+    \_ref_typespec: (work@data_bus_if.a)
+      |vpiParent:
+      \_logic_net: (work@data_bus_if.a), line:5:23, endln:5:24
+      |vpiFullName:work@data_bus_if.a
+      |vpiActual:
+      \_logic_typespec: , line:5:5, endln:5:22
+    |vpiName:a
+    |vpiFullName:work@data_bus_if.a
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@data_bus_if.b), line:6:23, endln:6:24
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiTypespec:
+    \_ref_typespec: (work@data_bus_if.b)
+      |vpiParent:
+      \_logic_net: (work@data_bus_if.b), line:6:23, endln:6:24
+      |vpiFullName:work@data_bus_if.b
+      |vpiActual:
+      \_logic_typespec: , line:6:5, endln:6:22
+    |vpiName:b
+    |vpiFullName:work@data_bus_if.b
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@data_bus_if.c), line:7:23, endln:7:24
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiTypespec:
+    \_ref_typespec: (work@data_bus_if.c)
+      |vpiParent:
+      \_logic_net: (work@data_bus_if.c), line:7:23, endln:7:24
+      |vpiFullName:work@data_bus_if.c
+      |vpiActual:
+      \_logic_typespec: , line:7:5, endln:7:22
+    |vpiName:c
+    |vpiFullName:work@data_bus_if.c
+    |vpiNetType:36
+  |vpiModport:
+  \_modport: (driver), line:15:13, endln:15:19
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiName:driver
+    |vpiIODecl:
+    \_io_decl: (a), line:16:16, endln:16:17
+      |vpiParent:
+      \_modport: (driver), line:15:13, endln:15:19
+      |vpiDirection:2
+      |vpiName:a
+    |vpiIODecl:
+    \_io_decl: (b), line:16:19, endln:16:20
+      |vpiParent:
+      \_modport: (driver), line:15:13, endln:15:19
+      |vpiDirection:2
+      |vpiName:b
+    |vpiIODecl:
+    \_io_decl: (c), line:16:22, endln:16:23
+      |vpiParent:
+      \_modport: (driver), line:15:13, endln:15:19
+      |vpiDirection:2
+      |vpiName:c
+  |vpiModport:
+  \_modport: (user), line:10:13, endln:10:17
+    |vpiParent:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+    |vpiName:user
+    |vpiIODecl:
+    \_io_decl: (a), line:11:15, endln:11:16
+      |vpiParent:
+      \_modport: (user), line:10:13, endln:10:17
+      |vpiDirection:1
+      |vpiName:a
+    |vpiIODecl:
+    \_io_decl: (b), line:11:18, endln:11:19
+      |vpiParent:
+      \_modport: (user), line:10:13, endln:10:17
+      |vpiDirection:1
+      |vpiName:b
+    |vpiIODecl:
+    \_io_decl: (c), line:11:21, endln:11:22
+      |vpiParent:
+      \_modport: (user), line:10:13, endln:10:17
+      |vpiDirection:1
+      |vpiName:c
+|uhdmallModules:
+\_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiFullName:work@simple_interface
+  |vpiDefName:work@simple_interface
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a1
+    |vpiFullName:work@simple_interface.a1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b1
+    |vpiFullName:work@simple_interface.b1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c1
+    |vpiFullName:work@simple_interface.c1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a2
+    |vpiFullName:work@simple_interface.a2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b2
+    |vpiFullName:work@simple_interface.b2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c2
+    |vpiFullName:work@simple_interface.c2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a3
+    |vpiFullName:work@simple_interface.a3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b3
+    |vpiFullName:work@simple_interface.b3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c3
+    |vpiFullName:work@simple_interface.c3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out1
+    |vpiFullName:work@simple_interface.out1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out2
+    |vpiFullName:work@simple_interface.out2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out3
+    |vpiFullName:work@simple_interface.out3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.bus1), line:59:14, endln:59:18
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus1
+    |vpiFullName:work@simple_interface.bus1
+    |vpiNetType:1
+  |vpiNet:
+  \_logic_net: (work@simple_interface.bus2), line:65:14, endln:65:18
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus2
+    |vpiFullName:work@simple_interface.bus2
+    |vpiNetType:1
+  |vpiNet:
+  \_logic_net: (work@simple_interface.bus3), line:71:14, endln:71:18
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus3
+    |vpiFullName:work@simple_interface.bus3
+    |vpiNetType:1
+  |vpiPort:
+  \_port: (a1), line:31:25, endln:31:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a1.a1), line:31:25, endln:31:27
+      |vpiParent:
+      \_port: (a1), line:31:25, endln:31:27
+      |vpiName:a1
+      |vpiFullName:work@simple_interface.a1.a1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a1)
+      |vpiParent:
+      \_port: (a1), line:31:25, endln:31:27
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+  |vpiPort:
+  \_port: (b1), line:31:29, endln:31:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b1.b1), line:31:29, endln:31:31
+      |vpiParent:
+      \_port: (b1), line:31:29, endln:31:31
+      |vpiName:b1
+      |vpiFullName:work@simple_interface.b1.b1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b1)
+      |vpiParent:
+      \_port: (b1), line:31:29, endln:31:31
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+  |vpiPort:
+  \_port: (c1), line:31:33, endln:31:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c1.c1), line:31:33, endln:31:35
+      |vpiParent:
+      \_port: (c1), line:31:33, endln:31:35
+      |vpiName:c1
+      |vpiFullName:work@simple_interface.c1.c1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c1)
+      |vpiParent:
+      \_port: (c1), line:31:33, endln:31:35
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+  |vpiPort:
+  \_port: (a2), line:32:25, endln:32:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a2.a2), line:32:25, endln:32:27
+      |vpiParent:
+      \_port: (a2), line:32:25, endln:32:27
+      |vpiName:a2
+      |vpiFullName:work@simple_interface.a2.a2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a2)
+      |vpiParent:
+      \_port: (a2), line:32:25, endln:32:27
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+  |vpiPort:
+  \_port: (b2), line:32:29, endln:32:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b2.b2), line:32:29, endln:32:31
+      |vpiParent:
+      \_port: (b2), line:32:29, endln:32:31
+      |vpiName:b2
+      |vpiFullName:work@simple_interface.b2.b2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b2)
+      |vpiParent:
+      \_port: (b2), line:32:29, endln:32:31
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+  |vpiPort:
+  \_port: (c2), line:32:33, endln:32:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c2.c2), line:32:33, endln:32:35
+      |vpiParent:
+      \_port: (c2), line:32:33, endln:32:35
+      |vpiName:c2
+      |vpiFullName:work@simple_interface.c2.c2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c2)
+      |vpiParent:
+      \_port: (c2), line:32:33, endln:32:35
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+  |vpiPort:
+  \_port: (a3), line:33:25, endln:33:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a3.a3), line:33:25, endln:33:27
+      |vpiParent:
+      \_port: (a3), line:33:25, endln:33:27
+      |vpiName:a3
+      |vpiFullName:work@simple_interface.a3.a3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a3)
+      |vpiParent:
+      \_port: (a3), line:33:25, endln:33:27
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+  |vpiPort:
+  \_port: (b3), line:33:29, endln:33:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b3.b3), line:33:29, endln:33:31
+      |vpiParent:
+      \_port: (b3), line:33:29, endln:33:31
+      |vpiName:b3
+      |vpiFullName:work@simple_interface.b3.b3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b3)
+      |vpiParent:
+      \_port: (b3), line:33:29, endln:33:31
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+  |vpiPort:
+  \_port: (c3), line:33:33, endln:33:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c3.c3), line:33:33, endln:33:35
+      |vpiParent:
+      \_port: (c3), line:33:33, endln:33:35
+      |vpiName:c3
+      |vpiFullName:work@simple_interface.c3.c3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c3)
+      |vpiParent:
+      \_port: (c3), line:33:33, endln:33:35
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+  |vpiPort:
+  \_port: (out1), line:34:25, endln:34:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out1
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out1.out1), line:34:25, endln:34:29
+      |vpiParent:
+      \_port: (out1), line:34:25, endln:34:29
+      |vpiName:out1
+      |vpiFullName:work@simple_interface.out1.out1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out1)
+      |vpiParent:
+      \_port: (out1), line:34:25, endln:34:29
+      |vpiFullName:work@simple_interface.out1
+      |vpiActual:
+      \_logic_typespec: , line:34:12, endln:34:23
+  |vpiPort:
+  \_port: (out2), line:35:25, endln:35:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out2
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out2.out2), line:35:25, endln:35:29
+      |vpiParent:
+      \_port: (out2), line:35:25, endln:35:29
+      |vpiName:out2
+      |vpiFullName:work@simple_interface.out2.out2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out2)
+      |vpiParent:
+      \_port: (out2), line:35:25, endln:35:29
+      |vpiFullName:work@simple_interface.out2
+      |vpiActual:
+      \_logic_typespec: , line:35:12, endln:35:23
+  |vpiPort:
+  \_port: (out3), line:36:25, endln:36:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out3
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out3.out3), line:36:25, endln:36:29
+      |vpiParent:
+      \_port: (out3), line:36:25, endln:36:29
+      |vpiName:out3
+      |vpiFullName:work@simple_interface.out3.out3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out3)
+      |vpiParent:
+      \_port: (out3), line:36:25, endln:36:29
+      |vpiFullName:work@simple_interface.out3
+      |vpiActual:
+      \_logic_typespec: , line:36:12, endln:36:24
+  |vpiContAssign:
+  \_cont_assign: , line:45:12, endln:45:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a1), line:45:21, endln:45:23
+      |vpiParent:
+      \_cont_assign: , line:45:12, endln:45:23
+      |vpiName:a1
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiLhs:
+    \_hier_path: (bus1.a), line:45:12, endln:45:18
+      |vpiParent:
+      \_cont_assign: , line:45:12, endln:45:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:45:17, endln:45:18
+        |vpiParent:
+        \_hier_path: (bus1.a), line:45:12, endln:45:18
+        |vpiName:bus1
+      |vpiActual:
+      \_ref_obj: (a), line:45:17, endln:45:18
+        |vpiParent:
+        \_hier_path: (bus1.a), line:45:12, endln:45:18
+        |vpiName:a
+      |vpiName:bus1.a
+  |vpiContAssign:
+  \_cont_assign: , line:46:12, endln:46:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b1), line:46:21, endln:46:23
+      |vpiParent:
+      \_cont_assign: , line:46:12, endln:46:23
+      |vpiName:b1
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiLhs:
+    \_hier_path: (bus1.b), line:46:12, endln:46:18
+      |vpiParent:
+      \_cont_assign: , line:46:12, endln:46:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:46:17, endln:46:18
+        |vpiParent:
+        \_hier_path: (bus1.b), line:46:12, endln:46:18
+        |vpiName:bus1
+      |vpiActual:
+      \_ref_obj: (b), line:46:17, endln:46:18
+        |vpiParent:
+        \_hier_path: (bus1.b), line:46:12, endln:46:18
+        |vpiName:b
+      |vpiName:bus1.b
+  |vpiContAssign:
+  \_cont_assign: , line:47:12, endln:47:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c1), line:47:21, endln:47:23
+      |vpiParent:
+      \_cont_assign: , line:47:12, endln:47:23
+      |vpiName:c1
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiLhs:
+    \_hier_path: (bus1.c), line:47:12, endln:47:18
+      |vpiParent:
+      \_cont_assign: , line:47:12, endln:47:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:47:17, endln:47:18
+        |vpiParent:
+        \_hier_path: (bus1.c), line:47:12, endln:47:18
+        |vpiName:bus1
+      |vpiActual:
+      \_ref_obj: (c), line:47:17, endln:47:18
+        |vpiParent:
+        \_hier_path: (bus1.c), line:47:12, endln:47:18
+        |vpiName:c
+      |vpiName:bus1.c
+  |vpiContAssign:
+  \_cont_assign: , line:49:12, endln:49:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a2), line:49:21, endln:49:23
+      |vpiParent:
+      \_cont_assign: , line:49:12, endln:49:23
+      |vpiName:a2
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiLhs:
+    \_hier_path: (bus2.a), line:49:12, endln:49:18
+      |vpiParent:
+      \_cont_assign: , line:49:12, endln:49:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:49:17, endln:49:18
+        |vpiParent:
+        \_hier_path: (bus2.a), line:49:12, endln:49:18
+        |vpiName:bus2
+      |vpiActual:
+      \_ref_obj: (a), line:49:17, endln:49:18
+        |vpiParent:
+        \_hier_path: (bus2.a), line:49:12, endln:49:18
+        |vpiName:a
+      |vpiName:bus2.a
+  |vpiContAssign:
+  \_cont_assign: , line:50:12, endln:50:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b2), line:50:21, endln:50:23
+      |vpiParent:
+      \_cont_assign: , line:50:12, endln:50:23
+      |vpiName:b2
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiLhs:
+    \_hier_path: (bus2.b), line:50:12, endln:50:18
+      |vpiParent:
+      \_cont_assign: , line:50:12, endln:50:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:50:17, endln:50:18
+        |vpiParent:
+        \_hier_path: (bus2.b), line:50:12, endln:50:18
+        |vpiName:bus2
+      |vpiActual:
+      \_ref_obj: (b), line:50:17, endln:50:18
+        |vpiParent:
+        \_hier_path: (bus2.b), line:50:12, endln:50:18
+        |vpiName:b
+      |vpiName:bus2.b
+  |vpiContAssign:
+  \_cont_assign: , line:51:12, endln:51:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c2), line:51:21, endln:51:23
+      |vpiParent:
+      \_cont_assign: , line:51:12, endln:51:23
+      |vpiName:c2
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiLhs:
+    \_hier_path: (bus2.c), line:51:12, endln:51:18
+      |vpiParent:
+      \_cont_assign: , line:51:12, endln:51:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:51:17, endln:51:18
+        |vpiParent:
+        \_hier_path: (bus2.c), line:51:12, endln:51:18
+        |vpiName:bus2
+      |vpiActual:
+      \_ref_obj: (c), line:51:17, endln:51:18
+        |vpiParent:
+        \_hier_path: (bus2.c), line:51:12, endln:51:18
+        |vpiName:c
+      |vpiName:bus2.c
+  |vpiContAssign:
+  \_cont_assign: , line:53:12, endln:53:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a3), line:53:21, endln:53:23
+      |vpiParent:
+      \_cont_assign: , line:53:12, endln:53:23
+      |vpiName:a3
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiLhs:
+    \_hier_path: (bus3.a), line:53:12, endln:53:18
+      |vpiParent:
+      \_cont_assign: , line:53:12, endln:53:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:53:17, endln:53:18
+        |vpiParent:
+        \_hier_path: (bus3.a), line:53:12, endln:53:18
+        |vpiName:bus3
+      |vpiActual:
+      \_ref_obj: (a), line:53:17, endln:53:18
+        |vpiParent:
+        \_hier_path: (bus3.a), line:53:12, endln:53:18
+        |vpiName:a
+      |vpiName:bus3.a
+  |vpiContAssign:
+  \_cont_assign: , line:54:12, endln:54:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b3), line:54:21, endln:54:23
+      |vpiParent:
+      \_cont_assign: , line:54:12, endln:54:23
+      |vpiName:b3
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiLhs:
+    \_hier_path: (bus3.b), line:54:12, endln:54:18
+      |vpiParent:
+      \_cont_assign: , line:54:12, endln:54:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:54:17, endln:54:18
+        |vpiParent:
+        \_hier_path: (bus3.b), line:54:12, endln:54:18
+        |vpiName:bus3
+      |vpiActual:
+      \_ref_obj: (b), line:54:17, endln:54:18
+        |vpiParent:
+        \_hier_path: (bus3.b), line:54:12, endln:54:18
+        |vpiName:b
+      |vpiName:bus3.b
+  |vpiContAssign:
+  \_cont_assign: , line:55:12, endln:55:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c3), line:55:21, endln:55:23
+      |vpiParent:
+      \_cont_assign: , line:55:12, endln:55:23
+      |vpiName:c3
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiLhs:
+    \_hier_path: (bus3.c), line:55:12, endln:55:18
+      |vpiParent:
+      \_cont_assign: , line:55:12, endln:55:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:55:17, endln:55:18
+        |vpiParent:
+        \_hier_path: (bus3.c), line:55:12, endln:55:18
+        |vpiName:bus3
+      |vpiActual:
+      \_ref_obj: (c), line:55:17, endln:55:18
+        |vpiParent:
+        \_hier_path: (bus3.c), line:55:12, endln:55:18
+        |vpiName:c
+      |vpiName:bus3.c
+  |vpiRefModule:
+  \_ref_module: work@data_bus_if (bus1), line:40:31, endln:40:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus1
+    |vpiDefName:work@data_bus_if
+    |vpiActual:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+  |vpiRefModule:
+  \_ref_module: work@data_bus_if (bus2), line:41:31, endln:41:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus2
+    |vpiDefName:work@data_bus_if
+    |vpiActual:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+  |vpiRefModule:
+  \_ref_module: work@data_bus_if (bus3), line:42:31, endln:42:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus3
+    |vpiDefName:work@data_bus_if
+    |vpiActual:
+    \_interface_inst: work@data_bus_if (work@data_bus_if), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:2:1, endln:18:13
+  |vpiRefModule:
+  \_ref_module: work@submodule (inst1), line:58:28, endln:58:33
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst1
+    |vpiDefName:work@submodule
+    |vpiActual:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiPort:
+    \_port: (bus), line:59:9, endln:59:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst1), line:58:28, endln:58:33
+      |vpiName:bus
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst1.bus.bus1), line:59:14, endln:59:18
+        |vpiParent:
+        \_port: (bus), line:59:9, endln:59:19
+        |vpiName:bus1
+        |vpiFullName:work@simple_interface.inst1.bus.bus1
+        |vpiActual:
+        \_logic_net: (work@simple_interface.bus1), line:59:14, endln:59:18
+    |vpiPort:
+    \_port: (out), line:60:9, endln:60:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst1), line:58:28, endln:58:33
+      |vpiName:out
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst1.out.out1), line:60:14, endln:60:18
+        |vpiParent:
+        \_port: (out), line:60:9, endln:60:19
+        |vpiName:out1
+        |vpiFullName:work@simple_interface.inst1.out.out1
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+  |vpiRefModule:
+  \_ref_module: work@submodule (inst2), line:64:28, endln:64:33
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst2
+    |vpiDefName:work@submodule
+    |vpiActual:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiPort:
+    \_port: (bus), line:65:9, endln:65:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst2), line:64:28, endln:64:33
+      |vpiName:bus
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst2.bus.bus2), line:65:14, endln:65:18
+        |vpiParent:
+        \_port: (bus), line:65:9, endln:65:19
+        |vpiName:bus2
+        |vpiFullName:work@simple_interface.inst2.bus.bus2
+        |vpiActual:
+        \_logic_net: (work@simple_interface.bus2), line:65:14, endln:65:18
+    |vpiPort:
+    \_port: (out), line:66:9, endln:66:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst2), line:64:28, endln:64:33
+      |vpiName:out
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst2.out.out2), line:66:14, endln:66:18
+        |vpiParent:
+        \_port: (out), line:66:9, endln:66:19
+        |vpiName:out2
+        |vpiFullName:work@simple_interface.inst2.out.out2
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+  |vpiRefModule:
+  \_ref_module: work@submodule (inst3), line:70:29, endln:70:34
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst3
+    |vpiDefName:work@submodule
+    |vpiActual:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiPort:
+    \_port: (bus), line:71:9, endln:71:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst3), line:70:29, endln:70:34
+      |vpiName:bus
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst3.bus.bus3), line:71:14, endln:71:18
+        |vpiParent:
+        \_port: (bus), line:71:9, endln:71:19
+        |vpiName:bus3
+        |vpiFullName:work@simple_interface.inst3.bus.bus3
+        |vpiActual:
+        \_logic_net: (work@simple_interface.bus3), line:71:14, endln:71:18
+    |vpiPort:
+    \_port: (out), line:72:9, endln:72:19
+      |vpiParent:
+      \_ref_module: work@submodule (inst3), line:70:29, endln:70:34
+      |vpiName:out
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.inst3.out.out3), line:72:14, endln:72:18
+        |vpiParent:
+        \_port: (out), line:72:9, endln:72:19
+        |vpiName:out3
+        |vpiFullName:work@simple_interface.inst3.out.out3
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+|uhdmallModules:
+\_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+  |vpiParent:
+  \_design: (work@simple_interface)
+  |vpiFullName:work@submodule
+  |vpiParameter:
+  \_parameter: (work@submodule.WIDTH), line:21:15, endln:21:20
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |UINT:8
+    |vpiTypespec:
+    \_ref_typespec: (work@submodule.WIDTH)
+      |vpiParent:
+      \_parameter: (work@submodule.WIDTH), line:21:15, endln:21:20
+      |vpiFullName:work@submodule.WIDTH
+      |vpiActual:
+      \_int_typespec: , line:21:5, endln:21:24
+    |vpiName:WIDTH
+    |vpiFullName:work@submodule.WIDTH
+  |vpiParamAssign:
+  \_param_assign: , line:21:15, endln:21:24
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiRhs:
+    \_constant: , line:21:23, endln:21:24
+      |vpiParent:
+      \_param_assign: , line:21:15, endln:21:24
+      |vpiDecompile:8
+      |vpiSize:64
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@submodule)
+        |vpiParent:
+        \_constant: , line:21:23, endln:21:24
+        |vpiFullName:work@submodule
+        |vpiActual:
+        \_int_typespec: , line:21:5, endln:21:24
+      |vpiConstType:9
+    |vpiLhs:
+    \_parameter: (work@submodule.WIDTH), line:21:15, endln:21:20
+  |vpiDefName:work@submodule
+  |vpiNet:
+  \_logic_net: (work@submodule.out), line:24:30, endln:24:33
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiName:out
+    |vpiFullName:work@submodule.out
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@submodule.bus), line:23:22, endln:23:25
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiName:bus
+    |vpiFullName:work@submodule.bus
+  |vpiPort:
+  \_port: (bus), line:23:22, endln:23:25
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiName:bus
+    |vpiDirection:3
+    |vpiLowConn:
+    \_ref_obj: (work@submodule.bus.bus), line:23:22, endln:23:25
+      |vpiParent:
+      \_port: (bus), line:23:22, endln:23:25
+      |vpiName:bus
+      |vpiFullName:work@submodule.bus.bus
+      |vpiActual:
+      \_modport: (user), line:10:13, endln:10:17
+    |vpiTypedef:
+    \_ref_typespec: (work@submodule.bus)
+      |vpiParent:
+      \_port: (bus), line:23:22, endln:23:25
+      |vpiFullName:work@submodule.bus
+      |vpiActual:
+      \_interface_typespec: (user), line:23:17, endln:23:21
+  |vpiPort:
+  \_port: (out), line:24:30, endln:24:33
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiName:out
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@submodule.out.out), line:24:30, endln:24:33
+      |vpiParent:
+      \_port: (out), line:24:30, endln:24:33
+      |vpiName:out
+      |vpiFullName:work@submodule.out.out
+      |vpiActual:
+      \_logic_net: (work@submodule.out), line:24:30, endln:24:33
+    |vpiTypedef:
+    \_ref_typespec: (work@submodule.out)
+      |vpiParent:
+      \_port: (out), line:24:30, endln:24:33
+      |vpiFullName:work@submodule.out
+      |vpiActual:
+      \_logic_typespec: , line:24:12, endln:24:29
+  |vpiContAssign:
+  \_cont_assign: , line:27:12, endln:27:39
+    |vpiParent:
+    \_module_inst: work@submodule (work@submodule), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:20:1, endln:28:10
+    |vpiRhs:
+    \_operation: , line:27:18, endln:27:39
+      |vpiParent:
+      \_cont_assign: , line:27:12, endln:27:39
+      |vpiOpType:28
+      |vpiOperand:
+      \_operation: , line:27:18, endln:27:31
+        |vpiParent:
+        \_operation: , line:27:18, endln:27:39
+        |vpiOpType:28
+        |vpiOperand:
+        \_hier_path: (bus.a), line:27:18, endln:27:23
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:31
+          |vpiActual:
+          \_ref_obj: (bus), line:27:18, endln:27:21
+            |vpiParent:
+            \_hier_path: (bus.a), line:27:18, endln:27:23
+            |vpiName:bus
+          |vpiActual:
+          \_ref_obj: (work@submodule.a), line:27:22, endln:27:23
+            |vpiParent:
+            \_hier_path: (bus.a), line:27:18, endln:27:23
+            |vpiName:a
+            |vpiFullName:work@submodule.a
+          |vpiName:bus.a
+        |vpiOperand:
+        \_hier_path: (bus.b), line:27:26, endln:27:31
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:31
+          |vpiActual:
+          \_ref_obj: (bus), line:27:26, endln:27:29
+            |vpiParent:
+            \_hier_path: (bus.b), line:27:26, endln:27:31
+            |vpiName:bus
+          |vpiActual:
+          \_ref_obj: (work@submodule.b), line:27:30, endln:27:31
+            |vpiParent:
+            \_hier_path: (bus.b), line:27:26, endln:27:31
+            |vpiName:b
+            |vpiFullName:work@submodule.b
+          |vpiName:bus.b
+      |vpiOperand:
+      \_hier_path: (bus.c), line:27:34, endln:27:39
+        |vpiParent:
+        \_operation: , line:27:18, endln:27:39
+        |vpiActual:
+        \_ref_obj: (bus), line:27:34, endln:27:37
+          |vpiParent:
+          \_hier_path: (bus.c), line:27:34, endln:27:39
+          |vpiName:bus
+        |vpiActual:
+        \_ref_obj: (work@submodule.c), line:27:38, endln:27:39
+          |vpiParent:
+          \_hier_path: (bus.c), line:27:34, endln:27:39
+          |vpiName:c
+          |vpiFullName:work@submodule.c
+        |vpiName:bus.c
+    |vpiLhs:
+    \_ref_obj: (work@submodule.out), line:27:12, endln:27:15
+      |vpiParent:
+      \_cont_assign: , line:27:12, endln:27:39
+      |vpiName:out
+      |vpiFullName:work@submodule.out
+      |vpiActual:
+      \_logic_net: (work@submodule.out), line:24:30, endln:24:33
+|uhdmtopModules:
+\_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiName:work@simple_interface
+  |vpiDefName:work@simple_interface
+  |vpiTop:1
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.a1)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiName:a1
+    |vpiFullName:work@simple_interface.a1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.b1)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiName:b1
+    |vpiFullName:work@simple_interface.b1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.c1)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiName:c1
+    |vpiFullName:work@simple_interface.c1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.a2)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiName:a2
+    |vpiFullName:work@simple_interface.a2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.b2)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiName:b2
+    |vpiFullName:work@simple_interface.b2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.c2)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiName:c2
+    |vpiFullName:work@simple_interface.c2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.a3)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiName:a3
+    |vpiFullName:work@simple_interface.a3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.b3)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiName:b3
+    |vpiFullName:work@simple_interface.b3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.c3)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiName:c3
+    |vpiFullName:work@simple_interface.c3
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.out1)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+      |vpiFullName:work@simple_interface.out1
+      |vpiActual:
+      \_logic_typespec: , line:34:12, endln:34:23
+    |vpiName:out1
+    |vpiFullName:work@simple_interface.out1
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.out2)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+      |vpiFullName:work@simple_interface.out2
+      |vpiActual:
+      \_logic_typespec: , line:35:12, endln:35:23
+    |vpiName:out2
+    |vpiFullName:work@simple_interface.out2
+    |vpiNetType:36
+  |vpiNet:
+  \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiTypespec:
+    \_ref_typespec: (work@simple_interface.out3)
+      |vpiParent:
+      \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+      |vpiFullName:work@simple_interface.out3
+      |vpiActual:
+      \_logic_typespec: , line:36:12, endln:36:24
+    |vpiName:out3
+    |vpiFullName:work@simple_interface.out3
+    |vpiNetType:36
+  |vpiTopModule:1
+  |vpiPort:
+  \_port: (a1), line:31:25, endln:31:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a1), line:31:25, endln:31:27
+      |vpiParent:
+      \_port: (a1), line:31:25, endln:31:27
+      |vpiName:a1
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a1)
+      |vpiParent:
+      \_port: (a1), line:31:25, endln:31:27
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (b1), line:31:29, endln:31:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b1), line:31:29, endln:31:31
+      |vpiParent:
+      \_port: (b1), line:31:29, endln:31:31
+      |vpiName:b1
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b1)
+      |vpiParent:
+      \_port: (b1), line:31:29, endln:31:31
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (c1), line:31:33, endln:31:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c1
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c1), line:31:33, endln:31:35
+      |vpiParent:
+      \_port: (c1), line:31:33, endln:31:35
+      |vpiName:c1
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c1)
+      |vpiParent:
+      \_port: (c1), line:31:33, endln:31:35
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_typespec: , line:31:12, endln:31:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (a2), line:32:25, endln:32:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a2), line:32:25, endln:32:27
+      |vpiParent:
+      \_port: (a2), line:32:25, endln:32:27
+      |vpiName:a2
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a2)
+      |vpiParent:
+      \_port: (a2), line:32:25, endln:32:27
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (b2), line:32:29, endln:32:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b2), line:32:29, endln:32:31
+      |vpiParent:
+      \_port: (b2), line:32:29, endln:32:31
+      |vpiName:b2
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b2)
+      |vpiParent:
+      \_port: (b2), line:32:29, endln:32:31
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (c2), line:32:33, endln:32:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c2
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c2), line:32:33, endln:32:35
+      |vpiParent:
+      \_port: (c2), line:32:33, endln:32:35
+      |vpiName:c2
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c2)
+      |vpiParent:
+      \_port: (c2), line:32:33, endln:32:35
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_typespec: , line:32:12, endln:32:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (a3), line:33:25, endln:33:27
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:a3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.a3), line:33:25, endln:33:27
+      |vpiParent:
+      \_port: (a3), line:33:25, endln:33:27
+      |vpiName:a3
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.a3)
+      |vpiParent:
+      \_port: (a3), line:33:25, endln:33:27
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (b3), line:33:29, endln:33:31
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:b3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.b3), line:33:29, endln:33:31
+      |vpiParent:
+      \_port: (b3), line:33:29, endln:33:31
+      |vpiName:b3
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.b3)
+      |vpiParent:
+      \_port: (b3), line:33:29, endln:33:31
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (c3), line:33:33, endln:33:35
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:c3
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.c3), line:33:33, endln:33:35
+      |vpiParent:
+      \_port: (c3), line:33:33, endln:33:35
+      |vpiName:c3
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.c3)
+      |vpiParent:
+      \_port: (c3), line:33:33, endln:33:35
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_typespec: , line:33:12, endln:33:24
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (out1), line:34:25, endln:34:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out1
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out1), line:34:25, endln:34:29
+      |vpiParent:
+      \_port: (out1), line:34:25, endln:34:29
+      |vpiName:out1
+      |vpiFullName:work@simple_interface.out1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out1)
+      |vpiParent:
+      \_port: (out1), line:34:25, endln:34:29
+      |vpiFullName:work@simple_interface.out1
+      |vpiActual:
+      \_logic_typespec: , line:34:12, endln:34:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (out2), line:35:25, endln:35:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out2
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out2), line:35:25, endln:35:29
+      |vpiParent:
+      \_port: (out2), line:35:25, endln:35:29
+      |vpiName:out2
+      |vpiFullName:work@simple_interface.out2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out2)
+      |vpiParent:
+      \_port: (out2), line:35:25, endln:35:29
+      |vpiFullName:work@simple_interface.out2
+      |vpiActual:
+      \_logic_typespec: , line:35:12, endln:35:23
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiPort:
+  \_port: (out3), line:36:25, endln:36:29
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:out3
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@simple_interface.out3), line:36:25, endln:36:29
+      |vpiParent:
+      \_port: (out3), line:36:25, endln:36:29
+      |vpiName:out3
+      |vpiFullName:work@simple_interface.out3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+    |vpiTypedef:
+    \_ref_typespec: (work@simple_interface.out3)
+      |vpiParent:
+      \_port: (out3), line:36:25, endln:36:29
+      |vpiFullName:work@simple_interface.out3
+      |vpiActual:
+      \_logic_typespec: , line:36:12, endln:36:24
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+  |vpiInterface:
+  \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus1
+    |vpiFullName:work@simple_interface.bus1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus1.a), line:5:23, endln:5:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus1.a)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus1.a), line:5:23, endln:5:24
+        |vpiFullName:work@simple_interface.bus1.a
+        |vpiActual:
+        \_logic_typespec: , line:5:5, endln:5:22
+      |vpiName:a
+      |vpiFullName:work@simple_interface.bus1.a
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus1.b), line:6:23, endln:6:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus1.b)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus1.b), line:6:23, endln:6:24
+        |vpiFullName:work@simple_interface.bus1.b
+        |vpiActual:
+        \_logic_typespec: , line:6:5, endln:6:22
+      |vpiName:b
+      |vpiFullName:work@simple_interface.bus1.b
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus1.c), line:7:23, endln:7:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus1.c)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus1.c), line:7:23, endln:7:24
+        |vpiFullName:work@simple_interface.bus1.c
+        |vpiActual:
+        \_logic_typespec: , line:7:5, endln:7:22
+      |vpiName:c
+      |vpiFullName:work@simple_interface.bus1.c
+      |vpiVisibility:1
+    |vpiParameter:
+    \_parameter: (work@simple_interface.bus1.WIDTH), line:3:15, endln:3:20
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus1.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.bus1.WIDTH), line:3:15, endln:3:20
+        |vpiFullName:work@simple_interface.bus1.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:3:5, endln:3:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.bus1.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:3:15, endln:3:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:3:23, endln:3:24
+        |vpiParent:
+        \_param_assign: , line:3:15, endln:3:24
+        |vpiDecompile:8
+        |vpiSize:32
+        |UINT:8
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.bus1)
+          |vpiParent:
+          \_constant: , line:3:23, endln:3:24
+          |vpiFullName:work@simple_interface.bus1
+          |vpiActual:
+          \_int_typespec: , line:3:5, endln:3:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.bus1.WIDTH), line:3:15, endln:3:20
+    |vpiDefName:work@data_bus_if
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:2
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiModport:
+    \_modport: (driver), line:15:13, endln:15:19
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiName:driver
+      |vpiIODecl:
+      \_io_decl: (a), line:16:16, endln:16:17
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:16:19, endln:16:20
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:16:22, endln:16:23
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+    |vpiModport:
+    \_modport: (user), line:10:13, endln:10:17
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiName:user
+      |vpiIODecl:
+      \_io_decl: (a), line:11:15, endln:11:16
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:11:18, endln:11:19
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:11:21, endln:11:22
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+  |vpiInterface:
+  \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus2
+    |vpiFullName:work@simple_interface.bus2
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus2.a), line:5:23, endln:5:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus2.a)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus2.a), line:5:23, endln:5:24
+        |vpiFullName:work@simple_interface.bus2.a
+        |vpiActual:
+        \_logic_typespec: , line:5:5, endln:5:22
+      |vpiName:a
+      |vpiFullName:work@simple_interface.bus2.a
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus2.b), line:6:23, endln:6:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus2.b)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus2.b), line:6:23, endln:6:24
+        |vpiFullName:work@simple_interface.bus2.b
+        |vpiActual:
+        \_logic_typespec: , line:6:5, endln:6:22
+      |vpiName:b
+      |vpiFullName:work@simple_interface.bus2.b
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus2.c), line:7:23, endln:7:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus2.c)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus2.c), line:7:23, endln:7:24
+        |vpiFullName:work@simple_interface.bus2.c
+        |vpiActual:
+        \_logic_typespec: , line:7:5, endln:7:22
+      |vpiName:c
+      |vpiFullName:work@simple_interface.bus2.c
+      |vpiVisibility:1
+    |vpiParameter:
+    \_parameter: (work@simple_interface.bus2.WIDTH), line:3:15, endln:3:20
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus2.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.bus2.WIDTH), line:3:15, endln:3:20
+        |vpiFullName:work@simple_interface.bus2.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:3:5, endln:3:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.bus2.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:3:15, endln:3:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:3:23, endln:3:24
+        |vpiParent:
+        \_param_assign: , line:3:15, endln:3:24
+        |vpiDecompile:8
+        |vpiSize:32
+        |UINT:8
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.bus2)
+          |vpiParent:
+          \_constant: , line:3:23, endln:3:24
+          |vpiFullName:work@simple_interface.bus2
+          |vpiActual:
+          \_int_typespec: , line:3:5, endln:3:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.bus2.WIDTH), line:3:15, endln:3:20
+    |vpiDefName:work@data_bus_if
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:2
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiModport:
+    \_modport: (driver), line:15:13, endln:15:19
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiName:driver
+      |vpiIODecl:
+      \_io_decl: (a), line:16:16, endln:16:17
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:16:19, endln:16:20
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:16:22, endln:16:23
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+    |vpiModport:
+    \_modport: (user), line:10:13, endln:10:17
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiName:user
+      |vpiIODecl:
+      \_io_decl: (a), line:11:15, endln:11:16
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:11:18, endln:11:19
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:11:21, endln:11:22
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+  |vpiInterface:
+  \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:bus3
+    |vpiFullName:work@simple_interface.bus3
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus3.a), line:5:23, endln:5:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus3.a)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus3.a), line:5:23, endln:5:24
+        |vpiFullName:work@simple_interface.bus3.a
+        |vpiActual:
+        \_logic_typespec: , line:5:5, endln:5:22
+      |vpiName:a
+      |vpiFullName:work@simple_interface.bus3.a
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus3.b), line:6:23, endln:6:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus3.b)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus3.b), line:6:23, endln:6:24
+        |vpiFullName:work@simple_interface.bus3.b
+        |vpiActual:
+        \_logic_typespec: , line:6:5, endln:6:22
+      |vpiName:b
+      |vpiFullName:work@simple_interface.bus3.b
+      |vpiVisibility:1
+    |vpiVariables:
+    \_logic_var: (work@simple_interface.bus3.c), line:7:23, endln:7:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus3.c)
+        |vpiParent:
+        \_logic_var: (work@simple_interface.bus3.c), line:7:23, endln:7:24
+        |vpiFullName:work@simple_interface.bus3.c
+        |vpiActual:
+        \_logic_typespec: , line:7:5, endln:7:22
+      |vpiName:c
+      |vpiFullName:work@simple_interface.bus3.c
+      |vpiVisibility:1
+    |vpiParameter:
+    \_parameter: (work@simple_interface.bus3.WIDTH), line:3:15, endln:3:20
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.bus3.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.bus3.WIDTH), line:3:15, endln:3:20
+        |vpiFullName:work@simple_interface.bus3.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:3:5, endln:3:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.bus3.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:3:15, endln:3:24
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:3:23, endln:3:24
+        |vpiParent:
+        \_param_assign: , line:3:15, endln:3:24
+        |vpiDecompile:16
+        |vpiSize:32
+        |UINT:16
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.bus3)
+          |vpiParent:
+          \_constant: , line:3:23, endln:3:24
+          |vpiFullName:work@simple_interface.bus3
+          |vpiActual:
+          \_int_typespec: , line:3:5, endln:3:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.bus3.WIDTH), line:3:15, endln:3:20
+    |vpiDefName:work@data_bus_if
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:2
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiModport:
+    \_modport: (driver), line:15:13, endln:15:19
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiName:driver
+      |vpiIODecl:
+      \_io_decl: (a), line:16:16, endln:16:17
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:16:19, endln:16:20
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:16:22, endln:16:23
+        |vpiParent:
+        \_modport: (driver), line:15:13, endln:15:19
+        |vpiDirection:2
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+    |vpiModport:
+    \_modport: (user), line:10:13, endln:10:17
+      |vpiParent:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiName:user
+      |vpiIODecl:
+      \_io_decl: (a), line:11:15, endln:11:16
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:a
+      |vpiIODecl:
+      \_io_decl: (b), line:11:18, endln:11:19
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:b
+      |vpiIODecl:
+      \_io_decl: (c), line:11:21, endln:11:22
+        |vpiParent:
+        \_modport: (user), line:10:13, endln:10:17
+        |vpiDirection:1
+        |vpiName:c
+      |vpiInterface:
+      \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+  |vpiModule:
+  \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst1
+    |vpiFullName:work@simple_interface.inst1
+    |vpiParameter:
+    \_parameter: (work@simple_interface.inst1.WIDTH), line:21:15, endln:21:20
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst1.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.inst1.WIDTH), line:21:15, endln:21:20
+        |vpiFullName:work@simple_interface.inst1.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:21:5, endln:21:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.inst1.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:21:15, endln:21:24
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:21:23, endln:21:24
+        |vpiParent:
+        \_param_assign: , line:21:15, endln:21:24
+        |vpiDecompile:8
+        |vpiSize:32
+        |UINT:8
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst1)
+          |vpiParent:
+          \_constant: , line:21:23, endln:21:24
+          |vpiFullName:work@simple_interface.inst1
+          |vpiActual:
+          \_int_typespec: , line:21:5, endln:21:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.inst1.WIDTH), line:21:15, endln:21:20
+    |vpiDefName:work@submodule
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:20
+    |vpiNet:
+    \_logic_net: (work@simple_interface.inst1.out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst1.out)
+        |vpiParent:
+        \_logic_net: (work@simple_interface.inst1.out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst1.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiName:out
+      |vpiFullName:work@simple_interface.inst1.out
+      |vpiNetType:36
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiPort:
+    \_port: (bus), line:23:22, endln:23:25
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiName:bus
+      |vpiDirection:3
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.bus1), line:59:14, endln:59:18
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiName:bus1
+        |vpiFullName:work@simple_interface.bus1
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst1.bus), line:59:10, endln:59:13
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst1.bus
+        |vpiActual:
+        \_modport: (user), line:10:13, endln:10:17
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst1.bus)
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst1.bus
+        |vpiActual:
+        \_interface_typespec: (user), line:23:17, endln:23:21
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+    |vpiPort:
+    \_port: (out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiName:out
+      |vpiDirection:2
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.out1), line:60:14, endln:60:18
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out1
+        |vpiFullName:work@simple_interface.out1
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst1.out), line:60:10, endln:60:13
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst1.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst1.out), line:24:30, endln:24:33
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst1.out)
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst1.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+    |vpiInterface:
+    \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiName:bus
+      |vpiFullName:work@simple_interface.inst1.bus
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst1.bus.a), line:5:23, endln:5:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst1.bus.a)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst1.bus.a), line:5:23, endln:5:24
+          |vpiFullName:work@simple_interface.inst1.bus.a
+          |vpiActual:
+          \_logic_typespec: , line:5:5, endln:5:22
+        |vpiName:a
+        |vpiFullName:work@simple_interface.inst1.bus.a
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst1.bus.b), line:6:23, endln:6:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst1.bus.b)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst1.bus.b), line:6:23, endln:6:24
+          |vpiFullName:work@simple_interface.inst1.bus.b
+          |vpiActual:
+          \_logic_typespec: , line:6:5, endln:6:22
+        |vpiName:b
+        |vpiFullName:work@simple_interface.inst1.bus.b
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst1.bus.c), line:7:23, endln:7:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst1.bus.c)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst1.bus.c), line:7:23, endln:7:24
+          |vpiFullName:work@simple_interface.inst1.bus.c
+          |vpiActual:
+          \_logic_typespec: , line:7:5, endln:7:22
+        |vpiName:c
+        |vpiFullName:work@simple_interface.inst1.bus.c
+        |vpiVisibility:1
+      |vpiDefName:work@data_bus_if
+      |vpiModport:
+      \_modport: (user), line:10:13, endln:10:17
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+        |vpiName:user
+        |vpiIODecl:
+        \_io_decl: (a), line:11:15, endln:11:16
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:a
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst1.bus.a), line:5:23, endln:5:24
+        |vpiIODecl:
+        \_io_decl: (b), line:11:18, endln:11:19
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:b
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst1.bus.b), line:6:23, endln:6:24
+        |vpiIODecl:
+        \_io_decl: (c), line:11:21, endln:11:22
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:c
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst1.bus.c), line:7:23, endln:7:24
+        |vpiInterface:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+    |vpiContAssign:
+    \_cont_assign: , line:27:12, endln:27:39
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:5, endln:61:7
+      |vpiRhs:
+      \_operation: , line:27:18, endln:27:39
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiOpType:28
+        |vpiOperand:
+        \_operation: , line:27:18, endln:27:31
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiOpType:28
+          |vpiOperand:
+          \_hier_path: (bus.a), line:27:18, endln:27:23
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:18, endln:27:21
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst1.a), line:27:22, endln:27:23
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:a
+              |vpiFullName:work@simple_interface.inst1.a
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst1.bus.a), line:5:23, endln:5:24
+            |vpiName:bus.a
+          |vpiOperand:
+          \_hier_path: (bus.b), line:27:26, endln:27:31
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:26, endln:27:29
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst1.b), line:27:30, endln:27:31
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:b
+              |vpiFullName:work@simple_interface.inst1.b
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst1.bus.b), line:6:23, endln:6:24
+            |vpiName:bus.b
+        |vpiOperand:
+        \_hier_path: (bus.c), line:27:34, endln:27:39
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiActual:
+          \_ref_obj: (bus), line:27:34, endln:27:37
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:bus
+            |vpiActual:
+            \_interface_inst: work@data_bus_if (work@simple_interface.inst1.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:58:0
+          |vpiActual:
+          \_ref_obj: (work@simple_interface.inst1.c), line:27:38, endln:27:39
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:c
+            |vpiFullName:work@simple_interface.inst1.c
+            |vpiActual:
+            \_logic_var: (work@simple_interface.inst1.bus.c), line:7:23, endln:7:24
+          |vpiName:bus.c
+      |vpiLhs:
+      \_ref_obj: (work@simple_interface.inst1.out), line:27:12, endln:27:15
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst1.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst1.out), line:24:30, endln:24:33
+  |vpiModule:
+  \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst2
+    |vpiFullName:work@simple_interface.inst2
+    |vpiParameter:
+    \_parameter: (work@simple_interface.inst2.WIDTH), line:21:15, endln:21:20
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst2.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.inst2.WIDTH), line:21:15, endln:21:20
+        |vpiFullName:work@simple_interface.inst2.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:21:5, endln:21:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.inst2.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:21:15, endln:21:24
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:21:23, endln:21:24
+        |vpiParent:
+        \_param_assign: , line:21:15, endln:21:24
+        |vpiDecompile:8
+        |vpiSize:32
+        |UINT:8
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst2)
+          |vpiParent:
+          \_constant: , line:21:23, endln:21:24
+          |vpiFullName:work@simple_interface.inst2
+          |vpiActual:
+          \_int_typespec: , line:21:5, endln:21:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.inst2.WIDTH), line:21:15, endln:21:20
+    |vpiDefName:work@submodule
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:20
+    |vpiNet:
+    \_logic_net: (work@simple_interface.inst2.out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst2.out)
+        |vpiParent:
+        \_logic_net: (work@simple_interface.inst2.out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst2.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiName:out
+      |vpiFullName:work@simple_interface.inst2.out
+      |vpiNetType:36
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiPort:
+    \_port: (bus), line:23:22, endln:23:25
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiName:bus
+      |vpiDirection:3
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.bus2), line:65:14, endln:65:18
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiName:bus2
+        |vpiFullName:work@simple_interface.bus2
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst2.bus), line:65:10, endln:65:13
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst2.bus
+        |vpiActual:
+        \_modport: (user), line:10:13, endln:10:17
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst2.bus)
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst2.bus
+        |vpiActual:
+        \_interface_typespec: (user), line:23:17, endln:23:21
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+    |vpiPort:
+    \_port: (out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiName:out
+      |vpiDirection:2
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.out2), line:66:14, endln:66:18
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out2
+        |vpiFullName:work@simple_interface.out2
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst2.out), line:66:10, endln:66:13
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst2.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst2.out), line:24:30, endln:24:33
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst2.out)
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst2.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+    |vpiInterface:
+    \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiName:bus
+      |vpiFullName:work@simple_interface.inst2.bus
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst2.bus.a), line:5:23, endln:5:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst2.bus.a)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst2.bus.a), line:5:23, endln:5:24
+          |vpiFullName:work@simple_interface.inst2.bus.a
+          |vpiActual:
+          \_logic_typespec: , line:5:5, endln:5:22
+        |vpiName:a
+        |vpiFullName:work@simple_interface.inst2.bus.a
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst2.bus.b), line:6:23, endln:6:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst2.bus.b)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst2.bus.b), line:6:23, endln:6:24
+          |vpiFullName:work@simple_interface.inst2.bus.b
+          |vpiActual:
+          \_logic_typespec: , line:6:5, endln:6:22
+        |vpiName:b
+        |vpiFullName:work@simple_interface.inst2.bus.b
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst2.bus.c), line:7:23, endln:7:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst2.bus.c)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst2.bus.c), line:7:23, endln:7:24
+          |vpiFullName:work@simple_interface.inst2.bus.c
+          |vpiActual:
+          \_logic_typespec: , line:7:5, endln:7:22
+        |vpiName:c
+        |vpiFullName:work@simple_interface.inst2.bus.c
+        |vpiVisibility:1
+      |vpiDefName:work@data_bus_if
+      |vpiModport:
+      \_modport: (user), line:10:13, endln:10:17
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+        |vpiName:user
+        |vpiIODecl:
+        \_io_decl: (a), line:11:15, endln:11:16
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:a
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst2.bus.a), line:5:23, endln:5:24
+        |vpiIODecl:
+        \_io_decl: (b), line:11:18, endln:11:19
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:b
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst2.bus.b), line:6:23, endln:6:24
+        |vpiIODecl:
+        \_io_decl: (c), line:11:21, endln:11:22
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:c
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst2.bus.c), line:7:23, endln:7:24
+        |vpiInterface:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+    |vpiContAssign:
+    \_cont_assign: , line:27:12, endln:27:39
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:5, endln:67:7
+      |vpiRhs:
+      \_operation: , line:27:18, endln:27:39
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiOpType:28
+        |vpiOperand:
+        \_operation: , line:27:18, endln:27:31
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiOpType:28
+          |vpiOperand:
+          \_hier_path: (bus.a), line:27:18, endln:27:23
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:18, endln:27:21
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst2.a), line:27:22, endln:27:23
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:a
+              |vpiFullName:work@simple_interface.inst2.a
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst2.bus.a), line:5:23, endln:5:24
+            |vpiName:bus.a
+          |vpiOperand:
+          \_hier_path: (bus.b), line:27:26, endln:27:31
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:26, endln:27:29
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst2.b), line:27:30, endln:27:31
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:b
+              |vpiFullName:work@simple_interface.inst2.b
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst2.bus.b), line:6:23, endln:6:24
+            |vpiName:bus.b
+        |vpiOperand:
+        \_hier_path: (bus.c), line:27:34, endln:27:39
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiActual:
+          \_ref_obj: (bus), line:27:34, endln:27:37
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:bus
+            |vpiActual:
+            \_interface_inst: work@data_bus_if (work@simple_interface.inst2.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:64:0
+          |vpiActual:
+          \_ref_obj: (work@simple_interface.inst2.c), line:27:38, endln:27:39
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:c
+            |vpiFullName:work@simple_interface.inst2.c
+            |vpiActual:
+            \_logic_var: (work@simple_interface.inst2.bus.c), line:7:23, endln:7:24
+          |vpiName:bus.c
+      |vpiLhs:
+      \_ref_obj: (work@simple_interface.inst2.out), line:27:12, endln:27:15
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst2.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst2.out), line:24:30, endln:24:33
+  |vpiModule:
+  \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiName:inst3
+    |vpiFullName:work@simple_interface.inst3
+    |vpiParameter:
+    \_parameter: (work@simple_interface.inst3.WIDTH), line:21:15, endln:21:20
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |UINT:8
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst3.WIDTH)
+        |vpiParent:
+        \_parameter: (work@simple_interface.inst3.WIDTH), line:21:15, endln:21:20
+        |vpiFullName:work@simple_interface.inst3.WIDTH
+        |vpiActual:
+        \_int_typespec: , line:21:5, endln:21:24
+      |vpiName:WIDTH
+      |vpiFullName:work@simple_interface.inst3.WIDTH
+    |vpiParamAssign:
+    \_param_assign: , line:21:15, endln:21:24
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiOverriden:1
+      |vpiRhs:
+      \_constant: , line:21:23, endln:21:24
+        |vpiParent:
+        \_param_assign: , line:21:15, endln:21:24
+        |vpiDecompile:16
+        |vpiSize:32
+        |UINT:16
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst3)
+          |vpiParent:
+          \_constant: , line:21:23, endln:21:24
+          |vpiFullName:work@simple_interface.inst3
+          |vpiActual:
+          \_int_typespec: , line:21:5, endln:21:24
+        |vpiConstType:9
+      |vpiLhs:
+      \_parameter: (work@simple_interface.inst3.WIDTH), line:21:15, endln:21:20
+    |vpiDefName:work@submodule
+    |vpiDefFile:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv
+    |vpiDefLineNo:20
+    |vpiNet:
+    \_logic_net: (work@simple_interface.inst3.out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiTypespec:
+      \_ref_typespec: (work@simple_interface.inst3.out)
+        |vpiParent:
+        \_logic_net: (work@simple_interface.inst3.out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst3.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiName:out
+      |vpiFullName:work@simple_interface.inst3.out
+      |vpiNetType:36
+    |vpiInstance:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiPort:
+    \_port: (bus), line:23:22, endln:23:25
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiName:bus
+      |vpiDirection:3
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.bus3), line:71:14, endln:71:18
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiName:bus3
+        |vpiFullName:work@simple_interface.bus3
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst3.bus), line:71:10, endln:71:13
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst3.bus
+        |vpiActual:
+        \_modport: (user), line:10:13, endln:10:17
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst3.bus)
+        |vpiParent:
+        \_port: (bus), line:23:22, endln:23:25
+        |vpiFullName:work@simple_interface.inst3.bus
+        |vpiActual:
+        \_interface_typespec: (user), line:23:17, endln:23:21
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+    |vpiPort:
+    \_port: (out), line:24:30, endln:24:33
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiName:out
+      |vpiDirection:2
+      |vpiHighConn:
+      \_ref_obj: (work@simple_interface.out3), line:72:14, endln:72:18
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out3
+        |vpiFullName:work@simple_interface.out3
+        |vpiActual:
+        \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+      |vpiLowConn:
+      \_ref_obj: (work@simple_interface.inst3.out), line:72:10, endln:72:13
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst3.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst3.out), line:24:30, endln:24:33
+      |vpiTypedef:
+      \_ref_typespec: (work@simple_interface.inst3.out)
+        |vpiParent:
+        \_port: (out), line:24:30, endln:24:33
+        |vpiFullName:work@simple_interface.inst3.out
+        |vpiActual:
+        \_logic_typespec: , line:24:12, endln:24:29
+      |vpiInstance:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+    |vpiInterface:
+    \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiName:bus
+      |vpiFullName:work@simple_interface.inst3.bus
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst3.bus.a), line:5:23, endln:5:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst3.bus.a)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst3.bus.a), line:5:23, endln:5:24
+          |vpiFullName:work@simple_interface.inst3.bus.a
+          |vpiActual:
+          \_logic_typespec: , line:5:5, endln:5:22
+        |vpiName:a
+        |vpiFullName:work@simple_interface.inst3.bus.a
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst3.bus.b), line:6:23, endln:6:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst3.bus.b)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst3.bus.b), line:6:23, endln:6:24
+          |vpiFullName:work@simple_interface.inst3.bus.b
+          |vpiActual:
+          \_logic_typespec: , line:6:5, endln:6:22
+        |vpiName:b
+        |vpiFullName:work@simple_interface.inst3.bus.b
+        |vpiVisibility:1
+      |vpiVariables:
+      \_logic_var: (work@simple_interface.inst3.bus.c), line:7:23, endln:7:24
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+        |vpiTypespec:
+        \_ref_typespec: (work@simple_interface.inst3.bus.c)
+          |vpiParent:
+          \_logic_var: (work@simple_interface.inst3.bus.c), line:7:23, endln:7:24
+          |vpiFullName:work@simple_interface.inst3.bus.c
+          |vpiActual:
+          \_logic_typespec: , line:7:5, endln:7:22
+        |vpiName:c
+        |vpiFullName:work@simple_interface.inst3.bus.c
+        |vpiVisibility:1
+      |vpiDefName:work@data_bus_if
+      |vpiModport:
+      \_modport: (user), line:10:13, endln:10:17
+        |vpiParent:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+        |vpiName:user
+        |vpiIODecl:
+        \_io_decl: (a), line:11:15, endln:11:16
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:a
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst3.bus.a), line:5:23, endln:5:24
+        |vpiIODecl:
+        \_io_decl: (b), line:11:18, endln:11:19
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:b
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst3.bus.b), line:6:23, endln:6:24
+        |vpiIODecl:
+        \_io_decl: (c), line:11:21, endln:11:22
+          |vpiParent:
+          \_modport: (user), line:10:13, endln:10:17
+          |vpiDirection:1
+          |vpiName:c
+          |vpiExpr:
+          \_logic_var: (work@simple_interface.inst3.bus.c), line:7:23, endln:7:24
+        |vpiInterface:
+        \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+    |vpiContAssign:
+    \_cont_assign: , line:27:12, endln:27:39
+      |vpiParent:
+      \_module_inst: work@submodule (work@simple_interface.inst3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:5, endln:73:7
+      |vpiRhs:
+      \_operation: , line:27:18, endln:27:39
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiOpType:28
+        |vpiOperand:
+        \_operation: , line:27:18, endln:27:31
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiOpType:28
+          |vpiOperand:
+          \_hier_path: (bus.a), line:27:18, endln:27:23
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:18, endln:27:21
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst3.a), line:27:22, endln:27:23
+              |vpiParent:
+              \_hier_path: (bus.a), line:27:18, endln:27:23
+              |vpiName:a
+              |vpiFullName:work@simple_interface.inst3.a
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst3.bus.a), line:5:23, endln:5:24
+            |vpiName:bus.a
+          |vpiOperand:
+          \_hier_path: (bus.b), line:27:26, endln:27:31
+            |vpiParent:
+            \_operation: , line:27:18, endln:27:31
+            |vpiActual:
+            \_ref_obj: (bus), line:27:26, endln:27:29
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:bus
+              |vpiActual:
+              \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+            |vpiActual:
+            \_ref_obj: (work@simple_interface.inst3.b), line:27:30, endln:27:31
+              |vpiParent:
+              \_hier_path: (bus.b), line:27:26, endln:27:31
+              |vpiName:b
+              |vpiFullName:work@simple_interface.inst3.b
+              |vpiActual:
+              \_logic_var: (work@simple_interface.inst3.bus.b), line:6:23, endln:6:24
+            |vpiName:bus.b
+        |vpiOperand:
+        \_hier_path: (bus.c), line:27:34, endln:27:39
+          |vpiParent:
+          \_operation: , line:27:18, endln:27:39
+          |vpiActual:
+          \_ref_obj: (bus), line:27:34, endln:27:37
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:bus
+            |vpiActual:
+            \_interface_inst: work@data_bus_if (work@simple_interface.inst3.bus), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:70:0
+          |vpiActual:
+          \_ref_obj: (work@simple_interface.inst3.c), line:27:38, endln:27:39
+            |vpiParent:
+            \_hier_path: (bus.c), line:27:34, endln:27:39
+            |vpiName:c
+            |vpiFullName:work@simple_interface.inst3.c
+            |vpiActual:
+            \_logic_var: (work@simple_interface.inst3.bus.c), line:7:23, endln:7:24
+          |vpiName:bus.c
+      |vpiLhs:
+      \_ref_obj: (work@simple_interface.inst3.out), line:27:12, endln:27:15
+        |vpiParent:
+        \_cont_assign: , line:27:12, endln:27:39
+        |vpiName:out
+        |vpiFullName:work@simple_interface.inst3.out
+        |vpiActual:
+        \_logic_net: (work@simple_interface.inst3.out), line:24:30, endln:24:33
+  |vpiContAssign:
+  \_cont_assign: , line:45:12, endln:45:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a1), line:45:21, endln:45:23
+      |vpiParent:
+      \_cont_assign: , line:45:12, endln:45:23
+      |vpiName:a1
+      |vpiFullName:work@simple_interface.a1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a1), line:31:25, endln:31:27
+    |vpiLhs:
+    \_hier_path: (bus1.a), line:45:12, endln:45:18
+      |vpiParent:
+      \_cont_assign: , line:45:12, endln:45:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:45:17, endln:45:18
+        |vpiParent:
+        \_hier_path: (bus1.a), line:45:12, endln:45:18
+        |vpiName:bus1
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiActual:
+      \_ref_obj: (a), line:45:17, endln:45:18
+        |vpiParent:
+        \_hier_path: (bus1.a), line:45:12, endln:45:18
+        |vpiName:a
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus1.a), line:5:23, endln:5:24
+      |vpiName:bus1.a
+  |vpiContAssign:
+  \_cont_assign: , line:46:12, endln:46:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b1), line:46:21, endln:46:23
+      |vpiParent:
+      \_cont_assign: , line:46:12, endln:46:23
+      |vpiName:b1
+      |vpiFullName:work@simple_interface.b1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b1), line:31:29, endln:31:31
+    |vpiLhs:
+    \_hier_path: (bus1.b), line:46:12, endln:46:18
+      |vpiParent:
+      \_cont_assign: , line:46:12, endln:46:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:46:17, endln:46:18
+        |vpiParent:
+        \_hier_path: (bus1.b), line:46:12, endln:46:18
+        |vpiName:bus1
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiActual:
+      \_ref_obj: (b), line:46:17, endln:46:18
+        |vpiParent:
+        \_hier_path: (bus1.b), line:46:12, endln:46:18
+        |vpiName:b
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus1.b), line:6:23, endln:6:24
+      |vpiName:bus1.b
+  |vpiContAssign:
+  \_cont_assign: , line:47:12, endln:47:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c1), line:47:21, endln:47:23
+      |vpiParent:
+      \_cont_assign: , line:47:12, endln:47:23
+      |vpiName:c1
+      |vpiFullName:work@simple_interface.c1
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+    |vpiLhs:
+    \_hier_path: (bus1.c), line:47:12, endln:47:18
+      |vpiParent:
+      \_cont_assign: , line:47:12, endln:47:23
+      |vpiActual:
+      \_ref_obj: (bus1), line:47:17, endln:47:18
+        |vpiParent:
+        \_hier_path: (bus1.c), line:47:12, endln:47:18
+        |vpiName:bus1
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus1), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:40:5, endln:40:38
+      |vpiActual:
+      \_ref_obj: (c), line:47:17, endln:47:18
+        |vpiParent:
+        \_hier_path: (bus1.c), line:47:12, endln:47:18
+        |vpiName:c
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus1.c), line:7:23, endln:7:24
+      |vpiName:bus1.c
+  |vpiContAssign:
+  \_cont_assign: , line:49:12, endln:49:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a2), line:49:21, endln:49:23
+      |vpiParent:
+      \_cont_assign: , line:49:12, endln:49:23
+      |vpiName:a2
+      |vpiFullName:work@simple_interface.a2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a2), line:32:25, endln:32:27
+    |vpiLhs:
+    \_hier_path: (bus2.a), line:49:12, endln:49:18
+      |vpiParent:
+      \_cont_assign: , line:49:12, endln:49:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:49:17, endln:49:18
+        |vpiParent:
+        \_hier_path: (bus2.a), line:49:12, endln:49:18
+        |vpiName:bus2
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiActual:
+      \_ref_obj: (a), line:49:17, endln:49:18
+        |vpiParent:
+        \_hier_path: (bus2.a), line:49:12, endln:49:18
+        |vpiName:a
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus2.a), line:5:23, endln:5:24
+      |vpiName:bus2.a
+  |vpiContAssign:
+  \_cont_assign: , line:50:12, endln:50:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b2), line:50:21, endln:50:23
+      |vpiParent:
+      \_cont_assign: , line:50:12, endln:50:23
+      |vpiName:b2
+      |vpiFullName:work@simple_interface.b2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b2), line:32:29, endln:32:31
+    |vpiLhs:
+    \_hier_path: (bus2.b), line:50:12, endln:50:18
+      |vpiParent:
+      \_cont_assign: , line:50:12, endln:50:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:50:17, endln:50:18
+        |vpiParent:
+        \_hier_path: (bus2.b), line:50:12, endln:50:18
+        |vpiName:bus2
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiActual:
+      \_ref_obj: (b), line:50:17, endln:50:18
+        |vpiParent:
+        \_hier_path: (bus2.b), line:50:12, endln:50:18
+        |vpiName:b
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus2.b), line:6:23, endln:6:24
+      |vpiName:bus2.b
+  |vpiContAssign:
+  \_cont_assign: , line:51:12, endln:51:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c2), line:51:21, endln:51:23
+      |vpiParent:
+      \_cont_assign: , line:51:12, endln:51:23
+      |vpiName:c2
+      |vpiFullName:work@simple_interface.c2
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+    |vpiLhs:
+    \_hier_path: (bus2.c), line:51:12, endln:51:18
+      |vpiParent:
+      \_cont_assign: , line:51:12, endln:51:23
+      |vpiActual:
+      \_ref_obj: (bus2), line:51:17, endln:51:18
+        |vpiParent:
+        \_hier_path: (bus2.c), line:51:12, endln:51:18
+        |vpiName:bus2
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus2), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:41:5, endln:41:38
+      |vpiActual:
+      \_ref_obj: (c), line:51:17, endln:51:18
+        |vpiParent:
+        \_hier_path: (bus2.c), line:51:12, endln:51:18
+        |vpiName:c
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus2.c), line:7:23, endln:7:24
+      |vpiName:bus2.c
+  |vpiContAssign:
+  \_cont_assign: , line:53:12, endln:53:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.a3), line:53:21, endln:53:23
+      |vpiParent:
+      \_cont_assign: , line:53:12, endln:53:23
+      |vpiName:a3
+      |vpiFullName:work@simple_interface.a3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.a3), line:33:25, endln:33:27
+    |vpiLhs:
+    \_hier_path: (bus3.a), line:53:12, endln:53:18
+      |vpiParent:
+      \_cont_assign: , line:53:12, endln:53:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:53:17, endln:53:18
+        |vpiParent:
+        \_hier_path: (bus3.a), line:53:12, endln:53:18
+        |vpiName:bus3
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiActual:
+      \_ref_obj: (a), line:53:17, endln:53:18
+        |vpiParent:
+        \_hier_path: (bus3.a), line:53:12, endln:53:18
+        |vpiName:a
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus3.a), line:5:23, endln:5:24
+      |vpiName:bus3.a
+  |vpiContAssign:
+  \_cont_assign: , line:54:12, endln:54:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.b3), line:54:21, endln:54:23
+      |vpiParent:
+      \_cont_assign: , line:54:12, endln:54:23
+      |vpiName:b3
+      |vpiFullName:work@simple_interface.b3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.b3), line:33:29, endln:33:31
+    |vpiLhs:
+    \_hier_path: (bus3.b), line:54:12, endln:54:18
+      |vpiParent:
+      \_cont_assign: , line:54:12, endln:54:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:54:17, endln:54:18
+        |vpiParent:
+        \_hier_path: (bus3.b), line:54:12, endln:54:18
+        |vpiName:bus3
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiActual:
+      \_ref_obj: (b), line:54:17, endln:54:18
+        |vpiParent:
+        \_hier_path: (bus3.b), line:54:12, endln:54:18
+        |vpiName:b
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus3.b), line:6:23, endln:6:24
+      |vpiName:bus3.b
+  |vpiContAssign:
+  \_cont_assign: , line:55:12, endln:55:23
+    |vpiParent:
+    \_module_inst: work@simple_interface (work@simple_interface), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:30:1, endln:75:10
+    |vpiRhs:
+    \_ref_obj: (work@simple_interface.c3), line:55:21, endln:55:23
+      |vpiParent:
+      \_cont_assign: , line:55:12, endln:55:23
+      |vpiName:c3
+      |vpiFullName:work@simple_interface.c3
+      |vpiActual:
+      \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+    |vpiLhs:
+    \_hier_path: (bus3.c), line:55:12, endln:55:18
+      |vpiParent:
+      \_cont_assign: , line:55:12, endln:55:23
+      |vpiActual:
+      \_ref_obj: (bus3), line:55:17, endln:55:18
+        |vpiParent:
+        \_hier_path: (bus3.c), line:55:12, endln:55:18
+        |vpiName:bus3
+        |vpiActual:
+        \_interface_inst: work@data_bus_if (work@simple_interface.bus3), file:/home/alain/uhdm2rtlil/test/simple_interface/dut.sv, line:42:5, endln:42:38
+      |vpiActual:
+      \_ref_obj: (c), line:55:17, endln:55:18
+        |vpiParent:
+        \_hier_path: (bus3.c), line:55:12, endln:55:18
+        |vpiName:c
+        |vpiActual:
+        \_logic_var: (work@simple_interface.bus3.c), line:7:23, endln:7:24
+      |vpiName:bus3.c
+\_weaklyReferenced:
+\_int_typespec: , line:3:5, endln:3:24
+\_int_typespec: , line:21:5, endln:21:24
+\_function: (work@mailbox::new), line:3:5, endln:4:16
+  |vpiParent:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiName:new
+  |vpiFullName:work@mailbox::new
+  |vpiMethod:1
+  |vpiReturn:
+  \_class_var: (work@mailbox::new), line:3:23, endln:3:28
+  |vpiIODecl:
+  \_io_decl: (bound), line:3:23, endln:3:28
+    |vpiParent:
+    \_function: (work@mailbox::new), line:3:5, endln:4:16
+    |vpiDirection:1
+    |vpiName:bound
+    |vpiExpr:
+    \_constant: , line:3:31, endln:3:32
+    |vpiTypedef:
+    \_ref_typespec: (work@mailbox::new::bound)
+      |vpiParent:
+      \_io_decl: (bound), line:3:23, endln:3:28
+      |vpiFullName:work@mailbox::new::bound
+      |vpiActual:
+      \_int_typespec: , line:3:19, endln:3:22
+\_class_typespec: 
+  |vpiClassDefn:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+\_int_typespec: , line:3:19, endln:3:22
+  |vpiSigned:1
+\_function: (work@mailbox::num), line:6:5, endln:7:16
+  |vpiParent:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiName:num
+  |vpiFullName:work@mailbox::num
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_int_var: (work@mailbox::num), line:6:14, endln:6:17
+\_int_typespec: , line:6:14, endln:6:17
+  |vpiSigned:1
+\_function: (work@mailbox::try_put), line:12:5, endln:13:16
+  |vpiParent:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiName:try_put
+  |vpiFullName:work@mailbox::try_put
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_logic_var: (work@mailbox::try_put)
+  |vpiIODecl:
+  \_io_decl: (message), line:12:23, endln:12:30
+    |vpiParent:
+    \_function: (work@mailbox::try_put), line:12:5, endln:13:16
+    |vpiDirection:1
+    |vpiName:message
+\_function: (work@mailbox::try_get), line:18:5, endln:19:16
+  |vpiParent:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiName:try_get
+  |vpiFullName:work@mailbox::try_get
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_int_var: (work@mailbox::try_get), line:18:14, endln:18:17
+  |vpiIODecl:
+  \_io_decl: (message), line:18:31, endln:18:38
+    |vpiParent:
+    \_function: (work@mailbox::try_get), line:18:5, endln:19:16
+    |vpiDirection:6
+    |vpiName:message
+\_int_typespec: , line:18:14, endln:18:17
+  |vpiSigned:1
+\_function: (work@mailbox::try_peek), line:24:5, endln:25:16
+  |vpiParent:
+  \_class_defn: (work@mailbox), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:1:3, endln:27:11
+  |vpiName:try_peek
+  |vpiFullName:work@mailbox::try_peek
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_int_var: (work@mailbox::try_peek), line:24:14, endln:24:17
+  |vpiIODecl:
+  \_io_decl: (message), line:24:31, endln:24:38
+    |vpiParent:
+    \_function: (work@mailbox::try_peek), line:24:5, endln:25:16
+    |vpiDirection:6
+    |vpiName:message
+\_int_typespec: , line:24:14, endln:24:17
+  |vpiSigned:1
+\_enum_typespec: (state), line:32:5, endln:32:74
+  |vpiParent:
+  \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+  |vpiName:state
+  |vpiEnumConst:
+  \_enum_const: (FINISHED), line:32:20, endln:32:28
+    |vpiParent:
+    \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiName:FINISHED
+    |INT:0
+    |vpiDecompile:0
+    |vpiSize:64
+  |vpiEnumConst:
+  \_enum_const: (RUNNING), line:32:30, endln:32:37
+    |vpiParent:
+    \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiName:RUNNING
+    |INT:1
+    |vpiDecompile:1
+    |vpiSize:64
+  |vpiEnumConst:
+  \_enum_const: (WAITING), line:32:39, endln:32:46
+    |vpiParent:
+    \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiName:WAITING
+    |INT:2
+    |vpiDecompile:2
+    |vpiSize:64
+  |vpiEnumConst:
+  \_enum_const: (SUSPENDED), line:32:48, endln:32:57
+    |vpiParent:
+    \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiName:SUSPENDED
+    |INT:3
+    |vpiDecompile:3
+    |vpiSize:64
+  |vpiEnumConst:
+  \_enum_const: (KILLED), line:32:59, endln:32:65
+    |vpiParent:
+    \_enum_typespec: (state), line:32:5, endln:32:74
+    |vpiName:KILLED
+    |INT:4
+    |vpiDecompile:4
+    |vpiSize:64
+\_function: (work@process::self), line:34:5, endln:34:11
+  |vpiParent:
+  \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+  |vpiName:self
+  |vpiFullName:work@process::self
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_class_var: (work@process::self), line:34:21, endln:34:28
+\_class_typespec: , line:34:21, endln:34:28
+  |vpiClassDefn:
+  \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+\_function: (work@process::status), line:37:5, endln:38:16
+  |vpiParent:
+  \_class_defn: (work@process), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:30:3, endln:52:11
+  |vpiName:status
+  |vpiFullName:work@process::status
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_enum_var: (work@process::status), line:37:14, endln:37:19
+\_function: (work@semaphore::new), line:57:5, endln:58:16
+  |vpiParent:
+  \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+  |vpiName:new
+  |vpiFullName:work@semaphore::new
+  |vpiMethod:1
+  |vpiReturn:
+  \_class_var: (work@semaphore::new), line:57:22, endln:57:30
+  |vpiIODecl:
+  \_io_decl: (keyCount), line:57:22, endln:57:30
+    |vpiParent:
+    \_function: (work@semaphore::new), line:57:5, endln:58:16
+    |vpiDirection:1
+    |vpiName:keyCount
+    |vpiExpr:
+    \_constant: , line:57:33, endln:57:34
+    |vpiTypedef:
+    \_ref_typespec: (work@semaphore::new::keyCount)
+      |vpiParent:
+      \_io_decl: (keyCount), line:57:22, endln:57:30
+      |vpiFullName:work@semaphore::new::keyCount
+      |vpiActual:
+      \_int_typespec: , line:57:18, endln:57:21
+\_class_typespec: 
+  |vpiClassDefn:
+  \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+\_int_typespec: , line:57:18, endln:57:21
+  |vpiSigned:1
+\_int_typespec: , line:60:14, endln:60:17
+  |vpiSigned:1
+\_int_typespec: , line:63:14, endln:63:17
+  |vpiSigned:1
+\_function: (work@semaphore::try_get), line:66:5, endln:67:16
+  |vpiParent:
+  \_class_defn: (work@semaphore), file:/home/alain/uhdm2rtlil/test/simple_interface/builtin.sv, line:55:3, endln:69:11
+  |vpiName:try_get
+  |vpiFullName:work@semaphore::try_get
+  |vpiMethod:1
+  |vpiVisibility:1
+  |vpiReturn:
+  \_int_var: (work@semaphore::try_get), line:66:14, endln:66:17
+  |vpiIODecl:
+  \_io_decl: (keyCount), line:66:30, endln:66:38
+    |vpiParent:
+    \_function: (work@semaphore::try_get), line:66:5, endln:67:16
+    |vpiDirection:1
+    |vpiName:keyCount
+    |vpiExpr:
+    \_constant: , line:66:41, endln:66:42
+    |vpiTypedef:
+    \_ref_typespec: (work@semaphore::try_get::keyCount)
+      |vpiParent:
+      \_io_decl: (keyCount), line:66:30, endln:66:38
+      |vpiFullName:work@semaphore::try_get::keyCount
+      |vpiActual:
+      \_int_typespec: , line:66:26, endln:66:29
+\_int_typespec: , line:66:14, endln:66:17
+  |vpiSigned:1
+\_int_typespec: , line:66:26, endln:66:29
+  |vpiSigned:1
+\_logic_typespec: , line:31:12, endln:31:23
+  |vpiRange:
+  \_range: , line:31:18, endln:31:23
+    |vpiParent:
+    \_logic_typespec: , line:31:12, endln:31:23
+    |vpiLeftRange:
+    \_constant: , line:31:19, endln:31:20
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:31:21, endln:31:22
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:32:12, endln:32:23
+  |vpiRange:
+  \_range: , line:32:18, endln:32:23
+    |vpiParent:
+    \_logic_typespec: , line:32:12, endln:32:23
+    |vpiLeftRange:
+    \_constant: , line:32:19, endln:32:20
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:32:21, endln:32:22
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:33:12, endln:33:24
+  |vpiRange:
+  \_range: , line:33:18, endln:33:24
+    |vpiParent:
+    \_logic_typespec: , line:33:12, endln:33:24
+    |vpiLeftRange:
+    \_constant: , line:33:19, endln:33:21
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:33:22, endln:33:23
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:34:12, endln:34:23
+  |vpiRange:
+  \_range: , line:34:18, endln:34:23
+    |vpiParent:
+    \_logic_typespec: , line:34:12, endln:34:23
+    |vpiLeftRange:
+    \_constant: , line:34:19, endln:34:20
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:34:21, endln:34:22
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:35:12, endln:35:23
+  |vpiRange:
+  \_range: , line:35:18, endln:35:23
+    |vpiParent:
+    \_logic_typespec: , line:35:12, endln:35:23
+    |vpiLeftRange:
+    \_constant: , line:35:19, endln:35:20
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:35:21, endln:35:22
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:36:12, endln:36:24
+  |vpiRange:
+  \_range: , line:36:18, endln:36:24
+    |vpiParent:
+    \_logic_typespec: , line:36:12, endln:36:24
+    |vpiLeftRange:
+    \_constant: , line:36:19, endln:36:21
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:36:22, endln:36:23
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:31:12, endln:31:23
+  |vpiParent:
+  \_logic_net: (work@simple_interface.c1), line:31:33, endln:31:35
+  |vpiRange:
+  \_range: , line:31:18, endln:31:23
+    |vpiParent:
+    \_logic_typespec: , line:31:12, endln:31:23
+    |vpiLeftRange:
+    \_constant: , line:31:19, endln:31:20
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:31:21, endln:31:22
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:32:12, endln:32:23
+  |vpiParent:
+  \_logic_net: (work@simple_interface.c2), line:32:33, endln:32:35
+  |vpiRange:
+  \_range: , line:32:18, endln:32:23
+    |vpiParent:
+    \_logic_typespec: , line:32:12, endln:32:23
+    |vpiLeftRange:
+    \_constant: , line:32:19, endln:32:20
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:32:21, endln:32:22
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:33:12, endln:33:24
+  |vpiParent:
+  \_logic_net: (work@simple_interface.c3), line:33:33, endln:33:35
+  |vpiRange:
+  \_range: , line:33:18, endln:33:24
+    |vpiParent:
+    \_logic_typespec: , line:33:12, endln:33:24
+    |vpiLeftRange:
+    \_constant: , line:33:19, endln:33:21
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:33:22, endln:33:23
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:34:12, endln:34:23
+  |vpiParent:
+  \_logic_net: (work@simple_interface.out1), line:34:25, endln:34:29
+  |vpiRange:
+  \_range: , line:34:18, endln:34:23
+    |vpiParent:
+    \_logic_typespec: , line:34:12, endln:34:23
+    |vpiLeftRange:
+    \_constant: , line:34:19, endln:34:20
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:34:21, endln:34:22
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:35:12, endln:35:23
+  |vpiParent:
+  \_logic_net: (work@simple_interface.out2), line:35:25, endln:35:29
+  |vpiRange:
+  \_range: , line:35:18, endln:35:23
+    |vpiParent:
+    \_logic_typespec: , line:35:12, endln:35:23
+    |vpiLeftRange:
+    \_constant: , line:35:19, endln:35:20
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:35:21, endln:35:22
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:36:12, endln:36:24
+  |vpiParent:
+  \_logic_net: (work@simple_interface.out3), line:36:25, endln:36:29
+  |vpiRange:
+  \_range: , line:36:18, endln:36:24
+    |vpiParent:
+    \_logic_typespec: , line:36:12, endln:36:24
+    |vpiLeftRange:
+    \_constant: , line:36:19, endln:36:21
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:36:22, endln:36:23
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus1.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus1.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus1.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus2.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus2.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus2.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus3.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus3.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.bus3.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_interface_typespec: (user), line:23:17, endln:23:21
+  |vpiParent:
+  \_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:user
+  |vpiIsModPort:1
+\_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:data_bus_if
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst1.bus.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst1.bus.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst1.bus.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_interface_typespec: (user), line:23:17, endln:23:21
+  |vpiParent:
+  \_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:user
+  |vpiIsModPort:1
+\_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:data_bus_if
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst2.bus.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst2.bus.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst2.bus.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:7
+      |vpiSize:64
+      |INT:7
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_interface_typespec: (user), line:23:17, endln:23:21
+  |vpiParent:
+  \_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:user
+  |vpiIsModPort:1
+\_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:data_bus_if
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst3.bus.a), line:5:23, endln:5:24
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_constant: , line:5:12, endln:5:17
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst3.bus.b), line:6:23, endln:6:24
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_constant: , line:6:12, endln:6:17
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiParent:
+  \_logic_var: (work@simple_interface.inst3.bus.c), line:7:23, endln:7:24
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_constant: , line:7:12, endln:7:17
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_constant: , line:24:19, endln:24:24
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:15
+      |vpiSize:64
+      |INT:15
+      |vpiConstType:7
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:5, endln:5:22
+  |vpiRange:
+  \_range: , line:5:11, endln:5:22
+    |vpiParent:
+    \_logic_typespec: , line:5:5, endln:5:22
+    |vpiLeftRange:
+    \_operation: , line:5:12, endln:5:19
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (WIDTH), line:5:12, endln:5:17
+        |vpiParent:
+        \_operation: , line:5:12, endln:5:19
+        |vpiName:WIDTH
+      |vpiOperand:
+      \_constant: , line:5:18, endln:5:19
+        |vpiParent:
+        \_operation: , line:5:12, endln:5:19
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:5:20, endln:5:21
+      |vpiParent:
+      \_range: , line:5:11, endln:5:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:6:5, endln:6:22
+  |vpiRange:
+  \_range: , line:6:11, endln:6:22
+    |vpiParent:
+    \_logic_typespec: , line:6:5, endln:6:22
+    |vpiLeftRange:
+    \_operation: , line:6:12, endln:6:19
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (WIDTH), line:6:12, endln:6:17
+        |vpiParent:
+        \_operation: , line:6:12, endln:6:19
+        |vpiName:WIDTH
+      |vpiOperand:
+      \_constant: , line:6:18, endln:6:19
+        |vpiParent:
+        \_operation: , line:6:12, endln:6:19
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:6:20, endln:6:21
+      |vpiParent:
+      \_range: , line:6:11, endln:6:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:5, endln:7:22
+  |vpiRange:
+  \_range: , line:7:11, endln:7:22
+    |vpiParent:
+    \_logic_typespec: , line:7:5, endln:7:22
+    |vpiLeftRange:
+    \_operation: , line:7:12, endln:7:19
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (WIDTH), line:7:12, endln:7:17
+        |vpiParent:
+        \_operation: , line:7:12, endln:7:19
+        |vpiName:WIDTH
+      |vpiOperand:
+      \_constant: , line:7:18, endln:7:19
+        |vpiParent:
+        \_operation: , line:7:12, endln:7:19
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:7:20, endln:7:21
+      |vpiParent:
+      \_range: , line:7:11, endln:7:22
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:31:12, endln:31:23
+  |vpiRange:
+  \_range: , line:31:18, endln:31:23
+    |vpiParent:
+    \_logic_typespec: , line:31:12, endln:31:23
+    |vpiLeftRange:
+    \_constant: , line:31:19, endln:31:20
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:31:21, endln:31:22
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:31:12, endln:31:23
+  |vpiRange:
+  \_range: , line:31:18, endln:31:23
+    |vpiParent:
+    \_logic_typespec: , line:31:12, endln:31:23
+    |vpiLeftRange:
+    \_constant: , line:31:19, endln:31:20
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:31:21, endln:31:22
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:31:12, endln:31:23
+  |vpiRange:
+  \_range: , line:31:18, endln:31:23
+    |vpiParent:
+    \_logic_typespec: , line:31:12, endln:31:23
+    |vpiLeftRange:
+    \_constant: , line:31:19, endln:31:20
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:31:21, endln:31:22
+      |vpiParent:
+      \_range: , line:31:18, endln:31:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:32:12, endln:32:23
+  |vpiRange:
+  \_range: , line:32:18, endln:32:23
+    |vpiParent:
+    \_logic_typespec: , line:32:12, endln:32:23
+    |vpiLeftRange:
+    \_constant: , line:32:19, endln:32:20
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:32:21, endln:32:22
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:32:12, endln:32:23
+  |vpiRange:
+  \_range: , line:32:18, endln:32:23
+    |vpiParent:
+    \_logic_typespec: , line:32:12, endln:32:23
+    |vpiLeftRange:
+    \_constant: , line:32:19, endln:32:20
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:32:21, endln:32:22
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:32:12, endln:32:23
+  |vpiRange:
+  \_range: , line:32:18, endln:32:23
+    |vpiParent:
+    \_logic_typespec: , line:32:12, endln:32:23
+    |vpiLeftRange:
+    \_constant: , line:32:19, endln:32:20
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:32:21, endln:32:22
+      |vpiParent:
+      \_range: , line:32:18, endln:32:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:33:12, endln:33:24
+  |vpiRange:
+  \_range: , line:33:18, endln:33:24
+    |vpiParent:
+    \_logic_typespec: , line:33:12, endln:33:24
+    |vpiLeftRange:
+    \_constant: , line:33:19, endln:33:21
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:33:22, endln:33:23
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:33:12, endln:33:24
+  |vpiRange:
+  \_range: , line:33:18, endln:33:24
+    |vpiParent:
+    \_logic_typespec: , line:33:12, endln:33:24
+    |vpiLeftRange:
+    \_constant: , line:33:19, endln:33:21
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:33:22, endln:33:23
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:33:12, endln:33:24
+  |vpiRange:
+  \_range: , line:33:18, endln:33:24
+    |vpiParent:
+    \_logic_typespec: , line:33:12, endln:33:24
+    |vpiLeftRange:
+    \_constant: , line:33:19, endln:33:21
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:33:22, endln:33:23
+      |vpiParent:
+      \_range: , line:33:18, endln:33:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:34:12, endln:34:23
+  |vpiRange:
+  \_range: , line:34:18, endln:34:23
+    |vpiParent:
+    \_logic_typespec: , line:34:12, endln:34:23
+    |vpiLeftRange:
+    \_constant: , line:34:19, endln:34:20
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:34:21, endln:34:22
+      |vpiParent:
+      \_range: , line:34:18, endln:34:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:35:12, endln:35:23
+  |vpiRange:
+  \_range: , line:35:18, endln:35:23
+    |vpiParent:
+    \_logic_typespec: , line:35:12, endln:35:23
+    |vpiLeftRange:
+    \_constant: , line:35:19, endln:35:20
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:35:21, endln:35:22
+      |vpiParent:
+      \_range: , line:35:18, endln:35:23
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:36:12, endln:36:24
+  |vpiRange:
+  \_range: , line:36:18, endln:36:24
+    |vpiParent:
+    \_logic_typespec: , line:36:12, endln:36:24
+    |vpiLeftRange:
+    \_constant: , line:36:19, endln:36:21
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:15
+      |vpiSize:64
+      |UINT:15
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:36:22, endln:36:23
+      |vpiParent:
+      \_range: , line:36:18, endln:36:24
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_interface_typespec: (user), line:23:17, endln:23:21
+  |vpiParent:
+  \_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:user
+  |vpiIsModPort:1
+\_interface_typespec: (data_bus_if), line:23:5, endln:23:16
+  |vpiName:data_bus_if
+\_logic_typespec: , line:24:12, endln:24:29
+  |vpiRange:
+  \_range: , line:24:18, endln:24:29
+    |vpiParent:
+    \_logic_typespec: , line:24:12, endln:24:29
+    |vpiLeftRange:
+    \_operation: , line:24:19, endln:24:26
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (WIDTH), line:24:19, endln:24:24
+        |vpiParent:
+        \_operation: , line:24:19, endln:24:26
+        |vpiName:WIDTH
+      |vpiOperand:
+      \_constant: , line:24:25, endln:24:26
+        |vpiParent:
+        \_operation: , line:24:19, endln:24:26
+        |vpiDecompile:1
+        |vpiSize:64
+        |UINT:1
+        |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:24:27, endln:24:28
+      |vpiParent:
+      \_range: , line:24:18, endln:24:29
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_int_typespec: , line:3:5, endln:3:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.bus1.WIDTH)
+\_int_typespec: , line:3:5, endln:3:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.bus2.WIDTH)
+\_int_typespec: , line:3:5, endln:3:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.bus3.WIDTH)
+\_int_typespec: , line:21:5, endln:21:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.inst1.WIDTH)
+\_int_typespec: , line:21:5, endln:21:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.inst2.WIDTH)
+\_int_typespec: , line:21:5, endln:21:24
+  |vpiParent:
+  \_ref_typespec: (work@simple_interface.inst3.WIDTH)
+===================
+[  FATAL] : 0
+[ SYNTAX] : 0
+[  ERROR] : 0
+[WARNING] : 3
+[   NOTE] : 5

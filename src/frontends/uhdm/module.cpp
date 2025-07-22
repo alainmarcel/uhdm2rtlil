@@ -28,6 +28,36 @@ void UhdmImporter::import_port(const port* uhdm_port) {
     // Get port width
     int width = get_width(uhdm_port);
     
+    // Check if this is an interface port
+    if (width == -1) {
+        log("UHDM: Port '%s' is an interface type, creating placeholder\n", portname.c_str());
+        // For interface ports, create a special wire that won't be used for connections
+        // but serves as a placeholder for the port list
+        RTLIL::Wire* w = module->addWire(RTLIL::escape_id(portname), 1);
+        w->attributes[RTLIL::escape_id("interface_port")] = RTLIL::Const(1);
+        
+        // Add source attribute
+        add_src_attribute(w->attributes, uhdm_port);
+        
+        // Set port direction
+        if (direction == vpiInput)
+            w->port_input = true;
+        else if (direction == vpiOutput)
+            w->port_output = true;
+        else if (direction == vpiInout) {
+            w->port_input = true;
+            w->port_output = true;
+        }
+        
+        w->port_id = module->ports.size() + 1;
+        module->ports.push_back(w->name);
+        
+        // Store in maps
+        wire_map[uhdm_port] = w;
+        name_map[portname] = w;
+        return;
+    }
+    
     RTLIL::Wire* w = create_wire(portname, width);
     
     // Add source attribute
@@ -341,6 +371,32 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec) {
     
     try {
         log("UHDM: Analyzing typespec for width determination\n");
+        log("UHDM: Typespec UhdmType = %d\n", typespec->UhdmType());
+        
+        // Check if this is a ref_typespec and follow the reference
+        if (typespec->UhdmType() == uhdmref_typespec) {
+            log("UHDM: Found ref_typespec, following reference\n");
+            if (auto ref_typespec = dynamic_cast<const UHDM::ref_typespec*>(typespec)) {
+                if (auto actual = ref_typespec->Actual_typespec()) {
+                    log("UHDM: Following to actual typespec (UhdmType = %d)\n", actual->UhdmType());
+                    // Check if the actual type is an interface
+                    if (actual->UhdmType() == uhdminterface_typespec) {
+                        log("UHDM: Found interface_typespec through reference\n");
+                        return -1;  // Special value to indicate interface type
+                    }
+                    // Otherwise recurse to get the actual width
+                    return get_width_from_typespec(actual);
+                }
+            }
+        }
+        
+        // Check if this is an interface typespec
+        if (typespec->UhdmType() == uhdminterface_typespec) {
+            log("UHDM: Found interface_typespec, interface ports don't have a simple width\n");
+            // Interface ports are special - they don't have a width
+            // They represent a bundle of signals
+            return -1;  // Special value to indicate interface type
+        }
         
         // Use UHDM::ExprEval to get the actual size of the typespec
         UHDM::ExprEval eval;
