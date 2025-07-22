@@ -68,6 +68,13 @@ struct UhdmImporter {
     std::map<const any*, RTLIL::Wire*> wire_map;
     std::map<std::string, RTLIL::Wire*> name_map;
     
+    // Track module instances to avoid duplicates
+    // Key: module_name + parameter signature
+    std::set<std::string> imported_module_signatures;
+    
+    // Track top-level modules (those with vpiTop:1 property)
+    std::set<std::string> top_level_modules;
+    
     // Import modes and options
     bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
     bool mode_debug = false;
@@ -78,6 +85,7 @@ struct UhdmImporter {
     // Main import functions
     void import_design(UHDM::design* uhdm_design);
     void import_module(const UHDM::module_inst* uhdm_module);
+    void import_module_hierarchy(const UHDM::module_inst* uhdm_module);
     void import_port(const UHDM::port* uhdm_port);
     void import_net(const UHDM::net* uhdm_net);
     void import_process(const UHDM::process_stmt* uhdm_process);

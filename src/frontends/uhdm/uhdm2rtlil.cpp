@@ -112,13 +112,24 @@ UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
 void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log("UHDM: Starting import_design\n");
     
-    if (!uhdm_design->AllModules()) {
-        log("UHDM: No modules found in design\n");
-        return;
+    // First, identify top-level modules by checking vpiTop property
+    std::set<std::string> top_level_module_names;
+    if (uhdm_design->TopModules()) {
+        for (const module_inst* top_mod : *uhdm_design->TopModules()) {
+            if (top_mod->VpiTop()) {
+                std::string mod_name = std::string(top_mod->VpiDefName());
+                if (mod_name.find("work@") == 0) {
+                    mod_name = mod_name.substr(5);
+                }
+                top_level_module_names.insert(mod_name);
+                log("UHDM: Identified top-level module: %s\n", mod_name.c_str());
+            }
+        }
     }
     
-    log("UHDM: Found %d modules in design\n", (int)uhdm_design->AllModules()->size());
-        
+    // Store in class member for use during import
+    this->top_level_modules = top_level_module_names;
+    
     // First, import all interfaces
     if (uhdm_design->AllInterfaces()) {
         log("UHDM: Found %d interfaces in design\n", (int)uhdm_design->AllInterfaces()->size());
@@ -128,16 +139,277 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         }
     }
     
-    for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
-        log("UHDM: About to import module\n");
-        import_module(uhdm_mod);
+    // First import all module definitions from AllModules if available
+    // This ensures we have all the base module definitions before creating instances
+    if (uhdm_design->AllModules()) {
+        log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
+        for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
+            log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
+            import_module(uhdm_mod);
+        }
     }
     
-    // Post-process to create parameterized modules
-    log("UHDM: Creating parameterized modules\n");
-    create_parameterized_modules();
+    // Then import from TopModules which contains the elaborated hierarchy with instances
+    if (uhdm_design->TopModules()) {
+        log("UHDM: Found %d top modules in design\n", (int)uhdm_design->TopModules()->size());
+        
+        // Recursively import the instantiation tree starting from top modules
+        for (const module_inst* top_mod : *uhdm_design->TopModules()) {
+            log("UHDM: Importing top module hierarchy starting from: %s\n", 
+                !top_mod->VpiName().empty() ? top_mod->VpiName().data() : top_mod->VpiDefName().data());
+            import_module_hierarchy(top_mod);
+        }
+    } else {
+        log("UHDM: No top modules found in design\n");
+    }
+    
+    // Post-process to create parameterized modules is no longer needed
+    // as we handle parameterization during hierarchy traversal
     
     log("UHDM: Finished import_design\n");
+}
+
+// Recursively import module hierarchy starting from a module instance
+void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module) {
+    if (!uhdm_module) return;
+    
+    // Get module name
+    std::string module_name = std::string(uhdm_module->VpiDefName());
+    if (module_name.find("work@") == 0) {
+        module_name = module_name.substr(5);
+    }
+    
+    // Build parameter signature
+    std::string param_signature = module_name;
+    if (uhdm_module->Param_assigns()) {
+        log("UHDM: Found param_assigns for %s\n", module_name.c_str());
+        for (auto param_assign : *uhdm_module->Param_assigns()) {
+            if (param_assign->Lhs() && param_assign->Rhs()) {
+                std::string param_name;
+                // Get parameter name from LHS
+                if (auto ref = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                    param_name = std::string(ref->VpiName());
+                }
+                
+                if (!param_name.empty()) {
+                    param_signature += "$" + param_name + "=";
+                    // Get parameter value from RHS
+                    if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
+                        // Get the actual integer value
+                        std::string val_str;
+                        log("UHDM: Constant type: %d\n", const_val->VpiConstType());
+                        log("UHDM: VpiDecompile: '%s'\n", std::string(const_val->VpiDecompile()).c_str());
+                        log("UHDM: VpiValue: '%s'\n", const_val->VpiValue().data());
+                        
+                        if (const_val->VpiConstType() == vpiUIntConst || const_val->VpiConstType() == vpiIntConst) {
+                            // Use VpiDecompile which contains the actual value
+                            val_str = const_val->VpiDecompile();
+                        } else {
+                            val_str = std::string(const_val->VpiValue());
+                        }
+                        
+                        // If val_str is empty, try to use import_expression
+                        if (val_str.empty()) {
+                            log("UHDM: VpiDecompile/VpiValue empty, trying import_expression\n");
+                            // Save current module context
+                            RTLIL::Module* saved_module = this->module;
+                            // Create a temporary module for expression evaluation
+                            this->module = design->addModule(NEW_ID);
+                            
+                            RTLIL::SigSpec val_spec = this->import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                            if (val_spec.is_fully_const()) {
+                                val_str = std::to_string(val_spec.as_int());
+                                log("UHDM: Got value from import_expression: %s\n", val_str.c_str());
+                            }
+                            
+                            // Remove temporary module and restore context
+                            design->remove(this->module);
+                            this->module = saved_module;
+                        }
+                        
+                        param_signature += val_str;
+                        log("UHDM: Added parameter %s=%s to signature\n", param_name.c_str(), val_str.c_str());
+                    }
+                }
+            }
+        }
+    } else {
+        log("UHDM: No param_assigns found for %s\n", module_name.c_str());
+    }
+    
+    // Check if we've already imported this module definition with these parameters
+    bool module_already_imported = imported_module_signatures.count(param_signature) > 0;
+    
+    if (!module_already_imported) {
+        // Mark as imported
+        imported_module_signatures.insert(param_signature);
+        
+        // Import the module definition
+        log("UHDM: Final param_signature: %s\n", param_signature.c_str());
+        log("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
+        import_module(uhdm_module);
+    } else {
+        log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
+        
+        // Look up the existing module so we can create cells
+        // First try the parameterized Yosys format
+        std::string yosys_modname = module_name;
+        if (!param_signature.empty() && param_signature != module_name) {
+            // Extract just the parameter part
+            size_t param_start = param_signature.find('$');
+            if (param_start != std::string::npos) {
+                std::string param_part = param_signature.substr(param_start);
+                // Convert to Yosys format: $paramod\module_name\PARAM=value
+                yosys_modname = "$paramod\\" + module_name;
+                
+                // Parse parameters to create proper Yosys format
+                size_t pos = 0;
+                while ((pos = param_part.find('$', pos)) != std::string::npos) {
+                    size_t eq_pos = param_part.find('=', pos);
+                    if (eq_pos != std::string::npos) {
+                        std::string param_name = param_part.substr(pos + 1, eq_pos - pos - 1);
+                        size_t next_dollar = param_part.find('$', eq_pos);
+                        std::string param_value = param_part.substr(eq_pos + 1, 
+                            (next_dollar != std::string::npos) ? next_dollar - eq_pos - 1 : std::string::npos);
+                        
+                        // Convert to Yosys format
+                        yosys_modname += "\\" + param_name + "=s32'";
+                        // Pad value to 32 bits
+                        try {
+                            int val = std::stoi(param_value);
+                            for (int i = 31; i >= 0; i--) {
+                                yosys_modname += ((val >> i) & 1) ? "1" : "0";
+                            }
+                        } catch (const std::invalid_argument& e) {
+                            log_error("UHDM: Failed to parse parameter value '%s' as integer\n", param_value.c_str());
+                        }
+                    }
+                    pos = eq_pos;
+                    if (pos == std::string::npos) break;
+                    pos++;
+                }
+            }
+        }
+        
+        RTLIL::IdString mod_id = RTLIL::escape_id(yosys_modname);
+        module = design->module(mod_id);
+        if (!module) {
+            // Try the original param_signature
+            mod_id = RTLIL::escape_id(param_signature);
+            module = design->module(mod_id);
+        }
+        if (!module) {
+            // Try without parameter signature
+            mod_id = RTLIL::escape_id(module_name);
+            module = design->module(mod_id);
+        }
+        
+        if (module) {
+            log("UHDM: Found existing module %s for instance\n", module->name.c_str());
+        } else {
+            log("UHDM: WARNING: Could not find module for %s (tried %s)\n", param_signature.c_str(), yosys_modname.c_str());
+        }
+    }
+    
+    // Recursively import child modules through Modules() which contains elaborated instances
+    if (uhdm_module->Modules()) {
+        log("UHDM: Found %d child module instances in %s\n", (int)uhdm_module->Modules()->size(), param_signature.c_str());
+        int child_index = 0;
+        for (auto child : *uhdm_module->Modules()) {
+            log("UHDM: Processing child %d: %s (def: %s)\n", child_index++, 
+                child->VpiName().data(), child->VpiDefName().data());
+            import_module_hierarchy(child);
+        }
+    } else {
+        log("UHDM: No child modules found in %s\n", param_signature.c_str());
+    }
+    
+    // Also need to import the actual instantiations through RefModule
+    // This happens after we've imported all the module definitions
+    log("UHDM: Checking if we should create cell: module=%p, has_parent=%d\n", 
+        module, (uhdm_module->VpiParent() != nullptr));
+    if (module && uhdm_module->VpiParent()) {
+        // This is a child module instance - we need to create a cell in the parent
+        if (auto parent_mod = dynamic_cast<const module_inst*>(uhdm_module->VpiParent())) {
+            std::string parent_name = std::string(parent_mod->VpiDefName());
+            if (parent_name.find("work@") == 0) {
+                parent_name = parent_name.substr(5);
+            }
+            
+            RTLIL::Module* parent_rtlil_module = design->module(RTLIL::escape_id(parent_name));
+            if (parent_rtlil_module) {
+                // Create the cell in the parent module
+                std::string inst_name = std::string(uhdm_module->VpiName());
+                
+                // Generate parameterized module name
+                std::string cell_type = module_name;
+                if (!param_signature.empty() && param_signature != module_name) {
+                    // Extract just the parameter part
+                    size_t param_start = param_signature.find('$');
+                    if (param_start != std::string::npos) {
+                        std::string param_part = param_signature.substr(param_start);
+                        // Convert to Yosys format: $paramod\module_name\PARAM=value
+                        cell_type = "$paramod\\" + module_name;
+                        
+                        // Parse parameters to create proper Yosys format
+                        size_t pos = 0;
+                        while ((pos = param_part.find('$', pos)) != std::string::npos) {
+                            size_t eq_pos = param_part.find('=', pos);
+                            if (eq_pos != std::string::npos) {
+                                std::string param_name = param_part.substr(pos + 1, eq_pos - pos - 1);
+                                size_t next_dollar = param_part.find('$', eq_pos);
+                                std::string param_value = param_part.substr(eq_pos + 1, 
+                                    (next_dollar != std::string::npos) ? next_dollar - eq_pos - 1 : std::string::npos);
+                                
+                                // Convert to Yosys format
+                                cell_type += "\\" + param_name + "=s32'";
+                                // Pad value to 32 bits
+                                try {
+                                    int val = std::stoi(param_value);
+                                    for (int i = 31; i >= 0; i--) {
+                                        cell_type += ((val >> i) & 1) ? "1" : "0";
+                                    }
+                                } catch (const std::invalid_argument& e) {
+                                    log_error("UHDM: Failed to parse parameter value '%s' as integer\n", param_value.c_str());
+                                }
+                            }
+                            pos = eq_pos;
+                            if (pos == std::string::npos) break;
+                            pos++;
+                        }
+                    }
+                }
+                
+                log("UHDM: Creating cell %s of type %s in parent %s\n", 
+                    inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
+                
+                // Save current module context
+                RTLIL::Module* saved_module = this->module;
+                this->module = parent_rtlil_module;
+                
+                // Create the cell
+                RTLIL::Cell* cell = parent_rtlil_module->addCell(
+                    RTLIL::escape_id(inst_name), 
+                    RTLIL::escape_id(cell_type)
+                );
+                
+                // Import port connections
+                if (uhdm_module->Ports()) {
+                    for (auto port : *uhdm_module->Ports()) {
+                        std::string port_name = std::string(port->VpiName());
+                        if (port->High_conn()) {
+                            RTLIL::SigSpec conn = import_expression(static_cast<const expr*>(port->High_conn()));
+                            cell->setPort(RTLIL::escape_id(port_name), conn);
+                            log("UHDM: Connected port %s\n", port_name.c_str());
+                        }
+                    }
+                }
+                
+                // Restore module context
+                this->module = saved_module;
+            }
+        }
+    }
 }
 
 // Create parameterized modules based on cell parameters
@@ -333,27 +605,75 @@ void UhdmImporter::create_parameterized_modules() {
 
 // Import a single module
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
-    std::string modname = std::string(uhdm_module->VpiName());
+    // For module instances, we want the definition name, not the instance name
+    std::string base_modname = std::string(uhdm_module->VpiDefName());
     
     // Debug and validation
-    log("UHDM: Processing module, VpiName() returns: '%s'\n", modname.c_str());
+    log("UHDM: Processing module, VpiDefName() returns: '%s', VpiName() returns: '%s'\n", 
+        base_modname.c_str(), uhdm_module->VpiName().data());
     
-    // Try alternative name fields if VpiName is empty
-    if (modname.empty()) {
-        // Try VpiDefName for module definition name
-        std::string defname = std::string(uhdm_module->VpiDefName());
-        if (!defname.empty()) {
-            modname = defname;
-            log("UHDM: Using VpiDefName: '%s'\n", modname.c_str());
-            
-            // Strip work@ prefix if present
-            if (modname.find("work@") == 0) {
-                modname = modname.substr(5); // Remove "work@"
-                log("UHDM: Stripped work@ prefix, using: '%s'\n", modname.c_str());
-            }
+    // Try VpiName if VpiDefName is empty
+    if (base_modname.empty()) {
+        base_modname = std::string(uhdm_module->VpiName());
+        if (!base_modname.empty()) {
+            log("UHDM: Using VpiName: '%s'\n", base_modname.c_str());
         } else {
             log_warning("UHDM: Module has empty name, using default name 'unnamed_module'\n");
-            modname = "unnamed_module";
+            base_modname = "unnamed_module";
+        }
+    }
+    
+    // Strip work@ prefix if present
+    if (base_modname.find("work@") == 0) {
+        base_modname = base_modname.substr(5); // Remove "work@"
+        log("UHDM: Stripped work@ prefix, using: '%s'\n", base_modname.c_str());
+    }
+    
+    // Build parameterized module name if parameters exist
+    std::string modname = base_modname;
+    
+    // Check if this is a top-level module
+    bool is_top_level = top_level_modules.count(base_modname) > 0;
+    
+    // Use param_assigns which contain the actual parameter values in the instantiation hierarchy
+    // BUT: Top-level modules should not have parameters in their names
+    if (uhdm_module->Param_assigns() && !is_top_level) {
+        // Build Yosys-style parameterized module name
+        std::string param_string;
+        for (auto param_assign : *uhdm_module->Param_assigns()) {
+            if (param_assign->Lhs() && param_assign->Rhs()) {
+                std::string param_name;
+                // Get parameter name from LHS
+                if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                    param_name = std::string(param->VpiName());
+                }
+                
+                if (!param_name.empty()) {
+                    if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
+                        // Get the actual integer value
+                        std::string val_str = std::string(const_val->VpiValue());
+                        
+                        // Parse value from format like "UINT:8" or "INT:8"
+                        size_t colon_pos = val_str.find(':');
+                        if (colon_pos != std::string::npos) {
+                            val_str = val_str.substr(colon_pos + 1);
+                        }
+                        
+                        if (!val_str.empty()) {
+                            // Convert to Yosys format
+                            param_string += "\\" + param_name + "=s32'";
+                            // Pad value to 32 bits
+                            int val = std::stoi(val_str);
+                            for (int i = 31; i >= 0; i--) {
+                                param_string += ((val >> i) & 1) ? "1" : "0";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!param_string.empty()) {
+            modname = "$paramod\\" + base_modname + param_string;
         }
     }
     
@@ -361,6 +681,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     if (mode_debug)
         log("Importing module: %s (ID: %s)\n", modname.c_str(), mod_id.c_str());
+    
+    // Check if module already exists
+    if (design->module(mod_id)) {
+        if (mode_debug)
+            log("Module %s already exists, skipping\n", modname.c_str());
+        return;
+    }
     
     module = design->addModule(mod_id);
     
@@ -397,22 +724,29 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
         for (auto param_assign : *uhdm_module->Param_assigns()) {
             if (param_assign->Lhs() && param_assign->Rhs()) {
-                std::string param_name = std::string(param_assign->Lhs()->VpiName());
-                log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
+                std::string param_name;
+                // Get parameter name from LHS
+                if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                    param_name = std::string(param->VpiName());
+                }
                 
-                // Get the assigned value
-                RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
-                if (value_spec.is_fully_const()) {
-                    RTLIL::Const param_value = value_spec.as_const();
-                    // Override the parameter value
-                    RTLIL::IdString param_id = RTLIL::escape_id(param_name);
-                    module->avail_parameters(param_id);
-                    module->parameter_default_values[param_id] = param_value;
-                    log("UHDM: Updated parameter '%s' to value %s\n", 
-                        param_name.c_str(), param_value.as_string().c_str());
-                } else {
-                    log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
-                               param_name.c_str());
+                if (!param_name.empty()) {
+                    log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
+                    
+                    // Get the assigned value
+                    RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                    if (value_spec.is_fully_const()) {
+                        RTLIL::Const param_value = value_spec.as_const();
+                        // Override the parameter value
+                        RTLIL::IdString param_id = RTLIL::escape_id(param_name);
+                        module->avail_parameters(param_id);
+                        module->parameter_default_values[param_id] = param_value;
+                        log("UHDM: Updated parameter '%s' to value %s\n", 
+                            param_name.c_str(), param_value.as_string().c_str());
+                    } else {
+                        log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
+                                   param_name.c_str());
+                    }
                 }
             }
         }
@@ -473,21 +807,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
-    // Import module instances via ref_modules
-    if (uhdm_module->Ref_modules()) {
-        log("UHDM: Found %d ref_modules to import\n", (int)uhdm_module->Ref_modules()->size());
-        for (auto ref_mod : *uhdm_module->Ref_modules()) {
-            log("UHDM: About to import ref_module instance\n");
-            try {
-                import_ref_module(ref_mod);
-                log("UHDM: Successfully imported module instance\n");
-            } catch (const std::exception& e) {
-                log_error("UHDM: Exception in module instance import: %s\n", e.what());
-            } catch (...) {
-                log_error("UHDM: Unknown exception in module instance import\n");
-            }
-        }
-    }
+    // Module instances are imported through the hierarchy traversal
+    // (TopModules), not through ref_modules
     
     // Finalize module
     module->fixup_ports();
