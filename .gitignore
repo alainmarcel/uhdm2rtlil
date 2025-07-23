@@ -1,0 +1,39 @@
+# Build directories
+build/
+build-*/
+out/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.lib
+*.so
+*.dylib
+
+# Executables
+*.exe
+
+# Temporary files
+*.tmp
+*.log
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test outputs
+test/**/slpp_all/
+test/**/*.il
+test/**/rtlil_diff.txt
