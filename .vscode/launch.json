@@ -1,0 +1,51 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug UHDM Plugin - simple_hierarchy",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/simple_hierarchy/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/simple_hierarchy",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UHDM Plugin - simple_interface",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/simple_interface/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/simple_interface",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+    ]
+}
