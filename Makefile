@@ -36,9 +36,9 @@ build/Makefile:
 	@echo "Configuring Release build..."
 	@mkdir -p build
 	@if [[ "$(CC)" == *"ccache"* ]]; then \
-		cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER=g++ ..; \
+		cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCPU_CORES=$(CPU_CORES) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER=g++ ..; \
 	else \
-		cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="$(CC)" -DCMAKE_CXX_COMPILER="$(CXX)" ..; \
+		cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCPU_CORES=$(CPU_CORES) -DCMAKE_C_COMPILER="$(CC)" -DCMAKE_CXX_COMPILER="$(CXX)" ..; \
 	fi
 
 # Create debug build directory and configure
@@ -48,9 +48,9 @@ build-debug/Makefile:
 	@echo "Configuring Debug build..."
 	@mkdir -p build-debug
 	@if [[ "$(CC)" == *"ccache"* ]]; then \
-		cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER=g++ ..; \
+		cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCPU_CORES=$(CPU_CORES) -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER=g++ ..; \
 	else \
-		cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER="$(CC)" -DCMAKE_CXX_COMPILER="$(CXX)" ..; \
+		cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCPU_CORES=$(CPU_CORES) -DCMAKE_C_COMPILER="$(CC)" -DCMAKE_CXX_COMPILER="$(CXX)" ..; \
 	fi
 
 # Clean build artifacts
