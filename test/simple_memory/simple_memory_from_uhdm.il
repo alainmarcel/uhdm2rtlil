@@ -3,31 +3,25 @@ autoidx 1
 attribute \top 1
 attribute \src "dut.sv:1.1-36.10"
 module \simple_memory
-  parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  parameter \DEPTH 64'0000000000000000000000000000000000000000000000000000000000010000
-  parameter \ADDR_WIDTH 64'0000000000000000000000000000000000000000000000000000000000000100
+  parameter \WIDTH 8
+  parameter \DEPTH 16
+  parameter \ADDR_WIDTH 4
   attribute \src "dut.sv:19.5-34.8"
-  wire $0\data_out[0:0]
+  wire width 8 $0\data_out[7:0]
   attribute \src "dut.sv:19.12-19.26"
   wire $logic_not$dut.sv:19.12-19.26$2_Y
-  wire width 8 $memrd$\memory$fallback_DATA
   attribute \src "dut.sv:9.34-9.38"
-  wire input 4 \addr
+  wire width 4 input 4 \addr
   attribute \src "dut.sv:6.34-6.37"
   wire input 1 \clk
   attribute \src "dut.sv:10.34-10.41"
-  wire input 5 \data_in
+  wire width 8 input 5 \data_in
   attribute \src "dut.sv:11.34-11.42"
-  wire output 6 \data_out
-  wire width 32 \i
-  attribute \reg 1
-  wire \memory
+  wire width 8 output 6 \data_out
   attribute \src "dut.sv:7.34-7.37"
   wire input 2 \rst
   attribute \src "dut.sv:8.34-8.36"
   wire input 3 \we
-  attribute \src "unknown_location"
-  memory width 8 size 16 \memory
   attribute \src "dut.sv:19.12-19.26"
   cell $logic_not $logic_not$dut.sv:19.12-19.26$2
     parameter \A_SIGNED 0
@@ -36,51 +30,22 @@ module \simple_memory
     connect \A \rst
     connect \Y $logic_not$dut.sv:19.12-19.26$2_Y
   end
-  cell $memrd $memrd$\memory$fallback
-    parameter \ABITS 1
-    parameter \CLK_ENABLE 0
-    parameter \CLK_POLARITY 0
-    parameter \MEMID "\\memory"
-    parameter \TRANSPARENT 0
-    parameter \WIDTH 8
-    connect \ADDR \addr
-    connect \CLK 1'x
-    connect \DATA $memrd$\memory$fallback_DATA
-    connect \EN 1'x
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:19.5-34.8"
   process $proc$dut.sv:19$1
-    assign $0\data_out[0:0] \data_out
+    assign $0\data_out[7:0] \data_out
     attribute \src "dut.sv:19.12-19.26"
     switch $logic_not$dut.sv:19.12-19.26$2_Y
       attribute \src "dut.sv:19.12-19.26"
       case 1'1
-        assign $0\data_out[0:0] 1'0
+        assign $0\data_out[7:0] 8'00000000
       attribute \src "dut.sv:19.12-19.26"
       case 
-        assign $0\data_out[0:0] $memrd$\memory$fallback_DATA [0]
+        assign $0\data_out[7:0] { 4'0000 \addr }
     end
     sync posedge \clk
-      update \data_out $0\data_out[0:0]
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory 1'0 8'00000000 8'11111111 1'0
-      memwr \memory 1'1 8'00000000 8'11111111 1'1
-      memwr \memory \addr \data_in \we 1'0
+      update \data_out $0\data_out[7:0]
     sync negedge \rst
-      update \data_out $0\data_out[0:0]
+      update \data_out $0\data_out[7:0]
   end
 end

@@ -9,6 +9,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <uhdm/vpi_visitor.h>
 
 USING_YOSYS_NAMESPACE
 
@@ -141,13 +142,13 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     
     // First import all module definitions from AllModules if available
     // This ensures we have all the base module definitions before creating instances
-    if (uhdm_design->AllModules()) {
-        log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
-        for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
-            log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
-            import_module(uhdm_mod);
-        }
-    }
+    //if (uhdm_design->AllModules()) {
+    //    log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
+    //    for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
+    //        log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
+    //        import_module(uhdm_mod);
+    //    }
+    //}
     
     // Then import from TopModules which contains the elaborated hierarchy with instances
     if (uhdm_design->TopModules()) {
@@ -247,6 +248,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module) {
         // Import the module definition
         log("UHDM: Final param_signature: %s\n", param_signature.c_str());
         log("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
+        log_flush();
         import_module(uhdm_module);
     } else {
         log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
@@ -605,6 +607,10 @@ void UhdmImporter::create_parameterized_modules() {
 
 // Import a single module
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
+    // Set current instance context for expression evaluation
+    const module_inst* saved_instance = current_instance;
+    current_instance = uhdm_module;
+    
     // For module instances, we want the definition name, not the instance name
     std::string base_modname = std::string(uhdm_module->VpiDefName());
     
@@ -704,6 +710,19 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
         for (auto port : *uhdm_module->Ports()) {
             std::string port_name = std::string(port->VpiName());
+            any* high_conn = port->High_conn();
+            if (high_conn) {
+              if (high_conn->UhdmType() == uhdmref_obj) {
+                ref_obj* ref = (ref_obj*) high_conn;
+                any* actual = ref->Actual_group();
+                if (actual) {
+                    if (actual->UhdmType() == uhdminterface_inst) {
+                        //log("UHDM: Skip importing port as it is an interface: '%s'\n", port_name.c_str());
+                        //continue;
+                    }
+                }
+              }
+            }
             log("UHDM: About to import port: '%s'\n", port_name.c_str());
             import_port(port);
         }
@@ -758,22 +777,16 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (auto net : *uhdm_module->Nets()) {
             std::string net_name = std::string(net->VpiName());
             log("UHDM: About to import net: '%s'\n", net_name.c_str());
-            import_net(net);
+            import_net(net, uhdm_module);
         }
     }
     
     // Import interface instances
+    log("UHDM: About to import interface instances for module %s\n", module->name.c_str());
     import_interface_instances(uhdm_module);
     
     // Import memory objects using analysis pass
     analyze_and_generate_memories(uhdm_module);
-    
-    // Import continuous assignments
-    if (uhdm_module->Cont_assigns()) {
-        for (auto assign : *uhdm_module->Cont_assigns()) {
-            import_continuous_assign(assign);
-        }
-    }
     
     // Import processes (always blocks) - re-enabled with debugging
     if (uhdm_module->Process()) {
@@ -812,6 +825,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Finalize module
     module->fixup_ports();
+    
+    // Restore saved instance context
+    current_instance = saved_instance;
 }
 
 // Create a parameterized module based on parameter values in the base module
@@ -955,7 +971,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
     interface_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(interface_name);
     interface_module->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
     interface_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
-    
+    add_src_attribute(interface_module->attributes, uhdm_interface);
     // Import interface variables as ports
     if (uhdm_interface->Variables()) {
         if (mode_debug)
@@ -963,8 +979,7 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
             
         for (auto var : *uhdm_interface->Variables()) {
             std::string var_name = std::string(var->VpiName());
-            int width = get_width(var);
-            if (width <= 0) width = 8; // Default to 8 for interface signals instead of 1
+            int width = get_width(var, uhdm_interface);
             
             if (mode_debug)
                 log("UHDM: Creating interface signal: %s (width=%d)\n", var_name.c_str(), width);
@@ -976,11 +991,54 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
         if (mode_debug)
             log("UHDM: Interface has no variables\n");
     }
+
+    // Import nets
+    if (uhdm_interface->Nets()) {
+        log("UHDM: Found %d nets to import\n", (int)uhdm_interface->Nets()->size());
+        for (auto net : *uhdm_interface->Nets()) {
+            std::string net_name = std::string(net->VpiName());
+            log("UHDM: About to import net: '%s'\n", net_name.c_str());
+            import_net(net, uhdm_interface);
+        }
+    }
     
     // Handle parameters
     if (uhdm_interface->Parameters()) {
         for (auto param : *uhdm_interface->Parameters()) {
             import_parameter(param);
+        }
+    }
+
+    // Import parameter overrides (param_assigns)
+    if (uhdm_interface->Param_assigns()) {
+        log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_interface->Param_assigns()->size());
+        for (auto param_assign : *uhdm_interface->Param_assigns()) {
+            if (param_assign->Lhs() && param_assign->Rhs()) {
+                std::string param_name;
+                // Get parameter name from LHS
+                if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                    param_name = std::string(param->VpiName());
+                }
+                
+                if (!param_name.empty()) {
+                    log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
+                    
+                    // Get the assigned value
+                    RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                    if (value_spec.is_fully_const()) {
+                        RTLIL::Const param_value = value_spec.as_const();
+                        // Override the parameter value
+                        RTLIL::IdString param_id = RTLIL::escape_id(param_name);
+                        module->avail_parameters(param_id);
+                        module->parameter_default_values[param_id] = param_value;
+                        log("UHDM: Updated parameter '%s' to value %s\n", 
+                            param_name.c_str(), param_value.as_string().c_str());
+                    } else {
+                        log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
+                                   param_name.c_str());
+                    }
+                }
+            }
         }
     }
     
@@ -997,23 +1055,25 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
     
     // Import interface instances
     if (uhdm_module->Interfaces()) {
+        log("UHDM: Module has %d interfaces\n", (int)uhdm_module->Interfaces()->size());
         for (auto interface : *uhdm_module->Interfaces()) {
             std::string interface_name = std::string(interface->VpiName());
-            if (mode_debug)
-                log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
-            
+            log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
+                       
             // Create interface signals in the module
             if (interface->Variables()) {
                 for (auto var : *interface->Variables()) {
                     std::string var_name = std::string(var->VpiName());
                     std::string full_name = interface_name + "." + var_name;
-                    int width = get_width(var);
-                    if (width <= 0) width = 1;
+                    
+                    // Use parameter width if available, otherwise get width from variable
+                    int width = get_width(var, interface);
                     
                     if (mode_debug)
                         log("UHDM: Creating interface signal: %s (width=%d)\n", full_name.c_str(), width);
                     
                     RTLIL::Wire* wire = create_wire(full_name, width);
+                    add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
                 }
             }
@@ -1038,9 +1098,9 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
             
-            RTLIL::Cell* interface_cell = module->addCell(RTLIL::escape_id(interface_name), RTLIL::escape_id(interface_type));
-            interface_cell->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
         }
+    } else {
+        log("UHDM: Module has no interfaces\n");
     }
     
     if (mode_debug)

@@ -75,10 +75,16 @@ struct UhdmImporter {
     // Track top-level modules (those with vpiTop:1 property)
     std::set<std::string> top_level_modules;
     
+    // Track interface instance parameters (interface_name -> param_name -> value)
+    std::map<std::string, std::map<std::string, int>> interface_parameters;
+    
     // Import modes and options
     bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
-    bool mode_debug = false;
+    bool mode_debug = true;
     bool mode_formal = false;
+    
+    // Current instance context for hierarchical path resolution
+    const UHDM::module_inst* current_instance = nullptr;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
@@ -87,7 +93,7 @@ struct UhdmImporter {
     void import_module(const UHDM::module_inst* uhdm_module);
     void import_module_hierarchy(const UHDM::module_inst* uhdm_module);
     void import_port(const UHDM::port* uhdm_port);
-    void import_net(const UHDM::net* uhdm_net);
+    void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
     void import_process(const UHDM::process_stmt* uhdm_process);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     void import_instance(const UHDM::module_inst* uhdm_inst);
@@ -142,12 +148,12 @@ struct UhdmImporter {
     RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part);
     RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit);
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat);
-    RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier);
+    RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::module_inst* inst = nullptr);
     
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);
     std::string get_name(const UHDM::any* uhdm_obj);
-    int get_width(const UHDM::any* uhdm_obj);
+    int get_width(const UHDM::any* uhdm_obj, const UHDM::instance* inst = nullptr);
     void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
@@ -161,7 +167,7 @@ struct UhdmImporter {
                                          std::string& reset_signal);
     
     // Width extraction helpers
-    int get_width_from_typespec(const UHDM::any* typespec);
+    int get_width_from_typespec(const UHDM::any* typespec, const UHDM::instance* inst = nullptr);
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);

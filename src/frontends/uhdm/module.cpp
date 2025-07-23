@@ -6,7 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
-
+#include <uhdm/vpi_visitor.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -82,7 +82,7 @@ void UhdmImporter::import_port(const port* uhdm_port) {
 }
 
 // Import a net
-void UhdmImporter::import_net(const net* uhdm_net) {
+void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     std::string netname = std::string(uhdm_net->VpiName());
     
     // Handle empty net names
@@ -107,9 +107,9 @@ void UhdmImporter::import_net(const net* uhdm_net) {
         return;
     }
     
-    int width = get_width(uhdm_net);
+    int width = get_width(uhdm_net, inst);
     RTLIL::Wire* w = create_wire(netname, width);
-    
+    add_src_attribute(w->attributes, uhdm_net);
     // Handle net type
     int net_type = uhdm_net->VpiNetType();
     if (net_type == vpiReg) {
@@ -137,6 +137,9 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         } else {
             log_warning("Assignment width mismatch: LHS=%d, RHS=%d\n", 
                        lhs.size(), rhs.size());
+            
+            // For now, just continue with the warning
+            // TODO: Fix interface signal width inference
         }
     }
     
@@ -324,7 +327,7 @@ std::string UhdmImporter::get_name(const any* uhdm_obj) {
 }
 
 // Get width from UHDM object
-int UhdmImporter::get_width(const any* uhdm_obj) {
+int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::instance* inst) {
     if (!uhdm_obj) {
         log("UHDM: get_width called with null object\n");
         return 1;
@@ -338,7 +341,7 @@ int UhdmImporter::get_width(const any* uhdm_obj) {
             log("UHDM: Found port object\n");
             if (auto typespec = port->Typespec()) {
                 log("UHDM: Port has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec);
+                return get_width_from_typespec(typespec, inst);
             } else {
                 log("UHDM: Port has no typespec\n");
             }
@@ -349,7 +352,28 @@ int UhdmImporter::get_width(const any* uhdm_obj) {
             log("UHDM: Found net object\n");
             if (auto typespec = net->Typespec()) {
                 log("UHDM: Net has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec);
+                return get_width_from_typespec(typespec, inst);
+            } else {
+                log("UHDM: Net has no typespec\n");
+            }
+        }
+
+        // Check if it's a net and try to get typespec
+        if (auto variable = dynamic_cast<const UHDM::variables*>(uhdm_obj)) {
+            log("UHDM: Found net object\n");
+            if (auto typespec = variable->Typespec()) {
+                log("UHDM: Net has typespec, calling get_width_from_typespec\n");
+                return get_width_from_typespec(typespec, inst);
+            } else {
+                log("UHDM: Net has no typespec\n");
+            }
+        }
+
+        if (auto variable = dynamic_cast<const UHDM::io_decl*>(uhdm_obj)) {
+            log("UHDM: Found net object\n");
+            if (auto typespec = variable->Typespec()) {
+                log("UHDM: Net has typespec, calling get_width_from_typespec\n");
+                return get_width_from_typespec(typespec, inst);
             } else {
                 log("UHDM: Net has no typespec\n");
             }
@@ -366,7 +390,7 @@ int UhdmImporter::get_width(const any* uhdm_obj) {
 }
 
 // Helper function to get width from typespec
-int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec) {
+int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::instance* inst) {
     if (!typespec) return 1;
     
     try {
@@ -385,7 +409,7 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec) {
                         return -1;  // Special value to indicate interface type
                     }
                     // Otherwise recurse to get the actual width
-                    return get_width_from_typespec(actual);
+                    return get_width_from_typespec(actual, inst);
                 }
             }
         }
@@ -404,7 +428,7 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec) {
         
         // Call eval.size() like Surelog does
         // From Surelog: eval.size(typespec, invalidValue, context, nullptr, !sizeMode)
-        uint64_t size = eval.size(typespec, invalidValue, nullptr, nullptr, true);
+        uint64_t size = eval.size(typespec, invalidValue, inst, typespec, true);
         
         if (!invalidValue && size > 0) {
             log("UHDM: ExprEval returned size=%llu for typespec\n", (unsigned long long)size);

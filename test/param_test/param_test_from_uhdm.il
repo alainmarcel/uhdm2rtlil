@@ -3,19 +3,19 @@ autoidx 1
 attribute \top 1
 attribute \src "dut.sv:1.1-20.10"
 module \param_test
-  parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  parameter \DEPTH 64'0000000000000000000000000000000000000000000000000000000000010000
+  parameter \WIDTH 8
+  parameter \DEPTH 16
   parameter \INIT_VALUE 8'10101010
   attribute \src "dut.sv:13.5-18.8"
-  wire $0\data_out[0:0]
+  wire width 8 $0\data_out[7:0]
   attribute \src "dut.sv:13.12-13.26"
   wire $logic_not$dut.sv:13.12-13.26$2_Y
   attribute \src "dut.sv:6.29-6.32"
   wire input 1 \clk
   attribute \src "dut.sv:8.29-8.36"
-  wire input 3 \data_in
+  wire width 8 input 3 \data_in
   attribute \src "dut.sv:9.29-9.37"
-  wire output 4 \data_out
+  wire width 8 output 4 \data_out
   attribute \src "dut.sv:7.29-7.32"
   wire input 2 \rst
   attribute \src "dut.sv:13.12-13.26"
@@ -29,19 +29,19 @@ module \param_test
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-18.8"
   process $proc$dut.sv:13$1
-    assign $0\data_out[0:0] \data_out
+    assign $0\data_out[7:0] \data_out
     attribute \src "dut.sv:13.12-13.26"
     switch $logic_not$dut.sv:13.12-13.26$2_Y
       attribute \src "dut.sv:13.12-13.26"
       case 1'1
-        assign $0\data_out[0:0] 1'0
+        assign $0\data_out[7:0] 8'00000000
       attribute \src "dut.sv:13.12-13.26"
       case 
-        assign $0\data_out[0:0] \data_in
+        assign $0\data_out[7:0] \data_in
     end
     sync posedge \clk
-      update \data_out $0\data_out[0:0]
+      update \data_out $0\data_out[7:0]
     sync negedge \rst
-      update \data_out $0\data_out[0:0]
+      update \data_out $0\data_out[7:0]
   end
 end
