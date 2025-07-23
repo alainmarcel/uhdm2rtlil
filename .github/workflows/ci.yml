@@ -84,7 +84,7 @@ jobs:
         # Clean any potential cmake cache that might have wrong compiler info
         rm -rf build/CMakeCache.txt build/CMakeFiles/
         # Explicitly pass compiler to make/cmake
-        make -j4 CC="ccache gcc" CXX="ccache g++"
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
         
     - name: Print ccache statistics
       run: |
