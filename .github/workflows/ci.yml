@@ -81,7 +81,10 @@ jobs:
     
     - name: Build project
       run: |
-        make -j4
+        # Clean any potential cmake cache that might have wrong compiler info
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        # Explicitly pass compiler to make/cmake
+        make -j4 CC="ccache gcc" CXX="ccache g++"
         
     - name: Print ccache statistics
       run: |
