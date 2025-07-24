@@ -785,6 +785,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     log("UHDM: About to import interface instances for module %s\n", module->name.c_str());
     import_interface_instances(uhdm_module);
     
+    // Import generate scopes (generate blocks)
+    log("UHDM: About to import generate scopes for module %s\n", module->name.c_str());
+    import_generate_scopes(uhdm_module);
+    
     // Import memory objects using analysis pass
     analyze_and_generate_memories(uhdm_module);
     

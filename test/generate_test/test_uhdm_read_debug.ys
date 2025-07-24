@@ -1,0 +1,9 @@
+# Test script to read UHDM file in Yosys with debug output
+# debug mode on
+plugin -i ../../build-debug/uhdm2rtlil.so
+read_uhdm -debug slpp_all/surelog.uhdm
+hierarchy -check -top generate_test
+stat
+opt
+stat
+write_rtlil generate_test_from_uhdm.il

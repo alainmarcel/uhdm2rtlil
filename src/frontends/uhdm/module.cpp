@@ -7,6 +7,8 @@
 
 #include "uhdm2rtlil.h"
 #include <uhdm/vpi_visitor.h>
+#include <uhdm/gen_scope.h>
+#include <uhdm/gen_scope_array.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -201,7 +203,34 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
 
 // Import a module instance
 void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
-    std::string inst_name = std::string(uhdm_inst->VpiName());
+    // Get the instance name - use full name if available for hierarchical names
+    std::string inst_name;
+    std::string full_name = std::string(uhdm_inst->VpiFullName());
+    
+    if (!full_name.empty()) {
+        // Extract the hierarchical name relative to the current module
+        // E.g., from "work@generate_test.gen_units[0].even_unit.adder_inst"
+        // we want "gen_units[0].even_unit.adder_inst"
+        
+        // Find the module name in the full path
+        std::string module_prefix = "work@" + module->name.substr(1); // Remove leading backslash
+        size_t module_pos = full_name.find(module_prefix);
+        
+        if (module_pos != std::string::npos) {
+            // Skip past module name and the dot
+            size_t start_pos = module_pos + module_prefix.length();
+            if (start_pos < full_name.length() && full_name[start_pos] == '.') {
+                start_pos++;
+            }
+            inst_name = full_name.substr(start_pos);
+        } else {
+            // Fallback to simple name
+            inst_name = std::string(uhdm_inst->VpiName());
+        }
+    } else {
+        inst_name = std::string(uhdm_inst->VpiName());
+    }
+    
     std::string base_module_name = std::string(uhdm_inst->VpiDefName());
     
     // Strip work@ prefix if present
@@ -247,6 +276,9 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         log("  Importing instance: %s of %s\n", inst_name.c_str(), module_name.c_str());
     
     RTLIL::Cell* cell = module->addCell(new_id(inst_name), RTLIL::escape_id(module_name));
+    
+    // Add source attribute to cell
+    add_src_attribute(cell->attributes, uhdm_inst);
     
     // Import port connections
     if (uhdm_inst->Ports()) {
@@ -487,6 +519,124 @@ void UhdmImporter::add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attrib
     std::string src = get_src_attribute(uhdm_obj);
     if (!src.empty()) {
         attributes[ID::src] = RTLIL::Const(src);
+    }
+}
+
+// Get unique cell name by checking if it already exists
+RTLIL::IdString UhdmImporter::get_unique_cell_name(const std::string& base_name) {
+    RTLIL::IdString cell_name = RTLIL::escape_id(base_name);
+    int suffix = 1;
+    while (module->cells_.count(cell_name)) {
+        suffix++;
+        std::string unique_name = base_name + "_" + std::to_string(suffix);
+        cell_name = RTLIL::escape_id(unique_name);
+    }
+    return cell_name;
+}
+
+// Import generate scopes (generate blocks)
+void UhdmImporter::import_generate_scopes(const module_inst* uhdm_module) {
+    // Check for GenScopeArray which contains generate blocks
+    if (uhdm_module->Gen_scope_arrays()) {
+        log("UHDM: Found %d generate scope arrays\n", (int)uhdm_module->Gen_scope_arrays()->size());
+        for (auto gen_array : *uhdm_module->Gen_scope_arrays()) {
+            if (!gen_array) {
+                log("UHDM: Skipping null generate scope array\n");
+                continue;
+            }
+            // Check if VpiName() is valid before using it
+            std::string_view name_view = gen_array->VpiName();
+            if (name_view.empty()) {
+                log("UHDM: Generate scope array has empty name, skipping\n");
+                continue;
+            }
+            std::string gen_name = std::string(name_view);
+            log("UHDM: Processing generate scope array: %s\n", gen_name.c_str());
+            
+            // Process each generate scope in the array
+            if (gen_array->Gen_scopes()) {
+                for (auto gen_scope : *gen_array->Gen_scopes()) {
+                    if (!gen_scope) {
+                        log("UHDM: Skipping null generate scope\n");
+                        continue;
+                    }
+                    import_gen_scope(gen_scope);
+                }
+            }
+        }
+    }
+}
+
+// Import a single generate scope
+void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
+    if (!uhdm_scope) return;
+    
+    std::string scope_name = std::string(uhdm_scope->VpiName());
+    std::string full_name = std::string(uhdm_scope->VpiFullName());
+    
+    log("UHDM: Importing generate scope: %s (full: %s)\n", scope_name.c_str(), full_name.c_str());
+    
+    // Import variables declared in the generate scope
+    if (uhdm_scope->Variables()) {
+        log("UHDM: Found %d variables in generate scope\n", (int)uhdm_scope->Variables()->size());
+        for (auto var : *uhdm_scope->Variables()) {
+            // Variables can be logic_var or other types, we need to handle them
+            // For now, create a wire for each variable
+            std::string var_name = std::string(var->VpiName());
+            int width = get_width(var, current_instance);
+            
+            if (!name_map.count(var_name)) {
+                RTLIL::Wire* w = create_wire(var_name, width);
+                wire_map[var] = w;
+                name_map[var_name] = w;
+                log("UHDM: Created wire '%s' (width=%d) for generate scope variable\n", var_name.c_str(), width);
+            }
+        }
+    }
+    
+    // Import module instances within the generate scope
+    if (uhdm_scope->Modules()) {
+        log("UHDM: Found %d module instances in generate scope\n", (int)uhdm_scope->Modules()->size());
+        for (auto mod_inst : *uhdm_scope->Modules()) {
+            // Import the module instance
+            import_instance(mod_inst);
+        }
+    }
+    
+    // Import processes (always blocks) within the generate scope
+    if (uhdm_scope->Process()) {
+        log("UHDM: Found %d processes in generate scope\n", (int)uhdm_scope->Process()->size());
+        for (auto process : *uhdm_scope->Process()) {
+            try {
+                import_process(process);
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in process import within generate scope: %s\n", e.what());
+            }
+        }
+    }
+    
+    // Import continuous assignments within the generate scope
+    if (uhdm_scope->Cont_assigns()) {
+        log("UHDM: Found %d continuous assignments in generate scope\n", (int)uhdm_scope->Cont_assigns()->size());
+        for (auto cont_assign : *uhdm_scope->Cont_assigns()) {
+            try {
+                import_continuous_assign(cont_assign);
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in continuous assignment import within generate scope: %s\n", e.what());
+            }
+        }
+    }
+    
+    // Recursively import nested generate scopes
+    if (uhdm_scope->Gen_scope_arrays()) {
+        log("UHDM: Found nested generate scope arrays\n");
+        for (auto nested_array : *uhdm_scope->Gen_scope_arrays()) {
+            if (nested_array->Gen_scopes()) {
+                for (auto nested_scope : *nested_array->Gen_scopes()) {
+                    import_gen_scope(nested_scope);
+                }
+            }
+        }
     }
 }
 

@@ -57,7 +57,8 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Hierarchical signal references
 - **Control Flow**: If-else statements, case statements, loops
 - **Memory**: Array inference, memory initialization
-- **Advanced Features**: Generate blocks, interfaces, assertions
+- **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
+- **Advanced Features**: Interfaces, assertions
 
 ## Quick Start
 
@@ -126,6 +127,7 @@ bash test_uhdm_workflow.sh simple_counter
 - **simple_interface** - Interface-based connections
 - **simple_memory** - Memory arrays and access patterns
 - **param_test** - Parameter passing and overrides
+- **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
 
 ### Test Management
 
