@@ -8,7 +8,7 @@ module \simple_counter
   attribute \src "dut.sv:8.15-8.46"
   wire width 8 $add$dut.sv:8.15-8.46$3_Y
   attribute \src "dut.sv:8.15-8.46"
-  wire $logic_not$dut.sv:8.15-8.46$2_Y
+  wire $logic_not$dut.sv:8.15-8.46$$proc$dut.sv:8$1$1_Y
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk
   attribute \src "dut.sv:5.24-5.29"
@@ -27,19 +27,19 @@ module \simple_counter
     connect \Y $add$dut.sv:8.15-8.46$3_Y
   end
   attribute \src "dut.sv:8.15-8.46"
-  cell $logic_not $logic_not$dut.sv:8.15-8.46$2
+  cell $logic_not $logic_not$dut.sv:8.15-8.46$$proc$dut.sv:8$1$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst_n
-    connect \Y $logic_not$dut.sv:8.15-8.46$2_Y
+    connect \Y $logic_not$dut.sv:8.15-8.46$$proc$dut.sv:8$1$1_Y
   end
   attribute \always_ff 1
   attribute \src "dut.sv:8.5-14.8"
   process $proc$dut.sv:8$1
     assign $0\count[7:0] \count
     attribute \src "dut.sv:8.15-8.46"
-    switch $logic_not$dut.sv:8.15-8.46$2_Y
+    switch $logic_not$dut.sv:8.15-8.46$$proc$dut.sv:8$1$1_Y
       attribute \src "dut.sv:8.15-8.46"
       case 1'1
         assign $0\count[7:0] 8'00000000

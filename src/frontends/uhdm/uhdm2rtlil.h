@@ -83,15 +83,24 @@ struct UhdmImporter {
     bool mode_debug = true;
     bool mode_formal = false;
     
+    // Counter for unique cell names
+    int logic_not_counter = 0;
+    
     // Current instance context for hierarchical path resolution
     const UHDM::module_inst* current_instance = nullptr;
+    
+    // Current generate scope for naming
+    std::string current_gen_scope;
+    
+    // UHDM design for accessing module definitions
+    UHDM::design* uhdm_design = nullptr;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
     // Main import functions
     void import_design(UHDM::design* uhdm_design);
     void import_module(const UHDM::module_inst* uhdm_module);
-    void import_module_hierarchy(const UHDM::module_inst* uhdm_module);
+    void import_module_hierarchy(const UHDM::module_inst* uhdm_module, bool create_instances = true);
     void import_port(const UHDM::port* uhdm_port);
     void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
     void import_process(const UHDM::process_stmt* uhdm_process);

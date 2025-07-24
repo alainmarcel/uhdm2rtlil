@@ -113,6 +113,9 @@ UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
 void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log("UHDM: Starting import_design\n");
     
+    // Store the design for later access
+    this->uhdm_design = uhdm_design;
+    
     // First, identify top-level modules by checking vpiTop property
     std::set<std::string> top_level_module_names;
     if (uhdm_design->TopModules()) {
@@ -142,13 +145,25 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     
     // First import all module definitions from AllModules if available
     // This ensures we have all the base module definitions before creating instances
-    //if (uhdm_design->AllModules()) {
-    //    log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
-    //    for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
-    //        log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
-    //        import_module(uhdm_mod);
-    //    }
-    //}
+    if (uhdm_design->AllModules()) {
+        log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
+        for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
+            std::string mod_name = std::string(uhdm_mod->VpiDefName());
+            if (mod_name.find("work@") == 0) {
+                mod_name = mod_name.substr(5);
+            }
+            
+            // Skip top-level modules as they will be imported from the hierarchy
+            // with their generate blocks intact
+            if (top_level_module_names.find(mod_name) != top_level_module_names.end()) {
+                log("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
+                continue;
+            }
+            
+            log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
+            import_module(uhdm_mod);
+        }
+    }
     
     // Then import from TopModules which contains the elaborated hierarchy with instances
     if (uhdm_design->TopModules()) {
@@ -171,7 +186,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 }
 
 // Recursively import module hierarchy starting from a module instance
-void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module) {
+void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
     
     // Get module name
@@ -328,9 +343,9 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module) {
     
     // Also need to import the actual instantiations through RefModule
     // This happens after we've imported all the module definitions
-    log("UHDM: Checking if we should create cell: module=%p, has_parent=%d\n", 
-        module, (uhdm_module->VpiParent() != nullptr));
-    if (module && uhdm_module->VpiParent()) {
+    log("UHDM: Checking if we should create cell: module=%p, has_parent=%d, create_instances=%d\n", 
+        module, (uhdm_module->VpiParent() != nullptr), create_instances);
+    if (create_instances && module && uhdm_module->VpiParent()) {
         // This is a child module instance - we need to create a cell in the parent
         if (auto parent_mod = dynamic_cast<const module_inst*>(uhdm_module->VpiParent())) {
             std::string parent_name = std::string(parent_mod->VpiDefName());
@@ -607,16 +622,26 @@ void UhdmImporter::create_parameterized_modules() {
 
 // Import a single module
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
+    // Null check
+    if (!uhdm_module) {
+        log_error("UHDM: import_module called with null module\n");
+        return;
+    }
+    
     // Set current instance context for expression evaluation
     const module_inst* saved_instance = current_instance;
     current_instance = uhdm_module;
     
     // For module instances, we want the definition name, not the instance name
-    std::string base_modname = std::string(uhdm_module->VpiDefName());
+    std::string base_modname;
+    if (uhdm_module->VpiDefName().data()) {
+        base_modname = std::string(uhdm_module->VpiDefName());
+    }
     
     // Debug and validation
     log("UHDM: Processing module, VpiDefName() returns: '%s', VpiName() returns: '%s'\n", 
-        base_modname.c_str(), uhdm_module->VpiName().data());
+        base_modname.c_str(), 
+        uhdm_module->VpiName().data() ? uhdm_module->VpiName().data() : "<null>");
     
     // Try VpiName if VpiDefName is empty
     if (base_modname.empty()) {
@@ -643,7 +668,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Use param_assigns which contain the actual parameter values in the instantiation hierarchy
     // BUT: Top-level modules should not have parameters in their names
-    if (uhdm_module->Param_assigns() && !is_top_level) {
+    // Also, modules from AllModules should be imported as base modules without parameters
+    bool is_base_module_def = (uhdm_module->VpiParent() == nullptr || 
+                              dynamic_cast<const UHDM::design*>(uhdm_module->VpiParent()) != nullptr);
+    
+    if (uhdm_module->Param_assigns() && !is_top_level && !is_base_module_def) {
         // Build Yosys-style parameterized module name
         std::string param_string;
         for (auto param_assign : *uhdm_module->Param_assigns()) {

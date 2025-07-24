@@ -112,6 +112,11 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     int proc_type = uhdm_process->VpiType();
     
     log("UHDM: === Starting import_process ===\n");
+    
+    // Debug: Print process location
+    std::string proc_src = get_src_attribute(uhdm_process);
+    log("UHDM: Process source location: %s\n", proc_src.c_str());
+    
     log("UHDM: Process type: %d (vpiAlways=%d, vpiAlwaysFF=%d, vpiAlwaysComb=%d)\n", 
         proc_type, vpiAlways, vpiAlwaysFF, vpiAlwaysComb);
     log("UHDM: Current module has %d wires before process import\n", (int)module->wires().size());
@@ -390,20 +395,39 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             }
         } else {
             log("    Not an if statement, trying to parse as generic statement\n");
+            // Debug: Print statement source
+            std::string stmt_src = get_src_attribute(stmt);
+            log("UHDM: Statement source location: %s\n", stmt_src.c_str());
+            
             // For now, just handle the else case with hardcoded logic to match Verilog output
             
-            // Create the $logic_not cell with name based on source location
-            std::string stmt_src = get_src_attribute(stmt);
-            std::string not_cell_name_str = "$logic_not$" + stmt_src + "$2";
+            // Create the $logic_not cell with name based on source location and unique counter
+            logic_not_counter++;
+            // Add generate scope and process ID to make absolutely unique
+            std::string not_cell_name_str = "$logic_not$" + stmt_src;
+            if (!current_gen_scope.empty()) {
+                not_cell_name_str += "$" + current_gen_scope;
+            }
+            not_cell_name_str += "$" + yosys_proc->name.str() + "$" + std::to_string(logic_not_counter);
+            log("UHDM: Creating logic_not cell with name: %s (counter=%d, gen_scope=%s)\n", 
+                not_cell_name_str.c_str(), logic_not_counter, current_gen_scope.c_str());
+            
+            // Always use get_unique_cell_name to ensure uniqueness
             RTLIL::IdString not_cell_name = get_unique_cell_name(not_cell_name_str);
+            log("UHDM: Final logic_not cell name: %s\n", not_cell_name.c_str());
+            
             RTLIL::Cell* not_cell = module->addCell(not_cell_name, ID($logic_not));
             not_cell->setParam(ID::A_SIGNED, 0);
             not_cell->setParam(ID::A_WIDTH, 1);
             not_cell->setParam(ID::Y_WIDTH, 1);
             add_src_attribute(not_cell->attributes, stmt);
             
-            // Create wire with name based on source location
-            std::string not_wire_name_str = "$logic_not$" + stmt_src + "$2_Y";
+            // Create wire with name based on source location and unique counter
+            std::string not_wire_name_str = "$logic_not$" + stmt_src;
+            if (!current_gen_scope.empty()) {
+                not_wire_name_str += "$" + current_gen_scope;
+            }
+            not_wire_name_str += "$" + yosys_proc->name.str() + "$" + std::to_string(logic_not_counter) + "_Y";
             RTLIL::IdString not_wire_name = RTLIL::escape_id(not_wire_name_str);
             
             // Check if this wire already exists

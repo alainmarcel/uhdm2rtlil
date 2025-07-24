@@ -275,7 +275,134 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     if (mode_debug)
         log("  Importing instance: %s of %s\n", inst_name.c_str(), module_name.c_str());
     
-    RTLIL::Cell* cell = module->addCell(new_id(inst_name), RTLIL::escape_id(module_name));
+    // Check if the module definition exists
+    RTLIL::IdString module_id = RTLIL::escape_id(module_name);
+    if (!design->module(module_id)) {
+        // Module doesn't exist - need to create it
+        // For parameterized modules, we need the base module first
+        RTLIL::IdString base_module_id = RTLIL::escape_id(base_module_name);
+        if (!design->module(base_module_id)) {
+            // Base module doesn't exist either - need to import it from UHDM
+            if (uhdm_design && uhdm_design->AllModules()) {
+                // Search for the module definition in AllModules
+                for (const module_inst* mod_def : *uhdm_design->AllModules()) {
+                    std::string def_name = std::string(mod_def->VpiDefName());
+                    if (def_name.find("work@") == 0) {
+                        def_name = def_name.substr(5);
+                    }
+                    if (def_name == base_module_name) {
+                        log("UHDM: Found module definition for %s, importing it\n", base_module_name.c_str());
+                        // Save current module context
+                        RTLIL::Module* saved_module = module;
+                        const module_inst* saved_instance = current_instance;
+                        
+                        // Import the module definition
+                        import_module(mod_def);
+                        
+                        // Restore context
+                        module = saved_module;
+                        current_instance = saved_instance;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Now create the parameterized version if needed
+        if (!params.empty() && design->module(base_module_id)) {
+            log("UHDM: Creating parameterized module %s\n", module_name.c_str());
+            RTLIL::Module* base_mod = design->module(base_module_id);
+            RTLIL::Module* param_mod = design->addModule(module_id);
+            
+            // Copy attributes from base module
+            param_mod->attributes = base_mod->attributes;
+            param_mod->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
+            // Mark the module as parametric - this is crucial!
+            param_mod->avail_parameters = base_mod->avail_parameters;
+            if (param_mod->avail_parameters.empty()) {
+                // If base module doesn't have parameters declared, add them
+                for (const auto& [pname, pval] : params) {
+                    param_mod->avail_parameters(RTLIL::escape_id(pname));
+                }
+            }
+            
+            param_mod->parameter_default_values = base_mod->parameter_default_values;
+            
+            // Update parameters
+            for (const auto& [pname, pval] : params) {
+                param_mod->parameter_default_values[RTLIL::escape_id(pname)] = pval;
+            }
+            
+            // Copy and resize wires/ports based on WIDTH parameter
+            int width = params.count("WIDTH") ? params.at("WIDTH").as_int() : 8;
+            for (auto &wire_pair : base_mod->wires_) {
+                RTLIL::Wire* base_wire = wire_pair.second;
+                RTLIL::Wire* param_wire = param_mod->addWire(base_wire->name, width);
+                param_wire->attributes = base_wire->attributes;
+                param_wire->port_id = base_wire->port_id;
+                param_wire->port_input = base_wire->port_input;
+                param_wire->port_output = base_wire->port_output;
+            }
+            
+            // Import the module contents from UHDM for this parameterized instance
+            // This ensures cells are created with proper wire references
+            if (uhdm_design && uhdm_design->AllModules()) {
+                // Find the UHDM module definition
+                for (const module_inst* mod_def : *uhdm_design->AllModules()) {
+                    std::string def_name = std::string(mod_def->VpiDefName());
+                    if (def_name.find("work@") == 0) {
+                        def_name = def_name.substr(5);
+                    }
+                    if (def_name == base_module_name) {
+                        // Save current module context
+                        RTLIL::Module* saved_module = module;
+                        const module_inst* saved_instance = current_instance;
+                        
+                        // Set context to the parameterized module
+                        module = param_mod;
+                        current_instance = mod_def;
+                        
+                        // Clear wire and name maps for clean import
+                        wire_map.clear();
+                        name_map.clear();
+                        
+                        // Map the parameterized wires we already created
+                        for (auto &wire_pair : param_mod->wires_) {
+                            name_map[wire_pair.first.str().substr(1)] = wire_pair.second;
+                        }
+                        
+                        // Import continuous assignments
+                        if (mod_def->Cont_assigns()) {
+                            for (auto cont_assign : *mod_def->Cont_assigns()) {
+                                import_continuous_assign(cont_assign);
+                            }
+                        }
+                        
+                        // Import always blocks
+                        if (mod_def->Process()) {
+                            for (auto process : *mod_def->Process()) {
+                                import_process(process);
+                            }
+                        }
+                        
+                        // Restore context
+                        module = saved_module;
+                        current_instance = saved_instance;
+                        
+                        // Clear temporary maps
+                        wire_map.clear();
+                        name_map.clear();
+                        
+                        break;
+                    }
+                }
+            }
+            
+            param_mod->fixup_ports();
+        }
+    }
+    
+    RTLIL::Cell* cell = module->addCell(new_id(inst_name), module_id);
     
     // Add source attribute to cell
     add_src_attribute(cell->attributes, uhdm_inst);
@@ -297,9 +424,9 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     }
     
     // Set parameters on the cell
-    for (const auto& [pname, pval] : params) {
-        cell->setParam(RTLIL::escape_id(pname), pval);
-    }
+    //for (const auto& [pname, pval] : params) {
+    //    cell->setParam(RTLIL::escape_id(pname), pval);
+    //}
 }
 
 // Create a wire with the given name and width
@@ -574,6 +701,23 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     std::string scope_name = std::string(uhdm_scope->VpiName());
     std::string full_name = std::string(uhdm_scope->VpiFullName());
     
+    // If VpiName is empty, extract from full name
+    if (scope_name.empty() && !full_name.empty()) {
+        // Extract the part after the last dot
+        size_t last_dot = full_name.rfind('.');
+        if (last_dot != std::string::npos) {
+            scope_name = full_name.substr(last_dot + 1);
+        } else {
+            // No dot found, use everything after @ if present
+            size_t at_pos = full_name.rfind('@');
+            if (at_pos != std::string::npos) {
+                scope_name = full_name.substr(at_pos + 1);
+            } else {
+                scope_name = full_name;
+            }
+        }
+    }
+    
     log("UHDM: Importing generate scope: %s (full: %s)\n", scope_name.c_str(), full_name.c_str());
     
     // Import variables declared in the generate scope
@@ -598,7 +742,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     if (uhdm_scope->Modules()) {
         log("UHDM: Found %d module instances in generate scope\n", (int)uhdm_scope->Modules()->size());
         for (auto mod_inst : *uhdm_scope->Modules()) {
-            // Import the module instance
+            // Just import the module instance
+            // The module definition should already exist from the top-level import
             import_instance(mod_inst);
         }
     }
@@ -606,6 +751,9 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     // Import processes (always blocks) within the generate scope
     if (uhdm_scope->Process()) {
         log("UHDM: Found %d processes in generate scope\n", (int)uhdm_scope->Process()->size());
+        // Save current generate scope for process naming
+        std::string saved_gen_scope = current_gen_scope;
+        current_gen_scope = scope_name;
         for (auto process : *uhdm_scope->Process()) {
             try {
                 import_process(process);
@@ -613,6 +761,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 log_error("UHDM: Exception in process import within generate scope: %s\n", e.what());
             }
         }
+        // Restore previous generate scope
+        current_gen_scope = saved_gen_scope;
     }
     
     // Import continuous assignments within the generate scope

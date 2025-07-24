@@ -154,11 +154,32 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
     switch (op_type) {
         case vpiNotOp:
             if (operands.size() == 1) {
-                // Create a logic_not cell like the Verilog frontend
-                RTLIL::Cell* not_cell = module->addCell(NEW_ID, ID($logic_not));
+                // Create a logic_not cell with unique naming using counter
+                std::string op_src = get_src_attribute(uhdm_op);
+                logic_not_counter++;
+                std::string cell_name_str;
+                if (!op_src.empty()) {
+                    cell_name_str = "$logic_not$" + op_src;
+                    if (!current_gen_scope.empty()) {
+                        cell_name_str += "$" + current_gen_scope;
+                    }
+                    cell_name_str += "$" + std::to_string(logic_not_counter);
+                } else {
+                    cell_name_str = "$logic_not$auto";
+                    if (!current_gen_scope.empty()) {
+                        cell_name_str += "$" + current_gen_scope;
+                    }
+                    cell_name_str += "$" + std::to_string(logic_not_counter);
+                }
+                
+                log("UHDM: import_operation creating logic_not cell with name: %s (gen_scope=%s)\n", 
+                    cell_name_str.c_str(), current_gen_scope.c_str());
+                RTLIL::IdString cell_name = RTLIL::escape_id(cell_name_str);
+                RTLIL::Cell* not_cell = module->addCell(cell_name, ID($logic_not));
                 not_cell->setParam(ID::A_SIGNED, 0);
                 not_cell->setParam(ID::A_WIDTH, operands[0].size());
                 not_cell->setParam(ID::Y_WIDTH, 1);
+                add_src_attribute(not_cell->attributes, uhdm_op);
                 
                 RTLIL::Wire* output_wire = module->addWire(NEW_ID, 1);
                 not_cell->setPort(ID::A, operands[0]);

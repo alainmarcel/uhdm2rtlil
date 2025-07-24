@@ -10,7 +10,7 @@ module \counter
   wire $auto$rtlil.cc:3011:Eq$4
   wire width 8 $auto$rtlil.cc:3017:Add$2
   attribute \src "dut.sv:14.15-14.46"
-  wire $logic_not$dut.sv:14.15-14.46$2_Y
+  wire $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
   wire \WIDTH
   attribute \src "dut.sv:5.18-5.21"
   wire input 1 \clk
@@ -23,7 +23,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $and $auto$expression.cpp:172:import_operation$5
+  cell $and $auto$expression.cpp:193:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -33,7 +33,7 @@ module \counter
     connect \B \enable
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $add $auto$expression.cpp:196:import_operation$1
+  cell $add $auto$expression.cpp:217:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -43,7 +43,7 @@ module \counter
     connect \B 3'--1
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  cell $logic_not $auto$expression.cpp:208:import_operation$3
+  cell $logic_not $auto$expression.cpp:229:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 1
@@ -51,19 +51,19 @@ module \counter
     connect \Y $auto$rtlil.cc:3011:Eq$4
   end
   attribute \src "dut.sv:14.15-14.46"
-  cell $logic_not $logic_not$dut.sv:14.15-14.46$2
+  cell $logic_not $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst_n
-    connect \Y $logic_not$dut.sv:14.15-14.46$2_Y
+    connect \Y $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
   end
   attribute \always_ff 1
   attribute \src "dut.sv:14.5-20.8"
   process $proc$dut.sv:14$1
     assign $0\overflow[0:0] \overflow
     attribute \src "dut.sv:14.15-14.46"
-    switch $logic_not$dut.sv:14.15-14.46$2_Y
+    switch $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
       attribute \src "dut.sv:14.15-14.46"
       case 1'1
         assign $0\overflow[0:0] 1'0
