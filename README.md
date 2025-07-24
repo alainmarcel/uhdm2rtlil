@@ -43,12 +43,18 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 ### Supported SystemVerilog Features
 
 - **Module System**: Module definitions, hierarchical instantiation, parameter passing
-- **Data Types**: Logic, bit vectors, arrays, packed/unpacked structures
+- **Data Types**: 
+  - Logic, bit vectors, arrays
+  - Packed structures with member access via bit slicing
+  - Basic unpacked structures
 - **Procedural Blocks**: 
   - `always_ff` - Sequential logic with proper clock/reset inference
   - `always_comb` - Combinational logic
   - `always` - Mixed sequential/combinational logic
-- **Expressions**: Arithmetic, logical, bitwise, comparison, ternary operators
+- **Expressions**: 
+  - Arithmetic, logical, bitwise, comparison, ternary operators
+  - Struct member access (e.g., `bus.field`)
+  - Hierarchical signal references
 - **Control Flow**: If-else statements, case statements, loops
 - **Memory**: Array inference, memory initialization
 - **Advanced Features**: Generate blocks, interfaces, assertions
@@ -114,14 +120,36 @@ bash test_uhdm_workflow.sh simple_counter
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
+- **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
+- **simple_assign** - Basic continuous assignments
+- **simple_hierarchy** - Module instantiation and port connections
+- **simple_interface** - Interface-based connections
+- **simple_memory** - Memory arrays and access patterns
+- **param_test** - Parameter passing and overrides
 
 ### Test Management
+
+The test framework includes automatic handling of known failing tests:
+
 ```bash
 # View known failing tests
 cat test/failing_tests.txt
 
-# Tests in this file are automatically skipped in CI
 # Format: one test name per line, # for comments
+```
+
+**How it works:**
+- Tests listed in `failing_tests.txt` are expected to fail
+- The test runner (`run_all_tests.sh`) will still run these tests
+- If all failures are listed in `failing_tests.txt`, the test suite passes with exit code 0
+- This allows CI to pass while acknowledging known issues
+- New unexpected failures will cause the test suite to fail
+
+**Example `failing_tests.txt`:**
+```
+# Tests that currently fail:
+simple_fsm    # Missing implementation for FSM constructs
+struct_array  # Complex struct array handling (stoi exception)
 ```
 
 ## Project Structure

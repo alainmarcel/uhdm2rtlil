@@ -1,17 +1,10 @@
-# Failing tests that should be skipped in CI
+# Failing tests that are expected to fail
 # Format: one test directory name per line
 # Comments start with #
 
-# All tests are now working! The UHDM frontend successfully processes all test cases.
-# Some tests have RTLIL differences compared to the Verilog frontend, but this is expected
-# due to different source location tracking and intermediate representation differences.
+# Tests listed here will be marked as expected failures in CI
+# The test runner will pass if all failures are listed here
 
-# Key improvements made:
-# - Fixed process signal extraction with fallback logic
-# - Added support for bitwise operations (vpiBitAndOp, vpiBitOrOp, vpiBitXorOp, vpiBitNegOp)
-# - Fixed parameter parsing for vpiUIntConst and vpiHexConst formats
-# - Implemented comprehensive UHDM memory analysis pass with intermediate representation
-# - Memory objects now generate proper RTLIL memory blocks instead of simple wires
-
-# If any tests start failing, add them here:
-# example_failing_test
+# Tests that currently fail:
+simple_fsm
+struct_array

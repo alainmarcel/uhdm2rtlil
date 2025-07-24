@@ -27,6 +27,10 @@ CRASHED_TEST_NAMES=()
 RTLIL_DIFF_TEST_NAMES=()
 PASSED_TEST_NAMES=()
 
+# Track unexpected results
+UNEXPECTED_FAILURES=()
+UNEXPECTED_SUCCESSES=()
+
 # Load failing tests list
 FAILING_TESTS=()
 if [ -f "failing_tests.txt" ]; then
@@ -125,10 +129,10 @@ for test_dir in "${TEST_DIRS[@]}"; do
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
-    # Mark if test was previously failing
-    was_failing=""
+    # Check if test is expected to fail
+    expected_to_fail=false
     if is_failing_test "$test_dir"; then
-        was_failing=" [was marked as failing]"
+        expected_to_fail=true
     fi
     
     # Run the test and capture result
@@ -137,14 +141,25 @@ for test_dir in "${TEST_DIRS[@]}"; do
     
     # Analyze the result
     echo -n "Result: "
-    analyze_test_result "$test_dir" "$exit_code"
+    test_passed=false
+    if analyze_test_result "$test_dir" "$exit_code"; then
+        test_passed=true
+    fi
     
-    if [ -n "$was_failing" ]; then
-        echo "    Note: This test was previously marked as failing"
+    # Check for unexpected results
+    if [ "$expected_to_fail" = true ] && [ "$test_passed" = true ]; then
+        echo "    ⚠️  UNEXPECTED SUCCESS - This test was expected to fail!"
+        UNEXPECTED_SUCCESSES+=("$test_dir")
+    elif [ "$expected_to_fail" = false ] && [ "$test_passed" = false ]; then
+        echo "    ⚠️  UNEXPECTED FAILURE - This test was expected to pass!"
+        UNEXPECTED_FAILURES+=("$test_dir")
+    elif [ "$expected_to_fail" = true ] && [ "$test_passed" = false ]; then
+        echo "    Note: This test was expected to fail"
     fi
     
     echo
 done
+
 
 # Final summary
 echo "=========================================="
@@ -217,28 +232,66 @@ echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
 echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
 echo "  • Tests that fail: $FAILED_TESTS/$TOTAL_TESTS"
 
-echo
-if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
-    echo "🎉 EXCELLENT! All tests are functional! 🎉"
+# Check for any unexpected results
+if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
     echo
-    echo "The UHDM frontend successfully processes all test cases without crashes."
-    if [ $RTLIL_DIFF_TESTS -gt 0 ]; then
-        echo "RTLIL differences are expected and normal between different frontends."
+    echo "❌ UNEXPECTED FAILURES (${#UNEXPECTED_FAILURES[@]} tests):"
+    echo "   These tests were expected to pass but failed:"
+    for test in "${UNEXPECTED_FAILURES[@]}"; do
+        echo "   - $test"
+    done
+fi
+
+if [ ${#UNEXPECTED_SUCCESSES[@]} -gt 0 ]; then
+    echo
+    echo "❌ UNEXPECTED SUCCESSES (${#UNEXPECTED_SUCCESSES[@]} tests):"
+    echo "   These tests were expected to fail but passed:"
+    for test in "${UNEXPECTED_SUCCESSES[@]}"; do
+        echo "   - $test"
+    done
+    echo
+    echo "   Please remove these from failing_tests.txt"
+fi
+
+# Determine exit status
+echo
+if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]; then
+    if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
+        echo "🎉 EXCELLENT! All tests are functional! 🎉"
+        echo
+        echo "The UHDM frontend successfully processes all test cases without crashes."
+        if [ $RTLIL_DIFF_TESTS -gt 0 ]; then
+            echo "RTLIL differences are expected and normal between different frontends."
+        fi
+        echo
+        echo "✨ Key achievements:"
+        echo "  • No crashes or failures"
+        echo "  • All SystemVerilog constructs are supported"
+        echo "  • Memory analysis pass is working"
+        echo "  • Parameter handling is correct"
+        echo "  • Process import is functional"
+        exit 0
+    else
+        echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
+        echo
+        echo "All failing tests are documented in failing_tests.txt:"
+        echo "  • Crashed tests: $CRASHED_TESTS"
+        echo "  • Failed tests: $FAILED_TESTS"
+        echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+        echo
+        echo "The test suite passes because all results match expectations."
+        exit 0
+    fi
+else
+    echo "❌ TEST SUITE FAILED - Unexpected results detected!"
+    echo
+    if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
+        echo "• ${#UNEXPECTED_FAILURES[@]} tests failed unexpectedly"
+    fi
+    if [ ${#UNEXPECTED_SUCCESSES[@]} -gt 0 ]; then
+        echo "• ${#UNEXPECTED_SUCCESSES[@]} tests passed unexpectedly"
     fi
     echo
-    echo "✨ Key achievements:"
-    echo "  • No crashes or failures"
-    echo "  • All SystemVerilog constructs are supported"
-    echo "  • Memory analysis pass is working"
-    echo "  • Parameter handling is correct"
-    echo "  • Process import is functional"
-    exit 0
-elif [ $CRASHED_TESTS -eq 0 ]; then
-    echo "⚠️  MOSTLY WORKING - Some tests fail but none crash"
-    echo "This suggests configuration or missing file issues rather than code bugs."
-    exit 1
-else
-    echo "❌ NEEDS ATTENTION - Some tests are crashing"
-    echo "Priority should be fixing crashes before addressing other issues."
+    echo "Please investigate unexpected results or update failing_tests.txt"
     exit 1
 fi

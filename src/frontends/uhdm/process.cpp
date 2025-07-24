@@ -450,9 +450,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (else_stmt->VpiType() == vpiAssignment) {
                                 const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(else_stmt);
                                 if (auto rhs = assign->Rhs()) {
-                                    rhs_signal = import_expression(static_cast<const UHDM::expr*>(rhs));
-                                    found_rhs = true;
-                                    log("    Parsed actual RHS expression from UHDM\n");
+                                    if (auto rhs_expr = dynamic_cast<const UHDM::expr*>(rhs)) {
+                                        rhs_signal = import_expression(rhs_expr);
+                                        found_rhs = true;
+                                        log("    Parsed actual RHS expression from UHDM\n");
+                                    }
                                 }
                             }
                         }
@@ -785,8 +787,22 @@ void UhdmImporter::import_begin_block_comb(const begin* uhdm_begin, RTLIL::Proce
 
 // Import assignment for sync context
 void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::SyncRule* sync) {
-    RTLIL::SigSpec lhs = import_expression(static_cast<const expr*>(uhdm_assign->Lhs()));
-    RTLIL::SigSpec rhs = import_expression(static_cast<const expr*>(uhdm_assign->Rhs()));
+    RTLIL::SigSpec lhs;
+    RTLIL::SigSpec rhs;
+    
+    // Import LHS (always an expr)
+    if (auto lhs_expr = uhdm_assign->Lhs()) {
+        lhs = import_expression(lhs_expr);
+    }
+    
+    // Import RHS (could be an expr or other type)
+    if (auto rhs_any = uhdm_assign->Rhs()) {
+        if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            rhs = import_expression(rhs_expr);
+        } else {
+            log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
+        }
+    }
     
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
@@ -803,8 +819,22 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
 
 // Import assignment for comb context
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
-    RTLIL::SigSpec lhs = import_expression(static_cast<const expr*>(uhdm_assign->Lhs()));
-    RTLIL::SigSpec rhs = import_expression(static_cast<const expr*>(uhdm_assign->Rhs()));
+    RTLIL::SigSpec lhs;
+    RTLIL::SigSpec rhs;
+    
+    // Import LHS (always an expr)
+    if (auto lhs_expr = uhdm_assign->Lhs()) {
+        lhs = import_expression(lhs_expr);
+    }
+    
+    // Import RHS (could be an expr or other type)
+    if (auto rhs_any = uhdm_assign->Rhs()) {
+        if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            rhs = import_expression(rhs_expr);
+        } else {
+            log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
+        }
+    }
     
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {

@@ -10,7 +10,10 @@
 #include <uhdm/logic_net.h>
 #include <uhdm/net.h>
 #include <uhdm/port.h>
+#include <uhdm/struct_typespec.h>
+#include <uhdm/typespec_member.h>
 #include <uhdm/vpi_visitor.h>
+#include <uhdm/assignment.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -36,6 +39,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             return import_bit_select(static_cast<const bit_select*>(uhdm_expr));
         case vpiConcatOp:
             return import_concat(static_cast<const operation*>(uhdm_expr));
+        case vpiAssignment:
+            // This should not be called on assignment directly
+            // Assignment is a statement, not an expression
+            log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
+            return RTLIL::SigSpec();
         case 5000: // vpiHierPath
             return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_instance);
         default:
@@ -333,6 +341,106 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     if (mode_debug)
         log("    hier_path name: '%s'\n", path_name.c_str());
+    
+    // Check if this is a struct member access (e.g., bus1.a)
+    size_t dot_pos = path_name.find('.');
+    if (dot_pos != std::string::npos) {
+        std::string base_name = path_name.substr(0, dot_pos);
+        std::string member_name = path_name.substr(dot_pos + 1);
+        
+        if (mode_debug)
+            log("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
+        
+        // Check if the base wire exists
+        if (name_map.count(base_name)) {
+            RTLIL::Wire* base_wire = name_map[base_name];
+            
+            // Look up the base wire in wire_map to get the UHDM object
+            const any* base_uhdm_obj = nullptr;
+            for (auto& pair : wire_map) {
+                if (pair.second == base_wire) {
+                    base_uhdm_obj = pair.first;
+                    break;
+                }
+            }
+            
+            if (base_uhdm_obj) {
+                // Get typespec of the base object
+                const ref_typespec* base_ref_typespec = nullptr;
+                const typespec* base_typespec = nullptr;
+                
+                if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(base_uhdm_obj)) {
+                    base_ref_typespec = logic_var->Typespec();
+                } else if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(base_uhdm_obj)) {
+                    base_ref_typespec = logic_net->Typespec();
+                } else if (auto net_obj = dynamic_cast<const UHDM::net*>(base_uhdm_obj)) {
+                    base_ref_typespec = net_obj->Typespec();
+                } else if (auto port_obj = dynamic_cast<const UHDM::port*>(base_uhdm_obj)) {
+                    base_ref_typespec = port_obj->Typespec();
+                }
+                
+                if (base_ref_typespec) {
+                    base_typespec = base_ref_typespec->Actual_typespec();
+                    
+                    // Check if this is a packed struct typespec
+                    if (base_typespec && base_typespec->UhdmType() == uhdmstruct_typespec) {
+                        auto struct_typespec = static_cast<const UHDM::struct_typespec*>(base_typespec);
+                        
+                        if (mode_debug)
+                            log("    Found struct typespec for base wire '%s'\n", base_name.c_str());
+                        
+                        // Find the member in the struct
+                        if (struct_typespec->Members()) {
+                            int bit_offset = 0;
+                            int member_width = 0;
+                            bool found_member = false;
+                            
+                            // Iterate through members in reverse order (MSB to LSB for packed structs)
+                            auto members = struct_typespec->Members();
+                            for (int i = members->size() - 1; i >= 0; i--) {
+                                auto member_spec = (*members)[i];
+                                std::string current_member_name = std::string(member_spec->VpiName());
+                                
+                                // Get width of this member
+                                int current_member_width = 1;
+                                if (auto member_ts = member_spec->Typespec()) {
+                                    if (auto actual_ts = member_ts->Actual_typespec()) {
+                                        current_member_width = get_width_from_typespec(actual_ts, inst);
+                                    }
+                                } else {
+                                    // Try to get width directly from the member
+                                    current_member_width = get_width(member_spec, inst);
+                                }
+                                
+                                if (current_member_name == member_name) {
+                                    member_width = current_member_width;
+                                    found_member = true;
+                                    break;
+                                }
+                                
+                                bit_offset += current_member_width;
+                            }
+                            
+                            if (found_member) {
+                                if (mode_debug)
+                                    log("    Found packed struct member: offset=%d, width=%d\n", bit_offset, member_width);
+                                
+                                // Return a bit slice of the base wire
+                                return RTLIL::SigSpec(base_wire, bit_offset, member_width);
+                            }
+                        }
+                    } else if (mode_debug) {
+                        log("    Base wire typespec is not a struct (UhdmType=%d)\n", 
+                            base_typespec ? base_typespec->UhdmType() : -1);
+                    }
+                } else if (mode_debug) {
+                    log("    Base wire has no typespec\n");
+                }
+            } else if (mode_debug) {
+                log("    Could not find UHDM object for base wire '%s'\n", base_name.c_str());
+            }
+        }
+    }
     
     // Check if wire already exists in name_map
     if (name_map.count(path_name)) {
