@@ -27,6 +27,17 @@
             ],
             "problemMatcher": [],
             "detail": "Configure UHDM plugin for debug build"
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "-j$(nproc)"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Build UHDM plugin in release mode"
         }
     ]
 }

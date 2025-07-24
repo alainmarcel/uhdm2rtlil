@@ -14,6 +14,7 @@
 #include <uhdm/typespec_member.h>
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/assignment.h>
+#include <uhdm/uhdm_vpi_user.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -44,7 +45,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             // Assignment is a statement, not an expression
             log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
             return RTLIL::SigSpec();
-        case 5000: // vpiHierPath
+        case vpiHierPath:
             return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_instance);
         default:
             log_warning("Unsupported expression type: %d\n", obj_type);

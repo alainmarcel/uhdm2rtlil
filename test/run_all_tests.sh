@@ -7,11 +7,19 @@
 set +e
 
 echo "=== UHDM Frontend Test Runner ==="
-echo "Running all test cases..."
-echo
 
 # Change to test directory
 cd "$(dirname "$0")"
+
+# Check if a specific test was requested
+SPECIFIC_TEST=""
+if [ $# -eq 1 ]; then
+    SPECIFIC_TEST="$1"
+    echo "Running specific test: $SPECIFIC_TEST"
+else
+    echo "Running all test cases..."
+fi
+echo
 
 # Initialize counters and tracking arrays
 TOTAL_TESTS=0
@@ -51,13 +59,24 @@ echo
 
 # Find all test directories (directories containing dut.sv)
 TEST_DIRS=()
-for dir in */; do
-    if [ -d "$dir" ] && [ -f "$dir/dut.sv" ]; then
-        # Remove trailing slash from directory name
-        TEST_NAME="${dir%/}"
-        TEST_DIRS+=("$TEST_NAME")
+if [ -n "$SPECIFIC_TEST" ]; then
+    # Check if the specific test exists
+    if [ -d "$SPECIFIC_TEST" ] && [ -f "$SPECIFIC_TEST/dut.sv" ]; then
+        TEST_DIRS+=("$SPECIFIC_TEST")
+    else
+        echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv"
+        exit 1
     fi
-done
+else
+    # Find all test directories
+    for dir in */; do
+        if [ -d "$dir" ] && [ -f "$dir/dut.sv" ]; then
+            # Remove trailing slash from directory name
+            TEST_NAME="${dir%/}"
+            TEST_DIRS+=("$TEST_NAME")
+        fi
+    done
+fi
 
 if [ ${#TEST_DIRS[@]} -eq 0 ]; then
     echo "No test directories found (looking for directories containing dut.sv)"

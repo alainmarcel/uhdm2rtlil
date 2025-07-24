@@ -104,6 +104,8 @@ struct UhdmImporter {
     // Interface support
     void import_interface(const UHDM::interface_inst* uhdm_interface);
     void import_interface_instances(const UHDM::module_inst* uhdm_module);
+    void import_generate_scopes(const UHDM::module_inst* uhdm_module);
+    void import_gen_scope(const UHDM::gen_scope* uhdm_scope);
     
     // Signal and wire management
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);
@@ -158,6 +160,7 @@ struct UhdmImporter {
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
     std::string get_src_attribute(const UHDM::any* uhdm_obj);
+    RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     
     // Signal name extraction from UHDM
     bool extract_signal_names_from_process(const UHDM::any* stmt, 

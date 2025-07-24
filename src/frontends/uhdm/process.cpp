@@ -149,7 +149,15 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
         proc_name_str = "$proc$unknown$1";
     }
     
+    // Ensure unique process name by checking if it already exists
     RTLIL::IdString proc_name = RTLIL::escape_id(proc_name_str);
+    int suffix = 1;
+    while (module->processes.count(proc_name)) {
+        suffix++;
+        std::string unique_name = proc_name_str.substr(0, proc_name_str.rfind('$')) + "$" + std::to_string(suffix);
+        proc_name = RTLIL::escape_id(unique_name);
+    }
+    
     RTLIL::Process* yosys_proc = module->addProcess(proc_name);
     
     // Add source attributes (process type attributes will be set in specific import functions)
@@ -387,7 +395,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Create the $logic_not cell with name based on source location
             std::string stmt_src = get_src_attribute(stmt);
             std::string not_cell_name_str = "$logic_not$" + stmt_src + "$2";
-            RTLIL::IdString not_cell_name = RTLIL::escape_id(not_cell_name_str);
+            RTLIL::IdString not_cell_name = get_unique_cell_name(not_cell_name_str);
             RTLIL::Cell* not_cell = module->addCell(not_cell_name, ID($logic_not));
             not_cell->setParam(ID::A_SIGNED, 0);
             not_cell->setParam(ID::A_WIDTH, 1);
@@ -467,7 +475,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             // This is likely an increment operation like count <= count + 1
                             // Create $add cell for increment
                             std::string add_cell_name_str = "$add$" + get_src_attribute(stmt) + "$3";
-                            RTLIL::IdString add_cell_name = RTLIL::escape_id(add_cell_name_str);
+                            RTLIL::IdString add_cell_name = get_unique_cell_name(add_cell_name_str);
                             RTLIL::Cell* add_cell = module->addCell(add_cell_name, ID($add));
                             add_cell->setParam(ID::A_SIGNED, 0);
                             add_cell->setParam(ID::A_WIDTH, temp_wire->width);

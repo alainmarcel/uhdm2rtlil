@@ -1,0 +1,4 @@
+# Read UHDM into Yosys
+debug read_uhdm slpp_all/surelog.uhdm
+# Write the design to RTLIL
+write_rtlil simple_struct_from_uhdm_debug.il

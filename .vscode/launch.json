@@ -46,6 +46,34 @@
             ],
             "preLaunchTask": "build-debug",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UHDM Plugin - generate_test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/third_party/yosys/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/generate_test/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/generate_test",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on import_generate_scopes",
+                    "text": "break UhdmImporter::import_generate_scopes",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
 }
