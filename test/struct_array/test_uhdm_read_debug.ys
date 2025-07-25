@@ -1,4 +1,8 @@
-# Read UHDM into Yosys
-debug read_uhdm slpp_all/surelog.uhdm
-# Write the design to RTLIL
-write_rtlil simple_struct_from_uhdm_debug.il
+# Debug script for UHDM import
+plugin -i ../../build-debug/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -check -top struct_array
+stat
+opt
+stat
+write_rtlil struct_array_from_uhdm.il

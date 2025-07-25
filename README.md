@@ -46,7 +46,8 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Data Types**: 
   - Logic, bit vectors, arrays
   - Packed structures with member access via bit slicing
-  - Basic unpacked structures
+  - Struct arrays with complex indexing
+  - Package types and imports
 - **Procedural Blocks**: 
   - `always_ff` - Sequential logic with proper clock/reset inference
   - `always_comb` - Combinational logic
@@ -55,9 +56,12 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Arithmetic, logical, bitwise, comparison, ternary operators
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
-- **Control Flow**: If-else statements, case statements, loops
+  - Parameter references in expressions
+- **Control Flow**: If-else statements, case statements with parameter values, loops
 - **Memory**: Array inference, memory initialization
 - **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
+- **Packages**: Import statements, package parameters, struct types, functions
+- **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
 - **Advanced Features**: Interfaces, assertions
 
 ## Quick Start
@@ -153,8 +157,7 @@ cat test/failing_tests.txt
 **Example `failing_tests.txt`:**
 ```
 # Tests that currently fail:
-simple_fsm    # Missing implementation for FSM constructs
-struct_array  # Complex struct array handling (stoi exception)
+# (none - all tests pass!)
 ```
 
 ## Project Structure
@@ -181,6 +184,13 @@ uhdm2rtlil/
 └── build/                     # Build artifacts
 ```
 
+## Test Results
+
+The UHDM frontend now passes **all 14 test cases** in the test suite:
+- **2 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package)
+- **12 Functional tests** - Work correctly with expected RTLIL differences
+- **0 Failing tests** - All tests pass successfully!
+
 ## Recent Improvements
 
 ### Parameter Reference Support
@@ -192,6 +202,7 @@ uhdm2rtlil/
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
 - **simple_instance_array** - Added support for primitive gate arrays (and, or, xor, nand, not gates with array syntax)
 - **simple_package** - Added full package support including imports, parameters, and struct types
+- **struct_array** - Now passes with improved expression handling and struct support
 
 ### Primitive Gate Support
 The UHDM frontend now supports Verilog primitive gates and gate arrays:

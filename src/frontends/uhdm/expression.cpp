@@ -122,11 +122,13 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             }
         }
         case vpiDecConst: {
-            int int_val = std::stoi(value);
+            std::string dec_str = value.substr(4);
+            int int_val = std::stoi(dec_str);
             return RTLIL::SigSpec(RTLIL::Const(int_val, size));
         }
         case vpiIntConst: {
-            int int_val = std::stoi(value);
+            std::string int_str = value.substr(4);
+            int int_val = std::stoi(int_str);
             return RTLIL::SigSpec(RTLIL::Const(int_val, 32));
         }
         case vpiUIntConst: {

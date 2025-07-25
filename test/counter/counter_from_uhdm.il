@@ -22,7 +22,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $and $auto$expression.cpp:211:import_operation$5
+  cell $and $auto$expression.cpp:213:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -32,7 +32,7 @@ module \counter
     connect \B \enable
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $add $auto$expression.cpp:235:import_operation$1
+  cell $add $auto$expression.cpp:237:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -42,7 +42,7 @@ module \counter
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  cell $logic_not $auto$expression.cpp:247:import_operation$3
+  cell $logic_not $auto$expression.cpp:249:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 1
