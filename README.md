@@ -28,12 +28,16 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - Provides semantic analysis and type checking
 
 #### 2. **UHDM Frontend** (`src/frontends/uhdm/`)
-- **Core Module** (`uhdm2rtlil.cpp`) - Main frontend entry point and design import
+- **Core Module** (`uhdm2rtlil.cpp`) - Main frontend entry point, design import, and UHDM elaboration
 - **Module Handler** (`module.cpp`) - Module definitions, ports, instances, and wire declarations
 - **Process Handler** (`process.cpp`) - Always blocks, procedural statements, and control flow
 - **Expression Handler** (`expression.cpp`) - Operations, constants, references, and complex expressions
 - **Memory Handler** (`memory.cpp`) - Memory inference and array handling
+- **Memory Analysis** (`memory_analysis.cpp`) - Advanced memory pattern detection and optimization
 - **Clocking Handler** (`clocking.cpp`) - Clock domain analysis and flip-flop generation
+- **Package Support** (`package.cpp`) - SystemVerilog package imports, parameters, and type definitions
+- **Primitives Support** (`primitives.cpp`) - Verilog primitive gates and gate arrays
+- **Reference Module** (`ref_module.cpp`) - Module instance reference resolution and parameter passing
 
 #### 3. **Yosys** (`third_party/yosys/`)
 - Open-source synthesis framework
@@ -161,11 +165,26 @@ cat test/failing_tests.txt
 - This allows CI to pass while acknowledging known issues
 - New unexpected failures will cause the test suite to fail
 
-**Example `failing_tests.txt`:**
+**Current Status:**
 ```
 # Tests that currently fail:
 # (none - all tests pass!)
 ```
+
+### Important Test Workflow Note
+
+The test workflow runs `proc` before `opt` to ensure proper process handling:
+```tcl
+hierarchy -check -top $MODULE_NAME
+stat
+proc    # Convert processes to netlists first
+opt     # Then optimize
+stat
+write_rtlil ${MODULE_NAME}_from_uhdm.il
+synth -top $MODULE_NAME
+```
+
+This prevents errors when synthesizing designs with generate blocks and multiple processes.
 
 ## Project Structure
 
@@ -177,7 +196,11 @@ uhdm2rtlil/
 │   ├── process.cpp             # Always blocks and statements
 │   ├── expression.cpp          # Expression evaluation
 │   ├── memory.cpp              # Memory and array support
+│   ├── memory_analysis.cpp     # Memory pattern detection
 │   ├── clocking.cpp            # Clock domain analysis
+│   ├── package.cpp             # Package support
+│   ├── primitives.cpp          # Primitive gates
+│   ├── ref_module.cpp          # Module references
 │   └── uhdm2rtlil.h           # Header with class definitions
 ├── test/                        # Test framework
 │   ├── run_all_tests.sh        # Test runner script
@@ -205,11 +228,12 @@ The UHDM frontend now passes **all 14 test cases** in the test suite:
 - Parameters are now correctly resolved to their constant values instead of being treated as wire references
 - Supports binary constant format "BIN:xx" used by UHDM for proper bit width handling
 
-### Fixed Tests
+### Key Improvements
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
 - **simple_instance_array** - Added support for primitive gate arrays (and, or, xor, nand, not gates with array syntax)
 - **simple_package** - Added full package support including imports, parameters, and struct types
 - **struct_array** - Now passes with improved expression handling and struct support
+- **generate_test** - Fixed by adding `proc` before `opt` in test workflow to handle multiple generated processes correctly
 
 ### Primitive Gate Support
 The UHDM frontend now supports Verilog primitive gates and gate arrays:
