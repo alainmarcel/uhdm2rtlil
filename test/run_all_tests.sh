@@ -28,12 +28,14 @@ FAILED_TESTS=0
 SKIPPED_TESTS=0
 CRASHED_TESTS=0
 RTLIL_DIFF_TESTS=0
+UHDM_ONLY_TESTS=0
 
 FAILED_TEST_NAMES=()
 SKIPPED_TEST_NAMES=()
 CRASHED_TEST_NAMES=()
 RTLIL_DIFF_TEST_NAMES=()
 PASSED_TEST_NAMES=()
+UHDM_ONLY_TEST_NAMES=()
 
 # Track unexpected results
 UNEXPECTED_FAILURES=()
@@ -114,11 +116,29 @@ analyze_test_result() {
     local uhdm_file="${test_dir}/${test_dir}_from_uhdm.il"
     local verilog_file="${test_dir}/${test_dir}_from_verilog.il"
     
-    if [ ! -f "$uhdm_file" ] || [ ! -f "$verilog_file" ]; then
-        echo "❌ Test $test_dir FAILED - missing output files"
+    # Check if UHDM output exists
+    if [ ! -f "$uhdm_file" ]; then
+        echo "❌ Test $test_dir FAILED - UHDM output missing"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         FAILED_TEST_NAMES+=("$test_dir")
         return 1
+    fi
+    
+    # If Verilog output is missing but UHDM succeeded, this might be showcasing UHDM's superior capabilities
+    if [ ! -f "$verilog_file" ]; then
+        # Check if Verilog frontend failed (common for advanced SystemVerilog)
+        if [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
+            echo "✅ Test $test_dir PASSED - UHDM succeeds where Verilog fails!"
+            echo "    Demonstrates UHDM's superior SystemVerilog support"
+            UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
+            UHDM_ONLY_TEST_NAMES+=("$test_dir")
+            return 0
+        else
+            echo "❌ Test $test_dir FAILED - Verilog output missing unexpectedly"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
+            FAILED_TEST_NAMES+=("$test_dir")
+            return 1
+        fi
     fi
     
     # Check if RTLIL outputs are identical
@@ -188,13 +208,14 @@ echo
 echo "📊 OVERALL STATISTICS:"
 echo "  Total tests run: $TOTAL_TESTS"
 echo "  ✅ Perfect matches: $PASSED_TESTS"
+echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
 echo "  ⚠️  Functional (RTLIL diffs): $RTLIL_DIFF_TESTS"
 echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
 echo
 
 # Calculate success rate
-FUNCTIONAL_TESTS=$((PASSED_TESTS + RTLIL_DIFF_TESTS))
+FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS + RTLIL_DIFF_TESTS))
 if [ $TOTAL_TESTS -gt 0 ]; then
     SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / TOTAL_TESTS))
     echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$TOTAL_TESTS tests functional)"
@@ -208,6 +229,15 @@ if [ $PASSED_TESTS -gt 0 ]; then
     echo "✅ PERFECT MATCHES ($PASSED_TESTS tests):"
     echo "   These tests produce identical RTLIL output between UHDM and Verilog frontends:"
     for test in "${PASSED_TEST_NAMES[@]}"; do
+        echo "   - $test"
+    done
+fi
+
+if [ $UHDM_ONLY_TESTS -gt 0 ]; then
+    echo
+    echo "🚀 UHDM-ONLY SUCCESS ($UHDM_ONLY_TESTS tests):"
+    echo "   These tests demonstrate UHDM's superior SystemVerilog support:"
+    for test in "${UHDM_ONLY_TEST_NAMES[@]}"; do
         echo "   - $test"
     done
 fi

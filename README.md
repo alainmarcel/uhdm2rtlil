@@ -128,6 +128,9 @@ bash test_uhdm_workflow.sh simple_counter
 - **simple_memory** - Memory arrays and access patterns
 - **param_test** - Parameter passing and overrides
 - **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
+- **simple_fsm** - Finite state machine with parameterized states (tests parameter references in case statements)
+- **simple_instance_array** - Primitive gate arrays (tests and, or, xor, nand, not gates with array instances)
+- **simple_package** - SystemVerilog packages with parameters, structs, and imports
 
 ### Test Management
 
@@ -177,6 +180,33 @@ uhdm2rtlil/
 ├── .github/workflows/         # CI/CD configuration
 └── build/                     # Build artifacts
 ```
+
+## Recent Improvements
+
+### Parameter Reference Support
+- Added proper handling of parameter references in expressions (e.g., in case statements)
+- Parameters are now correctly resolved to their constant values instead of being treated as wire references
+- Supports binary constant format "BIN:xx" used by UHDM for proper bit width handling
+
+### Fixed Tests
+- **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
+- **simple_instance_array** - Added support for primitive gate arrays (and, or, xor, nand, not gates with array syntax)
+- **simple_package** - Added full package support including imports, parameters, and struct types
+
+### Primitive Gate Support
+The UHDM frontend now supports Verilog primitive gates and gate arrays:
+- Supported gates: `and`, `or`, `xor`, `nand`, `nor`, `xnor`, `not`, `buf`
+- Array instantiation: `and gate_array[3:0] (out, in1, in2);`
+- Proper bit-slicing for vectored connections
+- Maps to Yosys internal gate cells (`$_AND_`, `$_OR_`, etc.)
+
+### Package Support
+The UHDM frontend now supports SystemVerilog packages:
+- Package imports with `import package::*` syntax
+- Package parameters and constants
+- Package struct types with correct width calculation
+- Cross-module type references from packages
+- Proper wire context resolution during module instantiation
 
 ## Development Workflow
 

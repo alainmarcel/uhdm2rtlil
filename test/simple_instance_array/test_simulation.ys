@@ -1,0 +1,8 @@
+# Test simulation for instance arrays
+plugin -i /home/alain/uhdm2rtlil/build/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top simple_instance_array
+
+# Create a simple test bench
+eval -set a 4'b1010 -set b 4'b1100
+eval -table a,b,and_out,or_out,xor_out,nand_out,not_out

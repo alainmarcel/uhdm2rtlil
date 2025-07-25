@@ -74,6 +74,39 @@
             ],
             "preLaunchTask": "build",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UHDM Plugin - simple_package",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/simple_package/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/simple_package",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on package import",
+                    "text": "break UhdmImporter::import_package",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on assertion",
+                    "text": "break rtlil.cc:5264",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
 }

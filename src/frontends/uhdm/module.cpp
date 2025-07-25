@@ -28,7 +28,7 @@ void UhdmImporter::import_port(const port* uhdm_port) {
         log("  Importing port: %s (dir=%d)\n", portname.c_str(), direction);
     
     // Get port width
-    int width = get_width(uhdm_port);
+    int width = get_width(uhdm_port, current_instance);
     
     // Check if this is an interface port
     if (width == -1) {
@@ -296,12 +296,20 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         RTLIL::Module* saved_module = module;
                         const module_inst* saved_instance = current_instance;
                         
+                        // Save parent module's maps
+                        auto saved_wire_map = wire_map;
+                        auto saved_name_map = name_map;
+                        
                         // Import the module definition
                         import_module(mod_def);
                         
                         // Restore context
                         module = saved_module;
                         current_instance = saved_instance;
+                        
+                        // Restore parent module's maps
+                        wire_map = saved_wire_map;
+                        name_map = saved_name_map;
                         break;
                     }
                 }
@@ -358,6 +366,10 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         RTLIL::Module* saved_module = module;
                         const module_inst* saved_instance = current_instance;
                         
+                        // Save parent module's maps
+                        auto saved_wire_map = wire_map;
+                        auto saved_name_map = name_map;
+                        
                         // Set context to the parameterized module
                         module = param_mod;
                         current_instance = mod_def;
@@ -389,9 +401,9 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         module = saved_module;
                         current_instance = saved_instance;
                         
-                        // Clear temporary maps
-                        wire_map.clear();
-                        name_map.clear();
+                        // Restore the parent module's maps
+                        wire_map = saved_wire_map;
+                        name_map = saved_name_map;
                         
                         break;
                     }
@@ -569,6 +581,27 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     }
                     // Otherwise recurse to get the actual width
                     return get_width_from_typespec(actual, inst);
+                } else {
+                    // Try to resolve package type reference
+                    std::string type_name = std::string(ref_typespec->VpiName());
+                    log("UHDM: ref_typespec has no actual_typespec, checking package types for: %s\n", type_name.c_str());
+                    
+                    // Check if this is a package type reference
+                    if (package_typespec_map.count(type_name)) {
+                        const UHDM::typespec* pkg_typespec = package_typespec_map.at(type_name);
+                        log("UHDM: Found package typespec for %s\n", type_name.c_str());
+                        return get_width_from_typespec(pkg_typespec, inst);
+                    }
+                    
+                    // Try with package:: prefix (in case of qualified name)
+                    size_t colonPos = type_name.find("::");
+                    if (colonPos != std::string::npos) {
+                        if (package_typespec_map.count(type_name)) {
+                            const UHDM::typespec* pkg_typespec = package_typespec_map.at(type_name);
+                            log("UHDM: Found package typespec for qualified name %s\n", type_name.c_str());
+                            return get_width_from_typespec(pkg_typespec, inst);
+                        }
+                    }
                 }
             }
         }

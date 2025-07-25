@@ -134,7 +134,16 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // Store in class member for use during import
     this->top_level_modules = top_level_module_names;
     
-    // First, import all interfaces
+    // First, import all packages
+    if (uhdm_design->AllPackages()) {
+        log("UHDM: Found %d packages in design\n", (int)uhdm_design->AllPackages()->size());
+        for (const package* uhdm_package : *uhdm_design->AllPackages()) {
+            log("UHDM: About to import package: %s\n", uhdm_package->VpiDefName().data());
+            import_package(uhdm_package);
+        }
+    }
+    
+    // Then, import all interfaces
     if (uhdm_design->AllInterfaces()) {
         log("UHDM: Found %d interfaces in design\n", (int)uhdm_design->AllInterfaces()->size());
         for (const interface_inst* uhdm_interface : *uhdm_design->AllInterfaces()) {
@@ -264,7 +273,27 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         log("UHDM: Final param_signature: %s\n", param_signature.c_str());
         log("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
         log_flush();
+        
+        // Save current context before importing child module
+        RTLIL::Module* saved_module = module;
+        const module_inst* saved_instance = current_instance;
+        auto saved_wire_map = wire_map;
+        auto saved_name_map = name_map;
+        auto saved_net_map = net_map;
+        
+        // Clear maps before importing new module to avoid cross-module wire references
+        wire_map.clear();
+        name_map.clear();
+        net_map.clear();
+        
         import_module(uhdm_module);
+        
+        // Restore parent context
+        module = saved_module;
+        current_instance = saved_instance;
+        wire_map = saved_wire_map;
+        name_map = saved_name_map;
+        net_map = saved_net_map;
     } else {
         log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
         
@@ -400,9 +429,20 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 log("UHDM: Creating cell %s of type %s in parent %s\n", 
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
                 
-                // Save current module context
+                // Save current module context and maps
                 RTLIL::Module* saved_module = this->module;
+                auto saved_name_map = this->name_map;
+                auto saved_wire_map = this->wire_map;
+                
                 this->module = parent_rtlil_module;
+                
+                // Build name_map for parent module
+                this->name_map.clear();
+                for (auto &wire_pair : parent_rtlil_module->wires_) {
+                    std::string wire_name = wire_pair.first.str();
+                    if (wire_name[0] == '\\') wire_name = wire_name.substr(1);
+                    this->name_map[wire_name] = wire_pair.second;
+                }
                 
                 // Create the cell
                 RTLIL::Cell* cell = parent_rtlil_module->addCell(
@@ -422,8 +462,10 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     }
                 }
                 
-                // Restore module context
+                // Restore module context and maps
                 this->module = saved_module;
+                this->name_map = saved_name_map;
+                this->wire_map = saved_wire_map;
             }
         }
     }
@@ -852,6 +894,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
     }
+    
+    // Import primitive gates
+    import_primitives(uhdm_module);
+    
+    // Import primitive gate arrays
+    import_primitive_arrays(uhdm_module);
     
     // Module instances are imported through the hierarchy traversal
     // (TopModules), not through ref_modules

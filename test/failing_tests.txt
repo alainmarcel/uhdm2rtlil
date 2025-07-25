@@ -6,5 +6,4 @@
 # The test runner will pass if all failures are listed here
 
 # Tests that currently fail:
-simple_fsm
 struct_array

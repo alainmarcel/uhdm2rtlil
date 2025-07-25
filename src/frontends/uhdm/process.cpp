@@ -272,7 +272,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         // Extract signal names from the UHDM structure
         if (!extract_signal_names_from_process(stmt, output_signal_name, input_signal_name, 
                                              clock_signal_name, reset_signal_name)) {
-            log_warning("Failed to extract signal names from UHDM structure, trying fallback method...\n");
+            // Debug: Check if module already has processes with switches BEFORE warning
+            log("UHDM: Module has %d processes before fallback\n", (int)module->processes.size());
+            for (const auto& proc_pair : module->processes) {
+                log("UHDM: Existing process %s has %d switches\n", 
+                    proc_pair.first.c_str(), (int)proc_pair.second->root_case.switches.size());
+            }
+            
+            log("Warning: Failed to extract signal names from UHDM structure, trying fallback method...\n");
             
             // Fallback: use name_map to extract signals
             for (const auto& [name, wire] : name_map) {

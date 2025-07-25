@@ -23,6 +23,7 @@
 #include <uhdm/interface_inst.h>
 #include <uhdm/interface_typespec.h>
 #include <uhdm/ref_typespec.h>
+#include <uhdm/package.h>
 #include <uhdm/ExprEval.h>
 
 #include "kernel/yosys.h"
@@ -78,6 +79,18 @@ struct UhdmImporter {
     // Track interface instance parameters (interface_name -> param_name -> value)
     std::map<std::string, std::map<std::string, int>> interface_parameters;
     
+    // Track package definitions and their contents
+    // Key: package_name, Value: package object
+    std::map<std::string, const UHDM::package*> package_map;
+    
+    // Track package typespecs for type resolution
+    // Key: fully qualified name (package::type), Value: typespec
+    std::map<std::string, const UHDM::typespec*> package_typespec_map;
+    
+    // Track package parameters
+    // Key: fully qualified name (package::param), Value: constant value
+    std::map<std::string, RTLIL::Const> package_parameter_map;
+    
     // Import modes and options
     bool mode_keep_names = false;  // Use uniquify to avoid naming conflicts
     bool mode_debug = true;
@@ -110,11 +123,21 @@ struct UhdmImporter {
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
     
+    // Package support
+    void import_package(const UHDM::package* uhdm_package);
+    
     // Interface support
     void import_interface(const UHDM::interface_inst* uhdm_interface);
     void import_interface_instances(const UHDM::module_inst* uhdm_module);
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);
+    
+    // Primitive gate support
+    void import_primitives(const UHDM::module_inst* uhdm_module);
+    void import_primitive_arrays(const UHDM::module_inst* uhdm_module);
+    void import_gate(const UHDM::gate* uhdm_gate, const std::string& instance_name = "");
+    void import_gate_array(const UHDM::gate_array* uhdm_gate_array);
+    void import_gate_array_element(const UHDM::gate* gate_template, const std::string& instance_name, int bit_index);
     
     // Signal and wire management
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);

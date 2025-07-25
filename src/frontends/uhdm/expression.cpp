@@ -59,15 +59,33 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
     std::string value = std::string(uhdm_const->VpiValue());
     int size = uhdm_const->VpiSize();
     
-    if (mode_debug)
-        log("    Importing constant: %s (type=%d, size=%d)\n", 
-            value.c_str(), const_type, size);
+    log("UHDM: Importing constant: %s (type=%d, size=%d)\n", 
+        value.c_str(), const_type, size);
     
     switch (const_type) {
         case vpiBinaryConst: {
-            // Remove 'b prefix
-            std::string bin_str = value.substr(2);
-            return RTLIL::SigSpec(RTLIL::Const::from_string(bin_str));
+            std::string bin_str;
+            // Handle UHDM format: "BIN:value" or traditional "'b prefix"
+            if (value.substr(0, 4) == "BIN:") {
+                bin_str = value.substr(4);
+            } else if (value.length() > 2 && value[1] == 'b') {
+                // Remove 'b prefix
+                bin_str = value.substr(2);
+            } else {
+                bin_str = value;
+            }
+            
+            // Create constant with proper size
+            RTLIL::Const const_val = RTLIL::Const::from_string(bin_str);
+            if (size > 0 && const_val.size() != size) {
+                // Resize to match specified size
+                if (const_val.size() < size) {
+                    const_val.bits().resize(size, RTLIL::State::S0);
+                } else {
+                    const_val.bits().resize(size);
+                }
+            }
+            return RTLIL::SigSpec(const_val);
         }
         case vpiHexConst: {
             if (mode_debug)
@@ -270,10 +288,30 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
     if (mode_debug)
         log("    Importing ref_obj: %s\n", ref_name.c_str());
     
+    // Check if this is a parameter reference
+    RTLIL::IdString param_id = RTLIL::escape_id(ref_name);
+    if (module->parameter_default_values.count(param_id)) {
+        RTLIL::Const param_value = module->parameter_default_values.at(param_id);
+        log("UHDM: Found parameter %s with value %s (bits=%d)\n", 
+            ref_name.c_str(), param_value.as_string().c_str(), param_value.size());
+        return RTLIL::SigSpec(param_value);
+    }
+    
     // Look up in name map
     if (name_map.count(ref_name)) {
         RTLIL::Wire* wire = name_map[ref_name];
         return RTLIL::SigSpec(wire);
+    }
+    
+    // Check if wire exists in current module
+    if (module) {
+        RTLIL::IdString wire_id = RTLIL::escape_id(ref_name);
+        if (RTLIL::Wire* existing_wire = module->wire(wire_id)) {
+            log("UHDM: Found existing wire %s in module\n", ref_name.c_str());
+            // Add to name_map for future lookups
+            name_map[ref_name] = existing_wire;
+            return RTLIL::SigSpec(existing_wire);
+        }
     }
     
     // If not found, create a new wire
@@ -532,7 +570,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         
         // If we still don't have a valid width, try get_width on the member
         if (width <= 1) {
-            int member_width = get_width(member);
+            int member_width = get_width(member, inst);
             if (member_width > 1) {
                 width = member_width;
                 if (mode_debug)
@@ -544,7 +582,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             log("    ExprEval::decodeHierPath (MEMBER) returned invalid value or null\n");
         
         // Fallback: try to get width from the hier_path itself
-        int hier_width = get_width(uhdm_hier);
+        int hier_width = get_width(uhdm_hier, inst);
         if (hier_width > 0) {
             width = hier_width;
         }
