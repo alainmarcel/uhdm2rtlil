@@ -54,17 +54,18 @@ jobs:
         key: ${{ github.job }}-${{ matrix.os }}
         max-size: 2G
         
-    - name: Cache build dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          build/
-          third_party/Surelog/build/
-          third_party/yosys/
-          ~/.cache/pip
-        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', '**/Makefile', '**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-build-
+    # Temporarily disabled - cache restore
+    #- name: Cache build dependencies
+    #  uses: actions/cache@v4
+    #  with:
+    #    path: |
+    #      build/
+    #      third_party/Surelog/build/
+    #      third_party/yosys/
+    #      ~/.cache/pip
+    #    key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', '**/Makefile', '**/requirements.txt') }}
+    #    restore-keys: |
+    #      ${{ runner.os }}-build-
     
     - name: Install Python dependencies
       run: |
