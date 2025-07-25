@@ -219,6 +219,13 @@ The UHDM frontend now supports SystemVerilog packages:
 - Cross-module type references from packages
 - Proper wire context resolution during module instantiation
 
+### UHDM Elaboration
+The UHDM frontend now handles elaboration automatically:
+- The plugin checks if the UHDM design is already elaborated using `vpi_get(vpiElaborated)` 
+- If not elaborated, it performs elaboration using UHDM's ElaboratorListener
+- This removes the need for the `-elabuhdm` flag in Surelog
+- Elaboration happens transparently when reading UHDM files in Yosys
+
 ## Development Workflow
 
 ### Adding SystemVerilog Support

@@ -75,6 +75,16 @@ struct ReadUHDMPass : public Frontend {
         if (!uhdm_design)
             log_error("Failed to restore UHDM file.\n");
 
+        // If UHDM is not already elaborated/uniquified (uhdm db was saved by a
+        // different process pre-elaboration), then optionally elaborate it:
+        if (uhdm_design && (!vpi_get(vpiElaborated, vpi_design))) {
+            log("UHDM Elaboration...\n");
+            UHDM::ElaboratorContext* elaboratorContext =
+                new UHDM::ElaboratorContext(&serializer, true);
+            elaboratorContext->m_elaborator.listenDesigns(designs);
+            delete elaboratorContext;
+        }
+
         if (!uhdm_design->AllModules())
             log_error("No modules found in UHDM design.\n");
 

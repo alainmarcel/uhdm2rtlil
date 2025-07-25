@@ -3,7 +3,7 @@
 # Generate UHDM file if not already present
 if [ ! -f slpp_all/surelog.uhdm ]; then
     echo "Generating UHDM..."
-    surelog -parse dut.sv -elabuhdm
+    surelog -parse dut.sv
 fi
 
 # Run yosys with UHDM frontend
