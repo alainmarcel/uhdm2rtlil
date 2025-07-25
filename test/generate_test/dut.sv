@@ -32,7 +32,8 @@ module generate_test #(
     input  logic [NUM_UNITS*DATA_WIDTH-1:0] data_in,  // Flattened array
     input  logic [NUM_UNITS*DATA_WIDTH-1:0] operand,  // Flattened array
     input  logic mode,  // 0=add, 1=subtract
-    output logic [NUM_UNITS*DATA_WIDTH-1:0] result    // Flattened array
+    output logic [NUM_UNITS*DATA_WIDTH-1:0] result,   // Flattened array
+    output logic [DATA_WIDTH-1:0] extra_result         // Extra result for conditional logic
 );
     
     // Generate for loop to create multiple processing units
@@ -88,16 +89,21 @@ module generate_test #(
                 .sum(extra_sum)
             );
             
-            // Store extra sum in unused result slot if available
+            // Store extra sum in the extra_result output
             if (NUM_UNITS > 3) begin : store_extra
                 always_ff @(posedge clk or negedge rst_n) begin
                     if (!rst_n) begin
-                        result[(NUM_UNITS-1)*DATA_WIDTH +: DATA_WIDTH] <= '0;
+                        extra_result <= '0;
                     end else if (mode) begin
-                        result[(NUM_UNITS-1)*DATA_WIDTH +: DATA_WIDTH] <= extra_sum;
+                        extra_result <= extra_sum;
                     end
                 end
+            end else begin : no_extra
+                assign extra_result = '0;
             end
+        end else begin : no_extra_logic
+            // When NUM_UNITS <= 2, extra_result is always 0
+            assign extra_result = '0;
         end
     endgenerate
     

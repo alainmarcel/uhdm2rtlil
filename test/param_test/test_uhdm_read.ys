@@ -3,6 +3,10 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top param_test
 stat
+proc
 opt
 stat
 write_rtlil param_test_from_uhdm.il
+# Synthesize to gate-level netlist
+synth -top param_test
+write_verilog -noexpr param_test_from_uhdm_synth.v

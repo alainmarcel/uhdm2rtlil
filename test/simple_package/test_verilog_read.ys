@@ -2,6 +2,10 @@
 read_verilog -sv dut.sv
 hierarchy -check -top simple_package
 stat
+proc
 opt
 stat
 write_rtlil simple_package_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top simple_package
+write_verilog -noexpr simple_package_from_verilog_synth.v

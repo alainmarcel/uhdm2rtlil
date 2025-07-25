@@ -2,6 +2,10 @@
 read_verilog -sv dut.sv
 hierarchy -check -top simple_assign
 stat
+proc
 opt
 stat
 write_rtlil simple_assign_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top simple_assign
+write_verilog -noexpr simple_assign_from_verilog_synth.v

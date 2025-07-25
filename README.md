@@ -104,7 +104,10 @@ Each test case is a directory containing:
 - Automatically generated comparison files:
   - `*_from_uhdm.il` - RTLIL generated via UHDM path
   - `*_from_verilog.il` - RTLIL generated via Verilog path
-  - `rtlil_diff.txt` - Detailed comparison results
+  - `rtlil_diff.txt` - Detailed RTLIL comparison
+  - `*_from_uhdm_synth.v` - Gate-level netlist via UHDM path
+  - `*_from_verilog_synth.v` - Gate-level netlist via Verilog path
+  - `netlist_diff.txt` - Gate-level netlist comparison
 
 ### Running Tests
 ```bash
@@ -116,9 +119,13 @@ bash run_all_tests.sh
 bash test_uhdm_workflow.sh simple_counter
 
 # Test output explanation:
-# ✓ PASSED - UHDM and Verilog frontends produce functionally equivalent RTLIL
-# ⚠ DIFFERENT - Minor differences (usually acceptable, like source locations)
+# ✓ PASSED - UHDM and Verilog frontends produce functionally equivalent results
+# ⚠ DIFFERENT - Minor differences in RTLIL/netlists (usually acceptable)
 # ✗ FAILED - Significant functional differences requiring investigation
+
+# The test framework now performs two levels of comparison:
+# 1. RTLIL comparison - Shows implementation differences
+# 2. Gate-level netlist comparison - Validates functional equivalence
 ```
 
 ### Current Test Cases

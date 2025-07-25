@@ -2,6 +2,10 @@
 read_verilog -sv dut.sv
 hierarchy -check -top struct_array
 stat
+proc
 opt
 stat
 write_rtlil struct_array_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top struct_array
+write_verilog -noexpr struct_array_from_verilog_synth.v

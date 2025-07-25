@@ -115,6 +115,8 @@ analyze_test_result() {
     # Check if test generated output files
     local uhdm_file="${test_dir}/${test_dir}_from_uhdm.il"
     local verilog_file="${test_dir}/${test_dir}_from_verilog.il"
+    local uhdm_synth="${test_dir}/${test_dir}_from_uhdm_synth.v"
+    local verilog_synth="${test_dir}/${test_dir}_from_verilog_synth.v"
     
     # Check if UHDM output exists
     if [ ! -f "$uhdm_file" ]; then
@@ -142,20 +144,55 @@ analyze_test_result() {
     fi
     
     # Check if RTLIL outputs are identical
+    local rtlil_identical=false
     if diff -q "$uhdm_file" "$verilog_file" >/dev/null 2>&1; then
-        echo "✅ Test $test_dir PASSED - RTLIL outputs are IDENTICAL"
+        rtlil_identical=true
+    fi
+    
+    # Check if synthesized netlists are identical
+    local synth_identical=false
+    if [ -f "$uhdm_synth" ] && [ -f "$verilog_synth" ]; then
+        # Compare netlists ignoring comments and whitespace
+        grep -v "^//" "$uhdm_synth" | grep -v "^$" | sed 's/^[[:space:]]*//' > /tmp/uhdm_synth_clean.tmp
+        grep -v "^//" "$verilog_synth" | grep -v "^$" | sed 's/^[[:space:]]*//' > /tmp/verilog_synth_clean.tmp
+        if diff -q /tmp/verilog_synth_clean.tmp /tmp/uhdm_synth_clean.tmp >/dev/null 2>&1; then
+            synth_identical=true
+        fi
+        rm -f /tmp/uhdm_synth_clean.tmp /tmp/verilog_synth_clean.tmp
+    fi
+    
+    # Report results
+    if [ "$rtlil_identical" = true ] && [ "$synth_identical" = true ]; then
+        echo "✅ Test $test_dir PASSED - Both RTLIL and synthesized netlists are IDENTICAL"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+        PASSED_TEST_NAMES+=("$test_dir")
+        return 0
+    elif [ "$rtlil_identical" = true ] && [ "$synth_identical" = false ]; then
+        echo "⚠️  Test $test_dir FUNCTIONAL - RTLIL identical but synthesized netlists differ"
+        RTLIL_DIFF_TESTS=$((RTLIL_DIFF_TESTS + 1))
+        RTLIL_DIFF_TEST_NAMES+=("$test_dir")
+        return 0
+    elif [ "$rtlil_identical" = false ] && [ "$synth_identical" = true ]; then
+        echo "✅ Test $test_dir PASSED - RTLIL differs but synthesized netlists are IDENTICAL (functionally equivalent)"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         PASSED_TEST_NAMES+=("$test_dir")
         return 0
     else
-        echo "⚠️  Test $test_dir FUNCTIONAL - RTLIL outputs differ (expected)"
+        echo "⚠️  Test $test_dir FUNCTIONAL - Both RTLIL and synthesized netlists differ"
         RTLIL_DIFF_TESTS=$((RTLIL_DIFF_TESTS + 1))
         RTLIL_DIFF_TEST_NAMES+=("$test_dir")
         
         # Count lines to show size difference
         local uhdm_lines=$(wc -l < "$uhdm_file" 2>/dev/null || echo "0")
         local verilog_lines=$(wc -l < "$verilog_file" 2>/dev/null || echo "0")
-        echo "    UHDM: $uhdm_lines lines, Verilog: $verilog_lines lines"
+        echo "    RTLIL: UHDM=$uhdm_lines lines, Verilog=$verilog_lines lines"
+        
+        if [ -f "$uhdm_synth" ] && [ -f "$verilog_synth" ]; then
+            # Count gates
+            local uhdm_gates=$(grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$uhdm_synth" | wc -l)
+            local verilog_gates=$(grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$verilog_synth" | wc -l)
+            echo "    Gates: UHDM=$uhdm_gates, Verilog=$verilog_gates"
+        fi
         return 0
     fi
 }

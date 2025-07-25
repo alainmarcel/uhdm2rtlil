@@ -59,6 +59,7 @@ fi
 # Clean up previous runs (but preserve UHDM file)
 echo "1. Cleaning up previous files..."
 rm -f *.log *.dot *_from_uhdm.il *_from_verilog.il rtlil_diff.txt test_*_read.ys uhdm_path.log verilog_path.log
+rm -f *_from_uhdm_synth.v *_from_verilog_synth.v netlist_diff.txt
 
 # Step 1: Check if UHDM file exists or generate it
 echo "2. Checking for existing UHDM file or generating..."
@@ -92,9 +93,13 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top $MODULE_NAME
 stat
+proc
 opt
 stat
 write_rtlil ${MODULE_NAME}_from_uhdm.il
+# Synthesize to gate-level netlist
+synth -top $MODULE_NAME
+write_verilog -noexpr ${MODULE_NAME}_from_uhdm_synth.v
 EOF
 
 echo "   ✓ Yosys script created: test_uhdm_read.ys"
@@ -107,9 +112,13 @@ cat > test_verilog_read.ys << EOF
 read_verilog -sv dut.sv
 hierarchy -check -top $MODULE_NAME
 stat
+proc
 opt
 stat
 write_rtlil ${MODULE_NAME}_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top $MODULE_NAME
+write_verilog -noexpr ${MODULE_NAME}_from_verilog_synth.v
 EOF
 
 echo "   ✓ Yosys script created: test_verilog_read.ys"
@@ -221,6 +230,59 @@ else
 fi
 
 echo
+
+# Step 7: Compare synthesized netlists if both were generated
+echo "8. Comparing synthesized gate-level netlists..."
+UHDM_SYNTH="${MODULE_NAME}_from_uhdm_synth.v"
+VERILOG_SYNTH="${MODULE_NAME}_from_verilog_synth.v"
+
+if [ $VERILOG_FAILED -eq 1 ] && [ -f "$UHDM_SYNTH" ]; then
+    echo "   ✓ UHDM frontend produced synthesized netlist"
+    echo "   Verilog frontend failed, so no netlist comparison possible"
+    echo
+    echo "   UHDM synthesized netlist ($UHDM_SYNTH):"
+    echo "   ===================================="
+    head -50 "$UHDM_SYNTH"
+    if [ $(wc -l < "$UHDM_SYNTH") -gt 50 ]; then
+        echo "   ... (truncated, see $UHDM_SYNTH for full netlist)"
+    fi
+elif [ -f "$UHDM_SYNTH" ] && [ -f "$VERILOG_SYNTH" ]; then
+    echo "   Both synthesized netlists generated successfully"
+    
+    # Extract just the module contents for comparison (ignore comments and formatting)
+    # This helps compare the actual gate-level implementation
+    grep -v "^//" "$UHDM_SYNTH" | grep -v "^$" | sed 's/^[[:space:]]*//' > uhdm_synth_clean.tmp
+    grep -v "^//" "$VERILOG_SYNTH" | grep -v "^$" | sed 's/^[[:space:]]*//' > verilog_synth_clean.tmp
+    
+    if diff -u verilog_synth_clean.tmp uhdm_synth_clean.tmp > netlist_diff.txt; then
+        echo "   ✓ Synthesized netlists are IDENTICAL!"
+        echo "     Both frontends produce the same gate-level implementation"
+        rm netlist_diff.txt uhdm_synth_clean.tmp verilog_synth_clean.tmp
+    else
+        echo "   ⚠ Synthesized netlists are DIFFERENT:"
+        echo "     Differences saved to netlist_diff.txt"
+        echo
+        echo "   Netlist diff summary:"
+        head -20 netlist_diff.txt
+        if [ $(wc -l < netlist_diff.txt) -gt 20 ]; then
+            echo "   ... (truncated, see netlist_diff.txt for full diff)"
+        fi
+        
+        # Count gates in each netlist for comparison
+        echo
+        echo "   Gate count comparison:"
+        echo -n "   UHDM path: "
+        grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$UHDM_SYNTH" | wc -l
+        echo -n "   Verilog path: "
+        grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$VERILOG_SYNTH" | wc -l
+    fi
+    rm -f uhdm_synth_clean.tmp verilog_synth_clean.tmp
+else
+    echo "   ⚠ One or both synthesized netlists missing"
+    ls -la *_synth.v 2>/dev/null || echo "   No synthesized netlists found"
+fi
+
+echo
 echo "=== Test Summary ==="
 echo "✓ Surelog successfully parsed SystemVerilog and generated UHDM"
 echo "✓ Yosys UHDM frontend successfully read UHDM and generated RTLIL"
@@ -244,7 +306,7 @@ fi
 
 echo
 echo "Generated files:"
-ls -la *.uhdm *.il *.ys *.txt *.log 2>/dev/null || echo "  Files may not have been generated"
+ls -la *.uhdm *.il *.ys *.txt *.log *_synth.v 2>/dev/null || echo "  Files may not have been generated"
 
 # Return to original directory
 cd ..

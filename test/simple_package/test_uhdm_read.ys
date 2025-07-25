@@ -3,6 +3,10 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 hierarchy -check -top simple_package
 stat
+proc
 opt
 stat
 write_rtlil simple_package_from_uhdm.il
+# Synthesize to gate-level netlist
+synth -top simple_package
+write_verilog -noexpr simple_package_from_uhdm_synth.v

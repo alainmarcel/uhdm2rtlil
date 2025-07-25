@@ -1,0 +1,186 @@
+--- verilog_synth_clean.tmp	2025-07-24 22:03:22.006649470 -0700
++++ uhdm_synth_clean.tmp	2025-07-24 22:03:22.006649470 -0700
+@@ -21,13 +21,10 @@
+ input [15:0] b3;
+ wire [15:0] b3;
+ (* src = "dut.sv:40.22-40.26" *)
+-(* wiretype = "\\data_bus_8bit_t" *)
+ wire [23:0] bus1;
+ (* src = "dut.sv:41.22-41.26" *)
+-(* wiretype = "\\data_bus_8bit_t" *)
+ wire [23:0] bus2;
+ (* src = "dut.sv:42.22-42.26" *)
+-(* wiretype = "\\data_bus_16bit_t" *)
+ wire [47:0] bus3;
+ (* src = "dut.sv:31.33-31.35" *)
+ input [7:0] c1;
+@@ -47,20 +44,14 @@
+ (* src = "dut.sv:36.25-36.29" *)
+ output [15:0] out3;
+ wire [15:0] out3;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:60.20-63.6" *)
+ submodule_8bit inst1 (
+ .bus({ a1, b1, c1 }),
+ .out(out1)
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:66.20-69.6" *)
+ submodule_8bit inst2 (
+ .bus({ a2, b2, c2 }),
+ .out(out2)
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:72.21-75.6" *)
+ submodule_16bit inst3 (
+ .bus({ a3, b3, c3 }),
+ .out(out3)
+@@ -70,7 +61,7 @@
+ assign bus3 = { a3, b3, c3 };
+ endmodule
+ (* src = "dut.sv:22.1-28.10" *)
+-module submodule_16bit(out, bus);
++module submodule_16bit(bus, out);
+ wire _00_;
+ wire _01_;
+ wire _02_;
+@@ -88,7 +79,6 @@
+ wire _14_;
+ wire _15_;
+ (* src = "dut.sv:23.29-23.32" *)
+-(* wiretype = "\\data_bus_16bit_t" *)
+ input [47:0] bus;
+ wire [47:0] bus;
+ (* src = "dut.sv:24.25-24.28" *)
+@@ -256,7 +246,7 @@
+ );
+ endmodule
+ (* src = "dut.sv:14.1-20.10" *)
+-module submodule_8bit(out, bus);
++module submodule_8bit(bus, out);
+ wire _00_;
+ wire _01_;
+ wire _02_;
+@@ -266,90 +256,89 @@
+ wire _06_;
+ wire _07_;
+ (* src = "dut.sv:15.28-15.31" *)
+-(* wiretype = "\\data_bus_8bit_t" *)
+ input [23:0] bus;
+ wire [23:0] bus;
+ (* src = "dut.sv:16.24-16.27" *)
+ output [7:0] out;
+ wire [7:0] out;
+ \$_NAND_  _08_ (
+-.A(bus[8]),
+-.B(bus[16]),
++.A(bus[14]),
++.B(bus[22]),
+ .Y(_00_)
+ );
+ \$_ANDNOT_  _09_ (
+-.A(bus[0]),
++.A(bus[6]),
+ .B(_00_),
+-.Y(out[0])
++.Y(out[6])
+ );
+ \$_NAND_  _10_ (
+-.A(bus[9]),
+-.B(bus[17]),
++.A(bus[15]),
++.B(bus[23]),
+ .Y(_01_)
+ );
+ \$_ANDNOT_  _11_ (
+-.A(bus[1]),
++.A(bus[7]),
+ .B(_01_),
+-.Y(out[1])
++.Y(out[7])
+ );
+ \$_NAND_  _12_ (
+-.A(bus[10]),
+-.B(bus[18]),
++.A(bus[8]),
++.B(bus[16]),
+ .Y(_02_)
+ );
+ \$_ANDNOT_  _13_ (
+-.A(bus[2]),
++.A(bus[0]),
+ .B(_02_),
+-.Y(out[2])
++.Y(out[0])
+ );
+ \$_NAND_  _14_ (
+-.A(bus[11]),
+-.B(bus[19]),
++.A(bus[9]),
++.B(bus[17]),
+ .Y(_03_)
+ );
+ \$_ANDNOT_  _15_ (
+-.A(bus[3]),
++.A(bus[1]),
+ .B(_03_),
+-.Y(out[3])
++.Y(out[1])
+ );
+ \$_NAND_  _16_ (
+-.A(bus[12]),
+-.B(bus[20]),
++.A(bus[10]),
++.B(bus[18]),
+ .Y(_04_)
+ );
+ \$_ANDNOT_  _17_ (
+-.A(bus[4]),
++.A(bus[2]),
+ .B(_04_),
+-.Y(out[4])
++.Y(out[2])
+ );
+ \$_NAND_  _18_ (
+-.A(bus[13]),
+-.B(bus[21]),
++.A(bus[11]),
++.B(bus[19]),
+ .Y(_05_)
+ );
+ \$_ANDNOT_  _19_ (
+-.A(bus[5]),
++.A(bus[3]),
+ .B(_05_),
+-.Y(out[5])
++.Y(out[3])
+ );
+ \$_NAND_  _20_ (
+-.A(bus[14]),
+-.B(bus[22]),
++.A(bus[12]),
++.B(bus[20]),
+ .Y(_06_)
+ );
+ \$_ANDNOT_  _21_ (
+-.A(bus[6]),
++.A(bus[4]),
+ .B(_06_),
+-.Y(out[6])
++.Y(out[4])
+ );
+ \$_NAND_  _22_ (
+-.A(bus[15]),
+-.B(bus[23]),
++.A(bus[13]),
++.B(bus[21]),
+ .Y(_07_)
+ );
+ \$_ANDNOT_  _23_ (
+-.A(bus[7]),
++.A(bus[5]),
+ .B(_07_),
+-.Y(out[7])
++.Y(out[5])
+ );
+ endmodule
