@@ -91,6 +91,8 @@ cat > test_uhdm_read.ys << EOF
 # Test script to read UHDM file in Yosys
 plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil ${MODULE_NAME}_from_uhdm_nohier.il
 hierarchy -check -top $MODULE_NAME
 stat
 proc
@@ -110,6 +112,8 @@ echo "4. Creating Yosys script to read Verilog..."
 cat > test_verilog_read.ys << EOF
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil ${MODULE_NAME}_from_verilog_nohier.il
 hierarchy -check -top $MODULE_NAME
 stat
 proc

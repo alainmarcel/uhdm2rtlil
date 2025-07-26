@@ -1,5 +1,7 @@
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil param_test_from_verilog_nohier.il
 hierarchy -check -top param_test
 stat
 proc

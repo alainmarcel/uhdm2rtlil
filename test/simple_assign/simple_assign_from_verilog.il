@@ -31,6 +31,17 @@ module \simple_assign
   wire output 8 \out_not
   attribute \src "dut.sv:8.17-8.23"
   wire output 7 \out_or
+  attribute \src "dut.sv:14.22-14.27"
+  cell $and $and$dut.sv:14$1
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B \b
+    connect \Y $and$dut.sv:14$1_Y
+  end
   attribute \src "dut.sv:14.22-14.31"
   cell $and $and$dut.sv:14$2
     parameter \A_SIGNED 0
@@ -52,17 +63,6 @@ module \simple_assign
     connect \A $and$dut.sv:17$9_Y
     connect \B \e
     connect \Y $and$dut.sv:17$10_Y
-  end
-  attribute \src "dut.sv:17.27-17.32"
-  cell $and $and$dut.sv:17$8
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B \b
-    connect \Y $and$dut.sv:14$1_Y
   end
   attribute \src "dut.sv:17.37-17.42"
   cell $and $and$dut.sv:17$9

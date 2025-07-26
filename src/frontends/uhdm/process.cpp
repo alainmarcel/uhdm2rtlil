@@ -61,6 +61,60 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                             }
                         }
                     }
+                } else if (else_stmt->VpiType() == vpiIfElse || else_stmt->VpiType() == vpiIf) {
+                    // Handle else-if case
+                    const UHDM::any* else_if_stmt = else_stmt;
+                    if (else_if_stmt->UhdmType() == uhdmif_else) {
+                        const UHDM::if_else* nested_if_else = static_cast<const UHDM::if_else*>(else_if_stmt);
+                        // Check the then statement of the else-if
+                        if (auto then_stmt = nested_if_else->VpiStmt()) {
+                            if (then_stmt->VpiType() == vpiAssignment) {
+                                const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                if (auto lhs = assign->Lhs()) {
+                                    if (lhs->VpiType() == vpiRefObj) {
+                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
+                                        // Only update output_signal if it's empty (priority to first-level assignment)
+                                        if (output_signal.empty()) {
+                                            output_signal = std::string(ref->VpiName());
+                                            log("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
+                                        }
+                                    }
+                                }
+                                if (auto rhs = assign->Rhs()) {
+                                    if (rhs->VpiType() == vpiRefObj) {
+                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                                        input_signal = std::string(ref->VpiName());
+                                        log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    } else if (else_if_stmt->VpiType() == vpiIf) {
+                        const UHDM::if_stmt* nested_if = static_cast<const UHDM::if_stmt*>(else_if_stmt);
+                        // Check the then statement of the else-if
+                        if (auto then_stmt = nested_if->VpiStmt()) {
+                            if (then_stmt->VpiType() == vpiAssignment) {
+                                const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                if (auto lhs = assign->Lhs()) {
+                                    if (lhs->VpiType() == vpiRefObj) {
+                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
+                                        // Only update output_signal if it's empty (priority to first-level assignment)
+                                        if (output_signal.empty()) {
+                                            output_signal = std::string(ref->VpiName());
+                                            log("UHDM: Found output signal from else-if assignment: %s\n", output_signal.c_str());
+                                        }
+                                    }
+                                }
+                                if (auto rhs = assign->Rhs()) {
+                                    if (rhs->VpiType() == vpiRefObj) {
+                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                                        input_signal = std::string(ref->VpiName());
+                                        log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
@@ -351,10 +405,161 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
         
         // Parse the statement structure (if statement)
-        log("    Statement type: %d (vpiIf=%d)\n", stmt->VpiType(), vpiIf);
-        if (stmt->VpiType() == vpiIf) {
+        log("    Statement type: %s (vpiIf=%d, vpiIfElse=%d)\n", UhdmName(stmt->UhdmType()).c_str(), vpiIf, vpiIfElse);
+        if (stmt->VpiType() == vpiIfElse) {
+            const UHDM::if_else* if_else_stmt = static_cast<const UHDM::if_else*>(stmt);
+            log("    Processing if-else statement\n");
+            
+            // Get condition (!rst_n) and create logic_not cell
+            if (auto condition = if_else_stmt->VpiCondition()) {
+                log("    Processing if condition...\n");
+                RTLIL::SigSpec cond_sig = import_expression(condition);
+                
+                if (cond_sig.size() > 0) {
+                    log("    Condition signal imported successfully\n");
+                    
+                    // Create a switch statement in root_case
+                    RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
+                    sw->signal = cond_sig;
+                    
+                    // Case when condition is true (reset active)
+                    RTLIL::CaseRule* reset_case = new RTLIL::CaseRule();
+                    reset_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                    
+                    if (temp_wire) {
+                        reset_case->actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(RTLIL::State::S0))
+                        );
+                        log("    Added reset case: temp <= 0\n");
+                    }
+                    
+                    // Default case (normal operation)
+                    RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
+                    // Empty compare means default case
+                    
+                    // Check if there's an else clause with another if statement (else if)
+                    if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
+                        log("    Found else clause, checking if it's an else-if...\n");
+                        if (else_stmt->VpiType() == vpiIfElse) {
+                            // This is an else-if structure
+                            const UHDM::if_else* else_if_stmt = static_cast<const UHDM::if_else*>(else_stmt);
+                            
+                            // Get the else-if condition (mode)
+                            if (auto else_condition = else_if_stmt->VpiCondition()) {
+                                RTLIL::SigSpec else_cond_sig = import_expression(else_condition);
+                                log("    Processing else-if condition (mode check)\n");
+                                
+                                // Create nested switch for the else-if condition
+                                RTLIL::SwitchRule* mode_sw = new RTLIL::SwitchRule();
+                                mode_sw->signal = else_cond_sig;
+                                
+                                // Case when mode is true
+                                RTLIL::CaseRule* mode_true_case = new RTLIL::CaseRule();
+                                mode_true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                                
+                                // Get the then statement of else-if (extra_result <= extra_sum)
+                                if (auto then_stmt = else_if_stmt->VpiStmt()) {
+                                    if (then_stmt->VpiType() == vpiAssignment) {
+                                        const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                        const any* rhs_any = assign->Rhs();
+                                        if (rhs_any && rhs_any->UhdmType() >= UHDM_OBJECT_TYPE::uhdmexpr) {
+                                            RTLIL::SigSpec rhs = import_expression(static_cast<const UHDM::expr*>(rhs_any));
+                                            
+                                            if (temp_wire && rhs.size() > 0) {
+                                                mode_true_case->actions.push_back(
+                                                    RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs)
+                                                );
+                                                log("    Added mode=1 case: temp <= extra_sum\n");
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Default case for mode switch (mode=0, no change)
+                                RTLIL::CaseRule* mode_false_case = new RTLIL::CaseRule();
+                                // Empty compare and empty actions means hold current value
+                                
+                                mode_sw->cases.push_back(mode_true_case);
+                                mode_sw->cases.push_back(mode_false_case);
+                                normal_case->switches.push_back(mode_sw);
+                                log("    Added nested mode switch with %zu cases\n", mode_sw->cases.size());
+                            }
+                        } else if (else_stmt->VpiType() == vpiIf) {
+                            // This is an else-if structure with simple if
+                            const UHDM::if_stmt* else_if_stmt = static_cast<const UHDM::if_stmt*>(else_stmt);
+                            
+                            // Get the else-if condition (mode)
+                            if (auto else_condition = else_if_stmt->VpiCondition()) {
+                                RTLIL::SigSpec else_cond_sig = import_expression(else_condition);
+                                log("    Processing else-if condition (mode check)\n");
+                                
+                                // Create nested switch for the else-if condition
+                                RTLIL::SwitchRule* mode_sw = new RTLIL::SwitchRule();
+                                mode_sw->signal = else_cond_sig;
+                                
+                                // Case when mode is true
+                                RTLIL::CaseRule* mode_true_case = new RTLIL::CaseRule();
+                                mode_true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                                
+                                // Get the then statement of else-if (extra_result <= extra_sum)
+                                if (auto then_stmt = else_if_stmt->VpiStmt()) {
+                                    if (then_stmt->VpiType() == vpiAssignment) {
+                                        const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                        const any* rhs_any = assign->Rhs();
+                                        if (rhs_any && rhs_any->UhdmType() >= UHDM_OBJECT_TYPE::uhdmexpr) {
+                                            RTLIL::SigSpec rhs = import_expression(static_cast<const UHDM::expr*>(rhs_any));
+                                            
+                                            if (temp_wire && rhs.size() > 0) {
+                                                mode_true_case->actions.push_back(
+                                                    RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs)
+                                                );
+                                                log("    Added mode=1 case: temp <= extra_sum\n");
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Default case for mode switch (mode=0, no change)
+                                RTLIL::CaseRule* mode_false_case = new RTLIL::CaseRule();
+                                // Empty compare and empty actions means hold current value
+                                
+                                mode_sw->cases.push_back(mode_true_case);
+                                mode_sw->cases.push_back(mode_false_case);
+                                normal_case->switches.push_back(mode_sw);
+                                log("    Added nested mode switch with %zu cases\n", mode_sw->cases.size());
+                            }
+                        } else {
+                            // Simple else clause, use fallback
+                            if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
+                                normal_case->actions.push_back(
+                                    RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
+                                );
+                                log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
+                            }
+                        }
+                    } else {
+                        // No else clause, use fallback
+                        if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
+                            normal_case->actions.push_back(
+                                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
+                            );
+                            log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
+                        }
+                    }
+                    
+                    sw->cases.push_back(reset_case);
+                    sw->cases.push_back(normal_case);
+                    yosys_proc->root_case.switches.push_back(sw);
+                    log("    Added switch with %zu cases\n", sw->cases.size());
+                } else {
+                    log_warning("Failed to import condition expression\n");
+                }
+            } else {
+                log_warning("No condition found in if statement\n");
+            }
+        } else if (stmt->VpiType() == vpiIf) {
             const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(stmt);
-            log("    Processing if statement\n");
+            log("    Processing simple if statement (no else)\n");
             
             // Get condition (!rst_n) and create logic_not cell
             if (auto condition = if_stmt->VpiCondition()) {
@@ -383,6 +588,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
                     // Empty compare means default case
                     
+                    // Use fallback for normal case
                     if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
                         normal_case->actions.push_back(
                             RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))

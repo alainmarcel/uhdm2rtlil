@@ -1,6 +1,8 @@
 # Test script to read UHDM file in Yosys
 plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil param_test_from_uhdm_nohier.il
 hierarchy -check -top param_test
 stat
 proc

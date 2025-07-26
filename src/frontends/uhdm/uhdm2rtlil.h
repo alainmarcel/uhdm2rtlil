@@ -182,6 +182,7 @@ struct UhdmImporter {
     // Additional expression types
     RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part);
     RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit);
+    RTLIL::SigSpec import_indexed_part_select(const UHDM::indexed_part_select* uhdm_indexed);
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::module_inst* inst = nullptr);
     

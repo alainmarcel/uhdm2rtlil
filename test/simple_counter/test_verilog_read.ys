@@ -1,5 +1,7 @@
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil simple_counter_from_verilog_nohier.il
 hierarchy -check -top simple_counter
 stat
 proc

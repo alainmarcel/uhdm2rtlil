@@ -27,8 +27,8 @@ module simple_fsm(clk, reset, start, done, busy, state);
   output [1:0] state;
   wire [1:0] state;
   \$_NOR_  _3_ (
-    .A(state[0]),
-    .B(state[1]),
+    .A(state[1]),
+    .B(state[0]),
     .Y(_1_)
   );
   \$_ORNOT_  _4_ (
@@ -48,8 +48,8 @@ module simple_fsm(clk, reset, start, done, busy, state);
     .Y(next_state[0])
   );
   \$_XOR_  _7_ (
-    .A(state[0]),
-    .B(state[1]),
+    .A(state[1]),
+    .B(state[0]),
     .Y(busy)
   );
   (* \always_ff  = 32'd1 *)

@@ -15,6 +15,7 @@
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/assignment.h>
 #include <uhdm/uhdm_vpi_user.h>
+#include <uhdm/uhdm_types.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -47,8 +48,40 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             return RTLIL::SigSpec();
         case vpiHierPath:
             return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_instance);
+        case vpiIndexedPartSelect:
+            return import_indexed_part_select(static_cast<const indexed_part_select*>(uhdm_expr));
+        case vpiPort:
+            // Handle port as expression - this happens when ports are referenced in connections
+            {
+                const UHDM::port* port = static_cast<const UHDM::port*>(static_cast<const any*>(uhdm_expr));
+                std::string port_name = std::string(port->VpiName());
+                log("    Handling port '%s' as expression\n", port_name.c_str());
+                
+                // Check if this port has a Low_conn which would be the actual net/wire
+                if (port->Low_conn()) {
+                    log("    Port has Low_conn, importing that instead\n");
+                    return import_expression(static_cast<const expr*>(port->Low_conn()));
+                }
+                
+                // Otherwise try to find the wire in the current module
+                RTLIL::IdString wire_id = RTLIL::escape_id(port_name);
+                if (module->wire(wire_id)) {
+                    log("    Found wire '%s' for port\n", wire_id.c_str());
+                    return RTLIL::SigSpec(module->wire(wire_id));
+                }
+                
+                // Try looking in the name_map
+                auto it = name_map.find(port_name);
+                if (it != name_map.end()) {
+                    log("    Found wire in name_map for port '%s'\n", port_name.c_str());
+                    return RTLIL::SigSpec(it->second);
+                }
+                
+                log_warning("Port '%s' not found as wire in module\n", port_name.c_str());
+                return RTLIL::SigSpec();
+            }
         default:
-            log_warning("Unsupported expression type: %d\n", obj_type);
+            log_warning("Unsupported expression type: %s\n", UhdmName(static_cast<UHDM_OBJECT_TYPE>(obj_type)).c_str());
             return RTLIL::SigSpec();
     }
 }
@@ -288,7 +321,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
     std::string ref_name = std::string(uhdm_ref->VpiName());
     
     if (mode_debug)
-        log("    Importing ref_obj: %s\n", ref_name.c_str());
+        log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), current_gen_scope.c_str());
     
     // Check if this is a parameter reference
     RTLIL::IdString param_id = RTLIL::escape_id(ref_name);
@@ -299,7 +332,17 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
         return RTLIL::SigSpec(param_value);
     }
     
-    // Look up in name map
+    // If we're in a generate scope, first try the hierarchical name
+    if (!current_gen_scope.empty()) {
+        std::string hierarchical_name = current_gen_scope + "." + ref_name;
+        if (name_map.count(hierarchical_name)) {
+            RTLIL::Wire* wire = name_map[hierarchical_name];
+            log("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
+            return RTLIL::SigSpec(wire);
+        }
+    }
+    
+    // Look up in name map with simple name
     if (name_map.count(ref_name)) {
         RTLIL::Wire* wire = name_map[ref_name];
         return RTLIL::SigSpec(wire);
@@ -366,6 +409,101 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit) {
     // Dynamic bit select - need to create a mux
     log_warning("Dynamic bit select not yet implemented\n");
     return base.extract(0, 1);
+}
+
+// Import indexed part select (e.g., data[i*8 +: 8])
+RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed) {
+    log("    Importing indexed part select\n");
+    
+    // Get the parent object - this should contain the base signal
+    const any* parent = uhdm_indexed->VpiParent();
+    if (!parent) {
+        log_warning("Indexed part select has no parent\n");
+        return RTLIL::SigSpec();
+    }
+    
+    log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
+    
+    // Check if the indexed part select itself has the signal name
+    std::string base_signal_name;
+    if (!uhdm_indexed->VpiDefName().empty()) {
+        base_signal_name = std::string(uhdm_indexed->VpiDefName());
+        log("      IndexedPartSelect VpiDefName: %s\n", base_signal_name.c_str());
+    } else if (!uhdm_indexed->VpiName().empty()) {
+        base_signal_name = std::string(uhdm_indexed->VpiName());
+        log("      IndexedPartSelect VpiName: %s\n", base_signal_name.c_str());
+    }
+    
+    // If not found in the indexed part select, try the parent
+    if (base_signal_name.empty()) {
+        if (!parent->VpiDefName().empty()) {
+            base_signal_name = std::string(parent->VpiDefName());
+            log("      Parent VpiDefName: %s\n", base_signal_name.c_str());
+        } else if (!parent->VpiName().empty()) {
+            base_signal_name = std::string(parent->VpiName());
+            log("      Parent VpiName: %s\n", base_signal_name.c_str());
+        }
+    }
+    
+    // Look up the wire in the current module
+    RTLIL::SigSpec base;
+    if (!base_signal_name.empty()) {
+        RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
+        if (module->wire(wire_id)) {
+            base = RTLIL::SigSpec(module->wire(wire_id));
+            log("      Found wire %s in module\n", wire_id.c_str());
+        } else {
+            // Try name_map
+            auto it = name_map.find(base_signal_name);
+            if (it != name_map.end()) {
+                base = RTLIL::SigSpec(it->second);
+                log("      Found wire in name_map\n");
+            } else {
+                log_warning("Base signal '%s' not found in module\n", base_signal_name.c_str());
+                return RTLIL::SigSpec();
+            }
+        }
+    } else {
+        // If we can't get the name directly, try importing the parent as an expression
+        base = import_expression(static_cast<const expr*>(parent));
+    }
+    
+    log("      Base signal width: %d\n", base.size());
+    
+    // Get the base index expression
+    RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr());
+    log("      Base index: %s\n", base_index.is_fully_const() ? 
+        std::to_string(base_index.as_const().as_int()).c_str() : "non-const");
+    
+    // Get the width expression
+    RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr());
+    log("      Width: %s\n", width_expr.is_fully_const() ? 
+        std::to_string(width_expr.as_const().as_int()).c_str() : "non-const");
+    
+    // Both base_index and width must be constant for RTLIL
+    if (base_index.is_fully_const() && width_expr.is_fully_const()) {
+        int offset = base_index.as_const().as_int();
+        int width = width_expr.as_const().as_int();
+        
+        // Validate offset and width
+        if (offset < 0 || width <= 0 || offset + width > base.size()) {
+            log_warning("Invalid indexed part select: offset=%d, width=%d, base_size=%d\n",
+                offset, width, base.size());
+            return RTLIL::SigSpec();
+        }
+        
+        // Handle +: and -: operators
+        if (uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed) {
+            // The +: operator means [offset +: width] = [offset+width-1:offset]
+            return base.extract(offset, width);
+        } else {
+            // The -: operator means [offset -: width] = [offset:offset-width+1]
+            return base.extract(offset - width + 1, width);
+        }
+    }
+    
+    log_warning("Indexed part select with non-constant index or width not supported\n");
+    return RTLIL::SigSpec();
 }
 
 // Import concatenation (e.g., {a, b, c})
@@ -492,8 +630,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
                         }
                     } else if (mode_debug) {
-                        log("    Base wire typespec is not a struct (UhdmType=%d)\n", 
-                            base_typespec ? base_typespec->UhdmType() : -1);
+                        log("    Base wire typespec is not a struct (UhdmType=%s)\n", 
+                            base_typespec ? UhdmName(base_typespec->UhdmType()).c_str() : "null");
                     }
                 } else if (mode_debug) {
                     log("    Base wire has no typespec\n");

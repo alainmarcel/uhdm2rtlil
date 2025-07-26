@@ -9,6 +9,7 @@
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/gen_scope.h>
 #include <uhdm/gen_scope_array.h>
+#include <uhdm/uhdm_types.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -203,6 +204,10 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
 
 // Import a module instance
 void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
+    log("UHDM: import_instance called for '%s' of type '%s'\n", 
+        std::string(uhdm_inst->VpiName()).c_str(), 
+        std::string(uhdm_inst->VpiDefName()).c_str());
+    
     // Get the instance name - use full name if available for hierarchical names
     std::string inst_name;
     std::string full_name = std::string(uhdm_inst->VpiFullName());
@@ -414,6 +419,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         }
     }
     
+    log("UHDM: Creating cell '%s' of type '%s'\n", inst_name.c_str(), module_id.c_str());
     RTLIL::Cell* cell = module->addCell(new_id(inst_name), module_id);
     
     // Add source attribute to cell
@@ -421,18 +427,37 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     
     // Import port connections
     if (uhdm_inst->Ports()) {
+        log("UHDM: Processing %d ports for instance\n", (int)uhdm_inst->Ports()->size());
         for (auto port : *uhdm_inst->Ports()) {
             std::string port_name = std::string(port->VpiName());
             
             // Get the actual connection (high_conn)
             if (port->High_conn()) {
-                RTLIL::SigSpec actual_sig = import_expression(static_cast<const expr*>(port->High_conn()));
-                cell->setPort(RTLIL::escape_id(port_name), actual_sig);
+                const any* high_conn = port->High_conn();
+                log("    Port %s has High_conn of type %s\n", port_name.c_str(), UhdmName(high_conn->UhdmType()).c_str());
                 
-                if (mode_debug)
-                    log("    Connected port %s\n", port_name.c_str());
+                // Try to handle as expression directly
+                RTLIL::SigSpec actual_sig;
+                try {
+                    actual_sig = import_expression(static_cast<const expr*>(high_conn));
+                } catch (...) {
+                    log_warning("Failed to import port connection for %s\n", port_name.c_str());
+                    actual_sig = RTLIL::SigSpec();
+                }
+                
+                if (actual_sig.size() > 0) {
+                    cell->setPort(RTLIL::escape_id(port_name), actual_sig);
+                } else {
+                    log_warning("Port %s has empty connection\n", port_name.c_str());
+                }
+                
+                log("    Connected port %s to signal of width %d\n", port_name.c_str(), actual_sig.size());
+            } else {
+                log("    Port %s has no connection (High_conn)\n", port_name.c_str());
             }
         }
+    } else {
+        log("UHDM: No ports found for instance\n");
     }
     
     // Set parameters on the cell
@@ -573,7 +598,7 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             log("UHDM: Found ref_typespec, following reference\n");
             if (auto ref_typespec = dynamic_cast<const UHDM::ref_typespec*>(typespec)) {
                 if (auto actual = ref_typespec->Actual_typespec()) {
-                    log("UHDM: Following to actual typespec (UhdmType = %d)\n", actual->UhdmType());
+                    log("UHDM: Following to actual typespec (UhdmType = %s)\n", UhdmName(actual->UhdmType()).c_str());
                     // Check if the actual type is an interface
                     if (actual->UhdmType() == uhdminterface_typespec) {
                         log("UHDM: Found interface_typespec through reference\n");
@@ -715,6 +740,7 @@ void UhdmImporter::import_generate_scopes(const module_inst* uhdm_module) {
             
             // Process each generate scope in the array
             if (gen_array->Gen_scopes()) {
+                log("UHDM: Found %d generate scopes in array %s\n", (int)gen_array->Gen_scopes()->size(), gen_name.c_str());
                 for (auto gen_scope : *gen_array->Gen_scopes()) {
                     if (!gen_scope) {
                         log("UHDM: Skipping null generate scope\n");
@@ -722,8 +748,12 @@ void UhdmImporter::import_generate_scopes(const module_inst* uhdm_module) {
                     }
                     import_gen_scope(gen_scope);
                 }
+            } else {
+                log("UHDM: No generate scopes found in array %s\n", gen_name.c_str());
             }
         }
+    } else {
+        log("UHDM: No generate scope arrays found in module\n");
     }
 }
 
@@ -760,25 +790,39 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             // Variables can be logic_var or other types, we need to handle them
             // For now, create a wire for each variable
             std::string var_name = std::string(var->VpiName());
+            std::string hierarchical_name = scope_name + "." + var_name;
             int width = get_width(var, current_instance);
             
-            if (!name_map.count(var_name)) {
-                RTLIL::Wire* w = create_wire(var_name, width);
+            // Check if we already have this wire with the hierarchical name
+            if (!name_map.count(hierarchical_name)) {
+                RTLIL::Wire* w = create_wire(hierarchical_name, width);
                 wire_map[var] = w;
-                name_map[var_name] = w;
-                log("UHDM: Created wire '%s' (width=%d) for generate scope variable\n", var_name.c_str(), width);
+                name_map[var_name] = w;  // Map the simple name for local references
+                name_map[hierarchical_name] = w;  // Also map the full hierarchical name
+                log("UHDM: Created wire '%s' (width=%d) for generate scope variable\n", hierarchical_name.c_str(), width);
             }
         }
     }
     
     // Import module instances within the generate scope
     if (uhdm_scope->Modules()) {
-        log("UHDM: Found %d module instances in generate scope\n", (int)uhdm_scope->Modules()->size());
+        log("UHDM: Found %d module instances in generate scope '%s'\n", 
+            (int)uhdm_scope->Modules()->size(), scope_name.c_str());
+        
+        // Save current generate scope for module instances
+        std::string saved_gen_scope = current_gen_scope;
+        current_gen_scope = scope_name;
+        
         for (auto mod_inst : *uhdm_scope->Modules()) {
             // Just import the module instance
             // The module definition should already exist from the top-level import
+            log("UHDM: Importing module instance '%s' of type '%s' in generate scope\n",
+                std::string(mod_inst->VpiName()).c_str(), std::string(mod_inst->VpiDefName()).c_str());
             import_instance(mod_inst);
         }
+        
+        // Restore previous generate scope
+        current_gen_scope = saved_gen_scope;
     }
     
     // Import processes (always blocks) within the generate scope

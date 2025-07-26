@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-07-24 22:03:20.982664200 -0700
-+++ uhdm_synth_clean.tmp	2025-07-24 22:03:20.982664200 -0700
+--- verilog_synth_clean.tmp	2025-07-25 21:02:21.456441179 -0700
++++ uhdm_synth_clean.tmp	2025-07-25 21:02:21.456441179 -0700
 @@ -2,9 +2,6 @@
  (* top =  1  *)
  (* src = "dut.sv:2.1-65.10" *)
@@ -24,8 +24,8 @@
  output [1:0] state;
  wire [1:0] state;
 -\$_NOR_  _3_ (
--.A(state[0]),
--.B(state[1]),
+-.A(state[1]),
+-.B(state[0]),
 -.Y(_1_)
 -);
 -\$_ORNOT_  _4_ (
@@ -45,8 +45,8 @@
 -.Y(next_state[0])
 -);
 -\$_XOR_  _7_ (
--.A(state[0]),
--.B(state[1]),
+-.A(state[1]),
+-.B(state[0]),
 -.Y(busy)
 -);
  (* \always_ff  = 32'd1 *)

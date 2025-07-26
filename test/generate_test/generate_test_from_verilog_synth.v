@@ -603,199 +603,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[24]  /* _08_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [0]),
-    .Q(result[24]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[25]  /* _09_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [1]),
-    .Q(result[25]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[26]  /* _10_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [2]),
-    .Q(result[26]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[27]  /* _11_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [3]),
-    .Q(result[27]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[28]  /* _12_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [4]),
-    .Q(result[28]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[29]  /* _13_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [5]),
-    .Q(result[29]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[30]  /* _14_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [6]),
-    .Q(result[30]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[31]  /* _15_ */ (
-    .C(clk),
-    .D(\gen_units[3].unit_result [7]),
-    .Q(result[31]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[16]  /* _16_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [0]),
-    .Q(result[16]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[17]  /* _17_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [1]),
-    .Q(result[17]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[18]  /* _18_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [2]),
-    .Q(result[18]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[19]  /* _19_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [3]),
-    .Q(result[19]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[20]  /* _20_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [4]),
-    .Q(result[20]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[21]  /* _21_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [5]),
-    .Q(result[21]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[22]  /* _22_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [6]),
-    .Q(result[22]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[23]  /* _23_ */ (
-    .C(clk),
-    .D(\gen_units[2].unit_result [7]),
-    .Q(result[23]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[8]  /* _24_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [0]),
-    .Q(result[8]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[9]  /* _25_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [1]),
-    .Q(result[9]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[10]  /* _26_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [2]),
-    .Q(result[10]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[11]  /* _27_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [3]),
-    .Q(result[11]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[12]  /* _28_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [4]),
-    .Q(result[12]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[13]  /* _29_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [5]),
-    .Q(result[13]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[14]  /* _30_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [6]),
-    .Q(result[14]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[15]  /* _31_ */ (
-    .C(clk),
-    .D(\gen_units[1].unit_result [7]),
-    .Q(result[15]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[0]  /* _32_ */ (
+  \$_DFF_PN0_  \result_reg[0]  /* _08_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [0]),
     .Q(result[0]),
@@ -803,7 +611,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[1]  /* _33_ */ (
+  \$_DFF_PN0_  \result_reg[1]  /* _09_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [1]),
     .Q(result[1]),
@@ -811,7 +619,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[2]  /* _34_ */ (
+  \$_DFF_PN0_  \result_reg[2]  /* _10_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [2]),
     .Q(result[2]),
@@ -819,7 +627,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[3]  /* _35_ */ (
+  \$_DFF_PN0_  \result_reg[3]  /* _11_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [3]),
     .Q(result[3]),
@@ -827,7 +635,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[4]  /* _36_ */ (
+  \$_DFF_PN0_  \result_reg[4]  /* _12_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [4]),
     .Q(result[4]),
@@ -835,7 +643,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[5]  /* _37_ */ (
+  \$_DFF_PN0_  \result_reg[5]  /* _13_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [5]),
     .Q(result[5]),
@@ -843,7 +651,7 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[6]  /* _38_ */ (
+  \$_DFF_PN0_  \result_reg[6]  /* _14_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [6]),
     .Q(result[6]),
@@ -851,10 +659,202 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:68.13-74.16" *)
-  \$_DFF_PN0_  \result_reg[7]  /* _39_ */ (
+  \$_DFF_PN0_  \result_reg[7]  /* _15_ */ (
     .C(clk),
     .D(\gen_units[0].unit_result [7]),
     .Q(result[7]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[8]  /* _16_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [0]),
+    .Q(result[8]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[9]  /* _17_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [1]),
+    .Q(result[9]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[10]  /* _18_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [2]),
+    .Q(result[10]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[11]  /* _19_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [3]),
+    .Q(result[11]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[12]  /* _20_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [4]),
+    .Q(result[12]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[13]  /* _21_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [5]),
+    .Q(result[13]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[14]  /* _22_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [6]),
+    .Q(result[14]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[15]  /* _23_ */ (
+    .C(clk),
+    .D(\gen_units[1].unit_result [7]),
+    .Q(result[15]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[16]  /* _24_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [0]),
+    .Q(result[16]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[17]  /* _25_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [1]),
+    .Q(result[17]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[18]  /* _26_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [2]),
+    .Q(result[18]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[19]  /* _27_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [3]),
+    .Q(result[19]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[20]  /* _28_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [4]),
+    .Q(result[20]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[21]  /* _29_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [5]),
+    .Q(result[21]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[22]  /* _30_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [6]),
+    .Q(result[22]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[23]  /* _31_ */ (
+    .C(clk),
+    .D(\gen_units[2].unit_result [7]),
+    .Q(result[23]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[24]  /* _32_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [0]),
+    .Q(result[24]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[25]  /* _33_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [1]),
+    .Q(result[25]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[26]  /* _34_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [2]),
+    .Q(result[26]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[27]  /* _35_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [3]),
+    .Q(result[27]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[28]  /* _36_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [4]),
+    .Q(result[28]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[29]  /* _37_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [5]),
+    .Q(result[29]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[30]  /* _38_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [6]),
+    .Q(result[30]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:68.13-74.16" *)
+  \$_DFF_PN0_  \result_reg[31]  /* _39_ */ (
+    .C(clk),
+    .D(\gen_units[3].unit_result [7]),
+    .Q(result[31]),
     .R(rst_n)
   );
   (* src = "dut.sv:86.15-90.14" *)

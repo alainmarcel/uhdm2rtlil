@@ -8,6 +8,7 @@
 #include "uhdm2rtlil.h"
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/struct_typespec.h>
+#include <uhdm/uhdm_types.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -77,8 +78,8 @@ void UhdmImporter::import_package(const package* uhdm_package) {
             std::string type_name = std::string(ts->VpiName());
             std::string full_name = package_name + "::" + type_name;
             
-            log("UHDM: Importing package typespec: %s (UhdmType=%d)\n", 
-                full_name.c_str(), ts->UhdmType());
+            log("UHDM: Importing package typespec: %s (UhdmType=%s)\n", 
+                full_name.c_str(), UhdmName(ts->UhdmType()).c_str());
             
             // Store typespec for later reference
             package_typespec_map[full_name] = ts;

@@ -35,5 +35,4 @@ compile_commands.json
 
 # Test outputs
 test/**/slpp_all/
-test/**/*.il
 test/**/rtlil_diff.txt

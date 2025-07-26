@@ -6,7 +6,7 @@ attribute \src "dut.sv:1.1-13.10"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   attribute \src "dut.sv:11.18-11.23"
-  wire width 8 $and$dut.sv:11$5_Y
+  wire width 8 $and$dut.sv:11$3_Y
   attribute \src "dut.sv:4.29-4.30"
   wire width 8 input 1 \a
   attribute \src "dut.sv:5.29-5.30"
@@ -16,7 +16,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   attribute \src "dut.sv:7.29-7.32"
   wire width 8 output 4 \out
   attribute \src "dut.sv:11.18-11.23"
-  cell $and $and$dut.sv:11$5
+  cell $and $and$dut.sv:11$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -24,16 +24,16 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $and$dut.sv:11$5_Y
+    connect \Y $and$dut.sv:11$3_Y
   end
   attribute \src "dut.sv:11.18-11.27"
-  cell $and $and$dut.sv:11$6
+  cell $and $and$dut.sv:11$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $and$dut.sv:11$5_Y
+    connect \A $and$dut.sv:11$3_Y
     connect \B \c
     connect \Y \out
   end
@@ -44,7 +44,7 @@ attribute \src "dut.sv:1.1-13.10"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   attribute \src "dut.sv:11.18-11.23"
-  wire width 16 $and$dut.sv:11$3_Y
+  wire width 16 $and$dut.sv:11$5_Y
   attribute \src "dut.sv:4.29-4.30"
   wire width 16 input 1 \a
   attribute \src "dut.sv:5.29-5.30"
@@ -54,7 +54,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   attribute \src "dut.sv:7.29-7.32"
   wire width 16 output 4 \out
   attribute \src "dut.sv:11.18-11.23"
-  cell $and $and$dut.sv:11$3
+  cell $and $and$dut.sv:11$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -62,16 +62,16 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     parameter \Y_WIDTH 16
     connect \A \a
     connect \B \b
-    connect \Y $and$dut.sv:11$3_Y
+    connect \Y $and$dut.sv:11$5_Y
   end
   attribute \src "dut.sv:11.18-11.27"
-  cell $and $and$dut.sv:11$4
+  cell $and $and$dut.sv:11$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $and$dut.sv:11$3_Y
+    connect \A $and$dut.sv:11$5_Y
     connect \B \c
     connect \Y \out
   end
