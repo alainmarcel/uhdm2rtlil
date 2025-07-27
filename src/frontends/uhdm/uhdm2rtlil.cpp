@@ -538,6 +538,10 @@ void UhdmImporter::create_parameterized_modules() {
             param_mod->avail_parameters = base_mod->avail_parameters;
             param_mod->parameter_default_values = base_mod->parameter_default_values;
             
+            // Add hdlname attribute with the original module name
+            param_mod->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_module_name);
+            param_mod->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
+            
             // Update the WIDTH parameter
             RTLIL::IdString width_param = RTLIL::escape_id("WIDTH");
             param_mod->parameter_default_values[width_param] = RTLIL::Const(width, 32);
@@ -936,6 +940,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Module instances are imported through the hierarchy traversal
     // (TopModules), not through ref_modules
     
+    // Add dynports attribute if module has parameters
+    if (!module->avail_parameters.empty()) {
+        module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
+    }
+    
     // Finalize module
     module->fixup_ports();
     
@@ -1017,6 +1026,7 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
         // Copy attributes
         param_module->attributes = base_module->attributes;
         param_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_name);
+        param_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
         
         param_module->fixup_ports();
     }
@@ -1082,8 +1092,10 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
     
     // Set interface attributes
     interface_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(interface_name);
+    if (uhdm_interface->Parameters()) {
+      interface_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
+    }
     interface_module->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
-    interface_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
     add_src_attribute(interface_module->attributes, uhdm_interface);
     // Import interface variables as ports
     if (uhdm_interface->Variables()) {

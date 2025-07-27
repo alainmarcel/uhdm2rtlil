@@ -329,6 +329,8 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             
             // Copy attributes from base module
             param_mod->attributes = base_mod->attributes;
+            // Add hdlname attribute with the original module name
+            param_mod->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_module_name);
             param_mod->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
             // Mark the module as parametric - this is crucial!
             param_mod->avail_parameters = base_mod->avail_parameters;
