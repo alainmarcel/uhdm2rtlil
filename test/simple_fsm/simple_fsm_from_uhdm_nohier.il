@@ -6,6 +6,8 @@ module \simple_fsm
   parameter \WORK 2'01
   parameter \WAIT 2'10
   parameter \DONE 2'11
+  wire $0\busy
+  wire width 2 $0\next_state
   attribute \src "dut.sv:20.1-25.4"
   wire width 2 $0\state[1:0]
   attribute \src "dut.sv:7.17-7.21"
@@ -46,18 +48,36 @@ module \simple_fsm
     switch \state
       attribute \src "dut.sv:30.9-35.12"
       case 2'00
+        attribute \src "dut.sv:31.13-34.35"
+        switch \start
+          attribute \src "dut.sv:31.13-34.35"
+          case 1'1
+            assign $0\next_state 2'01
+          attribute \src "dut.sv:31.13-34.35"
+          case 
+        end
       attribute \src "dut.sv:36.9-38.12"
       case 2'01
-        assign \next_state 2'10
+        assign $0\next_state 2'10
       attribute \src "dut.sv:39.9-44.12"
       case 2'10
+        attribute \src "dut.sv:40.13-43.35"
+        switch \done
+          attribute \src "dut.sv:40.13-43.35"
+          case 1'1
+            assign $0\next_state 2'11
+          attribute \src "dut.sv:40.13-43.35"
+          case 
+        end
       attribute \src "dut.sv:45.9-47.12"
       case 2'11
-        assign \next_state 2'00
+        assign $0\next_state 2'00
       attribute \src "dut.sv:48.9-50.12"
       case 
-        assign \next_state 2'00
+        assign $0\next_state 2'00
     end
+    sync always
+      update \next_state $0\next_state
   end
   attribute \always_comb 1
   attribute \src "dut.sv:55.1-63.4"
@@ -66,19 +86,21 @@ module \simple_fsm
     switch \state
       attribute \src "dut.sv:57.9-57.27"
       case 2'00
-        assign \busy 1'0
+        assign $0\busy 1'0
       attribute \src "dut.sv:58.9-58.27"
       case 2'01
-        assign \busy 1'1
+        assign $0\busy 1'1
       attribute \src "dut.sv:59.9-59.27"
       case 2'10
-        assign \busy 1'1
+        assign $0\busy 1'1
       attribute \src "dut.sv:60.9-60.27"
       case 2'11
-        assign \busy 1'0
+        assign $0\busy 1'0
       attribute \src "dut.sv:61.9-61.30"
       case 
-        assign \busy 1'0
+        assign $0\busy 1'0
     end
+    sync always
+      update \busy $0\busy
   end
 end

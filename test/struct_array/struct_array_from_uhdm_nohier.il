@@ -2,6 +2,8 @@
 autoidx 5
 attribute \src "dut.sv:7.1-27.10"
 module \struct_array
+  wire width 8 $0\data_out
+  wire width 4 $0\tag_out
   wire width 4 $auto$rtlil.cc:3006:Xor$4
   wire width 8 $auto$rtlil.cc:3017:Add$2
   attribute \src "dut.sv:8.24-8.31"
@@ -39,11 +41,15 @@ module \struct_array
   process $proc$dut.sv:17$1
     assign \packet [11:4] \data_in
     assign \packet [3:0] \tag_in
+    sync always
   end
   attribute \always_comb 1
   attribute \src "dut.sv:23.5-26.8"
   process $proc$dut.sv:23$1
     assign \data_out $auto$rtlil.cc:3017:Add$2
     assign \tag_out $auto$rtlil.cc:3006:Xor$4
+    sync always
+      update \data_out $0\data_out
+      update \tag_out $0\tag_out
   end
 end

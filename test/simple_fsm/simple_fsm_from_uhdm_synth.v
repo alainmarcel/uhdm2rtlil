@@ -3,6 +3,8 @@
 (* top =  1  *)
 (* src = "dut.sv:2.1-65.10" *)
 module simple_fsm(clk, reset, start, done, busy, state);
+  wire _0_;
+  wire _1_;
   (* src = "dut.sv:7.17-7.21" *)
   output busy;
   wire busy;
@@ -24,15 +26,41 @@ module simple_fsm(clk, reset, start, done, busy, state);
   (* src = "dut.sv:8.23-8.28" *)
   output [1:0] state;
   wire [1:0] state;
+  \$_ANDNOT_  _2_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(_0_)
+  );
+  \$_NOR_  _3_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(_1_)
+  );
+  \$_OR_  _4_ (
+    .A(_1_),
+    .B(_0_),
+    .Y(next_state[0])
+  );
+  \$_XOR_  _5_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(busy)
+  );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:20.1-25.4" *)
-  \$_SDFF_PP0_  \state_reg[1]  /* _0_ */ (
+  \$_SDFF_PP0_  \state_reg[0]  /* _6_ */ (
     .C(clk),
-    .D(1'h1),
+    .D(next_state[0]),
+    .Q(state[0]),
+    .R(reset)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:20.1-25.4" *)
+  \$_SDFF_PP0_  \state_reg[1]  /* _7_ */ (
+    .C(clk),
+    .D(busy),
     .Q(state[1]),
     .R(reset)
   );
-  assign busy = state[1];
-  assign next_state = 2'h2;
-  assign state[0] = 1'h0;
+  assign next_state[1] = busy;
 endmodule

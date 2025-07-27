@@ -5,6 +5,8 @@ module \counter
   parameter \WIDTH 8
   attribute \src "dut.sv:14.5-20.8"
   wire width 8 $0\count[7:0]
+  wire width 8 $0\count_next
+  wire $0\overflow
   wire $auto$rtlil.cc:3004:And$6
   wire $auto$rtlil.cc:3011:Eq$4
   wire width 8 $auto$rtlil.cc:3017:Add$2
@@ -89,5 +91,8 @@ module \counter
   process $proc$dut.sv:22$1
     assign \count_next $auto$rtlil.cc:3017:Add$2
     assign \overflow $auto$rtlil.cc:3004:And$6
+    sync always
+      update \count_next $0\count_next
+      update \overflow $0\overflow
   end
 end

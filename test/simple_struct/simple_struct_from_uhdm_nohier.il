@@ -56,6 +56,7 @@ module \simple_struct
     assign \bus3 [47:32] \a3
     assign \bus3 [31:16] \b3
     assign \bus3 [15:0] \c3
+    sync always
   end
 end
 attribute \src "dut.sv:22.1-28.10"

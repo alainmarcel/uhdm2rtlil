@@ -109,6 +109,9 @@ struct UhdmImporter {
     // UHDM design for accessing module definitions
     UHDM::design* uhdm_design = nullptr;
     
+    // Temporary wires for combinational processes
+    std::map<std::string, RTLIL::Wire*> current_temp_wires;
+    
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
     // Main import functions
