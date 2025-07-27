@@ -201,7 +201,9 @@ struct UhdmImporter {
                                          std::string& output_signal, 
                                          std::string& input_signal,
                                          std::string& clock_signal, 
-                                         std::string& reset_signal);
+                                         std::string& reset_signal,
+                                         std::vector<int>& slice_offsets,
+                                         std::vector<int>& slice_widths);
     
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::instance* inst = nullptr);

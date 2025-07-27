@@ -4,8 +4,8 @@ attribute \src "dut.sv:2.1-17.10"
 module \flipflop
   attribute \src "dut.sv:9.5-15.8"
   wire $0\q[0:0]
-  attribute \src "dut.sv:9.15-9.46"
-  wire $logic_not$dut.sv:9.15-9.46$$proc$dut.sv:9$1$1_Y
+  attribute \src "dut.sv:10.13-10.19"
+  wire $logic_not$dut.sv:10.13-10.19$1_Y
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk
   attribute \src "dut.sv:5.18-5.19"
@@ -14,24 +14,24 @@ module \flipflop
   wire output 4 \q
   attribute \src "dut.sv:4.18-4.23"
   wire input 2 \rst_n
-  attribute \src "dut.sv:9.15-9.46"
-  cell $logic_not $logic_not$dut.sv:9.15-9.46$$proc$dut.sv:9$1$1
+  attribute \src "dut.sv:10.13-10.19"
+  cell $logic_not $logic_not$dut.sv:10.13-10.19$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst_n
-    connect \Y $logic_not$dut.sv:9.15-9.46$$proc$dut.sv:9$1$1_Y
+    connect \Y $logic_not$dut.sv:10.13-10.19$1_Y
   end
   attribute \always_ff 1
   attribute \src "dut.sv:9.5-15.8"
   process $proc$dut.sv:9$1
     assign $0\q[0:0] \q
-    attribute \src "dut.sv:9.15-9.46"
-    switch $logic_not$dut.sv:9.15-9.46$$proc$dut.sv:9$1$1_Y
-      attribute \src "dut.sv:9.15-9.46"
+    attribute \src "dut.sv:10.9-14.12"
+    switch $logic_not$dut.sv:10.13-10.19$1_Y
+      attribute \src "dut.sv:10.13-10.19"
       case 1'1
         assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:9.15-9.46"
+      attribute \src "dut.sv:12.18-14.12"
       case 
         assign $0\q[0:0] \d
     end

@@ -3,12 +3,29 @@
 (* top =  1  *)
 (* src = "dut.sv:2.1-27.10" *)
 module counter(clk, rst_n, enable, count, overflow);
+  wire _00_;
+  wire _01_;
+  wire _02_;
+  wire _03_;
+  wire _04_;
+  wire _05_;
+  wire _06_;
+  wire _07_;
+  wire _08_;
+  wire _09_;
+  wire _10_;
+  wire _11_;
+  wire _12_;
+  wire _13_;
+  wire _14_;
   (* src = "dut.sv:5.18-5.21" *)
   input clk;
   wire clk;
   (* src = "dut.sv:8.30-8.35" *)
   output [7:0] count;
   wire [7:0] count;
+  (* src = "dut.sv:12.23-12.33" *)
+  wire [7:0] count_next;
   (* src = "dut.sv:7.18-7.24" *)
   input enable;
   wire enable;
@@ -18,6 +35,195 @@ module counter(clk, rst_n, enable, count, overflow);
   (* src = "dut.sv:6.18-6.23" *)
   input rst_n;
   wire rst_n;
-  assign count = 8'hxx;
-  assign overflow = 1'h0;
+  \$_NOT_  _15_ (
+    .A(count[0]),
+    .Y(count_next[0])
+  );
+  \$_OR_  _16_ (
+    .A(count[1]),
+    .B(count[0]),
+    .Y(_00_)
+  );
+  \$_OR_  _17_ (
+    .A(count[3]),
+    .B(count[2]),
+    .Y(_01_)
+  );
+  \$_OR_  _18_ (
+    .A(_01_),
+    .B(_00_),
+    .Y(_02_)
+  );
+  \$_OR_  _19_ (
+    .A(count[5]),
+    .B(count[4]),
+    .Y(_03_)
+  );
+  \$_OR_  _20_ (
+    .A(count[7]),
+    .B(count[6]),
+    .Y(_04_)
+  );
+  \$_OR_  _21_ (
+    .A(_04_),
+    .B(_03_),
+    .Y(_05_)
+  );
+  \$_OR_  _22_ (
+    .A(_05_),
+    .B(_02_),
+    .Y(_06_)
+  );
+  \$_ANDNOT_  _23_ (
+    .A(enable),
+    .B(_06_),
+    .Y(overflow)
+  );
+  \$_XOR_  _24_ (
+    .A(count[1]),
+    .B(count[0]),
+    .Y(count_next[1])
+  );
+  \$_NAND_  _25_ (
+    .A(count[1]),
+    .B(count[0]),
+    .Y(_07_)
+  );
+  \$_XNOR_  _26_ (
+    .A(_07_),
+    .B(count[2]),
+    .Y(count_next[2])
+  );
+  \$_ANDNOT_  _27_ (
+    .A(count[2]),
+    .B(_07_),
+    .Y(_08_)
+  );
+  \$_XOR_  _28_ (
+    .A(_08_),
+    .B(count[3]),
+    .Y(count_next[3])
+  );
+  \$_NAND_  _29_ (
+    .A(count[3]),
+    .B(count[2]),
+    .Y(_09_)
+  );
+  \$_OR_  _30_ (
+    .A(_09_),
+    .B(_07_),
+    .Y(_10_)
+  );
+  \$_XNOR_  _31_ (
+    .A(_10_),
+    .B(count[4]),
+    .Y(count_next[4])
+  );
+  \$_ANDNOT_  _32_ (
+    .A(count[4]),
+    .B(_10_),
+    .Y(_11_)
+  );
+  \$_XOR_  _33_ (
+    .A(_11_),
+    .B(count[5]),
+    .Y(count_next[5])
+  );
+  \$_NAND_  _34_ (
+    .A(count[5]),
+    .B(count[4]),
+    .Y(_12_)
+  );
+  \$_OR_  _35_ (
+    .A(_12_),
+    .B(_10_),
+    .Y(_13_)
+  );
+  \$_XNOR_  _36_ (
+    .A(_13_),
+    .B(count[6]),
+    .Y(count_next[6])
+  );
+  \$_ANDNOT_  _37_ (
+    .A(count[6]),
+    .B(_13_),
+    .Y(_14_)
+  );
+  \$_XOR_  _38_ (
+    .A(_14_),
+    .B(count[7]),
+    .Y(count_next[7])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[0]  /* _39_ */ (
+    .C(clk),
+    .D(count_next[0]),
+    .E(enable),
+    .Q(count[0]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[1]  /* _40_ */ (
+    .C(clk),
+    .D(count_next[1]),
+    .E(enable),
+    .Q(count[1]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[2]  /* _41_ */ (
+    .C(clk),
+    .D(count_next[2]),
+    .E(enable),
+    .Q(count[2]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[3]  /* _42_ */ (
+    .C(clk),
+    .D(count_next[3]),
+    .E(enable),
+    .Q(count[3]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[4]  /* _43_ */ (
+    .C(clk),
+    .D(count_next[4]),
+    .E(enable),
+    .Q(count[4]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[5]  /* _44_ */ (
+    .C(clk),
+    .D(count_next[5]),
+    .E(enable),
+    .Q(count[5]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[6]  /* _45_ */ (
+    .C(clk),
+    .D(count_next[6]),
+    .E(enable),
+    .Q(count[6]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.5-20.8" *)
+  \$_DFFE_PN0P_  \count_reg[7]  /* _46_ */ (
+    .C(clk),
+    .D(count_next[7]),
+    .E(enable),
+    .Q(count[7]),
+    .R(rst_n)
+  );
 endmodule

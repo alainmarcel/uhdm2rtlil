@@ -70,7 +70,7 @@ else
     echo "   Running Surelog to generate UHDM..."
     echo "   Command: $SURELOG_BIN -parse -d uhdm $SV_FILE"
     echo "   Logging to: surelog_build.log"
-    $SURELOG_BIN -parse -d uhdm "$SV_FILE" > surelog_build.log 2>&1
+    $SURELOG_BIN -parse -nobuiltin -d uhdm "$SV_FILE" > surelog_build.log 2>&1
     
     # Check if UHDM file was generated
     if [ ! -f "$UHDM_FILE" ]; then

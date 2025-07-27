@@ -45,7 +45,7 @@ else()
     add_custom_command(
       OUTPUT ${INSTALL_DIR}/bin/yosys
       COMMAND echo "       Compiling Yosys"
-      COMMAND make CONFIG=gcc PREFIX=${INSTALL_DIR} install -j4
+      COMMAND make CONFIG=gcc PREFIX=${INSTALL_DIR} ENABLE_DEBUG=1 install -j4
       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/third_party/yosys"
       DEPENDS ${PROJECT_SOURCE_DIR}/third_party/yosys/kernel/yosys.cc)
   endif()

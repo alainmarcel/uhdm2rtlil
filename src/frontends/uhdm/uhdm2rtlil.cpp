@@ -852,6 +852,28 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Import module-level variables (logic declarations)
+    if (uhdm_module->Variables()) {
+        log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
+        for (auto var : *uhdm_module->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            int width = get_width(var, uhdm_module);
+            log("UHDM: Importing variable '%s' (width=%d)\n", var_name.c_str(), width);
+            
+            // Check if this wire already exists (might have been created as a port)
+            RTLIL::IdString wire_id = RTLIL::escape_id(var_name);
+            if (!module->wire(wire_id)) {
+                RTLIL::Wire* wire = module->addWire(wire_id, width);
+                wire_map[var] = wire;
+                name_map[var_name] = wire;
+                add_src_attribute(wire->attributes, var);
+                log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
+            } else {
+                log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
+            }
+        }
+    }
+    
     // Import nets
     if (uhdm_module->Nets()) {
         log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());

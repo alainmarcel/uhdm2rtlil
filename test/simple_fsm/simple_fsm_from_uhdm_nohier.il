@@ -8,8 +8,6 @@ module \simple_fsm
   parameter \DONE 2'11
   attribute \src "dut.sv:20.1-25.4"
   wire width 2 $0\state[1:0]
-  attribute \src "dut.sv:20.11-20.42"
-  wire $logic_not$dut.sv:20.11-20.42$$proc$dut.sv:20$1$1_Y
   attribute \src "dut.sv:7.17-7.21"
   wire output 5 \busy
   attribute \src "dut.sv:3.17-3.20"
@@ -25,30 +23,20 @@ module \simple_fsm
   wire input 3 \start
   attribute \src "dut.sv:8.23-8.28"
   wire width 2 output 6 \state
-  attribute \src "dut.sv:20.11-20.42"
-  cell $logic_not $logic_not$dut.sv:20.11-20.42$$proc$dut.sv:20$1$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \reset
-    connect \Y $logic_not$dut.sv:20.11-20.42$$proc$dut.sv:20$1$1_Y
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:20.1-25.4"
   process $proc$dut.sv:20$1
     assign $0\state[1:0] \state
-    attribute \src "dut.sv:20.11-20.42"
-    switch $logic_not$dut.sv:20.11-20.42$$proc$dut.sv:20$1$1_Y
-      attribute \src "dut.sv:20.11-20.42"
+    attribute \src "dut.sv:21.5-24.29"
+    switch \reset
+      attribute \src "dut.sv:21.9-21.14"
       case 1'1
         assign $0\state[1:0] 2'00
-      attribute \src "dut.sv:20.11-20.42"
+      attribute \src "dut.sv:24.9-24.28"
       case 
-        assign $0\state[1:0] { 1'0 \done }
+        assign $0\state[1:0] \next_state
     end
     sync posedge \clk
-      update \state $0\state[1:0]
-    sync negedge \reset
       update \state $0\state[1:0]
   end
   attribute \always_comb 1

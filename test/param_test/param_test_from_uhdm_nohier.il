@@ -7,8 +7,6 @@ module \param_test
   parameter \INIT_VALUE 8'10101010
   attribute \src "dut.sv:13.5-18.8"
   wire width 8 $0\data_out[7:0]
-  attribute \src "dut.sv:13.12-13.26"
-  wire $logic_not$dut.sv:13.12-13.26$$proc$dut.sv:13$1$1_Y
   attribute \src "dut.sv:6.29-6.32"
   wire input 1 \clk
   attribute \src "dut.sv:8.29-8.36"
@@ -17,30 +15,20 @@ module \param_test
   wire width 8 output 4 \data_out
   attribute \src "dut.sv:7.29-7.32"
   wire input 2 \rst
-  attribute \src "dut.sv:13.12-13.26"
-  cell $logic_not $logic_not$dut.sv:13.12-13.26$$proc$dut.sv:13$1$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \rst
-    connect \Y $logic_not$dut.sv:13.12-13.26$$proc$dut.sv:13$1$1_Y
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-18.8"
   process $proc$dut.sv:13$1
     assign $0\data_out[7:0] \data_out
-    attribute \src "dut.sv:13.12-13.26"
-    switch $logic_not$dut.sv:13.12-13.26$$proc$dut.sv:13$1$1_Y
-      attribute \src "dut.sv:13.12-13.26"
+    attribute \src "dut.sv:14.9-17.33"
+    switch \rst
+      attribute \src "dut.sv:14.13-14.16"
       case 1'1
         assign $0\data_out[7:0] 8'00000000
-      attribute \src "dut.sv:13.12-13.26"
+      attribute \src "dut.sv:17.13-17.32"
       case 
         assign $0\data_out[7:0] \data_in
     end
     sync posedge \clk
-      update \data_out $0\data_out[7:0]
-    sync negedge \rst
       update \data_out $0\data_out[7:0]
   end
 end

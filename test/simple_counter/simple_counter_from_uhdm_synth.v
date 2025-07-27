@@ -12,10 +12,10 @@ module simple_counter(clk, rst_n, count);
   wire _06_;
   wire _07_;
   (* force_downto = 32'd1 *)
-  (* src = "dut.sv:8.15-8.46|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.23-270.24" *)
+  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.23-270.24" *)
   wire [7:0] _08_;
   (* force_downto = 32'd1 *)
-  (* src = "dut.sv:8.15-8.46|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [7:0] _09_;
   (* src = "dut.sv:3.18-3.21" *)
   input clk;
@@ -107,7 +107,15 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[0]  /* _26_ */ (
+  \$_DFF_PN0_  \count_reg[7]  /* _26_ */ (
+    .C(clk),
+    .D(_09_[7]),
+    .Q(count[7]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:8.5-14.8" *)
+  \$_DFF_PN0_  \count_reg[0]  /* _27_ */ (
     .C(clk),
     .D(_08_[0]),
     .Q(count[0]),
@@ -115,7 +123,7 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[1]  /* _27_ */ (
+  \$_DFF_PN0_  \count_reg[1]  /* _28_ */ (
     .C(clk),
     .D(_09_[1]),
     .Q(count[1]),
@@ -123,7 +131,7 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[2]  /* _28_ */ (
+  \$_DFF_PN0_  \count_reg[2]  /* _29_ */ (
     .C(clk),
     .D(_09_[2]),
     .Q(count[2]),
@@ -131,7 +139,7 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[3]  /* _29_ */ (
+  \$_DFF_PN0_  \count_reg[3]  /* _30_ */ (
     .C(clk),
     .D(_09_[3]),
     .Q(count[3]),
@@ -139,7 +147,7 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[4]  /* _30_ */ (
+  \$_DFF_PN0_  \count_reg[4]  /* _31_ */ (
     .C(clk),
     .D(_09_[4]),
     .Q(count[4]),
@@ -147,7 +155,7 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[5]  /* _31_ */ (
+  \$_DFF_PN0_  \count_reg[5]  /* _32_ */ (
     .C(clk),
     .D(_09_[5]),
     .Q(count[5]),
@@ -155,18 +163,10 @@ module simple_counter(clk, rst_n, count);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[6]  /* _32_ */ (
+  \$_DFF_PN0_  \count_reg[6]  /* _33_ */ (
     .C(clk),
     .D(_09_[6]),
     .Q(count[6]),
-    .R(rst_n)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:8.5-14.8" *)
-  \$_DFF_PN0_  \count_reg[7]  /* _33_ */ (
-    .C(clk),
-    .D(_09_[7]),
-    .Q(count[7]),
     .R(rst_n)
   );
   assign _08_[7:1] = count[7:1];

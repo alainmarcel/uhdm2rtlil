@@ -13,7 +13,7 @@ module \struct_array
   wire width 4 input 2 \tag_in
   attribute \src "dut.sv:11.24-11.31"
   wire width 4 output 4 \tag_out
-  cell $add $auto$expression.cpp:270:import_operation$1
+  cell $add $auto$expression.cpp:275:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

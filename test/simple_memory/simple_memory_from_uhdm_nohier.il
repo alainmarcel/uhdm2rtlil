@@ -7,8 +7,6 @@ module \simple_memory
   parameter \ADDR_WIDTH 4
   attribute \src "dut.sv:19.5-34.8"
   wire width 8 $0\data_out[7:0]
-  attribute \src "dut.sv:19.12-19.26"
-  wire $logic_not$dut.sv:19.12-19.26$$proc$dut.sv:19$1$1_Y
   attribute \src "dut.sv:9.34-9.38"
   wire width 4 input 4 \addr
   attribute \src "dut.sv:6.34-6.37"
@@ -17,34 +15,25 @@ module \simple_memory
   wire width 8 input 5 \data_in
   attribute \src "dut.sv:11.34-11.42"
   wire width 8 output 6 \data_out
+  attribute \src "dut.sv:18.13-18.14"
+  wire width 32 \i
   attribute \src "dut.sv:7.34-7.37"
   wire input 2 \rst
   attribute \src "dut.sv:8.34-8.36"
   wire input 3 \we
-  attribute \src "dut.sv:19.12-19.26"
-  cell $logic_not $logic_not$dut.sv:19.12-19.26$$proc$dut.sv:19$1$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \rst
-    connect \Y $logic_not$dut.sv:19.12-19.26$$proc$dut.sv:19$1$1_Y
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:19.5-34.8"
   process $proc$dut.sv:19$1
     assign $0\data_out[7:0] \data_out
-    attribute \src "dut.sv:19.12-19.26"
-    switch $logic_not$dut.sv:19.12-19.26$$proc$dut.sv:19$1$1_Y
-      attribute \src "dut.sv:19.12-19.26"
+    attribute \src "dut.sv:20.9-33.12"
+    switch \rst
+      attribute \src "dut.sv:20.13-20.16"
       case 1'1
         assign $0\data_out[7:0] 8'00000000
-      attribute \src "dut.sv:19.12-19.26"
+      attribute \src "dut.sv:25.18-33.12"
       case 
-        assign $0\data_out[7:0] { 4'0000 \addr }
     end
     sync posedge \clk
-      update \data_out $0\data_out[7:0]
-    sync negedge \rst
       update \data_out $0\data_out[7:0]
   end
 end

@@ -16,14 +16,14 @@ module \param_test
   wire input 2 \rst
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-18.8"
-  cell $adff $procdff$5
-    parameter \ARST_POLARITY 0
-    parameter \ARST_VALUE 8'00000000
-    parameter \CLK_POLARITY 1'1
+  cell $sdff $auto$ff.cc:266:slice$5
+    parameter \CLK_POLARITY 1
+    parameter \SRST_POLARITY 1
+    parameter \SRST_VALUE 8'00000000
     parameter \WIDTH 8
-    connect \ARST \rst
     connect \CLK \clk
     connect \D \data_in
     connect \Q \data_out
+    connect \SRST \rst
   end
 end

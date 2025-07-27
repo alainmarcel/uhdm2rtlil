@@ -234,7 +234,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
                 not_cell->setParam(ID::Y_WIDTH, 1);
                 add_src_attribute(not_cell->attributes, uhdm_op);
                 
-                RTLIL::Wire* output_wire = module->addWire(NEW_ID, 1);
+                // Create output wire with source-based name
+                std::string wire_name_str = cell_name_str + "_Y";
+                RTLIL::IdString wire_name = RTLIL::escape_id(wire_name_str);
+                RTLIL::Wire* output_wire = module->addWire(wire_name, 1);
+                add_src_attribute(output_wire->attributes, uhdm_op);
+
                 not_cell->setPort(ID::A, operands[0]);
                 not_cell->setPort(ID::Y, output_wire);
                 

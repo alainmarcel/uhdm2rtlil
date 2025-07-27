@@ -17,7 +17,7 @@ module param_test(clk, rst, data_in, data_out);
   wire rst;
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[0]  /* _0_ */ (
+  \$_SDFF_PP0_  \data_out_reg[0]  /* _0_ */ (
     .C(clk),
     .D(data_in[0]),
     .Q(data_out[0]),
@@ -25,7 +25,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[1]  /* _1_ */ (
+  \$_SDFF_PP0_  \data_out_reg[1]  /* _1_ */ (
     .C(clk),
     .D(data_in[1]),
     .Q(data_out[1]),
@@ -33,7 +33,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[2]  /* _2_ */ (
+  \$_SDFF_PP0_  \data_out_reg[2]  /* _2_ */ (
     .C(clk),
     .D(data_in[2]),
     .Q(data_out[2]),
@@ -41,7 +41,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[3]  /* _3_ */ (
+  \$_SDFF_PP0_  \data_out_reg[3]  /* _3_ */ (
     .C(clk),
     .D(data_in[3]),
     .Q(data_out[3]),
@@ -49,7 +49,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[4]  /* _4_ */ (
+  \$_SDFF_PP0_  \data_out_reg[4]  /* _4_ */ (
     .C(clk),
     .D(data_in[4]),
     .Q(data_out[4]),
@@ -57,7 +57,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[5]  /* _5_ */ (
+  \$_SDFF_PP0_  \data_out_reg[5]  /* _5_ */ (
     .C(clk),
     .D(data_in[5]),
     .Q(data_out[5]),
@@ -65,7 +65,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[6]  /* _6_ */ (
+  \$_SDFF_PP0_  \data_out_reg[6]  /* _6_ */ (
     .C(clk),
     .D(data_in[6]),
     .Q(data_out[6]),
@@ -73,7 +73,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_PN0_  \data_out_reg[7]  /* _7_ */ (
+  \$_SDFF_PP0_  \data_out_reg[7]  /* _7_ */ (
     .C(clk),
     .D(data_in[7]),
     .Q(data_out[7]),

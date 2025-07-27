@@ -4,24 +4,25 @@ attribute \src "dut.sv:2.1-27.10"
 module \counter
   parameter \WIDTH 8
   attribute \src "dut.sv:14.5-20.8"
-  wire $0\overflow[0:0]
+  wire width 8 $0\count[7:0]
   wire $auto$rtlil.cc:3004:And$6
   wire $auto$rtlil.cc:3011:Eq$4
   wire width 8 $auto$rtlil.cc:3017:Add$2
-  attribute \src "dut.sv:14.15-14.46"
-  wire $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
+  attribute \src "dut.sv:15.13-15.19"
+  wire $logic_not$dut.sv:15.13-15.19$1_Y
   attribute \src "dut.sv:5.18-5.21"
   wire input 1 \clk
   attribute \src "dut.sv:8.30-8.35"
   wire width 8 output 4 \count
-  wire \count_next
+  attribute \src "dut.sv:12.23-12.33"
+  wire width 8 \count_next
   attribute \src "dut.sv:7.18-7.24"
   wire input 3 \enable
   attribute \src "dut.sv:9.18-9.26"
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $and $auto$expression.cpp:246:import_operation$5
+  cell $and $auto$expression.cpp:251:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -31,7 +32,7 @@ module \counter
     connect \B \enable
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $add $auto$expression.cpp:270:import_operation$1
+  cell $add $auto$expression.cpp:275:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -41,7 +42,7 @@ module \counter
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  cell $eq $auto$expression.cpp:282:import_operation$3
+  cell $eq $auto$expression.cpp:287:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -51,36 +52,42 @@ module \counter
     connect \B { }
     connect \Y $auto$rtlil.cc:3011:Eq$4
   end
-  attribute \src "dut.sv:14.15-14.46"
-  cell $logic_not $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1
+  attribute \src "dut.sv:15.13-15.19"
+  cell $logic_not $logic_not$dut.sv:15.13-15.19$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst_n
-    connect \Y $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
+    connect \Y $logic_not$dut.sv:15.13-15.19$1_Y
   end
   attribute \always_ff 1
   attribute \src "dut.sv:14.5-20.8"
   process $proc$dut.sv:14$1
-    assign $0\overflow[0:0] \overflow
-    attribute \src "dut.sv:14.15-14.46"
-    switch $logic_not$dut.sv:14.15-14.46$$proc$dut.sv:14$1$1_Y
-      attribute \src "dut.sv:14.15-14.46"
+    assign $0\count[7:0] \count
+    attribute \src "dut.sv:15.9-19.12"
+    switch $logic_not$dut.sv:15.13-15.19$1_Y
+      attribute \src "dut.sv:15.13-15.19"
       case 1'1
-        assign $0\overflow[0:0] 1'0
-      attribute \src "dut.sv:14.15-14.46"
+        assign $0\count[7:0] 8'00000000
+      attribute \src "dut.sv:17.18-19.12"
       case 
-        assign $0\overflow[0:0] \enable
+        attribute \src "dut.sv:17.18-19.12"
+        switch \enable
+          attribute \src "dut.sv:17.22-17.28"
+          case 1'1
+            assign $0\count[7:0] \count_next
+          case 
+        end
     end
     sync posedge \clk
-      update \overflow $0\overflow[0:0]
+      update \count $0\count[7:0]
     sync negedge \rst_n
-      update \overflow $0\overflow[0:0]
+      update \count $0\count[7:0]
   end
   attribute \always_comb 1
   attribute \src "dut.sv:22.5-25.8"
   process $proc$dut.sv:22$1
-    assign \count_next $auto$rtlil.cc:3017:Add$2 [0]
+    assign \count_next $auto$rtlil.cc:3017:Add$2
     assign \overflow $auto$rtlil.cc:3004:And$6
   end
 end

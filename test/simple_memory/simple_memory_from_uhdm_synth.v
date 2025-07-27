@@ -21,37 +21,5 @@ module simple_memory(clk, rst, we, addr, data_in, data_out);
   (* src = "dut.sv:8.34-8.36" *)
   input we;
   wire we;
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:19.5-34.8" *)
-  \$_DFF_PN0_  \data_out_reg[0]  /* _0_ */ (
-    .C(clk),
-    .D(addr[0]),
-    .Q(data_out[0]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:19.5-34.8" *)
-  \$_DFF_PN0_  \data_out_reg[1]  /* _1_ */ (
-    .C(clk),
-    .D(addr[1]),
-    .Q(data_out[1]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:19.5-34.8" *)
-  \$_DFF_PN0_  \data_out_reg[2]  /* _2_ */ (
-    .C(clk),
-    .D(addr[2]),
-    .Q(data_out[2]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:19.5-34.8" *)
-  \$_DFF_PN0_  \data_out_reg[3]  /* _3_ */ (
-    .C(clk),
-    .D(addr[3]),
-    .Q(data_out[3]),
-    .R(rst)
-  );
-  assign data_out[7:4] = 4'h0;
+  assign data_out = 8'h00;
 endmodule

@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-07-25 21:02:21.456441179 -0700
-+++ uhdm_synth_clean.tmp	2025-07-25 21:02:21.456441179 -0700
+--- verilog_synth_clean.tmp	2025-07-26 20:22:06.764007835 -0700
++++ uhdm_synth_clean.tmp	2025-07-26 20:22:06.764007835 -0700
 @@ -2,9 +2,6 @@
  (* top =  1  *)
  (* src = "dut.sv:2.1-65.10" *)
@@ -10,16 +10,15 @@
  (* src = "dut.sv:7.17-7.21" *)
  output busy;
  wire busy;
-@@ -14,8 +11,6 @@
+@@ -14,6 +11,7 @@
  (* src = "dut.sv:6.17-6.21" *)
  input done;
  wire done;
--(* src = "dut.sv:17.11-17.21" *)
--wire [1:0] next_state;
++(* \reg  = 32'd1 *)
+ (* src = "dut.sv:17.11-17.21" *)
+ wire [1:0] next_state;
  (* src = "dut.sv:4.17-4.22" *)
- input reset;
- wire reset;
-@@ -25,47 +20,14 @@
+@@ -25,47 +23,15 @@
  (* src = "dut.sv:8.23-8.28" *)
  output [1:0] state;
  wire [1:0] state;
@@ -49,25 +48,26 @@
 -.B(state[0]),
 -.Y(busy)
 -);
- (* \always_ff  = 32'd1 *)
- (* src = "dut.sv:20.1-25.4" *)
--\$_DFF_PP0_  \state_reg[0]  /* _8_ */ (
-+\$_DFF_PN0_  \state_reg[0]  /* _0_ */ (
- .C(clk),
--.D(next_state[0]),
-+.D(done),
- .Q(state[0]),
- .R(reset)
- );
 -(* \always_ff  = 32'd1 *)
 -(* src = "dut.sv:20.1-25.4" *)
--\$_DFF_PP0_  \state_reg[1]  /* _9_ */ (
+-\$_DFF_PP0_  \state_reg[0]  /* _8_ */ (
 -.C(clk),
--.D(busy),
--.Q(state[1]),
+-.D(next_state[0]),
+-.Q(state[0]),
 -.R(reset)
 -);
+ (* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:20.1-25.4" *)
+-\$_DFF_PP0_  \state_reg[1]  /* _9_ */ (
++\$_SDFF_PP0_  \state_reg[1]  /* _0_ */ (
+ .C(clk),
+-.D(busy),
++.D(1'h1),
+ .Q(state[1]),
+ .R(reset)
+ );
 -assign next_state[1] = busy;
-+assign busy = state[0];
-+assign state[1] = 1'h0;
++assign busy = state[1];
++assign next_state = 2'h2;
++assign state[0] = 1'h0;
  endmodule

@@ -14,12 +14,37 @@ using namespace UHDM;
 // Extract signal names from a UHDM process statement
 bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt, 
                                                    std::string& output_signal, std::string& input_signal,
-                                                   std::string& clock_signal, std::string& reset_signal) {
+                                                   std::string& clock_signal, std::string& reset_signal,
+                                                   std::vector<int>& slice_offsets, std::vector<int>& slice_widths) {
     
     log("UHDM: Extracting signal names from process statement\n");
     
+    // Handle event_control wrapper (for always_ff @(...))
+    if (stmt->VpiType() == vpiEventControl) {
+        const UHDM::event_control* event_ctrl = static_cast<const UHDM::event_control*>(stmt);
+        if (auto controlled_stmt = event_ctrl->Stmt()) {
+            // Extract the actual statement from event control
+            stmt = controlled_stmt;
+            log("UHDM: Unwrapped event_control, found inner statement type: %s (vpiType=%d)\n", 
+                UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
+        }
+    }
+    
+    // Handle begin block
+    if (stmt->VpiType() == vpiBegin) {
+        const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(stmt);
+        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+            // Get first statement from begin block
+            stmt = (*begin_stmt->Stmts())[0];
+            log("UHDM: Unwrapped begin block, found inner statement type: %s (vpiType=%d)\n", 
+                UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
+        }
+    }
+    
     // For simple_counter, we need to extract from the if statement structure
-    if (stmt->VpiType() == vpiIf) {
+    if (stmt->VpiType() == vpiIf || stmt->VpiType() == vpiIfElse) {
+        log("UHDM: Found if statement, VpiType=%d, UhdmType=%s\n", stmt->VpiType(), UhdmName(stmt->UhdmType()).c_str());
+        
         // Check if this is an if_else or just if_stmt
         if (stmt->UhdmType() == uhdmif_else) {
             const UHDM::if_else* if_else_stmt = static_cast<const UHDM::if_else*>(stmt);
@@ -29,6 +54,21 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             
             // Check then statement for reset assignment
             if (auto then_stmt = if_else_stmt->VpiStmt()) {
+                log("UHDM: Then statement type: %s (vpiType=%d)\n", UhdmName(then_stmt->UhdmType()).c_str(), then_stmt->VpiType());
+                // Handle begin blocks
+                if (then_stmt->VpiType() == vpiBegin) {
+                    const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(then_stmt);
+                    if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+                        // Look for assignment inside begin block
+                        for (auto stmt : *begin_stmt->Stmts()) {
+                            if (stmt->VpiType() == vpiAssignment) {
+                                then_stmt = stmt;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 if (then_stmt->VpiType() == vpiAssignment) {
                     const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
                     if (auto lhs = assign->Lhs()) {
@@ -36,6 +76,40 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                             const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
                             output_signal = std::string(ref->VpiName());
                             log("UHDM: Found output signal from reset assignment: %s\n", output_signal.c_str());
+                        } else if (lhs->VpiType() == vpiIndexedPartSelect) {
+                            // For indexed part selects like result[i*8 +: 8], we need to extract the base signal
+                            const UHDM::indexed_part_select* ips = static_cast<const UHDM::indexed_part_select*>(lhs);
+                            // Try to get the base signal name
+                            if (!ips->VpiDefName().empty()) {
+                                output_signal = std::string(ips->VpiDefName());
+                            } else if (!ips->VpiName().empty()) {
+                                output_signal = std::string(ips->VpiName());
+                            } else if (auto parent = ips->VpiParent()) {
+                                if (!parent->VpiDefName().empty()) {
+                                    output_signal = std::string(parent->VpiDefName());
+                                } else if (!parent->VpiName().empty()) {
+                                    output_signal = std::string(parent->VpiName());
+                                }
+                            }
+                            log("UHDM: Found output signal from indexed part select: %s\n", output_signal.c_str());
+                            
+                            // Extract slice information from indexed part select
+                            if (ips->Base_expr()) {
+                                RTLIL::SigSpec base_expr = import_expression(ips->Base_expr());
+                                if (base_expr.is_fully_const()) {
+                                    int offset = base_expr.as_const().as_int();
+                                    slice_offsets.push_back(offset);
+                                    log("UHDM: Indexed part select offset: %d\n", offset);
+                                }
+                            }
+                            if (ips->Width_expr()) {
+                                RTLIL::SigSpec width_expr = import_expression(ips->Width_expr());
+                                if (width_expr.is_fully_const()) {
+                                    int width = width_expr.as_const().as_int();
+                                    slice_widths.push_back(width);
+                                    log("UHDM: Indexed part select width: %d\n", width);
+                                }
+                            }
                         }
                     }
                 }
@@ -43,11 +117,35 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             
             // Check else statement for normal assignment  
             if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
+                log("UHDM: Found else statement, type: %s (vpiType=%d)\n", 
+                    UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
+                // Handle begin blocks
+                if (else_stmt->VpiType() == vpiBegin) {
+                    const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(else_stmt);
+                    if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+                        // Look for assignment inside begin block
+                        for (auto stmt : *begin_stmt->Stmts()) {
+                            if (stmt->VpiType() == vpiAssignment) {
+                                else_stmt = stmt;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 if (else_stmt->VpiType() == vpiAssignment) {
                     const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(else_stmt);
+                    log("UHDM: Processing else assignment\n");
                     if (auto rhs = assign->Rhs()) {
+                        log("UHDM: RHS type: %s (vpiType=%d)\n", UhdmName(rhs->UhdmType()).c_str(), rhs->VpiType());
+                        // For simple ref like "unit_result"
+                        if (rhs->VpiType() == vpiRefObj) {
+                            const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                            input_signal = std::string(ref->VpiName());
+                            log("UHDM: Found input signal from else assignment: %s\n", input_signal.c_str());
+                        }
                         // For expressions like "count + 1", we want to extract "count" as input
-                        if (rhs->VpiType() == vpiOperation) {
+                        else if (rhs->VpiType() == vpiOperation) {
                             const UHDM::operation* op = static_cast<const UHDM::operation*>(rhs);
                             if (auto operands = op->Operands()) {
                                 for (auto operand : *operands) {
@@ -310,6 +408,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     // Instead of hardcoding the logic, let's parse the actual UHDM structure
     if (auto stmt = uhdm_process->Stmt()) {
         log("    Found process statement, parsing structure...\n");
+        log("    Process source: %s\n", get_src_attribute(uhdm_process).c_str());
         
         // Analyze the UHDM structure to extract actual signal names
         std::string output_signal_name;
@@ -324,8 +423,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         std::string memory_name;
         
         // Extract signal names from the UHDM structure
+        std::vector<int> slice_offsets;
+        std::vector<int> slice_widths;
         if (!extract_signal_names_from_process(stmt, output_signal_name, input_signal_name, 
-                                             clock_signal_name, reset_signal_name)) {
+                                             clock_signal_name, reset_signal_name, slice_offsets, slice_widths)) {
             // Debug: Check if module already has processes with switches BEFORE warning
             log("UHDM: Module has %d processes before fallback\n", (int)module->processes.size());
             for (const auto& proc_pair : module->processes) {
@@ -336,9 +437,25 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             log("Warning: Failed to extract signal names from UHDM structure, trying fallback method...\n");
             
             // Fallback: use name_map to extract signals
+            // Be more selective - prioritize based on generate scope context
+            std::string preferred_output;
+            
+            // If we're in the extra_logic generate scope, prefer extra_result
+            if (!current_gen_scope.empty() && current_gen_scope.find("extra_logic") != std::string::npos) {
+                preferred_output = "extra_result";
+            }
+            
             for (const auto& [name, wire] : name_map) {
                 if (wire->port_output) {
-                    output_signal_name = name;
+                    // If we have a preferred output and this matches, use it immediately
+                    if (!preferred_output.empty() && name == preferred_output) {
+                        output_signal_name = name;
+                        break;  // Found our preferred signal, stop looking
+                    }
+                    // Otherwise, only set if we haven't found one yet
+                    if (output_signal_name.empty()) {
+                        output_signal_name = name;
+                    }
                 } else if (wire->port_input) {
                     // Try to identify clock, reset, and data signals by name patterns
                     if (name.find("clk") != std::string::npos || name.find("clock") != std::string::npos) {
@@ -373,24 +490,101 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         log("    Extracted signals: output=%s, input=%s, clock=%s, reset=%s\n",
             output_signal_name.c_str(), input_signal_name.c_str(), 
             clock_signal_name.c_str(), reset_signal_name.c_str());
+        log("    Slice info: %zu offsets, %zu widths\n", slice_offsets.size(), slice_widths.size());
+        for (size_t i = 0; i < slice_offsets.size() && i < slice_widths.size(); i++) {
+            log("      Slice[%zu]: offset=%d, width=%d\n", i, slice_offsets[i], slice_widths[i]);
+        }
+        
+        // Extract generate loop index from current_gen_scope if present
+        int generate_index = -1;
+        if (!current_gen_scope.empty()) {
+            // Parse generate scope like "gen_units[0]" to extract index
+            size_t bracket_pos = current_gen_scope.find('[');
+            if (bracket_pos != std::string::npos) {
+                size_t close_bracket = current_gen_scope.find(']', bracket_pos);
+                if (close_bracket != std::string::npos) {
+                    std::string index_str = current_gen_scope.substr(bracket_pos + 1, close_bracket - bracket_pos - 1);
+                    try {
+                        generate_index = std::stoi(index_str);
+                        log("    Extracted generate index %d from scope '%s'\n", generate_index, current_gen_scope.c_str());
+                    } catch (...) {
+                        log("    Failed to parse generate index from '%s'\n", current_gen_scope.c_str());
+                    }
+                }
+            }
+        }
         
         // Create intermediate wire for conditional logic (like Verilog frontend)
         RTLIL::Wire* temp_wire = nullptr;
+        RTLIL::SigSpec output_slice;
+        
         if (!output_signal_name.empty() && name_map.count(output_signal_name)) {
-            // Get the width of the output signal
-            int output_width = name_map[output_signal_name]->width;
-            
-            // Create a name like $0\<signal>[7:0] to match Verilog output exactly
-            std::string temp_name = "$0\\" + output_signal_name + "[" + std::to_string(output_width-1) + ":0]";
-            RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
-            
-            // Check if this wire already exists
-            temp_wire = module->wire(temp_id);
-            if (!temp_wire) {
-                log("UHDM: Creating temp wire '%s' with width %d\n", temp_id.c_str(), output_width);
-                temp_wire = module->addWire(temp_id, output_width);
+            // For generate blocks with indexed part selects, calculate offset from generate index
+            if (generate_index >= 0 && !slice_widths.empty() && slice_widths[0] > 0) {
+                // Calculate offset based on generate index and slice width
+                int width = slice_widths[0];
+                int offset = generate_index * width;
+                
+                // Create a name like $0\result[15:8] for generate index 1 with width 8
+                std::string temp_name = "$0\\" + output_signal_name + "[" + 
+                    std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
+                
+                log("UHDM: Generate index %d: creating slice [%d:%d] for signal '%s'\n", 
+                    generate_index, offset + width - 1, offset, output_signal_name.c_str());
+                
+                // Check if this wire already exists
+                temp_wire = module->wire(temp_id);
+                if (!temp_wire) {
+                    log("UHDM: Creating temp wire '%s' with width %d\n", temp_id.c_str(), width);
+                    temp_wire = module->addWire(temp_id, width);
+                } else {
+                    log("UHDM: Temp wire '%s' already exists, reusing\n", temp_id.c_str());
+                }
+                
+                // Create the output slice
+                output_slice = RTLIL::SigSpec(name_map[output_signal_name], offset, width);
+            }
+            // Check if we have slice information to handle indexed part select
+            else if (!slice_offsets.empty() && !slice_widths.empty() && slice_offsets.size() == slice_widths.size()) {
+                // Handle sliced assignment (e.g., result[7:0], result[15:8], etc.)
+                int offset = slice_offsets[0];
+                int width = slice_widths[0];
+                
+                // Create a name like $0\<signal>[15:8] to match Verilog output exactly
+                std::string temp_name = "$0\\" + output_signal_name + "[" + 
+                    std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
+                
+                // Check if this wire already exists
+                temp_wire = module->wire(temp_id);
+                if (!temp_wire) {
+                    log("UHDM: Creating temp wire '%s' with width %d\n", temp_id.c_str(), width);
+                    temp_wire = module->addWire(temp_id, width);
+                } else {
+                    log("UHDM: Temp wire '%s' already exists, reusing\n", temp_id.c_str());
+                }
+                
+                // Create the output slice
+                output_slice = RTLIL::SigSpec(name_map[output_signal_name], offset, width);
             } else {
-                log("UHDM: Temp wire '%s' already exists, reusing\n", temp_id.c_str());
+                // Handle full signal assignment
+                int output_width = name_map[output_signal_name]->width;
+                
+                // Create a name like $0\<signal>[7:0] to match Verilog output exactly
+                std::string temp_name = "$0\\" + output_signal_name + "[" + std::to_string(output_width-1) + ":0]";
+                RTLIL::IdString temp_id = RTLIL::escape_id(temp_name);
+                
+                // Check if this wire already exists
+                temp_wire = module->wire(temp_id);
+                if (!temp_wire) {
+                    log("UHDM: Creating temp wire '%s' with width %d\n", temp_id.c_str(), output_width);
+                    temp_wire = module->addWire(temp_id, output_width);
+                } else {
+                    log("UHDM: Temp wire '%s' already exists, reusing\n", temp_id.c_str());
+                }
+                
+                output_slice = RTLIL::SigSpec(name_map[output_signal_name]);
             }
             
             // Add source attribute for the temp wire (using process source info)
@@ -398,14 +592,45 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
         
         // Initialize the process with assignment to temp wire
-        if (temp_wire && !output_signal_name.empty() && name_map.count(output_signal_name)) {
+        if (temp_wire && !output_slice.empty()) {
             yosys_proc->root_case.actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[output_signal_name]))
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), output_slice)
             );
         }
         
-        // Parse the statement structure (if statement)
-        log("    Statement type: %s (vpiIf=%d, vpiIfElse=%d)\n", UhdmName(stmt->UhdmType()).c_str(), vpiIf, vpiIfElse);
+        // Parse the statement structure
+        log("    Statement type: %s (vpiType=%d, vpiEventControl=%d, vpiIfElse=%d, vpiBegin=%d)\n", 
+            UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType(), vpiEventControl, vpiIfElse, vpiBegin);
+        
+        // Check if the statement is an event_control (for always_ff @(...))
+        if (stmt->VpiType() == vpiEventControl) {
+            const UHDM::event_control* event_ctrl = static_cast<const UHDM::event_control*>(stmt);
+            log("    Found event_control, extracting controlled statement...\n");
+            if (auto controlled_stmt = event_ctrl->Stmt()) {
+                stmt = controlled_stmt;
+                log("    Extracted statement from event_control: %s (vpiType=%d)\n", 
+                    UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
+            } else {
+                log("    Event_control has no controlled statement\n");
+            }
+        }
+        
+        // Check if the statement is wrapped in a begin block
+        if (stmt->VpiType() == vpiBegin) {
+            const UHDM::begin* begin_block = static_cast<const UHDM::begin*>(stmt);
+            log("    Found begin block, checking for statements inside...\n");
+            if (auto stmts = begin_block->Stmts()) {
+                log("    Begin block has %zu statements\n", stmts->size());
+                if (!stmts->empty()) {
+                    stmt = stmts->front();  // Get the first statement
+                    log("    Using first statement from begin block: %s (vpiType=%d)\n", 
+                        UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
+                }
+            } else {
+                log("    Begin block has no statements\n");
+            }
+        }
+        
         if (stmt->VpiType() == vpiIfElse) {
             const UHDM::if_else* if_else_stmt = static_cast<const UHDM::if_else*>(stmt);
             log("    Processing if-else statement\n");
@@ -421,26 +646,122 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Create a switch statement in root_case
                     RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
                     sw->signal = cond_sig;
+                    add_src_attribute(sw->attributes, if_else_stmt);
                     
                     // Case when condition is true (reset active)
                     RTLIL::CaseRule* reset_case = new RTLIL::CaseRule();
                     reset_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                    add_src_attribute(reset_case->attributes, condition);
                     
                     if (temp_wire) {
+                        // Create a zero constant with the same width as temp_wire
+                        RTLIL::Const zero_const(0, temp_wire->width);
                         reset_case->actions.push_back(
-                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(RTLIL::State::S0))
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(zero_const))
                         );
-                        log("    Added reset case: temp <= 0\n");
+                        log("    Added reset case: temp <= 0 (width=%d)\n", temp_wire->width);
                     }
                     
                     // Default case (normal operation)
                     RTLIL::CaseRule* normal_case = new RTLIL::CaseRule();
                     // Empty compare means default case
+                    // Source attribute for else clause
+                    if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
+                        add_src_attribute(normal_case->attributes, else_stmt);
+                    }
                     
                     // Check if there's an else clause with another if statement (else if)
                     if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
-                        log("    Found else clause, checking if it's an else-if...\n");
-                        if (else_stmt->VpiType() == vpiIfElse) {
+                        log("    Found else clause, type: %s (vpiType=%d)\n", 
+                            UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
+                        
+                        // Handle begin block in else clause
+                        if (else_stmt->VpiType() == vpiBegin) {
+                            const UHDM::begin* begin_block = static_cast<const UHDM::begin*>(else_stmt);
+                            log("    Processing begin block in else clause\n");
+                            log("    Current gen scope: '%s', generate_index: %d\n", current_gen_scope.c_str(), generate_index);
+                            log("    Temp wire: %s (width=%d)\n", temp_wire ? temp_wire->name.c_str() : "NULL", temp_wire ? temp_wire->width : -1);
+                            if (auto stmts = begin_block->Stmts()) {
+                                log("    Begin block has %zu statements\n", stmts->size());
+                                if (!stmts->empty()) {
+                                    // Process the first statement (should be the assignment)
+                                    auto assign_stmt = stmts->front();
+                                    log("    First statement type: %s (vpiType=%d)\n", 
+                                        UhdmName(assign_stmt->UhdmType()).c_str(), assign_stmt->VpiType());
+                                    
+                                    if (assign_stmt->VpiType() == vpiAssignment) {
+                                        const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(assign_stmt);
+                                        
+                                        // Import the assignment properly
+                                        RTLIL::SigSpec lhs;
+                                        RTLIL::SigSpec rhs;
+                                        
+                                        if (auto lhs_expr = assign->Lhs()) {
+                                            log("    LHS expression type: %s (vpiType=%d)\n", 
+                                                UhdmName(lhs_expr->UhdmType()).c_str(), lhs_expr->VpiType());
+                                            lhs = import_expression(lhs_expr);
+                                            log("    LHS imported: width=%d\n", lhs.size());
+                                        }
+                                        if (auto rhs_any = assign->Rhs()) {
+                                            if (rhs_any->UhdmType() >= UHDM_OBJECT_TYPE::uhdmexpr) {
+                                                const UHDM::expr* rhs_expr = static_cast<const UHDM::expr*>(rhs_any);
+                                                log("    RHS expression type: %s (vpiType=%d)\n", 
+                                                    UhdmName(rhs_expr->UhdmType()).c_str(), rhs_expr->VpiType());
+                                                
+                                                // For generate blocks, check if RHS is a simple reference that needs hierarchical resolution
+                                                if (generate_index >= 0 && !current_gen_scope.empty() && 
+                                                    rhs_expr->VpiType() == vpiRefObj) {
+                                                    const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs_expr);
+                                                    std::string ref_name = std::string(ref->VpiName());
+                                                    log("    RHS is ref_obj: %s\n", ref_name.c_str());
+                                                    
+                                                    // Try hierarchical name first
+                                                    std::string hierarchical_name = current_gen_scope + "." + ref_name;
+                                                    if (name_map.count(hierarchical_name)) {
+                                                        rhs = RTLIL::SigSpec(name_map[hierarchical_name]);
+                                                        log("    Using hierarchical signal: %s\n", hierarchical_name.c_str());
+                                                    } else {
+                                                        log("    Hierarchical signal %s not found, using direct import\n", hierarchical_name.c_str());
+                                                        rhs = import_expression(rhs_expr);
+                                                    }
+                                                } else {
+                                                    rhs = import_expression(rhs_expr);
+                                                }
+                                                log("    RHS imported: width=%d\n", rhs.size());
+                                            }
+                                        }
+                                        
+                                        if (!lhs.empty() && !rhs.empty()) {
+                                            // Ensure sizes match
+                                            if (lhs.size() != rhs.size()) {
+                                                log("    Size mismatch: lhs=%d, rhs=%d\n", lhs.size(), rhs.size());
+                                                if (rhs.size() < lhs.size()) {
+                                                    rhs.extend_u0(lhs.size());
+                                                } else {
+                                                    rhs = rhs.extract(0, lhs.size());
+                                                }
+                                            }
+                                            
+                                            // If temp_wire exists and matches the lhs size, update it
+                                            if (temp_wire && temp_wire->width == lhs.size()) {
+                                                normal_case->actions.push_back(
+                                                    RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs)
+                                                );
+                                                log("    Added normal case from begin block assignment: temp <= rhs (width=%d)\n", rhs.size());
+                                            } else {
+                                                log_warning("Temp wire width mismatch: temp_wire=%d, lhs=%d\n", 
+                                                    temp_wire ? temp_wire->width : -1, lhs.size());
+                                            }
+                                        } else {
+                                            log("    Failed to import LHS or RHS: lhs.empty()=%d, rhs.empty()=%d\n", 
+                                                lhs.empty(), rhs.empty());
+                                        }
+                                    }
+                                }
+                            } else {
+                                log("    Begin block has no statements\n");
+                            }
+                        } else if (else_stmt->VpiType() == vpiIfElse) {
                             // This is an else-if structure
                             const UHDM::if_else* else_if_stmt = static_cast<const UHDM::if_else*>(else_stmt);
                             
@@ -452,13 +773,27 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // Create nested switch for the else-if condition
                                 RTLIL::SwitchRule* mode_sw = new RTLIL::SwitchRule();
                                 mode_sw->signal = else_cond_sig;
+                                add_src_attribute(mode_sw->attributes, else_if_stmt);
                                 
                                 // Case when mode is true
                                 RTLIL::CaseRule* mode_true_case = new RTLIL::CaseRule();
                                 mode_true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                                add_src_attribute(mode_true_case->attributes, else_condition);
                                 
                                 // Get the then statement of else-if (extra_result <= extra_sum)
                                 if (auto then_stmt = else_if_stmt->VpiStmt()) {
+                                    // Check if the statement is wrapped in a begin block
+                                    if (then_stmt->VpiType() == vpiBegin) {
+                                        const UHDM::begin* begin_block = static_cast<const UHDM::begin*>(then_stmt);
+                                        if (auto stmts = begin_block->Stmts()) {
+                                            if (!stmts->empty()) {
+                                                then_stmt = stmts->front();  // Get the first statement
+                                                log("    Extracted statement from else-if begin block: %s\n", 
+                                                    UhdmName(then_stmt->UhdmType()).c_str());
+                                            }
+                                        }
+                                    }
+                                    
                                     if (then_stmt->VpiType() == vpiAssignment) {
                                         const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
                                         const any* rhs_any = assign->Rhs();
@@ -496,13 +831,27 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 // Create nested switch for the else-if condition
                                 RTLIL::SwitchRule* mode_sw = new RTLIL::SwitchRule();
                                 mode_sw->signal = else_cond_sig;
+                                add_src_attribute(mode_sw->attributes, else_if_stmt);
                                 
                                 // Case when mode is true
                                 RTLIL::CaseRule* mode_true_case = new RTLIL::CaseRule();
                                 mode_true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                                add_src_attribute(mode_true_case->attributes, else_condition);
                                 
                                 // Get the then statement of else-if (extra_result <= extra_sum)
                                 if (auto then_stmt = else_if_stmt->VpiStmt()) {
+                                    // Check if the statement is wrapped in a begin block
+                                    if (then_stmt->VpiType() == vpiBegin) {
+                                        const UHDM::begin* begin_block = static_cast<const UHDM::begin*>(then_stmt);
+                                        if (auto stmts = begin_block->Stmts()) {
+                                            if (!stmts->empty()) {
+                                                then_stmt = stmts->front();  // Get the first statement
+                                                log("    Extracted statement from else-if begin block: %s\n", 
+                                                    UhdmName(then_stmt->UhdmType()).c_str());
+                                            }
+                                        }
+                                    }
+                                    
                                     if (then_stmt->VpiType() == vpiAssignment) {
                                         const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
                                         const any* rhs_any = assign->Rhs();
@@ -529,26 +878,128 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 log("    Added nested mode switch with %zu cases\n", mode_sw->cases.size());
                             }
                         } else {
-                            // Simple else clause, use fallback
-                            if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
+                            // Simple else clause, try to import the actual assignment
+                            log("    Else statement type: %s\n", UhdmName(else_stmt->UhdmType()).c_str());
+                            
+                            if (else_stmt->VpiType() == vpiAssignment) {
+                                // Direct assignment in else clause
+                                const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(else_stmt);
+                                
+                                // Import the assignment properly
+                                RTLIL::SigSpec lhs;
+                                RTLIL::SigSpec rhs;
+                                const UHDM::expr* lhs_expr = nullptr;
+                                
+                                if (assign->Lhs()) {
+                                    lhs_expr = assign->Lhs();
+                                    lhs = import_expression(lhs_expr);
+                                }
+                                if (auto rhs_any = assign->Rhs()) {
+                                    if (rhs_any->UhdmType() >= UHDM_OBJECT_TYPE::uhdmexpr) {
+                                        const UHDM::expr* rhs_expr = static_cast<const UHDM::expr*>(rhs_any);
+                                        
+                                        // For generate blocks, check if RHS is a simple reference that needs hierarchical resolution
+                                        if (generate_index >= 0 && !current_gen_scope.empty() && 
+                                            rhs_expr->VpiType() == vpiRefObj) {
+                                            const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs_expr);
+                                            std::string ref_name = std::string(ref->VpiName());
+                                            
+                                            // Try hierarchical name first
+                                            std::string hierarchical_name = current_gen_scope + "." + ref_name;
+                                            if (name_map.count(hierarchical_name)) {
+                                                rhs = RTLIL::SigSpec(name_map[hierarchical_name]);
+                                                log("    Using hierarchical signal: %s\n", hierarchical_name.c_str());
+                                            } else {
+                                                rhs = import_expression(rhs_expr);
+                                            }
+                                        } else {
+                                            rhs = import_expression(rhs_expr);
+                                        }
+                                    }
+                                }
+                                
+                                // Special handling for indexed part select in generate blocks
+                                if (lhs.empty() && lhs_expr && lhs_expr->VpiType() == vpiIndexedPartSelect && 
+                                    generate_index >= 0 && !rhs.empty()) {
+                                    // For generate blocks with indexed part select LHS,
+                                    // we know the temp_wire corresponds to the slice
+                                    if (temp_wire && temp_wire->width == rhs.size()) {
+                                        normal_case->actions.push_back(
+                                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs)
+                                        );
+                                        log("    Added normal case for generate indexed part select: temp <= rhs (width=%d)\n", rhs.size());
+                                    } else {
+                                        log_warning("Temp wire width mismatch for indexed part select: temp_wire=%d, rhs=%d\n", 
+                                            temp_wire ? temp_wire->width : -1, rhs.size());
+                                    }
+                                } else if (!lhs.empty() && !rhs.empty()) {
+                                    // Normal case with successfully imported LHS
+                                    // Ensure sizes match
+                                    if (lhs.size() != rhs.size()) {
+                                        if (rhs.size() < lhs.size()) {
+                                            rhs.extend_u0(lhs.size());
+                                        } else {
+                                            rhs = rhs.extract(0, lhs.size());
+                                        }
+                                    }
+                                    
+                                    // If temp_wire exists and matches the lhs size, update it
+                                    if (temp_wire && temp_wire->width == lhs.size()) {
+                                        normal_case->actions.push_back(
+                                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs)
+                                        );
+                                        log("    Added normal case from assignment: temp <= rhs (width=%d)\n", rhs.size());
+                                        log("    Normal case now has %zu actions\n", normal_case->actions.size());
+                                    } else {
+                                        log_warning("Temp wire width mismatch: temp_wire=%d, lhs=%d\n", 
+                                            temp_wire ? temp_wire->width : -1, lhs.size());
+                                        log("    LHS spec: %s\n", log_signal(lhs));
+                                        log("    RHS spec: %s\n", log_signal(rhs));
+                                    }
+                                } else {
+                                    log("    Failed to import LHS or RHS: lhs.empty()=%d, rhs.empty()=%d\n",
+                                        lhs.empty(), rhs.empty());
+                                }
+                            } else {
+                                // Fallback if we can't parse the else statement properly
+                                if (normal_case->switches.empty()) {
+                                    if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
+                                        normal_case->actions.push_back(
+                                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
+                                        );
+                                        log("    Added normal case (fallback): temp <= %s\n", input_signal_name.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // No else clause, use fallback
+                        if (temp_wire && !input_signal_name.empty()) {
+                            // In generate blocks, check for hierarchical signal names
+                            if (generate_index >= 0 && !current_gen_scope.empty()) {
+                                // Don't make assumptions about signal names
+                                if (name_map.count(input_signal_name)) {
+                                    normal_case->actions.push_back(
+                                        RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
+                                    );
+                                    log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
+                                }
+                            } else if (name_map.count(input_signal_name)) {
                                 normal_case->actions.push_back(
                                     RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
                                 );
                                 log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
                             }
                         }
-                    } else {
-                        // No else clause, use fallback
-                        if (temp_wire && !input_signal_name.empty() && name_map.count(input_signal_name)) {
-                            normal_case->actions.push_back(
-                                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(name_map[input_signal_name]))
-                            );
-                            log("    Added normal case: temp <= %s\n", input_signal_name.c_str());
-                        }
                     }
                     
                     sw->cases.push_back(reset_case);
                     sw->cases.push_back(normal_case);
+                    
+                    // Debug: Check normal_case contents
+                    log("    Normal case has %zu actions and %zu switches\n", 
+                        normal_case->actions.size(), normal_case->switches.size());
+                    
                     yosys_proc->root_case.switches.push_back(sw);
                     log("    Added switch with %zu cases\n", sw->cases.size());
                 } else {
@@ -572,16 +1023,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Create a switch statement in root_case
                     RTLIL::SwitchRule* sw = new RTLIL::SwitchRule();
                     sw->signal = cond_sig;
+                    add_src_attribute(sw->attributes, if_stmt);
                     
                     // Case when condition is true (reset active)
                     RTLIL::CaseRule* reset_case = new RTLIL::CaseRule();
                     reset_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                    add_src_attribute(reset_case->attributes, condition);
                     
                     if (temp_wire) {
+                        // Create a zero constant with the same width as temp_wire
+                        RTLIL::Const zero_const(0, temp_wire->width);
                         reset_case->actions.push_back(
-                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(RTLIL::State::S0))
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(zero_const))
                         );
-                        log("    Added reset case: temp <= 0\n");
+                        log("    Added reset case: temp <= 0 (width=%d)\n", temp_wire->width);
                     }
                     
                     // Default case (normal operation)
@@ -598,6 +1053,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     
                     sw->cases.push_back(reset_case);
                     sw->cases.push_back(normal_case);
+                    
+                    // Debug: Check normal_case contents
+                    log("    Normal case has %zu actions and %zu switches\n", 
+                        normal_case->actions.size(), normal_case->switches.size());
+                    
                     yosys_proc->root_case.switches.push_back(sw);
                     log("    Added switch with %zu cases\n", sw->cases.size());
                 } else {
@@ -706,9 +1166,23 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                     
                     // Fallback: use input signal directly if we couldn't parse the actual RHS
-                    if (!found_rhs && !input_signal_name.empty() && name_map.count(input_signal_name)) {
-                        // Check if this is a self-incrementing case (input == output)
-                        if (input_signal_name == output_signal_name) {
+                    log("    Fallback: found_rhs=%d, input_signal_name='%s'\n", found_rhs, input_signal_name.c_str());
+                    if (!found_rhs && !input_signal_name.empty()) {
+                        // For generate blocks, check for hierarchical signal names
+                        if (generate_index >= 0 && !current_gen_scope.empty()) {
+                            std::string hierarchical_name = current_gen_scope + "." + input_signal_name;
+                            if (name_map.count(hierarchical_name)) {
+                                rhs_signal = RTLIL::SigSpec(name_map[hierarchical_name]);
+                                found_rhs = true;
+                                log("    Using hierarchical signal in fallback: %s\n", hierarchical_name.c_str());
+                            } else if (name_map.count(input_signal_name)) {
+                                rhs_signal = RTLIL::SigSpec(name_map[input_signal_name]);
+                                found_rhs = true;
+                                log("    Using direct signal in fallback: %s\n", input_signal_name.c_str());
+                            }
+                        } else if (name_map.count(input_signal_name)) {
+                            // Check if this is a self-incrementing case (input == output)
+                            if (input_signal_name == output_signal_name) {
                             // This is likely an increment operation like count <= count + 1
                             // Create $add cell for increment
                             std::string add_cell_name_str = "$add$" + get_src_attribute(stmt) + "$3";
@@ -738,7 +1212,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("    Created fallback $add cell for %s + 1\n", input_signal_name.c_str());
                             
                             rhs_signal = RTLIL::SigSpec(add_output);
-                        } else {
+                            found_rhs = true;
+                            } else {
                             // Check if this might be a memory read (addr signal + memory exists)
                             if (input_signal_name == "addr" && module->memories.size() > 0) {
                                 log("    Detected potential memory read: %s with memory present\n", input_signal_name.c_str());
@@ -771,6 +1246,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 memrd_cell->setPort(ID::DATA, RTLIL::SigSpec(data_wire));
                                 
                                 rhs_signal = RTLIL::SigSpec(data_wire);
+                                found_rhs = true;
                                 log("    Created $memrd cell for memory[%s] access\n", input_signal_name.c_str());
                                 
                                 // Also check if we need to generate memory write operations
@@ -787,12 +1263,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             } else {
                                 // Direct assignment case (like q <= d)
                                 rhs_signal = RTLIL::SigSpec(name_map[input_signal_name]);
+                                found_rhs = true;
                                 log("    Using fallback: direct assignment of %s\n", input_signal_name.c_str());
+                            }
                             }
                         }
                     }
                     
-                    if (rhs_signal.size() > 0) {
+                    if (found_rhs && rhs_signal.size() > 0) {
                         // Extend or truncate RHS to match temp wire width
                         if (rhs_signal.size() != temp_wire->width) {
                             if (rhs_signal.size() < temp_wire->width) {
@@ -806,11 +1284,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs_signal)
                         );
                         log("    Added normal case: temp <= <parsed_expression>\n");
+                        log("    Normal case now has %zu actions\n", normal_case->actions.size());
                     }
                 }
                 
                 sw->cases.push_back(reset_case);
                 sw->cases.push_back(normal_case);
+                log("    Switch case[0] (reset) has %zu actions\n", sw->cases[0]->actions.size());
+                log("    Switch case[1] (normal) has %zu actions\n", sw->cases[1]->actions.size());
                 yosys_proc->root_case.switches.push_back(sw);
                 log("    Added switch with %zu cases\n", sw->cases.size());
             }
@@ -818,13 +1299,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         
         // Add sync rules for both clock edges
         if (!clock_signal_name.empty() && name_map.count(clock_signal_name) && 
-            temp_wire && !output_signal_name.empty() && name_map.count(output_signal_name)) {
+            temp_wire && !output_slice.empty()) {
             // Positive edge clock
             RTLIL::SyncRule* clk_sync = new RTLIL::SyncRule();
             clk_sync->type = RTLIL::SyncType::STp;
             clk_sync->signal = RTLIL::SigSpec(name_map[clock_signal_name]);
             clk_sync->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(name_map[output_signal_name]), RTLIL::SigSpec(temp_wire))
+                RTLIL::SigSig(output_slice, RTLIL::SigSpec(temp_wire))
             );
             
             // Add memory write operations if detected
@@ -888,7 +1369,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 rst_sync->type = RTLIL::SyncType::STn;
                 rst_sync->signal = RTLIL::SigSpec(name_map[reset_signal_name]);
                 rst_sync->actions.push_back(
-                    RTLIL::SigSig(RTLIL::SigSpec(name_map[output_signal_name]), RTLIL::SigSpec(temp_wire))
+                    RTLIL::SigSig(output_slice, RTLIL::SigSpec(temp_wire))
                 );
                 yosys_proc->syncs.push_back(rst_sync);
             }
