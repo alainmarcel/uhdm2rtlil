@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-07-26 21:22:40.734526856 -0700
-+++ uhdm_synth_clean.tmp	2025-07-26 21:22:40.730526849 -0700
+--- verilog_synth_clean.tmp	2025-07-26 23:51:59.892110753 -0700
++++ uhdm_synth_clean.tmp	2025-07-26 23:51:59.892110753 -0700
 @@ -4,7 +4,6 @@
  module simple_fsm(clk, reset, start, done, busy, state);
  wire _0_;

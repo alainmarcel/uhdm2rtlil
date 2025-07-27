@@ -102,7 +102,8 @@ struct UhdmImporter {
     
     // Current instance context for hierarchical path resolution
     const UHDM::module_inst* current_instance = nullptr;
-    
+    const UHDM::scope* current_scope = nullptr;
+
     // Current generate scope for naming
     std::string current_gen_scope;
     
@@ -152,8 +153,8 @@ struct UhdmImporter {
     // Expression handling
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr);
     RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
-    RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op);
-    RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref);
+    RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op, const UHDM::scope* inst = nullptr);
+    RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref, const UHDM::scope* inst = nullptr);
     
     // Statement handling
     void import_statement(const UHDM::any* uhdm_stmt, RTLIL::Process* proc = nullptr);
@@ -183,16 +184,16 @@ struct UhdmImporter {
     void import_case_stmt_comb(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
     
     // Additional expression types
-    RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part);
-    RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit);
-    RTLIL::SigSpec import_indexed_part_select(const UHDM::indexed_part_select* uhdm_indexed);
-    RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat);
-    RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::module_inst* inst = nullptr);
+    RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part, const UHDM::scope* inst = nullptr);
+    RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit, const UHDM::scope* inst = nullptr);
+    RTLIL::SigSpec import_indexed_part_select(const UHDM::indexed_part_select* uhdm_indexed, const UHDM::scope* inst = nullptr);
+    RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat, const UHDM::scope* inst = nullptr);
+    RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr);
     
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);
     std::string get_name(const UHDM::any* uhdm_obj);
-    int get_width(const UHDM::any* uhdm_obj, const UHDM::instance* inst = nullptr);
+    int get_width(const UHDM::any* uhdm_obj, const UHDM::scope* inst = nullptr);
     void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
@@ -209,7 +210,7 @@ struct UhdmImporter {
                                          std::vector<int>& slice_widths);
     
     // Width extraction helpers
-    int get_width_from_typespec(const UHDM::any* typespec, const UHDM::instance* inst = nullptr);
+    int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);

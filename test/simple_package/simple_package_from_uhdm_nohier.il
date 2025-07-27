@@ -20,7 +20,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   wire width 50 output 4 \data_out
   attribute \src "dut.sv:66.38-66.43"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:275:import_operation$3
+  cell $add $auto$expression.cpp:283:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
@@ -114,23 +114,23 @@ module \sub_module
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 0'x
   attribute \src "dut.sv:77.5-97.8"
-  wire width 5 $0\counter[4:0]
+  wire $0\counter[0:0]
   wire width 64 $auto$rtlil.cc:3017:Add$2
   attribute \src "dut.sv:78.13-78.19"
   wire $logic_not$dut.sv:78.13-78.19$1_Y
   attribute \src "dut.sv:65.38-65.41"
   wire input 1 \clk
   attribute \src "dut.sv:75.31-75.38"
-  wire width 5 \counter
+  wire \counter
   attribute \src "dut.sv:67.38-67.45"
   wire width 50 input 3 \data_in
   attribute \src "dut.sv:68.38-68.46"
   wire width 50 output 4 \data_out
   attribute \src "dut.sv:66.38-66.43"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:275:import_operation$1
+  cell $add $auto$expression.cpp:283:import_operation$1
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
+    parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
@@ -149,19 +149,19 @@ module \sub_module
   attribute \always_ff 1
   attribute \src "dut.sv:77.5-97.8"
   process $proc$dut.sv:77$1
-    assign $0\counter[4:0] \counter
+    assign $0\counter[0:0] \counter
     attribute \src "dut.sv:78.9-96.12"
     switch $logic_not$dut.sv:78.13-78.19$1_Y
       attribute \src "dut.sv:78.13-78.19"
       case 1'1
-        assign $0\counter[4:0] 5'00000
+        assign $0\counter[0:0] 1'0
       attribute \src "dut.sv:84.18-96.12"
       case 
-        assign $0\counter[4:0] $auto$rtlil.cc:3017:Add$2 [4:0]
+        assign $0\counter[0:0] $auto$rtlil.cc:3017:Add$2 [0]
     end
     sync posedge \clk
-      update \counter $0\counter[4:0]
+      update \counter $0\counter[0:0]
     sync negedge \rst_n
-      update \counter $0\counter[4:0]
+      update \counter $0\counter[0:0]
   end
 end

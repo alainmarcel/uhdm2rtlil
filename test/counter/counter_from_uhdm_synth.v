@@ -14,10 +14,6 @@ module counter(clk, rst_n, enable, count, overflow);
   wire _08_;
   wire _09_;
   wire _10_;
-  wire _11_;
-  wire _12_;
-  wire _13_;
-  wire _14_;
   (* src = "dut.sv:5.18-5.21" *)
   input clk;
   wire clk;
@@ -35,128 +31,108 @@ module counter(clk, rst_n, enable, count, overflow);
   (* src = "dut.sv:6.18-6.23" *)
   input rst_n;
   wire rst_n;
-  \$_NOT_  _15_ (
+  \$_NOT_  _11_ (
     .A(count[0]),
     .Y(count_next[0])
   );
-  \$_OR_  _16_ (
+  \$_NAND_  _12_ (
     .A(count[1]),
     .B(count[0]),
     .Y(_00_)
   );
-  \$_OR_  _17_ (
+  \$_NAND_  _13_ (
     .A(count[3]),
     .B(count[2]),
     .Y(_01_)
   );
-  \$_OR_  _18_ (
+  \$_OR_  _14_ (
     .A(_01_),
     .B(_00_),
     .Y(_02_)
   );
-  \$_OR_  _19_ (
+  \$_NAND_  _15_ (
     .A(count[5]),
     .B(count[4]),
     .Y(_03_)
   );
-  \$_OR_  _20_ (
-    .A(count[7]),
-    .B(count[6]),
+  \$_NAND_  _16_ (
+    .A(count[6]),
+    .B(count[7]),
     .Y(_04_)
   );
-  \$_OR_  _21_ (
+  \$_OR_  _17_ (
     .A(_04_),
     .B(_03_),
     .Y(_05_)
   );
-  \$_OR_  _22_ (
+  \$_OR_  _18_ (
     .A(_05_),
     .B(_02_),
     .Y(_06_)
   );
-  \$_ANDNOT_  _23_ (
+  \$_ANDNOT_  _19_ (
     .A(enable),
     .B(_06_),
     .Y(overflow)
   );
-  \$_XOR_  _24_ (
+  \$_XOR_  _20_ (
     .A(count[1]),
     .B(count[0]),
     .Y(count_next[1])
   );
-  \$_NAND_  _25_ (
-    .A(count[1]),
-    .B(count[0]),
-    .Y(_07_)
-  );
-  \$_XNOR_  _26_ (
-    .A(_07_),
+  \$_XNOR_  _21_ (
+    .A(_00_),
     .B(count[2]),
     .Y(count_next[2])
   );
-  \$_ANDNOT_  _27_ (
+  \$_ANDNOT_  _22_ (
     .A(count[2]),
-    .B(_07_),
-    .Y(_08_)
+    .B(_00_),
+    .Y(_07_)
   );
-  \$_XOR_  _28_ (
-    .A(_08_),
+  \$_XOR_  _23_ (
+    .A(_07_),
     .B(count[3]),
     .Y(count_next[3])
   );
-  \$_NAND_  _29_ (
-    .A(count[3]),
-    .B(count[2]),
-    .Y(_09_)
-  );
-  \$_OR_  _30_ (
-    .A(_09_),
-    .B(_07_),
-    .Y(_10_)
-  );
-  \$_XNOR_  _31_ (
-    .A(_10_),
+  \$_XNOR_  _24_ (
+    .A(_02_),
     .B(count[4]),
     .Y(count_next[4])
   );
-  \$_ANDNOT_  _32_ (
+  \$_ANDNOT_  _25_ (
     .A(count[4]),
-    .B(_10_),
-    .Y(_11_)
+    .B(_02_),
+    .Y(_08_)
   );
-  \$_XOR_  _33_ (
-    .A(_11_),
+  \$_XOR_  _26_ (
+    .A(_08_),
     .B(count[5]),
     .Y(count_next[5])
   );
-  \$_NAND_  _34_ (
-    .A(count[5]),
-    .B(count[4]),
-    .Y(_12_)
+  \$_OR_  _27_ (
+    .A(_03_),
+    .B(_02_),
+    .Y(_09_)
   );
-  \$_OR_  _35_ (
-    .A(_12_),
-    .B(_10_),
-    .Y(_13_)
-  );
-  \$_XNOR_  _36_ (
-    .A(_13_),
+  \$_XNOR_  _28_ (
+    .A(_09_),
     .B(count[6]),
     .Y(count_next[6])
   );
-  \$_ANDNOT_  _37_ (
+  \$_ANDNOT_  _29_ (
     .A(count[6]),
-    .B(_13_),
-    .Y(_14_)
+    .B(_09_),
+    .Y(_10_)
   );
-  \$_XOR_  _38_ (
-    .A(_14_),
+  \$_XOR_  _30_ (
+    .A(_10_),
     .B(count[7]),
     .Y(count_next[7])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[0]  /* _39_ */ (
+  \$_DFFE_PN0P_  \count_reg[0]  /* _31_ */ (
     .C(clk),
     .D(count_next[0]),
     .E(enable),
@@ -165,7 +141,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[1]  /* _40_ */ (
+  \$_DFFE_PN0P_  \count_reg[1]  /* _32_ */ (
     .C(clk),
     .D(count_next[1]),
     .E(enable),
@@ -174,7 +150,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[2]  /* _41_ */ (
+  \$_DFFE_PN0P_  \count_reg[2]  /* _33_ */ (
     .C(clk),
     .D(count_next[2]),
     .E(enable),
@@ -183,7 +159,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[3]  /* _42_ */ (
+  \$_DFFE_PN0P_  \count_reg[3]  /* _34_ */ (
     .C(clk),
     .D(count_next[3]),
     .E(enable),
@@ -192,7 +168,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[4]  /* _43_ */ (
+  \$_DFFE_PN0P_  \count_reg[4]  /* _35_ */ (
     .C(clk),
     .D(count_next[4]),
     .E(enable),
@@ -201,7 +177,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[5]  /* _44_ */ (
+  \$_DFFE_PN0P_  \count_reg[5]  /* _36_ */ (
     .C(clk),
     .D(count_next[5]),
     .E(enable),
@@ -210,7 +186,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[6]  /* _45_ */ (
+  \$_DFFE_PN0P_  \count_reg[6]  /* _37_ */ (
     .C(clk),
     .D(count_next[6]),
     .E(enable),
@@ -219,7 +195,7 @@ module counter(clk, rst_n, enable, count, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
-  \$_DFFE_PN0P_  \count_reg[7]  /* _46_ */ (
+  \$_DFFE_PN0P_  \count_reg[7]  /* _38_ */ (
     .C(clk),
     .D(count_next[7]),
     .E(enable),

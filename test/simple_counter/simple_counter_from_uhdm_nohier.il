@@ -13,7 +13,7 @@ module \simple_counter
   wire width 8 output 3 \count
   attribute \src "dut.sv:4.18-4.23"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:275:import_operation$1
+  cell $add $auto$expression.cpp:283:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

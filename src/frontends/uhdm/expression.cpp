@@ -32,24 +32,24 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
         case vpiConstant:
             return import_constant(static_cast<const constant*>(uhdm_expr));
         case vpiOperation:
-            return import_operation(static_cast<const operation*>(uhdm_expr));
+            return import_operation(static_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiRefObj:
-            return import_ref_obj(static_cast<const ref_obj*>(uhdm_expr));
+            return import_ref_obj(static_cast<const ref_obj*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiPartSelect:
-            return import_part_select(static_cast<const part_select*>(uhdm_expr));
+            return import_part_select(static_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiBitSelect:
-            return import_bit_select(static_cast<const bit_select*>(uhdm_expr));
+            return import_bit_select(static_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiConcatOp:
-            return import_concat(static_cast<const operation*>(uhdm_expr));
+            return import_concat(static_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiAssignment:
             // This should not be called on assignment directly
             // Assignment is a statement, not an expression
             log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
             return RTLIL::SigSpec();
         case vpiHierPath:
-            return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_instance);
+            return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiIndexedPartSelect:
-            return import_indexed_part_select(static_cast<const indexed_part_select*>(uhdm_expr));
+            return import_indexed_part_select(static_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiPort:
             // Handle port as expression - this happens when ports are referenced in connections
             {
@@ -190,7 +190,15 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
 }
 
 // Import operation
-RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
+RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst) {
+    // Try to reduce it first
+    ExprEval eval;
+    bool invalidValue = false;
+    expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
+    if (res && res->UhdmType() == uhdmconstant) {
+        return import_constant(dynamic_cast<const UHDM::constant*>(res));
+    }
+
     int op_type = uhdm_op->VpiOpType();
     
     if (mode_debug)
@@ -321,7 +329,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op) {
 }
 
 // Import reference to object
-RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
+RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst) {
     // Get the referenced object name
     std::string ref_name = std::string(uhdm_ref->VpiName());
     
@@ -370,7 +378,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref) {
 }
 
 // Import part select (e.g., sig[7:0])
-RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part) {
+RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst) {
     if (mode_debug)
         log("    Importing part select\n");
     
@@ -399,7 +407,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part) {
 }
 
 // Import bit select (e.g., sig[3])
-RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit) {
+RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const UHDM::scope* inst) {
     if (mode_debug)
         log("    Importing bit select\n");
     
@@ -417,7 +425,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit) {
 }
 
 // Import indexed part select (e.g., data[i*8 +: 8])
-RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed) {
+RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst) {
     log("    Importing indexed part select\n");
     
     // Get the parent object - this should contain the base signal
@@ -507,12 +515,12 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         }
     }
     
-    log_warning("Indexed part select with non-constant index or width not supported\n");
+    log_warning("Indexed part select with non-constant index or widthimport_expressioncurrent not supported\n");
     return RTLIL::SigSpec();
 }
 
 // Import concatenation (e.g., {a, b, c})
-RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat) {
+RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat, const UHDM::scope* inst) {
     if (mode_debug)
         log("    Importing concatenation\n");
     
@@ -529,7 +537,7 @@ RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat) {
 }
 
 // Import hierarchical path (e.g., bus.a, interface.signal)
-RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const module_inst* inst) {
+RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst) {
     if (mode_debug)
         log("    Importing hier_path\n");
     

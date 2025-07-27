@@ -523,7 +523,7 @@ std::string UhdmImporter::get_name(const any* uhdm_obj) {
 }
 
 // Get width from UHDM object
-int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::instance* inst) {
+int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
     if (!uhdm_obj) {
         log("UHDM: get_width called with null object\n");
         return 1;
@@ -586,7 +586,7 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::instance* inst) {
 }
 
 // Helper function to get width from typespec
-int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::instance* inst) {
+int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst) {
     if (!typespec) return 1;
     
     try {
@@ -760,7 +760,7 @@ void UhdmImporter::import_generate_scopes(const module_inst* uhdm_module) {
 // Import a single generate scope
 void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     if (!uhdm_scope) return;
-    
+    current_scope = uhdm_scope;
     std::string scope_name = std::string(uhdm_scope->VpiName());
     std::string full_name = std::string(uhdm_scope->VpiFullName());
     
@@ -845,6 +845,9 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     // Import continuous assignments within the generate scope
     if (uhdm_scope->Cont_assigns()) {
         log("UHDM: Found %d continuous assignments in generate scope\n", (int)uhdm_scope->Cont_assigns()->size());
+        // Save current generate scope for process naming
+        std::string saved_gen_scope = current_gen_scope;
+        current_gen_scope = scope_name;
         for (auto cont_assign : *uhdm_scope->Cont_assigns()) {
             try {
                 import_continuous_assign(cont_assign);
@@ -852,6 +855,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 log_error("UHDM: Exception in continuous assignment import within generate scope: %s\n", e.what());
             }
         }
+        // Restore previous generate scope
+        current_gen_scope = saved_gen_scope;
     }
     
     // Recursively import nested generate scopes
@@ -865,6 +870,7 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             }
         }
     }
+    current_scope = nullptr;
 }
 
 YOSYS_NAMESPACE_END

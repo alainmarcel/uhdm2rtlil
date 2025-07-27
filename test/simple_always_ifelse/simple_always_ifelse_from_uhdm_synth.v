@@ -15,5 +15,69 @@ module simple_always_ifelse(clk, rst_n, unit_result, result);
   (* src = "dut.sv:6.35-6.46" *)
   input [7:0] unit_result;
   wire [7:0] unit_result;
-  assign result = 32'd0;
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[10]  /* _0_ */ (
+    .C(clk),
+    .D(unit_result[2]),
+    .Q(result[10]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[11]  /* _1_ */ (
+    .C(clk),
+    .D(unit_result[3]),
+    .Q(result[11]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[12]  /* _2_ */ (
+    .C(clk),
+    .D(unit_result[4]),
+    .Q(result[12]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[13]  /* _3_ */ (
+    .C(clk),
+    .D(unit_result[5]),
+    .Q(result[13]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[14]  /* _4_ */ (
+    .C(clk),
+    .D(unit_result[6]),
+    .Q(result[14]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[15]  /* _5_ */ (
+    .C(clk),
+    .D(unit_result[7]),
+    .Q(result[15]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[8]  /* _6_ */ (
+    .C(clk),
+    .D(unit_result[0]),
+    .Q(result[8]),
+    .R(rst_n)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[9]  /* _7_ */ (
+    .C(clk),
+    .D(unit_result[1]),
+    .Q(result[9]),
+    .R(rst_n)
+  );
+  assign { result[31:16], result[7:0] } = { result[15:8], result[15:8], result[15:8] };
 endmodule
