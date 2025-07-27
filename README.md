@@ -96,8 +96,8 @@ bash test_uhdm_workflow.sh simple_counter
 # Step 1: Generate UHDM from SystemVerilog
 ./build/third_party/Surelog/bin/surelog -parse design.sv
 
-# Step 2: Use Yosys with UHDM frontend
-./out/current/bin/yosys -p "read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
+# Step 2: Use Yosys with UHDM frontend (load plugin first)
+./out/current/bin/yosys -p "plugin -i uhdm2rtlil.so; read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
 ```
 
 ## Testing Framework
@@ -138,6 +138,8 @@ bash test_uhdm_workflow.sh simple_counter
 - **counter** - More complex counter design
 - **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
 - **simple_assign** - Basic continuous assignments
+- **simple_always_ff** - Sequential always_ff blocks with clock and reset
+- **simple_always_ifelse** - Always blocks with if-else conditional logic
 - **simple_hierarchy** - Module instantiation and port connections
 - **simple_interface** - Interface-based connections
 - **simple_memory** - Memory arrays and access patterns
@@ -146,6 +148,7 @@ bash test_uhdm_workflow.sh simple_counter
 - **simple_fsm** - Finite state machine with parameterized states (tests parameter references in case statements)
 - **simple_instance_array** - Primitive gate arrays (tests and, or, xor, nand, not gates with array instances)
 - **simple_package** - SystemVerilog packages with parameters, structs, and imports
+- **struct_array** - Arrays of packed structs with complex indexing and member access
 
 ### Test Management
 
@@ -216,9 +219,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend now passes **all 14 test cases** in the test suite:
+The UHDM frontend now passes **all 16 test cases** in the test suite:
 - **2 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package)
-- **12 Functional tests** - Work correctly with expected RTLIL differences
+- **14 Functional tests** - Work correctly with expected RTLIL differences
 - **0 Failing tests** - All tests pass successfully!
 
 ## Recent Improvements
