@@ -14,7 +14,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 3 \c
   attribute \src "dut.sv:7.29-7.32"
   wire width 8 output 4 \out
-  cell $and $auto$expression.cpp:267:import_operation$5
+  cell $and $auto$expression.cpp:292:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -24,7 +24,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     connect \B \b
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $and $auto$expression.cpp:267:import_operation$7
+  cell $and $auto$expression.cpp:292:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -50,7 +50,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   wire width 16 input 3 \c
   attribute \src "dut.sv:7.29-7.32"
   wire width 16 output 4 \out
-  cell $and $auto$expression.cpp:267:import_operation$11
+  cell $and $auto$expression.cpp:292:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -60,7 +60,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     connect \B \c
     connect \Y $auto$rtlil.cc:3004:And$12
   end
-  cell $and $auto$expression.cpp:267:import_operation$9
+  cell $and $auto$expression.cpp:292:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -131,7 +131,7 @@ module \submodule
   wire width 8 input 3 \c
   attribute \src "dut.sv:7.29-7.32"
   wire width 8 output 4 \out
-  cell $and $auto$expression.cpp:267:import_operation$1
+  cell $and $auto$expression.cpp:292:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -141,7 +141,7 @@ module \submodule
     connect \B \b
     connect \Y $auto$rtlil.cc:3004:And$2
   end
-  cell $and $auto$expression.cpp:267:import_operation$3
+  cell $and $auto$expression.cpp:292:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

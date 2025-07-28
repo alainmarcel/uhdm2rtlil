@@ -28,6 +28,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
     
     int obj_type = uhdm_expr->VpiType();
     
+    if (mode_debug) {
+        log("  import_expression: VpiType=%d, UhdmType=%s\n", 
+            obj_type, UHDM::UhdmName(uhdm_expr->UhdmType()).c_str());
+    }
+    
     switch (obj_type) {
         case vpiConstant:
             return import_constant(static_cast<const constant*>(uhdm_expr));
@@ -80,8 +85,28 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 log_warning("Port '%s' not found as wire in module\n", port_name.c_str());
                 return RTLIL::SigSpec();
             }
+        case vpiNet:  // Handle logic_net
+            {
+                const logic_net* net = static_cast<const logic_net*>(uhdm_expr);
+                std::string net_name = std::string(net->VpiName());
+                if (mode_debug)
+                    log("    Handling logic_net '%s' as expression\n", net_name.c_str());
+                
+                // Look up the wire
+                if (name_map.count(net_name)) {
+                    return RTLIL::SigSpec(name_map.at(net_name));
+                } else {
+                    RTLIL::IdString wire_id = RTLIL::escape_id(net_name);
+                    if (module->wire(wire_id)) {
+                        return RTLIL::SigSpec(module->wire(wire_id));
+                    }
+                }
+                
+                log_warning("Logic_net '%s' not found as wire in module\n", net_name.c_str());
+                return RTLIL::SigSpec();
+            }
         default:
-            log_warning("Unsupported expression type: %s\n", UhdmName(static_cast<UHDM_OBJECT_TYPE>(obj_type)).c_str());
+            log_warning("Unsupported expression type: %s\n", UhdmName(uhdm_expr->UhdmType()).c_str());
             return RTLIL::SigSpec();
     }
 }
@@ -411,11 +436,33 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     if (mode_debug)
         log("    Importing bit select\n");
     
-    RTLIL::SigSpec base = import_expression(static_cast<const expr*>(uhdm_bit->VpiParent()));
+    // Get the signal name directly from the bit_select
+    std::string signal_name = std::string(uhdm_bit->VpiName());
+    
+    if (mode_debug)
+        log("    Bit select signal name: '%s'\n", signal_name.c_str());
+    
+    // Look up the wire
+    RTLIL::Wire* wire = nullptr;
+    if (name_map.count(signal_name)) {
+        wire = name_map.at(signal_name);
+    } else {
+        // Try with escaped name
+        RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
+        wire = module->wire(wire_id);
+    }
+    
+    if (!wire) {
+        log_error("Could not find wire '%s' for bit select\n", signal_name.c_str());
+    }
+    
+    RTLIL::SigSpec base(wire);
     RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
     
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
+        if (mode_debug)
+            log("    Bit select index: %d\n", idx);
         return base.extract(idx, 1);
     }
     

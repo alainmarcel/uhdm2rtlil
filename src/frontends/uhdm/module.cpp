@@ -130,8 +130,17 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     if (mode_debug)
         log("  Importing continuous assignment\n");
     
-    RTLIL::SigSpec lhs = import_expression(uhdm_assign->Lhs());
-    RTLIL::SigSpec rhs = import_expression(uhdm_assign->Rhs());
+    const expr* lhs_expr = uhdm_assign->Lhs();
+    const expr* rhs_expr = uhdm_assign->Rhs();
+    
+    if (mode_debug && lhs_expr) {
+        log("  LHS type: %s, VpiType: %d\n", 
+            UHDM::UhdmName(lhs_expr->UhdmType()).c_str(), 
+            lhs_expr->VpiType());
+    }
+    
+    RTLIL::SigSpec lhs = import_expression(lhs_expr);
+    RTLIL::SigSpec rhs = import_expression(rhs_expr);
     
     if (lhs.size() != rhs.size()) {
         if (rhs.size() == 1) {
