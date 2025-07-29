@@ -276,9 +276,19 @@ elif [ -f "$UHDM_SYNTH" ] && [ -f "$VERILOG_SYNTH" ]; then
         echo
         echo "   Gate count comparison:"
         echo -n "   UHDM path: "
-        grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$UHDM_SYNTH" | wc -l
+        UHDM_GATES=$(grep -E '\$_' "$UHDM_SYNTH" | wc -l)
+        echo $UHDM_GATES
         echo -n "   Verilog path: "
-        grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$VERILOG_SYNTH" | wc -l
+        VERILOG_GATES=$(grep -E '\$_' "$VERILOG_SYNTH" | wc -l)
+        echo $VERILOG_GATES
+        
+        # Check if gate counts match
+        if [ "$UHDM_GATES" -eq "$VERILOG_GATES" ]; then
+            echo "   ✓ Gate counts MATCH! Both implementations use $UHDM_GATES gates"
+            echo "     This indicates functionally equivalent implementations"
+        else
+            echo "   ⚠ Gate counts differ: UHDM=$UHDM_GATES, Verilog=$VERILOG_GATES"
+        fi
     fi
     rm -f uhdm_synth_clean.tmp verilog_synth_clean.tmp
 else

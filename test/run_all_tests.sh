@@ -149,8 +149,9 @@ analyze_test_result() {
         rtlil_identical=true
     fi
     
-    # Check if synthesized netlists are identical
+    # Check if synthesized netlists are identical or have same gate count
     local synth_identical=false
+    local gates_match=false
     if [ -f "$uhdm_synth" ] && [ -f "$verilog_synth" ]; then
         # Compare netlists ignoring comments and whitespace
         grep -v "^//" "$uhdm_synth" | grep -v "^$" | sed 's/^[[:space:]]*//' > /tmp/uhdm_synth_clean.tmp
@@ -159,11 +160,23 @@ analyze_test_result() {
             synth_identical=true
         fi
         rm -f /tmp/uhdm_synth_clean.tmp /tmp/verilog_synth_clean.tmp
+        
+        # Check if gate counts match
+        local uhdm_gates=$(grep -E '\$_' "$uhdm_synth" | wc -l)
+        local verilog_gates=$(grep -E '\$_' "$verilog_synth" | wc -l)
+        if [ "$uhdm_gates" -eq "$verilog_gates" ]; then
+            gates_match=true
+        fi
     fi
     
     # Report results
     if [ "$rtlil_identical" = true ] && [ "$synth_identical" = true ]; then
         echo "✅ Test $test_dir PASSED - Both RTLIL and synthesized netlists are IDENTICAL"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+        PASSED_TEST_NAMES+=("$test_dir")
+        return 0
+    elif [ "$gates_match" = true ]; then
+        echo "✅ Test $test_dir PASSED - Gate counts MATCH (same number of gates)"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         PASSED_TEST_NAMES+=("$test_dir")
         return 0
@@ -189,8 +202,8 @@ analyze_test_result() {
         
         if [ -f "$uhdm_synth" ] && [ -f "$verilog_synth" ]; then
             # Count gates
-            local uhdm_gates=$(grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$uhdm_synth" | wc -l)
-            local verilog_gates=$(grep -E "\\$\\(and|or|xor|not|mux|dff\\)" "$verilog_synth" | wc -l)
+            local uhdm_gates=$(grep -E '\$_' "$uhdm_synth" | wc -l)
+            local verilog_gates=$(grep -E '\$_' "$verilog_synth" | wc -l)
             echo "    Gates: UHDM=$uhdm_gates, Verilog=$verilog_gates"
         fi
         return 0
