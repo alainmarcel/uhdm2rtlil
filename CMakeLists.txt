@@ -108,3 +108,11 @@ target_link_libraries(uhdm2rtlil dl pthread)
 
 # Installation
 install(TARGETS uhdm2rtlil DESTINATION ${INSTALL_DIR}/share/yosys/plugins)
+
+# Add test target
+add_custom_target(test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_all_tests.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    COMMENT "Running all UHDM frontend tests"
+    DEPENDS uhdm2rtlil
+)
