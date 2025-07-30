@@ -8,6 +8,7 @@
 #include "uhdm2rtlil.h"
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/gen_scope.h>
+#include <cctype>
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/uhdm_types.h>
 YOSYS_NAMESPACE_BEGIN
@@ -565,10 +566,42 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 if (actual_sig.size() > 0) {
                     // Check if the target module has this port marked as an interface port
                     RTLIL::Module* target_module = design->module(cell->type);
+                    if (!target_module) {
+                        log("    Target module not found for cell type: %s\n", cell->type.c_str());
+                    }
                     if (target_module) {
                         RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
+                        if (!port_wire) {
+                            log("    Port wire not found for port: %s\n", port_name.c_str());
+                        }
                         if (port_wire && port_wire->attributes.count(RTLIL::escape_id("interface_port"))) {
-                            log("    Skipping interface port %s connection (will be handled separately)\n", port_name.c_str());
+                            log("    Port %s is an interface port, creating connection wire\n", port_name.c_str());
+                            
+                            // For interface ports, we need to create a connection wire
+                            // The wire name is based on the connected interface instance name
+                            // Extract interface name from actual_sig if it's a simple wire reference
+                            std::string interface_wire_name;
+                            if (actual_sig.is_wire() && actual_sig.as_wire()) {
+                                interface_wire_name = actual_sig.as_wire()->name.str();
+                                if (interface_wire_name[0] == '\\') {
+                                    interface_wire_name = interface_wire_name.substr(1);
+                                }
+                                interface_wire_name += "_1";
+                            } else {
+                                // Fallback: use instance name + port name
+                                interface_wire_name = inst_name + "_" + port_name + "_1";
+                            }
+                            
+                            // Create or get the interface connection wire
+                            RTLIL::Wire* conn_wire = module->wire(RTLIL::escape_id(interface_wire_name));
+                            if (!conn_wire) {
+                                conn_wire = module->addWire(RTLIL::escape_id(interface_wire_name), 1);
+                                conn_wire->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
+                                log("    Created interface connection wire: %s\n", interface_wire_name.c_str());
+                            }
+                            
+                            // Connect the cell port to this wire
+                            cell->setPort(RTLIL::escape_id(port_name), conn_wire);
                             continue;
                         }
                     }
@@ -618,6 +651,41 @@ RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width) {
     try {
         RTLIL::Wire* w = module->addWire(wire_name, width);
         log("UHDM: Successfully created wire '%s'\n", wire_name.c_str());
+        
+        // Check if this wire is being created for an interface connection
+        // Interface connection wires typically have names like bus1_1, bus2_1, etc.
+        // where bus1, bus2 are interface instance names
+        std::string base_name = name;
+        size_t underscore_pos = base_name.rfind('_');
+        if (underscore_pos != std::string::npos && underscore_pos < base_name.length() - 1) {
+            std::string suffix = base_name.substr(underscore_pos + 1);
+            // Check if suffix is a number (typically "1")
+            bool is_numeric = true;
+            for (char c : suffix) {
+                if (!std::isdigit(c)) {
+                    is_numeric = false;
+                    break;
+                }
+            }
+            
+            if (is_numeric) {
+                // This might be an interface connection wire
+                // Check if there's an interface cell with the base name
+                std::string potential_interface = base_name.substr(0, underscore_pos);
+                RTLIL::IdString interface_cell_name = RTLIL::escape_id(potential_interface);
+                if (module->cell(interface_cell_name)) {
+                    // Check if the cell type indicates it's an interface
+                    // Look for the is_interface attribute on the module definition
+                    RTLIL::Cell* interface_cell = module->cell(interface_cell_name);
+                    RTLIL::Module* interface_module = design->module(interface_cell->type);
+                    if (interface_module && interface_module->attributes.count(RTLIL::escape_id("is_interface"))) {
+                        w->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
+                        log("UHDM: Marked wire '%s' as interface connection\n", wire_name.c_str());
+                    }
+                }
+            }
+        }
+        
         return w;
     } catch (const std::exception& e) {
         log_error("UHDM: Failed to create wire '%s': %s\n", wire_name.c_str(), e.what());

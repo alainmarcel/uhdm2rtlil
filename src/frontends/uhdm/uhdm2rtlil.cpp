@@ -277,6 +277,32 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // Post-process to create parameterized modules is no longer needed
     // as we handle parameterization during hierarchy traversal
     
+    // Post-process: Mark interface connection wires with is_interface attribute
+    log("UHDM: Post-processing to mark interface connection wires\n");
+    for (auto module : design->modules()) {
+        for (auto cell : module->cells()) {
+            // Check if this is an interface cell by looking at the module it references
+            RTLIL::Module* cell_module = design->module(cell->type);
+            if (cell_module && cell_module->attributes.count(RTLIL::escape_id("is_interface"))) {
+                // This is an interface cell
+                // Look for any wires that connect to this interface from other cells
+                std::string interface_name = cell->name.str();
+                if (interface_name[0] == '\\') {
+                    interface_name = interface_name.substr(1);
+                }
+                
+                // Look for connection wires with pattern interface_name + "_1"
+                std::string conn_wire_name = interface_name + "_1";
+                RTLIL::Wire* conn_wire = module->wire(RTLIL::escape_id(conn_wire_name));
+                if (conn_wire && !conn_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
+                    conn_wire->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
+                    log("UHDM: Marked wire '%s' as interface connection in module %s\n", 
+                        conn_wire_name.c_str(), module->name.c_str());
+                }
+            }
+        }
+    }
+    
     log("UHDM: Finished import_design\n");
 }
 

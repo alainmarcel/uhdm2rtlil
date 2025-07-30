@@ -135,6 +135,7 @@ module \simple_interface
   wire width 8 \bus1.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \bus1.c
+  attribute \is_interface 1
   wire \bus1_1
   attribute \src "dut.sv:5.23-5.24"
   wire width 8 \bus2.a
@@ -142,6 +143,7 @@ module \simple_interface
   wire width 8 \bus2.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \bus2.c
+  attribute \is_interface 1
   wire \bus2_1
   attribute \src "dut.sv:5.23-5.24"
   wire width 16 \bus3.a
@@ -149,6 +151,7 @@ module \simple_interface
   wire width 16 \bus3.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 \bus3.c
+  attribute \is_interface 1
   wire \bus3_1
   attribute \src "dut.sv:31.33-31.35"
   wire width 8 input 3 \c1

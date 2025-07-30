@@ -38,6 +38,7 @@ module \simple_interface
   attribute \src "dut.sv:7.23-7.24"
   attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus1.c
+  attribute \is_interface 1
   wire \bus1_1
   attribute \src "dut.sv:5.23-5.24"
   attribute \unused_bits "0 1 2 3 4 5 6 7"
@@ -48,6 +49,7 @@ module \simple_interface
   attribute \src "dut.sv:7.23-7.24"
   attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus2.c
+  attribute \is_interface 1
   wire \bus2_1
   attribute \src "dut.sv:5.23-5.24"
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
@@ -58,6 +60,7 @@ module \simple_interface
   attribute \src "dut.sv:7.23-7.24"
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
   wire width 16 \bus3.c
+  attribute \is_interface 1
   wire \bus3_1
   attribute \src "dut.sv:31.33-31.35"
   wire width 8 input 3 \c1
