@@ -64,6 +64,7 @@ set(UHDM_FRONTEND_SOURCES
     src/frontends/uhdm/ref_module.cpp
     src/frontends/uhdm/primitives.cpp
     src/frontends/uhdm/package.cpp
+    src/frontends/uhdm/interface.cpp
 )
 
 # Build as a shared library (Yosys plugin)

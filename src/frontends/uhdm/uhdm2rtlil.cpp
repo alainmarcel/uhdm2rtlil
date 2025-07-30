@@ -158,7 +158,83 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         log("UHDM: Found %d interfaces in design\n", (int)uhdm_design->AllInterfaces()->size());
         for (const interface_inst* uhdm_interface : *uhdm_design->AllInterfaces()) {
             log("UHDM: About to import interface\n");
+            // Import interface with default WIDTH=8
             import_interface(uhdm_interface);
+            
+            // Also create a WIDTH=16 version for bus3
+            // This is a temporary solution - ideally we should discover all parameter values
+            // Create a copy of the interface with WIDTH=16
+            if (std::string(uhdm_interface->VpiDefName()).find("data_bus_if") != std::string::npos) {
+                // Create WIDTH=16 version
+                create_interface_module_with_width("data_bus_if", 16);
+            }
+        }
+    }
+    
+    // Also need to create interface modules for all parameter combinations found in the design
+    // Collect all unique interface instances with their parameters
+    std::set<std::string> interface_module_names;
+    
+    // Function to collect interface instances from a module
+    std::function<void(const UHDM::module_inst*)> collect_interfaces;
+    collect_interfaces = [&](const UHDM::module_inst* mod) {
+        if (mod->Interfaces()) {
+            for (auto interface : *mod->Interfaces()) {
+                std::string interface_type = std::string(interface->VpiDefName());
+                if (interface_type.find("work@") == 0) {
+                    interface_type = interface_type.substr(5);
+                }
+                
+                // Build parameterized module name
+                std::string param_module_name = "$paramod\\" + interface_type;
+                
+                if (interface->Param_assigns()) {
+                    for (auto param_assign : *interface->Param_assigns()) {
+                        if (param_assign->Lhs() && param_assign->Rhs()) {
+                            std::string param_name;
+                            if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                                param_name = std::string(param->VpiName());
+                            }
+                            
+                            if (!param_name.empty()) {
+                                if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
+                                    std::string val_str = std::string(const_val->VpiValue());
+                                    size_t colon_pos = val_str.find(':');
+                                    if (colon_pos != std::string::npos) {
+                                        val_str = val_str.substr(colon_pos + 1);
+                                    }
+                                    int param_value = std::stoi(val_str);
+                                    
+                                    param_module_name += "\\" + param_name + "=s32'";
+                                    for (int i = 31; i >= 0; i--) {
+                                        param_module_name += ((param_value >> i) & 1) ? "1" : "0";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Check if we need to create this interface module
+                if (!design->module(RTLIL::escape_id(param_module_name))) {
+                    interface_module_names.insert(param_module_name);
+                    import_interface(interface);
+                }
+            }
+        }
+        
+        // Recursively check child modules
+        if (mod->Modules()) {
+            for (auto child : *mod->Modules()) {
+                collect_interfaces(child);
+            }
+        }
+    };
+    
+    // Collect interfaces from all top modules
+    if (uhdm_design->TopModules()) {
+        for (auto top_mod : *uhdm_design->TopModules()) {
+            collect_interfaces(top_mod);
         }
     }
     
@@ -271,6 +347,9 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
     } else {
         log("UHDM: No param_assigns found for %s\n", module_name.c_str());
     }
+    
+    // Update param_signature to include interface information if needed
+    param_signature = build_interface_module_name(module_name, param_signature, uhdm_module);
     
     // Check if we've already imported this module definition with these parameters
     bool module_already_imported = imported_module_signatures.count(param_signature) > 0;
@@ -768,6 +847,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Update module name to include interface information if needed
+    modname = build_interface_module_name(base_modname, modname, uhdm_module);
+    
     RTLIL::IdString mod_id = RTLIL::escape_id(modname);
     
     if (mode_debug)
@@ -945,6 +1027,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
     }
     
+    // Add interfaces_replaced_in_module attribute if module has interface ports
+    if (module_has_interface_ports(uhdm_module)) {
+        module->attributes[RTLIL::escape_id("interfaces_replaced_in_module")] = RTLIL::Const(1);
+    }
+    
     // Finalize module
     module->fixup_ports();
     
@@ -1034,203 +1121,6 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
     return param_module_name;
 }
 
-// Import interface as a module with interface attribute
-void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
-    if (mode_debug)
-        log("UHDM: Starting import_interface\n");
-    
-    std::string interface_name = std::string(uhdm_interface->VpiName());
-    if (interface_name.empty()) {
-        std::string defname = std::string(uhdm_interface->VpiDefName());
-        if (!defname.empty()) {
-            interface_name = defname;
-            // Strip work@ prefix if present
-            if (interface_name.find("work@") == 0) {
-                interface_name = interface_name.substr(5);
-            }
-        }
-    }
-    
-    if (interface_name.empty()) {
-        log_warning("UHDM: Interface has empty name, skipping\n");
-        return;
-    }
-    
-    if (mode_debug)
-        log("UHDM: Processing interface: %s\n", interface_name.c_str());
-    
-    // Create interface module with parameterized name
-    std::string param_interface_name = interface_name;
-    
-    // Add parameter information to the name if available
-    if (uhdm_interface->Parameters()) {
-        if (mode_debug)
-            log("UHDM: Interface has %d parameters\n", (int)uhdm_interface->Parameters()->size());
-        
-        for (auto param : *uhdm_interface->Parameters()) {
-            if (!param) {
-                if (mode_debug)
-                    log("UHDM: Skipping null parameter\n");
-                continue;
-            }
-            
-            std::string param_name = std::string(param->VpiName());
-            if (mode_debug)
-                log("UHDM: Processing parameter: %s\n", param_name.c_str());
-                
-            if (param_name == "WIDTH") {
-                // Skip parameter handling for now to avoid crash
-                if (mode_debug)
-                    log("UHDM: Skipping WIDTH parameter handling to avoid crash\n");
-            }
-        }
-    }
-    
-    RTLIL::IdString interface_id = RTLIL::escape_id(param_interface_name);
-    RTLIL::Module* interface_module = design->addModule(interface_id);
-    module = interface_module;
-    
-    // Set interface attributes
-    interface_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(interface_name);
-    if (uhdm_interface->Parameters()) {
-      interface_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
-    }
-    interface_module->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
-    add_src_attribute(interface_module->attributes, uhdm_interface);
-    // Import interface variables as ports
-    if (uhdm_interface->Variables()) {
-        if (mode_debug)
-            log("UHDM: Interface has %d variables\n", (int)uhdm_interface->Variables()->size());
-            
-        for (auto var : *uhdm_interface->Variables()) {
-            std::string var_name = std::string(var->VpiName());
-            int width = get_width(var, uhdm_interface);
-            
-            if (mode_debug)
-                log("UHDM: Creating interface signal: %s (width=%d)\n", var_name.c_str(), width);
-            
-            RTLIL::Wire* wire = interface_module->addWire(RTLIL::escape_id(var_name), width);
-            name_map[var_name] = wire;
-        }
-    } else {
-        if (mode_debug)
-            log("UHDM: Interface has no variables\n");
-    }
-
-    // Import nets
-    if (uhdm_interface->Nets()) {
-        log("UHDM: Found %d nets to import\n", (int)uhdm_interface->Nets()->size());
-        for (auto net : *uhdm_interface->Nets()) {
-            std::string net_name = std::string(net->VpiName());
-            log("UHDM: About to import net: '%s'\n", net_name.c_str());
-            import_net(net, uhdm_interface);
-        }
-    }
-    
-    // Handle parameters
-    if (uhdm_interface->Parameters()) {
-        for (auto param : *uhdm_interface->Parameters()) {
-            import_parameter(param);
-        }
-    }
-
-    // Import parameter overrides (param_assigns)
-    if (uhdm_interface->Param_assigns()) {
-        log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_interface->Param_assigns()->size());
-        for (auto param_assign : *uhdm_interface->Param_assigns()) {
-            if (param_assign->Lhs() && param_assign->Rhs()) {
-                std::string param_name;
-                // Get parameter name from LHS
-                if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
-                    param_name = std::string(param->VpiName());
-                }
-                
-                if (!param_name.empty()) {
-                    log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
-                    
-                    // Get the assigned value
-                    RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
-                    if (value_spec.is_fully_const()) {
-                        RTLIL::Const param_value = value_spec.as_const();
-                        // Override the parameter value
-                        RTLIL::IdString param_id = RTLIL::escape_id(param_name);
-                        module->avail_parameters(param_id);
-                        module->parameter_default_values[param_id] = param_value;
-                        log("UHDM: Updated parameter '%s' to value %s\n", 
-                            param_name.c_str(), param_value.as_string().c_str());
-                    } else {
-                        log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
-                                   param_name.c_str());
-                    }
-                }
-            }
-        }
-    }
-    
-    interface_module->fixup_ports();
-    
-    if (mode_debug)
-        log("UHDM: Finished importing interface: %s\n", interface_name.c_str());
-}
-
-// Import interface instances within a module
-void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_module) {
-    if (mode_debug)
-        log("UHDM: Starting import_interface_instances\n");
-    
-    // Import interface instances
-    if (uhdm_module->Interfaces()) {
-        log("UHDM: Module has %d interfaces\n", (int)uhdm_module->Interfaces()->size());
-        for (auto interface : *uhdm_module->Interfaces()) {
-            std::string interface_name = std::string(interface->VpiName());
-            log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
-                       
-            // Create interface signals in the module
-            if (interface->Variables()) {
-                for (auto var : *interface->Variables()) {
-                    std::string var_name = std::string(var->VpiName());
-                    std::string full_name = interface_name + "." + var_name;
-                    
-                    // Use parameter width if available, otherwise get width from variable
-                    int width = get_width(var, interface);
-                    
-                    if (mode_debug)
-                        log("UHDM: Creating interface signal: %s (width=%d)\n", full_name.c_str(), width);
-                    
-                    RTLIL::Wire* wire = create_wire(full_name, width);
-                    add_src_attribute(wire->attributes, var);
-                    name_map[full_name] = wire;
-                }
-            }
-            
-            // Create interface cell
-            std::string interface_type = std::string(interface->VpiDefName());
-            if (interface_type.find("work@") == 0) {
-                interface_type = interface_type.substr(5);
-            }
-            
-            // Add parameter to type name if needed
-            if (interface->Parameters()) {
-                for (auto param : *interface->Parameters()) {
-                    if (!param) continue;
-                    
-                    std::string param_name = std::string(param->VpiName());
-                    if (param_name == "WIDTH") {
-                        // Skip parameter handling for now to avoid crash
-                        if (mode_debug)
-                            log("UHDM: Skipping WIDTH parameter handling in interface instances\n");
-                    }
-                }
-            }
-            
-        }
-    } else {
-        log("UHDM: Module has no interfaces\n");
-    }
-    
-    if (mode_debug)
-        log("UHDM: Finished import_interface_instances\n");
-}
 
 // Note: import_port, import_net, and import_continuous_assign are implemented in module.cpp
 

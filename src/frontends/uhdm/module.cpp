@@ -286,6 +286,83 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         }
     }
     
+    // Check if the module definition has interface ports
+    // We need to look at the module being instantiated to see if it uses interfaces
+    bool has_interface_ports = false;
+    if (uhdm_design && uhdm_design->AllModules()) {
+        for (const module_inst* mod_def : *uhdm_design->AllModules()) {
+            std::string def_name = std::string(mod_def->VpiDefName());
+            if (def_name.find("work@") == 0) {
+                def_name = def_name.substr(5);
+            }
+            if (def_name == base_module_name) {
+                has_interface_ports = module_has_interface_ports(mod_def);
+                break;
+            }
+        }
+    }
+    
+    // If the module has interface ports, add the interface suffix
+    if (has_interface_ports) {
+        // Find the interface information from the instance's port connections
+        std::string interface_suffix = "$interfaces$";
+        
+        if (uhdm_inst->Ports()) {
+            for (auto port : *uhdm_inst->Ports()) {
+                if (port->High_conn()) {
+                    const any* high_conn = port->High_conn();
+                    if (high_conn->UhdmType() == uhdmref_obj) {
+                        const ref_obj* ref = static_cast<const ref_obj*>(high_conn);
+                        const any* actual = ref->Actual_group();
+                        if (actual && actual->UhdmType() == uhdminterface_inst) {
+                            const interface_inst* iface = static_cast<const interface_inst*>(actual);
+                            std::string iface_type = std::string(iface->VpiDefName());
+                            if (iface_type.find("work@") == 0) {
+                                iface_type = iface_type.substr(5);
+                            }
+                            
+                            // Build interface parameter suffix
+                            std::string iface_param_suffix = "$paramod\\" + iface_type;
+                            
+                            // Add interface parameters
+                            if (iface->Param_assigns()) {
+                                for (auto param_assign : *iface->Param_assigns()) {
+                                    if (param_assign->Lhs() && param_assign->Rhs()) {
+                                        std::string param_name;
+                                        if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                                            param_name = std::string(param->VpiName());
+                                        }
+                                        
+                                        if (!param_name.empty()) {
+                                            if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
+                                                std::string val_str = std::string(const_val->VpiValue());
+                                                size_t colon_pos = val_str.find(':');
+                                                if (colon_pos != std::string::npos) {
+                                                    val_str = val_str.substr(colon_pos + 1);
+                                                }
+                                                int param_value = std::stoi(val_str);
+                                                
+                                                iface_param_suffix += "\\" + param_name + "=s32'";
+                                                for (int i = 31; i >= 0; i--) {
+                                                    iface_param_suffix += ((param_value >> i) & 1) ? "1" : "0";
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            interface_suffix += iface_param_suffix;
+                            break; // For now, only handle the first interface port
+                        }
+                    }
+                }
+            }
+        }
+        
+        module_name += interface_suffix;
+    }
+    
     if (mode_debug)
         log("  Importing instance: %s of %s\n", inst_name.c_str(), module_name.c_str());
     
@@ -447,6 +524,35 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 const any* high_conn = port->High_conn();
                 log("    Port %s has High_conn of type %s\n", port_name.c_str(), UhdmName(high_conn->UhdmType()).c_str());
                 
+                // Check if this is an interface connection
+                if (high_conn->UhdmType() == uhdmref_obj) {
+                    const ref_obj* ref = static_cast<const ref_obj*>(high_conn);
+                    const any* actual = ref->Actual_group();
+                    
+                    if (actual && actual->UhdmType() == uhdminterface_inst) {
+                        const interface_inst* iface = static_cast<const interface_inst*>(actual);
+                        std::string iface_name = std::string(iface->VpiName());
+                        log("    Port %s is connected to interface %s\n", port_name.c_str(), iface_name.c_str());
+                        
+                        // For interface connections, we need to expand the interface signals
+                        // and connect them individually as bus.a, bus.b, bus.c
+                        if (iface->Variables()) {
+                            for (auto var : *iface->Variables()) {
+                                std::string var_name = std::string(var->VpiName());
+                                std::string full_signal_name = iface_name + "." + var_name;
+                                std::string port_signal_name = port_name + "." + var_name;
+                                
+                                if (name_map.count(full_signal_name)) {
+                                    RTLIL::Wire* w = name_map[full_signal_name];
+                                    cell->setPort(RTLIL::escape_id(port_signal_name), w);
+                                    log("      Connected interface signal %s to port %s\n", full_signal_name.c_str(), port_signal_name.c_str());
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                }
+                
                 // Try to handle as expression directly
                 RTLIL::SigSpec actual_sig;
                 try {
@@ -457,6 +563,15 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 }
                 
                 if (actual_sig.size() > 0) {
+                    // Check if the target module has this port marked as an interface port
+                    RTLIL::Module* target_module = design->module(cell->type);
+                    if (target_module) {
+                        RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
+                        if (port_wire && port_wire->attributes.count(RTLIL::escape_id("interface_port"))) {
+                            log("    Skipping interface port %s connection (will be handled separately)\n", port_name.c_str());
+                            continue;
+                        }
+                    }
                     cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 } else {
                     log_warning("Port %s has empty connection\n", port_name.c_str());

@@ -12,28 +12,25 @@ module $paramod\bus
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \c
 end
+attribute \src "dut.sv:42.5-42.38"
+attribute \dynports 1
+attribute \is_interface 1
+attribute \hdlname "bus3"
+module $paramod\bus3\WIDTH=s32'00000000000000000000000000010000
+  parameter \WIDTH 16
+  attribute \src "dut.sv:5.23-5.24"
+  wire width 16 \a
+  attribute \src "dut.sv:6.23-6.24"
+  wire width 16 \b
+  attribute \src "dut.sv:7.23-7.24"
+  wire width 16 \c
+end
 attribute \src "dut.sv:2.1-18.13"
 attribute \dynports 1
 attribute \is_interface 1
 attribute \hdlname "data_bus_if"
 module $paramod\data_bus_if\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
-  attribute \src "dut.sv:5.23-5.24"
-  wire width 8 \a
-  attribute \src "dut.sv:6.23-6.24"
-  wire width 8 \b
-  attribute \src "dut.sv:7.23-7.24"
-  wire width 8 \c
-end
-attribute \src "dut.sv:2.1-18.13"
-attribute \dynports 1
-attribute \is_interface 1
-attribute \hdlname "data_bus_if"
-module $paramod\data_bus_if\WIDTH=s32'00000000000000000000000000010000
-  parameter \WIDTH 16
-  wire width 16 \a
-  wire width 16 \b
-  wire width 16 \c
 end
 attribute \interfaces_replaced_in_module 1
 attribute \dynports 1
