@@ -307,54 +307,9 @@ bool UhdmImporter::module_has_interface_ports(const module_inst* uhdm_module) {
 std::string UhdmImporter::build_interface_module_name(const std::string& base_name, 
                                                      const std::string& param_signature,
                                                      const module_inst* uhdm_module) {
-    if (!module_has_interface_ports(uhdm_module)) {
-        return param_signature;
-    }
-    
-    // Module has interface ports, so we need to add interface information
-    std::string interface_suffix = "$interfaces$";
-    
-    // Collect interface parameter information
-    if (uhdm_module->Interfaces()) {
-        for (auto interface : *uhdm_module->Interfaces()) {
-            std::string interface_type = std::string(interface->VpiDefName());
-            if (interface_type.find("work@") == 0) {
-                interface_type = interface_type.substr(5);
-            }
-            
-            interface_suffix += "$paramod\\" + interface_type;
-            
-            // Add interface parameters
-            if (interface->Param_assigns()) {
-                for (auto param_assign : *interface->Param_assigns()) {
-                    if (param_assign->Lhs() && param_assign->Rhs()) {
-                        std::string param_name;
-                        if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
-                            param_name = std::string(param->VpiName());
-                        }
-                        
-                        if (!param_name.empty()) {
-                            if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
-                                std::string val_str = std::string(const_val->VpiValue());
-                                size_t colon_pos = val_str.find(':');
-                                if (colon_pos != std::string::npos) {
-                                    val_str = val_str.substr(colon_pos + 1);
-                                }
-                                int param_value = std::stoi(val_str);
-                                
-                                interface_suffix += "\\" + param_name + "=s32'";
-                                for (int i = 31; i >= 0; i--) {
-                                    interface_suffix += ((param_value >> i) & 1) ? "1" : "0";
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    return param_signature + interface_suffix;
+    // Don't modify the module name for interfaces
+    // The parameterized name is sufficient
+    return param_signature;
 }
 
 // Create interface module with specific width

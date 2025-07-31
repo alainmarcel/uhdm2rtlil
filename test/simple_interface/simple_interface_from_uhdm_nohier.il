@@ -38,7 +38,7 @@ end
 attribute \interfaces_replaced_in_module 1
 attribute \dynports 1
 attribute \src "dut.sv:58.5-61.7"
-module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000$interfaces$$paramod\data_bus_if
+module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3004:And$6
   wire width 8 $auto$rtlil.cc:3004:And$8
@@ -78,7 +78,7 @@ end
 attribute \interfaces_replaced_in_module 1
 attribute \dynports 1
 attribute \src "dut.sv:70.5-73.7"
-module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000$interfaces$$paramod\data_bus_if
+module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3004:And$10
   wire width 16 $auto$rtlil.cc:3004:And$12
@@ -117,6 +117,12 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000$interfaces$
 end
 attribute \src "dut.sv:30.1-75.10"
 module \simple_interface
+  attribute \is_interface 1
+  wire $dummywireforinterface\bus1
+  attribute \is_interface 1
+  wire $dummywireforinterface\bus2
+  attribute \is_interface 1
+  wire $dummywireforinterface\bus3
   attribute \src "dut.sv:31.25-31.27"
   wire width 8 input 1 \a1
   attribute \src "dut.sv:32.25-32.27"
@@ -135,24 +141,18 @@ module \simple_interface
   wire width 8 \bus1.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \bus1.c
-  attribute \is_interface 1
-  wire \bus1_1
   attribute \src "dut.sv:5.23-5.24"
   wire width 8 \bus2.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 8 \bus2.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \bus2.c
-  attribute \is_interface 1
-  wire \bus2_1
   attribute \src "dut.sv:5.23-5.24"
   wire width 16 \bus3.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 16 \bus3.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 \bus3.c
-  attribute \is_interface 1
-  wire \bus3_1
   attribute \src "dut.sv:31.33-31.35"
   wire width 8 input 3 \c1
   attribute \src "dut.sv:32.33-32.35"
@@ -172,15 +172,15 @@ module \simple_interface
   cell $paramod\data_bus_if\WIDTH=s32'00000000000000000000000000010000 \bus3
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst1
-    connect \bus \bus1_1
+    connect \bus $dummywireforinterface\bus1
     connect \out \out1
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst2
-    connect \bus \bus2_1
+    connect \bus $dummywireforinterface\bus2
     connect \out \out2
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000010000 \inst3
-    connect \bus \bus3_1
+    connect \bus $dummywireforinterface\bus3
     connect \out \out3
   end
   connect \bus1.a \a1

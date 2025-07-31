@@ -303,65 +303,10 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         }
     }
     
-    // If the module has interface ports, add the interface suffix
+    // If the module has interface ports, add the interfaces_replaced_in_module attribute
+    // but don't modify the module name
     if (has_interface_ports) {
-        // Find the interface information from the instance's port connections
-        std::string interface_suffix = "$interfaces$";
-        
-        if (uhdm_inst->Ports()) {
-            for (auto port : *uhdm_inst->Ports()) {
-                if (port->High_conn()) {
-                    const any* high_conn = port->High_conn();
-                    if (high_conn->UhdmType() == uhdmref_obj) {
-                        const ref_obj* ref = static_cast<const ref_obj*>(high_conn);
-                        const any* actual = ref->Actual_group();
-                        if (actual && actual->UhdmType() == uhdminterface_inst) {
-                            const interface_inst* iface = static_cast<const interface_inst*>(actual);
-                            std::string iface_type = std::string(iface->VpiDefName());
-                            if (iface_type.find("work@") == 0) {
-                                iface_type = iface_type.substr(5);
-                            }
-                            
-                            // Build interface parameter suffix
-                            std::string iface_param_suffix = "$paramod\\" + iface_type;
-                            
-                            // Add interface parameters
-                            if (iface->Param_assigns()) {
-                                for (auto param_assign : *iface->Param_assigns()) {
-                                    if (param_assign->Lhs() && param_assign->Rhs()) {
-                                        std::string param_name;
-                                        if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
-                                            param_name = std::string(param->VpiName());
-                                        }
-                                        
-                                        if (!param_name.empty()) {
-                                            if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
-                                                std::string val_str = std::string(const_val->VpiValue());
-                                                size_t colon_pos = val_str.find(':');
-                                                if (colon_pos != std::string::npos) {
-                                                    val_str = val_str.substr(colon_pos + 1);
-                                                }
-                                                int param_value = std::stoi(val_str);
-                                                
-                                                iface_param_suffix += "\\" + param_name + "=s32'";
-                                                for (int i = 31; i >= 0; i--) {
-                                                    iface_param_suffix += ((param_value >> i) & 1) ? "1" : "0";
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            interface_suffix += iface_param_suffix;
-                            break; // For now, only handle the first interface port
-                        }
-                    }
-                }
-            }
-        }
-        
-        module_name += interface_suffix;
+        // We'll add the attribute later when creating the module
     }
     
     if (mode_debug)
@@ -578,18 +523,17 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             log("    Port %s is an interface port, creating connection wire\n", port_name.c_str());
                             
                             // For interface ports, we need to create a connection wire
-                            // The wire name is based on the connected interface instance name
-                            // Extract interface name from actual_sig if it's a simple wire reference
+                            // The wire name should follow Yosys convention: $dummywireforinterface\<interface_name>
                             std::string interface_wire_name;
                             if (actual_sig.is_wire() && actual_sig.as_wire()) {
-                                interface_wire_name = actual_sig.as_wire()->name.str();
-                                if (interface_wire_name[0] == '\\') {
-                                    interface_wire_name = interface_wire_name.substr(1);
+                                std::string interface_name = actual_sig.as_wire()->name.str();
+                                if (interface_name[0] == '\\') {
+                                    interface_name = interface_name.substr(1);
                                 }
-                                interface_wire_name += "_1";
+                                interface_wire_name = "$dummywireforinterface\\" + interface_name;
                             } else {
                                 // Fallback: use instance name + port name
-                                interface_wire_name = inst_name + "_" + port_name + "_1";
+                                interface_wire_name = "$dummywireforinterface\\" + inst_name + "_" + port_name;
                             }
                             
                             // Create or get the interface connection wire
@@ -653,37 +597,12 @@ RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width) {
         log("UHDM: Successfully created wire '%s'\n", wire_name.c_str());
         
         // Check if this wire is being created for an interface connection
-        // Interface connection wires typically have names like bus1_1, bus2_1, etc.
-        // where bus1, bus2 are interface instance names
+        // Interface connection wires have names like $dummywireforinterface\bus1
         std::string base_name = name;
-        size_t underscore_pos = base_name.rfind('_');
-        if (underscore_pos != std::string::npos && underscore_pos < base_name.length() - 1) {
-            std::string suffix = base_name.substr(underscore_pos + 1);
-            // Check if suffix is a number (typically "1")
-            bool is_numeric = true;
-            for (char c : suffix) {
-                if (!std::isdigit(c)) {
-                    is_numeric = false;
-                    break;
-                }
-            }
-            
-            if (is_numeric) {
-                // This might be an interface connection wire
-                // Check if there's an interface cell with the base name
-                std::string potential_interface = base_name.substr(0, underscore_pos);
-                RTLIL::IdString interface_cell_name = RTLIL::escape_id(potential_interface);
-                if (module->cell(interface_cell_name)) {
-                    // Check if the cell type indicates it's an interface
-                    // Look for the is_interface attribute on the module definition
-                    RTLIL::Cell* interface_cell = module->cell(interface_cell_name);
-                    RTLIL::Module* interface_module = design->module(interface_cell->type);
-                    if (interface_module && interface_module->attributes.count(RTLIL::escape_id("is_interface"))) {
-                        w->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
-                        log("UHDM: Marked wire '%s' as interface connection\n", wire_name.c_str());
-                    }
-                }
-            }
+        if (base_name.find("$dummywireforinterface\\") == 0) {
+            // This is an interface connection wire
+            w->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
+            log("UHDM: Marked wire '%s' as interface connection\n", wire_name.c_str());
         }
         
         return w;

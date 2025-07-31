@@ -397,6 +397,41 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
     }
     
+    // Check if this ref_obj has VpiActual property pointing to an interface
+    if (uhdm_ref->Actual_group()) {
+        const UHDM::any* actual = uhdm_ref->Actual_group();
+        if (mode_debug) {
+            log("    ref_obj has VpiActual of type: %s\n", UhdmName(actual->UhdmType()).c_str());
+        }
+        
+        // Check if the actual is an interface_inst
+        if (actual->UhdmType() == uhdminterface_inst) {
+            // This is a reference to an interface instance
+            // Create the interface connection wire with proper naming
+            std::string interface_wire_name = "$dummywireforinterface\\" + ref_name;
+            log("UHDM: Reference to interface instance %s via VpiActual, creating connection wire %s\n", 
+                ref_name.c_str(), interface_wire_name.c_str());
+            return create_wire(interface_wire_name, 1);
+        }
+    }
+    
+    // Check if this is a reference to an interface instance
+    // Interface instances would have been created as cells in the module
+    RTLIL::IdString potential_interface_name = RTLIL::escape_id(ref_name);
+    if (module && module->cell(potential_interface_name)) {
+        RTLIL::Cell* potential_interface_cell = module->cell(potential_interface_name);
+        // Check if the cell type indicates it's an interface
+        RTLIL::Module* cell_module = design->module(potential_interface_cell->type);
+        if (cell_module && cell_module->attributes.count(RTLIL::escape_id("is_interface"))) {
+            // This is a reference to an interface instance
+            // Create the interface connection wire with proper naming
+            std::string interface_wire_name = "$dummywireforinterface\\" + ref_name;
+            log("UHDM: Reference to interface instance %s, creating connection wire %s\n", 
+                ref_name.c_str(), interface_wire_name.c_str());
+            return create_wire(interface_wire_name, 1);
+        }
+    }
+    
     // If not found, create a new wire
     log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
     return create_wire(ref_name, 1);
