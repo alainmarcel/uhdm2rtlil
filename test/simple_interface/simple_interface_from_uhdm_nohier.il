@@ -42,7 +42,9 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3004:And$6
   wire width 8 $auto$rtlil.cc:3004:And$8
-  attribute \interface_port 1
+  attribute \interface_modport "user"
+  attribute \interface_type "$paramod\\data_bus_if\\WIDTH=s32'00000000000000000000000000001000"
+  attribute \is_interface 1
   attribute \src "dut.sv:23.22-23.25"
   wire inout 1 \bus
   attribute \src "dut.sv:5.23-5.24"
@@ -82,7 +84,9 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3004:And$10
   wire width 16 $auto$rtlil.cc:3004:And$12
-  attribute \interface_port 1
+  attribute \interface_modport "user"
+  attribute \interface_type "$paramod\\data_bus_if\\WIDTH=s32'00000000000000000000000000010000"
+  attribute \is_interface 1
   attribute \src "dut.sv:23.22-23.25"
   wire inout 1 \bus
   attribute \src "dut.sv:5.23-5.24"
@@ -199,7 +203,9 @@ module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire $auto$rtlil.cc:3004:And$2
   wire $auto$rtlil.cc:3004:And$4
-  attribute \interface_port 1
+  attribute \interface_modport "user"
+  attribute \interface_type "$paramod\\data_bus_if\\WIDTH=s64'0000000000000000000000000000000000000000000000000000000000001000"
+  attribute \is_interface 1
   attribute \src "dut.sv:23.22-23.25"
   wire inout 1 \bus
   wire \bus.a

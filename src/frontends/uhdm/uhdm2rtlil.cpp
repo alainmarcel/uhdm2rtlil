@@ -85,6 +85,9 @@ struct ReadUHDMPass : public Frontend {
             delete elaboratorContext;
         }
 
+        vpi_show_ids(true);
+        visit_designs({vpi_design}, std::cout);
+
         if (!uhdm_design->AllModules())
             log_error("No modules found in UHDM design.\n");
 
@@ -898,29 +901,6 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     wire_map.clear();
     name_map.clear();
     
-    // Import ports
-    if (uhdm_module->Ports()) {
-        log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
-        for (auto port : *uhdm_module->Ports()) {
-            std::string port_name = std::string(port->VpiName());
-            any* high_conn = port->High_conn();
-            if (high_conn) {
-              if (high_conn->UhdmType() == uhdmref_obj) {
-                ref_obj* ref = (ref_obj*) high_conn;
-                any* actual = ref->Actual_group();
-                if (actual) {
-                    if (actual->UhdmType() == uhdminterface_inst) {
-                        //log("UHDM: Skip importing port as it is an interface: '%s'\n", port_name.c_str());
-                        //continue;
-                    }
-                }
-              }
-            }
-            log("UHDM: About to import port: '%s'\n", port_name.c_str());
-            import_port(port);
-        }
-    }
-    
     // Import parameters
     if (uhdm_module->Parameters()) {
         log("UHDM: Found %d parameters to import\n", (int)uhdm_module->Parameters()->size());
@@ -930,7 +910,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             import_parameter(param);
         }
     }
-    
+
     // Import parameter overrides (param_assigns)
     if (uhdm_module->Param_assigns()) {
         log("UHDM: Found %d parameter assignments to import\n", (int)uhdm_module->Param_assigns()->size());
@@ -964,6 +944,29 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Import ports
+    if (uhdm_module->Ports()) {
+        log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
+        for (auto port : *uhdm_module->Ports()) {
+            std::string port_name = std::string(port->VpiName());
+            any* high_conn = port->High_conn();
+            if (high_conn) {
+              if (high_conn->UhdmType() == uhdmref_obj) {
+                ref_obj* ref = (ref_obj*) high_conn;
+                any* actual = ref->Actual_group();
+                if (actual) {
+                    if (actual->UhdmType() == uhdminterface_inst) {
+                        //log("UHDM: Skip importing port as it is an interface: '%s'\n", port_name.c_str());
+                        //continue;
+                    }
+                }
+              }
+            }
+            log("UHDM: About to import port: '%s'\n", port_name.c_str());
+            import_port(port);
+        }
+    }
+
     // Import module-level variables (logic declarations)
     if (uhdm_module->Variables()) {
         log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());

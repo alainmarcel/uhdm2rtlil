@@ -20,9 +20,6 @@ attribute \src "dut.sv:58.5-61.7"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3004:And$6
-  attribute \interface_port 1
-  attribute \src "dut.sv:23.22-23.25"
-  wire inout 1 \bus
   attribute \src "dut.sv:5.23-5.24"
   wire width 8 \bus.a
   attribute \src "dut.sv:6.23-6.24"
@@ -30,7 +27,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 \bus.c
   attribute \src "dut.sv:24.30-24.33"
-  wire width 8 output 2 \out
+  wire width 8 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
@@ -58,9 +55,6 @@ attribute \src "dut.sv:70.5-73.7"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3004:And$10
-  attribute \interface_port 1
-  attribute \src "dut.sv:23.22-23.25"
-  wire inout 1 \bus
   attribute \src "dut.sv:5.23-5.24"
   wire width 16 \bus.a
   attribute \src "dut.sv:6.23-6.24"
@@ -68,7 +62,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 \bus.c
   attribute \src "dut.sv:24.30-24.33"
-  wire width 16 output 2 \out
+  wire width 16 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
@@ -94,13 +88,10 @@ attribute \top 1
 attribute \src "dut.sv:30.1-75.10"
 module \simple_interface
   attribute \is_interface 1
-  attribute \unused_bits "0"
   wire $dummywireforinterface\bus1
   attribute \is_interface 1
-  attribute \unused_bits "0"
   wire $dummywireforinterface\bus2
   attribute \is_interface 1
-  attribute \unused_bits "0"
   wire $dummywireforinterface\bus3
   attribute \src "dut.sv:31.25-31.27"
   wire width 8 input 1 \a1

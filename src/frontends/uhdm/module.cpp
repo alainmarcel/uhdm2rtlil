@@ -38,7 +38,108 @@ void UhdmImporter::import_port(const port* uhdm_port) {
         // For interface ports, create a special wire that won't be used for connections
         // but serves as a placeholder for the port list
         RTLIL::Wire* w = module->addWire(RTLIL::escape_id(portname), 1);
-        w->attributes[RTLIL::escape_id("interface_port")] = RTLIL::Const(1);
+        
+        // Add interface-specific attributes
+        w->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
+        
+        // Get the interface type information from the port's typespec
+        if (uhdm_port->Typespec()) {
+            const UHDM::ref_typespec* ref_typespec = uhdm_port->Typespec();
+            const UHDM::typespec* typespec = nullptr;
+            
+            // Get actual typespec from ref_typespec
+            if (ref_typespec && ref_typespec->Actual_typespec()) {
+                typespec = ref_typespec->Actual_typespec();
+            }
+            
+            // Get interface type name
+            if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
+                const UHDM::interface_typespec* iface_ts = static_cast<const UHDM::interface_typespec*>(typespec);
+                std::string interface_type;
+                std::string modport_name;
+                
+                // Check if this is a modport (has vpiIsModPort)
+                if (iface_ts->VpiIsModPort()) {
+                    // This is a modport, so get the modport name
+                    modport_name = std::string(iface_ts->VpiName());
+                    
+                    // The parent should be the actual interface typespec
+                    if (iface_ts->VpiParent() && iface_ts->VpiParent()->UhdmType() == uhdminterface_typespec) {
+                        const UHDM::interface_typespec* parent_iface_ts = 
+                            static_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
+                        interface_type = std::string(parent_iface_ts->VpiName());
+                    } 
+                } else {
+                    // This is the interface itself
+                    interface_type = std::string(iface_ts->VpiName());
+                }
+
+                if (interface_type.empty())
+                {
+                    const UHDM::any *lowconn = uhdm_port->Low_conn();
+                    if (lowconn && lowconn->UhdmType() == uhdmref_obj)
+                    {
+                        const ref_obj *ref = (const ref_obj *)lowconn;
+                        const any *actual = ref->Actual_group();
+                        if (actual && actual->UhdmType() == uhdmmodport)
+                        {
+                            modport *mod = (modport *)actual;
+                            const any *inst = mod->VpiParent();
+                            interface_type = std::string(inst->VpiDefName());
+                        }
+                    }
+                }
+
+                // If we still don't have interface type, try other sources
+                if (interface_type.empty()) {
+                    if (ref_typespec && !ref_typespec->VpiDefName().empty()) {
+                        interface_type = std::string(ref_typespec->VpiDefName());
+                    } else if (!iface_ts->VpiDefName().empty()) {
+                        interface_type = std::string(iface_ts->VpiDefName());
+                    }
+                }
+                
+                if (!interface_type.empty()) {
+                    // Remove work@ prefix if present
+                    if (interface_type.find("work@") == 0) {
+                        interface_type = interface_type.substr(5);
+                    }
+                    
+                    // Check if we need to use a parameterized interface name
+                    std::string final_interface_type = interface_type;
+                    
+                    // Try to determine the WIDTH parameter from the context
+                    // First check if the parent module has a WIDTH parameter
+                    if (module->parameter_default_values.count(RTLIL::escape_id("WIDTH"))) {
+                        // Build the parameterized interface name
+                        std::string param_interface_name = RTLIL::escape_id("$paramod") + RTLIL::escape_id(interface_type);
+                        param_interface_name +=  RTLIL::escape_id("WIDTH=");
+                        RTLIL::Const width_val = module->parameter_default_values.at(RTLIL::escape_id("WIDTH"));
+                        //if (width_val.flags & RTLIL::CONST_FLAG_SIGNED) {
+                            param_interface_name += "s";
+                        //}
+                        param_interface_name += std::to_string(width_val.size()) + "'";
+                        // Add binary representation
+                        for (int i = width_val.size() - 1; i >= 0; i--) {
+                            param_interface_name += (width_val[i] == RTLIL::State::S1) ? "1" : "0";
+                        }
+                        
+                        // Check if this parameterized interface module exists
+                        //if (design->module(RTLIL::escape_id(param_interface_name))) {
+                            final_interface_type = param_interface_name;
+                            log("UHDM: Using parameterized interface name: %s\n", final_interface_type.c_str());
+                        //}
+                    }
+                    
+                    w->attributes[RTLIL::escape_id("interface_type")] = RTLIL::Const( final_interface_type);
+                }
+                
+                // Set modport name
+                if (!modport_name.empty()) {
+                    w->attributes[RTLIL::escape_id("interface_modport")] = RTLIL::Const(modport_name);
+                }
+            }
+        }
         
         // Add source attribute
         add_src_attribute(w->attributes, uhdm_port);
@@ -384,11 +485,19 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             int width = params.count("WIDTH") ? params.at("WIDTH").as_int() : 8;
             for (auto &wire_pair : base_mod->wires_) {
                 RTLIL::Wire* base_wire = wire_pair.second;
-                RTLIL::Wire* param_wire = param_mod->addWire(base_wire->name, width);
+                
+                // For interface ports, keep width as 1
+                int wire_width = width;
+                if (base_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
+                    wire_width = 1;
+                }
+                
+                RTLIL::Wire* param_wire = param_mod->addWire(base_wire->name, wire_width);
                 param_wire->attributes = base_wire->attributes;
                 param_wire->port_id = base_wire->port_id;
                 param_wire->port_input = base_wire->port_input;
                 param_wire->port_output = base_wire->port_output;
+                
             }
             
             // Import the module contents from UHDM for this parameterized instance
@@ -420,6 +529,90 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         // Map the parameterized wires we already created
                         for (auto &wire_pair : param_mod->wires_) {
                             name_map[wire_pair.first.str().substr(1)] = wire_pair.second;
+                            
+                            // Check if this is an interface port that needs interface_type attribute
+                            RTLIL::Wire* param_wire = wire_pair.second;
+                            if (param_wire->attributes.count(RTLIL::escape_id("is_interface")) &&
+                                !param_wire->attributes.count(RTLIL::escape_id("interface_type"))) {
+                                // Find the corresponding port in the module definition
+                                if (mod_def->Ports()) {
+                                    for (auto port : *mod_def->Ports()) {
+                                        std::string port_name = std::string(port->VpiName());
+                                        if (RTLIL::escape_id(port_name) == param_wire->name.str()) {
+                                            // Found the port, check if it has interface typespec
+                                            if (port->Typespec()) {
+                                                const UHDM::ref_typespec* ref_typespec = port->Typespec();
+                                                const UHDM::typespec* typespec = nullptr;
+                                                
+                                                if (ref_typespec && ref_typespec->Actual_typespec()) {
+                                                    typespec = ref_typespec->Actual_typespec();
+                                                }
+                                                
+                                                if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
+                                                    const UHDM::interface_typespec* iface_ts = static_cast<const UHDM::interface_typespec*>(typespec);
+                                                    
+                                                    std::string interface_type;
+                                                    std::string modport_name;
+                                                    
+                                                    // Check if this is a modport
+                                                    if (iface_ts->VpiIsModPort()) {
+                                                        modport_name = std::string(iface_ts->VpiName());
+                                                        
+                                                        // The parent should be the actual interface typespec
+                                                        if (iface_ts->VpiParent() && iface_ts->VpiParent()->UhdmType() == uhdminterface_typespec) {
+                                                            const UHDM::interface_typespec* parent_iface_ts = 
+                                                                static_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
+                                                            interface_type = std::string(parent_iface_ts->VpiName());
+                                                        }
+                                                    } else {
+                                                        interface_type = std::string(iface_ts->VpiName());
+                                                    }
+                                                    
+                                                    if (!interface_type.empty()) {
+                                                        if (interface_type.find("work@") == 0) {
+                                                            interface_type = interface_type.substr(5);
+                                                        }
+                                                        
+                                                        // Check if we need to use a parameterized interface name
+                                                        // The parameterized module has WIDTH parameter, so we should check if
+                                                        // a parameterized interface with the same WIDTH exists
+                                                        std::string final_interface_type = interface_type;
+                                                        if (param_mod->parameter_default_values.count(RTLIL::escape_id("WIDTH"))) {
+                                                            // Build the parameterized interface name
+                                                            std::string param_interface_name = "$paramod\\" + interface_type;
+                                                            param_interface_name += "\\WIDTH=";
+                                                            RTLIL::Const width_val = param_mod->parameter_default_values.at(RTLIL::escape_id("WIDTH"));
+                                                            if (width_val.flags & RTLIL::CONST_FLAG_SIGNED) {
+                                                                param_interface_name += "s";
+                                                            }
+                                                            param_interface_name += std::to_string(width_val.size()) + "'";
+                                                            // Add binary representation
+                                                            for (int i = width_val.size() - 1; i >= 0; i--) {
+                                                                param_interface_name += (width_val[i] == RTLIL::State::S1) ? "1" : "0";
+                                                            }
+                                                            
+                                                            // Check if this parameterized interface module exists
+                                                            if (design->module(RTLIL::escape_id(param_interface_name))) {
+                                                                final_interface_type = param_interface_name;
+                                                                log("UHDM: Using parameterized interface name: %s\n", final_interface_type.c_str());
+                                                            }
+                                                        }
+                                                        
+                                                        param_wire->attributes[RTLIL::escape_id("interface_type")] = RTLIL::Const("\\" + final_interface_type);
+                                                        log("UHDM: Added interface_type attribute '%s' to parameterized module wire '%s'\n", 
+                                                            final_interface_type.c_str(), param_wire->name.c_str());
+                                                    }
+                                                    
+                                                    if (!modport_name.empty()) {
+                                                        param_wire->attributes[RTLIL::escape_id("interface_modport")] = RTLIL::Const(modport_name);
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                         
                         // Import continuous assignments
