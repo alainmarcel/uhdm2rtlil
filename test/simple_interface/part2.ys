@@ -1,0 +1,15 @@
+# Load the RTLIL file
+read_rtlil verilog_before_hier.il
+
+# Run hierarchy pass
+hierarchy -check -top simple_interface
+
+# Run other optimization passes
+stat
+proc
+opt
+stat
+
+# Save the result
+write_rtlil verilog_after_hier_from_rtlil.il
+write_verilog -noexpr verilog_synth_from_rtlil.v

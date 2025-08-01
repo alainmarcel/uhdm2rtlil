@@ -306,6 +306,10 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         }
     }
     
+    // Expand interfaces - replace interface instances with their signals
+    log("UHDM: Starting interface expansion\n");
+    expand_interfaces();
+    
     log("UHDM: Finished import_design\n");
 }
 
@@ -1152,5 +1156,328 @@ std::string UhdmImporter::create_parameterized_module(const std::string& base_na
 
 
 // Note: import_port, import_net, and import_continuous_assign are implemented in module.cpp
+
+// Expand interfaces - replace interface instances with their signals
+void UhdmImporter::expand_interfaces() {
+    log("UHDM: Expanding interfaces in design\n");
+    
+    // First, collect all interface modules and interface cells
+    std::set<RTLIL::Module*> interface_modules;
+    std::vector<std::pair<RTLIL::Module*, RTLIL::Cell*>> interface_cells_to_remove;
+    
+    // Map from dummy wire to interface instance name
+    std::map<RTLIL::IdString, std::string> dummy_wire_to_interface;
+    
+    // Identify interface modules and cells
+    for (auto module : design->modules()) {
+        if (module->attributes.count(RTLIL::escape_id("is_interface"))) {
+            interface_modules.insert(module);
+            log("UHDM: Found interface module: %s\n", module->name.c_str());
+        }
+        
+        // Find interface cells in this module
+        for (auto cell : module->cells()) {
+            RTLIL::Module* cell_module = design->module(cell->type);
+            if (cell_module && cell_module->attributes.count(RTLIL::escape_id("is_interface"))) {
+                interface_cells_to_remove.push_back(std::make_pair(module, cell));
+                log("UHDM: Found interface cell %s of type %s in module %s\n", 
+                    cell->name.c_str(), cell->type.c_str(), module->name.c_str());
+                
+                // Map dummy wires to interface names
+                std::string interface_name = cell->name.str();
+                if (interface_name[0] == '\\') {
+                    interface_name = interface_name.substr(1);
+                }
+                
+                // Look for dummy wires that correspond to this interface
+                for (auto wire : module->wires()) {
+                    if (wire->name.str().find("$dummywireforinterface\\" + interface_name) == 0) {
+                        dummy_wire_to_interface[wire->name] = interface_name;
+                        log("UHDM: Mapped dummy wire %s to interface %s\n", 
+                            wire->name.c_str(), interface_name.c_str());
+                    }
+                }
+            }
+        }
+    }
+    
+    // Process each module to expand interface ports and connections
+    for (auto module : design->modules()) {
+        // Skip interface modules themselves
+        if (interface_modules.count(module)) {
+            continue;
+        }
+        
+        log("UHDM: Processing module %s for interface expansion\n", module->name.c_str());
+        
+        // Find cells with interface ports
+        std::vector<RTLIL::Cell*> cells_to_update;
+        for (auto cell : module->cells()) {
+            // Check if this cell has interface port connections
+            bool has_interface_port = false;
+            
+            // Check the cell's module to see if it has interface ports
+            RTLIL::Module* cell_module = design->module(cell->type);
+            if (cell_module) {
+                for (auto wire : cell_module->wires()) {
+                    if (wire->attributes.count(RTLIL::escape_id("is_interface")) && wire->port_id > 0) {
+                        has_interface_port = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (has_interface_port) {
+                cells_to_update.push_back(cell);
+                log("UHDM: Cell %s has interface ports (module %s has interface ports)\n", 
+                    cell->name.c_str(), cell->type.c_str());
+            }
+        }
+        
+        // Update cells with interface ports
+        for (auto cell : cells_to_update) {
+            std::map<RTLIL::IdString, RTLIL::SigSpec> new_connections;
+            
+            // First check what interface signals exist in the cell's module
+            RTLIL::Module* cell_module = design->module(cell->type);
+            std::set<std::string> cell_interface_signals;
+            if (cell_module) {
+                for (auto wire : cell_module->wires()) {
+                    std::string wire_name = wire->name.str();
+                    if (wire_name.find("\\bus.") == 0) {
+                        cell_interface_signals.insert(wire_name);
+                        log("UHDM: Cell module %s has interface signal %s\n", 
+                            cell->type.c_str(), wire_name.c_str());
+                    }
+                }
+            }
+            
+            for (auto &conn : cell->connections()) {
+                RTLIL::IdString port_name = conn.first;
+                RTLIL::SigSpec port_sig = conn.second;
+                
+                // Check if this is an interface port
+                RTLIL::Wire* port_wire = nullptr;
+                if (port_sig.is_wire()) {
+                    port_wire = port_sig.as_wire();
+                }
+                
+                if (port_wire && port_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
+                    log("UHDM: Expanding interface port %s on cell %s\n", 
+                        port_name.c_str(), cell->name.c_str());
+                    
+                    // Find which interface this dummy wire corresponds to
+                    std::string interface_name;
+                    
+                    // First check if it's in our dummy wire map
+                    if (dummy_wire_to_interface.count(port_wire->name)) {
+                        interface_name = dummy_wire_to_interface[port_wire->name];
+                        log("UHDM: Found interface %s from dummy wire map\n", interface_name.c_str());
+                    } else {
+                        // Try to extract from the wire name itself
+                        std::string wire_name = port_wire->name.str();
+                        if (wire_name.find("$dummywireforinterface\\") == 0) {
+                            interface_name = wire_name.substr(23); // Skip "$dummywireforinterface\"
+                            log("UHDM: Extracted interface %s from wire name\n", interface_name.c_str());
+                        } else {
+                            // The wire might have been renamed by Yosys, try to find it by checking connections
+                            // Look for any interface signal wires that exist for this cell
+                            for (auto wire : module->wires()) {
+                                std::string wire_str = wire->name.str();
+                                // Check if this is an interface signal wire (contains a dot)
+                                size_t dot_pos = wire_str.find('.');
+                                if (dot_pos != std::string::npos && dot_pos > 0) {
+                                    std::string potential_interface = wire_str.substr(0, dot_pos);
+                                    // Check if there's an interface cell with this name
+                                    for (auto &pair : interface_cells_to_remove) {
+                                        if (pair.first == module) {
+                                            std::string cell_interface_name = pair.second->name.str();
+                                            if (cell_interface_name[0] == '\\') {
+                                                cell_interface_name = cell_interface_name.substr(1);
+                                            }
+                                            if (cell_interface_name == potential_interface) {
+                                                interface_name = potential_interface;
+                                                log("UHDM: Found interface %s by searching module wires\n", interface_name.c_str());
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!interface_name.empty()) break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!interface_name.empty()) {
+                        // Find the interface cell to get its type
+                        RTLIL::Cell* interface_cell = nullptr;
+                        for (auto &pair : interface_cells_to_remove) {
+                            if (pair.first == module) {
+                                std::string cell_interface_name = pair.second->name.str();
+                                if (cell_interface_name[0] == '\\') {
+                                    cell_interface_name = cell_interface_name.substr(1);
+                                }
+                                if (cell_interface_name == interface_name) {
+                                    interface_cell = pair.second;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (interface_cell) {
+                            // Get the interface module to find its signals
+                            RTLIL::Module* interface_module = design->module(interface_cell->type);
+                            if (interface_module) {
+                                log("UHDM: Interface module %s has the following signals:\n", interface_module->name.c_str());
+                                
+                                // Get all signals from the interface module
+                                for (auto iface_wire : interface_module->wires()) {
+                                    std::string signal_name = iface_wire->name.str();
+                                    if (signal_name[0] == '\\') {
+                                        signal_name = signal_name.substr(1);
+                                    }
+                                    
+                                    // Find the corresponding wire in the parent module
+                                    std::string expanded_wire_name = interface_name + "." + signal_name;
+                                    RTLIL::Wire* parent_wire = module->wire(RTLIL::escape_id(expanded_wire_name));
+                                    
+                                    if (parent_wire) {
+                                        // Create connection to the expanded signal
+                                        RTLIL::IdString expanded_port = RTLIL::escape_id(port_name.str() + "." + signal_name);
+                                        new_connections[expanded_port] = parent_wire;
+                                        log("UHDM: Connected port %s to wire %s\n", expanded_port.c_str(), parent_wire->name.c_str());
+                                    } else {
+                                        log_warning("UHDM: Could not find wire %s in parent module\n", expanded_wire_name.c_str());
+                                    }
+                                }
+                            } else {
+                                log_warning("UHDM: Could not find interface module %s\n", interface_cell->type.c_str());
+                            }
+                        } else {
+                            log_warning("UHDM: Could not find interface cell for %s\n", interface_name.c_str());
+                        }
+                    } else {
+                        log_warning("UHDM: Could not find interface instance for wire %s\n", port_wire->name.c_str());
+                    }
+                } else {
+                    // Keep non-interface connections as-is
+                    new_connections[port_name] = port_sig;
+                }
+            }
+            
+            // Update cell connections
+            cell->connections_.clear();
+            for (auto &conn : new_connections) {
+                cell->setPort(conn.first, conn.second);
+            }
+        }
+    }
+    
+    // Remove interface cells
+    for (auto &pair : interface_cells_to_remove) {
+        RTLIL::Module* module = pair.first;
+        RTLIL::Cell* cell = pair.second;
+        log("UHDM: Removing interface cell %s from module %s\n", 
+            cell->name.c_str(), module->name.c_str());
+        module->remove(cell);
+    }
+    
+    // Remove interface modules
+    for (auto iface_module : interface_modules) {
+        log("UHDM: Removing interface module %s\n", iface_module->name.c_str());
+        design->remove(iface_module);
+    }
+    
+    // Clean up dummy interface wires
+    for (auto module : design->modules()) {
+        pool<RTLIL::Wire*> wires_to_remove;
+        for (auto wire : module->wires()) {
+            if (wire->name.str().find("$dummywireforinterface") == 0) {
+                wires_to_remove.insert(wire);
+            }
+        }
+        if (!wires_to_remove.empty()) {
+            for (auto wire : wires_to_remove) {
+                log("UHDM: Removing dummy interface wire %s\n", wire->name.c_str());
+            }
+            module->remove(wires_to_remove);
+        }
+    }
+    
+    // Also expand interface ports in modules that use them
+    for (auto module : design->modules()) {
+        // Skip interface modules themselves
+        if (interface_modules.count(module)) {
+            continue;
+        }
+        
+        // Check if this module has interface ports (wires with is_interface attribute)
+        std::vector<RTLIL::Wire*> interface_port_wires;
+        for (auto wire : module->wires()) {
+            if (wire->attributes.count(RTLIL::escape_id("is_interface")) && wire->port_id > 0) {
+                interface_port_wires.push_back(wire);
+                log("UHDM: Module %s has interface port %s\n", module->name.c_str(), wire->name.c_str());
+            }
+        }
+        
+        if (!interface_port_wires.empty()) {
+            // This module has interface ports that need to be expanded
+            for (auto interface_wire : interface_port_wires) {
+                std::string port_name = interface_wire->name.str();
+                if (port_name[0] == '\\') {
+                    port_name = port_name.substr(1);
+                }
+                
+                // Find all interface signal wires (bus.a, bus.b, bus.c)
+                std::vector<RTLIL::Wire*> signal_wires;
+                std::string prefix = port_name + ".";
+                std::string escaped_prefix = "\\" + port_name + ".";
+                
+                for (auto wire : module->wires()) {
+                    std::string wire_name = wire->name.str();
+                    // Check both escaped and unescaped versions
+                    if (wire_name.find(prefix) == 0 || wire_name.find(escaped_prefix) == 0) {
+                        signal_wires.push_back(wire);
+                        log("UHDM: Found interface signal wire %s\n", wire_name.c_str());
+                    }
+                }
+                
+                // Convert interface signal wires to ports
+                int max_port_id = 0;
+                for (auto wire : module->wires()) {
+                    if (wire->port_id > max_port_id) {
+                        max_port_id = wire->port_id;
+                    }
+                }
+                
+                for (auto signal_wire : signal_wires) {
+                    // Make it a port
+                    signal_wire->port_input = interface_wire->port_input;
+                    signal_wire->port_output = interface_wire->port_output;
+                    signal_wire->port_id = ++max_port_id;
+                    log("UHDM: Converted %s to port (id=%d)\n", signal_wire->name.c_str(), signal_wire->port_id);
+                }
+                
+                // Remove the interface port wire
+                interface_wire->port_input = false;
+                interface_wire->port_output = false;
+                interface_wire->port_id = 0;
+                log("UHDM: Removed interface port status from %s\n", interface_wire->name.c_str());
+            }
+            
+            // Remove interface port wires
+            pool<RTLIL::Wire*> wires_to_remove;
+            for (auto wire : interface_port_wires) {
+                wires_to_remove.insert(wire);
+            }
+            module->remove(wires_to_remove);
+            
+            // Fix port IDs to be contiguous
+            module->fixup_ports();
+        }
+    }
+    
+    log("UHDM: Finished expanding interfaces\n");
+}
 
 YOSYS_NAMESPACE_END

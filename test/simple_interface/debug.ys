@@ -1,0 +1,5 @@
+plugin -i ../../build/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+write_rtlil simple_interface_from_uhdm_nohier.il
+select \data_bus_if
+ls

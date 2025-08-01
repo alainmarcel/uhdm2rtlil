@@ -8,11 +8,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   wire width 8 $auto$rtlil.cc:3004:And$6
   wire width 8 $auto$rtlil.cc:3004:And$8
   attribute \src "dut.sv:5.23-5.24"
-  wire width 8 inout 4 \bus.a
+  wire width 8 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 8 inout 3 \bus.b
+  wire width 8 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 8 inout 2 \bus.c
+  wire width 8 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$5
@@ -45,11 +45,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   wire width 16 $auto$rtlil.cc:3004:And$10
   wire width 16 $auto$rtlil.cc:3004:And$12
   attribute \src "dut.sv:5.23-5.24"
-  wire width 16 inout 4 \bus.a
+  wire width 16 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 16 inout 3 \bus.b
+  wire width 16 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 16 inout 2 \bus.c
+  wire width 16 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$11
@@ -152,9 +152,9 @@ module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire $auto$rtlil.cc:3004:And$2
   wire $auto$rtlil.cc:3004:And$4
-  wire inout 4 \bus.a
-  wire inout 3 \bus.b
-  wire inout 2 \bus.c
+  wire \bus.a
+  wire \bus.b
+  wire \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$1

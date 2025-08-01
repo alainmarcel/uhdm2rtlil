@@ -1,0 +1,8 @@
+# Load the design with Verilog frontend
+read_verilog -sv dut.sv
+
+# Save RTLIL before hierarchy pass
+write_rtlil verilog_before_hier.il
+
+# Also dump module info
+ls

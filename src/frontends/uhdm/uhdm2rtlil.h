@@ -139,6 +139,7 @@ struct UhdmImporter {
                                           const std::string& param_signature,
                                           const UHDM::module_inst* uhdm_module);
     void create_interface_module_with_width(const std::string& interface_name, int width);
+    void expand_interfaces();
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);
     
