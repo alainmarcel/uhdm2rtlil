@@ -44,6 +44,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Package Support** (`package.cpp`) - SystemVerilog package imports, parameters, and type definitions
 - **Primitives Support** (`primitives.cpp`) - Verilog primitive gates and gate arrays
 - **Reference Module** (`ref_module.cpp`) - Module instance reference resolution and parameter passing
+- **Interface Support** (`interface.cpp`) - SystemVerilog interface handling with automatic expansion
 
 #### 3. **Yosys** (`third_party/yosys/`)
 - Open-source synthesis framework
@@ -72,7 +73,10 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
 - **Packages**: Import statements, package parameters, struct types, functions
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
-- **Advanced Features**: Interfaces, assertions
+- **Advanced Features**: 
+  - Interfaces with automatic expansion to individual signals
+  - Interface port connections and signal mapping
+  - Assertions
 
 ## Quick Start
 
@@ -239,12 +243,20 @@ The UHDM frontend now passes **all 18 test cases** in the test suite:
 
 ## Recent Improvements
 
+### Interface Expansion Support
+- Added automatic expansion of SystemVerilog interfaces to individual signals
+- Interface instances are replaced with their constituent nets during RTLIL import
+- Interface connections are properly mapped to individual signal connections
+- Interface signal wires are converted to proper input/output ports
+- Supports parameterized interfaces with different widths
+
 ### Parameter Reference Support
 - Added proper handling of parameter references in expressions (e.g., in case statements)
 - Parameters are now correctly resolved to their constant values instead of being treated as wire references
 - Supports binary constant format "BIN:xx" used by UHDM for proper bit width handling
 
 ### Key Improvements
+- **simple_interface** - Added interface expansion support, converting interface instances to individual signals
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
 - **simple_instance_array** - Added support for primitive gate arrays (and, or, xor, nand, not gates with array syntax)
 - **simple_package** - Added full package support including imports, parameters, and struct types

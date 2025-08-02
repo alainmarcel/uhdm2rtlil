@@ -1060,6 +1060,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
     }
     
+    // Add hdlname attribute if this is a parameterized module
+    if (modname.find("$paramod\\") == 0) {
+        module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_modname);
+    }
+    
     // Add interfaces_replaced_in_module attribute if module has interface ports
     if (module_has_interface_ports(uhdm_module)) {
         module->attributes[RTLIL::escape_id("interfaces_replaced_in_module")] = RTLIL::Const(1);
