@@ -211,7 +211,7 @@ This prevents errors when synthesizing designs with generate blocks and multiple
 ```
 uhdm2rtlil/
 ├── src/frontends/uhdm/          # UHDM Frontend implementation
-│   ├── uhdm2rtlil.cpp          # Main frontend and design import
+│   ├── uhdm2rtlil.cpp          # Main frontend, design import, interface expansion
 │   ├── module.cpp              # Module/port/instance handling  
 │   ├── process.cpp             # Always blocks and statements
 │   ├── expression.cpp          # Expression evaluation
@@ -221,6 +221,7 @@ uhdm2rtlil/
 │   ├── package.cpp             # Package support
 │   ├── primitives.cpp          # Primitive gates
 │   ├── ref_module.cpp          # Module references
+│   ├── interface.cpp           # Interface declarations and modports
 │   └── uhdm2rtlil.h           # Header with class definitions
 ├── test/                        # Test framework
 │   ├── run_all_tests.sh        # Test runner script
@@ -228,10 +229,12 @@ uhdm2rtlil/
 │   ├── failing_tests.txt       # Known failing tests list
 │   └── */                      # Individual test cases
 ├── third_party/                # External dependencies
-│   ├── Surelog/               # SystemVerilog parser
+│   ├── Surelog/               # SystemVerilog parser (includes UHDM)
 │   └── yosys/                 # Synthesis framework
 ├── .github/workflows/         # CI/CD configuration
-└── build/                     # Build artifacts
+├── build/                     # Build artifacts
+├── CMakeLists.txt            # CMake build configuration
+└── Makefile                   # Top-level build orchestration
 ```
 
 ## Test Results
