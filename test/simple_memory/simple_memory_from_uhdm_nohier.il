@@ -18,6 +18,38 @@ module \simple_memory
   wire width 8 output 6 \data_out
   attribute \src "dut.sv:18.13-18.14"
   wire width 32 \i
+  attribute \hdlname "\\memory[0]"
+  wire width 8 \memory[0]
+  attribute \hdlname "\\memory[10]"
+  wire width 8 \memory[10]
+  attribute \hdlname "\\memory[11]"
+  wire width 8 \memory[11]
+  attribute \hdlname "\\memory[12]"
+  wire width 8 \memory[12]
+  attribute \hdlname "\\memory[13]"
+  wire width 8 \memory[13]
+  attribute \hdlname "\\memory[14]"
+  wire width 8 \memory[14]
+  attribute \hdlname "\\memory[15]"
+  wire width 8 \memory[15]
+  attribute \hdlname "\\memory[1]"
+  wire width 8 \memory[1]
+  attribute \hdlname "\\memory[2]"
+  wire width 8 \memory[2]
+  attribute \hdlname "\\memory[3]"
+  wire width 8 \memory[3]
+  attribute \hdlname "\\memory[4]"
+  wire width 8 \memory[4]
+  attribute \hdlname "\\memory[5]"
+  wire width 8 \memory[5]
+  attribute \hdlname "\\memory[6]"
+  wire width 8 \memory[6]
+  attribute \hdlname "\\memory[7]"
+  wire width 8 \memory[7]
+  attribute \hdlname "\\memory[8]"
+  wire width 8 \memory[8]
+  attribute \hdlname "\\memory[9]"
+  wire width 8 \memory[9]
   attribute \src "dut.sv:7.34-7.37"
   wire input 2 \rst
   attribute \src "dut.sv:8.34-8.36"
@@ -31,6 +63,22 @@ module \simple_memory
       attribute \src "dut.sv:20.13-20.16"
       case 1'1
         assign $0\data_out[7:0] 8'00000000
+        assign \memory[0] 8'00000000
+        assign \memory[1] 8'00000000
+        assign \memory[2] 8'00000000
+        assign \memory[3] 8'00000000
+        assign \memory[4] 8'00000000
+        assign \memory[5] 8'00000000
+        assign \memory[6] 8'00000000
+        assign \memory[7] 8'00000000
+        assign \memory[8] 8'00000000
+        assign \memory[9] 8'00000000
+        assign \memory[10] 8'00000000
+        assign \memory[11] 8'00000000
+        assign \memory[12] 8'00000000
+        assign \memory[13] 8'00000000
+        assign \memory[14] 8'00000000
+        assign \memory[15] 8'00000000
       attribute \src "dut.sv:25.18-33.12"
       case 
     end

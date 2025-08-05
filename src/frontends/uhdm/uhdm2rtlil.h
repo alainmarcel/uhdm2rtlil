@@ -176,6 +176,9 @@ struct UhdmImporter {
     void import_always(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     
+    // TARGETED FIX: Memory for-loop processing
+    void process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case);
+    
     // Statement import for different contexts
     void import_statement_sync(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
