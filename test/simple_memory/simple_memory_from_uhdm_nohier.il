@@ -54,6 +54,8 @@ module \simple_memory
   wire input 2 \rst
   attribute \src "dut.sv:8.34-8.36"
   wire input 3 \we
+  attribute \src "dut.sv:15.21-15.27"
+  memory width 8 size 16 \memory
   attribute \always_ff 1
   attribute \src "dut.sv:19.5-34.8"
   process $proc$dut.sv:19$1

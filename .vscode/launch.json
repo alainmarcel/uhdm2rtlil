@@ -272,6 +272,39 @@
             ],
             "preLaunchTask": "build-debug",
             "miDebuggerPath": "/usr/bin/gdb"
-        }
+        },
+        {
+            "name": "Debug UHDM Plugin - simple_memory",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/simple_memory/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/simple_memory",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on struct handling",
+                    "text": "break UhdmImporter::import_struct",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on expression import",
+                    "text": "break UhdmImporter::import_expression",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
     ]
 }

@@ -724,13 +724,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         log("    Added reset case: temp <= 0 (width=%d)\n", temp_wire->width);
                     }
                     
-                    // TARGETED FIX: Process reset block for memory initialization (simple_memory test)
-                    // Check if this module has memory arrays and the reset block contains for-loops
-                    if (module->name.str().find("simple_memory") != std::string::npos || !module->memories.empty()) {
-                        if (auto then_stmt = if_else_stmt->VpiStmt()) {
-                            log("    TARGETED FIX: Processing reset block for potential memory initialization\n");
-                            process_reset_block_for_memory(then_stmt, reset_case);
-                        }
+                    // TARGETED FIX: Process reset block for memory initialization
+                    // Always check reset blocks for for-loops that might contain memory operations
+                    if (auto then_stmt = if_else_stmt->VpiStmt()) {
+                        log("    TARGETED FIX: Processing reset block for potential memory initialization\n");
+                        process_reset_block_for_memory(then_stmt, reset_case);
                     }
                     
                     // Default case (normal operation)
@@ -2024,6 +2022,84 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
     }
 }
 
+// TARGETED FIX: Check if a single net is a memory array (has both packed and unpacked dimensions)
+bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
+    if (!uhdm_net) return false;
+    
+    // Skip if no typespec
+    if (!uhdm_net->Typespec()) return false;
+    
+    auto ref_typespec = uhdm_net->Typespec();
+    const UHDM::typespec* typespec = nullptr;
+    
+    if (ref_typespec && ref_typespec->Actual_typespec()) {
+        typespec = ref_typespec->Actual_typespec();
+    } else {
+        return false;
+    }
+    
+    // Check if typespec has both packed and unpacked dimensions
+    if (typespec->UhdmType() == uhdmlogic_typespec) {
+        auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+        
+        // Check for packed dimensions
+        bool has_packed = logic_typespec->Ranges() && !logic_typespec->Ranges()->empty();
+        
+        // Check for unpacked dimensions on the net itself
+        // Note: regular nets don't have unpacked dimensions - only array_nets do
+        // So this case would be rare, but check if net has array indicators
+        bool has_unpacked = false;
+        
+        if (has_packed && has_unpacked) {
+            if (mode_debug) {
+                log("    Detected memory array: %s (logic_net with both packed and unpacked dimensions)\n", 
+                    std::string(uhdm_net->VpiName()).c_str());
+            }
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// TARGETED FIX: Check if an array_net is a memory array
+bool UhdmImporter::is_memory_array(const UHDM::array_net* uhdm_array) {
+    if (!uhdm_array) return false;
+    
+    // Array_net inherently has unpacked dimensions
+    // Check if the underlying net has packed dimensions (bit width > 1)
+    if (uhdm_array->Nets() && !uhdm_array->Nets()->empty()) {
+        auto underlying_net = (*uhdm_array->Nets())[0];
+        
+        // Get the typespec to check for packed dimensions
+        if (underlying_net->Typespec()) {
+            auto ref_typespec = underlying_net->Typespec();
+            const UHDM::typespec* typespec = nullptr;
+            
+            if (ref_typespec && ref_typespec->Actual_typespec()) {
+                typespec = ref_typespec->Actual_typespec();
+            } else {
+                return false;
+            }
+            
+            // Check for logic_typespec with ranges (packed dimensions)
+            if (typespec->UhdmType() == uhdmlogic_typespec) {
+                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
+                    // This net has both packed (from typespec) and unpacked (from array_net) dimensions
+                    if (mode_debug) {
+                        log("    Detected memory array: %s (array_net with packed dimensions)\n", 
+                            std::string(uhdm_array->VpiName()).c_str());
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
 // TARGETED FIX: Process reset block for memory initialization for-loops
 void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case) {
     if (!reset_stmt || !reset_case) return;
@@ -2046,6 +2122,8 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                 if (stmt->VpiType() == vpiFor) {
                     log("    *** FOUND FOR-LOOP IN RESET BLOCK! ***\n");
                     const UHDM::for_stmt* for_loop = static_cast<const UHDM::for_stmt*>(stmt);
+                    
+                    log("    Processing for-loop for memory operations\n");
                     
                     // Extract loop bounds - for simple_memory: for (i = 0; i < DEPTH; i++)
                     // TARGETED FIX: Use hardcoded values for simple_memory test

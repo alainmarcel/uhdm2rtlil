@@ -1,0 +1,4 @@
+plugin -i ../../build/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+cd simple_memory
+ls

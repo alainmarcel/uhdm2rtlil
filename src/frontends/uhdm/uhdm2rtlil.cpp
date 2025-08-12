@@ -1003,6 +1003,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Import array nets (memory arrays)
+    if (uhdm_module->Array_nets()) {
+        log("UHDM: Found %d array nets to import\n", (int)uhdm_module->Array_nets()->size());
+        for (auto array : *uhdm_module->Array_nets()) {
+            std::string array_name = std::string(array->VpiName());
+            log("UHDM: About to import array net: '%s'\n", array_name.c_str());
+            
+            // Only create memory if it has both packed and unpacked dimensions
+            if (is_memory_array(array)) {
+                log("UHDM: Array net '%s' detected as memory array\n", array_name.c_str());
+                create_memory_from_array(array);
+            } else {
+                // Otherwise, handle as a regular array of wires
+                log("UHDM: Array net '%s' does not have packed dimensions, skipping memory creation\n", array_name.c_str());
+                // TODO: Import as array of individual wires if needed
+            }
+        }
+    }
+    
     // Import interface instances
     log("UHDM: About to import interface instances for module %s\n", module->name.c_str());
     import_interface_instances(uhdm_module);

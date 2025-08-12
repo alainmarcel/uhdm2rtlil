@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-05 08:55:41.538246336 -0700
-+++ uhdm_synth_clean.tmp	2025-08-05 08:55:41.538246336 -0700
+--- verilog_synth_clean.tmp	2025-08-11 21:39:48.643620273 -0700
++++ uhdm_synth_clean.tmp	2025-08-11 21:39:48.643620273 -0700
 @@ -17,7 +17,6 @@
  output [7:0] data_out;
  wire [7:0] data_out;

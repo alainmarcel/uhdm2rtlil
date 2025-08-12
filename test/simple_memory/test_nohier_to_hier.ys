@@ -1,0 +1,8 @@
+# Test if nohier.il can be processed to produce the same result as full flow
+read_rtlil simple_memory_from_verilog_nohier.il
+hierarchy -check -top simple_memory
+stat
+proc
+opt
+stat
+write_rtlil test_from_nohier.il

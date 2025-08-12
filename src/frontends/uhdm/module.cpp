@@ -212,6 +212,53 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         return;
     }
     
+    // Check if this net should be imported as a memory
+    if (is_memory_array(uhdm_net)) {
+        log("UHDM: Net '%s' has both packed and unpacked dimensions - creating memory\n", netname.c_str());
+        
+        // Get packed dimension (width) from typespec
+        int width = 1;
+        if (uhdm_net->Typespec()) {
+            auto ref_typespec = uhdm_net->Typespec();
+            const UHDM::typespec* typespec = nullptr;
+            
+            if (ref_typespec && ref_typespec->Actual_typespec()) {
+                typespec = ref_typespec->Actual_typespec();
+            }
+            if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
+                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                width = get_width_from_typespec(logic_typespec, inst);
+            }
+        }
+        
+        // Get unpacked dimension (size) from net ranges
+        // Note: regular nets don't have unpacked dimensions - this shouldn't happen
+        // but we'll default to size 1
+        int size = 1;
+        log_warning("UHDM: Net '%s' detected as memory but regular nets don't have unpacked dimensions\n", netname.c_str());
+        
+        // Create RTLIL memory object
+        RTLIL::IdString mem_id = RTLIL::escape_id(netname);
+        RTLIL::Memory* memory = new RTLIL::Memory;
+        memory->name = mem_id;
+        memory->width = width;
+        memory->size = size;
+        memory->start_offset = 0;
+        
+        // Add source attribute
+        add_src_attribute(memory->attributes, uhdm_net);
+        
+        // Add memory to module
+        module->memories[mem_id] = memory;
+        
+        if (mode_debug)
+            log("    Created memory: %s (width=%d, size=%d)\n", mem_id.c_str(), width, size);
+        
+        // Don't create a wire for memory arrays
+        return;
+    }
+    
+    // Normal net - create as wire
     int width = get_width(uhdm_net, inst);
     RTLIL::Wire* w = create_wire(netname, width);
     add_src_attribute(w->attributes, uhdm_net);
