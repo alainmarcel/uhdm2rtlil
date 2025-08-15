@@ -11,5 +11,6 @@ module \unique_case
   attribute \always_ff 1
   attribute \src "dut.sv:3.1-10.4"
   process $proc$dut.sv:3$1
+    sync posedge \clock
   end
 end

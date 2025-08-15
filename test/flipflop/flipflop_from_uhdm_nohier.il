@@ -2,8 +2,8 @@
 autoidx 1
 attribute \src "dut.sv:2.1-17.10"
 module \flipflop
-  attribute \src "dut.sv:9.5-15.8"
-  wire $0\q[0:0]
+  attribute \src "dut.sv:6.18-6.19"
+  wire $0\q
   attribute \src "dut.sv:10.13-10.19"
   wire $logic_not$dut.sv:10.13-10.19$1_Y
   attribute \src "dut.sv:3.18-3.21"
@@ -22,22 +22,23 @@ module \flipflop
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:10.13-10.19$1_Y
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:9.5-15.8"
   process $proc$dut.sv:9$1
-    assign $0\q[0:0] \q
-    attribute \src "dut.sv:10.9-14.12"
+    assign $0\q \q
+    attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:10.13-10.19$1_Y
-      attribute \src "dut.sv:10.13-10.19"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:12.18-14.12"
+        assign $0\q 1'0
+      attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\q[0:0] \d
+        assign $0\q \d
     end
     sync posedge \clk
-      update \q $0\q[0:0]
+      update \q $0\q
     sync negedge \rst_n
-      update \q $0\q[0:0]
+      update \q $0\q
   end
 end

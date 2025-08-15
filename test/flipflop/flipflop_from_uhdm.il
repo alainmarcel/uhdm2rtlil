@@ -11,6 +11,7 @@ module \flipflop
   wire output 4 \q
   attribute \src "dut.sv:4.18-4.23"
   wire input 2 \rst_n
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:9.5-15.8"
   cell $adff $procdff$5

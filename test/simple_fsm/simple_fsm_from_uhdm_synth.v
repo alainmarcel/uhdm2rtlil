@@ -47,17 +47,19 @@ module simple_fsm(clk, reset, start, done, busy, state);
     .B(state[0]),
     .Y(busy)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:20.1-25.4" *)
-  \$_SDFF_PP0_  \state_reg[0]  /* _6_ */ (
+  \$_DFF_PP0_  \state_reg[0]  /* _6_ */ (
     .C(clk),
     .D(next_state[0]),
     .Q(state[0]),
     .R(reset)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:20.1-25.4" *)
-  \$_SDFF_PP0_  \state_reg[1]  /* _7_ */ (
+  \$_DFF_PP0_  \state_reg[1]  /* _7_ */ (
     .C(clk),
     .D(busy),
     .Q(state[1]),

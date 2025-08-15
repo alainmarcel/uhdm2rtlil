@@ -9,7 +9,7 @@ module \simple_fsm
   parameter \DONE 2'11
   wire $0\busy
   wire width 2 $0\next_state
-  attribute \src "dut.sv:20.1-25.4"
+  attribute \src "dut.sv:8.23-8.28"
   wire width 2 $0\state[1:0]
   attribute \src "dut.sv:7.17-7.21"
   wire output 5 \busy
@@ -26,20 +26,23 @@ module \simple_fsm
   wire input 3 \start
   attribute \src "dut.sv:8.23-8.28"
   wire width 2 output 6 \state
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:20.1-25.4"
   process $proc$dut.sv:20$1
     assign $0\state[1:0] \state
-    attribute \src "dut.sv:21.5-24.29"
+    attribute \src "dut.sv:11.9-15.12"
     switch \reset
-      attribute \src "dut.sv:21.9-21.14"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
         assign $0\state[1:0] 2'00
-      attribute \src "dut.sv:24.9-24.28"
+      attribute \src "dut.sv:13.13-13.17"
       case 
         assign $0\state[1:0] \next_state
     end
     sync posedge \clk
+      update \state $0\state[1:0]
+    sync posedge \reset
       update \state $0\state[1:0]
   end
   attribute \always_comb 1

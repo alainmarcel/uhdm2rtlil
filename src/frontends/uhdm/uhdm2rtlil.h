@@ -107,6 +107,9 @@ struct UhdmImporter {
     // Current generate scope for naming
     std::string current_gen_scope;
     
+    // Current condition for conditional memory writes
+    RTLIL::SigSpec current_condition;
+    
     // UHDM design for accessing module definitions
     UHDM::design* uhdm_design = nullptr;
     
@@ -179,6 +182,7 @@ struct UhdmImporter {
     // TARGETED FIX: Memory for-loop processing
     bool is_memory_array(const UHDM::net* uhdm_net);
     bool is_memory_array(const UHDM::array_net* uhdm_array);
+    bool is_memory_array(const UHDM::array_var* uhdm_array);
     void process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case);
     
     // Statement import for different contexts
@@ -226,6 +230,7 @@ struct UhdmImporter {
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);
     void create_memory_from_array(const UHDM::array_net* uhdm_array);
+    void create_memory_from_array(const UHDM::array_var* uhdm_array);
     
     // Parameterized module creation
     std::string create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module);

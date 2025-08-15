@@ -477,7 +477,53 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     if (mode_debug)
         log("    Bit select signal name: '%s'\n", signal_name.c_str());
     
-    // Look up the wire
+    // Check if this is a memory access
+    RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+    if (module->memories.count(mem_id) > 0) {
+        if (mode_debug)
+            log("    This is a memory access - creating $memrd cell\n");
+        
+        // Get memory info
+        RTLIL::Memory* memory = module->memories.at(mem_id);
+        
+        // Get the address expression
+        RTLIL::SigSpec addr = import_expression(uhdm_bit->VpiIndex());
+        
+        // Create a unique name for the cell
+        RTLIL::IdString cell_id = new_id("memrd_" + signal_name);
+        std::string cell_name = cell_id.str();
+        
+        // Create $memrd cell
+        RTLIL::Cell* memrd_cell = module->addCell(cell_id, ID($memrd));
+        memrd_cell->setParam(ID::MEMID, RTLIL::Const(mem_id.str()));
+        memrd_cell->setParam(ID::ABITS, GetSize(addr));
+        memrd_cell->setParam(ID::WIDTH, memory->width);
+        memrd_cell->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
+        memrd_cell->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+        memrd_cell->setParam(ID::TRANSPARENT, RTLIL::Const(0));
+        
+        // Create data output wire - need to create a new unique ID
+        RTLIL::IdString data_wire_id = new_id("memrd_" + signal_name + "_DATA");
+        RTLIL::Wire* data_wire = module->addWire(data_wire_id, memory->width);
+        
+        if (mode_debug) {
+            log("    Created memrd cell: %s\n", cell_name.c_str());
+            log("    Created data wire: %s\n", data_wire_id.c_str());
+        }
+        
+        // Connect ports
+        memrd_cell->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+        memrd_cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::S1, 1));
+        memrd_cell->setPort(ID::ADDR, addr);
+        memrd_cell->setPort(ID::DATA, data_wire);
+        
+        // Add source attribute
+        add_src_attribute(memrd_cell->attributes, uhdm_bit);
+        
+        return RTLIL::SigSpec(data_wire);
+    }
+    
+    // Regular bit select on a wire
     RTLIL::Wire* wire = nullptr;
     if (name_map.count(signal_name)) {
         wire = name_map.at(signal_name);

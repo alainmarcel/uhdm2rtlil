@@ -48,6 +48,7 @@ module \counter
     connect \B 8'11111111
     connect \Y $auto$rtlil.cc:3011:Eq$4
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:14.5-20.8"
   cell $adffe $auto$ff.cc:266:slice$14

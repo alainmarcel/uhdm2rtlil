@@ -105,6 +105,7 @@ module simple_counter(clk, rst_n, count);
     .B(count[7]),
     .Y(_09_[7])
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[7]  /* _26_ */ (
@@ -113,6 +114,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[7]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[0]  /* _27_ */ (
@@ -121,6 +123,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[0]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[1]  /* _28_ */ (
@@ -129,6 +132,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[1]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[2]  /* _29_ */ (
@@ -137,6 +141,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[2]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[3]  /* _30_ */ (
@@ -145,6 +150,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[3]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[4]  /* _31_ */ (
@@ -153,6 +159,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[4]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[5]  /* _32_ */ (
@@ -161,6 +168,7 @@ module simple_counter(clk, rst_n, count);
     .Q(count[5]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:8.5-14.8" *)
   \$_DFF_PN0_  \count_reg[6]  /* _33_ */ (

@@ -4,7 +4,7 @@ attribute \dynports 1
 attribute \src "dut.sv:2.1-27.10"
 module \counter
   parameter \WIDTH 8
-  attribute \src "dut.sv:14.5-20.8"
+  attribute \src "dut.sv:8.30-8.35"
   wire width 8 $0\count[7:0]
   wire width 8 $0\count_next
   wire $0\overflow
@@ -63,22 +63,24 @@ module \counter
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:15.13-15.19$1_Y
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:14.5-20.8"
   process $proc$dut.sv:14$1
     assign $0\count[7:0] \count
-    attribute \src "dut.sv:15.9-19.12"
+    attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:15.13-15.19$1_Y
-      attribute \src "dut.sv:15.13-15.19"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
         assign $0\count[7:0] 8'00000000
-      attribute \src "dut.sv:17.18-19.12"
+      attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:17.18-19.12"
         switch \enable
-          attribute \src "dut.sv:17.22-17.28"
+          attribute \src "dut.sv:17.18-19.12"
           case 1'1
             assign $0\count[7:0] \count_next
+          attribute \src "dut.sv:17.18-19.12"
           case 
         end
     end

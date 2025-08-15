@@ -3,7 +3,7 @@ autoidx 8
 attribute \top 1
 attribute \src "dut.sv:2.1-16.10"
 module \simple_counter
-  attribute \src "dut.sv:8.5-14.8"
+  attribute \src "dut.sv:5.24-5.29"
   wire width 8 $0\count[7:0]
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk
@@ -21,6 +21,7 @@ module \simple_counter
     connect \B 1'1
     connect \Y $0\count[7:0]
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:8.5-14.8"
   cell $adff $procdff$7

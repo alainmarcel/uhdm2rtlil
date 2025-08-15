@@ -131,6 +131,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .B(count[7]),
     .Y(count_next[7])
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[0]  /* _31_ */ (
@@ -140,6 +141,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[0]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[1]  /* _32_ */ (
@@ -149,6 +151,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[1]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[2]  /* _33_ */ (
@@ -158,6 +161,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[2]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[3]  /* _34_ */ (
@@ -167,6 +171,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[3]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[4]  /* _35_ */ (
@@ -176,6 +181,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[4]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[5]  /* _36_ */ (
@@ -185,6 +191,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[5]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[6]  /* _37_ */ (
@@ -194,6 +201,7 @@ module counter(clk, rst_n, enable, count, overflow);
     .Q(count[6]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.5-20.8" *)
   \$_DFFE_PN0P_  \count_reg[7]  /* _38_ */ (
