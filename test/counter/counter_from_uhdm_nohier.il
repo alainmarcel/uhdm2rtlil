@@ -91,8 +91,8 @@ module \counter
   attribute \always_comb 1
   attribute \src "dut.sv:22.5-25.8"
   process $proc$dut.sv:22$1
-    assign \count_next $auto$rtlil.cc:3017:Add$2
-    assign \overflow $auto$rtlil.cc:3004:And$6
+    assign $0\count_next $auto$rtlil.cc:3017:Add$2
+    assign $0\overflow $auto$rtlil.cc:3004:And$6
     sync always
       update \count_next $0\count_next
       update \overflow $0\overflow

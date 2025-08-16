@@ -683,11 +683,160 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (mode_debug)
         log("    hier_path name: '%s'\n", path_name.c_str());
     
-    // Check if this is a struct member access (e.g., bus1.a)
+    // Check if this is a struct member access (e.g., bus1.a or in_struct.base.data)
     size_t dot_pos = path_name.find('.');
     if (dot_pos != std::string::npos) {
-        std::string base_name = path_name.substr(0, dot_pos);
-        std::string member_name = path_name.substr(dot_pos + 1);
+        // For nested struct members like in_struct.base.data, we need special handling
+        // Count number of dots to determine if it's nested
+        size_t dot_count = std::count(path_name.begin(), path_name.end(), '.');
+        
+        if (mode_debug)
+            log("    hier_path has %zu dots\n", dot_count);
+        
+        if (dot_count > 1) {
+            // Nested struct member access
+            // Find the last dot to separate the final member from the rest
+            size_t last_dot = path_name.rfind('.');
+            std::string base_path = path_name.substr(0, last_dot);  // e.g., "in_struct.base"
+            std::string final_member = path_name.substr(last_dot + 1);  // e.g., "data"
+            
+            if (mode_debug)
+                log("    Detected nested struct member access: base_path='%s', final_member='%s'\n", 
+                    base_path.c_str(), final_member.c_str());
+            
+            // First, find the first-level struct and member
+            size_t first_dot = path_name.find('.');
+            std::string struct_name = path_name.substr(0, first_dot);  // e.g., "in_struct"
+            std::string first_member = base_path.substr(first_dot + 1);  // e.g., "base"
+            
+            if (mode_debug)
+                log("    Looking for struct wire '%s' in name_map\n", struct_name.c_str());
+            
+            if (name_map.count(struct_name)) {
+                RTLIL::Wire* struct_wire = name_map[struct_name];
+                
+                if (mode_debug)
+                    log("    Found struct wire '%s' with width %d\n", struct_name.c_str(), struct_wire->width);
+                
+                // Get UHDM object for the struct
+                const any* struct_uhdm_obj = nullptr;
+                for (auto& pair : wire_map) {
+                    if (pair.second == struct_wire) {
+                        struct_uhdm_obj = pair.first;
+                        if (mode_debug)
+                            log("    Found UHDM object for struct wire (type=%d)\n", struct_uhdm_obj->UhdmType());
+                        break;
+                    }
+                }
+                
+                if (struct_uhdm_obj) {
+                    // Get struct typespec
+                    const ref_typespec* struct_ref_typespec = nullptr;
+                    if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = logic_var->Typespec();
+                    } else if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = logic_net->Typespec();
+                    }
+                    
+                    if (struct_ref_typespec) {
+                        const typespec* struct_typespec = struct_ref_typespec->Actual_typespec();
+                        if (struct_typespec && struct_typespec->UhdmType() == uhdmstruct_typespec) {
+                            auto st_spec = static_cast<const UHDM::struct_typespec*>(struct_typespec);
+                            
+                            if (mode_debug)
+                                log("    Found struct_typespec\n");
+                            
+                            // Find the first-level member
+                            if (st_spec->Members()) {
+                                int first_member_offset = 0;
+                                int first_member_width = 0;
+                                const typespec* first_member_typespec = nullptr;
+                                bool found_first_member = false;
+                                
+                                // Iterate through members in reverse order
+                                auto members = st_spec->Members();
+                                for (int i = members->size() - 1; i >= 0; i--) {
+                                    auto member_spec = (*members)[i];
+                                    std::string member_name = std::string(member_spec->VpiName());
+                                    
+                                    int member_width = 1;
+                                    if (auto member_ts = member_spec->Typespec()) {
+                                        if (auto actual_ts = member_ts->Actual_typespec()) {
+                                            member_width = get_width_from_typespec(actual_ts, inst);
+                                            if (member_name == first_member) {
+                                                first_member_typespec = actual_ts;
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (member_name == first_member) {
+                                        first_member_width = member_width;
+                                        found_first_member = true;
+                                        break;
+                                    }
+                                    
+                                    first_member_offset += member_width;
+                                }
+                                
+                                if (found_first_member && first_member_typespec && 
+                                    first_member_typespec->UhdmType() == uhdmstruct_typespec) {
+                                    // Now find the second-level member
+                                    auto nested_st_spec = static_cast<const UHDM::struct_typespec*>(first_member_typespec);
+                                    if (nested_st_spec->Members()) {
+                                        int second_member_offset = 0;
+                                        int second_member_width = 0;
+                                        bool found_second_member = false;
+                                        
+                                        auto nested_members = nested_st_spec->Members();
+                                        for (int i = nested_members->size() - 1; i >= 0; i--) {
+                                            auto member_spec = (*nested_members)[i];
+                                            std::string member_name = std::string(member_spec->VpiName());
+                                            
+                                            int member_width = 1;
+                                            if (auto member_ts = member_spec->Typespec()) {
+                                                if (auto actual_ts = member_ts->Actual_typespec()) {
+                                                    member_width = get_width_from_typespec(actual_ts, inst);
+                                                }
+                                            }
+                                            
+                                            if (member_name == final_member) {
+                                                second_member_width = member_width;
+                                                found_second_member = true;
+                                                break;
+                                            }
+                                            
+                                            second_member_offset += member_width;
+                                        }
+                                        
+                                        if (found_second_member) {
+                                            if (mode_debug)
+                                                log("    Found nested struct member: total_offset=%d, width=%d\n", 
+                                                    first_member_offset + second_member_offset, second_member_width);
+                                            
+                                            // Return bit slice from the struct wire
+                                            return RTLIL::SigSpec(struct_wire, 
+                                                                first_member_offset + second_member_offset, 
+                                                                second_member_width);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (mode_debug) {
+                log("    Struct wire '%s' not found in name_map\n", struct_name.c_str());
+                log("    Available wires in name_map:\n");
+                for (auto& pair : name_map) {
+                    log("      %s (width=%d)\n", pair.first.c_str(), pair.second->width);
+                }
+            }
+            
+            // If we couldn't resolve it as nested struct member, fall through to create wire
+        } else {
+            // Single-level struct member access
+            std::string base_name = path_name.substr(0, dot_pos);
+            std::string member_name = path_name.substr(dot_pos + 1);
         
         if (mode_debug)
             log("    Detected struct member access: base='%s', member='%s'\n", base_name.c_str(), member_name.c_str());
@@ -781,6 +930,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 log("    Could not find UHDM object for base wire '%s'\n", base_name.c_str());
             }
         }
+        }  // End of single-level struct member handling
     }
     
     // Check if wire already exists in name_map
@@ -869,12 +1019,148 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
     
+    // Check if this is a struct member access - if so, don't create a new wire
+    if (dot_pos != std::string::npos) {
+        // This is a struct member reference but we couldn't resolve it above
+        // Try to calculate the offset dynamically from the struct typespec
+        std::string struct_name = path_name.substr(0, path_name.find('.'));
+        
+        if (name_map.count(struct_name)) {
+            RTLIL::Wire* struct_wire = name_map[struct_name];
+            
+            // Find the UHDM object for the struct wire
+            const any* struct_uhdm_obj = nullptr;
+            for (auto& pair : wire_map) {
+                if (pair.second == struct_wire) {
+                    struct_uhdm_obj = pair.first;
+                    break;
+                }
+            }
+            
+            if (struct_uhdm_obj) {
+                // Get the typespec
+                const ref_typespec* ref_ts = nullptr;
+                if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(struct_uhdm_obj)) {
+                    ref_ts = logic_net->Typespec();
+                } else if (auto net_obj = dynamic_cast<const UHDM::net*>(struct_uhdm_obj)) {
+                    ref_ts = net_obj->Typespec();
+                }
+                
+                if (ref_ts && ref_ts->Actual_typespec()) {
+                    const typespec* ts = ref_ts->Actual_typespec();
+                    
+                    // Calculate bit offset for struct member access
+                    std::string remaining_path = path_name.substr(struct_name.length() + 1);
+                    int bit_offset = 0;
+                    int member_width = 0;
+                    
+                    if (calculate_struct_member_offset(ts, remaining_path, inst, bit_offset, member_width)) {
+                        if (mode_debug)
+                            log("    Calculated struct member '%s' offset=%d, width=%d\n", 
+                                path_name.c_str(), bit_offset, member_width);
+                        return RTLIL::SigSpec(struct_wire, bit_offset, member_width);
+                    }
+                }
+            }
+        }
+        
+        // Log a warning and return an unconnected signal
+        log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
+        return RTLIL::SigSpec(RTLIL::State::Sx, width);
+    }
+    
     // Create the wire with the determined width
     if (mode_debug)
         log("    Creating wire '%s' with width=%d\n", path_name.c_str(), width);
     
     RTLIL::Wire* wire = create_wire(path_name, width);
     return RTLIL::SigSpec(wire);
+}
+
+// Calculate bit offset and width for struct member access
+bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std::string& member_path, 
+                                                 const scope* inst, int& bit_offset, int& member_width) {
+    if (!ts || member_path.empty()) {
+        return false;
+    }
+    
+    log("UHDM: calculate_struct_member_offset for path '%s'\n", member_path.c_str());
+    
+    // Split the member path by dots for nested access
+    std::vector<std::string> path_parts;
+    size_t start = 0;
+    size_t dot_pos = member_path.find('.');
+    while (dot_pos != std::string::npos) {
+        path_parts.push_back(member_path.substr(start, dot_pos - start));
+        start = dot_pos + 1;
+        dot_pos = member_path.find('.', start);
+    }
+    path_parts.push_back(member_path.substr(start));
+    
+    // Start with the given typespec
+    const typespec* current_ts = ts;
+    bit_offset = 0;
+    member_width = 0;
+    
+    // Process each part of the path
+    for (const auto& member_name : path_parts) {
+        if (!current_ts || current_ts->UhdmType() != uhdmstruct_typespec) {
+            return false;
+        }
+        
+        auto struct_ts = static_cast<const struct_typespec*>(current_ts);
+        if (!struct_ts->Members()) {
+            return false;
+        }
+        
+        // Calculate offset within this struct
+        int offset_in_struct = 0;
+        bool found = false;
+        const typespec* member_ts = nullptr;
+        
+        // Iterate through members in reverse order (MSB to LSB for packed structs)
+        auto members = struct_ts->Members();
+        for (int i = members->size() - 1; i >= 0; i--) {
+            auto member = (*members)[i];
+            std::string current_member_name = std::string(member->VpiName());
+            
+            if (current_member_name == member_name) {
+                // Found the member
+                if (auto ref_ts = member->Typespec()) {
+                    if (auto actual_ts = ref_ts->Actual_typespec()) {
+                        member_ts = actual_ts;
+                        member_width = get_width_from_typespec(actual_ts, inst);
+                        log("UHDM:   Found target member '%s' width=%d at offset_in_struct=%d\n", 
+                            current_member_name.c_str(), member_width, offset_in_struct);
+                    }
+                }
+                found = true;
+                break;
+            }
+            
+            // Add width of this member to offset
+            if (auto ref_ts = member->Typespec()) {
+                if (auto actual_ts = ref_ts->Actual_typespec()) {
+                    int width = get_width_from_typespec(actual_ts, inst);
+                    log("UHDM:   Member '%s' width=%d, offset_in_struct=%d\n", 
+                        current_member_name.c_str(), width, offset_in_struct);
+                    offset_in_struct += width;
+                }
+            }
+        }
+        
+        if (!found) {
+            return false;
+        }
+        
+        // Add the offset within this struct to the total offset
+        bit_offset += offset_in_struct;
+        
+        // For the next iteration, use the member's typespec
+        current_ts = member_ts;
+    }
+    
+    return member_width > 0;
 }
 
 YOSYS_NAMESPACE_END

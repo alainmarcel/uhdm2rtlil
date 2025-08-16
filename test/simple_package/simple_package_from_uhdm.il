@@ -87,6 +87,7 @@ module \simple_package
   attribute \src "dut.sv:28.38-28.41"
   wire input 1 \clk
   attribute \src "dut.sv:35.23-35.35"
+  attribute \wiretype "\\my_pkg::bus_transaction_t"
   wire width 50 \internal_bus
   attribute \src "dut.sv:29.38-29.43"
   wire input 2 \rst_n

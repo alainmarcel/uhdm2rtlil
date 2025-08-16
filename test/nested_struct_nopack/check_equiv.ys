@@ -1,0 +1,16 @@
+read_rtlil nested_struct_nopack_from_verilog_nohier.il
+rename nested_struct_nopack ref
+proc ref
+memory ref
+opt ref
+
+read_rtlil nested_struct_nopack_from_uhdm_nohier.il
+rename nested_struct_nopack uut
+proc uut
+memory uut
+opt uut
+
+equiv_make ref uut equiv
+equiv_simple equiv
+equiv_induct equiv
+equiv_status -assert equiv

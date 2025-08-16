@@ -473,7 +473,9 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* src = "dut.sv:28.38-28.41" *)
   input clk;
   wire clk;
-  wire [17:0] internal_bus;
+  (* src = "dut.sv:35.23-35.35" *)
+  (* wiretype = "\\my_pkg::bus_transaction_t" *)
+  wire [49:0] internal_bus;
   (* src = "dut.sv:29.38-29.43" *)
   input rst_n;
   wire rst_n;
@@ -641,8 +643,9 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   );
   \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101  sub_inst (
     .clk(clk),
-    .data_in({ 32'h00000000, internal_bus }),
+    .data_in({ 32'h00000000, internal_bus[17:0] }),
     .data_out(bus_out),
     .rst_n(rst_n)
   );
+  assign internal_bus[49:18] = 32'd0;
 endmodule

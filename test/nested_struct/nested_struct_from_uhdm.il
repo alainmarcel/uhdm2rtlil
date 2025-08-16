@@ -7,10 +7,10 @@ module \nested_struct
   wire input 3 \clk
   attribute \src "dut.sv:24.38-24.45"
   wire width 62 input 1 \in_data
-  wire \in_data.base.valid
   attribute \src "dut.sv:25.38-25.46"
   wire width 62 output 2 \out_data
   attribute \src "dut.sv:33.21-33.35"
+  attribute \wiretype "\\main_pkg::nested_struct_t"
   wire width 62 \processed_data
   attribute \src "dut.sv:27.18-27.21"
   wire input 4 \rst
@@ -29,13 +29,12 @@ module \nested_struct
   cell $dffe $auto$ff.cc:266:slice$21
     parameter \CLK_POLARITY 1
     parameter \EN_POLARITY 0
-    parameter \WIDTH 60
+    parameter \WIDTH 18
     connect \CLK \clk
-    connect \D { \in_data [61:21] \processed_data [20:5] \in_data [3] \in_data [1] \processed_data [0] }
+    connect \D { \processed_data [20:5] \in_data [3] \in_data [1] }
     connect \EN \rst
-    connect \Q { \out_data [61:5] \out_data [3] \out_data [1:0] }
+    connect \Q { \out_data [20:5] \out_data [3] \out_data [1] }
   end
-  connect \in_data.base.valid \processed_data [0]
-  connect { \out_data [4] \out_data [2] } 2'11
-  connect { \processed_data [61:21] \processed_data [4:1] } { \in_data [61:21] 1'1 \in_data [3] 1'1 \in_data [1] }
+  connect { \out_data [61:21] \out_data [4] \out_data [2] \out_data [0] } 44'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx011x
+  connect { \processed_data [61:21] \processed_data [4:0] } { 42'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx01 \in_data [3] 1'1 \in_data [1] 1'x }
 end

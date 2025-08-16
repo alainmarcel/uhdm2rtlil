@@ -1,0 +1,13 @@
+# Test the actual logic values
+read_rtlil nested_struct_nopack_from_verilog_nohier.il
+proc
+flatten
+eval -set in_data 62'h0000000000000000 -set clk 1'b0 -set rst 1'b0
+eval -table processed_data
+
+design -reset
+read_rtlil nested_struct_nopack_from_uhdm_nohier.il  
+proc
+flatten
+eval -set in_data 62'h0000000000000000 -set clk 1'b0 -set rst 1'b0
+eval -table processed_data

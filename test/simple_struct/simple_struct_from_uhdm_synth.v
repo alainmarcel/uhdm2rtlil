@@ -22,10 +22,13 @@ module simple_struct(a1, b1, c1, a2, b2, c2, a3, b3, c3, out1, out2, out3);
   input [15:0] b3;
   wire [15:0] b3;
   (* src = "dut.sv:40.22-40.26" *)
+  (* wiretype = "\\data_bus_8bit_t" *)
   wire [23:0] bus1;
   (* src = "dut.sv:41.22-41.26" *)
+  (* wiretype = "\\data_bus_8bit_t" *)
   wire [23:0] bus2;
   (* src = "dut.sv:42.22-42.26" *)
+  (* wiretype = "\\data_bus_16bit_t" *)
   wire [47:0] bus3;
   (* src = "dut.sv:31.33-31.35" *)
   input [7:0] c1;

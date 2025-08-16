@@ -1039,6 +1039,29 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     wire_map[var] = wire;
                     name_map[var_name] = wire;
                     add_src_attribute(wire->attributes, var);
+                    
+                    // Add wiretype attribute for struct types
+                    if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
+                        if (auto ref_typespec = logic_var->Typespec()) {
+                            if (auto actual_typespec = ref_typespec->Actual_typespec()) {
+                                if (actual_typespec->UhdmType() == uhdmstruct_typespec) {
+                                    // Get the struct type name
+                                    std::string type_name;
+                                    if (!ref_typespec->VpiName().empty()) {
+                                        type_name = ref_typespec->VpiName();
+                                    } else if (!actual_typespec->VpiName().empty()) {
+                                        type_name = actual_typespec->VpiName();
+                                    }
+                                    
+                                    if (!type_name.empty()) {
+                                        wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                                        log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), wire->name.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
                 } else {
                     log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());

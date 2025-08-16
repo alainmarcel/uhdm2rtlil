@@ -24,6 +24,7 @@
 #include <uhdm/interface_inst.h>
 #include <uhdm/interface_typespec.h>
 #include <uhdm/ref_typespec.h>
+#include <uhdm/struct_typespec.h>
 #include <uhdm/package.h>
 #include <uhdm/ExprEval.h>
 
@@ -231,6 +232,8 @@ struct UhdmImporter {
     
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
+    bool calculate_struct_member_offset(const UHDM::typespec* ts, const std::string& member_path, 
+                                       const UHDM::scope* inst, int& bit_offset, int& member_width);
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);

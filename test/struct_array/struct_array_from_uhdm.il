@@ -8,6 +8,7 @@ module \struct_array
   attribute \src "dut.sv:10.24-10.32"
   wire width 8 output 3 \data_out
   attribute \src "dut.sv:14.14-14.20"
+  attribute \wiretype "\\packet_t"
   wire width 12 \packet
   attribute \src "dut.sv:9.24-9.30"
   wire width 4 input 2 \tag_in

@@ -1,0 +1,31 @@
+# Generate UHDM
+exec ../../third_party/Surelog/build/bin/surelog -nouhdm -parse -d uhdm simple_struct_test.sv
+
+# Read and convert UHDM
+plugin -i ../../build/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+hierarchy -top simple_struct_test
+write_rtlil simple_struct_from_uhdm.il
+
+# Clean and prepare for Verilog frontend
+design -reset
+
+# Read with Verilog frontend
+read_verilog -sv simple_struct_test.sv
+hierarchy -top simple_struct_test
+write_rtlil simple_struct_from_verilog.il
+
+# Compare the two
+design -reset
+read_rtlil simple_struct_from_verilog.il
+rename simple_struct_test ref
+proc ref
+
+read_rtlil simple_struct_from_uhdm.il
+rename simple_struct_test uut
+proc uut
+
+# Equivalence check
+equiv_make ref uut equiv
+equiv_simple equiv
+equiv_status -assert equiv

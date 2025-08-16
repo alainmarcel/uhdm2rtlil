@@ -18,6 +18,7 @@ module struct_array(data_in, tag_in, data_out, tag_out);
   output [7:0] data_out;
   wire [7:0] data_out;
   (* src = "dut.sv:14.14-14.20" *)
+  (* wiretype = "\\packet_t" *)
   wire [11:0] packet;
   (* src = "dut.sv:9.24-9.30" *)
   input [3:0] tag_in;

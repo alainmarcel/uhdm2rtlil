@@ -1,0 +1,14 @@
+read_rtlil nested_struct_nopack_from_verilog_nohier.il
+proc
+flatten
+techmap
+opt -full
+write_rtlil verilog_opt.il
+
+design -reset
+read_rtlil nested_struct_nopack_from_uhdm_nohier.il  
+proc
+flatten
+techmap
+opt -full
+write_rtlil uhdm_opt.il
