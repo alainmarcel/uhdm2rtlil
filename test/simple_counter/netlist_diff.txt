@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-11 21:39:45.304073101 -0700
-+++ uhdm_synth_clean.tmp	2025-08-11 21:39:45.300073646 -0700
+--- verilog_synth_clean.tmp	2025-08-15 14:49:38.442311981 -0700
++++ uhdm_synth_clean.tmp	2025-08-15 14:49:38.442311981 -0700
 @@ -11,10 +11,10 @@
  wire _06_;
  wire _07_;
@@ -13,8 +13,11 @@
  wire [7:0] _09_;
  (* src = "dut.sv:3.18-3.21" *)
  input clk;
-@@ -106,15 +106,7 @@
+@@ -104,70 +104,78 @@
+ .B(count[7]),
+ .Y(_09_[7])
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[6]  /* _26_ */ (
@@ -30,8 +33,9 @@
  .C(clk),
  .D(_09_[7]),
  .Q(count[7]),
-@@ -122,7 +114,7 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[0]  /* _28_ */ (
@@ -39,8 +43,9 @@
  .C(clk),
  .D(_08_[0]),
  .Q(count[0]),
-@@ -130,7 +122,7 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[1]  /* _29_ */ (
@@ -48,8 +53,9 @@
  .C(clk),
  .D(_09_[1]),
  .Q(count[1]),
-@@ -138,7 +130,7 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[2]  /* _30_ */ (
@@ -57,8 +63,9 @@
  .C(clk),
  .D(_09_[2]),
  .Q(count[2]),
-@@ -146,7 +138,7 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[3]  /* _31_ */ (
@@ -66,8 +73,9 @@
  .C(clk),
  .D(_09_[3]),
  .Q(count[3]),
-@@ -154,7 +146,7 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[4]  /* _32_ */ (
@@ -75,8 +83,9 @@
  .C(clk),
  .D(_09_[4]),
  .Q(count[4]),
-@@ -162,12 +154,20 @@
+ .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
 -\$_DFF_PN0_  \count_reg[5]  /* _33_ */ (
@@ -86,6 +95,7 @@
  .Q(count[5]),
  .R(rst_n)
  );
++(* \"has_async_reset"  = 32'd1 *)
 +(* \always_ff  = 32'd1 *)
 +(* src = "dut.sv:8.5-14.8" *)
 +\$_DFF_PN0_  \count_reg[6]  /* _33_ */ (

@@ -2,8 +2,7 @@
 autoidx 3
 attribute \src "dut.sv:2.1-16.10"
 module \simple_counter
-  attribute \src "dut.sv:8.5-14.8"
-  wire width 8 $0\count[7:0]
+  wire width 8 $0\count
   wire width 8 $auto$rtlil.cc:3017:Add$2
   attribute \src "dut.sv:9.13-9.19"
   wire $logic_not$dut.sv:9.13-9.19$1_Y
@@ -31,22 +30,23 @@ module \simple_counter
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:9.13-9.19$1_Y
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:8.5-14.8"
   process $proc$dut.sv:8$1
-    assign $0\count[7:0] \count
-    attribute \src "dut.sv:9.9-13.12"
+    assign $0\count \count
+    attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:9.13-9.19$1_Y
-      attribute \src "dut.sv:9.13-9.19"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\count[7:0] 8'00000000
-      attribute \src "dut.sv:11.18-13.12"
+        assign $0\count 8'00000000
+      attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\count[7:0] $auto$rtlil.cc:3017:Add$2
+        assign $0\count $auto$rtlil.cc:3017:Add$2
     end
     sync posedge \clk
-      update \count $0\count[7:0]
+      update \count $0\count
     sync negedge \rst_n
-      update \count $0\count[7:0]
+      update \count $0\count
   end
 end

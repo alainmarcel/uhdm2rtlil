@@ -1,0 +1,446 @@
+--- verilog_synth_clean.tmp	2025-08-15 14:49:40.122317278 -0700
++++ uhdm_synth_clean.tmp	2025-08-15 14:49:40.118317265 -0700
+@@ -1106,197 +1106,197 @@
+ .B(_152_),
+ .Y(_007_)
+ );
+-\$_DFFE_PP_  \memory_reg[6][0]  /* _313_ */ (
++\$_DFFE_PP_  \memory_reg[3][0]  /* _313_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_013_),
+-.Q(\memory[6] [0])
++.E(_010_),
++.Q(\memory[3] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[6][1]  /* _314_ */ (
++\$_DFFE_PP_  \memory_reg[3][1]  /* _314_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_013_),
+-.Q(\memory[6] [1])
++.E(_010_),
++.Q(\memory[3] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[6][2]  /* _315_ */ (
++\$_DFFE_PP_  \memory_reg[3][2]  /* _315_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_013_),
+-.Q(\memory[6] [2])
++.E(_010_),
++.Q(\memory[3] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[6][3]  /* _316_ */ (
++\$_DFFE_PP_  \memory_reg[3][3]  /* _316_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_013_),
+-.Q(\memory[6] [3])
++.E(_010_),
++.Q(\memory[3] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[6][4]  /* _317_ */ (
++\$_DFFE_PP_  \memory_reg[3][4]  /* _317_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_013_),
+-.Q(\memory[6] [4])
++.E(_010_),
++.Q(\memory[3] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[6][5]  /* _318_ */ (
++\$_DFFE_PP_  \memory_reg[3][5]  /* _318_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_013_),
+-.Q(\memory[6] [5])
++.E(_010_),
++.Q(\memory[3] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[6][6]  /* _319_ */ (
++\$_DFFE_PP_  \memory_reg[3][6]  /* _319_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_013_),
+-.Q(\memory[6] [6])
++.E(_010_),
++.Q(\memory[3] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[6][7]  /* _320_ */ (
++\$_DFFE_PP_  \memory_reg[3][7]  /* _320_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_013_),
+-.Q(\memory[6] [7])
++.E(_010_),
++.Q(\memory[3] [7])
+ );
+-\$_DFFE_PP_  \memory_reg[7][0]  /* _321_ */ (
++\$_DFFE_PP_  \memory_reg[2][0]  /* _321_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_014_),
+-.Q(\memory[7] [0])
++.E(_009_),
++.Q(\memory[2] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[7][1]  /* _322_ */ (
++\$_DFFE_PP_  \memory_reg[2][1]  /* _322_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_014_),
+-.Q(\memory[7] [1])
++.E(_009_),
++.Q(\memory[2] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[7][2]  /* _323_ */ (
++\$_DFFE_PP_  \memory_reg[2][2]  /* _323_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_014_),
+-.Q(\memory[7] [2])
++.E(_009_),
++.Q(\memory[2] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[7][3]  /* _324_ */ (
++\$_DFFE_PP_  \memory_reg[2][3]  /* _324_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_014_),
+-.Q(\memory[7] [3])
++.E(_009_),
++.Q(\memory[2] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[7][4]  /* _325_ */ (
++\$_DFFE_PP_  \memory_reg[2][4]  /* _325_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_014_),
+-.Q(\memory[7] [4])
++.E(_009_),
++.Q(\memory[2] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[7][5]  /* _326_ */ (
++\$_DFFE_PP_  \memory_reg[2][5]  /* _326_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_014_),
+-.Q(\memory[7] [5])
++.E(_009_),
++.Q(\memory[2] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[7][6]  /* _327_ */ (
++\$_DFFE_PP_  \memory_reg[2][6]  /* _327_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_014_),
+-.Q(\memory[7] [6])
++.E(_009_),
++.Q(\memory[2] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[7][7]  /* _328_ */ (
++\$_DFFE_PP_  \memory_reg[2][7]  /* _328_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_014_),
+-.Q(\memory[7] [7])
++.E(_009_),
++.Q(\memory[2] [7])
+ );
+-\$_DFFE_PP_  \memory_reg[2][0]  /* _329_ */ (
++\$_DFFE_PP_  \memory_reg[1][0]  /* _329_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_009_),
+-.Q(\memory[2] [0])
++.E(_008_),
++.Q(\memory[1] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[2][1]  /* _330_ */ (
++\$_DFFE_PP_  \memory_reg[1][1]  /* _330_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_009_),
+-.Q(\memory[2] [1])
++.E(_008_),
++.Q(\memory[1] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[2][2]  /* _331_ */ (
++\$_DFFE_PP_  \memory_reg[1][2]  /* _331_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_009_),
+-.Q(\memory[2] [2])
++.E(_008_),
++.Q(\memory[1] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[2][3]  /* _332_ */ (
++\$_DFFE_PP_  \memory_reg[1][3]  /* _332_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_009_),
+-.Q(\memory[2] [3])
++.E(_008_),
++.Q(\memory[1] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[2][4]  /* _333_ */ (
++\$_DFFE_PP_  \memory_reg[1][4]  /* _333_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_009_),
+-.Q(\memory[2] [4])
++.E(_008_),
++.Q(\memory[1] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[2][5]  /* _334_ */ (
++\$_DFFE_PP_  \memory_reg[1][5]  /* _334_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_009_),
+-.Q(\memory[2] [5])
++.E(_008_),
++.Q(\memory[1] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[2][6]  /* _335_ */ (
++\$_DFFE_PP_  \memory_reg[1][6]  /* _335_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_009_),
+-.Q(\memory[2] [6])
++.E(_008_),
++.Q(\memory[1] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[2][7]  /* _336_ */ (
++\$_DFFE_PP_  \memory_reg[1][7]  /* _336_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_009_),
+-.Q(\memory[2] [7])
++.E(_008_),
++.Q(\memory[1] [7])
+ );
+-\$_DFFE_PP_  \memory_reg[3][0]  /* _337_ */ (
++\$_DFFE_PP_  \memory_reg[15][0]  /* _337_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_010_),
+-.Q(\memory[3] [0])
++.E(_007_),
++.Q(\memory[15] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[3][1]  /* _338_ */ (
++\$_DFFE_PP_  \memory_reg[15][1]  /* _338_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_010_),
+-.Q(\memory[3] [1])
++.E(_007_),
++.Q(\memory[15] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[3][2]  /* _339_ */ (
++\$_DFFE_PP_  \memory_reg[15][2]  /* _339_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_010_),
+-.Q(\memory[3] [2])
++.E(_007_),
++.Q(\memory[15] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[3][3]  /* _340_ */ (
++\$_DFFE_PP_  \memory_reg[15][3]  /* _340_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_010_),
+-.Q(\memory[3] [3])
++.E(_007_),
++.Q(\memory[15] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[3][4]  /* _341_ */ (
++\$_DFFE_PP_  \memory_reg[15][4]  /* _341_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_010_),
+-.Q(\memory[3] [4])
++.E(_007_),
++.Q(\memory[15] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[3][5]  /* _342_ */ (
++\$_DFFE_PP_  \memory_reg[15][5]  /* _342_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_010_),
+-.Q(\memory[3] [5])
++.E(_007_),
++.Q(\memory[15] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[3][6]  /* _343_ */ (
++\$_DFFE_PP_  \memory_reg[15][6]  /* _343_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_010_),
+-.Q(\memory[3] [6])
++.E(_007_),
++.Q(\memory[15] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[3][7]  /* _344_ */ (
++\$_DFFE_PP_  \memory_reg[15][7]  /* _344_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_010_),
+-.Q(\memory[3] [7])
++.E(_007_),
++.Q(\memory[15] [7])
+ );
+ \$_DFFE_PP_  \memory_reg[4][0]  /* _345_ */ (
+ .C(clk),
+@@ -1394,101 +1394,101 @@
+ .E(_012_),
+ .Q(\memory[5] [7])
+ );
+-\$_DFFE_PP_  \memory_reg[15][0]  /* _361_ */ (
++\$_DFFE_PP_  \memory_reg[6][0]  /* _361_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_007_),
+-.Q(\memory[15] [0])
++.E(_013_),
++.Q(\memory[6] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[15][1]  /* _362_ */ (
++\$_DFFE_PP_  \memory_reg[6][1]  /* _362_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_007_),
+-.Q(\memory[15] [1])
++.E(_013_),
++.Q(\memory[6] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[15][2]  /* _363_ */ (
++\$_DFFE_PP_  \memory_reg[6][2]  /* _363_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_007_),
+-.Q(\memory[15] [2])
++.E(_013_),
++.Q(\memory[6] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[15][3]  /* _364_ */ (
++\$_DFFE_PP_  \memory_reg[6][3]  /* _364_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_007_),
+-.Q(\memory[15] [3])
++.E(_013_),
++.Q(\memory[6] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[15][4]  /* _365_ */ (
++\$_DFFE_PP_  \memory_reg[6][4]  /* _365_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_007_),
+-.Q(\memory[15] [4])
++.E(_013_),
++.Q(\memory[6] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[15][5]  /* _366_ */ (
++\$_DFFE_PP_  \memory_reg[6][5]  /* _366_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_007_),
+-.Q(\memory[15] [5])
++.E(_013_),
++.Q(\memory[6] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[15][6]  /* _367_ */ (
++\$_DFFE_PP_  \memory_reg[6][6]  /* _367_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_007_),
+-.Q(\memory[15] [6])
++.E(_013_),
++.Q(\memory[6] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[15][7]  /* _368_ */ (
++\$_DFFE_PP_  \memory_reg[6][7]  /* _368_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_007_),
+-.Q(\memory[15] [7])
++.E(_013_),
++.Q(\memory[6] [7])
+ );
+-\$_DFFE_PP_  \memory_reg[1][0]  /* _369_ */ (
++\$_DFFE_PP_  \memory_reg[7][0]  /* _369_ */ (
+ .C(clk),
+ .D(data_in[0]),
+-.E(_008_),
+-.Q(\memory[1] [0])
++.E(_014_),
++.Q(\memory[7] [0])
+ );
+-\$_DFFE_PP_  \memory_reg[1][1]  /* _370_ */ (
++\$_DFFE_PP_  \memory_reg[7][1]  /* _370_ */ (
+ .C(clk),
+ .D(data_in[1]),
+-.E(_008_),
+-.Q(\memory[1] [1])
++.E(_014_),
++.Q(\memory[7] [1])
+ );
+-\$_DFFE_PP_  \memory_reg[1][2]  /* _371_ */ (
++\$_DFFE_PP_  \memory_reg[7][2]  /* _371_ */ (
+ .C(clk),
+ .D(data_in[2]),
+-.E(_008_),
+-.Q(\memory[1] [2])
++.E(_014_),
++.Q(\memory[7] [2])
+ );
+-\$_DFFE_PP_  \memory_reg[1][3]  /* _372_ */ (
++\$_DFFE_PP_  \memory_reg[7][3]  /* _372_ */ (
+ .C(clk),
+ .D(data_in[3]),
+-.E(_008_),
+-.Q(\memory[1] [3])
++.E(_014_),
++.Q(\memory[7] [3])
+ );
+-\$_DFFE_PP_  \memory_reg[1][4]  /* _373_ */ (
++\$_DFFE_PP_  \memory_reg[7][4]  /* _373_ */ (
+ .C(clk),
+ .D(data_in[4]),
+-.E(_008_),
+-.Q(\memory[1] [4])
++.E(_014_),
++.Q(\memory[7] [4])
+ );
+-\$_DFFE_PP_  \memory_reg[1][5]  /* _374_ */ (
++\$_DFFE_PP_  \memory_reg[7][5]  /* _374_ */ (
+ .C(clk),
+ .D(data_in[5]),
+-.E(_008_),
+-.Q(\memory[1] [5])
++.E(_014_),
++.Q(\memory[7] [5])
+ );
+-\$_DFFE_PP_  \memory_reg[1][6]  /* _375_ */ (
++\$_DFFE_PP_  \memory_reg[7][6]  /* _375_ */ (
+ .C(clk),
+ .D(data_in[6]),
+-.E(_008_),
+-.Q(\memory[1] [6])
++.E(_014_),
++.Q(\memory[7] [6])
+ );
+-\$_DFFE_PP_  \memory_reg[1][7]  /* _376_ */ (
++\$_DFFE_PP_  \memory_reg[7][7]  /* _376_ */ (
+ .C(clk),
+ .D(data_in[7]),
+-.E(_008_),
+-.Q(\memory[1] [7])
++.E(_014_),
++.Q(\memory[7] [7])
+ );
+ \$_DFFE_PP_  \memory_reg[8][0]  /* _377_ */ (
+ .C(clk),

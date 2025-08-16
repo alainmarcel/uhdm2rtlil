@@ -311,6 +311,34 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     expand_interfaces();
     
     log("UHDM: Finished import_design\n");
+    log_flush();
+    
+    // Debug: Log all created wires and memories
+    log("UHDM: Final debug - listing all created objects\n");
+    log_flush();
+    for (auto mod : design->modules()) {
+        log("  Module: %s\n", log_id(mod->name));
+        log_flush();
+        for (auto wire : mod->wires()) {
+            log("    Wire: %s (width=%d) [raw name: %s]\n", log_id(wire->name), wire->width, wire->name.c_str());
+            log_flush();
+        }
+        for (auto &mem_pair : mod->memories) {
+            log("    Memory: %s (width=%d, size=%d)\n", log_id(mem_pair.first), 
+                mem_pair.second->width, mem_pair.second->size);
+            log_flush();
+        }
+        for (auto cell : mod->cells()) {
+            log("    Cell: %s (type=%s) [raw name: %s]\n", log_id(cell->name), log_id(cell->type), cell->name.c_str());
+            log_flush();
+        }
+        for (auto &proc_pair : mod->processes) {
+            log("    Process: %s\n", log_id(proc_pair.first));
+            log_flush();
+        }
+    }
+    log("UHDM: End of debug listing\n");
+    log_flush();
 }
 
 // Recursively import module hierarchy starting from a module instance
@@ -975,20 +1003,46 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     if (uhdm_module->Variables()) {
         log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
         for (auto var : *uhdm_module->Variables()) {
-            std::string var_name = std::string(var->VpiName());
-            int width = get_width(var, uhdm_module);
-            log("UHDM: Importing variable '%s' (width=%d)\n", var_name.c_str(), width);
-            
-            // Check if this wire already exists (might have been created as a port)
-            RTLIL::IdString wire_id = RTLIL::escape_id(var_name);
-            if (!module->wire(wire_id)) {
-                RTLIL::Wire* wire = module->addWire(wire_id, width);
-                wire_map[var] = wire;
-                name_map[var_name] = wire;
-                add_src_attribute(wire->attributes, var);
-                log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
+            // Check if this is an array_var (memory array)
+            if (var->UhdmType() == uhdmarray_var) {
+                auto array_var = static_cast<const UHDM::array_var*>(var);
+                std::string array_name = std::string(array_var->VpiName());
+                log("UHDM: Found array_var: '%s'\n", array_name.c_str());
+                
+                // Check if it should be imported as memory
+                if (is_memory_array(array_var)) {
+                    log("UHDM: Array_var '%s' detected as memory array\n", array_name.c_str());
+                    create_memory_from_array(array_var);
+                } else {
+                    // Otherwise, handle as a regular array of wires
+                    log("UHDM: Array_var '%s' does not have packed dimensions, treating as regular variable\n", array_name.c_str());
+                    // For now, just create a single wire with the array name
+                    RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
+                    if (!module->wire(wire_id)) {
+                        RTLIL::Wire* wire = module->addWire(wire_id, 1);
+                        wire_map[var] = wire;
+                        name_map[array_name] = wire;
+                        add_src_attribute(wire->attributes, var);
+                        log("UHDM: Created wire '%s' for array_var\n", wire->name.c_str());
+                    }
+                }
             } else {
-                log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
+                // Regular variable
+                std::string var_name = std::string(var->VpiName());
+                int width = get_width(var, uhdm_module);
+                log("UHDM: Importing variable '%s' (width=%d)\n", var_name.c_str(), width);
+                
+                // Check if this wire already exists (might have been created as a port)
+                RTLIL::IdString wire_id = RTLIL::escape_id(var_name);
+                if (!module->wire(wire_id)) {
+                    RTLIL::Wire* wire = module->addWire(wire_id, width);
+                    wire_map[var] = wire;
+                    name_map[var_name] = wire;
+                    add_src_attribute(wire->attributes, var);
+                    log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
+                } else {
+                    log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
+                }
             }
         }
     }
@@ -996,16 +1050,39 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import nets
     if (uhdm_module->Nets()) {
         log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());
+        log_flush();
+        int net_index = 0;
         for (auto net : *uhdm_module->Nets()) {
             std::string net_name = std::string(net->VpiName());
-            log("UHDM: About to import net: '%s'\n", net_name.c_str());
+            log("UHDM: About to import net %d/%d: '%s'\n", net_index+1, (int)uhdm_module->Nets()->size(), net_name.c_str());
+            log_flush();
             import_net(net, uhdm_module);
+            net_index++;
         }
+        log("UHDM: Finished importing all nets\n");
+        log_flush();
     }
     
+    log("UHDM: Checking for array nets...\n");
+    log_flush();
+    
     // Import array nets (memory arrays)
+    try {
+        if (uhdm_module->Array_nets()) {
+            log("UHDM: Array_nets() is not null\n");
+            log_flush();
+            log("UHDM: Found %d array nets to import\n", (int)uhdm_module->Array_nets()->size());
+            log_flush();
+        } else {
+            log("UHDM: No array nets found (Array_nets() is null)\n");
+            log_flush();
+        }
+    } catch (...) {
+        log("UHDM: Exception while checking Array_nets()\n");
+        log_flush();
+    }
+    
     if (uhdm_module->Array_nets()) {
-        log("UHDM: Found %d array nets to import\n", (int)uhdm_module->Array_nets()->size());
         for (auto array : *uhdm_module->Array_nets()) {
             std::string array_name = std::string(array->VpiName());
             log("UHDM: About to import array net: '%s'\n", array_name.c_str());
@@ -1023,30 +1100,50 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     }
     
     // Import interface instances
-    log("UHDM: About to import interface instances for module %s\n", module->name.c_str());
+    if (module) {
+        log("UHDM: About to import interface instances for module %s\n", log_id(module->name));
+        log_flush();
+    } else {
+        log("UHDM: ERROR - module is null!\n");
+        log_flush();
+        return;
+    }
     import_interface_instances(uhdm_module);
+    log("UHDM: Finished importing interface instances\n");
+    log_flush();
     
     // Import generate scopes (generate blocks)
-    log("UHDM: About to import generate scopes for module %s\n", module->name.c_str());
+    log("UHDM: About to import generate scopes for module %s\n", log_id(module->name));
+    log_flush();
     import_generate_scopes(uhdm_module);
+    log("UHDM: Finished importing generate scopes\n");
+    log_flush();
     
     // Import memory objects using analysis pass
     analyze_and_generate_memories(uhdm_module);
     
     // Import processes (always blocks) - re-enabled with debugging
+    log("UHDM: Checking for processes...\n");
+    log_flush();
     if (uhdm_module->Process()) {
         log("UHDM: Found %d processes to import\n", (int)uhdm_module->Process()->size());
+        log_flush();
         for (auto process : *uhdm_module->Process()) {
             log("UHDM: About to import process\n");
+            log_flush();
             try {
                 import_process(process);
                 log("UHDM: Successfully imported process\n");
+                log_flush();
             } catch (const std::exception& e) {
                 log_error("UHDM: Exception in process import: %s\n", e.what());
             } catch (...) {
                 log_error("UHDM: Unknown exception in process import\n");
             }
         }
+    } else {
+        log("UHDM: No processes found\n");
+        log_flush();
     }
     
     // Import continuous assignments

@@ -18,6 +18,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
   (* src = "dut.sv:4.18-4.23" *)
   input rst_n;
   wire rst_n;
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[0]  /* _0_ */ (
@@ -27,6 +28,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[0]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[1]  /* _1_ */ (
@@ -36,6 +38,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[1]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[2]  /* _2_ */ (
@@ -45,6 +48,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[2]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[3]  /* _3_ */ (
@@ -54,6 +58,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[3]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[4]  /* _4_ */ (
@@ -63,6 +68,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[4]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[5]  /* _5_ */ (
@@ -72,6 +78,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[5]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[6]  /* _6_ */ (
@@ -81,6 +88,7 @@ module simple_always_ff(clk, rst_n, mode, extra_sum, extra_result);
     .Q(extra_result[6]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.5-16.8" *)
   \$_DFFE_PN0P_  \extra_result_reg[7]  /* _7_ */ (

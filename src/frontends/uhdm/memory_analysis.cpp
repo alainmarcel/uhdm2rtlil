@@ -549,6 +549,93 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
             array_name.c_str(), width, size, start_offset);
 }
 
+// Create RTLIL memory object from UHDM array_var
+void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
+    if (!uhdm_array) return;
+    
+    std::string array_name = std::string(uhdm_array->VpiName());
+    if (mode_debug)
+        log("  Creating RTLIL memory from array_var: %s\n", array_name.c_str());
+    
+    // Extract memory dimensions from the array_var structure
+    int width = 1; // Default bit width
+    int size = 1;  // Default array size
+    int start_offset = 0;
+    
+    // Get unpacked dimension (array size) from array_var ranges
+    if (uhdm_array->Ranges() && !uhdm_array->Ranges()->empty()) {
+        auto range = (*uhdm_array->Ranges())[0];
+        if (range->Left_expr() && range->Right_expr()) {
+            RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+            
+            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                int left = left_spec.as_int();
+                int right = right_spec.as_int();
+                size = std::abs(left - right) + 1;
+                start_offset = std::min(left, right);
+                
+                if (mode_debug)
+                    log("    Array range: [%d:%d], size=%d\n", left, right, size);
+            }
+        }
+    }
+    
+    // Get packed dimension (bit width) from underlying var's typespec
+    // The underlying logic_var is accessed through Reg()
+    const UHDM::VectorOfvariables * underlying_var = uhdm_array->Variables();
+    
+    if (underlying_var && !underlying_var->empty()) {
+        
+        if (underlying_var->at(0)->Typespec()) {
+            auto ref_typespec = underlying_var->at(0)->Typespec();
+            const UHDM::typespec* typespec = nullptr;
+            
+            if (ref_typespec && ref_typespec->Actual_typespec()) {
+                typespec = ref_typespec->Actual_typespec();
+            }
+            
+            if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
+                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
+                    auto range = (*logic_typespec->Ranges())[0];
+                    if (range->Left_expr() && range->Right_expr()) {
+                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        
+                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                            int left = left_spec.as_int();
+                            int right = right_spec.as_int();
+                            width = std::abs(left - right) + 1;
+                            
+                            if (mode_debug)
+                                log("    Packed range: [%d:%d], width=%d\n", left, right, width);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Create RTLIL memory object
+    RTLIL::IdString mem_id = RTLIL::escape_id(array_name);
+    RTLIL::Memory *memory = new RTLIL::Memory;
+    memory->name = mem_id;
+    memory->width = width;
+    memory->size = size;
+    memory->start_offset = start_offset;
+    
+    // Add source attribute
+    add_src_attribute(memory->attributes, uhdm_array);
+    
+    // Add memory to module
+    module->memories[mem_id] = memory;
+    
+    if (mode_debug)
+        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n", 
+            array_name.c_str(), width, size, start_offset);
+}
+
 // Main entry point for memory analysis
 void UhdmImporter::analyze_and_generate_memories(const module_inst* uhdm_module) {
     UhdmMemoryAnalyzer analyzer(this);

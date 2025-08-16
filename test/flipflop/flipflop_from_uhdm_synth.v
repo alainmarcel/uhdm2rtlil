@@ -15,6 +15,7 @@ module flipflop(clk, rst_n, d, q);
   (* src = "dut.sv:4.18-4.23" *)
   input rst_n;
   wire rst_n;
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:9.5-15.8" *)
   \$_DFF_PN0_  q_reg /* _0_ */ (

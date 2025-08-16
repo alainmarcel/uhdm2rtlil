@@ -202,6 +202,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     // Skip if already created as port or net
     if (name_map.count(netname)) {
         log("UHDM: Net '%s' already exists in name_map, skipping\n", netname.c_str());
+        log_flush();
         return;
     }
     
@@ -209,6 +210,14 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     RTLIL::IdString wire_id = RTLIL::escape_id(netname);
     if (module->wire(wire_id)) {
         log("UHDM: Wire '%s' already exists in module, skipping net import\n", wire_id.c_str());
+        log_flush();
+        return;
+    }
+    
+    // Also skip if this is a memory that was already created
+    if (module->memories.count(wire_id) > 0) {
+        log("UHDM: Net '%s' already exists as memory, skipping net import\n", netname.c_str());
+        log_flush();
         return;
     }
     
