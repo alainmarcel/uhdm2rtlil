@@ -11,6 +11,7 @@ module \struct_array
   attribute \src "dut.sv:10.24-10.32"
   wire width 8 output 3 \data_out
   attribute \src "dut.sv:14.14-14.20"
+  attribute \wiretype "\\packet_t"
   wire width 12 \packet
   attribute \src "dut.sv:9.24-9.30"
   wire width 4 input 2 \tag_in
@@ -46,8 +47,8 @@ module \struct_array
   attribute \always_comb 1
   attribute \src "dut.sv:23.5-26.8"
   process $proc$dut.sv:23$1
-    assign \data_out $auto$rtlil.cc:3017:Add$2
-    assign \tag_out $auto$rtlil.cc:3006:Xor$4
+    assign $0\data_out $auto$rtlil.cc:3017:Add$2
+    assign $0\tag_out $auto$rtlil.cc:3006:Xor$4
     sync always
       update \data_out $0\data_out
       update \tag_out $0\tag_out

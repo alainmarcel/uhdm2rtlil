@@ -1,0 +1,12 @@
+# Test just the combinational logic
+read_rtlil nested_struct_nopack_from_verilog_nohier.il
+rename nested_struct_nopack verilog_version
+proc
+eval -set in_data 62'h3FFFFFFFFFFFFFFF
+
+read_rtlil nested_struct_nopack_from_uhdm_nohier.il  
+rename nested_struct_nopack uhdm_version
+proc
+eval -set in_data 62'h3FFFFFFFFFFFFFFF
+
+eval -table verilog_version uhdm_version processed_data

@@ -154,9 +154,6 @@ module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire $auto$rtlil.cc:3004:And$2
   wire $auto$rtlil.cc:3004:And$4
-  wire inout 4 \bus.a
-  wire inout 3 \bus.b
-  wire inout 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   cell $and $auto$expression.cpp:292:import_operation$1
@@ -165,8 +162,8 @@ module \submodule
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \bus.a
-    connect \B \bus.b
+    connect \A 1'x
+    connect \B 1'x
     connect \Y $auto$rtlil.cc:3004:And$2
   end
   cell $and $auto$expression.cpp:292:import_operation$3
@@ -176,7 +173,7 @@ module \submodule
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3004:And$2
-    connect \B \bus.c
+    connect \B 1'x
     connect \Y $auto$rtlil.cc:3004:And$4
   end
   connect \out { $auto$rtlil.cc:3004:And$4 7'0000000 }

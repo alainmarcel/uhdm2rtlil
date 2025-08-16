@@ -1,20 +1,6 @@
---- verilog_synth_clean.tmp	2025-08-15 22:11:05.879235889 -0700
-+++ uhdm_synth_clean.tmp	2025-08-15 22:11:05.875235966 -0700
-@@ -21,13 +21,10 @@
- input [15:0] b3;
- wire [15:0] b3;
- (* src = "dut.sv:40.22-40.26" *)
--(* wiretype = "\\data_bus_8bit_t" *)
- wire [23:0] bus1;
- (* src = "dut.sv:41.22-41.26" *)
--(* wiretype = "\\data_bus_8bit_t" *)
- wire [23:0] bus2;
- (* src = "dut.sv:42.22-42.26" *)
--(* wiretype = "\\data_bus_16bit_t" *)
- wire [47:0] bus3;
- (* src = "dut.sv:31.33-31.35" *)
- input [7:0] c1;
-@@ -47,20 +44,14 @@
+--- verilog_synth_clean.tmp	2025-08-16 09:55:49.421270266 -0700
++++ uhdm_synth_clean.tmp	2025-08-16 09:55:49.421270266 -0700
+@@ -47,20 +47,14 @@
  (* src = "dut.sv:36.25-36.29" *)
  output [15:0] out3;
  wire [15:0] out3;
@@ -35,7 +21,7 @@
  submodule_16bit inst3 (
  .bus({ a3, b3, c3 }),
  .out(out3)
-@@ -70,7 +61,7 @@
+@@ -70,7 +64,7 @@
  assign bus3 = { a3, b3, c3 };
  endmodule
  (* src = "dut.sv:22.1-28.10" *)
@@ -44,7 +30,7 @@
  wire _00_;
  wire _01_;
  wire _02_;
-@@ -88,7 +79,6 @@
+@@ -88,7 +82,6 @@
  wire _14_;
  wire _15_;
  (* src = "dut.sv:23.29-23.32" *)
@@ -52,7 +38,7 @@
  input [47:0] bus;
  wire [47:0] bus;
  (* src = "dut.sv:24.25-24.28" *)
-@@ -256,7 +246,7 @@
+@@ -256,7 +249,7 @@
  );
  endmodule
  (* src = "dut.sv:14.1-20.10" *)
@@ -61,7 +47,7 @@
  wire _00_;
  wire _01_;
  wire _02_;
-@@ -266,90 +256,89 @@
+@@ -266,90 +259,89 @@
  wire _06_;
  wire _07_;
  (* src = "dut.sv:15.28-15.31" *)

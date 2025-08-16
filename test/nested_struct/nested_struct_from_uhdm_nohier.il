@@ -15,16 +15,11 @@ module \nested_struct
   wire input 3 \clk
   attribute \src "dut.sv:24.38-24.45"
   wire width 62 input 1 \in_data
-  wire \in_data.base.addr
-  wire \in_data.base.data
-  wire \in_data.base.valid
   attribute \src "dut.sv:25.38-25.46"
   wire width 62 output 2 \out_data
   attribute \src "dut.sv:33.21-33.35"
+  attribute \wiretype "\\main_pkg::nested_struct_t"
   wire width 62 \processed_data
-  wire \processed_data.base.addr
-  wire \processed_data.base.data
-  wire \processed_data.base.valid
   attribute \src "dut.sv:27.18-27.21"
   wire input 4 \rst
   cell $and $auto$expression.cpp:292:import_operation$11
@@ -33,7 +28,7 @@ module \nested_struct
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \in_data.base.valid
+    connect \A 1'x
     connect \B \in_data [0]
     connect \Y $auto$rtlil.cc:3004:And$12
   end
@@ -49,11 +44,11 @@ module \nested_struct
   end
   cell $xor $auto$expression.cpp:300:import_operation$9
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A \in_data.base.data
+    connect \A 32'x
     connect \B 32'11011110101011011011111011101111
     connect \Y $auto$rtlil.cc:3006:Xor$10
   end
@@ -69,11 +64,11 @@ module \nested_struct
   end
   cell $add $auto$expression.cpp:308:import_operation$7
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \in_data.base.addr
+    connect \A 8'x
     connect \B 8'00000001
     connect \Y $auto$rtlil.cc:3017:Add$8
   end
@@ -108,13 +103,13 @@ module \nested_struct
   attribute \always_comb 1
   attribute \src "dut.sv:45.5-57.8"
   process $proc$dut.sv:45$1
-    assign \processed_data \in_data
-    assign \processed_data.base.addr $auto$rtlil.cc:3017:Add$8 [0]
-    assign \processed_data.base.data $auto$rtlil.cc:3006:Xor$10 [0]
-    assign \processed_data.base.valid $auto$rtlil.cc:3004:And$12
-    assign \processed_data [20:5] $auto$rtlil.cc:3017:Add$14
-    assign \processed_data [4:1] $auto$rtlil.cc:3005:Or$16
-    assign \processed_data [0] \in_data.base.valid
+    assign $0\processed_data \in_data
+    assign $0\processed_data [61:54] $auto$rtlil.cc:3017:Add$8
+    assign $0\processed_data [53:22] $auto$rtlil.cc:3006:Xor$10
+    assign $0\processed_data [21] $auto$rtlil.cc:3004:And$12
+    assign $0\processed_data [20:5] $auto$rtlil.cc:3017:Add$14
+    assign $0\processed_data [4:1] $auto$rtlil.cc:3005:Or$16
+    assign $0\processed_data [0] 1'x
     sync always
       update \processed_data $0\processed_data
   end

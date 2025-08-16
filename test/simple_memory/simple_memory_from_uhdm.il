@@ -55,7 +55,7 @@ module \simple_memory
     connect \A \rst
     connect \Y $auto$rtlil.cc:2957:Not$4
   end
-  cell $and $auto$process.cpp:1547:import_if_stmt_sync$5
+  cell $and $auto$process.cpp:1649:import_if_stmt_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

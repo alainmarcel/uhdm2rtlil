@@ -3,237 +3,237 @@
 (* top =  1  *)
 (* src = "dut.sv:23.1-59.10" *)
 module nested_struct(in_data, out_data, clk, rst);
-  wire _000_;
-  wire _001_;
-  wire _002_;
-  wire _003_;
-  wire _004_;
-  wire _005_;
-  wire _006_;
-  wire _007_;
-  wire _008_;
-  wire _009_;
-  wire _010_;
-  wire _011_;
-  wire _012_;
-  wire _013_;
-  wire _014_;
-  wire _015_;
-  wire _016_;
-  wire _017_;
-  wire _018_;
-  wire _019_;
-  wire _020_;
-  wire _021_;
-  wire _022_;
-  wire _023_;
+  wire _00_;
+  wire _01_;
+  wire _02_;
+  wire _03_;
+  wire _04_;
+  wire _05_;
+  wire _06_;
+  wire _07_;
+  wire _08_;
+  wire _09_;
+  wire _10_;
+  wire _11_;
+  wire _12_;
+  wire _13_;
+  wire _14_;
+  wire _15_;
+  wire _16_;
+  wire _17_;
+  wire _18_;
+  wire _19_;
+  wire _20_;
+  wire _21_;
+  wire _22_;
+  wire _23_;
   (* src = "dut.sv:26.18-26.21" *)
   input clk;
   wire clk;
   (* src = "dut.sv:24.38-24.45" *)
   input [61:0] in_data;
   wire [61:0] in_data;
-  wire \in_data.base.valid ;
   (* src = "dut.sv:25.38-25.46" *)
   output [61:0] out_data;
   wire [61:0] out_data;
   (* src = "dut.sv:33.21-33.35" *)
+  (* wiretype = "\\main_pkg::nested_struct_t" *)
   wire [61:0] processed_data;
   (* src = "dut.sv:27.18-27.21" *)
   input rst;
   wire rst;
-  \$_NOT_  _024_ (
+  \$_NOT_  _24_ (
     .A(in_data[7]),
     .Y(processed_data[7])
   );
-  \$_XOR_  _025_ (
+  \$_XOR_  _25_ (
     .A(in_data[8]),
     .B(in_data[7]),
     .Y(processed_data[8])
   );
-  \$_AND_  _026_ (
+  \$_AND_  _26_ (
     .A(in_data[8]),
     .B(in_data[7]),
-    .Y(_000_)
+    .Y(_00_)
   );
-  \$_XOR_  _027_ (
-    .A(_000_),
+  \$_XOR_  _27_ (
+    .A(_00_),
     .B(in_data[9]),
     .Y(processed_data[9])
   );
-  \$_NAND_  _028_ (
-    .A(_000_),
+  \$_NAND_  _28_ (
+    .A(_00_),
     .B(in_data[9]),
-    .Y(_001_)
+    .Y(_01_)
   );
-  \$_XOR_  _029_ (
-    .A(_001_),
+  \$_XOR_  _29_ (
+    .A(_01_),
     .B(in_data[10]),
     .Y(processed_data[10])
   );
-  \$_ORNOT_  _030_ (
+  \$_ORNOT_  _30_ (
     .A(in_data[10]),
     .B(in_data[9]),
-    .Y(_002_)
+    .Y(_02_)
   );
-  \$_ANDNOT_  _031_ (
-    .A(_000_),
-    .B(_002_),
-    .Y(_003_)
+  \$_ANDNOT_  _31_ (
+    .A(_00_),
+    .B(_02_),
+    .Y(_03_)
   );
-  \$_OR_  _032_ (
-    .A(_003_),
+  \$_OR_  _32_ (
+    .A(_03_),
     .B(in_data[10]),
-    .Y(_004_)
+    .Y(_04_)
   );
-  \$_XNOR_  _033_ (
-    .A(_004_),
+  \$_XNOR_  _33_ (
+    .A(_04_),
     .B(in_data[11]),
     .Y(processed_data[11])
   );
-  \$_OR_  _034_ (
-    .A(_004_),
+  \$_OR_  _34_ (
+    .A(_04_),
     .B(in_data[11]),
-    .Y(_005_)
+    .Y(_05_)
   );
-  \$_XOR_  _035_ (
-    .A(_005_),
+  \$_XOR_  _35_ (
+    .A(_05_),
     .B(in_data[12]),
     .Y(processed_data[12])
   );
-  \$_NAND_  _036_ (
+  \$_NAND_  _36_ (
     .A(in_data[12]),
     .B(in_data[11]),
-    .Y(_006_)
+    .Y(_06_)
   );
-  \$_ORNOT_  _037_ (
+  \$_ORNOT_  _37_ (
     .A(in_data[11]),
     .B(in_data[12]),
-    .Y(_007_)
+    .Y(_07_)
   );
-  \$_ANDNOT_  _038_ (
-    .A(_004_),
-    .B(_007_),
-    .Y(_008_)
+  \$_ANDNOT_  _38_ (
+    .A(_04_),
+    .B(_07_),
+    .Y(_08_)
   );
-  \$_ANDNOT_  _039_ (
-    .A(_006_),
-    .B(_008_),
-    .Y(_009_)
+  \$_ANDNOT_  _39_ (
+    .A(_06_),
+    .B(_08_),
+    .Y(_09_)
   );
-  \$_XNOR_  _040_ (
-    .A(_009_),
+  \$_XNOR_  _40_ (
+    .A(_09_),
     .B(in_data[13]),
     .Y(processed_data[13])
   );
-  \$_ANDNOT_  _041_ (
+  \$_ANDNOT_  _41_ (
     .A(in_data[13]),
-    .B(_009_),
-    .Y(_010_)
+    .B(_09_),
+    .Y(_10_)
   );
-  \$_XOR_  _042_ (
-    .A(_010_),
+  \$_XOR_  _42_ (
+    .A(_10_),
     .B(in_data[14]),
     .Y(processed_data[14])
   );
-  \$_NAND_  _043_ (
+  \$_NAND_  _43_ (
     .A(in_data[14]),
     .B(in_data[13]),
-    .Y(_011_)
+    .Y(_11_)
   );
-  \$_OR_  _044_ (
-    .A(_011_),
-    .B(_006_),
-    .Y(_012_)
+  \$_OR_  _44_ (
+    .A(_11_),
+    .B(_06_),
+    .Y(_12_)
   );
-  \$_OR_  _045_ (
-    .A(_011_),
-    .B(_007_),
-    .Y(_013_)
+  \$_OR_  _45_ (
+    .A(_11_),
+    .B(_07_),
+    .Y(_13_)
   );
-  \$_ANDNOT_  _046_ (
-    .A(_004_),
-    .B(_013_),
-    .Y(_014_)
+  \$_ANDNOT_  _46_ (
+    .A(_04_),
+    .B(_13_),
+    .Y(_14_)
   );
-  \$_ANDNOT_  _047_ (
-    .A(_012_),
-    .B(_014_),
-    .Y(_015_)
+  \$_ANDNOT_  _47_ (
+    .A(_12_),
+    .B(_14_),
+    .Y(_15_)
   );
-  \$_XNOR_  _048_ (
-    .A(_015_),
+  \$_XNOR_  _48_ (
+    .A(_15_),
     .B(in_data[15]),
     .Y(processed_data[15])
   );
-  \$_ANDNOT_  _049_ (
+  \$_ANDNOT_  _49_ (
     .A(in_data[15]),
-    .B(_015_),
-    .Y(_016_)
+    .B(_15_),
+    .Y(_16_)
   );
-  \$_XOR_  _050_ (
-    .A(_016_),
+  \$_XOR_  _50_ (
+    .A(_16_),
     .B(in_data[16]),
     .Y(processed_data[16])
   );
-  \$_NAND_  _051_ (
+  \$_NAND_  _51_ (
     .A(in_data[16]),
     .B(in_data[15]),
-    .Y(_017_)
+    .Y(_17_)
   );
-  \$_OR_  _052_ (
-    .A(_017_),
-    .B(_015_),
-    .Y(_018_)
+  \$_OR_  _52_ (
+    .A(_17_),
+    .B(_15_),
+    .Y(_18_)
   );
-  \$_XNOR_  _053_ (
-    .A(_018_),
+  \$_XNOR_  _53_ (
+    .A(_18_),
     .B(in_data[17]),
     .Y(processed_data[17])
   );
-  \$_ANDNOT_  _054_ (
+  \$_ANDNOT_  _54_ (
     .A(in_data[17]),
-    .B(_018_),
-    .Y(_019_)
+    .B(_18_),
+    .Y(_19_)
   );
-  \$_XOR_  _055_ (
-    .A(_019_),
+  \$_XOR_  _55_ (
+    .A(_19_),
     .B(in_data[18]),
     .Y(processed_data[18])
   );
-  \$_NAND_  _056_ (
+  \$_NAND_  _56_ (
     .A(in_data[18]),
     .B(in_data[17]),
-    .Y(_020_)
+    .Y(_20_)
   );
-  \$_OR_  _057_ (
-    .A(_020_),
-    .B(_017_),
-    .Y(_021_)
+  \$_OR_  _57_ (
+    .A(_20_),
+    .B(_17_),
+    .Y(_21_)
   );
-  \$_OR_  _058_ (
-    .A(_021_),
-    .B(_015_),
-    .Y(_022_)
+  \$_OR_  _58_ (
+    .A(_21_),
+    .B(_15_),
+    .Y(_22_)
   );
-  \$_XNOR_  _059_ (
-    .A(_022_),
+  \$_XNOR_  _59_ (
+    .A(_22_),
     .B(in_data[19]),
     .Y(processed_data[19])
   );
-  \$_ANDNOT_  _060_ (
+  \$_ANDNOT_  _60_ (
     .A(in_data[19]),
-    .B(_022_),
-    .Y(_023_)
+    .B(_22_),
+    .Y(_23_)
   );
-  \$_XOR_  _061_ (
-    .A(_023_),
+  \$_XOR_  _61_ (
+    .A(_23_),
     .B(in_data[20]),
     .Y(processed_data[20])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[1]  /* _062_ */ (
+  \$_DFFE_PN_  \out_data_reg[1]  /* _62_ */ (
     .C(clk),
     .D(in_data[1]),
     .E(rst),
@@ -241,7 +241,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[3]  /* _063_ */ (
+  \$_DFFE_PN_  \out_data_reg[3]  /* _63_ */ (
     .C(clk),
     .D(in_data[3]),
     .E(rst),
@@ -249,7 +249,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[5]  /* _064_ */ (
+  \$_DFFE_PN_  \out_data_reg[5]  /* _64_ */ (
     .C(clk),
     .D(in_data[5]),
     .E(rst),
@@ -257,7 +257,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[6]  /* _065_ */ (
+  \$_DFFE_PN_  \out_data_reg[6]  /* _65_ */ (
     .C(clk),
     .D(in_data[6]),
     .E(rst),
@@ -265,7 +265,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[7]  /* _066_ */ (
+  \$_DFFE_PN_  \out_data_reg[7]  /* _66_ */ (
     .C(clk),
     .D(processed_data[7]),
     .E(rst),
@@ -273,7 +273,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[8]  /* _067_ */ (
+  \$_DFFE_PN_  \out_data_reg[8]  /* _67_ */ (
     .C(clk),
     .D(processed_data[8]),
     .E(rst),
@@ -281,7 +281,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[9]  /* _068_ */ (
+  \$_DFFE_PN_  \out_data_reg[9]  /* _68_ */ (
     .C(clk),
     .D(processed_data[9]),
     .E(rst),
@@ -289,7 +289,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[10]  /* _069_ */ (
+  \$_DFFE_PN_  \out_data_reg[10]  /* _69_ */ (
     .C(clk),
     .D(processed_data[10]),
     .E(rst),
@@ -297,7 +297,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[11]  /* _070_ */ (
+  \$_DFFE_PN_  \out_data_reg[11]  /* _70_ */ (
     .C(clk),
     .D(processed_data[11]),
     .E(rst),
@@ -305,7 +305,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[12]  /* _071_ */ (
+  \$_DFFE_PN_  \out_data_reg[12]  /* _71_ */ (
     .C(clk),
     .D(processed_data[12]),
     .E(rst),
@@ -313,7 +313,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[13]  /* _072_ */ (
+  \$_DFFE_PN_  \out_data_reg[13]  /* _72_ */ (
     .C(clk),
     .D(processed_data[13]),
     .E(rst),
@@ -321,7 +321,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[14]  /* _073_ */ (
+  \$_DFFE_PN_  \out_data_reg[14]  /* _73_ */ (
     .C(clk),
     .D(processed_data[14]),
     .E(rst),
@@ -329,7 +329,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[15]  /* _074_ */ (
+  \$_DFFE_PN_  \out_data_reg[15]  /* _74_ */ (
     .C(clk),
     .D(processed_data[15]),
     .E(rst),
@@ -337,7 +337,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[16]  /* _075_ */ (
+  \$_DFFE_PN_  \out_data_reg[16]  /* _75_ */ (
     .C(clk),
     .D(processed_data[16]),
     .E(rst),
@@ -345,7 +345,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[17]  /* _076_ */ (
+  \$_DFFE_PN_  \out_data_reg[17]  /* _76_ */ (
     .C(clk),
     .D(processed_data[17]),
     .E(rst),
@@ -353,7 +353,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[18]  /* _077_ */ (
+  \$_DFFE_PN_  \out_data_reg[18]  /* _77_ */ (
     .C(clk),
     .D(processed_data[18]),
     .E(rst),
@@ -361,7 +361,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[19]  /* _078_ */ (
+  \$_DFFE_PN_  \out_data_reg[19]  /* _78_ */ (
     .C(clk),
     .D(processed_data[19]),
     .E(rst),
@@ -369,341 +369,12 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[20]  /* _079_ */ (
+  \$_DFFE_PN_  \out_data_reg[20]  /* _79_ */ (
     .C(clk),
     .D(processed_data[20]),
     .E(rst),
     .Q(out_data[20])
   );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[21]  /* _080_ */ (
-    .C(clk),
-    .D(in_data[21]),
-    .E(rst),
-    .Q(out_data[21])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[22]  /* _081_ */ (
-    .C(clk),
-    .D(in_data[22]),
-    .E(rst),
-    .Q(out_data[22])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[23]  /* _082_ */ (
-    .C(clk),
-    .D(in_data[23]),
-    .E(rst),
-    .Q(out_data[23])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[24]  /* _083_ */ (
-    .C(clk),
-    .D(in_data[24]),
-    .E(rst),
-    .Q(out_data[24])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[25]  /* _084_ */ (
-    .C(clk),
-    .D(in_data[25]),
-    .E(rst),
-    .Q(out_data[25])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[26]  /* _085_ */ (
-    .C(clk),
-    .D(in_data[26]),
-    .E(rst),
-    .Q(out_data[26])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[27]  /* _086_ */ (
-    .C(clk),
-    .D(in_data[27]),
-    .E(rst),
-    .Q(out_data[27])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[28]  /* _087_ */ (
-    .C(clk),
-    .D(in_data[28]),
-    .E(rst),
-    .Q(out_data[28])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[29]  /* _088_ */ (
-    .C(clk),
-    .D(in_data[29]),
-    .E(rst),
-    .Q(out_data[29])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[30]  /* _089_ */ (
-    .C(clk),
-    .D(in_data[30]),
-    .E(rst),
-    .Q(out_data[30])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[31]  /* _090_ */ (
-    .C(clk),
-    .D(in_data[31]),
-    .E(rst),
-    .Q(out_data[31])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[32]  /* _091_ */ (
-    .C(clk),
-    .D(in_data[32]),
-    .E(rst),
-    .Q(out_data[32])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[33]  /* _092_ */ (
-    .C(clk),
-    .D(in_data[33]),
-    .E(rst),
-    .Q(out_data[33])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[34]  /* _093_ */ (
-    .C(clk),
-    .D(in_data[34]),
-    .E(rst),
-    .Q(out_data[34])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[35]  /* _094_ */ (
-    .C(clk),
-    .D(in_data[35]),
-    .E(rst),
-    .Q(out_data[35])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[36]  /* _095_ */ (
-    .C(clk),
-    .D(in_data[36]),
-    .E(rst),
-    .Q(out_data[36])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[37]  /* _096_ */ (
-    .C(clk),
-    .D(in_data[37]),
-    .E(rst),
-    .Q(out_data[37])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[38]  /* _097_ */ (
-    .C(clk),
-    .D(in_data[38]),
-    .E(rst),
-    .Q(out_data[38])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[39]  /* _098_ */ (
-    .C(clk),
-    .D(in_data[39]),
-    .E(rst),
-    .Q(out_data[39])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[40]  /* _099_ */ (
-    .C(clk),
-    .D(in_data[40]),
-    .E(rst),
-    .Q(out_data[40])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[41]  /* _100_ */ (
-    .C(clk),
-    .D(in_data[41]),
-    .E(rst),
-    .Q(out_data[41])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[42]  /* _101_ */ (
-    .C(clk),
-    .D(in_data[42]),
-    .E(rst),
-    .Q(out_data[42])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[43]  /* _102_ */ (
-    .C(clk),
-    .D(in_data[43]),
-    .E(rst),
-    .Q(out_data[43])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[44]  /* _103_ */ (
-    .C(clk),
-    .D(in_data[44]),
-    .E(rst),
-    .Q(out_data[44])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[45]  /* _104_ */ (
-    .C(clk),
-    .D(in_data[45]),
-    .E(rst),
-    .Q(out_data[45])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[46]  /* _105_ */ (
-    .C(clk),
-    .D(in_data[46]),
-    .E(rst),
-    .Q(out_data[46])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[47]  /* _106_ */ (
-    .C(clk),
-    .D(in_data[47]),
-    .E(rst),
-    .Q(out_data[47])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[48]  /* _107_ */ (
-    .C(clk),
-    .D(in_data[48]),
-    .E(rst),
-    .Q(out_data[48])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[49]  /* _108_ */ (
-    .C(clk),
-    .D(in_data[49]),
-    .E(rst),
-    .Q(out_data[49])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[50]  /* _109_ */ (
-    .C(clk),
-    .D(in_data[50]),
-    .E(rst),
-    .Q(out_data[50])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[51]  /* _110_ */ (
-    .C(clk),
-    .D(in_data[51]),
-    .E(rst),
-    .Q(out_data[51])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[52]  /* _111_ */ (
-    .C(clk),
-    .D(in_data[52]),
-    .E(rst),
-    .Q(out_data[52])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[53]  /* _112_ */ (
-    .C(clk),
-    .D(in_data[53]),
-    .E(rst),
-    .Q(out_data[53])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[54]  /* _113_ */ (
-    .C(clk),
-    .D(in_data[54]),
-    .E(rst),
-    .Q(out_data[54])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[55]  /* _114_ */ (
-    .C(clk),
-    .D(in_data[55]),
-    .E(rst),
-    .Q(out_data[55])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[56]  /* _115_ */ (
-    .C(clk),
-    .D(in_data[56]),
-    .E(rst),
-    .Q(out_data[56])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[57]  /* _116_ */ (
-    .C(clk),
-    .D(in_data[57]),
-    .E(rst),
-    .Q(out_data[57])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[58]  /* _117_ */ (
-    .C(clk),
-    .D(in_data[58]),
-    .E(rst),
-    .Q(out_data[58])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[59]  /* _118_ */ (
-    .C(clk),
-    .D(in_data[59]),
-    .E(rst),
-    .Q(out_data[59])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[60]  /* _119_ */ (
-    .C(clk),
-    .D(in_data[60]),
-    .E(rst),
-    .Q(out_data[60])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_DFFE_PN_  \out_data_reg[61]  /* _120_ */ (
-    .C(clk),
-    .D(in_data[61]),
-    .E(rst),
-    .Q(out_data[61])
-  );
-  assign \in_data.base.valid  = 1'hx;
-  assign { out_data[4], out_data[2], out_data[0] } = 3'b11x;
-  assign { processed_data[61:21], processed_data[6:0] } = { in_data[61:21], in_data[6:5], 1'h1, in_data[3], 1'h1, in_data[1], 1'hx };
+  assign { out_data[61:21], out_data[4], out_data[2], out_data[0] } = 44'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx011x;
+  assign { processed_data[61:21], processed_data[6:0] } = { 41'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0, in_data[6:5], 1'h1, in_data[3], 1'h1, in_data[1], 1'hx };
 endmodule

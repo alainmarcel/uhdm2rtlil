@@ -16,10 +16,13 @@ module \simple_struct
   attribute \src "dut.sv:33.29-33.31"
   wire width 16 input 8 \b3
   attribute \src "dut.sv:40.22-40.26"
+  attribute \wiretype "\\data_bus_8bit_t"
   wire width 24 \bus1
   attribute \src "dut.sv:41.22-41.26"
+  attribute \wiretype "\\data_bus_8bit_t"
   wire width 24 \bus2
   attribute \src "dut.sv:42.22-42.26"
+  attribute \wiretype "\\data_bus_16bit_t"
   wire width 48 \bus3
   attribute \src "dut.sv:31.33-31.35"
   wire width 8 input 3 \c1

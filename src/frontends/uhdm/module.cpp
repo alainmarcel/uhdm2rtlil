@@ -11,6 +11,7 @@
 #include <cctype>
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/uhdm_types.h>
+#include <uhdm/ExprEval.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -271,6 +272,47 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     int width = get_width(uhdm_net, inst);
     RTLIL::Wire* w = create_wire(netname, width);
     add_src_attribute(w->attributes, uhdm_net);
+    
+    // Add wiretype attribute for struct types
+    log("UHDM: Checking for struct type on net '%s' (UhdmType=%d)\n", netname.c_str(), uhdm_net->UhdmType());
+    
+    // Check if net has a typespec (works for both logic_net and regular net)
+    const ref_typespec* ref_ts = nullptr;
+    
+    if (uhdm_net->UhdmType() == uhdmlogic_net) {
+        auto logic_net = static_cast<const UHDM::logic_net*>(uhdm_net);
+        ref_ts = logic_net->Typespec();
+        log("UHDM: Net is a logic_net\n");
+    } else if (uhdm_net->Typespec()) {
+        // Regular net with typespec
+        ref_ts = uhdm_net->Typespec();
+        log("UHDM: Net has typespec\n");
+    }
+    
+    if (ref_ts) {
+        log("UHDM: Found ref_typespec\n");
+        if (auto actual_typespec = ref_ts->Actual_typespec()) {
+            log("UHDM: Found actual_typespec (UhdmType=%d)\n", actual_typespec->UhdmType());
+            if (actual_typespec->UhdmType() == uhdmstruct_typespec) {
+                log("UHDM: typespec is a struct_typespec\n");
+                // Get the struct type name
+                std::string type_name;
+                if (!ref_ts->VpiName().empty()) {
+                    type_name = ref_ts->VpiName();
+                } else if (!actual_typespec->VpiName().empty()) {
+                    type_name = actual_typespec->VpiName();
+                }
+                
+                if (!type_name.empty()) {
+                    w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                    log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
+                } else {
+                    log("UHDM: Could not get type name for struct\n");
+                }
+            }
+        }
+    }
+    
     // Handle net type
     int net_type = uhdm_net->VpiNetType();
     if (net_type == vpiReg) {
@@ -893,6 +935,41 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
     
     try {
         log("UHDM: get_width analyzing object type\n");
+        
+        // Check if it's a hier_path (hierarchical reference like in_struct.base.data)
+        if (auto hier = dynamic_cast<const UHDM::hier_path*>(uhdm_obj)) {
+            log("UHDM: Found hier_path object\n");
+            
+            // Use ExprEval to get the typespec of the hier_path
+            ExprEval eval;
+            bool invalidValue = false;
+            
+            // Get the typespec using decodeHierPath
+            any* typespec_obj = eval.decodeHierPath(
+                const_cast<hier_path*>(hier), 
+                invalidValue, 
+                inst,  // Use the instance scope
+                hier,  // pexpr
+                ExprEval::ReturnType::TYPESPEC,  // Get the typespec
+                false     // muteError
+            );
+            
+            if (!invalidValue && typespec_obj) {
+                log("UHDM: decodeHierPath returned typespec\n");
+                
+                // Get the size from the typespec
+                // From Surelog: eval.size(typespec, invalidValue, context, nullptr, !sizeMode)
+                uint64_t size = eval.size(typespec_obj, invalidValue, inst, typespec_obj, true, false);
+                if (!invalidValue && size > 0) {
+                    log("UHDM: ExprEval::size returned %lu\n", (unsigned long)size);
+                    return size;
+                } else {
+                    log("UHDM: ExprEval::size failed or returned 0\n");
+                }
+            } else {
+                log("UHDM: decodeHierPath failed to return typespec\n");
+            }
+        }
         
         // Check if it's a port and try to get typespec
         if (auto port = dynamic_cast<const UHDM::port*>(uhdm_obj)) {
