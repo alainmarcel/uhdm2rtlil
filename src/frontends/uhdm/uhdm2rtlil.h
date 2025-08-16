@@ -113,8 +113,12 @@ struct UhdmImporter {
     // UHDM design for accessing module definitions
     UHDM::design* uhdm_design = nullptr;
     
+    // Context for handling async reset (maps signal name to temp wire)
+    std::map<std::string, RTLIL::Wire*> current_signal_temp_wires;
+    
     // Temporary wires for combinational processes
-    std::map<std::string, RTLIL::Wire*> current_temp_wires;
+    std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
+    std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
@@ -193,6 +197,7 @@ struct UhdmImporter {
     void import_begin_block_comb(const UHDM::begin* uhdm_begin, RTLIL::Process* proc);
     void import_assignment_sync(const UHDM::assignment* uhdm_assign, RTLIL::SyncRule* sync);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
+    void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::CaseRule* case_rule);
     void import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset);
     void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
     void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);

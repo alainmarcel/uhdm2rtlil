@@ -9,8 +9,7 @@ module \simple_fsm
   parameter \DONE 2'11
   wire $0\busy
   wire width 2 $0\next_state
-  attribute \src "dut.sv:8.23-8.28"
-  wire width 2 $0\state[1:0]
+  wire width 2 $0\state
   attribute \src "dut.sv:7.17-7.21"
   wire output 5 \busy
   attribute \src "dut.sv:3.17-3.20"
@@ -30,20 +29,20 @@ module \simple_fsm
   attribute \always_ff 1
   attribute \src "dut.sv:20.1-25.4"
   process $proc$dut.sv:20$1
-    assign $0\state[1:0] \state
+    assign $0\state \state
     attribute \src "dut.sv:11.9-15.12"
     switch \reset
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\state[1:0] 2'00
+        assign $0\state 2'00
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\state[1:0] \next_state
+        assign $0\state \next_state
     end
     sync posedge \clk
-      update \state $0\state[1:0]
+      update \state $0\state
     sync posedge \reset
-      update \state $0\state[1:0]
+      update \state $0\state
   end
   attribute \always_comb 1
   attribute \src "dut.sv:28.1-52.4"

@@ -7,10 +7,8 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 5
-  attribute \src "dut.sv:75.31-75.38"
-  wire width 5 $0\counter[4:0]
-  attribute \src "dut.sv:68.38-68.46"
-  wire width 50 $0\data_out[49:0]
+  wire width 5 $0\counter
+  wire width 50 $0\data_out
   wire $auto$rtlil.cc:3011:Eq$8
   wire width 64 $auto$rtlil.cc:3017:Add$6
   attribute \src "dut.sv:78.13-78.19"
@@ -57,21 +55,21 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   attribute \always_ff 1
   attribute \src "dut.sv:77.5-97.8"
   process $proc$dut.sv:77$1
-    assign $0\counter[4:0] \counter
-    assign $0\data_out[49:0] \data_out
+    assign $0\counter \counter
+    assign $0\data_out \data_out
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:78.13-78.19$3_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\counter[4:0] 5'00000
+        assign $0\counter 5'00000
         assign \data_out [49:18] 0
         assign \data_out [17:2] 16'0000000000000000
         assign \data_out [1] 1'0
         assign \data_out [0] 1'0
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\counter[4:0] $auto$rtlil.cc:3017:Add$6 [4:0]
-        assign $0\data_out[49:0] \data_in
+        assign $0\counter $auto$rtlil.cc:3017:Add$6 [4:0]
+        assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $auto$rtlil.cc:3011:Eq$8
           attribute \src "dut.sv:91.13-95.16"
@@ -82,11 +80,11 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
         end
     end
     sync posedge \clk
-      update \counter $0\counter[4:0]
-      update \data_out $0\data_out[49:0]
+      update \counter $0\counter
+      update \data_out $0\data_out
     sync negedge \rst_n
-      update \counter $0\counter[4:0]
-      update \data_out $0\data_out[49:0]
+      update \counter $0\counter
+      update \data_out $0\data_out
   end
 end
 attribute \dynports 1
@@ -94,8 +92,7 @@ attribute \src "dut.sv:25.1-59.10"
 module \simple_package
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
-  attribute \src "dut.sv:35.23-35.35"
-  wire width 50 $0\internal_bus[49:0]
+  wire width 50 $0\internal_bus
   attribute \src "dut.sv:39.13-39.19"
   wire $logic_not$dut.sv:39.13-39.19$2_Y
   attribute \src "dut.sv:30.38-30.44"
@@ -126,7 +123,7 @@ module \simple_package
   attribute \always_ff 1
   attribute \src "dut.sv:38.5-49.8"
   process $proc$dut.sv:38$1
-    assign $0\internal_bus[49:0] \internal_bus
+    assign $0\internal_bus \internal_bus
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:39.13-39.19$2_Y
       attribute \src "dut.sv:11.13-11.19"
@@ -137,13 +134,13 @@ module \simple_package
         assign \internal_bus [0] 1'0
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\internal_bus[49:0] \bus_in
+        assign $0\internal_bus \bus_in
         assign \internal_bus [49:18] 0
     end
     sync posedge \clk
-      update \internal_bus $0\internal_bus[49:0]
+      update \internal_bus $0\internal_bus
     sync negedge \rst_n
-      update \internal_bus $0\internal_bus[49:0]
+      update \internal_bus $0\internal_bus
   end
 end
 attribute \dynports 1
@@ -152,10 +149,8 @@ module \sub_module
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 0'x
-  attribute \src "dut.sv:75.31-75.38"
-  wire width 5 $0\counter[4:0]
-  attribute \src "dut.sv:68.38-68.46"
-  wire width 50 $0\data_out[49:0]
+  wire width 5 $0\counter
+  wire width 50 $0\data_out
   wire $auto$rtlil.cc:3011:Eq$4
   wire width 64 $auto$rtlil.cc:3017:Add$2
   attribute \src "dut.sv:78.13-78.19"
@@ -202,21 +197,21 @@ module \sub_module
   attribute \always_ff 1
   attribute \src "dut.sv:77.5-97.8"
   process $proc$dut.sv:77$1
-    assign $0\counter[4:0] \counter
-    assign $0\data_out[49:0] \data_out
+    assign $0\counter \counter
+    assign $0\data_out \data_out
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:78.13-78.19$1_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\counter[4:0] 5'00000
+        assign $0\counter 5'00000
         assign \data_out [49:18] 0
         assign \data_out [17:2] 16'0000000000000000
         assign \data_out [1] 1'0
         assign \data_out [0] 1'0
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\counter[4:0] $auto$rtlil.cc:3017:Add$2 [4:0]
-        assign $0\data_out[49:0] \data_in
+        assign $0\counter $auto$rtlil.cc:3017:Add$2 [4:0]
+        assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $auto$rtlil.cc:3011:Eq$4
           attribute \src "dut.sv:91.13-95.16"
@@ -227,10 +222,10 @@ module \sub_module
         end
     end
     sync posedge \clk
-      update \counter $0\counter[4:0]
-      update \data_out $0\data_out[49:0]
+      update \counter $0\counter
+      update \data_out $0\data_out
     sync negedge \rst_n
-      update \counter $0\counter[4:0]
-      update \data_out $0\data_out[49:0]
+      update \counter $0\counter
+      update \data_out $0\data_out
   end
 end

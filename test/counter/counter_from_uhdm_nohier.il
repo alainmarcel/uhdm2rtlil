@@ -4,8 +4,7 @@ attribute \dynports 1
 attribute \src "dut.sv:2.1-27.10"
 module \counter
   parameter \WIDTH 8
-  attribute \src "dut.sv:8.30-8.35"
-  wire width 8 $0\count[7:0]
+  wire width 8 $0\count
   wire width 8 $0\count_next
   wire $0\overflow
   wire $auto$rtlil.cc:3004:And$6
@@ -67,27 +66,27 @@ module \counter
   attribute \always_ff 1
   attribute \src "dut.sv:14.5-20.8"
   process $proc$dut.sv:14$1
-    assign $0\count[7:0] \count
+    assign $0\count \count
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:15.13-15.19$1_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\count[7:0] 8'00000000
+        assign $0\count 8'00000000
       attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:17.18-19.12"
         switch \enable
           attribute \src "dut.sv:17.18-19.12"
           case 1'1
-            assign $0\count[7:0] \count_next
+            assign $0\count \count_next
           attribute \src "dut.sv:17.18-19.12"
           case 
         end
     end
     sync posedge \clk
-      update \count $0\count[7:0]
+      update \count $0\count
     sync negedge \rst_n
-      update \count $0\count[7:0]
+      update \count $0\count
   end
   attribute \always_comb 1
   attribute \src "dut.sv:22.5-25.8"

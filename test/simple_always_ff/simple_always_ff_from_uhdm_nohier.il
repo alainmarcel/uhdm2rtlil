@@ -2,8 +2,7 @@
 autoidx 1
 attribute \src "dut.sv:2.1-18.10"
 module \simple_always_ff
-  attribute \src "dut.sv:7.24-7.36"
-  wire width 8 $0\extra_result[7:0]
+  wire width 8 $0\extra_result
   attribute \src "dut.sv:11.13-11.19"
   wire $logic_not$dut.sv:11.13-11.19$1_Y
   attribute \src "dut.sv:3.18-3.21"
@@ -28,26 +27,26 @@ module \simple_always_ff
   attribute \always_ff 1
   attribute \src "dut.sv:10.5-16.8"
   process $proc$dut.sv:10$1
-    assign $0\extra_result[7:0] \extra_result
+    assign $0\extra_result \extra_result
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:11.13-11.19$1_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\extra_result[7:0] 8'00000000
+        assign $0\extra_result 8'00000000
       attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:13.18-15.12"
         switch \mode
           attribute \src "dut.sv:13.18-15.12"
           case 1'1
-            assign $0\extra_result[7:0] \extra_sum
+            assign $0\extra_result \extra_sum
           attribute \src "dut.sv:13.18-15.12"
           case 
         end
     end
     sync posedge \clk
-      update \extra_result $0\extra_result[7:0]
+      update \extra_result $0\extra_result
     sync negedge \rst_n
-      update \extra_result $0\extra_result[7:0]
+      update \extra_result $0\extra_result
   end
 end

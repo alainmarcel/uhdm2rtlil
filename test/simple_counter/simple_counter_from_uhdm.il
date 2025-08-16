@@ -3,8 +3,7 @@ autoidx 8
 attribute \top 1
 attribute \src "dut.sv:2.1-16.10"
 module \simple_counter
-  attribute \src "dut.sv:5.24-5.29"
-  wire width 8 $0\count[7:0]
+  wire width 8 $0\count
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk
   attribute \src "dut.sv:5.24-5.29"
@@ -19,7 +18,7 @@ module \simple_counter
     parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
-    connect \Y $0\count[7:0]
+    connect \Y $0\count
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -31,7 +30,7 @@ module \simple_counter
     parameter \WIDTH 8
     connect \ARST \rst_n
     connect \CLK \clk
-    connect \D $0\count[7:0]
+    connect \D $0\count
     connect \Q \count
   end
 end

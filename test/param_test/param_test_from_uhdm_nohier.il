@@ -17,26 +17,26 @@ module \param_test
   wire width 8 output 4 \data_out
   attribute \src "dut.sv:7.29-7.32"
   wire input 2 \rst
-  cell $mux $auto$process.cpp:1172:import_assignment_sync$1
+  cell $not $auto$process.cpp:1063:import_statement_sync$3
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \rst
+    connect \Y $auto$rtlil.cc:2957:Not$4
+  end
+  cell $mux $auto$process.cpp:1284:import_assignment_sync$1
     parameter \WIDTH 8
     connect \A \data_out
     connect \B 8'10101010
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$2
   end
-  cell $mux $auto$process.cpp:1172:import_assignment_sync$5
+  cell $mux $auto$process.cpp:1284:import_assignment_sync$5
     parameter \WIDTH 8
     connect \A \data_out
     connect \B \data_in
     connect \S $auto$rtlil.cc:2957:Not$4
     connect \Y $auto$rtlil.cc:3092:Mux$6
-  end
-  cell $not $auto$process.cpp:951:import_statement_sync$3
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \rst
-    connect \Y $auto$rtlil.cc:2957:Not$4
   end
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-18.8"

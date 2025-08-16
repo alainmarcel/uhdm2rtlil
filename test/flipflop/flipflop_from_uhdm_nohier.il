@@ -2,7 +2,6 @@
 autoidx 1
 attribute \src "dut.sv:2.1-17.10"
 module \flipflop
-  attribute \src "dut.sv:6.18-6.19"
   wire $0\q
   attribute \src "dut.sv:10.13-10.19"
   wire $logic_not$dut.sv:10.13-10.19$1_Y

@@ -78,8 +78,7 @@ attribute \src "dut.sv:26.1-110.10"
 module \generate_test
   parameter \NUM_UNITS 4
   parameter \DATA_WIDTH 8
-  attribute \src "dut.sv:36.35-36.47"
-  wire width 8 $0\extra_result[7:0]
+  wire width 8 $0\extra_result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[0]$1_Y
   attribute \src "dut.sv:69.21-69.27"
@@ -247,27 +246,27 @@ module \generate_test
   attribute \always_ff 1
   attribute \src "dut.sv:94.17-100.20"
   process $proc$dut.sv:94$1
-    assign $0\extra_result[7:0] \extra_result
+    assign $0\extra_result \extra_result
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:95.25-95.31$store_extra$5_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\extra_result[7:0] 8'00000000
+        assign $0\extra_result 8'00000000
       attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:97.30-99.24"
         switch \mode
           attribute \src "dut.sv:97.30-99.24"
           case 1'1
-            assign $0\extra_result[7:0] \extra_logic.extra_sum
+            assign $0\extra_result \extra_logic.extra_sum
           attribute \src "dut.sv:97.30-99.24"
           case 
         end
     end
     sync posedge \clk
-      update \extra_result $0\extra_result[7:0]
+      update \extra_result $0\extra_result
     sync negedge \rst_n
-      update \extra_result $0\extra_result[7:0]
+      update \extra_result $0\extra_result
   end
 end
 attribute \dynports 1

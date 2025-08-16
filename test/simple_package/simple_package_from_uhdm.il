@@ -7,8 +7,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 5
-  attribute \src "dut.sv:75.31-75.38"
-  wire width 5 $0\counter[4:0]
+  wire width 5 $0\counter
   wire $auto$rtlil.cc:3011:Eq$8
   attribute \unused_bits "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 $auto$rtlil.cc:3017:Add$6
@@ -30,7 +29,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$rtlil.cc:3017:Add$6 [63:5] $0\counter[4:0] }
+    connect \Y { $auto$rtlil.cc:3017:Add$6 [63:5] $0\counter }
   end
   cell $logic_not $auto$expression.cpp:320:import_operation$7
     parameter \A_SIGNED 0
@@ -49,7 +48,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \WIDTH 5
     connect \ARST \rst_n
     connect \CLK \clk
-    connect \D $0\counter[4:0]
+    connect \D $0\counter
     connect \Q \counter
   end
   attribute \"has_async_reset" 1
@@ -73,7 +72,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \S $auto$rtlil.cc:3011:Eq$8
     connect \Y \data_out [0]
   end
-  connect $auto$rtlil.cc:3017:Add$6 [4:0] $0\counter[4:0]
+  connect $auto$rtlil.cc:3017:Add$6 [4:0] $0\counter
 end
 attribute \top 1
 attribute \dynports 1

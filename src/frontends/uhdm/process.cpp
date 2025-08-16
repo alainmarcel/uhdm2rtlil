@@ -12,9 +12,17 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Forward declaration of helper function
-static void extract_assigned_signals(const any* stmt, std::set<std::string>& signals);
+struct AssignedSignal {
+    std::string name;
+    const expr* lhs_expr;  // The full LHS expression (could be part select)
+    int msb = -1;
+    int lsb = -1;
+    bool is_part_select = false;
+};
 
-static void extract_assigned_signals(const any* stmt, std::set<std::string>& signals) {
+static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
+
+static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
     
     switch (stmt->VpiType()) {
@@ -23,14 +31,68 @@ static void extract_assigned_signals(const any* stmt, std::set<std::string>& sig
             auto assign = static_cast<const assignment*>(stmt);
             if (auto lhs = assign->Lhs()) {
                 if (auto lhs_expr = dynamic_cast<const expr*>(lhs)) {
+                    AssignedSignal sig;
+                    sig.lhs_expr = lhs_expr;
+                    
+                    log("extract_assigned_signals: LHS type is %d\n", lhs_expr->VpiType());
                     if (lhs_expr->VpiType() == vpiRefObj) {
                         auto ref = static_cast<const ref_obj*>(lhs_expr);
-                        signals.insert(std::string(ref->VpiName()));
+                        sig.name = std::string(ref->VpiName());
+                        sig.is_part_select = false;
+                        signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to '%s' (ref_obj)\n", ref->VpiName().data());
                     } else if (lhs_expr->VpiType() == vpiNetBit) {
                         auto net_bit = static_cast<const UHDM::net_bit*>(lhs_expr);
-                        signals.insert(std::string(net_bit->VpiName()));
+                        sig.name = std::string(net_bit->VpiName());
+                        sig.is_part_select = false;
+                        signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to '%s' (net_bit)\n", net_bit->VpiName().data());
+                    } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                        // Handle indexed part selects like result[i*8 +: 8]
+                        auto indexed_part_sel = static_cast<const indexed_part_select*>(lhs_expr);
+                        sig.is_part_select = true;
+                        
+                        // Get the signal name
+                        if (!indexed_part_sel->VpiName().empty()) {
+                            sig.name = std::string(indexed_part_sel->VpiName());
+                        }
+                        
+                        signals.push_back(sig);
+                        log("extract_assigned_signals: Found assignment to indexed part select of '%s'\n", sig.name.c_str());
+                    } else if (lhs_expr->VpiType() == vpiPartSelect) {
+                        // Handle part selects like result[7:0]
+                        auto part_sel = static_cast<const part_select*>(lhs_expr);
+                        sig.is_part_select = true;
+                        
+                        if (auto parent = part_sel->VpiParent()) {
+                            if (parent->VpiType() == vpiRefObj) {
+                                auto ref = static_cast<const ref_obj*>(parent);
+                                sig.name = std::string(ref->VpiName());
+                            } else if (!parent->VpiName().empty()) {
+                                sig.name = std::string(parent->VpiName());
+                            }
+                        } else if (!part_sel->VpiName().empty()) {
+                            sig.name = std::string(part_sel->VpiName());
+                        }
+                        
+                        signals.push_back(sig);
+                        log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
+                    } else if (lhs_expr->VpiType() == vpiBitSelect) {
+                        // Handle bit selects like result[0]
+                        auto bit_sel = static_cast<const bit_select*>(lhs_expr);
+                        sig.is_part_select = true;
+                        
+                        if (auto parent = bit_sel->VpiParent()) {
+                            if (parent->VpiType() == vpiRefObj) {
+                                auto ref = static_cast<const ref_obj*>(parent);
+                                sig.name = std::string(ref->VpiName());
+                            } else if (!parent->VpiName().empty()) {
+                                sig.name = std::string(parent->VpiName());
+                            }
+                        }
+                        
+                        signals.push_back(sig);
+                        log("extract_assigned_signals: Found assignment to bit select of '%s'\n", sig.name.c_str());
                     }
                 }
             }
@@ -589,59 +651,81 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
             }
             
-            // For async reset, we need to collect all signals assigned in the always_ff
-            std::set<std::string> assigned_signals;
-            std::map<std::string, RTLIL::Wire*> temp_wires;
+            // For async reset, we need to collect all unique signals assigned in the always_ff
+            std::vector<AssignedSignal> assigned_signals;
+            std::map<std::string, RTLIL::Wire*> temp_wires;  // Map from signal name to temp wire
+            std::map<std::string, RTLIL::SigSpec> signal_specs; // Map from signal name to full signal SigSpec
             
             // Extract assigned signals from the statement
             if (stmt) {
                 extract_assigned_signals(stmt, assigned_signals);
             }
             
-            // Create temp wires for all assigned signals
-            for (const auto& sig_name : assigned_signals) {
-                // Find the original wire
-                RTLIL::Wire* orig_wire = nullptr;
-                
-                // Try different ways to find the wire
-                if (name_map.count(sig_name)) {
-                    orig_wire = name_map[sig_name];
-                } else {
-                    // Try with escaped name
-                    std::string escaped_name = "\\" + sig_name;
-                    orig_wire = module->wire(escaped_name);
+            // Create ONE temp wire per unique signal (not per assignment)
+            std::set<std::string> processed_signals;
+            for (const auto& sig : assigned_signals) {
+                // Skip if we already created a temp wire for this signal
+                if (processed_signals.count(sig.name)) {
+                    continue;
                 }
                 
-                if (orig_wire) {
-                    // Create temp wire name based on original signal
-                    std::string temp_name = "$0\\" + sig_name;
-                    if (orig_wire->width > 1) {
-                        temp_name += "[" + std::to_string(orig_wire->width - 1) + ":0]";
-                    }
-                    
-                    RTLIL::Wire* temp_wire = module->addWire(temp_name, orig_wire->width);
-                    if (orig_wire->attributes.count(ID::src)) {
-                        temp_wire->attributes[ID::src] = orig_wire->attributes.at(ID::src);
-                    }
-                    temp_wires[sig_name] = temp_wire;
-                    
-                    // Create initial assignment in root case
-                    yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
-                        RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire)));
-                        
-                    log("      Created temp wire %s for async reset handling\n", temp_name.c_str());
-                } else {
-                    log_warning("Could not find wire for signal %s\n", sig_name.c_str());
+                // Skip part selects - they cause issues with generate blocks
+                // where each process only resets part of the signal
+                if (sig.is_part_select) {
+                    continue;
                 }
+                
+                processed_signals.insert(sig.name);
+                
+                // Get the full signal spec (not part select)
+                RTLIL::IdString signal_id = RTLIL::escape_id(sig.name);
+                if (!module->wire(signal_id)) {
+                    log_error("Signal %s not found in module\n", sig.name.c_str());
+                    continue;
+                }
+                RTLIL::Wire* signal_wire = module->wire(signal_id);
+                RTLIL::SigSpec signal_spec(signal_wire);
+                signal_specs[sig.name] = signal_spec;
+                
+                // Create temp wire with the same width as the full signal
+                std::string temp_name = "$0\\" + sig.name;
+                
+                // Check if temp wire already exists (e.g., from another generate block)
+                RTLIL::Wire* temp_wire = module->wire(temp_name);
+                if (!temp_wire) {
+                    // Create temp wire only if it doesn't exist
+                    temp_wire = module->addWire(temp_name, signal_spec.size());
+                }
+                temp_wires[sig.name] = temp_wire;
+                
+                // Create initial assignment in root case
+                yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                    RTLIL::SigSpec(temp_wire), signal_spec));
+                    
+                log("      Created temp wire %s (width=%d) for full signal\n", 
+                    temp_name.c_str(), signal_spec.size());
             }
             
             // Import the if-else as switch statements
-            if (stmt && stmt->VpiType() == vpiBegin) {
-                const UHDM::begin* begin = static_cast<const UHDM::begin*>(stmt);
-                if (begin->Stmts() && !begin->Stmts()->empty()) {
-                    const any* first_stmt = (*begin->Stmts())[0];
-                    if (first_stmt->VpiType() == vpiIfElse) {
-                        const if_else* if_else_stmt = static_cast<const if_else*>(first_stmt);
+            const if_else* if_else_stmt = nullptr;
+            
+            if (stmt) {
+                if (stmt->VpiType() == vpiIfElse) {
+                    // Direct if_else statement
+                    if_else_stmt = static_cast<const if_else*>(stmt);
+                } else if (stmt->VpiType() == vpiBegin) {
+                    // If_else inside a begin block
+                    const UHDM::begin* begin = static_cast<const UHDM::begin*>(stmt);
+                    if (begin->Stmts() && !begin->Stmts()->empty()) {
+                        const any* first_stmt = (*begin->Stmts())[0];
+                        if (first_stmt->VpiType() == vpiIfElse) {
+                            if_else_stmt = static_cast<const if_else*>(first_stmt);
+                        }
+                    }
+                }
+            }
+            
+            if (if_else_stmt) {
                         
                         // Import the condition (!rst_n)
                         if (auto cond = if_else_stmt->VpiCondition()) {
@@ -660,9 +744,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             
                             // Import reset assignments into case_true
                             if (auto then_stmt = if_else_stmt->VpiStmt()) {
-                                current_temp_wires = temp_wires;
-                                import_statement_comb(then_stmt, case_true);
+                                // Set up context for import
                                 current_temp_wires.clear();
+                                current_lhs_specs.clear();
+                                
+                                // Map signal names to temp wires for import
+                                for (const auto& [sig_name, temp_wire] : temp_wires) {
+                                    // We'll need to update import_assignment_comb to use this
+                                    current_signal_temp_wires[sig_name] = temp_wire;
+                                }
+                                
+                                import_statement_comb(then_stmt, case_true);
+                                
+                                // Clear context
+                                current_signal_temp_wires.clear();
                             }
                             
                             sw->switches[0]->cases.push_back(case_true);
@@ -673,16 +768,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             
                             // Handle else statement
                             if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
-                                current_temp_wires = temp_wires;
-                                import_statement_comb(else_stmt, case_false);
+                                // Set up context for import
                                 current_temp_wires.clear();
+                                current_lhs_specs.clear();
+                                
+                                // Map signal names to temp wires for import
+                                for (const auto& [sig_name, temp_wire] : temp_wires) {
+                                    current_signal_temp_wires[sig_name] = temp_wire;
+                                }
+                                
+                                import_statement_comb(else_stmt, case_false);
+                                
+                                // Clear context
+                                current_signal_temp_wires.clear();
                             }
                             
                             sw->switches[0]->cases.push_back(case_false);
                             yosys_proc->root_case.switches.push_back(sw->switches[0]);
                         }
-                    }
-                }
             }
             
             // Create sync rules that update from temp wires
@@ -694,24 +797,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             sync_rst->type = reset_posedge ? RTLIL::STp : RTLIL::STn;
             sync_rst->signal = reset_sig;
             
-            // Add updates for all temp wires
+            // Add updates for all temp wires (one per signal)
             for (const auto& [sig_name, temp_wire] : temp_wires) {
-                RTLIL::Wire* orig_wire = nullptr;
-                if (name_map.count(sig_name)) {
-                    orig_wire = name_map[sig_name];
-                } else {
-                    orig_wire = module->wire("\\" + sig_name);
-                }
-                
-                if (orig_wire) {
+                RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
+                if (module->wire(signal_id)) {
+                    // Update the full signal from the temp wire
                     sync_clk->actions.push_back(RTLIL::SigSig(
-                        RTLIL::SigSpec(orig_wire),
-                        RTLIL::SigSpec(temp_wire)
-                    ));
+                        signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
                     sync_rst->actions.push_back(RTLIL::SigSig(
-                        RTLIL::SigSpec(orig_wire),
-                        RTLIL::SigSpec(temp_wire)
-                    ));
+                        signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
+                        
+                    log("      Added sync update for %s\n", sig_name.c_str());
                 }
             }
             
@@ -746,6 +842,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             log_flush();
         }
     }
+    
+    // Clear temp wires context at the end of import_always_ff
+    current_temp_wires.clear();
+    current_lhs_specs.clear();
 }
 
 // Import always_comb block
@@ -757,41 +857,52 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     yosys_proc->attributes[ID::always_comb] = RTLIL::Const(1);
     
     // Extract signals that will be assigned in this process
-    std::set<std::string> assigned_signals;
+    std::vector<AssignedSignal> assigned_signals;
     if (auto stmt = uhdm_process->Stmt()) {
         // Simple extraction for combinational blocks
         extract_assigned_signals(stmt, assigned_signals);
     }
     
-    // Create temporary wires for assigned signals
-    std::map<std::string, RTLIL::Wire*> temp_wires;
-    for (const auto& sig_name : assigned_signals) {
-        std::string temp_name = "$0\\" + sig_name;
+    // Create temporary wires for assigned signals (one per unique signal name)
+    std::map<const expr*, RTLIL::Wire*> temp_wires;
+    std::map<const expr*, RTLIL::SigSpec> lhs_specs;
+    std::map<std::string, RTLIL::Wire*> signal_temp_wires; // Map signal name to temp wire
+    std::map<std::string, RTLIL::SigSpec> signal_specs;    // Map signal name to signal spec
+    
+    for (const auto& sig : assigned_signals) {
+        // Import the LHS expression to get its SigSpec
+        RTLIL::SigSpec lhs_spec = import_expression(sig.lhs_expr);
+        lhs_specs[sig.lhs_expr] = lhs_spec;
         
-        // Find the original wire to get its width
-        RTLIL::Wire* orig_wire = nullptr;
-        if (name_map.count(sig_name)) {
-            orig_wire = name_map[sig_name];
+        // Check if we already have a temp wire for this signal
+        RTLIL::Wire* temp_wire = nullptr;
+        if (signal_temp_wires.count(sig.name)) {
+            // Reuse existing temp wire
+            temp_wire = signal_temp_wires[sig.name];
         } else {
-            // Try to find the wire in the module
-            for (auto& it : module->wires_) {
-                if (it.second->name.str() == "\\" + sig_name) {
-                    orig_wire = it.second;
-                    break;
-                }
+            // Create new temp wire with the same width as the LHS
+            std::string temp_name = "$0\\" + sig.name;
+            
+            // Check if temp wire already exists (shouldn't happen with unique signal names)
+            if (module->wire(temp_name)) {
+                log_error("Temp wire %s already exists\n", temp_name.c_str());
             }
+            
+            temp_wire = module->addWire(temp_name, lhs_spec.size());
+            signal_temp_wires[sig.name] = temp_wire;
+            signal_specs[sig.name] = lhs_spec;
+            
+            log("    Created temp wire %s for signal %s (width=%d)\n", 
+                temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
         }
         
-        if (orig_wire) {
-            RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
-            temp_wires[sig_name] = temp_wire;
-            log("    Created temp wire %s for signal %s (width=%d)\n", 
-                temp_wire->name.c_str(), sig_name.c_str(), orig_wire->width);
-        }
+        // Map this expression to the temp wire
+        temp_wires[sig.lhs_expr] = temp_wire;
     }
     
     // Store temp wires in module context for use in statement import
     current_temp_wires = temp_wires;
+    current_lhs_specs = lhs_specs;
     
     // Import the statements
     if (auto stmt = uhdm_process->Stmt()) {
@@ -802,14 +913,14 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
     sync_always->type = RTLIL::SyncType::STa;
     
-    // Add update statements for all assigned signals
-    for (const auto& [sig_name, temp_wire] : temp_wires) {
-        if (name_map.count(sig_name)) {
-            RTLIL::Wire* orig_wire = name_map[sig_name];
+    // Add update statements for all assigned signals (one per unique signal)
+    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+        if (signal_specs.count(sig_name)) {
+            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
             sync_always->actions.push_back(
-                RTLIL::SigSig(RTLIL::SigSpec(orig_wire), RTLIL::SigSpec(temp_wire))
+                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
             );
-            log("    Added update: %s <= %s\n", orig_wire->name.c_str(), temp_wire->name.c_str());
+            log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
         }
     }
     
@@ -817,6 +928,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     
     // Clear temp wires context
     current_temp_wires.clear();
+    current_lhs_specs.clear();
 }
 
 // Import always block
@@ -1213,7 +1325,201 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
     }
     
+    // Special handling for async reset context
+    if (!current_signal_temp_wires.empty()) {
+        auto lhs_expr = uhdm_assign->Lhs();
+        if (!lhs_expr) return;
+        
+        // Extract the base signal name from the LHS
+        std::string signal_name;
+        
+        if (lhs_expr->VpiType() == vpiRefObj) {
+            const ref_obj* ref = static_cast<const ref_obj*>(lhs_expr);
+            if (!ref->VpiName().empty()) {
+                signal_name = std::string(ref->VpiName());
+            }
+        } else if (lhs_expr->VpiType() == vpiPartSelect) {
+            const part_select* ps = static_cast<const part_select*>(lhs_expr);
+            // Get base signal from parent
+            if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+                signal_name = std::string(ps->VpiParent()->VpiName());
+            }
+        } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+            const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+            // Get base signal from parent
+            if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
+                signal_name = std::string(ips->VpiParent()->VpiName());
+            }
+        }
+        
+        // If we have a temp wire for this signal, assign to it
+        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n", 
+            signal_name.c_str(), current_signal_temp_wires.size());
+        if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
+            log("      Found temp wire for signal '%s'\n", signal_name.c_str());
+            RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
+            RTLIL::SigSpec temp_spec(temp_wire);
+            
+            // For part selects, we should not use temp wires (causes issues with generate blocks)
+            if (lhs_expr->VpiType() == vpiPartSelect || lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                // Just do normal assignment for part selects
+                proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
+                return;
+            } else if (false) { // Disabled old code
+                // The 'lhs' SigSpec already represents the part select
+                // We need to extract the bit positions
+                int offset = 0;
+                int width = lhs.size();
+                
+                // Try to determine offset from the part select
+                if (lhs_expr->VpiType() == vpiPartSelect) {
+                    const part_select* ps = static_cast<const part_select*>(lhs_expr);
+                    if (auto right_expr = ps->Right_range()) {
+                        RTLIL::SigSpec right_sig = import_expression(right_expr);
+                        if (right_sig.is_fully_const()) {
+                            offset = right_sig.as_const().as_int();
+                        }
+                    }
+                } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+                    if (auto base_expr = ips->Base_expr()) {
+                        RTLIL::SigSpec base_sig = import_expression(base_expr);
+                        if (base_sig.is_fully_const()) {
+                            offset = base_sig.as_const().as_int();
+                        }
+                    }
+                }
+                
+                // Extract the part we're updating
+                RTLIL::SigSpec part_temp = temp_spec.extract(offset, width);
+                proc->root_case.actions.push_back(RTLIL::SigSig(part_temp, rhs));
+                
+                log("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
+                    signal_name.c_str(), offset + width - 1, offset);
+            } else {
+                // Full signal assignment
+                proc->root_case.actions.push_back(RTLIL::SigSig(temp_spec, rhs));
+                log("      Assigned to temp wire %s <= [value]\n", signal_name.c_str());
+            }
+            return;
+        }
+    }
+    
+    // Normal assignment
     proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
+}
+
+// Import assignment for comb context (CaseRule variant)
+void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
+    RTLIL::SigSpec lhs;
+    RTLIL::SigSpec rhs;
+    
+    // Import LHS (always an expr)
+    if (auto lhs_expr = uhdm_assign->Lhs()) {
+        lhs = import_expression(lhs_expr);
+    }
+    
+    // Import RHS (could be an expr or other type)
+    if (auto rhs_any = uhdm_assign->Rhs()) {
+        if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            rhs = import_expression(rhs_expr);
+        } else {
+            log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
+        }
+    }
+    
+    if (lhs.size() != rhs.size()) {
+        if (rhs.size() < lhs.size()) {
+            rhs.extend_u0(lhs.size());
+        } else {
+            rhs = rhs.extract(0, lhs.size());
+        }
+    }
+    
+    // Special handling for async reset context
+    if (!current_signal_temp_wires.empty()) {
+        auto lhs_expr = uhdm_assign->Lhs();
+        if (!lhs_expr) return;
+        
+        // Extract the base signal name from the LHS
+        std::string signal_name;
+        
+        if (lhs_expr->VpiType() == vpiRefObj) {
+            const ref_obj* ref = static_cast<const ref_obj*>(lhs_expr);
+            if (!ref->VpiName().empty()) {
+                signal_name = std::string(ref->VpiName());
+            }
+        } else if (lhs_expr->VpiType() == vpiPartSelect) {
+            const part_select* ps = static_cast<const part_select*>(lhs_expr);
+            // Get base signal from parent
+            if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+                signal_name = std::string(ps->VpiParent()->VpiName());
+            }
+        } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+            const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+            // Get base signal from parent
+            if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
+                signal_name = std::string(ips->VpiParent()->VpiName());
+            }
+        }
+        
+        // If we have a temp wire for this signal, assign to it
+        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n", 
+            signal_name.c_str(), current_signal_temp_wires.size());
+        if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
+            log("      Found temp wire for signal '%s'\n", signal_name.c_str());
+            RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
+            RTLIL::SigSpec temp_spec(temp_wire);
+            
+            // For part selects, we should not use temp wires (causes issues with generate blocks)
+            if (lhs_expr->VpiType() == vpiPartSelect || lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                // Just do normal assignment for part selects
+                // The assignment should go in the current context, not root_case
+                case_rule->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                return;
+            } else if (false) { // Disabled old code
+                // The 'lhs' SigSpec already represents the part select
+                // We need to extract the bit positions
+                int offset = 0;
+                int width = lhs.size();
+                
+                // Try to determine offset from the part select
+                if (lhs_expr->VpiType() == vpiPartSelect) {
+                    const part_select* ps = static_cast<const part_select*>(lhs_expr);
+                    if (auto right_expr = ps->Right_range()) {
+                        RTLIL::SigSpec right_sig = import_expression(right_expr);
+                        if (right_sig.is_fully_const()) {
+                            offset = right_sig.as_const().as_int();
+                        }
+                    }
+                } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+                    if (auto base_expr = ips->Base_expr()) {
+                        RTLIL::SigSpec base_sig = import_expression(base_expr);
+                        if (base_sig.is_fully_const()) {
+                            offset = base_sig.as_const().as_int();
+                        }
+                    }
+                }
+                
+                // Extract the part we're updating
+                RTLIL::SigSpec part_temp = temp_spec.extract(offset, width);
+                case_rule->actions.push_back(RTLIL::SigSig(part_temp, rhs));
+                
+                log("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
+                    signal_name.c_str(), offset + width - 1, offset);
+            } else {
+                // Full signal assignment
+                case_rule->actions.push_back(RTLIL::SigSig(temp_spec, rhs));
+                log("      Assigned to temp wire %s <= [value] (temp_wire=%s)\n", 
+                    signal_name.c_str(), temp_wire->name.c_str());
+            }
+            return;
+        }
+    }
+    
+    // Normal assignment
+    case_rule->actions.push_back(RTLIL::SigSig(lhs, rhs));
 }
 
 // Import if statement for sync context
@@ -1449,22 +1755,45 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             
                             // Check if we should assign to a temp wire instead
                             RTLIL::SigSpec target_sig = lhs_sig;
-                            if (!current_temp_wires.empty()) {
-                                // Extract the signal name from lhs
-                                std::string sig_name;
+                            
+                            // First check current_signal_temp_wires (for async reset context)
+                            if (!current_signal_temp_wires.empty()) {
+                                // Extract the base signal name from the LHS
+                                std::string signal_name;
+                                
                                 if (lhs->VpiType() == vpiRefObj) {
-                                    auto ref = static_cast<const ref_obj*>(lhs);
-                                    sig_name = std::string(ref->VpiName());
-                                } else if (lhs->VpiType() == vpiNetBit) {
-                                    auto net_bit = static_cast<const UHDM::net_bit*>(lhs);
-                                    sig_name = std::string(net_bit->VpiName());
+                                    const ref_obj* ref = static_cast<const ref_obj*>(lhs);
+                                    if (!ref->VpiName().empty()) {
+                                        signal_name = std::string(ref->VpiName());
+                                    }
+                                } else if (lhs->VpiType() == vpiPartSelect) {
+                                    const part_select* ps = static_cast<const part_select*>(lhs);
+                                    // Get base signal from parent
+                                    if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+                                        signal_name = std::string(ps->VpiParent()->VpiName());
+                                    }
+                                } else if (lhs->VpiType() == vpiIndexedPartSelect) {
+                                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs);
+                                    // Get base signal from parent
+                                    if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
+                                        signal_name = std::string(ips->VpiParent()->VpiName());
+                                    }
                                 }
                                 
                                 // If we have a temp wire for this signal, use it
-                                if (!sig_name.empty() && current_temp_wires.count(sig_name)) {
-                                    target_sig = RTLIL::SigSpec(current_temp_wires[sig_name]);
+                                if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
+                                    RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
+                                    target_sig = RTLIL::SigSpec(temp_wire);
                                     if (mode_debug)
-                                        log("        Using temp wire for %s\n", sig_name.c_str());
+                                        log("        Using temp wire %s for signal %s in async reset context\n",
+                                            temp_wire->name.c_str(), signal_name.c_str());
+                                }
+                            } else if (!current_temp_wires.empty()) {
+                                // Check if this exact LHS expression has a temp wire
+                                if (current_temp_wires.count(lhs)) {
+                                    target_sig = RTLIL::SigSpec(current_temp_wires[lhs]);
+                                    if (mode_debug)
+                                        log("        Using temp wire for assignment\n");
                                 }
                             }
                             
