@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-15 21:22:08.091173808 -0700
-+++ uhdm_synth_clean.tmp	2025-08-15 21:22:08.091173808 -0700
+--- verilog_synth_clean.tmp	2025-08-15 22:11:02.607297887 -0700
++++ uhdm_synth_clean.tmp	2025-08-15 22:11:02.607297887 -0700
 @@ -33,44 +33,44 @@
  (* src = "dut.sv:8.17-8.23" *)
  output out_or;
