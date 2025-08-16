@@ -27,20 +27,19 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 SKIPPED_TESTS=0
 CRASHED_TESTS=0
-RTLIL_DIFF_TESTS=0
 UHDM_ONLY_TESTS=0
+EQUIV_FAILED_TESTS=0
 
 FAILED_TEST_NAMES=()
 SKIPPED_TEST_NAMES=()
 CRASHED_TEST_NAMES=()
-RTLIL_DIFF_TEST_NAMES=()
 PASSED_TEST_NAMES=()
 UHDM_ONLY_TEST_NAMES=()
+EQUIV_FAILED_TEST_NAMES=()
 
 # Track unexpected results
 UNEXPECTED_FAILURES=()
 UNEXPECTED_SUCCESSES=()
-UNEXPECTED_FUNCTIONAL_DIFFS=()
 
 # Load failing tests list
 FAILING_TESTS=()
@@ -179,9 +178,9 @@ analyze_test_result() {
     # Report results
     if [ "$equiv_failed" = true ]; then
         echo "❌ Test $test_dir FAILED - Formal equivalence check failed"
-        FAILED_TESTS=$((FAILED_TESTS + 1))
-        FAILED_TEST_NAMES+=("$test_dir")
-        return 1
+        EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + 1))
+        EQUIV_FAILED_TEST_NAMES+=("$test_dir")
+        return 2  # Return 2 to indicate equivalence failure (different from other failures)
     elif [ "$rtlil_identical" = true ] && [ "$synth_identical" = true ]; then
         echo "✅ Test $test_dir PASSED - Both RTLIL and synthesized netlists are IDENTICAL"
         PASSED_TESTS=$((PASSED_TESTS + 1))
@@ -193,19 +192,20 @@ analyze_test_result() {
         PASSED_TEST_NAMES+=("$test_dir")
         return 0
     elif [ "$rtlil_identical" = true ] && [ "$synth_identical" = false ]; then
-        echo "⚠️  Test $test_dir FUNCTIONAL - RTLIL identical but synthesized netlists differ"
-        RTLIL_DIFF_TESTS=$((RTLIL_DIFF_TESTS + 1))
-        RTLIL_DIFF_TEST_NAMES+=("$test_dir")
-        return 0
+        echo "⚠️  Test $test_dir FAILED - RTLIL identical but synthesized netlists differ"
+        EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + 1))
+        EQUIV_FAILED_TEST_NAMES+=("$test_dir")
+        return 2
     elif [ "$rtlil_identical" = false ] && [ "$synth_identical" = true ]; then
         echo "✅ Test $test_dir PASSED - RTLIL differs but synthesized netlists are IDENTICAL (functionally equivalent)"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         PASSED_TEST_NAMES+=("$test_dir")
         return 0
     else
-        echo "⚠️  Test $test_dir FUNCTIONAL - Both RTLIL and synthesized netlists differ"
-        RTLIL_DIFF_TESTS=$((RTLIL_DIFF_TESTS + 1))
-        RTLIL_DIFF_TEST_NAMES+=("$test_dir")
+        echo "⚠️  Test $test_dir FUNCTIONAL - Both RTLIL and synthesized netlists differ (no equivalence check performed)"
+        # This shouldn't happen with equivalence checking enabled
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+        FAILED_TEST_NAMES+=("$test_dir")
         
         # Count lines to show size difference
         local uhdm_lines=$(wc -l < "$uhdm_file" 2>/dev/null || echo "0")
@@ -218,7 +218,7 @@ analyze_test_result() {
             local verilog_gates=$(grep -E '\$_' "$verilog_synth" | wc -l)
             echo "    Gates: UHDM=$uhdm_gates, Verilog=$verilog_gates"
         fi
-        return 0
+        return 1
     fi
 }
 
@@ -250,16 +250,10 @@ for test_dir in "${TEST_DIRS[@]}"; do
     # Determine test result type
     if [ $result_code -eq 0 ]; then
         test_passed=true
-        # Check if it's a functional diff test
-        for rtlil_test in "${RTLIL_DIFF_TEST_NAMES[@]}"; do
-            if [ "$rtlil_test" = "$test_dir" ]; then
-                test_result="functional_diff"
-                break
-            fi
-        done
-        if [ -z "$test_result" ]; then
-            test_result="passed"
-        fi
+        test_result="passed"
+    elif [ $result_code -eq 2 ]; then
+        # Equivalence check failure
+        test_result="equiv_failed"
     else
         test_result="failed"
     fi
@@ -269,8 +263,8 @@ for test_dir in "${TEST_DIRS[@]}"; do
         if [ "$test_result" = "passed" ]; then
             echo "    ⚠️  UNEXPECTED SUCCESS - This test was expected to fail!"
             UNEXPECTED_SUCCESSES+=("$test_dir")
-        elif [ "$test_result" = "functional_diff" ]; then
-            echo "    Note: This test was expected to fail but has functional differences"
+        elif [ "$test_result" = "equiv_failed" ]; then
+            echo "    Note: This test was expected to fail (equivalence check failure)"
         else
             echo "    Note: This test was expected to fail"
         fi
@@ -278,9 +272,9 @@ for test_dir in "${TEST_DIRS[@]}"; do
         if [ "$test_result" = "failed" ]; then
             echo "    ⚠️  UNEXPECTED FAILURE - This test was expected to pass!"
             UNEXPECTED_FAILURES+=("$test_dir")
-        elif [ "$test_result" = "functional_diff" ]; then
-            echo "    ⚠️  UNEXPECTED FUNCTIONAL DIFFERENCES - This test should produce identical output!"
-            UNEXPECTED_FUNCTIONAL_DIFFS+=("$test_dir")
+        elif [ "$test_result" = "equiv_failed" ]; then
+            echo "    ⚠️  UNEXPECTED EQUIVALENCE FAILURE - This test should pass formal equivalence!"
+            UNEXPECTED_FAILURES+=("$test_dir")
         fi
     fi
     
@@ -295,18 +289,19 @@ echo "=========================================="
 echo
 echo "📊 OVERALL STATISTICS:"
 echo "  Total tests run: $TOTAL_TESTS"
-echo "  ✅ Perfect matches: $PASSED_TESTS"
+echo "  ✅ Passing tests: $PASSED_TESTS"
 echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
-echo "  ⚠️  Functional (RTLIL diffs): $RTLIL_DIFF_TESTS"
+echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
 echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
 echo
 
-# Calculate success rate
-FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS + RTLIL_DIFF_TESTS))
-if [ $TOTAL_TESTS -gt 0 ]; then
-    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / TOTAL_TESTS))
-    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$TOTAL_TESTS tests functional)"
+# Calculate success rate (excluding equivalence failures and true failures)
+FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
+NON_FAILING_TESTS=$((TOTAL_TESTS - FAILED_TESTS - CRASHED_TESTS - EQUIV_FAILED_TESTS))
+if [ $TOTAL_TESTS -gt 0 ] && [ $NON_FAILING_TESTS -gt 0 ]; then
+    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / NON_FAILING_TESTS))
+    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$NON_FAILING_TESTS tests functional, excluding known failures)"
 fi
 
 echo
@@ -330,26 +325,21 @@ if [ $UHDM_ONLY_TESTS -gt 0 ]; then
     done
 fi
 
-if [ $RTLIL_DIFF_TESTS -gt 0 ]; then
-    echo
-    echo "⚠️  FUNCTIONAL WITH DIFFERENCES ($RTLIL_DIFF_TESTS tests):"
-    echo "   These tests work correctly but have expected RTLIL differences:"
-    for test in "${RTLIL_DIFF_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-    echo
-    echo "   Note: RTLIL differences are normal between UHDM and Verilog frontends due to:"
-    echo "   • Different source location tracking"
-    echo "   • Different intermediate representations"
-    echo "   • Different wire/cell naming conventions"
-    echo "   • Different optimization passes applied"
-fi
 
 if [ $CRASHED_TESTS -gt 0 ]; then
     echo
     echo "💥 CRASHED TESTS ($CRASHED_TESTS tests):"
     echo "   These tests crashed during execution and need investigation:"
     for test in "${CRASHED_TEST_NAMES[@]}"; do
+        echo "   - $test"
+    done
+fi
+
+if [ $EQUIV_FAILED_TESTS -gt 0 ]; then
+    echo
+    echo "❌ EQUIVALENCE FAILURES ($EQUIV_FAILED_TESTS tests):"
+    echo "   These tests generate output but fail formal equivalence checking:"
+    for test in "${EQUIV_FAILED_TEST_NAMES[@]}"; do
         echo "   - $test"
     done
 fi
@@ -367,7 +357,8 @@ echo
 echo "🔍 ANALYSIS:"
 echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
 echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
-echo "  • Tests that fail: $FAILED_TESTS/$TOTAL_TESTS"
+echo "  • Tests that fail equivalence: $EQUIV_FAILED_TESTS/$TOTAL_TESTS"
+echo "  • Tests that fail to generate output: $FAILED_TESTS/$TOTAL_TESTS"
 
 # Check for any unexpected results
 if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
@@ -379,16 +370,6 @@ if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
     done
 fi
 
-if [ ${#UNEXPECTED_FUNCTIONAL_DIFFS[@]} -gt 0 ]; then
-    echo
-    echo "❌ UNEXPECTED FUNCTIONAL DIFFERENCES (${#UNEXPECTED_FUNCTIONAL_DIFFS[@]} tests):"
-    echo "   These tests have RTLIL differences but are not listed in failing_tests.txt:"
-    for test in "${UNEXPECTED_FUNCTIONAL_DIFFS[@]}"; do
-        echo "   - $test"
-    done
-    echo
-    echo "   Either fix these tests to produce identical output or add them to failing_tests.txt"
-fi
 
 if [ ${#UNEXPECTED_SUCCESSES[@]} -gt 0 ]; then
     echo
@@ -403,14 +384,11 @@ fi
 
 # Determine exit status
 echo
-if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ] && [ ${#UNEXPECTED_FUNCTIONAL_DIFFS[@]} -eq 0 ]; then
-    if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
+if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]; then
+    if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ]; then
         echo "🎉 EXCELLENT! All tests are functional! 🎉"
         echo
         echo "The UHDM frontend successfully processes all test cases without crashes."
-        if [ $RTLIL_DIFF_TESTS -gt 0 ]; then
-            echo "RTLIL differences are expected and normal between different frontends."
-        fi
         echo
         echo "✨ Key achievements:"
         echo "  • No crashes or failures"
@@ -424,6 +402,7 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
         echo
         echo "All failing tests are documented in failing_tests.txt:"
         echo "  • Crashed tests: $CRASHED_TESTS"
+        echo "  • Equivalence failures: $EQUIV_FAILED_TESTS"
         echo "  • Failed tests: $FAILED_TESTS"
         echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
         echo
@@ -435,9 +414,6 @@ else
     echo
     if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
         echo "• ${#UNEXPECTED_FAILURES[@]} tests failed unexpectedly"
-    fi
-    if [ ${#UNEXPECTED_FUNCTIONAL_DIFFS[@]} -gt 0 ]; then
-        echo "• ${#UNEXPECTED_FUNCTIONAL_DIFFS[@]} tests have unexpected functional differences"
     fi
     if [ ${#UNEXPECTED_SUCCESSES[@]} -gt 0 ]; then
         echo "• ${#UNEXPECTED_SUCCESSES[@]} tests passed unexpectedly"

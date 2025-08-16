@@ -167,6 +167,8 @@ make test
 - **struct_array** - Arrays of packed structs with complex indexing and member access
 - **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
 - **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
+- **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
+- **nested_struct_nopack** - Nested structs without packages *(Known failure - missing XOR operation)*
 
 ### Test Management
 
@@ -241,10 +243,11 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend now passes **all 19 test cases** in the test suite:
+The UHDM frontend test suite includes **21 test cases**:
 - **3 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case)
-- **16 Functional tests** - Work correctly, validated by formal equivalence checking
-- **0 Failing tests** - All tests pass successfully!
+- **1 additional UHDM-only test** - nested_struct (uses packages, Verilog frontend can't parse)
+- **16 Passing tests** - Work correctly, validated by formal equivalence checking
+- **1 Known failing test** - nested_struct_nopack (equivalence check fails due to missing XOR operation in UHDM frontend)
 
 ## Recent Improvements
 

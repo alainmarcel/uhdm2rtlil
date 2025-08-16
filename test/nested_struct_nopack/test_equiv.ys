@@ -1,0 +1,29 @@
+# Formal equivalence check using design stash approach
+# to avoid module name conflicts between gold and gate designs
+
+# Load cell library
+read_verilog -lib +/simcells.v
+
+# Read and process Verilog version (gold)
+read_verilog -sv ./nested_struct_nopack/nested_struct_nopack_from_verilog_synth.v
+hierarchy -top nested_struct_nopack
+proc
+design -stash gold
+
+# Read and process UHDM version (gate)
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv ./nested_struct_nopack/nested_struct_nopack_from_uhdm_synth.v
+hierarchy -top nested_struct_nopack
+proc
+design -stash gate
+
+# Copy both designs with different names
+design -copy-from gold -as gold nested_struct_nopack
+design -copy-from gate -as gate nested_struct_nopack
+
+# Perform equivalence check
+equiv_make gold gate equiv
+equiv_simple
+equiv_induct
+equiv_status -assert

@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil nested_struct_from_verilog_nohier.il
+hierarchy -check -top nested_struct
+stat
+proc
+opt
+stat
+write_rtlil nested_struct_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top nested_struct
+write_verilog -noexpr nested_struct_from_verilog_synth.v
