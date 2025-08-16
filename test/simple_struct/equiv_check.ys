@@ -1,0 +1,19 @@
+# Read the Verilog frontend netlist as the golden reference
+read_verilog -sv ./simple_struct/simple_struct_from_verilog_synth.v
+# Rename the module to avoid name conflicts
+rename simple_struct gold
+
+# Read the UHDM frontend netlist as the implementation
+read_verilog -sv ./simple_struct/simple_struct_from_uhdm_synth.v
+# Rename the module for clarity
+rename simple_struct gate
+
+# Create equivalence checking circuit
+equiv_make gold gate equiv
+
+# Run equivalence checking
+equiv_simple equiv
+equiv_induct equiv
+
+# Check equivalence status
+equiv_status -assert equiv

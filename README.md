@@ -14,10 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (18/18 tests functional)
-- **Perfect Matches**: Tests with matching gate counts or identical netlists
-- **UHDM-Only Success**: 2 tests demonstrate superior SystemVerilog support
-- **Functional**: All tests work correctly, validated by gate count comparison
+- **Success Rate**: 100% (19/19 tests functional)
+- **Perfect Matches**: Tests validated by formal equivalence checking
+- **UHDM-Only Success**: 3 tests demonstrate superior SystemVerilog support
+- **Functional**: All tests work correctly, validated by formal equivalence checking
 
 ## Architecture & Workflow
 
@@ -139,12 +139,12 @@ make test
 # Test output explanation:
 # ✓ PASSED - UHDM and Verilog frontends produce functionally equivalent results
 # ⚠ FUNCTIONAL - Works correctly but with RTLIL differences (normal and expected)
-# ✗ FAILED - Significant functional differences requiring investigation
+# ✗ FAILED - Significant functional differences or equivalence check failure
 
 # The test framework performs multiple levels of comparison:
 # 1. RTLIL comparison - Shows implementation differences
-# 2. Gate count comparison - Tests pass if gate counts match
-# 3. Netlist comparison - Additional validation of functional equivalence
+# 2. Synthesis and formal equivalence check - Uses Yosys equiv_make/equiv_simple/equiv_induct
+# 3. Validates functional equivalence even when gate counts differ
 ```
 
 ### Current Test Cases
@@ -158,14 +158,15 @@ make test
 - **simple_hierarchy** - Module instantiation and port connections
 - **simple_interface** - Interface-based connections
 - **simple_memory** - Memory arrays and access patterns
+- **simple_memory_noreset** - Memory array without reset signal
 - **param_test** - Parameter passing and overrides
 - **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
 - **simple_fsm** - Finite state machine with parameterized states (tests parameter references in case statements)
-- **simple_instance_array** - Primitive gate arrays (tests and, or, xor, nand, not gates with array instances)
-- **simple_package** - SystemVerilog packages with parameters, structs, and imports
+- **simple_instance_array** - Primitive gate arrays (tests and, or, xor, nand, not gates with array instances) *(UHDM-only)*
+- **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
 - **struct_array** - Arrays of packed structs with complex indexing and member access
 - **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
-- **unique_case** - Unique case statements with for loops and break statements
+- **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
 
 ### Test Management
 
@@ -226,6 +227,7 @@ uhdm2rtlil/
 ├── test/                        # Test framework
 │   ├── run_all_tests.sh        # Test runner script
 │   ├── test_uhdm_workflow.sh   # Individual test workflow
+│   ├── test_equivalence.sh     # Formal equivalence checking script
 │   ├── failing_tests.txt       # Known failing tests list
 │   └── */                      # Individual test cases
 ├── third_party/                # External dependencies
@@ -239,9 +241,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend now passes **all 18 test cases** in the test suite:
-- **2 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package)
-- **16 Functional tests** - Work correctly, validated by matching gate counts
+The UHDM frontend now passes **all 19 test cases** in the test suite:
+- **3 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case)
+- **16 Functional tests** - Work correctly, validated by formal equivalence checking
 - **0 Failing tests** - All tests pass successfully!
 
 ## Recent Improvements
@@ -261,10 +263,18 @@ The UHDM frontend now passes **all 18 test cases** in the test suite:
 ### Key Improvements
 - **simple_interface** - Added interface expansion support, converting interface instances to individual signals
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
+- **simple_memory** - Fixed async reset handling with proper temp wire usage in processes
 - **simple_instance_array** - Added support for primitive gate arrays (and, or, xor, nand, not gates with array syntax)
 - **simple_package** - Added full package support including imports, parameters, and struct types
 - **struct_array** - Now passes with improved expression handling and struct support
 - **generate_test** - Fixed by adding `proc` before `opt` in test workflow to handle multiple generated processes correctly
+
+### Formal Equivalence Checking
+The test framework now includes formal equivalence checking using Yosys's built-in equivalence checking capabilities:
+- Uses `equiv_make`, `equiv_simple`, and `equiv_induct` to verify functional equivalence
+- Validates that UHDM and Verilog frontends produce functionally equivalent netlists
+- Works even when gate counts differ, as optimization strategies may vary
+- Generates `test_equiv.ys` scripts in each test directory for debugging
 
 ### Primitive Gate Support
 The UHDM frontend now supports Verilog primitive gates and gate arrays:
