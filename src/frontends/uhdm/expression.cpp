@@ -1084,7 +1084,7 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
         return false;
     }
     
-    log("UHDM: calculate_struct_member_offset for path '%s'\n", member_path.c_str());
+    // log("UHDM: calculate_struct_member_offset for path '%s'\n", member_path.c_str());
     
     // Split the member path by dots for nested access
     std::vector<std::string> path_parts;
@@ -1130,8 +1130,8 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
                     if (auto actual_ts = ref_ts->Actual_typespec()) {
                         member_ts = actual_ts;
                         member_width = get_width_from_typespec(actual_ts, inst);
-                        log("UHDM:   Found target member '%s' width=%d at offset_in_struct=%d\n", 
-                            current_member_name.c_str(), member_width, offset_in_struct);
+                        // log("UHDM:   Found target member '%s' width=%d at offset_in_struct=%d\n", 
+                        //     current_member_name.c_str(), member_width, offset_in_struct);
                     }
                 }
                 found = true;
@@ -1142,8 +1142,8 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
             if (auto ref_ts = member->Typespec()) {
                 if (auto actual_ts = ref_ts->Actual_typespec()) {
                     int width = get_width_from_typespec(actual_ts, inst);
-                    log("UHDM:   Member '%s' width=%d, offset_in_struct=%d\n", 
-                        current_member_name.c_str(), width, offset_in_struct);
+                    // log("UHDM:   Member '%s' width=%d, offset_in_struct=%d\n", 
+                    //     current_member_name.c_str(), width, offset_in_struct);
                     offset_in_struct += width;
                 }
             }

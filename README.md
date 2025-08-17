@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (19/19 tests functional)
-- **Perfect Matches**: Tests validated by formal equivalence checking
-- **UHDM-Only Success**: 3 tests demonstrate superior SystemVerilog support
+- **Success Rate**: 100% (22/22 tests functional)
+- **Perfect Matches**: 18 tests validated by formal equivalence checking
+- **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
 ## Architecture & Workflow
@@ -168,7 +168,8 @@ make test
 - **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
 - **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
 - **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
-- **nested_struct_nopack** - Nested structs without packages *(Known failure - missing XOR operation)*
+- **nested_struct_nopack** - Nested structs without packages (tests synchronous if-else with switch statement generation)
+- **simple_nested_struct_nopack** - Simpler nested struct test without packages
 
 ### Test Management
 
@@ -193,6 +194,8 @@ cat test/failing_tests.txt
 # Tests that currently fail:
 # (none - all tests pass!)
 ```
+
+✅ **All 22 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -243,11 +246,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **21 test cases**:
-- **3 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case)
-- **1 additional UHDM-only test** - nested_struct (uses packages, Verilog frontend can't parse)
-- **16 Passing tests** - Work correctly, validated by formal equivalence checking
-- **1 Known failing test** - nested_struct_nopack (equivalence check fails due to missing XOR operation in UHDM frontend)
+The UHDM frontend test suite includes **22 test cases**:
+- **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
+- **18 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
 
@@ -271,6 +273,7 @@ The UHDM frontend test suite includes **21 test cases**:
 - **simple_package** - Added full package support including imports, parameters, and struct types
 - **struct_array** - Now passes with improved expression handling and struct support
 - **generate_test** - Fixed by adding `proc` before `opt` in test workflow to handle multiple generated processes correctly
+- **nested_struct_nopack** - Fixed synchronous if-else handling to generate proper switch statements matching Verilog frontend output
 
 ### Formal Equivalence Checking
 The test framework now includes formal equivalence checking using Yosys's built-in equivalence checking capabilities:
