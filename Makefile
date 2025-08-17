@@ -1,5 +1,5 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test clean plugin
+.PHONY: all debug test test-all test-yosys clean plugin install help
 
 # Use bash as the default shell
 SHELL := /usr/bin/env bash
@@ -24,10 +24,20 @@ debug: build-debug
 	@echo "Building uhdm2rtlil in Debug mode..."
 	@cd build-debug && make -j$(CPU_CORES)
 
-# Test target
+# Test target - runs our internal tests only
 test: all
 	@echo "Running tests..."
 	@cd build && make test
+
+# Test all target - runs internal tests + all Yosys tests
+test-all: all
+	@echo "Running all tests (internal + Yosys)..."
+	@cd test && ./run_all_tests.sh --all
+
+# Test Yosys target - runs only Yosys tests
+test-yosys: all
+	@echo "Running Yosys tests..."
+	@cd test && ./run_all_tests.sh --yosys
 
 # Create release build directory and configure
 build: | build/Makefile
@@ -71,10 +81,12 @@ plugin: all
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  all      - Build in Release mode (default)"
-	@echo "  debug    - Build in Debug mode"
-	@echo "  plugin   - Build and show plugin location"
-	@echo "  test     - Run tests"
-	@echo "  clean    - Clean build artifacts"
-	@echo "  install  - Install the plugin"
-	@echo "  help     - Show this help message"
+	@echo "  all        - Build in Release mode (default)"
+	@echo "  debug      - Build in Debug mode"
+	@echo "  plugin     - Build and show plugin location"
+	@echo "  test       - Run internal tests only"
+	@echo "  test-all   - Run all tests (internal + Yosys)"
+	@echo "  test-yosys - Run Yosys tests only"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  install    - Install the plugin"
+	@echo "  help       - Show this help message"

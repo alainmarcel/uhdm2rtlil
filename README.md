@@ -128,16 +128,25 @@ Each test case is a directory containing:
 
 ### Running Tests
 ```bash
-# Run all tests
-cd test
-bash run_all_tests.sh
+# Run internal tests only (our test suite)
+make test
 
-# Run specific test
+# Run all tests (internal + Yosys tests)
+make test-all
+
+# Run Yosys tests only
+make test-yosys
+
+# Run specific test from test directory
+cd test
 bash test_uhdm_workflow.sh simple_counter
 
-# Run tests using CMake
-cd build
-make test
+# Run tests with options from test directory
+cd test
+bash run_all_tests.sh                    # Run internal tests only
+bash run_all_tests.sh --all              # Run all tests (internal + Yosys)
+bash run_all_tests.sh --yosys           # Run all Yosys tests
+bash run_all_tests.sh --yosys add_sub   # Run specific Yosys test pattern
 
 # Test output explanation:
 # ✓ PASSED - UHDM and Verilog frontends produce functionally equivalent results
@@ -149,6 +158,29 @@ make test
 # 2. Synthesis and formal equivalence check - Uses Yosys equiv_make/equiv_simple/equiv_induct
 # 3. Validates functional equivalence even when gate counts differ
 ```
+
+### Yosys Test Integration
+
+The UHDM frontend can run the full Yosys test suite to validate compatibility:
+
+```bash
+# Run all Yosys tests
+make test-yosys
+
+# Run specific Yosys test directory
+cd test
+./run_all_tests.sh --yosys ../third_party/yosys/tests/arch/common
+
+# Run specific Yosys test
+./run_all_tests.sh --yosys ../third_party/yosys/tests/arch/common/add_sub.v
+```
+
+The Yosys test runner:
+- Automatically finds self-contained Verilog/SystemVerilog tests
+- Runs both Verilog and UHDM frontends on each test
+- Performs formal equivalence checking when both frontends succeed
+- Reports UHDM-only successes (tests that only work with UHDM frontend)
+- Creates test results in `test/run/` directory structure
 
 ### Current Test Cases
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
@@ -315,6 +347,20 @@ The UHDM frontend now handles elaboration automatically:
 3. **Map to RTLIL**: Convert UHDM objects to equivalent RTLIL constructs
 4. **Add Tests**: Create test cases comparing UHDM vs Verilog frontend outputs
 5. **Validate**: Ensure generated RTLIL produces correct synthesis results
+
+### Development Setup
+
+#### Git Hooks
+The project includes Git hooks to maintain code quality:
+
+```bash
+# Enable Git hooks (one-time setup)
+git config core.hooksPath .githooks
+
+# What the hooks do:
+# - Prevent commits of files larger than 10MB
+# - Prevent commits of test/run/**/*.v files (generated test outputs)
+```
 
 ### Debugging
 ```bash
