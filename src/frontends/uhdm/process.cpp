@@ -79,11 +79,15 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiBitSelect) {
-                        // Handle bit selects like result[0]
+                        // Handle bit selects like result[0] or memory[addr]
                         auto bit_sel = static_cast<const bit_select*>(lhs_expr);
                         sig.is_part_select = true;
                         
-                        if (auto parent = bit_sel->VpiParent()) {
+                        // First try to get name from bit_select itself
+                        if (!bit_sel->VpiName().empty()) {
+                            sig.name = std::string(bit_sel->VpiName());
+                        } else if (auto parent = bit_sel->VpiParent()) {
+                            // Fall back to parent if bit_select doesn't have a name
                             if (parent->VpiType() == vpiRefObj) {
                                 auto ref = static_cast<const ref_obj*>(parent);
                                 sig.name = std::string(ref->VpiName());
@@ -382,6 +386,56 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
         clock_signal.c_str(), reset_signal.c_str());
     
     return success;
+}
+
+// Check if a statement contains complex constructs (for loops, memory writes, etc.)
+static bool contains_complex_constructs(const any* stmt) {
+    if (!stmt) return false;
+    
+    int stmt_type = stmt->VpiType();
+    
+    // Check for complex statement types
+    if (stmt_type == vpiFor || stmt_type == vpiForever || stmt_type == vpiWhile) {
+        return true;
+    }
+    
+    // Check for assignment to array elements (memory writes)
+    if (stmt_type == vpiAssignment) {
+        const assignment* assign = static_cast<const assignment*>(stmt);
+        if (auto lhs = assign->Lhs()) {
+            // Check if LHS is a bit select (array element)
+            if (lhs->VpiType() == vpiBitSelect) {
+                // Any bit select assignment in synchronous context could be a memory write
+                // We'll let the memory analysis determine if it's actually a memory
+                return true;
+            }
+        }
+    }
+    
+    // Check for begin blocks
+    if (stmt_type == vpiBegin) {
+        const begin* begin_stmt = static_cast<const begin*>(stmt);
+        if (begin_stmt->Stmts()) {
+            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                if (contains_complex_constructs(sub_stmt)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Check for nested if statements
+    if (stmt_type == vpiIf || stmt_type == vpiIfElse) {
+        const if_else* if_stmt = static_cast<const if_else*>(stmt);
+        if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
+            return true;
+        }
+        if (if_stmt->VpiElseStmt() && contains_complex_constructs(if_stmt->VpiElseStmt())) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 // Extract just the signal names from assignments
@@ -902,23 +956,30 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
                 // If we found an if-else, check if both branches assign to same signals
                 if (is_simple_if_else && simple_if_else) {
-                    std::set<std::string> then_signals, else_signals;
-                    if (simple_if_else->VpiStmt()) {
-                        extract_assigned_signal_names(simple_if_else->VpiStmt(), then_signals);
-                    }
-                    if (simple_if_else->VpiElseStmt()) {
-                        extract_assigned_signal_names(simple_if_else->VpiElseStmt(), else_signals);
-                    }
-                    
-                    if (then_signals == else_signals && !then_signals.empty()) {
-                        assigned_signals = then_signals;
-                        log("      Detected simple if-else pattern assigning to: ");
-                        for (const auto& sig : assigned_signals) {
-                            log("%s ", sig.c_str());
-                        }
-                        log("\n");
-                    } else {
+                    // First check if the if-else contains complex constructs
+                    if (contains_complex_constructs(simple_if_else->VpiStmt()) ||
+                        contains_complex_constructs(simple_if_else->VpiElseStmt())) {
+                        log("      If-else contains complex constructs (for loops, memory writes) - skipping simple if-else optimization\n");
                         is_simple_if_else = false;
+                    } else {
+                        std::set<std::string> then_signals, else_signals;
+                        if (simple_if_else->VpiStmt()) {
+                            extract_assigned_signal_names(simple_if_else->VpiStmt(), then_signals);
+                        }
+                        if (simple_if_else->VpiElseStmt()) {
+                            extract_assigned_signal_names(simple_if_else->VpiElseStmt(), else_signals);
+                        }
+                        
+                        if (then_signals == else_signals && !then_signals.empty()) {
+                            assigned_signals = then_signals;
+                            log("      Detected simple if-else pattern assigning to: ");
+                            for (const auto& sig : assigned_signals) {
+                                log("%s ", sig.c_str());
+                            }
+                            log("\n");
+                        } else {
+                            is_simple_if_else = false;
+                        }
                     }
                 }
             }
@@ -1395,6 +1456,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
             
             log("            Signal name: '%s', mem_id: '%s'\n", signal_name.c_str(), mem_id.c_str());
+            log("            Checking for memory in module...\n");
+            log("            Module has %d memories\n", (int)module->memories.size());
+            for (auto& mem_pair : module->memories) {
+                log("              Memory: %s\n", mem_pair.first.c_str());
+            }
             log_flush();
             
             if (module->memories.count(mem_id) > 0) {
