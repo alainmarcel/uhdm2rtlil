@@ -258,7 +258,7 @@ elif [ -f "$UHDM_SYNTH" ] && [ -f "$VERILOG_SYNTH" ]; then
     grep -v "^//" "$UHDM_SYNTH" | grep -v "^$" | sed 's/^[[:space:]]*//' > uhdm_synth_clean.tmp
     grep -v "^//" "$VERILOG_SYNTH" | grep -v "^$" | sed 's/^[[:space:]]*//' > verilog_synth_clean.tmp
     
-    if diff -u verilog_synth_clean.tmp uhdm_synth_clean.tmp > netlist_diff.txt; then
+    if diff -u --label="verilog_synth" --label="uhdm_synth" verilog_synth_clean.tmp uhdm_synth_clean.tmp > netlist_diff.txt; then
         echo "   ✓ Synthesized netlists are IDENTICAL!"
         echo "     Both frontends produce the same gate-level implementation"
         rm netlist_diff.txt uhdm_synth_clean.tmp verilog_synth_clean.tmp

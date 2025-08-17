@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-17 09:19:37.833475791 -0700
-+++ uhdm_synth_clean.tmp	2025-08-17 09:19:37.829475711 -0700
+--- verilog_synth
++++ uhdm_synth
 @@ -57,109 +57,109 @@
  input rst;
  wire rst;

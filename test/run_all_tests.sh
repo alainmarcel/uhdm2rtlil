@@ -2,24 +2,63 @@
 
 # Test runner script for UHDM frontend
 # Runs test_uhdm_workflow.sh for every test directory and provides comprehensive statistics
+# Can also run Yosys tests with --yosys or --all options
 
 # Don't exit on error - we want to run all tests
 set +e
 
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Default behavior
+RUN_LOCAL=true
+RUN_YOSYS=false
+SPECIFIC_TEST=""
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --yosys)
+            RUN_LOCAL=false
+            RUN_YOSYS=true
+            shift
+            ;;
+        --all)
+            RUN_LOCAL=true
+            RUN_YOSYS=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS] [TEST_PATTERN]"
+            echo ""
+            echo "Options:"
+            echo "  --yosys       Run only Yosys tests from third_party/yosys/tests/"
+            echo "  --all         Run both local tests and Yosys tests"
+            echo "  --help, -h    Show this help message"
+            echo ""
+            echo "Arguments:"
+            echo "  TEST_PATTERN  Optional pattern to match specific tests"
+            echo ""
+            echo "Examples:"
+            echo "  $0                    # Run all local tests"
+            echo "  $0 simple_memory      # Run local test matching 'simple_memory'"
+            echo "  $0 --yosys            # Run all Yosys tests"
+            echo "  $0 --yosys simple     # Run Yosys tests matching 'simple'"
+            echo "  $0 --all              # Run all local and Yosys tests"
+            exit 0
+            ;;
+        *)
+            SPECIFIC_TEST="$1"
+            shift
+            ;;
+    esac
+done
+
 echo "=== UHDM Frontend Test Runner ==="
 
 # Change to test directory
-cd "$(dirname "$0")"
-
-# Check if a specific test was requested
-SPECIFIC_TEST=""
-if [ $# -eq 1 ]; then
-    SPECIFIC_TEST="$1"
-    echo "Running specific test: $SPECIFIC_TEST"
-else
-    echo "Running all test cases..."
-fi
-echo
+cd "$SCRIPT_DIR"
 
 # Initialize counters and tracking arrays
 TOTAL_TESTS=0
@@ -28,6 +67,13 @@ FAILED_TESTS=0
 SKIPPED_TESTS=0
 CRASHED_TESTS=0
 UHDM_ONLY_TESTS=0
+
+# For Yosys tests
+YOSYS_TOTAL=0
+YOSYS_PASSED=0
+YOSYS_FAILED=0
+YOSYS_SKIPPED=0
+YOSYS_UHDM_ONLY=0
 EQUIV_FAILED_TESTS=0
 
 FAILED_TEST_NAMES=()
@@ -59,34 +105,42 @@ else
 fi
 echo
 
-# Find all test directories (directories containing dut.sv)
-TEST_DIRS=()
-if [ -n "$SPECIFIC_TEST" ]; then
-    # Check if the specific test exists
-    if [ -d "$SPECIFIC_TEST" ] && [ -f "$SPECIFIC_TEST/dut.sv" ]; then
-        TEST_DIRS+=("$SPECIFIC_TEST")
-    else
-        echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv"
+# Only find local test directories if running local tests
+if [ "$RUN_LOCAL" = true ]; then
+    # Find all test directories (directories containing dut.sv)
+    TEST_DIRS=()
+    if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_YOSYS" = false ]; then
+        # Check if the specific test exists
+        if [ -d "$SPECIFIC_TEST" ] && [ -f "$SPECIFIC_TEST/dut.sv" ]; then
+            TEST_DIRS+=("$SPECIFIC_TEST")
+        else
+            echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv"
+            exit 1
+        fi
+    elif [ "$RUN_YOSYS" = false ] || [ -z "$SPECIFIC_TEST" ]; then
+        # Find all test directories
+        for dir in */; do
+            if [ -d "$dir" ] && [ -f "$dir/dut.sv" ]; then
+                # Remove trailing slash from directory name
+                TEST_NAME="${dir%/}"
+                # Skip the run directory (used for Yosys tests)
+                if [ "$TEST_NAME" != "run" ]; then
+                    TEST_DIRS+=("$TEST_NAME")
+                fi
+            fi
+        done
+    fi
+
+    if [ "$RUN_YOSYS" = false ] && [ ${#TEST_DIRS[@]} -eq 0 ]; then
+        echo "No test directories found (looking for directories containing dut.sv)"
         exit 1
     fi
-else
-    # Find all test directories
-    for dir in */; do
-        if [ -d "$dir" ] && [ -f "$dir/dut.sv" ]; then
-            # Remove trailing slash from directory name
-            TEST_NAME="${dir%/}"
-            TEST_DIRS+=("$TEST_NAME")
-        fi
-    done
-fi
 
-if [ ${#TEST_DIRS[@]} -eq 0 ]; then
-    echo "No test directories found (looking for directories containing dut.sv)"
-    exit 1
+    if [ ${#TEST_DIRS[@]} -gt 0 ]; then
+        echo "Found ${#TEST_DIRS[@]} local test(s): ${TEST_DIRS[*]}"
+        echo
+    fi
 fi
-
-echo "Found ${#TEST_DIRS[@]} test(s): ${TEST_DIRS[*]}"
-echo
 
 # Helper function to check if test is in failing list
 is_failing_test() {
@@ -222,8 +276,9 @@ analyze_test_result() {
     fi
 }
 
-# Run tests
-for test_dir in "${TEST_DIRS[@]}"; do
+# Run local tests if requested and found
+if [ "$RUN_LOCAL" = true ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
+    for test_dir in "${TEST_DIRS[@]}"; do
     echo "=========================================="
     echo "Running test: $test_dir"
     echo "=========================================="
@@ -279,31 +334,66 @@ for test_dir in "${TEST_DIRS[@]}"; do
     fi
     
     echo
-done
+    done
+fi  # End of local test loop
 
-
-# Final summary
-echo "=========================================="
-echo "=== COMPREHENSIVE TEST SUMMARY ==="
-echo "=========================================="
-echo
-echo "📊 OVERALL STATISTICS:"
-echo "  Total tests run: $TOTAL_TESTS"
-echo "  ✅ Passing tests: $PASSED_TESTS"
-echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
-echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
-echo "  ❌ True failures: $FAILED_TESTS"
-echo "  💥 Crashes: $CRASHED_TESTS"
-echo
-
-# Calculate success rate (excluding equivalence failures and true failures)
-FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
-NON_FAILING_TESTS=$((TOTAL_TESTS - FAILED_TESTS - CRASHED_TESTS - EQUIV_FAILED_TESTS))
-if [ $TOTAL_TESTS -gt 0 ] && [ $NON_FAILING_TESTS -gt 0 ]; then
-    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / NON_FAILING_TESTS))
-    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$NON_FAILING_TESTS tests functional, excluding known failures)"
+# Run Yosys tests if requested
+if [ "$RUN_YOSYS" = true ]; then
+    echo "=========================================="
+    echo "=== Running Yosys Tests ==="
+    echo "=========================================="
+    echo
+    
+    # Save current directory
+    SAVE_DIR=$(pwd)
+    
+    # Run the Yosys test script and capture results
+    YOSYS_OUTPUT_FILE="/tmp/yosys_test_output_$$.txt"
+    if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_LOCAL" = false ]; then
+        "$SCRIPT_DIR/run_yosys_tests.sh" "$SPECIFIC_TEST" | tee "$YOSYS_OUTPUT_FILE"
+    else
+        "$SCRIPT_DIR/run_yosys_tests.sh" | tee "$YOSYS_OUTPUT_FILE"
+    fi
+    YOSYS_EXIT_CODE=$?
+    
+    # Return to original directory
+    cd "$SAVE_DIR"
+    
+    # Parse Yosys test results and update global counters
+    if [ -f "$YOSYS_OUTPUT_FILE" ]; then
+        # Extract UHDM-only success count and names
+        if grep -q "🚀 UHDM-only success:" "$YOSYS_OUTPUT_FILE"; then
+            YOSYS_UHDM_COUNT=$(grep "🚀 UHDM-only success:" "$YOSYS_OUTPUT_FILE" | sed 's/.*: //')
+            if [ -n "$YOSYS_UHDM_COUNT" ] && [ "$YOSYS_UHDM_COUNT" -gt 0 ]; then
+                UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + YOSYS_UHDM_COUNT))
+                
+                # Extract UHDM-only test names from the output
+                IN_UHDM_SECTION=false
+                while IFS= read -r line; do
+                    if [[ "$line" =~ ^🚀[[:space:]]UHDM-ONLY[[:space:]]SUCCESS ]]; then
+                        IN_UHDM_SECTION=true
+                    elif [[ "$line" =~ ^(✅|❌|⏭️|💥|$) ]] && [ "$IN_UHDM_SECTION" = true ]; then
+                        IN_UHDM_SECTION=false
+                    elif [ "$IN_UHDM_SECTION" = true ] && [[ "$line" =~ ^[[:space:]]+-[[:space:]] ]]; then
+                        test_name=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//')
+                        UHDM_ONLY_TEST_NAMES+=("$test_name")
+                    fi
+                done < "$YOSYS_OUTPUT_FILE"
+            fi
+        fi
+        
+        # Clean up
+        rm -f "$YOSYS_OUTPUT_FILE"
+    fi
+    
+    echo  # Extra newline after Yosys tests
 fi
 
+# Final summary - show when any tests were run
+if [ "$TOTAL_TESTS" -gt 0 ]; then
+    echo "=========================================="
+    echo "=== COMPREHENSIVE TEST SUMMARY ==="
+    echo "=========================================="
 echo
 echo "📈 DETAILED BREAKDOWN:"
 
@@ -355,6 +445,8 @@ fi
 
 echo
 echo "🔍 ANALYSIS:"
+# Recalculate functional tests before displaying
+FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
 echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
 echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
 echo "  • Tests that fail equivalence: $EQUIV_FAILED_TESTS/$TOTAL_TESTS"
@@ -382,20 +474,29 @@ if [ ${#UNEXPECTED_SUCCESSES[@]} -gt 0 ]; then
     echo "   Please remove these from failing_tests.txt"
 fi
 
+echo
+echo "📊 OVERALL STATISTICS:"
+echo "  Total tests run: $TOTAL_TESTS"
+echo "  ✅ Passing tests: $PASSED_TESTS"
+echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
+echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
+echo "  ❌ True failures: $FAILED_TESTS"
+echo "  💥 Crashes: $CRASHED_TESTS"
+echo
+
+# Calculate success rate (excluding equivalence failures and true failures)
+FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
+NON_FAILING_TESTS=$((TOTAL_TESTS - FAILED_TESTS - CRASHED_TESTS - EQUIV_FAILED_TESTS))
+if [ $TOTAL_TESTS -gt 0 ] && [ $NON_FAILING_TESTS -gt 0 ]; then
+    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / NON_FAILING_TESTS))
+    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$NON_FAILING_TESTS tests functional, excluding known failures)"
+fi
+
 # Determine exit status
 echo
 if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]; then
     if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ]; then
         echo "🎉 EXCELLENT! All tests are functional! 🎉"
-        echo
-        echo "The UHDM frontend successfully processes all test cases without crashes."
-        echo
-        echo "✨ Key achievements:"
-        echo "  • No crashes or failures"
-        echo "  • All SystemVerilog constructs are supported"
-        echo "  • Memory analysis pass is working"
-        echo "  • Parameter handling is correct"
-        echo "  • Process import is functional"
         exit 0
     else
         echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
@@ -422,3 +523,5 @@ else
     echo "Please investigate unexpected results or update failing_tests.txt"
     exit 1
 fi
+
+fi  # End of local test summary
