@@ -1,0 +1,143 @@
+--- verilog_synth_clean.tmp	2025-08-17 09:19:37.833475791 -0700
++++ uhdm_synth_clean.tmp	2025-08-17 09:19:37.829475711 -0700
+@@ -57,109 +57,109 @@
+ input rst;
+ wire rst;
+ \$_NOT_  _032_ (
++.A(in_data[22]),
++.Y(processed_data[22])
++);
++\$_NOT_  _033_ (
++.A(in_data[23]),
++.Y(processed_data[23])
++);
++\$_NOT_  _034_ (
+ .A(in_data[24]),
+ .Y(processed_data[24])
+ );
+-\$_NOT_  _033_ (
++\$_NOT_  _035_ (
+ .A(in_data[25]),
+ .Y(processed_data[25])
+ );
+-\$_NOT_  _034_ (
++\$_NOT_  _036_ (
+ .A(in_data[27]),
+ .Y(processed_data[27])
+ );
+-\$_NOT_  _035_ (
++\$_NOT_  _037_ (
+ .A(in_data[28]),
+ .Y(processed_data[28])
+ );
+-\$_NOT_  _036_ (
++\$_NOT_  _038_ (
+ .A(in_data[29]),
+ .Y(processed_data[29])
+ );
+-\$_NOT_  _037_ (
++\$_NOT_  _039_ (
+ .A(in_data[31]),
+ .Y(processed_data[31])
+ );
+-\$_NOT_  _038_ (
++\$_NOT_  _040_ (
+ .A(in_data[32]),
+ .Y(processed_data[32])
+ );
+-\$_NOT_  _039_ (
++\$_NOT_  _041_ (
+ .A(in_data[33]),
+ .Y(processed_data[33])
+ );
+-\$_NOT_  _040_ (
++\$_NOT_  _042_ (
+ .A(in_data[34]),
+ .Y(processed_data[34])
+ );
+-\$_NOT_  _041_ (
++\$_NOT_  _043_ (
+ .A(in_data[35]),
+ .Y(processed_data[35])
+ );
+-\$_NOT_  _042_ (
++\$_NOT_  _044_ (
+ .A(in_data[37]),
+ .Y(processed_data[37])
+ );
+-\$_NOT_  _043_ (
++\$_NOT_  _045_ (
+ .A(in_data[38]),
+ .Y(processed_data[38])
+ );
+-\$_NOT_  _044_ (
++\$_NOT_  _046_ (
+ .A(in_data[40]),
+ .Y(processed_data[40])
+ );
+-\$_NOT_  _045_ (
++\$_NOT_  _047_ (
+ .A(in_data[41]),
+ .Y(processed_data[41])
+ );
+-\$_NOT_  _046_ (
++\$_NOT_  _048_ (
+ .A(in_data[43]),
+ .Y(processed_data[43])
+ );
+-\$_NOT_  _047_ (
++\$_NOT_  _049_ (
+ .A(in_data[45]),
+ .Y(processed_data[45])
+ );
+-\$_NOT_  _048_ (
++\$_NOT_  _050_ (
+ .A(in_data[47]),
+ .Y(processed_data[47])
+ );
+-\$_NOT_  _049_ (
++\$_NOT_  _051_ (
+ .A(in_data[48]),
+ .Y(processed_data[48])
+ );
+-\$_NOT_  _050_ (
++\$_NOT_  _052_ (
+ .A(in_data[49]),
+ .Y(processed_data[49])
+ );
+-\$_NOT_  _051_ (
++\$_NOT_  _053_ (
+ .A(in_data[50]),
+ .Y(processed_data[50])
+ );
+-\$_NOT_  _052_ (
++\$_NOT_  _054_ (
+ .A(in_data[52]),
+ .Y(processed_data[52])
+ );
+-\$_NOT_  _053_ (
++\$_NOT_  _055_ (
+ .A(in_data[53]),
+ .Y(processed_data[53])
+ );
+-\$_NOT_  _054_ (
++\$_NOT_  _056_ (
+ .A(in_data[54]),
+ .Y(processed_data[54])
+ );
+-\$_NOT_  _055_ (
++\$_NOT_  _057_ (
+ .A(in_data[7]),
+ .Y(processed_data[7])
+ );
+-\$_NOT_  _056_ (
+-.A(in_data[22]),
+-.Y(processed_data[22])
+-);
+-\$_NOT_  _057_ (
+-.A(in_data[23]),
+-.Y(processed_data[23])
+-);
+ \$_AND_  _058_ (
+ .A(in_data[0]),
+ .B(in_data[21]),

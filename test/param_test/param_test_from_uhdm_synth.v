@@ -18,66 +18,66 @@ module param_test(clk, rst, data_in, data_out);
   wire rst;
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[0]  /* _0_ */ (
+  \$_SDFF_PP0_  \data_out_reg[0]  /* _0_ */ (
     .C(clk),
     .D(data_in[0]),
-    .E(rst),
-    .Q(data_out[0])
+    .Q(data_out[0]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[1]  /* _1_ */ (
+  \$_SDFF_PP1_  \data_out_reg[1]  /* _1_ */ (
     .C(clk),
     .D(data_in[1]),
-    .E(rst),
-    .Q(data_out[1])
+    .Q(data_out[1]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[2]  /* _2_ */ (
+  \$_SDFF_PP0_  \data_out_reg[2]  /* _2_ */ (
     .C(clk),
     .D(data_in[2]),
-    .E(rst),
-    .Q(data_out[2])
+    .Q(data_out[2]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[3]  /* _3_ */ (
+  \$_SDFF_PP1_  \data_out_reg[3]  /* _3_ */ (
     .C(clk),
     .D(data_in[3]),
-    .E(rst),
-    .Q(data_out[3])
+    .Q(data_out[3]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[4]  /* _4_ */ (
+  \$_SDFF_PP0_  \data_out_reg[4]  /* _4_ */ (
     .C(clk),
     .D(data_in[4]),
-    .E(rst),
-    .Q(data_out[4])
+    .Q(data_out[4]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[5]  /* _5_ */ (
+  \$_SDFF_PP1_  \data_out_reg[5]  /* _5_ */ (
     .C(clk),
     .D(data_in[5]),
-    .E(rst),
-    .Q(data_out[5])
+    .Q(data_out[5]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[6]  /* _6_ */ (
+  \$_SDFF_PP0_  \data_out_reg[6]  /* _6_ */ (
     .C(clk),
     .D(data_in[6]),
-    .E(rst),
-    .Q(data_out[6])
+    .Q(data_out[6]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_DFFE_PN_  \data_out_reg[7]  /* _7_ */ (
+  \$_SDFF_PP1_  \data_out_reg[7]  /* _7_ */ (
     .C(clk),
     .D(data_in[7]),
-    .E(rst),
-    .Q(data_out[7])
+    .Q(data_out[7]),
+    .R(rst)
   );
 endmodule

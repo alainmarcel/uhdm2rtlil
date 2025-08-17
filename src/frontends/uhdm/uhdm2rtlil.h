@@ -117,6 +117,9 @@ struct UhdmImporter {
     // Context for handling async reset (maps signal name to temp wire)
     std::map<std::string, RTLIL::Wire*> current_signal_temp_wires;
     
+    // Track sync assignment targets for proper if-else handling
+    std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
+    
     // Temporary wires for combinational processes
     std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
     std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
