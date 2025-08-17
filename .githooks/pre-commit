@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Pre-commit hook to prevent committing files larger than 10MB and test/run/**/*.v files
+
+# Maximum file size in bytes (10MB = 10 * 1024 * 1024)
+MAX_FILE_SIZE=10485760
+
+# Check for files larger than 10MB and test/run/**/*.v files
+large_files=()
+test_run_files=()
+
+while IFS= read -r -d '' file; do
+    # Skip if file doesn't exist (deleted files)
+    if [ -f "$file" ]; then
+        # Check file size
+        size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null)
+        if [ "$size" -gt "$MAX_FILE_SIZE" ]; then
+            size_mb=$((size / 1024 / 1024))
+            large_files+=("$file (${size_mb}MB)")
+        fi
+        
+        # Check if file is in test/run/ and has .v extension
+        if [[ "$file" =~ ^test/run/.*\.v$ ]]; then
+            test_run_files+=("$file")
+        fi
+    fi
+done < <(git diff --cached --name-only -z)
+
+# Report errors and prevent commit if necessary
+error_found=false
+
+# If large files found, report error
+if [ ${#large_files[@]} -gt 0 ]; then
+    echo "Error: Attempting to commit files larger than 10MB:"
+    printf '%s\n' "${large_files[@]}"
+    echo ""
+    echo "Large files should not be committed to the repository."
+    echo "Consider using Git LFS for large files or adding them to .gitignore"
+    echo ""
+    error_found=true
+fi
+
+# If test/run/**/*.v files found, report error
+if [ ${#test_run_files[@]} -gt 0 ]; then
+    echo "Error: Attempting to commit temporary test files from test/run/:"
+    printf '%s\n' "${test_run_files[@]}"
+    echo ""
+    echo "Files in test/run/ are temporary and should not be committed."
+    echo "These files are generated during Yosys test runs."
+    echo ""
+    error_found=true
+fi
+
+# Exit with error if any issues found
+if [ "$error_found" = true ]; then
+    exit 1
+fi
+
+exit 0
