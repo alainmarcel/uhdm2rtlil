@@ -71,12 +71,13 @@ is_verilog_test() {
 run_test() {
     local test_file="$1"
     local relative_path="${test_file#$YOSYS_TESTS_DIR/}"
-    local dir_name=$(dirname "$relative_path" | sed 's/\//_/g')
+    local dir_name=$(dirname "$relative_path")
     local test_name=$(basename "$test_file" .v)
     test_name=$(basename "$test_name" .sv)
     
-    # Create test directory
+    # Create test directory maintaining the original structure
     local test_dir="$RUN_DIR/${dir_name}/${test_name}"
+    local relative_test_dir="${dir_name}/${test_name}"
     mkdir -p "$test_dir"
     
     echo -e "${BLUE}Running test: $relative_path${NC}"
@@ -156,27 +157,11 @@ EOF
                 PASSED_TEST_NAMES+=("$relative_path")
                 test_result="passed"
             else
-                # Try formal equivalence check
-                cat > equiv_check.ys << EOF
-# Read both synthesized netlists
-read_verilog ${test_name}_from_verilog_synth.v
-prep -top top
-design -save gold
-
-design -reset
-read_verilog ${test_name}_from_uhdm_synth.v
-prep -top top
-
-design -save gate
-design -copy-from gold -as gold top
-design -copy-from gate -as gate top
-
-# Equivalence check
-equiv_make gold gate equiv
-equiv_simple equiv
-equiv_status -assert equiv
-EOF
-                if $YOSYS_BIN -s equiv_check.ys > equiv_check.log 2>&1; then
+                # Try formal equivalence check using existing test_equivalence.sh
+                # Need to change to parent directory since test_equivalence.sh expects relative paths
+                
+                # Call test_equivalence.sh from the run directory
+                if (cd "$RUN_DIR" && bash "$SCRIPT_DIR/test_equivalence.sh" "$relative_test_dir"); then
                     echo -e "${GREEN}✅ Formal equivalence check passed${NC}"
                     PASSED_TESTS=$((PASSED_TESTS + 1))
                     PASSED_TEST_NAMES+=("$relative_path")
@@ -234,6 +219,16 @@ echo ""
 if [ $# -gt 0 ]; then
     # Run specific tests matching pattern
     pattern="$1"
+    
+    # Handle case where user provides full path
+    if [[ "$pattern" == *"$YOSYS_TESTS_DIR"* ]]; then
+        # Extract just the relative path within the tests directory
+        pattern="${pattern#*$YOSYS_TESTS_DIR/}"
+    elif [[ "$pattern" == "../third_party/yosys/tests/"* ]]; then
+        # Handle relative path from test directory
+        pattern="${pattern#../third_party/yosys/tests/}"
+    fi
+    
     echo "Running tests matching pattern: $pattern"
     echo ""
     

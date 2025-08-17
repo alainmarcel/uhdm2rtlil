@@ -13,11 +13,22 @@ if [ $# -ne 1 ]; then
 fi
 
 TEST_NAME="$1"
-TEST_DIR="$(dirname "$0")/$TEST_NAME"
+
+# Handle both absolute and relative paths
+if [[ "$TEST_NAME" = /* ]]; then
+    # Absolute path
+    TEST_DIR="$TEST_NAME"
+else
+    # Relative path - prepend current directory
+    TEST_DIR="$(pwd)/$TEST_NAME"
+fi
+
+# Extract just the base name for the files (last component of the path)
+BASE_NAME=$(basename "$TEST_NAME")
 
 # Check if required files exist
-VERILOG_SYNTH="${TEST_DIR}/${TEST_NAME}_from_verilog_synth.v"
-UHDM_SYNTH="${TEST_DIR}/${TEST_NAME}_from_uhdm_synth.v"
+VERILOG_SYNTH="${TEST_DIR}/${BASE_NAME}_from_verilog_synth.v"
+UHDM_SYNTH="${TEST_DIR}/${BASE_NAME}_from_uhdm_synth.v"
 
 if [ ! -f "$VERILOG_SYNTH" ] || [ ! -f "$UHDM_SYNTH" ]; then
     echo "❌ Missing synthesized netlists for $TEST_NAME"
@@ -33,6 +44,8 @@ if [ "$GATE_COUNT" -eq 0 ]; then
     exit 0
 fi
 
+# We'll let Yosys auto-detect the top module
+
 # Create equivalence check script
 EQUIV_SCRIPT="${TEST_DIR}/test_equiv.ys"
 cat > "$EQUIV_SCRIPT" << 'EOF'
@@ -44,7 +57,7 @@ read_verilog -lib +/simcells.v
 
 # Read and process Verilog version (gold)
 read_verilog -sv VERILOG_SYNTH_FILE
-hierarchy -top DESIGN_NAME
+hierarchy -auto-top
 proc
 design -stash gold
 
@@ -52,13 +65,25 @@ design -stash gold
 design -reset
 read_verilog -lib +/simcells.v
 read_verilog -sv UHDM_SYNTH_FILE
-hierarchy -top DESIGN_NAME
+hierarchy -auto-top
 proc
 design -stash gate
 
 # Copy both designs with different names
-design -copy-from gold -as gold DESIGN_NAME
-design -copy-from gate -as gate DESIGN_NAME
+# Flatten to handle parameterized modules with different names
+design -load gold
+hierarchy -auto-top
+flatten
+design -stash gold_flat
+
+design -load gate
+hierarchy -auto-top  
+flatten
+design -stash gate_flat
+
+# Now copy the flattened designs
+design -copy-from gold_flat -as gold *
+design -copy-from gate_flat -as gate *
 
 # Perform equivalence check
 equiv_make gold gate equiv
@@ -70,7 +95,6 @@ EOF
 # Replace placeholders in the script
 sed -i "s|VERILOG_SYNTH_FILE|$VERILOG_SYNTH|g" "$EQUIV_SCRIPT"
 sed -i "s|UHDM_SYNTH_FILE|$UHDM_SYNTH|g" "$EQUIV_SCRIPT"
-sed -i "s|DESIGN_NAME|$TEST_NAME|g" "$EQUIV_SCRIPT"
 
 # Get path to yosys
 YOSYS_BIN="../../out/current/bin/yosys"
