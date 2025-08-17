@@ -92,6 +92,9 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 git clone --recursive https://github.com/username/uhdm2rtlil.git
 cd uhdm2rtlil
 
+# Configure git hooks (prevents committing files >10MB)
+git config core.hooksPath .githooks
+
 # Build everything (Surelog, Yosys, UHDM Frontend)
 make
 ```
@@ -383,10 +386,18 @@ See `.github/workflows/ci.yml` for configuration details.
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Add appropriate test cases
-4. Ensure all tests pass (or update `failing_tests.txt` if needed)
-5. Submit a pull request
+2. Clone and set up git hooks:
+   ```bash
+   git clone --recursive https://github.com/yourusername/uhdm2rtlil.git
+   cd uhdm2rtlil
+   git config core.hooksPath .githooks
+   ```
+3. Create a feature branch
+4. Add appropriate test cases
+5. Ensure all tests pass (or update `failing_tests.txt` if needed)
+6. Submit a pull request
+
+**Note**: The repository has git hooks configured to prevent committing files larger than 10MB. This helps keep the repository size manageable. If you need to include large files, consider using Git LFS or adding them to `.gitignore`.
 
 ## License
 

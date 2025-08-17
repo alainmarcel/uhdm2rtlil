@@ -36,3 +36,14 @@ compile_commands.json
 # Test outputs
 test/**/slpp_all/
 test/**/rtlil_diff.txt
+
+# Large files (>10MB)
+*.uhdm
+*.dump
+*.core
+core.*
+
+# Prevent accidental commit of large test files
+test/run/
+# Specifically ignore all .v files in test/run/
+test/run/**/*.v

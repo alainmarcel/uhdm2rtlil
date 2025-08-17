@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-17 09:06:18.247033325 -0700
-+++ uhdm_synth_clean.tmp	2025-08-17 09:06:18.247033325 -0700
+--- verilog_synth
++++ uhdm_synth
 @@ -17,6 +17,7 @@
  (* src = "dut.sv:4.18-4.23" *)
  input rst_n;

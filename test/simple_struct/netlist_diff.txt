@@ -1,5 +1,5 @@
---- verilog_synth_clean.tmp	2025-08-17 09:06:22.589902051 -0700
-+++ uhdm_synth_clean.tmp	2025-08-17 09:06:22.585903055 -0700
+--- verilog_synth
++++ uhdm_synth
 @@ -47,20 +47,14 @@
  (* src = "dut.sv:36.25-36.29" *)
  output [15:0] out3;
