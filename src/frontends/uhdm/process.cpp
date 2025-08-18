@@ -660,7 +660,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             const event_control* event_ctrl = static_cast<const event_control*>(stmt);
             
             // Extract clock signal from sensitivity
-            if (auto event_expr = event_ctrl->VpiCondition()) {
+            const any* event_expr = event_ctrl->VpiCondition();
+            if (event_expr) {
                 log("      Got event expression\n");
                 log_flush();
                 // Check if it's a simple edge or combined edges (or)
@@ -668,6 +669,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Event expression is operation\n");
                     log_flush();
                     const operation* op = static_cast<const operation*>(event_expr);
+                    log("      Operation type: %d (vpiEventOrOp=%d, vpiPosedgeOp=%d, vpiNegedgeOp=%d)\n", 
+                        op->VpiOpType(), vpiEventOrOp, vpiPosedgeOp, vpiNegedgeOp);
+                    log_flush();
                     
                     // Check if it's an "or" operation (multiple sensitivity items)
                     if (op->VpiOpType() == vpiEventOrOp) {
@@ -701,7 +705,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from posedge\n");
                             log_flush();
                             clock_sig = import_expression(static_cast<const expr*>((*op->Operands())[0]));
-                            log("      Clock signal imported\n");
+                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
                     } else if (op->VpiOpType() == vpiNegedgeOp) {
@@ -710,8 +714,40 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from negedge\n");
                             log_flush();
                             clock_sig = import_expression(static_cast<const expr*>((*op->Operands())[0]));
-                            log("      Clock signal imported\n");
+                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
+                        }
+                    } else if (op->VpiOpType() == vpiListOp) {
+                        // Handle list operation (e.g., single item sensitivity list)
+                        log("      Found list operation\n");
+                        log_flush();
+                        if (op->Operands() && !op->Operands()->empty()) {
+                            // Check the first operand
+                            auto first_operand = (*op->Operands())[0];
+                            if (first_operand->VpiType() == vpiOperation) {
+                                const operation* edge_op = static_cast<const operation*>(first_operand);
+                                log("      List contains operation of type: %d\n", edge_op->VpiOpType());
+                                log_flush();
+                                if (edge_op->VpiOpType() == vpiPosedgeOp) {
+                                    clock_posedge = true;
+                                    if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                        log("      Importing clock signal from posedge in list\n");
+                                        log_flush();
+                                        clock_sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                        log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                                        log_flush();
+                                    }
+                                } else if (edge_op->VpiOpType() == vpiNegedgeOp) {
+                                    clock_posedge = false;
+                                    if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                        log("      Importing clock signal from negedge in list\n");
+                                        log_flush();
+                                        clock_sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                        log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                                        log_flush();
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -900,6 +936,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             }
             
             // Create sync rules that update from temp wires
+            if (clock_sig.empty()) {
+                log_error("Clock signal is empty in async reset handling at line %d\n", __LINE__);
+            }
+            if (reset_sig.empty()) {
+                log_error("Reset signal is empty in async reset handling at line %d\n", __LINE__);
+            }
+            
             RTLIL::SyncRule* sync_clk = new RTLIL::SyncRule;
             sync_clk->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
             sync_clk->signal = clock_sig;
@@ -931,6 +974,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
             log("      No async reset detected\n");
+            log("      Clock signal at this point: %s (empty: %d)\n", log_signal(clock_sig), clock_sig.empty());
             log_flush();
             
             // Check if the statement is a simple if-else pattern
@@ -1064,6 +1108,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 yosys_proc->root_case.switches.push_back(sw);
                 
                 // Create sync rule with updates from temp wires
+                if (clock_sig.empty()) {
+                    log_error("Clock signal is empty in single clock handling at line %d\n", __LINE__);
+                }
+                
                 RTLIL::SyncRule* sync = new RTLIL::SyncRule;
                 sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
                 sync->signal = clock_sig;
@@ -1085,10 +1133,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // Fall back to original behavior for complex cases
                 log("      Creating sync rule\n");
                 log_flush();
+                
+                // Check if clock signal is empty
+                if (clock_sig.empty()) {
+                    log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+                }
+                
                 RTLIL::SyncRule* sync = new RTLIL::SyncRule;
                 sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
                 sync->signal = clock_sig;
-                log("      Sync rule created\n");
+                log("      Sync rule created with clock signal size: %d\n", clock_sig.size());
                 log_flush();
                 
                 // Import the statement using the generic import
@@ -1229,17 +1283,27 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (mode_debug)
         log("    Importing initial block\n");
     
-    // Initial blocks are for simulation only - create init sync rule
-    RTLIL::SyncRule sync;
-    sync.type = RTLIL::SyncType::STi;
+    // Initial blocks need two sync rules:
+    // 1. sync always (empty signal list)
+    // 2. sync init (STi type)
+    
+    // First, create the "sync always" rule with empty signal
+    RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
+    sync_always->type = RTLIL::SyncType::STa;  // STa is "always" with empty signal
+    sync_always->signal = RTLIL::SigSpec();  // Empty signal - this is required for STa
+    log("    Created sync always rule (STa) with signal size: %d\n", sync_always->signal.size());
+    yosys_proc->syncs.push_back(sync_always);
+    
+    // Then create the init sync rule
+    RTLIL::SyncRule* sync_init = new RTLIL::SyncRule();
+    sync_init->type = RTLIL::SyncType::STi;
+    sync_init->signal = RTLIL::SigSpec();  // STi also requires empty signal
     
     if (auto stmt = uhdm_process->Stmt()) {
-        import_statement_sync(stmt, &sync, false);
+        import_statement_sync(stmt, sync_init, false);
     }
     
-    RTLIL::SyncRule* sync_ptr = new RTLIL::SyncRule();
-    *sync_ptr = sync;
-    yosys_proc->syncs.push_back(sync_ptr);
+    yosys_proc->syncs.push_back(sync_init);
 }
 
 // Import statement for synchronous context

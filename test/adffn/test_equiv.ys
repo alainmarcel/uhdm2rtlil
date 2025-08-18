@@ -1,0 +1,41 @@
+# Formal equivalence check using design stash approach
+# to avoid module name conflicts between gold and gate designs
+
+# Load cell library
+read_verilog -lib +/simcells.v
+
+# Read and process Verilog version (gold)
+read_verilog -sv /home/alain/uhdm2rtlil/test/adffn/adffn_from_verilog_synth.v
+hierarchy -auto-top
+proc
+design -stash gold
+
+# Read and process UHDM version (gate)
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/adffn/adffn_from_uhdm_synth.v
+hierarchy -auto-top
+proc
+design -stash gate
+
+# Copy both designs with different names
+# Flatten to handle parameterized modules with different names
+design -load gold
+hierarchy -auto-top
+flatten
+design -stash gold_flat
+
+design -load gate
+hierarchy -auto-top  
+flatten
+design -stash gate_flat
+
+# Now copy the flattened designs
+design -copy-from gold_flat -as gold *
+design -copy-from gate_flat -as gate *
+
+# Perform equivalence check
+equiv_make gold gate equiv
+equiv_simple
+equiv_induct
+equiv_status -assert
