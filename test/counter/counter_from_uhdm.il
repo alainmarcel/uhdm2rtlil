@@ -18,7 +18,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $and $auto$expression.cpp:284:import_operation$5
+  cell $logic_and $auto$expression.cpp:284:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

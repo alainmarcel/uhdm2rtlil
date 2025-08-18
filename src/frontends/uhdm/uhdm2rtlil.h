@@ -165,7 +165,7 @@ struct UhdmImporter {
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);
     RTLIL::SigSpec get_sig_spec(const UHDM::any* uhdm_obj, int width = 1);
     RTLIL::Wire* get_wire(const UHDM::any* uhdm_obj, int width = 1);
-    RTLIL::Wire* create_wire(const std::string& name, int width = 1);
+    RTLIL::Wire* create_wire(const std::string& name, int width = 1, bool upto = false, int start_offset = 0);
     
     // Expression handling
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr);

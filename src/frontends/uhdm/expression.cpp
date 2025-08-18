@@ -281,11 +281,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiLogAndOp:
             if (operands.size() == 2)
-                return module->And(NEW_ID, operands[0], operands[1]);
+                return module->LogicAnd(NEW_ID, operands[0], operands[1]);
             break;
         case vpiLogOrOp:
             if (operands.size() == 2)
-                return module->Or(NEW_ID, operands[0], operands[1]);
+                return module->LogicOr(NEW_ID, operands[0], operands[1]);
             break;
         case vpiBitAndOp:
             if (operands.size() == 2)
@@ -643,7 +643,22 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         int idx = index.as_const().as_int();
         if (mode_debug)
             log("    Bit select index: %d\n", idx);
-        return base.extract(idx, 1);
+        
+        // Check if the wire has reversed bit ordering
+        if (wire && (wire->upto || wire->start_offset != 0)) {
+            // Convert from HDL index to RTLIL index
+            int rtlil_idx = wire->from_hdl_index(idx);
+            if (rtlil_idx == INT_MIN) {
+                log_error("Bit select index %d is out of range for wire '%s'\n", idx, signal_name.c_str());
+            }
+            if (mode_debug)
+                log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n", 
+                    idx, rtlil_idx, wire->upto ? 1 : 0, wire->start_offset);
+            return base.extract(rtlil_idx, 1);
+        } else {
+            // Standard bit ordering
+            return base.extract(idx, 1);
+        }
     }
     
     // Dynamic bit select - need to create a mux
