@@ -29,7 +29,7 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = static_cast<const assignment*>(stmt);
+            auto assign = any_cast<const assignment*>(stmt);
             if (auto lhs = assign->Lhs()) {
                 if (auto lhs_expr = dynamic_cast<const expr*>(lhs)) {
                     AssignedSignal sig;
@@ -37,20 +37,20 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
                     
                     log("extract_assigned_signals: LHS type is %d\n", lhs_expr->VpiType());
                     if (lhs_expr->VpiType() == vpiRefObj) {
-                        auto ref = static_cast<const ref_obj*>(lhs_expr);
+                        auto ref = any_cast<const ref_obj*>(lhs_expr);
                         sig.name = std::string(ref->VpiName());
                         sig.is_part_select = false;
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to '%s' (ref_obj)\n", ref->VpiName().data());
                     } else if (lhs_expr->VpiType() == vpiNetBit) {
-                        auto net_bit = static_cast<const UHDM::net_bit*>(lhs_expr);
+                        auto net_bit = any_cast<const UHDM::net_bit*>(lhs_expr);
                         sig.name = std::string(net_bit->VpiName());
                         sig.is_part_select = false;
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to '%s' (net_bit)\n", net_bit->VpiName().data());
                     } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
                         // Handle indexed part selects like result[i*8 +: 8]
-                        auto indexed_part_sel = static_cast<const indexed_part_select*>(lhs_expr);
+                        auto indexed_part_sel = any_cast<const indexed_part_select*>(lhs_expr);
                         sig.is_part_select = true;
                         
                         // Get the signal name
@@ -62,12 +62,12 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
                         log("extract_assigned_signals: Found assignment to indexed part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiPartSelect) {
                         // Handle part selects like result[7:0]
-                        auto part_sel = static_cast<const part_select*>(lhs_expr);
+                        auto part_sel = any_cast<const part_select*>(lhs_expr);
                         sig.is_part_select = true;
                         
                         if (auto parent = part_sel->VpiParent()) {
                             if (parent->VpiType() == vpiRefObj) {
-                                auto ref = static_cast<const ref_obj*>(parent);
+                                auto ref = any_cast<const ref_obj*>(parent);
                                 sig.name = std::string(ref->VpiName());
                             } else if (!parent->VpiName().empty()) {
                                 sig.name = std::string(parent->VpiName());
@@ -80,7 +80,7 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
                         log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiBitSelect) {
                         // Handle bit selects like result[0] or memory[addr]
-                        auto bit_sel = static_cast<const bit_select*>(lhs_expr);
+                        auto bit_sel = any_cast<const bit_select*>(lhs_expr);
                         sig.is_part_select = true;
                         
                         // First try to get name from bit_select itself
@@ -89,7 +89,7 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
                         } else if (auto parent = bit_sel->VpiParent()) {
                             // Fall back to parent if bit_select doesn't have a name
                             if (parent->VpiType() == vpiRefObj) {
-                                auto ref = static_cast<const ref_obj*>(parent);
+                                auto ref = any_cast<const ref_obj*>(parent);
                                 sig.name = std::string(ref->VpiName());
                             } else if (!parent->VpiName().empty()) {
                                 sig.name = std::string(parent->VpiName());
@@ -104,7 +104,7 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
             break;
         }
         case vpiBegin: {
-            auto begin_block = static_cast<const UHDM::begin*>(stmt);
+            auto begin_block = any_cast<const UHDM::begin*>(stmt);
             if (auto stmts = begin_block->Stmts()) {
                 for (auto s : *stmts) {
                     extract_assigned_signals(s, signals);
@@ -113,7 +113,7 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
             break;
         }
         case vpiCase: {
-            auto case_st = static_cast<const UHDM::case_stmt*>(stmt);
+            auto case_st = any_cast<const UHDM::case_stmt*>(stmt);
             if (auto items = case_st->Case_items()) {
                 for (auto item : *items) {
                     if (auto s = item->Stmt()) {
@@ -123,17 +123,20 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
             }
             break;
         }
-        case vpiIf:
-        case vpiIfElse: {
-            auto if_st = static_cast<const UHDM::if_stmt*>(stmt);
+        case vpiIf: {
+            auto if_st = any_cast<const UHDM::if_stmt*>(stmt);
             if (auto then_stmt = if_st->VpiStmt()) {
                 extract_assigned_signals(then_stmt, signals);
             }
-            if (stmt->UhdmType() == uhdmif_else) {
-                auto if_else = static_cast<const UHDM::if_else*>(stmt);
-                if (auto else_stmt = if_else->VpiElseStmt()) {
-                    extract_assigned_signals(else_stmt, signals);
-                }
+            break;
+        }
+        case vpiIfElse: {
+            auto if_else = any_cast<const UHDM::if_else*>(stmt);
+            if (auto then_stmt = if_else->VpiStmt()) {
+                extract_assigned_signals(then_stmt, signals);
+            }
+            if (auto else_stmt = if_else->VpiElseStmt()) {
+                extract_assigned_signals(else_stmt, signals);
             }
             break;
         }
@@ -150,7 +153,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
     
     // Handle event_control wrapper (for always_ff @(...))
     if (stmt->VpiType() == vpiEventControl) {
-        const UHDM::event_control* event_ctrl = static_cast<const UHDM::event_control*>(stmt);
+        const UHDM::event_control* event_ctrl = any_cast<const UHDM::event_control*>(stmt);
         if (auto controlled_stmt = event_ctrl->Stmt()) {
             // Extract the actual statement from event control
             stmt = controlled_stmt;
@@ -161,7 +164,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
     
     // Handle begin block
     if (stmt->VpiType() == vpiBegin) {
-        const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(stmt);
+        const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(stmt);
         if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
             // Get first statement from begin block
             stmt = (*begin_stmt->Stmts())[0];
@@ -176,7 +179,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
         
         // Check if this is an if_else or just if_stmt
         if (stmt->UhdmType() == uhdmif_else) {
-            const UHDM::if_else* if_else_stmt = static_cast<const UHDM::if_else*>(stmt);
+            const UHDM::if_else* if_else_stmt = any_cast<const UHDM::if_else*>(stmt);
             
             // For simple always_ff patterns like: if (!rst_n) count <= 0; else count <= count + 1;
             // We look for assignments in the then/else branches
@@ -186,7 +189,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                 log("UHDM: Then statement type: %s (vpiType=%d)\n", UhdmName(then_stmt->UhdmType()).c_str(), then_stmt->VpiType());
                 // Handle begin blocks
                 if (then_stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(then_stmt);
+                    const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(then_stmt);
                     if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
                         // Look for assignment inside begin block
                         for (auto stmt : *begin_stmt->Stmts()) {
@@ -199,15 +202,15 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                 }
                 
                 if (then_stmt->VpiType() == vpiAssignment) {
-                    const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                    const UHDM::assignment* assign = any_cast<const UHDM::assignment*>(then_stmt);
                     if (auto lhs = assign->Lhs()) {
                         if (lhs->VpiType() == vpiRefObj) {
-                            const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
+                            const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(lhs);
                             output_signal = std::string(ref->VpiName());
                             log("UHDM: Found output signal from reset assignment: %s\n", output_signal.c_str());
                         } else if (lhs->VpiType() == vpiIndexedPartSelect) {
                             // For indexed part selects like result[i*8 +: 8], we need to extract the base signal
-                            const UHDM::indexed_part_select* ips = static_cast<const UHDM::indexed_part_select*>(lhs);
+                            const UHDM::indexed_part_select* ips = any_cast<const UHDM::indexed_part_select*>(lhs);
                             // Try to get the base signal name
                             if (!ips->VpiDefName().empty()) {
                                 output_signal = std::string(ips->VpiDefName());
@@ -250,7 +253,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                     UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
                 // Handle begin blocks
                 if (else_stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin_stmt = static_cast<const UHDM::begin*>(else_stmt);
+                    const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(else_stmt);
                     if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
                         // Look for assignment inside begin block
                         for (auto stmt : *begin_stmt->Stmts()) {
@@ -263,23 +266,23 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                 }
                 
                 if (else_stmt->VpiType() == vpiAssignment) {
-                    const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(else_stmt);
+                    const UHDM::assignment* assign = any_cast<const UHDM::assignment*>(else_stmt);
                     log("UHDM: Processing else assignment\n");
                     if (auto rhs = assign->Rhs()) {
                         log("UHDM: RHS type: %s (vpiType=%d)\n", UhdmName(rhs->UhdmType()).c_str(), rhs->VpiType());
                         // For simple ref like "unit_result"
                         if (rhs->VpiType() == vpiRefObj) {
-                            const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                            const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                             input_signal = std::string(ref->VpiName());
                             log("UHDM: Found input signal from else assignment: %s\n", input_signal.c_str());
                         }
                         // For expressions like "count + 1", we want to extract "count" as input
                         else if (rhs->VpiType() == vpiOperation) {
-                            const UHDM::operation* op = static_cast<const UHDM::operation*>(rhs);
+                            const UHDM::operation* op = any_cast<const UHDM::operation*>(rhs);
                             if (auto operands = op->Operands()) {
                                 for (auto operand : *operands) {
                                     if (operand->VpiType() == vpiRefObj) {
-                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(operand);
+                                        const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(operand);
                                         input_signal = std::string(ref->VpiName());
                                         log("UHDM: Found input signal from operation: %s\n", input_signal.c_str());
                                         break;
@@ -292,14 +295,14 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                     // Handle else-if case
                     const UHDM::any* else_if_stmt = else_stmt;
                     if (else_if_stmt->UhdmType() == uhdmif_else) {
-                        const UHDM::if_else* nested_if_else = static_cast<const UHDM::if_else*>(else_if_stmt);
+                        const UHDM::if_else* nested_if_else = any_cast<const UHDM::if_else*>(else_if_stmt);
                         // Check the then statement of the else-if
                         if (auto then_stmt = nested_if_else->VpiStmt()) {
                             if (then_stmt->VpiType() == vpiAssignment) {
-                                const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                const UHDM::assignment* assign = any_cast<const UHDM::assignment*>(then_stmt);
                                 if (auto lhs = assign->Lhs()) {
                                     if (lhs->VpiType() == vpiRefObj) {
-                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
+                                        const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(lhs);
                                         // Only update output_signal if it's empty (priority to first-level assignment)
                                         if (output_signal.empty()) {
                                             output_signal = std::string(ref->VpiName());
@@ -309,7 +312,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                 }
                                 if (auto rhs = assign->Rhs()) {
                                     if (rhs->VpiType() == vpiRefObj) {
-                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                                        const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                                         input_signal = std::string(ref->VpiName());
                                         log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
                                     }
@@ -317,14 +320,14 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                             }
                         }
                     } else if (else_if_stmt->VpiType() == vpiIf) {
-                        const UHDM::if_stmt* nested_if = static_cast<const UHDM::if_stmt*>(else_if_stmt);
+                        const UHDM::if_stmt* nested_if = any_cast<const UHDM::if_stmt*>(else_if_stmt);
                         // Check the then statement of the else-if
                         if (auto then_stmt = nested_if->VpiStmt()) {
                             if (then_stmt->VpiType() == vpiAssignment) {
-                                const UHDM::assignment* assign = static_cast<const UHDM::assignment*>(then_stmt);
+                                const UHDM::assignment* assign = any_cast<const UHDM::assignment*>(then_stmt);
                                 if (auto lhs = assign->Lhs()) {
                                     if (lhs->VpiType() == vpiRefObj) {
-                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(lhs);
+                                        const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(lhs);
                                         // Only update output_signal if it's empty (priority to first-level assignment)
                                         if (output_signal.empty()) {
                                             output_signal = std::string(ref->VpiName());
@@ -334,7 +337,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                                 }
                                 if (auto rhs = assign->Rhs()) {
                                     if (rhs->VpiType() == vpiRefObj) {
-                                        const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(rhs);
+                                        const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(rhs);
                                         input_signal = std::string(ref->VpiName());
                                         log("UHDM: Found input signal from else-if assignment: %s\n", input_signal.c_str());
                                     }
@@ -348,11 +351,11 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             // Extract reset signal from condition (!rst_n)
             if (auto condition = if_else_stmt->VpiCondition()) {
                 if (condition->VpiType() == vpiOperation) {
-                    const UHDM::operation* op = static_cast<const UHDM::operation*>(condition);
+                    const UHDM::operation* op = any_cast<const UHDM::operation*>(condition);
                     if (auto operands = op->Operands()) {
                         for (auto operand : *operands) {
                             if (operand->VpiType() == vpiRefObj) {
-                                const UHDM::ref_obj* ref = static_cast<const UHDM::ref_obj*>(operand);
+                                const UHDM::ref_obj* ref = any_cast<const UHDM::ref_obj*>(operand);
                                 reset_signal = std::string(ref->VpiName());
                                 log("UHDM: Found reset signal from condition: %s\n", reset_signal.c_str());
                                 break;
@@ -363,7 +366,7 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             }
         } else {
             // Handle simple if_stmt without else
-            const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(stmt);
+            const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
             // Basic processing for simple if statements...
             log("UHDM: Processing simple if_stmt (no else clause)\n");
         }
@@ -401,7 +404,7 @@ static bool contains_complex_constructs(const any* stmt) {
     
     // Check for assignment to array elements (memory writes)
     if (stmt_type == vpiAssignment) {
-        const assignment* assign = static_cast<const assignment*>(stmt);
+        const assignment* assign = any_cast<const assignment*>(stmt);
         if (auto lhs = assign->Lhs()) {
             // Check if LHS is a bit select (array element)
             if (lhs->VpiType() == vpiBitSelect) {
@@ -414,7 +417,7 @@ static bool contains_complex_constructs(const any* stmt) {
     
     // Check for begin blocks
     if (stmt_type == vpiBegin) {
-        const begin* begin_stmt = static_cast<const begin*>(stmt);
+        const begin* begin_stmt = any_cast<const begin*>(stmt);
         if (begin_stmt->Stmts()) {
             for (auto sub_stmt : *begin_stmt->Stmts()) {
                 if (contains_complex_constructs(sub_stmt)) {
@@ -426,7 +429,7 @@ static bool contains_complex_constructs(const any* stmt) {
     
     // Check for nested if statements
     if (stmt_type == vpiIf || stmt_type == vpiIfElse) {
-        const if_else* if_stmt = static_cast<const if_else*>(stmt);
+        const if_else* if_stmt = any_cast<const if_else*>(stmt);
         if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
             return true;
         }
@@ -456,14 +459,14 @@ static const assignment* find_assignment_for_lhs(const any* stmt, const expr* lh
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = static_cast<const assignment*>(stmt);
+            auto assign = any_cast<const assignment*>(stmt);
             if (assign->Lhs() == lhs_expr) {
                 return assign;
             }
             break;
         }
         case vpiBegin: {
-            auto begin_stmt = static_cast<const UHDM::begin*>(stmt);
+            auto begin_stmt = any_cast<const UHDM::begin*>(stmt);
             if (begin_stmt->Stmts()) {
                 for (auto s : *begin_stmt->Stmts()) {
                     if (auto result = find_assignment_for_lhs(s, lhs_expr)) {
@@ -475,12 +478,12 @@ static const assignment* find_assignment_for_lhs(const any* stmt, const expr* lh
         }
         case vpiIfElse:
         case vpiIf: {
-            auto if_st = static_cast<const UHDM::if_stmt*>(stmt);
+            auto if_st = any_cast<const UHDM::if_stmt*>(stmt);
             if (auto result = find_assignment_for_lhs(if_st->VpiStmt(), lhs_expr)) {
                 return result;
             }
             if (stmt->VpiType() == vpiIfElse) {
-                auto if_else_st = static_cast<const UHDM::if_else*>(stmt);
+                auto if_else_st = any_cast<const UHDM::if_else*>(stmt);
                 if (if_else_st->VpiElseStmt()) {
                     if (auto result = find_assignment_for_lhs(if_else_st->VpiElseStmt(), lhs_expr)) {
                         return result;
@@ -657,7 +660,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         if (stmt->VpiType() == vpiEventControl) {
             log("      Statement is event_control\n");
             log_flush();
-            const event_control* event_ctrl = static_cast<const event_control*>(stmt);
+            const event_control* event_ctrl = any_cast<const event_control*>(stmt);
             
             // Extract clock signal from sensitivity
             const any* event_expr = event_ctrl->VpiCondition();
@@ -668,7 +671,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 if (event_expr->VpiType() == vpiOperation) {
                     log("      Event expression is operation\n");
                     log_flush();
-                    const operation* op = static_cast<const operation*>(event_expr);
+                    const operation* op = any_cast<const operation*>(event_expr);
                     log("      Operation type: %d (vpiEventOrOp=%d, vpiPosedgeOp=%d, vpiNegedgeOp=%d)\n", 
                         op->VpiOpType(), vpiEventOrOp, vpiPosedgeOp, vpiNegedgeOp);
                     log_flush();
@@ -684,13 +687,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (op->Operands() && !op->Operands()->empty()) {
                             for (auto operand : *op->Operands()) {
                                 if (operand->VpiType() == vpiOperation) {
-                                    const operation* edge_op = static_cast<const operation*>(operand);
+                                    const operation* edge_op = any_cast<const operation*>(operand);
                                     if (edge_op->VpiOpType() == vpiPosedgeOp) {
                                         clock_posedge = true;
                                         if (edge_op->Operands() && !edge_op->Operands()->empty()) {
                                             log("      Importing clock signal from posedge\n");
                                             log_flush();
-                                            clock_sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                             log("      Clock signal imported\n");
                                             log_flush();
                                             break; // Use the first posedge as clock
@@ -704,7 +707,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (op->Operands() && !op->Operands()->empty()) {
                             log("      Importing clock signal from posedge\n");
                             log_flush();
-                            clock_sig = import_expression(static_cast<const expr*>((*op->Operands())[0]));
+                            clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -713,7 +716,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         if (op->Operands() && !op->Operands()->empty()) {
                             log("      Importing clock signal from negedge\n");
                             log_flush();
-                            clock_sig = import_expression(static_cast<const expr*>((*op->Operands())[0]));
+                            clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -725,7 +728,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             // Check the first operand
                             auto first_operand = (*op->Operands())[0];
                             if (first_operand->VpiType() == vpiOperation) {
-                                const operation* edge_op = static_cast<const operation*>(first_operand);
+                                const operation* edge_op = any_cast<const operation*>(first_operand);
                                 log("      List contains operation of type: %d\n", edge_op->VpiOpType());
                                 log_flush();
                                 if (edge_op->VpiOpType() == vpiPosedgeOp) {
@@ -733,7 +736,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     if (edge_op->Operands() && !edge_op->Operands()->empty()) {
                                         log("      Importing clock signal from posedge in list\n");
                                         log_flush();
-                                        clock_sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                        clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                         log("      Clock signal imported: %s\n", log_signal(clock_sig));
                                         log_flush();
                                     }
@@ -742,7 +745,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     if (edge_op->Operands() && !edge_op->Operands()->empty()) {
                                         log("      Importing clock signal from negedge in list\n");
                                         log_flush();
-                                        clock_sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                        clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                         log("      Clock signal imported: %s\n", log_signal(clock_sig));
                                         log_flush();
                                     }
@@ -775,15 +778,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (auto event_ctrl = dynamic_cast<const event_control*>(uhdm_process->Stmt())) {
                 if (auto event_expr = event_ctrl->VpiCondition()) {
                     if (event_expr->VpiType() == vpiOperation) {
-                        const operation* op = static_cast<const operation*>(event_expr);
+                        const operation* op = any_cast<const operation*>(event_expr);
                         if (op->VpiOpType() == vpiEventOrOp && op->Operands()) { // OR operation
                             for (auto operand : *op->Operands()) {
                                 if (operand->VpiType() == vpiOperation) {
-                                    const operation* edge_op = static_cast<const operation*>(operand);
+                                    const operation* edge_op = any_cast<const operation*>(operand);
                                     if (edge_op->VpiOpType() == vpiNegedgeOp || edge_op->VpiOpType() == vpiPosedgeOp) {
                                         // Skip the clock signal - we want the reset
                                         if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                            auto sig = import_expression(static_cast<const expr*>((*edge_op->Operands())[0]));
+                                            auto sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                             // Check if this is not the clock signal
                                             if (sig != clock_sig) {
                                                 reset_sig = sig;
@@ -859,14 +862,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (stmt) {
                 if (stmt->VpiType() == vpiIfElse) {
                     // Direct if_else statement
-                    if_else_stmt = static_cast<const if_else*>(stmt);
+                    if_else_stmt = any_cast<const if_else*>(stmt);
                 } else if (stmt->VpiType() == vpiBegin) {
                     // If_else inside a begin block
-                    const UHDM::begin* begin = static_cast<const UHDM::begin*>(stmt);
+                    const UHDM::begin* begin = any_cast<const UHDM::begin*>(stmt);
                     if (begin->Stmts() && !begin->Stmts()->empty()) {
                         const any* first_stmt = (*begin->Stmts())[0];
                         if (first_stmt->VpiType() == vpiIfElse) {
-                            if_else_stmt = static_cast<const if_else*>(first_stmt);
+                            if_else_stmt = any_cast<const if_else*>(first_stmt);
                         }
                     }
                 }
@@ -985,14 +988,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (stmt) {
                 // Check for direct if-else or if-else inside begin block
                 if (stmt->VpiType() == vpiIfElse) {
-                    simple_if_else = static_cast<const if_else*>(stmt);
+                    simple_if_else = any_cast<const if_else*>(stmt);
                     is_simple_if_else = true;
                 } else if (stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin = static_cast<const UHDM::begin*>(stmt);
+                    const UHDM::begin* begin = any_cast<const UHDM::begin*>(stmt);
                     if (begin->Stmts() && begin->Stmts()->size() == 1) {
                         const any* first_stmt = (*begin->Stmts())[0];
                         if (first_stmt->VpiType() == vpiIfElse) {
-                            simple_if_else = static_cast<const if_else*>(first_stmt);
+                            simple_if_else = any_cast<const if_else*>(first_stmt);
                             is_simple_if_else = true;
                         }
                     }
@@ -1325,21 +1328,21 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
         case vpiBegin:
             log("        Processing begin block\n");
             log_flush();
-            import_begin_block_sync(static_cast<const begin*>(uhdm_stmt), sync, is_reset);
+            import_begin_block_sync(any_cast<const begin*>(uhdm_stmt), sync, is_reset);
             log("        Begin block processed\n");
             log_flush();
             break;
         case vpiAssignment:
             log("        Processing assignment\n");
             log_flush();
-            import_assignment_sync(static_cast<const assignment*>(uhdm_stmt), sync);
+            import_assignment_sync(any_cast<const assignment*>(uhdm_stmt), sync);
             log("        Assignment processed\n");
             log_flush();
             break;
         case vpiIf:
             log("        Processing if statement\n");
             log_flush();
-            import_if_stmt_sync(static_cast<const if_stmt*>(uhdm_stmt), sync, is_reset);
+            import_if_stmt_sync(any_cast<const if_stmt*>(uhdm_stmt), sync, is_reset);
             log("        If statement processed\n");
             log_flush();
             break;
@@ -1347,7 +1350,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log("        Processing if-else statement\n");
             log_flush();
             // if_else and if_stmt are siblings, both extend atomic_stmt
-            const if_else* if_else_stmt = static_cast<const if_else*>(uhdm_stmt);
+            const if_else* if_else_stmt = any_cast<const if_else*>(uhdm_stmt);
             log("        Cast to if_else successful, has else stmt: %s\n", 
                 if_else_stmt->VpiElseStmt() ? "yes" : "no");
             log_flush();
@@ -1427,7 +1430,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
         case vpiCase:
             log("        Processing case statement\n");
             log_flush();
-            import_case_stmt_sync(static_cast<const case_stmt*>(uhdm_stmt), sync, is_reset);
+            import_case_stmt_sync(any_cast<const case_stmt*>(uhdm_stmt), sync, is_reset);
             log("        Case statement processed\n");
             log_flush();
             break;
@@ -1448,16 +1451,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
     
     switch (stmt_type) {
         case vpiBegin:
-            import_begin_block_comb(static_cast<const begin*>(uhdm_stmt), proc);
+            import_begin_block_comb(any_cast<const begin*>(uhdm_stmt), proc);
             break;
         case vpiAssignment:
-            import_assignment_comb(static_cast<const assignment*>(uhdm_stmt), proc);
+            import_assignment_comb(any_cast<const assignment*>(uhdm_stmt), proc);
             break;
         case vpiIf:
-            import_if_stmt_comb(static_cast<const if_stmt*>(uhdm_stmt), proc);
+            import_if_stmt_comb(any_cast<const if_stmt*>(uhdm_stmt), proc);
             break;
         case vpiCase:
-            import_case_stmt_comb(static_cast<const case_stmt*>(uhdm_stmt), proc);
+            import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
             break;
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
@@ -1515,7 +1518,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         if (lhs_expr->VpiType() == vpiBitSelect) {
             log("            LHS is bit_select - checking for memory write\n");
             log_flush();
-            const bit_select* bit_sel = static_cast<const bit_select*>(lhs_expr);
+            const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
             std::string signal_name = std::string(bit_sel->VpiName());
             RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
             
@@ -1663,14 +1666,14 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     bool skip_assignment = false;
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         if (lhs_expr->VpiType() == vpiRefObj) {
-            const ref_obj* lhs_ref = static_cast<const ref_obj*>(lhs_expr);
+            const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
             std::string lhs_name = std::string(lhs_ref->VpiName());
             
             // Check if RHS is also a simple ref_obj (struct to struct assignment)
             if (auto rhs_any = uhdm_assign->Rhs()) {
                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
                     if (rhs_expr->VpiType() == vpiRefObj) {
-                        const ref_obj* rhs_ref = static_cast<const ref_obj*>(rhs_expr);
+                        const ref_obj* rhs_ref = any_cast<const ref_obj*>(rhs_expr);
                         std::string rhs_name = std::string(rhs_ref->VpiName());
                         
                         // Skip full struct assignments like "processed_data = in_struct"
@@ -1706,7 +1709,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
-                    const operation* op = static_cast<const operation*>(rhs_expr);
+                    const operation* op = any_cast<const operation*>(rhs_expr);
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
@@ -1733,18 +1736,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         std::string signal_name;
         
         if (lhs_expr->VpiType() == vpiRefObj) {
-            const ref_obj* ref = static_cast<const ref_obj*>(lhs_expr);
+            const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
             if (!ref->VpiName().empty()) {
                 signal_name = std::string(ref->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiPartSelect) {
-            const part_select* ps = static_cast<const part_select*>(lhs_expr);
+            const part_select* ps = any_cast<const part_select*>(lhs_expr);
             // Get base signal from parent
             if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ps->VpiParent()->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
-            const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+            const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
             // Get base signal from parent
             if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ips->VpiParent()->VpiName());
@@ -1772,7 +1775,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 
                 // Try to determine offset from the part select
                 if (lhs_expr->VpiType() == vpiPartSelect) {
-                    const part_select* ps = static_cast<const part_select*>(lhs_expr);
+                    const part_select* ps = any_cast<const part_select*>(lhs_expr);
                     if (auto right_expr = ps->Right_range()) {
                         RTLIL::SigSpec right_sig = import_expression(right_expr);
                         if (right_sig.is_fully_const()) {
@@ -1780,7 +1783,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         }
                     }
                 } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
-                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+                    const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
                     if (auto base_expr = ips->Base_expr()) {
                         RTLIL::SigSpec base_sig = import_expression(base_expr);
                         if (base_sig.is_fully_const()) {
@@ -1875,7 +1878,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
-                    const operation* op = static_cast<const operation*>(rhs_expr);
+                    const operation* op = any_cast<const operation*>(rhs_expr);
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
@@ -1902,18 +1905,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         std::string signal_name;
         
         if (lhs_expr->VpiType() == vpiRefObj) {
-            const ref_obj* ref = static_cast<const ref_obj*>(lhs_expr);
+            const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
             if (!ref->VpiName().empty()) {
                 signal_name = std::string(ref->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiPartSelect) {
-            const part_select* ps = static_cast<const part_select*>(lhs_expr);
+            const part_select* ps = any_cast<const part_select*>(lhs_expr);
             // Get base signal from parent
             if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ps->VpiParent()->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
-            const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+            const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
             // Get base signal from parent
             if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ips->VpiParent()->VpiName());
@@ -1942,7 +1945,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 
                 // Try to determine offset from the part select
                 if (lhs_expr->VpiType() == vpiPartSelect) {
-                    const part_select* ps = static_cast<const part_select*>(lhs_expr);
+                    const part_select* ps = any_cast<const part_select*>(lhs_expr);
                     if (auto right_expr = ps->Right_range()) {
                         RTLIL::SigSpec right_sig = import_expression(right_expr);
                         if (right_sig.is_fully_const()) {
@@ -1950,7 +1953,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         }
                     }
                 } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
-                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs_expr);
+                    const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
                     if (auto base_expr = ips->Base_expr()) {
                         RTLIL::SigSpec base_sig = import_expression(base_expr);
                         if (base_sig.is_fully_const()) {
@@ -2199,7 +2202,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
     switch (stmt_type) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = static_cast<const assignment*>(uhdm_stmt);
+            auto assign = any_cast<const assignment*>(uhdm_stmt);
             
             // Get LHS and RHS
             if (auto lhs_expr = assign->Lhs()) {
@@ -2219,18 +2222,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 std::string signal_name;
                                 
                                 if (lhs->VpiType() == vpiRefObj) {
-                                    const ref_obj* ref = static_cast<const ref_obj*>(lhs);
+                                    const ref_obj* ref = any_cast<const ref_obj*>(lhs);
                                     if (!ref->VpiName().empty()) {
                                         signal_name = std::string(ref->VpiName());
                                     }
                                 } else if (lhs->VpiType() == vpiPartSelect) {
-                                    const part_select* ps = static_cast<const part_select*>(lhs);
+                                    const part_select* ps = any_cast<const part_select*>(lhs);
                                     // Get base signal from parent
                                     if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                                         signal_name = std::string(ps->VpiParent()->VpiName());
                                     }
                                 } else if (lhs->VpiType() == vpiIndexedPartSelect) {
-                                    const indexed_part_select* ips = static_cast<const indexed_part_select*>(lhs);
+                                    const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs);
                                     // Get base signal from parent
                                     if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                                         signal_name = std::string(ips->VpiParent()->VpiName());
@@ -2278,7 +2281,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             break;
         }
         case vpiBegin: {
-            auto begin = static_cast<const UHDM::begin*>(uhdm_stmt);
+            auto begin = any_cast<const UHDM::begin*>(uhdm_stmt);
             if (auto stmts = begin->Stmts()) {
                 for (auto stmt : *stmts) {
                     import_statement_comb(stmt, case_rule);
@@ -2289,6 +2292,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiIf:
         case vpiIfElse: {
             // Handle if statements inside case items
+            // TODO: replace static_cast by any_cast and change the logic below to support if_else explicitly
             auto if_stmt = static_cast<const UHDM::if_stmt*>(uhdm_stmt);
             
             // Get the condition
@@ -2375,7 +2379,7 @@ bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     
     // Check if typespec has both packed and unpacked dimensions
     if (typespec->UhdmType() == uhdmlogic_typespec) {
-        auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+        auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
         
         // Check for packed dimensions
         bool has_packed = logic_typespec->Ranges() && !logic_typespec->Ranges()->empty();
@@ -2419,7 +2423,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_net* uhdm_array) {
             
             // Check for logic_typespec with ranges (packed dimensions)
             if (typespec->UhdmType() == uhdmlogic_typespec) {
-                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This net has both packed (from typespec) and unpacked (from array_net) dimensions
                     if (mode_debug) {
@@ -2457,7 +2461,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
             
             // Check for logic_typespec with ranges (packed dimensions)
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
-                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This var has both packed (from typespec) and unpacked (from array_var) dimensions
                     if (mode_debug) {
@@ -2481,7 +2485,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
     
     // Check if the reset statement is a begin block
     if (reset_stmt->VpiType() == vpiBegin) {
-        const UHDM::begin* begin_block = static_cast<const UHDM::begin*>(reset_stmt);
+        const UHDM::begin* begin_block = any_cast<const UHDM::begin*>(reset_stmt);
         if (auto stmts = begin_block->Stmts()) {
             log("    Reset begin block has %zu statements\n", stmts->size()); 
             
@@ -2494,7 +2498,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                 // Look for for-loop statements (vpiFor = 15)
                 if (stmt->VpiType() == vpiFor) {
                     log("    *** FOUND FOR-LOOP IN RESET BLOCK! ***\n");
-                    const UHDM::for_stmt* for_loop = static_cast<const UHDM::for_stmt*>(stmt);
+                    const UHDM::for_stmt* for_loop = any_cast<const UHDM::for_stmt*>(stmt);
                     
                     log("    Processing for-loop for memory operations\n");
                     

@@ -35,37 +35,37 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
     
     switch (obj_type) {
         case vpiConstant:
-            return import_constant(static_cast<const constant*>(uhdm_expr));
+            return import_constant(any_cast<const constant*>(uhdm_expr));
         case vpiOperation:
-            return import_operation(static_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_operation(any_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiRefObj:
-            return import_ref_obj(static_cast<const ref_obj*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_ref_obj(any_cast<const ref_obj*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiPartSelect:
-            return import_part_select(static_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_part_select(any_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiBitSelect:
-            return import_bit_select(static_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_bit_select(any_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiConcatOp:
-            return import_concat(static_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_concat(any_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiAssignment:
             // This should not be called on assignment directly
             // Assignment is a statement, not an expression
             log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
             return RTLIL::SigSpec();
         case vpiHierPath:
-            return import_hier_path(static_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiIndexedPartSelect:
-            return import_indexed_part_select(static_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_indexed_part_select(any_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiPort:
             // Handle port as expression - this happens when ports are referenced in connections
             {
-                const UHDM::port* port = static_cast<const UHDM::port*>(static_cast<const any*>(uhdm_expr));
+                const UHDM::port* port = any_cast<const UHDM::port*>(any_cast<const any*>(uhdm_expr));
                 std::string port_name = std::string(port->VpiName());
                 log("    Handling port '%s' as expression\n", port_name.c_str());
                 
                 // Check if this port has a Low_conn which would be the actual net/wire
                 if (port->Low_conn()) {
                     log("    Port has Low_conn, importing that instead\n");
-                    return import_expression(static_cast<const expr*>(port->Low_conn()));
+                    return import_expression(any_cast<const expr*>(port->Low_conn()));
                 }
                 
                 // Otherwise try to find the wire in the current module
@@ -87,7 +87,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             }
         case vpiNet:  // Handle logic_net
             {
-                const logic_net* net = static_cast<const logic_net*>(uhdm_expr);
+                const logic_net* net = any_cast<const logic_net*>(uhdm_expr);
                 std::string net_name = std::string(net->VpiName());
                 if (mode_debug)
                     log("    Handling logic_net '%s' as expression\n", net_name.c_str());
@@ -233,7 +233,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     std::vector<RTLIL::SigSpec> operands;
     if (uhdm_op->Operands()) {
         for (auto operand : *uhdm_op->Operands()) {
-            operands.push_back(import_expression(static_cast<const expr*>(operand)));
+            operands.push_back(import_expression(any_cast<const expr*>(operand)));
         }
     }
     
@@ -302,6 +302,51 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitNegOp:
             if (operands.size() == 1)
                 return module->Not(NEW_ID, operands[0]);
+            break;
+        case vpiBitXNorOp:  // Both vpiBitXNorOp and vpiBitXnorOp are the same
+            if (operands.size() == 2)
+                return module->Xnor(NEW_ID, operands[0], operands[1]);
+            break;
+        case vpiUnaryAndOp:
+            if (operands.size() == 1)
+                return module->ReduceAnd(NEW_ID, operands[0]);
+            break;
+        case vpiUnaryOrOp:
+            if (operands.size() == 1)
+                return module->ReduceOr(NEW_ID, operands[0]);
+            break;
+        case vpiUnaryXorOp:
+            if (operands.size() == 1)
+                return module->ReduceXor(NEW_ID, operands[0]);
+            break;
+        case vpiUnaryNandOp:
+            if (operands.size() == 1) {
+                // Unary NAND is NOT(REDUCE_AND)
+                RTLIL::SigSpec and_result = module->ReduceAnd(NEW_ID, operands[0]);
+                return module->Not(NEW_ID, and_result);
+            } else if (operands.size() == 2) {
+                // Binary NAND (when UHDM uses unary op for binary ~&)
+                RTLIL::SigSpec and_result = module->And(NEW_ID, operands[0], operands[1]);
+                return module->Not(NEW_ID, and_result);
+            }
+            break;
+        case vpiUnaryNorOp:
+            if (operands.size() == 1) {
+                // Unary NOR is NOT(REDUCE_OR)
+                RTLIL::SigSpec or_result = module->ReduceOr(NEW_ID, operands[0]);
+                return module->Not(NEW_ID, or_result);
+            } else if (operands.size() == 2) {
+                // Binary NOR (when UHDM uses unary op for binary ~|)
+                RTLIL::SigSpec or_result = module->Or(NEW_ID, operands[0], operands[1]);
+                return module->Not(NEW_ID, or_result);
+            }
+            break;
+        case vpiUnaryXNorOp:
+            if (operands.size() == 1) {
+                // Unary XNOR is NOT(REDUCE_XOR)
+                RTLIL::SigSpec xor_result = module->ReduceXor(NEW_ID, operands[0]);
+                return module->Not(NEW_ID, xor_result);
+            }
             break;
         case vpiAddOp:
             if (operands.size() == 2)
@@ -442,8 +487,64 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     if (mode_debug)
         log("    Importing part select\n");
     
-    RTLIL::SigSpec base = import_expression(static_cast<const expr*>(uhdm_part->VpiParent()));
+    //RTLIL::SigSpec base = import_expression(any_cast<const expr*>(uhdm_part->VpiParent()));
     
+    // Get the parent object - this should contain the base signal
+    const any* parent = uhdm_part->VpiParent();
+    if (!parent) {
+        log_warning("Part select has no parent\n");
+        return RTLIL::SigSpec();
+    }
+    
+    log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
+    
+    // Check if the indexed part select itself has the signal name
+    std::string base_signal_name;
+    if (!uhdm_part->VpiDefName().empty()) {
+        base_signal_name = std::string(uhdm_part->VpiDefName());
+        log("      PartSelect VpiDefName: %s\n", base_signal_name.c_str());
+    } else if (!uhdm_part->VpiName().empty()) {
+        base_signal_name = std::string(uhdm_part->VpiName());
+        log("      PartSelect VpiName: %s\n", base_signal_name.c_str());
+    }
+    
+    // If not found in the indexed part select, try the parent
+    if (base_signal_name.empty()) {
+        if (!parent->VpiDefName().empty()) {
+            base_signal_name = std::string(parent->VpiDefName());
+            log("      Parent VpiDefName: %s\n", base_signal_name.c_str());
+        } else if (!parent->VpiName().empty()) {
+            base_signal_name = std::string(parent->VpiName());
+            log("      Parent VpiName: %s\n", base_signal_name.c_str());
+        }
+    }
+    
+    // Look up the wire in the current module
+    RTLIL::SigSpec base;
+    if (!base_signal_name.empty()) {
+        RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
+        if (module->wire(wire_id)) {
+            base = RTLIL::SigSpec(module->wire(wire_id));
+            log("      Found wire %s in module\n", wire_id.c_str());
+        } else {
+            // Try name_map
+            auto it = name_map.find(base_signal_name);
+            if (it != name_map.end()) {
+                base = RTLIL::SigSpec(it->second);
+                log("      Found wire in name_map\n");
+            } else {
+                log_warning("Base signal '%s' not found in module\n", base_signal_name.c_str());
+                return RTLIL::SigSpec();
+            }
+        }
+    } else {
+        // If we can't get the name directly, try importing the parent as an expression
+        base = import_expression(any_cast<const expr*>(parent));
+    }
+    
+    log("      Base signal width: %d\n", base.size());
+
+
     // Get range
     int left = -1, right = -1;
     if (auto left_expr = uhdm_part->Left_range()) {
@@ -606,7 +707,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression
-        base = import_expression(static_cast<const expr*>(parent));
+        base = import_expression(any_cast<const expr*>(parent));
     }
     
     log("      Base signal width: %d\n", base.size());
@@ -656,7 +757,7 @@ RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat, const U
     
     if (uhdm_concat->Operands()) {
         for (auto operand : *uhdm_concat->Operands()) {
-            RTLIL::SigSpec sig = import_expression(static_cast<const expr*>(operand));
+            RTLIL::SigSpec sig = import_expression(any_cast<const expr*>(operand));
             result.append(sig);
         }
     }
@@ -741,7 +842,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (struct_ref_typespec) {
                         const typespec* struct_typespec = struct_ref_typespec->Actual_typespec();
                         if (struct_typespec && struct_typespec->UhdmType() == uhdmstruct_typespec) {
-                            auto st_spec = static_cast<const UHDM::struct_typespec*>(struct_typespec);
+                            auto st_spec = any_cast<const UHDM::struct_typespec*>(struct_typespec);
                             
                             if (mode_debug)
                                 log("    Found struct_typespec\n");
@@ -781,7 +882,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 if (found_first_member && first_member_typespec && 
                                     first_member_typespec->UhdmType() == uhdmstruct_typespec) {
                                     // Now find the second-level member
-                                    auto nested_st_spec = static_cast<const UHDM::struct_typespec*>(first_member_typespec);
+                                    auto nested_st_spec = any_cast<const UHDM::struct_typespec*>(first_member_typespec);
                                     if (nested_st_spec->Members()) {
                                         int second_member_offset = 0;
                                         int second_member_width = 0;
@@ -874,7 +975,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     
                     // Check if this is a packed struct typespec
                     if (base_typespec && base_typespec->UhdmType() == uhdmstruct_typespec) {
-                        auto struct_typespec = static_cast<const UHDM::struct_typespec*>(base_typespec);
+                        auto struct_typespec = any_cast<const UHDM::struct_typespec*>(base_typespec);
                         
                         if (mode_debug)
                             log("    Found struct typespec for base wire '%s'\n", base_name.c_str());
@@ -1108,7 +1209,7 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
             return false;
         }
         
-        auto struct_ts = static_cast<const struct_typespec*>(current_ts);
+        auto struct_ts = any_cast<const struct_typespec*>(current_ts);
         if (!struct_ts->Members()) {
             return false;
         }

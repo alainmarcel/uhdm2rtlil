@@ -50,7 +50,7 @@ module \nested_struct
     connect \B 32'11011110101011011011111011101111
     connect \Y $auto$rtlil.cc:3006:Xor$4
   end
-  cell $add $auto$expression.cpp:308:import_operation$1
+  cell $add $auto$expression.cpp:353:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -60,7 +60,7 @@ module \nested_struct
     connect \B 8'00000001
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  cell $add $auto$expression.cpp:308:import_operation$7
+  cell $add $auto$expression.cpp:353:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0

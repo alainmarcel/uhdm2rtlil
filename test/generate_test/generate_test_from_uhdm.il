@@ -11,7 +11,7 @@ module $paramod\adder\WIDTH=32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  cell $add $auto$expression.cpp:308:import_operation$5
+  cell $add $auto$expression.cpp:353:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -33,7 +33,7 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  cell $sub $auto$expression.cpp:312:import_operation$7
+  cell $sub $auto$expression.cpp:357:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

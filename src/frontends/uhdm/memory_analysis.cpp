@@ -207,16 +207,16 @@ void UhdmMemoryAnalyzer::analyze_statement_for_memory(const any* statement, cons
     int stmt_type = statement->VpiType();
     
     if (stmt_type == vpiAssignment) {
-        auto assign = static_cast<const assignment*>(statement);
+        auto assign = any_cast<const assignment*>(statement);
         analyze_assignment_for_memory(assign, context);
     } else if (stmt_type == vpiIf) {
-        auto if_stmt = static_cast<const if_else*>(statement);
+        auto if_stmt = any_cast<const if_else*>(statement);
         if (auto then_stmt = if_stmt->VpiStmt()) {
             analyze_statement_for_memory(then_stmt, context + "_if");
         }
         // Handle else clause if present
     } else if (stmt_type == vpiBegin) {
-        auto begin_stmt = static_cast<const UHDM::begin*>(statement);
+        auto begin_stmt = any_cast<const UHDM::begin*>(statement);
         if (auto stmts = begin_stmt->Stmts()) {
             for (auto nested_stmt : *stmts) {
                 analyze_statement_for_memory(nested_stmt, context + "_begin");
@@ -509,7 +509,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
             }
             
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
-                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     auto range = (*logic_typespec->Ranges())[0];
                     if (range->Left_expr() && range->Right_expr()) {
@@ -596,7 +596,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
             }
             
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
-                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     auto range = (*logic_typespec->Ranges())[0];
                     if (range->Left_expr() && range->Right_expr()) {

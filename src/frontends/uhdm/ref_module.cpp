@@ -95,7 +95,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                     continue;
                 }
                 
-                RTLIL::SigSpec actual_sig = import_expression(static_cast<const expr*>(port->High_conn()));
+                RTLIL::SigSpec actual_sig = import_expression(any_cast<const expr*>(port->High_conn()));
                 cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 
                 // Infer width from the first port

@@ -28,7 +28,7 @@ module \counter
     connect \B \enable
     connect \Y \overflow
   end
-  cell $add $auto$expression.cpp:308:import_operation$1
+  cell $add $auto$expression.cpp:353:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -38,7 +38,7 @@ module \counter
     connect \B 1'1
     connect \Y \count_next
   end
-  cell $eq $auto$expression.cpp:320:import_operation$3
+  cell $eq $auto$expression.cpp:365:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

@@ -1,0 +1,13 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -33,8 +33,8 @@
+ output B9;
+ wire B9;
+ (* src = "dut.sv:3.17-3.19" *)
+-input [0:7] in;
+-wire [0:7] in;
++input [7:0] in;
++wire [7:0] in;
+ \$_NOT_  _0_ (
+ .A(in[0]),
+ .Y(B7)

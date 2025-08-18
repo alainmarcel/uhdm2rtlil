@@ -14,7 +14,7 @@ module \nested_struct
   wire width 62 \processed_data
   attribute \src "dut.sv:27.18-27.21"
   wire input 4 \rst
-  cell $add $auto$expression.cpp:308:import_operation$7
+  cell $add $auto$expression.cpp:353:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
