@@ -487,8 +487,6 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     if (mode_debug)
         log("    Importing part select\n");
     
-    //RTLIL::SigSpec base = import_expression(any_cast<const expr*>(uhdm_part->VpiParent()));
-    
     // Get the parent object - this should contain the base signal
     const any* parent = uhdm_part->VpiParent();
     if (!parent) {
