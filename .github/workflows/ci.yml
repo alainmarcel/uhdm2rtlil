@@ -105,6 +105,7 @@ jobs:
           test/**/rtlil_diff.txt
           test/**/*_from_uhdm.il
           test/**/*_from_verilog.il
+          test/**/*.log
         retention-days: 7
     
     - name: Upload build artifacts
