@@ -89,6 +89,7 @@ run_test() {
     cat > "$test_dir/test_verilog_read.ys" << EOF
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
+write_rtlil ${test_name}_from_verilog_nohier.il
 hierarchy -auto-top
 stat
 proc
@@ -104,6 +105,7 @@ EOF
 # Test script to read UHDM file in Yosys
 plugin -i $UHDM_PLUGIN
 read_uhdm slpp_all/surelog.uhdm
+write_rtlil ${test_name}_from_uhdm_nohier.il
 hierarchy -auto-top
 stat
 proc

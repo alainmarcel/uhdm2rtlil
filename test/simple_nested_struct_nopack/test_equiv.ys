@@ -5,22 +5,34 @@
 read_verilog -lib +/simcells.v
 
 # Read and process Verilog version (gold)
-read_verilog -sv ./simple_nested_struct_nopack/simple_nested_struct_nopack_from_verilog_synth.v
-hierarchy -top simple_nested_struct_nopack
+read_verilog -sv /home/alain/uhdm2rtlil/test/simple_nested_struct_nopack/simple_nested_struct_nopack_from_verilog_synth.v
+hierarchy -auto-top
 proc
 design -stash gold
 
 # Read and process UHDM version (gate)
 design -reset
 read_verilog -lib +/simcells.v
-read_verilog -sv ./simple_nested_struct_nopack/simple_nested_struct_nopack_from_uhdm_synth.v
-hierarchy -top simple_nested_struct_nopack
+read_verilog -sv /home/alain/uhdm2rtlil/test/simple_nested_struct_nopack/simple_nested_struct_nopack_from_uhdm_synth.v
+hierarchy -auto-top
 proc
 design -stash gate
 
 # Copy both designs with different names
-design -copy-from gold -as gold simple_nested_struct_nopack
-design -copy-from gate -as gate simple_nested_struct_nopack
+# Flatten to handle parameterized modules with different names
+design -load gold
+hierarchy -auto-top
+flatten
+design -stash gold_flat
+
+design -load gate
+hierarchy -auto-top  
+flatten
+design -stash gate_flat
+
+# Now copy the flattened designs
+design -copy-from gold_flat -as gold *
+design -copy-from gate_flat -as gate *
 
 # Perform equivalence check
 equiv_make gold gate equiv

@@ -1,0 +1,13 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -15,8 +15,9 @@
+ (* src = "dut.sv:1.44-1.45" *)
+ output q;
+ wire q;
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:5.4-9.16" *)
+-\$_DFF_PP0_  q_reg /* _0_ */ (
++\$_SDFF_PP0_  q_reg /* _0_ */ (
+ .C(clk),
+ .D(d),
+ .Q(q),

@@ -48,14 +48,14 @@ module \simple_memory
     connect \DATA \data_in
     connect \EN { $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 }
   end
-  cell $not $auto$process.cpp:1348:import_statement_sync$3
+  cell $not $auto$process.cpp:1412:import_statement_sync$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst
     connect \Y $auto$rtlil.cc:2957:Not$4
   end
-  cell $and $auto$process.cpp:1940:import_if_stmt_sync$5
+  cell $and $auto$process.cpp:2004:import_if_stmt_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
