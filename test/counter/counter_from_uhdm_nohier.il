@@ -7,9 +7,9 @@ module \counter
   wire width 8 $0\count
   wire width 8 $0\count_next
   wire $0\overflow
-  wire $auto$rtlil.cc:3004:And$6
   wire $auto$rtlil.cc:3011:Eq$4
   wire width 8 $auto$rtlil.cc:3017:Add$2
+  wire $auto$rtlil.cc:3024:LogicAnd$6
   attribute \src "dut.sv:15.13-15.19"
   wire $logic_not$dut.sv:15.13-15.19$1_Y
   attribute \src "dut.sv:5.18-5.21"
@@ -24,7 +24,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $and $auto$expression.cpp:284:import_operation$5
+  cell $logic_and $auto$expression.cpp:284:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -32,7 +32,7 @@ module \counter
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3011:Eq$4
     connect \B \enable
-    connect \Y $auto$rtlil.cc:3004:And$6
+    connect \Y $auto$rtlil.cc:3024:LogicAnd$6
   end
   cell $add $auto$expression.cpp:353:import_operation$1
     parameter \A_SIGNED 0
@@ -92,7 +92,7 @@ module \counter
   attribute \src "dut.sv:22.5-25.8"
   process $proc$dut.sv:22$1
     assign $0\count_next $auto$rtlil.cc:3017:Add$2
-    assign $0\overflow $auto$rtlil.cc:3004:And$6
+    assign $0\overflow $auto$rtlil.cc:3024:LogicAnd$6
     sync always
       update \count_next $0\count_next
       update \overflow $0\overflow

@@ -164,7 +164,45 @@ void UhdmImporter::import_port(const port* uhdm_port) {
         return;
     }
     
-    RTLIL::Wire* w = create_wire(portname, width);
+    // Check if this port has reversed bit ordering
+    bool upto = false;
+    int start_offset = 0;
+    int left = -1, right = -1;
+    
+    // Try to get range information from the port's typespec
+    if (uhdm_port->Typespec()) {
+        auto ref_typespec = uhdm_port->Typespec();
+        if (ref_typespec && ref_typespec->Actual_typespec()) {
+            auto typespec = ref_typespec->Actual_typespec();
+            if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
+                if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
+                    auto range = (*logic_typespec->Ranges())[0];
+                    if (range->Left_expr() && range->Right_expr()) {
+                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        
+                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                            left = left_spec.as_int();
+                            right = right_spec.as_int();
+                            
+                            // Check if range is reversed (e.g., [0:7] instead of [7:0])
+                            if (left < right) {
+                                upto = true;
+                                start_offset = left;
+                                log("UHDM: Port '%s' has reversed bit ordering [%d:%d]\n", portname.c_str(), left, right);
+                            } else {
+                                start_offset = right;
+                                log("UHDM: Port '%s' has normal bit ordering [%d:%d]\n", portname.c_str(), left, right);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    RTLIL::Wire* w = create_wire(portname, width, upto, start_offset);
     
     // Add source attribute
     add_src_attribute(w->attributes, uhdm_port);
@@ -270,7 +308,46 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     
     // Normal net - create as wire
     int width = get_width(uhdm_net, inst);
-    RTLIL::Wire* w = create_wire(netname, width);
+    
+    // Check if this net has reversed bit ordering
+    bool upto = false;
+    int start_offset = 0;
+    int left = -1, right = -1;
+    
+    // Try to get range information from the net's typespec
+    if (uhdm_net->Typespec()) {
+        auto ref_typespec = uhdm_net->Typespec();
+        if (ref_typespec && ref_typespec->Actual_typespec()) {
+            auto typespec = ref_typespec->Actual_typespec();
+            if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
+                if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
+                    auto range = (*logic_typespec->Ranges())[0];
+                    if (range->Left_expr() && range->Right_expr()) {
+                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        
+                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                            left = left_spec.as_int();
+                            right = right_spec.as_int();
+                            
+                            // Check if range is reversed (e.g., [0:7] instead of [7:0])
+                            if (left < right) {
+                                upto = true;
+                                start_offset = left;
+                                log("UHDM: Net '%s' has reversed bit ordering [%d:%d]\n", netname.c_str(), left, right);
+                            } else {
+                                start_offset = right;
+                                log("UHDM: Net '%s' has normal bit ordering [%d:%d]\n", netname.c_str(), left, right);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    RTLIL::Wire* w = create_wire(netname, width, upto, start_offset);
     add_src_attribute(w->attributes, uhdm_net);
     
     // Add wiretype attribute for struct types
@@ -861,9 +938,9 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
 }
 
 // Create a wire with the given name and width
-RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width) {
-    log("UHDM: Creating wire '%s' (width=%d, mode_keep_names=%s)\n", 
-        name.c_str(), width, mode_keep_names ? "true" : "false");
+RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width, bool upto, int start_offset) {
+    log("UHDM: Creating wire '%s' (width=%d, upto=%d, start_offset=%d, mode_keep_names=%s)\n", 
+        name.c_str(), width, upto ? 1 : 0, start_offset, mode_keep_names ? "true" : "false");
     
     // First check if we already have this wire by base name
     RTLIL::IdString base_name = RTLIL::escape_id(name);
@@ -885,7 +962,9 @@ RTLIL::Wire* UhdmImporter::create_wire(const std::string& name, int width) {
     
     try {
         RTLIL::Wire* w = module->addWire(wire_name, width);
-        log("UHDM: Successfully created wire '%s'\n", wire_name.c_str());
+        w->upto = upto;
+        w->start_offset = start_offset;
+        log("UHDM: Successfully created wire '%s' (upto=%d, start_offset=%d)\n", wire_name.c_str(), w->upto ? 1 : 0, w->start_offset);
         
         // Check if this wire is being created for an interface connection
         // Interface connection wires have names like $dummywireforinterface\bus1

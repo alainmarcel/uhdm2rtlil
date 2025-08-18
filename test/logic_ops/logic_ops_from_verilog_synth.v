@@ -3,6 +3,7 @@
 (* top =  1  *)
 (* src = "dut.sv:1.1-16.10" *)
 module logic_ops(in, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10);
+  wire _00_;
   (* src = "dut.sv:4.17-4.19" *)
   output B1;
   wire B1;
@@ -36,17 +37,54 @@ module logic_ops(in, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10);
   (* src = "dut.sv:3.17-3.19" *)
   input [0:7] in;
   wire [0:7] in;
-  \$_NOT_  _0_ (
+  \$_OR_  _01_ (
+    .A(in[0]),
+    .B(in[1]),
+    .Y(B2)
+  );
+  \$_NOR_  _02_ (
+    .A(in[0]),
+    .B(in[1]),
+    .Y(B4)
+  );
+  \$_OR_  _03_ (
+    .A(in[2]),
+    .B(in[3]),
+    .Y(_00_)
+  );
+  \$_ANDNOT_  _04_ (
+    .A(_00_),
+    .B(B4),
+    .Y(B9)
+  );
+  \$_OR_  _05_ (
+    .A(_00_),
+    .B(B2),
+    .Y(B10)
+  );
+  \$_AND_  _06_ (
+    .A(in[0]),
+    .B(in[1]),
+    .Y(B1)
+  );
+  \$_NAND_  _07_ (
+    .A(in[0]),
+    .B(in[1]),
+    .Y(B3)
+  );
+  \$_NOT_  _08_ (
     .A(in[0]),
     .Y(B7)
   );
-  assign B1 = 1'hx;
-  assign B10 = 1'hx;
-  assign B2 = 1'hx;
-  assign B3 = 1'hx;
-  assign B4 = 1'hx;
-  assign B5 = 1'hx;
-  assign B6 = 1'hx;
+  \$_XOR_  _09_ (
+    .A(in[0]),
+    .B(in[1]),
+    .Y(B5)
+  );
+  \$_OR_  _10_ (
+    .A(B1),
+    .B(B4),
+    .Y(B6)
+  );
   assign B8 = in[0];
-  assign B9 = 1'hx;
 endmodule
