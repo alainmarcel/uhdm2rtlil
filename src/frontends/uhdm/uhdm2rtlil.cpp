@@ -388,7 +388,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // Create a temporary module for expression evaluation
                             this->module = design->addModule(NEW_ID);
                             
-                            RTLIL::SigSpec val_spec = this->import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                            RTLIL::SigSpec val_spec = this->import_expression(any_cast<const expr*>(param_assign->Rhs()));
                             if (val_spec.is_fully_const()) {
                                 val_str = std::to_string(val_spec.as_int());
                                 log("UHDM: Got value from import_expression: %s\n", val_str.c_str());
@@ -605,7 +605,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     for (auto port : *uhdm_module->Ports()) {
                         std::string port_name = std::string(port->VpiName());
                         if (port->High_conn()) {
-                            RTLIL::SigSpec conn = import_expression(static_cast<const expr*>(port->High_conn()));
+                            RTLIL::SigSpec conn = import_expression(any_cast<const expr*>(port->High_conn()));
                             cell->setPort(RTLIL::escape_id(port_name), conn);
                             log("UHDM: Connected port %s\n", port_name.c_str());
                         }
@@ -958,7 +958,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
                     
                     // Get the assigned value
-                    RTLIL::SigSpec value_spec = import_expression(static_cast<const expr*>(param_assign->Rhs()));
+                    RTLIL::SigSpec value_spec = import_expression(any_cast<const expr*>(param_assign->Rhs()));
                     if (value_spec.is_fully_const()) {
                         RTLIL::Const param_value = value_spec.as_const();
                         // Override the parameter value
@@ -1005,7 +1005,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (auto var : *uhdm_module->Variables()) {
             // Check if this is an array_var (memory array)
             if (var->UhdmType() == uhdmarray_var) {
-                auto array_var = static_cast<const UHDM::array_var*>(var);
+                auto array_var = any_cast<const UHDM::array_var*>(var);
                 std::string array_name = std::string(array_var->VpiName());
                 log("UHDM: Found array_var: '%s'\n", array_name.c_str());
                 

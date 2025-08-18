@@ -21,7 +21,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   wire width 50 output 4 \data_out
   attribute \src "dut.sv:66.38-66.43"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:308:import_operation$5
+  cell $add $auto$expression.cpp:353:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
@@ -31,7 +31,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y { $auto$rtlil.cc:3017:Add$6 [63:5] $0\counter }
   end
-  cell $logic_not $auto$expression.cpp:320:import_operation$7
+  cell $logic_not $auto$expression.cpp:365:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1

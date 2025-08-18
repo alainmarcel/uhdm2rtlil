@@ -292,7 +292,7 @@ bool UhdmImporter::module_has_interface_ports(const module_inst* uhdm_module) {
     for (auto port : *uhdm_module->Ports()) {
         any* high_conn = port->High_conn();
         if (high_conn && high_conn->UhdmType() == uhdmref_obj) {
-            ref_obj* ref = static_cast<ref_obj*>(high_conn);
+            ref_obj* ref = any_cast<ref_obj*>(high_conn);
             any* actual = ref->Actual_group();
             if (actual && actual->UhdmType() == uhdminterface_inst) {
                 return true;

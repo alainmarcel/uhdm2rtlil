@@ -55,7 +55,7 @@ void UhdmImporter::import_port(const port* uhdm_port) {
             
             // Get interface type name
             if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
-                const UHDM::interface_typespec* iface_ts = static_cast<const UHDM::interface_typespec*>(typespec);
+                const UHDM::interface_typespec* iface_ts = any_cast<const UHDM::interface_typespec*>(typespec);
                 std::string interface_type;
                 std::string modport_name;
                 
@@ -67,7 +67,7 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                     // The parent should be the actual interface typespec
                     if (iface_ts->VpiParent() && iface_ts->VpiParent()->UhdmType() == uhdminterface_typespec) {
                         const UHDM::interface_typespec* parent_iface_ts = 
-                            static_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
+                            any_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
                         interface_type = std::string(parent_iface_ts->VpiName());
                     } 
                 } else {
@@ -236,7 +236,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                 typespec = ref_typespec->Actual_typespec();
             }
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
-                auto logic_typespec = static_cast<const UHDM::logic_typespec*>(typespec);
+                auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 width = get_width_from_typespec(logic_typespec, inst);
             }
         }
@@ -280,7 +280,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     const ref_typespec* ref_ts = nullptr;
     
     if (uhdm_net->UhdmType() == uhdmlogic_net) {
-        auto logic_net = static_cast<const UHDM::logic_net*>(uhdm_net);
+        auto logic_net = any_cast<const UHDM::logic_net*>(uhdm_net);
         ref_ts = logic_net->Typespec();
         log("UHDM: Net is a logic_net\n");
     } else if (uhdm_net->Typespec()) {
@@ -459,7 +459,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             std::string param_name = std::string(param->Lhs()->VpiName());
             
             if (auto rhs = param->Rhs()) {
-                RTLIL::SigSpec value = import_expression(static_cast<const expr*>(rhs));
+                RTLIL::SigSpec value = import_expression(any_cast<const expr*>(rhs));
                 
                 if (value.is_fully_const()) {
                     params[param_name] = value.as_const();
@@ -647,7 +647,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                                                 }
                                                 
                                                 if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
-                                                    const UHDM::interface_typespec* iface_ts = static_cast<const UHDM::interface_typespec*>(typespec);
+                                                    const UHDM::interface_typespec* iface_ts = any_cast<const UHDM::interface_typespec*>(typespec);
                                                     
                                                     std::string interface_type;
                                                     std::string modport_name;
@@ -659,7 +659,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                                                         // The parent should be the actual interface typespec
                                                         if (iface_ts->VpiParent() && iface_ts->VpiParent()->UhdmType() == uhdminterface_typespec) {
                                                             const UHDM::interface_typespec* parent_iface_ts = 
-                                                                static_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
+                                                                any_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
                                                             interface_type = std::string(parent_iface_ts->VpiName());
                                                         }
                                                     } else {
@@ -763,11 +763,11 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 
                 // Check if this is an interface connection
                 if (high_conn->UhdmType() == uhdmref_obj) {
-                    const ref_obj* ref = static_cast<const ref_obj*>(high_conn);
+                    const ref_obj* ref = any_cast<const ref_obj*>(high_conn);
                     const any* actual = ref->Actual_group();
                     
                     if (actual && actual->UhdmType() == uhdminterface_inst) {
-                        const interface_inst* iface = static_cast<const interface_inst*>(actual);
+                        const interface_inst* iface = any_cast<const interface_inst*>(actual);
                         std::string iface_name = std::string(iface->VpiName());
                         log("    Port %s is connected to interface %s\n", port_name.c_str(), iface_name.c_str());
                         
@@ -793,7 +793,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                 // Try to handle as expression directly
                 RTLIL::SigSpec actual_sig;
                 try {
-                    actual_sig = import_expression(static_cast<const expr*>(high_conn));
+                    actual_sig = import_expression(any_cast<const expr*>(high_conn));
                 } catch (...) {
                     log_warning("Failed to import port connection for %s\n", port_name.c_str());
                     actual_sig = RTLIL::SigSpec();

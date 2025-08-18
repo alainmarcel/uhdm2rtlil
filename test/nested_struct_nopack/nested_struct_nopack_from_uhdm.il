@@ -31,7 +31,7 @@ module \nested_struct_nopack
     connect \B \in_data [0]
     connect \Y \processed_data [21]
   end
-  cell $add $auto$expression.cpp:308:import_operation$1
+  cell $add $auto$expression.cpp:353:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -41,7 +41,7 @@ module \nested_struct_nopack
     connect \B 8'00000001
     connect \Y \processed_data [61:54]
   end
-  cell $add $auto$expression.cpp:308:import_operation$7
+  cell $add $auto$expression.cpp:353:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
