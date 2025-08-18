@@ -92,9 +92,9 @@ module \nested_struct_nopack
     sync posedge \clk
       update \out_struct $0\out_struct[61:0]
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:40.5-52.8"
   process $proc$dut.sv:40$1
+    assign $0\processed_data \processed_data
     assign $0\processed_data [61:54] $auto$rtlil.cc:3017:Add$2
     assign $0\processed_data [53:22] $auto$rtlil.cc:3006:Xor$4
     assign $0\processed_data [21] $auto$rtlil.cc:3004:And$6

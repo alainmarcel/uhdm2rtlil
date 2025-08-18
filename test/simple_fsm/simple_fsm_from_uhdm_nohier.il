@@ -44,9 +44,9 @@ module \simple_fsm
     sync posedge \reset
       update \state $0\state
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:28.1-52.4"
   process $proc$dut.sv:28$1
+    assign $0\next_state \next_state
     attribute \src "dut.sv:29.5-51.12"
     switch \state
       attribute \src "dut.sv:30.9-35.12"
@@ -58,6 +58,7 @@ module \simple_fsm
             assign $0\next_state 2'01
           attribute \src "dut.sv:31.13-34.35"
           case 
+            assign $0\next_state 2'00
         end
       attribute \src "dut.sv:36.9-38.12"
       case 2'01
@@ -71,6 +72,7 @@ module \simple_fsm
             assign $0\next_state 2'11
           attribute \src "dut.sv:40.13-43.35"
           case 
+            assign $0\next_state 2'10
         end
       attribute \src "dut.sv:45.9-47.12"
       case 2'11
@@ -82,9 +84,9 @@ module \simple_fsm
     sync always
       update \next_state $0\next_state
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:55.1-63.4"
   process $proc$dut.sv:55$1
+    assign $0\busy \busy
     attribute \src "dut.sv:56.5-62.12"
     switch \state
       attribute \src "dut.sv:57.9-57.27"

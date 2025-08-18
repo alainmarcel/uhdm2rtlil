@@ -2,7 +2,7 @@
 autoidx 1
 attribute \src "dut.sv:1.1-10.10"
 module \adffn
-  wire $0\q[0:0]
+  wire $0\q
   attribute \src "dut.sv:6.10-6.14"
   wire $logic_not$dut.sv:6.10-6.14$1_Y
   attribute \src "dut.sv:1.24-1.27"
@@ -27,20 +27,19 @@ module \adffn
     sync init
       update \q 1'0
   end
-  attribute \always_ff 1
   attribute \src "dut.sv:5.4-9.16"
   process $proc$dut.sv:5$1
-    assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    assign $0\q \q
+    attribute \src "dut.sv:6.5-9.16"
     switch $logic_not$dut.sv:6.10-6.14$1_Y
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:6.5-9.16"
       case 1'1
-        assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+        assign $0\q 1'0
+      attribute \src "dut.sv:6.5-9.16"
       case 
-        assign $0\q[0:0] \d
+        assign $0\q \d
     end
-    sync posedge \clk
-      update \q $0\q[0:0]
+    sync always
+      update \q $0\q
   end
 end

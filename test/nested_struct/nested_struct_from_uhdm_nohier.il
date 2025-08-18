@@ -86,9 +86,9 @@ module \nested_struct
     sync posedge \clk
       update \out_data $0\out_data[61:0]
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:45.5-57.8"
   process $proc$dut.sv:45$1
+    assign $0\processed_data \processed_data
     assign $0\processed_data \in_data
     assign $0\processed_data [61:54] $auto$rtlil.cc:3017:Add$2
     assign $0\processed_data [53:22] $auto$rtlil.cc:3006:Xor$4

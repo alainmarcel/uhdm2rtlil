@@ -77,6 +77,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
             assign \data_out [0] 1'1
           attribute \src "dut.sv:91.13-95.16"
           case 
+            assign \data_out [0] \data_in [1]
         end
     end
     sync posedge \clk
@@ -220,6 +221,7 @@ module \sub_module
             assign \data_out [0] 1'1
           attribute \src "dut.sv:91.13-95.16"
           case 
+            assign \data_out [0] \data_in [1]
         end
     end
     sync posedge \clk

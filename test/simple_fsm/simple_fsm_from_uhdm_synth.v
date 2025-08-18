@@ -6,6 +6,7 @@
 module simple_fsm(clk, reset, start, done, busy, state);
   wire _0_;
   wire _1_;
+  wire _2_;
   (* src = "dut.sv:7.17-7.21" *)
   output busy;
   wire busy;
@@ -27,22 +28,28 @@ module simple_fsm(clk, reset, start, done, busy, state);
   (* src = "dut.sv:8.23-8.28" *)
   output [1:0] state;
   wire [1:0] state;
-  \$_ANDNOT_  _2_ (
-    .A(state[1]),
-    .B(state[0]),
-    .Y(_0_)
-  );
   \$_NOR_  _3_ (
     .A(state[1]),
     .B(state[0]),
     .Y(_1_)
   );
-  \$_OR_  _4_ (
-    .A(_1_),
-    .B(_0_),
+  \$_ORNOT_  _4_ (
+    .A(state[0]),
+    .B(state[1]),
+    .Y(_2_)
+  );
+  \$_ANDNOT_  _5_ (
+    .A(done),
+    .B(_2_),
+    .Y(_0_)
+  );
+  \$_MUX_  _6_ (
+    .A(_0_),
+    .B(start),
+    .S(_1_),
     .Y(next_state[0])
   );
-  \$_XOR_  _5_ (
+  \$_XOR_  _7_ (
     .A(state[1]),
     .B(state[0]),
     .Y(busy)
@@ -50,7 +57,7 @@ module simple_fsm(clk, reset, start, done, busy, state);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:20.1-25.4" *)
-  \$_DFF_PP0_  \state_reg[0]  /* _6_ */ (
+  \$_DFF_PP0_  \state_reg[0]  /* _8_ */ (
     .C(clk),
     .D(next_state[0]),
     .Q(state[0]),
@@ -59,7 +66,7 @@ module simple_fsm(clk, reset, start, done, busy, state);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:20.1-25.4" *)
-  \$_DFF_PP0_  \state_reg[1]  /* _7_ */ (
+  \$_DFF_PP0_  \state_reg[1]  /* _9_ */ (
     .C(clk),
     .D(busy),
     .Q(state[1]),
