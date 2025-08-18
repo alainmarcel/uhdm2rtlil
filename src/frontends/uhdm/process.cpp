@@ -1175,14 +1175,21 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     if (mode_debug)
         log("    Importing always_comb block\n");
     
-    // Set the always_comb attribute
-    yosys_proc->attributes[ID::always_comb] = RTLIL::Const(1);
+    // Don't set always_comb attribute - let Yosys infer latch behavior
+    // yosys_proc->attributes[ID::always_comb] = RTLIL::Const(1);
     
     // Extract signals that will be assigned in this process
     std::vector<AssignedSignal> assigned_signals;
     if (auto stmt = uhdm_process->Stmt()) {
-        // Simple extraction for combinational blocks
-        extract_assigned_signals(stmt, assigned_signals);
+        // For combinational blocks, unwrap event_control if present
+        const any* actual_stmt = stmt;
+        if (stmt->VpiType() == vpiEventControl) {
+            const event_control* event_ctrl = any_cast<const event_control*>(stmt);
+            if (event_ctrl->Stmt()) {
+                actual_stmt = event_ctrl->Stmt();
+            }
+        }
+        extract_assigned_signals(actual_stmt, assigned_signals);
     }
     
     // Create temporary wires for assigned signals (one per unique signal name)
@@ -1226,9 +1233,30 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     current_temp_wires = temp_wires;
     current_lhs_specs = lhs_specs;
     
+    // Initialize temp wires with current signal values
+    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+        if (signal_specs.count(sig_name)) {
+            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+            // Add assignment to initialize temp wire with current value
+            yosys_proc->root_case.actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec)
+            );
+            log("    Added initialization: %s = %s\n", temp_wire->name.c_str(), log_signal(lhs_spec));
+        }
+    }
+    
     // Import the statements
     if (auto stmt = uhdm_process->Stmt()) {
-        import_statement_comb(stmt, yosys_proc);
+        // For combinational blocks, unwrap event_control if present
+        const any* actual_stmt = stmt;
+        if (stmt->VpiType() == vpiEventControl) {
+            const event_control* event_ctrl = any_cast<const event_control*>(stmt);
+            if (event_ctrl->Stmt()) {
+                actual_stmt = event_ctrl->Stmt();
+                log("    Unwrapped event_control for combinational block\n");
+            }
+        }
+        import_statement_comb(actual_stmt, yosys_proc);
     }
     
     // Add sync always rule
@@ -1258,21 +1286,58 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
     log("    Importing always block\n");
     
     // For SystemVerilog always_ff is a different process type, but for regular always,
-    // we need to analyze the content to determine if it's clocked or combinational
+    // we need to analyze the sensitivity list to determine if it's clocked or combinational
     
-    // For the flipflop example, we know it's clocked, so let's assume always blocks
-    // with if statements are clocked for now
-    bool is_clocked = true;  // Assume clocked for now
+    // Check if this is a combinational always block (always @*)
+    bool is_combinational = false;
     
     if (auto stmt = uhdm_process->Stmt()) {
-        // Check if it contains if statements (like reset logic)
-        if (stmt->VpiType() == vpiIf) {
-            is_clocked = true;
-            log("    Detected if statement - treating as clocked always block\n");
+        // Check if wrapped in event_control
+        if (stmt->VpiType() == vpiEventControl) {
+            const event_control* event_ctrl = any_cast<const event_control*>(stmt);
+            
+            // Check if sensitivity list indicates combinational (*)
+            if (auto event_expr = event_ctrl->VpiCondition()) {
+                // For always @*, the condition might be a specific marker or empty
+                // Let's check if we have any edge-triggered signals
+                bool has_edge_trigger = false;
+                
+                if (event_expr->VpiType() == vpiOperation) {
+                    const operation* op = any_cast<const operation*>(event_expr);
+                    // Check for posedge/negedge operations
+                    if (op->VpiOpType() == vpiPosedgeOp || op->VpiOpType() == vpiNegedgeOp) {
+                        has_edge_trigger = true;
+                    } else if (op->VpiOpType() == vpiEventOrOp) {
+                        // Check operands for edge triggers
+                        if (op->Operands()) {
+                            for (auto operand : *op->Operands()) {
+                                if (operand->VpiType() == vpiOperation) {
+                                    const operation* sub_op = any_cast<const operation*>(operand);
+                                    if (sub_op->VpiOpType() == vpiPosedgeOp || sub_op->VpiOpType() == vpiNegedgeOp) {
+                                        has_edge_trigger = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // If no edge triggers found, it's combinational
+                is_combinational = !has_edge_trigger;
+                
+                if (is_combinational) {
+                    log("    Detected combinational always block (no edge triggers)\n");
+                }
+            } else {
+                // No condition typically means always @*
+                is_combinational = true;
+                log("    Detected combinational always block (empty sensitivity list)\n");
+            }
         }
     }
     
-    if (is_clocked) {
+    if (!is_combinational) {
         log("    Handling as clocked always block\n");
         import_always_ff(uhdm_process, yosys_proc);
     } else {
@@ -1459,6 +1524,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiIf:
             import_if_stmt_comb(any_cast<const if_stmt*>(uhdm_stmt), proc);
             break;
+        case vpiIfElse: {
+            // if_else is a distinct class, not derived from if_stmt
+            // We need a separate function to handle it properly
+            import_if_else_comb(any_cast<const if_else*>(uhdm_stmt), proc);
+            break;
+        }
         case vpiCase:
             import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
             break;
@@ -2029,10 +2100,65 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
     current_condition = prev_condition;
 }
 
+// Import if_else statement for comb context
+void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
+    log("    import_if_else_comb: Importing if_else statement\n");
+    
+    // Get the condition
+    if (auto condition = uhdm_if_else->VpiCondition()) {
+        RTLIL::SigSpec condition_sig = import_expression(condition);
+        
+        if (mode_debug)
+            log("    If_else condition: %s\n", log_signal(condition_sig));
+        
+        // Create a switch statement for the if
+        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+        sw->signal = condition_sig;
+        add_src_attribute(sw->attributes, uhdm_if_else);
+        
+        // Create case for true (then branch)
+        RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
+        true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+        add_src_attribute(true_case->attributes, uhdm_if_else);
+        
+        // Import then statement
+        if (auto then_stmt = uhdm_if_else->VpiStmt()) {
+            if (mode_debug)
+                log("    Importing then statement\n");
+            import_statement_comb(then_stmt, true_case);
+        }
+        
+        sw->cases.push_back(true_case);
+        
+        // Create case for false (else branch) if it exists
+        if (auto else_stmt = uhdm_if_else->VpiElseStmt()) {
+            RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
+            // Empty compare means default case
+            add_src_attribute(else_case->attributes, uhdm_if_else);
+            
+            log("    Importing else statement, type: %s (vpiType=%d)\n",
+                UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
+            import_statement_comb(else_stmt, else_case);
+            
+            sw->cases.push_back(else_case);
+        } else {
+            // Create empty default case
+            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+            add_src_attribute(default_case->attributes, uhdm_if_else);
+            sw->cases.push_back(default_case);
+        }
+        
+        // Add the switch to the current case
+        proc->root_case.switches.push_back(sw);
+    } else {
+        log_warning("If_else statement has no condition\n");
+    }
+}
+
 // Import if statement for comb context
 void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc) {
-    if (mode_debug)
-        log("    Importing if statement for combinational context\n");
+    // Always log for debugging
+    log("    import_if_stmt_comb: Importing if statement (UhdmType=%d)\n", uhdm_if->UhdmType());
     
     // Get the condition
     if (auto condition = uhdm_if->VpiCondition()) {
@@ -2060,34 +2186,10 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         
         sw->cases.push_back(true_case);
         
-        // Create case for false (else branch) if it exists
-        // Note: VpiElseStmt is only available on if_else, not if_stmt
-        if (uhdm_if->UhdmType() == uhdmif_else) {
-            const UHDM::if_else* if_else = dynamic_cast<const UHDM::if_else*>(uhdm_if);
-            if (auto else_stmt = if_else->VpiElseStmt()) {
-                RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
-                // Empty compare means default case
-                add_src_attribute(else_case->attributes, uhdm_if);
-                
-                if (mode_debug) {
-                    log("    Importing else statement, type: %s (vpiType=%d)\n",
-                        UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
-                }
-                import_statement_comb(else_stmt, else_case);
-                
-                sw->cases.push_back(else_case);
-            } else {
-                // Create empty default case
-                RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
-                add_src_attribute(default_case->attributes, uhdm_if);
-                sw->cases.push_back(default_case);
-            }
-        } else {
-            // Create empty default case for simple if
-            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
-            add_src_attribute(default_case->attributes, uhdm_if);
-            sw->cases.push_back(default_case);
-        }
+        // For simple if statements (not if_else), create empty default case
+        RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+        add_src_attribute(default_case->attributes, uhdm_if);
+        sw->cases.push_back(default_case);
         
         if (mode_debug) {
             log("    If statement import complete. Switch has %d cases\n", (int)sw->cases.size());
@@ -2289,11 +2391,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
             break;
         }
-        case vpiIf:
-        case vpiIfElse: {
-            // Handle if statements inside case items
-            // TODO: replace static_cast by any_cast and change the logic below to support if_else explicitly
-            auto if_stmt = static_cast<const UHDM::if_stmt*>(uhdm_stmt);
+        case vpiIf: {
+            // Handle simple if statement
+            auto if_stmt = any_cast<const UHDM::if_stmt*>(uhdm_stmt);
             
             // Get the condition
             if (auto condition = if_stmt->VpiCondition()) {
@@ -2321,30 +2421,62 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 
                 sw->cases.push_back(true_case);
                 
-                // Create case for false (else branch) if it exists
-                // Note: VpiElseStmt is only available on if_else, not if_stmt
-                if (if_stmt->UhdmType() == uhdmif_else) {
-                    const UHDM::if_else* if_else = dynamic_cast<const UHDM::if_else*>(if_stmt);
-                    if (auto else_stmt = if_else->VpiElseStmt()) {
-                        RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
-                        // Empty compare means default case
-                        add_src_attribute(else_case->attributes, if_stmt);
-                        
-                        if (mode_debug)
-                            log("        Importing else statement in case\n");
-                        import_statement_comb(else_stmt, else_case);
-                        
-                        sw->cases.push_back(else_case);
-                    } else {
-                        // Create empty default case
-                        RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
-                        add_src_attribute(default_case->attributes, if_stmt);
-                        sw->cases.push_back(default_case);
-                    }
+                // For simple if (not if_else), create empty default case
+                RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+                add_src_attribute(default_case->attributes, if_stmt);
+                sw->cases.push_back(default_case);
+                
+                // Add the switch to the current case
+                case_rule->switches.push_back(sw);
+            }
+            break;
+        }
+        case vpiIfElse: {
+            // Handle if_else statement which has an else branch
+            auto if_else_stmt = any_cast<const UHDM::if_else*>(uhdm_stmt);
+            
+            // Get the condition
+            if (auto condition = if_else_stmt->VpiCondition()) {
+                RTLIL::SigSpec condition_sig = import_expression(condition);
+                
+                if (mode_debug)
+                    log("        If_else condition in case: %s\n", log_signal(condition_sig));
+                
+                // Create a switch statement for the if
+                RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                sw->signal = condition_sig;
+                add_src_attribute(sw->attributes, if_else_stmt);
+                
+                // Create case for true (then branch)
+                RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
+                true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                add_src_attribute(true_case->attributes, if_else_stmt);
+                
+                // Import then statement
+                if (auto then_stmt = if_else_stmt->VpiStmt()) {
+                    if (mode_debug)
+                        log("        Importing then statement in case\n");
+                    import_statement_comb(then_stmt, true_case);
+                }
+                
+                sw->cases.push_back(true_case);
+                
+                // Handle else branch
+                if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
+                    RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
+                    // Empty compare means default case
+                    add_src_attribute(else_case->attributes, if_else_stmt);
+                    
+                    if (mode_debug)
+                        log("        Importing else statement in case (type=%s)\n", 
+                            UhdmName(else_stmt->UhdmType()).c_str());
+                    import_statement_comb(else_stmt, else_case);
+                    
+                    sw->cases.push_back(else_case);
                 } else {
-                    // Create empty default case for simple if
+                    // Create empty default case
                     RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
-                    add_src_attribute(default_case->attributes, if_stmt);
+                    add_src_attribute(default_case->attributes, if_else_stmt);
                     sw->cases.push_back(default_case);
                 }
                 

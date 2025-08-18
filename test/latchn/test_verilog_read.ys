@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil latchn_from_verilog_nohier.il
+hierarchy -check -top latchn
+stat
+proc
+opt
+stat
+write_rtlil latchn_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top latchn
+write_verilog -noexpr latchn_from_verilog_synth.v
