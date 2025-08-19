@@ -9,15 +9,20 @@ module \adff
   wire input 3 \clr
   attribute \src "dut.sv:1.20-1.21"
   wire input 1 \d
+  attribute \init 1'0
   attribute \src "dut.sv:1.44-1.45"
   wire output 4 \q
-  attribute \full_case 1
-  attribute \src "dut.sv:6.7-9.16"
-  cell $mux $procmux$2
+  attribute \"has_async_reset" 1
+  attribute \always_ff 1
+  attribute \src "dut.sv:5.4-9.16"
+  cell $adff $procdff$3
+    parameter \ARST_POLARITY 1'1
+    parameter \ARST_VALUE 1'0
+    parameter \CLK_POLARITY 1'1
     parameter \WIDTH 1
-    connect \A \d
-    connect \B 1'0
-    connect \S \clr
-    connect \Y \q
+    connect \ARST \clr
+    connect \CLK \clk
+    connect \D \d
+    connect \Q \q
   end
 end

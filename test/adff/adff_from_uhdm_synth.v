@@ -12,12 +12,17 @@ module adff(d, clk, clr, q);
   (* src = "dut.sv:1.20-1.21" *)
   input d;
   wire d;
+  (* init = 1'h0 *)
   (* src = "dut.sv:1.44-1.45" *)
   output q;
   wire q;
-  \$_ANDNOT_  _0_ (
-    .A(d),
-    .B(clr),
-    .Y(q)
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:5.4-9.16" *)
+  \$_DFF_PP0_  q_reg /* _0_ */ (
+    .C(clk),
+    .D(d),
+    .Q(q),
+    .R(clr)
   );
 endmodule

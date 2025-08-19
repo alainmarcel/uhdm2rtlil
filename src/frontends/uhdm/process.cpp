@@ -651,6 +651,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     // Get the clock signal from the event control
     RTLIL::SigSpec clock_sig;
     bool clock_posedge = true;
+    RTLIL::SigSpec reset_sig;
+    bool reset_posedge = true;
     
     if (auto stmt = uhdm_process->Stmt()) {
         log("      Got statement from process\n");
@@ -721,33 +723,77 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log_flush();
                         }
                     } else if (op->VpiOpType() == vpiListOp) {
-                        // Handle list operation (e.g., single item sensitivity list)
+                        // Handle list operation (e.g., sensitivity list with multiple items)
                         log("      Found list operation\n");
                         log_flush();
                         if (op->Operands() && !op->Operands()->empty()) {
-                            // Check the first operand
-                            auto first_operand = (*op->Operands())[0];
-                            if (first_operand->VpiType() == vpiOperation) {
-                                const operation* edge_op = any_cast<const operation*>(first_operand);
-                                log("      List contains operation of type: %d\n", edge_op->VpiOpType());
-                                log_flush();
-                                if (edge_op->VpiOpType() == vpiPosedgeOp) {
-                                    clock_posedge = true;
-                                    if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                        log("      Importing clock signal from posedge in list\n");
-                                        log_flush();
-                                        clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                        log("      Clock signal imported: %s\n", log_signal(clock_sig));
-                                        log_flush();
+                            // If we have multiple edge triggers in a list, it's an async reset pattern
+                            int edge_trigger_count = 0;
+                            for (auto operand : *op->Operands()) {
+                                if (operand->VpiType() == vpiOperation) {
+                                    const operation* sub_op = any_cast<const operation*>(operand);
+                                    if (sub_op->VpiOpType() == vpiPosedgeOp || sub_op->VpiOpType() == vpiNegedgeOp) {
+                                        edge_trigger_count++;
                                     }
-                                } else if (edge_op->VpiOpType() == vpiNegedgeOp) {
-                                    clock_posedge = false;
-                                    if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                        log("      Importing clock signal from negedge in list\n");
-                                        log_flush();
-                                        clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                        log("      Clock signal imported: %s\n", log_signal(clock_sig));
-                                        log_flush();
+                                }
+                            }
+                            
+                            if (edge_trigger_count > 1) {
+                                log("      List contains %d edge triggers - marking as async reset\n", edge_trigger_count);
+                                yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
+                                
+                                // Extract clock and reset signals from the list
+                                // Convention: first posedge is clock, second edge trigger is reset
+                                bool found_clock = false;
+                                for (auto operand : *op->Operands()) {
+                                    if (operand->VpiType() == vpiOperation) {
+                                        const operation* edge_op = any_cast<const operation*>(operand);
+                                        if (edge_op->VpiOpType() == vpiPosedgeOp || edge_op->VpiOpType() == vpiNegedgeOp) {
+                                            if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                                auto sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
+                                                if (!found_clock) {
+                                                    clock_sig = sig;
+                                                    clock_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                                    found_clock = true;
+                                                    log("      Found clock signal in list: %s (%s edge)\n", 
+                                                        log_signal(clock_sig), clock_posedge ? "pos" : "neg");
+                                                } else {
+                                                    reset_sig = sig;
+                                                    reset_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                                    log("      Found reset signal in list: %s (%s edge)\n", 
+                                                        log_signal(reset_sig), reset_posedge ? "pos" : "neg");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Only process first operand if we haven't already extracted signals
+                            if (clock_sig.empty() && !op->Operands()->empty()) {
+                                auto first_operand = (*op->Operands())[0];
+                                if (first_operand->VpiType() == vpiOperation) {
+                                    const operation* edge_op = any_cast<const operation*>(first_operand);
+                                    log("      List contains operation of type: %d\n", edge_op->VpiOpType());
+                                    log_flush();
+                                    if (edge_op->VpiOpType() == vpiPosedgeOp) {
+                                        clock_posedge = true;
+                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                            log("      Importing clock signal from posedge in list\n");
+                                            log_flush();
+                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
+                                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                                            log_flush();
+                                        }
+                                    } else if (edge_op->VpiOpType() == vpiNegedgeOp) {
+                                        clock_posedge = false;
+                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                            log("      Importing clock signal from negedge in list\n");
+                                            log_flush();
+                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
+                                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
+                                            log_flush();
+                                        }
                                     }
                                 }
                             }
@@ -771,15 +817,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Instead, we import the statements into the process root case
             
             // Find reset signal from sensitivity list
-            RTLIL::SigSpec reset_sig;
-            bool reset_posedge = false;
+            // Use the reset_sig that was already extracted above
+            // Don't redeclare it here as it shadows the one we already found
             
-            // Re-parse the event control to find reset signal
-            if (auto event_ctrl = dynamic_cast<const event_control*>(uhdm_process->Stmt())) {
-                if (auto event_expr = event_ctrl->VpiCondition()) {
-                    if (event_expr->VpiType() == vpiOperation) {
-                        const operation* op = any_cast<const operation*>(event_expr);
-                        if (op->VpiOpType() == vpiEventOrOp && op->Operands()) { // OR operation
+            // Only re-parse if we don't already have a reset signal
+            if (reset_sig.empty()) {
+                // Re-parse the event control to find reset signal
+                if (auto event_ctrl = dynamic_cast<const event_control*>(uhdm_process->Stmt())) {
+                    if (auto event_expr = event_ctrl->VpiCondition()) {
+                        if (event_expr->VpiType() == vpiOperation) {
+                            const operation* op = any_cast<const operation*>(event_expr);
+                            if ((op->VpiOpType() == vpiEventOrOp || op->VpiOpType() == vpiListOp) && op->Operands()) { // OR operation or List
                             for (auto operand : *op->Operands()) {
                                 if (operand->VpiType() == vpiOperation) {
                                     const operation* edge_op = any_cast<const operation*>(operand);
@@ -799,6 +847,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         }
                     }
                 }
+            }
             }
             
             // For async reset, we need to collect all unique signals assigned in the always_ff
@@ -1302,19 +1351,34 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
                 // Let's check if we have any edge-triggered signals
                 bool has_edge_trigger = false;
                 
+                log("    Event expression type: %s (vpiType=%d)\n", 
+                    UhdmName(event_expr->UhdmType()).c_str(), event_expr->VpiType());
+                
                 if (event_expr->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(event_expr);
+                    log("    Operation type: %d (vpiPosedgeOp=%d, vpiNegedgeOp=%d, vpiEventOrOp=%d)\n", 
+                        op->VpiOpType(), vpiPosedgeOp, vpiNegedgeOp, vpiEventOrOp);
+                    
                     // Check for posedge/negedge operations
                     if (op->VpiOpType() == vpiPosedgeOp || op->VpiOpType() == vpiNegedgeOp) {
                         has_edge_trigger = true;
-                    } else if (op->VpiOpType() == vpiEventOrOp) {
+                        log("    Found edge trigger at top level\n");
+                    } else if (op->VpiOpType() == vpiEventOrOp || op->VpiOpType() == vpiListOp) {
                         // Check operands for edge triggers
+                        // vpiEventOrOp is used for comma-separated events
+                        // vpiListOp (37) is also used for sensitivity lists
                         if (op->Operands()) {
+                            log("    Checking %zu operands of %s\n", op->Operands()->size(), 
+                                op->VpiOpType() == vpiEventOrOp ? "EventOr" : "ListOp");
                             for (auto operand : *op->Operands()) {
+                                log("      Operand type: %s (vpiType=%d)\n", 
+                                    UhdmName(operand->UhdmType()).c_str(), operand->VpiType());
                                 if (operand->VpiType() == vpiOperation) {
                                     const operation* sub_op = any_cast<const operation*>(operand);
+                                    log("      Sub-operation type: %d\n", sub_op->VpiOpType());
                                     if (sub_op->VpiOpType() == vpiPosedgeOp || sub_op->VpiOpType() == vpiNegedgeOp) {
                                         has_edge_trigger = true;
+                                        log("      Found edge trigger in operand\n");
                                         break;
                                     }
                                 }

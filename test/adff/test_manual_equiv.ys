@@ -1,0 +1,12 @@
+# Load the two netlists and check if they're really equivalent
+read_verilog -sv adff_from_verilog_synth.v
+rename adff adff_verilog
+read_verilog -sv adff_from_uhdm_synth.v  
+rename adff adff_uhdm
+
+# Create a miter to compare them
+miter -equiv adff_verilog adff_uhdm miter
+flatten miter
+# Run SAT solver
+sat -prove trigger 0 miter
+EOF < /dev/null
