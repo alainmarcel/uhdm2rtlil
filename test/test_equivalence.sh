@@ -14,6 +14,10 @@ fi
 
 TEST_NAME="$1"
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Handle both absolute and relative paths
 if [[ "$TEST_NAME" = /* ]]; then
     # Absolute path
@@ -127,13 +131,38 @@ EOF
 sed -i "s|VERILOG_SYNTH_FILE|$VERILOG_SYNTH|g" "$EQUIV_SCRIPT"
 sed -i "s|UHDM_SYNTH_FILE|$UHDM_SYNTH|g" "$EQUIV_SCRIPT"
 
-# Get path to yosys
-YOSYS_BIN="../../out/current/bin/yosys"
-if [ ! -x "$YOSYS_BIN" ]; then
-    YOSYS_BIN="../../third_party/yosys/yosys"
+# Get path to yosys using the same approach as run_yosys_tests.sh
+YOSYS_BIN="$PROJECT_ROOT/out/current/bin/yosys"
+
+# Check if Yosys exists and is executable
+if [ ! -f "$YOSYS_BIN" ]; then
+    echo "WARNING: Yosys not found at $YOSYS_BIN"
+    # Try alternative paths
+    if [ -f "$PROJECT_ROOT/third_party/yosys/yosys" ]; then
+        YOSYS_BIN="$PROJECT_ROOT/third_party/yosys/yosys"
+        echo "Found Yosys at alternative path: $YOSYS_BIN"
+    elif [ -f "$PROJECT_ROOT/build/third_party/yosys/yosys" ]; then
+        YOSYS_BIN="$PROJECT_ROOT/build/third_party/yosys/yosys"
+        echo "Found Yosys at build path: $YOSYS_BIN"
+    elif command -v yosys >/dev/null 2>&1; then
+        YOSYS_BIN="yosys"
+        echo "Using system Yosys"
+    else
+        echo "ERROR: Could not find Yosys executable"
+        echo "Searched paths:"
+        echo "  - $PROJECT_ROOT/out/current/bin/yosys"
+        echo "  - $PROJECT_ROOT/third_party/yosys/yosys"
+        echo "  - $PROJECT_ROOT/build/third_party/yosys/yosys"
+        echo "  - System PATH"
+        exit 1
+    fi
 fi
+
+# Make sure it's executable
 if [ ! -x "$YOSYS_BIN" ]; then
-    YOSYS_BIN="yosys"
+    echo "ERROR: Yosys binary is not executable: $YOSYS_BIN"
+    ls -la "$YOSYS_BIN" || echo "File does not exist"
+    exit 1
 fi
 
 # Run equivalence check
