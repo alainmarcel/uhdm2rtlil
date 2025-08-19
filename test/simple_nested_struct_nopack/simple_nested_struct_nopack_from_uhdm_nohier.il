@@ -68,9 +68,9 @@ module \simple_nested_struct_nopack
     connect \B 16'0000000001100100
     connect \Y $auto$rtlil.cc:3017:Add$8
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:30.5-41.8"
   process $proc$dut.sv:30$1
+    assign $0\out_struct \out_struct
     assign $0\out_struct \in_struct
     assign $0\out_struct [61:54] $auto$rtlil.cc:3017:Add$2
     assign $0\out_struct [53:22] $auto$rtlil.cc:3006:Xor$4

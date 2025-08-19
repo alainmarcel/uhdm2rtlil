@@ -16,9 +16,10 @@ module adffn(d, clk, clr, q);
   (* src = "dut.sv:1.45-1.46" *)
   output q;
   wire q;
+  (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:5.4-9.16" *)
-  \$_SDFF_PN0_  q_reg /* _0_ */ (
+  \$_DFF_PN0_  q_reg /* _0_ */ (
     .C(clk),
     .D(d),
     .Q(q),

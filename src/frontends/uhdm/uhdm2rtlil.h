@@ -180,6 +180,7 @@ struct UhdmImporter {
     void import_case_stmt(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
     void import_for_stmt(const UHDM::for_stmt* uhdm_for, RTLIL::Process* proc);
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
+    void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
     
     // Process-specific import functions
     void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);

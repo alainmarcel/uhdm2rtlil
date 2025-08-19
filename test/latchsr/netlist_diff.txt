@@ -1,0 +1,10 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -2,7 +2,6 @@
+ (* top =  1  *)
+ (* src = "dut.sv:1.1-9.10" *)
+ module latchsr(d, clk, en, clr, pre, q);
+-(* src = "dut.sv:2.2-8.11" *)
+ wire _00_;
+ wire _01_;
+ wire _02_;

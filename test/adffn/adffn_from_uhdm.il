@@ -12,16 +12,17 @@ module \adffn
   attribute \init 1'0
   attribute \src "dut.sv:1.45-1.46"
   wire output 4 \q
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:5.4-9.16"
-  cell $sdff $auto$ff.cc:266:slice$5
-    parameter \CLK_POLARITY 1
-    parameter \SRST_POLARITY 0
-    parameter \SRST_VALUE 1'0
+  cell $adff $procdff$5
+    parameter \ARST_POLARITY 0
+    parameter \ARST_VALUE 1'0
+    parameter \CLK_POLARITY 1'1
     parameter \WIDTH 1
+    connect \ARST \clr
     connect \CLK \clk
     connect \D \d
     connect \Q \q
-    connect \SRST \clr
   end
 end

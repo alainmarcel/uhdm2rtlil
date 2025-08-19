@@ -47,7 +47,6 @@ module \simple_struct
     connect \bus \bus3
     connect \out \out3
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:45.5-57.8"
   process $proc$dut.sv:45$1
     assign \bus1 [23:16] \a1

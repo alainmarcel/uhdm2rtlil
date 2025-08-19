@@ -2,7 +2,7 @@
 autoidx 1
 attribute \src "dut.sv:1.1-10.10"
 module \adff
-  wire $0\q[0:0]
+  wire $0\q
   attribute \src "dut.sv:1.23-1.26"
   wire input 2 \clk
   attribute \src "dut.sv:1.28-1.31"
@@ -17,20 +17,23 @@ module \adff
     sync init
       update \q 1'0
   end
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:5.4-9.16"
   process $proc$dut.sv:5$1
-    assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    assign $0\q \q
+    attribute \src "dut.sv:11.9-15.12"
     switch \clr
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+        assign $0\q 1'0
+      attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\q[0:0] \d
+        assign $0\q \d
     end
     sync posedge \clk
-      update \q $0\q[0:0]
+      update \q $0\q
+    sync posedge \clr
+      update \q $0\q
   end
 end

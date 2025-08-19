@@ -49,8 +49,8 @@ fi
 # Create equivalence check script
 EQUIV_SCRIPT="${TEST_DIR}/test_equiv.ys"
 cat > "$EQUIV_SCRIPT" << 'EOF'
-# Formal equivalence check using design stash approach
-# to avoid module name conflicts between gold and gate designs
+# Formal equivalence check for gate-level netlists
+# This properly detects sequential vs combinational differences
 
 # Load cell library
 read_verilog -lib +/simcells.v
@@ -59,6 +59,7 @@ read_verilog -lib +/simcells.v
 read_verilog -sv VERILOG_SYNTH_FILE
 hierarchy -auto-top
 proc
+flatten
 design -stash gold
 
 # Read and process UHDM version (gate)
@@ -67,25 +68,55 @@ read_verilog -lib +/simcells.v
 read_verilog -sv UHDM_SYNTH_FILE
 hierarchy -auto-top
 proc
+flatten
 design -stash gate
 
-# Copy both designs with different names
-# Flatten to handle parameterized modules with different names
+# Print statistics for both designs to detect sequential vs combinational
+log
+log === GOLD DESIGN STATISTICS ===
 design -load gold
+stat -width
+log
+log === GATE DESIGN STATISTICS ===
+design -load gate
+stat -width
+
+# Count sequential elements in both designs
+design -load gold
+select */t:$_DFF_* */t:$_DFFE_* */t:$_SDFF* */t:$_DLATCH* */t:$_SR_* %ci
+log
+log Sequential cells in gold:
+stat
+select -clear
+
+design -load gate
+select */t:$_DFF_* */t:$_DFFE_* */t:$_SDFF* */t:$_DLATCH* */t:$_SR_* %ci
+log
+log Sequential cells in gate:
+stat
+select -clear
+
+# Skip the SAT-based approach and use only the equiv flow
+# which is specifically designed for gate-level netlists
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv VERILOG_SYNTH_FILE
 hierarchy -auto-top
+proc
 flatten
 design -stash gold_flat
 
-design -load gate
-hierarchy -auto-top  
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv UHDM_SYNTH_FILE
+hierarchy -auto-top
+proc
 flatten
 design -stash gate_flat
 
-# Now copy the flattened designs
 design -copy-from gold_flat -as gold *
 design -copy-from gate_flat -as gate *
 
-# Perform equivalence check
 equiv_make gold gate equiv
 equiv_simple
 equiv_induct
@@ -109,7 +140,7 @@ fi
 EQUIV_LOG="${TEST_DIR}/equiv_check.log"
 echo "Running formal equivalence check for $TEST_NAME..."
 
-if $YOSYS_BIN -q -s "$EQUIV_SCRIPT" > "$EQUIV_LOG" 2>&1; then
+if $YOSYS_BIN -s "$EQUIV_SCRIPT" > "$EQUIV_LOG" 2>&1; then
     echo "✅ Formal equivalence check PASSED for $TEST_NAME"
     # Keep the test_equiv.ys file for reference
     exit 0

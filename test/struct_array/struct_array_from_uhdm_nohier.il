@@ -37,16 +37,16 @@ module \struct_array
     connect \B 8'00000001
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:17.5-20.8"
   process $proc$dut.sv:17$1
     assign \packet [11:4] \data_in
     assign \packet [3:0] \tag_in
     sync always
   end
-  attribute \always_comb 1
   attribute \src "dut.sv:23.5-26.8"
   process $proc$dut.sv:23$1
+    assign $0\data_out \data_out
+    assign $0\tag_out \tag_out
     assign $0\data_out $auto$rtlil.cc:3017:Add$2
     assign $0\tag_out $auto$rtlil.cc:3006:Xor$4
     sync always

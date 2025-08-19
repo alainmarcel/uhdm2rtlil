@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (22/22 tests functional)
-- **Perfect Matches**: 18 tests validated by formal equivalence checking
+- **Success Rate**: 100% (30/30 tests functional)
+- **Perfect Matches**: 26 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
@@ -205,6 +205,13 @@ The Yosys test runner:
 - **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
 - **nested_struct_nopack** - Nested structs without packages (tests synchronous if-else with switch statement generation)
 - **simple_nested_struct_nopack** - Simpler nested struct test without packages
+- **latchp** - Positive level-sensitive latch (tests latch inference from combinational always blocks)
+- **latchn** - Negative level-sensitive latch (tests inverted enable condition handling)
+- **latchsr** - Latch with set/reset functionality (tests nested if-else in combinational context)
+- **adffs** - Async D flip-flop with set (from Yosys test suite)
+- **add_sub** - Adder/subtractor with carry (from Yosys test suite)
+- **logic_ops** - Logical operations with bit ordering (from Yosys test suite)
+- **ndffnr** - Negative edge flip-flop with reset (from Yosys test suite)
 
 ### Test Management
 
@@ -230,7 +237,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 22 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 30 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -281,12 +288,21 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **22 test cases**:
+The UHDM frontend test suite includes **30 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **18 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **26 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
+
+### Latch Inference Support
+- Added proper detection of combinational always blocks (`always @*`)
+- Combinational blocks are now routed to dedicated combinational import path
+- Added support for if_else statements in combinational contexts (distinct from if_stmt)
+- Implemented proper type casting using `any_cast` based on `VpiType()`
+- Support for arbitrarily nested if/if_else/case statements in combinational logic
+- Temp wire initialization for proper latch inference
+- Three new latch tests added (latchp, latchn, latchsr) demonstrating various latch patterns
 
 ### Interface Expansion Support
 - Added automatic expansion of SystemVerilog interfaces to individual signals
