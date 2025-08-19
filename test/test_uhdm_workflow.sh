@@ -205,7 +205,7 @@ elif [ -f "$UHDM_RTLIL" ] && [ -f "$VERILOG_RTLIL" ]; then
     echo
     
     # Compare files
-    if diff -u "$UHDM_RTLIL" "$VERILOG_RTLIL" > rtlil_diff.txt; then
+    if diff -u --label="verilog_synth" --label="uhdm_synth" "$VERILOG_RTLIL" "$UHDM_RTLIL" > rtlil_diff.txt; then
         echo "   ✓ RTLIL outputs are IDENTICAL!"
         echo "     UHDM frontend produces the same result as Verilog frontend"
         rm rtlil_diff.txt
