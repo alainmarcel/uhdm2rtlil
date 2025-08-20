@@ -1,0 +1,32 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -2,22 +2,22 @@
+ (* top =  1  *)
+ (* src = "dut.sv:1.1-8.10" *)
+ module mux2(S, A, B, Y);
+-(* src = "dut.sv:3.11-3.12" *)
++(* src = "dut.sv:1.16-1.17" *)
+ input A;
+ wire A;
+-(* src = "dut.sv:3.13-3.14" *)
++(* src = "dut.sv:1.18-1.19" *)
+ input B;
+ wire B;
+-(* src = "dut.sv:2.11-2.12" *)
++(* src = "dut.sv:1.14-1.15" *)
+ input S;
+ wire S;
+-(* src = "dut.sv:4.16-4.17" *)
++(* src = "dut.sv:1.20-1.21" *)
+ output Y;
+ wire Y;
+ \$_MUX_  _0_ (
+-.A(A),
+-.B(B),
+-.S(S),
++.A(S),
++.B(A),
++.S(B),
+ .Y(Y)
+ );
+ endmodule

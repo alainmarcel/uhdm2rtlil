@@ -1,0 +1,19 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -33,13 +33,13 @@
+ wire _28_;
+ wire _29_;
+ wire _30_;
+-(* src = "dut.sv:4.16-4.17" *)
++(* src = "dut.sv:2.18-2.19" *)
+ input [7:0] D;
+ wire [7:0] D;
+-(* src = "dut.sv:3.16-3.17" *)
++(* src = "dut.sv:2.15-2.16" *)
+ input [2:0] S;
+ wire [2:0] S;
+-(* src = "dut.sv:5.12-5.13" *)
++(* src = "dut.sv:2.21-2.22" *)
+ output Y;
+ wire Y;
+ \$_NOT_  _31_ (

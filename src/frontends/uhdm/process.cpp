@@ -2790,10 +2790,22 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                         // Cast to expr type using any_cast
                         if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
                             RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                            
+                            // Ensure case value has same width as switch signal
+                            if (expr_sig.size() != case_sig.size()) {
+                                if (expr_sig.size() < case_sig.size()) {
+                                    // Zero-extend to match switch signal width
+                                    expr_sig = {expr_sig, RTLIL::SigSpec(RTLIL::State::S0, case_sig.size() - expr_sig.size())};
+                                } else {
+                                    // Truncate to match switch signal width
+                                    expr_sig = expr_sig.extract(0, case_sig.size());
+                                }
+                            }
+                            
                             case_rule->compare.push_back(expr_sig);
                             
                             if (mode_debug)
-                                log("      Case value: %s\n", log_signal(expr_sig));
+                                log("      Case value: %s (width=%d)\n", log_signal(expr_sig), expr_sig.size());
                         }
                     }
                 } else {
