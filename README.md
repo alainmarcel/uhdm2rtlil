@@ -68,8 +68,8 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
   - Parameter references in expressions
-- **Control Flow**: If-else statements, case statements with parameter values, loops
-- **Memory**: Array inference, memory initialization
+- **Control Flow**: If-else statements, case statements with parameter values, for loops with compile-time unrolling
+- **Memory**: Array inference, memory initialization, for-loop memory initialization patterns
 - **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
 - **Packages**: Import statements, package parameters, struct types, functions
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
@@ -182,7 +182,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases
+### Current Test Cases (31 total)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
@@ -212,6 +212,7 @@ The Yosys test runner:
 - **add_sub** - Adder/subtractor with carry (from Yosys test suite)
 - **logic_ops** - Logical operations with bit ordering (from Yosys test suite)
 - **ndffnr** - Negative edge flip-flop with reset (from Yosys test suite)
+- **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
 
 ### Test Management
 
@@ -237,7 +238,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 30 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 31 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -288,9 +289,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **30 test cases**:
+The UHDM frontend test suite includes **31 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **26 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **27 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements

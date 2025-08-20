@@ -1,0 +1,13 @@
+# DESCRIPTION: Verilator output: Timestamp data for --skip-identical.  Delete at will.
+C "--cc --exe --build test_sim.sv sim_main.cpp --top-module test_sim -Wno-WIDTH"
+S   7892640 13783693  1654902646   293839461  1598506306           0 "/usr/bin/verilator_bin"
+T      3397 25732529  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim.cpp"
+T      2481 25732526  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim.h"
+T      1777 25732531  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim.mk"
+T      3332 25732527  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim__Slow.cpp"
+T       554 25732521  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim__Syms.cpp"
+T       808 25732522  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim__Syms.h"
+T       261 25732483  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim__ver.d"
+T         0        0  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim__verFiles.dat"
+T      1558 25732530  1755617089   677265335  1755617089   677265335 "obj_dir/Vtest_sim_classes.mk"
+S       615 25732517  1755616708   599521733  1755616708   583520786 "test_sim.sv"

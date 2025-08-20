@@ -33,7 +33,7 @@
    attribute \src "dut.sv:9.34-9.38"
    wire width 4 input 4 \addr
    attribute \src "dut.sv:6.34-6.37"
-@@ -31,265 +17,56 @@
+@@ -31,265 +17,216 @@
    wire width 8 input 5 \data_in
    attribute \src "dut.sv:11.34-11.42"
    wire width 8 output 6 \data_out
@@ -74,216 +74,19 @@
      parameter \PRIORITY_MASK 0'x
      parameter \WIDTH 8
 -    connect \ADDR 0
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$165
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 1
--    parameter \PRIORITY_MASK 1'1
--    parameter \WIDTH 8
--    connect \ADDR 1
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$166
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 2
--    parameter \PRIORITY_MASK 2'11
--    parameter \WIDTH 8
--    connect \ADDR 2
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$167
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 3
--    parameter \PRIORITY_MASK 3'111
--    parameter \WIDTH 8
--    connect \ADDR 3
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$168
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 4
--    parameter \PRIORITY_MASK 4'1111
--    parameter \WIDTH 8
--    connect \ADDR 4
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$169
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 5
--    parameter \PRIORITY_MASK 5'11111
--    parameter \WIDTH 8
--    connect \ADDR 5
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$170
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 6
--    parameter \PRIORITY_MASK 6'111111
--    parameter \WIDTH 8
--    connect \ADDR 6
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$171
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 7
--    parameter \PRIORITY_MASK 7'1111111
--    parameter \WIDTH 8
--    connect \ADDR 7
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$172
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 8
--    parameter \PRIORITY_MASK 8'11111111
--    parameter \WIDTH 8
--    connect \ADDR 8
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$173
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 9
--    parameter \PRIORITY_MASK 9'111111111
--    parameter \WIDTH 8
--    connect \ADDR 9
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$174
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 10
--    parameter \PRIORITY_MASK 10'1111111111
--    parameter \WIDTH 8
--    connect \ADDR 10
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$175
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 11
--    parameter \PRIORITY_MASK 11'11111111111
--    parameter \WIDTH 8
--    connect \ADDR 11
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$176
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 12
--    parameter \PRIORITY_MASK 12'111111111111
--    parameter \WIDTH 8
--    connect \ADDR 12
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
--  end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$177
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 13
--    parameter \PRIORITY_MASK 13'1111111111111
--    parameter \WIDTH 8
--    connect \ADDR 13
 +    connect \ADDR \addr
      connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
 +    connect \DATA \data_in
 +    connect \EN { $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 }
-   end
--  attribute \src "dut.sv:22.17-22.43"
--  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$178
--    parameter \ABITS 32
--    parameter \CLK_ENABLE 1'1
--    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
--    parameter \PORTID 14
--    parameter \PRIORITY_MASK 14'11111111111111
--    parameter \WIDTH 8
--    connect \ADDR 14
--    connect \CLK \clk
--    connect \DATA 8'00000000
--    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
-+  cell $not $auto$process.cpp:1544:import_statement_sync$3
++  end
++  cell $not $auto$process.cpp:1651:import_statement_sync$3
 +    parameter \A_SIGNED 0
 +    parameter \A_WIDTH 1
 +    parameter \Y_WIDTH 1
 +    connect \A \rst
 +    connect \Y $auto$rtlil.cc:2957:Not$4
 +  end
-+  cell $and $auto$process.cpp:2142:import_if_stmt_sync$5
++  cell $and $auto$process.cpp:2622:import_if_stmt_sync$5
 +    parameter \A_SIGNED 0
 +    parameter \A_WIDTH 1
 +    parameter \B_SIGNED 0
@@ -292,19 +95,285 @@
 +    connect \A $auto$rtlil.cc:2957:Not$4
 +    connect \B \we
 +    connect \Y $auto$rtlil.cc:3004:And$6
++  end
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$12
++    parameter \ABITS 32
++    parameter \MEMID "\\memory"
++    parameter \PRIORITY 12
++    parameter \WIDTH 8
++    parameter \WORDS 1
++    connect \ADDR 0
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$165
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$13
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 1
+-    parameter \PRIORITY_MASK 1'1
++    parameter \PRIORITY 13
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 1
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$166
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$14
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 2
+-    parameter \PRIORITY_MASK 2'11
++    parameter \PRIORITY 14
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 2
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$167
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$15
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 3
+-    parameter \PRIORITY_MASK 3'111
++    parameter \PRIORITY 15
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 3
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$168
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$16
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 4
+-    parameter \PRIORITY_MASK 4'1111
++    parameter \PRIORITY 16
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 4
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$169
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$17
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 5
+-    parameter \PRIORITY_MASK 5'11111
++    parameter \PRIORITY 17
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 5
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$170
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$18
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 6
+-    parameter \PRIORITY_MASK 6'111111
++    parameter \PRIORITY 18
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 6
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$171
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$19
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 7
+-    parameter \PRIORITY_MASK 7'1111111
++    parameter \PRIORITY 19
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 7
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$172
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$20
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 8
+-    parameter \PRIORITY_MASK 8'11111111
++    parameter \PRIORITY 20
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 8
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$173
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$21
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 9
+-    parameter \PRIORITY_MASK 9'111111111
++    parameter \PRIORITY 21
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 9
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$174
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$22
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 10
+-    parameter \PRIORITY_MASK 10'1111111111
++    parameter \PRIORITY 22
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 10
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$175
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$23
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 11
+-    parameter \PRIORITY_MASK 11'11111111111
++    parameter \PRIORITY 23
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 11
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$176
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$24
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 12
+-    parameter \PRIORITY_MASK 12'111111111111
++    parameter \PRIORITY 24
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 12
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$177
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$25
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 13
+-    parameter \PRIORITY_MASK 13'1111111111111
++    parameter \PRIORITY 25
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 13
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
+   end
+-  attribute \src "dut.sv:22.17-22.43"
+-  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$178
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$26
+     parameter \ABITS 32
+-    parameter \CLK_ENABLE 1'1
+-    parameter \CLK_POLARITY 1'1
+     parameter \MEMID "\\memory"
+-    parameter \PORTID 14
+-    parameter \PRIORITY_MASK 14'11111111111111
++    parameter \PRIORITY 26
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 14
+-    connect \CLK \clk
+     connect \DATA 8'00000000
+-    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
++    connect \EN 8'11111111
    end
 -  attribute \src "dut.sv:22.17-22.43"
 -  cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$179
--    parameter \ABITS 32
++  cell $meminit_v2 $meminit$\memory$dut.sv:22$27
+     parameter \ABITS 32
 -    parameter \CLK_ENABLE 1'1
 -    parameter \CLK_POLARITY 1'1
--    parameter \MEMID "\\memory"
+     parameter \MEMID "\\memory"
 -    parameter \PORTID 15
 -    parameter \PRIORITY_MASK 15'111111111111111
--    parameter \WIDTH 8
--    connect \ADDR 15
++    parameter \PRIORITY 27
+     parameter \WIDTH 8
++    parameter \WORDS 1
+     connect \ADDR 15
 -    connect \CLK \clk
--    connect \DATA 8'00000000
+     connect \DATA 8'00000000
 -    connect \EN { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
 -  end
 -  attribute \src "dut.sv:28.17-28.40"
@@ -320,7 +389,8 @@
 -    connect \CLK \clk
 -    connect \DATA $0$memwr$\memory$dut.sv:28$18_DATA[7:0]$37
 -    connect \EN { $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] }
--  end
++    connect \EN 8'11111111
+   end
 -  attribute \src "dut.sv:32.25-32.31"
 -  cell $memrd $memrd$\memory$dut.sv:32$61
 +  attribute \src "dut.sv:32.32-32.36"
@@ -328,13 +398,15 @@
      parameter \ABITS 4
      parameter \CLK_ENABLE 0
      parameter \CLK_POLARITY 0
-@@ -298,74 +75,7 @@
+@@ -298,74 +235,7 @@
      parameter \WIDTH 8
      connect \ADDR \addr
      connect \CLK 1'x
 -    connect \DATA $memrd$\memory$dut.sv:32$61_DATA
 -    connect \EN 1'x
--  end
++    connect \DATA \memrd_memory_DATA
++    connect \EN 1'1
+   end
 -  attribute \full_case 1
 -  attribute \src "dut.sv:20.13-20.16|dut.sv:20.9-33.12"
 -  cell $mux $procmux$132
@@ -397,9 +469,7 @@
 -    connect \B \addr
 -    connect \S \we
 -    connect \Y $2$memwr$\memory$dut.sv:28$18_ADDR[3:0]$58
-+    connect \DATA \memrd_memory_DATA
-+    connect \EN 1'1
-   end
+-  end
 -  connect $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [6:0] { $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] $0$memwr$\memory$dut.sv:22$10_EN[7:0]$28 [7] }
 -  connect $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [6:0] { $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] $0$memwr$\memory$dut.sv:28$18_EN[7:0]$38 [7] }
 -  connect $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [6:0] { $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] $2$memwr$\memory$dut.sv:28$18_EN[7:0]$60 [7] }
