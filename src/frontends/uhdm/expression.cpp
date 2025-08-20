@@ -666,9 +666,29 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         }
     }
     
-    // Dynamic bit select - need to create a mux
-    log_warning("Dynamic bit select not yet implemented\n");
-    return base.extract(0, 1);
+    // Dynamic bit select - create a $shiftx cell
+    if (mode_debug)
+        log("    Creating $shiftx for dynamic bit select\n");
+    
+    // Create output wire for the result
+    RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
+    
+    // Create $shiftx cell
+    RTLIL::Cell* shiftx_cell = module->addCell(NEW_ID, ID($shiftx));
+    shiftx_cell->setParam(ID::A_SIGNED, 0);
+    shiftx_cell->setParam(ID::B_SIGNED, 0);
+    shiftx_cell->setParam(ID::A_WIDTH, base.size());
+    shiftx_cell->setParam(ID::B_WIDTH, index.size());
+    shiftx_cell->setParam(ID::Y_WIDTH, 1);
+    
+    shiftx_cell->setPort(ID::A, base);
+    shiftx_cell->setPort(ID::B, index);
+    shiftx_cell->setPort(ID::Y, result_wire);
+    
+    // Add source attribute
+    add_src_attribute(shiftx_cell->attributes, uhdm_bit);
+    
+    return RTLIL::SigSpec(result_wire);
 }
 
 // Import indexed part select (e.g., data[i*8 +: 8])
