@@ -48,14 +48,14 @@ module \simple_memory
     connect \DATA \data_in
     connect \EN { $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 $auto$rtlil.cc:3004:And$6 }
   end
-  cell $not $auto$process.cpp:1544:import_statement_sync$3
+  cell $not $auto$process.cpp:1651:import_statement_sync$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst
     connect \Y $auto$rtlil.cc:2957:Not$4
   end
-  cell $and $auto$process.cpp:2142:import_if_stmt_sync$5
+  cell $and $auto$process.cpp:2622:import_if_stmt_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -64,6 +64,166 @@ module \simple_memory
     connect \A $auto$rtlil.cc:2957:Not$4
     connect \B \we
     connect \Y $auto$rtlil.cc:3004:And$6
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$12
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 12
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 0
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$13
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 13
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 1
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$14
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 14
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 2
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$15
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 15
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 3
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$16
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 16
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 4
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$17
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 17
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 5
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$18
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 18
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 6
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$19
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 19
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 7
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$20
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 20
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 8
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$21
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 21
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 9
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$22
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 22
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 10
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$23
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 23
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 11
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$24
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 24
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 12
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$25
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 25
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 13
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$26
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 26
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 14
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
+  end
+  cell $meminit_v2 $meminit$\memory$dut.sv:22$27
+    parameter \ABITS 32
+    parameter \MEMID "\\memory"
+    parameter \PRIORITY 27
+    parameter \WIDTH 8
+    parameter \WORDS 1
+    connect \ADDR 15
+    connect \DATA 8'00000000
+    connect \EN 8'11111111
   end
   attribute \src "dut.sv:32.32-32.36"
   cell $memrd \memrd_memory

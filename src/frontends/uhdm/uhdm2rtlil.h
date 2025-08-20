@@ -173,6 +173,12 @@ struct UhdmImporter {
     RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref, const UHDM::scope* inst = nullptr);
     
+    // Helper for evaluating expressions with variable substitution (for loop unrolling)
+    RTLIL::SigSpec evaluate_expression_with_vars(const UHDM::expr* expr, 
+                                                 const std::map<std::string, uint64_t>& vars,
+                                                 const std::string& loop_var_name,
+                                                 int64_t loop_index);
+    
     // Statement handling
     void import_statement(const UHDM::any* uhdm_stmt, RTLIL::Process* proc = nullptr);
     void import_assignment(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
