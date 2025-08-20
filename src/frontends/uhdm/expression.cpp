@@ -357,8 +357,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return module->Sub(NEW_ID, operands[0], operands[1]);
             break;
         case vpiMultOp:
-            if (operands.size() == 2)
-                return module->Mul(NEW_ID, operands[0], operands[1]);
+            if (operands.size() == 2) {
+                // For multiplication, the result width should be the sum of operand widths
+                int result_width = operands[0].size() + operands[1].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                module->addMul(NEW_ID, operands[0], operands[1], result);
+                return result;
+            }
             break;
         case vpiEqOp:
             if (operands.size() == 2)

@@ -39,7 +39,7 @@
      connect \B 1'1
      connect \Y \count_next
    end
-+  cell $eq $auto$expression.cpp:365:import_operation$3
++  cell $eq $auto$expression.cpp:370:import_operation$3
 +    parameter \A_SIGNED 0
 +    parameter \A_WIDTH 8
 +    parameter \B_SIGNED 0

@@ -423,12 +423,16 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         if (rhs.size() == 1) {
             // Extend single bit to match LHS width
             rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1)};
+        } else if (rhs.size() < lhs.size()) {
+            // Zero-extend RHS to match LHS width
+            log_debug("Extending RHS from %d to %d bits\n", rhs.size(), lhs.size());
+            RTLIL::SigSpec extended = module->addWire(NEW_ID, lhs.size());
+            module->addPos(NEW_ID, rhs, extended);
+            rhs = extended;
         } else {
-            log_warning("Assignment width mismatch: LHS=%d, RHS=%d\n", 
-                       lhs.size(), rhs.size());
-            
-            // For now, just continue with the warning
-            // TODO: Fix interface signal width inference
+            // Truncate RHS to match LHS width
+            log_debug("Truncating RHS from %d to %d bits\n", rhs.size(), lhs.size());
+            rhs = rhs.extract(0, lhs.size());
         }
     }
     
