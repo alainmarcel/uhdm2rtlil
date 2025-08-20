@@ -305,6 +305,16 @@ The UHDM frontend test suite includes **31 test cases**:
 - Temp wire initialization for proper latch inference
 - Three new latch tests added (latchp, latchn, latchsr) demonstrating various latch patterns
 
+### For Loop Unrolling Support
+- Added support for unrolling for loops in initial blocks for memory initialization
+- Implemented compile-time expression evaluation with variable substitution
+- Generates $meminit_v2 cells for memory initialization patterns
+- Extracts loop bounds and parameters from UHDM elaborated model
+- Handles complex LFSR-style pseudo-random number generation patterns
+- Supports nested expressions including multiplication, shifts, and XOR operations
+- Properly handles SystemVerilog integer (32-bit) vs 64-bit constant semantics
+- Added blockrom test demonstrating loop-based memory initialization
+
 ### Interface Expansion Support
 - Added automatic expansion of SystemVerilog interfaces to individual signals
 - Interface instances are replaced with their constituent nets during RTLIL import
