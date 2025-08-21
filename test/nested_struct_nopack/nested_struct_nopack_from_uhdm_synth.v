@@ -154,12 +154,12 @@ module nested_struct_nopack(in_data, out_data, clk, rst);
     .Y(processed_data[53])
   );
   \$_NOT_  _056_ (
-    .A(in_data[54]),
-    .Y(processed_data[54])
-  );
-  \$_NOT_  _057_ (
     .A(in_data[7]),
     .Y(processed_data[7])
+  );
+  \$_NOT_  _057_ (
+    .A(in_data[54]),
+    .Y(processed_data[54])
   );
   \$_AND_  _058_ (
     .A(in_data[0]),
@@ -167,33 +167,33 @@ module nested_struct_nopack(in_data, out_data, clk, rst);
     .Y(processed_data[21])
   );
   \$_XOR_  _059_ (
-    .A(in_data[55]),
-    .B(in_data[54]),
-    .Y(processed_data[55])
+    .A(in_data[8]),
+    .B(in_data[7]),
+    .Y(processed_data[8])
   );
   \$_AND_  _060_ (
-    .A(in_data[55]),
-    .B(in_data[54]),
+    .A(in_data[8]),
+    .B(in_data[7]),
     .Y(_000_)
   );
   \$_XOR_  _061_ (
     .A(_000_),
-    .B(in_data[56]),
-    .Y(processed_data[56])
+    .B(in_data[9]),
+    .Y(processed_data[9])
   );
-  \$_AND_  _062_ (
+  \$_NAND_  _062_ (
     .A(_000_),
-    .B(in_data[56]),
+    .B(in_data[9]),
     .Y(_001_)
   );
   \$_XOR_  _063_ (
     .A(_001_),
-    .B(in_data[57]),
-    .Y(processed_data[57])
+    .B(in_data[10]),
+    .Y(processed_data[10])
   );
-  \$_NAND_  _064_ (
-    .A(in_data[57]),
-    .B(in_data[56]),
+  \$_ORNOT_  _064_ (
+    .A(in_data[10]),
+    .B(in_data[9]),
     .Y(_002_)
   );
   \$_ANDNOT_  _065_ (
@@ -201,230 +201,230 @@ module nested_struct_nopack(in_data, out_data, clk, rst);
     .B(_002_),
     .Y(_003_)
   );
-  \$_XOR_  _066_ (
+  \$_OR_  _066_ (
     .A(_003_),
-    .B(in_data[58]),
-    .Y(processed_data[58])
-  );
-  \$_AND_  _067_ (
-    .A(_003_),
-    .B(in_data[58]),
+    .B(in_data[10]),
     .Y(_004_)
   );
-  \$_XOR_  _068_ (
+  \$_XNOR_  _067_ (
     .A(_004_),
-    .B(in_data[59]),
-    .Y(processed_data[59])
-  );
-  \$_AND_  _069_ (
-    .A(in_data[59]),
-    .B(in_data[58]),
-    .Y(_005_)
-  );
-  \$_NAND_  _070_ (
-    .A(_005_),
-    .B(_003_),
-    .Y(_006_)
-  );
-  \$_XNOR_  _071_ (
-    .A(_006_),
-    .B(in_data[60]),
-    .Y(processed_data[60])
-  );
-  \$_ANDNOT_  _072_ (
-    .A(in_data[60]),
-    .B(_006_),
-    .Y(_007_)
-  );
-  \$_XOR_  _073_ (
-    .A(_007_),
-    .B(in_data[61]),
-    .Y(processed_data[61])
-  );
-  \$_XOR_  _074_ (
-    .A(in_data[8]),
-    .B(in_data[7]),
-    .Y(processed_data[8])
-  );
-  \$_AND_  _075_ (
-    .A(in_data[8]),
-    .B(in_data[7]),
-    .Y(_008_)
-  );
-  \$_XOR_  _076_ (
-    .A(_008_),
-    .B(in_data[9]),
-    .Y(processed_data[9])
-  );
-  \$_NAND_  _077_ (
-    .A(_008_),
-    .B(in_data[9]),
-    .Y(_009_)
-  );
-  \$_XOR_  _078_ (
-    .A(_009_),
-    .B(in_data[10]),
-    .Y(processed_data[10])
-  );
-  \$_ORNOT_  _079_ (
-    .A(in_data[10]),
-    .B(in_data[9]),
-    .Y(_010_)
-  );
-  \$_ANDNOT_  _080_ (
-    .A(_008_),
-    .B(_010_),
-    .Y(_011_)
-  );
-  \$_OR_  _081_ (
-    .A(_011_),
-    .B(in_data[10]),
-    .Y(_012_)
-  );
-  \$_XNOR_  _082_ (
-    .A(_012_),
     .B(in_data[11]),
     .Y(processed_data[11])
   );
-  \$_OR_  _083_ (
-    .A(_012_),
+  \$_OR_  _068_ (
+    .A(_004_),
     .B(in_data[11]),
-    .Y(_013_)
+    .Y(_005_)
   );
-  \$_XOR_  _084_ (
-    .A(_013_),
+  \$_XOR_  _069_ (
+    .A(_005_),
     .B(in_data[12]),
     .Y(processed_data[12])
   );
-  \$_NAND_  _085_ (
+  \$_NAND_  _070_ (
     .A(in_data[12]),
     .B(in_data[11]),
-    .Y(_014_)
+    .Y(_006_)
   );
-  \$_ORNOT_  _086_ (
+  \$_ORNOT_  _071_ (
     .A(in_data[11]),
     .B(in_data[12]),
-    .Y(_015_)
+    .Y(_007_)
   );
-  \$_ANDNOT_  _087_ (
-    .A(_012_),
-    .B(_015_),
-    .Y(_016_)
+  \$_ANDNOT_  _072_ (
+    .A(_004_),
+    .B(_007_),
+    .Y(_008_)
   );
-  \$_ANDNOT_  _088_ (
-    .A(_014_),
-    .B(_016_),
-    .Y(_017_)
+  \$_ANDNOT_  _073_ (
+    .A(_006_),
+    .B(_008_),
+    .Y(_009_)
   );
-  \$_XNOR_  _089_ (
-    .A(_017_),
+  \$_XNOR_  _074_ (
+    .A(_009_),
     .B(in_data[13]),
     .Y(processed_data[13])
   );
-  \$_ANDNOT_  _090_ (
+  \$_ANDNOT_  _075_ (
     .A(in_data[13]),
-    .B(_017_),
-    .Y(_018_)
+    .B(_009_),
+    .Y(_010_)
   );
-  \$_XOR_  _091_ (
-    .A(_018_),
+  \$_XOR_  _076_ (
+    .A(_010_),
     .B(in_data[14]),
     .Y(processed_data[14])
   );
-  \$_NAND_  _092_ (
+  \$_NAND_  _077_ (
     .A(in_data[14]),
     .B(in_data[13]),
-    .Y(_019_)
+    .Y(_011_)
   );
-  \$_OR_  _093_ (
-    .A(_019_),
-    .B(_014_),
-    .Y(_020_)
+  \$_OR_  _078_ (
+    .A(_011_),
+    .B(_006_),
+    .Y(_012_)
   );
-  \$_OR_  _094_ (
-    .A(_019_),
-    .B(_015_),
-    .Y(_021_)
+  \$_OR_  _079_ (
+    .A(_011_),
+    .B(_007_),
+    .Y(_013_)
   );
-  \$_ANDNOT_  _095_ (
+  \$_ANDNOT_  _080_ (
+    .A(_004_),
+    .B(_013_),
+    .Y(_014_)
+  );
+  \$_ANDNOT_  _081_ (
     .A(_012_),
-    .B(_021_),
-    .Y(_022_)
+    .B(_014_),
+    .Y(_015_)
   );
-  \$_ANDNOT_  _096_ (
-    .A(_020_),
-    .B(_022_),
-    .Y(_023_)
-  );
-  \$_XNOR_  _097_ (
-    .A(_023_),
+  \$_XNOR_  _082_ (
+    .A(_015_),
     .B(in_data[15]),
     .Y(processed_data[15])
   );
-  \$_ANDNOT_  _098_ (
+  \$_ANDNOT_  _083_ (
     .A(in_data[15]),
-    .B(_023_),
-    .Y(_024_)
+    .B(_015_),
+    .Y(_016_)
   );
-  \$_XOR_  _099_ (
-    .A(_024_),
+  \$_XOR_  _084_ (
+    .A(_016_),
     .B(in_data[16]),
     .Y(processed_data[16])
   );
-  \$_NAND_  _100_ (
+  \$_NAND_  _085_ (
     .A(in_data[16]),
     .B(in_data[15]),
-    .Y(_025_)
+    .Y(_017_)
   );
-  \$_OR_  _101_ (
-    .A(_025_),
-    .B(_023_),
-    .Y(_026_)
+  \$_OR_  _086_ (
+    .A(_017_),
+    .B(_015_),
+    .Y(_018_)
   );
-  \$_XNOR_  _102_ (
-    .A(_026_),
+  \$_XNOR_  _087_ (
+    .A(_018_),
     .B(in_data[17]),
     .Y(processed_data[17])
   );
-  \$_ANDNOT_  _103_ (
+  \$_ANDNOT_  _088_ (
     .A(in_data[17]),
-    .B(_026_),
-    .Y(_027_)
+    .B(_018_),
+    .Y(_019_)
   );
-  \$_XOR_  _104_ (
-    .A(_027_),
+  \$_XOR_  _089_ (
+    .A(_019_),
     .B(in_data[18]),
     .Y(processed_data[18])
   );
-  \$_NAND_  _105_ (
+  \$_NAND_  _090_ (
     .A(in_data[18]),
     .B(in_data[17]),
+    .Y(_020_)
+  );
+  \$_OR_  _091_ (
+    .A(_020_),
+    .B(_017_),
+    .Y(_021_)
+  );
+  \$_OR_  _092_ (
+    .A(_021_),
+    .B(_015_),
+    .Y(_022_)
+  );
+  \$_XNOR_  _093_ (
+    .A(_022_),
+    .B(in_data[19]),
+    .Y(processed_data[19])
+  );
+  \$_ANDNOT_  _094_ (
+    .A(in_data[19]),
+    .B(_022_),
+    .Y(_023_)
+  );
+  \$_XOR_  _095_ (
+    .A(_023_),
+    .B(in_data[20]),
+    .Y(processed_data[20])
+  );
+  \$_XOR_  _096_ (
+    .A(in_data[55]),
+    .B(in_data[54]),
+    .Y(processed_data[55])
+  );
+  \$_AND_  _097_ (
+    .A(in_data[55]),
+    .B(in_data[54]),
+    .Y(_024_)
+  );
+  \$_XOR_  _098_ (
+    .A(_024_),
+    .B(in_data[56]),
+    .Y(processed_data[56])
+  );
+  \$_AND_  _099_ (
+    .A(_024_),
+    .B(in_data[56]),
+    .Y(_025_)
+  );
+  \$_XOR_  _100_ (
+    .A(_025_),
+    .B(in_data[57]),
+    .Y(processed_data[57])
+  );
+  \$_NAND_  _101_ (
+    .A(in_data[57]),
+    .B(in_data[56]),
+    .Y(_026_)
+  );
+  \$_ANDNOT_  _102_ (
+    .A(_024_),
+    .B(_026_),
+    .Y(_027_)
+  );
+  \$_XOR_  _103_ (
+    .A(_027_),
+    .B(in_data[58]),
+    .Y(processed_data[58])
+  );
+  \$_AND_  _104_ (
+    .A(_027_),
+    .B(in_data[58]),
     .Y(_028_)
   );
-  \$_OR_  _106_ (
+  \$_XOR_  _105_ (
     .A(_028_),
-    .B(_025_),
+    .B(in_data[59]),
+    .Y(processed_data[59])
+  );
+  \$_AND_  _106_ (
+    .A(in_data[59]),
+    .B(in_data[58]),
     .Y(_029_)
   );
-  \$_OR_  _107_ (
+  \$_NAND_  _107_ (
     .A(_029_),
-    .B(_023_),
+    .B(_027_),
     .Y(_030_)
   );
   \$_XNOR_  _108_ (
     .A(_030_),
-    .B(in_data[19]),
-    .Y(processed_data[19])
+    .B(in_data[60]),
+    .Y(processed_data[60])
   );
   \$_ANDNOT_  _109_ (
-    .A(in_data[19]),
+    .A(in_data[60]),
     .B(_030_),
     .Y(_031_)
   );
   \$_XOR_  _110_ (
     .A(_031_),
-    .B(in_data[20]),
-    .Y(processed_data[20])
+    .B(in_data[61]),
+    .Y(processed_data[61])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:31.5-37.8" *)

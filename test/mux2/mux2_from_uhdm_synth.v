@@ -16,9 +16,9 @@ module mux2(S, A, B, Y);
   output Y;
   wire Y;
   \$_MUX_  _0_ (
-    .A(S),
-    .B(A),
-    .S(B),
+    .A(A),
+    .B(B),
+    .S(S),
     .Y(Y)
   );
 endmodule

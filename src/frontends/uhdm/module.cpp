@@ -473,18 +473,23 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     if (mode_debug)
         log("  Importing continuous assignment\n");
     
+    // Check if this is a net declaration assignment (initialization)
+    bool is_net_decl_assign = uhdm_assign->VpiNetDeclAssign();
+    
     const expr* lhs_expr = uhdm_assign->Lhs();
     const expr* rhs_expr = uhdm_assign->Rhs();
     
     if (mode_debug && lhs_expr) {
-        log("  LHS type: %s, VpiType: %d\n", 
+        log("  LHS type: %s, VpiType: %d, NetDeclAssign: %d\n", 
             UHDM::UhdmName(lhs_expr->UhdmType()).c_str(), 
-            lhs_expr->VpiType());
+            lhs_expr->VpiType(),
+            is_net_decl_assign);
     }
     
     RTLIL::SigSpec lhs = import_expression(lhs_expr);
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
     
+    // Handle size mismatch
     if (lhs.size() != rhs.size()) {
         if (rhs.size() == 1) {
             // Extend single bit to match LHS width
@@ -502,7 +507,56 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         }
     }
     
-    module->connect(lhs, rhs);
+    if (is_net_decl_assign) {
+        // Check if the RHS is a constant expression
+        bool is_constant = rhs.is_fully_const();
+        
+        if (is_constant) {
+            // This is a constant initialization, create an init process
+            // Get the source location for the process name
+            int line_num = uhdm_assign->VpiLineNo();
+            int col_num = uhdm_assign->VpiColumnNo();
+            int end_line = uhdm_assign->VpiEndLineNo();
+            int end_col = uhdm_assign->VpiEndColumnNo();
+            
+            // Create process name based on line number
+            std::string proc_name = stringf("$proc$dut.sv:%d$%d", line_num, autoidx++);
+            
+            // Create an init process for this initialization
+            RTLIL::Process *proc = module->addProcess(RTLIL::escape_id(proc_name));
+            proc->attributes[ID::src] = stringf("dut.sv:%d.%d-%d.%d", 
+                line_num, col_num, end_line, end_col);
+            
+            // Create a temporary wire for the assignment
+            RTLIL::Wire *temp_wire = module->addWire(NEW_ID, lhs.size());
+            
+            // Add the assignment to the root case
+            proc->root_case.actions.push_back(RTLIL::SigSig(temp_wire, rhs));
+            
+            // Add sync always (empty) - this matches Verilog frontend behavior
+            RTLIL::SyncRule *sync_always = new RTLIL::SyncRule;
+            sync_always->type = RTLIL::STa; // Always sync type
+            proc->syncs.push_back(sync_always);
+            
+            // Create the init sync and add the action
+            RTLIL::SyncRule *sync_init = new RTLIL::SyncRule;
+            sync_init->type = RTLIL::STi; // Init sync type
+            sync_init->actions.push_back(RTLIL::SigSig(lhs, temp_wire));
+            proc->syncs.push_back(sync_init);
+            
+            if (mode_debug)
+                log("  Created init process %s for net declaration assignment with constant value\n", proc_name.c_str());
+        } else {
+            // Non-constant expression in net declaration, treat as continuous assignment
+            module->connect(lhs, rhs);
+            
+            if (mode_debug)
+                log("  Created continuous assignment for net declaration with non-constant expression\n");
+        }
+    } else {
+        // Regular continuous assignment
+        module->connect(lhs, rhs);
+    }
 }
 
 // Import a parameter

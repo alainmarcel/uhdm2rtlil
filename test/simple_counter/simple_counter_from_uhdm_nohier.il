@@ -3,7 +3,7 @@ autoidx 3
 attribute \src "dut.sv:2.1-16.10"
 module \simple_counter
   wire width 8 $0\count
-  wire width 8 $auto$rtlil.cc:3017:Add$2
+  wire width 9 $auto$expression.cpp:382:import_operation$1
   attribute \src "dut.sv:9.13-9.19"
   wire $logic_not$dut.sv:9.13-9.19$1_Y
   attribute \src "dut.sv:3.18-3.21"
@@ -12,15 +12,15 @@ module \simple_counter
   wire width 8 output 3 \count
   attribute \src "dut.sv:4.18-4.23"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:353:import_operation$1
+  cell $add $auto$expression.cpp:396:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 8
+    parameter \Y_WIDTH 9
     connect \A \count
     connect \B 1'1
-    connect \Y $auto$rtlil.cc:3017:Add$2
+    connect \Y $auto$expression.cpp:382:import_operation$1
   end
   attribute \src "dut.sv:9.13-9.19"
   cell $logic_not $logic_not$dut.sv:9.13-9.19$1
@@ -42,7 +42,7 @@ module \simple_counter
         assign $0\count 8'00000000
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\count $auto$rtlil.cc:3017:Add$2
+        assign $0\count $auto$expression.cpp:382:import_operation$1 [7:0]
     end
     sync posedge \clk
       update \count $0\count

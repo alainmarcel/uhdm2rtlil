@@ -1151,56 +1151,101 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             
             // Check if the statement is a simple if-else pattern
             bool is_simple_if_else = false;
-            const if_else* simple_if_else = nullptr;
+            const UHDM::BaseClass* simple_if_stmt = nullptr;  // Can be if_stmt or if_else
             std::set<std::string> assigned_signals;
             
             if (stmt) {
-                // Check for direct if-else or if-else inside begin block
+                log("      Statement type: %d (vpiIf=%d, vpiIfElse=%d, vpiBegin=%d)\n", 
+                    stmt->VpiType(), vpiIf, vpiIfElse, vpiBegin);
+                // Check for direct if, if-else, or if-else inside begin block
                 if (stmt->VpiType() == vpiIfElse) {
-                    simple_if_else = any_cast<const if_else*>(stmt);
+                    log("      Detected vpiIfElse, setting is_simple_if_else = true\n");
+                    simple_if_stmt = any_cast<const if_else*>(stmt);
+                    is_simple_if_else = true;
+                } else if (stmt->VpiType() == vpiIf) {
+                    log("      Detected vpiIf, setting is_simple_if_else = true\n");
+                    simple_if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
                     is_simple_if_else = true;
                 } else if (stmt->VpiType() == vpiBegin) {
                     const UHDM::begin* begin = any_cast<const UHDM::begin*>(stmt);
                     if (begin->Stmts() && begin->Stmts()->size() == 1) {
                         const any* first_stmt = (*begin->Stmts())[0];
                         if (first_stmt->VpiType() == vpiIfElse) {
-                            simple_if_else = any_cast<const if_else*>(first_stmt);
+                            simple_if_stmt = any_cast<const if_else*>(first_stmt);
+                            is_simple_if_else = true;
+                        } else if (first_stmt->VpiType() == vpiIf) {
+                            simple_if_stmt = any_cast<const UHDM::if_stmt*>(first_stmt);
                             is_simple_if_else = true;
                         }
                     }
                 }
                 
                 // If we found an if-else, check if both branches assign to same signals
-                if (is_simple_if_else && simple_if_else) {
+                if (is_simple_if_else && simple_if_stmt) {
+                    log("      Found if/if-else statement, checking if it's simple\n");
+                    
+                    // Get the then statement and else statement (if exists)
+                    const any* then_stmt = nullptr;
+                    const any* else_stmt = nullptr;
+                    
+                    if (simple_if_stmt->VpiType() == vpiIfElse) {
+                        const if_else* if_else_stmt = static_cast<const if_else*>(simple_if_stmt);
+                        then_stmt = if_else_stmt->VpiStmt();
+                        else_stmt = if_else_stmt->VpiElseStmt();
+                    } else if (simple_if_stmt->VpiType() == vpiIf) {
+                        const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(simple_if_stmt);
+                        then_stmt = if_stmt->VpiStmt();
+                        else_stmt = nullptr;  // vpiIf has no else branch
+                    }
+                    
                     // First check if the if-else contains complex constructs
-                    if ((simple_if_else->VpiStmt() && contains_complex_constructs(simple_if_else->VpiStmt())) ||
-                        (simple_if_else->VpiElseStmt() && contains_complex_constructs(simple_if_else->VpiElseStmt()))) {
+                    if ((then_stmt && contains_complex_constructs(then_stmt)) ||
+                        (else_stmt && contains_complex_constructs(else_stmt))) {
                         log("      If-else contains complex constructs (for loops, memory writes) - skipping simple if-else optimization\n");
                         is_simple_if_else = false;
                     } else {
                         std::set<std::string> then_signals, else_signals;
-                        if (simple_if_else->VpiStmt()) {
-                            extract_assigned_signal_names(simple_if_else->VpiStmt(), then_signals);
+                        if (then_stmt) {
+                            extract_assigned_signal_names(then_stmt, then_signals);
                         }
-                        if (simple_if_else->VpiElseStmt()) {
-                            extract_assigned_signal_names(simple_if_else->VpiElseStmt(), else_signals);
+                        if (else_stmt) {
+                            extract_assigned_signal_names(else_stmt, else_signals);
                         }
                         
-                        if (then_signals == else_signals && !then_signals.empty()) {
-                            assigned_signals = then_signals;
-                            log("      Detected simple if-else pattern assigning to: ");
-                            for (const auto& sig : assigned_signals) {
-                                log("%s ", sig.c_str());
+                        // Handle both if-else and simple if (without else)
+                        if (!then_signals.empty()) {
+                            if (else_stmt) {
+                                // Has else branch - check if both branches assign same signals
+                                if (then_signals == else_signals) {
+                                    assigned_signals = then_signals;
+                                    log("      Detected simple if-else pattern assigning to: ");
+                                    for (const auto& sig : assigned_signals) {
+                                        log("%s ", sig.c_str());
+                                    }
+                                    log("\n");
+                                } else {
+                                    is_simple_if_else = false;
+                                }
+                            } else {
+                                // No else branch - simple if statement
+                                assigned_signals = then_signals;
+                                is_simple_if_else = true;  // Ensure flag is true for simple if
+                                log("      Detected simple if pattern (no else) assigning to: ");
+                                for (const auto& sig : assigned_signals) {
+                                    log("%s ", sig.c_str());
+                                }
+                                log("\n");
                             }
-                            log("\n");
                         } else {
                             is_simple_if_else = false;
                         }
                     }
                 }
+            } else {
+                log("      No statement found for simple if detection\n");
             }
             
-            if (is_simple_if_else && simple_if_else) {
+            if (is_simple_if_else && simple_if_stmt) {
                 // Handle simple if-else with proper switch statement
                 log("      Creating switch statement for simple if-else\n");
                 log_flush();
@@ -1230,10 +1275,25 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         temp_name.c_str(), sig_name.c_str());
                 }
                 
-                // Get condition
+                // Get condition, then stmt and else stmt based on type
                 RTLIL::SigSpec condition;
-                if (auto condition_expr = simple_if_else->VpiCondition()) {
-                    condition = import_expression(condition_expr);
+                const any* then_stmt = nullptr;
+                const any* else_stmt = nullptr;
+                
+                if (simple_if_stmt->VpiType() == vpiIfElse) {
+                    const if_else* if_else_stmt = static_cast<const if_else*>(simple_if_stmt);
+                    if (auto condition_expr = if_else_stmt->VpiCondition()) {
+                        condition = import_expression(condition_expr);
+                    }
+                    then_stmt = if_else_stmt->VpiStmt();
+                    else_stmt = if_else_stmt->VpiElseStmt();
+                } else if (simple_if_stmt->VpiType() == vpiIf) {
+                    const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(simple_if_stmt);
+                    if (auto condition_expr = if_stmt->VpiCondition()) {
+                        condition = import_expression(condition_expr);
+                    }
+                    then_stmt = if_stmt->VpiStmt();
+                    else_stmt = nullptr;
                 }
                 
                 // Create switch statement
@@ -1247,7 +1307,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 case_true->attributes[ID::src] = RTLIL::Const("dut.sv:32.13-32.16");
                 
                 // Import then assignments
-                if (auto then_stmt = simple_if_else->VpiStmt()) {
+                if (then_stmt) {
                     // Map signal names to temp wires for import
                     for (const auto& [sig_name, temp_wire] : temp_wires) {
                         current_signal_temp_wires[sig_name] = temp_wire;
@@ -1259,12 +1319,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
                 sw->cases.push_back(case_true);
                 
-                // Case for default (else branch)
+                // Case for default (else branch or empty)
                 RTLIL::CaseRule* case_default = new RTLIL::CaseRule;
-                case_default->attributes[ID::src] = RTLIL::Const("dut.sv:34.13-34.17");
                 
-                // Import else assignments
-                if (auto else_stmt = simple_if_else->VpiElseStmt()) {
+                // Import else assignments if present
+                if (else_stmt) {
+                    case_default->attributes[ID::src] = RTLIL::Const("dut.sv:34.13-34.17");
                     // Map signal names to temp wires for import
                     for (const auto& [sig_name, temp_wire] : temp_wires) {
                         current_signal_temp_wires[sig_name] = temp_wire;
@@ -1273,6 +1333,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     import_statement_comb(else_stmt, case_default);
                     
                     current_signal_temp_wires.clear();
+                } else {
+                    // No else branch - default case should be empty
+                    // The initial assignments already set temp wires to original values
                 }
                 sw->cases.push_back(case_default);
                 

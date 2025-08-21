@@ -5,6 +5,8 @@ attribute \dynports 1
 attribute \src "dut.sv:2.1-27.10"
 module \counter
   parameter \WIDTH 8
+  attribute \unused_bits "8"
+  wire width 9 $auto$expression.cpp:382:import_operation$1
   wire $auto$rtlil.cc:3011:Eq$4
   attribute \src "dut.sv:5.18-5.21"
   wire input 1 \clk
@@ -18,7 +20,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $logic_and $auto$expression.cpp:284:import_operation$5
+  cell $logic_and $auto$expression.cpp:311:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -28,17 +30,17 @@ module \counter
     connect \B \enable
     connect \Y \overflow
   end
-  cell $add $auto$expression.cpp:353:import_operation$1
+  cell $add $auto$expression.cpp:396:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 8
+    parameter \Y_WIDTH 9
     connect \A \count
     connect \B 1'1
-    connect \Y \count_next
+    connect \Y { $auto$expression.cpp:382:import_operation$1 [8] \count_next }
   end
-  cell $eq $auto$expression.cpp:386:import_operation$3
+  cell $eq $auto$expression.cpp:470:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -63,4 +65,5 @@ module \counter
     connect \EN \enable
     connect \Q \count
   end
+  connect $auto$expression.cpp:382:import_operation$1 [7:0] \count_next
 end
