@@ -233,7 +233,15 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[3]  /* _62_ */ (
+  \$_SDFF_PP0_  \out_data_reg[1]  /* _62_ */ (
+    .C(clk),
+    .D(in_data[1]),
+    .Q(out_data[1]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:36.5-42.8" *)
+  \$_SDFF_PP0_  \out_data_reg[3]  /* _63_ */ (
     .C(clk),
     .D(in_data[3]),
     .Q(out_data[3]),
@@ -241,7 +249,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[4]  /* _63_ */ (
+  \$_SDFF_PP0_  \out_data_reg[4]  /* _64_ */ (
     .C(clk),
     .D(1'h1),
     .Q(out_data[4]),
@@ -249,7 +257,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[5]  /* _64_ */ (
+  \$_SDFF_PP0_  \out_data_reg[5]  /* _65_ */ (
     .C(clk),
     .D(in_data[5]),
     .Q(out_data[5]),
@@ -257,7 +265,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[6]  /* _65_ */ (
+  \$_SDFF_PP0_  \out_data_reg[6]  /* _66_ */ (
     .C(clk),
     .D(in_data[6]),
     .Q(out_data[6]),
@@ -265,7 +273,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[7]  /* _66_ */ (
+  \$_SDFF_PP0_  \out_data_reg[7]  /* _67_ */ (
     .C(clk),
     .D(processed_data[7]),
     .Q(out_data[7]),
@@ -273,7 +281,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[8]  /* _67_ */ (
+  \$_SDFF_PP0_  \out_data_reg[8]  /* _68_ */ (
     .C(clk),
     .D(processed_data[8]),
     .Q(out_data[8]),
@@ -281,7 +289,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[9]  /* _68_ */ (
+  \$_SDFF_PP0_  \out_data_reg[9]  /* _69_ */ (
     .C(clk),
     .D(processed_data[9]),
     .Q(out_data[9]),
@@ -289,7 +297,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[10]  /* _69_ */ (
+  \$_SDFF_PP0_  \out_data_reg[10]  /* _70_ */ (
     .C(clk),
     .D(processed_data[10]),
     .Q(out_data[10]),
@@ -297,7 +305,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[11]  /* _70_ */ (
+  \$_SDFF_PP0_  \out_data_reg[11]  /* _71_ */ (
     .C(clk),
     .D(processed_data[11]),
     .Q(out_data[11]),
@@ -305,7 +313,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[12]  /* _71_ */ (
+  \$_SDFF_PP0_  \out_data_reg[12]  /* _72_ */ (
     .C(clk),
     .D(processed_data[12]),
     .Q(out_data[12]),
@@ -313,7 +321,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[13]  /* _72_ */ (
+  \$_SDFF_PP0_  \out_data_reg[13]  /* _73_ */ (
     .C(clk),
     .D(processed_data[13]),
     .Q(out_data[13]),
@@ -321,7 +329,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[14]  /* _73_ */ (
+  \$_SDFF_PP0_  \out_data_reg[14]  /* _74_ */ (
     .C(clk),
     .D(processed_data[14]),
     .Q(out_data[14]),
@@ -329,7 +337,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[15]  /* _74_ */ (
+  \$_SDFF_PP0_  \out_data_reg[15]  /* _75_ */ (
     .C(clk),
     .D(processed_data[15]),
     .Q(out_data[15]),
@@ -337,7 +345,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[16]  /* _75_ */ (
+  \$_SDFF_PP0_  \out_data_reg[16]  /* _76_ */ (
     .C(clk),
     .D(processed_data[16]),
     .Q(out_data[16]),
@@ -345,7 +353,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[17]  /* _76_ */ (
+  \$_SDFF_PP0_  \out_data_reg[17]  /* _77_ */ (
     .C(clk),
     .D(processed_data[17]),
     .Q(out_data[17]),
@@ -353,7 +361,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[18]  /* _77_ */ (
+  \$_SDFF_PP0_  \out_data_reg[18]  /* _78_ */ (
     .C(clk),
     .D(processed_data[18]),
     .Q(out_data[18]),
@@ -361,7 +369,7 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[19]  /* _78_ */ (
+  \$_SDFF_PP0_  \out_data_reg[19]  /* _79_ */ (
     .C(clk),
     .D(processed_data[19]),
     .Q(out_data[19]),
@@ -369,18 +377,10 @@ module nested_struct(in_data, out_data, clk, rst);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[20]  /* _79_ */ (
+  \$_SDFF_PP0_  \out_data_reg[20]  /* _80_ */ (
     .C(clk),
     .D(processed_data[20]),
     .Q(out_data[20]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:36.5-42.8" *)
-  \$_SDFF_PP0_  \out_data_reg[1]  /* _80_ */ (
-    .C(clk),
-    .D(in_data[1]),
-    .Q(out_data[1]),
     .R(rst)
   );
   assign { out_data[61:21], out_data[2], out_data[0] } = { 41'h00000000000, out_data[4], 1'h0 };

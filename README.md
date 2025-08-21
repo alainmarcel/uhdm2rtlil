@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (42/42 tests functional)
-- **Perfect Matches**: 38 tests validated by formal equivalence checking
+- **Success Rate**: 100% (43/43 tests functional)
+- **Perfect Matches**: 39 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
@@ -182,7 +182,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (42 total)
+### Current Test Cases (43 total)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
@@ -224,6 +224,7 @@ The Yosys test runner:
 - **mux4** - 4-to-1 multiplexer using case statement (tests case statement with bit selection)
 - **mux8** - 8-to-1 multiplexer using nested conditional operators (tests complex ternary chains)
 - **mux16** - 16-to-1 multiplexer using dynamic bit selection (tests non-constant indexed access)
+- **macc** - Multiply-accumulate unit from Xilinx (tests power operator, large constants, process structures)
 
 ### Test Management
 
@@ -249,7 +250,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 38 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 43 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -300,12 +301,33 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **42 test cases**:
+The UHDM frontend test suite includes **43 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **38 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **39 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
+
+### Process Structure Improvements for always_ff Blocks
+- Fixed process structure generation to use switch statements inside process bodies instead of external mux cells
+- Added proper handling of simple if statements without else branches in synchronous contexts
+- Correctly distinguishes between `vpiIf` (type 22) and `vpiIfElse` (type 23) for proper type casting
+- Fixed type casting: `vpiIf` statements cast to `UHDM::if_stmt*`, `vpiIfElse` to `UHDM::if_else*`
+- Eliminated redundant assignments in default case for simple if without else
+- Process structures now match Verilog frontend output exactly for better optimization
+
+### Net Declaration Assignment Improvements
+- Fixed PROC_INIT pass failures by checking if RHS expressions are constant
+- Constant expressions create init processes (as before)
+- Non-constant expressions (e.g., `wire [8:0] Emp = ~(Blk | Wht)`) create continuous assignments
+- Prevents "Failed to get a constant init value" errors during synthesis
+
+### Expression and Arithmetic Improvements
+- Added support for power operator (`**`) used in expressions like `2**(SIZEOUT-1)`
+- Fixed integer parsing to use `std::stoll` for large constants (e.g., 549755813888)
+- Corrected Mux (conditional operator) argument ordering: `Mux(false_val, true_val, cond)`
+- Fixed Add and Sub operations to create proper arithmetic cells using `addAdd`/`addSub`
+- All arithmetic operations now generate appropriate cells instead of just wires
 
 ### Latch Inference Support
 - Added proper detection of combinational always blocks (`always @*`)
@@ -362,6 +384,8 @@ The UHDM frontend test suite includes **42 test cases**:
 - **nested_struct_nopack** - Fixed synchronous if-else handling to generate proper switch statements matching Verilog frontend output
 - **mux4** - Fixed case statement width matching to ensure case values have the same width as the switch signal
 - **mul** - Fixed multiplication result width calculation to match Verilog frontend (sum of operand widths)
+- **macc** - Fixed power operator support, large constant parsing, Mux ordering, arithmetic cell creation, and process structures
+- **vector_index** - Fixed net declaration assignments with non-constant expressions to use continuous assignments
 
 ### Formal Equivalence Checking
 The test framework now includes formal equivalence checking using Yosys's built-in equivalence checking capabilities:

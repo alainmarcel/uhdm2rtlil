@@ -173,8 +173,8 @@ echo
 
 # Step 6: Compare the results
 echo "7. Comparing UHDM vs Verilog RTLIL outputs..."
-UHDM_RTLIL="${MODULE_NAME}_from_uhdm.il"
-VERILOG_RTLIL="${MODULE_NAME}_from_verilog.il"
+UHDM_RTLIL="${MODULE_NAME}_from_uhdm_nohier.il"
+VERILOG_RTLIL="${MODULE_NAME}_from_verilog_nohier.il"
 
 if [ $VERILOG_FAILED -eq 1 ] && [ -f "$UHDM_RTLIL" ]; then
     echo "   ✓ UHDM frontend succeeded where Verilog frontend failed!"

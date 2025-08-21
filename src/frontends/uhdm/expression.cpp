@@ -181,13 +181,33 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         }
         case vpiDecConst: {
             std::string dec_str = value.substr(4);
-            int int_val = std::stoi(dec_str);
-            return RTLIL::SigSpec(RTLIL::Const(int_val, size));
+            try {
+                // Use stoll to handle larger integers
+                long long int_val = std::stoll(dec_str);
+                return RTLIL::SigSpec(RTLIL::Const(int_val, size));
+            } catch (const std::exception& e) {
+                log_error("Failed to parse decimal constant: value='%s', substr='%s', error=%s\n", 
+                         value.c_str(), dec_str.c_str(), e.what());
+            }
         }
         case vpiIntConst: {
             std::string int_str = value.substr(4);
-            int int_val = std::stoi(int_str);
-            return RTLIL::SigSpec(RTLIL::Const(int_val, 32));
+            try {
+                // Use stoll to handle larger integers, then create appropriate constant
+                long long int_val = std::stoll(int_str);
+                // Create a constant with the appropriate bit width
+                // For vpiIntConst, we typically use 32 bits but if the value is larger,
+                // we need to determine the actual required width
+                int width = 32;
+                if (int_val > INT32_MAX || int_val < INT32_MIN) {
+                    // Calculate required width for the value
+                    width = 64; // Use 64 bits for large values
+                }
+                return RTLIL::SigSpec(RTLIL::Const(int_val, width));
+            } catch (const std::exception& e) {
+                log_error("Failed to parse integer constant: value='%s', substr='%s', error=%s\n", 
+                         value.c_str(), int_str.c_str(), e.what());
+            }
         }
         case vpiUIntConst: {
             if (mode_debug)
@@ -232,8 +252,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // Get operands
     std::vector<RTLIL::SigSpec> operands;
     if (uhdm_op->Operands()) {
+        if (op_type == vpiConditionOp) { 
+            log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
+        }
         for (auto operand : *uhdm_op->Operands()) {
-            operands.push_back(import_expression(any_cast<const expr*>(operand)));
+            RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand));
+            if (op_type == vpiConditionOp) {
+                log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
+            }
+            operands.push_back(op_sig);
         }
     }
     
@@ -349,12 +376,48 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             }
             break;
         case vpiAddOp:
-            if (operands.size() == 2)
-                return module->Add(NEW_ID, operands[0], operands[1]);
+            if (operands.size() == 2) {
+                // For addition, create an add cell
+                int result_width = std::max(operands[0].size(), operands[1].size()) + 1;
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                for (const auto& operand : operands) {
+                    if (operand.is_wire()) {
+                        RTLIL::Wire* wire = operand.as_wire();
+                        if (wire && wire->is_signed) {
+                            is_signed = true;
+                            break;
+                        }
+                    }
+                }
+                
+                module->addAdd(NEW_ID, operands[0], operands[1], result, is_signed);
+                return result;
+            }
             break;
         case vpiSubOp:
-            if (operands.size() == 2)
-                return module->Sub(NEW_ID, operands[0], operands[1]);
+            if (operands.size() == 2) {
+                // For subtraction, create a sub cell
+                int result_width = std::max(operands[0].size(), operands[1].size()) + 1;
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                for (const auto& operand : operands) {
+                    if (operand.is_wire()) {
+                        RTLIL::Wire* wire = operand.as_wire();
+                        if (wire && wire->is_signed) {
+                            is_signed = true;
+                            break;
+                        }
+                    }
+                }
+                
+                module->addSub(NEW_ID, operands[0], operands[1], result, is_signed);
+                return result;
+            }
             break;
         case vpiMultOp:
             if (operands.size() == 2) {
@@ -378,6 +441,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 module->addMul(NEW_ID, operands[0], operands[1], result, is_signed);
+                return result;
+            }
+            break;
+        case vpiPowerOp:
+            if (operands.size() == 2) {
+                // Power operation: base ** exponent
+                // Result width is typically the same as the base operand
+                int result_width = operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                if (operands[0].is_wire()) {
+                    RTLIL::Wire* wire = operands[0].as_wire();
+                    if (wire && wire->is_signed) {
+                        is_signed = true;
+                    }
+                }
+                
+                // Use Pow cell for power operation
+                module->addPow(NEW_ID, operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -406,8 +490,48 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return module->Ge(NEW_ID, operands[0], operands[1]);
             break;
         case vpiConditionOp:
-            if (operands.size() == 3)
-                return module->Mux(NEW_ID, operands[0], operands[2], operands[1]);
+            if (operands.size() == 3) {
+                // For conditional operator: condition ? true_val : false_val
+                // operands[0] is the condition
+                // operands[1] is the true value
+                // operands[2] is the false value
+                // Mux takes (name, selector, false_val, true_val)
+                
+                log("UHDM: ConditionOp - operand sizes: cond=%d, true=%d, false=%d\n",
+                    operands[0].size(), operands[1].size(), operands[2].size());
+                
+                // Ensure the condition is 1-bit
+                RTLIL::SigSpec cond = operands[0];
+                if (cond.size() > 1) {
+                    log("UHDM: Reducing %d-bit condition to 1-bit\n", cond.size());
+                    // Reduce multi-bit condition to single bit using ReduceBool
+                    cond = module->ReduceBool(NEW_ID, cond);
+                }
+                
+                // Match operand widths for the mux output
+                int max_width = std::max(operands[1].size(), operands[2].size());
+                RTLIL::SigSpec true_val = operands[1];
+                RTLIL::SigSpec false_val = operands[2];
+                
+                // Extend operands to match widths if needed
+                if (true_val.size() < max_width) {
+                    true_val = RTLIL::SigSpec(true_val);
+                    true_val.extend_u0(max_width);
+                }
+                if (false_val.size() < max_width) {
+                    false_val = RTLIL::SigSpec(false_val);
+                    false_val.extend_u0(max_width);
+                }
+                
+                log("UHDM: Creating Mux with selector size=%d, true_val size=%d, false_val size=%d\n",
+                    cond.size(), true_val.size(), false_val.size());
+                
+                // Mux signature: Mux(name, sig_a, sig_b, sig_s)
+                // sig_a = value when selector is 0 (false value)
+                // sig_b = value when selector is 1 (true value)
+                // sig_s = selector
+                return module->Mux(NEW_ID, false_val, true_val, cond);
+            }
             break;
         default:
             log_warning("Unsupported operation type: %d\n", op_type);

@@ -339,5 +339,38 @@
             "preLaunchTask": "",
             "miDebuggerPath": "/usr/bin/gdb"
         },
+        {
+            "name": "Debug UHDM Plugin - macc",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/macc/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/macc",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on struct handling",
+                    "text": "break UhdmImporter::import_struct",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on expression import",
+                    "text": "break UhdmImporter::import_expression",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
     ]
 }
