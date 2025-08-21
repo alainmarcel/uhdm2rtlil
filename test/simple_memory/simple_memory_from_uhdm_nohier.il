@@ -27,28 +27,28 @@ module \simple_memory
   wire input 3 \we
   attribute \src "dut.sv:15.21-15.27"
   memory width 8 size 16 \memory
-  cell $not $auto$process.cpp:1652:import_statement_sync$3
+  cell $not $auto$process.cpp:1664:import_statement_sync$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst
     connect \Y $auto$rtlil.cc:2957:Not$4
   end
-  cell $mux $auto$process.cpp:2258:import_assignment_sync$1
+  cell $mux $auto$process.cpp:2270:import_assignment_sync$1
     parameter \WIDTH 8
     connect \A \data_out
     connect \B 8'00000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$2
   end
-  cell $mux $auto$process.cpp:2258:import_assignment_sync$7
+  cell $mux $auto$process.cpp:2270:import_assignment_sync$7
     parameter \WIDTH 8
     connect \A \data_out
     connect \B \memrd_memory_DATA
     connect \S $auto$rtlil.cc:2957:Not$4
     connect \Y $auto$rtlil.cc:3092:Mux$8
   end
-  cell $and $auto$process.cpp:2623:import_if_stmt_sync$5
+  cell $and $auto$process.cpp:2635:import_if_stmt_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

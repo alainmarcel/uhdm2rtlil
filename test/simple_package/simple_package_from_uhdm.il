@@ -31,7 +31,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y { $auto$rtlil.cc:3017:Add$6 [63:5] $0\counter }
   end
-  cell $logic_not $auto$expression.cpp:370:import_operation$7
+  cell $logic_not $auto$expression.cpp:386:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1

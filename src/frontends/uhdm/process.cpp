@@ -525,24 +525,36 @@ static bool contains_complex_constructs(const any* stmt) {
     
     // Check for begin blocks
     if (stmt_type == vpiBegin) {
-        const begin* begin_stmt = any_cast<const begin*>(stmt);
-        if (begin_stmt->Stmts()) {
-            for (auto sub_stmt : *begin_stmt->Stmts()) {
-                if (contains_complex_constructs(sub_stmt)) {
-                    return true;
+        try {
+            const begin* begin_stmt = any_cast<const begin*>(stmt);
+            if (begin_stmt && begin_stmt->Stmts()) {
+                for (auto sub_stmt : *begin_stmt->Stmts()) {
+                    if (sub_stmt && contains_complex_constructs(sub_stmt)) {
+                        return true;
+                    }
                 }
             }
+        } catch (...) {
+            // Failed to cast - not a begin block
+            return false;
         }
     }
     
     // Check for nested if statements
     if (stmt_type == vpiIf || stmt_type == vpiIfElse) {
-        const if_else* if_stmt = any_cast<const if_else*>(stmt);
-        if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
-            return true;
-        }
-        if (if_stmt->VpiElseStmt() && contains_complex_constructs(if_stmt->VpiElseStmt())) {
-            return true;
+        try {
+            const if_else* if_stmt = any_cast<const if_else*>(stmt);
+            if (if_stmt) {
+                if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
+                    return true;
+                }
+                if (if_stmt->VpiElseStmt() && contains_complex_constructs(if_stmt->VpiElseStmt())) {
+                    return true;
+                }
+            }
+        } catch (...) {
+            // Failed to cast - this is not an if_else statement
+            return false;
         }
     }
     
@@ -1161,8 +1173,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // If we found an if-else, check if both branches assign to same signals
                 if (is_simple_if_else && simple_if_else) {
                     // First check if the if-else contains complex constructs
-                    if (contains_complex_constructs(simple_if_else->VpiStmt()) ||
-                        contains_complex_constructs(simple_if_else->VpiElseStmt())) {
+                    if ((simple_if_else->VpiStmt() && contains_complex_constructs(simple_if_else->VpiStmt())) ||
+                        (simple_if_else->VpiElseStmt() && contains_complex_constructs(simple_if_else->VpiElseStmt()))) {
                         log("      If-else contains complex constructs (for loops, memory writes) - skipping simple if-else optimization\n");
                         is_simple_if_else = false;
                     } else {

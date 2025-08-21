@@ -33,7 +33,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3017:Add$6
   end
-  cell $eq $auto$expression.cpp:370:import_operation$7
+  cell $eq $auto$expression.cpp:386:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
@@ -177,7 +177,7 @@ module \sub_module
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3017:Add$2
   end
-  cell $eq $auto$expression.cpp:370:import_operation$3
+  cell $eq $auto$expression.cpp:386:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0

@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil mul_sync_enable_test_from_verilog_nohier.il
+hierarchy -check -top mul_sync_enable_test
+stat
+proc
+opt
+stat
+write_rtlil mul_sync_enable_test_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top mul_sync_enable_test
+write_verilog -noexpr mul_sync_enable_test_from_verilog_synth.v

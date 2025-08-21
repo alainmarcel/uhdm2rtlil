@@ -1,0 +1,72 @@
+# Formal equivalence check for gate-level netlists
+# This properly detects sequential vs combinational differences
+
+# Load cell library
+read_verilog -lib +/simcells.v
+
+# Read and process Verilog version (gold)
+read_verilog -sv /home/alain/uhdm2rtlil/test/mul_plain/mul_plain_from_verilog_synth.v
+hierarchy -auto-top
+proc
+flatten
+design -stash gold
+
+# Read and process UHDM version (gate)
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/mul_plain/mul_plain_from_uhdm_synth.v
+hierarchy -auto-top
+proc
+flatten
+design -stash gate
+
+# Print statistics for both designs to detect sequential vs combinational
+log
+log === GOLD DESIGN STATISTICS ===
+design -load gold
+stat -width
+log
+log === GATE DESIGN STATISTICS ===
+design -load gate
+stat -width
+
+# Count sequential elements in both designs
+design -load gold
+select */t:$_DFF_* */t:$_DFFE_* */t:$_SDFF* */t:$_DLATCH* */t:$_SR_* %ci
+log
+log Sequential cells in gold:
+stat
+select -clear
+
+design -load gate
+select */t:$_DFF_* */t:$_DFFE_* */t:$_SDFF* */t:$_DLATCH* */t:$_SR_* %ci
+log
+log Sequential cells in gate:
+stat
+select -clear
+
+# Skip the SAT-based approach and use only the equiv flow
+# which is specifically designed for gate-level netlists
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/mul_plain/mul_plain_from_verilog_synth.v
+hierarchy -auto-top
+proc
+flatten
+design -stash gold_flat
+
+design -reset
+read_verilog -lib +/simcells.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/mul_plain/mul_plain_from_uhdm_synth.v
+hierarchy -auto-top
+proc
+flatten
+design -stash gate_flat
+
+design -copy-from gold_flat -as gold *
+design -copy-from gate_flat -as gate *
+
+equiv_make gold gate equiv
+equiv_simple
+equiv_induct
+equiv_status -assert

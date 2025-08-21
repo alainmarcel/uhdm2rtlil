@@ -207,6 +207,39 @@ void UhdmImporter::import_port(const port* uhdm_port) {
     // Add source attribute
     add_src_attribute(w->attributes, uhdm_port);
     
+    // Check if port is signed
+    if (auto ref_typespec = uhdm_port->Typespec()) {
+        // Check if typespec indicates signed
+        bool is_signed = false;
+        const UHDM::typespec* actual_typespec = nullptr;
+        
+        if (ref_typespec->Actual_typespec()) {
+            actual_typespec = ref_typespec->Actual_typespec();
+        }
+        
+        if (actual_typespec) {
+            switch (actual_typespec->UhdmType()) {
+                case uhdmlogic_typespec:
+                    if (auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
+                        is_signed = logic_ts->VpiSigned();
+                    }
+                    break;
+                case uhdmint_typespec:
+                case uhdminteger_typespec:
+                case uhdmbyte_typespec:
+                case uhdmshort_int_typespec:
+                case uhdmlong_int_typespec:
+                    is_signed = true;  // These are signed by default
+                    break;
+            }
+            
+            if (is_signed) {
+                log("UHDM: Port '%s' is signed\n", portname.c_str());
+                w->is_signed = true;
+            }
+        }
+    }
+    
     // Set port direction
     if (direction == vpiInput)
         w->port_input = true;
@@ -349,6 +382,39 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     
     RTLIL::Wire* w = create_wire(netname, width, upto, start_offset);
     add_src_attribute(w->attributes, uhdm_net);
+    
+    // Check if net is signed
+    if (auto ref_typespec = uhdm_net->Typespec()) {
+        // Check if typespec indicates signed
+        bool is_signed = false;
+        const UHDM::typespec* actual_typespec = nullptr;
+        
+        if (ref_typespec->Actual_typespec()) {
+            actual_typespec = ref_typespec->Actual_typespec();
+        }
+        
+        if (actual_typespec) {
+            switch (actual_typespec->UhdmType()) {
+                case uhdmlogic_typespec:
+                    if (auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
+                        is_signed = logic_ts->VpiSigned();
+                    }
+                    break;
+                case uhdmint_typespec:
+                case uhdminteger_typespec:
+                case uhdmbyte_typespec:
+                case uhdmshort_int_typespec:
+                case uhdmlong_int_typespec:
+                    is_signed = true;  // These are signed by default
+                    break;
+            }
+            
+            if (is_signed) {
+                log("UHDM: Net '%s' is signed\n", netname.c_str());
+                w->is_signed = true;
+            }
+        }
+    }
     
     // Add wiretype attribute for struct types
     log("UHDM: Checking for struct type on net '%s' (UhdmType=%d)\n", netname.c_str(), uhdm_net->UhdmType());
