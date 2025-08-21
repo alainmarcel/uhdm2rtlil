@@ -1,0 +1,99 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -91,19 +91,19 @@
+ (* force_downto = 32'd1 *)
+ (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+ wire [8:0] _074_;
+-(* src = "dut.sv:3.22-3.23" *)
++(* src = "dut.sv:1.39-1.40" *)
+ input [5:0] a;
+ wire [5:0] a;
+-(* src = "dut.sv:4.22-4.23" *)
++(* src = "dut.sv:1.42-1.43" *)
+ input [2:0] b;
+ wire [2:0] b;
+-(* src = "dut.sv:2.16-2.19" *)
++(* src = "dut.sv:1.29-1.32" *)
+ input clk;
+ wire clk;
+-(* src = "dut.sv:5.22-5.23" *)
++(* src = "dut.sv:1.45-1.46" *)
+ output [8:0] p;
+ wire [8:0] p;
+-(* src = "dut.sv:2.21-2.24" *)
++(* src = "dut.sv:1.34-1.37" *)
+ input rst;
+ wire rst;
+ \$_AND_  _075_ (
+@@ -500,6 +500,7 @@
+ .B(_067_),
+ .Y(_072_[7])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[0]  /* _154_ */ (
+ .C(clk),
+@@ -507,6 +508,7 @@
+ .Q(p[0]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[1]  /* _155_ */ (
+ .C(clk),
+@@ -514,6 +516,7 @@
+ .Q(p[1]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[2]  /* _156_ */ (
+ .C(clk),
+@@ -521,6 +524,7 @@
+ .Q(p[2]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[3]  /* _157_ */ (
+ .C(clk),
+@@ -528,6 +532,7 @@
+ .Q(p[3]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[4]  /* _158_ */ (
+ .C(clk),
+@@ -535,6 +540,7 @@
+ .Q(p[4]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[5]  /* _159_ */ (
+ .C(clk),
+@@ -542,6 +548,7 @@
+ .Q(p[5]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[6]  /* _160_ */ (
+ .C(clk),
+@@ -549,6 +556,7 @@
+ .Q(p[6]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[7]  /* _161_ */ (
+ .C(clk),
+@@ -556,6 +564,7 @@
+ .Q(p[7]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.5-15.8" *)
+ \$_SDFF_PP0_  \p_reg[8]  /* _162_ */ (
+ .C(clk),

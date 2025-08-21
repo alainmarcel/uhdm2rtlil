@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (30/30 tests functional)
-- **Perfect Matches**: 26 tests validated by formal equivalence checking
+- **Success Rate**: 100% (42/42 tests functional)
+- **Perfect Matches**: 38 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
@@ -182,7 +182,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (31 total)
+### Current Test Cases (42 total)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
@@ -208,11 +208,22 @@ The Yosys test runner:
 - **latchp** - Positive level-sensitive latch (tests latch inference from combinational always blocks)
 - **latchn** - Negative level-sensitive latch (tests inverted enable condition handling)
 - **latchsr** - Latch with set/reset functionality (tests nested if-else in combinational context)
+- **adff** - Async D flip-flop with async reset (from Yosys test suite)
+- **adffn** - Async D flip-flop with negative-edge async reset (from Yosys test suite)
 - **adffs** - Async D flip-flop with set (from Yosys test suite)
+- **dffs** - D flip-flop with synchronous preset (from Yosys test suite)
 - **add_sub** - Adder/subtractor with carry (from Yosys test suite)
 - **logic_ops** - Logical operations with bit ordering (from Yosys test suite)
 - **ndffnr** - Negative edge flip-flop with reset (from Yosys test suite)
 - **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
+- **mul** - Multiplication with correct result width calculation (tests arithmetic operation width inference)
+- **mul_plain** - Simple combinational multiplier from Gatemate test suite
+- **mul_signed_async** - Signed multiplier with async reset and pipeline registers from Gatemate test suite
+- **mul_unsigned_sync** - Unsigned multiplier with sync reset and pipeline registers from Gatemate test suite
+- **mux2** - 2-to-1 multiplexer using conditional operator (tests ternary expression)
+- **mux4** - 4-to-1 multiplexer using case statement (tests case statement with bit selection)
+- **mux8** - 8-to-1 multiplexer using nested conditional operators (tests complex ternary chains)
+- **mux16** - 16-to-1 multiplexer using dynamic bit selection (tests non-constant indexed access)
 
 ### Test Management
 
@@ -238,7 +249,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 31 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 38 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -289,9 +300,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **31 test cases**:
+The UHDM frontend test suite includes **42 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **27 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **38 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
@@ -327,6 +338,19 @@ The UHDM frontend test suite includes **31 test cases**:
 - Parameters are now correctly resolved to their constant values instead of being treated as wire references
 - Supports binary constant format "BIN:xx" used by UHDM for proper bit width handling
 
+### Dynamic Bit Selection Support
+- Implemented non-constant indexed access (e.g., `D[S]` where S is a signal)
+- Creates $shiftx cells for dynamic bit selection operations
+- Enables support for multiplexers and other dynamic indexing patterns
+- Added mux16 test demonstrating 16-to-1 multiplexer functionality
+
+### Signed Attribute Support
+- Added proper detection of signed ports and nets from UHDM typespecs
+- Implemented signed attribute handling for arithmetic operations
+- Signed types (int, byte, short_int, long_int) are properly marked as signed
+- Logic types with VpiSigned attribute are correctly handled
+- Enables correct signed multiplication and other arithmetic operations
+
 ### Key Improvements
 - **simple_interface** - Added interface expansion support, converting interface instances to individual signals
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
@@ -336,6 +360,8 @@ The UHDM frontend test suite includes **31 test cases**:
 - **struct_array** - Now passes with improved expression handling and struct support
 - **generate_test** - Fixed by adding `proc` before `opt` in test workflow to handle multiple generated processes correctly
 - **nested_struct_nopack** - Fixed synchronous if-else handling to generate proper switch statements matching Verilog frontend output
+- **mux4** - Fixed case statement width matching to ensure case values have the same width as the switch signal
+- **mul** - Fixed multiplication result width calculation to match Verilog frontend (sum of operand widths)
 
 ### Formal Equivalence Checking
 The test framework now includes formal equivalence checking using Yosys's built-in equivalence checking capabilities:

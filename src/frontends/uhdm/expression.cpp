@@ -361,7 +361,23 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // For multiplication, the result width should be the sum of operand widths
                 int result_width = operands[0].size() + operands[1].size();
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                module->addMul(NEW_ID, operands[0], operands[1], result);
+                
+                // Check if operands are signed by checking if they come from signed wires
+                bool is_signed = false;
+                
+                // Check if all operands come from signed wires
+                for (const auto& operand : operands) {
+                    // Check if the operand is a wire
+                    if (operand.is_wire()) {
+                        RTLIL::Wire* wire = operand.as_wire();
+                        if (wire && wire->is_signed) {
+                            is_signed = true;
+                            break;  // If any operand is signed, treat the operation as signed
+                        }
+                    }
+                }
+                
+                module->addMul(NEW_ID, operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
