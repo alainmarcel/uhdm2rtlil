@@ -124,6 +124,16 @@ struct UhdmImporter {
     std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
     std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
     
+    // Memory write handling for synchronous processes
+    struct MemoryWriteInfo {
+        RTLIL::IdString mem_id;
+        RTLIL::Wire* addr_wire;
+        RTLIL::Wire* data_wire;
+        RTLIL::Wire* en_wire;
+        int width;
+    };
+    std::map<std::string, MemoryWriteInfo> current_memory_writes;
+    
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
     // Main import functions

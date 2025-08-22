@@ -252,49 +252,49 @@ module \macc2
     connect \S \overflow
     connect \Y $auto$rtlil.cc:3092:Mux$52
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$19
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$19
     parameter \WIDTH 16
     connect \A \a_reg
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$20
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$21
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$21
     parameter \WIDTH 16
     connect \A \a_reg2
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$22
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$23
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$23
     parameter \WIDTH 16
     connect \A \b_reg
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$24
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$25
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$25
     parameter \WIDTH 16
     connect \A \b_reg2
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$26
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$27
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$27
     parameter \WIDTH 32
     connect \A \mult_reg
     connect \B 0
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$28
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$29
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$29
     parameter \WIDTH 41
     connect \A \adder_out
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$30
   end
-  cell $mux $auto$process.cpp:2333:import_assignment_sync$31
+  cell $mux $auto$process.cpp:2589:import_assignment_sync$31
     parameter \WIDTH 1
     connect \A \overflow_reg
     connect \B 1'0
