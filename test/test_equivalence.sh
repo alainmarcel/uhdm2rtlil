@@ -33,9 +33,43 @@ BASE_NAME=$(basename "$TEST_NAME")
 # Check if required files exist
 VERILOG_SYNTH="${TEST_DIR}/${BASE_NAME}_from_verilog_synth.v"
 UHDM_SYNTH="${TEST_DIR}/${BASE_NAME}_from_uhdm_synth.v"
+UHDM_RTLIL="${TEST_DIR}/${BASE_NAME}_from_uhdm.il"
 
 if [ ! -f "$VERILOG_SYNTH" ] || [ ! -f "$UHDM_SYNTH" ]; then
     echo "❌ Missing synthesized netlists for $TEST_NAME"
+    exit 1
+fi
+
+# Check for X assignments in UHDM RTLIL output
+# Note: X values in mux defaults (connect \A) are normal for if/else chains
+# Only flag X values in direct wire connections or problematic contexts
+if [ -f "$UHDM_RTLIL" ]; then
+    # Look for problematic X assignments (excluding mux A port defaults and memrd clocks)
+    # Note: memrd cells use X for clock when CLK_ENABLE=0 (asynchronous reads)
+    # Only check for X in actual clock inputs to sequential elements
+    if grep -E "connect \\\\(clk|clock) .*'x" "$UHDM_RTLIL" | grep -v "cell .*memrd" > /dev/null 2>&1; then
+        echo "❌ CRITICAL ERROR: UHDM netlist contains X assignments in clock signals!"
+        echo "   Found X values in clock connections:"
+        grep -E "connect \\\\(clk|clock) .*'x" "$UHDM_RTLIL" | grep -v "cell .*memrd" | head -5
+        echo "   This indicates a serious bug in UHDM import - the design is non-functional"
+        exit 1
+    fi
+    # Check for X values in top-level wire connections (not in cells)
+    if grep -E "^  connect.*'x" "$UHDM_RTLIL" | grep -v "cell \$mux" > /dev/null 2>&1; then
+        echo "❌ CRITICAL ERROR: UHDM netlist contains X assignments in wire connections!"
+        echo "   Found X values in wire connections:"
+        grep -E "^  connect.*'x" "$UHDM_RTLIL" | grep -v "cell \$mux" | head -5
+        echo "   This indicates a serious bug in UHDM import"
+        exit 1
+    fi
+fi
+
+# Also check synthesized netlist for X assignments
+if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1; then
+    echo "❌ CRITICAL ERROR: UHDM synthesized netlist contains X assignments!"
+    echo "   Found X values in assignments:"
+    grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | head -5
+    echo "   This indicates a serious bug - the design is non-functional"
     exit 1
 fi
 

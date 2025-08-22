@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (47/47 tests functional)
-- **Perfect Matches**: 43 tests validated by formal equivalence checking
+- **Success Rate**: 100% (48/48 tests functional)
+- **Perfect Matches**: 44 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
@@ -70,6 +70,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Parameter references in expressions
 - **Control Flow**: If-else statements, case statements with parameter values, for loops with compile-time unrolling
 - **Memory**: Array inference, memory initialization, for-loop memory initialization patterns
+- **Shift Registers**: Automatic detection and optimization of shift register patterns (e.g., `M[i+1] <= M[i]`)
 - **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
 - **Packages**: Import statements, package parameters, struct types, functions
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)

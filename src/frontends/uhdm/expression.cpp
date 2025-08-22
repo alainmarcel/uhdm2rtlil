@@ -777,6 +777,24 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         wire = module->wire(wire_id);
     }
     
+    // If wire not found, check if this is a shift register array element
+    if (!wire) {
+        // Get the index
+        RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
+        if (index.is_fully_const()) {
+            int idx = index.as_const().as_int();
+            // Try to find the wire with the array index in the name
+            std::string indexed_name = stringf("\\%s[%d]", signal_name.c_str(), idx);
+            wire = module->wire(indexed_name);
+            if (wire) {
+                if (mode_debug)
+                    log("    Found shift register element: %s\n", indexed_name.c_str());
+                // Return the whole wire since it represents M[idx]
+                return RTLIL::SigSpec(wire);
+            }
+        }
+    }
+    
     if (!wire) {
         log_error("Could not find wire '%s' for bit select\n", signal_name.c_str());
     }

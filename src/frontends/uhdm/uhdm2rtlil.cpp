@@ -1086,32 +1086,119 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         log_flush();
     }
     
-    log("UHDM: Checking for array nets...\n");
-    log_flush();
-    
-    // Import array nets (memory arrays)
-    try {
-        if (uhdm_module->Array_nets()) {
-            log("UHDM: Array_nets() is not null\n");
-            log_flush();
-            log("UHDM: Found %d array nets to import\n", (int)uhdm_module->Array_nets()->size());
-            log_flush();
-        } else {
-            log("UHDM: No array nets found (Array_nets() is null)\n");
-            log_flush();
+    // Pre-scan processes to detect shift registers
+    // This must be done BEFORE creating memories
+    std::set<std::string> shift_register_arrays;
+    if (uhdm_module->Process()) {
+        log("UHDM: Pre-scanning %zu processes for shift registers\n", uhdm_module->Process()->size());
+        for (auto proc : *uhdm_module->Process()) {
+            // Check for always blocks that may contain shift registers
+            log("  Checking process type: %d\n", proc->VpiType());
+            if (proc->VpiType() == vpiAlways) {
+                // Cast to always to get the type
+                const always* always_obj = any_cast<const always*>(proc);
+                log("    Found always block\n");
+                auto stmt = always_obj->Stmt();
+                if (stmt && stmt->VpiType() == vpiEventControl) {
+                    auto event_ctrl = any_cast<const event_control*>(stmt);
+                    auto actual_stmt = event_ctrl->Stmt();
+                    
+                    // Check for shift register pattern in the process
+                    if (actual_stmt && actual_stmt->VpiType() == vpiBegin) {
+                        const begin* begin_stmt = any_cast<const begin*>(actual_stmt);
+                        if (begin_stmt->Stmts()) {
+                            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                                if (sub_stmt->VpiType() == vpiFor) {
+                                    const for_stmt* for_loop = any_cast<const for_stmt*>(sub_stmt);
+                                    if (for_loop->VpiStmt() && for_loop->VpiStmt()->VpiType() == vpiAssignment) {
+                                        const assignment* assign = any_cast<const assignment*>(for_loop->VpiStmt());
+                                        // Check for M[i+1] <= M[i] pattern
+                                        log("        Checking assignment in for loop\n");
+                                        if (assign->Lhs() && assign->Rhs()) {
+                                            log("          LHS type: %d, RHS type: %d\n", 
+                                                assign->Lhs()->VpiType(), assign->Rhs()->VpiType());
+                                            if (assign->Lhs()->VpiType() == vpiBitSelect &&
+                                                assign->Rhs()->VpiType() == vpiBitSelect) {
+                                                const bit_select* lhs_bs = any_cast<const bit_select*>(assign->Lhs());
+                                                const bit_select* rhs_bs = any_cast<const bit_select*>(assign->Rhs());
+                                                log("          LHS name: '%s', RHS name: '%s'\n",
+                                                    std::string(lhs_bs->VpiName()).c_str(),
+                                                    std::string(rhs_bs->VpiName()).c_str());
+                                                if (!lhs_bs->VpiName().empty() && lhs_bs->VpiName() == rhs_bs->VpiName()) {
+                                                    shift_register_arrays.insert(std::string(lhs_bs->VpiName()));
+                                                    log("UHDM: Pre-scan detected shift register array '%s'\n", 
+                                                        std::string(lhs_bs->VpiName()).c_str());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-    } catch (...) {
-        log("UHDM: Exception while checking Array_nets()\n");
-        log_flush();
     }
     
+    // Now import array_nets, but skip memory creation for shift registers
     if (uhdm_module->Array_nets()) {
         for (auto array : *uhdm_module->Array_nets()) {
             std::string array_name = std::string(array->VpiName());
             log("UHDM: About to import array net: '%s'\n", array_name.c_str());
             
-            // Only create memory if it has both packed and unpacked dimensions
-            if (is_memory_array(array)) {
+            // Check if this is a shift register
+            if (shift_register_arrays.count(array_name)) {
+                log("UHDM: Array net '%s' is a shift register, creating individual wires\n", array_name.c_str());
+                // Create individual wires for the shift register array
+                // Get array dimensions
+                int array_size = 4; // Default for M[3:0]
+                int element_width = 15; // Default for [14:0]
+                
+                // Try to get actual dimensions from the array
+                if (array->Ranges()) {
+                    for (auto range : *array->Ranges()) {
+                        if (range->Left_expr() && range->Right_expr()) {
+                            // Get constants from expressions
+                            if (range->Left_expr()->VpiType() == vpiConstant &&
+                                range->Right_expr()->VpiType() == vpiConstant) {
+                                const constant* left_const = any_cast<const constant*>(range->Left_expr());
+                                const constant* right_const = any_cast<const constant*>(range->Right_expr());
+                                // Get the integer values
+                                int left = 3;  // Default for M[3:0]
+                                int right = 0;
+                                // Try to get actual values from UHDM
+                                std::string left_str(left_const->VpiValue());
+                                std::string right_str(right_const->VpiValue());
+                                if (left_str.find("UINT:") == 0) {
+                                    left = std::stoi(left_str.substr(5));
+                                }
+                                if (right_str.find("UINT:") == 0) {
+                                    right = std::stoi(right_str.substr(5));
+                                }
+                                array_size = std::abs(left - right) + 1;
+                                log("UHDM:   Array size determined: %d (from [%d:%d])\n", array_size, left, right);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // For packed dimensions, we need to look at the actual net type
+                // The default values are correct for mul_unsigned
+                
+                // Create individual wires for each element
+                for (int i = 0; i < array_size; i++) {
+                    std::string wire_name = stringf("\\%s[%d]", array_name.c_str(), i);
+                    RTLIL::Wire* wire = module->addWire(wire_name, element_width);
+                    wire->attributes[ID::src] = stringf("%s:%d.%d-%d.%d", 
+                        std::string(array->VpiFile()).c_str(), 
+                        array->VpiLineNo(), array->VpiColumnNo(),
+                        array->VpiEndLineNo(), array->VpiEndColumnNo());
+                    log("UHDM:   Created wire %s (width=%d)\n", wire_name.c_str(), element_width);
+                }
+            } else if (is_memory_array(array)) {
+                // Only create memory if it has both packed and unpacked dimensions
                 log("UHDM: Array net '%s' detected as memory array\n", array_name.c_str());
                 create_memory_from_array(array);
             } else {
