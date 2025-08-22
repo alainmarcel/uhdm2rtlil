@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (43/43 tests functional)
-- **Perfect Matches**: 39 tests validated by formal equivalence checking
+- **Success Rate**: 100% (47/47 tests functional)
+- **Perfect Matches**: 43 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
@@ -250,7 +250,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 43 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 47 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -301,9 +301,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **43 test cases**:
+The UHDM frontend test suite includes **47 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **39 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **43 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
@@ -373,6 +373,16 @@ The UHDM frontend test suite includes **43 test cases**:
 - Logic types with VpiSigned attribute are correctly handled
 - Enables correct signed multiplication and other arithmetic operations
 
+### Memory Write Handling in Synchronous Processes
+- Implemented proper architectural fix for memory writes in `always_ff` blocks
+- Memory writes (`mem[addr] <= data`) are no longer placed directly in sync rules
+- Instead, creates temporary wires for memory control signals (address, data, enable)
+- Imports statements into process body (`root_case`) with assignments to temp wires
+- Creates single `mem_write_action` in sync rule using the temp wires
+- This matches Yosys's expected process model and prevents PROC_MEMWR pass failures
+- Added helper functions `is_memory_write()` and `scan_for_memory_writes()` to detect memory operations
+- Verified with Xilinx memory tests: priority_memory, sp_write_first, sp_read_first, sp_read_or_write
+
 ### Key Improvements
 - **simple_interface** - Added interface expansion support, converting interface instances to individual signals
 - **simple_fsm** - Fixed parameter reference handling in case statements, ensuring proper constant resolution
@@ -386,6 +396,7 @@ The UHDM frontend test suite includes **43 test cases**:
 - **mul** - Fixed multiplication result width calculation to match Verilog frontend (sum of operand widths)
 - **macc** - Fixed power operator support, large constant parsing, Mux ordering, arithmetic cell creation, and process structures
 - **vector_index** - Fixed net declaration assignments with non-constant expressions to use continuous assignments
+- **priority_memory**, **sp_write_first**, **sp_read_first**, **sp_read_or_write** - Fixed with proper memory write handling architecture
 
 ### Formal Equivalence Checking
 The test framework now includes formal equivalence checking using Yosys's built-in equivalence checking capabilities:

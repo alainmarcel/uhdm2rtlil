@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil priority_memory_from_verilog_nohier.il
+hierarchy -check -top priority_memory
+stat
+proc
+opt
+stat
+write_rtlil priority_memory_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top priority_memory
+write_verilog -noexpr priority_memory_from_verilog_synth.v

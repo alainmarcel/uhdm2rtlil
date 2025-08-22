@@ -510,18 +510,8 @@ static bool contains_complex_constructs(const any* stmt) {
         return true;
     }
     
-    // Check for assignment to array elements (memory writes)
-    if (stmt_type == vpiAssignment) {
-        const assignment* assign = any_cast<const assignment*>(stmt);
-        if (auto lhs = assign->Lhs()) {
-            // Check if LHS is a bit select (array element)
-            if (lhs->VpiType() == vpiBitSelect) {
-                // Any bit select assignment in synchronous context could be a memory write
-                // We'll let the memory analysis determine if it's actually a memory
-                return true;
-            }
-        }
-    }
+    // Note: Memory writes (bit select assignments) are now allowed in simple if patterns
+    // They will be handled specially during switch statement generation
     
     // Check for begin blocks
     if (stmt_type == vpiBegin) {
@@ -568,6 +558,80 @@ static void extract_assigned_signal_names(const any* stmt, std::set<std::string>
     for (const auto& sig : signals) {
         if (!sig.name.empty()) {
             signal_names.insert(sig.name);
+        }
+    }
+}
+
+// Helper function to check if an assignment is a memory write
+static bool is_memory_write(const assignment* assign, RTLIL::Module* module) {
+    if (!assign || !module) return false;
+    
+    if (auto lhs = assign->Lhs()) {
+        if (lhs->VpiType() == vpiBitSelect) {
+            const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
+            std::string signal_name = std::string(bit_sel->VpiName());
+            RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+            return module->memories.count(mem_id) > 0;
+        }
+    }
+    return false;
+}
+
+// Helper function to scan a statement tree for memory writes
+static void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module) {
+    if (!stmt || !module) return;
+    
+    switch (stmt->VpiType()) {
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (is_memory_write(assign, module)) {
+                if (auto lhs = assign->Lhs()) {
+                    if (lhs->VpiType() == vpiBitSelect) {
+                        const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
+                        std::string signal_name = std::string(bit_sel->VpiName());
+                        memory_names.insert(signal_name);
+                    }
+                }
+            }
+            break;
+        }
+        case vpiBegin: {
+            const begin* begin_stmt = any_cast<const begin*>(stmt);
+            if (begin_stmt->Stmts()) {
+                for (auto sub_stmt : *begin_stmt->Stmts()) {
+                    scan_for_memory_writes(sub_stmt, memory_names, module);
+                }
+            }
+            break;
+        }
+        case vpiIf: {
+            const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
+            if (auto then_stmt = if_stmt->VpiStmt()) {
+                scan_for_memory_writes(then_stmt, memory_names, module);
+            }
+            break;
+        }
+        case vpiIfElse: {
+            const if_else* if_else_stmt = any_cast<const if_else*>(stmt);
+            if (auto then_stmt = if_else_stmt->VpiStmt()) {
+                scan_for_memory_writes(then_stmt, memory_names, module);
+            }
+            if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
+                scan_for_memory_writes(else_stmt, memory_names, module);
+            }
+            break;
+        }
+        case vpiCase: {
+            const case_stmt* case_stmt_obj = any_cast<const case_stmt*>(stmt);
+            if (case_stmt_obj->Case_items()) {
+                for (auto case_item : *case_stmt_obj->Case_items()) {
+                    if (auto case_item_stmt = case_item->Stmt()) {
+                        scan_for_memory_writes(case_item_stmt, memory_names, module);
+                    }
+                }
+            }
+            break;
         }
     }
 }
@@ -1250,7 +1314,96 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 log("      Creating switch statement for simple if-else\n");
                 log_flush();
                 
-                // Create temporary wires for assigned signals
+                // Check if any of the assigned signals are memories
+                std::set<std::string> memory_signals;
+                std::set<std::string> regular_signals;
+                for (const auto& sig_name : assigned_signals) {
+                    RTLIL::IdString sig_id = RTLIL::escape_id(sig_name);
+                    if (module->memories.count(sig_id)) {
+                        memory_signals.insert(sig_name);
+                        log("      Signal %s is a memory\n", sig_name.c_str());
+                    } else {
+                        regular_signals.insert(sig_name);
+                    }
+                }
+                
+                // If we have memory writes, we need special handling
+                if (!memory_signals.empty()) {
+                    log("      Detected memory writes in simple if-else pattern\n");
+                    
+                    // For memory writes, we need to create temp wires for the memory control signals
+                    // (address, data, enable) and handle them specially
+                    std::map<std::string, RTLIL::Wire*> mem_addr_wires;
+                    std::map<std::string, RTLIL::Wire*> mem_data_wires;
+                    std::map<std::string, RTLIL::Wire*> mem_en_wires;
+                    
+                    for (const auto& mem_name : memory_signals) {
+                        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                        RTLIL::Memory* mem = module->memories.at(mem_id);
+                        
+                        // Create temp wires for memory write signals
+                        std::string addr_wire_name = stringf("$memwr$\\%s$addr", mem_name.c_str());
+                        std::string data_wire_name = stringf("$memwr$\\%s$data", mem_name.c_str());
+                        std::string en_wire_name = stringf("$memwr$\\%s$en", mem_name.c_str());
+                        
+                        // Calculate address width from memory size
+                        int addr_width = 1;
+                        while ((1 << addr_width) < mem->size)
+                            addr_width++;
+                        
+                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
+                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
+                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), 1);
+                        
+                        mem_addr_wires[mem_name] = addr_wire;
+                        mem_data_wires[mem_name] = data_wire;
+                        mem_en_wires[mem_name] = en_wire;
+                        
+                        // Initialize enable to 0 (no write by default)
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
+                        
+                        log("      Created memory write control wires for %s\n", mem_name.c_str());
+                    }
+                    
+                    // Create temporary wires for regular (non-memory) signals
+                    std::map<std::string, RTLIL::Wire*> temp_wires;
+                    for (const auto& sig_name : regular_signals) {
+                        // Create temp wire name matching Verilog frontend format
+                        std::string temp_name = "$0\\" + sig_name;
+                        
+                        // Get the original wire
+                        RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
+                        if (!orig_wire) continue;
+                        
+                        // Add the array notation
+                        temp_name = stringf("$0\\%s[%d:0]", sig_name.c_str(), orig_wire->width - 1);
+                        
+                        // Create the temp wire
+                        RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                        temp_wires[sig_name] = temp_wire;
+                        
+                        // Initialize temp wire with current value
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire)));
+                        
+                        log("      Created temp wire %s for signal %s\n", 
+                            temp_name.c_str(), sig_name.c_str());
+                    }
+                    
+                    // TODO: Now we need to modify the import_statement_comb to detect memory writes
+                    // and assign to the memory control wires instead of directly creating memwr
+                    // For now, fall back to the original behavior
+                    is_simple_if_else = false;
+                    log("      Memory write handling not fully implemented, falling back to original behavior\n");
+                } else {
+                    // No memory signals, handle regular signals only
+                }
+            }
+            
+            // Only proceed if we still want simple if-else handling (not disabled due to memory writes)
+            if (is_simple_if_else && simple_if_stmt) {
+                // Create temporary wires for regular assigned signals
                 std::map<std::string, RTLIL::Wire*> temp_wires;
                 for (const auto& sig_name : assigned_signals) {
                     // Create temp wire name matching Verilog frontend format
@@ -1366,33 +1519,129 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
             } else {
                 // Fall back to original behavior for complex cases
-                log("      Creating sync rule\n");
+                log("      Checking for memory writes in process\n");
                 log_flush();
                 
-                // Check if clock signal is empty
-                if (clock_sig.empty()) {
-                    log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+                // Scan for memory writes in the statement
+                std::set<std::string> memory_names;
+                scan_for_memory_writes(stmt, memory_names, module);
+                
+                if (!memory_names.empty()) {
+                    log("      Found memory writes to: ");
+                    for (const auto& mem_name : memory_names) {
+                        log("%s ", mem_name.c_str());
+                    }
+                    log("\n");
+                    log_flush();
+                    
+                    // Create temp wires for memory control signals
+                    current_memory_writes.clear();
+                    for (const auto& mem_name : memory_names) {
+                        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                        RTLIL::Memory* mem = module->memories.at(mem_id);
+                        
+                        // Create temp wires for this memory
+                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), autoidx++);
+                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), autoidx++);
+                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), autoidx++);
+                        
+                        // Calculate address width from memory size
+                        int addr_width = 1;
+                        while ((1 << addr_width) < mem->size)
+                            addr_width++;
+                        
+                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
+                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
+                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), 1);
+                        
+                        // Store in tracking structure
+                        MemoryWriteInfo info;
+                        info.mem_id = mem_id;
+                        info.addr_wire = addr_wire;
+                        info.data_wire = data_wire;
+                        info.en_wire = en_wire;
+                        info.width = mem->width;
+                        current_memory_writes[mem_name] = info;
+                        
+                        // Initialize enable to 0 in the process body
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
+                        
+                        log("      Created memory control wires for %s: addr=%s, data=%s, en=%s\n",
+                            mem_name.c_str(), addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
+                    }
+                    
+                    // Import the statement into the process body (root_case)
+                    // This will generate assignments to the temp wires
+                    log("      Importing statement into process body for memory write handling\n");
+                    log_flush();
+                    import_statement_comb(stmt, &yosys_proc->root_case);
+                    log("      Statement imported to process body\n");
+                    log_flush();
+                    
+                    // Create sync rule with memory writes using temp wires
+                    if (clock_sig.empty()) {
+                        log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+                    }
+                    
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+                    
+                    // Add memory write actions for each memory
+                    for (const auto& [mem_name, info] : current_memory_writes) {
+                        sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
+                        RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
+                        action.memid = info.mem_id;
+                        action.address = RTLIL::SigSpec(info.addr_wire);
+                        action.data = RTLIL::SigSpec(info.data_wire);
+                        
+                        // Use the enable wire, expanded to memory width
+                        RTLIL::SigSpec enable;
+                        for (int i = 0; i < info.width; i++) {
+                            enable.append(RTLIL::SigSpec(info.en_wire));
+                        }
+                        action.enable = enable;
+                        
+                        log("      Added memory write action for %s\n", mem_name.c_str());
+                    }
+                    
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Sync rule with memory writes created\n");
+                    log_flush();
+                    
+                    // Clear memory write tracking
+                    current_memory_writes.clear();
+                } else {
+                    // No memory writes, use original behavior
+                    log("      No memory writes detected, using original sync rule\n");
+                    log_flush();
+                    
+                    // Check if clock signal is empty
+                    if (clock_sig.empty()) {
+                        log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+                    }
+                    
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+                    log("      Sync rule created with clock signal size: %d\n", clock_sig.size());
+                    log_flush();
+                    
+                    // Import the statement using the generic import
+                    log("      Importing statement into sync rule\n");
+                    log_flush();
+                    import_statement_sync(stmt, sync, false);
+                    log("      Statement imported\n");
+                    log_flush();
+                    
+                    // Add the sync rule to the process
+                    log("      Adding sync rule to process\n");
+                    log_flush();
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Sync rule added - import_always_ff complete\n");
+                    log_flush();
                 }
-                
-                RTLIL::SyncRule* sync = new RTLIL::SyncRule;
-                sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
-                sync->signal = clock_sig;
-                log("      Sync rule created with clock signal size: %d\n", clock_sig.size());
-                log_flush();
-                
-                // Import the statement using the generic import
-                log("      Importing statement into sync rule\n");
-                log_flush();
-                import_statement_sync(stmt, sync, false);
-                log("      Statement imported\n");
-                log_flush();
-                
-                // Add the sync rule to the process
-                log("      Adding sync rule to process\n");
-                log_flush();
-                yosys_proc->syncs.push_back(sync);
-                log("      Sync rule added - import_always_ff complete\n");
-                log_flush();
             }
         }
     }
@@ -2222,6 +2471,13 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             log_flush();
             
             if (module->memories.count(mem_id) > 0) {
+                // Check if we're using temp wires for memory writes (new architecture)
+                if (!current_memory_writes.empty() && current_memory_writes.count(signal_name)) {
+                    // Skip - memory writes are handled via temp wires
+                    log("            Memory write to %s handled via temp wires, skipping sync action\n", signal_name.c_str());
+                    return;
+                }
+                
                 log("            Found memory '%s' - handling memory write\n", signal_name.c_str());
                 log_flush();
                 // This is a memory write
@@ -2938,6 +3194,55 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiAssignStmt: {
             auto assign = any_cast<const assignment*>(uhdm_stmt);
             
+            // Check if this is a memory write first
+            if (is_memory_write(assign, module) && !current_memory_writes.empty()) {
+                // This is a memory write and we have temp wires for it
+                if (auto lhs_expr = assign->Lhs()) {
+                    if (lhs_expr->VpiType() == vpiBitSelect) {
+                        const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
+                        std::string mem_name = std::string(bit_sel->VpiName());
+                        
+                        if (current_memory_writes.count(mem_name)) {
+                            const MemoryWriteInfo& info = current_memory_writes[mem_name];
+                            
+                            // Get address
+                            RTLIL::SigSpec addr = import_expression(bit_sel->VpiIndex());
+                            
+                            // Get data
+                            RTLIL::SigSpec data;
+                            if (auto rhs_any = assign->Rhs()) {
+                                if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                                    data = import_expression(rhs_expr);
+                                }
+                            }
+                            
+                            // Resize data if needed
+                            if (data.size() != info.width) {
+                                if (data.size() < info.width) {
+                                    data.extend_u0(info.width);
+                                } else {
+                                    data = data.extract(0, info.width);
+                                }
+                            }
+                            
+                            // Assign to temp wires
+                            case_rule->actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(info.addr_wire), addr));
+                            case_rule->actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(info.data_wire), data));
+                            case_rule->actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(info.en_wire), RTLIL::SigSpec(RTLIL::State::S1)));
+                            
+                            if (mode_debug)
+                                log("        Memory write to %s: addr=%s, data=%s\n",
+                                    mem_name.c_str(), log_signal(addr), log_signal(data));
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // Regular assignment handling
             // Get LHS and RHS
             if (auto lhs_expr = assign->Lhs()) {
                 if (auto rhs_expr = assign->Rhs()) {
