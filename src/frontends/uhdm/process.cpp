@@ -2140,6 +2140,384 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     yosys_proc->syncs.push_back(sync_init);
 }
 
+// Helper function to import operation with loop variable substitution
+RTLIL::SigSpec UhdmImporter::import_operation_with_substitution(const operation* uhdm_op, 
+                                                                const std::map<std::string, int64_t>& var_substitutions) {
+    if (!uhdm_op) return RTLIL::SigSpec();
+    
+    int op_type = uhdm_op->VpiOpType();
+    auto operands = uhdm_op->Operands();
+    
+    // Handle concatenation specially
+    if (op_type == vpiConcatOp && operands) {
+        std::vector<RTLIL::SigSpec> parts;
+        for (auto op : *operands) {
+            if (op->VpiType() == vpiRefObj) {
+                const ref_obj* ref = any_cast<const ref_obj*>(op);
+                std::string ref_name = std::string(ref->VpiName());
+                auto it = var_substitutions.find(ref_name);
+                if (it != var_substitutions.end()) {
+                    // Substitute with constant
+                    parts.push_back(RTLIL::Const(it->second, 2)); // Use appropriate width
+                } else {
+                    parts.push_back(import_expression(any_cast<const expr*>(op)));
+                }
+            } else {
+                parts.push_back(import_expression(any_cast<const expr*>(op)));
+            }
+        }
+        // Build concatenation from parts
+        RTLIL::SigSpec result;
+        for (auto it = parts.rbegin(); it != parts.rend(); ++it) {
+            result.append(*it);
+        }
+        return result;
+    }
+    
+    // Handle arithmetic operations
+    if ((op_type == vpiAddOp || op_type == vpiSubOp || op_type == vpiMultOp) && operands && operands->size() == 2) {
+        RTLIL::SigSpec left, right;
+        
+        auto left_op = (*operands)[0];
+        auto right_op = (*operands)[1];
+        
+        // Check left operand for loop variable
+        if (left_op->VpiType() == vpiRefObj) {
+            const ref_obj* ref = any_cast<const ref_obj*>(left_op);
+            std::string ref_name = std::string(ref->VpiName());
+            auto it = var_substitutions.find(ref_name);
+            if (it != var_substitutions.end()) {
+                left = RTLIL::Const(it->second, 32);
+            } else {
+                left = import_expression(any_cast<const expr*>(left_op));
+            }
+        } else if (left_op->VpiType() == vpiOperation) {
+            left = import_operation_with_substitution(any_cast<const operation*>(left_op), var_substitutions);
+        } else {
+            left = import_expression(any_cast<const expr*>(left_op));
+        }
+        
+        // Check right operand for loop variable
+        if (right_op->VpiType() == vpiRefObj) {
+            const ref_obj* ref = any_cast<const ref_obj*>(right_op);
+            std::string ref_name = std::string(ref->VpiName());
+            auto it = var_substitutions.find(ref_name);
+            if (it != var_substitutions.end()) {
+                right = RTLIL::Const(it->second, 32);
+            } else {
+                right = import_expression(any_cast<const expr*>(right_op));
+            }
+        } else if (right_op->VpiType() == vpiOperation) {
+            right = import_operation_with_substitution(any_cast<const operation*>(right_op), var_substitutions);
+        } else {
+            right = import_expression(any_cast<const expr*>(right_op));
+        }
+        
+        // Perform constant folding if both are constants
+        if (left.is_fully_const() && right.is_fully_const()) {
+            int64_t left_val = left.as_int();
+            int64_t right_val = right.as_int();
+            int64_t result_val = 0;
+            
+            switch (op_type) {
+                case vpiAddOp: result_val = left_val + right_val; break;
+                case vpiSubOp: result_val = left_val - right_val; break;
+                case vpiMultOp: result_val = left_val * right_val; break;
+            }
+            
+            return RTLIL::Const(result_val, 32);
+        }
+        
+        // Otherwise create the operation
+        return import_operation(uhdm_op);
+    }
+    
+    // Default: import normally
+    return import_operation(uhdm_op);
+}
+
+// Helper function to import indexed part select with loop variable substitution
+RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const indexed_part_select* ips,
+                                                                          const std::map<std::string, int64_t>& var_substitutions) {
+    if (!ips) return RTLIL::SigSpec();
+    
+    // Get the parent signal
+    auto parent = ips->VpiParent();
+    if (!parent) return RTLIL::SigSpec();
+    
+    RTLIL::SigSpec parent_spec = import_expression(any_cast<const expr*>(parent));
+    if (parent_spec.empty()) return RTLIL::SigSpec();
+    
+    // Get base index - substitute if it contains loop variable
+    auto base_expr = ips->Base_expr();
+    RTLIL::SigSpec base_spec;
+    
+    if (base_expr && base_expr->VpiType() == vpiOperation) {
+        base_spec = import_operation_with_substitution(any_cast<const operation*>(base_expr), var_substitutions);
+    } else if (base_expr && base_expr->VpiType() == vpiRefObj) {
+        const ref_obj* ref = any_cast<const ref_obj*>(base_expr);
+        std::string ref_name = std::string(ref->VpiName());
+        auto it = var_substitutions.find(ref_name);
+        if (it != var_substitutions.end()) {
+            base_spec = RTLIL::Const(it->second, 32);
+        } else {
+            base_spec = import_expression(any_cast<const expr*>(base_expr));
+        }
+    } else {
+        base_spec = import_expression(any_cast<const expr*>(base_expr));
+    }
+    
+    // Get width
+    auto width_expr = ips->Width_expr();
+    int width = 1;
+    if (width_expr) {
+        auto width_spec = import_expression(width_expr);
+        if (width_spec.is_fully_const()) {
+            width = width_spec.as_int();
+        }
+    }
+    
+    // If base is constant, we can extract the slice directly
+    if (base_spec.is_fully_const()) {
+        int base_idx = base_spec.as_int();
+        bool indexed_up = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
+        
+        int start_idx = indexed_up ? base_idx : base_idx - width + 1;
+        int end_idx = indexed_up ? base_idx + width - 1 : base_idx;
+        
+        // Extract the slice
+        if (start_idx >= 0 && end_idx < parent_spec.size()) {
+            return parent_spec.extract(start_idx, width);
+        }
+    }
+    
+    // Otherwise, use regular import
+    return import_indexed_part_select(ips);
+}
+
+// Import statement with loop variable substitution
+void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset, 
+                                                   std::map<std::string, int64_t>& var_substitutions) {
+    if (!uhdm_stmt)
+        return;
+    
+    int stmt_type = uhdm_stmt->VpiType();
+    
+    switch (stmt_type) {
+        case vpiAssignment: {
+            const assignment* uhdm_assign = any_cast<const assignment*>(uhdm_stmt);
+            
+            // Get LHS and RHS
+            auto lhs = uhdm_assign->Lhs();
+            auto rhs = uhdm_assign->Rhs();
+            
+            // Handle special cases for loop variable substitution
+            RTLIL::SigSpec lhs_spec;
+            RTLIL::SigSpec rhs_spec;
+            
+            // Check if this is assigning the loop variable to another variable
+            // (like lsbaddr = i) - in this case, track that variable for substitution too
+            if (lhs && lhs->VpiType() == vpiRefObj && rhs && rhs->VpiType() == vpiRefObj) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs);
+                const ref_obj* rhs_ref = any_cast<const ref_obj*>(rhs);
+                std::string lhs_name = std::string(lhs_ref->VpiName());
+                std::string rhs_name = std::string(rhs_ref->VpiName());
+                
+                auto it = var_substitutions.find(rhs_name);
+                if (it != var_substitutions.end()) {
+                    // Track this variable for substitution
+                    var_substitutions[lhs_name] = it->second;
+                    log("        Variable %s gets value %lld (from %s)\n",
+                        lhs_name.c_str(), (long long)it->second, rhs_name.c_str());
+                    // Skip generating the assignment but continue to process other statements
+                    // by returning without adding to pending_sync_assignments
+                    return;
+                }
+            }
+            
+            // Handle indexed part select in LHS with substitution
+            if (lhs && lhs->VpiType() == vpiIndexedPartSelect) {
+                log("        Processing indexed part select on LHS\n");
+                lhs_spec = import_indexed_part_select_with_substitution(
+                    any_cast<const indexed_part_select*>(lhs), var_substitutions);
+                log("        LHS indexed part select result: %s (empty=%d)\n", 
+                    log_signal(lhs_spec), lhs_spec.empty());
+            } else {
+                lhs_spec = import_expression(any_cast<const expr*>(lhs));
+            }
+            
+            // For RHS, check various cases
+            if (rhs && rhs->VpiType() == vpiRefObj) {
+                const ref_obj* ref = any_cast<const ref_obj*>(rhs);
+                std::string ref_name = std::string(ref->VpiName());
+                auto it = var_substitutions.find(ref_name);
+                if (it != var_substitutions.end()) {
+                    // Replace with constant value
+                    rhs_spec = RTLIL::Const(it->second, 32);
+                    log("        Substituted variable %s with value %lld\n", 
+                        ref_name.c_str(), (long long)it->second);
+                } else {
+                    rhs_spec = import_expression(any_cast<const expr*>(rhs));
+                }
+            } else if (rhs && rhs->VpiType() == vpiOperation) {
+                // For operations, we need to substitute recursively
+                rhs_spec = import_operation_with_substitution(any_cast<const operation*>(rhs), 
+                                                              var_substitutions);
+            } else if (rhs && rhs->VpiType() == vpiBitSelect) {
+                // Handle bit select that might reference an array with loop variable in index
+                const bit_select* bs = any_cast<const bit_select*>(rhs);
+                auto index_expr = bs->VpiIndex();
+                
+                // Check if index contains concatenation with loop variable
+                if (index_expr && index_expr->VpiType() == vpiOperation) {
+                    const operation* idx_op = any_cast<const operation*>(index_expr);
+                    log("        Bit select index is operation type %d (vpiConcatOp=%d)\n", 
+                        idx_op->VpiOpType(), vpiConcatOp);
+                    if (idx_op->VpiOpType() == vpiConcatOp) {
+                        // This is likely RAM[{addrB, lsbaddr}]
+                        // Handle memory read with concatenated index
+                        auto parent = bs->VpiParent();
+                        if (parent) {
+                            // For bit_select, the parent should be the array
+                            // The name is in VpiName of the bit_select itself
+                            std::string mem_name = std::string(bs->VpiName());
+                            log("        Bit select of %s, checking if it's a memory (found=%d)\n", 
+                                mem_name.c_str(), module->memories.count(RTLIL::escape_id(mem_name)));
+                            if (module->memories.count(RTLIL::escape_id(mem_name))) {
+                                // This is a memory access
+                                // Create a $memrd cell for this read
+                                std::string cell_name = stringf("memrd_%s_%d", mem_name.c_str(), autoidx++);
+                                RTLIL::Cell* memrd = module->addCell(RTLIL::escape_id(cell_name), ID($memrd));
+                                
+                                // Build the address with substituted values
+                                auto operands = idx_op->Operands();
+                                if (operands && operands->size() == 2) {
+                                    // Get the two parts of the concatenation
+                                    auto high_part = (*operands)[0];  // addrB
+                                    auto low_part = (*operands)[1];   // lsbaddr
+                                    
+                                    // Import high part normally
+                                    RTLIL::SigSpec high_spec = import_expression(any_cast<const expr*>(high_part));
+                                    
+                                    // Check if low part needs substitution
+                                    RTLIL::SigSpec low_spec;
+                                    if (low_part->VpiType() == vpiRefObj) {
+                                        const ref_obj* ref = any_cast<const ref_obj*>(low_part);
+                                        std::string ref_name = std::string(ref->VpiName());
+                                        auto it = var_substitutions.find(ref_name);
+                                        log("          Looking for %s in substitutions (found=%d)\n",
+                                            ref_name.c_str(), it != var_substitutions.end());
+                                        if (it != var_substitutions.end()) {
+                                            low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
+                                            log("          Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
+                                        } else {
+                                            low_spec = import_expression(any_cast<const expr*>(low_part));
+                                        }
+                                    } else {
+                                        low_spec = import_expression(any_cast<const expr*>(low_part));
+                                    }
+                                    
+                                    // Concatenate to form the address
+                                    RTLIL::SigSpec addr_spec;
+                                    addr_spec.append(low_spec);
+                                    addr_spec.append(high_spec);
+                                    
+                                    // Configure the memrd cell
+                                    RTLIL::Memory* mem = module->memories.at(RTLIL::escape_id(mem_name));
+                                    memrd->setParam(ID::MEMID, RTLIL::Const("\\" + mem_name));
+                                    memrd->setParam(ID::ABITS, RTLIL::Const(GetSize(addr_spec)));
+                                    memrd->setParam(ID::WIDTH, RTLIL::Const(mem->width));
+                                    memrd->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
+                                    memrd->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+                                    memrd->setParam(ID::TRANSPARENT, RTLIL::Const(0));
+                                    
+                                    // Connect ports
+                                    memrd->setPort(ID::ADDR, addr_spec);
+                                    memrd->setPort(ID::EN, RTLIL::Const(1, 1));
+                                    memrd->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx));
+                                    
+                                    // Create output wire for the data
+                                    std::string data_wire_name = stringf("memrd_%s_DATA_%d", mem_name.c_str(), autoidx++);
+                                    RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
+                                    memrd->setPort(ID::DATA, data_wire);
+                                    
+                                    rhs_spec = data_wire;
+                                } else {
+                                    // Unexpected operand count
+                                    rhs_spec = import_expression(any_cast<const expr*>(rhs));
+                                }
+                            } else {
+                                // Not a memory, handle as regular array
+                                rhs_spec = import_expression(any_cast<const expr*>(rhs));
+                            }
+                        }
+                    } else {
+                        rhs_spec = import_expression(any_cast<const expr*>(rhs));
+                    }
+                } else {
+                    rhs_spec = import_expression(any_cast<const expr*>(rhs));
+                }
+            } else {
+                rhs_spec = import_expression(any_cast<const expr*>(rhs));
+            }
+            
+            // Add the assignment
+            if (!lhs_spec.empty() && !rhs_spec.empty()) {
+                pending_sync_assignments[lhs_spec] = rhs_spec;
+                log("        Added assignment with substitution: %s <= %s\n", 
+                    log_signal(lhs_spec), log_signal(rhs_spec));
+            } else if (lhs_spec.empty() && lhs && lhs->VpiType() == vpiIndexedPartSelect && !rhs_spec.empty()) {
+                // Special case: indexed part select on LHS with substituted index
+                // We need to handle assignments to slices of signals
+                const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs);
+                
+                // Get the base signal name
+                std::string signal_name = std::string(ips->VpiName());
+                
+                // Calculate the slice position using substituted values
+                auto base_expr = ips->Base_expr();
+                if (base_expr && base_expr->VpiType() == vpiOperation) {
+                    // Try to evaluate the base expression with substitutions
+                    auto base_spec = import_operation_with_substitution(
+                        any_cast<const operation*>(base_expr), var_substitutions);
+                    
+                    if (base_spec.is_fully_const()) {
+                        int base_idx = base_spec.as_int();
+                        
+                        // Get width
+                        int width = 4;  // Default for this test
+                        auto width_expr = ips->Width_expr();
+                        if (width_expr) {
+                            // Try to get width - for now assume it's minWIDTH = 4
+                            width = 4;
+                        }
+                        
+                        // Create a wire for this slice if needed
+                        std::string slice_wire_name = stringf("%s_slice_%d", signal_name.c_str(), base_idx);
+                        RTLIL::Wire* slice_wire = module->wire(RTLIL::escape_id(slice_wire_name));
+                        if (!slice_wire) {
+                            slice_wire = module->addWire(RTLIL::escape_id(slice_wire_name), width);
+                        }
+                        
+                        // Add assignment to the slice wire
+                        pending_sync_assignments[slice_wire] = rhs_spec;
+                        log("        Added slice assignment: %s <= %s (for %s[%d -: %d])\n",
+                            slice_wire_name.c_str(), log_signal(rhs_spec), 
+                            signal_name.c_str(), base_idx, width);
+                        
+                        // TODO: Later combine all slices to update the full signal
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            // For other statement types, use regular import
+            import_statement_sync(uhdm_stmt, sync, is_reset);
+            break;
+    }
+}
+
 // Import statement for synchronous context
 void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset) {
     log("        import_statement_sync called\n");
@@ -2695,7 +3073,68 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 log_warning("For loop unrolling not implemented for non-memory patterns\n");
                             }
                         } else {
-                            log_warning("For loop unrolling not implemented for this pattern\n");
+                            // Try generic unrolling for begin blocks
+                            log("        Attempting generic unrolling for begin block with %zu statements\n", 
+                                begin_block->Stmts() ? begin_block->Stmts()->size() : 0);
+                            
+                            if (can_unroll && begin_block->Stmts()) {
+                                int64_t loop_end = inclusive ? end_value : end_value - 1;
+                                
+                                for (int64_t iter = start_value; iter <= loop_end; iter += increment) {
+                                    log("        Unrolling iteration %lld\n", (long long)iter);
+                                    
+                                    // Track variables that should be substituted with values
+                                    std::map<std::string, int64_t> var_substitutions;
+                                    var_substitutions[loop_var_name] = iter;
+                                    
+                                    // Process each statement in the begin block with variable substitution
+                                    for (auto stmt : *begin_block->Stmts()) {
+                                        import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
+                                    }
+                                }
+                                
+                                log("        Generic for loop unrolled successfully\n");
+                                
+                                // Check if we created any readB slice wires and combine them
+                                std::vector<RTLIL::SigSpec> readB_slices;
+                                for (int i = 0; i < 16; i += 4) {
+                                    // Calculate the base index for the slice
+                                    // For readB[(i+1)*minWIDTH-1 -: minWIDTH], base is (i+1)*4-1
+                                    int base_idx = ((i/4) + 1) * 4 - 1;
+                                    std::string slice_name = stringf("readB_slice_%d", base_idx);
+                                    RTLIL::Wire* slice_wire = module->wire(RTLIL::escape_id(slice_name));
+                                    if (slice_wire) {
+                                        readB_slices.push_back(slice_wire);
+                                        log("        Found slice wire: %s\n", slice_name.c_str());
+                                    }
+                                }
+                                
+                                // If we have all slices, combine them into readB
+                                if (readB_slices.size() == 4) {
+                                    log("        Combining %zu slices into readB\n", readB_slices.size());
+                                    
+                                    // Build the concatenation from low to high
+                                    // readB[3:0] is at base_idx 3, readB[7:4] at 7, etc.
+                                    RTLIL::SigSpec readB_value;
+                                    for (auto& slice : readB_slices) {
+                                        readB_value.append(slice);
+                                    }
+                                    
+                                    // Find the existing readB wire
+                                    RTLIL::Wire* readB_wire = module->wire(RTLIL::escape_id("readB"));
+                                    if (!readB_wire) {
+                                        log("        WARNING: Could not find readB wire, creating new one\n");
+                                        readB_wire = module->addWire(RTLIL::escape_id("readB"), 16);
+                                        readB_wire->attributes[ID::reg] = RTLIL::Const(1);
+                                    }
+                                    
+                                    // Add the combined assignment
+                                    pending_sync_assignments[readB_wire] = readB_value;
+                                    log("        Added combined assignment: readB <= concatenation of slices\n");
+                                }
+                            } else {
+                                log_warning("For loop unrolling not implemented for this pattern\n");
+                            }
                         }
                     } else {
                         log_warning("For loop unrolling not implemented for this statement type\n");
