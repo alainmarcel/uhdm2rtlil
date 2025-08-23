@@ -220,6 +220,15 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
             }
             break;
         }
+        case vpiNamedBegin: {
+            auto named_block = any_cast<const UHDM::named_begin*>(stmt);
+            if (auto stmts = named_block->Stmts()) {
+                for (auto s : *stmts) {
+                    extract_assigned_signals(s, signals);
+                }
+            }
+            break;
+        }
         case vpiCase: {
             auto case_st = any_cast<const UHDM::case_stmt*>(stmt);
             if (auto items = case_st->Case_items()) {
@@ -605,6 +614,15 @@ static void scan_for_memory_writes(const any* stmt, std::set<std::string>& memor
             }
             break;
         }
+        case vpiNamedBegin: {
+            const named_begin* named_stmt = any_cast<const named_begin*>(stmt);
+            if (named_stmt->Stmts()) {
+                for (auto sub_stmt : *named_stmt->Stmts()) {
+                    scan_for_memory_writes(sub_stmt, memory_names, module);
+                }
+            }
+            break;
+        }
         case vpiIf: {
             const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
             if (auto then_stmt = if_stmt->VpiStmt()) {
@@ -653,6 +671,17 @@ static const assignment* find_assignment_for_lhs(const any* stmt, const expr* lh
             auto begin_stmt = any_cast<const UHDM::begin*>(stmt);
             if (begin_stmt->Stmts()) {
                 for (auto s : *begin_stmt->Stmts()) {
+                    if (auto result = find_assignment_for_lhs(s, lhs_expr)) {
+                        return result;
+                    }
+                }
+            }
+            break;
+        }
+        case vpiNamedBegin: {
+            auto named_stmt = any_cast<const UHDM::named_begin*>(stmt);
+            if (named_stmt->Stmts()) {
+                for (auto s : *named_stmt->Stmts()) {
                     if (auto result = find_assignment_for_lhs(s, lhs_expr)) {
                         return result;
                     }
@@ -824,6 +853,9 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
     log_flush();
+    
+    // Clear pending assignments from any previous process
+    pending_sync_assignments.clear();
     
     // Set the always_ff attribute
     log("      Setting always_ff attribute\n");
@@ -1855,6 +1887,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Statement imported\n");
                     log_flush();
                     
+                    // Flush pending sync assignments to the sync rule
+                    log("      Flushing %d pending assignments to sync rule\n", (int)pending_sync_assignments.size());
+                    log_flush();
+                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                        log("        Added final assignment: %s <= %s\n", log_signal(lhs), log_signal(rhs));
+                    }
+                    pending_sync_assignments.clear();
+                    
                     // Add the sync rule to the process
                     log("      Adding sync rule to process\n");
                     log_flush();
@@ -2067,6 +2108,9 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (mode_debug)
         log("    Importing initial block\n");
     
+    // Clear pending assignments from any previous process
+    pending_sync_assignments.clear();
+    
     // Initial blocks need two sync rules:
     // 1. sync always (empty signal list)
     // 2. sync init (STi type)
@@ -2086,6 +2130,12 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (auto stmt = uhdm_process->Stmt()) {
         import_statement_sync(stmt, sync_init, false);
     }
+    
+    // Flush pending sync assignments to the sync rule
+    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+        sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
+    }
+    pending_sync_assignments.clear();
     
     yosys_proc->syncs.push_back(sync_init);
 }
@@ -2113,6 +2163,17 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log("        Begin block processed\n");
             log_flush();
             break;
+        case vpiNamedBegin: {
+            log("        Processing named begin block\n");
+            log_flush();
+            // named_begin has similar structure to begin
+            const named_begin* named = any_cast<const named_begin*>(uhdm_stmt);
+            // Create a wrapper to handle named_begin
+            import_named_begin_block_sync(named, sync, is_reset);
+            log("        Named begin block processed\n");
+            log_flush();
+            break;
+        }
         case vpiAssignment:
             log("        Processing assignment\n");
             log_flush();
@@ -2670,6 +2731,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiBegin:
             import_begin_block_comb(any_cast<const begin*>(uhdm_stmt), proc);
             break;
+        case vpiNamedBegin:
+            import_named_begin_block_comb(any_cast<const named_begin*>(uhdm_stmt), proc);
+            break;
         case vpiAssignment:
             import_assignment_comb(any_cast<const assignment*>(uhdm_stmt), proc);
             break;
@@ -2747,6 +2811,67 @@ void UhdmImporter::import_begin_block_sync(const begin* uhdm_begin, RTLIL::SyncR
 void UhdmImporter::import_begin_block_comb(const begin* uhdm_begin, RTLIL::Process* proc) {
     if (uhdm_begin->Stmts()) {
         for (auto stmt : *uhdm_begin->Stmts()) {
+            import_statement_comb(stmt, proc);
+        }
+    }
+}
+
+// Import named_begin block for sync context
+void UhdmImporter::import_named_begin_block_sync(const named_begin* uhdm_named, RTLIL::SyncRule* sync, bool is_reset) {
+    log("          import_named_begin_block_sync called\n");
+    log_flush();
+    
+    if (uhdm_named->Stmts()) {
+        auto stmts = uhdm_named->Stmts();
+        log("          Named begin block has %zu statements\n", stmts->size());
+        log_flush();
+        
+        int stmt_idx = 0;
+        for (auto stmt : *stmts) {
+            log("          Processing statement %d/%zu in named begin block\n", stmt_idx + 1, stmts->size());
+            log_flush();
+            
+            // Skip assignments to integer variables that are only used in for loops
+            // This prevents loop variables like 'j' from appearing in the output
+            if (stmt->VpiType() == vpiAssignment) {
+                const assignment* assign = any_cast<const assignment*>(stmt);
+                if (assign->Lhs()) {
+                    std::string var_name;
+                    if (assign->Lhs()->VpiType() == vpiRefVar) {
+                        var_name = std::string(any_cast<const ref_var*>(assign->Lhs())->VpiName());
+                    } else if (assign->Lhs()->VpiType() == vpiRefObj) {
+                        var_name = std::string(any_cast<const ref_obj*>(assign->Lhs())->VpiName());
+                    }
+                    
+                    // TODO: More generic solution
+                    // Check if this is an integer variable (like i, j used in loops)
+                    // For now, skip assignments to common loop variable names
+                    if (var_name == "i" || var_name == "j" || var_name == "k") {
+                        log("          Skipping assignment to loop variable '%s'\n", var_name.c_str());
+                        stmt_idx++;
+                        continue;
+                    }
+                }
+            }
+            
+            import_statement_sync(stmt, sync, is_reset);
+            log("          Statement %d/%zu processed\n", stmt_idx + 1, stmts->size());
+            log_flush();
+            stmt_idx++;
+        }
+    } else {
+        log("          Named begin block has no statements\n");
+        log_flush();
+    }
+    
+    log("          import_named_begin_block_sync returning\n");
+    log_flush();
+}
+
+// Import named_begin block for comb context
+void UhdmImporter::import_named_begin_block_comb(const named_begin* uhdm_named, RTLIL::Process* proc) {
+    if (uhdm_named->Stmts()) {
+        for (auto stmt : *uhdm_named->Stmts()) {
             import_statement_comb(stmt, proc);
         }
     }
@@ -2889,19 +3014,30 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         log("            Creating conditional assignment with multiplexer\n");
         log_flush();
         
-        // Get the current value of lhs to use as the "else" value
-        RTLIL::SigSpec else_value = lhs;
+        // Check if we already have a pending assignment to this signal
+        RTLIL::SigSpec else_value;
+        if (pending_sync_assignments.count(lhs)) {
+            // Use the previous assignment as the else value
+            else_value = pending_sync_assignments[lhs];
+            log("            Using previous assignment as else value\n");
+        } else {
+            // Use the current value of lhs as the else value
+            else_value = lhs;
+            log("            Using current signal value as else value\n");
+        }
         
-        // Create multiplexer: condition ? rhs : lhs
+        // Create multiplexer: condition ? rhs : else_value
         RTLIL::SigSpec mux_result = module->Mux(NEW_ID, else_value, rhs, current_condition);
         
-        sync->actions.push_back(RTLIL::SigSig(lhs, mux_result));
-        log("            Added conditional assignment: %s <= %s ? %s : %s\n", 
+        // Store in pending assignments (will be added to sync rule later)
+        pending_sync_assignments[lhs] = mux_result;
+        log("            Stored conditional assignment: %s <= %s ? %s : %s\n", 
             log_signal(lhs), log_signal(current_condition), log_signal(rhs), log_signal(else_value));
         log_flush();
     } else {
-        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
-        log("            Added unconditional assignment: %s <= %s\n", 
+        // Store unconditional assignment
+        pending_sync_assignments[lhs] = rhs;
+        log("            Stored unconditional assignment: %s <= %s\n", 
             log_signal(lhs), log_signal(rhs));
         log_flush();
     }
@@ -3390,7 +3526,100 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
 
 // Import case statement for sync context
 void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset) {
-    log_warning("Case statements in sync context not yet implemented\n");
+    log("        Processing case statement in sync context\n");
+    log_flush();
+    
+    // Get the case condition (the signal being switched on)
+    if (auto condition = uhdm_case->VpiCondition()) {
+        RTLIL::SigSpec case_sig = import_expression(condition);
+        
+        log("        Case condition signal: %s\n", log_signal(case_sig));
+        log_flush();
+        
+        // For sync context, we need to build a cascade of muxes for each assigned signal
+        // First, collect all assignments from all case items
+        std::map<std::string, std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>>> signal_assignments;
+        std::vector<RTLIL::SigSpec> case_conditions;
+        bool has_default = false;
+        
+        // Process each case item
+        if (auto case_items = uhdm_case->Case_items()) {
+            log("        Found %d case items\n", (int)case_items->size());
+            log_flush();
+            
+            for (auto case_item : *case_items) {
+                // Get case expressions (values to match)
+                RTLIL::SigSpec case_condition;
+                
+                if (auto exprs = case_item->VpiExprs()) {
+                    // Build equality comparison for this case
+                    for (auto expr : *exprs) {
+                        if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
+                            RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                            
+                            // Create equality comparison
+                            RTLIL::SigSpec eq_sig = module->addWire(NEW_ID);
+                            RTLIL::Cell* eq_cell = module->addEq(NEW_ID, case_sig, expr_sig, eq_sig);
+                            add_src_attribute(eq_cell->attributes, case_item);
+                            
+                            if (case_condition.empty()) {
+                                case_condition = eq_sig;
+                            } else {
+                                // OR multiple case values together
+                                RTLIL::SigSpec or_sig = module->addWire(NEW_ID);
+                                module->addOr(NEW_ID, case_condition, eq_sig, or_sig);
+                                case_condition = or_sig;
+                            }
+                            
+                            log("          Case value: %s\n", log_signal(expr_sig));
+                            log_flush();
+                        }
+                    }
+                } else {
+                    // This is a default case
+                    has_default = true;
+                    log("          Default case\n");
+                    log_flush();
+                }
+                
+                // Store the condition for this case
+                case_conditions.push_back(case_condition);
+                
+                // Collect assignments from this case item
+                if (auto stmt = case_item->Stmt()) {
+                    // Save current condition state
+                    RTLIL::SigSpec prev_condition = current_condition;
+                    
+                    // Set condition for nested statements
+                    if (!case_condition.empty()) {
+                        if (current_condition.empty()) {
+                            current_condition = case_condition;
+                        } else {
+                            // AND with existing condition
+                            RTLIL::SigSpec and_sig = module->addWire(NEW_ID);
+                            module->addAnd(NEW_ID, current_condition, case_condition, and_sig);
+                            current_condition = and_sig;
+                        }
+                    }
+                    
+                    log("          Importing case body statements\n");
+                    log_flush();
+                    
+                    // Import the statement(s) for this case
+                    import_statement_sync(stmt, sync, is_reset);
+                    
+                    // Restore previous condition
+                    current_condition = prev_condition;
+                }
+            }
+        }
+        
+        log("        Case statement processed\n");
+        log_flush();
+        
+    } else {
+        log_warning("Case statement has no condition\n");
+    }
 }
 
 // Import case statement for comb context
@@ -3629,6 +3858,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiBegin: {
             auto begin = any_cast<const UHDM::begin*>(uhdm_stmt);
             if (auto stmts = begin->Stmts()) {
+                for (auto stmt : *stmts) {
+                    import_statement_comb(stmt, case_rule);
+                }
+            }
+            break;
+        }
+        case vpiNamedBegin: {
+            auto named = any_cast<const UHDM::named_begin*>(uhdm_stmt);
+            if (auto stmts = named->Stmts()) {
                 for (auto stmt : *stmts) {
                     import_statement_comb(stmt, case_rule);
                 }
