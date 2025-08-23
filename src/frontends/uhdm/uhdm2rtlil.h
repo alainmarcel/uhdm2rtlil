@@ -134,8 +134,21 @@ struct UhdmImporter {
     };
     std::map<std::string, MemoryWriteInfo> current_memory_writes;
     
+    // Track memory writes for process generation (like Verilog frontend)
+    struct ProcessMemoryWrite {
+        RTLIL::IdString mem_id;
+        RTLIL::SigSpec address;
+        RTLIL::SigSpec data;
+        RTLIL::SigSpec condition;  // Enable condition
+        int iteration;  // For unrolled loops
+    };
+    std::vector<ProcessMemoryWrite> pending_memory_writes;
+    
     // Track pending sync assignments to merge multiple updates to same signal
     std::map<RTLIL::SigSpec, RTLIL::SigSpec> pending_sync_assignments;
+    
+    // Current loop variable substitutions for unrolling
+    std::map<std::string, int64_t> current_loop_substitutions;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     

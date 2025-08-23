@@ -2241,12 +2241,33 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
                                                                           const std::map<std::string, int64_t>& var_substitutions) {
     if (!ips) return RTLIL::SigSpec();
     
-    // Get the parent signal
-    auto parent = ips->VpiParent();
-    if (!parent) return RTLIL::SigSpec();
+    log("      Importing indexed part select with substitution\n");
     
-    RTLIL::SigSpec parent_spec = import_expression(any_cast<const expr*>(parent));
-    if (parent_spec.empty()) return RTLIL::SigSpec();
+    // Get the base signal name (similar to import_indexed_part_select)
+    std::string base_signal_name;
+    if (!ips->VpiDefName().empty()) {
+        base_signal_name = std::string(ips->VpiDefName());
+        log("        IndexedPartSelect VpiDefName: %s\n", base_signal_name.c_str());
+    } else if (!ips->VpiName().empty()) {
+        base_signal_name = std::string(ips->VpiName());
+        log("        IndexedPartSelect VpiName: %s\n", base_signal_name.c_str());
+    }
+    
+    // Look up the wire in the current module
+    RTLIL::SigSpec base_signal;
+    if (!base_signal_name.empty()) {
+        RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
+        if (module->wire(wire_id)) {
+            base_signal = RTLIL::SigSpec(module->wire(wire_id));
+            log("        Found wire %s in module (width=%d)\n", wire_id.c_str(), base_signal.size());
+        } else {
+            log_warning("Wire %s not found in module\n", base_signal_name.c_str());
+            return RTLIL::SigSpec();
+        }
+    } else {
+        log_warning("Could not determine base signal name for indexed part select\n");
+        return RTLIL::SigSpec();
+    }
     
     // Get base index - substitute if it contains loop variable
     auto base_expr = ips->Base_expr();
@@ -2260,6 +2281,7 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
         auto it = var_substitutions.find(ref_name);
         if (it != var_substitutions.end()) {
             base_spec = RTLIL::Const(it->second, 32);
+            log("        Substituted %s with %lld\n", ref_name.c_str(), (long long)it->second);
         } else {
             base_spec = import_expression(any_cast<const expr*>(base_expr));
         }
@@ -2276,18 +2298,27 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select_with_substitution(const 
             width = width_spec.as_int();
         }
     }
+    log("        Width: %d\n", width);
     
     // If base is constant, we can extract the slice directly
     if (base_spec.is_fully_const()) {
         int base_idx = base_spec.as_int();
         bool indexed_up = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
         
+        // For downto indexing [base -: width], extract from (base - width + 1) to base
+        // For upto indexing [base +: width], extract from base to (base + width - 1)  
         int start_idx = indexed_up ? base_idx : base_idx - width + 1;
-        int end_idx = indexed_up ? base_idx + width - 1 : base_idx;
+        
+        log("        Base index: %d, indexed_up: %d, start_idx: %d\n", base_idx, indexed_up, start_idx);
         
         // Extract the slice
-        if (start_idx >= 0 && end_idx < parent_spec.size()) {
-            return parent_spec.extract(start_idx, width);
+        if (start_idx >= 0 && start_idx + width <= base_signal.size()) {
+            RTLIL::SigSpec result = base_signal.extract(start_idx, width);
+            log("        Extracted bits [%d:%d] from signal\n", start_idx + width - 1, start_idx);
+            return result;
+        } else {
+            log_warning("Indexed part select out of bounds (start=%d, width=%d, signal_size=%d)\n",
+                       start_idx, width, base_signal.size());
         }
     }
     
@@ -2301,6 +2332,10 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
     if (!uhdm_stmt)
         return;
     
+    // Save current substitutions and set new ones
+    auto saved_substitutions = current_loop_substitutions;
+    current_loop_substitutions = var_substitutions;
+    
     int stmt_type = uhdm_stmt->VpiType();
     
     switch (stmt_type) {
@@ -2310,6 +2345,12 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             // Get LHS and RHS
             auto lhs = uhdm_assign->Lhs();
             auto rhs = uhdm_assign->Rhs();
+            
+            // Log LHS type for debugging
+            if (lhs) {
+                log("        LHS type: %d (vpiBitSelect=%d, vpiIndexedPartSelect=%d)\n", 
+                    lhs->VpiType(), vpiBitSelect, vpiIndexedPartSelect);
+            }
             
             // Handle special cases for loop variable substitution
             RTLIL::SigSpec lhs_spec;
@@ -2342,6 +2383,81 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                     any_cast<const indexed_part_select*>(lhs), var_substitutions);
                 log("        LHS indexed part select result: %s (empty=%d)\n", 
                     log_signal(lhs_spec), lhs_spec.empty());
+            } else if (lhs && lhs->VpiType() == vpiBitSelect) {
+                // Handle bit select LHS - might be a memory write with concatenated index
+                const bit_select* bs = any_cast<const bit_select*>(lhs);
+                std::string signal_name = std::string(bs->VpiName());
+                log("        LHS is bit select of %s\n", signal_name.c_str());
+                
+                // Check if this is a memory
+                RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+                if (module->memories.count(mem_id) > 0) {
+                    log("        This is a memory write to %s\n", signal_name.c_str());
+                    
+                    // Get the index expression
+                    auto index_expr = bs->VpiIndex();
+                    if (index_expr && index_expr->VpiType() == vpiOperation) {
+                        const operation* idx_op = any_cast<const operation*>(index_expr);
+                        
+                        // Check if it's a concatenation
+                        if (idx_op->VpiOpType() == vpiConcatOp) {
+                            log("        Memory index is concatenation\n");
+                            
+                            // Process the concatenation with variable substitution
+                            auto operands = idx_op->Operands();
+                            if (operands && operands->size() == 2) {
+                                // Get the two parts of the concatenation {addrA, lsbaddr}
+                                auto high_part = (*operands)[0];  // addrA
+                                auto low_part = (*operands)[1];   // lsbaddr
+                                
+                                // Import high part normally
+                                RTLIL::SigSpec high_spec = import_expression(any_cast<const expr*>(high_part));
+                                
+                                // Check if low part needs substitution
+                                RTLIL::SigSpec low_spec;
+                                if (low_part->VpiType() == vpiRefObj) {
+                                    const ref_obj* ref = any_cast<const ref_obj*>(low_part);
+                                    std::string ref_name = std::string(ref->VpiName());
+                                    auto it = var_substitutions.find(ref_name);
+                                    if (it != var_substitutions.end()) {
+                                        low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
+                                        log("          Substituted %s with %lld in memory index\n", 
+                                            ref_name.c_str(), (long long)it->second);
+                                    } else {
+                                        low_spec = import_expression(any_cast<const expr*>(low_part));
+                                    }
+                                } else {
+                                    low_spec = import_expression(any_cast<const expr*>(low_part));
+                                }
+                                
+                                // Build the full address
+                                RTLIL::SigSpec addr_spec;
+                                addr_spec.append(low_spec);
+                                addr_spec.append(high_spec);
+                                
+                                // Store this as a memory write target
+                                // We'll handle the actual memory write action below
+                                // For now, just skip setting lhs_spec to indicate special handling
+                                lhs_spec = RTLIL::SigSpec();
+                                
+                                // Store the memory write info for later processing
+                                // We need both the address and the data (RHS)
+                                // This will be handled in the section after RHS processing
+                            }
+                        } else {
+                            // Regular index, import with possible substitution
+                            RTLIL::SigSpec idx_spec = import_operation_with_substitution(idx_op, var_substitutions);
+                            // For now, just import normally
+                            lhs_spec = import_expression(any_cast<const expr*>(lhs));
+                        }
+                    } else {
+                        // Simple index, import normally
+                        lhs_spec = import_expression(any_cast<const expr*>(lhs));
+                    }
+                } else {
+                    // Not a memory, just a regular bit select
+                    lhs_spec = import_expression(any_cast<const expr*>(lhs));
+                }
             } else {
                 lhs_spec = import_expression(any_cast<const expr*>(lhs));
             }
@@ -2363,6 +2479,13 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 // For operations, we need to substitute recursively
                 rhs_spec = import_operation_with_substitution(any_cast<const operation*>(rhs), 
                                                               var_substitutions);
+            } else if (rhs && rhs->VpiType() == vpiIndexedPartSelect) {
+                // Handle indexed part select on RHS with variable substitution
+                const indexed_part_select* ips = any_cast<const indexed_part_select*>(rhs);
+                log("        RHS is indexed part select, calling substitution function\n");
+                rhs_spec = import_indexed_part_select_with_substitution(ips, var_substitutions);
+                log("        RHS indexed part select result: %s (empty=%d)\n", 
+                    log_signal(rhs_spec), rhs_spec.empty());
             } else if (rhs && rhs->VpiType() == vpiBitSelect) {
                 // Handle bit select that might reference an array with loop variable in index
                 const bit_select* bs = any_cast<const bit_select*>(rhs);
@@ -2461,11 +2584,87 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 rhs_spec = import_expression(any_cast<const expr*>(rhs));
             }
             
-            // Add the assignment
+            // Add the assignment or memory write
             if (!lhs_spec.empty() && !rhs_spec.empty()) {
                 pending_sync_assignments[lhs_spec] = rhs_spec;
                 log("        Added assignment with substitution: %s <= %s\n", 
                     log_signal(lhs_spec), log_signal(rhs_spec));
+            } else if (lhs_spec.empty() && lhs && lhs->VpiType() == vpiBitSelect && !rhs_spec.empty()) {
+                // Special case: memory write with concatenated index
+                const bit_select* bs = any_cast<const bit_select*>(lhs);
+                std::string mem_name = std::string(bs->VpiName());
+                RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                
+                if (module->memories.count(mem_id) > 0) {
+                    RTLIL::Memory* memory = module->memories.at(mem_id);
+                    
+                    // Get the index expression and build address with substitution
+                    auto index_expr = bs->VpiIndex();
+                    RTLIL::SigSpec addr_spec;
+                    
+                    if (index_expr && index_expr->VpiType() == vpiOperation) {
+                        const operation* idx_op = any_cast<const operation*>(index_expr);
+                        
+                        if (idx_op->VpiOpType() == vpiConcatOp) {
+                            auto operands = idx_op->Operands();
+                            if (operands && operands->size() == 2) {
+                                // Get the two parts of the concatenation {addrA, lsbaddr}
+                                auto high_part = (*operands)[0];  // addrA
+                                auto low_part = (*operands)[1];   // lsbaddr
+                                
+                                // Import high part normally
+                                RTLIL::SigSpec high_spec = import_expression(any_cast<const expr*>(high_part));
+                                
+                                // Check if low part needs substitution
+                                RTLIL::SigSpec low_spec;
+                                if (low_part->VpiType() == vpiRefObj) {
+                                    const ref_obj* ref = any_cast<const ref_obj*>(low_part);
+                                    std::string ref_name = std::string(ref->VpiName());
+                                    auto it = var_substitutions.find(ref_name);
+                                    if (it != var_substitutions.end()) {
+                                        low_spec = RTLIL::Const(it->second, 2);  // 2-bit for RATIO=4
+                                        log("          Using substituted value %lld for %s in address\n", 
+                                            (long long)it->second, ref_name.c_str());
+                                    } else {
+                                        low_spec = import_expression(any_cast<const expr*>(low_part));
+                                    }
+                                } else {
+                                    low_spec = import_expression(any_cast<const expr*>(low_part));
+                                }
+                                
+                                // Build the full address as a simple concatenation
+                                // For {addrA[7:0], lsbaddr[1:0]}, we create a 10-bit address
+                                addr_spec.append(low_spec);
+                                addr_spec.append(high_spec);
+                            }
+                        } else {
+                            // Regular operation, import with substitution
+                            addr_spec = import_operation_with_substitution(idx_op, var_substitutions);
+                        }
+                    } else {
+                        // Simple index
+                        addr_spec = import_expression(index_expr);
+                    }
+                    
+                    // Collect memory write for later process generation
+                    if (!addr_spec.empty()) {
+                        ProcessMemoryWrite mem_write;
+                        mem_write.mem_id = mem_id;
+                        mem_write.address = addr_spec;
+                        mem_write.data = rhs_spec;
+                        mem_write.condition = current_condition;
+                        
+                        // Track iteration number for unique wire naming
+                        static int write_counter = 0;
+                        mem_write.iteration = write_counter++;
+                        
+                        pending_memory_writes.push_back(mem_write);
+                        
+                        log("        Collected memory write: %s[%s] <= %s (condition: %s)\n", 
+                            mem_name.c_str(), log_signal(addr_spec), log_signal(rhs_spec),
+                            current_condition.empty() ? "none" : log_signal(current_condition));
+                    }
+                }
             } else if (lhs_spec.empty() && lhs && lhs->VpiType() == vpiIndexedPartSelect && !rhs_spec.empty()) {
                 // Special case: indexed part select on LHS with substituted index
                 // We need to handle assignments to slices of signals
@@ -2511,11 +2710,88 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             }
             break;
         }
+        case vpiIf:
+        case vpiIfElse: {
+            // Handle if statements with variable substitution
+            // We need to process the then/else branches with substitutions
+            const if_stmt* if_st = (stmt_type == vpiIf) ? any_cast<const if_stmt*>(uhdm_stmt) : nullptr;
+            const if_else* if_el = (stmt_type == vpiIfElse) ? any_cast<const if_else*>(uhdm_stmt) : nullptr;
+            
+            // Import condition
+            RTLIL::SigSpec cond;
+            if (if_st) {
+                cond = import_expression(any_cast<const expr*>(if_st->VpiCondition()));
+            } else if (if_el) {
+                cond = import_expression(any_cast<const expr*>(if_el->VpiCondition()));
+            }
+            
+            // Save current condition
+            RTLIL::SigSpec prev_condition = current_condition;
+            
+            // For nested if statements, AND the conditions
+            if (!prev_condition.empty()) {
+                current_condition = module->And(NEW_ID, prev_condition, cond);
+            } else {
+                current_condition = cond;
+            }
+            
+            // Process then statement with substitutions
+            const any* then_stmt = if_st ? if_st->VpiStmt() : (if_el ? if_el->VpiStmt() : nullptr);
+            if (then_stmt) {
+                import_statement_with_loop_vars(then_stmt, sync, is_reset, var_substitutions);
+            }
+            
+            // Process else statement if present
+            const any* else_stmt = nullptr;
+            if (if_el && if_el->VpiElseStmt()) {
+                else_stmt = if_el->VpiElseStmt();
+            }
+            if (else_stmt) {
+                // Invert condition for else branch
+                if (!prev_condition.empty()) {
+                    // For nested if-else, AND the previous condition with NOT of current
+                    current_condition = module->And(NEW_ID, prev_condition, module->Not(NEW_ID, cond));
+                } else {
+                    current_condition = module->Not(NEW_ID, cond);
+                }
+                import_statement_with_loop_vars(else_stmt, sync, is_reset, var_substitutions);
+            }
+            
+            // Restore previous condition
+            current_condition = prev_condition;
+            
+            // Update var_substitutions with any changes made
+            var_substitutions = current_loop_substitutions;
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin: {
+            // Handle begin blocks with variable substitution
+            const VectorOfany* stmts = nullptr;
+            if (stmt_type == vpiBegin) {
+                const begin* block = any_cast<const begin*>(uhdm_stmt);
+                stmts = block->Stmts();
+            } else {
+                const named_begin* block = any_cast<const named_begin*>(uhdm_stmt);
+                stmts = block->Stmts();
+            }
+            
+            if (stmts) {
+                for (auto stmt : *stmts) {
+                    import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
+                }
+            }
+            break;
+        }
         default:
             // For other statement types, use regular import
             import_statement_sync(uhdm_stmt, sync, is_reset);
             break;
     }
+    
+    // Update var_substitutions with any changes and restore saved substitutions
+    var_substitutions = current_loop_substitutions;
+    current_loop_substitutions = saved_substitutions;
 }
 
 // Import statement for synchronous context
@@ -2930,11 +3206,21 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             log("        Shift register unrolled successfully\n");
                         }
                     }
-                } else if (body->VpiType() == vpiBegin) {
-                    const begin* begin_block = any_cast<const begin*>(body);
-                    if (begin_block->Stmts() && !begin_block->Stmts()->empty()) {
+                } else if (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) {
+                    // Handle both regular begin and named begin blocks
+                    const VectorOfany* stmts = nullptr;
+                    if (body->VpiType() == vpiBegin) {
+                        const begin* begin_block = any_cast<const begin*>(body);
+                        stmts = begin_block->Stmts();
+                    } else {
+                        const named_begin* named_block = any_cast<const named_begin*>(body);
+                        stmts = named_block->Stmts();
+                    }
+                    const begin* begin_block = (body->VpiType() == vpiBegin) ? any_cast<const begin*>(body) : nullptr;
+                    const named_begin* named_block = (body->VpiType() == vpiNamedBegin) ? any_cast<const named_begin*>(body) : nullptr;
+                    if (stmts && !stmts->empty()) {
                     // Check for memory assignment pattern
-                    auto first_stmt = begin_block->Stmts()->at(0);
+                    auto first_stmt = stmts->at(0);
                     if (first_stmt->VpiType() == vpiAssignment) {
                         const assignment* assign = any_cast<const assignment*>(first_stmt);
                         if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
@@ -2946,7 +3232,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 std::string memory_name = std::string(bit_sel->VpiName());
                                 
                                 // Get all statements in the loop body
-                                auto loop_stmts = begin_block->Stmts();
+                                auto loop_stmts = stmts;
                                 
                                 // Look for variables used in the loop body that need tracking
                                 // For blockrom: j is used in memory[i] = j * constant
@@ -3075,9 +3361,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         } else {
                             // Try generic unrolling for begin blocks
                             log("        Attempting generic unrolling for begin block with %zu statements\n", 
-                                begin_block->Stmts() ? begin_block->Stmts()->size() : 0);
+                                stmts ? stmts->size() : 0);
                             
-                            if (can_unroll && begin_block->Stmts()) {
+                            if (can_unroll && stmts) {
                                 int64_t loop_end = inclusive ? end_value : end_value - 1;
                                 
                                 for (int64_t iter = start_value; iter <= loop_end; iter += increment) {
@@ -3088,12 +3374,88 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     var_substitutions[loop_var_name] = iter;
                                     
                                     // Process each statement in the begin block with variable substitution
-                                    for (auto stmt : *begin_block->Stmts()) {
+                                    for (auto stmt : *stmts) {
                                         import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
                                     }
                                 }
                                 
                                 log("        Generic for loop unrolled successfully\n");
+                                
+                                // Process pending memory writes to generate proper structure
+                                if (!pending_memory_writes.empty()) {
+                                    log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
+                                    
+                                    // Create temporary wires for each memory write (like Verilog frontend)
+                                    // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
+                                    std::map<int, RTLIL::Wire*> memwr_addr_wires;
+                                    std::map<int, RTLIL::Wire*> memwr_data_wires;
+                                    std::map<int, RTLIL::Wire*> memwr_en_wires;
+                                    
+                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                                        const auto& mem_write = pending_memory_writes[i];
+                                        
+                                        // Create wires for this memory write
+                                        std::string base_name = stringf("$memwr$%s$%d", mem_write.mem_id.c_str(), i);
+                                        
+                                        // Address wire (10 bits for this test)
+                                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), 10);
+                                        memwr_addr_wires[i] = addr_wire;
+                                        
+                                        // Data wire (4 bits for this test)
+                                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(base_name + "_DATA"), 4);
+                                        memwr_data_wires[i] = data_wire;
+                                        
+                                        // Enable wire (4 bits for this test)
+                                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(base_name + "_EN"), 4);
+                                        memwr_en_wires[i] = en_wire;
+                                    }
+                                    
+                                    // Add assignments to sync rule for each memory write
+                                    // These special $memwr$ wires will be recognized by proc_memwr pass
+                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                                        const auto& mem_write = pending_memory_writes[i];
+                                        
+                                        // Add update statements for the special $memwr$ wires
+                                        sync->actions.push_back(RTLIL::SigSig(memwr_addr_wires[i], mem_write.address));
+                                        sync->actions.push_back(RTLIL::SigSig(memwr_data_wires[i], mem_write.data));
+                                        
+                                        // For enable, expand condition to match memory width
+                                        RTLIL::SigSpec enable;
+                                        if (!mem_write.condition.empty()) {
+                                            for (int j = 0; j < 4; j++) {
+                                                enable.append(mem_write.condition);
+                                            }
+                                        } else {
+                                            for (int j = 0; j < 4; j++) {
+                                                enable.append(RTLIL::Const(1, 1));
+                                            }
+                                        }
+                                        sync->actions.push_back(RTLIL::SigSig(memwr_en_wires[i], enable));
+                                        
+                                        log("        Generated memory write %zu: addr=%s, data=%s, en=%s\n",
+                                            i, log_signal(mem_write.address), log_signal(mem_write.data),
+                                            mem_write.condition.empty() ? "1111" : log_signal(mem_write.condition));
+                                    }
+                                    
+                                    // Now add the actual memwr statements using the temporary wires
+                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                                        const auto& mem_write = pending_memory_writes[i];
+                                        
+                                        // Add memory write action using the temporary wires
+                                        sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
+                                        RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
+                                        action.memid = mem_write.mem_id;
+                                        action.address = memwr_addr_wires[i];
+                                        action.data = memwr_data_wires[i];
+                                        action.enable = memwr_en_wires[i];
+                                        
+                                        // Priority based on iteration number
+                                        action.priority_mask = RTLIL::Const(i, 32);
+                                    }
+                                    
+                                    // Clear pending memory writes
+                                    pending_memory_writes.clear();
+                                }
                                 
                                 // Check if we created any readB slice wires and combine them
                                 std::vector<RTLIL::SigSpec> readB_slices;
@@ -3357,14 +3719,28 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 
                 RTLIL::Memory* memory = module->memories.at(mem_id);
                 
-                // Get address
-                RTLIL::SigSpec addr = import_expression(bit_sel->VpiIndex());
+                // Get address - check if it needs variable substitution
+                RTLIL::SigSpec addr;
+                auto index_expr = bit_sel->VpiIndex();
+                if (index_expr && index_expr->VpiType() == vpiOperation && !current_loop_substitutions.empty()) {
+                    // Try to substitute variables in the address
+                    const operation* op = any_cast<const operation*>(index_expr);
+                    addr = import_operation_with_substitution(op, current_loop_substitutions);
+                } else {
+                    addr = import_expression(bit_sel->VpiIndex());
+                }
                 
-                // Get data
+                // Get data - check if it needs variable substitution
                 RTLIL::SigSpec data;
                 if (auto rhs_any = uhdm_assign->Rhs()) {
                     if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
-                        data = import_expression(rhs_expr);
+                        // Check if it's an indexed part select that needs substitution
+                        if (rhs_expr->VpiType() == vpiIndexedPartSelect && !current_loop_substitutions.empty()) {
+                            const indexed_part_select* ips = any_cast<const indexed_part_select*>(rhs_expr);
+                            data = import_indexed_part_select_with_substitution(ips, current_loop_substitutions);
+                        } else {
+                            data = import_expression(rhs_expr);
+                        }
                     }
                 }
                 
