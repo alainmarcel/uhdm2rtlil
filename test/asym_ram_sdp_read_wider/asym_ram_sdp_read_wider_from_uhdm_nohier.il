@@ -43,10 +43,6 @@ module \asym_ram_sdp_read_wider
   attribute \reg 1
   attribute \src "dut.sv:50.19-50.24"
   wire width 16 \readB
-  wire width 4 \readB_slice_11
-  wire width 4 \readB_slice_15
-  wire width 4 \readB_slice_3
-  wire width 4 \readB_slice_7
   attribute \src "dut.sv:4.51-4.54"
   wire input 4 \weA
   attribute \src "dut.sv:49.21-49.24"
@@ -128,11 +124,10 @@ module \asym_ram_sdp_read_wider
   attribute \src "dut.sv:60.2-70.5"
   process $proc$dut.sv:60$1
     sync posedge \clkB
-      update \readB_slice_11 \memrd_RAM_DATA_9
-      update \readB_slice_7 \memrd_RAM_DATA_7
-      update \readB_slice_15 \memrd_RAM_DATA_11
-      update \readB_slice_3 \memrd_RAM_DATA_5
-      update \readB { \readB_slice_15 \readB_slice_11 \readB_slice_7 \readB_slice_3 }
+      update \readB [3:0] \memrd_RAM_DATA_5
+      update \readB [7:4] \memrd_RAM_DATA_7
+      update \readB [11:8] \memrd_RAM_DATA_9
+      update \readB [15:12] \memrd_RAM_DATA_11
   end
   connect \doB \readB
 end
