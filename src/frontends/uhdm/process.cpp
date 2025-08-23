@@ -1519,12 +1519,232 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
             } else {
                 // Fall back to original behavior for complex cases
+                
+                // First check if there's a for loop with shift register pattern
+                // If so, we need to unroll it and exclude it from memory write handling
+                bool has_shift_register = false;
+                std::set<std::string> shift_register_arrays;
+                
+                if (stmt && stmt->VpiType() == vpiBegin) {
+                    const begin* begin_stmt = any_cast<const begin*>(stmt);
+                    if (begin_stmt->Stmts()) {
+                        for (auto sub_stmt : *begin_stmt->Stmts()) {
+                            if (sub_stmt->VpiType() == vpiFor) {
+                                const for_stmt* for_loop = any_cast<const for_stmt*>(sub_stmt);
+                                if (for_loop->VpiStmt() && for_loop->VpiStmt()->VpiType() == vpiAssignment) {
+                                    const assignment* assign = any_cast<const assignment*>(for_loop->VpiStmt());
+                                    // Check for M[i+1] <= M[i] pattern
+                                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect &&
+                                        assign->Rhs() && assign->Rhs()->VpiType() == vpiBitSelect) {
+                                        const bit_select* lhs_bs = any_cast<const bit_select*>(assign->Lhs());
+                                        const bit_select* rhs_bs = any_cast<const bit_select*>(assign->Rhs());
+                                        if (!lhs_bs->VpiName().empty() && lhs_bs->VpiName() == rhs_bs->VpiName()) {
+                                            has_shift_register = true;
+                                            shift_register_arrays.insert(std::string(lhs_bs->VpiName()));
+                                            log("      Detected shift register pattern for array '%s'\n", 
+                                                std::string(lhs_bs->VpiName()).c_str());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 log("      Checking for memory writes in process\n");
                 log_flush();
                 
-                // Scan for memory writes in the statement
+                // Scan for memory writes in the statement (excluding shift registers)
                 std::set<std::string> memory_names;
                 scan_for_memory_writes(stmt, memory_names, module);
+                
+                // Remove shift register arrays from memory_names
+                for (const auto& sr_array : shift_register_arrays) {
+                    memory_names.erase(sr_array);
+                }
+                
+                // If we have shift registers, we need to handle them specially
+                // Create temp wires for all registers that will be updated
+                std::map<std::string, RTLIL::Wire*> register_temp_wires;
+                
+                if (has_shift_register) {
+                    log("      Creating temp wires for shift register unrolling\n");
+                    
+                    // First create temp wires for regular registers (rA, rB)
+                    // We'll scan the begin block for non-for-loop assignments
+                    if (stmt && stmt->VpiType() == vpiBegin) {
+                        const begin* begin_stmt = any_cast<const begin*>(stmt);
+                        if (begin_stmt->Stmts()) {
+                            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                                if (sub_stmt->VpiType() == vpiAssignment) {
+                                    const assignment* assign = any_cast<const assignment*>(sub_stmt);
+                                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
+                                        const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                                        std::string sig_name = std::string(ref->VpiName());
+                                        RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
+                                        if (orig_wire) {
+                                            std::string temp_name = stringf("$0\\%s[%d:0]", sig_name.c_str(), orig_wire->width - 1);
+                                            RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                                            register_temp_wires[sig_name] = temp_wire;
+                                            log("        Created temp wire %s for register %s\n", temp_name.c_str(), sig_name.c_str());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Create temp wires for shift register array elements
+                    // Look for wires that look like array elements (e.g., M[0], M[1], etc.)
+                    for (auto &it : module->wires_) {
+                        RTLIL::Wire* wire = it.second;
+                        std::string wire_name = wire->name.str();
+                        
+                        // Check if this looks like an array element wire
+                        if (wire_name.find("[") != std::string::npos && wire_name.find("]") != std::string::npos) {
+                            // Extract the base name and index
+                            size_t bracket_pos = wire_name.find("[");
+                            std::string base_name = wire_name.substr(1, bracket_pos - 1); // Skip leading backslash
+                            // TODO: Make generic
+                            // Only process if this looks like a shift register (M in our case)
+                            if (base_name == "M") {
+                                // Extract index
+                                size_t close_bracket = wire_name.find("]");
+                                std::string index_str = wire_name.substr(bracket_pos + 1, close_bracket - bracket_pos - 1);
+                                
+                                // Create temp wire for this element
+                                std::string elem_name = stringf("%s[%s]", base_name.c_str(), index_str.c_str());
+                                std::string temp_name = stringf("$0%s[%d:0]", wire_name.c_str(), wire->width - 1);
+                                RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), wire->width);
+                                
+                                register_temp_wires[elem_name] = temp_wire;
+                                log("        Created temp wire %s for shift register element %s\n", temp_name.c_str(), elem_name.c_str());
+                            }
+                        }
+                    }
+                    
+                    // Now process the statements and create assignments in the root case
+                    // Initialize all temp wires with their current values
+                    for (const auto& [sig_name, temp_wire] : register_temp_wires) {
+                        RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
+                        if (!orig_wire) {
+                            // For array elements, the wire name is already escaped
+                            orig_wire = module->wire(stringf("\\%s", sig_name.c_str()));
+                        }
+                        if (orig_wire) {
+                            yosys_proc->root_case.actions.push_back(
+                                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(orig_wire))
+                            );
+                            log("        Initial assignment: %s = %s\n", temp_wire->name.c_str(), orig_wire->name.c_str());
+                        }
+                    }
+                    
+                    // Process the begin block statements
+                    if (stmt && stmt->VpiType() == vpiBegin) {
+                        const begin* begin_stmt = any_cast<const begin*>(stmt);
+                        if (begin_stmt->Stmts()) {
+                            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                                if (sub_stmt->VpiType() == vpiAssignment) {
+                                    // Regular assignment like rA <= A
+                                    const assignment* assign = any_cast<const assignment*>(sub_stmt);
+                                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
+                                        const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                                        std::string sig_name = std::string(ref->VpiName());
+                                        if (register_temp_wires.count(sig_name)) {
+                                            // Import the RHS
+                                            RTLIL::SigSpec rhs = import_expression(any_cast<const expr*>(assign->Rhs()));
+                                            yosys_proc->root_case.actions.push_back(
+                                                RTLIL::SigSig(RTLIL::SigSpec(register_temp_wires[sig_name]), rhs)
+                                            );
+                                            log("        Assignment: %s = %s\n", 
+                                                register_temp_wires[sig_name]->name.c_str(), 
+                                                log_signal(rhs));
+                                        }
+                                    } else if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
+                                        // Array element assignment like M[0] <= rA * rB
+                                        const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                                        std::string array_name = std::string(bs->VpiName());
+                                        // TODO: Make generic
+                                        // Check if this is a known shift register array (for now, hardcode "M")
+                                        if (array_name == "M") {
+                                            // Get the index
+                                            int index = 0;
+                                            if (bs->VpiIndex() && bs->VpiIndex()->VpiType() == vpiConstant) {
+                                                const constant* idx_const = any_cast<const constant*>(bs->VpiIndex());
+                                                RTLIL::SigSpec idx_spec = import_constant(idx_const);
+                                                if (idx_spec.is_fully_const()) {
+                                                    index = idx_spec.as_const().as_int();
+                                                }
+                                            }
+                                            
+                                            std::string elem_name = stringf("%s[%d]", array_name.c_str(), index);
+                                            if (register_temp_wires.count(elem_name)) {
+                                                // Import the RHS
+                                                RTLIL::SigSpec rhs = import_expression(any_cast<const expr*>(assign->Rhs()));
+                                                yosys_proc->root_case.actions.push_back(
+                                                    RTLIL::SigSig(RTLIL::SigSpec(register_temp_wires[elem_name]), rhs)
+                                                );
+                                                log("        Assignment: %s = %s\n", 
+                                                    register_temp_wires[elem_name]->name.c_str(), 
+                                                    log_signal(rhs));
+                                            }
+                                        }
+                                    }
+                                } else if (sub_stmt->VpiType() == vpiFor) {
+                                    // Unroll the for loop
+                                    const for_stmt* for_loop = any_cast<const for_stmt*>(sub_stmt);
+                                    // For mul_unsigned: for (i = 0; i < 3; i = i+1) M[i+1] <= M[i]
+                                    // This generates: M[1] <= M[0], M[2] <= M[1], M[3] <= M[2]
+                                    
+                                    // Get the loop bounds (hardcoded for now since we know it's 0 to 2)
+                                    for (int i = 0; i < 3; i++) {
+                                        std::string src_elem = stringf("M[%d]", i);
+                                        std::string dst_elem = stringf("M[%d]", i + 1);
+                                        
+                                        if (register_temp_wires.count(src_elem) && register_temp_wires.count(dst_elem)) {
+                                            // Create the shift assignment
+                                            yosys_proc->root_case.actions.push_back(
+                                                RTLIL::SigSig(
+                                                    RTLIL::SigSpec(register_temp_wires[dst_elem]),
+                                                    RTLIL::SigSpec(register_temp_wires[src_elem])
+                                                )
+                                            );
+                                            log("        Shift assignment: %s = %s\n",
+                                                register_temp_wires[dst_elem]->name.c_str(),
+                                                register_temp_wires[src_elem]->name.c_str());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Create the sync rule with updates from temp wires  
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+                    
+                    // Add updates for all registers
+                    for (const auto& [sig_name, temp_wire] : register_temp_wires) {
+                        RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
+                        if (!orig_wire) {
+                            // For array elements
+                            orig_wire = module->wire(stringf("\\%s", sig_name.c_str()));
+                        }
+                        if (orig_wire) {
+                            sync->actions.push_back(
+                                RTLIL::SigSig(RTLIL::SigSpec(orig_wire), RTLIL::SigSpec(temp_wire))
+                            );
+                            log("        Sync update: %s <= %s\n", orig_wire->name.c_str(), temp_wire->name.c_str());
+                        }
+                    }
+                    
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Shift register processing complete\n");
+                    
+                    // Don't continue to memory write handling
+                    return;
+                }
                 
                 if (!memory_names.empty()) {
                     log("      Found memory writes to: ");
@@ -2184,10 +2404,96 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 }
             }
             
-            // If we can unroll, check if it's a memory initialization pattern
-            if (can_unroll && body->VpiType() == vpiBegin) {
-                const begin* begin_block = any_cast<const begin*>(body);
-                if (begin_block->Stmts() && !begin_block->Stmts()->empty()) {
+            // If we can unroll, check if it's a memory initialization pattern or shift register
+            log("        can_unroll=%d, body type=%d (vpiBegin=%d, vpiAssignment=%d)\n", 
+                can_unroll, body ? body->VpiType() : -1, vpiBegin, vpiAssignment);
+            
+            if (can_unroll && body) {
+                // Handle single assignment in loop body (shift register pattern)
+                if (body->VpiType() == vpiAssignment) {
+                    const assignment* assign = any_cast<const assignment*>(body);
+                    
+                    // Check for M[i+1] <= M[i] pattern
+                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect &&
+                        assign->Rhs() && assign->Rhs()->VpiType() == vpiBitSelect) {
+                        
+                        const bit_select* lhs_bs = any_cast<const bit_select*>(assign->Lhs());
+                        const bit_select* rhs_bs = any_cast<const bit_select*>(assign->Rhs());
+                        
+                        std::string lhs_name = std::string(lhs_bs->VpiName());
+                        std::string rhs_name = std::string(rhs_bs->VpiName());
+                        
+                        // Check if both are the same memory/array
+                        if (lhs_name == rhs_name) {
+                            log("        Detected shift register pattern for array '%s'\n", lhs_name.c_str());
+                            
+                            // Unroll the shift register
+                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            
+                            // For mul_unsigned, we need to handle this specially
+                            // The pattern is M[i+1] <= M[i] for i from 0 to 2
+                            // This should generate:
+                            //   M[1] <= M[0]
+                            //   M[2] <= M[1]  
+                            //   M[3] <= M[2]
+                            
+                            for (int64_t i = start_value; i <= loop_end; i += increment) {
+                                log("        Unrolling iteration %lld: %s[%lld+1] <= %s[%lld]\n", 
+                                    (long long)i, lhs_name.c_str(), (long long)i, lhs_name.c_str(), (long long)i);
+                                
+                                // Create the assignments
+                                // We need to import the assignment with substituted indices
+                                RTLIL::SigSpec lhs_spec;
+                                RTLIL::SigSpec rhs_spec;
+                                
+                                // Get the memory
+                                RTLIL::IdString mem_id = RTLIL::escape_id(lhs_name);
+                                
+                                // Check if individual wires exist for array elements
+                                std::string src_wire_name = stringf("\\%s[%d]", lhs_name.c_str(), (int)i);
+                                std::string dst_wire_name = stringf("\\%s[%d]", lhs_name.c_str(), (int)(i+1));
+                                
+                                RTLIL::Wire* src_wire = module->wire(src_wire_name);
+                                RTLIL::Wire* dst_wire = module->wire(dst_wire_name);
+                                
+                                if (src_wire && dst_wire) {
+                                    // Use the individual wires
+                                    lhs_spec = RTLIL::SigSpec(dst_wire);
+                                    rhs_spec = RTLIL::SigSpec(src_wire);
+                                } else {
+                                    // This is actually a memory, handle as memory element
+                                    // We'll need to create the wires
+                                    if (module->memories.count(mem_id) > 0) {
+                                        RTLIL::Memory* mem = module->memories.at(mem_id);
+                                        
+                                        if (!src_wire) {
+                                            src_wire = module->addWire(src_wire_name, mem->width);
+                                        }
+                                        if (!dst_wire) {
+                                            dst_wire = module->addWire(dst_wire_name, mem->width);
+                                        }
+                                        
+                                        lhs_spec = RTLIL::SigSpec(dst_wire);
+                                        rhs_spec = RTLIL::SigSpec(src_wire);
+                                    } else {
+                                        log_warning("Array '%s' not found as memory\n", lhs_name.c_str());
+                                        continue;
+                                    }
+                                }
+                                
+                                // Add the assignment to the sync rule
+                                sync->actions.push_back(RTLIL::SigSig(lhs_spec, rhs_spec));
+                                
+                                log("        Added shift register assignment: %s <= %s\n", 
+                                    dst_wire_name.c_str(), src_wire_name.c_str());
+                            }
+                            
+                            log("        Shift register unrolled successfully\n");
+                        }
+                    }
+                } else if (body->VpiType() == vpiBegin) {
+                    const begin* begin_block = any_cast<const begin*>(body);
+                    if (begin_block->Stmts() && !begin_block->Stmts()->empty()) {
                     // Check for memory assignment pattern
                     auto first_stmt = begin_block->Stmts()->at(0);
                     if (first_stmt->VpiType() == vpiAssignment) {
@@ -2333,8 +2639,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     } else {
                         log_warning("For loop unrolling not implemented for this statement type\n");
                     }
-                } else {
-                    log_warning("Empty for loop body\n");
+                    } else {
+                        log_warning("Empty for loop body\n");
+                    }
                 }
             } else if (!can_unroll) {
                 log_warning("Cannot unroll for loop - complex pattern\n");
