@@ -86,6 +86,14 @@ target_include_directories(uhdm2rtlil PRIVATE
     third_party/yosys
 )
 
+# Add compiler warning flags - treat all warnings as errors
+target_compile_options(uhdm2rtlil PRIVATE
+    -Wall
+    -Werror               # Treat all warnings as errors
+    -Wno-unused-parameter # Yosys headers have many unused parameters
+    -Wno-sign-compare     # Common in Yosys code
+)
+
 # Add required Yosys defines
 target_compile_definitions(uhdm2rtlil PRIVATE
     _YOSYS_

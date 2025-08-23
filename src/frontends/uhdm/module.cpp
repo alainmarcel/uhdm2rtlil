@@ -231,6 +231,9 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                 case uhdmlong_int_typespec:
                     is_signed = true;  // These are signed by default
                     break;
+                default:
+                    // Other typespec types are not handled
+                    break;
             }
             
             if (is_signed) {
@@ -406,6 +409,9 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                 case uhdmshort_int_typespec:
                 case uhdmlong_int_typespec:
                     is_signed = true;  // These are signed by default
+                    break;
+                default:
+                    // Other typespec types are not handled
                     break;
             }
             
