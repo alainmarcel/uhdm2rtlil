@@ -15,6 +15,7 @@ module \sp_read_or_write
   attribute \src "dut.sv:1.26-1.29"
   wire input 1 \clk
   wire width 8 \memrd_mem_DATA
+  attribute \init 8'00000000
   attribute \src "dut.sv:1.64-1.71"
   wire width 8 output 6 \rdata_a
   attribute \src "dut.sv:1.39-1.45"

@@ -25,8 +25,10 @@ module \priority_memory
   wire input 1 \clk
   wire width 8 \memrd_mem_DATA
   wire width 8 \memrd_mem_DATA_1
+  attribute \init 8'00000000
   attribute \src "dut.sv:2.40-2.47"
   wire width 8 output 6 \rdata_a
+  attribute \init 8'00000000
   attribute \src "dut.sv:3.35-3.42"
   wire width 8 output 11 \rdata_b
   attribute \src "dut.sv:2.15-2.21"

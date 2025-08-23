@@ -42,6 +42,7 @@ module \sp_write_first
   process $proc$dut.sv:15$1
     sync always
     sync init
+      update \rdata_a 8'00000000
   end
   attribute \always_ff 1
   attribute \src "dut.sv:19.2-28.5"

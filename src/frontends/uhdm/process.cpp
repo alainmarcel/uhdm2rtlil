@@ -2108,6 +2108,9 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (mode_debug)
         log("    Importing initial block\n");
     
+    // Clear pending assignments from any previous process
+    pending_sync_assignments.clear();
+    
     // Initial blocks need two sync rules:
     // 1. sync always (empty signal list)
     // 2. sync init (STi type)
@@ -2127,6 +2130,12 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (auto stmt = uhdm_process->Stmt()) {
         import_statement_sync(stmt, sync_init, false);
     }
+    
+    // Flush pending sync assignments to the sync rule
+    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+        sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
+    }
+    pending_sync_assignments.clear();
     
     yosys_proc->syncs.push_back(sync_init);
 }

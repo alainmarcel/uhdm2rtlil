@@ -11,6 +11,7 @@ module \ndffnr
   wire input 1 \d
   attribute \src "dut.sv:1.30-1.33"
   wire input 3 \pre
+  attribute \init 1'0
   attribute \src "dut.sv:1.51-1.52"
   wire output 5 \q
   attribute \always_ff 1

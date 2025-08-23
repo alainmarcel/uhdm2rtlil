@@ -179,6 +179,7 @@ module sp_read_first(clk, wren_a, rden_a, addr_a, wdata_a, rdata_a);
   wire [7:0] \mem[8] ;
   wire [7:0] \mem[9] ;
   wire [7:0] memrd_mem_DATA;
+  (* init = 8'h00 *)
   (* src = "dut.sv:1.61-1.68" *)
   output [7:0] rdata_a;
   wire [7:0] rdata_a;

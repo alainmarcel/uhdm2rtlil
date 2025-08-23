@@ -789,17 +789,17 @@
  input clk;
  wire clk;
  wire [7:0] \mem[0] ;
-@@ -504,3684 +321,2603 @@
+@@ -504,3684 +321,2605 @@
  wire [7:0] \mem[7] ;
  wire [7:0] \mem[8] ;
  wire [7:0] \mem[9] ;
--(* init = 8'h00 *)
--(* src = "dut.sv:13.25-13.32" *)
 +wire [7:0] memrd_mem_DATA;
+ (* init = 8'h00 *)
+-(* src = "dut.sv:13.25-13.32" *)
 +(* src = "dut.sv:2.40-2.47" *)
  output [7:0] rdata_a;
  wire [7:0] rdata_a;
--(* init = 8'h00 *)
+ (* init = 8'h00 *)
 -(* src = "dut.sv:13.34-13.41" *)
 +(* src = "dut.sv:3.35-3.42" *)
  output [7:0] rdata_b;

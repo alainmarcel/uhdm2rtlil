@@ -15,6 +15,7 @@ module \adff
   process $proc$dut.sv:2$1
     sync always
     sync init
+      update \q 1'0
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1

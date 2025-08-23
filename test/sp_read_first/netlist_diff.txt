@@ -26,13 +26,13 @@
  input clk;
  wire clk;
  wire [7:0] \mem[0] ;
-@@ -178,1753 +177,1706 @@
+@@ -178,1753 +177,1707 @@
  wire [7:0] \mem[7] ;
  wire [7:0] \mem[8] ;
  wire [7:0] \mem[9] ;
--(* init = 8'h00 *)
--(* src = "dut.sv:10.25-10.32" *)
 +wire [7:0] memrd_mem_DATA;
+ (* init = 8'h00 *)
+-(* src = "dut.sv:10.25-10.32" *)
 +(* src = "dut.sv:1.61-1.68" *)
  output [7:0] rdata_a;
  wire [7:0] rdata_a;

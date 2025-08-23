@@ -12,6 +12,7 @@ module adff(d, clk, clr, q);
   (* src = "dut.sv:1.20-1.21" *)
   input d;
   wire d;
+  (* init = 1'h0 *)
   (* src = "dut.sv:1.44-1.45" *)
   output q;
   wire q;
