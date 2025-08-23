@@ -1605,7 +1605,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             // Extract the base name and index
                             size_t bracket_pos = wire_name.find("[");
                             std::string base_name = wire_name.substr(1, bracket_pos - 1); // Skip leading backslash
-                            
+                            // TODO: Make generic
                             // Only process if this looks like a shift register (M in our case)
                             if (base_name == "M") {
                                 // Extract index
@@ -1664,6 +1664,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                         // Array element assignment like M[0] <= rA * rB
                                         const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                                         std::string array_name = std::string(bs->VpiName());
+                                        // TODO: Make generic
                                         // Check if this is a known shift register array (for now, hardcode "M")
                                         if (array_name == "M") {
                                             // Get the index
