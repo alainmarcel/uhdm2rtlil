@@ -12,7 +12,6 @@ module adffn(d, clk, clr, q);
   (* src = "dut.sv:1.21-1.22" *)
   input d;
   wire d;
-  (* init = 1'h0 *)
   (* src = "dut.sv:1.45-1.46" *)
   output q;
   wire q;

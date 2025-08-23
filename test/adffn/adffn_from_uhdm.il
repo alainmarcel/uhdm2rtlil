@@ -9,7 +9,6 @@ module \adffn
   wire input 3 \clr
   attribute \src "dut.sv:1.21-1.22"
   wire input 1 \d
-  attribute \init 1'0
   attribute \src "dut.sv:1.45-1.46"
   wire output 4 \q
   attribute \"has_async_reset" 1

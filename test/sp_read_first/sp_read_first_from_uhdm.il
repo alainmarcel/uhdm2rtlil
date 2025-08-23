@@ -14,7 +14,6 @@ module \sp_read_first
   attribute \src "dut.sv:1.23-1.26"
   wire input 1 \clk
   wire width 8 \memrd_mem_DATA
-  attribute \init 8'00000000
   attribute \src "dut.sv:1.61-1.68"
   wire width 8 output 6 \rdata_a
   attribute \src "dut.sv:1.36-1.42"

@@ -15,7 +15,6 @@ module dffs(d, clk, pre, clr, q);
   (* src = "dut.sv:1.28-1.31" *)
   input pre;
   wire pre;
-  (* init = 1'h0 *)
   (* src = "dut.sv:1.49-1.50" *)
   output q;
   wire q;

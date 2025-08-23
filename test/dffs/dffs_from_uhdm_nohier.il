@@ -17,7 +17,6 @@ module \dffs
   process $proc$dut.sv:3$1
     sync always
     sync init
-      update \q 1'0
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-11.16"

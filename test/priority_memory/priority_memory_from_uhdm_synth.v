@@ -323,11 +323,9 @@ module priority_memory(clk, wren_a, rden_a, addr_a, wdata_a, rdata_a, wren_b, rd
   wire [7:0] \mem[8] ;
   wire [7:0] \mem[9] ;
   wire [7:0] memrd_mem_DATA;
-  (* init = 8'h00 *)
   (* src = "dut.sv:2.40-2.47" *)
   output [7:0] rdata_a;
   wire [7:0] rdata_a;
-  (* init = 8'h00 *)
   (* src = "dut.sv:3.35-3.42" *)
   output [7:0] rdata_b;
   wire [7:0] rdata_b;

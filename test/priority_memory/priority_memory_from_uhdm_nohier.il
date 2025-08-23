@@ -88,8 +88,6 @@ module \priority_memory
   process $proc$dut.sv:18$1
     sync always
     sync init
-      update \rdata_a 8'00000000
-      update \rdata_b 8'00000000
   end
   attribute \always_ff 1
   attribute \src "dut.sv:23.2-38.5"

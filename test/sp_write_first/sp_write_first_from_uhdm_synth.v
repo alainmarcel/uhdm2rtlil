@@ -186,7 +186,6 @@ module sp_write_first(clk, wren_a, rden_a, addr_a, wdata_a, rdata_a);
   wire [7:0] \mem[7] ;
   wire [7:0] \mem[8] ;
   wire [7:0] \mem[9] ;
-  (* init = 8'h00 *)
   (* src = "dut.sv:1.62-1.69" *)
   output [7:0] rdata_a;
   wire [7:0] rdata_a;
@@ -1167,101 +1166,101 @@ module sp_write_first(clk, wren_a, rden_a, addr_a, wdata_a, rdata_a);
     .B(_159_),
     .Y(_006_)
   );
-  \$_DFFE_PP_  \mem_reg[2][0]  /* _328_ */ (
-    .C(clk),
-    .D(wdata_a[0]),
-    .E(_008_),
-    .Q(\mem[2] [0])
-  );
-  \$_DFFE_PP_  \mem_reg[2][1]  /* _329_ */ (
-    .C(clk),
-    .D(wdata_a[1]),
-    .E(_008_),
-    .Q(\mem[2] [1])
-  );
-  \$_DFFE_PP_  \mem_reg[2][2]  /* _330_ */ (
-    .C(clk),
-    .D(wdata_a[2]),
-    .E(_008_),
-    .Q(\mem[2] [2])
-  );
-  \$_DFFE_PP_  \mem_reg[2][3]  /* _331_ */ (
-    .C(clk),
-    .D(wdata_a[3]),
-    .E(_008_),
-    .Q(\mem[2] [3])
-  );
-  \$_DFFE_PP_  \mem_reg[2][4]  /* _332_ */ (
-    .C(clk),
-    .D(wdata_a[4]),
-    .E(_008_),
-    .Q(\mem[2] [4])
-  );
-  \$_DFFE_PP_  \mem_reg[2][5]  /* _333_ */ (
-    .C(clk),
-    .D(wdata_a[5]),
-    .E(_008_),
-    .Q(\mem[2] [5])
-  );
-  \$_DFFE_PP_  \mem_reg[2][6]  /* _334_ */ (
-    .C(clk),
-    .D(wdata_a[6]),
-    .E(_008_),
-    .Q(\mem[2] [6])
-  );
-  \$_DFFE_PP_  \mem_reg[2][7]  /* _335_ */ (
-    .C(clk),
-    .D(wdata_a[7]),
-    .E(_008_),
-    .Q(\mem[2] [7])
-  );
-  \$_DFFE_PP_  \mem_reg[5][0]  /* _336_ */ (
+  \$_DFFE_PP_  \mem_reg[5][0]  /* _328_ */ (
     .C(clk),
     .D(wdata_a[0]),
     .E(_011_),
     .Q(\mem[5] [0])
   );
-  \$_DFFE_PP_  \mem_reg[5][1]  /* _337_ */ (
+  \$_DFFE_PP_  \mem_reg[5][1]  /* _329_ */ (
     .C(clk),
     .D(wdata_a[1]),
     .E(_011_),
     .Q(\mem[5] [1])
   );
-  \$_DFFE_PP_  \mem_reg[5][2]  /* _338_ */ (
+  \$_DFFE_PP_  \mem_reg[5][2]  /* _330_ */ (
     .C(clk),
     .D(wdata_a[2]),
     .E(_011_),
     .Q(\mem[5] [2])
   );
-  \$_DFFE_PP_  \mem_reg[5][3]  /* _339_ */ (
+  \$_DFFE_PP_  \mem_reg[5][3]  /* _331_ */ (
     .C(clk),
     .D(wdata_a[3]),
     .E(_011_),
     .Q(\mem[5] [3])
   );
-  \$_DFFE_PP_  \mem_reg[5][4]  /* _340_ */ (
+  \$_DFFE_PP_  \mem_reg[5][4]  /* _332_ */ (
     .C(clk),
     .D(wdata_a[4]),
     .E(_011_),
     .Q(\mem[5] [4])
   );
-  \$_DFFE_PP_  \mem_reg[5][5]  /* _341_ */ (
+  \$_DFFE_PP_  \mem_reg[5][5]  /* _333_ */ (
     .C(clk),
     .D(wdata_a[5]),
     .E(_011_),
     .Q(\mem[5] [5])
   );
-  \$_DFFE_PP_  \mem_reg[5][6]  /* _342_ */ (
+  \$_DFFE_PP_  \mem_reg[5][6]  /* _334_ */ (
     .C(clk),
     .D(wdata_a[6]),
     .E(_011_),
     .Q(\mem[5] [6])
   );
-  \$_DFFE_PP_  \mem_reg[5][7]  /* _343_ */ (
+  \$_DFFE_PP_  \mem_reg[5][7]  /* _335_ */ (
     .C(clk),
     .D(wdata_a[7]),
     .E(_011_),
     .Q(\mem[5] [7])
+  );
+  \$_DFFE_PP_  \mem_reg[2][0]  /* _336_ */ (
+    .C(clk),
+    .D(wdata_a[0]),
+    .E(_008_),
+    .Q(\mem[2] [0])
+  );
+  \$_DFFE_PP_  \mem_reg[2][1]  /* _337_ */ (
+    .C(clk),
+    .D(wdata_a[1]),
+    .E(_008_),
+    .Q(\mem[2] [1])
+  );
+  \$_DFFE_PP_  \mem_reg[2][2]  /* _338_ */ (
+    .C(clk),
+    .D(wdata_a[2]),
+    .E(_008_),
+    .Q(\mem[2] [2])
+  );
+  \$_DFFE_PP_  \mem_reg[2][3]  /* _339_ */ (
+    .C(clk),
+    .D(wdata_a[3]),
+    .E(_008_),
+    .Q(\mem[2] [3])
+  );
+  \$_DFFE_PP_  \mem_reg[2][4]  /* _340_ */ (
+    .C(clk),
+    .D(wdata_a[4]),
+    .E(_008_),
+    .Q(\mem[2] [4])
+  );
+  \$_DFFE_PP_  \mem_reg[2][5]  /* _341_ */ (
+    .C(clk),
+    .D(wdata_a[5]),
+    .E(_008_),
+    .Q(\mem[2] [5])
+  );
+  \$_DFFE_PP_  \mem_reg[2][6]  /* _342_ */ (
+    .C(clk),
+    .D(wdata_a[6]),
+    .E(_008_),
+    .Q(\mem[2] [6])
+  );
+  \$_DFFE_PP_  \mem_reg[2][7]  /* _343_ */ (
+    .C(clk),
+    .D(wdata_a[7]),
+    .E(_008_),
+    .Q(\mem[2] [7])
   );
   \$_DFFE_PP_  \mem_reg[15][0]  /* _344_ */ (
     .C(clk),

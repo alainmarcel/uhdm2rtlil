@@ -15,7 +15,6 @@ module ndffnr(d, clk, pre, clr, q);
   (* src = "dut.sv:1.30-1.33" *)
   input pre;
   wire pre;
-  (* init = 1'h0 *)
   (* src = "dut.sv:1.51-1.52" *)
   output q;
   wire q;
