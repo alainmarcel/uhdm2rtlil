@@ -24,7 +24,6 @@
 #include <uhdm/interface_inst.h>
 #include <uhdm/interface_typespec.h>
 #include <uhdm/ref_typespec.h>
-#include <uhdm/struct_typespec.h>
 #include <uhdm/package.h>
 #include <uhdm/ExprEval.h>
 
@@ -108,47 +107,11 @@ struct UhdmImporter {
     // Current generate scope for naming
     std::string current_gen_scope;
     
-    // Current condition for conditional memory writes
-    RTLIL::SigSpec current_condition;
-    
     // UHDM design for accessing module definitions
     UHDM::design* uhdm_design = nullptr;
     
-    // Context for handling async reset (maps signal name to temp wire)
-    std::map<std::string, RTLIL::Wire*> current_signal_temp_wires;
-    
-    // Track sync assignment targets for proper if-else handling
-    std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
-    
     // Temporary wires for combinational processes
-    std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
-    std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
-    
-    // Memory write handling for synchronous processes
-    struct MemoryWriteInfo {
-        RTLIL::IdString mem_id;
-        RTLIL::Wire* addr_wire;
-        RTLIL::Wire* data_wire;
-        RTLIL::Wire* en_wire;
-        int width;
-    };
-    std::map<std::string, MemoryWriteInfo> current_memory_writes;
-    
-    // Track memory writes for process generation (like Verilog frontend)
-    struct ProcessMemoryWrite {
-        RTLIL::IdString mem_id;
-        RTLIL::SigSpec address;
-        RTLIL::SigSpec data;
-        RTLIL::SigSpec condition;  // Enable condition
-        int iteration;  // For unrolled loops
-    };
-    std::vector<ProcessMemoryWrite> pending_memory_writes;
-    
-    // Track pending sync assignments to merge multiple updates to same signal
-    std::map<RTLIL::SigSpec, RTLIL::SigSpec> pending_sync_assignments;
-    
-    // Current loop variable substitutions for unrolling
-    std::map<std::string, int64_t> current_loop_substitutions;
+    std::map<std::string, RTLIL::Wire*> current_temp_wires;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
@@ -176,9 +139,11 @@ struct UhdmImporter {
                                           const std::string& param_signature,
                                           const UHDM::module_inst* uhdm_module);
     void create_interface_module_with_width(const std::string& interface_name, int width);
-    void expand_interfaces();
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
     void import_gen_scope(const UHDM::gen_scope* uhdm_scope);
+    void expand_interface_signals_in_module(const UHDM::module_inst* uhdm_module);
+    void expand_interface_ports_in_module(const UHDM::module_inst* uhdm_module);
+    void expand_all_interfaces();
     
     // Primitive gate support
     void import_primitives(const UHDM::module_inst* uhdm_module);
@@ -191,19 +156,13 @@ struct UhdmImporter {
     RTLIL::SigBit get_sig_bit(const UHDM::any* uhdm_obj);
     RTLIL::SigSpec get_sig_spec(const UHDM::any* uhdm_obj, int width = 1);
     RTLIL::Wire* get_wire(const UHDM::any* uhdm_obj, int width = 1);
-    RTLIL::Wire* create_wire(const std::string& name, int width = 1, bool upto = false, int start_offset = 0);
+    RTLIL::Wire* create_wire(const std::string& name, int width = 1);
     
     // Expression handling
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr);
     RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
     RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref, const UHDM::scope* inst = nullptr);
-    
-    // Helper for evaluating expressions with variable substitution (for loop unrolling)
-    RTLIL::SigSpec evaluate_expression_with_vars(const UHDM::expr* expr, 
-                                                 const std::map<std::string, uint64_t>& vars,
-                                                 const std::string& loop_var_name,
-                                                 int64_t loop_index);
     
     // Statement handling
     void import_statement(const UHDM::any* uhdm_stmt, RTLIL::Process* proc = nullptr);
@@ -212,15 +171,6 @@ struct UhdmImporter {
     void import_case_stmt(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
     void import_for_stmt(const UHDM::for_stmt* uhdm_for, RTLIL::Process* proc);
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
-    void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
-    
-    // Loop variable substitution helpers
-    void import_statement_with_loop_vars(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset,
-                                         std::map<std::string, int64_t>& var_substitutions);
-    RTLIL::SigSpec import_operation_with_substitution(const UHDM::operation* uhdm_op,
-                                                      const std::map<std::string, int64_t>& var_substitutions);
-    RTLIL::SigSpec import_indexed_part_select_with_substitution(const UHDM::indexed_part_select* ips,
-                                                                const std::map<std::string, int64_t>& var_substitutions);
     
     // Process-specific import functions
     void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
@@ -228,23 +178,14 @@ struct UhdmImporter {
     void import_always(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     
-    // TARGETED FIX: Memory for-loop processing
-    bool is_memory_array(const UHDM::net* uhdm_net);
-    bool is_memory_array(const UHDM::array_net* uhdm_array);
-    bool is_memory_array(const UHDM::array_var* uhdm_array);
-    void process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case);
-    
     // Statement import for different contexts
     void import_statement_sync(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::CaseRule* case_rule);
     void import_begin_block_sync(const UHDM::begin* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
     void import_begin_block_comb(const UHDM::begin* uhdm_begin, RTLIL::Process* proc);
-    void import_named_begin_block_sync(const UHDM::named_begin* uhdm_named, RTLIL::SyncRule* sync, bool is_reset);
-    void import_named_begin_block_comb(const UHDM::named_begin* uhdm_named, RTLIL::Process* proc);
     void import_assignment_sync(const UHDM::assignment* uhdm_assign, RTLIL::SyncRule* sync);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
-    void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::CaseRule* case_rule);
     void import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset);
     void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
     void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
@@ -278,25 +219,9 @@ struct UhdmImporter {
     
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
-    bool calculate_struct_member_offset(const UHDM::typespec* ts, const std::string& member_path, 
-                                       const UHDM::scope* inst, int& bit_offset, int& member_width);
     
     // Memory analysis and generation
     void analyze_and_generate_memories(const UHDM::module_inst* uhdm_module);
-    void create_memory_from_array(const UHDM::array_net* uhdm_array);
-    void create_memory_from_array(const UHDM::array_var* uhdm_array);
-    
-    // Helper functions to reduce code duplication
-    const UHDM::assignment* cast_to_assignment(const UHDM::any* stmt);
-    RTLIL::SigSpec create_temp_wire(int width = 1);
-    RTLIL::SigSpec create_eq_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
-    RTLIL::SigSpec create_and_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
-    RTLIL::SigSpec create_or_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
-    RTLIL::SigSpec create_not_cell(const RTLIL::SigSpec& a, const UHDM::any* src = nullptr);
-    RTLIL::SigSpec create_mux_cell(const RTLIL::SigSpec& sel, const RTLIL::SigSpec& b, const RTLIL::SigSpec& a, int width = 0);
-    bool is_vpi_type(const UHDM::any* obj, int vpi_type);
-    void process_assignment_lhs_rhs(const UHDM::assignment* assign, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
-    void process_statement_by_type(const UHDM::any* stmt, RTLIL::Process* proc, RTLIL::SyncRule* sync);
     
     // Parameterized module creation
     std::string create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module);

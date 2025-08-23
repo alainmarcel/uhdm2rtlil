@@ -11,6 +11,136 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// ============================================================================
+// Helper functions to reduce code duplication
+// ============================================================================
+
+// Helper to safely cast to assignment
+const UHDM::assignment* UhdmImporter::cast_to_assignment(const UHDM::any* stmt) {
+    if (!stmt || stmt->VpiType() != vpiAssignment) return nullptr;
+    return any_cast<const assignment*>(stmt);
+}
+
+// Helper to check VPI type
+bool UhdmImporter::is_vpi_type(const UHDM::any* obj, int vpi_type) {
+    return obj && obj->VpiType() == vpi_type;
+}
+
+// Create a temporary wire
+RTLIL::SigSpec UhdmImporter::create_temp_wire(int width) {
+    return module->addWire(NEW_ID, width);
+}
+
+// Create equality comparison cell
+RTLIL::SigSpec UhdmImporter::create_eq_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
+    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Cell* cell = module->addEq(NEW_ID, a, b, result);
+    if (src) add_src_attribute(cell->attributes, src);
+    return result;
+}
+
+// Create AND cell
+RTLIL::SigSpec UhdmImporter::create_and_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
+    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Cell* cell = module->addAnd(NEW_ID, a, b, result);
+    if (src) add_src_attribute(cell->attributes, src);
+    return result;
+}
+
+// Create OR cell
+RTLIL::SigSpec UhdmImporter::create_or_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
+    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Cell* cell = module->addOr(NEW_ID, a, b, result);
+    if (src) add_src_attribute(cell->attributes, src);
+    return result;
+}
+
+// Create NOT cell
+RTLIL::SigSpec UhdmImporter::create_not_cell(const RTLIL::SigSpec& a, const UHDM::any* src) {
+    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Cell* cell = module->addNot(NEW_ID, a, result);
+    if (src) add_src_attribute(cell->attributes, src);
+    return result;
+}
+
+// Create MUX cell
+RTLIL::SigSpec UhdmImporter::create_mux_cell(const RTLIL::SigSpec& sel, const RTLIL::SigSpec& b, const RTLIL::SigSpec& a, int width) {
+    if (width == 0) width = std::max(a.size(), b.size());
+    RTLIL::SigSpec result = create_temp_wire(width);
+    module->addMux(NEW_ID, a, b, sel, result);
+    return result;
+}
+
+// Process assignment to get LHS and RHS
+void UhdmImporter::process_assignment_lhs_rhs(const UHDM::assignment* assign, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs) {
+    if (!assign) return;
+    
+    auto lhs_expr = assign->Lhs();
+    auto rhs_expr = assign->Rhs();
+    
+    if (lhs_expr) lhs = import_expression(any_cast<const expr*>(lhs_expr));
+    if (rhs_expr) rhs = import_expression(any_cast<const expr*>(rhs_expr));
+}
+
+// Generic statement type dispatcher to reduce if-else chains
+void UhdmImporter::process_statement_by_type(const UHDM::any* stmt, RTLIL::Process* proc, RTLIL::SyncRule* sync) {
+    if (!stmt) return;
+    
+    switch (stmt->VpiType()) {
+        case vpiAssignment:
+            if (sync) {
+                import_assignment_sync(any_cast<const assignment*>(stmt), sync);
+            } else if (proc) {
+                import_assignment_comb(any_cast<const assignment*>(stmt), proc);
+            }
+            break;
+            
+        case vpiIf:
+            if (sync) {
+                import_if_stmt_sync(any_cast<const if_stmt*>(stmt), sync, false);
+            } else if (proc) {
+                import_if_stmt_comb(any_cast<const if_stmt*>(stmt), proc);
+            }
+            break;
+            
+        case vpiIfElse:
+            if (proc) {
+                import_if_else_comb(any_cast<const if_else*>(stmt), proc);
+            }
+            // Note: if_else in sync context is handled via import_statement_sync
+            break;
+            
+        case vpiCase:
+            if (sync) {
+                import_case_stmt_sync(any_cast<const case_stmt*>(stmt), sync, false);
+            } else if (proc) {
+                import_case_stmt_comb(any_cast<const case_stmt*>(stmt), proc);
+            }
+            break;
+            
+        case vpiBegin:
+        case vpiNamedBegin:
+            {
+                const VectorOfany* stmts = nullptr;
+                if (stmt->VpiType() == vpiBegin) {
+                    stmts = any_cast<const begin*>(stmt)->Stmts();
+                } else {
+                    stmts = any_cast<const named_begin*>(stmt)->Stmts();
+                }
+                if (stmts) {
+                    for (auto sub_stmt : *stmts) {
+                        process_statement_by_type(sub_stmt, proc, sync);
+                    }
+                }
+            }
+            break;
+            
+        default:
+            // Handle other statement types as needed
+            break;
+    }
+}
+
 // Forward declaration of helper function
 struct AssignedSignal {
     std::string name;
@@ -4364,17 +4494,13 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                             RTLIL::SigSpec expr_sig = import_expression(case_expr);
                             
                             // Create equality comparison
-                            RTLIL::SigSpec eq_sig = module->addWire(NEW_ID);
-                            RTLIL::Cell* eq_cell = module->addEq(NEW_ID, case_sig, expr_sig, eq_sig);
-                            add_src_attribute(eq_cell->attributes, case_item);
+                            RTLIL::SigSpec eq_sig = create_eq_cell(case_sig, expr_sig, case_item);
                             
                             if (case_condition.empty()) {
                                 case_condition = eq_sig;
                             } else {
                                 // OR multiple case values together
-                                RTLIL::SigSpec or_sig = module->addWire(NEW_ID);
-                                module->addOr(NEW_ID, case_condition, eq_sig, or_sig);
-                                case_condition = or_sig;
+                                case_condition = create_or_cell(case_condition, eq_sig);
                             }
                             
                             log("          Case value: %s\n", log_signal(expr_sig));
@@ -4401,9 +4527,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                             current_condition = case_condition;
                         } else {
                             // AND with existing condition
-                            RTLIL::SigSpec and_sig = module->addWire(NEW_ID);
-                            module->addAnd(NEW_ID, current_condition, case_condition, and_sig);
-                            current_condition = and_sig;
+                            current_condition = create_and_cell(current_condition, case_condition);
                         }
                     }
                     

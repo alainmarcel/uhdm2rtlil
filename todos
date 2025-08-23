@@ -1,0 +1,23 @@
+Running test: arch/xilinx/priority_memory.v
+/home/alain/uhdm2rtlil/test/run_yosys_tests.sh: line 71: 2151487 Segmentation fault      (core dumped) $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
+❌ UHDM frontend failed
+
+Running test: arch/xilinx/xilinx_srl.v
+❌ UHDM frontend failed
+
+Running test: asicworld/code_hdl_models_arbiter_tb.v
+⚠️  Skipped - both frontends failed
+
+Running test: arch/fabulous/custom_map.v
+/home/alain/uhdm2rtlil/test/run_yosys_tests.sh: line 71: 2149362 Aborted                 (core dumped) $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
+⚠️  Skipped - both frontends failed
+
+Running test: asicworld/code_hdl_models_serial_crc.v
+Running formal equivalence check for asicworld/code_hdl_models_serial_crc...
+❌ Formal equivalence check FAILED for asicworld/code_hdl_models_serial_crc
+
+
+Running test: asicworld/code_tidbits_fsm_using_function.v
+Running formal equivalence check for asicworld/code_tidbits_fsm_using_function...
+❌ Formal equivalence check FAILED for asicworld/code_tidbits_fsm_using_function
+S
