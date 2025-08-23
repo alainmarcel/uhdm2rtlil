@@ -1046,7 +1046,6 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             // Find the first-level member
                             if (st_spec->Members()) {
                                 int first_member_offset = 0;
-                                int first_member_width = 0;
                                 const typespec* first_member_typespec = nullptr;
                                 bool found_first_member = false;
                                 
@@ -1067,7 +1066,6 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     }
                                     
                                     if (member_name == first_member) {
-                                        first_member_width = member_width;
                                         found_first_member = true;
                                         break;
                                     }

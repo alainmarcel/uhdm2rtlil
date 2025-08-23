@@ -440,7 +440,6 @@ void UhdmMemoryAnalyzer::generate_memory_write_process(const std::vector<MemoryA
     if (writes.empty()) return;
     
     const auto& first_write = writes[0];
-    const auto& mem_info = memories[first_write.memory_name];
     
     if (parent->mode_debug)
         log("    Generating write process for memory %s\n", first_write.memory_name.c_str());

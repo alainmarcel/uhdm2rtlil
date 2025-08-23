@@ -270,7 +270,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
                 
                 RTLIL::IdString cell_name = "\\" + interface_name;
-                RTLIL::Cell* iface_cell = module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
+                module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
                 log("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
             }
             
@@ -346,7 +346,7 @@ void UhdmImporter::create_interface_module_with_width(const std::string& interfa
     // Create the interface signals (a, b, c for data_bus_if)
     std::vector<std::string> signal_names = {"a", "b", "c"};
     for (const auto& signal_name : signal_names) {
-        RTLIL::Wire* w = iface_module->addWire(RTLIL::escape_id(signal_name), width);
+        iface_module->addWire(RTLIL::escape_id(signal_name), width);
         log("UHDM: Added wire '%s' (width=%d) to interface module\n", signal_name.c_str(), width);
     }
     

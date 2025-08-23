@@ -35,7 +35,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
         // Try to cast to different UHDM types to find parameters
         // actual_group might contain param_assign objects
         try {
-            if (auto actual_group = ref_mod->Actual_group()) {
+            if (ref_mod->Actual_group()) {
                 // Check if it's a param_assign or contains param_assigns
                 if (mode_debug) {
                     log("  Investigating actual_group for param_assigns...\n");
@@ -87,7 +87,7 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                 }
                 
                 // Also check if this is an interface port connection by type
-                if (auto hier_path = dynamic_cast<const UHDM::hier_path*>(port->High_conn())) {
+                if (dynamic_cast<const UHDM::hier_path*>(port->High_conn())) {
                     // Interface ports don't get connected directly
                     // The individual signals within the interface are connected separately
                     if (mode_debug)

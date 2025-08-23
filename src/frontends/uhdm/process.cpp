@@ -483,8 +483,6 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             }
         } else {
             // Handle simple if_stmt without else
-            const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
-            // Basic processing for simple if statements...
             log("UHDM: Processing simple if_stmt (no else clause)\n");
         }
     }
@@ -1724,7 +1722,6 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     }
                                 } else if (sub_stmt->VpiType() == vpiFor) {
                                     // Unroll the for loop
-                                    const for_stmt* for_loop = any_cast<const for_stmt*>(sub_stmt);
                                     // For mul_unsigned: for (i = 0; i < 3; i = i+1) M[i+1] <= M[i]
                                     // This generates: M[1] <= M[0], M[2] <= M[1], M[3] <= M[2]
                                     
@@ -2596,8 +2593,6 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                 RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
                 
                 if (module->memories.count(mem_id) > 0) {
-                    RTLIL::Memory* memory = module->memories.at(mem_id);
-                    
                     // Get the index expression and build address with substitution
                     auto index_expr = bs->VpiIndex();
                     RTLIL::SigSpec addr_spec;
@@ -3216,8 +3211,6 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         const named_begin* named_block = any_cast<const named_begin*>(body);
                         stmts = named_block->Stmts();
                     }
-                    const begin* begin_block = (body->VpiType() == vpiBegin) ? any_cast<const begin*>(body) : nullptr;
-                    const named_begin* named_block = (body->VpiType() == vpiNamedBegin) ? any_cast<const named_begin*>(body) : nullptr;
                     if (stmts && !stmts->empty()) {
                     // Check for memory assignment pattern
                     auto first_stmt = stmts->at(0);
@@ -3395,7 +3388,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                         const auto& mem_write = pending_memory_writes[i];
                                         
                                         // Create wires for this memory write
-                                        std::string base_name = stringf("$memwr$%s$%d", mem_write.mem_id.c_str(), i);
+                                        std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
                                         
                                         // Address wire (10 bits for this test)
                                         RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), 10);
@@ -4189,7 +4182,6 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
 // Import if statement for sync context
 void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset) {
-    int stmt_type = uhdm_if->VpiType();
     // For synchronous logic, we need to handle if statements specially
     // In RTLIL, conditions in sync rules are handled through enable signals on memory writes
     // and through multiplexers for regular assignments
@@ -4355,7 +4347,6 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
         // First, collect all assignments from all case items
         std::map<std::string, std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>>> signal_assignments;
         std::vector<RTLIL::SigSpec> case_conditions;
-        bool has_default = false;
         
         // Process each case item
         if (auto case_items = uhdm_case->Case_items()) {
@@ -4392,7 +4383,6 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                     }
                 } else {
                     // This is a default case
-                    has_default = true;
                     log("          Default case\n");
                     log_flush();
                 }
@@ -4927,8 +4917,6 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
                 // Look for for-loop statements (vpiFor = 15)
                 if (stmt->VpiType() == vpiFor) {
                     log("    *** FOUND FOR-LOOP IN RESET BLOCK! ***\n");
-                    const UHDM::for_stmt* for_loop = any_cast<const UHDM::for_stmt*>(stmt);
-                    
                     log("    Processing for-loop for memory operations\n");
                     
                     // Extract loop bounds - for simple_memory: for (i = 0; i < DEPTH; i++)
