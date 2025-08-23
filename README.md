@@ -183,7 +183,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (43 total)
+### Current Test Cases (52 total - all passing)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
@@ -302,12 +302,21 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **47 test cases**:
-- **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (simple_instance_array, simple_package, unique_case, nested_struct)
-- **43 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+The UHDM frontend test suite includes **52 test cases**:
+- **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
+- **47 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
+
+### Memory Write Restructuring for Complex Loop-based Writes
+- Fixed asym_ram_sdp_write_wider test by restructuring memory write generation
+- Implemented proper for-loop unrolling with variable substitution in memory addresses and data slices
+- Added support for indexed part select with loop variable substitution (e.g., `diA[(i+1)*minWIDTH-1 -: minWIDTH]`)
+- Memory writes in loops now generate proper `$memwr$` temporary wires matching Verilog frontend structure
+- Added priority values to memwr statements for correct write ordering
+- Eliminated external combinational cells in favor of process-internal switch statements
+- All 52 tests now pass with no known failures
 
 ### Process Structure Improvements for always_ff Blocks
 - Fixed process structure generation to use switch statements inside process bodies instead of external mux cells
