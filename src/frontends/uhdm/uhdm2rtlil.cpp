@@ -203,14 +203,28 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                                 if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                                     std::string val_str = std::string(const_val->VpiValue());
                                     size_t colon_pos = val_str.find(':');
+                                    std::string value_type = "";
                                     if (colon_pos != std::string::npos) {
+                                        value_type = val_str.substr(0, colon_pos);
                                         val_str = val_str.substr(colon_pos + 1);
                                     }
-                                    int param_value = std::stoi(val_str);
                                     
-                                    param_module_name += "\\" + param_name + "=s32'";
-                                    for (int i = 31; i >= 0; i--) {
-                                        param_module_name += ((param_value >> i) & 1) ? "1" : "0";
+                                    if (value_type == "STRING") {
+                                        // Handle string parameters
+                                        param_module_name += "\\" + param_name + "=\"" + val_str + "\"";
+                                    } else {
+                                        // Handle numeric parameters
+                                        try {
+                                            int param_value = std::stoi(val_str);
+                                            param_module_name += "\\" + param_name + "=s32'";
+                                            for (int i = 31; i >= 0; i--) {
+                                                param_module_name += ((param_value >> i) & 1) ? "1" : "0";
+                                            }
+                                        } catch (const std::exception& e) {
+                                            log_warning("Failed to convert parameter value '%s' to integer: %s\n", 
+                                                       val_str.c_str(), e.what());
+                                            param_module_name += "\\" + param_name + "=s32'00000000000000000000000000000000";
+                                        }
                                     }
                                 }
                             }
@@ -468,16 +482,33 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         std::string param_value = param_part.substr(eq_pos + 1, 
                             (next_dollar != std::string::npos) ? next_dollar - eq_pos - 1 : std::string::npos);
                         
-                        // Convert to Yosys format
-                        yosys_modname += "\\" + param_name + "=s32'";
-                        // Pad value to 32 bits
-                        try {
-                            int val = std::stoi(param_value);
-                            for (int i = 31; i >= 0; i--) {
-                                yosys_modname += ((val >> i) & 1) ? "1" : "0";
+                        // Check if it's a string parameter
+                        if (param_value.find("STRING:") == 0) {
+                            // Handle string parameter
+                            std::string str_value = param_value.substr(7); // Skip "STRING:"
+                            yosys_modname += "\\" + param_name + "=\"" + str_value + "\"";
+                        } else {
+                            // Handle numeric parameter
+                            // Remove type prefix if present (e.g., "UINT:", "INT:")
+                            size_t colon_pos = param_value.find(':');
+                            if (colon_pos != std::string::npos) {
+                                param_value = param_value.substr(colon_pos + 1);
                             }
-                        } catch (const std::invalid_argument& e) {
-                            log_error("UHDM: Failed to parse parameter value '%s' as integer\n", param_value.c_str());
+                            
+                            // Convert to Yosys format
+                            yosys_modname += "\\" + param_name + "=s32'";
+                            // Pad value to 32 bits
+                            try {
+                                int val = std::stoi(param_value);
+                                for (int i = 31; i >= 0; i--) {
+                                    yosys_modname += ((val >> i) & 1) ? "1" : "0";
+                                }
+                            } catch (const std::exception& e) {
+                                log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n", 
+                                           param_value.c_str(), e.what());
+                                // Use zero as default
+                                yosys_modname += "00000000000000000000000000000000";
+                            }
                         }
                     }
                     pos = eq_pos;
@@ -557,16 +588,28 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 std::string param_value = param_part.substr(eq_pos + 1, 
                                     (next_dollar != std::string::npos) ? next_dollar - eq_pos - 1 : std::string::npos);
                                 
+                                // Check if this is a string parameter
+                                bool is_string = false;
+                                std::string value_to_use = param_value;
+                                if (param_value.substr(0, 7) == "STRING:") {
+                                    is_string = true;
+                                    value_to_use = param_value.substr(7);
+                                }
+                                
                                 // Convert to Yosys format
-                                cell_type += "\\" + param_name + "=s32'";
-                                // Pad value to 32 bits
-                                try {
-                                    int val = std::stoi(param_value);
-                                    for (int i = 31; i >= 0; i--) {
-                                        cell_type += ((val >> i) & 1) ? "1" : "0";
+                                if (is_string) {
+                                    cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
+                                } else {
+                                    cell_type += "\\" + param_name + "=s32'";
+                                    // Pad value to 32 bits
+                                    try {
+                                        int val = std::stoi(value_to_use);
+                                        for (int i = 31; i >= 0; i--) {
+                                            cell_type += ((val >> i) & 1) ? "1" : "0";
+                                        }
+                                    } catch (const std::invalid_argument& e) {
+                                        log_error("UHDM: Failed to parse parameter value '%s' as integer\n", value_to_use.c_str());
                                     }
-                                } catch (const std::invalid_argument& e) {
-                                    log_error("UHDM: Failed to parse parameter value '%s' as integer\n", param_value.c_str());
                                 }
                             }
                             pos = eq_pos;
@@ -884,19 +927,35 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // Get the actual integer value
                         std::string val_str = std::string(const_val->VpiValue());
                         
-                        // Parse value from format like "UINT:8" or "INT:8"
+                        // Parse value from format like "UINT:8", "INT:8", or "STRING:text"
                         size_t colon_pos = val_str.find(':');
+                        std::string value_type = "";
                         if (colon_pos != std::string::npos) {
+                            value_type = val_str.substr(0, colon_pos);
                             val_str = val_str.substr(colon_pos + 1);
                         }
                         
                         if (!val_str.empty()) {
-                            // Convert to Yosys format
-                            param_string += "\\" + param_name + "=s32'";
-                            // Pad value to 32 bits
-                            int val = std::stoi(val_str);
-                            for (int i = 31; i >= 0; i--) {
-                                param_string += ((val >> i) & 1) ? "1" : "0";
+                            if (value_type == "STRING") {
+                                // Handle string parameters
+                                // For string parameters, just use the string value directly
+                                param_string += "\\" + param_name + "=\"" + val_str + "\"";
+                            } else {
+                                // Handle numeric parameters
+                                // Convert to Yosys format
+                                param_string += "\\" + param_name + "=s32'";
+                                // Pad value to 32 bits
+                                try {
+                                    int val = std::stoi(val_str);
+                                    for (int i = 31; i >= 0; i--) {
+                                        param_string += ((val >> i) & 1) ? "1" : "0";
+                                    }
+                                } catch (const std::exception& e) {
+                                    log_warning("Failed to convert parameter value '%s' to integer: %s\n", 
+                                               val_str.c_str(), e.what());
+                                    // Use zero as default
+                                    param_string += "00000000000000000000000000000000";
+                                }
                             }
                         }
                     }
