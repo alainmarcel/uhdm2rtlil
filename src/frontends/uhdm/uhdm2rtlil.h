@@ -201,6 +201,14 @@ struct UhdmImporter {
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
     void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
     
+    // Loop variable substitution helpers
+    void import_statement_with_loop_vars(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset,
+                                         std::map<std::string, int64_t>& var_substitutions);
+    RTLIL::SigSpec import_operation_with_substitution(const UHDM::operation* uhdm_op,
+                                                      const std::map<std::string, int64_t>& var_substitutions);
+    RTLIL::SigSpec import_indexed_part_select_with_substitution(const UHDM::indexed_part_select* ips,
+                                                                const std::map<std::string, int64_t>& var_substitutions);
+    
     // Process-specific import functions
     void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_always_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
