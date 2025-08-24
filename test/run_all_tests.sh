@@ -107,6 +107,27 @@ if [ ${#FAILING_TESTS[@]} -gt 0 ]; then
 else
     echo "No tests marked as failing - all tests will be run normally"
 fi
+
+# Load skipped tests list
+SKIPPED_TESTS_LIST=()
+if [ -f "skipped_tests.txt" ]; then
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+            # Trim leading and trailing whitespace and remove inline comments
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [[ -n "$trimmed_line" ]]; then
+                SKIPPED_TESTS_LIST+=("$trimmed_line")
+            fi
+        fi
+    done < "skipped_tests.txt"
+fi
+
+if [ ${#SKIPPED_TESTS_LIST[@]} -gt 0 ]; then
+    echo "Tests marked as skipped (will not be run): ${SKIPPED_TESTS_LIST[*]}"
+else
+    echo "No tests marked as skipped - all tests will be run"
+fi
 echo
 
 # Only find local test directories if running local tests
@@ -151,6 +172,18 @@ is_failing_test() {
     local test_name="$1"
     for failing_test in "${FAILING_TESTS[@]}"; do
         if [ "$test_name" = "$failing_test" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Helper function to check if test should be skipped
+should_skip_test() {
+    local test_name="$1"
+    for skipped_test in "${SKIPPED_TESTS_LIST[@]}"; do
+        # Support wildcards in skipped test patterns
+        if [[ "$test_name" == $skipped_test ]] || [[ "$test_name" == *"$skipped_test"* ]]; then
             return 0
         fi
     done
@@ -283,6 +316,18 @@ analyze_test_result() {
 # Run local tests if requested and found
 if [ "$RUN_LOCAL" = true ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
     for test_dir in "${TEST_DIRS[@]}"; do
+    
+    # Check if test should be skipped
+    if should_skip_test "$test_dir"; then
+        echo "=========================================="
+        echo "Skipping test: $test_dir (marked in skipped_tests.txt)"
+        echo "=========================================="
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        SKIPPED_TEST_NAMES+=("$test_dir")
+        echo
+        continue
+    fi
+    
     echo "=========================================="
     echo "Running test: $test_dir"
     echo "=========================================="

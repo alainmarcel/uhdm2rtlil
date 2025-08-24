@@ -1,0 +1,9 @@
+# Skipped tests that will not be run
+# Format: one test directory/path name per line
+# Comments start with #
+
+# Tests listed here will be completely skipped (not run at all)
+# This is different from failing_tests.txt where tests are run but expected to fail
+
+# Yosys tests that are skipped due to runtime issues
+arch/xilinx/priority_memory.v  # Skipped due to excessive runtime
