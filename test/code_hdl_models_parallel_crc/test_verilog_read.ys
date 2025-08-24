@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv dut.sv
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil code_hdl_models_parallel_crc_from_verilog_nohier.il
+hierarchy -check -top code_hdl_models_parallel_crc
+stat
+proc
+opt
+stat
+write_rtlil code_hdl_models_parallel_crc_from_verilog.il
+# Synthesize to gate-level netlist
+synth -top code_hdl_models_parallel_crc
+write_verilog -noexpr code_hdl_models_parallel_crc_from_verilog_synth.v
