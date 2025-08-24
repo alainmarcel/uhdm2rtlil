@@ -260,119 +260,119 @@ module \fsm
     connect \B 3'101
     connect \Y $auto$process.cpp:31:create_temp_wire$71
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$19
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$19
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$4
     connect \B 3'010
     connect \S $auto$rtlil.cc:3004:And$18
     connect \Y $auto$rtlil.cc:3092:Mux$20
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$21
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$21
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3092:Mux$6
     connect \B 1'1
     connect \S $auto$rtlil.cc:3004:And$18
     connect \Y $auto$rtlil.cc:3092:Mux$22
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$3
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$3
     parameter \WIDTH 3
     connect \A \state
     connect \B 3'001
     connect \S $auto$rtlil.cc:3011:Eq$2
     connect \Y $auto$rtlil.cc:3092:Mux$4
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$31
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$31
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3092:Mux$8
     connect \B 1'1
     connect \S $auto$rtlil.cc:3004:And$30
     connect \Y $auto$rtlil.cc:3092:Mux$32
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$33
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$33
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$20
     connect \B 3'010
     connect \S $auto$rtlil.cc:3004:And$30
     connect \Y $auto$rtlil.cc:3092:Mux$34
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$39
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$39
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$34
     connect \B 3'001
     connect \S $auto$rtlil.cc:3004:And$38
     connect \Y $auto$rtlil.cc:3092:Mux$40
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$49
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$49
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$40
     connect \B 3'010
     connect \S $auto$rtlil.cc:3004:And$48
     connect \Y $auto$rtlil.cc:3092:Mux$50
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$5
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$5
     parameter \WIDTH 1
     connect \A \gnt_0
     connect \B 1'0
     connect \S $auto$rtlil.cc:3011:Eq$2
     connect \Y $auto$rtlil.cc:3092:Mux$6
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$55
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$55
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3092:Mux$22
     connect \B 1'0
     connect \S $auto$rtlil.cc:3004:And$54
     connect \Y $auto$rtlil.cc:3092:Mux$56
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$57
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$57
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$50
     connect \B 3'001
     connect \S $auto$rtlil.cc:3004:And$54
     connect \Y $auto$rtlil.cc:3092:Mux$58
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$67
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$67
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$58
     connect \B 3'101
     connect \S $auto$rtlil.cc:3004:And$66
     connect \Y $auto$rtlil.cc:3092:Mux$68
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$69
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$69
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3092:Mux$32
     connect \B \req_0
     connect \S $auto$rtlil.cc:3004:And$66
     connect \Y $auto$rtlil.cc:3092:Mux$70
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$7
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$7
     parameter \WIDTH 1
     connect \A \gnt_1
     connect \B 1'0
     connect \S $auto$rtlil.cc:3011:Eq$2
     connect \Y $auto$rtlil.cc:3092:Mux$8
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$79
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$79
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$68
     connect \B 3'100
     connect \S $auto$rtlil.cc:3004:And$78
     connect \Y $auto$rtlil.cc:3092:Mux$80
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$81
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$81
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3092:Mux$70
     connect \B \req_1
     connect \S $auto$rtlil.cc:3004:And$78
     connect \Y $auto$rtlil.cc:3092:Mux$82
   end
-  cell $mux $auto$process.cpp:3923:import_assignment_sync$83
+  cell $mux $auto$process.cpp:3955:import_assignment_sync$83
     parameter \WIDTH 3
     connect \A $auto$rtlil.cc:3092:Mux$80
     connect \B 3'001
     connect \S $auto$rtlil.cc:2957:Not$10
     connect \Y $auto$rtlil.cc:3092:Mux$84
   end
-  cell $and $auto$process.cpp:4289:import_if_stmt_sync$65
+  cell $and $auto$process.cpp:4321:import_if_stmt_sync$65
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -382,7 +382,7 @@ module \fsm
     connect \B $auto$rtlil.cc:3011:Eq$64
     connect \Y $auto$rtlil.cc:3004:And$66
   end
-  cell $and $auto$process.cpp:4289:import_if_stmt_sync$77
+  cell $and $auto$process.cpp:4321:import_if_stmt_sync$77
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

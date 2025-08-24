@@ -543,6 +543,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (operands.size() == 2)
                 return module->Eq(NEW_ID, operands[0], operands[1]);
             break;
+        case vpiCaseEqOp:
+            // Case equality (===) - in RTLIL, we use regular equality
+            // since RTLIL handles X and Z values in comparisons
+            if (operands.size() == 2)
+                return module->Eq(NEW_ID, operands[0], operands[1]);
+            break;
         case vpiNeqOp:
             if (operands.size() == 2)
                 return module->Ne(NEW_ID, operands[0], operands[1]);
@@ -609,6 +615,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiCastOp:
             // Cast operation like 3'('x) or 64'(value)
+            log("    Processing cast operation\n");
             if (operands.size() == 1) {
                 // Get the target width from the typespec
                 int target_width = 0;
@@ -637,15 +644,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (operand.is_fully_const()) {
                         RTLIL::Const const_val = operand.as_const();
                         
-                        // For small constants that are all X or Z, expand to target width
-                        // This handles cases like 3'x or 3'z
+                        // For small constants that are all the same value, expand to target width
+                        // This handles cases like 3'('x), 3'('z), 3'('0), 3'('1)
                         if (const_val.size() <= target_width) {
-                            // Check if all bits are X or Z
+                            // Check if all bits are the same value
                             bool all_x = true;
                             bool all_z = true;
+                            bool all_0 = true;
+                            bool all_1 = true;
                             for (auto bit : const_val.bits()) {
                                 if (bit != RTLIL::State::Sx) all_x = false;
                                 if (bit != RTLIL::State::Sz) all_z = false;
+                                if (bit != RTLIL::State::S0) all_0 = false;
+                                if (bit != RTLIL::State::S1) all_1 = false;
                             }
                             
                             // If all bits are X, expand to full width with X
@@ -655,6 +666,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             // If all bits are Z, expand to full width with Z
                             if (all_z) {
                                 return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, target_width));
+                            }
+                            // If all bits are 0, expand to full width with 0
+                            if (all_0) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S0, target_width));
+                            }
+                            // If all bits are 1, expand to full width with 1
+                            if (all_1) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S1, target_width));
                             }
                         }
                         

@@ -93,8 +93,8 @@ if [ -f "failing_tests.txt" ]; then
     while IFS= read -r line; do
         # Skip empty lines and comments
         if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
-            # Trim leading and trailing whitespace
-            trimmed_line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            # Trim leading and trailing whitespace and remove inline comments
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
             if [[ -n "$trimmed_line" ]]; then
                 FAILING_TESTS+=("$trimmed_line")
             fi
