@@ -10,7 +10,7 @@ module \mux16
   attribute \src "dut.sv:3.21-3.22"
   wire output 3 \Y
   attribute \src "dut.sv:8.18-8.19"
-  cell $shiftx $auto$expression.cpp:973:import_bit_select$2
+  cell $shiftx $auto$expression.cpp:979:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
