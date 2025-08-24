@@ -1,6 +1,7 @@
 # Test script to read UHDM file in Yosys
 plugin -i /home/alain/uhdm2rtlil/build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
+write_rtlil rmdead_from_uhdm_nohier.il
 hierarchy -auto-top
 stat
 proc
