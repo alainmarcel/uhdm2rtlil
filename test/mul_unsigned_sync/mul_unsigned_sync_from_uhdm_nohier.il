@@ -8,7 +8,7 @@ module \mul_unsigned_sync
   wire width 6 $0\a_reg[5:0]
   wire width 3 $0\b_reg[2:0]
   wire width 9 $0\p[8:0]
-  wire width 9 $auto$expression.cpp:488:import_operation$1
+  wire width 9 $auto$expression.cpp:500:import_operation$1
   attribute \src "dut.sv:1.41-1.42"
   wire width 6 input 4 \a
   attribute \reg 1
@@ -27,7 +27,7 @@ module \mul_unsigned_sync
   wire width 9 output 6 \p
   attribute \src "dut.sv:1.32-1.35"
   wire input 2 \rst
-  cell $mul $auto$expression.cpp:505:import_operation$2
+  cell $mul $auto$expression.cpp:517:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \mul_unsigned_sync
     parameter \Y_WIDTH 9
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:488:import_operation$1
+    connect \Y $auto$expression.cpp:500:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:18.5-30.8"
@@ -58,7 +58,7 @@ module \mul_unsigned_sync
           case 1'1
             assign $0\a_reg[5:0] \a
             assign $0\b_reg[2:0] \b
-            assign $0\p[8:0] $auto$expression.cpp:488:import_operation$1
+            assign $0\p[8:0] $auto$expression.cpp:500:import_operation$1
           attribute \src "dut.sv:25.14-29.12"
           case 
         end

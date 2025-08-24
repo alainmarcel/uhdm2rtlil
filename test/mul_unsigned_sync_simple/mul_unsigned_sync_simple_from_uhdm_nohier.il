@@ -2,7 +2,7 @@
 autoidx 3
 attribute \src "dut.sv:1.1-11.10"
 module \mul_unsigned_sync_simple
-  wire width 9 $auto$expression.cpp:488:import_operation$1
+  wire width 9 $auto$expression.cpp:500:import_operation$1
   attribute \src "dut.sv:1.39-1.40"
   wire width 6 input 2 \a
   attribute \src "dut.sv:1.42-1.43"
@@ -11,7 +11,7 @@ module \mul_unsigned_sync_simple
   wire input 1 \clk
   attribute \src "dut.sv:1.45-1.46"
   wire width 9 output 4 \p
-  cell $mul $auto$expression.cpp:505:import_operation$2
+  cell $mul $auto$expression.cpp:517:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -19,12 +19,12 @@ module \mul_unsigned_sync_simple
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:488:import_operation$1
+    connect \Y $auto$expression.cpp:500:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-10.8"
   process $proc$dut.sv:7$1
     sync posedge \clk
-      update \p $auto$expression.cpp:488:import_operation$1
+      update \p $auto$expression.cpp:500:import_operation$1
   end
 end

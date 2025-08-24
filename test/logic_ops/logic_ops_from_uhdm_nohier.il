@@ -35,7 +35,7 @@ module \logic_ops
   wire output 10 \B9
   attribute \src "dut.sv:3.17-3.19"
   wire width 8 upto input 1 \in
-  cell $logic_and $auto$expression.cpp:373:import_operation$19
+  cell $logic_and $auto$expression.cpp:385:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -45,7 +45,7 @@ module \logic_ops
     connect \B \in [3:2]
     connect \Y $auto$rtlil.cc:3024:LogicAnd$20
   end
-  cell $logic_or $auto$expression.cpp:377:import_operation$21
+  cell $logic_or $auto$expression.cpp:389:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -55,7 +55,7 @@ module \logic_ops
     connect \B \in [3:2]
     connect \Y $auto$rtlil.cc:3025:LogicOr$22
   end
-  cell $and $auto$expression.cpp:381:import_operation$1
+  cell $and $auto$expression.cpp:393:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -65,7 +65,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3004:And$2
   end
-  cell $or $auto$expression.cpp:385:import_operation$3
+  cell $or $auto$expression.cpp:397:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -75,7 +75,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3005:Or$4
   end
-  cell $xor $auto$expression.cpp:389:import_operation$13
+  cell $xor $auto$expression.cpp:401:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -85,14 +85,14 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3006:Xor$14
   end
-  cell $not $auto$expression.cpp:393:import_operation$17
+  cell $not $auto$expression.cpp:405:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in [7]
     connect \Y $auto$rtlil.cc:2957:Not$18
   end
-  cell $xnor $auto$expression.cpp:397:import_operation$15
+  cell $xnor $auto$expression.cpp:409:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -102,7 +102,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3007:Xnor$16
   end
-  cell $and $auto$expression.cpp:418:import_operation$5
+  cell $and $auto$expression.cpp:430:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -112,14 +112,14 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $not $auto$expression.cpp:419:import_operation$7
+  cell $not $auto$expression.cpp:431:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3004:And$6
     connect \Y $auto$rtlil.cc:2957:Not$8
   end
-  cell $or $auto$expression.cpp:429:import_operation$9
+  cell $or $auto$expression.cpp:441:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -129,7 +129,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3005:Or$10
   end
-  cell $not $auto$expression.cpp:430:import_operation$11
+  cell $not $auto$expression.cpp:442:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1

@@ -633,13 +633,43 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // Handle the cast based on operand type
                     RTLIL::SigSpec operand = operands[0];
                     
-                    // If operand is a single bit constant (like 'x, 'z, '0, '1), replicate it
-                    if (operand.size() == 1 && operand.is_fully_const()) {
-                        RTLIL::State bit_val = operand.as_const().bits()[0];
-                        return RTLIL::SigSpec(RTLIL::Const(bit_val, target_width));
+                    // If operand is a constant, handle it directly
+                    if (operand.is_fully_const()) {
+                        RTLIL::Const const_val = operand.as_const();
+                        
+                        // For small constants that are all X or Z, expand to target width
+                        // This handles cases like 3'x or 3'z
+                        if (const_val.size() <= target_width) {
+                            // Check if all bits are X or Z
+                            bool all_x = true;
+                            bool all_z = true;
+                            for (auto bit : const_val.bits()) {
+                                if (bit != RTLIL::State::Sx) all_x = false;
+                                if (bit != RTLIL::State::Sz) all_z = false;
+                            }
+                            
+                            // If all bits are X, expand to full width with X
+                            if (all_x) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, target_width));
+                            }
+                            // If all bits are Z, expand to full width with Z
+                            if (all_z) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, target_width));
+                            }
+                        }
+                        
+                        // For other constants, resize appropriately
+                        if (const_val.size() < target_width) {
+                            // Zero-extend
+                            const_val.bits().resize(target_width, RTLIL::State::S0);
+                        } else if (const_val.size() > target_width) {
+                            // Truncate
+                            const_val.bits().resize(target_width);
+                        }
+                        return RTLIL::SigSpec(const_val);
                     }
                     
-                    // Otherwise, use $pos to cast/resize
+                    // For non-constant operands, use $pos to cast/resize
                     RTLIL::SigSpec result = module->addWire(NEW_ID, target_width);
                     module->addPos(NEW_ID, operand, result);
                     return result;
