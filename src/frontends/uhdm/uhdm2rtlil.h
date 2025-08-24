@@ -286,6 +286,17 @@ struct UhdmImporter {
     void create_memory_from_array(const UHDM::array_net* uhdm_array);
     void create_memory_from_array(const UHDM::array_var* uhdm_array);
     
+    // Helper functions to reduce code duplication
+    const UHDM::assignment* cast_to_assignment(const UHDM::any* stmt);
+    RTLIL::SigSpec create_temp_wire(int width = 1);
+    RTLIL::SigSpec create_eq_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
+    RTLIL::SigSpec create_and_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
+    RTLIL::SigSpec create_or_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src = nullptr);
+    RTLIL::SigSpec create_not_cell(const RTLIL::SigSpec& a, const UHDM::any* src = nullptr);
+    RTLIL::SigSpec create_mux_cell(const RTLIL::SigSpec& sel, const RTLIL::SigSpec& b, const RTLIL::SigSpec& a, int width = 0);
+    bool is_vpi_type(const UHDM::any* obj, int vpi_type);
+    void process_assignment_lhs_rhs(const UHDM::assignment* assign, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
+    
     // Parameterized module creation
     std::string create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module);
 };
