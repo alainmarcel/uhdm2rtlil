@@ -14,6 +14,7 @@
 #include <uhdm/Serializer.h>
 #include <uhdm/ElaboratorListener.h>
 #include <uhdm/vpi_user.h>
+#include <uhdm/sv_vpi_user.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/stmt.h>
 #include <uhdm/expr.h>

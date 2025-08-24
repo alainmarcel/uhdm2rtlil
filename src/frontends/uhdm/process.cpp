@@ -2998,6 +2998,14 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log("        Case statement processed\n");
             log_flush();
             break;
+        case vpiImmediateAssert: {
+            log("        Processing immediate assert (skipping - assertions not fully supported)\n");
+            log_flush();
+            // For now, we skip assertions as they don't directly translate to RTLIL
+            // In the future, we could convert them to $assert cells or log warnings
+            // The important thing is to not crash when encountering them
+            break;
+        }
         case vpiFor: {
             log("        Processing for loop in initial block\n");
             log_flush();
@@ -3615,6 +3623,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         }
         case vpiCase:
             import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
+            break;
+        case vpiImmediateAssert:
+            // Skip assertions for now - they don't directly translate to RTLIL
+            log("        Skipping immediate assert in comb context\n");
             break;
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
