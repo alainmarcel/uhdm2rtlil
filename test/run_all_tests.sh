@@ -93,7 +93,11 @@ if [ -f "failing_tests.txt" ]; then
     while IFS= read -r line; do
         # Skip empty lines and comments
         if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
-            FAILING_TESTS+=("$line")
+            # Trim leading and trailing whitespace
+            trimmed_line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [[ -n "$trimmed_line" ]]; then
+                FAILING_TESTS+=("$trimmed_line")
+            fi
         fi
     done < "failing_tests.txt"
 fi
@@ -495,8 +499,35 @@ fi
 # Determine exit status
 echo
 if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]; then
+    # Count expected failures
+    EXPECTED_FAILS=0
+    for test in "${FAILED_TEST_NAMES[@]}"; do
+        if is_failing_test "$test"; then
+            EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
+        fi
+    done
+    for test in "${EQUIV_FAILED_TEST_NAMES[@]}"; do
+        if is_failing_test "$test"; then
+            EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
+        fi
+    done
+    for test in "${CRASHED_TEST_NAMES[@]}"; do
+        if is_failing_test "$test"; then
+            EXPECTED_FAILS=$((EXPECTED_FAILS + 1))
+        fi
+    done
+    
     if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ]; then
         echo "🎉 EXCELLENT! All tests are functional! 🎉"
+        exit 0
+    elif [ $EXPECTED_FAILS -gt 0 ]; then
+        echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
+        echo
+        echo "All failing tests are documented in failing_tests.txt:"
+        echo "  • Expected failures: $EXPECTED_FAILS"
+        echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+        echo
+        echo "The test suite passes because all results match expectations."
         exit 0
     else
         echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
