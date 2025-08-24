@@ -1,5 +1,6 @@
 # Test script to read Verilog file directly in Yosys
 read_verilog -sv dut.sv
+write_rtlil rmdead_from_verilog_nohier.il
 hierarchy -auto-top
 stat
 proc

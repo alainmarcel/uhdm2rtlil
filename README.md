@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (50/50 tests functional)
-- **Perfect Matches**: 45 tests validated by formal equivalence checking
-- **UHDM-Only Success**: 4 tests demonstrate superior SystemVerilog support
+- **Success Rate**: 100% (53/53 tests functional)
+- **Perfect Matches**: 48 tests validated by formal equivalence checking
+- **UHDM-Only Success**: 5 tests demonstrate superior SystemVerilog support
 - **Functional**: All tests work correctly, validated by formal equivalence checking
 
 ## Architecture & Workflow
@@ -183,7 +183,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (52 total - all passing)
+### Current Test Cases (53 total - all passing)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design
@@ -226,6 +226,7 @@ The Yosys test runner:
 - **mux8** - 8-to-1 multiplexer using nested conditional operators (tests complex ternary chains)
 - **mux16** - 16-to-1 multiplexer using dynamic bit selection (tests non-constant indexed access)
 - **macc** - Multiply-accumulate unit from Xilinx (tests power operator, large constants, process structures)
+- **code_hdl_models_decoder_2to4_gates** - 2-to-4 decoder using primitive gates (tests gate instantiation and connections)
 
 ### Test Management
 
@@ -251,7 +252,7 @@ cat test/failing_tests.txt
 # (none - all tests pass!)
 ```
 
-✅ **All 47 tests are passing!** The UHDM frontend achieves 100% success rate.
+✅ **All 53 tests are passing!** The UHDM frontend achieves 100% success rate.
 
 ### Important Test Workflow Note
 
@@ -302,9 +303,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **52 test cases**:
+The UHDM frontend test suite includes **53 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **47 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **48 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 Known failing tests** - All tests pass!
 
 ## Recent Improvements
@@ -316,7 +317,7 @@ The UHDM frontend test suite includes **52 test cases**:
 - Memory writes in loops now generate proper `$memwr$` temporary wires matching Verilog frontend structure
 - Added priority values to memwr statements for correct write ordering
 - Eliminated external combinational cells in favor of process-internal switch statements
-- All 52 tests now pass with no known failures
+- All 53 tests now pass with no known failures
 
 ### Process Structure Improvements for always_ff Blocks
 - Fixed process structure generation to use switch statements inside process bodies instead of external mux cells
@@ -421,6 +422,8 @@ The UHDM frontend now supports Verilog primitive gates and gate arrays:
 - Array instantiation: `and gate_array[3:0] (out, in1, in2);`
 - Proper bit-slicing for vectored connections
 - Maps to Yosys internal gate cells (`$_AND_`, `$_OR_`, etc.)
+- Fixed import_primitives() function to properly iterate through module->Primitives()
+- Added code_hdl_models_decoder_2to4_gates test demonstrating gate usage
 
 ### Package Support
 The UHDM frontend now supports SystemVerilog packages:

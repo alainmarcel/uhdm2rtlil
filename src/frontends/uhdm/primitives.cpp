@@ -19,13 +19,16 @@ using namespace UHDM;
 void UhdmImporter::import_primitives(const module_inst* uhdm_module) {
     if (!uhdm_module) return;
     
-    // Check if the module has a Primitives() method
-    // Based on UHDM structure, primitive gates are typically stored as part of module's children
-    // We need to check the UHDM API for the exact method name
-    
-    // For now, log that we're looking for primitives
-    if (mode_debug)
-        log("UHDM: Checking for primitive gates in module\n");
+    // Import primitive gates from module
+    if (uhdm_module->Primitives()) {
+        log("UHDM: Found %d primitive gates\n", (int)uhdm_module->Primitives()->size());
+        for (auto prim : *uhdm_module->Primitives()) {
+            if (auto gate = dynamic_cast<const UHDM::gate*>(prim)) {
+                std::string instance_name(gate->VpiName());
+                import_gate(gate, instance_name);
+            }
+        }
+    }
 }
 
 // Import primitive gate arrays from a module
