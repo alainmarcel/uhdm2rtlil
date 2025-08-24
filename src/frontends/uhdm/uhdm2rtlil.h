@@ -267,6 +267,9 @@ struct UhdmImporter {
     std::string get_src_attribute(const UHDM::any* uhdm_obj);
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     
+    // Helper to extract RTLIL::Const from UHDM Value string
+    static RTLIL::Const extract_const_from_value(const std::string& value_str);
+    
     // Signal name extraction from UHDM
     bool extract_signal_names_from_process(const UHDM::any* stmt, 
                                          std::string& output_signal, 

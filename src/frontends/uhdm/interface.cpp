@@ -54,11 +54,8 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
                 if (!param_name.empty()) {
                     if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                         std::string val_str = std::string(const_val->VpiValue());
-                        size_t colon_pos = val_str.find(':');
-                        if (colon_pos != std::string::npos) {
-                            val_str = val_str.substr(colon_pos + 1);
-                        }
-                        int param_value = std::stoi(val_str);
+                        RTLIL::Const const_val_rtlil = extract_const_from_value(val_str);
+                        int param_value = const_val_rtlil.as_int();
                         param_values[param_name] = param_value;
                         
                         // Add to module name in Yosys format
@@ -172,11 +169,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                             if (param_name == "WIDTH") {
                                 if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                                     std::string val_str = std::string(const_val->VpiValue());
-                                    size_t colon_pos = val_str.find(':');
-                                    if (colon_pos != std::string::npos) {
-                                        val_str = val_str.substr(colon_pos + 1);
-                                    }
-                                    interface_width = std::stoi(val_str);
+                                    RTLIL::Const const_val_rtlil = extract_const_from_value(val_str);
+                                    interface_width = const_val_rtlil.as_int();
                                     log("UHDM: Interface %s has WIDTH=%d\n", interface_name.c_str(), interface_width);
                                 }
                             }
@@ -252,11 +246,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                             if (!param_name.empty()) {
                                 if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                                     std::string val_str = std::string(const_val->VpiValue());
-                                    size_t colon_pos = val_str.find(':');
-                                    if (colon_pos != std::string::npos) {
-                                        val_str = val_str.substr(colon_pos + 1);
-                                    }
-                                    int param_value = std::stoi(val_str);
+                                    RTLIL::Const const_val_rtlil = extract_const_from_value(val_str);
+                                    int param_value = const_val_rtlil.as_int();
                                     
                                     // Add to module name in Yosys format
                                     param_interface_type += "\\" + param_name + "=s32'";

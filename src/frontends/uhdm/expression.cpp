@@ -24,7 +24,7 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Helper function to extract RTLIL::Const from UHDM Value string
-static RTLIL::Const extract_const_from_value(const std::string& value_str) {
+RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str) {
     if (value_str.empty()) {
         return RTLIL::Const();
     }
@@ -51,6 +51,18 @@ static RTLIL::Const extract_const_from_value(const std::string& value_str) {
         // Determine width from hex string length
         int width = hex_str.length() * 4;
         return RTLIL::Const(hex_val, width);
+    } else if (value_str.substr(0, 7) == "STRING:") {
+        // Handle string constants - convert to binary representation
+        std::string str_val = value_str.substr(7);
+        std::vector<RTLIL::State> bits;
+        // Convert string to bits (LSB first as per Verilog convention)
+        for (size_t i = 0; i < str_val.length(); i++) {
+            unsigned char ch = str_val[i];
+            for (int j = 0; j < 8; j++) {
+                bits.push_back((ch & (1 << j)) ? RTLIL::State::S1 : RTLIL::State::S0);
+            }
+        }
+        return RTLIL::Const(bits);
     } else {
         // Try to parse as integer directly
         try {
