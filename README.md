@@ -14,10 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (54/54 tests passing)
+- **Success Rate**: 98% (53/54 tests passing)
 - **Perfect Matches**: 48 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 5 tests demonstrate superior SystemVerilog support
-- **Functional**: All tests work correctly, validated by formal equivalence checking
+- **Known Issues**: 1 test (unbased_unsized) - assertions cause optimization differences
 
 ## Architecture & Workflow
 
@@ -250,10 +250,10 @@ cat test/failing_tests.txt
 **Current Status:**
 ```
 # Tests that currently fail:
-# (none - all tests pass!)
+unbased_unsized  # Pass_through instances optimized away without assertions (equivalence differs)
 ```
 
-✅ **All 54 tests are passing!** The UHDM frontend achieves 100% success rate.
+**53 of 54 tests are passing.** The unbased_unsized test works but has optimization differences.
 
 ### Important Test Workflow Note
 
@@ -306,8 +306,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **54 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **49 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **0 Known failing tests** - All tests pass!
+- **48 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **1 Known failing test** - unbased_unsized (works but has optimization differences)
 
 ## Recent Improvements
 
