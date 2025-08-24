@@ -45,7 +45,7 @@ module \priority_memory
   wire input 7 \wren_b
   attribute \src "dut.sv:15.18-15.21"
   memory width 8 size 16 \mem
-  cell $logic_and $auto$expression.cpp:311:import_operation$6
+  cell $logic_and $auto$expression.cpp:373:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -55,7 +55,7 @@ module \priority_memory
     connect \B $auto$rtlil.cc:3011:Eq$5
     connect \Y $auto$rtlil.cc:3024:LogicAnd$7
   end
-  cell $eq $auto$expression.cpp:470:import_operation$4
+  cell $eq $auto$expression.cpp:532:import_operation$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
