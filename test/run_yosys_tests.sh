@@ -40,6 +40,33 @@ declare -a UHDM_ONLY_TEST_NAMES
 # Create run directory if it doesn't exist
 mkdir -p "$RUN_DIR"
 
+# Load skipped tests list
+SKIPPED_TESTS_LIST=()
+if [ -f "$SCRIPT_DIR/skipped_tests.txt" ]; then
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+            # Trim leading and trailing whitespace and remove inline comments
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [[ -n "$trimmed_line" ]]; then
+                SKIPPED_TESTS_LIST+=("$trimmed_line")
+            fi
+        fi
+    done < "$SCRIPT_DIR/skipped_tests.txt"
+fi
+
+# Helper function to check if test should be skipped
+should_skip_test() {
+    local test_path="$1"
+    for skipped_test in "${SKIPPED_TESTS_LIST[@]}"; do
+        # Support exact matches and wildcards
+        if [[ "$test_path" == "$skipped_test" ]] || [[ "$test_path" == *"$skipped_test"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Function to check if a file is a self-contained Verilog/SystemVerilog test
 is_verilog_test() {
     local file="$1"
@@ -74,6 +101,14 @@ run_test() {
     local dir_name=$(dirname "$relative_path")
     local test_name=$(basename "$test_file" .v)
     test_name=$(basename "$test_name" .sv)
+    
+    # Check if test should be skipped
+    if should_skip_test "$relative_path"; then
+        echo -e "${YELLOW}Skipping test: $relative_path (marked in skipped_tests.txt)${NC}"
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        SKIPPED_TEST_NAMES+=("$relative_path")
+        return
+    fi
     
     # Create test directory maintaining the original structure
     local test_dir="$RUN_DIR/${dir_name}/${test_name}"
