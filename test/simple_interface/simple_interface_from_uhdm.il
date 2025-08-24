@@ -15,7 +15,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   wire width 8 inout 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
-  cell $and $auto$expression.cpp:319:import_operation$5
+  cell $and $auto$expression.cpp:393:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -25,7 +25,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     connect \B \bus.b
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $and $auto$expression.cpp:319:import_operation$7
+  cell $and $auto$expression.cpp:393:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -51,7 +51,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   wire width 16 inout 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
-  cell $and $auto$expression.cpp:319:import_operation$11
+  cell $and $auto$expression.cpp:393:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -61,7 +61,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     connect \B \bus.c
     connect \Y \out
   end
-  cell $and $auto$expression.cpp:319:import_operation$9
+  cell $and $auto$expression.cpp:393:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0

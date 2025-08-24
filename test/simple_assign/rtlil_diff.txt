@@ -49,7 +49,7 @@
    wire output 7 \out_or
 -  attribute \src "dut.sv:14.22-14.27"
 -  cell $and $and$dut.sv:14$1
-+  cell $and $auto$expression.cpp:319:import_operation$1
++  cell $and $auto$expression.cpp:393:import_operation$1
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -62,7 +62,7 @@
    end
 -  attribute \src "dut.sv:14.22-14.31"
 -  cell $and $and$dut.sv:14$2
-+  cell $and $auto$expression.cpp:319:import_operation$11
++  cell $and $auto$expression.cpp:393:import_operation$11
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -77,7 +77,7 @@
    end
 -  attribute \src "dut.sv:16.24-16.29"
 -  cell $and $and$dut.sv:16$6
-+  cell $and $auto$expression.cpp:319:import_operation$15
++  cell $and $auto$expression.cpp:393:import_operation$15
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -90,7 +90,7 @@
    end
 -  attribute \src "dut.sv:17.37-17.46"
 -  cell $and $and$dut.sv:17$10
-+  cell $and $auto$expression.cpp:319:import_operation$17
++  cell $and $auto$expression.cpp:393:import_operation$17
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -105,7 +105,7 @@
    end
 -  attribute \src "dut.sv:17.27-17.32"
 -  cell $and $and$dut.sv:17$8
-+  cell $and $auto$expression.cpp:319:import_operation$19
++  cell $and $auto$expression.cpp:393:import_operation$19
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -120,7 +120,7 @@
    end
 -  attribute \src "dut.sv:17.37-17.42"
 -  cell $and $and$dut.sv:17$9
-+  cell $and $auto$expression.cpp:319:import_operation$3
++  cell $and $auto$expression.cpp:393:import_operation$3
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -135,7 +135,7 @@
    end
 -  attribute \src "dut.sv:16.22-16.30"
 -  cell $not $not$dut.sv:16$7
-+  cell $or $auto$expression.cpp:323:import_operation$21
++  cell $or $auto$expression.cpp:397:import_operation$21
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
 +    parameter \B_SIGNED 0
@@ -149,7 +149,7 @@
    end
 -  attribute \src "dut.sv:15.21-15.26"
 -  cell $or $or$dut.sv:15$3
-+  cell $or $auto$expression.cpp:323:import_operation$5
++  cell $or $auto$expression.cpp:397:import_operation$5
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -162,7 +162,7 @@
    end
 -  attribute \src "dut.sv:15.21-15.30"
 -  cell $or $or$dut.sv:15$4
-+  cell $or $auto$expression.cpp:323:import_operation$7
++  cell $or $auto$expression.cpp:397:import_operation$7
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -176,7 +176,7 @@
    end
 -  attribute \src "dut.sv:15.21-15.34"
 -  cell $or $or$dut.sv:15$5
-+  cell $or $auto$expression.cpp:323:import_operation$9
++  cell $or $auto$expression.cpp:397:import_operation$9
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -190,7 +190,7 @@
    end
 -  attribute \src "dut.sv:17.26-17.47"
 -  cell $or $or$dut.sv:17$11
-+  cell $not $auto$expression.cpp:331:import_operation$13
++  cell $not $auto$expression.cpp:405:import_operation$13
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
 -    parameter \B_SIGNED 0

@@ -498,8 +498,15 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     // Handle size mismatch
     if (lhs.size() != rhs.size()) {
         if (rhs.size() == 1) {
-            // Extend single bit to match LHS width
-            rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1)};
+            // Extend single bit to match LHS width by replicating the bit
+            // This handles unbased unsized literals like 'x, 'z, '0, '1 correctly
+            if (rhs.is_fully_const()) {
+                RTLIL::State bit_val = rhs.as_const().bits()[0];
+                rhs = RTLIL::SigSpec(RTLIL::Const(bit_val, lhs.size()));
+            } else {
+                // For non-constant single bits, zero-extend
+                rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1)};
+            }
         } else if (rhs.size() < lhs.size()) {
             // Zero-extend RHS to match LHS width
             log_debug("Extending RHS from %d to %d bits\n", rhs.size(), lhs.size());

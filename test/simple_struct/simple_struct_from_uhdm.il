@@ -59,7 +59,7 @@ module \submodule_16bit
   wire width 48 input 1 \bus
   attribute \src "dut.sv:24.25-24.28"
   wire width 16 output 2 \out
-  cell $and $auto$expression.cpp:319:import_operation$1
+  cell $and $auto$expression.cpp:393:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -69,7 +69,7 @@ module \submodule_16bit
     connect \B \bus [31:16]
     connect \Y $auto$rtlil.cc:3004:And$2
   end
-  cell $and $auto$expression.cpp:319:import_operation$3
+  cell $and $auto$expression.cpp:393:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -87,7 +87,7 @@ module \submodule_8bit
   wire width 24 input 1 \bus
   attribute \src "dut.sv:16.24-16.27"
   wire width 8 output 2 \out
-  cell $and $auto$expression.cpp:319:import_operation$5
+  cell $and $auto$expression.cpp:393:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -97,7 +97,7 @@ module \submodule_8bit
     connect \B \bus [15:8]
     connect \Y $auto$rtlil.cc:3004:And$6
   end
-  cell $and $auto$expression.cpp:319:import_operation$7
+  cell $and $auto$expression.cpp:393:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0

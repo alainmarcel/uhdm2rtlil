@@ -33,7 +33,8 @@ BASE_NAME=$(basename "$TEST_NAME")
 # Check if required files exist
 VERILOG_SYNTH="${TEST_DIR}/${BASE_NAME}_from_verilog_synth.v"
 UHDM_SYNTH="${TEST_DIR}/${BASE_NAME}_from_uhdm_synth.v"
-UHDM_RTLIL="${TEST_DIR}/${BASE_NAME}_from_uhdm.il"
+UHDM_RTLIL="${TEST_DIR}/${BASE_NAME}_from_uhdm_nohier.il"
+VERILOG_RTLIL="${TEST_DIR}/${BASE_NAME}_from_verilog_nohier.il"
 
 if [ ! -f "$VERILOG_SYNTH" ] || [ ! -f "$UHDM_SYNTH" ]; then
     echo "❌ Missing synthesized netlists for $TEST_NAME"
@@ -55,12 +56,29 @@ if [ -f "$UHDM_RTLIL" ]; then
         exit 1
     fi
     # Check for X values in top-level wire connections (not in cells)
+    # Only fail if UHDM has X values that Verilog doesn't have  
     if grep -E "^  connect.*'x" "$UHDM_RTLIL" | grep -v "cell \$mux" > /dev/null 2>&1; then
-        echo "❌ CRITICAL ERROR: UHDM netlist contains X assignments in wire connections!"
-        echo "   Found X values in wire connections:"
-        grep -E "^  connect.*'x" "$UHDM_RTLIL" | grep -v "cell \$mux" | head -5
-        echo "   This indicates a serious bug in UHDM import"
-        exit 1
+        # Get X connections from both files
+        UHDM_X_CONNECTS=$(grep -E "^  connect.*'x" "$UHDM_RTLIL" | grep -v "cell \$mux" | sed 's/^  connect \\//' | sed 's/ .*//' | sort -u)
+        VERILOG_X_CONNECTS=$(grep -E "^  connect.*'x" "$VERILOG_RTLIL" 2>/dev/null | grep -v "cell \$mux" | sed 's/^  connect \\//' | sed 's/ .*//' | sort -u || true)
+        
+        # Check if UHDM has unique X connections not in Verilog
+        HAS_UNIQUE_X=0
+        for wire in $UHDM_X_CONNECTS; do
+            if ! echo "$VERILOG_X_CONNECTS" | grep -q "^$wire$"; then
+                if [ $HAS_UNIQUE_X -eq 0 ]; then
+                    echo "❌ CRITICAL ERROR: UHDM netlist contains X assignments not present in Verilog!"
+                    echo "   UHDM has X assignment to wire: $wire"
+                    HAS_UNIQUE_X=1
+                fi
+                grep "connect \\\\$wire .*'x" "$UHDM_RTLIL" | head -1
+            fi
+        done
+        
+        if [ $HAS_UNIQUE_X -eq 1 ]; then
+            echo "   This indicates a serious bug in UHDM import"
+            exit 1
+        fi
     fi
 fi
 

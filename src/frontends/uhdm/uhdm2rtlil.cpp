@@ -1223,18 +1223,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 range->Right_expr()->VpiType() == vpiConstant) {
                                 const constant* left_const = any_cast<const constant*>(range->Left_expr());
                                 const constant* right_const = any_cast<const constant*>(range->Right_expr());
-                                // Get the integer values
-                                int left = 3;  // Default for M[3:0]
-                                int right = 0;
-                                // Try to get actual values from UHDM
+                                // Get the integer values using helper function
                                 std::string left_str(left_const->VpiValue());
                                 std::string right_str(right_const->VpiValue());
-                                if (left_str.find("UINT:") == 0) {
-                                    left = std::stoi(left_str.substr(5));
-                                }
-                                if (right_str.find("UINT:") == 0) {
-                                    right = std::stoi(right_str.substr(5));
-                                }
+                                RTLIL::Const left_const_val = extract_const_from_value(left_str);
+                                RTLIL::Const right_const_val = extract_const_from_value(right_str);
+                                int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;  // Default for M[3:0]
+                                int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
                                 array_size = std::abs(left - right) + 1;
                                 log("UHDM:   Array size determined: %d (from [%d:%d])\n", array_size, left, right);
                                 break;

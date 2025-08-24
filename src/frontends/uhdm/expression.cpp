@@ -16,10 +16,64 @@
 #include <uhdm/assignment.h>
 #include <uhdm/uhdm_vpi_user.h>
 #include <uhdm/uhdm_types.h>
+#include <uhdm/integer_typespec.h>
+#include <uhdm/range.h>
 
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
+
+// Helper function to extract RTLIL::Const from UHDM Value string
+RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str) {
+    if (value_str.empty()) {
+        return RTLIL::Const();
+    }
+    
+    // Handle different value formats from UHDM
+    if (value_str.substr(0, 4) == "INT:") {
+        int int_val = std::stoi(value_str.substr(4));
+        // Return as 32-bit integer by default
+        return RTLIL::Const(int_val, 32);
+    } else if (value_str.substr(0, 5) == "UINT:") {
+        unsigned long long uint_val = std::stoull(value_str.substr(5));
+        // Determine width based on value
+        int width = 32;
+        if (uint_val > UINT32_MAX) {
+            width = 64;
+        }
+        return RTLIL::Const(uint_val, width);
+    } else if (value_str.substr(0, 4) == "BIN:") {
+        std::string bin_str = value_str.substr(4);
+        return RTLIL::Const::from_string(bin_str);
+    } else if (value_str.substr(0, 4) == "HEX:") {
+        std::string hex_str = value_str.substr(4);
+        unsigned long long hex_val = std::stoull(hex_str, nullptr, 16);
+        // Determine width from hex string length
+        int width = hex_str.length() * 4;
+        return RTLIL::Const(hex_val, width);
+    } else if (value_str.substr(0, 7) == "STRING:") {
+        // Handle string constants - convert to binary representation
+        std::string str_val = value_str.substr(7);
+        std::vector<RTLIL::State> bits;
+        // Convert string to bits (LSB first as per Verilog convention)
+        for (size_t i = 0; i < str_val.length(); i++) {
+            unsigned char ch = str_val[i];
+            for (int j = 0; j < 8; j++) {
+                bits.push_back((ch & (1 << j)) ? RTLIL::State::S1 : RTLIL::State::S0);
+            }
+        }
+        return RTLIL::Const(bits);
+    } else {
+        // Try to parse as integer directly
+        try {
+            int int_val = std::stoi(value_str);
+            return RTLIL::Const(int_val, 32);
+        } catch (...) {
+            // Return empty const if parsing fails
+            return RTLIL::Const();
+        }
+    }
+}
 
 // Import any expression
 RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
@@ -133,6 +187,25 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 bin_str = value;
             }
             
+            // Handle unbased unsized literals (size == -1)
+            if (size == -1) {
+                // For unbased unsized literals like 'x, 'z, '0, '1
+                // These should be handled as special cases
+                if (bin_str == "X" || bin_str == "x") {
+                    // Return a single X that will be extended as needed
+                    return RTLIL::SigSpec(RTLIL::State::Sx);
+                } else if (bin_str == "Z" || bin_str == "z") {
+                    // Return a single Z that will be extended as needed
+                    return RTLIL::SigSpec(RTLIL::State::Sz);
+                } else if (bin_str == "0") {
+                    // Return a single 0 that will be extended as needed
+                    return RTLIL::SigSpec(RTLIL::State::S0);
+                } else if (bin_str == "1") {
+                    // Return a single 1 that will be extended as needed
+                    return RTLIL::SigSpec(RTLIL::State::S1);
+                }
+            }
+            
             // Create constant with proper size
             RTLIL::Const const_val = RTLIL::Const::from_string(bin_str);
             if (size > 0 && const_val.size() != size) {
@@ -216,11 +289,12 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 // Handle UHDM format: "UINT:value"
                 if (value.substr(0, 5) == "UINT:") {
                     std::string num_str = value.substr(5);
-                    unsigned int uint_val = std::stoul(num_str);
+                    // Use stoull to handle large values like 18446744073709551615 (0xFFFFFFFFFFFFFFFF)
+                    unsigned long long uint_val = std::stoull(num_str);
                     return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
                 } else {
                     // Handle plain number format
-                    unsigned int uint_val = std::stoul(value);
+                    unsigned long long uint_val = std::stoull(value);
                     return RTLIL::SigSpec(RTLIL::Const(uint_val, size));
                 }
             } catch (const std::exception& e) {
@@ -533,6 +607,76 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return module->Mux(NEW_ID, false_val, true_val, cond);
             }
             break;
+        case vpiCastOp:
+            // Cast operation like 3'('x) or 64'(value)
+            if (operands.size() == 1) {
+                // Get the target width from the typespec
+                int target_width = 0;
+                if (uhdm_op->Typespec()) {
+                    const ref_typespec* ref_ts = uhdm_op->Typespec();
+                    const typespec* ts = ref_ts->Actual_typespec();
+                    // For integer typespec, get the actual value
+                    if (ts->VpiType() == vpiIntegerTypespec) {
+                        const integer_typespec* its = any_cast<const integer_typespec*>(ts);
+                        // Get the actual value from VpiValue()
+                        std::string val_str = std::string(its->VpiValue());
+                        if (!val_str.empty()) {
+                            RTLIL::Const width_const = extract_const_from_value(val_str);
+                            if (width_const.size() > 0) {
+                                target_width = width_const.as_int();
+                            }
+                        }
+                    }
+                }
+                
+                if (target_width > 0) {
+                    // Handle the cast based on operand type
+                    RTLIL::SigSpec operand = operands[0];
+                    
+                    // If operand is a constant, handle it directly
+                    if (operand.is_fully_const()) {
+                        RTLIL::Const const_val = operand.as_const();
+                        
+                        // For small constants that are all X or Z, expand to target width
+                        // This handles cases like 3'x or 3'z
+                        if (const_val.size() <= target_width) {
+                            // Check if all bits are X or Z
+                            bool all_x = true;
+                            bool all_z = true;
+                            for (auto bit : const_val.bits()) {
+                                if (bit != RTLIL::State::Sx) all_x = false;
+                                if (bit != RTLIL::State::Sz) all_z = false;
+                            }
+                            
+                            // If all bits are X, expand to full width with X
+                            if (all_x) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, target_width));
+                            }
+                            // If all bits are Z, expand to full width with Z
+                            if (all_z) {
+                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, target_width));
+                            }
+                        }
+                        
+                        // For other constants, resize appropriately
+                        if (const_val.size() < target_width) {
+                            // Zero-extend
+                            const_val.bits().resize(target_width, RTLIL::State::S0);
+                        } else if (const_val.size() > target_width) {
+                            // Truncate
+                            const_val.bits().resize(target_width);
+                        }
+                        return RTLIL::SigSpec(const_val);
+                    }
+                    
+                    // For non-constant operands, use $pos to cast/resize
+                    RTLIL::SigSpec result = module->addWire(NEW_ID, target_width);
+                    module->addPos(NEW_ID, operand, result);
+                    return result;
+                }
+            }
+            log_warning("Unsupported cast operation\n");
+            return RTLIL::SigSpec();
         default:
             log_warning("Unsupported operation type: %d\n", op_type);
             return RTLIL::SigSpec();
