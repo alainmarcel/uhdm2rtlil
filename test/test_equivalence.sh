@@ -64,13 +64,34 @@ if [ -f "$UHDM_RTLIL" ]; then
     fi
 fi
 
-# Also check synthesized netlist for X assignments
+# Check for X assignments in synthesized netlists (.v files)
+# Only fail if UHDM has X assignments that Verilog doesn't have for the same signal
 if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1; then
-    echo "❌ CRITICAL ERROR: UHDM synthesized netlist contains X assignments!"
-    echo "   Found X values in assignments:"
-    grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | head -5
-    echo "   This indicates a serious bug - the design is non-functional"
-    exit 1
+    # UHDM has X assignments - check if Verilog has them too
+    UHDM_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | sed 's/^[[:space:]]*assign[[:space:]]*\([^[:space:]]*\).*/\1/' | sort -u)
+    VERILOG_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$VERILOG_SYNTH" 2>/dev/null | sed 's/^[[:space:]]*assign[[:space:]]*\([^[:space:]]*\).*/\1/' | sort -u || true)
+    
+    # Check each X assignment in UHDM
+    HAS_UNIQUE_X=0
+    for signal in $UHDM_X_ASSIGNS; do
+        # Escape special characters for grep
+        escaped_signal=$(echo "$signal" | sed 's/\[/\\[/g; s/\]/\\]/g')
+        if ! echo "$VERILOG_X_ASSIGNS" | grep -q "^$escaped_signal$"; then
+            if [ $HAS_UNIQUE_X -eq 0 ]; then
+                echo "❌ CRITICAL ERROR: UHDM synthesized netlist contains X assignments not present in Verilog!"
+                echo "   UHDM has X assignment to signal: $signal"
+                HAS_UNIQUE_X=1
+            fi
+            grep "assign $signal.*=.*x" "$UHDM_SYNTH" | head -1
+        fi
+    done
+    
+    if [ $HAS_UNIQUE_X -eq 1 ]; then
+        echo "   This indicates a serious bug - the design is non-functional"
+        exit 1
+    else
+        echo "ℹ️  Both UHDM and Verilog have X assignments to the same signals - this is acceptable"
+    fi
 fi
 
 # Check if there are any gates to compare

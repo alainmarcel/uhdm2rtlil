@@ -1,0 +1,141 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -42,27 +42,28 @@
+ wire _37_;
+ wire _38_;
+ wire _39_;
+-(* src = "dut.sv:16.7-16.10" *)
++(* src = "dut.sv:8.1-8.4" *)
+ input clk;
+ wire clk;
+-(* src = "dut.sv:22.15-22.22" *)
++(* src = "dut.sv:13.1-13.8" *)
+ output [15:0] crc_out;
+ wire [15:0] crc_out;
++(* \reg  = 32'd1 *)
+ (* src = "dut.sv:24.14-24.21" *)
+ wire [15:0] crc_reg;
+-(* src = "dut.sv:20.13-20.20" *)
++(* src = "dut.sv:12.1-12.8" *)
+ input [7:0] data_in;
+ wire [7:0] data_in;
+-(* src = "dut.sv:18.7-18.13" *)
++(* src = "dut.sv:10.1-10.7" *)
+ input enable;
+ wire enable;
+-(* src = "dut.sv:19.7-19.11" *)
++(* src = "dut.sv:11.1-11.5" *)
+ input init;
+ wire init;
+ (* src = "dut.sv:25.14-25.22" *)
+ (* unused_bits = "0 1 2 3 4 5 6 7 8 9 10 11" *)
+ wire [15:0] next_crc;
+-(* src = "dut.sv:17.7-17.12" *)
++(* src = "dut.sv:9.1-9.6" *)
+ input reset;
+ wire reset;
+ \$_NOT_  _40_ (
+@@ -263,6 +264,7 @@
+ .B(init),
+ .Y(_30_)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[0]  /* _80_ */ (
+ .C(clk),
+@@ -271,6 +273,7 @@
+ .Q(crc_reg[0]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[1]  /* _81_ */ (
+ .C(clk),
+@@ -279,6 +282,7 @@
+ .Q(crc_reg[1]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[2]  /* _82_ */ (
+ .C(clk),
+@@ -287,6 +291,7 @@
+ .Q(crc_reg[2]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[3]  /* _83_ */ (
+ .C(clk),
+@@ -295,6 +300,7 @@
+ .Q(crc_reg[3]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[4]  /* _84_ */ (
+ .C(clk),
+@@ -303,6 +309,7 @@
+ .Q(crc_reg[4]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[5]  /* _85_ */ (
+ .C(clk),
+@@ -311,6 +318,7 @@
+ .Q(crc_reg[5]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[6]  /* _86_ */ (
+ .C(clk),
+@@ -319,6 +327,7 @@
+ .Q(crc_reg[6]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[7]  /* _87_ */ (
+ .C(clk),
+@@ -327,6 +336,7 @@
+ .Q(crc_reg[7]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[8]  /* _88_ */ (
+ .C(clk),
+@@ -335,6 +345,7 @@
+ .Q(crc_reg[8]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[9]  /* _89_ */ (
+ .C(clk),
+@@ -343,6 +354,7 @@
+ .Q(crc_reg[9]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[10]  /* _90_ */ (
+ .C(clk),
+@@ -351,6 +363,7 @@
+ .Q(crc_reg[10]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[11]  /* _91_ */ (
+ .C(clk),
+@@ -359,6 +372,7 @@
+ .Q(crc_reg[11]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:29.1-38.4" *)
+ \$_SDFFE_PP1P_  \crc_reg_reg[14]  /* _92_ */ (
+ .C(clk),
