@@ -251,19 +251,19 @@ module \unbased_unsized
     connect \EN 1'1
   end
   cell \pass_through \pt09
-    connect \inp 64'0000000000000000000000000000000000000000000000000000000000000000
+    connect \inp 1'0
     connect \out \o09
   end
   cell \pass_through \pt10
-    connect \inp 64'1111111111111111111111111111111111111111111111111111111111111111
+    connect \inp 1'1
     connect \out \o10
   end
   cell \pass_through \pt11
-    connect \inp 64'x
+    connect \inp 1'x
     connect \out \o11
   end
   cell \pass_through \pt12
-    connect \inp 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    connect \inp 1'z
     connect \out \o12
   end
   attribute \src "dut.sv:26.5-39.8"

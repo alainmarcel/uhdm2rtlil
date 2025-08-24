@@ -2998,6 +2998,28 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log("        Case statement processed\n");
             log_flush();
             break;
+        case vpiImmediateAssert: {
+            log("        Processing immediate assert - converting to $assert cell\n");
+            log_flush();
+            
+            // Import immediate assertion as $assert cell
+            const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
+            if (assert_stmt && assert_stmt->Expr()) {
+                // Get the assertion condition
+                RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
+                
+                // Create an $assert cell
+                RTLIL::Cell* assert_cell = module->addCell(NEW_ID, "$assert");
+                assert_cell->setPort("\\A", condition);
+                assert_cell->setPort("\\EN", RTLIL::State::S1); // Always enabled
+                
+                // Add source location if available
+                add_src_attribute(assert_cell->attributes, assert_stmt);
+                
+                log("        Created $assert cell for assertion\n");
+            }
+            break;
+        }
         case vpiFor: {
             log("        Processing for loop in initial block\n");
             log_flush();
@@ -3616,6 +3638,28 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiCase:
             import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
             break;
+        case vpiImmediateAssert: {
+            log("        Processing immediate assert in comb context - converting to $assert cell\n");
+            log_flush();
+            
+            // Import immediate assertion as $assert cell
+            const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
+            if (assert_stmt && assert_stmt->Expr()) {
+                // Get the assertion condition
+                RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
+                
+                // Create an $assert cell
+                RTLIL::Cell* assert_cell = module->addCell(NEW_ID, "$assert");
+                assert_cell->setPort("\\A", condition);
+                assert_cell->setPort("\\EN", RTLIL::State::S1); // Always enabled
+                
+                // Add source location if available
+                add_src_attribute(assert_cell->attributes, assert_stmt);
+                
+                log("        Created $assert cell for assertion in comb context\n");
+            }
+            break;
+        }
         default:
             log_warning("Unsupported statement type in comb context: %d\n", stmt_type);
             break;

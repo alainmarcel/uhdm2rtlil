@@ -1024,6 +1024,27 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         if (!port_wire) {
                             log("    Port wire not found for port: %s\n", port_name.c_str());
                         }
+                        
+                        // Handle unbased unsized literals - extend single-bit constants to port width
+                        if (port_wire && actual_sig.size() == 1 && actual_sig.is_fully_const()) {
+                            RTLIL::State bit_val = actual_sig.as_const().bits()[0];
+                            // Check if this is an unbased unsized literal that should be extended
+                            // (single bit of 0, 1, X, or Z)
+                            if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
+                                bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
+                                int port_width = port_wire->width;
+                                actual_sig = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
+                                log("    Extended unbased unsized literal '%s' to port width %d\n", 
+                                    bit_val == RTLIL::State::S0 ? "0" :
+                                    bit_val == RTLIL::State::S1 ? "1" :
+                                    bit_val == RTLIL::State::Sx ? "x" : "z", port_width);
+                            }
+                        } else if (!port_wire && actual_sig.size() == 1 && actual_sig.is_fully_const()) {
+                            // Port wire not found yet, but we still need to handle unbased unsized literals
+                            // Try to infer the width from the port definition if available
+                            log("    Warning: Port wire not found for unbased unsized literal, cannot extend\n");
+                        }
+                        
                         if (port_wire && port_wire->attributes.count(RTLIL::escape_id("interface_port"))) {
                             log("    Port %s is an interface port, creating connection wire\n", port_name.c_str());
                             

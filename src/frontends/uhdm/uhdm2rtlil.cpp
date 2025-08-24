@@ -649,6 +649,24 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         std::string port_name = std::string(port->VpiName());
                         if (port->High_conn()) {
                             RTLIL::SigSpec conn = import_expression(any_cast<const expr*>(port->High_conn()));
+                            
+                            // Handle unbased unsized literals - extend single-bit constants to port width
+                            // Get the target module to find port width
+                            RTLIL::Module* target_module = design->module(cell->type);
+                            if (target_module) {
+                                RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
+                                if (port_wire && conn.size() == 1 && conn.is_fully_const()) {
+                                    RTLIL::State bit_val = conn.as_const().bits()[0];
+                                    // Check if this is an unbased unsized literal that should be extended
+                                    if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
+                                        bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
+                                        int port_width = port_wire->width;
+                                        conn = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
+                                        log("UHDM: Extended unbased unsized literal to port width %d\n", port_width);
+                                    }
+                                }
+                            }
+                            
                             cell->setPort(RTLIL::escape_id(port_name), conn);
                             log("UHDM: Connected port %s\n", port_name.c_str());
                         }
