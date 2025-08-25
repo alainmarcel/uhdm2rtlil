@@ -1,31 +1,28 @@
 --- verilog_synth
 +++ uhdm_synth
-@@ -2,7 +2,7 @@
- (* top =  1  *)
- (* src = "dut.sv:1.1-20.10" *)
- module simple_memory_noreset(clk, we, addr, data_in, data_out);
+@@ -17,7 +17,7 @@
+ (* src = "dut.sv:6.24-6.32" *)
+ output [7:0] data_out;
+ wire [7:0] data_out;
 -wire [7:0] _000_;
 +wire _000_;
  wire _001_;
  wire _002_;
  wire _003_;
-@@ -154,7 +154,6 @@
+@@ -169,7 +169,6 @@
  wire _149_;
  wire _150_;
  wire _151_;
 -wire _152_;
- (* src = "dut.sv:4.24-4.28" *)
- input [3:0] addr;
- wire [3:0] addr;
-@@ -183,1735 +182,1697 @@
+ wire [7:0] \memory[0] ;
+ wire [7:0] \memory[10] ;
+ wire [7:0] \memory[11] ;
+@@ -186,1732 +185,1694 @@
  wire [7:0] \memory[7] ;
  wire [7:0] \memory[8] ;
  wire [7:0] \memory[9] ;
-+wire [7:0] memrd_memory_DATA;
- (* src = "dut.sv:3.24-3.26" *)
- input we;
- wire we;
 -\$_MUX_  _153_ (
++wire [7:0] memrd_memory_DATA;
 +\$_MUX_  _152_ (
  .A(\memory[0] [0]),
  .B(\memory[1] [0]),

@@ -1,9 +1,9 @@
 --- verilog_synth
 +++ uhdm_synth
 @@ -14,6 +14,7 @@
- (* src = "dut.sv:4.18-4.23" *)
- input rst_n;
- wire rst_n;
+ (* src = "dut.sv:6.18-6.19" *)
+ output q;
+ wire q;
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:9.5-15.8" *)

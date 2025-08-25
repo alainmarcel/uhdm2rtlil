@@ -1,17 +1,9 @@
 --- verilog_synth
 +++ uhdm_synth
-@@ -3,6 +3,7 @@
- (* src = "dut.sv:1.1-16.10" *)
- module logic_ops(in, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10);
+@@ -36,53 +36,59 @@
+ output B10;
+ wire B10;
  wire _00_;
-+wire _01_;
- (* src = "dut.sv:4.17-4.19" *)
- output B1;
- wire B1;
-@@ -36,53 +37,58 @@
- (* src = "dut.sv:3.17-3.19" *)
- input [0:7] in;
- wire [0:7] in;
 -\$_OR_  _01_ (
 -.A(in[0]),
 -.B(in[1]),
@@ -25,6 +17,7 @@
 -\$_OR_  _03_ (
 -.A(in[2]),
 -.B(in[3]),
++wire _01_;
 +\$_OR_  _02_ (
 +.A(in[6]),
 +.B(in[7]),
