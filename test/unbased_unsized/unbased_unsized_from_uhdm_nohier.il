@@ -407,7 +407,7 @@ module \unbased_unsized
   connect \o03 64'x
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
-  connect \o06 64'0000000000000000000000000000000000000000000000000000000000000001
+  connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
   connect \o07 $auto$module.cpp:513:import_continuous_assign$49
   connect \o08 $auto$module.cpp:513:import_continuous_assign$51
 end
