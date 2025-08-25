@@ -84,6 +84,44 @@ void UhdmImporter::process_assignment_lhs_rhs(const UHDM::assignment* assign, RT
 
 // Generic statement type dispatcher to reduce if-else chains
 
+// Import immediate assertion as $check cell (following DRY principle)
+void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire) {
+    if (!assert_stmt || !assert_stmt->Expr()) {
+        return;
+    }
+    
+    // Get the assertion condition
+    RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
+    
+    // Create enable wire for the assertion (matching Verilog frontend)
+    enable_wire = module->addWire(NEW_ID);
+    enable_wire->width = 1;
+    
+    // Create a $check cell (matching Verilog frontend behavior)
+    RTLIL::Cell* check_cell = module->addCell(NEW_ID, "$check");
+    
+    // Set required parameters for $check cell
+    check_cell->setParam("\\ARGS_WIDTH", 0);
+    check_cell->setParam("\\FLAVOR", RTLIL::Const("assert"));
+    check_cell->setParam("\\FORMAT", RTLIL::Const(""));
+    check_cell->setParam("\\PRIORITY", RTLIL::Const(0xffffffff, 32)); // Default priority
+    check_cell->setParam("\\TRG_ENABLE", 0);
+    check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(RTLIL::State::Sx, 0));
+    check_cell->setParam("\\TRG_WIDTH", 0);
+    
+    // Set ports
+    check_cell->setPort("\\A", condition);
+    check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
+    check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
+    check_cell->setPort("\\TRG", RTLIL::SigSpec());   // Empty trigger
+    
+    // Add source location if available
+    add_src_attribute(check_cell->attributes, assert_stmt);
+    
+    log("        Created $check cell for assertion\n");
+    log_flush();
+}
+
 // Forward declaration of helper function
 struct AssignedSignal {
     std::string name;
@@ -2999,25 +3037,20 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             break;
         case vpiImmediateAssert: {
-            log("        Processing immediate assert - converting to $assert cell\n");
+            log("        Processing immediate assert - converting to $check cell\n");
             log_flush();
             
-            // Import immediate assertion as $assert cell
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
-            if (assert_stmt && assert_stmt->Expr()) {
-                // Get the assertion condition
-                RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
-                
-                // Create an $assert cell
-                RTLIL::Cell* assert_cell = module->addCell(NEW_ID, "$assert");
-                assert_cell->setPort("\\A", condition);
-                assert_cell->setPort("\\EN", RTLIL::State::S1); // Always enabled
-                
-                // Add source location if available
-                add_src_attribute(assert_cell->attributes, assert_stmt);
-                
-                log("        Created $assert cell for assertion\n");
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assert(assert_stmt, enable_wire);
+            
+            // In synchronous context, add assignment to set enable wire to 1
+            if (enable_wire) {
+                sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
+            
+            log("        Immediate assert processed\n");
+            log_flush();
             break;
         }
         case vpiFor: {
@@ -3639,25 +3672,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             import_case_stmt_comb(any_cast<const case_stmt*>(uhdm_stmt), proc);
             break;
         case vpiImmediateAssert: {
-            log("        Processing immediate assert in comb context - converting to $assert cell\n");
+            log("        Processing immediate assert in comb context - converting to $check cell\n");
             log_flush();
             
-            // Import immediate assertion as $assert cell
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
-            if (assert_stmt && assert_stmt->Expr()) {
-                // Get the assertion condition
-                RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
-                
-                // Create an $assert cell
-                RTLIL::Cell* assert_cell = module->addCell(NEW_ID, "$assert");
-                assert_cell->setPort("\\A", condition);
-                assert_cell->setPort("\\EN", RTLIL::State::S1); // Always enabled
-                
-                // Add source location if available
-                add_src_attribute(assert_cell->attributes, assert_stmt);
-                
-                log("        Created $assert cell for assertion in comb context\n");
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assert(assert_stmt, enable_wire);
+            
+            // In combinational context, add assignment to set enable wire to 1
+            if (enable_wire) {
+                proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
+            
+            log("        Immediate assert processed\n");
+            log_flush();
             break;
         }
         default:

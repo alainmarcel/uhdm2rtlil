@@ -251,6 +251,9 @@ struct UhdmImporter {
     void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
     void import_case_stmt_comb(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
     
+    // Assertion handling
+    void import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire);
+    
     // Additional expression types
     RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_bit_select(const UHDM::bit_select* uhdm_bit, const UHDM::scope* inst = nullptr);

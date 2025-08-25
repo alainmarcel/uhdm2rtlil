@@ -235,7 +235,7 @@ module \macc2
     connect \B \b_reg2
     connect \Y $auto$expression.cpp:500:import_operation$15
   end
-  cell $ge $auto$expression.cpp:570:import_operation$47
+  cell $ge $auto$expression.cpp:569:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 41
     parameter \B_SIGNED 0
@@ -245,56 +245,56 @@ module \macc2
     connect \B 64'0000000000000000000000001000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3015:Ge$48
   end
-  cell $mux $auto$expression.cpp:613:import_operation$51
+  cell $mux $auto$expression.cpp:612:import_operation$51
     parameter \WIDTH 64
     connect \A { 23'00000000000000000000000 \adder_out }
     connect \B 64'0000000000000000000000000111111111111111111111111111111111111111
     connect \S \overflow
     connect \Y $auto$rtlil.cc:3092:Mux$52
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$19
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$19
     parameter \WIDTH 16
     connect \A \a
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$20
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$21
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$21
     parameter \WIDTH 16
     connect \A \a_reg
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$22
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$23
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$23
     parameter \WIDTH 16
     connect \A \b
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$24
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$25
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$25
     parameter \WIDTH 16
     connect \A \b_reg
     connect \B 16'0000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$26
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$27
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$27
     parameter \WIDTH 32
     connect \A $auto$expression.cpp:500:import_operation$15
     connect \B 0
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$28
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$29
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$29
     parameter \WIDTH 41
     connect \A $auto$expression.cpp:456:import_operation$17 [40:0]
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3092:Mux$30
   end
-  cell $mux $auto$process.cpp:3955:import_assignment_sync$31
+  cell $mux $auto$process.cpp:3983:import_assignment_sync$31
     parameter \WIDTH 1
     connect \A \overflow
     connect \B 1'0

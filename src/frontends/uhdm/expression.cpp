@@ -544,10 +544,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return module->Eq(NEW_ID, operands[0], operands[1]);
             break;
         case vpiCaseEqOp:
-            // Case equality (===) - in RTLIL, we use regular equality
-            // since RTLIL handles X and Z values in comparisons
+            // Case equality (===) - use $eqx which properly handles X and Z values
             if (operands.size() == 2)
-                return module->Eq(NEW_ID, operands[0], operands[1]);
+                return module->Eqx(NEW_ID, operands[0], operands[1]);
             break;
         case vpiNeqOp:
             if (operands.size() == 2)
