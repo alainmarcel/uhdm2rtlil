@@ -14,10 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 98% (53/54 tests passing)
-- **Perfect Matches**: 48 tests validated by formal equivalence checking
+- **Success Rate**: 100% (55/55 tests passing)
+- **Perfect Matches**: 50 tests validated by formal equivalence checking
 - **UHDM-Only Success**: 5 tests demonstrate superior SystemVerilog support
-- **Known Issues**: 1 test (unbased_unsized) - assertions cause optimization differences
+- **All tests pass** including full assertion support
 
 ## Architecture & Workflow
 
@@ -227,7 +227,7 @@ The Yosys test runner:
 - **mux16** - 16-to-1 multiplexer using dynamic bit selection (tests non-constant indexed access)
 - **macc** - Multiply-accumulate unit from Xilinx (tests power operator, large constants, process structures)
 - **code_hdl_models_decoder_2to4_gates** - 2-to-4 decoder using primitive gates (tests gate instantiation and connections)
-- **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations with assertion support
+- **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z), cast operations, and full assertion support (✅ PASSING)
 
 ### Test Management
 
@@ -249,11 +249,10 @@ cat test/failing_tests.txt
 
 **Current Status:**
 ```
-# Tests that currently fail:
-unbased_unsized  # Pass_through instances optimized away without assertions (equivalence differs)
+# All tests passing!
 ```
 
-**53 of 54 tests are passing.** The unbased_unsized test works but has optimization differences.
+**55 of 55 tests are passing.** All tests including unbased_unsized pass formal equivalence checking.
 
 ### Important Test Workflow Note
 
@@ -307,7 +306,7 @@ uhdm2rtlil/
 The UHDM frontend test suite includes **54 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
 - **48 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **1 Known failing test** - unbased_unsized (works but has optimization differences)
+- **All 55 tests passing** - including unbased_unsized with full assertion support
 
 ## Recent Improvements
 
