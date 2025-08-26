@@ -1,0 +1,860 @@
+slpp_all/surelog.uhdm: Restored design Pre-Elab: 
+design: (work@wreduce_test1)
+|vpiName:work@wreduce_test1
+|uhdmallModules:
+\_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+  |vpiParent:
+  \_design: (work@wreduce_test1)
+  |vpiFullName:work@wreduce_test1
+  |vpiDefName:work@wreduce_test1
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:a
+    |vpiFullName:work@wreduce_test1.a
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:b
+    |vpiFullName:work@wreduce_test1.b
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:x
+    |vpiFullName:work@wreduce_test1.x
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:y
+    |vpiFullName:work@wreduce_test1.y
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:z
+    |vpiFullName:work@wreduce_test1.z
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:w
+    |vpiFullName:work@wreduce_test1.w
+  |vpiPort:
+  \_port: (a), line:1:35, endln:1:36
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:a
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.a.a), line:1:35, endln:1:36
+      |vpiParent:
+      \_port: (a), line:1:35, endln:1:36
+      |vpiName:a
+      |vpiFullName:work@wreduce_test1.a.a
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.a)
+      |vpiParent:
+      \_port: (a), line:1:35, endln:1:36
+      |vpiFullName:work@wreduce_test1.a
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+  |vpiPort:
+  \_port: (b), line:1:38, endln:1:39
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:b
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.b.b), line:1:38, endln:1:39
+      |vpiParent:
+      \_port: (b), line:1:38, endln:1:39
+      |vpiName:b
+      |vpiFullName:work@wreduce_test1.b.b
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.b)
+      |vpiParent:
+      \_port: (b), line:1:38, endln:1:39
+      |vpiFullName:work@wreduce_test1.b
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+  |vpiPort:
+  \_port: (x), line:1:54, endln:1:55
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:x
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.x.x), line:1:54, endln:1:55
+      |vpiParent:
+      \_port: (x), line:1:54, endln:1:55
+      |vpiName:x
+      |vpiFullName:work@wreduce_test1.x.x
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.x)
+      |vpiParent:
+      \_port: (x), line:1:54, endln:1:55
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (y), line:1:57, endln:1:58
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:y
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.y.y), line:1:57, endln:1:58
+      |vpiParent:
+      \_port: (y), line:1:57, endln:1:58
+      |vpiName:y
+      |vpiFullName:work@wreduce_test1.y.y
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.y)
+      |vpiParent:
+      \_port: (y), line:1:57, endln:1:58
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (z), line:1:60, endln:1:61
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:z
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.z.z), line:1:60, endln:1:61
+      |vpiParent:
+      \_port: (z), line:1:60, endln:1:61
+      |vpiName:z
+      |vpiFullName:work@wreduce_test1.z.z
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.z)
+      |vpiParent:
+      \_port: (z), line:1:60, endln:1:61
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (w), line:1:63, endln:1:64
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:w
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.w.w), line:1:63, endln:1:64
+      |vpiParent:
+      \_port: (w), line:1:63, endln:1:64
+      |vpiName:w
+      |vpiFullName:work@wreduce_test1.w.w
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.w)
+      |vpiParent:
+      \_port: (w), line:1:63, endln:1:64
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:14, endln:2:19
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:14, endln:2:15
+        |vpiParent:
+        \_operation: , line:2:14, endln:2:19
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:18, endln:2:19
+        |vpiParent:
+        \_operation: , line:2:14, endln:2:19
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.x), line:2:10, endln:2:11
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:x
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:25, endln:2:30
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:25
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:25, endln:2:26
+        |vpiParent:
+        \_operation: , line:2:25, endln:2:30
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:29, endln:2:30
+        |vpiParent:
+        \_operation: , line:2:25, endln:2:30
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.y), line:2:21, endln:2:22
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:y
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:36, endln:2:42
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:23
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:36, endln:2:37
+        |vpiParent:
+        \_operation: , line:2:36, endln:2:42
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:41, endln:2:42
+        |vpiParent:
+        \_operation: , line:2:36, endln:2:42
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.z), line:2:32, endln:2:33
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:z
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:48, endln:2:54
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:22
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:48, endln:2:49
+        |vpiParent:
+        \_operation: , line:2:48, endln:2:54
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:53, endln:2:54
+        |vpiParent:
+        \_operation: , line:2:48, endln:2:54
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.w), line:2:44, endln:2:45
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:w
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+|uhdmtopModules:
+\_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+  |vpiParent:
+  \_design: (work@wreduce_test1)
+  |vpiName:work@wreduce_test1
+  |vpiDefName:work@wreduce_test1
+  |vpiTop:1
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.a)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiFullName:work@wreduce_test1.a
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+    |vpiName:a
+    |vpiFullName:work@wreduce_test1.a
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.b)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+      |vpiFullName:work@wreduce_test1.b
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+    |vpiName:b
+    |vpiFullName:work@wreduce_test1.b
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.x)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+    |vpiName:x
+    |vpiFullName:work@wreduce_test1.x
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.y)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+    |vpiName:y
+    |vpiFullName:work@wreduce_test1.y
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.z)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+    |vpiName:z
+    |vpiFullName:work@wreduce_test1.z
+  |vpiNet:
+  \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiTypespec:
+    \_ref_typespec: (work@wreduce_test1.w)
+      |vpiParent:
+      \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+    |vpiName:w
+    |vpiFullName:work@wreduce_test1.w
+  |vpiTopModule:1
+  |vpiPort:
+  \_port: (a), line:1:35, endln:1:36
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:a
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiParent:
+      \_port: (a), line:1:35, endln:1:36
+      |vpiName:a
+      |vpiFullName:work@wreduce_test1.a
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.a)
+      |vpiParent:
+      \_port: (a), line:1:35, endln:1:36
+      |vpiFullName:work@wreduce_test1.a
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+  |vpiPort:
+  \_port: (b), line:1:38, endln:1:39
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:b
+    |vpiDirection:1
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.b), line:1:38, endln:1:39
+      |vpiParent:
+      \_port: (b), line:1:38, endln:1:39
+      |vpiName:b
+      |vpiFullName:work@wreduce_test1.b
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.b)
+      |vpiParent:
+      \_port: (b), line:1:38, endln:1:39
+      |vpiFullName:work@wreduce_test1.b
+      |vpiActual:
+      \_logic_typespec: , line:1:28, endln:1:34
+  |vpiPort:
+  \_port: (x), line:1:54, endln:1:55
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:x
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.x), line:1:54, endln:1:55
+      |vpiParent:
+      \_port: (x), line:1:54, endln:1:55
+      |vpiName:x
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.x)
+      |vpiParent:
+      \_port: (x), line:1:54, endln:1:55
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (y), line:1:57, endln:1:58
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:y
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.y), line:1:57, endln:1:58
+      |vpiParent:
+      \_port: (y), line:1:57, endln:1:58
+      |vpiName:y
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.y)
+      |vpiParent:
+      \_port: (y), line:1:57, endln:1:58
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (z), line:1:60, endln:1:61
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:z
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.z), line:1:60, endln:1:61
+      |vpiParent:
+      \_port: (z), line:1:60, endln:1:61
+      |vpiName:z
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.z)
+      |vpiParent:
+      \_port: (z), line:1:60, endln:1:61
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiPort:
+  \_port: (w), line:1:63, endln:1:64
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiName:w
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@wreduce_test1.w), line:1:63, endln:1:64
+      |vpiParent:
+      \_port: (w), line:1:63, endln:1:64
+      |vpiName:w
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+    |vpiTypedef:
+    \_ref_typespec: (work@wreduce_test1.w)
+      |vpiParent:
+      \_port: (w), line:1:63, endln:1:64
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_typespec: , line:1:48, endln:1:53
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:14, endln:2:19
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:11
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:14, endln:2:15
+        |vpiParent:
+        \_operation: , line:2:14, endln:2:19
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:18, endln:2:19
+        |vpiParent:
+        \_operation: , line:2:14, endln:2:19
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.x), line:2:10, endln:2:11
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:x
+      |vpiFullName:work@wreduce_test1.x
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.x), line:1:54, endln:1:55
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:25, endln:2:30
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:25
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:25, endln:2:26
+        |vpiParent:
+        \_operation: , line:2:25, endln:2:30
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:29, endln:2:30
+        |vpiParent:
+        \_operation: , line:2:25, endln:2:30
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.y), line:2:21, endln:2:22
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:y
+      |vpiFullName:work@wreduce_test1.y
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.y), line:1:57, endln:1:58
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:36, endln:2:42
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:23
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:36, endln:2:37
+        |vpiParent:
+        \_operation: , line:2:36, endln:2:42
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:41, endln:2:42
+        |vpiParent:
+        \_operation: , line:2:36, endln:2:42
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.z), line:2:32, endln:2:33
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:z
+      |vpiFullName:work@wreduce_test1.z
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.z), line:1:60, endln:1:61
+  |vpiContAssign:
+  \_cont_assign: , line:2:10, endln:2:54
+    |vpiParent:
+    \_module_inst: work@wreduce_test1 (work@wreduce_test1), file:/home/alain/uhdm2rtlil/test/wreduce_test1/dut.sv, line:1:1, endln:3:10
+    |vpiRhs:
+    \_operation: , line:2:48, endln:2:54
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiOpType:22
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.a), line:2:48, endln:2:49
+        |vpiParent:
+        \_operation: , line:2:48, endln:2:54
+        |vpiName:a
+        |vpiFullName:work@wreduce_test1.a
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.a), line:1:35, endln:1:36
+      |vpiOperand:
+      \_ref_obj: (work@wreduce_test1.b), line:2:53, endln:2:54
+        |vpiParent:
+        \_operation: , line:2:48, endln:2:54
+        |vpiName:b
+        |vpiFullName:work@wreduce_test1.b
+        |vpiActual:
+        \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+    |vpiLhs:
+    \_ref_obj: (work@wreduce_test1.w), line:2:44, endln:2:45
+      |vpiParent:
+      \_cont_assign: , line:2:10, endln:2:54
+      |vpiName:w
+      |vpiFullName:work@wreduce_test1.w
+      |vpiActual:
+      \_logic_net: (work@wreduce_test1.w), line:1:63, endln:1:64
+\_weaklyReferenced:
+\_logic_typespec: , line:1:28, endln:1:34
+  |vpiRange:
+  \_range: , line:1:28, endln:1:34
+    |vpiParent:
+    \_logic_typespec: , line:1:28, endln:1:34
+    |vpiLeftRange:
+    \_constant: , line:1:29, endln:1:31
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:31
+      |vpiSize:64
+      |UINT:31
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:32, endln:1:33
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:28, endln:1:34
+  |vpiParent:
+  \_logic_net: (work@wreduce_test1.b), line:1:38, endln:1:39
+  |vpiRange:
+  \_range: , line:1:28, endln:1:34
+    |vpiParent:
+    \_logic_typespec: , line:1:28, endln:1:34
+    |vpiLeftRange:
+    \_constant: , line:1:29, endln:1:31
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:31
+      |vpiSize:64
+      |UINT:31
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:32, endln:1:33
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:28, endln:1:34
+  |vpiRange:
+  \_range: , line:1:28, endln:1:34
+    |vpiParent:
+    \_logic_typespec: , line:1:28, endln:1:34
+    |vpiLeftRange:
+    \_constant: , line:1:29, endln:1:31
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:31
+      |vpiSize:64
+      |UINT:31
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:32, endln:1:33
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:28, endln:1:34
+  |vpiRange:
+  \_range: , line:1:28, endln:1:34
+    |vpiParent:
+    \_logic_typespec: , line:1:28, endln:1:34
+    |vpiLeftRange:
+    \_constant: , line:1:29, endln:1:31
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:31
+      |vpiSize:64
+      |UINT:31
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:32, endln:1:33
+      |vpiParent:
+      \_range: , line:1:28, endln:1:34
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:1:48, endln:1:53
+  |vpiRange:
+  \_range: , line:1:48, endln:1:53
+    |vpiParent:
+    \_logic_typespec: , line:1:48, endln:1:53
+    |vpiLeftRange:
+    \_constant: , line:1:49, endln:1:50
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:7
+      |vpiSize:64
+      |UINT:7
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:1:51, endln:1:52
+      |vpiParent:
+      \_range: , line:1:48, endln:1:53
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
