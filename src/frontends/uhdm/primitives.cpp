@@ -108,72 +108,170 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
         return;
     }
     
-    // Primitive gates have: output first, then inputs
-    // For NOT/BUF: 1 output, 1 input
-    // For others: 1 output, 2 inputs
+    // Primitive gates can have multiple outputs and/or inputs
+    // For buf/not: multiple outputs, 1 input
+    // For xor/xnor: 1 output, multiple inputs
+    // For other gates: 1 output, 2 inputs
     auto terms = *uhdm_gate->Prim_terms();
     if (terms.size() < 2) {
         log_error("UHDM: Gate has insufficient terminals (%d)\n", (int)terms.size());
         return;
     }
     
-    // Get output signal (first terminal)
-    RTLIL::SigSpec output_sig;
-    if (auto out_expr = terms[0]->Expr()) {
-        output_sig = import_expression(out_expr);
-    } else {
-        log_error("UHDM: Gate output terminal has no expression\n");
-        return;
+    // Separate outputs and inputs based on terminal direction
+    std::vector<RTLIL::SigSpec> outputs;
+    std::vector<RTLIL::SigSpec> inputs;
+    
+    for (auto term : terms) {
+        // First check VpiDirection
+        int direction = term->VpiDirection();
+        if (direction == vpiOutput) {
+            // Explicitly marked as output
+            if (auto expr = term->Expr()) {
+                outputs.push_back(import_expression(expr));
+            }
+        } else if (direction == vpiInput) {
+            // Explicitly marked as input
+            if (auto expr = term->Expr()) {
+                inputs.push_back(import_expression(expr));
+            }
+        } else {
+            // No explicit direction - use position
+            // For buf/not: first terminals are outputs, last is input
+            // Check TermIndex to determine position
+            int term_index = term->VpiTermIndex();
+            if (term_index >= 0) {
+                // TermIndex available - use it
+                // Last terminal is input for buf/not
+                if ((prim_type == vpiBufPrim || prim_type == vpiNotPrim) && 
+                    term_index == (int)terms.size() - 1) {
+                    if (auto expr = term->Expr()) {
+                        inputs.push_back(import_expression(expr));
+                    }
+                } else if (prim_type == vpiBufPrim || prim_type == vpiNotPrim) {
+                    // Earlier terminals are outputs for buf/not
+                    if (auto expr = term->Expr()) {
+                        outputs.push_back(import_expression(expr));
+                    }
+                } else {
+                    // For other gates, first is output, rest are inputs
+                    if (outputs.empty()) {
+                        if (auto expr = term->Expr()) {
+                            outputs.push_back(import_expression(expr));
+                        }
+                    } else {
+                        if (auto expr = term->Expr()) {
+                            inputs.push_back(import_expression(expr));
+                        }
+                    }
+                }
+            } else {
+                // No TermIndex - use order
+                if ((prim_type == vpiBufPrim || prim_type == vpiNotPrim)) {
+                    // For buf/not: all but last are outputs
+                    if (term == terms.back()) {
+                        if (auto expr = term->Expr()) {
+                            inputs.push_back(import_expression(expr));
+                        }
+                    } else {
+                        if (auto expr = term->Expr()) {
+                            outputs.push_back(import_expression(expr));
+                        }
+                    }
+                } else {
+                    // For other gates, first is output
+                    if (outputs.empty()) {
+                        if (auto expr = term->Expr()) {
+                            outputs.push_back(import_expression(expr));
+                        }
+                    } else {
+                        if (auto expr = term->Expr()) {
+                            inputs.push_back(import_expression(expr));
+                        }
+                    }
+                }
+            }
+        }
     }
     
-    // Create the cell
-    RTLIL::Cell* cell = module->addCell(get_unique_cell_name(inst_name), cell_type);
-    add_src_attribute(cell->attributes, uhdm_gate);
+    log("UHDM: Gate '%s' has %d outputs and %d inputs\n", 
+        inst_name.c_str(), (int)outputs.size(), (int)inputs.size());
     
-    // Connect output
-    cell->setPort(ID::Y, output_sig);
-    
-    // Handle different gate types
-    if (prim_type == vpiNotPrim || prim_type == vpiBufPrim) {
-        // Single input gates
-        if (terms.size() < 2) {
-            log_error("UHDM: Single-input gate has no input terminal\n");
-            return;
+    // For primitives with multiple outputs (buf, not), create separate cells
+    if (outputs.size() > 1) {
+        // Create a cell for each output
+        for (size_t i = 0; i < outputs.size(); i++) {
+            std::string cell_name = (outputs.size() > 1) ? 
+                inst_name + "_" + std::to_string(i) : inst_name;
+            RTLIL::Cell* cell = module->addCell(get_unique_cell_name(cell_name), cell_type);
+            add_src_attribute(cell->attributes, uhdm_gate);
+            
+            // Connect this output
+            cell->setPort(ID::Y, outputs[i]);
+            
+            // Connect input(s)
+            if (prim_type == vpiNotPrim || prim_type == vpiBufPrim) {
+                // Single input gates
+                if (inputs.size() >= 1) {
+                    cell->setPort(ID::A, inputs[0]);
+                }
+            } else {
+                // Should not happen for gates with multiple outputs
+                log_error("UHDM: Unexpected multiple outputs for gate type %d\n", prim_type);
+            }
         }
+    } else if (outputs.size() == 1) {
+        // Single output - standard case
+        RTLIL::Cell* cell = module->addCell(get_unique_cell_name(inst_name), cell_type);
+        add_src_attribute(cell->attributes, uhdm_gate);
         
-        RTLIL::SigSpec input_sig;
-        if (auto in_expr = terms[1]->Expr()) {
-            input_sig = import_expression(in_expr);
+        // Connect output
+        cell->setPort(ID::Y, outputs[0]);
+        
+        // Connect inputs based on gate type
+        if (prim_type == vpiNotPrim || prim_type == vpiBufPrim) {
+            // Single input gates
+            if (inputs.size() >= 1) {
+                cell->setPort(ID::A, inputs[0]);
+            }
+        } else if (prim_type == vpiXorPrim || prim_type == vpiXnorPrim) {
+            // XOR/XNOR can have multiple inputs - need to create tree
+            if (inputs.size() == 2) {
+                cell->setPort(ID::A, inputs[0]);
+                cell->setPort(ID::B, inputs[1]);
+            } else if (inputs.size() > 2) {
+                // Create a tree of XOR/XNOR gates
+                RTLIL::SigSpec result = inputs[0];
+                for (size_t i = 1; i < inputs.size(); i++) {
+                    RTLIL::Wire* temp_wire = module->addWire(NEW_ID);
+                    RTLIL::Cell* tree_cell = module->addCell(NEW_ID, cell_type);
+                    tree_cell->setPort(ID::A, result);
+                    tree_cell->setPort(ID::B, inputs[i]);
+                    if (i == inputs.size() - 1) {
+                        // Last gate connects to output
+                        tree_cell->setPort(ID::Y, outputs[0]);
+                    } else {
+                        // Intermediate gates connect to temp wire
+                        tree_cell->setPort(ID::Y, temp_wire);
+                        result = temp_wire;
+                    }
+                }
+                // Don't need the original cell
+                module->remove(cell);
+                log("UHDM: Created tree of %d %s gates for multi-input primitive\n", 
+                    (int)(inputs.size() - 1), gate_type_str.c_str());
+                return;
+            }
         } else {
-            log_error("UHDM: Gate input terminal has no expression\n");
-            return;
+            // Two input gates
+            if (inputs.size() >= 2) {
+                cell->setPort(ID::A, inputs[0]);
+                cell->setPort(ID::B, inputs[1]);
+            }
         }
-        
-        cell->setPort(ID::A, input_sig);
     } else {
-        // Two input gates
-        if (terms.size() < 3) {
-            log_error("UHDM: Two-input gate has insufficient inputs\n");
-            return;
-        }
-        
-        RTLIL::SigSpec input_a, input_b;
-        if (auto in_expr = terms[1]->Expr()) {
-            input_a = import_expression(in_expr);
-        } else {
-            log_error("UHDM: Gate input A terminal has no expression\n");
-            return;
-        }
-        
-        if (auto in_expr = terms[2]->Expr()) {
-            input_b = import_expression(in_expr);
-        } else {
-            log_error("UHDM: Gate input B terminal has no expression\n");
-            return;
-        }
-        
-        cell->setPort(ID::A, input_a);
-        cell->setPort(ID::B, input_b);
+        log_error("UHDM: Gate has no outputs\n");
+        return;
     }
     
     log("UHDM: Successfully imported %s gate\n", gate_type_str.c_str());
