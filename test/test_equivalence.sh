@@ -96,7 +96,7 @@ if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1
         escaped_signal=$(echo "$signal" | sed 's/\[/\\[/g; s/\]/\\]/g')
         if ! echo "$VERILOG_X_ASSIGNS" | grep -q "^$escaped_signal$"; then
             if [ $HAS_UNIQUE_X -eq 0 ]; then
-                echo "❌ CRITICAL ERROR: UHDM synthesized netlist contains X assignments not present in Verilog!"
+                echo "❌ CRITICAL ERROR for $TEST_NAME: UHDM synthesized netlist contains X assignments not present in Verilog!"
                 echo "   UHDM has X assignment to signal: $signal"
                 HAS_UNIQUE_X=1
             fi
@@ -105,7 +105,7 @@ if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1
     done
     
     if [ $HAS_UNIQUE_X -eq 1 ]; then
-        echo "   This indicates a serious bug - the design is non-functional"
+        echo "   This indicates a serious bug in $TEST_NAME - the design is non-functional"
         exit 1
     else
         echo "ℹ️  Both UHDM and Verilog have X assignments to the same signals - this is acceptable"

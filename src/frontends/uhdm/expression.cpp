@@ -18,6 +18,7 @@
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/range.h>
+#include <uhdm/sys_func_call.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -159,6 +160,42 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 log_warning("Logic_net '%s' not found as wire in module\n", net_name.c_str());
                 return RTLIL::SigSpec();
             }
+        case vpiSysFuncCall:
+            // Handle system function calls like $signed, $unsigned, etc.
+            {
+                const sys_func_call* func_call = any_cast<const sys_func_call*>(uhdm_expr);
+                if (!func_call) {
+                    log_warning("Failed to cast expression to sys_func_call\n");
+                    return RTLIL::SigSpec();
+                }
+                
+                std::string func_name = std::string(func_call->VpiName());
+                
+                // Get the arguments
+                std::vector<RTLIL::SigSpec> args;
+                if (func_call->Tf_call_args()) {
+                    for (auto arg : *func_call->Tf_call_args()) {
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        args.push_back(arg_sig);
+                    }
+                }
+                
+                // Handle specific system functions
+                if (func_name == "$signed" && args.size() == 1) {
+                    // $signed just returns the argument with signed interpretation
+                    // The signedness will be handled by the operation that uses it
+                    return args[0];
+                } else if (func_name == "$unsigned" && args.size() == 1) {
+                    // $unsigned just returns the argument with unsigned interpretation
+                    return args[0];
+                } else {
+                    log_warning("Unhandled system function call: %s with %d arguments\n", 
+                               func_name.c_str(), (int)args.size());
+                    // Return first argument if available, otherwise empty
+                    return args.empty() ? RTLIL::SigSpec() : args[0];
+                }
+            }
+            break;
         default:
             log_warning("Unsupported expression type: %s\n", UhdmName(uhdm_expr->UhdmType()).c_str());
             return RTLIL::SigSpec();
@@ -333,6 +370,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand));
             if (op_type == vpiConditionOp) {
                 log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
+            }
+            // Debug: Check for empty operands in comparison operations
+            if ((op_type == vpiEqOp || op_type == vpiNeqOp || op_type == vpiLtOp || 
+                 op_type == vpiLeOp || op_type == vpiGtOp || op_type == vpiGeOp) && 
+                op_sig.size() == 0) {
+                log_warning("Empty operand detected in comparison operation (type=%d)\n", op_type);
+                // Try to get more information about the operand
+                const expr* expr_operand = any_cast<const expr*>(operand);
+                if (expr_operand) {
+                    log_warning("  Operand type: %s\n", UhdmName(expr_operand->UhdmType()).c_str());
+                    if (!expr_operand->VpiName().empty()) {
+                        log_warning("  Operand name: %s\n", std::string(expr_operand->VpiName()).c_str());
+                    }
+                }
             }
             operands.push_back(op_sig);
         }

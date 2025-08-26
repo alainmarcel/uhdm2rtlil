@@ -46,7 +46,7 @@ module \code_hdl_models_parallel_crc
   wire width 16 \next_crc
   attribute \src "dut.sv:9.1-9.6"
   wire input 2 \reset
-  cell $xor $auto$expression.cpp:401:import_operation$1
+  cell $xor $auto$expression.cpp:452:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -56,7 +56,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [0]
     connect \Y $auto$rtlil.cc:3008:Xor$2
   end
-  cell $xor $auto$expression.cpp:401:import_operation$11
+  cell $xor $auto$expression.cpp:452:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -66,7 +66,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [7]
     connect \Y $auto$rtlil.cc:3008:Xor$12
   end
-  cell $xor $auto$expression.cpp:401:import_operation$13
+  cell $xor $auto$expression.cpp:452:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -76,7 +76,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [8]
     connect \Y $auto$rtlil.cc:3008:Xor$14
   end
-  cell $xor $auto$expression.cpp:401:import_operation$15
+  cell $xor $auto$expression.cpp:452:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -86,7 +86,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [5]
     connect \Y $auto$rtlil.cc:3008:Xor$16
   end
-  cell $xor $auto$expression.cpp:401:import_operation$17
+  cell $xor $auto$expression.cpp:452:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -96,7 +96,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [0]
     connect \Y $auto$rtlil.cc:3008:Xor$18
   end
-  cell $xor $auto$expression.cpp:401:import_operation$19
+  cell $xor $auto$expression.cpp:452:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -106,7 +106,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [4]
     connect \Y $auto$rtlil.cc:3008:Xor$20
   end
-  cell $xor $auto$expression.cpp:401:import_operation$21
+  cell $xor $auto$expression.cpp:452:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -116,7 +116,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [9]
     connect \Y $auto$rtlil.cc:3008:Xor$22
   end
-  cell $xor $auto$expression.cpp:401:import_operation$23
+  cell $xor $auto$expression.cpp:452:import_operation$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -126,7 +126,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y $auto$rtlil.cc:3008:Xor$24
   end
-  cell $xor $auto$expression.cpp:401:import_operation$25
+  cell $xor $auto$expression.cpp:452:import_operation$25
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -136,7 +136,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [1]
     connect \Y $auto$rtlil.cc:3008:Xor$26
   end
-  cell $xor $auto$expression.cpp:401:import_operation$27
+  cell $xor $auto$expression.cpp:452:import_operation$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -146,7 +146,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [5]
     connect \Y $auto$rtlil.cc:3008:Xor$28
   end
-  cell $xor $auto$expression.cpp:401:import_operation$29
+  cell $xor $auto$expression.cpp:452:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -156,7 +156,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [10]
     connect \Y $auto$rtlil.cc:3008:Xor$30
   end
-  cell $xor $auto$expression.cpp:401:import_operation$3
+  cell $xor $auto$expression.cpp:452:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -166,7 +166,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [4]
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $xor $auto$expression.cpp:401:import_operation$31
+  cell $xor $auto$expression.cpp:452:import_operation$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -176,7 +176,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [2]
     connect \Y $auto$rtlil.cc:3008:Xor$32
   end
-  cell $xor $auto$expression.cpp:401:import_operation$33
+  cell $xor $auto$expression.cpp:452:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -186,7 +186,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [6]
     connect \Y $auto$rtlil.cc:3008:Xor$34
   end
-  cell $xor $auto$expression.cpp:401:import_operation$35
+  cell $xor $auto$expression.cpp:452:import_operation$35
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -196,7 +196,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y $auto$rtlil.cc:3008:Xor$36
   end
-  cell $xor $auto$expression.cpp:401:import_operation$37
+  cell $xor $auto$expression.cpp:452:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -206,7 +206,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [0]
     connect \Y $auto$rtlil.cc:3008:Xor$38
   end
-  cell $xor $auto$expression.cpp:401:import_operation$39
+  cell $xor $auto$expression.cpp:452:import_operation$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -216,7 +216,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [7]
     connect \Y $auto$rtlil.cc:3008:Xor$40
   end
-  cell $xor $auto$expression.cpp:401:import_operation$41
+  cell $xor $auto$expression.cpp:452:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -226,7 +226,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [1]
     connect \Y $auto$rtlil.cc:3008:Xor$42
   end
-  cell $xor $auto$expression.cpp:401:import_operation$43
+  cell $xor $auto$expression.cpp:452:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -236,7 +236,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [8]
     connect \Y $auto$rtlil.cc:3008:Xor$44
   end
-  cell $xor $auto$expression.cpp:401:import_operation$45
+  cell $xor $auto$expression.cpp:452:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -246,7 +246,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [2]
     connect \Y $auto$rtlil.cc:3008:Xor$46
   end
-  cell $xor $auto$expression.cpp:401:import_operation$47
+  cell $xor $auto$expression.cpp:452:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -256,7 +256,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [9]
     connect \Y $auto$rtlil.cc:3008:Xor$48
   end
-  cell $xor $auto$expression.cpp:401:import_operation$49
+  cell $xor $auto$expression.cpp:452:import_operation$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -266,7 +266,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [3]
     connect \Y $auto$rtlil.cc:3008:Xor$50
   end
-  cell $xor $auto$expression.cpp:401:import_operation$5
+  cell $xor $auto$expression.cpp:452:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -276,7 +276,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y $auto$rtlil.cc:3008:Xor$6
   end
-  cell $xor $auto$expression.cpp:401:import_operation$51
+  cell $xor $auto$expression.cpp:452:import_operation$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -286,7 +286,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [10]
     connect \Y $auto$rtlil.cc:3008:Xor$52
   end
-  cell $xor $auto$expression.cpp:401:import_operation$7
+  cell $xor $auto$expression.cpp:452:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -296,7 +296,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [5]
     connect \Y $auto$rtlil.cc:3008:Xor$8
   end
-  cell $xor $auto$expression.cpp:401:import_operation$9
+  cell $xor $auto$expression.cpp:452:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

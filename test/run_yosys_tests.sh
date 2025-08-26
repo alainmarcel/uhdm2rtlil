@@ -37,6 +37,10 @@ declare -a FAILED_TEST_NAMES
 declare -a SKIPPED_TEST_NAMES
 declare -a UHDM_ONLY_TEST_NAMES
 
+# Arrays to track test execution times
+declare -A TEST_TIMES
+declare -A TEST_START_TIMES
+
 # Create run directory if it doesn't exist
 mkdir -p "$RUN_DIR"
 
@@ -107,6 +111,7 @@ run_test() {
         echo -e "${YELLOW}Skipping test: $relative_path (marked in skipped_tests.txt)${NC}"
         SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
         SKIPPED_TEST_NAMES+=("$relative_path")
+        # Don't track time for skipped tests
         return
     fi
     
@@ -116,6 +121,9 @@ run_test() {
     mkdir -p "$test_dir"
     
     echo -e "${BLUE}Running test: $relative_path${NC}"
+    
+    # Record test start time
+    local test_start_time=$(date +%s.%N)
     
     # Copy the test file
     cp "$test_file" "$test_dir/dut.sv"
@@ -229,6 +237,12 @@ EOF
     # Return to script directory
     cd "$SCRIPT_DIR"
     
+    # Record test end time and calculate duration
+    local test_end_time=$(date +%s.%N)
+    local test_duration=$(echo "$test_end_time - $test_start_time" | bc)
+    TEST_TIMES["$relative_path"]=$test_duration
+    printf "Test execution time: %.2f seconds\n" $test_duration
+    
     echo ""
     return 0
 }
@@ -331,6 +345,24 @@ if [ ${#SKIPPED_TEST_NAMES[@]} -gt 0 ]; then
         echo "   - $test"
     done
     echo ""
+fi
+
+# Export timing data for parent script
+if [ ${#TEST_TIMES[@]} -gt 0 ]; then
+    # Create temporary file with timing data (use fixed name for IPC)
+    TIMING_FILE="/tmp/yosys_test_times_latest.txt"
+    > "$TIMING_FILE"  # Clear any existing file
+    for test_name in "${!TEST_TIMES[@]}"; do
+        echo "$test_name|${TEST_TIMES[$test_name]}" >> "$TIMING_FILE"
+    done
+    
+    # Display top 5 longest running tests
+    echo ""
+    echo "Top 5 Longest Running Yosys Tests:"
+    echo "-----------------------------------"
+    sort -t'|' -k2 -rn "$TIMING_FILE" | head -5 | while IFS='|' read test_name duration; do
+        printf "  %-50s %.2f seconds\n" "$test_name" "$duration"
+    done
 fi
 
 # Exit with appropriate code

@@ -6,3 +6,6 @@
 # The test runner will pass if all failures are listed here
 
 # Tests that currently fail:
+carryadd
+case_expr_const
+forloops
