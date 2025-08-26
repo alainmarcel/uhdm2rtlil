@@ -35,6 +35,7 @@ jobs:
           libreadline-dev \
           bison \
           flex \
+          libfl-dev \
           libunwind-dev \
           libgoogle-perftools-dev \
           ccache 
