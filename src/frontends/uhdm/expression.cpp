@@ -835,6 +835,13 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
     }
     
+    // Check if this is an integer loop variable (common ones like i, j, k)
+    // These should be created as 32-bit wires (integer width in Verilog)
+    if (ref_name == "i" || ref_name == "j" || ref_name == "k") {
+        log("Reference to integer loop variable '%s' - creating 32-bit wire\n", ref_name.c_str());
+        return create_wire(ref_name, 32);
+    }
+    
     // If not found, create a new wire
     log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
     return create_wire(ref_name, 1);

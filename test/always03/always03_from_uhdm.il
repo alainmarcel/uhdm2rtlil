@@ -71,7 +71,7 @@ module \always03
     connect \A { $auto$rtlil.cc:3006:And$12 $auto$rtlil.cc:3006:And$6 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$22
   end
-  cell $and $auto$process.cpp:2994:import_statement_sync$5
+  cell $and $auto$process.cpp:2995:import_statement_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -81,7 +81,7 @@ module \always03
     connect \B \in5
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$process.cpp:3015:import_statement_sync$11
+  cell $and $auto$process.cpp:3016:import_statement_sync$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -91,21 +91,21 @@ module \always03
     connect \B $auto$rtlil.cc:2959:Not$10
     connect \Y $auto$rtlil.cc:3006:And$12
   end
-  cell $not $auto$process.cpp:3015:import_statement_sync$9
+  cell $not $auto$process.cpp:3016:import_statement_sync$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in5
     connect \Y $auto$rtlil.cc:2959:Not$10
   end
-  cell $mux $auto$process.cpp:3983:import_assignment_sync$13
+  cell $mux $auto$process.cpp:3984:import_assignment_sync$13
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3094:Mux$8
     connect \B \in7
     connect \S $auto$rtlil.cc:3006:And$12
     connect \Y $auto$rtlil.cc:3094:Mux$14
   end
-  cell $mux $auto$process.cpp:3983:import_assignment_sync$7
+  cell $mux $auto$process.cpp:3984:import_assignment_sync$7
     parameter \WIDTH 1
     connect \A 1'x
     connect \B \in6

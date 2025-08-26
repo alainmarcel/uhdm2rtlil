@@ -14,10 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 100% (55/55 tests passing)
-- **Perfect Matches**: 50 tests validated by formal equivalence checking
-- **UHDM-Only Success**: 5 tests demonstrate superior SystemVerilog support
-- **All tests pass** including full assertion support
+- **Success Rate**: 95% (66/69 tests passing)
+- **Perfect Matches**: 63 tests validated by formal equivalence checking
+- **Expected Failures**: 3 tests with known issues documented in `test/failing_tests.txt`
+- **Includes**: Full assertion support and system function call handling ($signed/$unsigned)
 
 ## Architecture & Workflow
 
@@ -65,10 +65,11 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - `always` - Mixed sequential/combinational logic
 - **Expressions**: 
   - Arithmetic, logical, bitwise, comparison, ternary operators
+  - System function calls ($signed, $unsigned)
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
   - Parameter references in expressions
-- **Control Flow**: If-else statements, case statements (including in synchronous contexts), for loops with compile-time unrolling and variable substitution, named begin blocks
+- **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, named begin blocks
 - **Memory**: Array inference, memory initialization, for-loop memory initialization patterns, asymmetric port RAM with different read/write widths
 - **Shift Registers**: Automatic detection and optimization of shift register patterns (e.g., `M[i+1] <= M[i]`)
 - **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
