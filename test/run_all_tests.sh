@@ -11,6 +11,18 @@ set +e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Setup logging
+LOG_FILE="$SCRIPT_DIR/test.log"
+YOSYS_LOG_FILE="$SCRIPT_DIR/test-yosys.log"
+
+# Create/clear log files
+echo "Test run started at $(date)" > "$LOG_FILE"
+echo "Test run started at $(date)" > "$YOSYS_LOG_FILE"
+
+# Arrays to track test execution times
+declare -A TEST_TIMES
+declare -A TEST_START_TIMES
+
 # Default behavior
 RUN_LOCAL=true
 RUN_YOSYS=false
@@ -190,6 +202,63 @@ should_skip_test() {
     return 1
 }
 
+# Function to display timing summary
+display_timing_summary() {
+    if [ ${#TEST_TIMES[@]} -gt 0 ]; then
+    echo
+    echo "=========================================="
+    echo "=== TEST EXECUTION TIME SUMMARY ==="
+    echo "=========================================="
+    echo
+    
+    # Sort tests by execution time and display top 5 longest
+    echo "Top 5 Longest Running Tests:"
+    echo "-----------------------------"
+    
+    # Create a temporary file for sorting
+    TEMP_FILE="/tmp/test_times_$$.txt"
+    for test_name in "${!TEST_TIMES[@]}"; do
+        printf "%s|%.2f\n" "$test_name" "${TEST_TIMES[$test_name]}"
+    done | sort -t'|' -k2 -rn > "$TEMP_FILE"
+    
+    # Display top 5
+    head -5 "$TEMP_FILE" | while IFS='|' read test_name duration; do
+        printf "  %-40s %.2f seconds\n" "$test_name" "$duration"
+    done
+    
+    # Calculate total time
+    total_time=0
+    for duration in "${TEST_TIMES[@]}"; do
+        total_time=$(echo "$total_time + $duration" | bc)
+    done
+    
+    echo
+    printf "Total test execution time: %.2f seconds\n" $total_time
+    
+    # Clean up
+    rm -f "$TEMP_FILE"
+    
+    # Log timing summary to file
+    {
+        echo
+        echo "=========================================="
+        echo "=== TEST EXECUTION TIME SUMMARY ==="
+        echo "=========================================="
+        echo
+        echo "Top 5 Longest Running Tests:"
+        for test_name in "${!TEST_TIMES[@]}"; do
+            printf "%s|%.2f\n" "$test_name" "${TEST_TIMES[$test_name]}"
+        done | sort -t'|' -k2 -rn | head -5 | while IFS='|' read test_name duration; do
+            printf "  %-40s %.2f seconds\n" "$test_name" "$duration"
+        done
+        echo
+        printf "Total test execution time: %.2f seconds\n" $total_time
+        echo
+        echo "Test run completed at $(date)"
+    } >> "$LOG_FILE"
+    fi
+}
+
 # Helper function to analyze test result
 analyze_test_result() {
     local test_dir="$1"
@@ -340,9 +409,21 @@ if [ "$RUN_LOCAL" = true ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
         expected_to_fail=true
     fi
     
-    # Run the test and capture result
+    # Record start time
+    start_time=$(date +%s.%N)
+    TEST_START_TIMES["$test_dir"]=$start_time
+    
+    # Run the test and capture result (don't log verbose output)
     ./test_uhdm_workflow.sh "$test_dir" >/dev/null 2>&1
     exit_code=$?
+    
+    # Record end time and calculate duration
+    end_time=$(date +%s.%N)
+    duration=$(echo "$end_time - $start_time" | bc)
+    TEST_TIMES["$test_dir"]=$duration
+    
+    # Display timing info
+    printf "Execution time: %.2f seconds\n" $duration
     
     # Analyze the result
     echo -n "Result: "
@@ -396,25 +477,77 @@ if [ "$RUN_YOSYS" = true ]; then
     # Save current directory
     SAVE_DIR=$(pwd)
     
+    # Record Yosys tests start time
+    yosys_start_time=$(date +%s.%N)
+    
     # Run the Yosys test script and capture results
     YOSYS_OUTPUT_FILE="/tmp/yosys_test_output_$$.txt"
     if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_LOCAL" = false ]; then
-        "$SCRIPT_DIR/run_yosys_tests.sh" "$SPECIFIC_TEST" | tee "$YOSYS_OUTPUT_FILE"
+        "$SCRIPT_DIR/run_yosys_tests.sh" "$SPECIFIC_TEST" 2>&1 | tee "$YOSYS_OUTPUT_FILE"
     else
-        "$SCRIPT_DIR/run_yosys_tests.sh" | tee "$YOSYS_OUTPUT_FILE"
+        "$SCRIPT_DIR/run_yosys_tests.sh" 2>&1 | tee "$YOSYS_OUTPUT_FILE"
     fi
-    YOSYS_EXIT_CODE=$?
+    YOSYS_EXIT_CODE=${PIPESTATUS[0]}
+    
+    # Record Yosys tests end time
+    yosys_end_time=$(date +%s.%N)
+    yosys_duration=$(echo "$yosys_end_time - $yosys_start_time" | bc)
+    
+    # Import individual test times from Yosys tests
+    TIMING_FILE="/tmp/yosys_test_times_latest.txt"
+    if [ -f "$TIMING_FILE" ]; then
+        while IFS='|' read test_name duration; do
+            TEST_TIMES["yosys:$test_name"]=$duration
+        done < "$TIMING_FILE"
+        rm -f "$TIMING_FILE"
+    else
+        # Fall back to just total time if individual times not available
+        TEST_TIMES["Yosys_Tests_Total"]=$yosys_duration
+    fi
+    
+    printf "Yosys tests total execution time: %.2f seconds\n" $yosys_duration
     
     # Return to original directory
     cd "$SAVE_DIR"
     
     # Parse Yosys test results and update global counters
     if [ -f "$YOSYS_OUTPUT_FILE" ]; then
+        # Extract and display Yosys test summary
+        echo "=== Yosys Test Summary ==="
+        
+        # Extract the summary section from the output (including statistics and test lists)
+        awk '/^=== TEST SUMMARY ===/,/^$/ {print}' "$YOSYS_OUTPUT_FILE" | tail -n +2 || true
+        
+        # Log Yosys summary to file  
+        {
+            echo
+            echo "=== Yosys Test Summary ==="
+            # Get overall statistics
+            awk '/^📊 OVERALL STATISTICS:/,/^🎯 Success Rate:/' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
+            echo ""
+            # Get test result lists with their names
+            awk '/^✅ PASSED TESTS/,/^(🚀|❌|⚠️|$)/ {if ($0 !~ /^(🚀|❌|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
+            awk '/^🚀 UHDM-ONLY SUCCESS/,/^(✅|❌|⚠️|$)/ {if ($0 !~ /^(✅|❌|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
+            awk '/^❌ FAILED TESTS/,/^(✅|🚀|⚠️|$)/ {if ($0 !~ /^(✅|🚀|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
+            echo ""
+            echo "Yosys test duration: $(printf "%.2f" $yosys_duration) seconds"
+        } >> "$YOSYS_LOG_FILE"
+        
+        # Extract test counts from Yosys output to update global counters
+        if grep -q "✅ PASSED TESTS" "$YOSYS_OUTPUT_FILE"; then
+            YOSYS_PASSED_COUNT=$(grep "✅ PASSED TESTS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
+            if [ -n "$YOSYS_PASSED_COUNT" ]; then
+                PASSED_TESTS=$((PASSED_TESTS + YOSYS_PASSED_COUNT))
+                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_PASSED_COUNT))
+            fi
+        fi
+        
         # Extract UHDM-only success count and names
-        if grep -q "🚀 UHDM-only success:" "$YOSYS_OUTPUT_FILE"; then
-            YOSYS_UHDM_COUNT=$(grep "🚀 UHDM-only success:" "$YOSYS_OUTPUT_FILE" | sed 's/.*: //')
+        if grep -q "🚀 UHDM-ONLY SUCCESS" "$YOSYS_OUTPUT_FILE"; then
+            YOSYS_UHDM_COUNT=$(grep "🚀 UHDM-ONLY SUCCESS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
             if [ -n "$YOSYS_UHDM_COUNT" ] && [ "$YOSYS_UHDM_COUNT" -gt 0 ]; then
                 UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + YOSYS_UHDM_COUNT))
+                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_UHDM_COUNT))
                 
                 # Extract UHDM-only test names from the output
                 IN_UHDM_SECTION=false
@@ -425,9 +558,18 @@ if [ "$RUN_YOSYS" = true ]; then
                         IN_UHDM_SECTION=false
                     elif [ "$IN_UHDM_SECTION" = true ] && [[ "$line" =~ ^[[:space:]]+-[[:space:]] ]]; then
                         test_name=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//')
-                        UHDM_ONLY_TEST_NAMES+=("$test_name")
+                        UHDM_ONLY_TEST_NAMES+=("yosys:$test_name")
                     fi
                 done < "$YOSYS_OUTPUT_FILE"
+            fi
+        fi
+        
+        # Extract failed test count
+        if grep -q "❌ FAILED TESTS" "$YOSYS_OUTPUT_FILE"; then
+            YOSYS_FAILED_COUNT=$(grep "❌ FAILED TESTS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
+            if [ -n "$YOSYS_FAILED_COUNT" ]; then
+                EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + YOSYS_FAILED_COUNT))
+                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_FAILED_COUNT))
             fi
         fi
         
@@ -438,68 +580,73 @@ if [ "$RUN_YOSYS" = true ]; then
     echo  # Extra newline after Yosys tests
 fi
 
-# Final summary - show when any tests were run
-if [ "$TOTAL_TESTS" -gt 0 ]; then
+# Function to print comprehensive summary
+print_comprehensive_summary() {
     echo "=========================================="
     echo "=== COMPREHENSIVE TEST SUMMARY ==="
     echo "=========================================="
-echo
-echo "📈 DETAILED BREAKDOWN:"
-
-if [ $PASSED_TESTS -gt 0 ]; then
     echo
-    echo "✅ PERFECT MATCHES ($PASSED_TESTS tests):"
-    echo "   These tests produce identical RTLIL output between UHDM and Verilog frontends:"
-    for test in "${PASSED_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-fi
+    echo "📈 DETAILED BREAKDOWN:"
 
-if [ $UHDM_ONLY_TESTS -gt 0 ]; then
+    if [ $PASSED_TESTS -gt 0 ]; then
+        echo
+        echo "✅ PERFECT MATCHES ($PASSED_TESTS tests):"
+        echo "   These tests produce identical RTLIL output between UHDM and Verilog frontends:"
+        for test in "${PASSED_TEST_NAMES[@]}"; do
+            echo "   - $test"
+        done
+    fi
+
+    if [ $UHDM_ONLY_TESTS -gt 0 ]; then
+        echo
+        echo "🚀 UHDM-ONLY SUCCESS ($UHDM_ONLY_TESTS tests):"
+        echo "   These tests demonstrate UHDM's superior SystemVerilog support:"
+        for test in "${UHDM_ONLY_TEST_NAMES[@]}"; do
+            echo "   - $test"
+        done
+    fi
+
+    if [ $CRASHED_TESTS -gt 0 ]; then
+        echo
+        echo "💥 CRASHED TESTS ($CRASHED_TESTS tests):"
+        echo "   These tests crashed during execution and need investigation:"
+        for test in "${CRASHED_TEST_NAMES[@]}"; do
+            echo "   - $test"
+        done
+    fi
+
+    if [ $EQUIV_FAILED_TESTS -gt 0 ]; then
+        echo
+        echo "❌ EQUIVALENCE FAILURES ($EQUIV_FAILED_TESTS tests):"
+        echo "   These tests generate output but fail formal equivalence checking:"
+        for test in "${EQUIV_FAILED_TEST_NAMES[@]}"; do
+            echo "   - $test"
+        done
+    fi
+
+    if [ $FAILED_TESTS -gt 0 ]; then
+        echo
+        echo "❌ TRUE FAILURES ($FAILED_TESTS tests):"
+        echo "   These tests failed to generate output files:"
+        for test in "${FAILED_TEST_NAMES[@]}"; do
+            echo "   - $test"
+        done
+    fi
+
     echo
-    echo "🚀 UHDM-ONLY SUCCESS ($UHDM_ONLY_TESTS tests):"
-    echo "   These tests demonstrate UHDM's superior SystemVerilog support:"
-    for test in "${UHDM_ONLY_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-fi
+    echo "🔍 ANALYSIS:"
+    # Recalculate functional tests before displaying
+    FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
+    echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+    echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
+    echo "  • Tests that fail equivalence: $EQUIV_FAILED_TESTS/$TOTAL_TESTS"
+    echo "  • Tests that fail to generate output: $FAILED_TESTS/$TOTAL_TESTS"
+}
 
-
-if [ $CRASHED_TESTS -gt 0 ]; then
-    echo
-    echo "💥 CRASHED TESTS ($CRASHED_TESTS tests):"
-    echo "   These tests crashed during execution and need investigation:"
-    for test in "${CRASHED_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-fi
-
-if [ $EQUIV_FAILED_TESTS -gt 0 ]; then
-    echo
-    echo "❌ EQUIVALENCE FAILURES ($EQUIV_FAILED_TESTS tests):"
-    echo "   These tests generate output but fail formal equivalence checking:"
-    for test in "${EQUIV_FAILED_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-fi
-
-if [ $FAILED_TESTS -gt 0 ]; then
-    echo
-    echo "❌ TRUE FAILURES ($FAILED_TESTS tests):"
-    echo "   These tests failed to generate output files:"
-    for test in "${FAILED_TEST_NAMES[@]}"; do
-        echo "   - $test"
-    done
-fi
-
-echo
-echo "🔍 ANALYSIS:"
-# Recalculate functional tests before displaying
-FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
-echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
-echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
-echo "  • Tests that fail equivalence: $EQUIV_FAILED_TESTS/$TOTAL_TESTS"
-echo "  • Tests that fail to generate output: $FAILED_TESTS/$TOTAL_TESTS"
+# Final summary - show when any tests were run
+if [ "$TOTAL_TESTS" -gt 0 ]; then
+    # Print to console
+    print_comprehensive_summary
 
 # Check for any unexpected results
 if [ ${#UNEXPECTED_FAILURES[@]} -gt 0 ]; then
@@ -533,12 +680,26 @@ echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
 echo
 
-# Calculate success rate (excluding equivalence failures and true failures)
+# Log the comprehensive summary to file
+{
+    print_comprehensive_summary
+    echo
+    echo "📊 OVERALL STATISTICS:"
+    echo "  Total tests run: $TOTAL_TESTS"
+    echo "  ✅ Passing tests: $PASSED_TESTS"
+    echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
+    echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
+    echo "  ❌ True failures: $FAILED_TESTS"
+    echo "  💥 Crashes: $CRASHED_TESTS"
+    echo
+} >> "$LOG_FILE"
+
+# Calculate success rate
 FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
-NON_FAILING_TESTS=$((TOTAL_TESTS - FAILED_TESTS - CRASHED_TESTS - EQUIV_FAILED_TESTS))
-if [ $TOTAL_TESTS -gt 0 ] && [ $NON_FAILING_TESTS -gt 0 ]; then
-    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / NON_FAILING_TESTS))
-    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$NON_FAILING_TESTS tests functional, excluding known failures)"
+if [ $TOTAL_TESTS -gt 0 ]; then
+    SUCCESS_RATE=$((FUNCTIONAL_TESTS * 100 / TOTAL_TESTS))
+    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$TOTAL_TESTS tests functional)"
+    echo "🎯 Success Rate: $SUCCESS_RATE% ($FUNCTIONAL_TESTS/$TOTAL_TESTS tests functional)" >> "$LOG_FILE"
 fi
 
 # Determine exit status
@@ -564,27 +725,39 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
     
     if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ]; then
         echo "🎉 EXCELLENT! All tests are functional! 🎉"
-        exit 0
-    elif [ $EXPECTED_FAILS -gt 0 ]; then
-        echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
-        echo
-        echo "All failing tests are documented in failing_tests.txt:"
-        echo "  • Expected failures: $EXPECTED_FAILS"
-        echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
-        echo
-        echo "The test suite passes because all results match expectations."
+        display_timing_summary
         exit 0
     else
-        echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
-        echo
-        echo "All failing tests are documented in failing_tests.txt:"
-        echo "  • Crashed tests: $CRASHED_TESTS"
-        echo "  • Equivalence failures: $EQUIV_FAILED_TESTS"
-        echo "  • Failed tests: $FAILED_TESTS"
-        echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
-        echo
-        echo "The test suite passes because all results match expectations."
-        exit 0
+        # Check if all failures are expected
+        TOTAL_FAILURES=$((CRASHED_TESTS + FAILED_TESTS + EQUIV_FAILED_TESTS))
+        if [ $EXPECTED_FAILS -eq $TOTAL_FAILURES ] && [ $EXPECTED_FAILS -gt 0 ]; then
+            echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
+            echo
+            echo "All failing tests are documented in failing_tests.txt:"
+            echo "  • Expected failures: $EXPECTED_FAILS"
+            echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+            echo
+            echo "The test suite passes because all results match expectations."
+            display_timing_summary
+            exit 0
+        else
+            echo "❌ TEST SUITE FAILED - There are failures!"
+            echo
+            echo "Test results:"
+            echo "  • Crashed tests: $CRASHED_TESTS"
+            echo "  • Equivalence failures: $EQUIV_FAILED_TESTS"
+            echo "  • Failed tests: $FAILED_TESTS"
+            echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
+            echo
+            UNEXPECTED_COUNT=$((TOTAL_FAILURES - EXPECTED_FAILS))
+            if [ $UNEXPECTED_COUNT -gt 0 ]; then
+                echo "❌ Found $UNEXPECTED_COUNT unexpected failures not in failing_tests.txt"
+            fi
+            echo
+            echo "Please investigate failures or update failing_tests.txt"
+            display_timing_summary
+            exit 1
+        fi
     fi
 else
     echo "❌ TEST SUITE FAILED - Unexpected results detected!"
@@ -597,6 +770,7 @@ else
     fi
     echo
     echo "Please investigate unexpected results or update failing_tests.txt"
+    display_timing_summary
     exit 1
 fi
 

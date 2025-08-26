@@ -1,0 +1,133 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -2,78 +2,91 @@
+ (* top =  1  *)
+ (* src = "dut.sv:1.1-22.10" *)
+ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
+-(* src = "dut.sv:3.7-3.12" *)
++(* src = "dut.sv:1.17-1.22" *)
+ input clock;
+ wire clock;
+-(* src = "dut.sv:3.14-3.17" *)
++(* src = "dut.sv:1.24-1.27" *)
+ input in1;
+ wire in1;
+-(* src = "dut.sv:3.19-3.22" *)
++(* src = "dut.sv:1.29-1.32" *)
+ input in2;
+ wire in2;
+-(* src = "dut.sv:3.24-3.27" *)
++(* src = "dut.sv:1.34-1.37" *)
+ input in3;
+ wire in3;
+-(* src = "dut.sv:3.29-3.32" *)
++(* src = "dut.sv:1.39-1.42" *)
+ input in4;
+ wire in4;
+-(* src = "dut.sv:3.34-3.37" *)
++(* src = "dut.sv:1.44-1.47" *)
+ input in5;
+ wire in5;
+-(* src = "dut.sv:3.39-3.42" *)
++(* src = "dut.sv:1.49-1.52" *)
+ input in6;
+ wire in6;
+-(* src = "dut.sv:3.44-3.47" *)
++(* src = "dut.sv:1.54-1.57" *)
+ input in7;
+ wire in7;
+-(* src = "dut.sv:4.8-4.12" *)
++(* src = "dut.sv:1.59-1.63" *)
+ output out1;
+ wire out1;
+-(* src = "dut.sv:4.14-4.18" *)
++(* src = "dut.sv:1.65-1.69" *)
+ output out2;
+ wire out2;
+-(* src = "dut.sv:4.20-4.24" *)
++(* src = "dut.sv:1.71-1.75" *)
+ output out3;
+ wire out3;
+-(* src = "dut.sv:7.1-20.4" *)
+-wire _0_;
+-(* src = "dut.sv:7.1-20.4" *)
+-wire _1_;
+-wire _2_;
+-\$_MUX_  _3_ (
++wire _00_;
++wire _01_;
++wire _02_;
++wire _03_;
++wire _04_;
++\$_NAND_  _05_ (
++.A(in4),
++.B(in5),
++.Y(_03_)
++);
++\$_ORNOT_  _06_ (
++.A(in5),
++.B(in4),
++.Y(_04_)
++);
++\$_NAND_  _07_ (
++.A(_04_),
++.B(_03_),
++.Y(_00_)
++);
++\$_MUX_  _08_ (
+ .A(in7),
+ .B(in6),
+-.S(in5),
+-.Y(_2_)
++.S(_04_),
++.Y(_02_)
+ );
+-\$_XOR_  _4_ (
+-.A(in2),
+-.B(in1),
+-.Y(_1_)
+-);
+-\$_XOR_  _5_ (
+-.A(_1_),
+-.B(out2),
+-.Y(_0_)
++\$_XOR_  _09_ (
++.A(out2),
++.B(out1),
++.Y(_01_)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.1-20.4" *)
+-\$_DFF_P_  out1_reg /* _6_ */ (
++\$_DFFE_PN_  out2_reg /* _10_ */ (
+ .C(clock),
+-.D(_0_),
+-.Q(out1)
++.D(out1),
++.E(in3),
++.Q(out2)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.1-20.4" *)
+-\$_DFFE_PP_  out3_reg /* _7_ */ (
++\$_DFF_P_  out1_reg /* _11_ */ (
+ .C(clock),
+-.D(_2_),
+-.E(in4),
+-.Q(out3)
++.D(_01_),
++.Q(out1)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:7.1-20.4" *)
+-\$_DFFE_PN_  out2_reg /* _8_ */ (
++\$_DFFE_PP_  out3_reg /* _12_ */ (
+ .C(clock),
+-.D(_1_),
+-.E(in3),
+-.Q(out2)
++.D(_02_),
++.E(_00_),
++.Q(out3)
+ );
+ endmodule
