@@ -590,6 +590,52 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        case vpiLShiftOp:
+            if (operands.size() == 2) {
+                // Left shift operation: a << b
+                // Result width is typically the same as the first operand
+                int result_width = operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                if (operands[0].is_wire()) {
+                    RTLIL::Wire* wire = operands[0].as_wire();
+                    if (wire && wire->is_signed) {
+                        is_signed = true;
+                    }
+                }
+                
+                // Use Shl cell for left shift operation
+                module->addShl(NEW_ID, operands[0], operands[1], result, is_signed);
+                return result;
+            }
+            break;
+        case vpiRShiftOp:
+            if (operands.size() == 2) {
+                // Right shift operation: a >> b
+                // Result width is typically the same as the first operand
+                int result_width = operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                if (operands[0].is_wire()) {
+                    RTLIL::Wire* wire = operands[0].as_wire();
+                    if (wire && wire->is_signed) {
+                        is_signed = true;
+                    }
+                }
+                
+                // Use Shr cell for right shift operation (or Sshr for signed)
+                if (is_signed) {
+                    module->addSshr(NEW_ID, operands[0], operands[1], result, is_signed);
+                } else {
+                    module->addShr(NEW_ID, operands[0], operands[1], result, false);
+                }
+                return result;
+            }
+            break;
         case vpiEqOp:
             if (operands.size() == 2)
                 return module->Eq(NEW_ID, operands[0], operands[1]);
