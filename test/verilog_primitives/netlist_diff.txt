@@ -1,0 +1,11 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -39,7 +39,7 @@
+ output out_xnor;
+ wire out_xnor;
+ wire _0_;
+-\$_XNOR_  _1_ (
++\$_XOR_  _1_ (
+ .A(in2),
+ .B(in1),
+ .Y(_0_)
