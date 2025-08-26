@@ -1080,6 +1080,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     if (uhdm_module->Variables()) {
         log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
         for (auto var : *uhdm_module->Variables()) {
+            // Skip integer variables - they are procedural and shouldn't be module-level wires
+            if (var->UhdmType() == uhdmint_var) {
+                std::string var_name = std::string(var->VpiName());
+                log("UHDM: Skipping integer variable '%s' (procedural variable)\n", var_name.c_str());
+                continue;
+            }
+            
             // Check if this is an array_var (memory array)
             if (var->UhdmType() == uhdmarray_var) {
                 auto array_var = any_cast<const UHDM::array_var*>(var);

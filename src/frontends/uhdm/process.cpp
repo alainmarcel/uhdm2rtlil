@@ -6,6 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <algorithm>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -4485,8 +4486,88 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
     if (auto condition = uhdm_case->VpiCondition()) {
         RTLIL::SigSpec case_sig = import_expression(condition);
         
+        // Check if this is in an initial block with constant condition
+        bool is_initial_block = (sync->type == RTLIL::SyncType::STi);
+        bool is_const_condition = case_sig.is_fully_const();
+        
         log("        Case condition signal: %s\n", log_signal(case_sig));
+        log("        Is initial block: %s, Is const condition: %s\n", 
+            is_initial_block ? "yes" : "no", is_const_condition ? "yes" : "no");
         log_flush();
+        
+        // If this is an initial block with constant condition, try to evaluate it directly
+        if (is_initial_block && is_const_condition && case_sig.is_fully_const()) {
+            RTLIL::Const case_value = case_sig.as_const();
+            log("        Evaluating constant case in initial block: %s\n", case_value.as_string().c_str());
+            
+            // Process each case item to find a match
+            if (auto case_items = uhdm_case->Case_items()) {
+                for (auto case_item : *case_items) {
+                    bool is_default = false;
+                    bool case_matches = false;
+                    
+                    if (auto exprs = case_item->VpiExprs()) {
+                        // Check if any expression matches
+                        for (auto expr : *exprs) {
+                            if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
+                                RTLIL::SigSpec expr_sig = import_expression(case_expr);
+                                if (expr_sig.is_fully_const()) {
+                                    RTLIL::Const expr_value = expr_sig.as_const();
+                                    // Compare values, handling width differences
+                                    // Extend both to max width for comparison
+                                    size_t max_width = std::max(case_value.size(), expr_value.size());
+                                    RTLIL::Const case_extended = case_value;
+                                    RTLIL::Const expr_extended = expr_value;
+                                    case_extended.bits().resize(max_width, RTLIL::State::S0);
+                                    expr_extended.bits().resize(max_width, RTLIL::State::S0);
+                                    
+                                    if (case_extended == expr_extended) {
+                                        case_matches = true;
+                                        log("          Found matching case: %s == %s\n", 
+                                            case_value.as_string().c_str(), expr_value.as_string().c_str());
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // This is a default case
+                        is_default = true;
+                        log("          Default case found\n");
+                    }
+                    
+                    // Execute the matching case (or save default for later)
+                    if (case_matches) {
+                        if (auto stmt = case_item->Stmt()) {
+                            log("          Executing matching case body\n");
+                            import_statement_sync(stmt, sync, is_reset);
+                        }
+                        return; // Found match, done processing
+                    } else if (is_default) {
+                        // Save default case and continue looking for exact match
+                        if (case_item->Stmt()) {
+                            // If we reach end without match, we'll execute default
+                            // For now, continue to check other cases
+                            continue;
+                        }
+                    }
+                }
+                
+                // If we got here without a match, execute default case if exists
+                for (auto case_item : *case_items) {
+                    if (!case_item->VpiExprs()) { // Default case
+                        if (auto stmt = case_item->Stmt()) {
+                            log("          Executing default case body\n");
+                            import_statement_sync(stmt, sync, is_reset);
+                        }
+                        return;
+                    }
+                }
+            }
+            
+            log("        No matching case found for constant value\n");
+            return; // Exit early for constant evaluation
+        }
         
         // For sync context, we need to build a cascade of muxes for each assigned signal
         // First, collect all assignments from all case items

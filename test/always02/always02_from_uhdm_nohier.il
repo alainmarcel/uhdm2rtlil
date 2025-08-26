@@ -20,7 +20,7 @@ module \always02
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:507:import_operation$1
   end
-  cell $mux $auto$process.cpp:3983:import_assignment_sync$3
+  cell $mux $auto$process.cpp:3984:import_assignment_sync$3
     parameter \WIDTH 4
     connect \A $auto$expression.cpp:507:import_operation$1 [3:0]
     connect \B 4'0000

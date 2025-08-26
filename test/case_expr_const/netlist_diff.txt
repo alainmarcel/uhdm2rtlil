@@ -1,0 +1,17 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -27,11 +27,11 @@
+ output h;
+ wire h;
+ assign a = 1'h1;
+-assign b = 1'h1;
+-assign c = 1'h1;
++assign b = 1'hx;
++assign c = 1'hx;
+ assign d = 1'h1;
+ assign e = 1'h1;
+-assign f = 1'h1;
++assign f = 1'h0;
+ assign g = 1'h1;
+ assign h = 1'h1;
+ endmodule
