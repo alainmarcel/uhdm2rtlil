@@ -7,8 +7,8 @@ module \macc
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
   attribute \unused_bits "40"
-  wire width 41 $auto$expression.cpp:507:import_operation$3
-  wire width 32 $auto$expression.cpp:551:import_operation$1
+  wire width 41 $auto$expression.cpp:529:import_operation$3
+  wire width 32 $auto$expression.cpp:573:import_operation$1
   attribute \src "dut.sv:9.28-9.29"
   wire width 16 input 4 signed \a
   attribute \init 16'0000000000000000
@@ -44,7 +44,7 @@ module \macc
   attribute \reg 1
   attribute \src "dut.sv:14.5-14.18"
   wire \sload_reg
-  cell $add $auto$expression.cpp:521:import_operation$4
+  cell $add $auto$expression.cpp:543:import_operation$4
     parameter \A_SIGNED 1
     parameter \A_WIDTH 40
     parameter \B_SIGNED 1
@@ -52,9 +52,9 @@ module \macc
     parameter \Y_WIDTH 41
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:507:import_operation$3
+    connect \Y $auto$expression.cpp:529:import_operation$3
   end
-  cell $mul $auto$expression.cpp:568:import_operation$2
+  cell $mul $auto$expression.cpp:590:import_operation$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \B_SIGNED 1
@@ -62,7 +62,7 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:551:import_operation$1
+    connect \Y $auto$expression.cpp:573:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:27.1-36.5"
@@ -82,7 +82,7 @@ module \macc
     parameter \EN_POLARITY 1
     parameter \WIDTH 40
     connect \CLK \clk
-    connect \D $auto$expression.cpp:507:import_operation$3 [39:0]
+    connect \D $auto$expression.cpp:529:import_operation$3 [39:0]
     connect \EN \ce
     connect \Q \adder_out
   end
@@ -104,7 +104,7 @@ module \macc
     parameter \EN_POLARITY 1
     parameter \WIDTH 32
     connect \CLK \clk
-    connect \D $auto$expression.cpp:551:import_operation$1
+    connect \D $auto$expression.cpp:573:import_operation$1
     connect \EN \ce
     connect \Q \mult_reg
   end

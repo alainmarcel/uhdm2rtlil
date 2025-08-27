@@ -3,8 +3,8 @@ autoidx 11
 attribute \src "dut.sv:2.1-43.10"
 module \simple_nested_struct_nopack
   wire width 62 $0\out_struct
-  wire width 9 $auto$expression.cpp:507:import_operation$1
-  wire width 17 $auto$expression.cpp:507:import_operation$7
+  wire width 9 $auto$expression.cpp:529:import_operation$1
+  wire width 17 $auto$expression.cpp:529:import_operation$7
   wire $auto$rtlil.cc:3006:And$6
   wire width 4 $auto$rtlil.cc:3007:Or$10
   wire width 32 $auto$rtlil.cc:3008:Xor$4
@@ -18,7 +18,7 @@ module \simple_nested_struct_nopack
   attribute \src "dut.sv:23.21-23.31"
   attribute \wiretype "\\nested_struct_t"
   wire width 62 \out_struct
-  cell $and $auto$expression.cpp:444:import_operation$5
+  cell $and $auto$expression.cpp:466:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -28,7 +28,7 @@ module \simple_nested_struct_nopack
     connect \B \in_struct [0]
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $or $auto$expression.cpp:448:import_operation$9
+  cell $or $auto$expression.cpp:470:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -38,7 +38,7 @@ module \simple_nested_struct_nopack
     connect \B 4'1010
     connect \Y $auto$rtlil.cc:3007:Or$10
   end
-  cell $xor $auto$expression.cpp:452:import_operation$3
+  cell $xor $auto$expression.cpp:474:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -48,7 +48,7 @@ module \simple_nested_struct_nopack
     connect \B 32'11011110101011011011111011101111
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $add $auto$expression.cpp:521:import_operation$2
+  cell $add $auto$expression.cpp:543:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -56,9 +56,9 @@ module \simple_nested_struct_nopack
     parameter \Y_WIDTH 9
     connect \A \in_struct [61:54]
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:507:import_operation$1
+    connect \Y $auto$expression.cpp:529:import_operation$1
   end
-  cell $add $auto$expression.cpp:521:import_operation$8
+  cell $add $auto$expression.cpp:543:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -66,16 +66,16 @@ module \simple_nested_struct_nopack
     parameter \Y_WIDTH 17
     connect \A \in_struct [20:5]
     connect \B 16'0000000001100100
-    connect \Y $auto$expression.cpp:507:import_operation$7
+    connect \Y $auto$expression.cpp:529:import_operation$7
   end
   attribute \src "dut.sv:30.5-41.8"
   process $proc$dut.sv:30$1
     assign $0\out_struct \out_struct
     assign $0\out_struct \in_struct
-    assign $0\out_struct [61:54] $auto$expression.cpp:507:import_operation$1 [7:0]
+    assign $0\out_struct [61:54] $auto$expression.cpp:529:import_operation$1 [7:0]
     assign $0\out_struct [53:22] $auto$rtlil.cc:3008:Xor$4
     assign $0\out_struct [21] $auto$rtlil.cc:3006:And$6
-    assign $0\out_struct [20:5] $auto$expression.cpp:507:import_operation$7 [15:0]
+    assign $0\out_struct [20:5] $auto$expression.cpp:529:import_operation$7 [15:0]
     assign $0\out_struct [4:1] $auto$rtlil.cc:3007:Or$10
     assign $0\out_struct [0] \in_struct [21]
     sync always

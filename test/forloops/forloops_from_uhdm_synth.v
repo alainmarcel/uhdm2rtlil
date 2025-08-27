@@ -24,11 +24,24 @@ module forloops(clk, a, b, p, q, x, y);
   (* src = "dut.sv:1.61-1.62" *)
   output [3:0] y;
   wire [3:0] y;
-  (* src = "dut.sv:2.10-2.11" *)
-  wire [31:0] k;
-  assign k = 32'hxxxxxxxx;
+  wire [3:0] k;
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:3.2-7.5" *)
+  \$_DFF_P_  \x_reg[0]  /* _0_ */ (
+    .C(clk),
+    .D(b),
+    .Q(x[0])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:3.2-7.5" *)
+  \$_DFF_P_  \x_reg[1]  /* _1_ */ (
+    .C(clk),
+    .D(a),
+    .Q(x[1])
+  );
+  assign k = 4'hx;
   assign p = 4'hx;
   assign q = 4'hx;
-  assign x = 4'hx;
-  assign y = 4'hx;
+  assign x[3:2] = 2'h0;
+  assign y = 4'h1;
 endmodule

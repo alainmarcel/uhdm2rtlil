@@ -68,7 +68,7 @@ module \unbased_unsized
   wire width 64 \o15
   attribute \src "dut.sv:13.24-13.27"
   wire width 64 \o16
-  cell $eqx $auto$expression.cpp:600:import_operation$1
+  cell $eqx $auto$expression.cpp:668:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -78,7 +78,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3015:Eqx$2
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$13
+  cell $eqx $auto$expression.cpp:668:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -88,7 +88,7 @@ module \unbased_unsized
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3015:Eqx$14
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$17
+  cell $eqx $auto$expression.cpp:668:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -98,7 +98,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3015:Eqx$18
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$21
+  cell $eqx $auto$expression.cpp:668:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -108,7 +108,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000111
     connect \Y $auto$rtlil.cc:3015:Eqx$22
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$25
+  cell $eqx $auto$expression.cpp:668:import_operation$25
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -118,7 +118,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000xxx
     connect \Y $auto$rtlil.cc:3015:Eqx$26
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$29
+  cell $eqx $auto$expression.cpp:668:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -128,7 +128,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000zzz
     connect \Y $auto$rtlil.cc:3015:Eqx$30
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$33
+  cell $eqx $auto$expression.cpp:668:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -138,7 +138,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3015:Eqx$34
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$37
+  cell $eqx $auto$expression.cpp:668:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -148,7 +148,7 @@ module \unbased_unsized
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3015:Eqx$38
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$41
+  cell $eqx $auto$expression.cpp:668:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -158,7 +158,7 @@ module \unbased_unsized
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3015:Eqx$42
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$45
+  cell $eqx $auto$expression.cpp:668:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -168,7 +168,7 @@ module \unbased_unsized
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3015:Eqx$46
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$5
+  cell $eqx $auto$expression.cpp:668:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -178,7 +178,7 @@ module \unbased_unsized
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3015:Eqx$6
   end
-  cell $eqx $auto$expression.cpp:600:import_operation$9
+  cell $eqx $auto$expression.cpp:668:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0

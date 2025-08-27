@@ -99,8 +99,6 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             return import_part_select(any_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiBitSelect:
             return import_bit_select(any_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
-        case vpiConcatOp:
-            return import_concat(any_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
         case vpiAssignment:
             // This should not be called on assignment directly
             // Assignment is a statement, not an expression
@@ -176,6 +174,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 if (func_call->Tf_call_args()) {
                     for (auto arg : *func_call->Tf_call_args()) {
                         RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        log_debug("UHDM: sys_func_call %s argument size: %d\n", func_name.c_str(), arg_sig.size());
+                        if (arg_sig.size() == 0) {
+                            log_warning("Empty argument in sys_func_call %s\n", func_name.c_str());
+                        }
                         args.push_back(arg_sig);
                     }
                 }
@@ -184,6 +186,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 if (func_name == "$signed" && args.size() == 1) {
                     // $signed just returns the argument with signed interpretation
                     // The signedness will be handled by the operation that uses it
+                    log_debug("UHDM: $signed returning argument of size %d\n", args[0].size());
                     return args[0];
                 } else if (func_name == "$unsigned" && args.size() == 1) {
                     // $unsigned just returns the argument with unsigned interpretation
@@ -390,6 +393,25 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     }
     
     switch (op_type) {
+        case vpiMinusOp:
+            // Unary minus operation
+            if (operands.size() == 1) {
+                log_debug("UHDM: Found vpiMinusOp (unary minus) with operand size %d\n", operands[0].size());
+                if (operands[0].size() == 0) {
+                    log_warning("vpiMinusOp has empty operand!\n");
+                    return RTLIL::SigSpec();
+                }
+                // Create a negation operation
+                int result_width = operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operand is signed - for unary minus with $signed, assume signed
+                bool is_signed = true;  // Default to signed for unary minus
+                
+                module->addNeg(NEW_ID, operands[0], result, is_signed);
+                return result;
+            }
+            break;
         case vpiNotOp:
             if (operands.size() == 1) {
                 // Create a logic_not cell with unique naming using counter
@@ -707,6 +729,23 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // sig_b = value when selector is 1 (true value)
                 // sig_s = selector
                 return module->Mux(NEW_ID, false_val, true_val, cond);
+            }
+            break;
+        case vpiConcatOp:
+            // Concatenation operation {a, b, c}
+            {
+                log_debug("UHDM: Processing vpiConcatOp with %d operands\n", (int)operands.size());
+                RTLIL::SigSpec result;
+                // In SystemVerilog concatenation, the leftmost item appears in the MSBs
+                // So we need to reverse the order when building the result
+                for (int i = operands.size() - 1; i >= 0; i--) {
+                    if (operands[i].size() == 0) {
+                        log_warning("Empty operand in concatenation at position %d\n", i);
+                    }
+                    result.append(operands[i]);
+                }
+                log_debug("UHDM: Concatenation result size: %d\n", result.size());
+                return result;
             }
             break;
         case vpiCastOp:
