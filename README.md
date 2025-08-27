@@ -14,16 +14,21 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 76 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 96% (73/76 tests passing)
-- **Perfect Matches**: 70+ tests validated by formal equivalence checking
+- **Total Tests**: 80 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 96% (77/80 tests passing)
+- **Perfect Matches**: 74+ tests validated by formal equivalence checking
 - **Expected Failures**: 3 tests with known issues documented in `test/failing_tests.txt`:
   - `carryadd` - Generate block genvar handling issue
   - `case_expr_const` - Partial fix (5/8 cases pass), signed comparison issue remaining
   - `forloops` - Fixed and passing with proper integer variable substitution
 - **Recent Additions**: 
   - 6 lut_map tests (and, cmp, mux, not, or, xor) - all passing with $signed/$unsigned support
-  - 3 additional tests from Yosys suite (forloops, carryadd, case_expr_const)
+  - 5 memory/flip-flop tests from Yosys suite:
+    - `arrays01` - Simple memory array test (passing)
+    - `dff_styles` - Basic D flip-flop test (passing)
+    - `gen_test1` - Complex generate blocks with nested loops (issues with synthesis)
+    - `mem2reg_test1` - Memory-to-register with combinational logic (passing)
+    - `mem2reg_test2` - Memory-to-register with sequential logic and for loops (passing)
   - Split wreduce test into wreduce_test0 and wreduce_test1 - both passing
   - Fixed verilog_primitives test with multi-output gate support
 
@@ -192,7 +197,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (54 total - 53 passing, 1 known issue)
+### Current Test Cases (77 total - 73 passing, 4 known issues)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design

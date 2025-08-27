@@ -15,6 +15,7 @@
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/assignment.h>
 #include <uhdm/uhdm_vpi_user.h>
+#include <uhdm/parameter.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/range.h>
@@ -420,20 +421,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 std::string cell_name_str;
                 if (!op_src.empty()) {
                     cell_name_str = "$logic_not$" + op_src;
-                    if (!current_gen_scope.empty()) {
-                        cell_name_str += "$" + current_gen_scope;
+                    std::string gen_scope = get_current_gen_scope();
+                    if (!gen_scope.empty()) {
+                        cell_name_str += "$" + gen_scope;
                     }
                     cell_name_str += "$" + std::to_string(logic_not_counter);
                 } else {
                     cell_name_str = "$logic_not$auto";
-                    if (!current_gen_scope.empty()) {
-                        cell_name_str += "$" + current_gen_scope;
+                    std::string gen_scope = get_current_gen_scope();
+                    if (!gen_scope.empty()) {
+                        cell_name_str += "$" + gen_scope;
                     }
                     cell_name_str += "$" + std::to_string(logic_not_counter);
                 }
                 
                 log("UHDM: import_operation creating logic_not cell with name: %s (gen_scope=%s)\n", 
-                    cell_name_str.c_str(), current_gen_scope.c_str());
+                    cell_name_str.c_str(), get_current_gen_scope().c_str());
                 RTLIL::IdString cell_name = RTLIL::escape_id(cell_name_str);
                 RTLIL::Cell* not_cell = module->addCell(cell_name, ID($logic_not));
                 not_cell->setParam(ID::A_SIGNED, 0);
@@ -847,25 +850,115 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     std::string ref_name = std::string(uhdm_ref->VpiName());
     
     if (mode_debug)
-        log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), current_gen_scope.c_str());
+        log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
+    
+    // Check if this is a loop variable that needs substitution
+    if (loop_values.count(ref_name)) {
+        int value = loop_values[ref_name];
+        if (mode_debug)
+            log("    Substituting loop variable %s with value %d\n", ref_name.c_str(), value);
+        return RTLIL::SigSpec(RTLIL::Const(value, 32));
+    }
+    
+    // Check if the ref_obj has an Actual_group() that points to a parameter
+    if (uhdm_ref->Actual_group()) {
+        const any* actual = uhdm_ref->Actual_group();
+        if (actual->VpiType() == vpiParameter) {
+            const parameter* param = any_cast<const parameter*>(actual);
+            // Get the parameter value - parameters typically store values as constants
+            std::string val_str = std::string(param->VpiValue());
+            
+            // Parse value from format like "UINT:0", "UINT:1", "HEX:AA", etc.
+            RTLIL::Const param_value;
+            if (!val_str.empty()) {
+                size_t colon_pos = val_str.find(':');
+                if (colon_pos != std::string::npos) {
+                    std::string type_part = val_str.substr(0, colon_pos);
+                    std::string value_part = val_str.substr(colon_pos + 1);
+                    
+                    if (type_part == "HEX") {
+                        // Parse hexadecimal value
+                        param_value = RTLIL::Const::from_string(value_part);
+                    } else if (type_part == "BIN") {
+                        // Parse binary value
+                        param_value = RTLIL::Const::from_string(value_part);
+                    } else {
+                        // Parse as decimal integer (UINT, INT)
+                        param_value = RTLIL::Const(std::stoi(value_part), 32);
+                    }
+                } else {
+                    // Try to parse as integer directly
+                    param_value = RTLIL::Const(std::stoi(val_str), 32);
+                }
+            } else {
+                // If no VpiValue, check if there's an expression
+                if (param->Expr()) {
+                    RTLIL::SigSpec expr_val = import_expression(any_cast<const expr*>(param->Expr()));
+                    if (expr_val.is_fully_const()) {
+                        param_value = expr_val.as_const();
+                    }
+                }
+                
+                // If still no value, try looking up the parameter by name in the module
+                if (param_value.size() == 0) {
+                    std::string param_name = std::string(param->VpiName());
+                    RTLIL::IdString param_id = RTLIL::escape_id(param_name);
+                    if (module->parameter_default_values.count(param_id)) {
+                        param_value = module->parameter_default_values.at(param_id);
+                        if (mode_debug)
+                            log("UHDM: Found parameter %s in module with value %s\n", 
+                                param_name.c_str(), param_value.as_string().c_str());
+                    }
+                }
+            }
+            
+            if (mode_debug)
+                log("UHDM: ref_obj %s refers to parameter with value %s\n", 
+                    ref_name.c_str(), param_value.as_string().c_str());
+            return RTLIL::SigSpec(param_value);
+        }
+    }
     
     // Check if this is a parameter reference
     RTLIL::IdString param_id = RTLIL::escape_id(ref_name);
     if (module->parameter_default_values.count(param_id)) {
         RTLIL::Const param_value = module->parameter_default_values.at(param_id);
-        log("UHDM: Found parameter %s with value %s (bits=%d)\n", 
-            ref_name.c_str(), param_value.as_string().c_str(), param_value.size());
+        if (mode_debug)
+            log("UHDM: Found parameter %s with value %s (bits=%d)\n", 
+                ref_name.c_str(), param_value.as_string().c_str(), param_value.size());
         return RTLIL::SigSpec(param_value);
     }
     
-    // If we're in a generate scope, first try the hierarchical name
-    if (!current_gen_scope.empty()) {
-        std::string hierarchical_name = current_gen_scope + "." + ref_name;
+    // If we're in a generate scope, try hierarchical lookups
+    std::string gen_scope = get_current_gen_scope();
+    if (!gen_scope.empty()) {
+        // First try the full hierarchical name
+        std::string hierarchical_name = gen_scope + "." + ref_name;
         if (name_map.count(hierarchical_name)) {
             RTLIL::Wire* wire = name_map[hierarchical_name];
             log("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
             return RTLIL::SigSpec(wire);
         }
+        
+        // If not found, try parent scopes
+        // For example, if we're in gen3[0].gen4[0] looking for tmp2,
+        // we should also check gen3[0].tmp2
+        for (int i = gen_scope_stack.size() - 1; i >= 0; i--) {
+            std::string parent_path;
+            for (int j = 0; j <= i; j++) {
+                if (j > 0) parent_path += ".";
+                parent_path += gen_scope_stack[j];
+            }
+            std::string parent_hierarchical = parent_path + "." + ref_name;
+            if (name_map.count(parent_hierarchical)) {
+                RTLIL::Wire* wire = name_map[parent_hierarchical];
+                log("UHDM: Found wire %s in parent scope %s\n", ref_name.c_str(), parent_path.c_str());
+                return RTLIL::SigSpec(wire);
+            }
+        }
+        
+        log("UHDM: In generate scope %s, wire %s not found in hierarchical lookup\n",
+            gen_scope.c_str(), ref_name.c_str());
     }
     
     // Look up in name map with simple name
@@ -875,7 +968,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     }
     
     // Check if wire exists in current module
-    if (module) {
+    // Skip this check if we're in a generate scope to avoid finding global wires
+    // when we should be using generate-local wires
+    if (module && gen_scope.empty()) {
         RTLIL::IdString wire_id = RTLIL::escape_id(ref_name);
         if (RTLIL::Wire* existing_wire = module->wire(wire_id)) {
             log("UHDM: Found existing wire %s in module\n", ref_name.c_str());
@@ -928,8 +1023,27 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     }
     
     // If not found, create a new wire
+    // In generate scopes, use hierarchical naming
+    std::string wire_name = ref_name;
+    if (!gen_scope.empty()) {
+        wire_name = gen_scope + "." + ref_name;
+        log("Creating wire with hierarchical name: %s (in generate scope %s)\n", 
+            wire_name.c_str(), gen_scope.c_str());
+    }
+    
     log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
-    return create_wire(ref_name, 1);
+    RTLIL::SigSpec wire_sig = create_wire(wire_name, 1);
+    
+    // Add to name_map with both hierarchical and simple names for future lookups
+    if (!gen_scope.empty() && module) {
+        RTLIL::IdString wire_id = RTLIL::escape_id(wire_name);
+        if (RTLIL::Wire* created_wire = module->wire(wire_id)) {
+            name_map[wire_name] = created_wire;  // Hierarchical name
+            // Don't map simple name to avoid conflicts with other generate instances
+        }
+    }
+    
+    return wire_sig;
 }
 
 // Import part select (e.g., sig[7:0])
@@ -1074,12 +1188,45 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     
     // Regular bit select on a wire
     RTLIL::Wire* wire = nullptr;
-    if (name_map.count(signal_name)) {
-        wire = name_map.at(signal_name);
-    } else {
-        // Try with escaped name
-        RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
-        wire = module->wire(wire_id);
+    
+    // If we're in a generate scope, try hierarchical lookups
+    std::string gen_scope = get_current_gen_scope();
+    if (!gen_scope.empty()) {
+        // First try the full hierarchical name
+        std::string hierarchical_name = gen_scope + "." + signal_name;
+        if (name_map.count(hierarchical_name)) {
+            wire = name_map[hierarchical_name];
+            log("UHDM: Found hierarchical wire %s for bit select\n", hierarchical_name.c_str());
+        }
+        
+        // If not found, try parent scopes
+        if (!wire) {
+            for (int i = gen_scope_stack.size() - 1; i >= 0; i--) {
+                std::string parent_path;
+                for (int j = 0; j <= i; j++) {
+                    if (j > 0) parent_path += ".";
+                    parent_path += gen_scope_stack[j];
+                }
+                std::string parent_hierarchical = parent_path + "." + signal_name;
+                if (name_map.count(parent_hierarchical)) {
+                    wire = name_map[parent_hierarchical];
+                    log("UHDM: Found wire %s in parent scope %s for bit select\n", 
+                        signal_name.c_str(), parent_path.c_str());
+                    break;
+                }
+            }
+        }
+    }
+    
+    // If not found in generate scopes, try regular lookup
+    if (!wire) {
+        if (name_map.count(signal_name)) {
+            wire = name_map.at(signal_name);
+        } else {
+            // Try with escaped name
+            RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
+            wire = module->wire(wire_id);
+        }
     }
     
     // If wire not found, check if this is a shift register array element
@@ -1122,9 +1269,20 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             if (mode_debug)
                 log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n", 
                     idx, rtlil_idx, wire->upto ? 1 : 0, wire->start_offset);
+            
+            // Check bounds before extracting
+            if (rtlil_idx < 0 || rtlil_idx >= base.size()) {
+                log_error("Bit select index %d (RTLIL index %d) is out of range for wire '%s' (width=%d)\n", 
+                    idx, rtlil_idx, signal_name.c_str(), base.size());
+            }
             return base.extract(rtlil_idx, 1);
         } else {
             // Standard bit ordering
+            // Check bounds before extracting
+            if (idx < 0 || idx >= base.size()) {
+                log_error("Bit select index %d is out of range for wire '%s' (width=%d)\n", 
+                    idx, signal_name.c_str(), base.size());
+            }
             return base.extract(idx, 1);
         }
     }

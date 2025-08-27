@@ -1459,6 +1459,31 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
     
     log("UHDM: Importing generate scope: %s (full: %s)\n", scope_name.c_str(), full_name.c_str());
     
+    // Push this scope onto the stack
+    gen_scope_stack.push_back(scope_name);
+    log("UHDM: Pushed scope '%s', stack depth: %zu, full path: %s\n", 
+        scope_name.c_str(), gen_scope_stack.size(), get_current_gen_scope().c_str());
+    
+    // Import nets declared in the generate scope
+    if (uhdm_scope->Nets()) {
+        log("UHDM: Found %d nets in generate scope\n", (int)uhdm_scope->Nets()->size());
+        for (auto net : *uhdm_scope->Nets()) {
+            std::string net_name = std::string(net->VpiName());
+            std::string full_gen_path = get_current_gen_scope();
+            std::string hierarchical_name = full_gen_path + "." + net_name;
+            int width = get_width(net, current_instance);
+            
+            // Check if we already have this wire with the hierarchical name
+            if (!name_map.count(hierarchical_name)) {
+                RTLIL::Wire* w = create_wire(hierarchical_name, width);
+                wire_map[net] = w;
+                // Map the full hierarchical name
+                name_map[hierarchical_name] = w;
+                log("UHDM: Created wire '%s' (width=%d) for generate scope net\n", hierarchical_name.c_str(), width);
+            }
+        }
+    }
+    
     // Import variables declared in the generate scope
     if (uhdm_scope->Variables()) {
         log("UHDM: Found %d variables in generate scope\n", (int)uhdm_scope->Variables()->size());
@@ -1466,15 +1491,16 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             // Variables can be logic_var or other types, we need to handle them
             // For now, create a wire for each variable
             std::string var_name = std::string(var->VpiName());
-            std::string hierarchical_name = scope_name + "." + var_name;
+            std::string full_gen_path = get_current_gen_scope();
+            std::string hierarchical_name = full_gen_path + "." + var_name;
             int width = get_width(var, current_instance);
             
             // Check if we already have this wire with the hierarchical name
             if (!name_map.count(hierarchical_name)) {
                 RTLIL::Wire* w = create_wire(hierarchical_name, width);
                 wire_map[var] = w;
-                name_map[var_name] = w;  // Map the simple name for local references
-                name_map[hierarchical_name] = w;  // Also map the full hierarchical name
+                // Don't map simple name to avoid conflicts between generate instances
+                name_map[hierarchical_name] = w;  // Map the full hierarchical name
                 log("UHDM: Created wire '%s' (width=%d) for generate scope variable\n", hierarchical_name.c_str(), width);
             }
         }
@@ -1485,10 +1511,6 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         log("UHDM: Found %d module instances in generate scope '%s'\n", 
             (int)uhdm_scope->Modules()->size(), scope_name.c_str());
         
-        // Save current generate scope for module instances
-        std::string saved_gen_scope = current_gen_scope;
-        current_gen_scope = scope_name;
-        
         for (auto mod_inst : *uhdm_scope->Modules()) {
             // Just import the module instance
             // The module definition should already exist from the top-level import
@@ -1496,17 +1518,11 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 std::string(mod_inst->VpiName()).c_str(), std::string(mod_inst->VpiDefName()).c_str());
             import_instance(mod_inst);
         }
-        
-        // Restore previous generate scope
-        current_gen_scope = saved_gen_scope;
     }
     
     // Import processes (always blocks) within the generate scope
     if (uhdm_scope->Process()) {
         log("UHDM: Found %d processes in generate scope\n", (int)uhdm_scope->Process()->size());
-        // Save current generate scope for process naming
-        std::string saved_gen_scope = current_gen_scope;
-        current_gen_scope = scope_name;
         for (auto process : *uhdm_scope->Process()) {
             try {
                 import_process(process);
@@ -1514,16 +1530,11 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 log_error("UHDM: Exception in process import within generate scope: %s\n", e.what());
             }
         }
-        // Restore previous generate scope
-        current_gen_scope = saved_gen_scope;
     }
     
     // Import continuous assignments within the generate scope
     if (uhdm_scope->Cont_assigns()) {
         log("UHDM: Found %d continuous assignments in generate scope\n", (int)uhdm_scope->Cont_assigns()->size());
-        // Save current generate scope for process naming
-        std::string saved_gen_scope = current_gen_scope;
-        current_gen_scope = scope_name;
         for (auto cont_assign : *uhdm_scope->Cont_assigns()) {
             try {
                 import_continuous_assign(cont_assign);
@@ -1531,8 +1542,6 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 log_error("UHDM: Exception in continuous assignment import within generate scope: %s\n", e.what());
             }
         }
-        // Restore previous generate scope
-        current_gen_scope = saved_gen_scope;
     }
     
     // Recursively import nested generate scopes
@@ -1541,11 +1550,17 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         for (auto nested_array : *uhdm_scope->Gen_scope_arrays()) {
             if (nested_array->Gen_scopes()) {
                 for (auto nested_scope : *nested_array->Gen_scopes()) {
+                    // The nested scope will push its name onto the stack
                     import_gen_scope(nested_scope);
                 }
             }
         }
     }
+    
+    // Pop this scope from the stack before returning
+    gen_scope_stack.pop_back();
+    log("UHDM: Popped scope '%s', stack depth: %zu\n", 
+        scope_name.c_str(), gen_scope_stack.size());
     current_scope = nullptr;
 }
 
