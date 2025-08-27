@@ -15,9 +15,9 @@ module partsel_simple(idx, data, slice_up, slice_down);
   (* src = "dut.sv:1.82-1.92" *)
   output [3:0] slice_down;
   wire [3:0] slice_down;
-  (* src = "dut.sv:2.12-2.18" *)
-  wire [5:0] offset;
-  assign offset = 6'h00;
+  (* unused_bits = "2" *)
+  wire [2:0] offset;
+  assign offset = { idx[0], 2'h0 };
   assign slice_down = 4'h0;
   assign slice_up = 4'h0;
 endmodule

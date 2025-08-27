@@ -1,9 +1,11 @@
 --- verilog_synth
 +++ uhdm_synth
-@@ -25,51 +25,9 @@
+@@ -23,53 +23,24 @@
+ (* src = "dut.sv:1.61-1.62" *)
+ output [3:0] y;
  wire [3:0] y;
- (* src = "dut.sv:2.10-2.11" *)
- wire [31:0] k;
+-(* src = "dut.sv:2.10-2.11" *)
+-wire [31:0] k;
 -\$_NOT_  _0_ (
 -.A(a),
 -.Y(q[3])
@@ -34,26 +36,32 @@
 -.D(q[2]),
 -.Q(p[2])
 -);
--(* src = "dut.sv:3.2-7.5" *)
++wire [3:0] k;
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:3.2-7.5" *)
 -\$_DFF_P_  \x_reg[0]  /* _6_ */ (
--.C(clk),
--.D(b),
--.Q(x[0])
--);
--(* src = "dut.sv:3.2-7.5" *)
++\$_DFF_P_  \x_reg[0]  /* _0_ */ (
+ .C(clk),
+ .D(b),
+ .Q(x[0])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:3.2-7.5" *)
 -\$_DFF_P_  \x_reg[1]  /* _7_ */ (
--.C(clk),
++\$_DFF_P_  \x_reg[1]  /* _1_ */ (
+ .C(clk),
 -.D(q[3]),
--.Q(x[1])
--);
++.D(a),
+ .Q(x[1])
+ );
 -assign k = 32'd4;
 -assign { p[3], p[0] } = { p[1], x[0] };
 -assign q[1:0] = { a, b };
 -assign x[3:2] = { 1'h0, p[1] };
 -assign { y[3], y[0] } = { 1'h0, b };
-+assign k = 32'hxxxxxxxx;
++assign k = 4'hx;
 +assign p = 4'hx;
 +assign q = 4'hx;
-+assign x = 4'hx;
-+assign y = 4'hx;
++assign x[3:2] = 2'h0;
++assign y = 4'h1;
  endmodule

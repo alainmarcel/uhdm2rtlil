@@ -14,10 +14,18 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Success Rate**: 95% (66/69 tests passing)
-- **Perfect Matches**: 63 tests validated by formal equivalence checking
-- **Expected Failures**: 3 tests with known issues documented in `test/failing_tests.txt`
-- **Includes**: Full assertion support and system function call handling ($signed/$unsigned)
+- **Total Tests**: 76 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 96% (73/76 tests passing)
+- **Perfect Matches**: 70+ tests validated by formal equivalence checking
+- **Expected Failures**: 3 tests with known issues documented in `test/failing_tests.txt`:
+  - `carryadd` - Generate block genvar handling issue
+  - `case_expr_const` - Partial fix (5/8 cases pass), signed comparison issue remaining
+  - `forloops` - Fixed and passing with proper integer variable substitution
+- **Recent Additions**: 
+  - 6 lut_map tests (and, cmp, mux, not, or, xor) - all passing with $signed/$unsigned support
+  - 3 additional tests from Yosys suite (forloops, carryadd, case_expr_const)
+  - Split wreduce test into wreduce_test0 and wreduce_test1 - both passing
+  - Fixed verilog_primitives test with multi-output gate support
 
 ## Architecture & Workflow
 
@@ -310,6 +318,33 @@ The UHDM frontend test suite includes **54 test cases**:
 - **All 55 tests passing** - including unbased_unsized with full assertion support
 
 ## Recent Improvements
+
+### Recursive Expression Import and Operation Support
+- Refactored expression import to use proper recursive approach for nested expressions
+- Fixed handling of concatenation operations (vpiConcatOp) within other expressions
+- Added support for unary minus operation (vpiMinusOp) for expressions like `-$signed({1'b0, a})`
+- Added support for shift operations (vpiLShiftOp, vpiRShiftOp) for `<<` and `>>` operators
+- Concatenation operations inside system function calls now properly import their operands
+- Expression evaluation now correctly handles arbitrary nesting depth
+- Fixed wreduce tests by properly handling complex nested expressions
+
+### System Function Call Improvements
+- Enhanced $signed and $unsigned system function handling
+- System function arguments are now properly evaluated recursively
+- Added debug logging for tracking empty operands in system functions
+- Fixed issue where concat operations inside $signed were returning empty signals
+
+### Primitive Gate Enhancements
+- Fixed handling of Verilog primitives with multiple outputs (buf, not)
+- Primitives with multiple outputs now create separate cells for each output
+- Proper connection mapping for multi-output primitives
+- Fixed verilog_primitives test with correct multi-output handling
+
+### Process and Case Statement Improvements
+- Enhanced constant case evaluation in initial blocks
+- Added support for evaluating case statements with constant conditions
+- Improved handling of integer variables in procedural loops
+- Fixed forloops test by properly handling integer variable assignments
 
 ### Unbased Unsized Literal and Assertion Support
 - Added proper handling for SystemVerilog unbased unsized literals ('0, '1, 'x, 'z)

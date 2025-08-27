@@ -47,7 +47,7 @@ module \vector_index
   wire width 9 output 3 \Moves
   attribute \src "dut.sv:10.5-10.8"
   wire width 9 input 2 \Wht
-  cell $logic_and $auto$expression.cpp:436:import_operation$11
+  cell $logic_and $auto$expression.cpp:458:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -57,7 +57,7 @@ module \vector_index
     connect \B \Wht [3]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$12
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$13
+  cell $logic_and $auto$expression.cpp:458:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -67,7 +67,7 @@ module \vector_index
     connect \B \Blk [0]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$14
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$15
+  cell $logic_and $auto$expression.cpp:458:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -77,7 +77,7 @@ module \vector_index
     connect \B \Wht [4]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$16
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$17
+  cell $logic_and $auto$expression.cpp:458:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -87,7 +87,7 @@ module \vector_index
     connect \B \Blk [1]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$18
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$19
+  cell $logic_and $auto$expression.cpp:458:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -97,7 +97,7 @@ module \vector_index
     connect \B \Wht [5]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$20
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$21
+  cell $logic_and $auto$expression.cpp:458:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -107,7 +107,7 @@ module \vector_index
     connect \B \Blk [2]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$22
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$23
+  cell $logic_and $auto$expression.cpp:458:import_operation$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -117,7 +117,7 @@ module \vector_index
     connect \B \Wht [1]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$24
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$25
+  cell $logic_and $auto$expression.cpp:458:import_operation$25
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -127,7 +127,7 @@ module \vector_index
     connect \B \Blk [0]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$26
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$27
+  cell $logic_and $auto$expression.cpp:458:import_operation$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -137,7 +137,7 @@ module \vector_index
     connect \B \Wht [4]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$28
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$29
+  cell $logic_and $auto$expression.cpp:458:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -147,7 +147,7 @@ module \vector_index
     connect \B \Blk [3]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$30
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$31
+  cell $logic_and $auto$expression.cpp:458:import_operation$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -157,7 +157,7 @@ module \vector_index
     connect \B \Wht [7]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$32
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$33
+  cell $logic_and $auto$expression.cpp:458:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -167,7 +167,7 @@ module \vector_index
     connect \B \Blk [6]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$34
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$35
+  cell $logic_and $auto$expression.cpp:458:import_operation$35
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -177,7 +177,7 @@ module \vector_index
     connect \B \Wht [1]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$36
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$37
+  cell $logic_and $auto$expression.cpp:458:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -187,7 +187,7 @@ module \vector_index
     connect \B \Blk [2]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$38
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$39
+  cell $logic_and $auto$expression.cpp:458:import_operation$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -197,7 +197,7 @@ module \vector_index
     connect \B \Wht [4]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$40
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$41
+  cell $logic_and $auto$expression.cpp:458:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -207,7 +207,7 @@ module \vector_index
     connect \B \Blk [5]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$42
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$43
+  cell $logic_and $auto$expression.cpp:458:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -217,7 +217,7 @@ module \vector_index
     connect \B \Wht [7]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$44
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$45
+  cell $logic_and $auto$expression.cpp:458:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -227,7 +227,7 @@ module \vector_index
     connect \B \Blk [8]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$46
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$47
+  cell $logic_and $auto$expression.cpp:458:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -237,7 +237,7 @@ module \vector_index
     connect \B \Wht [3]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$48
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$49
+  cell $logic_and $auto$expression.cpp:458:import_operation$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -247,7 +247,7 @@ module \vector_index
     connect \B \Blk [6]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$50
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$51
+  cell $logic_and $auto$expression.cpp:458:import_operation$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -257,7 +257,7 @@ module \vector_index
     connect \B \Wht [4]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$52
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$53
+  cell $logic_and $auto$expression.cpp:458:import_operation$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -267,7 +267,7 @@ module \vector_index
     connect \B \Blk [7]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$54
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$55
+  cell $logic_and $auto$expression.cpp:458:import_operation$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -277,7 +277,7 @@ module \vector_index
     connect \B \Wht [5]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$56
   end
-  cell $logic_and $auto$expression.cpp:436:import_operation$57
+  cell $logic_and $auto$expression.cpp:458:import_operation$57
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -287,7 +287,7 @@ module \vector_index
     connect \B \Blk [8]
     connect \Y $auto$rtlil.cc:3026:LogicAnd$58
   end
-  cell $or $auto$expression.cpp:448:import_operation$1
+  cell $or $auto$expression.cpp:470:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
@@ -297,7 +297,7 @@ module \vector_index
     connect \B \Wht
     connect \Y $auto$rtlil.cc:3007:Or$2
   end
-  cell $or $auto$expression.cpp:448:import_operation$5
+  cell $or $auto$expression.cpp:470:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
@@ -307,7 +307,7 @@ module \vector_index
     connect \B \Move_E
     connect \Y $auto$rtlil.cc:3007:Or$6
   end
-  cell $or $auto$expression.cpp:448:import_operation$7
+  cell $or $auto$expression.cpp:470:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
@@ -317,7 +317,7 @@ module \vector_index
     connect \B \Move_W
     connect \Y $auto$rtlil.cc:3007:Or$8
   end
-  cell $or $auto$expression.cpp:448:import_operation$9
+  cell $or $auto$expression.cpp:470:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
@@ -327,7 +327,7 @@ module \vector_index
     connect \B \Move_S
     connect \Y $auto$rtlil.cc:3007:Or$10
   end
-  cell $not $auto$expression.cpp:456:import_operation$3
+  cell $not $auto$expression.cpp:478:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 9

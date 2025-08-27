@@ -4,8 +4,8 @@ attribute \src "dut.sv:23.1-59.10"
 module \nested_struct
   wire width 62 $0\out_data[61:0]
   wire width 62 $0\processed_data
-  wire width 9 $auto$expression.cpp:507:import_operation$1
-  wire width 17 $auto$expression.cpp:507:import_operation$7
+  wire width 9 $auto$expression.cpp:529:import_operation$1
+  wire width 17 $auto$expression.cpp:529:import_operation$7
   wire $auto$rtlil.cc:3006:And$6
   wire width 4 $auto$rtlil.cc:3007:Or$10
   wire width 32 $auto$rtlil.cc:3008:Xor$4
@@ -20,7 +20,7 @@ module \nested_struct
   wire width 62 \processed_data
   attribute \src "dut.sv:27.18-27.21"
   wire input 4 \rst
-  cell $and $auto$expression.cpp:444:import_operation$5
+  cell $and $auto$expression.cpp:466:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -30,7 +30,7 @@ module \nested_struct
     connect \B \in_data [0]
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $or $auto$expression.cpp:448:import_operation$9
+  cell $or $auto$expression.cpp:470:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -40,7 +40,7 @@ module \nested_struct
     connect \B 4'1010
     connect \Y $auto$rtlil.cc:3007:Or$10
   end
-  cell $xor $auto$expression.cpp:452:import_operation$3
+  cell $xor $auto$expression.cpp:474:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -50,7 +50,7 @@ module \nested_struct
     connect \B 32'11011110101011011011111011101111
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $add $auto$expression.cpp:521:import_operation$2
+  cell $add $auto$expression.cpp:543:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -58,9 +58,9 @@ module \nested_struct
     parameter \Y_WIDTH 9
     connect \A 8'x
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:507:import_operation$1
+    connect \Y $auto$expression.cpp:529:import_operation$1
   end
-  cell $add $auto$expression.cpp:521:import_operation$8
+  cell $add $auto$expression.cpp:543:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -68,7 +68,7 @@ module \nested_struct
     parameter \Y_WIDTH 17
     connect \A \in_data [20:5]
     connect \B 16'0000000001100100
-    connect \Y $auto$expression.cpp:507:import_operation$7
+    connect \Y $auto$expression.cpp:529:import_operation$7
   end
   attribute \always_ff 1
   attribute \src "dut.sv:36.5-42.8"
@@ -90,10 +90,10 @@ module \nested_struct
   process $proc$dut.sv:45$1
     assign $0\processed_data \processed_data
     assign $0\processed_data \in_data
-    assign $0\processed_data [61:54] $auto$expression.cpp:507:import_operation$1 [7:0]
+    assign $0\processed_data [61:54] $auto$expression.cpp:529:import_operation$1 [7:0]
     assign $0\processed_data [53:22] $auto$rtlil.cc:3008:Xor$4
     assign $0\processed_data [21] $auto$rtlil.cc:3006:And$6
-    assign $0\processed_data [20:5] $auto$expression.cpp:507:import_operation$7 [15:0]
+    assign $0\processed_data [20:5] $auto$expression.cpp:529:import_operation$7 [15:0]
     assign $0\processed_data [4:1] $auto$rtlil.cc:3007:Or$10
     assign $0\processed_data [0] 1'x
     sync always
