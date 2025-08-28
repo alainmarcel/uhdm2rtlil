@@ -2,6 +2,7 @@
 autoidx 1
 attribute \dynports 1
 attribute \src "dut.sv:1.1-23.10"
+attribute \cells_not_processed 1
 module \simple_always_ifelse
   parameter \DATA_WIDTH 8
   attribute \src "dut.sv:14.21-14.27"

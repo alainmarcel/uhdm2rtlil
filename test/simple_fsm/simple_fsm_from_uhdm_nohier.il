@@ -2,6 +2,7 @@
 autoidx 1
 attribute \dynports 1
 attribute \src "dut.sv:2.1-65.10"
+attribute \cells_not_processed 1
 module \simple_fsm
   parameter \IDLE 2'00
   parameter \WORK 2'01

@@ -2,6 +2,7 @@
 autoidx 8
 attribute \dynports 1
 attribute \src "dut.sv:1.1-39.10"
+attribute \cells_not_processed 1
 module \priority_memory
   parameter \ABITS 4
   parameter \WIDTH 8

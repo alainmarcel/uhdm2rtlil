@@ -2,6 +2,7 @@
 autoidx 4
 attribute \dynports 1
 attribute \src "dut.sv:1.1-29.10"
+attribute \cells_not_processed 1
 module \sp_write_first
   parameter \ABITS 4
   parameter \WIDTH 8

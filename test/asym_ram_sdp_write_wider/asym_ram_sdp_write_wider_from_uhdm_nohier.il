@@ -2,6 +2,7 @@
 autoidx 9
 attribute \dynports 1
 attribute \src "dut.sv:4.1-71.10"
+attribute \cells_not_processed 1
 module \asym_ram_sdp_write_wider
   parameter \WIDTHB 4
   parameter \SIZEB 1024

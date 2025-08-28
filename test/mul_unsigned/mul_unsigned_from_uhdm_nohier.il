@@ -2,6 +2,7 @@
 autoidx 3
 attribute \dynports 1
 attribute \src "dut.sv:10.1-30.10"
+attribute \cells_not_processed 1
 module \mul_unsigned
   parameter \WIDTHA 6
   parameter \WIDTHB 9

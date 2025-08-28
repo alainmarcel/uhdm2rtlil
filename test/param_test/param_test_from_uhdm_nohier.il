@@ -2,6 +2,7 @@
 autoidx 1
 attribute \dynports 1
 attribute \src "dut.sv:1.1-20.10"
+attribute \cells_not_processed 1
 module \param_test
   parameter \WIDTH 8
   parameter \DEPTH 16

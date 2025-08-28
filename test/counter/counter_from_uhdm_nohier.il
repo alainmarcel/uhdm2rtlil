@@ -2,6 +2,7 @@
 autoidx 7
 attribute \dynports 1
 attribute \src "dut.sv:2.1-27.10"
+attribute \cells_not_processed 1
 module \counter
   parameter \WIDTH 8
   wire width 8 $0\count

@@ -12,8 +12,8 @@ module pass_through(inp, out);
 endmodule
 
 (* keep =  1  *)
-(* top =  1  *)
 (* src = "dut.sv:8.1-40.10" *)
+(* top =  1  *)
 module unbased_unsized();
   wire _000_;
   wire _001_;

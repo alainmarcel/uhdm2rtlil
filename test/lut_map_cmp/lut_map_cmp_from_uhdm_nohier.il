@@ -2,6 +2,7 @@
 autoidx 45
 attribute \dynports 1
 attribute \src "dut.sv:1.1-35.10"
+attribute \cells_not_processed 1
 module \lut_map_cmp
   parameter \LUT_WIDTH 4
   wire $auto$rtlil.cc:3011:Lt$16

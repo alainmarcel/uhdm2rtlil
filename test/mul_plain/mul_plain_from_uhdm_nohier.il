@@ -2,6 +2,7 @@
 autoidx 3
 attribute \dynports 1
 attribute \src "dut.sv:1.1-12.10"
+attribute \cells_not_processed 1
 module \mul_plain
   parameter \M 6
   parameter \N 6
