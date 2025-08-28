@@ -3,12 +3,12 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil generate_test_from_uhdm_nohier.il
-hierarchy -check -top generate_test
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil generate_test_from_uhdm.il
 # Synthesize to gate-level netlist
-synth -top generate_test
+synth -auto-top
 write_verilog -noexpr generate_test_from_uhdm_synth.v

@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil mux4_from_verilog_nohier.il
-hierarchy -check -top mux4
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil mux4_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top mux4
+synth -auto-top
 write_verilog -noexpr mux4_from_verilog_synth.v

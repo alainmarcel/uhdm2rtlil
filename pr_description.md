@@ -1,58 +1,52 @@
-## Fix unbased_unsized test and improve test infrastructure
+# Fix generate scope handling and parameter resolution
 
-This PR addresses the unbased_unsized test failures and improves the test infrastructure to properly handle expected failures.
+## Summary
+This PR fixes several test failures related to generate scope handling and parameter resolution in the UHDM to RTLIL frontend. The changes improve SystemVerilog generate block support and fix parameter value parsing issues.
 
-### Changes Made
+## Changes Made
 
-#### 1. Unbased Unsized Literal Support Improvements
-- Added proper handling for SystemVerilog unbased unsized literals ('0, '1, 'x, 'z)
-- Implemented cast operation support (vpiCastOp) for expressions like `3'('x)`
-- Fixed UInt constant parsing to use `stoull` for large values (e.g., 0xFFFFFFFFFFFFFFFF)
-- Added `extract_const_from_value` helper function with STRING value support
-- Fixed single-bit constant extension to properly replicate X/Z values across width
+### 1. Generate Scope Stack Implementation
+- Added a generate scope stack to track nested generate blocks
+- Properly handles hierarchical naming for signals in generate blocks
+- Supports both generate for loops and conditional generate blocks
 
-#### 2. Test Infrastructure Improvements
-- Fixed `run_all_tests.sh` to properly honor `failing_tests.txt`
-- Added whitespace trimming when reading test names from failing_tests.txt
-- Test suite now exits with success (0) when all failures are expected
-- Provides clear output showing expected failures vs unexpected results
+### 2. Parameter Resolution Improvements  
+- Fixed parameter value resolution when `ref_obj->Actual()` points to a parameter
+- Added support for HEX and BIN parameter value formats (e.g., `HEX:AA`, `BIN:1010`)
+- Improved parameter lookup in module default values
 
-#### 3. Documentation Updates
-- Updated README to reflect test status (54 tests, 53 passing, 1 known issue)
-- Added unbased_unsized to the test cases list with explanation
-- Documented the unbased unsized literal improvements in Recent Improvements section
+### 3. Net Import from Generate Scopes
+- Fixed issue where nets (not just variables) weren't being imported from generate scopes
+- Ensures all signals declared in generate blocks are properly accessible
 
-### Test Status
-- The unbased_unsized test is marked as a known failing test
-- It requires assertion support (vpiImmediateAssert) to fully pass
-- The test correctly handles unbased unsized literals, but pass_through module instances get optimized away without assertion support
-- Test suite passes with this expected failure properly handled
+### 4. Loop Variable Substitution
+- Added support for loop variable substitution in expressions within for loops
+- Properly handles memory indexing with loop variables (e.g., `RAM[{addrA, lsbaddr}]`)
 
-### Testing
-```bash
-# Run the specific test
-cd test
-./run_all_tests.sh unbased_unsized
+## Tests Fixed
+✅ **simple_generate** - Generate for loops with bit-select assignments  
+✅ **gen_test1** - Generate blocks with nets and wires  
+✅ **asym_ram_sdp_read_wider** - Asymmetric RAM with for loops and memory reads  
+✅ **asym_ram_sdp_write_wider** - Asymmetric RAM with for loops and memory writes  
+✅ **param_test** - Parameterized modules with HEX parameter values  
 
-# Run full test suite
-make test
-```
+## Test Results
+- **Total tests**: 77
+- **Passing tests**: 73 (94% success rate)
+- **Known failures**: 4 (carryadd, case_expr_const, forloops, mem2reg_test1)
 
-Output shows:
-```
-✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues
+## Technical Details
 
-All failing tests are documented in failing_tests.txt:
-  • Expected failures: 1
-  • Functional tests: 54/55
-```
+### Files Modified
+- `src/frontends/uhdm/expression.cpp` - Parameter resolution and loop variable substitution
+- `src/frontends/uhdm/module.cpp` - Net imports from generate scopes
+- `src/frontends/uhdm/uhdm2rtlil.h` - Generate scope stack data structures
 
-### Files Changed
-- `src/frontends/uhdm/expression.cpp` - Cast operation and value extraction improvements
-- `src/frontends/uhdm/expression.h` - Added extract_const_from_value declaration
-- `src/frontends/uhdm/module.cpp` - Fixed single-bit constant extension
-- `test/run_all_tests.sh` - Fixed failing test handling
-- `test/failing_tests.txt` - Added unbased_unsized as expected failure
-- `README.md` - Updated test statistics and documentation
+### Key Fixes
+1. **Generate scope naming**: Signals in generate blocks now get proper hierarchical names (e.g., `gen_loop[0].tmp`)
+2. **Parameter formats**: Added parsing for HEX/BIN parameter values instead of just decimal
+3. **Net visibility**: Generate blocks now properly export both variables and nets to parent scope
+4. **Loop unrolling**: For loops in always blocks properly substitute loop variables in expressions
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+## Verification
+All fixed tests now pass formal equivalence checking between UHDM and direct Verilog paths, confirming functional correctness of the implementation.

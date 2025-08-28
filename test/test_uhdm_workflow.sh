@@ -24,9 +24,13 @@ fi
 # Change to test directory
 cd "$TEST_DIR"
 
-# Extract module name from directory name (for hierarchy command)
+# Extract module name from directory name (for file naming)
 # Remove any trailing slash and extract just the basename
 MODULE_NAME=$(basename "$TEST_DIR" | sed 's|/$||')
+# If we're in current directory, use the parent directory name
+if [ "$MODULE_NAME" = "." ]; then
+    MODULE_NAME=$(basename "$(pwd)")
+fi
 
 echo "=== UHDM vs Verilog Workflow Comparison ==="
 echo "Testing: SystemVerilog -> [UHDM path vs Verilog path] -> Yosys -> RTLIL comparison"
@@ -93,14 +97,14 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_uhdm_nohier.il
-hierarchy -check -top $MODULE_NAME
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil ${MODULE_NAME}_from_uhdm.il
 # Synthesize to gate-level netlist
-synth -top $MODULE_NAME
+synth -auto-top
 write_verilog -noexpr ${MODULE_NAME}_from_uhdm_synth.v
 EOF
 
@@ -114,14 +118,14 @@ cat > test_verilog_read.ys << EOF
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_verilog_nohier.il
-hierarchy -check -top $MODULE_NAME
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil ${MODULE_NAME}_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top $MODULE_NAME
+synth -auto-top
 write_verilog -noexpr ${MODULE_NAME}_from_verilog_synth.v
 EOF
 

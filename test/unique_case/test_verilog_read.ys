@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil unique_case_from_verilog_nohier.il
-hierarchy -check -top unique_case
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil unique_case_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top unique_case
+synth -auto-top
 write_verilog -noexpr unique_case_from_verilog_synth.v
