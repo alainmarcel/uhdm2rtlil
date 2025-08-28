@@ -1403,6 +1403,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Finalize module
     module->fixup_ports();
     
+    // Check if module is empty (no processes, cells, or memories) and mark as blackbox if so
+    if (module->processes.empty() && module->cells_.empty() && module->memories.empty()) {
+        // This is an empty module, mark it as blackbox
+        module->set_bool_attribute(ID::blackbox);
+        log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
+    }
+    
     // Restore saved instance context
     current_instance = saved_instance;
 }
