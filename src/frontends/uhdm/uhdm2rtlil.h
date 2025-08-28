@@ -106,8 +106,27 @@ struct UhdmImporter {
     const UHDM::module_inst* current_instance = nullptr;
     const UHDM::scope* current_scope = nullptr;
 
-    // Current generate scope for naming
+    // Current generate scope for naming (deprecated - use gen_scope_stack)
     std::string current_gen_scope;
+    
+    // Generate scope stack for hierarchical lookups
+    std::vector<std::string> gen_scope_stack;
+    
+    // Get the current full generate scope path
+    std::string get_current_gen_scope() const {
+        if (gen_scope_stack.empty()) {
+            return "";
+        }
+        std::string path;
+        for (size_t i = 0; i < gen_scope_stack.size(); i++) {
+            if (i > 0) path += ".";
+            path += gen_scope_stack[i];
+        }
+        return path;
+    }
+    
+    // Loop variable values for unrolling
+    std::map<std::string, int> loop_values;
     
     // Current condition for conditional memory writes
     RTLIL::SigSpec current_condition;

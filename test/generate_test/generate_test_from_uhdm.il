@@ -6,14 +6,14 @@ attribute \src "dut.sv:4.1-12.10"
 module $paramod\adder\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
   attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:529:import_operation$5
+  wire width 9 $auto$expression.cpp:532:import_operation$5
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  cell $add $auto$expression.cpp:543:import_operation$6
+  cell $add $auto$expression.cpp:546:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -21,9 +21,9 @@ module $paramod\adder\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:529:import_operation$5 [8] \sum }
+    connect \Y { $auto$expression.cpp:532:import_operation$5 [8] \sum }
   end
-  connect $auto$expression.cpp:529:import_operation$5 [7:0] \sum
+  connect $auto$expression.cpp:532:import_operation$5 [7:0] \sum
 end
 attribute \hdlname "subtractor"
 attribute \dynports 1
@@ -31,14 +31,14 @@ attribute \src "dut.sv:15.1-23.10"
 module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
   attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:551:import_operation$7
+  wire width 9 $auto$expression.cpp:554:import_operation$7
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  cell $sub $auto$expression.cpp:565:import_operation$8
+  cell $sub $auto$expression.cpp:568:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -46,9 +46,9 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:551:import_operation$7 [8] \diff }
+    connect \Y { $auto$expression.cpp:554:import_operation$7 [8] \diff }
   end
-  connect $auto$expression.cpp:551:import_operation$7 [7:0] \diff
+  connect $auto$expression.cpp:554:import_operation$7 [7:0] \diff
 end
 attribute \top 1
 attribute \dynports 1

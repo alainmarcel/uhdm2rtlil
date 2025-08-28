@@ -23,7 +23,7 @@ module \param_test
     switch \rst
       attribute \src "dut.sv:32.13-32.16"
       case 1'1
-        assign $0\data_out[7:0] 8'10101010
+        assign $0\data_out[7:0] 8'000000--
       attribute \src "dut.sv:34.13-34.17"
       case 
         assign $0\data_out[7:0] \data_in

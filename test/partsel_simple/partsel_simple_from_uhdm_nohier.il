@@ -2,8 +2,8 @@
 autoidx 11
 attribute \src "dut.sv:1.1-5.10"
 module \partsel_simple
-  wire width 65 $auto$expression.cpp:529:import_operation$7
-  wire width 3 $auto$expression.cpp:620:import_operation$1
+  wire width 65 $auto$expression.cpp:532:import_operation$7
+  wire width 3 $auto$expression.cpp:623:import_operation$1
   wire width 6 $auto$module.cpp:513:import_continuous_assign$3
   wire width 4 $auto$module.cpp:513:import_continuous_assign$5
   wire width 4 $auto$module.cpp:513:import_continuous_assign$9
@@ -17,7 +17,7 @@ module \partsel_simple
   wire width 4 output 4 \slice_down
   attribute \src "dut.sv:1.72-1.80"
   wire width 4 output 3 \slice_up
-  cell $add $auto$expression.cpp:543:import_operation$8
+  cell $add $auto$expression.cpp:546:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -25,9 +25,9 @@ module \partsel_simple
     parameter \Y_WIDTH 65
     connect \A \offset
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:529:import_operation$7
+    connect \Y $auto$expression.cpp:532:import_operation$7
   end
-  cell $shl $auto$expression.cpp:632:import_operation$2
+  cell $shl $auto$expression.cpp:635:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \partsel_simple
     parameter \Y_WIDTH 3
     connect \A \idx
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:620:import_operation$1
+    connect \Y $auto$expression.cpp:623:import_operation$1
   end
   cell $pos $auto$module.cpp:514:import_continuous_assign$10
     parameter \A_SIGNED 0
@@ -48,7 +48,7 @@ module \partsel_simple
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 6
-    connect \A $auto$expression.cpp:620:import_operation$1
+    connect \A $auto$expression.cpp:623:import_operation$1
     connect \Y $auto$module.cpp:513:import_continuous_assign$3
   end
   cell $pos $auto$module.cpp:514:import_continuous_assign$6

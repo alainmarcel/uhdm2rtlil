@@ -5,15 +5,15 @@ attribute \dynports 1
 attribute \src "dut.sv:4.1-12.10"
 module $paramod\adder\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
-  wire width 8 $auto$expression.cpp:529:import_operation$1
-  wire width 9 $auto$expression.cpp:529:import_operation$5
+  wire width 8 $auto$expression.cpp:532:import_operation$1
+  wire width 9 $auto$expression.cpp:532:import_operation$5
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  cell $add $auto$expression.cpp:543:import_operation$6
+  cell $add $auto$expression.cpp:546:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -21,24 +21,24 @@ module $paramod\adder\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:529:import_operation$5
+    connect \Y $auto$expression.cpp:532:import_operation$5
   end
-  connect \sum $auto$expression.cpp:529:import_operation$5 [7:0]
+  connect \sum $auto$expression.cpp:532:import_operation$5 [7:0]
 end
 attribute \hdlname "subtractor"
 attribute \dynports 1
 attribute \src "dut.sv:15.1-23.10"
 module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
-  wire width 8 $auto$expression.cpp:551:import_operation$3
-  wire width 9 $auto$expression.cpp:551:import_operation$7
+  wire width 8 $auto$expression.cpp:554:import_operation$3
+  wire width 9 $auto$expression.cpp:554:import_operation$7
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  cell $sub $auto$expression.cpp:565:import_operation$8
+  cell $sub $auto$expression.cpp:568:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -46,22 +46,22 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:551:import_operation$7
+    connect \Y $auto$expression.cpp:554:import_operation$7
   end
-  connect \diff $auto$expression.cpp:551:import_operation$7 [7:0]
+  connect \diff $auto$expression.cpp:554:import_operation$7 [7:0]
 end
 attribute \dynports 1
 attribute \src "dut.sv:4.1-12.10"
 module \adder
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  wire width 9 $auto$expression.cpp:529:import_operation$1
+  wire width 9 $auto$expression.cpp:532:import_operation$1
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  cell $add $auto$expression.cpp:543:import_operation$2
+  cell $add $auto$expression.cpp:546:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -69,9 +69,9 @@ module \adder
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:529:import_operation$1
+    connect \Y $auto$expression.cpp:532:import_operation$1
   end
-  connect \sum $auto$expression.cpp:529:import_operation$1 [7:0]
+  connect \sum $auto$expression.cpp:532:import_operation$1 [7:0]
 end
 attribute \dynports 1
 attribute \src "dut.sv:26.1-110.10"
@@ -88,7 +88,7 @@ module \generate_test
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[3]$4_Y
   attribute \src "dut.sv:95.25-95.31"
-  wire $logic_not$dut.sv:95.25-95.31$store_extra$5_Y
+  wire $logic_not$dut.sv:95.25-95.31$extra_logic.store_extra$5_Y
   attribute \src "dut.sv:30.18-30.21"
   wire input 1 \clk
   attribute \src "dut.sv:32.45-32.52"
@@ -141,12 +141,12 @@ module \generate_test
     connect \Y $logic_not$dut.sv:69.21-69.27$gen_units[3]$4_Y
   end
   attribute \src "dut.sv:95.25-95.31"
-  cell $logic_not $logic_not$dut.sv:95.25-95.31$store_extra$5
+  cell $logic_not $logic_not$dut.sv:95.25-95.31$extra_logic.store_extra$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \rst_n
-    connect \Y $logic_not$dut.sv:95.25-95.31$store_extra$5_Y
+    connect \Y $logic_not$dut.sv:95.25-95.31$extra_logic.store_extra$5_Y
   end
   attribute \src "dut.sv:84.13-90.15"
   cell $paramod\adder\WIDTH=32'00000000000000000000000000001000 \extra_logic.extra_adder
@@ -248,7 +248,7 @@ module \generate_test
   process $proc$dut.sv:94$1
     assign $0\extra_result \extra_result
     attribute \src "dut.sv:11.9-15.12"
-    switch $logic_not$dut.sv:95.25-95.31$store_extra$5_Y
+    switch $logic_not$dut.sv:95.25-95.31$extra_logic.store_extra$5_Y
       attribute \src "dut.sv:11.13-11.19"
       case 1'1
         assign $0\extra_result 8'00000000
@@ -273,14 +273,14 @@ attribute \dynports 1
 attribute \src "dut.sv:15.1-23.10"
 module \subtractor
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  wire width 9 $auto$expression.cpp:551:import_operation$3
+  wire width 9 $auto$expression.cpp:554:import_operation$3
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  cell $sub $auto$expression.cpp:565:import_operation$4
+  cell $sub $auto$expression.cpp:568:import_operation$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -288,7 +288,7 @@ module \subtractor
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:551:import_operation$3
+    connect \Y $auto$expression.cpp:554:import_operation$3
   end
-  connect \diff $auto$expression.cpp:551:import_operation$3 [7:0]
+  connect \diff $auto$expression.cpp:554:import_operation$3 [7:0]
 end

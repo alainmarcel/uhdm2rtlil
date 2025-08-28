@@ -25,7 +25,7 @@ module \logic_ops
   wire output 10 \B9
   attribute \src "dut.sv:3.17-3.19"
   wire width 8 upto input 1 \in
-  cell $logic_and $auto$expression.cpp:458:import_operation$19
+  cell $logic_and $auto$expression.cpp:461:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \logic_ops
     connect \B \in [3:2]
     connect \Y \B9
   end
-  cell $logic_or $auto$expression.cpp:462:import_operation$21
+  cell $logic_or $auto$expression.cpp:465:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -45,7 +45,7 @@ module \logic_ops
     connect \B \in [3:2]
     connect \Y \B10
   end
-  cell $and $auto$expression.cpp:466:import_operation$1
+  cell $and $auto$expression.cpp:469:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -55,7 +55,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B1
   end
-  cell $or $auto$expression.cpp:470:import_operation$3
+  cell $or $auto$expression.cpp:473:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -65,7 +65,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B2
   end
-  cell $xor $auto$expression.cpp:474:import_operation$13
+  cell $xor $auto$expression.cpp:477:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -75,14 +75,14 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B5
   end
-  cell $not $auto$expression.cpp:478:import_operation$17
+  cell $not $auto$expression.cpp:481:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in [7]
     connect \Y \B7
   end
-  cell $xnor $auto$expression.cpp:482:import_operation$15
+  cell $xnor $auto$expression.cpp:485:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -92,14 +92,14 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B6
   end
-  cell $not $auto$expression.cpp:504:import_operation$7
+  cell $not $auto$expression.cpp:507:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \B1
     connect \Y \B3
   end
-  cell $not $auto$expression.cpp:515:import_operation$11
+  cell $not $auto$expression.cpp:518:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1

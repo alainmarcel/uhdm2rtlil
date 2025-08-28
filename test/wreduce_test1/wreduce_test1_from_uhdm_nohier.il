@@ -2,10 +2,10 @@
 autoidx 9
 attribute \src "dut.sv:1.1-6.10"
 module \wreduce_test1
-  wire width 33 $auto$expression.cpp:551:import_operation$1
-  wire width 64 $auto$expression.cpp:573:import_operation$3
-  wire width 32 $auto$expression.cpp:620:import_operation$7
-  wire width 32 $auto$expression.cpp:641:import_operation$5
+  wire width 33 $auto$expression.cpp:554:import_operation$1
+  wire width 64 $auto$expression.cpp:576:import_operation$3
+  wire width 32 $auto$expression.cpp:623:import_operation$7
+  wire width 32 $auto$expression.cpp:644:import_operation$5
   attribute \src "dut.sv:1.35-1.36"
   wire width 32 input 1 \a
   attribute \src "dut.sv:1.38-1.39"
@@ -18,7 +18,7 @@ module \wreduce_test1
   wire width 8 output 4 \y
   attribute \src "dut.sv:1.60-1.61"
   wire width 8 output 5 \z
-  cell $sub $auto$expression.cpp:565:import_operation$2
+  cell $sub $auto$expression.cpp:568:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -26,9 +26,9 @@ module \wreduce_test1
     parameter \Y_WIDTH 33
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:551:import_operation$1
+    connect \Y $auto$expression.cpp:554:import_operation$1
   end
-  cell $mul $auto$expression.cpp:590:import_operation$4
+  cell $mul $auto$expression.cpp:593:import_operation$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -36,9 +36,9 @@ module \wreduce_test1
     parameter \Y_WIDTH 64
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:573:import_operation$3
+    connect \Y $auto$expression.cpp:576:import_operation$3
   end
-  cell $shl $auto$expression.cpp:632:import_operation$8
+  cell $shl $auto$expression.cpp:635:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -46,9 +46,9 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:620:import_operation$7
+    connect \Y $auto$expression.cpp:623:import_operation$7
   end
-  cell $shr $auto$expression.cpp:656:import_operation$6
+  cell $shr $auto$expression.cpp:659:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -56,10 +56,10 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:641:import_operation$5
+    connect \Y $auto$expression.cpp:644:import_operation$5
   end
-  connect \x $auto$expression.cpp:551:import_operation$1 [7:0]
-  connect \y $auto$expression.cpp:573:import_operation$3 [7:0]
-  connect \z $auto$expression.cpp:641:import_operation$5 [7:0]
-  connect \w $auto$expression.cpp:620:import_operation$7 [7:0]
+  connect \x $auto$expression.cpp:554:import_operation$1 [7:0]
+  connect \y $auto$expression.cpp:576:import_operation$3 [7:0]
+  connect \z $auto$expression.cpp:644:import_operation$5 [7:0]
+  connect \w $auto$expression.cpp:623:import_operation$7 [7:0]
 end

@@ -13,14 +13,14 @@ module \wreduce_test0
   wire width 16 output 4 \y
   attribute \src "dut.sv:1.60-1.61"
   wire width 16 output 5 \z
-  cell $neg $auto$expression.cpp:411:import_operation$2
+  cell $neg $auto$expression.cpp:412:import_operation$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
     connect \Y \x [8:0]
   end
-  cell $xor $auto$expression.cpp:474:import_operation$9
+  cell $xor $auto$expression.cpp:477:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -30,7 +30,7 @@ module \wreduce_test0
     connect \B { 6'000000 \y [9:0] }
     connect \Y \z
   end
-  cell $add $auto$expression.cpp:543:import_operation$6
+  cell $add $auto$expression.cpp:546:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0

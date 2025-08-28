@@ -14,18 +14,21 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 76 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 96% (73/76 tests passing)
-- **Perfect Matches**: 70+ tests validated by formal equivalence checking
-- **Expected Failures**: 3 tests with known issues documented in `test/failing_tests.txt`:
-  - `carryadd` - Generate block genvar handling issue
-  - `case_expr_const` - Partial fix (5/8 cases pass), signed comparison issue remaining
-  - `forloops` - Fixed and passing with proper integer variable substitution
-- **Recent Additions**: 
-  - 6 lut_map tests (and, cmp, mux, not, or, xor) - all passing with $signed/$unsigned support
-  - 3 additional tests from Yosys suite (forloops, carryadd, case_expr_const)
-  - Split wreduce test into wreduce_test0 and wreduce_test1 - both passing
-  - Fixed verilog_primitives test with multi-output gate support
+- **Total Tests**: 77 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 94% (73/77 tests passing)
+- **Perfect Matches**: 68+ tests validated by formal equivalence checking
+- **UHDM-Only Success**: 5 tests that only work with UHDM frontend (not Verilog)
+- **Known Failures**: 4 tests with issues:
+  - `carryadd` - UHDM output missing
+  - `case_expr_const` - Equivalence check failure (expected)
+  - `forloops` - Equivalence check failure (expected)
+  - `mem2reg_test1` - Equivalence check failure
+- **Recent Fixes** (this PR):
+  - `simple_generate` - Generate for loops with bit-select assignments ✅
+  - `gen_test1` - Generate blocks with nets and wires ✅
+  - `asym_ram_sdp_read_wider` - Asymmetric RAM with for loops ✅
+  - `asym_ram_sdp_write_wider` - Asymmetric RAM with memory writes ✅
+  - `param_test` - Parameterized modules with HEX values ✅
 
 ## Architecture & Workflow
 
@@ -76,11 +79,16 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - System function calls ($signed, $unsigned)
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
-  - Parameter references in expressions
+  - Parameter references with HEX/BIN/DEC formats
+  - Loop variable substitution in generate blocks
 - **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, named begin blocks
 - **Memory**: Array inference, memory initialization, for-loop memory initialization patterns, asymmetric port RAM with different read/write widths
 - **Shift Registers**: Automatic detection and optimization of shift register patterns (e.g., `M[i+1] <= M[i]`)
-- **Generate Blocks**: For loops, if-else generate, hierarchical instance naming
+- **Generate Blocks**: 
+  - For loops with proper scope handling
+  - If-else generate conditions
+  - Hierarchical naming (e.g., `gen_loop[0].signal`)
+  - Net and variable imports from generate scopes
 - **Packages**: Import statements, package parameters, struct types, functions
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
 - **Advanced Features**: 
@@ -192,7 +200,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (54 total - 53 passing, 1 known issue)
+### Current Test Cases (77 total - 73 passing, 4 known issues)
 - **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
 - **flipflop** - D flip-flop (tests basic sequential logic)
 - **counter** - More complex counter design

@@ -1,0 +1,61 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -2,25 +2,21 @@
+ (* top =  1  *)
+ (* src = "dut.sv:1.1-17.10" *)
+ module simple_generate(clk, a, b, y);
+-(* src = "dut.sv:3.7-3.10" *)
++(* src = "dut.sv:1.24-1.27" *)
+ input clk;
+ wire clk;
+-(* src = "dut.sv:4.13-4.14" *)
++(* src = "dut.sv:1.29-1.30" *)
+ input [3:0] a;
+ wire [3:0] a;
+-(* src = "dut.sv:4.16-4.17" *)
++(* src = "dut.sv:1.32-1.33" *)
+ input [3:0] b;
+ wire [3:0] b;
+-(* src = "dut.sv:5.18-5.19" *)
++(* src = "dut.sv:1.35-1.36" *)
+ output [3:0] y;
+ wire [3:0] y;
+-(* src = "dut.sv:10.14-10.17" *)
+ wire \gen_loop[0].tmp ;
+-(* src = "dut.sv:10.14-10.17" *)
+ wire \gen_loop[1].tmp ;
+-(* src = "dut.sv:10.14-10.17" *)
+ wire \gen_loop[2].tmp ;
+-(* src = "dut.sv:10.14-10.17" *)
+ wire \gen_loop[3].tmp ;
+ \$_AND_  _0_ (
+ .A(b[1]),
+@@ -42,24 +38,28 @@
+ .B(a[0]),
+ .Y(\gen_loop[0].tmp )
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:12.9-13.25" *)
+ \$_DFF_P_  \y_reg[0]  /* _4_ */ (
+ .C(clk),
+ .D(\gen_loop[0].tmp ),
+ .Q(y[0])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:12.9-13.25" *)
+ \$_DFF_P_  \y_reg[1]  /* _5_ */ (
+ .C(clk),
+ .D(\gen_loop[1].tmp ),
+ .Q(y[1])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:12.9-13.25" *)
+ \$_DFF_P_  \y_reg[2]  /* _6_ */ (
+ .C(clk),
+ .D(\gen_loop[2].tmp ),
+ .Q(y[2])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:12.9-13.25" *)
+ \$_DFF_P_  \y_reg[3]  /* _7_ */ (
+ .C(clk),

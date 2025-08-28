@@ -9,7 +9,7 @@ module \lut_map_xor
   wire input 2 \b
   attribute \src "dut.sv:3.12-3.13"
   wire output 3 \y
-  cell $xor $auto$expression.cpp:474:import_operation$1
+  cell $xor $auto$expression.cpp:477:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

@@ -1,0 +1,97 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -2,33 +2,25 @@
+ (* top =  1  *)
+ (* src = "dut.sv:1.1-38.10" *)
+ module gen_test1(clk, a, b, y);
+-(* src = "dut.sv:3.7-3.10" *)
++(* src = "dut.sv:1.18-1.21" *)
+ input clk;
+ wire clk;
+-(* src = "dut.sv:4.13-4.14" *)
++(* src = "dut.sv:1.23-1.24" *)
+ input [7:0] a;
+ wire [7:0] a;
+-(* src = "dut.sv:4.16-4.17" *)
++(* src = "dut.sv:1.26-1.27" *)
+ input [7:0] b;
+ wire [7:0] b;
+-(* src = "dut.sv:5.18-5.19" *)
++(* src = "dut.sv:1.29-1.30" *)
+ output [7:0] y;
+ wire [7:0] y;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _00_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _01_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _02_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _03_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _04_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _05_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _06_;
+-(* src = "dut.sv:32.3-33.18" *)
+ wire _07_;
+ wire _08_;
+ wire _09_;
+@@ -286,48 +278,56 @@
+ .B(_42_),
+ .Y(_07_)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[0]  /* _88_ */ (
+ .C(clk),
+ .D(_00_),
+ .Q(y[0])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[1]  /* _89_ */ (
+ .C(clk),
+ .D(_01_),
+ .Q(y[1])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[2]  /* _90_ */ (
+ .C(clk),
+ .D(_02_),
+ .Q(y[2])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[3]  /* _91_ */ (
+ .C(clk),
+ .D(_03_),
+ .Q(y[3])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[4]  /* _92_ */ (
+ .C(clk),
+ .D(_04_),
+ .Q(y[4])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[5]  /* _93_ */ (
+ .C(clk),
+ .D(_05_),
+ .Q(y[5])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[6]  /* _94_ */ (
+ .C(clk),
+ .D(_06_),
+ .Q(y[6])
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:32.3-33.18" *)
+ \$_DFF_P_  \y_reg[7]  /* _95_ */ (
+ .C(clk),
