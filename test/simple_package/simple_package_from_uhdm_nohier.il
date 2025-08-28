@@ -3,6 +3,7 @@ autoidx 9
 attribute \hdlname "sub_module"
 attribute \dynports 1
 attribute \src "dut.sv:52.5-57.7"
+attribute \cells_not_processed 1
 module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
@@ -90,6 +91,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
 end
 attribute \dynports 1
 attribute \src "dut.sv:25.1-59.10"
+attribute \cells_not_processed 1
 module \simple_package
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
@@ -147,6 +149,7 @@ module \simple_package
 end
 attribute \dynports 1
 attribute \src "dut.sv:62.1-99.10"
+attribute \cells_not_processed 1
 module \sub_module
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32

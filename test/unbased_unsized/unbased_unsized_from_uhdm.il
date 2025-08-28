@@ -9,8 +9,8 @@ module \pass_through
   connect \out \inp
 end
 attribute \keep 1
-attribute \top 1
 attribute \src "dut.sv:8.1-40.10"
+attribute \top 1
 module \unbased_unsized
   wire $auto$rtlil.cc:3015:Eqx$34
   wire $auto$rtlil.cc:3015:Eqx$38

@@ -324,6 +324,24 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log("UHDM: Starting interface expansion\n");
     expand_interfaces();
     
+    // Post-process: Detect and mark blackbox modules
+    // This must be done after all instances are created
+    log("UHDM: Detecting blackbox modules\n");
+    for (auto module : design->modules()) {
+        // A module is considered blackbox if it has no implementation:
+        // no processes, no cells, no memories, and no connections (continuous assignments)
+        bool is_empty = module->processes.empty() && 
+                       module->cells_.empty() && 
+                       module->memories.empty() &&
+                       module->connections_.empty();
+        
+        if (is_empty) {
+            // This is truly an empty module with no implementation, mark it as blackbox
+            module->set_bool_attribute(ID::blackbox);
+            log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
+        }
+    }
+    
     log("UHDM: Finished import_design\n");
     log_flush();
     
@@ -1002,6 +1020,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     module = design->addModule(mod_id);
     
+    // Mark that cells have not been processed yet (similar to AST frontend)
+    module->set_bool_attribute(ID::cells_not_processed);
+    
     // Add source attribute to module
     add_src_attribute(module->attributes, uhdm_module);
     
@@ -1357,9 +1378,6 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import primitive gate arrays
     import_primitive_arrays(uhdm_module);
     
-    // Module instances are imported through the hierarchy traversal
-    // (TopModules), not through ref_modules
-    
     // Add dynports attribute if module has parameters
     if (!module->avail_parameters.empty()) {
         module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
@@ -1375,8 +1393,22 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         module->attributes[RTLIL::escape_id("interfaces_replaced_in_module")] = RTLIL::Const(1);
     }
     
+    // NOTE: Blackbox detection is done later after all instances are created
+    // We cannot check if a module is empty here because instances (cells) are created
+    // during hierarchy traversal, which happens after module import.
+    
+    // NOTE: Module instances (ref_modules) are imported through the hierarchy traversal
+    // (TopModules), not directly here. This is by design to maintain proper hierarchy.
+    
     // Finalize module
     module->fixup_ports();
+    
+    // Check if module is empty (no processes, cells, or memories) and mark as blackbox if so
+    if (module->processes.empty() && module->cells_.empty() && module->memories.empty()) {
+        // This is an empty module, mark it as blackbox
+        module->set_bool_attribute(ID::blackbox);
+        log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
+    }
     
     // Restore saved instance context
     current_instance = saved_instance;

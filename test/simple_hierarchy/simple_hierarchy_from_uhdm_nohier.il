@@ -3,6 +3,7 @@ autoidx 13
 attribute \hdlname "submodule"
 attribute \dynports 1
 attribute \src "dut.sv:25.5-30.7"
+attribute \cells_not_processed 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3006:And$6
@@ -40,6 +41,7 @@ end
 attribute \hdlname "submodule"
 attribute \dynports 1
 attribute \src "dut.sv:41.5-46.7"
+attribute \cells_not_processed 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3006:And$10
@@ -75,6 +77,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   connect \out $auto$rtlil.cc:3006:And$12
 end
 attribute \src "dut.sv:15.1-48.10"
+attribute \cells_not_processed 1
 module \simple_hierarchy
   attribute \src "dut.sv:16.24-16.26"
   wire width 8 input 1 \a1
@@ -121,6 +124,7 @@ module \simple_hierarchy
 end
 attribute \dynports 1
 attribute \src "dut.sv:1.1-13.10"
+attribute \cells_not_processed 1
 module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire width 8 $auto$rtlil.cc:3006:And$2

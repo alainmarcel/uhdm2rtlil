@@ -1,6 +1,6 @@
 // There must be white space after the
 // string which uses escape character
-module escape_id (
+module \1dff (
 q,      // Q output
 \q~ ,   // Q_out output
 d,      // D input

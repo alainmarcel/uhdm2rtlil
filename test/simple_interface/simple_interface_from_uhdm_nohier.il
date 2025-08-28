@@ -4,6 +4,7 @@ attribute \interfaces_replaced_in_module 1
 attribute \hdlname "submodule"
 attribute \dynports 1
 attribute \src "dut.sv:58.5-61.7"
+attribute \cells_not_processed 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3006:And$6
@@ -42,6 +43,7 @@ attribute \interfaces_replaced_in_module 1
 attribute \hdlname "submodule"
 attribute \dynports 1
 attribute \src "dut.sv:70.5-73.7"
+attribute \cells_not_processed 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3006:And$10
@@ -77,6 +79,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   connect \out $auto$rtlil.cc:3006:And$12
 end
 attribute \src "dut.sv:30.1-75.10"
+attribute \cells_not_processed 1
 module \simple_interface
   attribute \src "dut.sv:31.25-31.27"
   wire width 8 input 1 \a1
@@ -150,6 +153,7 @@ module \simple_interface
 end
 attribute \dynports 1
 attribute \src "dut.sv:20.1-28.10"
+attribute \cells_not_processed 1
 module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire $auto$rtlil.cc:3006:And$2

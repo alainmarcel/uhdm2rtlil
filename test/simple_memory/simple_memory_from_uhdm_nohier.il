@@ -2,6 +2,7 @@
 autoidx 4
 attribute \dynports 1
 attribute \src "dut.sv:1.1-36.10"
+attribute \cells_not_processed 1
 module \simple_memory
   parameter \WIDTH 8
   parameter \DEPTH 16

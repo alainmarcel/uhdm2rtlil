@@ -2,6 +2,7 @@
 autoidx 85
 attribute \dynports 1
 attribute \src "dut.sv:1.2-51.10"
+attribute \cells_not_processed 1
 module \fsm
   parameter \SIZE 3
   parameter \IDLE 3'001

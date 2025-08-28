@@ -2,6 +2,7 @@
 autoidx 1
 attribute \dynports 1
 attribute \src "dut.sv:2.1-35.10"
+attribute \cells_not_processed 1
 module \blockrom
   parameter \DATA_WIDTH 8
   parameter \ADDRESS_WIDTH 3

@@ -2,6 +2,7 @@
 autoidx 53
 attribute \dynports 1
 attribute \src "dut.sv:7.1-41.10"
+attribute \cells_not_processed 1
 module \macc
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
@@ -148,6 +149,7 @@ module \macc
 end
 attribute \dynports 1
 attribute \src "dut.sv:44.1-84.10"
+attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40

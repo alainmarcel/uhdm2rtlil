@@ -3,6 +3,7 @@ autoidx 9
 attribute \hdlname "adder"
 attribute \dynports 1
 attribute \src "dut.sv:4.1-12.10"
+attribute \cells_not_processed 1
 module $paramod\adder\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$expression.cpp:532:import_operation$1
@@ -28,6 +29,7 @@ end
 attribute \hdlname "subtractor"
 attribute \dynports 1
 attribute \src "dut.sv:15.1-23.10"
+attribute \cells_not_processed 1
 module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$expression.cpp:554:import_operation$3
@@ -52,6 +54,7 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
 end
 attribute \dynports 1
 attribute \src "dut.sv:4.1-12.10"
+attribute \cells_not_processed 1
 module \adder
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire width 9 $auto$expression.cpp:532:import_operation$1
@@ -75,6 +78,7 @@ module \adder
 end
 attribute \dynports 1
 attribute \src "dut.sv:26.1-110.10"
+attribute \cells_not_processed 1
 module \generate_test
   parameter \NUM_UNITS 4
   parameter \DATA_WIDTH 8
@@ -271,6 +275,7 @@ module \generate_test
 end
 attribute \dynports 1
 attribute \src "dut.sv:15.1-23.10"
+attribute \cells_not_processed 1
 module \subtractor
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire width 9 $auto$expression.cpp:554:import_operation$3
