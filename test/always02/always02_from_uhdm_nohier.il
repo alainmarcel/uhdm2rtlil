@@ -2,7 +2,7 @@
 autoidx 5
 attribute \src "dut.sv:1.1-13.10"
 module \always02
-  wire width 65 $auto$expression.cpp:529:import_operation$1
+  wire width 65 $auto$expression.cpp:532:import_operation$1
   wire width 4 $auto$rtlil.cc:3094:Mux$4
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
@@ -10,7 +10,7 @@ module \always02
   wire width 4 output 3 \count
   attribute \src "dut.sv:1.24-1.29"
   wire input 2 \reset
-  cell $add $auto$expression.cpp:543:import_operation$2
+  cell $add $auto$expression.cpp:546:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -18,11 +18,11 @@ module \always02
     parameter \Y_WIDTH 65
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:529:import_operation$1
+    connect \Y $auto$expression.cpp:532:import_operation$1
   end
   cell $mux $auto$process.cpp:3984:import_assignment_sync$3
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:529:import_operation$1 [3:0]
+    connect \A $auto$expression.cpp:532:import_operation$1 [3:0]
     connect \B 4'0000
     connect \S \reset
     connect \Y $auto$rtlil.cc:3094:Mux$4

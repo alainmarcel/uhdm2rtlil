@@ -1,0 +1,14 @@
+# Test script to read UHDM file in Yosys
+plugin -i ../../build/uhdm2rtlil.so
+read_uhdm slpp_all/surelog.uhdm
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil gen_test1_from_uhdm_nohier.il
+hierarchy -check -top gen_test1
+stat
+proc
+opt
+stat
+write_rtlil gen_test1_from_uhdm.il
+# Synthesize to gate-level netlist
+synth -top gen_test1
+write_verilog -noexpr gen_test1_from_uhdm_synth.v

@@ -7,7 +7,7 @@ module \lut_map_not
   wire input 1 \a
   attribute \src "dut.sv:3.12-3.13"
   wire output 2 \y
-  cell $not $auto$expression.cpp:478:import_operation$1
+  cell $not $auto$expression.cpp:481:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
