@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil simple_struct_from_verilog_nohier.il
-hierarchy -check -top simple_struct
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil simple_struct_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top simple_struct
+synth -auto-top
 write_verilog -noexpr simple_struct_from_verilog_synth.v

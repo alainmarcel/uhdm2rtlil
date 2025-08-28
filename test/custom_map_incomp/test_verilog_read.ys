@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil custom_map_incomp_from_verilog_nohier.il
-hierarchy -check -top custom_map_incomp
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil custom_map_incomp_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top custom_map_incomp
+synth -auto-top
 write_verilog -noexpr custom_map_incomp_from_verilog_synth.v

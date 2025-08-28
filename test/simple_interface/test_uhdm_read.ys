@@ -3,12 +3,12 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil simple_interface_from_uhdm_nohier.il
-hierarchy -check -top simple_interface
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil simple_interface_from_uhdm.il
 # Synthesize to gate-level netlist
-synth -top simple_interface
+synth -auto-top
 write_verilog -noexpr simple_interface_from_uhdm_synth.v

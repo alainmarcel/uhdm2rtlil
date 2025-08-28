@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil mul_signed_async_from_verilog_nohier.il
-hierarchy -check -top mul_signed_async
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil mul_signed_async_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top mul_signed_async
+synth -auto-top
 write_verilog -noexpr mul_signed_async_from_verilog_synth.v

@@ -3,12 +3,12 @@ plugin -i ../../build/uhdm2rtlil.so
 read_uhdm slpp_all/surelog.uhdm
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil case_expr_const_from_uhdm_nohier.il
-hierarchy -check -top case_expr_const
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil case_expr_const_from_uhdm.il
 # Synthesize to gate-level netlist
-synth -top case_expr_const
+synth -auto-top
 write_verilog -noexpr case_expr_const_from_uhdm_synth.v

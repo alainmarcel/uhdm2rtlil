@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil priority_memory_from_verilog_nohier.il
-hierarchy -check -top priority_memory
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil priority_memory_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top priority_memory
+synth -auto-top
 write_verilog -noexpr priority_memory_from_verilog_synth.v

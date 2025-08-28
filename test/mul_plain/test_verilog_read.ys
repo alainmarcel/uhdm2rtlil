@@ -2,12 +2,12 @@
 read_verilog -sv dut.sv
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil mul_plain_from_verilog_nohier.il
-hierarchy -check -top mul_plain
+hierarchy -check -auto-top
 stat
 proc
 opt
 stat
 write_rtlil mul_plain_from_verilog.il
 # Synthesize to gate-level netlist
-synth -top mul_plain
+synth -auto-top
 write_verilog -noexpr mul_plain_from_verilog_synth.v
