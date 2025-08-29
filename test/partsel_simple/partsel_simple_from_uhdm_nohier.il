@@ -5,9 +5,9 @@ attribute \cells_not_processed 1
 module \partsel_simple
   wire width 65 $auto$expression.cpp:532:import_operation$7
   wire width 3 $auto$expression.cpp:623:import_operation$1
-  wire width 6 $auto$module.cpp:513:import_continuous_assign$3
-  wire width 4 $auto$module.cpp:513:import_continuous_assign$5
-  wire width 4 $auto$module.cpp:513:import_continuous_assign$9
+  wire width 6 $auto$module.cpp:539:import_continuous_assign$3
+  wire width 4 $auto$module.cpp:539:import_continuous_assign$5
+  wire width 4 $auto$module.cpp:539:import_continuous_assign$9
   attribute \src "dut.sv:1.53-1.57"
   wire width 32 input 2 \data
   attribute \src "dut.sv:1.35-1.38"
@@ -38,28 +38,28 @@ module \partsel_simple
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
     connect \Y $auto$expression.cpp:623:import_operation$1
   end
-  cell $pos $auto$module.cpp:514:import_continuous_assign$10
+  cell $pos $auto$module.cpp:540:import_continuous_assign$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 4
     connect \A { }
-    connect \Y $auto$module.cpp:513:import_continuous_assign$9
+    connect \Y $auto$module.cpp:539:import_continuous_assign$9
   end
-  cell $pos $auto$module.cpp:514:import_continuous_assign$4
+  cell $pos $auto$module.cpp:540:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 6
     connect \A $auto$expression.cpp:623:import_operation$1
-    connect \Y $auto$module.cpp:513:import_continuous_assign$3
+    connect \Y $auto$module.cpp:539:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:514:import_continuous_assign$6
+  cell $pos $auto$module.cpp:540:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 4
     connect \A { }
-    connect \Y $auto$module.cpp:513:import_continuous_assign$5
+    connect \Y $auto$module.cpp:539:import_continuous_assign$5
   end
-  connect \offset $auto$module.cpp:513:import_continuous_assign$3
-  connect \slice_up $auto$module.cpp:513:import_continuous_assign$5
-  connect \slice_down $auto$module.cpp:513:import_continuous_assign$9
+  connect \offset $auto$module.cpp:539:import_continuous_assign$3
+  connect \slice_up $auto$module.cpp:539:import_continuous_assign$5
+  connect \slice_down $auto$module.cpp:539:import_continuous_assign$9
 end

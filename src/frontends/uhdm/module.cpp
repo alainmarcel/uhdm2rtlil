@@ -388,12 +388,14 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     
     // Check if net is signed
     if (auto ref_typespec = uhdm_net->Typespec()) {
+        log("UHDM: Checking signed attribute for net '%s'\n", netname.c_str());
         // Check if typespec indicates signed
         bool is_signed = false;
         const UHDM::typespec* actual_typespec = nullptr;
         
         if (ref_typespec->Actual_typespec()) {
             actual_typespec = ref_typespec->Actual_typespec();
+            log("UHDM: Found Actual_typespec, UhdmType=%d\n", actual_typespec->UhdmType());
         }
         
         if (actual_typespec) {
@@ -401,6 +403,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                 case uhdmlogic_typespec:
                     if (auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
                         is_signed = logic_ts->VpiSigned();
+                        log("UHDM: logic_typespec VpiSigned=%d\n", is_signed);
                     }
                     break;
                 case uhdmint_typespec:
@@ -409,15 +412,38 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                 case uhdmshort_int_typespec:
                 case uhdmlong_int_typespec:
                     is_signed = true;  // These are signed by default
+                    log("UHDM: Integer type, signed by default\n");
                     break;
                 default:
                     // Other typespec types are not handled
+                    log("UHDM: Unknown typespec type %d\n", actual_typespec->UhdmType());
                     break;
             }
             
             if (is_signed) {
-                log("UHDM: Net '%s' is signed\n", netname.c_str());
+                log("UHDM: Net '%s' is signed, setting is_signed=true\n", netname.c_str());
                 w->is_signed = true;
+            } else {
+                log("UHDM: Net '%s' is not signed\n", netname.c_str());
+            }
+        } else {
+            log("UHDM: No actual typespec found for net '%s'\n", netname.c_str());
+        }
+    } else {
+        log("UHDM: Net '%s' has no typespec\n", netname.c_str());
+    }
+    
+    // Import attributes (e.g., (* keep *))
+    if (auto net = any_cast<const UHDM::net*>(uhdm_net)) {
+        if (net->Attributes()) {
+            for (auto attr : *net->Attributes()) {
+                std::string attr_name = std::string(attr->VpiName());
+                if (!attr_name.empty()) {
+                    // Set the attribute to 1 (standard practice for boolean attributes like keep)
+                    w->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                    if (mode_debug)
+                        log("UHDM: Added attribute '%s' to net '%s'\n", attr_name.c_str(), netname.c_str());
+                }
             }
         }
     }

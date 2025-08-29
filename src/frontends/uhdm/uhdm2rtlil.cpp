@@ -1145,30 +1145,156 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     name_map[var_name] = wire;
                     add_src_attribute(wire->attributes, var);
                     
-                    // Add wiretype attribute for struct types
+                    // Import attributes (e.g., (* keep *))
+                    if (auto variables = any_cast<const UHDM::variables*>(var)) {
+                        if (variables->Attributes()) {
+                            for (auto attr : *variables->Attributes()) {
+                                std::string attr_name = std::string(attr->VpiName());
+                                if (!attr_name.empty()) {
+                                    // Set the attribute to 1 (standard practice for boolean attributes like keep)
+                                    wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                                    if (mode_debug)
+                                        log("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Add wiretype and signed attributes
                     if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                         if (auto ref_typespec = logic_var->Typespec()) {
+                            // First check if we have a typedef name to use as wiretype
+                            std::string wiretype_name;
+                            
+                            // Check if the actual_typespec has a name (typedef name)
                             if (auto actual_typespec = ref_typespec->Actual_typespec()) {
-                                if (actual_typespec->UhdmType() == uhdmstruct_typespec) {
-                                    // Get the struct type name
-                                    std::string type_name;
-                                    if (!ref_typespec->VpiName().empty()) {
-                                        type_name = ref_typespec->VpiName();
-                                    } else if (!actual_typespec->VpiName().empty()) {
-                                        type_name = actual_typespec->VpiName();
-                                    }
-                                    
-                                    if (!type_name.empty()) {
-                                        wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
-                                        log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), wire->name.c_str());
-                                    }
+                                if (!actual_typespec->VpiName().empty()) {
+                                    wiretype_name = actual_typespec->VpiName();
+                                } else if (!ref_typespec->VpiName().empty()) {
+                                    wiretype_name = ref_typespec->VpiName();
                                 }
+                                
+                                // Add wiretype attribute for any typedef'd type
+                                if (!wiretype_name.empty()) {
+                                    wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(wiretype_name);
+                                    log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", wiretype_name.c_str(), wire->name.c_str());
+                                }
+                                
+                                // Check for signed attribute
+                                bool is_signed = false;
+                                switch (actual_typespec->UhdmType()) {
+                                    case uhdmlogic_typespec:
+                                        if (auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec)) {
+                                            is_signed = logic_ts->VpiSigned();
+                                            log("UHDM: Variable '%s' logic_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
+                                        }
+                                        break;
+                                    case uhdmint_typespec:
+                                        if (auto int_ts = dynamic_cast<const UHDM::int_typespec*>(actual_typespec)) {
+                                            is_signed = int_ts->VpiSigned();
+                                            log("UHDM: Variable '%s' int_typespec VpiSigned=%d\n", var_name.c_str(), is_signed);
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                
+                                if (is_signed) {
+                                    wire->is_signed = true;
+                                    log("UHDM: Variable '%s' is signed, setting is_signed=true\n", var_name.c_str());
+                                }
+                            }
+                        }
+                        
+                        // Handle initial expression if present
+                        if (logic_var->Expr()) {
+                            log("UHDM: Variable '%s' has initial expression\n", var_name.c_str());
+                            RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
+                            if (init_value.size() > 0) {
+                                // Resize the init_value to match the wire width
+                                RTLIL::SigSpec lhs(wire);
+                                if (init_value.size() != lhs.size()) {
+                                    int orig_size = init_value.size();
+                                    // Need to resize - check if wire is signed for proper extension
+                                    if (wire->is_signed && init_value.size() < lhs.size()) {
+                                        // Sign extend
+                                        init_value.extend_u0(lhs.size(), true);
+                                    } else {
+                                        // Zero extend or truncate
+                                        init_value.extend_u0(lhs.size(), false);
+                                    }
+                                    log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n", 
+                                        orig_size, lhs.size(), var_name.c_str());
+                                }
+                                
+                                // Create an initial process to assign the value
+                                RTLIL::Process* proc = module->addProcess(NEW_ID);
+                                proc->root_case.actions.push_back(RTLIL::SigSig(lhs, init_value));
+                                proc->root_case.compare.clear();
+                                proc->root_case.switches.clear();
+                                
+                                // Add sync rule for initial
+                                RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                                sync->type = RTLIL::STa;  // Always
+                                sync->signal = RTLIL::SigSpec();
+                                sync->actions.push_back(RTLIL::SigSig(lhs, init_value));
+                                proc->syncs.push_back(sync);
+                                
+                                add_src_attribute(proc->attributes, var);
+                                log("UHDM: Created initial assignment for variable '%s'\n", var_name.c_str());
                             }
                         }
                     }
                     
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
                 } else {
+                    // Wire already exists, but check if we need to handle initial expression
+                    RTLIL::Wire* existing_wire = module->wire(wire_id);
+                    if (existing_wire) {
+                        wire_map[var] = existing_wire;
+                        name_map[var_name] = existing_wire;
+                        
+                        // Handle initial expression for existing wire
+                        if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
+                            if (logic_var->Expr()) {
+                                log("UHDM: Existing variable '%s' has initial expression\n", var_name.c_str());
+                                RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
+                                if (init_value.size() > 0) {
+                                    // Resize the init_value to match the wire width
+                                    RTLIL::SigSpec lhs(existing_wire);
+                                    if (init_value.size() != lhs.size()) {
+                                        int orig_size = init_value.size();
+                                        // Need to resize - check if wire is signed for proper extension
+                                        if (existing_wire->is_signed && init_value.size() < lhs.size()) {
+                                            // Sign extend
+                                            init_value.extend_u0(lhs.size(), true);
+                                        } else {
+                                            // Zero extend or truncate
+                                            init_value.extend_u0(lhs.size(), false);
+                                        }
+                                        log("UHDM: Resized initial value from %d bits to %d bits for existing variable '%s'\n", 
+                                            orig_size, lhs.size(), var_name.c_str());
+                                    }
+                                    
+                                    // Create an initial process to assign the value
+                                    RTLIL::Process* proc = module->addProcess(NEW_ID);
+                                    proc->root_case.actions.push_back(RTLIL::SigSig(lhs, init_value));
+                                    proc->root_case.compare.clear();
+                                    proc->root_case.switches.clear();
+                                    
+                                    // Add sync rule for initial
+                                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                                    sync->type = RTLIL::STa;  // Always
+                                    sync->signal = RTLIL::SigSpec();
+                                    sync->actions.push_back(RTLIL::SigSig(lhs, init_value));
+                                    proc->syncs.push_back(sync);
+                                    
+                                    add_src_attribute(proc->attributes, var);
+                                    log("UHDM: Created initial assignment for existing variable '%s'\n", var_name.c_str());
+                                }
+                            }
+                        }
+                    }
                     log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
                 }
             }
@@ -1403,12 +1529,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Finalize module
     module->fixup_ports();
     
-    // Check if module is empty (no processes, cells, or memories) and mark as blackbox if so
-    if (module->processes.empty() && module->cells_.empty() && module->memories.empty()) {
-        // This is an empty module, mark it as blackbox
-        module->set_bool_attribute(ID::blackbox);
-        log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
-    }
+    // NOTE: Blackbox detection is done after hierarchy import in import_design()
+    // We don't mark modules as blackbox here because cells may be added later
+    // during hierarchy traversal
     
     // Restore saved instance context
     current_instance = saved_instance;

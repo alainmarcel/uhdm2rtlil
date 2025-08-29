@@ -12,8 +12,8 @@ end
 attribute \src "dut.sv:8.1-40.10"
 attribute \cells_not_processed 1
 module \unbased_unsized
-  wire width 64 $auto$module.cpp:513:import_continuous_assign$49
-  wire width 64 $auto$module.cpp:513:import_continuous_assign$51
+  wire width 64 $auto$module.cpp:539:import_continuous_assign$49
+  wire width 64 $auto$module.cpp:539:import_continuous_assign$51
   wire $auto$process.cpp:98:import_immediate_assert$11
   wire $auto$process.cpp:98:import_immediate_assert$15
   wire $auto$process.cpp:98:import_immediate_assert$19
@@ -190,19 +190,19 @@ module \unbased_unsized
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3015:Eqx$10
   end
-  cell $pos $auto$module.cpp:514:import_continuous_assign$50
+  cell $pos $auto$module.cpp:540:import_continuous_assign$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'x
-    connect \Y $auto$module.cpp:513:import_continuous_assign$49
+    connect \Y $auto$module.cpp:539:import_continuous_assign$49
   end
-  cell $pos $auto$module.cpp:514:import_continuous_assign$52
+  cell $pos $auto$module.cpp:540:import_continuous_assign$52
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'zzz
-    connect \Y $auto$module.cpp:513:import_continuous_assign$51
+    connect \Y $auto$module.cpp:539:import_continuous_assign$51
   end
   attribute \src "dut.sv:29.9-29.38"
   cell $check $auto$process.cpp:102:import_immediate_assert$12
@@ -410,6 +410,6 @@ module \unbased_unsized
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
-  connect \o07 $auto$module.cpp:513:import_continuous_assign$49
-  connect \o08 $auto$module.cpp:513:import_continuous_assign$51
+  connect \o07 $auto$module.cpp:539:import_continuous_assign$49
+  connect \o08 $auto$module.cpp:539:import_continuous_assign$51
 end
