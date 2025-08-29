@@ -125,6 +125,13 @@ When working with UHDM objects, you need to know where to find type definitions:
    - Main include: `#include <uhdm/uhdm.h>`
    - This pulls in all necessary UHDM types and the visitor pattern
 
+4. **Inspecting UHDM Content**:
+   - **Important**: To inspect the actual UHDM content for a test, look at the `uhdm_path.log` file
+   - This file contains the textual representation of the UHDM tree that shows all objects and their properties
+   - Located at: `test/<test_name>/uhdm_path.log`
+   - Alternatively, use: `uhdm-dump slpp_all/surelog.uhdm` to manually dump UHDM content
+   - The uhdm-dump tool is at: `build/third_party/Surelog/third_party/UHDM/bin/uhdm-dump`
+
 ### Adding New Features
 1. Identify UHDM node type in the UHDM dump (use `-d uhdm` with Surelog)
 2. Find the VPI type constant in `vpi_user.h` and object class in `generated/uhdm/`
