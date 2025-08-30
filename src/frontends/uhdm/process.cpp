@@ -1120,6 +1120,28 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                                             log_flush();
                                         }
+                                    } else if (edge_op->VpiOpType() == vpiListOp) {
+                                        // Handle nested list - recurse into it
+                                        log("      Found nested list, processing first edge trigger as clock\n");
+                                        log_flush();
+                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                            // Find first edge trigger in nested list
+                                            for (auto nested_operand : *edge_op->Operands()) {
+                                                if (nested_operand->VpiType() == vpiOperation) {
+                                                    const operation* nested_edge_op = any_cast<const operation*>(nested_operand);
+                                                    if (nested_edge_op->VpiOpType() == vpiPosedgeOp || nested_edge_op->VpiOpType() == vpiNegedgeOp) {
+                                                        clock_posedge = (nested_edge_op->VpiOpType() == vpiPosedgeOp);
+                                                        if (nested_edge_op->Operands() && !nested_edge_op->Operands()->empty()) {
+                                                            clock_sig = import_expression(any_cast<const expr*>((*nested_edge_op->Operands())[0]));
+                                                            log("      Found clock signal in nested list: %s (%s edge)\n", 
+                                                                log_signal(clock_sig), clock_posedge ? "pos" : "neg");
+                                                            log_flush();
+                                                            break; // Use first edge trigger as clock
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
