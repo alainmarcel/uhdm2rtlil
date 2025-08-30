@@ -45,7 +45,7 @@ module \always03
     connect \B \out2
     connect \Y $auto$rtlil.cc:3008:Xor$16
   end
-  cell $and $auto$process.cpp:3017:import_statement_sync$5
+  cell $and $auto$process.cpp:3064:import_statement_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -55,7 +55,7 @@ module \always03
     connect \B \in5
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$process.cpp:3038:import_statement_sync$11
+  cell $and $auto$process.cpp:3085:import_statement_sync$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -65,35 +65,35 @@ module \always03
     connect \B $auto$rtlil.cc:2959:Not$10
     connect \Y $auto$rtlil.cc:3006:And$12
   end
-  cell $not $auto$process.cpp:3038:import_statement_sync$9
+  cell $not $auto$process.cpp:3085:import_statement_sync$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in5
     connect \Y $auto$rtlil.cc:2959:Not$10
   end
-  cell $mux $auto$process.cpp:4006:import_assignment_sync$1
+  cell $mux $auto$process.cpp:4053:import_assignment_sync$1
     parameter \WIDTH 1
     connect \A \in1
     connect \B $logic_not$dut.sv:10.10-10.15$1_Y
     connect \S \in2
     connect \Y $auto$rtlil.cc:3094:Mux$2
   end
-  cell $mux $auto$process.cpp:4006:import_assignment_sync$13
+  cell $mux $auto$process.cpp:4053:import_assignment_sync$13
     parameter \WIDTH 1
     connect \A $auto$rtlil.cc:3094:Mux$8
     connect \B \in7
     connect \S $auto$rtlil.cc:3006:And$12
     connect \Y $auto$rtlil.cc:3094:Mux$14
   end
-  cell $mux $auto$process.cpp:4006:import_assignment_sync$3
+  cell $mux $auto$process.cpp:4053:import_assignment_sync$3
     parameter \WIDTH 1
     connect \A \out1
     connect \B \out2
     connect \S \in3
     connect \Y $auto$rtlil.cc:3094:Mux$4
   end
-  cell $mux $auto$process.cpp:4006:import_assignment_sync$7
+  cell $mux $auto$process.cpp:4053:import_assignment_sync$7
     parameter \WIDTH 1
     connect \A \out3
     connect \B \in6
