@@ -1098,8 +1098,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     }
 
     // Import module-level variables (logic declarations)
+    // We do this in two passes to handle initial values that reference other variables
+    std::vector<std::pair<const UHDM::any*, RTLIL::Wire*>> vars_with_init_expr;
+    
     if (uhdm_module->Variables()) {
         log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
+        
+        // First pass: Create all wires without initial values
         for (auto var : *uhdm_module->Variables()) {
             // Skip integer variables - they are procedural and shouldn't be module-level wires
             if (var->UhdmType() == uhdmint_var) {
@@ -1161,7 +1166,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     }
                     
                     // Add wiretype and signed attributes
-                    if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
+                    // Also handle enum_var which is a type of variable
+                    if (var->UhdmType() == uhdmenum_var) {
+                        // Handle enum variable
+                        if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
+                            // Defer initial expression processing to second pass
+                            if (enum_var->Expr()) {
+                                log("UHDM: Enum variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                                vars_with_init_expr.push_back(std::make_pair(var, wire));
+                            }
+                        }
+                    } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                         if (auto ref_typespec = logic_var->Typespec()) {
                             // First check if we have a typedef name to use as wiretype
                             std::string wiretype_name;
@@ -1206,43 +1221,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             }
                         }
                         
-                        // Handle initial expression if present
+                        // Defer initial expression processing to second pass
                         if (logic_var->Expr()) {
-                            log("UHDM: Variable '%s' has initial expression\n", var_name.c_str());
-                            RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
-                            if (init_value.size() > 0) {
-                                // Resize the init_value to match the wire width
-                                RTLIL::SigSpec lhs(wire);
-                                if (init_value.size() != lhs.size()) {
-                                    int orig_size = init_value.size();
-                                    // Need to resize - check if wire is signed for proper extension
-                                    if (wire->is_signed && init_value.size() < lhs.size()) {
-                                        // Sign extend
-                                        init_value.extend_u0(lhs.size(), true);
-                                    } else {
-                                        // Zero extend or truncate
-                                        init_value.extend_u0(lhs.size(), false);
-                                    }
-                                    log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n", 
-                                        orig_size, lhs.size(), var_name.c_str());
-                                }
-                                
-                                // Create an initial process to assign the value
-                                RTLIL::Process* proc = module->addProcess(NEW_ID);
-                                proc->root_case.actions.push_back(RTLIL::SigSig(lhs, init_value));
-                                proc->root_case.compare.clear();
-                                proc->root_case.switches.clear();
-                                
-                                // Add sync rule for initial
-                                RTLIL::SyncRule* sync = new RTLIL::SyncRule;
-                                sync->type = RTLIL::STa;  // Always
-                                sync->signal = RTLIL::SigSpec();
-                                sync->actions.push_back(RTLIL::SigSig(lhs, init_value));
-                                proc->syncs.push_back(sync);
-                                
-                                add_src_attribute(proc->attributes, var);
-                                log("UHDM: Created initial assignment for variable '%s'\n", var_name.c_str());
-                            }
+                            log("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                            vars_with_init_expr.push_back(std::make_pair(var, wire));
                         }
                     }
                     
@@ -1254,48 +1236,124 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         wire_map[var] = existing_wire;
                         name_map[var_name] = existing_wire;
                         
-                        // Handle initial expression for existing wire
+                        // Defer initial expression processing for existing wire to second pass
                         if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                             if (logic_var->Expr()) {
-                                log("UHDM: Existing variable '%s' has initial expression\n", var_name.c_str());
-                                RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
-                                if (init_value.size() > 0) {
-                                    // Resize the init_value to match the wire width
-                                    RTLIL::SigSpec lhs(existing_wire);
-                                    if (init_value.size() != lhs.size()) {
-                                        int orig_size = init_value.size();
-                                        // Need to resize - check if wire is signed for proper extension
-                                        if (existing_wire->is_signed && init_value.size() < lhs.size()) {
-                                            // Sign extend
-                                            init_value.extend_u0(lhs.size(), true);
-                                        } else {
-                                            // Zero extend or truncate
-                                            init_value.extend_u0(lhs.size(), false);
-                                        }
-                                        log("UHDM: Resized initial value from %d bits to %d bits for existing variable '%s'\n", 
-                                            orig_size, lhs.size(), var_name.c_str());
-                                    }
-                                    
-                                    // Create an initial process to assign the value
-                                    RTLIL::Process* proc = module->addProcess(NEW_ID);
-                                    proc->root_case.actions.push_back(RTLIL::SigSig(lhs, init_value));
-                                    proc->root_case.compare.clear();
-                                    proc->root_case.switches.clear();
-                                    
-                                    // Add sync rule for initial
-                                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
-                                    sync->type = RTLIL::STa;  // Always
-                                    sync->signal = RTLIL::SigSpec();
-                                    sync->actions.push_back(RTLIL::SigSig(lhs, init_value));
-                                    proc->syncs.push_back(sync);
-                                    
-                                    add_src_attribute(proc->attributes, var);
-                                    log("UHDM: Created initial assignment for existing variable '%s'\n", var_name.c_str());
-                                }
+                                log("UHDM: Existing variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                                vars_with_init_expr.push_back(std::make_pair(var, existing_wire));
                             }
                         }
                     }
                     log("UHDM: Variable '%s' already exists as wire, skipping\n", var_name.c_str());
+                }
+            }
+        }
+        
+        // Second pass: Process initial expressions now that all variables exist
+        log("UHDM: Processing %d deferred initial expressions\n", (int)vars_with_init_expr.size());
+        for (const auto& [var, wire] : vars_with_init_expr) {
+            std::string var_name = std::string(var->VpiName());
+            
+            if (var->UhdmType() == uhdmenum_var) {
+                if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
+                    if (enum_var->Expr()) {
+                        log("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
+                        RTLIL::SigSpec init_value = import_expression(enum_var->Expr());
+                        if (init_value.size() > 0) {
+                            // Check if this is a reference to another wire with an init value
+                            if (!init_value.is_fully_const() && init_value.is_wire()) {
+                                // Try to get the init value from the referenced wire
+                                RTLIL::Wire* ref_wire = init_value.as_wire();
+                                if (ref_wire && ref_wire->attributes.count(RTLIL::escape_id("init"))) {
+                                    init_value = RTLIL::SigSpec(ref_wire->attributes.at(RTLIL::escape_id("init")));
+                                    log("UHDM: Resolved initial value from referenced wire '%s'\n", ref_wire->name.c_str());
+                                }
+                            }
+                            
+                            // Resize the init_value to match the wire width
+                            RTLIL::SigSpec lhs(wire);
+                            if (init_value.size() != lhs.size()) {
+                                int orig_size = init_value.size();
+                                // Sign extend if source is signed and we're extending
+                                if (init_value.size() < lhs.size() && init_value.is_wire()) {
+                                    RTLIL::Wire* src_wire = init_value.as_wire();
+                                    if (src_wire && src_wire->is_signed) {
+                                        // Sign extend
+                                        RTLIL::Const val = init_value.as_const();
+                                        bool sign_bit = val.bits().back() == RTLIL::State::S1;
+                                        while (val.bits().size() < (size_t)lhs.size()) {
+                                            val.bits().push_back(sign_bit ? RTLIL::State::S1 : RTLIL::State::S0);
+                                        }
+                                        init_value = RTLIL::SigSpec(val);
+                                    } else {
+                                        init_value.extend_u0(lhs.size(), false);
+                                    }
+                                } else {
+                                    init_value.extend_u0(lhs.size(), false);
+                                }
+                                log("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
+                                    orig_size, lhs.size(), var_name.c_str());
+                            }
+                            
+                            if (init_value.is_fully_const()) {
+                                wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
+                                log("UHDM: Set init attribute for enum variable '%s' to %s\n", 
+                                    var_name.c_str(), init_value.as_const().as_string().c_str());
+                            } else {
+                                log_warning("Initial value for enum variable '%s' is not constant after resolution, skipping\n", var_name.c_str());
+                            }
+                        }
+                    }
+                }
+            } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
+                if (logic_var->Expr()) {
+                    log("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
+                    RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
+                    if (init_value.size() > 0) {
+                        // Check if this is a reference to another wire with an init value
+                        if (!init_value.is_fully_const() && init_value.is_wire()) {
+                            // Try to get the init value from the referenced wire
+                            RTLIL::Wire* ref_wire = init_value.as_wire();
+                            if (ref_wire && ref_wire->attributes.count(RTLIL::escape_id("init"))) {
+                                init_value = RTLIL::SigSpec(ref_wire->attributes.at(RTLIL::escape_id("init")));
+                                log("UHDM: Resolved initial value from referenced wire '%s'\n", ref_wire->name.c_str());
+                            }
+                        }
+                        
+                        // Resize the init_value to match the wire width
+                        RTLIL::SigSpec lhs(wire);
+                        if (init_value.size() != lhs.size()) {
+                            int orig_size = init_value.size();
+                            // Check if we need sign extension
+                            if (wire->is_signed && init_value.size() < lhs.size()) {
+                                // Check if init_value is a constant that needs sign extension
+                                if (init_value.is_fully_const()) {
+                                    RTLIL::Const val = init_value.as_const();
+                                    // Sign extend: replicate the MSB
+                                    bool sign_bit = val.bits().back() == RTLIL::State::S1;
+                                    while (val.bits().size() < (size_t)lhs.size()) {
+                                        val.bits().push_back(sign_bit ? RTLIL::State::S1 : RTLIL::State::S0);
+                                    }
+                                    init_value = RTLIL::SigSpec(val);
+                                } else {
+                                    init_value.extend_u0(lhs.size(), true);
+                                }
+                            } else {
+                                // Zero extend or truncate
+                                init_value.extend_u0(lhs.size(), false);
+                            }
+                            log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n", 
+                                orig_size, lhs.size(), var_name.c_str());
+                        }
+                        
+                        if (init_value.is_fully_const()) {
+                            wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
+                            log("UHDM: Set init attribute for variable '%s' to %s\n", 
+                                var_name.c_str(), init_value.as_const().as_string().c_str());
+                        } else {
+                            log_warning("Initial value for variable '%s' is not constant after resolution, skipping\n", var_name.c_str());
+                        }
+                    }
                 }
             }
         }
