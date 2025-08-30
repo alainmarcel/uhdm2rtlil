@@ -1119,10 +1119,59 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 std::string array_name = std::string(array_var->VpiName());
                 log("UHDM: Found array_var: '%s'\n", array_name.c_str());
                 
+                // Determine array size
+                int array_size = 1;
+                if (array_var->Ranges() && !array_var->Ranges()->empty()) {
+                    auto range = (*array_var->Ranges())[0];
+                    if (range->Left_expr() && range->Right_expr()) {
+                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                            int left = left_spec.as_const().as_int();
+                            int right = right_spec.as_const().as_int();
+                            array_size = abs(left - right) + 1;
+                        }
+                    }
+                }
+                
                 // Check if it should be imported as memory
-                if (is_memory_array(array_var)) {
-                    log("UHDM: Array_var '%s' detected as memory array\n", array_name.c_str());
+                // For small arrays (<=16 elements), create individual registers instead of memory
+                // This handles cases like reg [3:0] w[3:0] which should be 4 separate registers
+                if (is_memory_array(array_var) && array_size > 16) {
+                    log("UHDM: Array_var '%s' detected as memory array (size=%d)\n", array_name.c_str(), array_size);
                     create_memory_from_array(array_var);
+                } else if (is_memory_array(array_var)) {
+                    // Small array with packed dimensions - create individual registers
+                    log("UHDM: Array_var '%s' is small (size=%d), creating individual registers\n", array_name.c_str(), array_size);
+                    
+                    // Get the width of each element
+                    int element_width = 1;
+                    if (array_var->Variables() && !array_var->Variables()->empty()) {
+                        auto first_var = array_var->Variables()->at(0);
+                        element_width = get_width(first_var, uhdm_module);
+                    }
+                    
+                    // Create individual wires for each array element
+                    int start_idx = 0;
+                    if (array_var->Ranges() && !array_var->Ranges()->empty()) {
+                        auto range = (*array_var->Ranges())[0];
+                        if (range->Right_expr()) {
+                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                            if (right_spec.is_fully_const()) {
+                                start_idx = right_spec.as_const().as_int();
+                            }
+                        }
+                    }
+                    
+                    for (int i = 0; i < array_size; i++) {
+                        std::string element_name = array_name + "[" + std::to_string(start_idx + i) + "]";
+                        RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                        if (!module->wire(wire_id)) {
+                            RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                            add_src_attribute(wire->attributes, var);
+                            log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                        }
+                    }
                 } else {
                     // Otherwise, handle as a regular array of wires
                     log("UHDM: Array_var '%s' does not have packed dimensions, treating as regular variable\n", array_name.c_str());
@@ -1482,9 +1531,60 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     log("UHDM:   Created wire %s (width=%d)\n", wire_name.c_str(), element_width);
                 }
             } else if (is_memory_array(array)) {
-                // Only create memory if it has both packed and unpacked dimensions
-                log("UHDM: Array net '%s' detected as memory array\n", array_name.c_str());
-                create_memory_from_array(array);
+                // Get array size to decide if we should create memory or individual registers
+                int array_size = 4; // Default
+                if (array->Ranges() && !array->Ranges()->empty()) {
+                    auto range = (*array->Ranges())[0];
+                    if (range->Left_expr() && range->Right_expr()) {
+                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                            int left = left_spec.as_const().as_int();
+                            int right = right_spec.as_const().as_int();
+                            array_size = abs(left - right) + 1;
+                        }
+                    }
+                }
+                
+                // For small arrays (<=16 elements), create individual registers instead of memory
+                // This handles cases like reg [3:0] w[3:0] which should be 4 separate registers
+                if (array_size > 16) {
+                    log("UHDM: Array net '%s' detected as memory array (size=%d)\n", array_name.c_str(), array_size);
+                    create_memory_from_array(array);
+                } else {
+                    // Small array with packed dimensions - create individual registers
+                    log("UHDM: Array net '%s' is small (size=%d), creating individual registers\n", array_name.c_str(), array_size);
+                    
+                    // Get the width of each element
+                    int element_width = 1;
+                    if (array->Nets() && !array->Nets()->empty()) {
+                        auto first_net = array->Nets()->at(0);
+                        element_width = get_width(first_net, uhdm_module);
+                    }
+                    
+                    // Get start index
+                    int start_idx = 0;
+                    if (array->Ranges() && !array->Ranges()->empty()) {
+                        auto range = (*array->Ranges())[0];
+                        if (range->Right_expr()) {
+                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                            if (right_spec.is_fully_const()) {
+                                start_idx = right_spec.as_const().as_int();
+                            }
+                        }
+                    }
+                    
+                    // Create individual wires for each array element
+                    for (int i = 0; i < array_size; i++) {
+                        std::string element_name = array_name + "[" + std::to_string(start_idx + i) + "]";
+                        RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                        if (!module->wire(wire_id)) {
+                            RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                            add_src_attribute(wire->attributes, array);
+                            log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                        }
+                    }
+                }
             } else {
                 // Otherwise, handle as a regular array of wires
                 log("UHDM: Array net '%s' does not have packed dimensions, skipping memory creation\n", array_name.c_str());
