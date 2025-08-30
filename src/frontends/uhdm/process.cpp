@@ -7,6 +7,7 @@
 
 #include "uhdm2rtlil.h"
 #include <algorithm>
+#include <functional>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -980,6 +981,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     RTLIL::SigSpec reset_sig;
     bool reset_posedge = true;
     
+    // For SR flip-flops, store all edge triggers
+    std::vector<std::pair<RTLIL::SigSpec, bool>> all_edge_triggers;
+    
     if (auto stmt = uhdm_process->Stmt()) {
         log("      Got statement from process\n");
         log_flush();
@@ -1095,52 +1099,68 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 }
                             }
                             
-                            // Only process first operand if we haven't already extracted signals
+                            // Process all operands to handle nested lists and multiple edge triggers
+                            // Collect ALL edge triggers from the list (including from nested lists)
                             if (clock_sig.empty() && !op->Operands()->empty()) {
-                                auto first_operand = (*op->Operands())[0];
-                                if (first_operand->VpiType() == vpiOperation) {
-                                    const operation* edge_op = any_cast<const operation*>(first_operand);
-                                    log("      List contains operation of type: %d\n", edge_op->VpiOpType());
-                                    log_flush();
-                                    if (edge_op->VpiOpType() == vpiPosedgeOp) {
-                                        clock_posedge = true;
-                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                            log("      Importing clock signal from posedge in list\n");
-                                            log_flush();
-                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
-                                            log_flush();
-                                        }
-                                    } else if (edge_op->VpiOpType() == vpiNegedgeOp) {
-                                        clock_posedge = false;
-                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                            log("      Importing clock signal from negedge in list\n");
-                                            log_flush();
-                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                            log("      Clock signal imported: %s\n", log_signal(clock_sig));
-                                            log_flush();
-                                        }
-                                    } else if (edge_op->VpiOpType() == vpiListOp) {
-                                        // Handle nested list - recurse into it
-                                        log("      Found nested list, processing first edge trigger as clock\n");
-                                        log_flush();
-                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                            // Find first edge trigger in nested list
-                                            for (auto nested_operand : *edge_op->Operands()) {
-                                                if (nested_operand->VpiType() == vpiOperation) {
-                                                    const operation* nested_edge_op = any_cast<const operation*>(nested_operand);
-                                                    if (nested_edge_op->VpiOpType() == vpiPosedgeOp || nested_edge_op->VpiOpType() == vpiNegedgeOp) {
-                                                        clock_posedge = (nested_edge_op->VpiOpType() == vpiPosedgeOp);
-                                                        if (nested_edge_op->Operands() && !nested_edge_op->Operands()->empty()) {
-                                                            clock_sig = import_expression(any_cast<const expr*>((*nested_edge_op->Operands())[0]));
-                                                            log("      Found clock signal in nested list: %s (%s edge)\n", 
-                                                                log_signal(clock_sig), clock_posedge ? "pos" : "neg");
-                                                            log_flush();
-                                                            break; // Use first edge trigger as clock
-                                                        }
-                                                    }
+                                std::vector<std::pair<RTLIL::SigSpec, bool>> all_edge_signals; // signal, is_posedge
+                                
+                                // Helper function to collect edge triggers recursively
+                                std::function<void(const VectorOfany*)> collect_edge_triggers = [&](const VectorOfany* operands) {
+                                    for (auto operand : *operands) {
+                                        if (operand->VpiType() == vpiOperation) {
+                                            const operation* edge_op = any_cast<const operation*>(operand);
+                                            if (edge_op->VpiOpType() == vpiPosedgeOp || edge_op->VpiOpType() == vpiNegedgeOp) {
+                                                // Direct edge trigger
+                                                if (edge_op->Operands() && !edge_op->Operands()->empty()) {
+                                                    auto sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
+                                                    bool is_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                                    all_edge_signals.push_back({sig, is_posedge});
+                                                    log("      Found edge trigger: %s (%s edge)\n", 
+                                                        log_signal(sig), is_posedge ? "pos" : "neg");
+                                                }
+                                            } else if (edge_op->VpiOpType() == vpiListOp) {
+                                                // Nested list - recurse
+                                                log("      Found nested list, recursing to collect edge triggers\n");
+                                                if (edge_op->Operands()) {
+                                                    collect_edge_triggers(edge_op->Operands());
                                                 }
                                             }
+                                        }
+                                    }
+                                };
+                                
+                                // Collect all edge triggers
+                                collect_edge_triggers(op->Operands());
+                                
+                                // Now assign clock and reset signals based on what we found
+                                if (all_edge_signals.size() > 0) {
+                                    // Save all edge triggers for later use
+                                    all_edge_triggers = all_edge_signals;
+                                    
+                                    // First edge trigger is the clock
+                                    clock_sig = all_edge_signals[0].first;
+                                    clock_posedge = all_edge_signals[0].second;
+                                    log("      Using first edge trigger as clock: %s (%s edge)\n", 
+                                        log_signal(clock_sig), clock_posedge ? "pos" : "neg");
+                                    
+                                    if (all_edge_signals.size() > 1) {
+                                        // Multiple edge triggers - mark as async reset
+                                        log("      Found %zu edge triggers total - marking as async reset\n", all_edge_signals.size());
+                                        yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
+                                        
+                                        // Use second edge trigger as primary reset
+                                        // Note: For SR flip-flops with 3+ edge triggers, we need special handling
+                                        reset_sig = all_edge_signals[1].first;
+                                        reset_posedge = all_edge_signals[1].second;
+                                        log("      Using second edge trigger as reset: %s (%s edge)\n", 
+                                            log_signal(reset_sig), reset_posedge ? "pos" : "neg");
+                                        
+                                        // Store all edge triggers for SR flip-flop handling
+                                        if (all_edge_signals.size() > 2) {
+                                            log("      Warning: Found %zu edge triggers (SR flip-flop pattern)\n", all_edge_signals.size());
+                                            // For SR flip-flops, we need to create sync rules for ALL edge triggers
+                                            // This will be handled in a separate code path
+                                            yosys_proc->attributes[ID("is_sr_ff")] = RTLIL::Const(1);
                                         }
                                     }
                                 }
@@ -1336,39 +1356,66 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             }
             
             // Create sync rules that update from temp wires
-            if (clock_sig.empty()) {
-                log_error("Clock signal is empty in async reset handling at line %d\n", __LINE__);
-            }
-            if (reset_sig.empty()) {
-                log_error("Reset signal is empty in async reset handling at line %d\n", __LINE__);
-            }
-            
-            RTLIL::SyncRule* sync_clk = new RTLIL::SyncRule;
-            sync_clk->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
-            sync_clk->signal = clock_sig;
-            
-            RTLIL::SyncRule* sync_rst = new RTLIL::SyncRule;
-            sync_rst->type = reset_posedge ? RTLIL::STp : RTLIL::STn;
-            sync_rst->signal = reset_sig;
-            
-            // Add updates for all temp wires (one per signal)
-            for (const auto& [sig_name, temp_wire] : temp_wires) {
-                RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
-                if (module->wire(signal_id)) {
-                    // Update the full signal from the temp wire
-                    sync_clk->actions.push_back(RTLIL::SigSig(
-                        signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
-                    sync_rst->actions.push_back(RTLIL::SigSig(
-                        signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
-                        
-                    log("      Added sync update for %s\n", sig_name.c_str());
+            if (yosys_proc->attributes.count(ID("is_sr_ff"))) {
+                // SR flip-flop: create sync rules for ALL edge triggers
+                log("      Creating sync rules for SR flip-flop with %zu edge triggers\n", all_edge_triggers.size());
+                
+                for (const auto& [sig, is_posedge] : all_edge_triggers) {
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = is_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = sig;
+                    
+                    // Add updates for all temp wires
+                    for (const auto& [sig_name, temp_wire] : temp_wires) {
+                        RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
+                        if (module->wire(signal_id)) {
+                            sync->actions.push_back(RTLIL::SigSig(
+                                signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
+                        }
+                    }
+                    
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Created sync rule for %s (%s edge)\n", 
+                        log_signal(sig), is_posedge ? "pos" : "neg");
                 }
+                
+                log("      Created %zu sync rules for SR flip-flop\n", all_edge_triggers.size());
+            } else {
+                // Normal async reset: create sync rules for clock and reset only
+                if (clock_sig.empty()) {
+                    log_error("Clock signal is empty in async reset handling at line %d\n", __LINE__);
+                }
+                if (reset_sig.empty()) {
+                    log_error("Reset signal is empty in async reset handling at line %d\n", __LINE__);
+                }
+                
+                RTLIL::SyncRule* sync_clk = new RTLIL::SyncRule;
+                sync_clk->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                sync_clk->signal = clock_sig;
+                
+                RTLIL::SyncRule* sync_rst = new RTLIL::SyncRule;
+                sync_rst->type = reset_posedge ? RTLIL::STp : RTLIL::STn;
+                sync_rst->signal = reset_sig;
+                
+                // Add updates for all temp wires (one per signal)
+                for (const auto& [sig_name, temp_wire] : temp_wires) {
+                    RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
+                    if (module->wire(signal_id)) {
+                        // Update the full signal from the temp wire
+                        sync_clk->actions.push_back(RTLIL::SigSig(
+                            signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
+                        sync_rst->actions.push_back(RTLIL::SigSig(
+                            signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
+                            
+                        log("      Added sync update for %s\n", sig_name.c_str());
+                    }
+                }
+                
+                yosys_proc->syncs.push_back(sync_clk);
+                yosys_proc->syncs.push_back(sync_rst);
+                
+                log("      Created sync rules for clock and reset\n");
             }
-            
-            yosys_proc->syncs.push_back(sync_clk);
-            yosys_proc->syncs.push_back(sync_rst);
-            
-            log("      Created sync rules for clock and reset\n");
             log_flush();
             
         } else {

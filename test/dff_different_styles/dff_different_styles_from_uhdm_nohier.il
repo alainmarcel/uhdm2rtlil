@@ -183,7 +183,7 @@ end
 attribute \src "dut.sv:53.1-66.10"
 attribute \cells_not_processed 1
 module \dffa4
-  wire $0\q[0:0]
+  wire $0\q
   attribute \src "dut.sv:61.11-61.17"
   wire $logic_not$dut.sv:61.11-61.17$3_Y
   attribute \src "dut.sv:53.19-53.24"
@@ -206,37 +206,45 @@ module \dffa4
     connect \A \arst3
     connect \Y $logic_not$dut.sv:61.11-61.17$3_Y
   end
+  attribute \"is_sr_ff" 1
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:56.1-65.4"
   process $proc$dut.sv:56$1
-    assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    assign $0\q \q
+    attribute \src "dut.sv:11.9-15.12"
     switch \arst1
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+        assign $0\q 1'0
+      attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:59.7-64.10"
         switch \arst2
           attribute \src "dut.sv:59.7-64.10"
           case 1'1
-            assign $0\q[0:0] 1'0
+            assign $0\q 1'0
           attribute \src "dut.sv:59.7-64.10"
           case 
             attribute \src "dut.sv:61.7-64.10"
             switch $logic_not$dut.sv:61.11-61.17$3_Y
               attribute \src "dut.sv:61.7-64.10"
               case 1'1
-                assign $0\q[0:0] 1'0
+                assign $0\q 1'0
               attribute \src "dut.sv:61.7-64.10"
               case 
-                assign $0\q[0:0] \d
+                assign $0\q \d
             end
         end
     end
+    sync posedge \clk
+      update \q $0\q
+    sync posedge \arst1
+      update \q $0\q
     sync posedge \arst2
-      update \q $0\q[0:0]
+      update \q $0\q
+    sync negedge \arst3
+      update \q $0\q
   end
 end
 attribute \src "dut.sv:72.1-81.10"
@@ -348,7 +356,7 @@ end
 attribute \src "dut.sv:92.1-103.10"
 attribute \cells_not_processed 1
 module \dffsr2_sub
-  wire $0\q[0:0]
+  wire $0\q
   attribute \src "dut.sv:92.32-92.37"
   wire input 3 \clear
   attribute \src "dut.sv:92.19-92.22"
@@ -359,28 +367,34 @@ module \dffsr2_sub
   wire input 2 \preset
   attribute \src "dut.sv:92.42-92.43"
   wire output 5 \q
+  attribute \"is_sr_ff" 1
+  attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:95.1-102.4"
   process $proc$dut.sv:95$1
-    assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    assign $0\q \q
+    attribute \src "dut.sv:11.9-15.12"
     switch \preset
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:11.13-11.19"
       case 1'1
-        assign $0\q[0:0] 1'1
-      attribute \src "dut.sv:34.13-34.17"
+        assign $0\q 1'1
+      attribute \src "dut.sv:13.13-13.17"
       case 
         attribute \src "dut.sv:98.7-101.10"
         switch \clear
           attribute \src "dut.sv:98.7-101.10"
           case 1'1
-            assign $0\q[0:0] 1'0
+            assign $0\q 1'0
           attribute \src "dut.sv:98.7-101.10"
           case 
-            assign $0\q[0:0] \d
+            assign $0\q \d
         end
     end
     sync posedge \clk
-      update \q $0\q[0:0]
+      update \q $0\q
+    sync posedge \preset
+      update \q $0\q
+    sync posedge \clear
+      update \q $0\q
   end
 end

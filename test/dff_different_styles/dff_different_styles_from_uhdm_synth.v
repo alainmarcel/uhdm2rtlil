@@ -21,14 +21,14 @@ module dffsr2(clk, preset, clear, d, q);
   wire _0_;
   wire _1_;
   \$_ANDNOT_  _2_ (
-    .A(clear),
-    .B(preset),
-    .Y(_0_)
-  );
-  \$_ANDNOT_  _3_ (
     .A(preset),
     .B(clear),
     .Y(_1_)
+  );
+  \$_ANDNOT_  _3_ (
+    .A(clear),
+    .B(preset),
+    .Y(_0_)
   );
   dffsr2_sub uut (
     .clear(_0_),
@@ -58,16 +58,19 @@ module dffsr2_sub(clk, preset, clear, d, q);
   wire q;
   wire _0_;
   \$_ANDNOT_  _1_ (
-    .A(d),
-    .B(clear),
+    .A(clear),
+    .B(preset),
     .Y(_0_)
   );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \"is_sr_ff"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:95.1-102.4" *)
-  \$_SDFF_PP1_  q_reg /* _2_ */ (
+  \$_DFFSR_PPP_  q_reg /* _2_ */ (
     .C(clk),
-    .D(_0_),
+    .D(d),
     .Q(q),
-    .R(preset)
+    .R(_0_),
+    .S(preset)
   );
 endmodule

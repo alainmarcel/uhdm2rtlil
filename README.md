@@ -14,21 +14,21 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 77 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 94% (73/77 tests passing)
-- **Perfect Matches**: 68+ tests validated by formal equivalence checking
+- **Total Tests**: 83 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 95% (79/83 tests passing)
+- **Perfect Matches**: 74+ tests validated by formal equivalence checking
 - **UHDM-Only Success**: 5 tests that only work with UHDM frontend (not Verilog)
 - **Known Failures**: 4 tests with issues:
   - `carryadd` - UHDM output missing
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
-- **Recent Fixes** (this PR):
-  - `simple_generate` - Generate for loops with bit-select assignments ✅
-  - `gen_test1` - Generate blocks with nets and wires ✅
-  - `asym_ram_sdp_read_wider` - Asymmetric RAM with for loops ✅
-  - `asym_ram_sdp_write_wider` - Asymmetric RAM with memory writes ✅
-  - `param_test` - Parameterized modules with HEX values ✅
+- **Recent Fixes** (this session):
+  - `typedef_simple` - Fixed keep attribute import for typedef declarations ✅
+  - `enum_values` - Fixed enum constant resolution and variable width detection ✅
+  - `opt_share_add_sub` - Fixed add/sub operation width calculation ✅
+  - `dff_different_styles` - Fixed nested list handling in sensitivity lists ✅
+  - `dffsr` - Implemented full SR flip-flop support with multiple sync rules ✅
 
 ## Architecture & Workflow
 
