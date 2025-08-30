@@ -1153,6 +1153,26 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     if (left >= 0 && right >= 0) {
         int width = abs(left - right) + 1;
         int offset = std::min(left, right);
+        
+        // Bounds check to prevent out-of-bounds access
+        int base_width = base.size();
+        if (offset >= base_width) {
+            // Completely out of bounds - return undefined
+            log_warning("Part select [%d:%d] is out of bounds for signal of width %d, returning undefined\n", 
+                       left, right, base_width);
+            return RTLIL::SigSpec(RTLIL::State::Sx, width);
+        }
+        
+        if (offset + width > base_width) {
+            // Partially out of bounds - pad with undefined
+            int valid_width = base_width - offset;
+            RTLIL::SigSpec result = base.extract(offset, valid_width);
+            result.append(RTLIL::SigSpec(RTLIL::State::Sx, width - valid_width));
+            log_warning("Part select [%d:%d] partially out of bounds for signal of width %d\n", 
+                       left, right, base_width);
+            return result;
+        }
+        
         return base.extract(offset, width);
     }
     
@@ -1302,16 +1322,18 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             
             // Check bounds before extracting
             if (rtlil_idx < 0 || rtlil_idx >= base.size()) {
-                log_error("Bit select index %d (RTLIL index %d) is out of range for wire '%s' (width=%d)\n", 
+                log_warning("Bit select index %d (RTLIL index %d) is out of range for wire '%s' (width=%d), returning undefined\n", 
                     idx, rtlil_idx, signal_name.c_str(), base.size());
+                return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
             return base.extract(rtlil_idx, 1);
         } else {
             // Standard bit ordering
             // Check bounds before extracting
             if (idx < 0 || idx >= base.size()) {
-                log_error("Bit select index %d is out of range for wire '%s' (width=%d)\n", 
+                log_warning("Bit select index %d is out of range for wire '%s' (width=%d), returning undefined\n", 
                     idx, signal_name.c_str(), base.size());
+                return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
             return base.extract(idx, 1);
         }

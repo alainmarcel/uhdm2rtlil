@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 83 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 95% (79/83 tests passing)
-- **Perfect Matches**: 74+ tests validated by formal equivalence checking
+- **Total Tests**: 84 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 95% (80/84 tests passing)
+- **Perfect Matches**: 75+ tests validated by formal equivalence checking
 - **UHDM-Only Success**: 5 tests that only work with UHDM frontend (not Verilog)
 - **Known Failures**: 4 tests with issues:
   - `carryadd` - UHDM output missing
@@ -29,6 +29,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `opt_share_add_sub` - Fixed add/sub operation width calculation ✅
   - `dff_different_styles` - Fixed nested list handling in sensitivity lists ✅
   - `dffsr` - Implemented full SR flip-flop support with multiple sync rules ✅
+  - `simple_abc9` - Added bounds checking for out-of-bounds bit/part selects ✅
 
 ## Architecture & Workflow
 

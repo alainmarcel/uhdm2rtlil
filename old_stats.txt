@@ -1,0 +1,632 @@
+==========================================
+=== TEST SUMMARY ===
+==========================================
+
+📊 OVERALL STATISTICS:
+  Total tests run: 510
+  ✅ Passing tests: 287
+  🚀 UHDM-only success: 31
+  ❌ Failed tests: 139
+  ⚠️  Skipped tests: 53
+
+🎯 Success Rate: 62% (318/510 tests functional)
+
+✅ PASSED TESTS (287):
+   - arch/common/add_sub.v
+   - arch/common/adffs.v
+   - arch/common/blockram.v
+   - arch/common/blockrom.v
+   - arch/common/counter.v
+   - arch/common/dffs.v
+   - arch/common/fsm.v
+   - arch/common/latches.v
+   - arch/common/logic.v
+   - arch/common/lutram.v
+   - arch/common/memory_attributes/attributes_test.v
+   - arch/common/mul.v
+   - arch/common/mux.v
+   - arch/common/shifter.v
+   - arch/common/tribuf.v
+   - arch/ecp5/dpram.v
+   - arch/ecp5/macc.v
+   - arch/ecp5/rom.v
+   - arch/fabulous/custom_prims.v
+   - arch/gatemate/luttrees.v
+   - arch/gatemate/mul.v
+   - arch/gowin/compare.v
+   - arch/gowin/init.v
+   - arch/ice40/dpram.v
+   - arch/ice40/macc.v
+   - arch/ice40/rom.v
+   - arch/ice40/spram.v
+   - arch/nexus/blockram_dc.v
+   - arch/xilinx/asym_ram_sdp_read_wider.v
+   - arch/xilinx/asym_ram_sdp_write_wider.v
+   - arch/xilinx/macc.v
+   - arch/xilinx/mul_unsigned.v
+   - asicworld/code_hdl_models_arbiter.v
+   - asicworld/code_hdl_models_cam.v
+   - asicworld/code_hdl_models_clk_div_45.v
+   - asicworld/code_hdl_models_clk_div.v
+   - asicworld/code_hdl_models_decoder_2to4_gates.v
+   - asicworld/code_hdl_models_decoder_using_assign.v
+   - asicworld/code_hdl_models_decoder_using_case.v
+   - asicworld/code_hdl_models_dff_async_reset.v
+   - asicworld/code_hdl_models_d_ff_gates.v
+   - asicworld/code_hdl_models_dff_sync_reset.v
+   - asicworld/code_hdl_models_d_latch_gates.v
+   - asicworld/code_hdl_models_encoder_4to2_gates.v
+   - asicworld/code_hdl_models_encoder_using_case.v
+   - asicworld/code_hdl_models_encoder_using_if.v
+   - asicworld/code_hdl_models_full_adder_gates.v
+   - asicworld/code_hdl_models_full_subtracter_gates.v
+   - asicworld/code_hdl_models_gray_counter.v
+   - asicworld/code_hdl_models_GrayCounter.v
+   - asicworld/code_hdl_models_half_adder_gates.v
+   - asicworld/code_hdl_models_lfsr_updown.v
+   - asicworld/code_hdl_models_lfsr.v
+   - asicworld/code_hdl_models_mux_2to1_gates.v
+   - asicworld/code_hdl_models_mux_using_assign.v
+   - asicworld/code_hdl_models_mux_using_case.v
+   - asicworld/code_hdl_models_mux_using_if.v
+   - asicworld/code_hdl_models_one_hot_cnt.v
+   - asicworld/code_hdl_models_parallel_crc.v
+   - asicworld/code_hdl_models_parity_using_assign.v
+   - asicworld/code_hdl_models_parity_using_bitwise.v
+   - asicworld/code_hdl_models_parity_using_function.v
+   - asicworld/code_hdl_models_pri_encoder_using_assign.v
+   - asicworld/code_hdl_models_rom_using_case.v
+   - asicworld/code_hdl_models_tff_async_reset.v
+   - asicworld/code_hdl_models_tff_sync_reset.v
+   - asicworld/code_hdl_models_uart.v
+   - asicworld/code_hdl_models_up_counter_load.v
+   - asicworld/code_hdl_models_up_counter.v
+   - asicworld/code_hdl_models_up_down_counter.v
+   - asicworld/code_specman_switch_fabric.v
+   - asicworld/code_tidbits_asyn_reset.v
+   - asicworld/code_tidbits_blocking.v
+   - asicworld/code_tidbits_fsm_using_always.v
+   - asicworld/code_tidbits_fsm_using_single_always.v
+   - asicworld/code_tidbits_nonblocking.v
+   - asicworld/code_tidbits_reg_combo_example.v
+   - asicworld/code_tidbits_reg_seq_example.v
+   - asicworld/code_tidbits_syn_reset.v
+   - asicworld/code_tidbits_wire_example.v
+   - asicworld/code_verilog_tutorial_addbit.v
+   - asicworld/code_verilog_tutorial_always_example.v
+   - asicworld/code_verilog_tutorial_bus_con.v
+   - asicworld/code_verilog_tutorial_comment.v
+   - asicworld/code_verilog_tutorial_counter.v
+   - asicworld/code_verilog_tutorial_decoder_always.v
+   - asicworld/code_verilog_tutorial_decoder.v
+   - asicworld/code_verilog_tutorial_d_ff.v
+   - asicworld/code_verilog_tutorial_escape_id.v
+   - asicworld/code_verilog_tutorial_explicit.v
+   - asicworld/code_verilog_tutorial_first_counter.v
+   - asicworld/code_verilog_tutorial_flip_flop.v
+   - asicworld/code_verilog_tutorial_fsm_full.v
+   - asicworld/code_verilog_tutorial_good_code.v
+   - asicworld/code_verilog_tutorial_if_else.v
+   - asicworld/code_verilog_tutorial_multiply.v
+   - asicworld/code_verilog_tutorial_mux_21.v
+   - asicworld/code_verilog_tutorial_n_out_primitive.v
+   - asicworld/code_verilog_tutorial_parallel_if.v
+   - asicworld/code_verilog_tutorial_parity.v
+   - asicworld/code_verilog_tutorial_simple_function.v
+   - asicworld/code_verilog_tutorial_simple_if.v
+   - asicworld/code_verilog_tutorial_task_global.v
+   - asicworld/code_verilog_tutorial_tri_buf.v
+   - asicworld/code_verilog_tutorial_v2k_reg.v
+   - asicworld/code_verilog_tutorial_which_clock.v
+   - bind/basic.sv
+   - bind/cell_list.sv
+   - bind/inst_list.sv
+   - errors/syntax_err09.v
+   - errors/syntax_err13.v
+   - fmt/always_comb.v
+   - fmt/always_full.v
+   - fmt/initial_display.v
+   - fmt/roundtrip_tb.v
+   - hana/test_parser.v
+   - hana/test_simulation_always.v
+   - hana/test_simulation_and.v
+   - hana/test_simulation_buffer.v
+   - hana/test_simulation_decoder.v
+   - hana/test_simulation_mux.v
+   - hana/test_simulation_nand.v
+   - hana/test_simulation_nor.v
+   - hana/test_simulation_or.v
+   - hana/test_simulation_seq.v
+   - hana/test_simulation_shifter.v
+   - hana/test_simulation_sop.v
+   - hana/test_simulation_techmap_tech.v
+   - hana/test_simulation_techmap.v
+   - hana/test_simulation_xnor.v
+   - hana/test_simulation_xor.v
+   - liberty/small.v
+   - memlib/memlib_lut.v
+   - memlib/memlib_multilut.v
+   - memories/firrtl_938.v
+   - memories/issue00335.v
+   - memories/issue00710.v
+   - memories/read_arst.v
+   - memories/read_two_mux.v
+   - memories/trans_sdp.v
+   - memories/trans_sp.v
+   - memories/wide_read_async.v
+   - memories/wide_read_sync.v
+   - memories/wide_read_trans.v
+   - memories/wide_thru_priority.v
+   - memories/wide_write.v
+   - opt/opt_hier_simple1.v
+   - opt/opt_hier_simple2.v
+   - opt/opt_lut.v
+   - opt/opt_rmdff_sat.v
+   - opt/opt_share_extend.v
+   - opt/opt_share_large_pmux_cat_multipart.v
+   - opt/opt_share_large_pmux_cat.v
+   - opt/opt_share_large_pmux_multipart.v
+   - opt/opt_share_large_pmux_part.v
+   - opt/opt_share_mux_tree.v
+   - proc/bug_1268.v
+   - sat/alu.v
+   - sat/asserts_seq.v
+   - sat/asserts.v
+   - sat/counters-repeat.v
+   - sat/counters.v
+   - sat/expose_dff.v
+   - sat/sizebits.sv
+   - sat/splice.v
+   - select/boxes.v
+   - sim/adffe.v
+   - sim/adff.v
+   - sim/adlatch.v
+   - sim/aldffe.v
+   - sim/aldff.v
+   - sim/dffe.v
+   - sim/dff.v
+   - sim/dlatchsr.v
+   - sim/dlatch.v
+   - simple/always01.v
+   - simple/always02.v
+   - simple/always03.v
+   - simple/arrays01.v
+   - simple/arrays02.sv
+   - simple/arrays03.sv
+   - simple/attrib01_module.v
+   - simple/attrib02_port_decl.v
+   - simple/attrib03_parameter.v
+   - simple/attrib04_net_var.v
+   - simple/attrib06_operator_suffix.v
+   - simple/attrib08_mod_inst.v
+   - simple/attrib09_case.v
+   - simple/case_expr_extend.sv
+   - simple/case_expr_query.sv
+   - simple/case_large.v
+   - simple/const_func_shadow.v
+   - simple/constmuldivmod.v
+   - simple/constpower.v
+   - simple/defvalue.sv
+   - simple/dff_init.v
+   - simple/fsm.v
+   - simple/genblk_collide.v
+   - simple/genblk_port_shadow.v
+   - simple/graphtest.v
+   - simple/hierarchy.v
+   - simple/i2c_master_tests.v
+   - simple/ifdef_1.v
+   - simple/ifdef_2.v
+   - simple/implicit_ports.sv
+   - simple/lesser_size_cast.sv
+   - simple/localparam_attr.v
+   - simple/loops.v
+   - simple/loop_var_shadow.v
+   - simple/macro_arg_surrounding_spaces.v
+   - simple/mem2reg_bounds_tern.v
+   - simple/module_scope.v
+   - simple/muxtree.v
+   - simple/named_genblk.v
+   - simple/nested_genblk_resolve.v
+   - simple/omsp_dbg_uart.v
+   - simple/operators.v
+   - simple/param_attr.v
+   - simple/paramods.v
+   - simple/partsel.v
+   - simple/process.v
+   - simple/retime.v
+   - simple/signedexpr.v
+   - simple/signed_full_slice.v
+   - simple/sign_part_assign.v
+   - simple/specify.v
+   - simple/string_format.v
+   - simple/task_func.v
+   - simple/undef_eqx_nex.v
+   - simple/usb_phy_tests.v
+   - simple/verilog_primitives.v
+   - simple/vloghammer.v
+   - simple/wreduce.v
+   - sim/sdffce.v
+   - sim/sdffe.v
+   - sim/sdff.v
+   - sim/simple_assign.v
+   - svinterfaces/svinterface1_ref.v
+   - svinterfaces/svinterface_at_top_ref.v
+   - svtypes/multirange_array.sv
+   - svtypes/static_cast_simple.sv
+   - svtypes/typedef_initial_and_assign.sv
+   - svtypes/typedef_memory_2.sv
+   - svtypes/typedef_scopes.sv
+   - svtypes/typedef_simple.sv
+   - svtypes/typedef_struct_port.sv
+   - svtypes/typedef_struct.sv
+   - techmap/mem_simple_4x1_cells.v
+   - techmap/mem_simple_4x1_uut.v
+   - techmap/recursive.v
+   - various/async.v
+   - various/attrib05_port_conn.v
+   - various/attrib07_func_call.v
+   - various/const_arg_loop.sv
+   - various/const_func_block_var.v
+   - various/countbits.sv
+   - various/dynamic_part_select/forloop_select_gate.v
+   - various/dynamic_part_select/latch_1990_gate.v
+   - various/dynamic_part_select/multiple_blocking_gate.v
+   - various/dynamic_part_select/nonblocking_gate.v
+   - various/dynamic_part_select/nonblocking.v
+   - various/dynamic_part_select/original_gate.v
+   - various/dynamic_part_select/reset_test_gate.v
+   - various/dynamic_part_select/reversed_gate.v
+   - various/elab_sys_tasks.sv
+   - various/gen_if_null.v
+   - various/muxpack.v
+   - various/pmux2shiftx.v
+   - various/specify.v
+   - various/sub.v
+   - various/tcl_apis.v
+   - verific/case.sv
+   - verilog/bug656.v
+   - verilog/func_tern_hint.sv
+   - verilog/func_typename_ret.sv
+   - verilog/genblk_case.v
+   - verilog/net_types.sv
+   - verilog/package_task_func.sv
+   - verilog/param_int_types.sv
+   - verilog/port_int_types.sv
+   - verilog/size_cast.sv
+   - verilog/typedef_const_shadow.sv
+   - verilog/unbased_unsized_shift.sv
+   - verilog/unbased_unsized.sv
+   - verilog/unbased_unsized_tern.sv
+   - verilog/unnamed_genblk.sv
+   - verilog/wire_and_var.sv
+
+🚀 UHDM-ONLY SUCCESS (31):
+   - arch/fabulous/custom_map.v
+   - arch/xilinx/bug3670.v
+   - fmt/always_display.v
+   - hana/test_simulation_vlib.v
+   - memfile/memory.v
+   - opt/opt_rmdff.v
+   - sat/grom_computer.v
+   - sat/grom_cpu.v
+   - sim/tb/tb_dlatchsr.v
+   - sva/basic00.sv
+   - sva/basic01.sv
+   - sva/basic02.sv
+   - sva/basic03.sv
+   - sva/basic04.sv
+   - sva/basic05.sv
+   - sva/counter.sv
+   - sva/sva_not.sv
+   - sva/sva_range.sv
+   - sva/sva_throughout.sv
+   - sva/sva_value_change_changed.sv
+   - sva/sva_value_change_changed_wide.sv
+   - sva/sva_value_change_rose.sv
+   - sva/sva_value_change_sim.sv
+   - svinterfaces/svinterface1_tb.v
+   - svinterfaces/svinterface_at_top_tb.v
+   - svinterfaces/svinterface_at_top_tb_wrapper.v
+   - techmap/lcu_refined.v
+   - techmap/mem_simple_4x1_tb.v
+   - techmap/recursive_map.v
+   - verific/range_case.sv
+   - verilog/param_no_default.sv
+
+❌ FAILED TESTS (139):
+   - arch/nanoxplore/meminit.v
+   - arch/quicklogic/qlf_k6n10f/meminit.v
+   - arch/xilinx/xilinx_srl.v
+   - asicworld/code_hdl_models_serial_crc.v
+   - asicworld/code_tidbits_fsm_using_function.v
+   - bind/hier.sv
+   - bind/param.sv
+   - bind/toplevel.sv
+   - fmt/display_lm.v
+   - functional/picorv32.v
+   - hana/test_intermout.v
+   - hana/test_parse2synthtrans.v
+   - lut/map_and.v
+   - lut/map_cmp.v
+   - lut/map_mux.v
+   - lut/map_not.v
+   - lut/map_or.v
+   - lut/map_xor.v
+   - memlib/memlib_clock_sdp.v
+   - memlib/memlib_wide_read.v
+   - memlib/memlib_wide_sdp.v
+   - memlib/memlib_wide_sp.v
+   - memlib/memlib_wide_write.v
+   - memlib/memlib_wren.v
+   - memories/amber23_sram_byte_en.v
+   - memories/implicit_en.v
+   - memories/no_implicit_en.v
+   - memories/shared_ports.v
+   - memories/simple_sram_byte_en.v
+   - memories/trans_addr_enable.v
+   - memories/wide_all.v
+   - memories/wide_read_mixed.v
+   - opt/opt_expr_cmp.v
+   - opt/opt_expr_constconn.v
+   - opt/opt_hier_test1.v
+   - opt/opt_share_add_sub.v
+   - opt/opt_share_cat_multiuser.v
+   - opt/opt_share_cat.v
+   - opt/opt_share_diff_port_widths.v
+   - proc/rmdead.v
+   - sat/initval.v
+   - sat/ram_memory.v
+   - sat/share.v
+   - sim/dffsr.v
+   - simple_abc9/abc9.v
+   - simple/aes_kexp128.v
+   - simple/arraycells.v
+   - simple/asgn_binop.sv
+   - simple/carryadd.v
+   - simple/case_expr_const.v
+   - simple/case_expr_non_const.v
+   - simple/const_branch_finish.v
+   - simple/const_fold_func.v
+   - simple/dff_different_styles.v
+   - simple/dynslice.v
+   - simple/fiedler-cooley.v
+   - simple/forgen01.v
+   - simple/forgen02.v
+   - simple/forloops.v
+   - simple/func_block.v
+   - simple/func_recurse.v
+   - simple/func_width_scope.v
+   - simple/genblk_dive.v
+   - simple/genblk_order.v
+   - simple/generate.v
+   - simple/hierdefparam.v
+   - simple/local_loop_var.sv
+   - simple/loop_prefix_case.v
+   - simple/macro_arg_spaces.sv
+   - simple/macros.v
+   - simple/matching_end_labels.sv
+   - simple/mem2reg.v
+   - simple/mem_arst.v
+   - simple/memwr_port_connection.sv
+   - simple/module_scope_case.v
+   - simple/module_scope_func.v
+   - simple/multiplier.v
+   - simple/realexpr.v
+   - simple/repwhile.v
+   - simple/rotate.v
+   - simple/scopes.v
+   - simple/sincos.v
+   - simple/subbytes.v
+   - simple/unnamed_block_decl.sv
+   - simple/values.v
+   - simple/wandwor.v
+   - sva/extnets.sv
+   - svinterfaces/load_and_derive.sv
+   - svinterfaces/ondemand.sv
+   - svinterfaces/resolve_types.sv
+   - svinterfaces/svinterface1.sv
+   - svinterfaces/svinterface_at_top.sv
+   - svtypes/enum_simple.sv
+   - svtypes/logic_rom.sv
+   - svtypes/struct_array.sv
+   - svtypes/struct_dynamic_range.sv
+   - svtypes/struct_simple.sv
+   - svtypes/struct_sizebits.sv
+   - svtypes/typedef_memory.sv
+   - svtypes/typedef_package.sv
+   - svtypes/typedef_param.sv
+   - svtypes/union_simple.sv
+   - techmap/dfflibmap-sim.v
+   - various/abc9.v
+   - various/clk2fflogic_effects.sv
+   - various/const_func.sv
+   - various/constmsk_testmap.v
+   - various/constmsk_test.v
+   - various/dynamic_part_select/forloop_select_nowrshmsk.v
+   - various/dynamic_part_select/forloop_select.v
+   - various/dynamic_part_select/latch_002_gate_good.v
+   - various/dynamic_part_select/latch_002_gate.v
+   - various/dynamic_part_select/latch_002.v
+   - various/dynamic_part_select/latch_1990.v
+   - various/dynamic_part_select/multiple_blocking.v
+   - various/dynamic_part_select/original.v
+   - various/dynamic_part_select/reset_test.v
+   - various/dynamic_part_select/reversed.v
+   - various/fib_tern.v
+   - various/fib.v
+   - various/func_port_implied_dir.sv
+   - various/lcov.v
+   - various/port_sign_extend.v
+   - various/rand_const.sv
+   - various/reg_wire_error.sv
+   - various/shregmap.v
+   - various/struct_access.sv
+   - verific/enum_values.sv
+   - verilog/asgn_expr.sv
+   - verilog/for_decl_shadow.sv
+   - verilog/func_upto.sv
+   - verilog/genvar_loop_decl_1.sv
+   - verilog/genvar_loop_decl_2.sv
+   - verilog/genvar_loop_decl_3.sv
+   - verilog/int_types.sv
+   - verilog/macro_arg_tromp.sv
+   - verilog/mem_bounds.sv
+   - verilog/prefix.sv
+   - verilog/struct_access.sv
+
+⚠️  SKIPPED TESTS (53):
+   - arch/quicklogic/qlf_k6n10f/mem_tb.v
+   - arch/xilinx/macc_tb.v
+   - arch/xilinx/priority_memory.v
+   - asicworld/code_hdl_models_arbiter_tb.v
+   - asicworld/code_verilog_tutorial_counter_tb.v
+   - asicworld/code_verilog_tutorial_first_counter_tb.v
+   - asicworld/code_verilog_tutorial_fsm_full_tb.v
+   - cxxrtl/test_unconnected_output.v
+   - errors/syntax_err01.v
+   - errors/syntax_err02.v
+   - errors/syntax_err03.v
+   - errors/syntax_err04.v
+   - errors/syntax_err05.v
+   - errors/syntax_err06.v
+   - errors/syntax_err07.v
+   - errors/syntax_err08.v
+   - errors/syntax_err10.v
+   - errors/syntax_err11.v
+   - errors/syntax_err12.v
+   - fmt/always_comb_tb.v
+   - fmt/always_full_tb.v
+   - fmt/roundtrip.v
+   - functional/picorv32_tb.v
+   - hana/hana_vlib.v
+   - memlib/memlib_9b1B.v
+   - memlib/memlib_block_sdp_1clk.v
+   - memlib/memlib_block_sdp.v
+   - memlib/memlib_block_sp_full.v
+   - memlib/memlib_block_sp.v
+   - memlib/memlib_block_tdp.v
+   - rpc/design.v
+   - simple/memory.v
+   - sim/tb/tb_adffe.v
+   - sim/tb/tb_adff.v
+   - sim/tb/tb_adlatch.v
+   - sim/tb/tb_aldffe.v
+   - sim/tb/tb_aldff.v
+   - sim/tb/tb_dffe.v
+   - sim/tb/tb_dffsr.v
+   - sim/tb/tb_dff.v
+   - sim/tb/tb_dlatch.v
+   - sim/tb/tb_sdffce.v
+   - sim/tb/tb_sdffe.v
+   - sim/tb/tb_sdff.v
+   - sva/nested_clk_else.sv
+   - svinterfaces/svinterface_at_top_wrapper.v
+   - techmap/mem_simple_4x1_map.v
+   - various/memory_word_as_index.v
+   - various/setundef.sv
+   - verific/bounds.sv
+   - verilog/constparser_f_file.sv
+   - verilog/dynamic_range_lhs.v
+   - verilog/package_import_separate_module.sv
+
+
+Top 5 Longest Running Yosys Tests:
+-----------------------------------
+  verilog/func_upto.sv                               59.94 seconds
+  arch/common/blockram.v                             15.29 seconds
+  arch/nexus/blockram_dc.v                           13.11 seconds
+  sat/ram_memory.v                                   12.73 seconds
+  arch/common/memory_attributes/attributes_test.v    7.84 seconds
+Yosys tests total execution time: 422.96 seconds
+=== Yosys Test Summary ===
+==========================================
+
+
+==========================================
+=== COMPREHENSIVE TEST SUMMARY ===
+==========================================
+
+📈 DETAILED BREAKDOWN:
+
+✅ PERFECT MATCHES (287 tests):
+   These tests produce identical RTLIL output between UHDM and Verilog frontends:
+
+🚀 UHDM-ONLY SUCCESS (31 tests):
+   These tests demonstrate UHDM's superior SystemVerilog support:
+   - yosys:arch/fabulous/custom_map.v
+   - yosys:arch/xilinx/bug3670.v
+   - yosys:fmt/always_display.v
+   - yosys:hana/test_simulation_vlib.v
+   - yosys:memfile/memory.v
+   - yosys:opt/opt_rmdff.v
+   - yosys:sat/grom_computer.v
+   - yosys:sat/grom_cpu.v
+   - yosys:sim/tb/tb_dlatchsr.v
+   - yosys:sva/basic00.sv
+   - yosys:sva/basic01.sv
+   - yosys:sva/basic02.sv
+   - yosys:sva/basic03.sv
+   - yosys:sva/basic04.sv
+   - yosys:sva/basic05.sv
+   - yosys:sva/counter.sv
+   - yosys:sva/sva_not.sv
+   - yosys:sva/sva_range.sv
+   - yosys:sva/sva_throughout.sv
+   - yosys:sva/sva_value_change_changed.sv
+   - yosys:sva/sva_value_change_changed_wide.sv
+   - yosys:sva/sva_value_change_rose.sv
+   - yosys:sva/sva_value_change_sim.sv
+   - yosys:svinterfaces/svinterface1_tb.v
+   - yosys:svinterfaces/svinterface_at_top_tb.v
+   - yosys:svinterfaces/svinterface_at_top_tb_wrapper.v
+   - yosys:techmap/lcu_refined.v
+   - yosys:techmap/mem_simple_4x1_tb.v
+   - yosys:techmap/recursive_map.v
+   - yosys:verific/range_case.sv
+   - yosys:verilog/param_no_default.sv
+
+❌ EQUIVALENCE FAILURES (139 tests):
+   These tests generate output but fail formal equivalence checking:
+
+🔍 ANALYSIS:
+  • Tests that work: 318/457
+  • Tests that crash: 0/457
+  • Tests that fail equivalence: 139/457
+  • Tests that fail to generate output: 0/457
+
+📊 OVERALL STATISTICS:
+  Total tests run: 457
+  ✅ Passing tests: 287
+  🚀 UHDM-only success: 31
+  ❌ Equivalence failures: 139
+  ❌ True failures: 0
+  💥 Crashes: 0
+
+🎯 Success Rate: 69% (318/457 tests functional)
+
+❌ TEST SUITE FAILED - There are failures!
+
+Test results:
+  • Crashed tests: 0
+  • Equivalence failures: 139
+  • Failed tests: 0
+  • Functional tests: 318/457
+
+❌ Found 139 unexpected failures not in failing_tests.txt
+
+Please investigate failures or update failing_tests.txt
+
+==========================================
+=== TEST EXECUTION TIME SUMMARY ===
+==========================================
+
+Top 5 Longest Running Tests:
+-----------------------------
+  yosys:verilog/func_upto.sv               59.94 seconds
+  yosys:arch/common/blockram.v             15.29 seconds
+  yosys:arch/nexus/blockram_dc.v           13.11 seconds
+  yosys:sat/ram_memory.v                   12.73 seconds
+  yosys:arch/common/memory_attributes/attributes_test.v 7.84 seconds
+
+Total test execution time: 417.71 seconds
+make: *** [Makefile:40: test-yosys] Error 1
