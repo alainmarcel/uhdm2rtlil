@@ -109,6 +109,13 @@ preprocess_test_file() {
     
     # Also handle cases with whitespace variations
     sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\s*\.\s*\.\s*)/module \1()/g' "$file"
+    
+    # Fix trailing commas in port lists (replace ,) with ))
+    # This handles cases like: output [15:0] res,);
+    # Use [ \t]* for whitespace since \s doesn't work in basic sed
+    sed -i 's/,[ \t]*)/)/g' "$file"
+    # Also handle cases where comma is at end of line and ) is on next line
+    sed -i ':a;N;$!ba;s/,\n[ \t]*)/\n  )/g' "$file"
 }
 
 # Function to run a single test

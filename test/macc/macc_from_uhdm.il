@@ -6,8 +6,7 @@ attribute \top 1
 module \macc
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  attribute \unused_bits "40"
-  wire width 41 $auto$expression.cpp:532:import_operation$3
+  wire width 40 $auto$expression.cpp:532:import_operation$3
   wire width 32 $auto$expression.cpp:576:import_operation$1
   attribute \src "dut.sv:9.28-9.29"
   wire width 16 input 4 signed \a
@@ -49,7 +48,7 @@ module \macc
     parameter \A_WIDTH 40
     parameter \B_SIGNED 1
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 41
+    parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
     connect \Y $auto$expression.cpp:532:import_operation$3
@@ -82,7 +81,7 @@ module \macc
     parameter \EN_POLARITY 1
     parameter \WIDTH 40
     connect \CLK \clk
-    connect \D $auto$expression.cpp:532:import_operation$3 [39:0]
+    connect \D $auto$expression.cpp:532:import_operation$3
     connect \EN \ce
     connect \Q \adder_out
   end

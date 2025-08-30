@@ -11,14 +11,14 @@ module \gen_test1
   wire $auto$expression.cpp:1325:import_bit_select$55
   wire $auto$expression.cpp:1325:import_bit_select$63
   wire $auto$expression.cpp:1325:import_bit_select$7
-  wire width 65 $auto$expression.cpp:532:import_operation$13
-  wire width 65 $auto$expression.cpp:532:import_operation$21
-  wire width 65 $auto$expression.cpp:532:import_operation$29
-  wire width 65 $auto$expression.cpp:532:import_operation$37
-  wire width 65 $auto$expression.cpp:532:import_operation$45
-  wire width 65 $auto$expression.cpp:532:import_operation$5
-  wire width 65 $auto$expression.cpp:532:import_operation$53
-  wire width 65 $auto$expression.cpp:532:import_operation$61
+  wire width 64 $auto$expression.cpp:532:import_operation$13
+  wire width 64 $auto$expression.cpp:532:import_operation$21
+  wire width 64 $auto$expression.cpp:532:import_operation$29
+  wire width 64 $auto$expression.cpp:532:import_operation$37
+  wire width 64 $auto$expression.cpp:532:import_operation$45
+  wire width 64 $auto$expression.cpp:532:import_operation$5
+  wire width 64 $auto$expression.cpp:532:import_operation$53
+  wire width 64 $auto$expression.cpp:532:import_operation$61
   wire $auto$rtlil.cc:2964:ReduceXor$66
   wire $auto$rtlil.cc:2964:ReduceXor$68
   wire $auto$rtlil.cc:2964:ReduceXor$70
@@ -122,7 +122,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$13
@@ -133,7 +133,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$21
@@ -144,7 +144,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$29
@@ -155,7 +155,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$37
@@ -166,7 +166,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$45
@@ -177,7 +177,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$53
@@ -188,7 +188,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$61
@@ -199,7 +199,7 @@ module \gen_test1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
-    parameter \B_WIDTH 65
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
     connect \B $auto$expression.cpp:532:import_operation$5
@@ -426,7 +426,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$13
@@ -436,7 +436,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$21
@@ -446,7 +446,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$29
@@ -456,7 +456,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$37
@@ -466,7 +466,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$45
@@ -476,7 +476,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 6
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$53
@@ -486,7 +486,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 0
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$5
@@ -496,7 +496,7 @@ module \gen_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A 7
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$expression.cpp:532:import_operation$61

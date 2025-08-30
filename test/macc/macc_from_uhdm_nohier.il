@@ -12,7 +12,7 @@ module \macc
   wire width 32 $0\mult_reg[31:0]
   wire width 40 $0\old_result
   wire $0\sload_reg[0:0]
-  wire width 41 $auto$expression.cpp:532:import_operation$3
+  wire width 40 $auto$expression.cpp:532:import_operation$3
   wire width 32 $auto$expression.cpp:576:import_operation$1
   wire $auto$module.cpp:570:import_continuous_assign$10
   wire width 32 $auto$module.cpp:570:import_continuous_assign$12
@@ -54,7 +54,7 @@ module \macc
     parameter \A_WIDTH 40
     parameter \B_SIGNED 1
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 41
+    parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
     connect \Y $auto$expression.cpp:532:import_operation$3
@@ -135,7 +135,7 @@ module \macc
         assign $0\b_reg[15:0] \b
         assign $0\mult_reg[31:0] $auto$expression.cpp:576:import_operation$1
         assign $0\sload_reg[0:0] \sload
-        assign $0\adder_out[39:0] $auto$expression.cpp:532:import_operation$3 [39:0]
+        assign $0\adder_out[39:0] $auto$expression.cpp:532:import_operation$3
       case 
     end
     sync posedge \clk
@@ -153,7 +153,7 @@ attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 42 $auto$expression.cpp:532:import_operation$17
+  wire width 41 $auto$expression.cpp:532:import_operation$17
   wire width 32 $auto$expression.cpp:576:import_operation$15
   wire width 16 $auto$module.cpp:570:import_continuous_assign$34
   wire width 16 $auto$module.cpp:570:import_continuous_assign$36
@@ -222,7 +222,7 @@ module \macc2
     parameter \A_WIDTH 41
     parameter \B_SIGNED 1
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 42
+    parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B \mult_reg
     connect \Y $auto$expression.cpp:532:import_operation$17
@@ -291,7 +291,7 @@ module \macc2
   end
   cell $mux $auto$process.cpp:3984:import_assignment_sync$29
     parameter \WIDTH 41
-    connect \A $auto$expression.cpp:532:import_operation$17 [40:0]
+    connect \A $auto$expression.cpp:532:import_operation$17
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3094:Mux$30

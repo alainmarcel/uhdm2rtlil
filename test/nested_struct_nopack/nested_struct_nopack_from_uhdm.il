@@ -3,10 +3,6 @@ autoidx 18
 attribute \src "dut.sv:2.1-54.10"
 attribute \top 1
 module \nested_struct_nopack
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:532:import_operation$1
-  attribute \unused_bits "16"
-  wire width 17 $auto$expression.cpp:532:import_operation$7
   attribute \src "dut.sv:5.18-5.21"
   wire input 3 \clk
   attribute \src "dut.sv:3.25-3.32"
@@ -40,20 +36,20 @@ module \nested_struct_nopack
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \in_data [61:54]
     connect \B 8'00000001
-    connect \Y { $auto$expression.cpp:532:import_operation$1 [8] \processed_data [61:54] }
+    connect \Y \processed_data [61:54]
   end
   cell $add $auto$expression.cpp:546:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 16
-    parameter \Y_WIDTH 17
+    parameter \Y_WIDTH 16
     connect \A \in_data [20:5]
     connect \B 16'0000000001100100
-    connect \Y { $auto$expression.cpp:532:import_operation$7 [16] \processed_data [20:5] }
+    connect \Y \processed_data [20:5]
   end
   attribute \always_ff 1
   attribute \src "dut.sv:31.5-37.8"
@@ -74,8 +70,6 @@ module \nested_struct_nopack
     connect \A { \in_data [53:52] \in_data [50:47] \in_data [45] \in_data [43] \in_data [41:40] \in_data [38:37] \in_data [35:31] \in_data [29:27] \in_data [25:22] }
     connect \Y { \processed_data [53:52] \processed_data [50:47] \processed_data [45] \processed_data [43] \processed_data [41:40] \processed_data [38:37] \processed_data [35:31] \processed_data [29:27] \processed_data [25:22] }
   end
-  connect $auto$expression.cpp:532:import_operation$1 [7:0] \processed_data [61:54]
-  connect $auto$expression.cpp:532:import_operation$7 [15:0] \processed_data [20:5]
   connect \in_struct \in_data
   connect \out_data \out_struct
   connect { \processed_data [51] \processed_data [46] \processed_data [44] \processed_data [42] \processed_data [39] \processed_data [36] \processed_data [30] \processed_data [26] \processed_data [4:0] } { \in_data [51] \in_data [46] \in_data [44] \in_data [42] \in_data [39] \in_data [36] \in_data [30] \in_data [26] 1'1 \in_data [3] 1'1 \in_data [1] \in_data [21] }

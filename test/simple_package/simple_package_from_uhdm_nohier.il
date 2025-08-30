@@ -10,7 +10,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \COUNTER_WIDTH 5
   wire width 5 $0\counter
   wire width 50 $0\data_out
-  wire width 65 $auto$expression.cpp:532:import_operation$5
+  wire width 64 $auto$expression.cpp:532:import_operation$5
   wire $auto$rtlil.cc:3013:Eq$8
   attribute \src "dut.sv:78.13-78.19"
   wire $logic_not$dut.sv:78.13-78.19$3_Y
@@ -29,7 +29,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:532:import_operation$5
@@ -156,7 +156,7 @@ module \sub_module
   parameter \COUNTER_WIDTH 32
   wire width 5 $0\counter
   wire width 50 $0\data_out
-  wire width 65 $auto$expression.cpp:532:import_operation$1
+  wire width 64 $auto$expression.cpp:532:import_operation$1
   wire $auto$rtlil.cc:3013:Eq$4
   attribute \src "dut.sv:78.13-78.19"
   wire $logic_not$dut.sv:78.13-78.19$1_Y
@@ -175,7 +175,7 @@ module \sub_module
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:532:import_operation$1

@@ -5,8 +5,6 @@ attribute \src "dut.sv:2.1-27.10"
 attribute \top 1
 module \counter
   parameter \WIDTH 8
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:532:import_operation$1
   wire $auto$rtlil.cc:3013:Eq$4
   attribute \src "dut.sv:5.18-5.21"
   wire input 1 \clk
@@ -35,10 +33,10 @@ module \counter
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
-    connect \Y { $auto$expression.cpp:532:import_operation$1 [8] \count_next }
+    connect \Y \count_next
   end
   cell $eq $auto$expression.cpp:666:import_operation$3
     parameter \A_SIGNED 0
@@ -65,5 +63,4 @@ module \counter
     connect \EN \enable
     connect \Q \count
   end
-  connect $auto$expression.cpp:532:import_operation$1 [7:0] \count_next
 end

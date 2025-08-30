@@ -5,8 +5,6 @@ attribute \src "dut.sv:4.1-12.10"
 attribute \hdlname "adder"
 module $paramod\adder\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:532:import_operation$5
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
@@ -18,20 +16,17 @@ module $paramod\adder\WIDTH=32'00000000000000000000000000001000
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:532:import_operation$5 [8] \sum }
+    connect \Y \sum
   end
-  connect $auto$expression.cpp:532:import_operation$5 [7:0] \sum
 end
 attribute \dynports 1
 attribute \src "dut.sv:15.1-23.10"
 attribute \hdlname "subtractor"
 module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
   parameter \WIDTH 8
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:554:import_operation$7
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
@@ -43,12 +38,11 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:554:import_operation$7 [8] \diff }
+    connect \Y \diff
   end
-  connect $auto$expression.cpp:554:import_operation$7 [7:0] \diff
 end
 attribute \dynports 1
 attribute \src "dut.sv:26.1-110.10"

@@ -3,7 +3,7 @@ autoidx 5
 attribute \src "dut.sv:1.1-13.10"
 attribute \cells_not_processed 1
 module \always02
-  wire width 65 $auto$expression.cpp:532:import_operation$1
+  wire width 64 $auto$expression.cpp:532:import_operation$1
   wire width 4 $auto$rtlil.cc:3094:Mux$4
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
@@ -16,7 +16,7 @@ module \always02
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:532:import_operation$1
