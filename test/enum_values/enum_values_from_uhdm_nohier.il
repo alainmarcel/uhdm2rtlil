@@ -13,8 +13,8 @@ module \top
   wire $auto$process.cpp:32:create_temp_wire$33
   wire $auto$process.cpp:32:create_temp_wire$5
   wire $auto$process.cpp:32:create_temp_wire$7
-  wire $auto$process.cpp:4638:import_case_stmt_sync$17
-  wire $auto$process.cpp:4638:import_case_stmt_sync$37
+  wire $auto$process.cpp:4660:import_case_stmt_sync$17
+  wire $auto$process.cpp:4660:import_case_stmt_sync$37
   wire $auto$rtlil.cc:3008:Xor$46
   wire $auto$rtlil.cc:3013:Eq$42
   wire $auto$rtlil.cc:3013:Eq$44
@@ -133,69 +133,69 @@ module \top
     connect \B 1
     connect \Y $auto$process.cpp:32:create_temp_wire$5
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$15
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$15
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$10
     connect \B 3
     connect \S $auto$process.cpp:32:create_temp_wire$11
     connect \Y $auto$rtlil.cc:3094:Mux$16
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$19
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$19
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$16
     connect \B 0
-    connect \S $auto$process.cpp:4638:import_case_stmt_sync$17
+    connect \S $auto$process.cpp:4660:import_case_stmt_sync$17
     connect \Y $auto$rtlil.cc:3094:Mux$20
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$23
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$23
     parameter \WIDTH 2
     connect \A \state
     connect \B 2'00
     connect \S $auto$process.cpp:32:create_temp_wire$21
     connect \Y $auto$rtlil.cc:3094:Mux$24
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$29
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$29
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$24
     connect \B 2'01
     connect \S $auto$process.cpp:32:create_temp_wire$25
     connect \Y $auto$rtlil.cc:3094:Mux$30
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$3
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$3
     parameter \WIDTH 32
     connect \A \wide_state
     connect \B 1
     connect \S $auto$process.cpp:32:create_temp_wire$1
     connect \Y $auto$rtlil.cc:3094:Mux$4
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$35
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$35
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$30
     connect \B 2'10
     connect \S $auto$process.cpp:32:create_temp_wire$31
     connect \Y $auto$rtlil.cc:3094:Mux$36
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$39
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$39
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$36
     connect \B 2'11
-    connect \S $auto$process.cpp:4638:import_case_stmt_sync$37
+    connect \S $auto$process.cpp:4660:import_case_stmt_sync$37
     connect \Y $auto$rtlil.cc:3094:Mux$40
   end
-  cell $mux $auto$process.cpp:3984:import_assignment_sync$9
+  cell $mux $auto$process.cpp:4006:import_assignment_sync$9
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$4
     connect \B 2
     connect \S $auto$process.cpp:32:create_temp_wire$5
     connect \Y $auto$rtlil.cc:3094:Mux$10
   end
-  cell $_NOT_ $auto$process.cpp:4639:import_case_stmt_sync$18
+  cell $_NOT_ $auto$process.cpp:4661:import_case_stmt_sync$18
     connect \A $auto$process.cpp:32:create_temp_wire$13
-    connect \Y $auto$process.cpp:4638:import_case_stmt_sync$17
+    connect \Y $auto$process.cpp:4660:import_case_stmt_sync$17
   end
-  cell $_NOT_ $auto$process.cpp:4639:import_case_stmt_sync$38
+  cell $_NOT_ $auto$process.cpp:4661:import_case_stmt_sync$38
     connect \A $auto$process.cpp:32:create_temp_wire$33
-    connect \Y $auto$process.cpp:4638:import_case_stmt_sync$37
+    connect \Y $auto$process.cpp:4660:import_case_stmt_sync$37
   end
   cell $or $auto$process.cpp:54:create_or_cell$14
     parameter \A_SIGNED 0
