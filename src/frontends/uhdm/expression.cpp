@@ -860,9 +860,39 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         return RTLIL::SigSpec(RTLIL::Const(value, 32));
     }
     
-    // Check if the ref_obj has an Actual_group() that points to a parameter
+    // Check if the ref_obj has an Actual_group() that points to a parameter or enum constant
     if (uhdm_ref->Actual_group()) {
         const any* actual = uhdm_ref->Actual_group();
+        
+        // Check for enum constant
+        if (actual->UhdmType() == uhdmenum_const) {
+            const UHDM::enum_const* enum_val = any_cast<const UHDM::enum_const*>(actual);
+            // Get the enum value - enum constants store their value in VpiValue
+            std::string val_str = std::string(enum_val->VpiValue());
+            
+            if (mode_debug)
+                log("UHDM: Found enum constant %s with value %s\n", ref_name.c_str(), val_str.c_str());
+            
+            // Parse value from format like "INT:0", "UINT:1", etc.
+            RTLIL::Const enum_value;
+            if (!val_str.empty()) {
+                size_t colon_pos = val_str.find(':');
+                if (colon_pos != std::string::npos) {
+                    std::string value_part = val_str.substr(colon_pos + 1);
+                    // Parse as integer
+                    enum_value = RTLIL::Const(std::stoi(value_part), 32);
+                } else {
+                    // Try to parse as integer directly
+                    enum_value = RTLIL::Const(std::stoi(val_str), 32);
+                }
+            } else {
+                // Default to 0 if no value specified
+                enum_value = RTLIL::Const(0, 32);
+            }
+            
+            return RTLIL::SigSpec(enum_value);
+        }
+        
         if (actual->VpiType() == vpiParameter) {
             const parameter* param = any_cast<const parameter*>(actual);
             // Get the parameter value - parameters typically store values as constants

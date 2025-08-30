@@ -4573,6 +4573,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
         // First, collect all assignments from all case items
         std::map<std::string, std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>>> signal_assignments;
         std::vector<RTLIL::SigSpec> case_conditions;
+        RTLIL::SigSpec all_non_default_conditions;  // Track all non-default conditions
         
         // Process each case item
         if (auto case_items = uhdm_case->Case_items()) {
@@ -4582,6 +4583,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
             for (auto case_item : *case_items) {
                 // Get case expressions (values to match)
                 RTLIL::SigSpec case_condition;
+                bool is_default = false;
                 
                 if (auto exprs = case_item->VpiExprs()) {
                     // Build equality comparison for this case
@@ -4603,8 +4605,19 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                             log_flush();
                         }
                     }
+                    
+                    // Add this condition to the combined non-default conditions
+                    if (!case_condition.empty()) {
+                        if (all_non_default_conditions.empty()) {
+                            all_non_default_conditions = case_condition;
+                        } else {
+                            // OR with other non-default conditions
+                            all_non_default_conditions = create_or_cell(all_non_default_conditions, case_condition);
+                        }
+                    }
                 } else {
                     // This is a default case
+                    is_default = true;
                     log("          Default case\n");
                     log_flush();
                 }
@@ -4618,7 +4631,23 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                     RTLIL::SigSpec prev_condition = current_condition;
                     
                     // Set condition for nested statements
-                    if (!case_condition.empty()) {
+                    if (is_default) {
+                        // For default case, use the negation of all other conditions
+                        if (!all_non_default_conditions.empty()) {
+                            // Create NOT of all non-default conditions
+                            RTLIL::Wire* not_wire = module->addWire(NEW_ID, 1);
+                            module->addNotGate(NEW_ID, all_non_default_conditions, not_wire);
+                            RTLIL::SigSpec default_condition(not_wire);
+                            
+                            if (current_condition.empty()) {
+                                current_condition = default_condition;
+                            } else {
+                                // AND with existing condition
+                                current_condition = create_and_cell(current_condition, default_condition);
+                            }
+                            log("          Using negation of all non-default conditions for default case\n");
+                        }
+                    } else if (!case_condition.empty()) {
                         if (current_condition.empty()) {
                             current_condition = case_condition;
                         } else {

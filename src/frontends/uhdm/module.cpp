@@ -1341,6 +1341,22 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             return -1;  // Special value to indicate interface type
         }
         
+        // Check if this is an enum typespec - need to get the base type
+        if (typespec->UhdmType() == uhdmenum_typespec) {
+            log("UHDM: Found enum_typespec, getting base type\n");
+            if (auto enum_typespec = dynamic_cast<const UHDM::enum_typespec*>(typespec)) {
+                // Get the base typespec - this defines the actual width
+                if (auto base_typespec = enum_typespec->Base_typespec()) {
+                    log("UHDM: Found base typespec for enum\n");
+                    return get_width_from_typespec(base_typespec, inst);
+                } else {
+                    // No explicit base type means default int type (32 bits in SystemVerilog)
+                    log("UHDM: No base typespec for enum, defaulting to 32 bits\n");
+                    return 32;
+                }
+            }
+        }
+        
         // Use UHDM::ExprEval to get the actual size of the typespec
         UHDM::ExprEval eval;
         bool invalidValue = false;
