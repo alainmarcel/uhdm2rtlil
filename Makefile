@@ -35,9 +35,14 @@ test-all: all
 	@cd test && ./run_all_tests.sh --all
 
 # Test Yosys target - runs only Yosys tests
-test-yosys: all
+test-yosys: all preprocess-yosys-tests
 	@echo "Running Yosys tests..."
 	@cd test && ./run_all_tests.sh --yosys
+
+# Preprocess Yosys test files to fix incompatible constructs
+preprocess-yosys-tests:
+	@echo "Preprocessing Yosys test files..."
+	@cd test && ./preprocess_yosys_tests.sh
 
 # Create release build directory and configure
 build: | build/Makefile

@@ -98,6 +98,19 @@ is_verilog_test() {
     return 0
 }
 
+# Function to preprocess test files
+# Fixes module declarations with ... to make them compatible with UHDM frontend
+preprocess_test_file() {
+    local file="$1"
+    
+    # Fix module declarations with ... (replace with empty parentheses)
+    # This handles cases like: module top(...);
+    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\.\.\s*)/module \1()/g' "$file"
+    
+    # Also handle cases with whitespace variations
+    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\s*\.\s*\.\s*)/module \1()/g' "$file"
+}
+
 # Function to run a single test
 run_test() {
     local test_file="$1"
@@ -127,6 +140,9 @@ run_test() {
     
     # Copy the test file
     cp "$test_file" "$test_dir/dut.sv"
+    
+    # Preprocess the test file to fix SystemVerilog constructs
+    preprocess_test_file "$test_dir/dut.sv"
     
     # Create Yosys scripts
     cat > "$test_dir/test_verilog_read.ys" << EOF
