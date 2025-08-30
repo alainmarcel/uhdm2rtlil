@@ -4,8 +4,8 @@ attribute \src "dut.sv:1.1-13.10"
 attribute \cells_not_processed 1
 module \forloops
   wire width 4 $0\y
-  wire width 33 $auto$expression.cpp:532:import_operation$1
-  wire width 33 $auto$expression.cpp:554:import_operation$3
+  wire width 32 $auto$expression.cpp:532:import_operation$1
+  wire width 32 $auto$expression.cpp:554:import_operation$3
   attribute \src "dut.sv:1.29-1.30"
   wire input 2 \a
   attribute \src "dut.sv:1.32-1.33"
@@ -27,7 +27,7 @@ module \forloops
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
     connect \Y $auto$expression.cpp:532:import_operation$1
@@ -37,7 +37,7 @@ module \forloops
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
     connect \Y $auto$expression.cpp:554:import_operation$3

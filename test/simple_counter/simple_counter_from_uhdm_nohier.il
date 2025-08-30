@@ -4,7 +4,7 @@ attribute \src "dut.sv:2.1-16.10"
 attribute \cells_not_processed 1
 module \simple_counter
   wire width 8 $0\count
-  wire width 9 $auto$expression.cpp:532:import_operation$1
+  wire width 8 $auto$expression.cpp:532:import_operation$1
   attribute \src "dut.sv:9.13-9.19"
   wire $logic_not$dut.sv:9.13-9.19$1_Y
   attribute \src "dut.sv:3.18-3.21"
@@ -18,7 +18,7 @@ module \simple_counter
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
     connect \Y $auto$expression.cpp:532:import_operation$1
@@ -43,7 +43,7 @@ module \simple_counter
         assign $0\count 8'00000000
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\count $auto$expression.cpp:532:import_operation$1 [7:0]
+        assign $0\count $auto$expression.cpp:532:import_operation$1
     end
     sync posedge \clk
       update \count $0\count

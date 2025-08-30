@@ -4,8 +4,6 @@ attribute \src "dut.sv:2.1-16.10"
 attribute \top 1
 module \simple_counter
   wire width 8 $0\count
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:532:import_operation$1
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk
   attribute \src "dut.sv:5.24-5.29"
@@ -17,10 +15,10 @@ module \simple_counter
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
-    connect \Y { $auto$expression.cpp:532:import_operation$1 [8] $0\count }
+    connect \Y $0\count
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -35,5 +33,4 @@ module \simple_counter
     connect \D $0\count
     connect \Q \count
   end
-  connect $auto$expression.cpp:532:import_operation$1 [7:0] $0\count
 end

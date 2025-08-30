@@ -3,7 +3,7 @@ autoidx 11
 attribute \src "dut.sv:1.1-5.10"
 attribute \cells_not_processed 1
 module \partsel_simple
-  wire width 65 $auto$expression.cpp:532:import_operation$7
+  wire width 64 $auto$expression.cpp:532:import_operation$7
   wire width 3 $auto$expression.cpp:623:import_operation$1
   wire width 6 $auto$module.cpp:539:import_continuous_assign$3
   wire width 4 $auto$module.cpp:539:import_continuous_assign$5
@@ -23,7 +23,7 @@ module \partsel_simple
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 65
+    parameter \Y_WIDTH 64
     connect \A \offset
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
     connect \Y $auto$expression.cpp:532:import_operation$7

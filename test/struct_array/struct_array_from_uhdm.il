@@ -3,8 +3,6 @@ autoidx 7
 attribute \src "dut.sv:7.1-27.10"
 attribute \top 1
 module \struct_array
-  attribute \unused_bits "8"
-  wire width 9 $auto$expression.cpp:532:import_operation$1
   attribute \src "dut.sv:8.24-8.31"
   wire width 8 input 1 \data_in
   attribute \src "dut.sv:10.24-10.32"
@@ -21,10 +19,10 @@ module \struct_array
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \data_in
     connect \B 8'00000001
-    connect \Y { $auto$expression.cpp:532:import_operation$1 [8] \data_out }
+    connect \Y \data_out
   end
   cell $not $auto$opt_expr.cc:716:replace_const_cells$5
     parameter \A_SIGNED 0
@@ -33,7 +31,6 @@ module \struct_array
     connect \A { \tag_in [3] \tag_in [1] }
     connect \Y { \tag_out [3] \tag_out [1] }
   end
-  connect $auto$expression.cpp:532:import_operation$1 [7:0] \data_out
   connect \packet { \data_in \tag_in }
   connect { \tag_out [2] \tag_out [0] } { \tag_in [2] \tag_in [0] }
 end

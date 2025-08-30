@@ -3,7 +3,7 @@ autoidx 9
 attribute \src "dut.sv:1.1-6.10"
 attribute \cells_not_processed 1
 module \wreduce_test1
-  wire width 33 $auto$expression.cpp:554:import_operation$1
+  wire width 32 $auto$expression.cpp:554:import_operation$1
   wire width 64 $auto$expression.cpp:576:import_operation$3
   wire width 32 $auto$expression.cpp:623:import_operation$7
   wire width 32 $auto$expression.cpp:644:import_operation$5
@@ -24,7 +24,7 @@ module \wreduce_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
     connect \Y $auto$expression.cpp:554:import_operation$1

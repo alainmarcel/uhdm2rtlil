@@ -5,7 +5,7 @@ attribute \cells_not_processed 1
 module \struct_array
   wire width 8 $0\data_out
   wire width 4 $0\tag_out
-  wire width 9 $auto$expression.cpp:532:import_operation$1
+  wire width 8 $auto$expression.cpp:532:import_operation$1
   wire width 4 $auto$rtlil.cc:3008:Xor$4
   attribute \src "dut.sv:8.24-8.31"
   wire width 8 input 1 \data_in
@@ -33,7 +33,7 @@ module \struct_array
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \packet [11:4]
     connect \B 8'00000001
     connect \Y $auto$expression.cpp:532:import_operation$1
@@ -48,7 +48,7 @@ module \struct_array
   process $proc$dut.sv:23$1
     assign $0\data_out \data_out
     assign $0\tag_out \tag_out
-    assign $0\data_out $auto$expression.cpp:532:import_operation$1 [7:0]
+    assign $0\data_out $auto$expression.cpp:532:import_operation$1
     assign $0\tag_out $auto$rtlil.cc:3008:Xor$4
     sync always
       update \data_out $0\data_out

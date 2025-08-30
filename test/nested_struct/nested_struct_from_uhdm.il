@@ -3,8 +3,6 @@ autoidx 19
 attribute \src "dut.sv:23.1-59.10"
 attribute \top 1
 module \nested_struct
-  attribute \unused_bits "16"
-  wire width 17 $auto$expression.cpp:532:import_operation$7
   attribute \src "dut.sv:26.18-26.21"
   wire input 3 \clk
   attribute \src "dut.sv:24.38-24.45"
@@ -21,10 +19,10 @@ module \nested_struct
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 16
-    parameter \Y_WIDTH 17
+    parameter \Y_WIDTH 16
     connect \A \in_data [20:5]
     connect \B 16'0000000001100100
-    connect \Y { $auto$expression.cpp:532:import_operation$7 [16] \processed_data [20:5] }
+    connect \Y \processed_data [20:5]
   end
   attribute \always_ff 1
   attribute \src "dut.sv:36.5-42.8"
@@ -38,7 +36,6 @@ module \nested_struct
     connect \Q \out_data [20:1]
     connect \SRST \rst
   end
-  connect $auto$expression.cpp:532:import_operation$7 [15:0] \processed_data [20:5]
   connect { \out_data [61:21] \out_data [0] } 42'000000000000000000000000000000000000000000
   connect { \processed_data [61:21] \processed_data [4:0] } { 42'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx01 \in_data [3] 1'1 \in_data [1] 1'x }
 end

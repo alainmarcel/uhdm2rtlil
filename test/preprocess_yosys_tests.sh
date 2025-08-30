@@ -22,8 +22,20 @@ MODIFIED_COUNT=0
 
 # Find all Verilog/SystemVerilog files in the tests directory
 find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) | while read -r file; do
+    needs_preprocessing=false
+    
     # Check if file contains module declarations with ...
     if grep -q 'module\s\+[a-zA-Z_][a-zA-Z0-9_]*\s*(\s*\.\.\.\s*)' "$file" 2>/dev/null; then
+        needs_preprocessing=true
+    fi
+    
+    # Check if file contains trailing commas in port lists
+    # Check for comma at end of line followed by ) on next line
+    if grep -q ',$' "$file" 2>/dev/null && grep -A1 ',$' "$file" | grep -q '^\s*);'; then
+        needs_preprocessing=true
+    fi
+    
+    if [ "$needs_preprocessing" = true ]; then
         # Create backup if it doesn't exist
         if [ ! -f "${file}.orig" ]; then
             cp "$file" "${file}.orig"
@@ -35,6 +47,13 @@ find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) | while read -
         
         # Also handle cases with whitespace variations (. . .)
         sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\s*\.\s*\.\s*)/module \1()/g' "$file"
+        
+        # Fix trailing commas in port lists (replace ,) with ))
+        # This handles cases like: output [15:0] res,);
+        # Use [ \t\n]* for whitespace since \s doesn't work in basic sed
+        sed -i 's/,[ \t]*)/)/g' "$file"
+        # Also handle cases where comma is at end of line and ) is on next line
+        sed -i ':a;N;$!ba;s/,\n[ \t]*)/\n  )/g' "$file"
         
         echo -e "${GREEN}✓${NC} Preprocessed: ${file#$YOSYS_TESTS_DIR/}"
         MODIFIED_COUNT=$((MODIFIED_COUNT + 1))

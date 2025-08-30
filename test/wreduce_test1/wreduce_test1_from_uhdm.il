@@ -3,8 +3,8 @@ autoidx 9
 attribute \src "dut.sv:1.1-6.10"
 attribute \top 1
 module \wreduce_test1
-  attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32"
-  wire width 33 $auto$expression.cpp:554:import_operation$1
+  attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  wire width 32 $auto$expression.cpp:554:import_operation$1
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 $auto$expression.cpp:576:import_operation$3
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
@@ -28,10 +28,10 @@ module \wreduce_test1
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:554:import_operation$1 [32:8] \x }
+    connect \Y { $auto$expression.cpp:554:import_operation$1 [31:8] \x }
   end
   cell $mul $auto$expression.cpp:593:import_operation$4
     parameter \A_SIGNED 0

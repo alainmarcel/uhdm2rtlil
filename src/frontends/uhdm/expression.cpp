@@ -528,7 +528,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiAddOp:
             if (operands.size() == 2) {
                 // For addition, create an add cell
-                int result_width = std::max(operands[0].size(), operands[1].size()) + 1;
+                int result_width = std::max(operands[0].size(), operands[1].size());
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed
@@ -550,7 +550,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiSubOp:
             if (operands.size() == 2) {
                 // For subtraction, create a sub cell
-                int result_width = std::max(operands[0].size(), operands[1].size()) + 1;
+                int result_width = std::max(operands[0].size(), operands[1].size());
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed

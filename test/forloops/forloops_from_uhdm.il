@@ -3,10 +3,10 @@ autoidx 6
 attribute \src "dut.sv:1.1-13.10"
 attribute \top 1
 module \forloops
-  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32"
-  wire width 33 $auto$expression.cpp:532:import_operation$1
-  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32"
-  wire width 33 $auto$expression.cpp:554:import_operation$3
+  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  wire width 32 $auto$expression.cpp:532:import_operation$1
+  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  wire width 32 $auto$expression.cpp:554:import_operation$3
   attribute \src "dut.sv:1.29-1.30"
   wire input 2 \a
   attribute \src "dut.sv:1.32-1.33"
@@ -28,7 +28,7 @@ module \forloops
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
     connect \Y $auto$expression.cpp:532:import_operation$1
@@ -38,10 +38,10 @@ module \forloops
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
-    parameter \Y_WIDTH 33
+    parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
-    connect \Y { $auto$expression.cpp:554:import_operation$3 [32:4] \y }
+    connect \Y { $auto$expression.cpp:554:import_operation$3 [31:4] \y }
   end
   attribute \always_ff 1
   attribute \src "dut.sv:3.2-7.5"

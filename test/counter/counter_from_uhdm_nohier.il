@@ -8,7 +8,7 @@ module \counter
   wire width 8 $0\count
   wire width 8 $0\count_next
   wire $0\overflow
-  wire width 9 $auto$expression.cpp:532:import_operation$1
+  wire width 8 $auto$expression.cpp:532:import_operation$1
   wire $auto$rtlil.cc:3013:Eq$4
   wire $auto$rtlil.cc:3026:LogicAnd$6
   attribute \src "dut.sv:15.13-15.19"
@@ -40,7 +40,7 @@ module \counter
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
-    parameter \Y_WIDTH 9
+    parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
     connect \Y $auto$expression.cpp:532:import_operation$1
@@ -93,7 +93,7 @@ module \counter
   process $proc$dut.sv:22$1
     assign $0\count_next \count_next
     assign $0\overflow \overflow
-    assign $0\count_next $auto$expression.cpp:532:import_operation$1 [7:0]
+    assign $0\count_next $auto$expression.cpp:532:import_operation$1
     assign $0\overflow $auto$rtlil.cc:3026:LogicAnd$6
     sync always
       update \count_next $0\count_next

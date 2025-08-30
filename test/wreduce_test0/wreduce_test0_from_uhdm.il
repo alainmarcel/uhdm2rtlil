@@ -27,7 +27,7 @@ module \wreduce_test0
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A { 7'0000000 \x [8:0] }
-    connect \B { 6'000000 \y [9:0] }
+    connect \B { 7'0000000 \y [8:0] }
     connect \Y \z
   end
   cell $add $auto$expression.cpp:546:import_operation$6
@@ -35,11 +35,11 @@ module \wreduce_test0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
     parameter \B_WIDTH 9
-    parameter \Y_WIDTH 10
+    parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
     connect \B { 1'0 \b }
-    connect \Y \y [9:0]
+    connect \Y \y [8:0]
   end
   connect \x [15:9] 7'0000000
-  connect \y [15:10] 6'000000
+  connect \y [15:9] 7'0000000
 end
