@@ -1,0 +1,744 @@
+=== UHDM Frontend Test Runner ===
+Tests marked as failing (will still be run): carryadd case_expr_const forloops mem2reg_test1
+Tests marked as skipped (will not be run): arch/xilinx/priority_memory.v
+
+Found 85 local test(s): adff adffn aes_kexp128 always01 always02 always03 arrays01 asym_ram_sdp_read_wider asym_ram_sdp_write_wider blockrom carryadd case_expr_const code_hdl_models_decoder_2to4_gates code_hdl_models_parallel_crc counter custom_map_incomp dff_different_styles dffs dffsr dff_styles enum_values escape_id flipflop forloops fsm generate_test gen_test1 latchn latchp latchsr logic_ops lut_map_and lut_map_cmp lut_map_mux lut_map_not lut_map_or lut_map_xor macc mem2reg_test1 mem2reg_test2 mul mul_plain mul_signed_async mul_sync_enable_test mul_sync_reset_test mul_unsigned mul_unsigned_sync mul_unsigned_sync_simple mux16 mux2 mux4 mux8 ndffnr nested_struct nested_struct_nopack opt_share_add_sub param_test partsel_simple priority_memory simple_abc9 simple_always_ff simple_always_ifelse simple_assign simple_counter simple_fsm simple_generate simple_hierarchy simple_instance_array simple_interface simple_memory simple_memory_noreset simple_nested_struct_nopack simple_package simple_struct sp_read_first sp_read_or_write sp_write_first struct_array typedef_simple unbased_unsized unique_case vector_index verilog_primitives wreduce_test0 wreduce_test1
+
+==========================================
+Running test: adff
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test adff PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: adffn
+==========================================
+Execution time: 0.24 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test adffn PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: aes_kexp128
+==========================================
+Execution time: 0.24 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test aes_kexp128 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: always01
+==========================================
+Execution time: 0.17 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test always01 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: always02
+==========================================
+Execution time: 0.19 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test always02 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: always03
+==========================================
+Execution time: 0.23 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test always03 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: arrays01
+==========================================
+Execution time: 0.27 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test arrays01 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: asym_ram_sdp_read_wider
+==========================================
+Execution time: 3.69 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test asym_ram_sdp_read_wider PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: asym_ram_sdp_write_wider
+==========================================
+Execution time: 3.69 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test asym_ram_sdp_write_wider PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: blockrom
+==========================================
+Execution time: 0.24 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test blockrom PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: carryadd
+==========================================
+Execution time: 0.02 seconds
+Result: ❌ Test carryadd FAILED - UHDM output missing
+    Note: This test was expected to fail
+
+==========================================
+Running test: case_expr_const
+==========================================
+Execution time: 0.12 seconds
+Result:     ❌ Formal equivalence check FAILED - netlists are not logically equivalent
+❌ Test case_expr_const FAILED - Formal equivalence check failed
+    Note: This test was expected to fail (equivalence check failure)
+
+==========================================
+Running test: code_hdl_models_decoder_2to4_gates
+==========================================
+Execution time: 0.26 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test code_hdl_models_decoder_2to4_gates PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: code_hdl_models_parallel_crc
+==========================================
+Execution time: 0.23 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test code_hdl_models_parallel_crc PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: counter
+==========================================
+Execution time: 0.18 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test counter PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: custom_map_incomp
+==========================================
+Execution time: 0.06 seconds
+Result: ✅ Test custom_map_incomp PASSED - UHDM succeeds where Verilog fails!
+    Demonstrates UHDM's superior SystemVerilog support
+
+==========================================
+Running test: dff_different_styles
+==========================================
+Execution time: 0.40 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test dff_different_styles PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: dffs
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test dffs PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: dffsr
+==========================================
+Execution time: 0.19 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test dffsr PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: dff_styles
+==========================================
+Execution time: 0.10 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test dff_styles PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: enum_values
+==========================================
+Execution time: 0.24 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test enum_values PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: escape_id
+==========================================
+Execution time: 0.07 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test escape_id PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: flipflop
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test flipflop PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: forloops
+==========================================
+Execution time: 0.29 seconds
+Result:     ❌ Formal equivalence check FAILED - netlists are not logically equivalent
+❌ Test forloops FAILED - Formal equivalence check failed
+    Note: This test was expected to fail (equivalence check failure)
+
+==========================================
+Running test: fsm
+==========================================
+Execution time: 0.26 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test fsm PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: generate_test
+==========================================
+Execution time: 0.39 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test generate_test PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: gen_test1
+==========================================
+Execution time: 0.23 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test gen_test1 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: latchn
+==========================================
+Execution time: 0.10 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test latchn PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: latchp
+==========================================
+Execution time: 0.16 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test latchp PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: latchsr
+==========================================
+Execution time: 0.20 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test latchsr PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: logic_ops
+==========================================
+Execution time: 0.17 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test logic_ops PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_and
+==========================================
+Execution time: 0.26 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_and PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_cmp
+==========================================
+Execution time: 0.20 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_cmp PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_mux
+==========================================
+Execution time: 0.19 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_mux PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_not
+==========================================
+Execution time: 0.16 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_not PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_or
+==========================================
+Execution time: 0.16 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_or PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: lut_map_xor
+==========================================
+Execution time: 0.22 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test lut_map_xor PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: macc
+==========================================
+Execution time: 0.94 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test macc PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mem2reg_test1
+==========================================
+Execution time: 0.23 seconds
+Result:     ❌ Formal equivalence check FAILED - netlists are not logically equivalent
+❌ Test mem2reg_test1 FAILED - Formal equivalence check failed
+    Note: This test was expected to fail (equivalence check failure)
+
+==========================================
+Running test: mem2reg_test2
+==========================================
+Execution time: 0.22 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mem2reg_test2 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul
+==========================================
+Execution time: 0.27 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_plain
+==========================================
+Execution time: 0.32 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_plain PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_signed_async
+==========================================
+Execution time: 0.28 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_signed_async PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_sync_enable_test
+==========================================
+Execution time: 0.31 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_sync_enable_test PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_sync_reset_test
+==========================================
+Execution time: 0.29 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_sync_reset_test PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_unsigned
+==========================================
+Execution time: 0.26 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_unsigned PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_unsigned_sync
+==========================================
+Execution time: 0.22 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_unsigned_sync PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mul_unsigned_sync_simple
+==========================================
+Execution time: 0.25 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mul_unsigned_sync_simple PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mux16
+==========================================
+Execution time: 0.25 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mux16 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mux2
+==========================================
+Execution time: 0.20 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mux2 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mux4
+==========================================
+Execution time: 0.20 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mux4 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: mux8
+==========================================
+Execution time: 0.21 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test mux8 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: ndffnr
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test ndffnr PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: nested_struct
+==========================================
+Execution time: 0.16 seconds
+Result: ✅ Test nested_struct PASSED - UHDM succeeds where Verilog fails!
+    Demonstrates UHDM's superior SystemVerilog support
+
+==========================================
+Running test: nested_struct_nopack
+==========================================
+Execution time: 0.39 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test nested_struct_nopack PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: opt_share_add_sub
+==========================================
+Execution time: 0.31 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test opt_share_add_sub PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: param_test
+==========================================
+Execution time: 0.15 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test param_test PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: partsel_simple
+==========================================
+Execution time: 0.28 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test partsel_simple PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: priority_memory
+==========================================
+Execution time: 0.41 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test priority_memory PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_abc9
+==========================================
+Execution time: 0.21 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_abc9 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_always_ff
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_always_ff PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_always_ifelse
+==========================================
+Execution time: 0.15 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_always_ifelse PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_assign
+==========================================
+Execution time: 0.17 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_assign PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_counter
+==========================================
+Execution time: 0.19 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_counter PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_fsm
+==========================================
+Execution time: 0.21 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_fsm PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_generate
+==========================================
+Execution time: 0.19 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_generate PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_hierarchy
+==========================================
+Execution time: 0.33 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_hierarchy PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_instance_array
+==========================================
+Execution time: 0.10 seconds
+Result: ✅ Test simple_instance_array PASSED - UHDM succeeds where Verilog fails!
+    Demonstrates UHDM's superior SystemVerilog support
+
+==========================================
+Running test: simple_interface
+==========================================
+Execution time: 0.44 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_interface PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_memory
+==========================================
+Execution time: 0.38 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_memory PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_memory_noreset
+==========================================
+Execution time: 0.30 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_memory_noreset PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_nested_struct_nopack
+==========================================
+Execution time: 0.25 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_nested_struct_nopack PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: simple_package
+==========================================
+Execution time: 0.16 seconds
+Result: ✅ Test simple_package PASSED - UHDM succeeds where Verilog fails!
+    Demonstrates UHDM's superior SystemVerilog support
+
+==========================================
+Running test: simple_struct
+==========================================
+Execution time: 0.29 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test simple_struct PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: sp_read_first
+==========================================
+Execution time: 0.33 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test sp_read_first PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: sp_read_or_write
+==========================================
+Execution time: 0.42 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test sp_read_or_write PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: sp_write_first
+==========================================
+Execution time: 0.30 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test sp_write_first PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: struct_array
+==========================================
+Execution time: 0.21 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test struct_array PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: typedef_simple
+==========================================
+Execution time: 0.11 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test typedef_simple PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: unbased_unsized
+==========================================
+Execution time: 0.31 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test unbased_unsized PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: unique_case
+==========================================
+Execution time: 0.06 seconds
+Result: ✅ Test unique_case PASSED - UHDM succeeds where Verilog fails!
+    Demonstrates UHDM's superior SystemVerilog support
+
+==========================================
+Running test: vector_index
+==========================================
+Execution time: 0.20 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test vector_index PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: verilog_primitives
+==========================================
+Execution time: 0.18 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test verilog_primitives PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: wreduce_test0
+==========================================
+Execution time: 0.25 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test wreduce_test0 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+Running test: wreduce_test1
+==========================================
+Execution time: 0.51 seconds
+Result:     ✅ Formal equivalence check PASSED
+✅ Test wreduce_test1 PASSED - Formal equivalence check confirmed functional equivalence
+
+==========================================
+=== COMPREHENSIVE TEST SUMMARY ===
+==========================================
+
+📈 DETAILED BREAKDOWN:
+
+✅ PERFECT MATCHES (76 tests):
+   These tests produce identical RTLIL output between UHDM and Verilog frontends:
+   - adff
+   - adffn
+   - aes_kexp128
+   - always01
+   - always02
+   - always03
+   - arrays01
+   - asym_ram_sdp_read_wider
+   - asym_ram_sdp_write_wider
+   - blockrom
+   - code_hdl_models_decoder_2to4_gates
+   - code_hdl_models_parallel_crc
+   - counter
+   - dff_different_styles
+   - dffs
+   - dffsr
+   - dff_styles
+   - enum_values
+   - escape_id
+   - flipflop
+   - fsm
+   - generate_test
+   - gen_test1
+   - latchn
+   - latchp
+   - latchsr
+   - logic_ops
+   - lut_map_and
+   - lut_map_cmp
+   - lut_map_mux
+   - lut_map_not
+   - lut_map_or
+   - lut_map_xor
+   - macc
+   - mem2reg_test2
+   - mul
+   - mul_plain
+   - mul_signed_async
+   - mul_sync_enable_test
+   - mul_sync_reset_test
+   - mul_unsigned
+   - mul_unsigned_sync
+   - mul_unsigned_sync_simple
+   - mux16
+   - mux2
+   - mux4
+   - mux8
+   - ndffnr
+   - nested_struct_nopack
+   - opt_share_add_sub
+   - param_test
+   - partsel_simple
+   - priority_memory
+   - simple_abc9
+   - simple_always_ff
+   - simple_always_ifelse
+   - simple_assign
+   - simple_counter
+   - simple_fsm
+   - simple_generate
+   - simple_hierarchy
+   - simple_interface
+   - simple_memory
+   - simple_memory_noreset
+   - simple_nested_struct_nopack
+   - simple_struct
+   - sp_read_first
+   - sp_read_or_write
+   - sp_write_first
+   - struct_array
+   - typedef_simple
+   - unbased_unsized
+   - vector_index
+   - verilog_primitives
+   - wreduce_test0
+   - wreduce_test1
+
+🚀 UHDM-ONLY SUCCESS (5 tests):
+   These tests demonstrate UHDM's superior SystemVerilog support:
+   - custom_map_incomp
+   - nested_struct
+   - simple_instance_array
+   - simple_package
+   - unique_case
+
+❌ EQUIVALENCE FAILURES (3 tests):
+   These tests generate output but fail formal equivalence checking:
+   - case_expr_const
+   - forloops
+   - mem2reg_test1
+
+❌ TRUE FAILURES (1 tests):
+   These tests failed to generate output files:
+   - carryadd
+
+🔍 ANALYSIS:
+  • Tests that work: 81/85
+  • Tests that crash: 0/85
+  • Tests that fail equivalence: 3/85
+  • Tests that fail to generate output: 1/85
+
+📊 OVERALL STATISTICS:
+  Total tests run: 85
+  ✅ Passing tests: 76
+  🚀 UHDM-only success: 5
+  ❌ Equivalence failures: 3
+  ❌ True failures: 1
+  💥 Crashes: 0
+
+🎯 Success Rate: 95% (81/85 tests functional)
+
+✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues
+
+All failing tests are documented in failing_tests.txt:
+  • Expected failures: 4
+  • Functional tests: 81/85
+
+The test suite passes because all results match expectations.
+
+==========================================
+=== TEST EXECUTION TIME SUMMARY ===
+==========================================
+
+Top 5 Longest Running Tests:
+-----------------------------
+  asym_ram_sdp_write_wider                 3.69 seconds
+  asym_ram_sdp_read_wider                  3.69 seconds
+  macc                                     0.94 seconds
+  wreduce_test1                            0.51 seconds
+  simple_interface                         0.44 seconds
+
+Total test execution time: 26.77 seconds

@@ -14,22 +14,25 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 84 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 95% (80/84 tests passing)
-- **Perfect Matches**: 75+ tests validated by formal equivalence checking
-- **UHDM-Only Success**: 5 tests that only work with UHDM frontend (not Verilog)
+- **Total Tests**: 85 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 95% (81/85 tests functional)
+- **Perfect Matches**: 76 tests with identical RTLIL output between UHDM and Verilog frontends
+- **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
+  - `custom_map_incomp` - Custom mapping features
+  - `nested_struct` - Complex nested structures
+  - `simple_instance_array` - Instance array support
+  - `simple_package` - Package support
+  - `unique_case` - Unique case statement support
 - **Known Failures**: 4 tests with issues:
-  - `carryadd` - UHDM output missing
+  - `carryadd` - UHDM output missing (true failure)
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
 - **Recent Fixes** (this session):
-  - `typedef_simple` - Fixed keep attribute import for typedef declarations ✅
-  - `enum_values` - Fixed enum constant resolution and variable width detection ✅
-  - `opt_share_add_sub` - Fixed add/sub operation width calculation ✅
-  - `dff_different_styles` - Fixed nested list handling in sensitivity lists ✅
-  - `dffsr` - Implemented full SR flip-flop support with multiple sync rules ✅
-  - `simple_abc9` - Added bounds checking for out-of-bounds bit/part selects ✅
+  - `asym_ram_sdp_read_wider` - Fixed array_net memory detection and dynamic indexing ✅
+  - Improved shift register detection to run before array_net processing ✅
+  - Fixed traversal depth in `has_only_constant_array_accesses` for proper dynamic access detection ✅
+  - Added support for vpiIf statement type in array access checking ✅
 
 ## Architecture & Workflow
 

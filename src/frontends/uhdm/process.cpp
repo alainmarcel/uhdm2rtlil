@@ -5098,6 +5098,287 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
     }
 }
 
+// Check if an array is accessed only with constant indices
+bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_name) {
+    if (!module) return false;
+    
+    // We need to scan all processes in the module to check array accesses
+    auto uhdm_module = current_instance;
+    if (!uhdm_module || !uhdm_module->Process()) {
+        return true;  // If no processes, assume constant access (will be unrolled)
+    }
+    
+    // Always log this for debugging array issues
+    log("UHDM: Checking array accesses for '%s' in %d processes\n", 
+        array_name.c_str(), (int)uhdm_module->Process()->size());
+    log("      Current instance: %p, Module: %p\n", current_instance, module);
+    
+    // Capture the module for lambda access
+    auto rtlil_module = module;
+    
+    // Helper lambda to check if an expression is a constant
+    std::function<bool(const UHDM::expr*)> is_constant_expr = [&, rtlil_module](const UHDM::expr* expr) -> bool {
+        if (!expr) return true;
+        
+        switch (expr->VpiType()) {
+            case vpiConstant:  // vpiIntConst has the same value
+            case vpiRealConst:
+            case vpiStringConst:
+            case vpiBinaryConst:
+            case vpiOctConst:
+            case vpiDecConst:
+            case vpiHexConst:
+                return true;
+            
+            case vpiRefObj: {
+                // Check if it's a parameter reference
+                auto ref = any_cast<const ref_obj*>(expr);
+                if (ref) {
+                    std::string ref_name = std::string(ref->VpiName());
+                    // Check if it's a parameter
+                    if (rtlil_module->parameter_default_values.count(RTLIL::escape_id(ref_name))) {
+                        return true;  // Parameters are constant
+                    }
+                }
+                return false;
+            }
+            
+            case vpiOperation: {
+                // Check if all operands are constant
+                auto op = any_cast<const operation*>(expr);
+                if (op && op->Operands()) {
+                    for (auto operand : *op->Operands()) {
+                        if (!is_constant_expr(any_cast<const UHDM::expr*>(operand))) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            }
+            
+            default:
+                return false;
+        }
+    };
+    
+    // Helper lambda to check array accesses in an expression
+    std::function<bool(const UHDM::any*, int)> check_array_access = [&](const UHDM::any* stmt, int cur_depth) -> bool {
+        if (!stmt) return true;
+        
+        // Debug: log statement type
+        if (cur_depth <= 5) {  // Only log first few levels to avoid spam
+            log("      [Depth %d] Checking statement type: %d\n", cur_depth, stmt->VpiType());
+        }
+        
+        switch (stmt->VpiType()) {
+            case vpiBitSelect: {
+                auto bit_sel = any_cast<const bit_select*>(stmt);
+                if (bit_sel && bit_sel->VpiParent()) {
+                    // Check if this is accessing our array
+                    std::string parent_name = std::string(bit_sel->VpiName());
+                    
+                    // Debug log to see all bit selects
+                    log("      Found bit_select with name='%s'\n", parent_name.c_str());
+                    
+                    // Sometimes the parent is the array reference
+                    if (bit_sel->VpiParent()->VpiType() == vpiRefObj) {
+                        auto ref = any_cast<const ref_obj*>(bit_sel->VpiParent());
+                        if (ref) {
+                            parent_name = std::string(ref->VpiName());
+                        }
+                    }
+                    
+                    if (mode_debug) {
+                        log("      Checking bit_select: parent_name='%s', array_name='%s'\n", 
+                            parent_name.c_str(), array_name.c_str());
+                    }
+                    
+                    if (parent_name == array_name) {
+                        // This is an access to our array - check if index is constant
+                        if (mode_debug) {
+                            log("      Found access to array %s\n", array_name.c_str());
+                        }
+                        if (!is_constant_expr(bit_sel->VpiIndex())) {
+                            if (mode_debug) {
+                                log("      Array %s has non-constant index access!\n", array_name.c_str());
+                            }
+                            return false;  // Non-constant access found
+                        } else {
+                            if (mode_debug) {
+                                log("      Array %s access with constant index\n", array_name.c_str());
+                            }
+                        }
+                    }
+                }
+                // Don't recursively check parent - we'll visit it through normal traversal
+                break;
+            }
+            
+            case vpiAssignment: {
+                auto assign = any_cast<const assignment*>(stmt);
+                if (assign) {
+                    // Check both LHS and RHS for array accesses
+                    // These might be bit_selects
+                    if (assign->Lhs()) {
+                        log("        Assignment LHS type: %d\n", assign->Lhs()->VpiType());
+                        if (!check_array_access(assign->Lhs(), cur_depth + 1)) return false;
+                    }
+                    if (assign->Rhs()) {
+                        log("        Assignment RHS type: %d\n", assign->Rhs()->VpiType());
+                        if (!check_array_access(assign->Rhs(), cur_depth + 1)) return false;
+                    }
+                }
+                break;
+            }
+            
+            case vpiBegin: {
+                auto begin = any_cast<const UHDM::begin*>(stmt);
+                if (begin && begin->Stmts()) {
+                    log("        Begin block has %d statements\n", (int)begin->Stmts()->size());
+                    for (auto sub_stmt : *begin->Stmts()) {
+                        log("        Begin sub-statement type: %d\n", sub_stmt->VpiType());
+                        if (!check_array_access(sub_stmt, cur_depth + 1)) return false;
+                    }
+                } else {
+                    log("        Begin block has no statements\n");
+                }
+                break;
+            }
+            
+            case vpiNamedBegin: {
+                auto named_begin = any_cast<const UHDM::named_begin*>(stmt);
+                if (named_begin && named_begin->Stmts()) {
+                    log("        Named begin block has %d statements\n", (int)named_begin->Stmts()->size());
+                    for (auto sub_stmt : *named_begin->Stmts()) {
+                        log("        Named begin sub-statement type: %d\n", sub_stmt->VpiType());
+                        if (!check_array_access(sub_stmt, cur_depth + 1)) return false;
+                    }
+                } else {
+                    log("        Named begin block has no statements\n");
+                }
+                break;
+            }
+            
+            case vpiIfElse: {
+                auto if_stmt = any_cast<const UHDM::if_else*>(stmt);
+                if (if_stmt) {
+                    if (!check_array_access(if_stmt->VpiCondition(), cur_depth + 1)) return false;
+                    if (if_stmt->VpiStmt()) {
+                        log("        IfElse statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
+                        if (!check_array_access(if_stmt->VpiStmt(), cur_depth + 1)) return false;
+                    }
+                    if (!check_array_access(if_stmt->VpiElseStmt(), cur_depth + 1)) return false;
+                }
+                break;
+            }
+            
+            case vpiIf: {
+                auto if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
+                if (if_stmt) {
+                    log("        Found if statement\n");
+                    if (!check_array_access(if_stmt->VpiCondition(), cur_depth + 1)) return false;
+                    if (if_stmt->VpiStmt()) {
+                        log("        If statement body type: %d\n", if_stmt->VpiStmt()->VpiType());
+                        if (!check_array_access(if_stmt->VpiStmt(), cur_depth + 1)) return false;
+                    } else {
+                        log("        If statement has no body\n");
+                    }
+                }
+                break;
+            }
+            
+            case vpiCase: {
+                auto case_stmt = any_cast<const UHDM::case_stmt*>(stmt);
+                if (case_stmt) {
+                    if (!check_array_access(case_stmt->VpiCondition(), cur_depth + 1)) return false;
+                    if (case_stmt->Case_items()) {
+                        for (auto item : *case_stmt->Case_items()) {
+                            if (!check_array_access(item, cur_depth + 1)) return false;
+                        }
+                    }
+                }
+                break;
+            }
+            
+            case vpiCaseItem: {
+                auto case_item = any_cast<const UHDM::case_item*>(stmt);
+                if (case_item) {
+                    if (!check_array_access(case_item->Stmt(), cur_depth + 1)) return false;
+                }
+                break;
+            }
+            
+            case vpiFor: {
+                auto for_s = any_cast<const UHDM::for_stmt*>(stmt);
+                if (for_s) {
+                    if (!check_array_access(for_s->VpiStmt(), cur_depth + 1)) return false;
+                }
+                break;
+            }
+            
+            case vpiEventControl: {
+                auto event_ctrl = any_cast<const event_control*>(stmt);
+                if (event_ctrl) {
+                    if (!check_array_access(event_ctrl->Stmt(), cur_depth + 1)) return false;
+                }
+                break;
+            }
+            
+            case vpiOperation: {
+                auto op = any_cast<const operation*>(stmt);
+                if (op && op->Operands()) {
+                    for (auto operand : *op->Operands()) {
+                        if (!check_array_access(any_cast<const UHDM::expr*>(operand), cur_depth + 1)) return false;
+                    }
+                }
+                break;
+            }
+            
+            case vpiRefObj: {
+                // Check if this reference involves array access
+                auto ref = any_cast<const ref_obj*>(stmt);
+                if (ref) {
+                    // Check if it has a bit select child
+                    if (ref->VpiType() == vpiBitSelect) {
+                        if (!check_array_access(ref, cur_depth + 1)) return false;
+                    }
+                }
+                break;
+            }
+        }
+        
+        return true;  // No non-constant access found
+    };
+    
+    // Check all processes in the module
+    int process_count = 0;
+    for (auto proc : *uhdm_module->Process()) {
+        log("      Process type: %d (vpiAlways=%d, vpiAlwaysComb=%d, vpiAlwaysFF=%d)\n",
+            proc->VpiType(), vpiAlways, vpiAlwaysComb, vpiAlwaysFF);
+        if (proc->VpiType() == vpiAlways || proc->VpiType() == vpiAlwaysComb || 
+            proc->VpiType() == vpiAlwaysFF || proc->VpiType() == vpiInitial) {
+            auto always_proc = any_cast<const process_stmt*>(proc);
+            if (always_proc && always_proc->Stmt()) {
+                process_count++;
+                log("    Checking process %d for array accesses\n", process_count);
+                if (!check_array_access(always_proc->Stmt(), 1)) {
+                    if (mode_debug) {
+                        log("    Found non-constant access in process %d\n", process_count);
+                    }
+                    return false;  // Found non-constant access
+                }
+            }
+        }
+    }
+    
+    if (mode_debug) {
+        log("    Array %s has only constant index accesses\n", array_name.c_str());
+    }
+    
+    return true;  // All accesses are constant
+}
+
 // TARGETED FIX: Check if a single net is a memory array (has both packed and unpacked dimensions)
 bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     if (!uhdm_net) return false;

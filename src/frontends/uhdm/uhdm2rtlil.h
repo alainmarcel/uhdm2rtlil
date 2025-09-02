@@ -252,6 +252,7 @@ struct UhdmImporter {
     bool is_memory_array(const UHDM::net* uhdm_net);
     bool is_memory_array(const UHDM::array_net* uhdm_array);
     bool is_memory_array(const UHDM::array_var* uhdm_array);
+    bool has_only_constant_array_accesses(const std::string& array_name);
     void process_reset_block_for_memory(const UHDM::any* reset_stmt, RTLIL::CaseRule* reset_case);
     
     // Statement import for different contexts
