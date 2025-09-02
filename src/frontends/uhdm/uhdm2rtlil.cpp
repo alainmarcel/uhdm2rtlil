@@ -1119,57 +1119,67 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 std::string array_name = std::string(array_var->VpiName());
                 log("UHDM: Found array_var: '%s'\n", array_name.c_str());
                 
-                // Determine array size
-                int array_size = 1;
-                if (array_var->Ranges() && !array_var->Ranges()->empty()) {
-                    auto range = (*array_var->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
-                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            int left = left_spec.as_const().as_int();
-                            int right = right_spec.as_const().as_int();
-                            array_size = abs(left - right) + 1;
-                        }
-                    }
-                }
-                
                 // Check if it should be imported as memory
-                // For small arrays (<=16 elements), create individual registers instead of memory
-                // This handles cases like reg [3:0] w[3:0] which should be 4 separate registers
-                if (is_memory_array(array_var) && array_size > 16) {
-                    log("UHDM: Array_var '%s' detected as memory array (size=%d)\n", array_name.c_str(), array_size);
+                // An array should be a memory if:
+                // 1. It has both packed and unpacked dimensions (checked by is_memory_array), AND
+                // 2. It has at least one non-constant array access
+                log("UHDM: Checking if array_var '%s' should be memory...\n", array_name.c_str());
+                bool is_mem = is_memory_array(array_var);
+                log("UHDM: is_memory_array returned %s for '%s'\n", is_mem ? "true" : "false", array_name.c_str());
+                bool has_const_only = true;
+                if (is_mem) {
+                    log("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
+                    has_const_only = has_only_constant_array_accesses(array_name);
+                    log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", has_const_only ? "true" : "false", array_name.c_str());
+                }
+                bool should_be_memory = is_mem && !has_const_only;
+                
+                if (should_be_memory) {
+                    log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array_var);
                 } else if (is_memory_array(array_var)) {
-                    // Small array with packed dimensions - create individual registers
-                    log("UHDM: Array_var '%s' is small (size=%d), creating individual registers\n", array_name.c_str(), array_size);
+                    // Has both packed and unpacked dimensions but only constant accesses - create individual registers
+                    log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
                     
-                    // Get the width of each element
-                    int element_width = 1;
-                    if (array_var->Variables() && !array_var->Variables()->empty()) {
-                        auto first_var = array_var->Variables()->at(0);
-                        element_width = get_width(first_var, uhdm_module);
-                    }
-                    
-                    // Create individual wires for each array element
-                    int start_idx = 0;
-                    if (array_var->Ranges() && !array_var->Ranges()->empty()) {
-                        auto range = (*array_var->Ranges())[0];
-                        if (range->Right_expr()) {
-                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                            if (right_spec.is_fully_const()) {
-                                start_idx = right_spec.as_const().as_int();
+                    // Get the array dimensions
+                    auto ranges = array_var->Ranges();
+                    if (ranges && !ranges->empty()) {
+                        // Get the first unpacked dimension (array size)
+                        auto first_range = (*ranges)[0];
+                        int array_size = 4;  // Default
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            // Get constants from expressions
+                            if (first_range->Left_expr()->VpiType() == vpiConstant &&
+                                first_range->Right_expr()->VpiType() == vpiConstant) {
+                                const constant* left_const = any_cast<const constant*>(first_range->Left_expr());
+                                const constant* right_const = any_cast<const constant*>(first_range->Right_expr());
+                                // Get the integer values using helper function
+                                std::string left_str(left_const->VpiValue());
+                                std::string right_str(right_const->VpiValue());
+                                RTLIL::Const left_const_val = extract_const_from_value(left_str);
+                                RTLIL::Const right_const_val = extract_const_from_value(right_str);
+                                int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;
+                                int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
+                                array_size = std::abs(left - right) + 1;
                             }
                         }
-                    }
-                    
-                    for (int i = 0; i < array_size; i++) {
-                        std::string element_name = array_name + "[" + std::to_string(start_idx + i) + "]";
-                        RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
-                        if (!module->wire(wire_id)) {
-                            RTLIL::Wire* wire = module->addWire(wire_id, element_width);
-                            add_src_attribute(wire->attributes, var);
-                            log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                        
+                        // Get the packed width from the underlying variable
+                        int element_width = 1;
+                        if (array_var->Variables() && !array_var->Variables()->empty()) {
+                            element_width = get_width(array_var->Variables()->at(0), uhdm_module);
+                        }
+                        
+                        // Create individual wires for each array element
+                        for (int i = 0; i < array_size; i++) {
+                            std::string element_name = array_name + "[" + std::to_string(i) + "]";
+                            RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                            if (!module->wire(wire_id)) {
+                                RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                                add_src_attribute(wire->attributes, array_var);
+                                name_map[element_name] = wire;
+                                log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                            }
                         }
                     }
                 } else {
@@ -1425,7 +1435,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     }
     
     // Pre-scan processes to detect shift registers
-    // This must be done BEFORE creating memories
+    // This must be done BEFORE creating memories or importing array_nets
     std::set<std::string> shift_register_arrays;
     if (uhdm_module->Process()) {
         log("UHDM: Pre-scanning %zu processes for shift registers\n", uhdm_module->Process()->size());
@@ -1481,11 +1491,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Now import array_nets, but skip memory creation for shift registers
     if (uhdm_module->Array_nets()) {
+        log("UHDM: Found %d array_nets to import\n", (int)uhdm_module->Array_nets()->size());
         for (auto array : *uhdm_module->Array_nets()) {
             std::string array_name = std::string(array->VpiName());
-            log("UHDM: About to import array net: '%s'\n", array_name.c_str());
+            log("UHDM: Found array_net: '%s'\n", array_name.c_str());
             
-            // Check if this is a shift register
+            // Check if this is a shift register first
             if (shift_register_arrays.count(array_name)) {
                 log("UHDM: Array net '%s' is a shift register, creating individual wires\n", array_name.c_str());
                 // Create individual wires for the shift register array
@@ -1531,56 +1542,60 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     log("UHDM:   Created wire %s (width=%d)\n", wire_name.c_str(), element_width);
                 }
             } else if (is_memory_array(array)) {
-                // Get array size to decide if we should create memory or individual registers
-                int array_size = 4; // Default
-                if (array->Ranges() && !array->Ranges()->empty()) {
-                    auto range = (*array->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
-                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            int left = left_spec.as_const().as_int();
-                            int right = right_spec.as_const().as_int();
-                            array_size = abs(left - right) + 1;
-                        }
-                    }
-                }
+                // Check if it should be imported as memory
+                // An array should be a memory if:
+                // 1. It has both packed and unpacked dimensions (checked by is_memory_array), AND
+                // 2. It has at least one non-constant array access
+                log("UHDM: is_memory_array returned true for '%s'\n", array_name.c_str());
+                log("UHDM: Checking access patterns for '%s'...\n", array_name.c_str());
+                bool has_const_only = has_only_constant_array_accesses(array_name);
+                log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", 
+                    has_const_only ? "true" : "false", array_name.c_str());
+                bool should_be_memory = !has_const_only;
                 
-                // For small arrays (<=16 elements), create individual registers instead of memory
-                // This handles cases like reg [3:0] w[3:0] which should be 4 separate registers
-                if (array_size > 16) {
-                    log("UHDM: Array net '%s' detected as memory array (size=%d)\n", array_name.c_str(), array_size);
+                if (should_be_memory) {
+                    log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array);
                 } else {
-                    // Small array with packed dimensions - create individual registers
-                    log("UHDM: Array net '%s' is small (size=%d), creating individual registers\n", array_name.c_str(), array_size);
+                    // Has both packed and unpacked dimensions but only constant accesses - create individual registers
+                    log("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
                     
-                    // Get the width of each element
-                    int element_width = 1;
-                    if (array->Nets() && !array->Nets()->empty()) {
-                        auto first_net = array->Nets()->at(0);
-                        element_width = get_width(first_net, uhdm_module);
-                    }
-                    
-                    // Get start index
-                    int start_idx = 0;
+                    // Get the array dimensions
+                    int array_size = 4; // Default for cases like M[3:0]
                     if (array->Ranges() && !array->Ranges()->empty()) {
-                        auto range = (*array->Ranges())[0];
-                        if (range->Right_expr()) {
-                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                            if (right_spec.is_fully_const()) {
-                                start_idx = right_spec.as_const().as_int();
+                        auto first_range = (*array->Ranges())[0];
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            // Get constants from expressions
+                            if (first_range->Left_expr()->VpiType() == vpiConstant &&
+                                first_range->Right_expr()->VpiType() == vpiConstant) {
+                                const constant* left_const = any_cast<const constant*>(first_range->Left_expr());
+                                const constant* right_const = any_cast<const constant*>(first_range->Right_expr());
+                                // Get the integer values using helper function
+                                std::string left_str(left_const->VpiValue());
+                                std::string right_str(right_const->VpiValue());
+                                RTLIL::Const left_const_val = extract_const_from_value(left_str);
+                                RTLIL::Const right_const_val = extract_const_from_value(right_str);
+                                int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;
+                                int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
+                                array_size = std::abs(left - right) + 1;
                             }
                         }
                     }
                     
+                    // Get the packed width from the underlying net
+                    int element_width = 1;
+                    if (array->Nets() && !array->Nets()->empty()) {
+                        element_width = get_width((*array->Nets())[0], uhdm_module);
+                    }
+                    
                     // Create individual wires for each array element
                     for (int i = 0; i < array_size; i++) {
-                        std::string element_name = array_name + "[" + std::to_string(start_idx + i) + "]";
+                        std::string element_name = array_name + "[" + std::to_string(i) + "]";
                         RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
                         if (!module->wire(wire_id)) {
                             RTLIL::Wire* wire = module->addWire(wire_id, element_width);
                             add_src_attribute(wire->attributes, array);
+                            name_map[element_name] = wire;
                             log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
                         }
                     }
@@ -1591,6 +1606,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // TODO: Import as array of individual wires if needed
             }
         }
+        log("UHDM: Finished importing all array_nets\n");
     }
     
     // Import interface instances
