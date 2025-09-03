@@ -7,16 +7,16 @@ module \top
   wire $auto$opt_dff.cc:247:make_patterns_logic$66
   wire $auto$opt_dff.cc:247:make_patterns_logic$69
   wire $auto$opt_dff.cc:306:combine_resets$62
-  wire $auto$process.cpp:33:create_temp_wire$1
-  wire $auto$process.cpp:33:create_temp_wire$11
-  wire $auto$process.cpp:33:create_temp_wire$13
-  wire $auto$process.cpp:33:create_temp_wire$21
-  wire $auto$process.cpp:33:create_temp_wire$25
-  wire $auto$process.cpp:33:create_temp_wire$27
-  wire $auto$process.cpp:33:create_temp_wire$31
-  wire $auto$process.cpp:33:create_temp_wire$33
-  wire $auto$process.cpp:33:create_temp_wire$5
-  wire $auto$process.cpp:33:create_temp_wire$7
+  wire $auto$process.cpp:34:create_temp_wire$1
+  wire $auto$process.cpp:34:create_temp_wire$11
+  wire $auto$process.cpp:34:create_temp_wire$13
+  wire $auto$process.cpp:34:create_temp_wire$21
+  wire $auto$process.cpp:34:create_temp_wire$25
+  wire $auto$process.cpp:34:create_temp_wire$27
+  wire $auto$process.cpp:34:create_temp_wire$31
+  wire $auto$process.cpp:34:create_temp_wire$33
+  wire $auto$process.cpp:34:create_temp_wire$5
+  wire $auto$process.cpp:34:create_temp_wire$7
   wire $auto$rtlil.cc:2959:Not$61
   wire width 32 $auto$rtlil.cc:3094:Mux$10
   attribute \unused_bits "2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
@@ -43,8 +43,8 @@ module \top
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$5
-    connect \B $auto$process.cpp:33:create_temp_wire$25
+    connect \A $auto$process.cpp:34:create_temp_wire$5
+    connect \B $auto$process.cpp:34:create_temp_wire$25
     connect \Y \z
   end
   cell $eq $auto$expression.cpp:666:import_operation$41
@@ -55,14 +55,14 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \wide_state [1:0]
     connect \B 2'01
-    connect \Y $auto$process.cpp:33:create_temp_wire$5
+    connect \Y $auto$process.cpp:34:create_temp_wire$5
   end
   cell $logic_not $auto$expression.cpp:666:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \Y $auto$process.cpp:33:create_temp_wire$25
+    connect \Y $auto$process.cpp:34:create_temp_wire$25
   end
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-20.8"
@@ -76,7 +76,7 @@ module \top
     connect \D $auto$rtlil.cc:3094:Mux$16 [1:0]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$56
     connect \Q \wide_state [1:0]
-    connect \SRST $auto$process.cpp:33:create_temp_wire$13
+    connect \SRST $auto$process.cpp:34:create_temp_wire$13
   end
   attribute \always_ff 1
   attribute \src "dut.sv:26.5-33.8"
@@ -90,7 +90,7 @@ module \top
     connect \D $auto$rtlil.cc:3094:Mux$36 [0]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$66
     connect \Q \state [0]
-    connect \SRST $auto$process.cpp:33:create_temp_wire$33
+    connect \SRST $auto$process.cpp:34:create_temp_wire$33
   end
   attribute \always_ff 1
   attribute \src "dut.sv:26.5-33.8"
@@ -110,39 +110,39 @@ module \top
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:33:create_temp_wire$5 $auto$process.cpp:33:create_temp_wire$11 $auto$process.cpp:33:create_temp_wire$1 }
+    connect \A { $auto$process.cpp:34:create_temp_wire$5 $auto$process.cpp:34:create_temp_wire$11 $auto$process.cpp:34:create_temp_wire$1 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$56
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:33:create_temp_wire$25 $auto$process.cpp:33:create_temp_wire$31 $auto$process.cpp:33:create_temp_wire$21 }
+    connect \A { $auto$process.cpp:34:create_temp_wire$25 $auto$process.cpp:34:create_temp_wire$31 $auto$process.cpp:34:create_temp_wire$21 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$66
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$70
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:33:create_temp_wire$25 $auto$process.cpp:33:create_temp_wire$21 }
+    connect \A { $auto$process.cpp:34:create_temp_wire$25 $auto$process.cpp:34:create_temp_wire$21 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$69
   end
   cell $not $auto$opt_dff.cc:303:combine_resets$60
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$33
+    connect \A $auto$process.cpp:34:create_temp_wire$33
     connect \Y $auto$rtlil.cc:2959:Not$61
   end
   cell $reduce_or $auto$opt_dff.cc:307:combine_resets$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:2959:Not$61 $auto$process.cpp:33:create_temp_wire$31 }
+    connect \A { $auto$rtlil.cc:2959:Not$61 $auto$process.cpp:34:create_temp_wire$31 }
     connect \Y $auto$opt_dff.cc:306:combine_resets$62
   end
   attribute \src "dut.sv:17.13-17.34"
-  cell $eq $auto$process.cpp:39:create_eq_cell$12
+  cell $eq $auto$process.cpp:40:create_eq_cell$12
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -150,18 +150,18 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \wide_state [1:0]
     connect \B 2'10
-    connect \Y $auto$process.cpp:33:create_temp_wire$11
+    connect \Y $auto$process.cpp:34:create_temp_wire$11
   end
   attribute \src "dut.sv:15.13-15.34"
-  cell $logic_not $auto$process.cpp:39:create_eq_cell$2
+  cell $logic_not $auto$process.cpp:40:create_eq_cell$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A { 30'000000000000000000000000000000 \wide_state [1:0] }
-    connect \Y $auto$process.cpp:33:create_temp_wire$1
+    connect \Y $auto$process.cpp:34:create_temp_wire$1
   end
   attribute \src "dut.sv:28.13-28.27"
-  cell $eq $auto$process.cpp:39:create_eq_cell$22
+  cell $eq $auto$process.cpp:40:create_eq_cell$22
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -169,10 +169,10 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'11
-    connect \Y $auto$process.cpp:33:create_temp_wire$21
+    connect \Y $auto$process.cpp:34:create_temp_wire$21
   end
   attribute \src "dut.sv:30.13-30.27"
-  cell $eq $auto$process.cpp:39:create_eq_cell$32
+  cell $eq $auto$process.cpp:40:create_eq_cell$32
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -180,89 +180,89 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'01
-    connect \Y $auto$process.cpp:33:create_temp_wire$31
+    connect \Y $auto$process.cpp:34:create_temp_wire$31
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$15
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$15
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$10
     connect \B 3
-    connect \S $auto$process.cpp:33:create_temp_wire$11
+    connect \S $auto$process.cpp:34:create_temp_wire$11
     connect \Y $auto$rtlil.cc:3094:Mux$16
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$23
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$23
     parameter \WIDTH 2
     connect \A 2'x
     connect \B 2'00
-    connect \S $auto$process.cpp:33:create_temp_wire$21
+    connect \S $auto$process.cpp:34:create_temp_wire$21
     connect \Y $auto$rtlil.cc:3094:Mux$24
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$29
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$29
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$24
     connect \B 2'01
-    connect \S $auto$process.cpp:33:create_temp_wire$25
+    connect \S $auto$process.cpp:34:create_temp_wire$25
     connect \Y $auto$rtlil.cc:3094:Mux$30
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$3
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$3
     parameter \WIDTH 32
     connect \A 32'000000000000000000000000000000xx
     connect \B 1
-    connect \S $auto$process.cpp:33:create_temp_wire$1
+    connect \S $auto$process.cpp:34:create_temp_wire$1
     connect \Y $auto$rtlil.cc:3094:Mux$4
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$35
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$35
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$30
     connect \B 2'10
-    connect \S $auto$process.cpp:33:create_temp_wire$31
+    connect \S $auto$process.cpp:34:create_temp_wire$31
     connect \Y $auto$rtlil.cc:3094:Mux$36
   end
-  cell $mux $auto$process.cpp:4053:import_assignment_sync$9
+  cell $mux $auto$process.cpp:4241:import_assignment_sync$9
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$4
     connect \B 2
-    connect \S $auto$process.cpp:33:create_temp_wire$5
+    connect \S $auto$process.cpp:34:create_temp_wire$5
     connect \Y $auto$rtlil.cc:3094:Mux$10
   end
-  cell $or $auto$process.cpp:55:create_or_cell$14
+  cell $or $auto$process.cpp:56:create_or_cell$14
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$7
-    connect \B $auto$process.cpp:33:create_temp_wire$11
-    connect \Y $auto$process.cpp:33:create_temp_wire$13
+    connect \A $auto$process.cpp:34:create_temp_wire$7
+    connect \B $auto$process.cpp:34:create_temp_wire$11
+    connect \Y $auto$process.cpp:34:create_temp_wire$13
   end
-  cell $or $auto$process.cpp:55:create_or_cell$28
+  cell $or $auto$process.cpp:56:create_or_cell$28
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$21
-    connect \B $auto$process.cpp:33:create_temp_wire$25
-    connect \Y $auto$process.cpp:33:create_temp_wire$27
+    connect \A $auto$process.cpp:34:create_temp_wire$21
+    connect \B $auto$process.cpp:34:create_temp_wire$25
+    connect \Y $auto$process.cpp:34:create_temp_wire$27
   end
-  cell $or $auto$process.cpp:55:create_or_cell$34
+  cell $or $auto$process.cpp:56:create_or_cell$34
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$27
-    connect \B $auto$process.cpp:33:create_temp_wire$31
-    connect \Y $auto$process.cpp:33:create_temp_wire$33
+    connect \A $auto$process.cpp:34:create_temp_wire$27
+    connect \B $auto$process.cpp:34:create_temp_wire$31
+    connect \Y $auto$process.cpp:34:create_temp_wire$33
   end
-  cell $or $auto$process.cpp:55:create_or_cell$8
+  cell $or $auto$process.cpp:56:create_or_cell$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:33:create_temp_wire$1
-    connect \B $auto$process.cpp:33:create_temp_wire$5
-    connect \Y $auto$process.cpp:33:create_temp_wire$7
+    connect \A $auto$process.cpp:34:create_temp_wire$1
+    connect \B $auto$process.cpp:34:create_temp_wire$5
+    connect \Y $auto$process.cpp:34:create_temp_wire$7
   end
   connect \wide_state [31:2] 30'000000000000000000000000000000
 end

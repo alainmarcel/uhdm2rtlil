@@ -225,6 +225,15 @@ struct UhdmImporter {
                                                  const std::string& loop_var_name,
                                                  int64_t loop_index);
     
+    // Statement interpreter for initial blocks
+    void interpret_statement(const UHDM::any* stmt, std::map<std::string, int64_t>& variables,
+                            std::map<std::string, std::vector<int64_t>>& arrays,
+                            bool& break_flag, bool& continue_flag);
+    
+    // Expression evaluator for interpreter
+    int64_t evaluate_expression(const UHDM::any* expr, std::map<std::string, int64_t>& variables,
+                               std::map<std::string, std::vector<int64_t>>& arrays);
+    
     // Statement handling
     void import_statement(const UHDM::any* uhdm_stmt, RTLIL::Process* proc = nullptr);
     void import_assignment(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
