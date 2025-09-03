@@ -28,7 +28,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
-- **Recent Fixes** (this session):
+- **Recent Fixes**:
+  - `forgen01` - Fixed nested for loops in initial blocks using interpreter ✅
+    - Added support for both ref_obj and ref_var in assignment statements
+    - Generalized interpreter usage for any complex initialization patterns
+    - Dynamic array detection and size determination
   - `asym_ram_sdp_read_wider` - Fixed array_net memory detection and dynamic indexing ✅
   - Improved shift register detection to run before array_net processing ✅
   - Fixed traversal depth in `has_only_constant_array_accesses` for proper dynamic access detection ✅

@@ -1,0 +1,406 @@
+/*
+ * Statement interpreter for UHDM initial blocks
+ * 
+ * This interpreter executes SystemVerilog statements at compile time
+ * to handle complex initialization patterns like those in forgen01.v
+ */
+
+#include "uhdm2rtlil.h"
+#include <uhdm/uhdm.h>
+#include <limits>
+
+YOSYS_NAMESPACE_BEGIN
+
+using namespace UHDM;
+
+// Evaluate an expression to an integer value
+int64_t UhdmImporter::evaluate_expression(const any* expr, 
+                                         std::map<std::string, int64_t>& variables,
+                                         std::map<std::string, std::vector<int64_t>>& arrays) {
+    if (!expr) return 0;
+    
+    int expr_type = expr->UhdmType();
+    
+    switch (expr_type) {
+        case uhdmconstant: {
+            const constant* c = any_cast<const constant*>(expr);
+            RTLIL::SigSpec val = import_constant(c);
+            if (val.is_fully_const()) {
+                return val.as_const().as_int();
+            }
+            return 0;
+        }
+        
+        case uhdmref_obj: {
+            const ref_obj* ref = any_cast<const ref_obj*>(expr);
+            std::string name = std::string(ref->VpiName());
+            
+            auto it = variables.find(name);
+            if (it != variables.end()) {
+                return it->second;
+            }
+            
+            log_warning("Unknown variable '%s' in expression\n", name.c_str());
+            return 0;
+        }
+        
+        case uhdmoperation: {
+            const operation* op = any_cast<const operation*>(expr);
+            int op_type = op->VpiOpType();
+            
+            if (!op->Operands() || op->Operands()->empty()) {
+                return 0;
+            }
+            
+            const VectorOfany& operands = *op->Operands();
+            
+            switch (op_type) {
+                case vpiAddOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a + b;
+                    }
+                    break;
+                }
+                
+                case vpiSubOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a - b;
+                    }
+                    break;
+                }
+                
+                case vpiMultOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a * b;
+                    }
+                    break;
+                }
+                
+                case vpiDivOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        if (b != 0) {
+                            return a / b;
+                        }
+                    }
+                    break;
+                }
+                
+                case vpiModOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        if (b != 0) {
+                            return a % b;
+                        }
+                    }
+                    break;
+                }
+                
+                case vpiEqOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a == b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiNeqOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a != b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiLtOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a < b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiLeOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a <= b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiGtOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a > b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiGeOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a >= b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiLogAndOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a && b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiLogOrOp: {
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return (a || b) ? 1 : 0;
+                    }
+                    break;
+                }
+                
+                case vpiPostIncOp: { // Post-increment operator
+                    if (operands.size() >= 1) {
+                        if (operands[0]->UhdmType() == uhdmref_obj) {
+                            const ref_obj* ref = any_cast<const ref_obj*>(operands[0]);
+                            std::string name = std::string(ref->VpiName());
+                            int64_t old_val = variables[name];
+                            variables[name] = old_val + 1;
+                            return old_val;
+                        }
+                    }
+                    break;
+                }
+                
+                default:
+                    log_warning("Unsupported operation type %d in expression evaluation\n", op_type);
+                    break;
+            }
+            break;
+        }
+        
+        case uhdmbit_select: {
+            const bit_select* bs = any_cast<const bit_select*>(expr);
+            std::string array_name = std::string(bs->VpiName());
+            
+            if (bs->VpiIndex()) {
+                int64_t index = evaluate_expression(bs->VpiIndex(), variables, arrays);
+                
+                auto it = arrays.find(array_name);
+                if (it != arrays.end()) {
+                    if (index >= 0 && index < (int64_t)it->second.size()) {
+                        return it->second[index];
+                    }
+                }
+            }
+            break;
+        }
+        
+        default:
+            log_warning("Unsupported expression type %d\n", expr_type);
+            break;
+    }
+    
+    return 0;
+}
+
+// Interpret a statement
+void UhdmImporter::interpret_statement(const any* stmt,
+                                      std::map<std::string, int64_t>& variables,
+                                      std::map<std::string, std::vector<int64_t>>& arrays,
+                                      bool& break_flag, bool& continue_flag) {
+    if (!stmt) return;
+    
+    int stmt_type = stmt->UhdmType();
+    
+    switch (stmt_type) {
+        case uhdmassignment: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            
+            if (assign->Lhs() && assign->Rhs()) {
+                int64_t rhs_value = evaluate_expression(assign->Rhs(), variables, arrays);
+                
+                // Handle LHS
+                if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                    const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                    std::string name = std::string(ref->VpiName());
+                    variables[name] = rhs_value;
+                    
+                    if (mode_debug) {
+                        log("        Assign: %s = %lld\n", name.c_str(), (long long)rhs_value);
+                    }
+                } else if (assign->Lhs()->UhdmType() == uhdmref_var) {
+                    const ref_var* ref = any_cast<const ref_var*>(assign->Lhs());
+                    std::string name = std::string(ref->VpiName());
+                    variables[name] = rhs_value;
+                    
+                    if (mode_debug) {
+                        log("        Assign: %s = %lld\n", name.c_str(), (long long)rhs_value);
+                    }
+                } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
+                    const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                    std::string array_name = std::string(bs->VpiName());
+                    
+                    if (bs->VpiIndex()) {
+                        int64_t index = evaluate_expression(bs->VpiIndex(), variables, arrays);
+                        
+                        // Ensure array exists and is large enough
+                        if (arrays[array_name].size() <= (size_t)index) {
+                            arrays[array_name].resize(index + 1, 0);
+                        }
+                        
+                        arrays[array_name][index] = rhs_value;
+                        
+                        if (mode_debug) {
+                            log("        Assign: %s[%lld] = %lld\n", 
+                                array_name.c_str(), (long long)index, (long long)rhs_value);
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        
+        case uhdmbegin: {
+            const begin* begin_block = any_cast<const begin*>(stmt);
+            if (begin_block->Stmts()) {
+                for (auto sub_stmt : *begin_block->Stmts()) {
+                    interpret_statement(sub_stmt, variables, arrays, break_flag, continue_flag);
+                    if (break_flag || continue_flag) return;
+                }
+            }
+            break;
+        }
+        
+        case uhdmnamed_begin: {
+            const named_begin* named_block = any_cast<const named_begin*>(stmt);
+            if (named_block->Stmts()) {
+                for (auto sub_stmt : *named_block->Stmts()) {
+                    interpret_statement(sub_stmt, variables, arrays, break_flag, continue_flag);
+                    if (break_flag || continue_flag) return;
+                }
+            }
+            break;
+        }
+        
+        case uhdmif_stmt: {
+            const if_stmt* if_s = any_cast<const if_stmt*>(stmt);
+            if (if_s->VpiCondition()) {
+                int64_t cond_value = evaluate_expression(if_s->VpiCondition(), variables, arrays);
+                if (cond_value != 0) {
+                    if (if_s->VpiStmt()) {
+                        interpret_statement(if_s->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                    }
+                }
+            }
+            break;
+        }
+        
+        case uhdmif_else: {
+            const if_else* if_else_s = any_cast<const if_else*>(stmt);
+            if (if_else_s->VpiCondition()) {
+                int64_t cond_value = evaluate_expression(if_else_s->VpiCondition(), variables, arrays);
+                if (cond_value != 0) {
+                    if (if_else_s->VpiStmt()) {
+                        interpret_statement(if_else_s->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                    }
+                } else {
+                    if (if_else_s->VpiElseStmt()) {
+                        interpret_statement(if_else_s->VpiElseStmt(), variables, arrays, break_flag, continue_flag);
+                    }
+                }
+            }
+            break;
+        }
+        
+        case uhdmfor_stmt: {
+            const for_stmt* for_s = any_cast<const for_stmt*>(stmt);
+            
+            // Execute init statement(s)
+            if (for_s->VpiForInitStmt()) {
+                interpret_statement(for_s->VpiForInitStmt(), variables, arrays, break_flag, continue_flag);
+            }
+            if (for_s->VpiForInitStmts()) {
+                for (auto init_stmt : *for_s->VpiForInitStmts()) {
+                    interpret_statement(init_stmt, variables, arrays, break_flag, continue_flag);
+                }
+            }
+            
+            // Execute loop
+            int iteration_count = 0;
+            const int MAX_ITERATIONS = 100000; // Safety limit
+            
+            while (iteration_count < MAX_ITERATIONS) {
+                // Check condition
+                if (for_s->VpiCondition()) {
+                    int64_t cond_value = evaluate_expression(for_s->VpiCondition(), variables, arrays);
+                    if (cond_value == 0) {
+                        break;
+                    }
+                }
+                
+                // Execute body
+                if (for_s->VpiStmt()) {
+                    interpret_statement(for_s->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                }
+                
+                if (break_flag) {
+                    break_flag = false;
+                    break;
+                }
+                
+                if (continue_flag) {
+                    continue_flag = false;
+                }
+                
+                // Execute increment statement(s)
+                if (for_s->VpiForIncStmt()) {
+                    interpret_statement(for_s->VpiForIncStmt(), variables, arrays, break_flag, continue_flag);
+                }
+                if (for_s->VpiForIncStmts()) {
+                    for (auto inc_stmt : *for_s->VpiForIncStmts()) {
+                        interpret_statement(inc_stmt, variables, arrays, break_flag, continue_flag);
+                    }
+                }
+                
+                iteration_count++;
+            }
+            
+            if (iteration_count >= MAX_ITERATIONS) {
+                log_warning("For loop exceeded maximum iterations (%d)\n", MAX_ITERATIONS);
+            }
+            break;
+        }
+        
+        case uhdmoperation: {
+            // Handle operations that are statements (like i++)
+            evaluate_expression(stmt, variables, arrays);
+            break;
+        }
+        
+        default:
+            if (mode_debug) {
+                log("        Unsupported statement type %d\n", stmt_type);
+            }
+            break;
+    }
+}
+
+YOSYS_NAMESPACE_END
