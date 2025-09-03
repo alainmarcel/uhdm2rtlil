@@ -12,7 +12,7 @@ module \uut_forgen01
   attribute \src "dut.sv:3.24-3.25"
   wire output 2 \y
   attribute \src "dut.sv:20.16-20.17"
-  cell $shiftx $auto$expression.cpp:1350:import_bit_select$2
+  cell $shiftx $auto$expression.cpp:1365:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0

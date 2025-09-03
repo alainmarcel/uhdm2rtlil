@@ -518,8 +518,29 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
             is_net_decl_assign);
     }
     
+    // Log the current generate scope before importing expressions
+    std::string current_gen_scope = get_current_gen_scope();
+    if (!current_gen_scope.empty()) {
+        log("    Importing cont_assign in generate scope: %s\n", current_gen_scope.c_str());
+    }
+    
     RTLIL::SigSpec lhs = import_expression(lhs_expr);
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
+    
+    // Debug: Check for empty signals
+    if (lhs.size() == 0) {
+        log_warning("Empty LHS in continuous assignment (generate scope: %s)\n", current_gen_scope.c_str());
+        if (lhs_expr) {
+            log_warning("  LHS expr type: %s (VpiType=%d)\n", 
+                UHDM::UhdmName(lhs_expr->UhdmType()).c_str(), lhs_expr->VpiType());
+        }
+    }
+    if (rhs.size() == 0) {
+        log_warning("Empty RHS in continuous assignment (generate scope: %s)\n", current_gen_scope.c_str());
+        if (rhs_expr) {
+            log_warning("  RHS expr type: %s\n", UHDM::UhdmName(rhs_expr->UhdmType()).c_str());
+        }
+    }
     
     // Handle size mismatch
     if (lhs.size() != rhs.size()) {

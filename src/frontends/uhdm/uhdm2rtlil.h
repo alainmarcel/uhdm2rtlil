@@ -213,6 +213,9 @@ struct UhdmImporter {
     RTLIL::Wire* get_wire(const UHDM::any* uhdm_obj, int width = 1);
     RTLIL::Wire* create_wire(const std::string& name, int width = 1, bool upto = false, int start_offset = 0);
     
+    // Helper function to find wire in hierarchical generate scopes
+    RTLIL::Wire* find_wire_in_scope(const std::string& signal_name, const std::string& context_for_log = "");
+    
     // Expression handling
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr);
     RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
