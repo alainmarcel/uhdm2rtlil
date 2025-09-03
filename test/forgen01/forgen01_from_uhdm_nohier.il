@@ -3,7 +3,7 @@ autoidx 3
 attribute \src "dut.sv:3.1-22.10"
 attribute \cells_not_processed 1
 module \uut_forgen01
-  wire $auto$expression.cpp:1347:import_bit_select$1
+  wire $auto$expression.cpp:1362:import_bit_select$1
   attribute \src "dut.sv:3.21-3.22"
   wire width 5 input 1 \a
   attribute \src "dut.sv:8.9-8.10"
@@ -16,7 +16,7 @@ module \uut_forgen01
   attribute \src "dut.sv:3.24-3.25"
   wire output 2 \y
   attribute \src "dut.sv:20.16-20.17"
-  cell $shiftx $auto$expression.cpp:1350:import_bit_select$2
+  cell $shiftx $auto$expression.cpp:1365:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -24,7 +24,7 @@ module \uut_forgen01
     parameter \Y_WIDTH 1
     connect \A \lut
     connect \B \a
-    connect \Y $auto$expression.cpp:1347:import_bit_select$1
+    connect \Y $auto$expression.cpp:1362:import_bit_select$1
   end
   attribute \src "dut.sv:11.1-18.4"
   process $proc$dut.sv:11$1
@@ -63,5 +63,5 @@ module \uut_forgen01
       update \lut [30] 1'0
       update \lut [31] 1'1
   end
-  connect \y $auto$expression.cpp:1347:import_bit_select$1
+  connect \y $auto$expression.cpp:1362:import_bit_select$1
 end

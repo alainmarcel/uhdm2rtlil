@@ -844,6 +844,59 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     return RTLIL::SigSpec();
 }
 
+// Helper function to find wire in hierarchical generate scopes
+RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, const std::string& context_for_log) {
+    // First try hierarchical lookup if we're in a generate scope
+    std::string gen_scope = get_current_gen_scope();
+    if (!gen_scope.empty()) {
+        // Try the full hierarchical name
+        std::string hierarchical_name = gen_scope + "." + signal_name;
+        if (name_map.count(hierarchical_name)) {
+            RTLIL::Wire* wire = name_map[hierarchical_name];
+            if (!context_for_log.empty()) {
+                log("UHDM: Found hierarchical wire %s for %s\n", hierarchical_name.c_str(), context_for_log.c_str());
+            }
+            return wire;
+        }
+        
+        // If not found, try parent scopes
+        for (int i = gen_scope_stack.size() - 1; i >= 0; i--) {
+            std::string parent_path;
+            for (int j = 0; j <= i; j++) {
+                if (j > 0) parent_path += ".";
+                parent_path += gen_scope_stack[j];
+            }
+            std::string parent_hierarchical = parent_path + "." + signal_name;
+            if (name_map.count(parent_hierarchical)) {
+                RTLIL::Wire* wire = name_map[parent_hierarchical];
+                if (!context_for_log.empty()) {
+                    log("UHDM: Found wire %s in parent scope %s for %s\n", 
+                        signal_name.c_str(), parent_path.c_str(), context_for_log.c_str());
+                }
+                return wire;
+            }
+        }
+    }
+    
+    // Try regular lookup in name_map
+    if (name_map.count(signal_name)) {
+        RTLIL::Wire* wire = name_map[signal_name];
+        if (!context_for_log.empty()) {
+            log("UHDM: Found wire %s in name_map for %s\n", signal_name.c_str(), context_for_log.c_str());
+        }
+        return wire;
+    }
+    
+    // Finally, try with escaped name in module
+    RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
+    RTLIL::Wire* wire = module->wire(wire_id);
+    if (wire && !context_for_log.empty()) {
+        log("UHDM: Found wire %s via module->wire for %s\n", signal_name.c_str(), context_for_log.c_str());
+    }
+    
+    return wire;
+}
+
 // Import reference to object
 RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst) {
     // Get the referenced object name
@@ -964,6 +1017,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (!gen_scope.empty()) {
         // First try the full hierarchical name
         std::string hierarchical_name = gen_scope + "." + ref_name;
+        if (mode_debug)
+            log("    Looking for hierarchical wire: %s (gen_scope=%s, ref=%s)\n", 
+                hierarchical_name.c_str(), gen_scope.c_str(), ref_name.c_str());
         if (name_map.count(hierarchical_name)) {
             RTLIL::Wire* wire = name_map[hierarchical_name];
             log("UHDM: Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
@@ -1114,20 +1170,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
-        RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
-        if (module->wire(wire_id)) {
-            base = RTLIL::SigSpec(module->wire(wire_id));
-            log("      Found wire %s in module\n", wire_id.c_str());
+        RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
+        if (wire) {
+            base = RTLIL::SigSpec(wire);
         } else {
-            // Try name_map
-            auto it = name_map.find(base_signal_name);
-            if (it != name_map.end()) {
-                base = RTLIL::SigSpec(it->second);
-                log("      Found wire in name_map\n");
-            } else {
-                log_warning("Base signal '%s' not found in module\n", base_signal_name.c_str());
-                return RTLIL::SigSpec();
-            }
+            std::string gen_scope = get_current_gen_scope();
+            log_warning("Base signal '%s' not found in module or generate scope %s\n", 
+                base_signal_name.c_str(), gen_scope.c_str());
+            return RTLIL::SigSpec();
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression
@@ -1237,47 +1287,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     }
     
     // Regular bit select on a wire
-    RTLIL::Wire* wire = nullptr;
-    
-    // If we're in a generate scope, try hierarchical lookups
-    std::string gen_scope = get_current_gen_scope();
-    if (!gen_scope.empty()) {
-        // First try the full hierarchical name
-        std::string hierarchical_name = gen_scope + "." + signal_name;
-        if (name_map.count(hierarchical_name)) {
-            wire = name_map[hierarchical_name];
-            log("UHDM: Found hierarchical wire %s for bit select\n", hierarchical_name.c_str());
-        }
-        
-        // If not found, try parent scopes
-        if (!wire) {
-            for (int i = gen_scope_stack.size() - 1; i >= 0; i--) {
-                std::string parent_path;
-                for (int j = 0; j <= i; j++) {
-                    if (j > 0) parent_path += ".";
-                    parent_path += gen_scope_stack[j];
-                }
-                std::string parent_hierarchical = parent_path + "." + signal_name;
-                if (name_map.count(parent_hierarchical)) {
-                    wire = name_map[parent_hierarchical];
-                    log("UHDM: Found wire %s in parent scope %s for bit select\n", 
-                        signal_name.c_str(), parent_path.c_str());
-                    break;
-                }
-            }
-        }
-    }
-    
-    // If not found in generate scopes, try regular lookup
-    if (!wire) {
-        if (name_map.count(signal_name)) {
-            wire = name_map.at(signal_name);
-        } else {
-            // Try with escaped name
-            RTLIL::IdString wire_id = RTLIL::escape_id(signal_name);
-            wire = module->wire(wire_id);
-        }
-    }
+    RTLIL::Wire* wire = find_wire_in_scope(signal_name, "bit select");
     
     // If wire not found, check if this is a shift register array element
     if (!wire) {
@@ -1303,6 +1313,11 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     
     RTLIL::SigSpec base(wire);
     RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
+    
+    if (index.size() == 0) {
+        log_warning("Bit select index expression returned empty SigSpec for signal %s\n", signal_name.c_str());
+        return RTLIL::SigSpec();
+    }
     
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
@@ -1401,20 +1416,14 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
-        RTLIL::IdString wire_id = RTLIL::escape_id(base_signal_name);
-        if (module->wire(wire_id)) {
-            base = RTLIL::SigSpec(module->wire(wire_id));
-            log("      Found wire %s in module\n", wire_id.c_str());
+        RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
+        if (wire) {
+            base = RTLIL::SigSpec(wire);
         } else {
-            // Try name_map
-            auto it = name_map.find(base_signal_name);
-            if (it != name_map.end()) {
-                base = RTLIL::SigSpec(it->second);
-                log("      Found wire in name_map\n");
-            } else {
-                log_warning("Base signal '%s' not found in module\n", base_signal_name.c_str());
-                return RTLIL::SigSpec();
-            }
+            std::string gen_scope = get_current_gen_scope();
+            log_warning("Base signal '%s' not found in module or generate scope %s\n", 
+                base_signal_name.c_str(), gen_scope.c_str());
+            return RTLIL::SigSpec();
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression

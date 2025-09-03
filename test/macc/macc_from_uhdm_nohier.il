@@ -14,11 +14,11 @@ module \macc
   wire $0\sload_reg[0:0]
   wire width 40 $auto$expression.cpp:532:import_operation$3
   wire width 32 $auto$expression.cpp:576:import_operation$1
-  wire $auto$module.cpp:570:import_continuous_assign$10
-  wire width 32 $auto$module.cpp:570:import_continuous_assign$12
-  wire width 40 $auto$module.cpp:570:import_continuous_assign$14
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$6
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$8
+  wire $auto$module.cpp:591:import_continuous_assign$10
+  wire width 32 $auto$module.cpp:591:import_continuous_assign$12
+  wire width 40 $auto$module.cpp:591:import_continuous_assign$14
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$6
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$8
   attribute \src "dut.sv:9.28-9.29"
   wire width 16 input 4 signed \a
   attribute \reg 1
@@ -71,38 +71,38 @@ module \macc
   end
   attribute \src "dut.sv:13.25-13.30"
   process $proc$dut.sv:13$5
-    assign $auto$module.cpp:570:import_continuous_assign$6 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$6 16'0000000000000000
     sync always
     sync init
-      update \a_reg $auto$module.cpp:570:import_continuous_assign$6
+      update \a_reg $auto$module.cpp:591:import_continuous_assign$6
   end
   attribute \src "dut.sv:13.36-13.41"
   process $proc$dut.sv:13$7
-    assign $auto$module.cpp:570:import_continuous_assign$8 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$8 16'0000000000000000
     sync always
     sync init
-      update \b_reg $auto$module.cpp:570:import_continuous_assign$8
+      update \b_reg $auto$module.cpp:591:import_continuous_assign$8
   end
   attribute \src "dut.sv:14.5-14.14"
   process $proc$dut.sv:14$9
-    assign $auto$module.cpp:570:import_continuous_assign$10 1'0
+    assign $auto$module.cpp:591:import_continuous_assign$10 1'0
     sync always
     sync init
-      update \sload_reg $auto$module.cpp:570:import_continuous_assign$10
+      update \sload_reg $auto$module.cpp:591:import_continuous_assign$10
   end
   attribute \src "dut.sv:15.27-15.35"
   process $proc$dut.sv:15$11
-    assign $auto$module.cpp:570:import_continuous_assign$12 0
+    assign $auto$module.cpp:591:import_continuous_assign$12 0
     sync always
     sync init
-      update \mult_reg $auto$module.cpp:570:import_continuous_assign$12
+      update \mult_reg $auto$module.cpp:591:import_continuous_assign$12
   end
   attribute \src "dut.sv:16.26-16.35"
   process $proc$dut.sv:16$13
-    assign $auto$module.cpp:570:import_continuous_assign$14 40'0000000000000000000000000000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$14 40'0000000000000000000000000000000000000000
     sync always
     sync init
-      update \adder_out $auto$module.cpp:570:import_continuous_assign$14
+      update \adder_out $auto$module.cpp:591:import_continuous_assign$14
   end
   attribute \src "dut.sv:17.1-25.4"
   process $proc$dut.sv:17$1
@@ -155,13 +155,13 @@ module \macc2
   parameter \SIZEOUT 40
   wire width 41 $auto$expression.cpp:532:import_operation$17
   wire width 32 $auto$expression.cpp:576:import_operation$15
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$34
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$36
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$38
-  wire width 16 $auto$module.cpp:570:import_continuous_assign$40
-  wire width 32 $auto$module.cpp:570:import_continuous_assign$42
-  wire width 41 $auto$module.cpp:570:import_continuous_assign$44
-  wire $auto$module.cpp:570:import_continuous_assign$46
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$34
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$36
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$38
+  wire width 16 $auto$module.cpp:591:import_continuous_assign$40
+  wire width 32 $auto$module.cpp:591:import_continuous_assign$42
+  wire width 41 $auto$module.cpp:591:import_continuous_assign$44
+  wire $auto$module.cpp:591:import_continuous_assign$46
   wire $auto$rtlil.cc:3007:Or$50
   wire $auto$rtlil.cc:3017:Ge$48
   wire width 16 $auto$rtlil.cc:3094:Mux$20
@@ -305,52 +305,52 @@ module \macc2
   end
   attribute \src "dut.sv:53.25-53.30"
   process $proc$dut.sv:53$33
-    assign $auto$module.cpp:570:import_continuous_assign$34 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$34 16'0000000000000000
     sync always
     sync init
-      update \a_reg $auto$module.cpp:570:import_continuous_assign$34
+      update \a_reg $auto$module.cpp:591:import_continuous_assign$34
   end
   attribute \src "dut.sv:53.36-53.41"
   process $proc$dut.sv:53$35
-    assign $auto$module.cpp:570:import_continuous_assign$36 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$36 16'0000000000000000
     sync always
     sync init
-      update \b_reg $auto$module.cpp:570:import_continuous_assign$36
+      update \b_reg $auto$module.cpp:591:import_continuous_assign$36
   end
   attribute \src "dut.sv:53.47-53.53"
   process $proc$dut.sv:53$37
-    assign $auto$module.cpp:570:import_continuous_assign$38 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$38 16'0000000000000000
     sync always
     sync init
-      update \a_reg2 $auto$module.cpp:570:import_continuous_assign$38
+      update \a_reg2 $auto$module.cpp:591:import_continuous_assign$38
   end
   attribute \src "dut.sv:53.59-53.65"
   process $proc$dut.sv:53$39
-    assign $auto$module.cpp:570:import_continuous_assign$40 16'0000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$40 16'0000000000000000
     sync always
     sync init
-      update \b_reg2 $auto$module.cpp:570:import_continuous_assign$40
+      update \b_reg2 $auto$module.cpp:591:import_continuous_assign$40
   end
   attribute \src "dut.sv:54.27-54.35"
   process $proc$dut.sv:54$41
-    assign $auto$module.cpp:570:import_continuous_assign$42 0
+    assign $auto$module.cpp:591:import_continuous_assign$42 0
     sync always
     sync init
-      update \mult_reg $auto$module.cpp:570:import_continuous_assign$42
+      update \mult_reg $auto$module.cpp:591:import_continuous_assign$42
   end
   attribute \src "dut.sv:55.24-55.33"
   process $proc$dut.sv:55$43
-    assign $auto$module.cpp:570:import_continuous_assign$44 41'00000000000000000000000000000000000000000
+    assign $auto$module.cpp:591:import_continuous_assign$44 41'00000000000000000000000000000000000000000
     sync always
     sync init
-      update \adder_out $auto$module.cpp:570:import_continuous_assign$44
+      update \adder_out $auto$module.cpp:591:import_continuous_assign$44
   end
   attribute \src "dut.sv:56.5-56.17"
   process $proc$dut.sv:56$45
-    assign $auto$module.cpp:570:import_continuous_assign$46 1'0
+    assign $auto$module.cpp:591:import_continuous_assign$46 1'0
     sync always
     sync init
-      update \overflow_reg $auto$module.cpp:570:import_continuous_assign$46
+      update \overflow_reg $auto$module.cpp:591:import_continuous_assign$46
   end
   attribute \always_ff 1
   attribute \src "dut.sv:57.1-78.4"
