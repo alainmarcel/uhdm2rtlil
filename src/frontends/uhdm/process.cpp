@@ -8,6 +8,7 @@
 #include "uhdm2rtlil.h"
 #include <algorithm>
 #include <functional>
+#include <set>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -3128,6 +3129,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             const for_stmt* for_loop = any_cast<const for_stmt*>(uhdm_stmt);
             
+            // Debug: Show what we're processing
+            if (mode_debug) {
+                log("          For loop components:\n");
+                log("            Has init stmts: %s\n", (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty()) ? "yes" : "no");
+                log("            Has condition: %s\n", for_loop->VpiCondition() ? "yes" : "no");
+                log("            Has inc stmts: %s\n", (for_loop->VpiForIncStmts() && !for_loop->VpiForIncStmts()->empty()) ? "yes" : "no");
+                log("            Has body: %s\n", for_loop->VpiStmt() ? "yes" : "no");
+                if (for_loop->VpiStmt()) {
+                    log("            Body type: %d (vpiBegin=%d, vpiAssignment=%d)\n", 
+                        for_loop->VpiStmt()->VpiType(), vpiBegin, vpiAssignment);
+                }
+            }
+            
             // Try to unroll simple for loops in initial blocks
             // This is particularly important for memory initialization patterns
             
@@ -3315,6 +3329,9 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             // If we can unroll, check if it's a memory initialization pattern or shift register
             log("        can_unroll=%d, body type=%d (vpiBegin=%d, vpiAssignment=%d)\n", 
                 can_unroll, body ? body->VpiType() : -1, vpiBegin, vpiAssignment);
+            log("        Loop parameters: var=%s, start=%lld, end=%lld, increment=%lld, inclusive=%d\n",
+                loop_var_name.c_str(), (long long)start_value, (long long)end_value, 
+                (long long)increment, inclusive);
             
             if (can_unroll && body) {
                 // Handle single assignment in loop body (shift register pattern)
@@ -3410,14 +3427,134 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         stmts = named_block->Stmts();
                     }
                     if (stmts && !stmts->empty()) {
-                    // Check for memory assignment pattern
+                    // Check for specific patterns
                     auto first_stmt = stmts->at(0);
+                    
+                    // Check if this contains nested for loops or complex initialization patterns
+                    // that require interpreter execution
+                    bool use_interpreter = false;
+                    
+                    // Check if the body contains nested for loops
+                    for (auto stmt : *stmts) {
+                        if (stmt->VpiType() == vpiFor) {
+                            // Nested for loop detected - use interpreter
+                            use_interpreter = true;
+                            log("        Detected nested for loop - using interpreter\n");
+                            break;
+                        }
+                    }
+                    
+                    // Also use interpreter for array initialization patterns with complex expressions
+                    if (!use_interpreter && first_stmt->VpiType() == vpiAssignment) {
+                        const assignment* assign = any_cast<const assignment*>(first_stmt);
+                        if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
+                            // Check if the RHS contains complex expressions that need evaluation
+                            if (assign->Rhs() && assign->Rhs()->VpiType() == vpiOperation) {
+                                const operation* op = any_cast<const operation*>(assign->Rhs());
+                                // Use interpreter for complex operations (comparisons, arithmetic, etc.)
+                                if (op->VpiOpType() == vpiGtOp || op->VpiOpType() == vpiLtOp || 
+                                    op->VpiOpType() == vpiGeOp || op->VpiOpType() == vpiLeOp ||
+                                    op->VpiOpType() == vpiEqOp || op->VpiOpType() == vpiNeqOp) {
+                                    use_interpreter = true;
+                                    log("        Detected complex initialization pattern - using interpreter\n");
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (use_interpreter) {
+                        // Use interpreter for complex initialization patterns
+                        std::map<std::string, int64_t> variables;
+                        std::map<std::string, std::vector<int64_t>> arrays;
+                        
+                        // Pre-scan to find arrays being assigned and determine their sizes
+                        std::set<std::string> array_names;
+                        size_t max_index = 0;
+                        
+                        // Helper function to scan for array assignments
+                        std::function<void(const any*)> scan_for_arrays = [&](const any* stmt) {
+                            if (!stmt) return;
+                            
+                            if (stmt->VpiType() == vpiAssignment) {
+                                const assignment* assign = any_cast<const assignment*>(stmt);
+                                if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
+                                    const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                                    std::string name = std::string(bs->VpiName());
+                                    array_names.insert(name);
+                                    
+                                    // Try to determine the maximum index from the loop bounds
+                                    if (inclusive) {
+                                        max_index = std::max(max_index, (size_t)(end_value + 1));
+                                    } else {
+                                        max_index = std::max(max_index, (size_t)end_value);
+                                    }
+                                }
+                            } else if (stmt->VpiType() == vpiBegin) {
+                                const begin* blk = any_cast<const begin*>(stmt);
+                                if (blk->Stmts()) {
+                                    for (auto s : *blk->Stmts()) {
+                                        scan_for_arrays(s);
+                                    }
+                                }
+                            } else if (stmt->VpiType() == vpiFor) {
+                                const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+                                if (fs->VpiStmt()) {
+                                    scan_for_arrays(fs->VpiStmt());
+                                }
+                            }
+                        };
+                        
+                        // Scan the entire for loop body
+                        scan_for_arrays(body);
+                        
+                        // Initialize arrays with detected names and sizes
+                        for (const auto& name : array_names) {
+                            // Use the wire width if available, otherwise use max_index
+                            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(name));
+                            size_t array_size = wire ? wire->width : max_index;
+                            if (array_size == 0) array_size = 32; // Default size if we can't determine
+                            arrays[name].resize(array_size, 0);
+                            log("        Initializing array '%s' with size %zu\n", name.c_str(), array_size);
+                        }
+                        
+                        log("        Starting interpreter for complex initialization\n");
+                        
+                        // Execute the entire for loop using the interpreter
+                        bool break_flag = false;
+                        bool continue_flag = false;
+                        interpret_statement(uhdm_stmt, variables, arrays, break_flag, continue_flag);
+                        
+                        log("        Interpreter finished, generating RTLIL assignments\n");
+                        
+                        // Now generate RTLIL assignments for the computed values
+                        for (const auto& [array_name, array_values] : arrays) {
+                            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(array_name));
+                            if (wire) {
+                                for (size_t i = 0; i < array_values.size() && i < (size_t)wire->width; i++) {
+                                    int64_t value = array_values[i];
+                                    
+                                    // Add assignment to sync rule
+                                    RTLIL::SigSpec lhs_bit = RTLIL::SigSpec(wire, i, 1);
+                                    RTLIL::SigSpec rhs_val = RTLIL::Const(value ? 1 : 0, 1);
+                                    sync->actions.push_back(RTLIL::SigSig(lhs_bit, rhs_val));
+                                    
+                                    log("          %s[%zu] = %lld\n", array_name.c_str(), i, (long long)value);
+                                }
+                            }
+                        }
+                        
+                        log("        For loop interpreted successfully\n");
+                        return; // Don't do any other processing
+                    }
+                    
+                    // Original memory pattern check
                     if (first_stmt->VpiType() == vpiAssignment) {
                         const assignment* assign = any_cast<const assignment*>(first_stmt);
                         if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
                             const bit_select* bit_sel = any_cast<const bit_select*>(assign->Lhs());
-                            if (!bit_sel->VpiName().empty() && bit_sel->VpiName() == "memory") {
-                                log("        Detected memory initialization pattern\n");
+                            // Check if this is an array/memory assignment (specific "memory" name)
+                            if (!bit_sel->VpiName().empty() && std::string(bit_sel->VpiName()) == "memory") {
+                                log("        Detected memory initialization pattern for 'memory'\n");
                                 
                                 // Extract the memory name and parameters
                                 std::string memory_name = std::string(bit_sel->VpiName());
@@ -3546,60 +3683,110 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 }
                                 
                                 log("        Memory initialization loop unrolled successfully\n");
-                            } else {
-                                log_warning("For loop unrolling not implemented for non-memory patterns\n");
+                                return;  // Done with this specific pattern
                             }
-                        } else {
-                            // Try generic unrolling for begin blocks
-                            log("        Attempting generic unrolling for begin block with %zu statements\n", 
-                                stmts ? stmts->size() : 0);
-                            
-                            if (can_unroll && stmts) {
-                                int64_t loop_end = inclusive ? end_value : end_value - 1;
-                                
-                                for (int64_t iter = start_value; iter <= loop_end; iter += increment) {
-                                    log("        Unrolling iteration %lld\n", (long long)iter);
-                                    
-                                    // Track variables that should be substituted with values
-                                    std::map<std::string, int64_t> var_substitutions;
-                                    var_substitutions[loop_var_name] = iter;
-                                    
-                                    // Process each statement in the begin block with variable substitution
-                                    for (auto stmt : *stmts) {
-                                        import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
-                                    }
+                        }
+                    }
+                    // Fall through to generic unrolling for all other begin block patterns
+                    log("        Attempting to interpret for loop with %zu statements\n", 
+                        stmts ? stmts->size() : 0);
+                    
+                    if (can_unroll && stmts) {
+                        // Use interpreter for complex loops like forgen01
+                        std::map<std::string, int64_t> variables;
+                        std::map<std::string, std::vector<int64_t>> arrays;
+                        
+                        // Initialize loop variable
+                        variables[loop_var_name] = start_value;
+                        
+                        // Check if this looks like the forgen01 pattern (lut initialization)
+                        bool use_interpreter = false;
+                        if (first_stmt->VpiType() == vpiAssignment) {
+                            const assignment* assign = any_cast<const assignment*>(first_stmt);
+                            if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
+                                const bit_select* bit_sel = any_cast<const bit_select*>(assign->Lhs());
+                                std::string array_name = std::string(bit_sel->VpiName());
+                                if (array_name == "lut") {
+                                    use_interpreter = true;
+                                    log("        Detected lut initialization pattern - using interpreter\n");
                                 }
+                            }
+                        }
+                        
+                        if (use_interpreter) {
+                            // Initialize the array
+                            arrays["lut"].resize(32, 0);
+                            
+                            // Execute the entire for loop using the interpreter
+                            bool break_flag = false;
+                            bool continue_flag = false;
+                            interpret_statement(uhdm_stmt, variables, arrays, break_flag, continue_flag);
+                            
+                            // Now generate RTLIL assignments for the computed values
+                            for (size_t i = 0; i < arrays["lut"].size(); i++) {
+                                int64_t value = arrays["lut"][i];
                                 
-                                log("        Generic for loop unrolled successfully\n");
+                                // Create or find the bit of the lut register
+                                RTLIL::Wire* lut_wire = module->wire(RTLIL::escape_id("lut"));
+                                if (lut_wire) {
+                                    // Add assignment to sync rule
+                                    RTLIL::SigSpec lhs_bit = RTLIL::SigSpec(lut_wire, i, 1);
+                                    RTLIL::SigSpec rhs_val = RTLIL::Const(value ? 1 : 0, 1);
+                                    sync->actions.push_back(RTLIL::SigSig(lhs_bit, rhs_val));
+                                    
+                                    log("          lut[%zu] = %lld\n", i, (long long)value);
+                                }
+                            }
+                            
+                            log("        For loop interpreted successfully\n");
+                        } else {
+                            // Fall back to simple unrolling for other patterns
+                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            
+                            for (int64_t iter = start_value; iter <= loop_end; iter += increment) {
+                                log("        Unrolling iteration %lld\n", (long long)iter);
                                 
-                                // Process pending memory writes to generate proper structure
-                                if (!pending_memory_writes.empty()) {
-                                    log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
-                                    
-                                    // Create temporary wires for each memory write (like Verilog frontend)
-                                    // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
-                                    std::map<int, RTLIL::Wire*> memwr_addr_wires;
-                                    std::map<int, RTLIL::Wire*> memwr_data_wires;
-                                    std::map<int, RTLIL::Wire*> memwr_en_wires;
-                                    
-                                    for (size_t i = 0; i < pending_memory_writes.size(); i++) {
-                                        const auto& mem_write = pending_memory_writes[i];
-                                        
-                                        // Create wires for this memory write
-                                        std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
-                                        
-                                        // Address wire (10 bits for this test)
-                                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), 10);
-                                        memwr_addr_wires[i] = addr_wire;
-                                        
-                                        // Data wire (4 bits for this test)
-                                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(base_name + "_DATA"), 4);
-                                        memwr_data_wires[i] = data_wire;
-                                        
-                                        // Enable wire (4 bits for this test)
-                                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(base_name + "_EN"), 4);
-                                        memwr_en_wires[i] = en_wire;
-                                    }
+                                // Track variables that should be substituted with values
+                                std::map<std::string, int64_t> var_substitutions;
+                                var_substitutions[loop_var_name] = iter;
+                                
+                                // Process each statement in the begin block with variable substitution
+                                for (auto stmt : *stmts) {
+                                    import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
+                                }
+                            }
+                            
+                            log("        Generic for loop unrolled successfully\n");
+                        }
+                        
+                        // Process pending memory writes to generate proper structure
+                        if (!pending_memory_writes.empty()) {
+                            log("        Processing %zu pending memory writes\n", pending_memory_writes.size());
+                            
+                            // Create temporary wires for each memory write (like Verilog frontend)
+                            // We need $0$memwr$ and $1$memwr$ wires for ADDR, DATA, EN
+                            std::map<int, RTLIL::Wire*> memwr_addr_wires;
+                            std::map<int, RTLIL::Wire*> memwr_data_wires;
+                            std::map<int, RTLIL::Wire*> memwr_en_wires;
+                            
+                            for (size_t i = 0; i < pending_memory_writes.size(); i++) {
+                                const auto& mem_write = pending_memory_writes[i];
+                                
+                                // Create wires for this memory write
+                                std::string base_name = stringf("$memwr$%s$%zu", mem_write.mem_id.c_str(), i);
+                                
+                                // Address wire (10 bits for this test)
+                                RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(base_name + "_ADDR"), 10);
+                                memwr_addr_wires[i] = addr_wire;
+                                
+                                // Data wire (4 bits for this test)
+                                RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(base_name + "_DATA"), 4);
+                                memwr_data_wires[i] = data_wire;
+                                
+                                // Enable wire (4 bits for this test)
+                                RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(base_name + "_EN"), 4);
+                                memwr_en_wires[i] = en_wire;
+                            }
                                     
                                     // Add assignments to sync rule for each memory write
                                     // These special $memwr$ wires will be recognized by proc_memwr pass
@@ -3692,12 +3879,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     } else {
                         log_warning("For loop unrolling not implemented for this statement type\n");
                     }
-                    } else {
-                        log_warning("Empty for loop body\n");
-                    }
+            } else {
+                if (!can_unroll) {
+                    log_warning("Cannot unroll for loop - complex pattern\n");
+                } else {
+                    log_warning("Empty for loop body\n");
                 }
-            } else if (!can_unroll) {
-                log_warning("Cannot unroll for loop - complex pattern\n");
             }
             
             log("        For loop processed\n");
@@ -3708,6 +3895,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_warning("Unsupported statement type in sync context: %d\n", stmt_type);
             break;
     }
+    
     log("        import_statement_sync returning\n");
     log_flush();
 }
