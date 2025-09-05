@@ -34,6 +34,7 @@ module \top
   attribute \enum_value_01 "\\C"
   attribute \enum_value_10 "\\D"
   attribute \enum_value_11 "\\A"
+  attribute \init 2'11
   attribute \src "dut.sv:24.13-24.18"
   attribute \wiretype "\\state_t"
   wire width 2 \state
@@ -42,6 +43,7 @@ module \top
   attribute \enum_value_00000000000000000000000000000001 "\\WB"
   attribute \enum_value_00000000000000000000000000000010 "\\WC"
   attribute \enum_value_00000000000000000000000000000011 "\\WD"
+  attribute \init 0
   attribute \src "dut.sv:11.18-11.28"
   attribute \wiretype "\\wide_state_t"
   wire width 32 \wide_state
