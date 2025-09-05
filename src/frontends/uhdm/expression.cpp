@@ -146,7 +146,39 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 if (mode_debug)
                     log("    Handling logic_net '%s' as expression\n", net_name.c_str());
                 
-                // Look up the wire
+                // If we're in a generate scope, try hierarchical lookups first
+                std::string gen_scope = get_current_gen_scope();
+                if (!gen_scope.empty()) {
+                    // First try the full hierarchical name
+                    std::string hierarchical_name = gen_scope + "." + net_name;
+                    if (mode_debug)
+                        log("    Looking for hierarchical wire: %s (gen_scope=%s, net=%s)\n", 
+                            hierarchical_name.c_str(), gen_scope.c_str(), net_name.c_str());
+                    if (name_map.count(hierarchical_name)) {
+                        RTLIL::Wire* wire = name_map[hierarchical_name];
+                        if (mode_debug)
+                            log("    Found hierarchical wire %s in name_map\n", hierarchical_name.c_str());
+                        return RTLIL::SigSpec(wire);
+                    }
+                    
+                    // If not found, try parent scopes
+                    for (int i = gen_scope_stack.size() - 1; i >= 0; i--) {
+                        std::string parent_path;
+                        for (int j = 0; j <= i; j++) {
+                            if (j > 0) parent_path += ".";
+                            parent_path += gen_scope_stack[j];
+                        }
+                        std::string parent_hierarchical = parent_path + "." + net_name;
+                        if (name_map.count(parent_hierarchical)) {
+                            RTLIL::Wire* wire = name_map[parent_hierarchical];
+                            if (mode_debug)
+                                log("    Found wire %s in parent scope %s\n", net_name.c_str(), parent_path.c_str());
+                            return RTLIL::SigSpec(wire);
+                        }
+                    }
+                }
+                
+                // Look up the wire without generate scope prefix
                 if (name_map.count(net_name)) {
                     return RTLIL::SigSpec(name_map.at(net_name));
                 } else {
@@ -156,7 +188,8 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                     }
                 }
                 
-                log_warning("Logic_net '%s' not found as wire in module\n", net_name.c_str());
+                log_warning("Logic_net '%s' not found as wire in module (generate scope: %s)\n", 
+                           net_name.c_str(), gen_scope.empty() ? "none" : gen_scope.c_str());
                 return RTLIL::SigSpec();
             }
         case vpiSysFuncCall:

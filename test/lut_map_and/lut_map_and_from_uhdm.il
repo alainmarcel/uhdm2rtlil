@@ -9,7 +9,7 @@ module \lut_map_and
   wire input 2 \b
   attribute \src "dut.sv:3.12-3.13"
   wire output 3 \y
-  cell $and $auto$expression.cpp:469:import_operation$1
+  cell $and $auto$expression.cpp:502:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

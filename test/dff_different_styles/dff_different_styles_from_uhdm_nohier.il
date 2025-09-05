@@ -61,7 +61,7 @@ module \dffa1
   wire input 3 \d
   attribute \src "dut.sv:20.28-20.29"
   wire output 4 \q
-  cell $not $auto$expression.cpp:481:import_operation$1
+  cell $not $auto$expression.cpp:514:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -145,7 +145,7 @@ module \dffa3
   wire input 3 \d
   attribute \src "dut.sv:42.28-42.29"
   wire output 4 \q
-  cell $not $auto$expression.cpp:481:import_operation$3
+  cell $not $auto$expression.cpp:514:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -260,7 +260,7 @@ module \dffsr1
   wire input 3 \d
   attribute \src "dut.sv:72.29-72.30"
   wire output 4 \q
-  cell $xor $auto$expression.cpp:477:import_operation$5
+  cell $xor $auto$expression.cpp:510:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -309,7 +309,7 @@ module \dffsr2
   wire input 2 \preset
   attribute \src "dut.sv:83.38-83.39"
   wire output 5 \q
-  cell $logic_and $auto$expression.cpp:461:import_operation$7
+  cell $logic_and $auto$expression.cpp:494:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -319,7 +319,7 @@ module \dffsr2
     connect \B $logic_not$dut.sv:88.32-88.38$4_Y
     connect \Y $auto$rtlil.cc:3026:LogicAnd$8
   end
-  cell $logic_and $auto$expression.cpp:461:import_operation$9
+  cell $logic_and $auto$expression.cpp:494:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

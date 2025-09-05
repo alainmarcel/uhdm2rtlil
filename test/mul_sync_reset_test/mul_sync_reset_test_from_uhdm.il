@@ -3,7 +3,7 @@ autoidx 8
 attribute \src "dut.sv:1.1-16.10"
 attribute \top 1
 module \mul_sync_reset_test
-  wire width 9 $auto$expression.cpp:576:import_operation$1
+  wire width 9 $auto$expression.cpp:609:import_operation$1
   attribute \src "dut.sv:1.39-1.40"
   wire width 6 input 3 \a
   attribute \src "dut.sv:1.42-1.43"
@@ -14,7 +14,7 @@ module \mul_sync_reset_test
   wire width 9 output 5 \p
   attribute \src "dut.sv:1.34-1.37"
   wire input 2 \rst
-  cell $mul $auto$expression.cpp:593:import_operation$2
+  cell $mul $auto$expression.cpp:626:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -22,7 +22,7 @@ module \mul_sync_reset_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:576:import_operation$1
+    connect \Y $auto$expression.cpp:609:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-15.8"
@@ -32,7 +32,7 @@ module \mul_sync_reset_test
     parameter \SRST_VALUE 9'000000000
     parameter \WIDTH 9
     connect \CLK \clk
-    connect \D $auto$expression.cpp:576:import_operation$1
+    connect \D $auto$expression.cpp:609:import_operation$1
     connect \Q \p
     connect \SRST \rst
   end

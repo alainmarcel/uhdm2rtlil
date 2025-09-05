@@ -57,7 +57,7 @@ module \enum_simple
   attribute \enum_value_00000000000000000000000000000011 "\\s3"
   attribute \src "dut.sv:4.24-4.33"
   wire width 32 \test_enum
-  cell $eq $auto$expression.cpp:666:import_operation$1
+  cell $eq $auto$expression.cpp:699:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -67,7 +67,7 @@ module \enum_simple
     connect \B 0
     connect \Y $auto$rtlil.cc:3013:Eq$2
   end
-  cell $eq $auto$expression.cpp:666:import_operation$11
+  cell $eq $auto$expression.cpp:699:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -77,7 +77,7 @@ module \enum_simple
     connect \B 0
     connect \Y $auto$rtlil.cc:3013:Eq$12
   end
-  cell $eq $auto$expression.cpp:666:import_operation$13
+  cell $eq $auto$expression.cpp:699:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -87,7 +87,7 @@ module \enum_simple
     connect \B 1
     connect \Y $auto$rtlil.cc:3013:Eq$14
   end
-  cell $eq $auto$expression.cpp:666:import_operation$15
+  cell $eq $auto$expression.cpp:699:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -97,7 +97,7 @@ module \enum_simple
     connect \B 2
     connect \Y $auto$rtlil.cc:3013:Eq$16
   end
-  cell $eq $auto$expression.cpp:666:import_operation$23
+  cell $eq $auto$expression.cpp:699:import_operation$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -107,7 +107,7 @@ module \enum_simple
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3013:Eq$24
   end
-  cell $eq $auto$expression.cpp:666:import_operation$29
+  cell $eq $auto$expression.cpp:699:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -117,7 +117,7 @@ module \enum_simple
     connect \B 1
     connect \Y $auto$rtlil.cc:3013:Eq$30
   end
-  cell $eq $auto$expression.cpp:666:import_operation$3
+  cell $eq $auto$expression.cpp:699:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -127,7 +127,7 @@ module \enum_simple
     connect \B 1
     connect \Y $auto$rtlil.cc:3013:Eq$4
   end
-  cell $eq $auto$expression.cpp:666:import_operation$5
+  cell $eq $auto$expression.cpp:699:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -137,7 +137,7 @@ module \enum_simple
     connect \B 2
     connect \Y $auto$rtlil.cc:3013:Eq$6
   end
-  cell $eq $auto$expression.cpp:666:import_operation$7
+  cell $eq $auto$expression.cpp:699:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -147,7 +147,7 @@ module \enum_simple
     connect \B 3
     connect \Y $auto$rtlil.cc:3013:Eq$8
   end
-  cell $ne $auto$expression.cpp:675:import_operation$19
+  cell $ne $auto$expression.cpp:708:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0

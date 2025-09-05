@@ -24,7 +24,7 @@ module \abc9_test007
   wire \c
   attribute \src "dut.sv:28.37-28.38"
   wire output 2 \o
-  cell $not $auto$expression.cpp:481:import_operation$21
+  cell $not $auto$expression.cpp:514:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1

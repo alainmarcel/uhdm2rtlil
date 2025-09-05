@@ -31,7 +31,7 @@ module \aes_key_expand_128
   wire width 4 output 6 \wo_2
   attribute \src "dut.sv:4.60-4.64"
   wire width 4 output 7 \wo_3
-  cell $xor $auto$expression.cpp:477:import_operation$13
+  cell $xor $auto$expression.cpp:510:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -41,7 +41,7 @@ module \aes_key_expand_128
     connect \B \w[1]
     connect \Y $auto$rtlil.cc:3008:Xor$14
   end
-  cell $xor $auto$expression.cpp:477:import_operation$15
+  cell $xor $auto$expression.cpp:510:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -51,7 +51,7 @@ module \aes_key_expand_128
     connect \B \w[2]
     connect \Y $auto$rtlil.cc:3008:Xor$10
   end
-  cell $xor $auto$expression.cpp:477:import_operation$17
+  cell $xor $auto$expression.cpp:510:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -61,21 +61,21 @@ module \aes_key_expand_128
     connect \B \w[3]
     connect \Y $auto$rtlil.cc:3008:Xor$18
   end
-  cell $mux $auto$expression.cpp:734:import_operation$11
+  cell $mux $auto$expression.cpp:767:import_operation$11
     parameter \WIDTH 4
     connect \A $auto$rtlil.cc:3008:Xor$10
     connect \B \key [7:4]
     connect \S \kld
     connect \Y $auto$rtlil.cc:3094:Mux$12
   end
-  cell $mux $auto$expression.cpp:734:import_operation$19
+  cell $mux $auto$expression.cpp:767:import_operation$19
     parameter \WIDTH 4
     connect \A $auto$rtlil.cc:3008:Xor$18
     connect \B \key [3:0]
     connect \S \kld
     connect \Y $auto$rtlil.cc:3094:Mux$20
   end
-  cell $mux $auto$expression.cpp:734:import_operation$5
+  cell $mux $auto$expression.cpp:767:import_operation$5
     parameter \WIDTH 4
     connect \A $auto$rtlil.cc:3008:Xor$14
     connect \B \key [11:8]

@@ -49,7 +49,7 @@ module \uut_forgen02
   wire output 5 \cout
   attribute \src "dut.sv:1.32-1.33"
   wire width 8 output 4 \y
-  cell $and $auto$expression.cpp:469:import_operation$17
+  cell $and $auto$expression.cpp:502:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -59,7 +59,7 @@ module \uut_forgen02
     connect \B \adder[1].D [2]
     connect \Y $auto$rtlil.cc:3006:And$18
   end
-  cell $and $auto$expression.cpp:469:import_operation$27
+  cell $and $auto$expression.cpp:502:import_operation$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -69,7 +69,7 @@ module \uut_forgen02
     connect \B \adder[2].D [2]
     connect \Y $auto$rtlil.cc:3006:And$28
   end
-  cell $and $auto$expression.cpp:469:import_operation$37
+  cell $and $auto$expression.cpp:502:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -79,7 +79,7 @@ module \uut_forgen02
     connect \B \adder[3].D [2]
     connect \Y $auto$rtlil.cc:3006:And$38
   end
-  cell $and $auto$expression.cpp:469:import_operation$47
+  cell $and $auto$expression.cpp:502:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -89,7 +89,7 @@ module \uut_forgen02
     connect \B \adder[4].D [2]
     connect \Y $auto$rtlil.cc:3006:And$48
   end
-  cell $and $auto$expression.cpp:469:import_operation$57
+  cell $and $auto$expression.cpp:502:import_operation$57
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -99,7 +99,7 @@ module \uut_forgen02
     connect \B \adder[5].D [2]
     connect \Y $auto$rtlil.cc:3006:And$58
   end
-  cell $and $auto$expression.cpp:469:import_operation$67
+  cell $and $auto$expression.cpp:502:import_operation$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -109,7 +109,7 @@ module \uut_forgen02
     connect \B \adder[6].D [2]
     connect \Y $auto$rtlil.cc:3006:And$68
   end
-  cell $and $auto$expression.cpp:469:import_operation$7
+  cell $and $auto$expression.cpp:502:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -119,7 +119,7 @@ module \uut_forgen02
     connect \B \cin
     connect \Y $auto$rtlil.cc:3006:And$8
   end
-  cell $and $auto$expression.cpp:469:import_operation$77
+  cell $and $auto$expression.cpp:502:import_operation$77
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -129,7 +129,7 @@ module \uut_forgen02
     connect \B \adder[7].D [2]
     connect \Y $auto$rtlil.cc:3006:And$78
   end
-  cell $or $auto$expression.cpp:473:import_operation$19
+  cell $or $auto$expression.cpp:506:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -139,7 +139,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$18
     connect \Y \adder[2].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$29
+  cell $or $auto$expression.cpp:506:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -149,7 +149,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$28
     connect \Y \adder[3].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$39
+  cell $or $auto$expression.cpp:506:import_operation$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -159,7 +159,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$38
     connect \Y \adder[4].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$49
+  cell $or $auto$expression.cpp:506:import_operation$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -169,7 +169,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$48
     connect \Y \adder[5].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$59
+  cell $or $auto$expression.cpp:506:import_operation$59
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -179,7 +179,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$58
     connect \Y \adder[6].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$69
+  cell $or $auto$expression.cpp:506:import_operation$69
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -189,7 +189,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$68
     connect \Y \adder[7].D [2]
   end
-  cell $or $auto$expression.cpp:473:import_operation$79
+  cell $or $auto$expression.cpp:506:import_operation$79
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -199,7 +199,7 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$78
     connect \Y \cout
   end
-  cell $or $auto$expression.cpp:473:import_operation$9
+  cell $or $auto$expression.cpp:506:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -209,168 +209,168 @@ module \uut_forgen02
     connect \B $auto$rtlil.cc:3006:And$8
     connect \Y \adder[1].D [2]
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$13
+  cell $reduce_and $auto$expression.cpp:522:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [1] \a [1] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$14
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$23
+  cell $reduce_and $auto$expression.cpp:522:import_operation$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [2] \a [2] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$24
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$3
+  cell $reduce_and $auto$expression.cpp:522:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [0] \a [0] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$4
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$33
+  cell $reduce_and $auto$expression.cpp:522:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [3] \a [3] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$34
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$43
+  cell $reduce_and $auto$expression.cpp:522:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [4] \a [4] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$44
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$53
+  cell $reduce_and $auto$expression.cpp:522:import_operation$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [5] \a [5] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$54
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$63
+  cell $reduce_and $auto$expression.cpp:522:import_operation$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [6] \a [6] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$64
   end
-  cell $reduce_and $auto$expression.cpp:489:import_operation$73
+  cell $reduce_and $auto$expression.cpp:522:import_operation$73
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \b [7] \a [7] }
     connect \Y $auto$rtlil.cc:2962:ReduceAnd$74
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$1
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \cin \a [0] \b [0] }
     connect \Y \y [0]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$11
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[1].D [2] \a [1] \b [1] }
     connect \Y \y [1]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$15
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [1] \b [1] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$16
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$21
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[2].D [2] \a [2] \b [2] }
     connect \Y \y [2]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$25
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$25
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [2] \b [2] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$26
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$31
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[3].D [2] \a [3] \b [3] }
     connect \Y \y [3]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$35
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$35
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [3] \b [3] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$36
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$41
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[4].D [2] \a [4] \b [4] }
     connect \Y \y [4]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$45
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [4] \b [4] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$46
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$5
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [0] \b [0] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$6
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$51
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[5].D [2] \a [5] \b [5] }
     connect \Y \y [5]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$55
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [5] \b [5] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$56
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$61
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$61
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[6].D [2] \a [6] \b [6] }
     connect \Y \y [6]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$65
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$65
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { \a [6] \b [6] }
     connect \Y $auto$rtlil.cc:2964:ReduceXor$66
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$71
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$71
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
     connect \A { \adder[7].D [2] \a [7] \b [7] }
     connect \Y \y [7]
   end
-  cell $reduce_xor $auto$expression.cpp:497:import_operation$75
+  cell $reduce_xor $auto$expression.cpp:530:import_operation$75
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1

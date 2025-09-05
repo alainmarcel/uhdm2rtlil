@@ -31,7 +31,7 @@ module \top
   attribute \src "dut.sv:10.20-10.24"
   attribute \wiretype "\\int8_t"
   wire width 8 signed \int8
-  cell $eq $auto$expression.cpp:666:import_operation$1
+  cell $eq $auto$expression.cpp:699:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -41,7 +41,7 @@ module \top
     connect \B 2'10
     connect \Y $auto$rtlil.cc:3013:Eq$2
   end
-  cell $eq $auto$expression.cpp:666:import_operation$13
+  cell $eq $auto$expression.cpp:699:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -51,7 +51,7 @@ module \top
     connect \B 8'11111111
     connect \Y $auto$rtlil.cc:3013:Eq$14
   end
-  cell $eq $auto$expression.cpp:666:import_operation$5
+  cell $eq $auto$expression.cpp:699:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -61,7 +61,7 @@ module \top
     connect \B 4'1111
     connect \Y $auto$rtlil.cc:3013:Eq$6
   end
-  cell $eq $auto$expression.cpp:666:import_operation$9
+  cell $eq $auto$expression.cpp:699:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
