@@ -1229,10 +1229,71 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     if (var->UhdmType() == uhdmenum_var) {
                         // Handle enum variable
                         if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
-                            // Defer initial expression processing to second pass
+                            // Add enum type attributes
+                            if (auto ref_typespec = enum_var->Typespec()) {
+                                if (auto enum_typespec = ref_typespec->Actual_typespec()) {
+                                    if (enum_typespec->UhdmType() == uhdmenum_typespec) {
+                                        const UHDM::enum_typespec* enum_ts = any_cast<const UHDM::enum_typespec*>(enum_typespec);
+                                        
+                                        // Add wiretype attribute with the enum type name
+                                        std::string type_name;
+                                        if (!ref_typespec->VpiName().empty()) {
+                                            type_name = ref_typespec->VpiName();
+                                        } else if (!enum_ts->VpiName().empty()) {
+                                            type_name = enum_ts->VpiName();
+                                        }
+                                        
+                                        if (!type_name.empty()) {
+                                            wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                                            log("UHDM: Added wiretype attribute '\\%s' to enum variable '%s'\n", type_name.c_str(), wire->name.c_str());
+                                        }
+                                        
+                                        // Add enum_type attribute
+                                        std::string enum_type_id = "$enum0";  // Use a consistent naming like Yosys does
+                                        wire->attributes[RTLIL::escape_id("enum_type")] = RTLIL::Const(enum_type_id);
+                                        
+                                        // Add enum value attributes
+                                        if (enum_ts->Enum_consts()) {
+                                            for (auto enum_const : *enum_ts->Enum_consts()) {
+                                                std::string const_name = std::string(enum_const->VpiName());
+                                                std::string const_value = std::string(enum_const->VpiValue());
+                                                
+                                                // Parse the value (format is usually "UINT:value" or "INT:value")
+                                                std::string value_str;
+                                                size_t colon_pos = const_value.find(':');
+                                                if (colon_pos != std::string::npos) {
+                                                    value_str = const_value.substr(colon_pos + 1);
+                                                } else {
+                                                    value_str = const_value;
+                                                }
+                                                
+                                                // Convert value to binary representation for attribute
+                                                int value = std::stoi(value_str);
+                                                int width = wire->width;
+                                                RTLIL::Const binary_val(value, width);
+                                                
+                                                // Create attribute name like enum_value_00, enum_value_01, etc.
+                                                std::string attr_name = "enum_value_";
+                                                for (int i = width - 1; i >= 0; i--) {
+                                                    attr_name += (binary_val[i] == RTLIL::State::S1) ? '1' : '0';
+                                                }
+                                                
+                                                // Set the attribute value to the enum constant name
+                                                wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const("\\" + const_name);
+                                                log("UHDM: Added enum attribute %s = \\%s to enum variable '%s'\n", 
+                                                    attr_name.c_str(), const_name.c_str(), wire->name.c_str());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Skip initial expression processing here - will be handled in module import
+                            // The enum constants don't exist yet at this point
                             if (enum_var->Expr()) {
-                                log("UHDM: Enum variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
-                                vars_with_init_expr.push_back(std::make_pair(var, wire));
+                                log("UHDM: Enum variable '%s' has initial expression - will be handled in module import\n", var_name.c_str());
+                                // Don't add to vars_with_init_expr - we can't process it here
+                                // vars_with_init_expr.push_back(std::make_pair(var, wire));
                             }
                         }
                     } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
@@ -1313,7 +1374,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (const auto& [var, wire] : vars_with_init_expr) {
             std::string var_name = std::string(var->VpiName());
             
+            // Skip enum_var - they are handled in module import where enum constants are available
             if (var->UhdmType() == uhdmenum_var) {
+                continue;
+            }
+            
+            if (false) { // Keep this code for reference but disabled
                 if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
                     if (enum_var->Expr()) {
                         log("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
@@ -1631,6 +1697,55 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Import memory objects using analysis pass
     analyze_and_generate_memories(uhdm_module);
+    
+    // TODO: Process initial expressions for enum variables now that enum constants are available
+    // Temporarily disabled to debug crash
+    /*
+    if (uhdm_module->Variables()) {
+        log("UHDM: Processing initial expressions for enum variables in module\n");
+        for (auto var : *uhdm_module->Variables()) {
+            if (var->UhdmType() == uhdmenum_var) {
+                if (auto enum_var = any_cast<const UHDM::enum_var*>(var)) {
+                    std::string var_name = std::string(enum_var->VpiName());
+                    if (enum_var->Expr()) {
+                        log("UHDM: Processing initial expression for enum variable '%s'\n", var_name.c_str());
+                        
+                        // Look up the wire we already created
+                        RTLIL::Wire* wire = nullptr;
+                        if (name_map.count(var_name)) {
+                            wire = name_map[var_name];
+                        } else if (module->wire(RTLIL::escape_id(var_name))) {
+                            wire = module->wire(RTLIL::escape_id(var_name));
+                        }
+                        
+                        if (wire) {
+                            RTLIL::SigSpec init_value = import_expression(enum_var->Expr());
+                            if (init_value.size() > 0) {
+                                // Resize the init_value to match the wire width
+                                RTLIL::SigSpec lhs(wire);
+                                if (init_value.size() != lhs.size()) {
+                                    init_value.extend_u0(lhs.size(), false);
+                                    log("UHDM: Resized initial value from %d bits to %d bits for enum variable '%s'\n", 
+                                        init_value.size(), lhs.size(), var_name.c_str());
+                                }
+                                
+                                if (init_value.is_fully_const()) {
+                                    wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
+                                    log("UHDM: Set init attribute for enum variable '%s' to %s\n", 
+                                        var_name.c_str(), init_value.as_const().as_string().c_str());
+                                } else {
+                                    log("UHDM: Initial expression for enum variable '%s' is not constant\n", var_name.c_str());
+                                }
+                            }
+                        } else {
+                            log_warning("UHDM: Could not find wire for enum variable '%s' when processing initial expression\n", var_name.c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    */
     
     // Import processes (always blocks) - re-enabled with debugging
     log("UHDM: Checking for processes...\n");

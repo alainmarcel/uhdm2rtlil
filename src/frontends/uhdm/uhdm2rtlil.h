@@ -140,6 +140,13 @@ struct UhdmImporter {
     // Track sync assignment targets for proper if-else handling
     std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
     
+    // Track assert enable wires created during process import
+    std::vector<RTLIL::Wire*> current_assert_enable_wires;
+    
+    // Track current process context for assertions
+    bool in_always_ff_context = false;
+    RTLIL::SigSpec current_ff_clock_sig;
+    
     // Temporary wires for combinational processes
     std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
     std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;

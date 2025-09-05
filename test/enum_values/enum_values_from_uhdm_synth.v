@@ -18,11 +18,21 @@ module top(clk, z);
   wire _06_;
   wire _07_;
   (* another_attribute = 32'd1 *)
-  (* init = 2'h3 *)
+  (* enum_type = "$enum0" *)
+  (* enum_value_00 = "\\B" *)
+  (* enum_value_01 = "\\C" *)
+  (* enum_value_10 = "\\D" *)
+  (* enum_value_11 = "\\A" *)
   (* src = "dut.sv:24.13-24.18" *)
+  (* wiretype = "\\state_t" *)
   wire [1:0] state;
-  (* init = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00 *)
+  (* enum_type = "$enum0" *)
+  (* enum_value_00000000000000000000000000000000 = "\\WA" *)
+  (* enum_value_00000000000000000000000000000001 = "\\WB" *)
+  (* enum_value_00000000000000000000000000000010 = "\\WC" *)
+  (* enum_value_00000000000000000000000000000011 = "\\WD" *)
   (* src = "dut.sv:11.18-11.28" *)
+  (* wiretype = "\\wide_state_t" *)
   wire [31:0] wide_state;
   \$_NAND_  _08_ (
     .A(wide_state[1]),

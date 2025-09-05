@@ -465,9 +465,9 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     }
     
     if (ref_ts) {
-        log("UHDM: Found ref_typespec\n");
+        log("UHDM: Found ref_typespec for net '%s'\n", netname.c_str());
         if (auto actual_typespec = ref_ts->Actual_typespec()) {
-            log("UHDM: Found actual_typespec (UhdmType=%d)\n", actual_typespec->UhdmType());
+            log("UHDM: Found actual_typespec (UhdmType=%d) for net '%s'\n", actual_typespec->UhdmType(), netname.c_str());
             if (actual_typespec->UhdmType() == uhdmstruct_typespec) {
                 log("UHDM: typespec is a struct_typespec\n");
                 // Get the struct type name
@@ -483,6 +483,61 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
                 } else {
                     log("UHDM: Could not get type name for struct\n");
+                }
+            } else if (actual_typespec->UhdmType() == uhdmenum_typespec) {
+                log("UHDM: typespec is an enum_typespec\n");
+                // Handle enum type attributes
+                const UHDM::enum_typespec* enum_ts = any_cast<const UHDM::enum_typespec*>(actual_typespec);
+                
+                // Add wiretype attribute with the enum type name
+                std::string type_name;
+                if (!ref_ts->VpiName().empty()) {
+                    type_name = ref_ts->VpiName();
+                } else if (!enum_ts->VpiName().empty()) {
+                    type_name = enum_ts->VpiName();
+                }
+                
+                if (!type_name.empty()) {
+                    w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                    log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
+                }
+                
+                // Add enum_type attribute (usually $enum0, $enum1, etc.)
+                // For simplicity, we'll use a generated name based on the type name
+                std::string enum_type_id = "$enum_" + type_name;
+                w->attributes[RTLIL::escape_id("enum_type")] = RTLIL::Const(enum_type_id);
+                
+                // Add enum value attributes
+                if (enum_ts->Enum_consts()) {
+                    for (auto enum_const : *enum_ts->Enum_consts()) {
+                        std::string const_name = std::string(enum_const->VpiName());
+                        std::string const_value = std::string(enum_const->VpiValue());
+                        
+                        // Parse the value (format is usually "UINT:value" or "INT:value")
+                        std::string value_str;
+                        size_t colon_pos = const_value.find(':');
+                        if (colon_pos != std::string::npos) {
+                            value_str = const_value.substr(colon_pos + 1);
+                        } else {
+                            value_str = const_value;
+                        }
+                        
+                        // Convert value to binary representation for attribute
+                        int value = std::stoi(value_str);
+                        int width = get_width(uhdm_net, inst);
+                        RTLIL::Const binary_val(value, width);
+                        
+                        // Create attribute name like enum_value_00, enum_value_01, etc.
+                        std::string attr_name = "enum_value_";
+                        for (int i = width - 1; i >= 0; i--) {
+                            attr_name += (binary_val[i] == RTLIL::State::S1) ? '1' : '0';
+                        }
+                        
+                        // Set the attribute value to the enum constant name
+                        w->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const("\\" + const_name);
+                        log("UHDM: Added enum attribute %s = \\%s to wire '%s'\n", 
+                            attr_name.c_str(), const_name.c_str(), w->name.c_str());
+                    }
                 }
             }
         }
@@ -1367,8 +1422,23 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             log("UHDM: Found enum_typespec, getting base type\n");
             if (auto enum_typespec = dynamic_cast<const UHDM::enum_typespec*>(typespec)) {
                 // Get the base typespec - this defines the actual width
-                if (auto base_typespec = enum_typespec->Base_typespec()) {
-                    log("UHDM: Found base typespec for enum\n");
+                const any* base_typespec = enum_typespec->Base_typespec();
+                
+                if (base_typespec) {
+                    log("UHDM: Found base typespec for enum (type=%d)\n", base_typespec->UhdmType());
+                    // Check if base_typespec is a ref_typespec that needs special handling
+                    if (base_typespec->UhdmType() == uhdmref_typespec) {
+                        auto base_ref = dynamic_cast<const UHDM::ref_typespec*>(base_typespec);
+                        if (base_ref) {
+                            log("UHDM: Base is a ref_typespec, name=%s\n", std::string(base_ref->VpiName()).c_str());
+                            // Try to get the Actual typespec
+                            if (base_ref->Actual_typespec()) {
+                                log("UHDM: ref_typespec has Actual_typespec\n");
+                            } else {
+                                log("UHDM: ref_typespec has NO Actual_typespec\n");
+                            }
+                        }
+                    }
                     return get_width_from_typespec(base_typespec, inst);
                 } else {
                     // No explicit base type means default int type (32 bits in SystemVerilog)
@@ -1376,6 +1446,13 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     return 32;
                 }
             }
+        }
+        
+        // For ref_typespec without Actual, don't call ExprEval::size as it may crash
+        if (typespec->UhdmType() == uhdmref_typespec) {
+            UHDM::decompile(typespec);
+            log("UHDM: ref_typespec without actual - defaulting to width 32 (int)\n");
+            return 32;
         }
         
         // Use UHDM::ExprEval to get the actual size of the typespec

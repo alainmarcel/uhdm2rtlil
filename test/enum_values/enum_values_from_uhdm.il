@@ -29,11 +29,21 @@ module \top
   attribute \src "dut.sv:9.18-9.21"
   wire input 1 \clk
   attribute \another_attribute 1
-  attribute \init 2'11
+  attribute \enum_type "$enum0"
+  attribute \enum_value_00 "\\B"
+  attribute \enum_value_01 "\\C"
+  attribute \enum_value_10 "\\D"
+  attribute \enum_value_11 "\\A"
   attribute \src "dut.sv:24.13-24.18"
+  attribute \wiretype "\\state_t"
   wire width 2 \state
-  attribute \init 32'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00
+  attribute \enum_type "$enum0"
+  attribute \enum_value_00000000000000000000000000000000 "\\WA"
+  attribute \enum_value_00000000000000000000000000000001 "\\WB"
+  attribute \enum_value_00000000000000000000000000000010 "\\WC"
+  attribute \enum_value_00000000000000000000000000000011 "\\WD"
   attribute \src "dut.sv:11.18-11.28"
+  attribute \wiretype "\\wide_state_t"
   wire width 32 \wide_state
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
@@ -182,42 +192,42 @@ module \top
     connect \B 2'01
     connect \Y $auto$process.cpp:34:create_temp_wire$31
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$15
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$15
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$10
     connect \B 3
     connect \S $auto$process.cpp:34:create_temp_wire$11
     connect \Y $auto$rtlil.cc:3094:Mux$16
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$23
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$23
     parameter \WIDTH 2
     connect \A 2'x
     connect \B 2'00
     connect \S $auto$process.cpp:34:create_temp_wire$21
     connect \Y $auto$rtlil.cc:3094:Mux$24
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$29
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$29
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$24
     connect \B 2'01
     connect \S $auto$process.cpp:34:create_temp_wire$25
     connect \Y $auto$rtlil.cc:3094:Mux$30
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$3
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$3
     parameter \WIDTH 32
     connect \A 32'000000000000000000000000000000xx
     connect \B 1
     connect \S $auto$process.cpp:34:create_temp_wire$1
     connect \Y $auto$rtlil.cc:3094:Mux$4
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$35
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$35
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$30
     connect \B 2'10
     connect \S $auto$process.cpp:34:create_temp_wire$31
     connect \Y $auto$rtlil.cc:3094:Mux$36
   end
-  cell $mux $auto$process.cpp:4241:import_assignment_sync$9
+  cell $mux $auto$process.cpp:4297:import_assignment_sync$9
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$4
     connect \B 2
