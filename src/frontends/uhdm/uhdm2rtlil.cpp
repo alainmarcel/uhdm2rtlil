@@ -1698,9 +1698,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import memory objects using analysis pass
     analyze_and_generate_memories(uhdm_module);
     
-    // TODO: Process initial expressions for enum variables now that enum constants are available
-    // Temporarily disabled to debug crash
-    
+    // Process initial expressions for enum variables now that enum constants are available
     if (uhdm_module->Variables()) {
         log("UHDM: Processing initial expressions for enum variables in module\n");
         for (auto var : *uhdm_module->Variables()) {
