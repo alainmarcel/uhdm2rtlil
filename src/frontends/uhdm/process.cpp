@@ -89,6 +89,8 @@ void UhdmImporter::process_assignment_lhs_rhs(const UHDM::assignment* assign, RT
 
 // Import immediate assertion as $check cell (following DRY principle)
 void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire) {
+    log("UHDM: import_immediate_assert called, in_always_ff=%d, clock_sig.empty=%d\n", 
+        in_always_ff_context ? 1 : 0, current_ff_clock_sig.empty() ? 1 : 0);
     if (!assert_stmt || !assert_stmt->Expr()) {
         return;
     }
@@ -100,6 +102,9 @@ void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_
     enable_wire = module->addWire(NEW_ID);
     enable_wire->width = 1;
     
+    // Track this enable wire for initialization
+    current_assert_enable_wires.push_back(enable_wire);
+    
     // Create a $check cell (matching Verilog frontend behavior)
     RTLIL::Cell* check_cell = module->addCell(NEW_ID, "$check");
     
@@ -108,15 +113,27 @@ void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_
     check_cell->setParam("\\FLAVOR", RTLIL::Const("assert"));
     check_cell->setParam("\\FORMAT", RTLIL::Const(""));
     check_cell->setParam("\\PRIORITY", RTLIL::Const(0xffffffff, 32)); // Default priority
-    check_cell->setParam("\\TRG_ENABLE", 0);
-    check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(RTLIL::State::Sx, 0));
-    check_cell->setParam("\\TRG_WIDTH", 0);
     
-    // Set ports
-    check_cell->setPort("\\A", condition);
-    check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
-    check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
-    check_cell->setPort("\\TRG", RTLIL::SigSpec());   // Empty trigger
+    // If we're in always_ff context, connect the clock to trigger
+    if (in_always_ff_context && !current_ff_clock_sig.empty()) {
+        check_cell->setParam("\\TRG_ENABLE", 1);
+        check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(1, 1)); // Positive edge
+        check_cell->setParam("\\TRG_WIDTH", 1);
+        // Set ports
+        check_cell->setPort("\\A", condition);
+        check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
+        check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
+        check_cell->setPort("\\TRG", current_ff_clock_sig); // Connect clock signal
+    } else {
+        check_cell->setParam("\\TRG_ENABLE", 0);
+        check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(RTLIL::State::Sx, 0));
+        check_cell->setParam("\\TRG_WIDTH", 0);
+        // Set ports
+        check_cell->setPort("\\A", condition);
+        check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
+        check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
+        check_cell->setPort("\\TRG", RTLIL::SigSpec());   // Empty trigger
+    }
     
     // Add source location if available
     add_src_attribute(check_cell->attributes, assert_stmt);
@@ -828,6 +845,9 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     
     log("UHDM: === Starting import_process ===\n");
     
+    // Clear assert enable wires tracking for this process
+    current_assert_enable_wires.clear();
+    
     // Debug: Print process location
     std::string proc_src = get_src_attribute(uhdm_process);
     log("UHDM: Process source location: %s\n", proc_src.c_str());
@@ -959,12 +979,25 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
             import_always(uhdm_process, yosys_proc);
             break;
     }
+    
+    // Add initialization assignments for all assert enable wires at the beginning of the process
+    if (!current_assert_enable_wires.empty()) {
+        log("  Adding initialization for %d assert enable wires\n", (int)current_assert_enable_wires.size());
+        // Insert at the beginning of root_case actions
+        for (auto it = current_assert_enable_wires.rbegin(); it != current_assert_enable_wires.rend(); ++it) {
+            yosys_proc->root_case.actions.insert(yosys_proc->root_case.actions.begin(),
+                RTLIL::SigSig(*it, RTLIL::State::S0));
+        }
+    }
 }
 
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
     log_flush();
+    
+    // Set always_ff context right at the start
+    in_always_ff_context = true;
     
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
@@ -1027,7 +1060,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                             log("      Importing clock signal from posedge\n");
                                             log_flush();
                                             clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                            log("      Clock signal imported\n");
+                                            current_ff_clock_sig = clock_sig; // Store for assertions
+                                            log("      Clock signal imported, setting current_ff_clock_sig\n");
                                             log_flush();
                                             break; // Use the first posedge as clock
                                         }
@@ -1041,6 +1075,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from posedge\n");
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            current_ff_clock_sig = clock_sig; // Store for assertions
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -1050,6 +1085,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from negedge\n");
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            current_ff_clock_sig = clock_sig; // Store for assertions
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -1322,6 +1358,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     current_signal_temp_wires[sig_name] = temp_wire;
                                 }
                                 
+                                // Set always_ff context for assert handling
+                                in_always_ff_context = true;
+                                current_ff_clock_sig = clock_sig;
+                                log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
+                                
                                 import_statement_comb(then_stmt, case_true);
                                 
                                 // Clear context
@@ -1344,6 +1385,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 for (const auto& [sig_name, temp_wire] : temp_wires) {
                                     current_signal_temp_wires[sig_name] = temp_wire;
                                 }
+                                
+                                // Set always_ff context for assert handling
+                                in_always_ff_context = true;
+                                current_ff_clock_sig = clock_sig;
+                                log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
                                 
                                 import_statement_comb(else_stmt, case_false);
                                 
@@ -1418,6 +1464,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 log("      Created sync rules for clock and reset\n");
             }
             log_flush();
+            
+            // Clear always_ff context after async reset handling
+            in_always_ff_context = false;
+            current_ff_clock_sig = RTLIL::SigSpec();
             
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
@@ -2059,6 +2109,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Sync rule created with clock signal size: %d\n", clock_sig.size());
                     log_flush();
                     
+                    // Set always_ff context for assert handling
+                    in_always_ff_context = true;
+                    current_ff_clock_sig = clock_sig;
+                    
                     // Import the statement using the generic import
                     log("      Importing statement into sync rule\n");
                     log_flush();
@@ -2086,7 +2140,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
     }
     
-    // Clear temp wires context at the end of import_always_ff
+    // Clear contexts at the end of import_always_ff
+    in_always_ff_context = false;
+    current_ff_clock_sig = RTLIL::SigSpec();
     current_temp_wires.clear();
     current_lhs_specs.clear();
 }
@@ -5278,6 +5334,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
             break;
         }
+        
+        case vpiImmediateAssert: {
+            log("        Processing immediate assert in case context - converting to $check cell\n");
+            
+            const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_assert(assert_stmt, enable_wire);
+            
+            // In case context, add assignment to set enable wire to 1
+            if (enable_wire) {
+                case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+            
+            log("        Immediate assert processed in case\n");
+            break;
+        }
+        
         default:
             if (mode_debug)
                 log("        Unsupported statement type in case: %s (vpiType=%d)\n", 

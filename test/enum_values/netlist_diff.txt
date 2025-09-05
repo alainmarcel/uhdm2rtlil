@@ -8,7 +8,7 @@
  module top(clk, z);
  (* src = "dut.sv:9.18-9.21" *)
  input clk;
-@@ -13,105 +13,96 @@
+@@ -13,20 +13,15 @@
  wire _02_;
  wire _03_;
  wire _04_;
@@ -20,27 +20,27 @@
 -wire [1:0] _06_;
 -(* another_attribute = 32'd4294967295 *)
 -(* enum_type = "$enum1" *)
--(* enum_value_00 = "\\B" *)
--(* enum_value_01 = "\\C" *)
--(* enum_value_10 = "\\D" *)
--(* enum_value_11 = "\\A" *)
 +wire _05_;
 +wire _06_;
 +wire _07_;
 +(* another_attribute = 32'd1 *)
- (* init = 2'h3 *)
++(* enum_type = "$enum0" *)
+ (* enum_value_00 = "\\B" *)
+ (* enum_value_01 = "\\C" *)
+ (* enum_value_10 = "\\D" *)
+ (* enum_value_11 = "\\A" *)
+-(* init = 2'h3 *)
 -(* some_attribute = 16'h002a *)
  (* src = "dut.sv:24.13-24.18" *)
--(* wiretype = "\\state_t" *)
+ (* wiretype = "\\state_t" *)
  wire [1:0] state;
--(* enum_type = "$enum0" *)
--(* enum_value_00000000000000000000000000000000 = "\\WA" *)
--(* enum_value_00000000000000000000000000000001 = "\\WB" *)
--(* enum_value_00000000000000000000000000000010 = "\\WC" *)
--(* enum_value_00000000000000000000000000000011 = "\\WD" *)
- (* init = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00 *)
+@@ -35,83 +30,89 @@
+ (* enum_value_00000000000000000000000000000001 = "\\WB" *)
+ (* enum_value_00000000000000000000000000000010 = "\\WC" *)
+ (* enum_value_00000000000000000000000000000011 = "\\WD" *)
+-(* init = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00 *)
  (* src = "dut.sv:11.18-11.28" *)
--(* wiretype = "\\wide_state_t" *)
+ (* wiretype = "\\wide_state_t" *)
  wire [31:0] wide_state;
 -\$_ANDNOT_  _07_ (
 +\$_NAND_  _08_ (
