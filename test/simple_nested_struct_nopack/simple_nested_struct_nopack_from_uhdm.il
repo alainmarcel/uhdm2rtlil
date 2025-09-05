@@ -14,7 +14,7 @@ module \simple_nested_struct_nopack
   attribute \src "dut.sv:23.21-23.31"
   attribute \wiretype "\\nested_struct_t"
   wire width 62 \out_struct
-  cell $and $auto$expression.cpp:469:import_operation$5
+  cell $and $auto$expression.cpp:502:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -24,7 +24,7 @@ module \simple_nested_struct_nopack
     connect \B \in_data [0]
     connect \Y \out_data [21]
   end
-  cell $add $auto$expression.cpp:546:import_operation$2
+  cell $add $auto$expression.cpp:579:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -34,7 +34,7 @@ module \simple_nested_struct_nopack
     connect \B 8'00000001
     connect \Y \out_data [61:54]
   end
-  cell $add $auto$expression.cpp:546:import_operation$8
+  cell $add $auto$expression.cpp:579:import_operation$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0

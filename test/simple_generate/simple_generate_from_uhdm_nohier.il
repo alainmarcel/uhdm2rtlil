@@ -19,7 +19,7 @@ module \simple_generate
   wire \gen_loop[3].tmp
   attribute \src "dut.sv:1.35-1.36"
   wire width 4 output 4 \y
-  cell $and $auto$expression.cpp:469:import_operation$1
+  cell $and $auto$expression.cpp:502:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -29,7 +29,7 @@ module \simple_generate
     connect \B \b [0]
     connect \Y $auto$rtlil.cc:3006:And$2
   end
-  cell $and $auto$expression.cpp:469:import_operation$3
+  cell $and $auto$expression.cpp:502:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -39,7 +39,7 @@ module \simple_generate
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3006:And$4
   end
-  cell $and $auto$expression.cpp:469:import_operation$5
+  cell $and $auto$expression.cpp:502:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -49,7 +49,7 @@ module \simple_generate
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$expression.cpp:469:import_operation$7
+  cell $and $auto$expression.cpp:502:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

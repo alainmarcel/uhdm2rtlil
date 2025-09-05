@@ -32,7 +32,7 @@ module \simple_assign
   wire output 8 \out_not
   attribute \src "dut.sv:8.17-8.23"
   wire output 7 \out_or
-  cell $and $auto$expression.cpp:469:import_operation$1
+  cell $and $auto$expression.cpp:502:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -42,7 +42,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3006:And$2
   end
-  cell $and $auto$expression.cpp:469:import_operation$11
+  cell $and $auto$expression.cpp:502:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -52,7 +52,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3006:And$12
   end
-  cell $and $auto$expression.cpp:469:import_operation$15
+  cell $and $auto$expression.cpp:502:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -62,7 +62,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3006:And$16
   end
-  cell $and $auto$expression.cpp:469:import_operation$17
+  cell $and $auto$expression.cpp:502:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -72,7 +72,7 @@ module \simple_assign
     connect \B \d
     connect \Y $auto$rtlil.cc:3006:And$18
   end
-  cell $and $auto$expression.cpp:469:import_operation$19
+  cell $and $auto$expression.cpp:502:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -82,7 +82,7 @@ module \simple_assign
     connect \B \e
     connect \Y $auto$rtlil.cc:3006:And$20
   end
-  cell $and $auto$expression.cpp:469:import_operation$3
+  cell $and $auto$expression.cpp:502:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -92,7 +92,7 @@ module \simple_assign
     connect \B \c
     connect \Y $auto$rtlil.cc:3006:And$4
   end
-  cell $or $auto$expression.cpp:473:import_operation$21
+  cell $or $auto$expression.cpp:506:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -102,7 +102,7 @@ module \simple_assign
     connect \B $auto$rtlil.cc:3006:And$20
     connect \Y $auto$rtlil.cc:3007:Or$22
   end
-  cell $or $auto$expression.cpp:473:import_operation$5
+  cell $or $auto$expression.cpp:506:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -112,7 +112,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3007:Or$6
   end
-  cell $or $auto$expression.cpp:473:import_operation$7
+  cell $or $auto$expression.cpp:506:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -122,7 +122,7 @@ module \simple_assign
     connect \B \c
     connect \Y $auto$rtlil.cc:3007:Or$8
   end
-  cell $or $auto$expression.cpp:473:import_operation$9
+  cell $or $auto$expression.cpp:506:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -132,7 +132,7 @@ module \simple_assign
     connect \B \d
     connect \Y $auto$rtlil.cc:3007:Or$10
   end
-  cell $not $auto$expression.cpp:481:import_operation$13
+  cell $not $auto$expression.cpp:514:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1

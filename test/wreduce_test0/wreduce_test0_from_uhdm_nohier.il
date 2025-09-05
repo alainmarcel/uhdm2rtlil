@@ -3,8 +3,8 @@ autoidx 11
 attribute \src "dut.sv:1.1-5.10"
 attribute \cells_not_processed 1
 module \wreduce_test0
-  wire width 9 $auto$expression.cpp:407:import_operation$1
-  wire width 9 $auto$expression.cpp:532:import_operation$5
+  wire width 9 $auto$expression.cpp:440:import_operation$1
+  wire width 9 $auto$expression.cpp:565:import_operation$5
   wire width 16 $auto$module.cpp:615:import_continuous_assign$3
   wire width 16 $auto$module.cpp:615:import_continuous_assign$7
   wire width 16 $auto$rtlil.cc:3008:Xor$10
@@ -18,14 +18,14 @@ module \wreduce_test0
   wire width 16 output 4 \y
   attribute \src "dut.sv:1.60-1.61"
   wire width 16 output 5 \z
-  cell $neg $auto$expression.cpp:412:import_operation$2
+  cell $neg $auto$expression.cpp:445:import_operation$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
-    connect \Y $auto$expression.cpp:407:import_operation$1
+    connect \Y $auto$expression.cpp:440:import_operation$1
   end
-  cell $xor $auto$expression.cpp:477:import_operation$9
+  cell $xor $auto$expression.cpp:510:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \wreduce_test0
     connect \B \y
     connect \Y $auto$rtlil.cc:3008:Xor$10
   end
-  cell $add $auto$expression.cpp:546:import_operation$6
+  cell $add $auto$expression.cpp:579:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \B_SIGNED 0
@@ -43,20 +43,20 @@ module \wreduce_test0
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
     connect \B { 1'0 \b }
-    connect \Y $auto$expression.cpp:532:import_operation$5
+    connect \Y $auto$expression.cpp:565:import_operation$5
   end
   cell $pos $auto$module.cpp:616:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:407:import_operation$1
+    connect \A $auto$expression.cpp:440:import_operation$1
     connect \Y $auto$module.cpp:615:import_continuous_assign$3
   end
   cell $pos $auto$module.cpp:616:import_continuous_assign$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:532:import_operation$5
+    connect \A $auto$expression.cpp:565:import_operation$5
     connect \Y $auto$module.cpp:615:import_continuous_assign$7
   end
   connect \x $auto$module.cpp:615:import_continuous_assign$3

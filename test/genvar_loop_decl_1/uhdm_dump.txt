@@ -1,0 +1,603 @@
+slpp_all/surelog.uhdm: Restored design Pre-Elab: 
+design: (work@gate)
+|vpiName:work@gate
+|uhdmallModules:
+\_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+  |vpiParent:
+  \_design: (work@gate)
+  |vpiFullName:work@gate
+  |vpiDefName:work@gate
+  |vpiNet:
+  \_logic_net: (work@gate.a), line:3:13, endln:3:14
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiName:a
+    |vpiFullName:work@gate.a
+    |vpiNetType:1
+  |vpiPort:
+  \_port: (a), line:3:13, endln:3:14
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiName:a
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@gate.a.a), line:3:13, endln:3:14
+      |vpiParent:
+      \_port: (a), line:3:13, endln:3:14
+      |vpiName:a
+      |vpiFullName:work@gate.a.a
+      |vpiActual:
+      \_logic_net: (work@gate.a), line:3:13, endln:3:14
+    |vpiTypedef:
+    \_ref_typespec: (work@gate.a)
+      |vpiParent:
+      \_port: (a), line:3:13, endln:3:14
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_typespec: , line:7:9, endln:7:20
+  |vpiContAssign:
+  \_cont_assign: , line:8:9, endln:8:59
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiRhs:
+    \_operation: , line:8:13, endln:8:59
+      |vpiParent:
+      \_cont_assign: , line:8:9, endln:8:59
+      |vpiOpType:33
+      |vpiOperand:
+      \_constant: , line:8:14, endln:8:18
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+      |vpiOperand:
+      \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiActual:
+        \_bit_select: (genblk1[0]), line:8:20, endln:8:27
+          |vpiParent:
+          \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+          |vpiName:genblk1
+          |vpiFullName:genblk1[0]
+          |vpiIndex:
+          \_constant: , line:8:28, endln:8:29
+            |vpiDecompile:0
+            |vpiSize:64
+            |UINT:0
+            |vpiConstType:9
+        |vpiActual:
+        \_ref_obj: (work@gate.x), line:8:31, endln:8:32
+          |vpiParent:
+          \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+          |vpiName:x
+          |vpiFullName:work@gate.x
+        |vpiName:genblk1[0].x
+      |vpiOperand:
+      \_constant: , line:8:34, endln:8:38
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+      |vpiOperand:
+      \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiActual:
+        \_bit_select: (genblk1[1]), line:8:40, endln:8:47
+          |vpiParent:
+          \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+          |vpiName:genblk1
+          |vpiFullName:genblk1[1]
+          |vpiIndex:
+          \_constant: , line:8:48, endln:8:49
+            |vpiDecompile:1
+            |vpiSize:64
+            |UINT:1
+            |vpiConstType:9
+        |vpiActual:
+        \_ref_obj: (work@gate.x), line:8:51, endln:8:52
+          |vpiParent:
+          \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+          |vpiName:x
+          |vpiFullName:work@gate.x
+        |vpiName:genblk1[1].x
+      |vpiOperand:
+      \_constant: , line:8:54, endln:8:58
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+    |vpiLhs:
+    \_ref_obj: (work@gate.a), line:8:9, endln:8:10
+      |vpiParent:
+      \_cont_assign: , line:8:9, endln:8:59
+      |vpiName:a
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_net: (work@gate.a), line:3:13, endln:3:14
+  |vpiGenStmt:
+  \_gen_for: 
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiForInitStmt:
+    \_assignment: , line:4:7, endln:4:19
+      |vpiParent:
+      \_gen_for: 
+      |vpiRhs:
+      \_constant: , line:4:18, endln:4:19
+        |vpiDecompile:0
+        |vpiSize:64
+        |UINT:0
+        |vpiConstType:9
+      |vpiLhs:
+      \_int_var: (work@gate.i), line:4:14, endln:4:15
+        |vpiParent:
+        \_assignment: , line:4:7, endln:4:19
+        |vpiTypespec:
+        \_ref_typespec: (work@gate.i)
+          |vpiParent:
+          \_int_var: (work@gate.i), line:4:14, endln:4:15
+          |vpiFullName:work@gate.i
+          |vpiActual:
+          \_int_typespec: 
+        |vpiName:i
+        |vpiFullName:work@gate.i
+    |vpiCondition:
+    \_operation: , line:4:21, endln:4:26
+      |vpiParent:
+      \_gen_for: 
+      |vpiOpType:20
+      |vpiOperand:
+      \_ref_obj: (work@gate.i), line:4:21, endln:4:22
+        |vpiParent:
+        \_operation: , line:4:21, endln:4:26
+        |vpiName:i
+        |vpiFullName:work@gate.i
+      |vpiOperand:
+      \_constant: , line:4:25, endln:4:26
+        |vpiParent:
+        \_operation: , line:4:21, endln:4:26
+        |vpiDecompile:2
+        |vpiSize:64
+        |UINT:2
+        |vpiConstType:9
+    |vpiForIncStmt:
+    \_operation: , line:4:28, endln:4:29
+      |vpiParent:
+      \_gen_for: 
+      |vpiOpType:62
+      |vpiOperand:
+      \_ref_obj: (work@gate.i)
+        |vpiParent:
+        \_gen_for: 
+        |vpiName:i
+        |vpiFullName:work@gate.i
+    |vpiStmt:
+    \_begin: (work@gate)
+      |vpiParent:
+      \_gen_for: 
+      |vpiFullName:work@gate
+|uhdmtopModules:
+\_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+  |vpiParent:
+  \_design: (work@gate)
+  |vpiName:work@gate
+  |vpiDefName:work@gate
+  |vpiTop:1
+  |vpiNet:
+  \_logic_net: (work@gate.a), line:3:13, endln:3:14
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiTypespec:
+    \_ref_typespec: (work@gate.a)
+      |vpiParent:
+      \_logic_net: (work@gate.a), line:3:13, endln:3:14
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_typespec: , line:7:9, endln:7:20
+    |vpiName:a
+    |vpiFullName:work@gate.a
+    |vpiNetType:1
+  |vpiTopModule:1
+  |vpiPort:
+  \_port: (a), line:3:13, endln:3:14
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiName:a
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@gate.a), line:3:13, endln:3:14
+      |vpiParent:
+      \_port: (a), line:3:13, endln:3:14
+      |vpiName:a
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_net: (work@gate.a), line:3:13, endln:3:14
+    |vpiTypedef:
+    \_ref_typespec: (work@gate.a)
+      |vpiParent:
+      \_port: (a), line:3:13, endln:3:14
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_typespec: , line:7:9, endln:7:20
+  |vpiGenScopeArray:
+  \_gen_scope_array: (work@gate.genblk1[0]), line:5:3, endln:5:21
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiName:genblk1[0]
+    |vpiFullName:work@gate.genblk1[0]
+    |vpiGenScope:
+    \_gen_scope: (work@gate.genblk1[0]), line:5:3, endln:5:21
+      |vpiParent:
+      \_gen_scope_array: (work@gate.genblk1[0]), line:5:3, endln:5:21
+      |vpiFullName:work@gate.genblk1[0]
+      |vpiParameter:
+      \_parameter: (work@gate.genblk1[0].i), line:4:0
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[0]), line:5:3, endln:5:21
+        |UINT:0
+        |vpiTypespec:
+        \_ref_typespec: (work@gate.genblk1[0].i)
+          |vpiParent:
+          \_parameter: (work@gate.genblk1[0].i), line:4:0
+          |vpiFullName:work@gate.genblk1[0].i
+          |vpiActual:
+          \_int_typespec: 
+        |vpiLocalParam:1
+        |vpiName:i
+        |vpiFullName:work@gate.genblk1[0].i
+      |vpiNet:
+      \_logic_net: (work@gate.genblk1[0].x), line:5:14, endln:5:15
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[0]), line:5:3, endln:5:21
+        |vpiTypespec:
+        \_ref_typespec: (work@gate.genblk1[0].x)
+          |vpiParent:
+          \_logic_net: (work@gate.genblk1[0].x), line:5:14, endln:5:15
+          |vpiFullName:work@gate.genblk1[0].x
+          |vpiActual:
+          \_logic_typespec: , line:5:3, endln:5:13
+        |vpiName:x
+        |vpiFullName:work@gate.genblk1[0].x
+        |vpiNetType:1
+      |vpiContAssign:
+      \_cont_assign: , line:5:14, endln:5:15
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[0]), line:5:3, endln:5:21
+        |vpiNetDeclAssign:1
+        |vpiRhs:
+        \_constant: , line:5:18, endln:5:20
+          |vpiParent:
+          \_cont_assign: , line:5:14, endln:5:15
+          |vpiDecompile:1
+          |vpiSize:1
+          |UINT:1
+          |vpiConstType:9
+        |vpiLhs:
+        \_logic_net: (work@gate.genblk1[0].x), line:5:14, endln:5:15
+          |vpiParent:
+          \_cont_assign: , line:5:14, endln:5:15
+          |vpiTypespec:
+          \_ref_typespec: (work@gate.genblk1[0].x)
+            |vpiParent:
+            \_logic_net: (work@gate.genblk1[0].x), line:5:14, endln:5:15
+            |vpiFullName:work@gate.genblk1[0].x
+            |vpiActual:
+            \_logic_typespec: , line:5:3, endln:5:13
+          |vpiName:x
+          |vpiFullName:work@gate.genblk1[0].x
+          |vpiNetType:1
+  |vpiGenScopeArray:
+  \_gen_scope_array: (work@gate.genblk1[1]), line:5:3, endln:5:21
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiName:genblk1[1]
+    |vpiFullName:work@gate.genblk1[1]
+    |vpiGenScope:
+    \_gen_scope: (work@gate.genblk1[1]), line:5:3, endln:5:21
+      |vpiParent:
+      \_gen_scope_array: (work@gate.genblk1[1]), line:5:3, endln:5:21
+      |vpiFullName:work@gate.genblk1[1]
+      |vpiParameter:
+      \_parameter: (work@gate.genblk1[1].i), line:4:0
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[1]), line:5:3, endln:5:21
+        |UINT:1
+        |vpiTypespec:
+        \_ref_typespec: (work@gate.genblk1[1].i)
+          |vpiParent:
+          \_parameter: (work@gate.genblk1[1].i), line:4:0
+          |vpiFullName:work@gate.genblk1[1].i
+          |vpiActual:
+          \_int_typespec: 
+        |vpiLocalParam:1
+        |vpiName:i
+        |vpiFullName:work@gate.genblk1[1].i
+      |vpiNet:
+      \_logic_net: (work@gate.genblk1[1].x), line:5:14, endln:5:15
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[1]), line:5:3, endln:5:21
+        |vpiTypespec:
+        \_ref_typespec: (work@gate.genblk1[1].x)
+          |vpiParent:
+          \_logic_net: (work@gate.genblk1[1].x), line:5:14, endln:5:15
+          |vpiFullName:work@gate.genblk1[1].x
+          |vpiActual:
+          \_logic_typespec: , line:5:3, endln:5:13
+        |vpiName:x
+        |vpiFullName:work@gate.genblk1[1].x
+        |vpiNetType:1
+      |vpiContAssign:
+      \_cont_assign: , line:5:14, endln:5:15
+        |vpiParent:
+        \_gen_scope: (work@gate.genblk1[1]), line:5:3, endln:5:21
+        |vpiNetDeclAssign:1
+        |vpiRhs:
+        \_constant: , line:5:18, endln:5:20
+          |vpiParent:
+          \_cont_assign: , line:5:14, endln:5:15
+          |vpiDecompile:3
+          |vpiSize:2
+          |UINT:3
+          |vpiConstType:9
+        |vpiLhs:
+        \_logic_net: (work@gate.genblk1[1].x), line:5:14, endln:5:15
+          |vpiParent:
+          \_cont_assign: , line:5:14, endln:5:15
+          |vpiTypespec:
+          \_ref_typespec: (work@gate.genblk1[1].x)
+            |vpiParent:
+            \_logic_net: (work@gate.genblk1[1].x), line:5:14, endln:5:15
+            |vpiFullName:work@gate.genblk1[1].x
+            |vpiActual:
+            \_logic_typespec: , line:5:3, endln:5:13
+          |vpiName:x
+          |vpiFullName:work@gate.genblk1[1].x
+          |vpiNetType:1
+  |vpiContAssign:
+  \_cont_assign: , line:8:9, endln:8:59
+    |vpiParent:
+    \_module_inst: work@gate (work@gate), file:/home/alain/uhdm2rtlil/test/genvar_loop_decl_1/dut.sv, line:3:1, endln:9:10
+    |vpiRhs:
+    \_operation: , line:8:13, endln:8:59
+      |vpiParent:
+      \_cont_assign: , line:8:9, endln:8:59
+      |vpiOpType:33
+      |vpiOperand:
+      \_constant: , line:8:14, endln:8:18
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+      |vpiOperand:
+      \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiActual:
+        \_bit_select: (genblk1[0]), line:8:20, endln:8:27
+          |vpiParent:
+          \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+          |vpiName:genblk1
+          |vpiFullName:genblk1[0]
+          |vpiIndex:
+          \_constant: , line:8:28, endln:8:29
+            |vpiParent:
+            \_bit_select: (genblk1[0]), line:8:20, endln:8:27
+            |vpiDecompile:0
+            |vpiSize:64
+            |UINT:0
+            |vpiConstType:9
+        |vpiActual:
+        \_ref_obj: (work@gate.x), line:8:31, endln:8:32
+          |vpiParent:
+          \_hier_path: (genblk1[0].x), line:8:20, endln:8:32
+          |vpiName:x
+          |vpiFullName:work@gate.x
+        |vpiName:genblk1[0].x
+      |vpiOperand:
+      \_constant: , line:8:34, endln:8:38
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+      |vpiOperand:
+      \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiActual:
+        \_bit_select: (genblk1[1]), line:8:40, endln:8:47
+          |vpiParent:
+          \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+          |vpiName:genblk1
+          |vpiFullName:genblk1[1]
+          |vpiIndex:
+          \_constant: , line:8:48, endln:8:49
+            |vpiParent:
+            \_bit_select: (genblk1[1]), line:8:40, endln:8:47
+            |vpiDecompile:1
+            |vpiSize:64
+            |UINT:1
+            |vpiConstType:9
+        |vpiActual:
+        \_ref_obj: (work@gate.x), line:8:51, endln:8:52
+          |vpiParent:
+          \_hier_path: (genblk1[1].x), line:8:40, endln:8:52
+          |vpiName:x
+          |vpiFullName:work@gate.x
+        |vpiName:genblk1[1].x
+      |vpiOperand:
+      \_constant: , line:8:54, endln:8:58
+        |vpiParent:
+        \_operation: , line:8:13, endln:8:59
+        |vpiDecompile:1'b0
+        |vpiSize:1
+        |BIN:0
+        |vpiConstType:3
+    |vpiLhs:
+    \_ref_obj: (work@gate.a), line:8:9, endln:8:10
+      |vpiParent:
+      \_cont_assign: , line:8:9, endln:8:59
+      |vpiName:a
+      |vpiFullName:work@gate.a
+      |vpiActual:
+      \_logic_net: (work@gate.a), line:3:13, endln:3:14
+\_weaklyReferenced:
+\_logic_typespec: , line:7:9, endln:7:20
+  |vpiRange:
+  \_range: , line:7:14, endln:7:20
+    |vpiParent:
+    \_logic_typespec: , line:7:9, endln:7:20
+    |vpiLeftRange:
+    \_constant: , line:7:15, endln:7:17
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:32
+      |vpiSize:64
+      |UINT:32
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:7:18, endln:7:19
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:9, endln:7:20
+  |vpiRange:
+  \_range: , line:7:14, endln:7:20
+    |vpiParent:
+    \_logic_typespec: , line:7:9, endln:7:20
+    |vpiLeftRange:
+    \_constant: , line:7:15, endln:7:17
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:32
+      |vpiSize:64
+      |UINT:32
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:7:18, endln:7:19
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:3, endln:5:13
+  |vpiRange:
+  \_range: , line:5:8, endln:5:13
+    |vpiParent:
+    \_logic_typespec: , line:5:3, endln:5:13
+    |vpiLeftRange:
+    \_constant: , line:5:9, endln:5:10
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:5:11, endln:5:12
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:3, endln:5:13
+  |vpiRange:
+  \_range: , line:5:8, endln:5:13
+    |vpiParent:
+    \_logic_typespec: , line:5:3, endln:5:13
+    |vpiLeftRange:
+    \_constant: , line:5:9, endln:5:10
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:1
+      |vpiSize:64
+      |UINT:1
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:5:11, endln:5:12
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:7:9, endln:7:20
+  |vpiRange:
+  \_range: , line:7:14, endln:7:20
+    |vpiParent:
+    \_logic_typespec: , line:7:9, endln:7:20
+    |vpiLeftRange:
+    \_constant: , line:7:15, endln:7:17
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:32
+      |vpiSize:64
+      |UINT:32
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:7:18, endln:7:19
+      |vpiParent:
+      \_range: , line:7:14, endln:7:20
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_logic_typespec: , line:5:3, endln:5:13
+  |vpiParent:
+  \_ref_typespec: (work@gate.genblk1[0].x)
+  |vpiRange:
+  \_range: , line:5:8, endln:5:13
+    |vpiParent:
+    \_logic_typespec: , line:5:3, endln:5:13
+    |vpiLeftRange:
+    \_constant: , line:5:9, endln:5:10
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:5:11, endln:5:12
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_int_typespec: 
+\_logic_typespec: , line:5:3, endln:5:13
+  |vpiParent:
+  \_ref_typespec: (work@gate.genblk1[1].x)
+  |vpiRange:
+  \_range: , line:5:8, endln:5:13
+    |vpiParent:
+    \_logic_typespec: , line:5:3, endln:5:13
+    |vpiLeftRange:
+    \_constant: , line:5:9, endln:5:10
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:1
+      |vpiSize:64
+      |UINT:1
+      |vpiConstType:9
+    |vpiRightRange:
+    \_constant: , line:5:11, endln:5:12
+      |vpiParent:
+      \_range: , line:5:8, endln:5:13
+      |vpiDecompile:0
+      |vpiSize:64
+      |UINT:0
+      |vpiConstType:9
+\_int_typespec: 
+\_int_typespec: 

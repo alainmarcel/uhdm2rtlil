@@ -12,7 +12,7 @@ module \mul_plain
   wire width 6 input 2 \b
   attribute \src "dut.sv:1.24-1.25"
   wire width 12 output 3 \p
-  cell $mul $auto$expression.cpp:593:import_operation$2
+  cell $mul $auto$expression.cpp:626:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0

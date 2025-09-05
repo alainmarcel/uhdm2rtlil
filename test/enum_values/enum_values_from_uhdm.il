@@ -49,7 +49,7 @@ module \top
   wire width 32 \wide_state
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
-  cell $xor $auto$expression.cpp:477:import_operation$45
+  cell $xor $auto$expression.cpp:510:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -59,7 +59,7 @@ module \top
     connect \B $auto$process.cpp:34:create_temp_wire$25
     connect \Y \z
   end
-  cell $eq $auto$expression.cpp:666:import_operation$41
+  cell $eq $auto$expression.cpp:699:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -69,7 +69,7 @@ module \top
     connect \B 2'01
     connect \Y $auto$process.cpp:34:create_temp_wire$5
   end
-  cell $logic_not $auto$expression.cpp:666:import_operation$43
+  cell $logic_not $auto$expression.cpp:699:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
