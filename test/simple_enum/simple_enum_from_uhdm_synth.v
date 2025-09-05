@@ -242,21 +242,6 @@ module enum_simple(clk, rst);
     .EN(1'h1),
     .TRG()
   );
-  (* src = "dut.sv:45.3-45.29" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967295),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _46_ (
-    .A(1'hx),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
-  assign enum_const = 2'hx;
+  assign enum_const = 2'h1;
   assign test_enum[31:2] = 30'h00000000;
 endmodule

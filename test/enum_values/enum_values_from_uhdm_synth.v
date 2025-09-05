@@ -23,6 +23,7 @@ module top(clk, z);
   (* enum_value_01 = "\\C" *)
   (* enum_value_10 = "\\D" *)
   (* enum_value_11 = "\\A" *)
+  (* init = 2'h3 *)
   (* src = "dut.sv:24.13-24.18" *)
   (* wiretype = "\\state_t" *)
   wire [1:0] state;
@@ -31,6 +32,7 @@ module top(clk, z);
   (* enum_value_00000000000000000000000000000001 = "\\WB" *)
   (* enum_value_00000000000000000000000000000010 = "\\WC" *)
   (* enum_value_00000000000000000000000000000011 = "\\WD" *)
+  (* init = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00 *)
   (* src = "dut.sv:11.18-11.28" *)
   (* wiretype = "\\wide_state_t" *)
   wire [31:0] wide_state;

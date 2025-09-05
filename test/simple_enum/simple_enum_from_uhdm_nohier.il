@@ -28,6 +28,7 @@ module \enum_simple
   attribute \enum_value_01 "\\ts1"
   attribute \enum_value_10 "\\ts2"
   attribute \enum_value_11 "\\ts3"
+  attribute \init 2'01
   attribute \src "dut.sv:10.11-10.21"
   attribute \wiretype "\\states_t"
   wire width 2 \enum_const

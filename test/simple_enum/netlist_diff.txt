@@ -198,8 +198,7 @@
 +.E(_00_),
 +.Q(test_enum[1]),
 +.R(rst)
- );
--(* src = "dut.sv:27.5-27.17" *)
++);
 +(* \always_ff  = 32'd1 *)
 +(* src = "dut.sv:12.2-39.5" *)
 +\$_SDFFE_PP1P_  \test_enum_reg[0]  /* _41_ */ (
@@ -208,7 +207,8 @@
 +.E(_01_),
 +.Q(test_enum[0]),
 +.R(_04_)
-+);
+ );
+-(* src = "dut.sv:27.5-27.17" *)
 +(* src = "dut.sv:27.5-27.18" *)
  \$check  #(
  .ARGS_WIDTH(32'd0),
@@ -249,7 +249,7 @@
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -183,89 +220,42 @@
+@@ -183,89 +220,27 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
@@ -261,10 +261,11 @@
  .TRG()
  );
 -(* src = "dut.sv:43.3-43.19" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
++(* src = "dut.sv:43.3-43.20" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
 -.PRIORITY(32'd4294967294),
 -.TRG_ENABLE(32'd0),
 -.TRG_POLARITY(),
@@ -276,38 +277,33 @@
 -.TRG()
 -);
 -(* src = "dut.sv:44.3-44.20" *)
-+(* src = "dut.sv:43.3-43.20" *)
- \$check  #(
- .ARGS_WIDTH(32'd0),
- .FLAVOR("assert"),
- .FORMAT(),
+-\$check  #(
+-.ARGS_WIDTH(32'd0),
+-.FLAVOR("assert"),
+-.FORMAT(),
 -.PRIORITY(32'd4294967293),
-+.PRIORITY(32'd4294967295),
- .TRG_ENABLE(32'd0),
- .TRG_POLARITY(),
- .TRG_WIDTH(32'd0)
+-.TRG_ENABLE(32'd0),
+-.TRG_POLARITY(),
+-.TRG_WIDTH(32'd0)
 -) _42_ (
-+) _45_ (
- .A(1'h1),
- .ARGS(),
- .EN(1'h1),
- .TRG()
- );
+-.A(1'h1),
+-.ARGS(),
+-.EN(1'h1),
+-.TRG()
+-);
 -(* src = "dut.sv:45.3-45.28" *)
-+(* src = "dut.sv:45.3-45.29" *)
- \$check  #(
- .ARGS_WIDTH(32'd0),
- .FLAVOR("assert"),
- .FORMAT(),
+-\$check  #(
+-.ARGS_WIDTH(32'd0),
+-.FLAVOR("assert"),
+-.FORMAT(),
 -.PRIORITY(32'd4294967292),
 +.PRIORITY(32'd4294967295),
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
 -) _43_ (
--.A(1'h1),
-+) _46_ (
-+.A(1'hx),
++) _45_ (
+ .A(1'h1),
  .ARGS(),
  .EN(1'h1),
  .TRG()
@@ -344,7 +340,6 @@
 -.Q(test_enum[0]),
 -.R(_07_)
 -);
--assign enum_const = 2'h1;
-+assign enum_const = 2'hx;
+ assign enum_const = 2'h1;
  assign test_enum[31:2] = 30'h00000000;
  endmodule

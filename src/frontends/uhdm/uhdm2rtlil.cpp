@@ -1700,7 +1700,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // TODO: Process initial expressions for enum variables now that enum constants are available
     // Temporarily disabled to debug crash
-    /*
+    
     if (uhdm_module->Variables()) {
         log("UHDM: Processing initial expressions for enum variables in module\n");
         for (auto var : *uhdm_module->Variables()) {
@@ -1745,7 +1745,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
     }
-    */
+    
     
     // Import processes (always blocks) - re-enabled with debugging
     log("UHDM: Checking for processes...\n");
