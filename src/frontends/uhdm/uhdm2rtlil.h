@@ -312,6 +312,7 @@ struct UhdmImporter {
     
     // Helper to extract RTLIL::Const from UHDM Value string
     static RTLIL::Const extract_const_from_value(const std::string& value_str);
+    RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
     
     // Signal name extraction from UHDM
     bool extract_signal_names_from_process(const UHDM::any* stmt, 
