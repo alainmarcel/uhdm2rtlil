@@ -89,6 +89,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
             obj_type, UHDM::UhdmName(uhdm_expr->UhdmType()).c_str());
     }
     
+    if (obj_type == vpiHierPath) {
+        log("  import_expression: Processing vpiHierPath\n");
+    }
+    
     switch (obj_type) {
         case vpiConstant:
             return import_constant(any_cast<const constant*>(uhdm_expr));
@@ -1530,12 +1534,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         path_name = std::string(name_view);
     }
     std::string_view full_name_view = uhdm_hier->VpiFullName();
-    if (!full_name_view.empty()) {
+    if (!full_name_view.empty() && path_name.empty()) {
         path_name = std::string(full_name_view);
     }
     
-    if (mode_debug)
-        log("    hier_path name: '%s'\n", path_name.c_str());
+    log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n", 
+        std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+    
+    // First check if this is a generate hierarchy wire (e.g., blk[0].sub.x)
+    // These are already created during generate scope import
+    if (name_map.count(path_name)) {
+        if (mode_debug)
+            log("    Found wire in name_map: %s\n", name_map[path_name]->name.c_str());
+        return RTLIL::SigSpec(name_map[path_name]);
+    }
     
     // Check if this is a struct member access (e.g., bus1.a or in_struct.base.data)
     size_t dot_pos = path_name.find('.');
@@ -1783,13 +1795,6 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             }
         }
         }  // End of single-level struct member handling
-    }
-    
-    // Check if wire already exists in name_map
-    if (name_map.count(path_name)) {
-        if (mode_debug)
-            log("    Found wire in name_map: %s\n", name_map[path_name]->name.c_str());
-        return RTLIL::SigSpec(name_map[path_name]);
     }
     
     // Use ExprEval to decode the hierarchical path to get the member

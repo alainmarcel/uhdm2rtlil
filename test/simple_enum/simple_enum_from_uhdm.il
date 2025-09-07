@@ -65,21 +65,21 @@ module \enum_simple
   attribute \enum_value_00000000000000000000000000000011 "\\s3"
   attribute \src "dut.sv:4.24-4.33"
   wire width 32 \test_enum
-  cell $logic_not $auto$expression.cpp:699:import_operation$1
+  cell $logic_not $auto$expression.cpp:703:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A { 30'000000000000000000000000000000 \test_enum [1:0] }
     connect \Y $auto$rtlil.cc:3013:Eq$2
   end
-  cell $logic_not $auto$expression.cpp:699:import_operation$11
+  cell $logic_not $auto$expression.cpp:703:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
     connect \Y $auto$rtlil.cc:3013:Eq$12
   end
-  cell $eq $auto$expression.cpp:699:import_operation$13
+  cell $eq $auto$expression.cpp:703:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -89,7 +89,7 @@ module \enum_simple
     connect \B 2'01
     connect \Y $auto$rtlil.cc:3013:Eq$14
   end
-  cell $eq $auto$expression.cpp:699:import_operation$15
+  cell $eq $auto$expression.cpp:703:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -99,7 +99,7 @@ module \enum_simple
     connect \B 2'10
     connect \Y $auto$rtlil.cc:3013:Eq$16
   end
-  cell $eq $auto$expression.cpp:699:import_operation$29
+  cell $eq $auto$expression.cpp:703:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -109,7 +109,7 @@ module \enum_simple
     connect \B 2'01
     connect \Y $auto$rtlil.cc:3013:Eq$30
   end
-  cell $eq $auto$expression.cpp:699:import_operation$3
+  cell $eq $auto$expression.cpp:703:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -119,7 +119,7 @@ module \enum_simple
     connect \B 2'01
     connect \Y $auto$rtlil.cc:3013:Eq$4
   end
-  cell $eq $auto$expression.cpp:699:import_operation$5
+  cell $eq $auto$expression.cpp:703:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -129,7 +129,7 @@ module \enum_simple
     connect \B 2'10
     connect \Y $auto$rtlil.cc:3013:Eq$6
   end
-  cell $eq $auto$expression.cpp:699:import_operation$7
+  cell $eq $auto$expression.cpp:703:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0
@@ -139,7 +139,7 @@ module \enum_simple
     connect \B 2'11
     connect \Y $auto$rtlil.cc:3013:Eq$8
   end
-  cell $ne $auto$expression.cpp:708:import_operation$19
+  cell $ne $auto$expression.cpp:712:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0

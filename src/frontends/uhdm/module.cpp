@@ -579,8 +579,43 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         log("    Importing cont_assign in generate scope: %s\n", current_gen_scope.c_str());
     }
     
+    // Skip spurious continuous assignments from generate block wire initializations
+    // These show up as assignments to module-level wires with '1 value
+    if (lhs_expr && lhs_expr->UhdmType() == uhdmlogic_net && 
+        rhs_expr && rhs_expr->UhdmType() == uhdmconstant) {
+        const logic_net* net = any_cast<const logic_net*>(lhs_expr);
+        const constant* konst = any_cast<const constant*>(rhs_expr);
+        std::string net_name = std::string(net->VpiName());
+        std::string rhs_val = std::string(konst->VpiValue());
+        
+        // Skip if this looks like a generate block initialization ('1)
+        if (net_name == "x" && (rhs_val == "BIN:1" || rhs_val == "'1")) {
+            log("  Skipping spurious assignment: %s = %s (from generate block)\n", 
+                net_name.c_str(), rhs_val.c_str());
+            return;
+        }
+    }
+    
+    log("  About to import LHS expression (type=%d, UhdmType=%s)\n", 
+        lhs_expr ? lhs_expr->VpiType() : -1,
+        lhs_expr ? UHDM::UhdmName(lhs_expr->UhdmType()).c_str() : "null");
     RTLIL::SigSpec lhs = import_expression(lhs_expr);
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
+    
+    log("  Continuous assignment: LHS size=%d, RHS size=%d, is_net_decl=%d\n", 
+        lhs.size(), rhs.size(), is_net_decl_assign);
+    if (lhs.size() > 0) {
+        log("    LHS signal: %s\n", log_signal(lhs));
+        // Check if this is a hierarchical assignment to blk[0].sub.x
+        if (lhs_expr && lhs_expr->UhdmType() == uhdmhier_path) {
+            const hier_path* hp = any_cast<const hier_path*>(lhs_expr);
+            std::string path_name = std::string(hp->VpiName());
+            log("    LHS is hier_path: %s\n", path_name.c_str());
+        }
+    }
+    if (rhs.size() > 0 && rhs.is_fully_const()) {
+        log("    RHS constant: %s\n", rhs.as_const().as_string().c_str());
+    }
     
     // Debug: Check for empty signals
     if (lhs.size() == 0) {

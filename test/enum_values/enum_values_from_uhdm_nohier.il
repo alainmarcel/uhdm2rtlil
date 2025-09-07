@@ -49,7 +49,7 @@ module \top
   wire width 32 \wide_state
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
-  cell $xor $auto$expression.cpp:510:import_operation$45
+  cell $xor $auto$expression.cpp:514:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -59,7 +59,7 @@ module \top
     connect \B $auto$rtlil.cc:3013:Eq$44
     connect \Y $auto$rtlil.cc:3008:Xor$46
   end
-  cell $eq $auto$expression.cpp:699:import_operation$41
+  cell $eq $auto$expression.cpp:703:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -69,7 +69,7 @@ module \top
     connect \B 1
     connect \Y $auto$rtlil.cc:3013:Eq$42
   end
-  cell $eq $auto$expression.cpp:699:import_operation$43
+  cell $eq $auto$expression.cpp:703:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_SIGNED 0

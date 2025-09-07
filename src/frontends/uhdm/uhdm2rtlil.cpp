@@ -1772,8 +1772,28 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import continuous assignments
     if (uhdm_module->Cont_assigns()) {
         log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
+        int assign_idx = 0;
         for (auto cont_assign : *uhdm_module->Cont_assigns()) {
-            log("UHDM: About to import continuous assignment\n");
+            log("UHDM: About to import continuous assignment %d (line:%d-%d)\n", 
+                assign_idx++, cont_assign->VpiLineNo(), cont_assign->VpiEndLineNo());
+            
+            // Debug: Check what the LHS is
+            if (cont_assign->Lhs()) {
+                const expr* lhs = cont_assign->Lhs();
+                log("UHDM:   LHS type: %s (VpiType=%d)\n", 
+                    UHDM::UhdmName(lhs->UhdmType()).c_str(), lhs->VpiType());
+                if (lhs->VpiType() == vpiHierPath) {
+                    const hier_path* hp = any_cast<const hier_path*>(lhs);
+                    log("UHDM:   LHS is hier_path: %s\n", std::string(hp->VpiName()).c_str());
+                } else if (lhs->UhdmType() == uhdmlogic_net) {
+                    const logic_net* net = any_cast<const logic_net*>(lhs);
+                    log("UHDM:   LHS is logic_net: %s\n", std::string(net->VpiName()).c_str());
+                } else if (lhs->UhdmType() == uhdmref_obj) {
+                    const ref_obj* ref = any_cast<const ref_obj*>(lhs);
+                    log("UHDM:   LHS is ref_obj: %s\n", std::string(ref->VpiName()).c_str());
+                }
+            }
+            
             try {
                 import_continuous_assign(cont_assign);
                 log("UHDM: Successfully imported continuous assignment\n");

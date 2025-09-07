@@ -8,7 +8,7 @@ module \counter
   wire width 8 $0\count
   wire width 8 $0\count_next
   wire $0\overflow
-  wire width 8 $auto$expression.cpp:565:import_operation$1
+  wire width 8 $auto$expression.cpp:569:import_operation$1
   wire $auto$rtlil.cc:3013:Eq$4
   wire $auto$rtlil.cc:3026:LogicAnd$6
   attribute \src "dut.sv:15.13-15.19"
@@ -25,7 +25,7 @@ module \counter
   wire output 5 \overflow
   attribute \src "dut.sv:6.18-6.23"
   wire input 2 \rst_n
-  cell $logic_and $auto$expression.cpp:494:import_operation$5
+  cell $logic_and $auto$expression.cpp:498:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \counter
     connect \B \enable
     connect \Y $auto$rtlil.cc:3026:LogicAnd$6
   end
-  cell $add $auto$expression.cpp:579:import_operation$2
+  cell $add $auto$expression.cpp:583:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -43,9 +43,9 @@ module \counter
     parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
-    connect \Y $auto$expression.cpp:565:import_operation$1
+    connect \Y $auto$expression.cpp:569:import_operation$1
   end
-  cell $eq $auto$expression.cpp:699:import_operation$3
+  cell $eq $auto$expression.cpp:703:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_SIGNED 0
@@ -93,7 +93,7 @@ module \counter
   process $proc$dut.sv:22$1
     assign $0\count_next \count_next
     assign $0\overflow \overflow
-    assign $0\count_next $auto$expression.cpp:565:import_operation$1
+    assign $0\count_next $auto$expression.cpp:569:import_operation$1
     assign $0\overflow $auto$rtlil.cc:3026:LogicAnd$6
     sync always
       update \count_next $0\count_next

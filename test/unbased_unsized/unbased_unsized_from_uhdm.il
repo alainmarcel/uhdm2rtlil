@@ -40,7 +40,7 @@ module \unbased_unsized
   wire width 64 \o11
   attribute \src "dut.sv:12.24-12.27"
   wire width 64 \o12
-  cell $eqx $auto$expression.cpp:704:import_operation$33
+  cell $eqx $auto$expression.cpp:708:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -50,7 +50,7 @@ module \unbased_unsized
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3015:Eqx$34
   end
-  cell $eqx $auto$expression.cpp:704:import_operation$37
+  cell $eqx $auto$expression.cpp:708:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -60,7 +60,7 @@ module \unbased_unsized
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3015:Eqx$38
   end
-  cell $eqx $auto$expression.cpp:704:import_operation$41
+  cell $eqx $auto$expression.cpp:708:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
@@ -70,7 +70,7 @@ module \unbased_unsized
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3015:Eqx$42
   end
-  cell $eqx $auto$expression.cpp:704:import_operation$45
+  cell $eqx $auto$expression.cpp:708:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \B_SIGNED 0
