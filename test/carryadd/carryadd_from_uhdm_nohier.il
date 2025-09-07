@@ -114,7 +114,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$20
-    connect \B 1'x
+    connect \B \STAGE[1].C
     connect \Y $auto$rtlil.cc:3006:And$22
   end
   cell $and $auto$expression.cpp:506:import_operation$29
@@ -134,7 +134,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$32
-    connect \B 1'x
+    connect \B \STAGE[2].C
     connect \Y $auto$rtlil.cc:3006:And$34
   end
   cell $and $auto$expression.cpp:506:import_operation$41
@@ -154,7 +154,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$44
-    connect \B 1'x
+    connect \B \STAGE[3].C
     connect \Y $auto$rtlil.cc:3006:And$46
   end
   cell $and $auto$expression.cpp:506:import_operation$5
@@ -184,7 +184,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$56
-    connect \B 1'x
+    connect \B \STAGE[4].C
     connect \Y $auto$rtlil.cc:3006:And$58
   end
   cell $and $auto$expression.cpp:506:import_operation$65
@@ -204,7 +204,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$68
-    connect \B 1'x
+    connect \B \STAGE[5].C
     connect \Y $auto$rtlil.cc:3006:And$70
   end
   cell $and $auto$expression.cpp:506:import_operation$77
@@ -224,7 +224,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$80
-    connect \B 1'x
+    connect \B \STAGE[6].C
     connect \Y $auto$rtlil.cc:3006:And$82
   end
   cell $and $auto$expression.cpp:506:import_operation$9
@@ -234,7 +234,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3007:Or$8
-    connect \B 1'x
+    connect \B \STAGE[0].C
     connect \Y $auto$rtlil.cc:3006:And$10
   end
   cell $or $auto$expression.cpp:510:import_operation$11
@@ -394,7 +394,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$14
-    connect \B 1'x
+    connect \B \STAGE[0].C
     connect \Y $auto$rtlil.cc:3008:Xor$16
   end
   cell $xor $auto$expression.cpp:514:import_operation$25
@@ -414,7 +414,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$26
-    connect \B 1'x
+    connect \B \STAGE[1].C
     connect \Y $auto$rtlil.cc:3008:Xor$28
   end
   cell $xor $auto$expression.cpp:514:import_operation$3
@@ -444,7 +444,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$38
-    connect \B 1'x
+    connect \B \STAGE[2].C
     connect \Y $auto$rtlil.cc:3008:Xor$40
   end
   cell $xor $auto$expression.cpp:514:import_operation$49
@@ -464,7 +464,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$50
-    connect \B 1'x
+    connect \B \STAGE[3].C
     connect \Y $auto$rtlil.cc:3008:Xor$52
   end
   cell $xor $auto$expression.cpp:514:import_operation$61
@@ -484,7 +484,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$62
-    connect \B 1'x
+    connect \B \STAGE[4].C
     connect \Y $auto$rtlil.cc:3008:Xor$64
   end
   cell $xor $auto$expression.cpp:514:import_operation$73
@@ -504,7 +504,7 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$74
-    connect \B 1'x
+    connect \B \STAGE[5].C
     connect \Y $auto$rtlil.cc:3008:Xor$76
   end
   cell $xor $auto$expression.cpp:514:import_operation$85
@@ -524,47 +524,47 @@ module \carryadd
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3008:Xor$86
-    connect \B 1'x
+    connect \B \STAGE[6].C
     connect \Y $auto$rtlil.cc:3008:Xor$88
   end
+  connect \STAGE[0].C $auto$rtlil.cc:3006:And$2
+  connect \STAGE[0].Y $auto$rtlil.cc:3008:Xor$4
   connect \STAGE[0].IN1 \a [0]
   connect \STAGE[0].IN2 \b [0]
   connect \y [0] \STAGE[0].Y
-  connect \STAGE[0].C $auto$rtlil.cc:3006:And$2
-  connect \STAGE[0].Y $auto$rtlil.cc:3008:Xor$4
+  connect \STAGE[1].C $auto$rtlil.cc:3007:Or$12
+  connect \STAGE[1].Y $auto$rtlil.cc:3008:Xor$16
   connect \STAGE[1].IN1 \a [1]
   connect \STAGE[1].IN2 \b [1]
   connect \y [1] \STAGE[1].Y
-  connect \STAGE[1].C $auto$rtlil.cc:3007:Or$12
-  connect \STAGE[1].Y $auto$rtlil.cc:3008:Xor$16
+  connect \STAGE[2].C $auto$rtlil.cc:3007:Or$24
+  connect \STAGE[2].Y $auto$rtlil.cc:3008:Xor$28
   connect \STAGE[2].IN1 \a [2]
   connect \STAGE[2].IN2 \b [2]
   connect \y [2] \STAGE[2].Y
-  connect \STAGE[2].C $auto$rtlil.cc:3007:Or$24
-  connect \STAGE[2].Y $auto$rtlil.cc:3008:Xor$28
+  connect \STAGE[3].C $auto$rtlil.cc:3007:Or$36
+  connect \STAGE[3].Y $auto$rtlil.cc:3008:Xor$40
   connect \STAGE[3].IN1 \a [3]
   connect \STAGE[3].IN2 \b [3]
   connect \y [3] \STAGE[3].Y
-  connect \STAGE[3].C $auto$rtlil.cc:3007:Or$36
-  connect \STAGE[3].Y $auto$rtlil.cc:3008:Xor$40
+  connect \STAGE[4].C $auto$rtlil.cc:3007:Or$48
+  connect \STAGE[4].Y $auto$rtlil.cc:3008:Xor$52
   connect \STAGE[4].IN1 \a [4]
   connect \STAGE[4].IN2 \b [4]
   connect \y [4] \STAGE[4].Y
-  connect \STAGE[4].C $auto$rtlil.cc:3007:Or$48
-  connect \STAGE[4].Y $auto$rtlil.cc:3008:Xor$52
+  connect \STAGE[5].C $auto$rtlil.cc:3007:Or$60
+  connect \STAGE[5].Y $auto$rtlil.cc:3008:Xor$64
   connect \STAGE[5].IN1 \a [5]
   connect \STAGE[5].IN2 \b [5]
   connect \y [5] \STAGE[5].Y
-  connect \STAGE[5].C $auto$rtlil.cc:3007:Or$60
-  connect \STAGE[5].Y $auto$rtlil.cc:3008:Xor$64
+  connect \STAGE[6].C $auto$rtlil.cc:3007:Or$72
+  connect \STAGE[6].Y $auto$rtlil.cc:3008:Xor$76
   connect \STAGE[6].IN1 \a [6]
   connect \STAGE[6].IN2 \b [6]
   connect \y [6] \STAGE[6].Y
-  connect \STAGE[6].C $auto$rtlil.cc:3007:Or$72
-  connect \STAGE[6].Y $auto$rtlil.cc:3008:Xor$76
+  connect \STAGE[7].C $auto$rtlil.cc:3007:Or$84
+  connect \STAGE[7].Y $auto$rtlil.cc:3008:Xor$88
   connect \STAGE[7].IN1 \a [7]
   connect \STAGE[7].IN2 \b [7]
   connect \y [7] \STAGE[7].Y
-  connect \STAGE[7].C $auto$rtlil.cc:3007:Or$84
-  connect \STAGE[7].Y $auto$rtlil.cc:3008:Xor$88
 end

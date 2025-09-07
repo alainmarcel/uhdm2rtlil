@@ -3,22 +3,22 @@ autoidx 81
 attribute \src "dut.sv:1.1-38.10"
 attribute \cells_not_processed 1
 module \gen_test1
-  wire $auto$expression.cpp:1399:import_bit_select$15
-  wire $auto$expression.cpp:1399:import_bit_select$23
-  wire $auto$expression.cpp:1399:import_bit_select$31
-  wire $auto$expression.cpp:1399:import_bit_select$39
-  wire $auto$expression.cpp:1399:import_bit_select$47
-  wire $auto$expression.cpp:1399:import_bit_select$55
-  wire $auto$expression.cpp:1399:import_bit_select$63
-  wire $auto$expression.cpp:1399:import_bit_select$7
-  wire width 64 $auto$expression.cpp:569:import_operation$13
-  wire width 64 $auto$expression.cpp:569:import_operation$21
-  wire width 64 $auto$expression.cpp:569:import_operation$29
-  wire width 64 $auto$expression.cpp:569:import_operation$37
-  wire width 64 $auto$expression.cpp:569:import_operation$45
-  wire width 64 $auto$expression.cpp:569:import_operation$5
-  wire width 64 $auto$expression.cpp:569:import_operation$53
-  wire width 64 $auto$expression.cpp:569:import_operation$61
+  wire $auto$expression.cpp:1426:import_bit_select$11
+  wire $auto$expression.cpp:1426:import_bit_select$19
+  wire $auto$expression.cpp:1426:import_bit_select$27
+  wire $auto$expression.cpp:1426:import_bit_select$3
+  wire $auto$expression.cpp:1426:import_bit_select$35
+  wire $auto$expression.cpp:1426:import_bit_select$43
+  wire $auto$expression.cpp:1426:import_bit_select$51
+  wire $auto$expression.cpp:1426:import_bit_select$59
+  wire width 64 $auto$expression.cpp:569:import_operation$1
+  wire width 64 $auto$expression.cpp:569:import_operation$17
+  wire width 64 $auto$expression.cpp:569:import_operation$25
+  wire width 64 $auto$expression.cpp:569:import_operation$33
+  wire width 64 $auto$expression.cpp:569:import_operation$41
+  wire width 64 $auto$expression.cpp:569:import_operation$49
+  wire width 64 $auto$expression.cpp:569:import_operation$57
+  wire width 64 $auto$expression.cpp:569:import_operation$9
   wire $auto$rtlil.cc:2964:ReduceXor$66
   wire $auto$rtlil.cc:2964:ReduceXor$68
   wire $auto$rtlil.cc:2964:ReduceXor$70
@@ -27,22 +27,22 @@ module \gen_test1
   wire $auto$rtlil.cc:2964:ReduceXor$76
   wire $auto$rtlil.cc:2964:ReduceXor$78
   wire $auto$rtlil.cc:2964:ReduceXor$80
-  wire $auto$rtlil.cc:3006:And$10
-  wire $auto$rtlil.cc:3006:And$18
-  wire $auto$rtlil.cc:3006:And$2
-  wire $auto$rtlil.cc:3006:And$26
-  wire $auto$rtlil.cc:3006:And$34
-  wire $auto$rtlil.cc:3006:And$42
-  wire $auto$rtlil.cc:3006:And$50
-  wire $auto$rtlil.cc:3006:And$58
-  wire $auto$rtlil.cc:3007:Or$12
-  wire $auto$rtlil.cc:3007:Or$20
-  wire $auto$rtlil.cc:3007:Or$28
-  wire $auto$rtlil.cc:3007:Or$36
-  wire $auto$rtlil.cc:3007:Or$4
-  wire $auto$rtlil.cc:3007:Or$44
-  wire $auto$rtlil.cc:3007:Or$52
-  wire $auto$rtlil.cc:3007:Or$60
+  wire $auto$rtlil.cc:3006:And$14
+  wire $auto$rtlil.cc:3006:And$22
+  wire $auto$rtlil.cc:3006:And$30
+  wire $auto$rtlil.cc:3006:And$38
+  wire $auto$rtlil.cc:3006:And$46
+  wire $auto$rtlil.cc:3006:And$54
+  wire $auto$rtlil.cc:3006:And$6
+  wire $auto$rtlil.cc:3006:And$62
+  wire $auto$rtlil.cc:3007:Or$16
+  wire $auto$rtlil.cc:3007:Or$24
+  wire $auto$rtlil.cc:3007:Or$32
+  wire $auto$rtlil.cc:3007:Or$40
+  wire $auto$rtlil.cc:3007:Or$48
+  wire $auto$rtlil.cc:3007:Or$56
+  wire $auto$rtlil.cc:3007:Or$64
+  wire $auto$rtlil.cc:3007:Or$8
   attribute \src "dut.sv:1.23-1.24"
   wire width 8 input 2 \a
   attribute \src "dut.sv:1.26-1.27"
@@ -118,164 +118,94 @@ module \gen_test1
   attribute \src "dut.sv:1.29-1.30"
   wire width 8 output 4 \y
   attribute \src "dut.sv:21.11-21.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$16
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$12
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$13
-    connect \Y $auto$expression.cpp:1399:import_bit_select$15
+    connect \B $auto$expression.cpp:569:import_operation$9
+    connect \Y $auto$expression.cpp:1426:import_bit_select$11
   end
   attribute \src "dut.sv:18.11-18.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$24
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$20
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$21
-    connect \Y $auto$expression.cpp:1399:import_bit_select$23
+    connect \B $auto$expression.cpp:569:import_operation$17
+    connect \Y $auto$expression.cpp:1426:import_bit_select$19
   end
   attribute \src "dut.sv:21.11-21.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$32
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$28
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$29
-    connect \Y $auto$expression.cpp:1399:import_bit_select$31
+    connect \B $auto$expression.cpp:569:import_operation$25
+    connect \Y $auto$expression.cpp:1426:import_bit_select$27
   end
   attribute \src "dut.sv:18.11-18.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$40
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$36
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$37
-    connect \Y $auto$expression.cpp:1399:import_bit_select$39
+    connect \B $auto$expression.cpp:569:import_operation$33
+    connect \Y $auto$expression.cpp:1426:import_bit_select$35
+  end
+  attribute \src "dut.sv:18.11-18.20"
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$4
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 16
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \tmp1
+    connect \B $auto$expression.cpp:569:import_operation$1
+    connect \Y $auto$expression.cpp:1426:import_bit_select$3
   end
   attribute \src "dut.sv:21.11-21.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$48
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$45
-    connect \Y $auto$expression.cpp:1399:import_bit_select$47
+    connect \B $auto$expression.cpp:569:import_operation$41
+    connect \Y $auto$expression.cpp:1426:import_bit_select$43
   end
   attribute \src "dut.sv:18.11-18.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$56
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$52
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$53
-    connect \Y $auto$expression.cpp:1399:import_bit_select$55
+    connect \B $auto$expression.cpp:569:import_operation$49
+    connect \Y $auto$expression.cpp:1426:import_bit_select$51
   end
   attribute \src "dut.sv:21.11-21.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$64
+  cell $shiftx $auto$expression.cpp:1429:import_bit_select$60
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$61
-    connect \Y $auto$expression.cpp:1399:import_bit_select$63
+    connect \B $auto$expression.cpp:569:import_operation$57
+    connect \Y $auto$expression.cpp:1426:import_bit_select$59
   end
-  attribute \src "dut.sv:18.11-18.20"
-  cell $shiftx $auto$expression.cpp:1402:import_bit_select$8
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 16
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \tmp1
-    connect \B $auto$expression.cpp:569:import_operation$5
-    connect \Y $auto$expression.cpp:1399:import_bit_select$7
-  end
-  cell $and $auto$expression.cpp:506:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [0]
-    connect \B \b [0]
-    connect \Y $auto$rtlil.cc:3006:And$2
-  end
-  cell $and $auto$expression.cpp:506:import_operation$17
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [2]
-    connect \B \b [2]
-    connect \Y $auto$rtlil.cc:3006:And$18
-  end
-  cell $and $auto$expression.cpp:506:import_operation$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [3]
-    connect \B \b [3]
-    connect \Y $auto$rtlil.cc:3006:And$26
-  end
-  cell $and $auto$expression.cpp:506:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [4]
-    connect \B \b [4]
-    connect \Y $auto$rtlil.cc:3006:And$34
-  end
-  cell $and $auto$expression.cpp:506:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [5]
-    connect \B \b [5]
-    connect \Y $auto$rtlil.cc:3006:And$42
-  end
-  cell $and $auto$expression.cpp:506:import_operation$49
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [6]
-    connect \B \b [6]
-    connect \Y $auto$rtlil.cc:3006:And$50
-  end
-  cell $and $auto$expression.cpp:506:import_operation$57
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [7]
-    connect \B \b [7]
-    connect \Y $auto$rtlil.cc:3006:And$58
-  end
-  cell $and $auto$expression.cpp:506:import_operation$9
+  cell $and $auto$expression.cpp:506:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -283,19 +213,9 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [1]
     connect \B \b [1]
-    connect \Y $auto$rtlil.cc:3006:And$10
+    connect \Y $auto$rtlil.cc:3006:And$14
   end
-  cell $or $auto$expression.cpp:510:import_operation$11
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [1]
-    connect \B \b [1]
-    connect \Y $auto$rtlil.cc:3007:Or$12
-  end
-  cell $or $auto$expression.cpp:510:import_operation$19
+  cell $and $auto$expression.cpp:506:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -303,9 +223,9 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [2]
     connect \B \b [2]
-    connect \Y $auto$rtlil.cc:3007:Or$20
+    connect \Y $auto$rtlil.cc:3006:And$22
   end
-  cell $or $auto$expression.cpp:510:import_operation$27
+  cell $and $auto$expression.cpp:506:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -313,19 +233,9 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [3]
     connect \B \b [3]
-    connect \Y $auto$rtlil.cc:3007:Or$28
+    connect \Y $auto$rtlil.cc:3006:And$30
   end
-  cell $or $auto$expression.cpp:510:import_operation$3
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [0]
-    connect \B \b [0]
-    connect \Y $auto$rtlil.cc:3007:Or$4
-  end
-  cell $or $auto$expression.cpp:510:import_operation$35
+  cell $and $auto$expression.cpp:506:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -333,9 +243,9 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [4]
     connect \B \b [4]
-    connect \Y $auto$rtlil.cc:3007:Or$36
+    connect \Y $auto$rtlil.cc:3006:And$38
   end
-  cell $or $auto$expression.cpp:510:import_operation$43
+  cell $and $auto$expression.cpp:506:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -343,9 +253,19 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [5]
     connect \B \b [5]
-    connect \Y $auto$rtlil.cc:3007:Or$44
+    connect \Y $auto$rtlil.cc:3006:And$46
   end
-  cell $or $auto$expression.cpp:510:import_operation$51
+  cell $and $auto$expression.cpp:506:import_operation$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [0]
+    connect \B \b [0]
+    connect \Y $auto$rtlil.cc:3006:And$6
+  end
+  cell $and $auto$expression.cpp:506:import_operation$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -353,9 +273,9 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [6]
     connect \B \b [6]
-    connect \Y $auto$rtlil.cc:3007:Or$52
+    connect \Y $auto$rtlil.cc:3006:And$54
   end
-  cell $or $auto$expression.cpp:510:import_operation$59
+  cell $and $auto$expression.cpp:506:import_operation$61
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -363,7 +283,87 @@ module \gen_test1
     parameter \Y_WIDTH 1
     connect \A \a [7]
     connect \B \b [7]
-    connect \Y $auto$rtlil.cc:3007:Or$60
+    connect \Y $auto$rtlil.cc:3006:And$62
+  end
+  cell $or $auto$expression.cpp:510:import_operation$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [1]
+    connect \B \b [1]
+    connect \Y $auto$rtlil.cc:3007:Or$16
+  end
+  cell $or $auto$expression.cpp:510:import_operation$23
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [2]
+    connect \B \b [2]
+    connect \Y $auto$rtlil.cc:3007:Or$24
+  end
+  cell $or $auto$expression.cpp:510:import_operation$31
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [3]
+    connect \B \b [3]
+    connect \Y $auto$rtlil.cc:3007:Or$32
+  end
+  cell $or $auto$expression.cpp:510:import_operation$39
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [4]
+    connect \B \b [4]
+    connect \Y $auto$rtlil.cc:3007:Or$40
+  end
+  cell $or $auto$expression.cpp:510:import_operation$47
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [5]
+    connect \B \b [5]
+    connect \Y $auto$rtlil.cc:3007:Or$48
+  end
+  cell $or $auto$expression.cpp:510:import_operation$55
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [6]
+    connect \B \b [6]
+    connect \Y $auto$rtlil.cc:3007:Or$56
+  end
+  cell $or $auto$expression.cpp:510:import_operation$63
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [7]
+    connect \B \b [7]
+    connect \Y $auto$rtlil.cc:3007:Or$64
+  end
+  cell $or $auto$expression.cpp:510:import_operation$7
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [0]
+    connect \B \b [0]
+    connect \Y $auto$rtlil.cc:3007:Or$8
   end
   cell $reduce_xor $auto$expression.cpp:534:import_operation$65
     parameter \A_SIGNED 0
@@ -421,7 +421,7 @@ module \gen_test1
     connect \A \gen3[7].tmp2
     connect \Y $auto$rtlil.cc:2964:ReduceXor$80
   end
-  cell $add $auto$expression.cpp:583:import_operation$14
+  cell $add $auto$expression.cpp:583:import_operation$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -429,9 +429,9 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$13
+    connect \Y $auto$expression.cpp:569:import_operation$9
   end
-  cell $add $auto$expression.cpp:583:import_operation$22
+  cell $add $auto$expression.cpp:583:import_operation$18
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -439,49 +439,9 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$21
+    connect \Y $auto$expression.cpp:569:import_operation$17
   end
-  cell $add $auto$expression.cpp:583:import_operation$30
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 3
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$29
-  end
-  cell $add $auto$expression.cpp:583:import_operation$38
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 4
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$37
-  end
-  cell $add $auto$expression.cpp:583:import_operation$46
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 5
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$45
-  end
-  cell $add $auto$expression.cpp:583:import_operation$54
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 6
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$53
-  end
-  cell $add $auto$expression.cpp:583:import_operation$6
+  cell $add $auto$expression.cpp:583:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -489,9 +449,49 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 0
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$5
+    connect \Y $auto$expression.cpp:569:import_operation$1
   end
-  cell $add $auto$expression.cpp:583:import_operation$62
+  cell $add $auto$expression.cpp:583:import_operation$26
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A 3
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
+    connect \Y $auto$expression.cpp:569:import_operation$25
+  end
+  cell $add $auto$expression.cpp:583:import_operation$34
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A 4
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
+    connect \Y $auto$expression.cpp:569:import_operation$33
+  end
+  cell $add $auto$expression.cpp:583:import_operation$42
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A 5
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
+    connect \Y $auto$expression.cpp:569:import_operation$41
+  end
+  cell $add $auto$expression.cpp:583:import_operation$50
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A 6
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
+    connect \Y $auto$expression.cpp:569:import_operation$49
+  end
+  cell $add $auto$expression.cpp:583:import_operation$58
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_SIGNED 0
@@ -499,7 +499,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 7
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:569:import_operation$61
+    connect \Y $auto$expression.cpp:569:import_operation$57
   end
   attribute \always_ff 1
   attribute \src "dut.sv:32.3-33.18"
@@ -549,38 +549,38 @@ module \gen_test1
     sync posedge \clk
       update \y [7] $auto$rtlil.cc:2964:ReduceXor$80
   end
-  connect \gen1[0].and_wire $auto$rtlil.cc:3006:And$2
-  connect \gen1[0].or_wire $auto$rtlil.cc:3007:Or$4
   connect \tmp1 [0] \gen1[0].and_wire
-  connect $auto$expression.cpp:1399:import_bit_select$7 \gen1[0].or_wire
-  connect \gen1[1].and_wire $auto$rtlil.cc:3006:And$10
-  connect \gen1[1].or_wire $auto$rtlil.cc:3007:Or$12
+  connect $auto$expression.cpp:1426:import_bit_select$3 \gen1[0].or_wire
+  connect \gen1[0].and_wire $auto$rtlil.cc:3006:And$6
+  connect \gen1[0].or_wire $auto$rtlil.cc:3007:Or$8
   connect \tmp1 [1] \gen1[1].or_wire
-  connect $auto$expression.cpp:1399:import_bit_select$15 \gen1[1].and_wire
-  connect \gen1[2].and_wire $auto$rtlil.cc:3006:And$18
-  connect \gen1[2].or_wire $auto$rtlil.cc:3007:Or$20
+  connect $auto$expression.cpp:1426:import_bit_select$11 \gen1[1].and_wire
+  connect \gen1[1].and_wire $auto$rtlil.cc:3006:And$14
+  connect \gen1[1].or_wire $auto$rtlil.cc:3007:Or$16
   connect \tmp1 [2] \gen1[2].and_wire
-  connect $auto$expression.cpp:1399:import_bit_select$23 \gen1[2].or_wire
-  connect \gen1[3].and_wire $auto$rtlil.cc:3006:And$26
-  connect \gen1[3].or_wire $auto$rtlil.cc:3007:Or$28
+  connect $auto$expression.cpp:1426:import_bit_select$19 \gen1[2].or_wire
+  connect \gen1[2].and_wire $auto$rtlil.cc:3006:And$22
+  connect \gen1[2].or_wire $auto$rtlil.cc:3007:Or$24
   connect \tmp1 [3] \gen1[3].or_wire
-  connect $auto$expression.cpp:1399:import_bit_select$31 \gen1[3].and_wire
-  connect \gen1[4].and_wire $auto$rtlil.cc:3006:And$34
-  connect \gen1[4].or_wire $auto$rtlil.cc:3007:Or$36
+  connect $auto$expression.cpp:1426:import_bit_select$27 \gen1[3].and_wire
+  connect \gen1[3].and_wire $auto$rtlil.cc:3006:And$30
+  connect \gen1[3].or_wire $auto$rtlil.cc:3007:Or$32
   connect \tmp1 [4] \gen1[4].and_wire
-  connect $auto$expression.cpp:1399:import_bit_select$39 \gen1[4].or_wire
-  connect \gen1[5].and_wire $auto$rtlil.cc:3006:And$42
-  connect \gen1[5].or_wire $auto$rtlil.cc:3007:Or$44
+  connect $auto$expression.cpp:1426:import_bit_select$35 \gen1[4].or_wire
+  connect \gen1[4].and_wire $auto$rtlil.cc:3006:And$38
+  connect \gen1[4].or_wire $auto$rtlil.cc:3007:Or$40
   connect \tmp1 [5] \gen1[5].or_wire
-  connect $auto$expression.cpp:1399:import_bit_select$47 \gen1[5].and_wire
-  connect \gen1[6].and_wire $auto$rtlil.cc:3006:And$50
-  connect \gen1[6].or_wire $auto$rtlil.cc:3007:Or$52
+  connect $auto$expression.cpp:1426:import_bit_select$43 \gen1[5].and_wire
+  connect \gen1[5].and_wire $auto$rtlil.cc:3006:And$46
+  connect \gen1[5].or_wire $auto$rtlil.cc:3007:Or$48
   connect \tmp1 [6] \gen1[6].and_wire
-  connect $auto$expression.cpp:1399:import_bit_select$55 \gen1[6].or_wire
-  connect \gen1[7].and_wire $auto$rtlil.cc:3006:And$58
-  connect \gen1[7].or_wire $auto$rtlil.cc:3007:Or$60
+  connect $auto$expression.cpp:1426:import_bit_select$51 \gen1[6].or_wire
+  connect \gen1[6].and_wire $auto$rtlil.cc:3006:And$54
+  connect \gen1[6].or_wire $auto$rtlil.cc:3007:Or$56
   connect \tmp1 [7] \gen1[7].or_wire
-  connect $auto$expression.cpp:1399:import_bit_select$63 \gen1[7].and_wire
+  connect $auto$expression.cpp:1426:import_bit_select$59 \gen1[7].and_wire
+  connect \gen1[7].and_wire $auto$rtlil.cc:3006:And$62
+  connect \gen1[7].or_wire $auto$rtlil.cc:3007:Or$64
   connect \gen3[0].gen4[0].tmpbuf \tmp1 [0]
   connect \gen3[0].tmp2 [0] \gen3[0].gen4[0].tmpbuf
   connect \gen3[0].gen4[1].tmpbuf \tmp1 [2]

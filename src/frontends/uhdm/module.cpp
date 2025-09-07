@@ -1707,19 +1707,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
         }
     }
     
-    // Import continuous assignments within the generate scope
-    if (uhdm_scope->Cont_assigns()) {
-        log("UHDM: Found %d continuous assignments in generate scope\n", (int)uhdm_scope->Cont_assigns()->size());
-        for (auto cont_assign : *uhdm_scope->Cont_assigns()) {
-            try {
-                import_continuous_assign(cont_assign);
-            } catch (const std::exception& e) {
-                log_error("UHDM: Exception in continuous assignment import within generate scope: %s\n", e.what());
-            }
-        }
-    }
-    
-    // Recursively import nested generate scopes
+    // Recursively import nested generate scopes BEFORE continuous assignments
+    // This ensures all wires in nested scopes are created before assignments reference them
     if (uhdm_scope->Gen_scope_arrays()) {
         log("UHDM: Found nested generate scope arrays\n");
         for (auto nested_array : *uhdm_scope->Gen_scope_arrays()) {
@@ -1728,6 +1717,19 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                     // The nested scope will push its name onto the stack
                     import_gen_scope(nested_scope);
                 }
+            }
+        }
+    }
+    
+    // Import continuous assignments within the generate scope
+    // Do this AFTER nested generate scopes so all wires are available
+    if (uhdm_scope->Cont_assigns()) {
+        log("UHDM: Found %d continuous assignments in generate scope\n", (int)uhdm_scope->Cont_assigns()->size());
+        for (auto cont_assign : *uhdm_scope->Cont_assigns()) {
+            try {
+                import_continuous_assign(cont_assign);
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in continuous assignment import within generate scope: %s\n", e.what());
             }
         }
     }

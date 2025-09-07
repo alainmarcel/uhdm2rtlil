@@ -1,0 +1,440 @@
+slpp_all/surelog.uhdm: Restored design Pre-Elab: 
+design: (work@genblk_order_top)
+|vpiName:work@genblk_order_top
+|uhdmallModules:
+\_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+  |vpiParent:
+  \_design: (work@genblk_order_top)
+  |vpiFullName:work@genblk_order_top
+  |vpiDefName:work@genblk_order_top
+  |vpiNet:
+  \_logic_net: (work@genblk_order_top.out1), line:3:14, endln:3:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out1
+    |vpiFullName:work@genblk_order_top.out1
+    |vpiNetType:1
+  |vpiNet:
+  \_logic_net: (work@genblk_order_top.out2), line:4:14, endln:4:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out2
+    |vpiFullName:work@genblk_order_top.out2
+    |vpiNetType:1
+  |vpiPort:
+  \_port: (out1), line:3:14, endln:3:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out1
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@genblk_order_top.out1.out1), line:3:14, endln:3:18
+      |vpiParent:
+      \_port: (out1), line:3:14, endln:3:18
+      |vpiName:out1
+      |vpiFullName:work@genblk_order_top.out1.out1
+      |vpiActual:
+      \_logic_net: (work@genblk_order_top.out1), line:3:14, endln:3:18
+    |vpiTypedef:
+    \_ref_typespec: (work@genblk_order_top.out1)
+      |vpiParent:
+      \_port: (out1), line:3:14, endln:3:18
+      |vpiFullName:work@genblk_order_top.out1
+      |vpiActual:
+      \_logic_typespec: , line:3:9, endln:3:13
+  |vpiPort:
+  \_port: (out2), line:4:14, endln:4:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out2
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@genblk_order_top.out2.out2), line:4:14, endln:4:18
+      |vpiParent:
+      \_port: (out2), line:4:14, endln:4:18
+      |vpiName:out2
+      |vpiFullName:work@genblk_order_top.out2.out2
+      |vpiActual:
+      \_logic_net: (work@genblk_order_top.out2), line:4:14, endln:4:18
+    |vpiTypedef:
+    \_ref_typespec: (work@genblk_order_top.out2)
+      |vpiParent:
+      \_port: (out2), line:4:14, endln:4:18
+      |vpiFullName:work@genblk_order_top.out2
+      |vpiActual:
+      \_logic_typespec: , line:4:9, endln:4:13
+  |vpiGenStmt:
+  \_gen_region: 
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiStmt:
+    \_begin: (work@genblk_order_top)
+      |vpiParent:
+      \_gen_region: 
+      |vpiFullName:work@genblk_order_top
+      |vpiStmt:
+      \_gen_if: , line:7:3, endln:7:5
+        |vpiParent:
+        \_begin: (work@genblk_order_top)
+        |vpiCondition:
+        \_constant: , line:7:7, endln:7:8
+          |vpiParent:
+          \_gen_if: , line:7:3, endln:7:5
+          |vpiDecompile:1
+          |vpiSize:64
+          |UINT:1
+          |vpiConstType:9
+        |vpiStmt:
+        \_named_begin: (work@genblk_order_top.outer)
+          |vpiParent:
+          \_gen_if: , line:7:3, endln:7:5
+          |vpiName:outer
+          |vpiFullName:work@genblk_order_top.outer
+          |vpiStmt:
+          \_gen_if: , line:8:4, endln:8:6
+            |vpiParent:
+            \_named_begin: (work@genblk_order_top.outer)
+            |vpiCondition:
+            \_constant: , line:8:8, endln:8:9
+              |vpiParent:
+              \_gen_if: , line:8:4, endln:8:6
+              |vpiDecompile:1
+              |vpiSize:64
+              |UINT:1
+              |vpiConstType:9
+            |vpiStmt:
+            \_named_begin: (work@genblk_order_top.outer.foo)
+              |vpiParent:
+              \_gen_if: , line:8:4, endln:8:6
+              |vpiName:foo
+              |vpiFullName:work@genblk_order_top.outer.foo
+              |vpiStmt:
+              \_gen_if: , line:10:5, endln:10:7
+                |vpiParent:
+                \_named_begin: (work@genblk_order_top.outer.foo)
+                |vpiCondition:
+                \_constant: , line:10:9, endln:10:10
+                  |vpiParent:
+                  \_gen_if: , line:10:5, endln:10:7
+                  |vpiDecompile:1
+                  |vpiSize:64
+                  |UINT:1
+                  |vpiConstType:9
+                |vpiStmt:
+                \_named_begin: (work@genblk_order_top.outer.foo.foo)
+                  |vpiParent:
+                  \_gen_if: , line:10:5, endln:10:7
+                  |vpiName:foo
+                  |vpiFullName:work@genblk_order_top.outer.foo.foo
+                  |vpiStmt:
+                  \_cont_assign: , line:12:13, endln:12:25
+                    |vpiParent:
+                    \_named_begin: (work@genblk_order_top.outer.foo.foo)
+                    |vpiRhs:
+                    \_hier_path: (foo.x), line:12:20, endln:12:25
+                      |vpiParent:
+                      \_cont_assign: , line:12:13, endln:12:25
+                      |vpiActual:
+                      \_ref_obj: (foo), line:12:20, endln:12:23
+                        |vpiParent:
+                        \_hier_path: (foo.x), line:12:20, endln:12:25
+                        |vpiName:foo
+                      |vpiActual:
+                      \_ref_obj: (work@genblk_order_top.outer.foo.foo.x), line:12:24, endln:12:25
+                        |vpiParent:
+                        \_hier_path: (foo.x), line:12:20, endln:12:25
+                        |vpiName:x
+                        |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                      |vpiName:foo.x
+                    |vpiLhs:
+                    \_ref_obj: (work@genblk_order_top.outer.foo.foo.out1), line:12:13, endln:12:17
+                      |vpiParent:
+                      \_cont_assign: , line:12:13, endln:12:25
+                      |vpiName:out1
+                      |vpiFullName:work@genblk_order_top.outer.foo.foo.out1
+              |vpiStmt:
+              \_cont_assign: , line:14:12, endln:14:24
+                |vpiParent:
+                \_named_begin: (work@genblk_order_top.outer.foo)
+                |vpiRhs:
+                \_hier_path: (foo.x), line:14:19, endln:14:24
+                  |vpiParent:
+                  \_cont_assign: , line:14:12, endln:14:24
+                  |vpiActual:
+                  \_ref_obj: (foo), line:14:19, endln:14:22
+                    |vpiParent:
+                    \_hier_path: (foo.x), line:14:19, endln:14:24
+                    |vpiName:foo
+                  |vpiActual:
+                  \_ref_obj: (work@genblk_order_top.outer.foo.x), line:14:23, endln:14:24
+                    |vpiParent:
+                    \_hier_path: (foo.x), line:14:19, endln:14:24
+                    |vpiName:x
+                    |vpiFullName:work@genblk_order_top.outer.foo.x
+                  |vpiName:foo.x
+                |vpiLhs:
+                \_ref_obj: (work@genblk_order_top.outer.foo.out2), line:14:12, endln:14:16
+                  |vpiParent:
+                  \_cont_assign: , line:14:12, endln:14:24
+                  |vpiName:out2
+                  |vpiFullName:work@genblk_order_top.outer.foo.out2
+|uhdmtopModules:
+\_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+  |vpiParent:
+  \_design: (work@genblk_order_top)
+  |vpiName:work@genblk_order_top
+  |vpiDefName:work@genblk_order_top
+  |vpiTop:1
+  |vpiNet:
+  \_logic_net: (work@genblk_order_top.out1), line:3:14, endln:3:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiTypespec:
+    \_ref_typespec: (work@genblk_order_top.out1)
+      |vpiParent:
+      \_logic_net: (work@genblk_order_top.out1), line:3:14, endln:3:18
+      |vpiFullName:work@genblk_order_top.out1
+      |vpiActual:
+      \_logic_typespec: , line:3:9, endln:3:13
+    |vpiName:out1
+    |vpiFullName:work@genblk_order_top.out1
+    |vpiNetType:1
+  |vpiNet:
+  \_logic_net: (work@genblk_order_top.out2), line:4:14, endln:4:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiTypespec:
+    \_ref_typespec: (work@genblk_order_top.out2)
+      |vpiParent:
+      \_logic_net: (work@genblk_order_top.out2), line:4:14, endln:4:18
+      |vpiFullName:work@genblk_order_top.out2
+      |vpiActual:
+      \_logic_typespec: , line:4:9, endln:4:13
+    |vpiName:out2
+    |vpiFullName:work@genblk_order_top.out2
+    |vpiNetType:1
+  |vpiTopModule:1
+  |vpiPort:
+  \_port: (out1), line:3:14, endln:3:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out1
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@genblk_order_top.out1), line:3:14, endln:3:18
+      |vpiParent:
+      \_port: (out1), line:3:14, endln:3:18
+      |vpiName:out1
+      |vpiFullName:work@genblk_order_top.out1
+      |vpiActual:
+      \_logic_net: (work@genblk_order_top.out1), line:3:14, endln:3:18
+    |vpiTypedef:
+    \_ref_typespec: (work@genblk_order_top.out1)
+      |vpiParent:
+      \_port: (out1), line:3:14, endln:3:18
+      |vpiFullName:work@genblk_order_top.out1
+      |vpiActual:
+      \_logic_typespec: , line:3:9, endln:3:13
+  |vpiPort:
+  \_port: (out2), line:4:14, endln:4:18
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:out2
+    |vpiDirection:2
+    |vpiLowConn:
+    \_ref_obj: (work@genblk_order_top.out2), line:4:14, endln:4:18
+      |vpiParent:
+      \_port: (out2), line:4:14, endln:4:18
+      |vpiName:out2
+      |vpiFullName:work@genblk_order_top.out2
+      |vpiActual:
+      \_logic_net: (work@genblk_order_top.out2), line:4:14, endln:4:18
+    |vpiTypedef:
+    \_ref_typespec: (work@genblk_order_top.out2)
+      |vpiParent:
+      \_port: (out2), line:4:14, endln:4:18
+      |vpiFullName:work@genblk_order_top.out2
+      |vpiActual:
+      \_logic_typespec: , line:4:9, endln:4:13
+  |vpiGenScopeArray:
+  \_gen_scope_array: (work@genblk_order_top.outer), line:7:10, endln:16:6
+    |vpiParent:
+    \_module_inst: work@genblk_order_top (work@genblk_order_top), file:/home/alain/uhdm2rtlil/test/genblk_order/dut.sv, line:2:1, endln:18:10
+    |vpiName:outer
+    |vpiFullName:work@genblk_order_top.outer
+    |vpiGenScope:
+    \_gen_scope: (work@genblk_order_top.outer), line:7:10, endln:16:6
+      |vpiParent:
+      \_gen_scope_array: (work@genblk_order_top.outer), line:7:10, endln:16:6
+      |vpiFullName:work@genblk_order_top.outer
+      |vpiGenScopeArray:
+      \_gen_scope_array: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+        |vpiParent:
+        \_gen_scope: (work@genblk_order_top.outer), line:7:10, endln:16:6
+        |vpiName:foo
+        |vpiFullName:work@genblk_order_top.outer.foo
+        |vpiGenScope:
+        \_gen_scope: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+          |vpiParent:
+          \_gen_scope_array: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+          |vpiFullName:work@genblk_order_top.outer.foo
+          |vpiNet:
+          \_logic_net: (work@genblk_order_top.outer.foo.x), line:9:10, endln:9:11
+            |vpiParent:
+            \_gen_scope: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+            |vpiTypespec:
+            \_ref_typespec: (work@genblk_order_top.outer.foo.x)
+              |vpiParent:
+              \_logic_net: (work@genblk_order_top.outer.foo.x), line:9:10, endln:9:11
+              |vpiFullName:work@genblk_order_top.outer.foo.x
+              |vpiActual:
+              \_logic_typespec: , line:9:5, endln:9:9
+            |vpiName:x
+            |vpiFullName:work@genblk_order_top.outer.foo.x
+            |vpiNetType:1
+          |vpiContAssign:
+          \_cont_assign: , line:9:10, endln:9:11
+            |vpiParent:
+            \_gen_scope: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+            |vpiNetDeclAssign:1
+            |vpiRhs:
+            \_constant: , line:9:14, endln:9:15
+              |vpiParent:
+              \_cont_assign: , line:9:10, endln:9:11
+              |vpiDecompile:0
+              |vpiSize:1
+              |UINT:0
+              |vpiConstType:9
+            |vpiLhs:
+            \_logic_net: (work@genblk_order_top.outer.foo.x), line:9:10, endln:9:11
+              |vpiParent:
+              \_cont_assign: , line:9:10, endln:9:11
+              |vpiTypespec:
+              \_ref_typespec: (work@genblk_order_top.outer.foo.x)
+                |vpiParent:
+                \_logic_net: (work@genblk_order_top.outer.foo.x), line:9:10, endln:9:11
+                |vpiFullName:work@genblk_order_top.outer.foo.x
+                |vpiActual:
+                \_logic_typespec: , line:9:5, endln:9:9
+              |vpiName:x
+              |vpiFullName:work@genblk_order_top.outer.foo.x
+              |vpiNetType:1
+          |vpiContAssign:
+          \_cont_assign: , line:14:12, endln:14:24
+            |vpiParent:
+            \_gen_scope: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+            |vpiRhs:
+            \_hier_path: (foo.x), line:14:19, endln:14:24
+              |vpiParent:
+              \_cont_assign: , line:14:12, endln:14:24
+              |vpiActual:
+              \_ref_obj: (foo), line:14:19, endln:14:22
+                |vpiParent:
+                \_hier_path: (foo.x), line:14:19, endln:14:24
+                |vpiName:foo
+              |vpiActual:
+              \_ref_obj: (work@genblk_order_top.outer.foo.x), line:14:23, endln:14:24
+                |vpiParent:
+                \_hier_path: (foo.x), line:14:19, endln:14:24
+                |vpiName:x
+                |vpiFullName:work@genblk_order_top.outer.foo.x
+              |vpiName:foo.x
+            |vpiLhs:
+            \_ref_obj: (work@genblk_order_top.outer.foo.out2), line:14:12, endln:14:16
+              |vpiParent:
+              \_cont_assign: , line:14:12, endln:14:24
+              |vpiName:out2
+              |vpiFullName:work@genblk_order_top.outer.foo.out2
+          |vpiGenScopeArray:
+          \_gen_scope_array: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+            |vpiParent:
+            \_gen_scope: (work@genblk_order_top.outer.foo), line:8:11, endln:15:7
+            |vpiName:foo
+            |vpiFullName:work@genblk_order_top.outer.foo.foo
+            |vpiGenScope:
+            \_gen_scope: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+              |vpiParent:
+              \_gen_scope_array: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+              |vpiFullName:work@genblk_order_top.outer.foo.foo
+              |vpiNet:
+              \_logic_net: (work@genblk_order_top.outer.foo.foo.x), line:11:11, endln:11:12
+                |vpiParent:
+                \_gen_scope: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+                |vpiTypespec:
+                \_ref_typespec: (work@genblk_order_top.outer.foo.foo.x)
+                  |vpiParent:
+                  \_logic_net: (work@genblk_order_top.outer.foo.foo.x), line:11:11, endln:11:12
+                  |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                  |vpiActual:
+                  \_logic_typespec: , line:11:6, endln:11:10
+                |vpiName:x
+                |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                |vpiNetType:1
+              |vpiContAssign:
+              \_cont_assign: , line:11:11, endln:11:12
+                |vpiParent:
+                \_gen_scope: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+                |vpiNetDeclAssign:1
+                |vpiRhs:
+                \_constant: , line:11:15, endln:11:16
+                  |vpiParent:
+                  \_cont_assign: , line:11:11, endln:11:12
+                  |vpiDecompile:1
+                  |vpiSize:1
+                  |UINT:1
+                  |vpiConstType:9
+                |vpiLhs:
+                \_logic_net: (work@genblk_order_top.outer.foo.foo.x), line:11:11, endln:11:12
+                  |vpiParent:
+                  \_cont_assign: , line:11:11, endln:11:12
+                  |vpiTypespec:
+                  \_ref_typespec: (work@genblk_order_top.outer.foo.foo.x)
+                    |vpiParent:
+                    \_logic_net: (work@genblk_order_top.outer.foo.foo.x), line:11:11, endln:11:12
+                    |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                    |vpiActual:
+                    \_logic_typespec: , line:11:6, endln:11:10
+                  |vpiName:x
+                  |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                  |vpiNetType:1
+              |vpiContAssign:
+              \_cont_assign: , line:12:13, endln:12:25
+                |vpiParent:
+                \_gen_scope: (work@genblk_order_top.outer.foo.foo), line:10:12, endln:13:8
+                |vpiRhs:
+                \_hier_path: (foo.x), line:12:20, endln:12:25
+                  |vpiParent:
+                  \_cont_assign: , line:12:13, endln:12:25
+                  |vpiActual:
+                  \_ref_obj: (foo), line:12:20, endln:12:23
+                    |vpiParent:
+                    \_hier_path: (foo.x), line:12:20, endln:12:25
+                    |vpiName:foo
+                  |vpiActual:
+                  \_ref_obj: (work@genblk_order_top.outer.foo.foo.x), line:12:24, endln:12:25
+                    |vpiParent:
+                    \_hier_path: (foo.x), line:12:20, endln:12:25
+                    |vpiName:x
+                    |vpiFullName:work@genblk_order_top.outer.foo.foo.x
+                  |vpiName:foo.x
+                |vpiLhs:
+                \_ref_obj: (work@genblk_order_top.outer.foo.foo.out1), line:12:13, endln:12:17
+                  |vpiParent:
+                  \_cont_assign: , line:12:13, endln:12:25
+                  |vpiName:out1
+                  |vpiFullName:work@genblk_order_top.outer.foo.foo.out1
+\_weaklyReferenced:
+\_logic_typespec: , line:3:9, endln:3:13
+\_logic_typespec: , line:4:9, endln:4:13
+\_logic_typespec: , line:3:9, endln:3:13
+\_logic_typespec: , line:4:9, endln:4:13
+\_logic_typespec: , line:9:5, endln:9:9
+\_logic_typespec: , line:11:6, endln:11:10
+\_logic_typespec: , line:3:9, endln:3:13
+\_logic_typespec: , line:4:9, endln:4:13
+\_logic_typespec: , line:9:5, endln:9:9
+  |vpiParent:
+  \_ref_typespec: (work@genblk_order_top.outer.foo.x)
+\_logic_typespec: , line:11:6, endln:11:10
+  |vpiParent:
+  \_ref_typespec: (work@genblk_order_top.outer.foo.foo.x)

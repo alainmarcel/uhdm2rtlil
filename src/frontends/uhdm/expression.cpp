@@ -942,6 +942,33 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (mode_debug)
         log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
     
+    // Check if the ref_obj has an Actual_group() that points to the real signal
+    // This is used in generate blocks where ref_obj names include generate scope prefixes
+    // but the Actual_group() points to the real module-level signal
+    // Note: Actual_group() is also used for parameters, so check the type
+    const any* actual_for_signal = uhdm_ref->Actual_group();
+    if (actual_for_signal && actual_for_signal->UhdmType() == uhdmlogic_net) {
+        const logic_net* net = any_cast<const logic_net*>(actual_for_signal);
+        std::string actual_name = std::string(net->VpiName());
+        if (mode_debug)
+            log("    ref_obj has Actual_group() pointing to logic_net: %s\n", actual_name.c_str());
+        
+        // Check if this is a module output that was incorrectly prefixed with generate scope
+        if (name_map.count(actual_name)) {
+            if (mode_debug)
+                log("    Using actual signal: %s\n", actual_name.c_str());
+            return RTLIL::SigSpec(name_map[actual_name]);
+        }
+        
+        // Try with escaped name
+        RTLIL::IdString wire_id = RTLIL::escape_id(actual_name);
+        if (module->wire(wire_id)) {
+            if (mode_debug)
+                log("    Found actual signal as module wire: %s\n", wire_id.c_str());
+            return RTLIL::SigSpec(module->wire(wire_id));
+        }
+    }
+    
     // Check if this is a loop variable that needs substitution
     if (loop_values.count(ref_name)) {
         int value = loop_values[ref_name];
@@ -1540,6 +1567,76 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n", 
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+    
+    // Check if the hier_path has path elements that resolve to a full path
+    // This handles generate block references like foo.x that resolve to outer.foo.foo.x
+    // In UHDM, the hier_path contains multiple ref_obj elements in Path_elems
+    // The last ref_obj typically has the fully resolved name
+    if (uhdm_hier->Path_elems()) {
+        log("    hier_path has %d path elements\n", (int)uhdm_hier->Path_elems()->size());
+        
+        // Look through all path elements to find one with a resolved full name
+        // Sometimes the resolution is in the Actual() of the ref_obj
+        for (auto elem : *uhdm_hier->Path_elems()) {
+            log("      Path elem type: %s\n", UHDM::UhdmName(elem->UhdmType()).c_str());
+            
+            if (elem->UhdmType() == uhdmref_obj) {
+                const ref_obj* ref = any_cast<const ref_obj*>(elem);
+                log("        ref_obj: name=%s, full_name=%s\n", 
+                    std::string(ref->VpiName()).c_str(), std::string(ref->VpiFullName()).c_str());
+                
+                // Check if this ref_obj has an Actual_group() pointing to the real signal
+                if (ref->Actual_group()) {
+                    const any* actual = ref->Actual_group();
+                    log("        ref_obj has Actual_group of type %s\n", UHDM::UhdmName(actual->UhdmType()).c_str());
+                    if (actual->UhdmType() == uhdmlogic_net) {
+                        const logic_net* net = any_cast<const logic_net*>(actual);
+                        std::string actual_name = std::string(net->VpiName());
+                        
+                        // Try to find it with generate scope prefix
+                        std::string_view full_name = net->VpiFullName();
+                        if (!full_name.empty()) {
+                            std::string full_str = std::string(full_name);
+                            log("          logic_net full name: %s\n", full_str.c_str());
+                            // Extract module-relative path (remove work@module_name. prefix)
+                            size_t module_end = full_str.find('.');
+                            if (module_end != std::string::npos) {
+                                std::string signal_path = full_str.substr(module_end + 1);
+                                log("          Extracted signal path: %s\n", signal_path.c_str());
+                                if (name_map.count(signal_path)) {
+                                    log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
+                                    return RTLIL::SigSpec(name_map[signal_path]);
+                                } else {
+                                    log("          Not found in name_map\n");
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Also check VpiFullName of the ref_obj itself (fallback)
+                std::string_view ref_full_name = ref->VpiFullName();
+                if (!ref_full_name.empty()) {
+                    std::string full_str = std::string(ref_full_name);
+                    // Extract module-relative path
+                    size_t module_end = full_str.find('.');
+                    if (module_end != std::string::npos) {
+                        std::string signal_path = full_str.substr(module_end + 1);
+                        if (mode_debug)
+                            log("      ref_obj has VpiFullName: %s -> %s\n", full_str.c_str(), signal_path.c_str());
+                        if (name_map.count(signal_path)) {
+                            if (mode_debug)
+                                log("      Found in name_map: %s\n", name_map[signal_path]->name.c_str());
+                            return RTLIL::SigSpec(name_map[signal_path]);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        if (mode_debug)
+            log("    hier_path has no Path_elems\n");
+    }
     
     // First check if this is a generate hierarchy wire (e.g., blk[0].sub.x)
     // These are already created during generate scope import
