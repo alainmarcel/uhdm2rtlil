@@ -87,7 +87,7 @@ module \carryadd
   wire width 8 input 2 \b
   attribute \src "dut.sv:1.23-1.24"
   wire width 8 output 3 \y
-  cell $and $auto$expression.cpp:502:import_operation$1
+  cell $and $auto$expression.cpp:506:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -97,7 +97,7 @@ module \carryadd
     connect \B \STAGE[0].IN2
     connect \Y $auto$rtlil.cc:3006:And$2
   end
-  cell $and $auto$expression.cpp:502:import_operation$17
+  cell $and $auto$expression.cpp:506:import_operation$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -107,7 +107,7 @@ module \carryadd
     connect \B \STAGE[2].IN2
     connect \Y $auto$rtlil.cc:3006:And$18
   end
-  cell $and $auto$expression.cpp:502:import_operation$21
+  cell $and $auto$expression.cpp:506:import_operation$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -117,7 +117,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$22
   end
-  cell $and $auto$expression.cpp:502:import_operation$29
+  cell $and $auto$expression.cpp:506:import_operation$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -127,7 +127,7 @@ module \carryadd
     connect \B \STAGE[3].IN2
     connect \Y $auto$rtlil.cc:3006:And$30
   end
-  cell $and $auto$expression.cpp:502:import_operation$33
+  cell $and $auto$expression.cpp:506:import_operation$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -137,7 +137,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$34
   end
-  cell $and $auto$expression.cpp:502:import_operation$41
+  cell $and $auto$expression.cpp:506:import_operation$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -147,7 +147,7 @@ module \carryadd
     connect \B \STAGE[4].IN2
     connect \Y $auto$rtlil.cc:3006:And$42
   end
-  cell $and $auto$expression.cpp:502:import_operation$45
+  cell $and $auto$expression.cpp:506:import_operation$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -157,7 +157,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$46
   end
-  cell $and $auto$expression.cpp:502:import_operation$5
+  cell $and $auto$expression.cpp:506:import_operation$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -167,7 +167,7 @@ module \carryadd
     connect \B \STAGE[1].IN2
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$expression.cpp:502:import_operation$53
+  cell $and $auto$expression.cpp:506:import_operation$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -177,7 +177,7 @@ module \carryadd
     connect \B \STAGE[5].IN2
     connect \Y $auto$rtlil.cc:3006:And$54
   end
-  cell $and $auto$expression.cpp:502:import_operation$57
+  cell $and $auto$expression.cpp:506:import_operation$57
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -187,7 +187,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$58
   end
-  cell $and $auto$expression.cpp:502:import_operation$65
+  cell $and $auto$expression.cpp:506:import_operation$65
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -197,7 +197,7 @@ module \carryadd
     connect \B \STAGE[6].IN2
     connect \Y $auto$rtlil.cc:3006:And$66
   end
-  cell $and $auto$expression.cpp:502:import_operation$69
+  cell $and $auto$expression.cpp:506:import_operation$69
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -207,7 +207,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$70
   end
-  cell $and $auto$expression.cpp:502:import_operation$77
+  cell $and $auto$expression.cpp:506:import_operation$77
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -217,7 +217,7 @@ module \carryadd
     connect \B \STAGE[7].IN2
     connect \Y $auto$rtlil.cc:3006:And$78
   end
-  cell $and $auto$expression.cpp:502:import_operation$81
+  cell $and $auto$expression.cpp:506:import_operation$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -227,7 +227,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$82
   end
-  cell $and $auto$expression.cpp:502:import_operation$9
+  cell $and $auto$expression.cpp:506:import_operation$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -237,7 +237,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3006:And$10
   end
-  cell $or $auto$expression.cpp:506:import_operation$11
+  cell $or $auto$expression.cpp:510:import_operation$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -247,7 +247,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$10
     connect \Y $auto$rtlil.cc:3007:Or$12
   end
-  cell $or $auto$expression.cpp:506:import_operation$19
+  cell $or $auto$expression.cpp:510:import_operation$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -257,7 +257,7 @@ module \carryadd
     connect \B \STAGE[2].IN2
     connect \Y $auto$rtlil.cc:3007:Or$20
   end
-  cell $or $auto$expression.cpp:506:import_operation$23
+  cell $or $auto$expression.cpp:510:import_operation$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -267,7 +267,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$22
     connect \Y $auto$rtlil.cc:3007:Or$24
   end
-  cell $or $auto$expression.cpp:506:import_operation$31
+  cell $or $auto$expression.cpp:510:import_operation$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -277,7 +277,7 @@ module \carryadd
     connect \B \STAGE[3].IN2
     connect \Y $auto$rtlil.cc:3007:Or$32
   end
-  cell $or $auto$expression.cpp:506:import_operation$35
+  cell $or $auto$expression.cpp:510:import_operation$35
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -287,7 +287,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$34
     connect \Y $auto$rtlil.cc:3007:Or$36
   end
-  cell $or $auto$expression.cpp:506:import_operation$43
+  cell $or $auto$expression.cpp:510:import_operation$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -297,7 +297,7 @@ module \carryadd
     connect \B \STAGE[4].IN2
     connect \Y $auto$rtlil.cc:3007:Or$44
   end
-  cell $or $auto$expression.cpp:506:import_operation$47
+  cell $or $auto$expression.cpp:510:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -307,7 +307,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$46
     connect \Y $auto$rtlil.cc:3007:Or$48
   end
-  cell $or $auto$expression.cpp:506:import_operation$55
+  cell $or $auto$expression.cpp:510:import_operation$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -317,7 +317,7 @@ module \carryadd
     connect \B \STAGE[5].IN2
     connect \Y $auto$rtlil.cc:3007:Or$56
   end
-  cell $or $auto$expression.cpp:506:import_operation$59
+  cell $or $auto$expression.cpp:510:import_operation$59
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -327,7 +327,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$58
     connect \Y $auto$rtlil.cc:3007:Or$60
   end
-  cell $or $auto$expression.cpp:506:import_operation$67
+  cell $or $auto$expression.cpp:510:import_operation$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -337,7 +337,7 @@ module \carryadd
     connect \B \STAGE[6].IN2
     connect \Y $auto$rtlil.cc:3007:Or$68
   end
-  cell $or $auto$expression.cpp:506:import_operation$7
+  cell $or $auto$expression.cpp:510:import_operation$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -347,7 +347,7 @@ module \carryadd
     connect \B \STAGE[1].IN2
     connect \Y $auto$rtlil.cc:3007:Or$8
   end
-  cell $or $auto$expression.cpp:506:import_operation$71
+  cell $or $auto$expression.cpp:510:import_operation$71
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -357,7 +357,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$70
     connect \Y $auto$rtlil.cc:3007:Or$72
   end
-  cell $or $auto$expression.cpp:506:import_operation$79
+  cell $or $auto$expression.cpp:510:import_operation$79
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -367,7 +367,7 @@ module \carryadd
     connect \B \STAGE[7].IN2
     connect \Y $auto$rtlil.cc:3007:Or$80
   end
-  cell $or $auto$expression.cpp:506:import_operation$83
+  cell $or $auto$expression.cpp:510:import_operation$83
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -377,7 +377,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3006:And$82
     connect \Y $auto$rtlil.cc:3007:Or$84
   end
-  cell $xor $auto$expression.cpp:510:import_operation$13
+  cell $xor $auto$expression.cpp:514:import_operation$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -387,7 +387,7 @@ module \carryadd
     connect \B \STAGE[1].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$14
   end
-  cell $xor $auto$expression.cpp:510:import_operation$15
+  cell $xor $auto$expression.cpp:514:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -397,7 +397,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$16
   end
-  cell $xor $auto$expression.cpp:510:import_operation$25
+  cell $xor $auto$expression.cpp:514:import_operation$25
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -407,7 +407,7 @@ module \carryadd
     connect \B \STAGE[2].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$26
   end
-  cell $xor $auto$expression.cpp:510:import_operation$27
+  cell $xor $auto$expression.cpp:514:import_operation$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -417,7 +417,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$28
   end
-  cell $xor $auto$expression.cpp:510:import_operation$3
+  cell $xor $auto$expression.cpp:514:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -427,7 +427,7 @@ module \carryadd
     connect \B \STAGE[0].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $xor $auto$expression.cpp:510:import_operation$37
+  cell $xor $auto$expression.cpp:514:import_operation$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -437,7 +437,7 @@ module \carryadd
     connect \B \STAGE[3].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$38
   end
-  cell $xor $auto$expression.cpp:510:import_operation$39
+  cell $xor $auto$expression.cpp:514:import_operation$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -447,7 +447,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$40
   end
-  cell $xor $auto$expression.cpp:510:import_operation$49
+  cell $xor $auto$expression.cpp:514:import_operation$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -457,7 +457,7 @@ module \carryadd
     connect \B \STAGE[4].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$50
   end
-  cell $xor $auto$expression.cpp:510:import_operation$51
+  cell $xor $auto$expression.cpp:514:import_operation$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -467,7 +467,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$52
   end
-  cell $xor $auto$expression.cpp:510:import_operation$61
+  cell $xor $auto$expression.cpp:514:import_operation$61
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -477,7 +477,7 @@ module \carryadd
     connect \B \STAGE[5].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$62
   end
-  cell $xor $auto$expression.cpp:510:import_operation$63
+  cell $xor $auto$expression.cpp:514:import_operation$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -487,7 +487,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$64
   end
-  cell $xor $auto$expression.cpp:510:import_operation$73
+  cell $xor $auto$expression.cpp:514:import_operation$73
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -497,7 +497,7 @@ module \carryadd
     connect \B \STAGE[6].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$74
   end
-  cell $xor $auto$expression.cpp:510:import_operation$75
+  cell $xor $auto$expression.cpp:514:import_operation$75
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -507,7 +507,7 @@ module \carryadd
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3008:Xor$76
   end
-  cell $xor $auto$expression.cpp:510:import_operation$85
+  cell $xor $auto$expression.cpp:514:import_operation$85
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -517,7 +517,7 @@ module \carryadd
     connect \B \STAGE[7].IN2
     connect \Y $auto$rtlil.cc:3008:Xor$86
   end
-  cell $xor $auto$expression.cpp:510:import_operation$87
+  cell $xor $auto$expression.cpp:514:import_operation$87
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

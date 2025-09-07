@@ -7,14 +7,14 @@ module \mul
   parameter \X_WIDTH 6
   parameter \Y_WIDTH 6
   parameter \A_WIDTH 12
-  wire width 12 $auto$expression.cpp:609:import_operation$1
+  wire width 12 $auto$expression.cpp:613:import_operation$1
   attribute \src "dut.sv:7.26-7.27"
   wire width 12 output 3 \A
   attribute \src "dut.sv:4.25-4.26"
   wire width 6 input 1 \x
   attribute \src "dut.sv:5.25-5.26"
   wire width 6 input 2 \y
-  cell $mul $auto$expression.cpp:626:import_operation$2
+  cell $mul $auto$expression.cpp:630:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -22,7 +22,7 @@ module \mul
     parameter \Y_WIDTH 12
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:609:import_operation$1
+    connect \Y $auto$expression.cpp:613:import_operation$1
   end
-  connect \A $auto$expression.cpp:609:import_operation$1
+  connect \A $auto$expression.cpp:613:import_operation$1
 end

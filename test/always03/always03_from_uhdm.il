@@ -32,7 +32,7 @@ module \always03
   wire output 10 \out2
   attribute \src "dut.sv:1.71-1.75"
   wire output 11 \out3
-  cell $xor $auto$expression.cpp:510:import_operation$15
+  cell $xor $auto$expression.cpp:514:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

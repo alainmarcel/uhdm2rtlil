@@ -74,7 +74,7 @@ module \fsm
   attribute \reg 1
   attribute \src "dut.sv:13.20-13.25"
   wire width 3 \state
-  cell $eq $auto$expression.cpp:699:import_operation$1
+  cell $eq $auto$expression.cpp:703:import_operation$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -84,7 +84,7 @@ module \fsm
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3013:Eq$2
   end
-  cell $eq $auto$expression.cpp:699:import_operation$15
+  cell $eq $auto$expression.cpp:703:import_operation$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -94,7 +94,7 @@ module \fsm
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3013:Eq$16
   end
-  cell $eq $auto$expression.cpp:699:import_operation$27
+  cell $eq $auto$expression.cpp:703:import_operation$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -104,7 +104,7 @@ module \fsm
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3013:Eq$28
   end
-  cell $eq $auto$expression.cpp:699:import_operation$47
+  cell $eq $auto$expression.cpp:703:import_operation$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -114,7 +114,7 @@ module \fsm
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3013:Eq$48
   end
-  cell $eq $auto$expression.cpp:699:import_operation$67
+  cell $eq $auto$expression.cpp:703:import_operation$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -124,7 +124,7 @@ module \fsm
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3013:Eq$68
   end
-  cell $eq $auto$expression.cpp:699:import_operation$81
+  cell $eq $auto$expression.cpp:703:import_operation$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

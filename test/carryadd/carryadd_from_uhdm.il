@@ -49,7 +49,7 @@ module \carryadd
   wire width 8 input 2 \b
   attribute \src "dut.sv:1.23-1.24"
   wire width 8 output 3 \y
-  cell $xor $auto$expression.cpp:510:import_operation$3
+  cell $xor $auto$expression.cpp:514:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
