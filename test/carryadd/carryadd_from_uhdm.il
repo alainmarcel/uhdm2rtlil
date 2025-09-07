@@ -5,42 +5,60 @@ attribute \src "dut.sv:1.1-24.10"
 attribute \top 1
 module \carryadd
   parameter \WIDTH 8
+  wire $auto$rtlil.cc:3006:And$10
+  wire $auto$rtlil.cc:3006:And$18
+  wire $auto$rtlil.cc:3006:And$22
+  wire $auto$rtlil.cc:3006:And$30
+  wire $auto$rtlil.cc:3006:And$34
+  wire $auto$rtlil.cc:3006:And$42
+  wire $auto$rtlil.cc:3006:And$46
+  wire $auto$rtlil.cc:3006:And$54
+  wire $auto$rtlil.cc:3006:And$58
+  wire $auto$rtlil.cc:3006:And$6
+  wire $auto$rtlil.cc:3006:And$66
+  wire $auto$rtlil.cc:3006:And$70
+  wire $auto$rtlil.cc:3007:Or$20
+  wire $auto$rtlil.cc:3007:Or$32
+  wire $auto$rtlil.cc:3007:Or$44
+  wire $auto$rtlil.cc:3007:Or$56
+  wire $auto$rtlil.cc:3007:Or$68
+  wire $auto$rtlil.cc:3007:Or$8
+  wire $auto$rtlil.cc:3008:Xor$14
+  wire $auto$rtlil.cc:3008:Xor$26
+  wire $auto$rtlil.cc:3008:Xor$38
+  wire $auto$rtlil.cc:3008:Xor$50
+  wire $auto$rtlil.cc:3008:Xor$62
+  wire $auto$rtlil.cc:3008:Xor$74
+  wire $auto$rtlil.cc:3008:Xor$86
+  wire \STAGE[0].C
   wire \STAGE[0].IN1
   wire \STAGE[0].IN2
   wire \STAGE[0].Y
-  attribute \unused_bits "0"
+  wire \STAGE[1].C
   wire \STAGE[1].IN1
-  attribute \unused_bits "0"
   wire \STAGE[1].IN2
   wire \STAGE[1].Y
-  attribute \unused_bits "0"
+  wire \STAGE[2].C
   wire \STAGE[2].IN1
-  attribute \unused_bits "0"
   wire \STAGE[2].IN2
   wire \STAGE[2].Y
-  attribute \unused_bits "0"
+  wire \STAGE[3].C
   wire \STAGE[3].IN1
-  attribute \unused_bits "0"
   wire \STAGE[3].IN2
   wire \STAGE[3].Y
-  attribute \unused_bits "0"
+  wire \STAGE[4].C
   wire \STAGE[4].IN1
-  attribute \unused_bits "0"
   wire \STAGE[4].IN2
   wire \STAGE[4].Y
-  attribute \unused_bits "0"
+  wire \STAGE[5].C
   wire \STAGE[5].IN1
-  attribute \unused_bits "0"
   wire \STAGE[5].IN2
   wire \STAGE[5].Y
-  attribute \unused_bits "0"
+  wire \STAGE[6].C
   wire \STAGE[6].IN1
-  attribute \unused_bits "0"
   wire \STAGE[6].IN2
   wire \STAGE[6].Y
-  attribute \unused_bits "0"
   wire \STAGE[7].IN1
-  attribute \unused_bits "0"
   wire \STAGE[7].IN2
   wire \STAGE[7].Y
   attribute \src "dut.sv:1.17-1.18"
@@ -49,6 +67,296 @@ module \carryadd
   wire width 8 input 2 \b
   attribute \src "dut.sv:1.23-1.24"
   wire width 8 output 3 \y
+  cell $and $auto$expression.cpp:506:import_operation$1
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [0]
+    connect \B \b [0]
+    connect \Y \STAGE[0].C
+  end
+  cell $and $auto$expression.cpp:506:import_operation$17
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [2]
+    connect \B \b [2]
+    connect \Y $auto$rtlil.cc:3006:And$18
+  end
+  cell $and $auto$expression.cpp:506:import_operation$21
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$20
+    connect \B \STAGE[1].C
+    connect \Y $auto$rtlil.cc:3006:And$22
+  end
+  cell $and $auto$expression.cpp:506:import_operation$29
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [3]
+    connect \B \b [3]
+    connect \Y $auto$rtlil.cc:3006:And$30
+  end
+  cell $and $auto$expression.cpp:506:import_operation$33
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$32
+    connect \B \STAGE[2].C
+    connect \Y $auto$rtlil.cc:3006:And$34
+  end
+  cell $and $auto$expression.cpp:506:import_operation$41
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [4]
+    connect \B \b [4]
+    connect \Y $auto$rtlil.cc:3006:And$42
+  end
+  cell $and $auto$expression.cpp:506:import_operation$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$44
+    connect \B \STAGE[3].C
+    connect \Y $auto$rtlil.cc:3006:And$46
+  end
+  cell $and $auto$expression.cpp:506:import_operation$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [1]
+    connect \B \b [1]
+    connect \Y $auto$rtlil.cc:3006:And$6
+  end
+  cell $and $auto$expression.cpp:506:import_operation$53
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [5]
+    connect \B \b [5]
+    connect \Y $auto$rtlil.cc:3006:And$54
+  end
+  cell $and $auto$expression.cpp:506:import_operation$57
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$56
+    connect \B \STAGE[4].C
+    connect \Y $auto$rtlil.cc:3006:And$58
+  end
+  cell $and $auto$expression.cpp:506:import_operation$65
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [6]
+    connect \B \b [6]
+    connect \Y $auto$rtlil.cc:3006:And$66
+  end
+  cell $and $auto$expression.cpp:506:import_operation$69
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$68
+    connect \B \STAGE[5].C
+    connect \Y $auto$rtlil.cc:3006:And$70
+  end
+  cell $and $auto$expression.cpp:506:import_operation$9
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3007:Or$8
+    connect \B \STAGE[0].C
+    connect \Y $auto$rtlil.cc:3006:And$10
+  end
+  cell $or $auto$expression.cpp:510:import_operation$11
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$6
+    connect \B $auto$rtlil.cc:3006:And$10
+    connect \Y \STAGE[1].C
+  end
+  cell $or $auto$expression.cpp:510:import_operation$19
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [2]
+    connect \B \b [2]
+    connect \Y $auto$rtlil.cc:3007:Or$20
+  end
+  cell $or $auto$expression.cpp:510:import_operation$23
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$18
+    connect \B $auto$rtlil.cc:3006:And$22
+    connect \Y \STAGE[2].C
+  end
+  cell $or $auto$expression.cpp:510:import_operation$31
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [3]
+    connect \B \b [3]
+    connect \Y $auto$rtlil.cc:3007:Or$32
+  end
+  cell $or $auto$expression.cpp:510:import_operation$35
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$30
+    connect \B $auto$rtlil.cc:3006:And$34
+    connect \Y \STAGE[3].C
+  end
+  cell $or $auto$expression.cpp:510:import_operation$43
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [4]
+    connect \B \b [4]
+    connect \Y $auto$rtlil.cc:3007:Or$44
+  end
+  cell $or $auto$expression.cpp:510:import_operation$47
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$42
+    connect \B $auto$rtlil.cc:3006:And$46
+    connect \Y \STAGE[4].C
+  end
+  cell $or $auto$expression.cpp:510:import_operation$55
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [5]
+    connect \B \b [5]
+    connect \Y $auto$rtlil.cc:3007:Or$56
+  end
+  cell $or $auto$expression.cpp:510:import_operation$59
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$54
+    connect \B $auto$rtlil.cc:3006:And$58
+    connect \Y \STAGE[5].C
+  end
+  cell $or $auto$expression.cpp:510:import_operation$67
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [6]
+    connect \B \b [6]
+    connect \Y $auto$rtlil.cc:3007:Or$68
+  end
+  cell $or $auto$expression.cpp:510:import_operation$7
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [1]
+    connect \B \b [1]
+    connect \Y $auto$rtlil.cc:3007:Or$8
+  end
+  cell $or $auto$expression.cpp:510:import_operation$71
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3006:And$66
+    connect \B $auto$rtlil.cc:3006:And$70
+    connect \Y \STAGE[6].C
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$13
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [1]
+    connect \B \b [1]
+    connect \Y $auto$rtlil.cc:3008:Xor$14
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$14
+    connect \B \STAGE[0].C
+    connect \Y \STAGE[1].Y
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$25
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [2]
+    connect \B \b [2]
+    connect \Y $auto$rtlil.cc:3008:Xor$26
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$27
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$26
+    connect \B \STAGE[1].C
+    connect \Y \STAGE[2].Y
+  end
   cell $xor $auto$expression.cpp:514:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -59,28 +367,121 @@ module \carryadd
     connect \B \b [0]
     connect \Y \STAGE[0].Y
   end
+  cell $xor $auto$expression.cpp:514:import_operation$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [3]
+    connect \B \b [3]
+    connect \Y $auto$rtlil.cc:3008:Xor$38
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$39
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$38
+    connect \B \STAGE[2].C
+    connect \Y \STAGE[3].Y
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$49
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [4]
+    connect \B \b [4]
+    connect \Y $auto$rtlil.cc:3008:Xor$50
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$51
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$50
+    connect \B \STAGE[3].C
+    connect \Y \STAGE[4].Y
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$61
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [5]
+    connect \B \b [5]
+    connect \Y $auto$rtlil.cc:3008:Xor$62
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$63
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$62
+    connect \B \STAGE[4].C
+    connect \Y \STAGE[5].Y
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$73
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [6]
+    connect \B \b [6]
+    connect \Y $auto$rtlil.cc:3008:Xor$74
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$75
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$74
+    connect \B \STAGE[5].C
+    connect \Y \STAGE[6].Y
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$85
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a [7]
+    connect \B \b [7]
+    connect \Y $auto$rtlil.cc:3008:Xor$86
+  end
+  cell $xor $auto$expression.cpp:514:import_operation$87
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$86
+    connect \B \STAGE[6].C
+    connect \Y \STAGE[7].Y
+  end
   connect \STAGE[0].IN1 \a [0]
   connect \STAGE[0].IN2 \b [0]
   connect \STAGE[1].IN1 \a [1]
   connect \STAGE[1].IN2 \b [1]
-  connect \STAGE[1].Y 1'0
   connect \STAGE[2].IN1 \a [2]
   connect \STAGE[2].IN2 \b [2]
-  connect \STAGE[2].Y 1'0
   connect \STAGE[3].IN1 \a [3]
   connect \STAGE[3].IN2 \b [3]
-  connect \STAGE[3].Y 1'0
   connect \STAGE[4].IN1 \a [4]
   connect \STAGE[4].IN2 \b [4]
-  connect \STAGE[4].Y 1'0
   connect \STAGE[5].IN1 \a [5]
   connect \STAGE[5].IN2 \b [5]
-  connect \STAGE[5].Y 1'0
   connect \STAGE[6].IN1 \a [6]
   connect \STAGE[6].IN2 \b [6]
-  connect \STAGE[6].Y 1'0
   connect \STAGE[7].IN1 \a [7]
   connect \STAGE[7].IN2 \b [7]
-  connect \STAGE[7].Y 1'0
-  connect \y { 7'0000000 \STAGE[0].Y }
+  connect \y { \STAGE[7].Y \STAGE[6].Y \STAGE[5].Y \STAGE[4].Y \STAGE[3].Y \STAGE[2].Y \STAGE[1].Y \STAGE[0].Y }
 end

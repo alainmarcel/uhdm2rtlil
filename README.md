@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 91 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (88/91 tests functional)
-- **Perfect Matches**: 83 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 92 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 96% (89/92 tests functional)
+- **Perfect Matches**: 84 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
@@ -28,6 +28,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
 - **Recent Fixes**:
+  - `genblk_order` - Fixed nested generate blocks with same name ✅
+    - Reordered generate scope import to process nested scopes before continuous assignments
+    - Added proper Actual_group() checking in hier_path for correct signal resolution
+    - Handles generate block name shadowing correctly
   - `genvar_loop_decl_1` - Fixed generate scope wire initialization with hierarchical name lookup ✅
   - `genvar_loop_decl_2` - Fixed with Surelog update for proper hierarchical path assignment handling ✅
   - `carryadd` - Now passing with fixed carry addition handling ✅

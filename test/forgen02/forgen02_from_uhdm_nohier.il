@@ -393,37 +393,37 @@ module \uut_forgen02
     connect \A \adder[7].D [1:0]
     connect \Y $auto$rtlil.cc:2964:ReduceXor$76
   end
+  connect \adder[0].D [2] \cin
   connect \adder[0].D [1:0] { \a [0] \b [0] }
   connect \y [0] $auto$rtlil.cc:2964:ReduceXor$2
   connect \carry [0] $auto$rtlil.cc:3007:Or$10
-  connect \adder[0].D [2] \cin
+  connect \adder[1].D [2] \carry [0]
   connect \adder[1].D [1:0] { \a [1] \b [1] }
   connect \y [1] $auto$rtlil.cc:2964:ReduceXor$12
   connect \carry [1] $auto$rtlil.cc:3007:Or$20
-  connect \adder[1].D [2] \carry [0]
+  connect \adder[2].D [2] \carry [1]
   connect \adder[2].D [1:0] { \a [2] \b [2] }
   connect \y [2] $auto$rtlil.cc:2964:ReduceXor$22
   connect \carry [2] $auto$rtlil.cc:3007:Or$30
-  connect \adder[2].D [2] \carry [1]
+  connect \adder[3].D [2] \carry [2]
   connect \adder[3].D [1:0] { \a [3] \b [3] }
   connect \y [3] $auto$rtlil.cc:2964:ReduceXor$32
   connect \carry [3] $auto$rtlil.cc:3007:Or$40
-  connect \adder[3].D [2] \carry [2]
+  connect \adder[4].D [2] \carry [3]
   connect \adder[4].D [1:0] { \a [4] \b [4] }
   connect \y [4] $auto$rtlil.cc:2964:ReduceXor$42
   connect \carry [4] $auto$rtlil.cc:3007:Or$50
-  connect \adder[4].D [2] \carry [3]
+  connect \adder[5].D [2] \carry [4]
   connect \adder[5].D [1:0] { \a [5] \b [5] }
   connect \y [5] $auto$rtlil.cc:2964:ReduceXor$52
   connect \carry [5] $auto$rtlil.cc:3007:Or$60
-  connect \adder[5].D [2] \carry [4]
+  connect \adder[6].D [2] \carry [5]
   connect \adder[6].D [1:0] { \a [6] \b [6] }
   connect \y [6] $auto$rtlil.cc:2964:ReduceXor$62
   connect \carry [6] $auto$rtlil.cc:3007:Or$70
-  connect \adder[6].D [2] \carry [5]
+  connect \adder[7].D [2] \carry [6]
   connect \adder[7].D [1:0] { \a [7] \b [7] }
   connect \y [7] $auto$rtlil.cc:2964:ReduceXor$72
   connect \carry [7] $auto$rtlil.cc:3007:Or$80
-  connect \adder[7].D [2] \carry [6]
   connect \cout \carry [7]
 end
