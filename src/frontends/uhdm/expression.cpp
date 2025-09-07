@@ -20,10 +20,71 @@
 #include <uhdm/integer_typespec.h>
 #include <uhdm/range.h>
 #include <uhdm/sys_func_call.h>
+#include <uhdm/func_call.h>
+#include <uhdm/function.h>
+#include <uhdm/case_stmt.h>
+#include <uhdm/case_item.h>
+#include <uhdm/io_decl.h>
+#include <uhdm/begin.h>
+#include <uhdm/named_begin.h>
+#include <uhdm/if_else.h>
 
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
+
+// Helper function to extract function return value from a statement
+// This looks for assignments to the function name
+RTLIL::SigSpec UhdmImporter::extract_function_return_value(const any* stmt, const std::string& func_name, int width) {
+    if (!stmt) {
+        return RTLIL::SigSpec(RTLIL::State::Sx, width);
+    }
+    
+    // Handle different statement types
+    switch (stmt->UhdmType()) {
+        case uhdmassignment: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (assign && assign->Lhs()) {
+                const ref_obj* lhs = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs && std::string(lhs->VpiName()) == func_name) {
+                    // This is an assignment to the function name - the return value
+                    if (assign->Rhs()) {
+                        return import_expression(any_cast<const expr*>(assign->Rhs()));
+                    }
+                }
+            }
+            break;
+        }
+        case uhdmbegin:
+        case uhdmnamed_begin: {
+            // Look for assignments in begin/end blocks
+            const begin* bg = any_cast<const begin*>(stmt);
+            if (bg && bg->Stmts()) {
+                for (auto s : *bg->Stmts()) {
+                    RTLIL::SigSpec ret = extract_function_return_value(s, func_name, width);
+                    if (!ret.is_fully_undef()) {
+                        return ret;
+                    }
+                }
+            }
+            break;
+        }
+        case uhdmif_else: {
+            // For if/else, we'd need to handle both branches
+            // For now, just try to extract from the if branch
+            const if_else* ie = any_cast<const if_else*>(stmt);
+            if (ie && ie->VpiStmt()) {
+                return extract_function_return_value(ie->VpiStmt(), func_name, width);
+            }
+            break;
+        }
+        default:
+            // For other statement types, return undefined
+            break;
+    }
+    
+    return RTLIL::SigSpec(RTLIL::State::Sx, width);
+}
 
 // Helper function to extract RTLIL::Const from UHDM Value string
 RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str) {
@@ -235,6 +296,164 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                     // Return first argument if available, otherwise empty
                     return args.empty() ? RTLIL::SigSpec() : args[0];
                 }
+            }
+            break;
+        case vpiFuncCall:
+            // Handle user-defined function calls by inlining the function logic
+            {
+                const func_call* fc = any_cast<const func_call*>(uhdm_expr);
+                if (!fc) {
+                    log_warning("Failed to cast expression to func_call\n");
+                    return RTLIL::SigSpec();
+                }
+                
+                std::string func_name = std::string(fc->VpiName());
+                log("UHDM: Processing function call: %s\n", func_name.c_str());
+                
+                // Get the function definition
+                const function* func_def = fc->Function();
+                if (!func_def) {
+                    log_warning("Function definition not found for %s\n", func_name.c_str());
+                    return RTLIL::SigSpec();
+                }
+                
+                // Get function return width
+                int ret_width = 1;
+                if (func_def->Return()) {
+                    ret_width = get_width(func_def->Return(), current_instance);
+                }
+                
+                // Create a unique wire for this function call result
+                static int func_call_counter = 0;
+                std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
+                RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
+                
+                // Collect arguments
+                std::vector<RTLIL::SigSpec> args;
+                std::vector<std::string> arg_names;
+                if (fc->Tf_call_args()) {
+                    for (auto arg : *fc->Tf_call_args()) {
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        args.push_back(arg_sig);
+                    }
+                }
+                
+                // Map function input declarations to argument signals
+                std::map<std::string, RTLIL::SigSpec> input_mapping;
+                if (func_def->Io_decls() && !args.empty()) {
+                    int arg_idx = 0;
+                    for (auto io_decl : *func_def->Io_decls()) {
+                        if (arg_idx < args.size()) {
+                            std::string io_name = std::string(io_decl->VpiName());
+                            input_mapping[io_name] = args[arg_idx];
+                            log("UHDM:   Mapping function input '%s' to argument %d\n", io_name.c_str(), arg_idx);
+                            arg_idx++;
+                        }
+                    }
+                }
+                
+                // For functions, we'll build a combinational mux tree
+                // This is a simpler approach that works for FSM-style functions
+                
+                // Save current context
+                std::map<std::string, RTLIL::Wire*> saved_name_map = name_map;
+                
+                // Add input mappings to name_map temporarily
+                for (const auto& [name, sig] : input_mapping) {
+                    // Create temporary wires for inputs if needed
+                    std::string temp_wire_name = stringf("$func_%s_input_%s_%d", 
+                        func_name.c_str(), name.c_str(), func_call_counter - 1);
+                    RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_wire_name), sig.size());
+                    name_map[name] = temp_wire;
+                    
+                    // Connect input to temp wire
+                    module->connect(RTLIL::SigSpec(temp_wire), sig);
+                }
+                
+                // Process the function statement to build the mux tree
+                if (func_def->Stmt()) {
+                    const any* stmt = func_def->Stmt();
+                    
+                    // Handle case statement - most common in FSM functions
+                    if (stmt->UhdmType() == uhdmcase_stmt) {
+                        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+                        if (cs) {
+                            // Get the case expression (what we're switching on)
+                            RTLIL::SigSpec case_expr;
+                            if (cs->VpiCondition()) {
+                                case_expr = import_expression(any_cast<const expr*>(cs->VpiCondition()));
+                            }
+                            
+                            // Build a mux tree for the case statement
+                            RTLIL::SigSpec final_result;
+                            RTLIL::SigSpec default_value = RTLIL::SigSpec(RTLIL::State::Sx, ret_width);
+                            
+                            // Collect all case items to build mux tree
+                            std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>> case_values;
+                            
+                            if (cs->Case_items()) {
+                                for (auto item : *cs->Case_items()) {
+                                    const case_item* ci = any_cast<const case_item*>(item);
+                                    if (!ci) continue;
+                                    
+                                    // Get the value for this case
+                                    RTLIL::SigSpec case_value;
+                                    if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
+                                        // Regular case item with expression
+                                        case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)));
+                                    } else {
+                                        // Default case - handled separately
+                                        default_value = extract_function_return_value(ci->Stmt(), func_name, ret_width);
+                                        continue;
+                                    }
+                                    
+                                    // Extract the return value from the case statement
+                                    RTLIL::SigSpec return_value = extract_function_return_value(ci->Stmt(), func_name, ret_width);
+                                    
+                                    case_values.push_back({case_value, return_value});
+                                }
+                            }
+                            
+                            // Build the mux tree
+                            if (!case_values.empty()) {
+                                final_result = default_value;
+                                
+                                // Build mux chain from the end backwards
+                                for (auto it = case_values.rbegin(); it != case_values.rend(); ++it) {
+                                    // Create equality comparison
+                                    RTLIL::Wire* eq_wire = module->addWire(NEW_ID, 1);
+                                    module->addEq(NEW_ID, case_expr, it->first, eq_wire);
+                                    
+                                    // Create mux: if case matches, use case value, else use accumulated result
+                                    RTLIL::Wire* mux_out = module->addWire(NEW_ID, ret_width);
+                                    module->addMux(NEW_ID, final_result, it->second, eq_wire, mux_out);
+                                    
+                                    final_result = mux_out;
+                                }
+                                
+                                // Connect final result to output wire
+                                module->connect(result_wire, final_result);
+                            }
+                        }
+                    } else {
+                        // For other statement types, we'd need more complex handling
+                        log_warning("Function %s has unsupported statement type for inlining\n", func_name.c_str());
+                    }
+                }
+                
+                // Restore name_map
+                name_map = saved_name_map;
+                
+                log("UHDM: Created inline function logic for %s (return width=%d, %d arguments)\n", 
+                    func_name.c_str(), ret_width, (int)args.size());
+                
+                // Note: This is still a partial implementation
+                // Full support would require:
+                // 1. Complete statement processing (if/else, assignments, etc.)
+                // 2. Proper handling of local variables
+                // 3. Support for all expression types within the function
+                
+                return RTLIL::SigSpec(result_wire);
             }
             break;
         default:
