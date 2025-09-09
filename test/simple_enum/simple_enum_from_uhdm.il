@@ -4,23 +4,31 @@ attribute \keep 1
 attribute \src "dut.sv:2.1-48.10"
 attribute \top 1
 module \enum_simple
-  wire $auto$expression.cpp:1586:import_operation$1
-  wire $auto$expression.cpp:1586:import_operation$11
-  wire $auto$expression.cpp:1586:import_operation$13
-  wire $auto$expression.cpp:1586:import_operation$15
-  wire $auto$expression.cpp:1586:import_operation$29
-  wire $auto$expression.cpp:1586:import_operation$3
-  wire $auto$expression.cpp:1586:import_operation$5
-  wire $auto$expression.cpp:1586:import_operation$7
   wire $auto$opt_dff.cc:247:make_patterns_logic$100
   wire $auto$opt_dff.cc:247:make_patterns_logic$108
   wire $auto$opt_dff.cc:247:make_patterns_logic$111
   wire $auto$opt_dff.cc:247:make_patterns_logic$97
   wire $auto$opt_dff.cc:306:combine_resets$104
   wire $auto$opt_dff.cc:306:combine_resets$93
-  wire $auto$process.cpp:102:import_immediate_assert$17
-  wire $auto$process.cpp:102:import_immediate_assert$9
+  wire $auto$process.cpp:111:import_immediate_assert$17
+  wire $auto$process.cpp:111:import_immediate_assert$9
   wire $auto$rtlil.cc:3014:Ne$20
+  attribute \src "dut.sv:18.8-18.23"
+  wire $eq$dut.sv:18$1_Y
+  attribute \src "dut.sv:20.13-20.28"
+  wire $eq$dut.sv:20$3_Y
+  attribute \src "dut.sv:22.13-22.28"
+  wire $eq$dut.sv:22$5_Y
+  attribute \src "dut.sv:24.13-24.28"
+  wire $eq$dut.sv:24$7_Y
+  attribute \src "dut.sv:30.8-30.20"
+  wire $eq$dut.sv:30$11_Y
+  attribute \src "dut.sv:32.13-32.25"
+  wire $eq$dut.sv:32$13_Y
+  attribute \src "dut.sv:34.13-34.25"
+  wire $eq$dut.sv:34$15_Y
+  attribute \src "dut.sv:45.10-45.27"
+  wire $eq$dut.sv:45$29_Y
   wire width 32 $procmux$34_Y
   wire width 32 $procmux$37_Y
   wire width 32 $procmux$40_Y
@@ -125,46 +133,46 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$7 $auto$expression.cpp:1586:import_operation$5 $auto$expression.cpp:1586:import_operation$3 }
+    connect \A { $eq$dut.sv:24$7_Y $eq$dut.sv:22$5_Y $eq$dut.sv:20$3_Y }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$100
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$109
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$15 $auto$expression.cpp:1586:import_operation$13 $auto$expression.cpp:1586:import_operation$11 }
+    connect \A { $eq$dut.sv:34$15_Y $eq$dut.sv:32$13_Y $eq$dut.sv:30$11_Y }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$108
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$112
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$15 $auto$expression.cpp:1586:import_operation$13 }
+    connect \A { $eq$dut.sv:34$15_Y $eq$dut.sv:32$13_Y }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$111
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$98
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$7 $auto$expression.cpp:1586:import_operation$5 $auto$expression.cpp:1586:import_operation$3 $auto$expression.cpp:1586:import_operation$1 }
+    connect \A { $eq$dut.sv:24$7_Y $eq$dut.sv:22$5_Y $eq$dut.sv:20$3_Y $eq$dut.sv:18$1_Y }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$97
   end
   cell $reduce_or $auto$opt_dff.cc:307:combine_resets$105
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$11 \rst }
+    connect \A { $eq$dut.sv:30$11_Y \rst }
     connect \Y $auto$opt_dff.cc:306:combine_resets$104
   end
   cell $reduce_or $auto$opt_dff.cc:307:combine_resets$94
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:1586:import_operation$1 \rst }
+    connect \A { $eq$dut.sv:18$1_Y \rst }
     connect \Y $auto$opt_dff.cc:306:combine_resets$93
   end
   attribute \src "dut.sv:27.5-27.18"
-  cell $check $auto$process.cpp:109:import_immediate_assert$10
+  cell $check $auto$process.cpp:118:import_immediate_assert$10
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -174,11 +182,11 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$9
+    connect \EN $auto$process.cpp:111:import_immediate_assert$9
     connect \TRG \clk
   end
   attribute \src "dut.sv:37.5-37.18"
-  cell $check $auto$process.cpp:109:import_immediate_assert$18
+  cell $check $auto$process.cpp:118:import_immediate_assert$18
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -188,11 +196,11 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$17
+    connect \EN $auto$process.cpp:111:import_immediate_assert$17
     connect \TRG \clk
   end
   attribute \src "dut.sv:42.3-42.25"
-  cell $check $auto$process.cpp:109:import_immediate_assert$22
+  cell $check $auto$process.cpp:118:import_immediate_assert$22
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -206,7 +214,7 @@ module \enum_simple
     connect \TRG { }
   end
   attribute \src "dut.sv:43.3-43.20"
-  cell $check $auto$process.cpp:109:import_immediate_assert$26
+  cell $check $auto$process.cpp:118:import_immediate_assert$26
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -220,7 +228,7 @@ module \enum_simple
     connect \TRG { }
   end
   attribute \src "dut.sv:45.3-45.29"
-  cell $check $auto$process.cpp:109:import_immediate_assert$32
+  cell $check $auto$process.cpp:118:import_immediate_assert$32
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -228,7 +236,7 @@ module \enum_simple
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$29
+    connect \A $eq$dut.sv:45$29_Y
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -239,7 +247,7 @@ module \enum_simple
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A { 30'000000000000000000000000000000 \test_enum [1:0] }
-    connect \Y $auto$expression.cpp:1586:import_operation$1
+    connect \Y $eq$dut.sv:18$1_Y
   end
   attribute \src "dut.sv:20.13-20.28"
   cell $eq $eq$dut.sv:20$4
@@ -250,7 +258,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum [1:0]
     connect \B 2'01
-    connect \Y $auto$expression.cpp:1586:import_operation$3
+    connect \Y $eq$dut.sv:20$3_Y
   end
   attribute \src "dut.sv:22.13-22.28"
   cell $eq $eq$dut.sv:22$6
@@ -261,7 +269,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum [1:0]
     connect \B 2'10
-    connect \Y $auto$expression.cpp:1586:import_operation$5
+    connect \Y $eq$dut.sv:22$5_Y
   end
   attribute \src "dut.sv:24.13-24.28"
   cell $eq $eq$dut.sv:24$8
@@ -272,7 +280,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum [1:0]
     connect \B 2'11
-    connect \Y $auto$expression.cpp:1586:import_operation$7
+    connect \Y $eq$dut.sv:24$7_Y
   end
   attribute \src "dut.sv:30.8-30.20"
   cell $logic_not $eq$dut.sv:30$12
@@ -280,7 +288,7 @@ module \enum_simple
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \Y $auto$expression.cpp:1586:import_operation$11
+    connect \Y $eq$dut.sv:30$11_Y
   end
   attribute \src "dut.sv:32.13-32.25"
   cell $eq $eq$dut.sv:32$14
@@ -291,7 +299,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'01
-    connect \Y $auto$expression.cpp:1586:import_operation$13
+    connect \Y $eq$dut.sv:32$13_Y
   end
   attribute \src "dut.sv:34.13-34.25"
   cell $eq $eq$dut.sv:34$16
@@ -302,7 +310,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'10
-    connect \Y $auto$expression.cpp:1586:import_operation$15
+    connect \Y $eq$dut.sv:34$15_Y
   end
   attribute \src "dut.sv:45.10-45.27"
   cell $eq $eq$dut.sv:45$30
@@ -313,7 +321,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \enum_const
     connect \B 2'01
-    connect \Y $auto$expression.cpp:1586:import_operation$29
+    connect \Y $eq$dut.sv:45$29_Y
   end
   cell $ne $ne$dut.sv:42$19
     parameter \A_SIGNED 0
@@ -331,7 +339,7 @@ module \enum_simple
     parameter \WIDTH 32
     connect \A 32'000000000000000000000000000000xx
     connect \B 0
-    connect \S $auto$expression.cpp:1586:import_operation$7
+    connect \S $eq$dut.sv:24$7_Y
     connect \Y $procmux$34_Y
   end
   attribute \full_case 1
@@ -340,7 +348,7 @@ module \enum_simple
     parameter \WIDTH 32
     connect \A $procmux$34_Y
     connect \B 3
-    connect \S $auto$expression.cpp:1586:import_operation$5
+    connect \S $eq$dut.sv:22$5_Y
     connect \Y $procmux$37_Y
   end
   attribute \full_case 1
@@ -349,7 +357,7 @@ module \enum_simple
     parameter \WIDTH 32
     connect \A $procmux$37_Y
     connect \B 2
-    connect \S $auto$expression.cpp:1586:import_operation$3
+    connect \S $eq$dut.sv:20$3_Y
     connect \Y $procmux$40_Y
   end
   attribute \full_case 1
@@ -358,7 +366,7 @@ module \enum_simple
     parameter \WIDTH 32
     connect \A $procmux$40_Y
     connect \B 1
-    connect \S $auto$expression.cpp:1586:import_operation$1
+    connect \S $eq$dut.sv:18$1_Y
     connect \Y $procmux$43_Y
   end
   attribute \full_case 1
@@ -367,7 +375,7 @@ module \enum_simple
     parameter \WIDTH 2
     connect \A 2'x
     connect \B 2'00
-    connect \S $auto$expression.cpp:1586:import_operation$15
+    connect \S $eq$dut.sv:34$15_Y
     connect \Y $procmux$49_Y
   end
   attribute \full_case 1
@@ -376,7 +384,7 @@ module \enum_simple
     parameter \WIDTH 2
     connect \A $procmux$49_Y
     connect \B 2'10
-    connect \S $auto$expression.cpp:1586:import_operation$13
+    connect \S $eq$dut.sv:32$13_Y
     connect \Y $procmux$52_Y
   end
   attribute \full_case 1
@@ -385,7 +393,7 @@ module \enum_simple
     parameter \WIDTH 2
     connect \A $procmux$52_Y
     connect \B 2'01
-    connect \S $auto$expression.cpp:1586:import_operation$11
+    connect \S $eq$dut.sv:30$11_Y
     connect \Y $procmux$55_Y
   end
   attribute \full_case 1
@@ -394,7 +402,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A 1'1
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$15
+    connect \S $eq$dut.sv:34$15_Y
     connect \Y $procmux$61_Y
   end
   attribute \full_case 1
@@ -403,7 +411,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A $procmux$61_Y
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$13
+    connect \S $eq$dut.sv:32$13_Y
     connect \Y $procmux$64_Y
   end
   attribute \full_case 1
@@ -412,7 +420,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A $procmux$64_Y
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$11
+    connect \S $eq$dut.sv:30$11_Y
     connect \Y $procmux$67_Y
   end
   attribute \full_case 1
@@ -422,7 +430,7 @@ module \enum_simple
     connect \A $procmux$67_Y
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:102:import_immediate_assert$17
+    connect \Y $auto$process.cpp:111:import_immediate_assert$17
   end
   attribute \full_case 1
   attribute \src "dut.sv:24.9-27.18"
@@ -430,7 +438,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A 1'1
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$7
+    connect \S $eq$dut.sv:24$7_Y
     connect \Y $procmux$73_Y
   end
   attribute \full_case 1
@@ -439,7 +447,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A $procmux$73_Y
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$5
+    connect \S $eq$dut.sv:22$5_Y
     connect \Y $procmux$76_Y
   end
   attribute \full_case 1
@@ -448,7 +456,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A $procmux$76_Y
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$3
+    connect \S $eq$dut.sv:20$3_Y
     connect \Y $procmux$79_Y
   end
   attribute \full_case 1
@@ -457,7 +465,7 @@ module \enum_simple
     parameter \WIDTH 1
     connect \A $procmux$79_Y
     connect \B 1'0
-    connect \S $auto$expression.cpp:1586:import_operation$1
+    connect \S $eq$dut.sv:18$1_Y
     connect \Y $procmux$82_Y
   end
   attribute \full_case 1
@@ -467,7 +475,7 @@ module \enum_simple
     connect \A $procmux$82_Y
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:102:import_immediate_assert$9
+    connect \Y $auto$process.cpp:111:import_immediate_assert$9
   end
   connect \test_enum [31:2] 30'000000000000000000000000000000
 end

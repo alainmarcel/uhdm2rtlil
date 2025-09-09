@@ -645,6 +645,12 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 std::string temp_name = stringf("$0\\%s.%s[%d:0]$%d", 
                     func_call_id.c_str(), io_name.c_str(), width - 1, global_temp_counter);
                 RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
+                
+                // Add source attribute to temp wire
+                if (fc) {
+                    add_src_attribute(temp_wire->attributes, fc);
+                }
+                
                 arg_temp_wires.push_back(temp_wire);
                 
                 // Add assignment from actual argument to temp wire
@@ -668,12 +674,24 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     RTLIL::Wire* temp_result2_wire = module->addWire(RTLIL::escape_id(temp_result2_name), result_wire->width);
     RTLIL::Wire* temp_result1_wire = module->addWire(RTLIL::escape_id(temp_result1_name), result_wire->width);
     
+    // Add source attributes to these wires
+    if (fc) {
+        add_src_attribute(temp_result2_wire->attributes, fc);
+        add_src_attribute(temp_result1_wire->attributes, fc);
+    }
+    
     // Add assignment chaining for results
     root_case->actions.push_back(RTLIL::SigSig(temp_result2_wire, temp_result1_wire));
     
     std::string temp_result_final_name = stringf("$0\\%s.$result[%d:0]$%d",
         func_result_id.c_str(), result_wire->width - 1, global_temp_counter - 4);
     RTLIL::Wire* temp_result_final_wire = module->addWire(RTLIL::escape_id(temp_result_final_name), result_wire->width);
+    
+    // Add source attribute to final result wire
+    if (fc) {
+        add_src_attribute(temp_result_final_wire->attributes, fc);
+    }
+    
     root_case->actions.push_back(RTLIL::SigSig(temp_result_final_wire, temp_result1_wire));
     
     // Create the main function result wire
@@ -694,6 +712,10 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     if (!nosync_result) {
         nosync_result = module->addWire(RTLIL::escape_id(result_wire_name), result_wire->width);
         nosync_result->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+        // Add source attribute
+        if (fc) {
+            add_src_attribute(nosync_result->attributes, fc);
+        }
     }
     
     // Create nosync wires for each argument (the Verilog frontend creates these for all arguments)
@@ -718,6 +740,10 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
             if (!nosync_wire) {
                 nosync_wire = module->addWire(RTLIL::escape_id(nosync_name), width);
                 nosync_wire->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+                // Add source attribute
+                if (fc) {
+                    add_src_attribute(nosync_wire->attributes, fc);
+                }
             }
             nosync_arg_wires.push_back(nosync_wire);
         }
@@ -1582,8 +1608,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             if (operands.size() == 2)
                 //return module->Eq(NEW_ID, operands[0], operands[1]);
             {
-                // Create output wire for the comparison
-                RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
+                // Create output wire for the comparison with proper naming
+                std::string wire_name = generate_cell_name(uhdm_op, "eq", autoidx) + "_Y";
+                RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(wire_name), 1);
+                add_src_attribute(result_wire->attributes, uhdm_op);
                 
                 // Create cell with source location-based name
                 std::string cell_name = generate_cell_name(uhdm_op, "eq", autoidx);

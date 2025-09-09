@@ -3,7 +3,7 @@ autoidx 4
 attribute \src "dut.sv:1.1-11.10"
 attribute \top 1
 module \mul_unsigned_sync_simple
-  wire width 9 $auto$expression.cpp:1488:import_operation$1
+  wire width 9 $auto$expression.cpp:1514:import_operation$1
   attribute \src "dut.sv:1.39-1.40"
   wire width 6 input 2 \a
   attribute \src "dut.sv:1.42-1.43"
@@ -20,7 +20,7 @@ module \mul_unsigned_sync_simple
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1488:import_operation$1
+    connect \Y $auto$expression.cpp:1514:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-10.8"
@@ -28,7 +28,7 @@ module \mul_unsigned_sync_simple
     parameter \CLK_POLARITY 1'1
     parameter \WIDTH 9
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1488:import_operation$1
+    connect \D $auto$expression.cpp:1514:import_operation$1
     connect \Q \p
   end
 end

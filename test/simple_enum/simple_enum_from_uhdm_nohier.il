@@ -5,22 +5,31 @@ attribute \cells_not_processed 1
 module \enum_simple
   wire width 2 $0\state[1:0]
   wire width 32 $0\test_enum[31:0]
-  wire $auto$expression.cpp:1586:import_operation$1
-  wire $auto$expression.cpp:1586:import_operation$11
-  wire $auto$expression.cpp:1586:import_operation$13
-  wire $auto$expression.cpp:1586:import_operation$15
-  wire $auto$expression.cpp:1586:import_operation$23
-  wire $auto$expression.cpp:1586:import_operation$29
-  wire $auto$expression.cpp:1586:import_operation$3
-  wire $auto$expression.cpp:1586:import_operation$5
-  wire $auto$expression.cpp:1586:import_operation$7
-  wire $auto$process.cpp:102:import_immediate_assert$17
-  wire $auto$process.cpp:102:import_immediate_assert$21
-  wire $auto$process.cpp:102:import_immediate_assert$25
-  wire $auto$process.cpp:102:import_immediate_assert$27
-  wire $auto$process.cpp:102:import_immediate_assert$31
-  wire $auto$process.cpp:102:import_immediate_assert$9
+  wire $auto$process.cpp:111:import_immediate_assert$17
+  wire $auto$process.cpp:111:import_immediate_assert$21
+  wire $auto$process.cpp:111:import_immediate_assert$25
+  wire $auto$process.cpp:111:import_immediate_assert$27
+  wire $auto$process.cpp:111:import_immediate_assert$31
+  wire $auto$process.cpp:111:import_immediate_assert$9
   wire $auto$rtlil.cc:3014:Ne$20
+  attribute \src "dut.sv:18.8-18.23"
+  wire $eq$dut.sv:18$1_Y
+  attribute \src "dut.sv:20.13-20.28"
+  wire $eq$dut.sv:20$3_Y
+  attribute \src "dut.sv:22.13-22.28"
+  wire $eq$dut.sv:22$5_Y
+  attribute \src "dut.sv:24.13-24.28"
+  wire $eq$dut.sv:24$7_Y
+  attribute \src "dut.sv:30.8-30.20"
+  wire $eq$dut.sv:30$11_Y
+  attribute \src "dut.sv:32.13-32.25"
+  wire $eq$dut.sv:32$13_Y
+  attribute \src "dut.sv:34.13-34.25"
+  wire $eq$dut.sv:34$15_Y
+  attribute \src "dut.sv:43.10-43.18"
+  wire $eq$dut.sv:43$23_Y
+  attribute \src "dut.sv:45.10-45.27"
+  wire $eq$dut.sv:45$29_Y
   attribute \src "dut.sv:2.26-2.29"
   wire input 1 \clk
   attribute \enum_type "$enum0"
@@ -58,7 +67,7 @@ module \enum_simple
   attribute \src "dut.sv:4.24-4.33"
   wire width 32 \test_enum
   attribute \src "dut.sv:27.5-27.18"
-  cell $check $auto$process.cpp:109:import_immediate_assert$10
+  cell $check $auto$process.cpp:118:import_immediate_assert$10
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -68,11 +77,11 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$9
+    connect \EN $auto$process.cpp:111:import_immediate_assert$9
     connect \TRG \clk
   end
   attribute \src "dut.sv:37.5-37.18"
-  cell $check $auto$process.cpp:109:import_immediate_assert$18
+  cell $check $auto$process.cpp:118:import_immediate_assert$18
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -82,11 +91,11 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$17
+    connect \EN $auto$process.cpp:111:import_immediate_assert$17
     connect \TRG \clk
   end
   attribute \src "dut.sv:42.3-42.25"
-  cell $check $auto$process.cpp:109:import_immediate_assert$22
+  cell $check $auto$process.cpp:118:import_immediate_assert$22
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -96,11 +105,11 @@ module \enum_simple
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3014:Ne$20
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$21
+    connect \EN $auto$process.cpp:111:import_immediate_assert$21
     connect \TRG { }
   end
   attribute \src "dut.sv:43.3-43.20"
-  cell $check $auto$process.cpp:109:import_immediate_assert$26
+  cell $check $auto$process.cpp:118:import_immediate_assert$26
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -108,13 +117,13 @@ module \enum_simple
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$23
+    connect \A $eq$dut.sv:43$23_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$25
+    connect \EN $auto$process.cpp:111:import_immediate_assert$25
     connect \TRG { }
   end
   attribute \src "dut.sv:44.3-44.21"
-  cell $check $auto$process.cpp:109:import_immediate_assert$28
+  cell $check $auto$process.cpp:118:import_immediate_assert$28
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -124,11 +133,11 @@ module \enum_simple
     parameter \TRG_WIDTH 0
     connect \A 1'1
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$27
+    connect \EN $auto$process.cpp:111:import_immediate_assert$27
     connect \TRG { }
   end
   attribute \src "dut.sv:45.3-45.29"
-  cell $check $auto$process.cpp:109:import_immediate_assert$32
+  cell $check $auto$process.cpp:118:import_immediate_assert$32
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -136,9 +145,9 @@ module \enum_simple
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$29
+    connect \A $eq$dut.sv:45$29_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$31
+    connect \EN $auto$process.cpp:111:import_immediate_assert$31
     connect \TRG { }
   end
   attribute \src "dut.sv:18.8-18.23"
@@ -150,7 +159,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum
     connect \B 0
-    connect \Y $auto$expression.cpp:1586:import_operation$1
+    connect \Y $eq$dut.sv:18$1_Y
   end
   attribute \src "dut.sv:20.13-20.28"
   cell $eq $eq$dut.sv:20$4
@@ -161,7 +170,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum
     connect \B 1
-    connect \Y $auto$expression.cpp:1586:import_operation$3
+    connect \Y $eq$dut.sv:20$3_Y
   end
   attribute \src "dut.sv:22.13-22.28"
   cell $eq $eq$dut.sv:22$6
@@ -172,7 +181,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum
     connect \B 2
-    connect \Y $auto$expression.cpp:1586:import_operation$5
+    connect \Y $eq$dut.sv:22$5_Y
   end
   attribute \src "dut.sv:24.13-24.28"
   cell $eq $eq$dut.sv:24$8
@@ -183,7 +192,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \test_enum
     connect \B 3
-    connect \Y $auto$expression.cpp:1586:import_operation$7
+    connect \Y $eq$dut.sv:24$7_Y
   end
   attribute \src "dut.sv:30.8-30.20"
   cell $eq $eq$dut.sv:30$12
@@ -194,7 +203,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 0
-    connect \Y $auto$expression.cpp:1586:import_operation$11
+    connect \Y $eq$dut.sv:30$11_Y
   end
   attribute \src "dut.sv:32.13-32.25"
   cell $eq $eq$dut.sv:32$14
@@ -205,7 +214,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 1
-    connect \Y $auto$expression.cpp:1586:import_operation$13
+    connect \Y $eq$dut.sv:32$13_Y
   end
   attribute \src "dut.sv:34.13-34.25"
   cell $eq $eq$dut.sv:34$16
@@ -216,7 +225,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2
-    connect \Y $auto$expression.cpp:1586:import_operation$15
+    connect \Y $eq$dut.sv:34$15_Y
   end
   attribute \src "dut.sv:43.10-43.18"
   cell $eq $eq$dut.sv:43$24
@@ -227,7 +236,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A 0
     connect \B 1'0
-    connect \Y $auto$expression.cpp:1586:import_operation$23
+    connect \Y $eq$dut.sv:43$23_Y
   end
   attribute \src "dut.sv:45.10-45.27"
   cell $eq $eq$dut.sv:45$30
@@ -238,7 +247,7 @@ module \enum_simple
     parameter \Y_WIDTH 1
     connect \A \enum_const
     connect \B 1
-    connect \Y $auto$expression.cpp:1586:import_operation$29
+    connect \Y $eq$dut.sv:45$29_Y
   end
   cell $ne $ne$dut.sv:42$19
     parameter \A_SIGNED 0
@@ -253,8 +262,8 @@ module \enum_simple
   attribute \always_ff 1
   attribute \src "dut.sv:12.2-39.5"
   process $proc$dut.sv:12$1
-    assign $auto$process.cpp:102:import_immediate_assert$9 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$17 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$9 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$17 1'0
     assign $0\state[1:0] \state
     assign $0\test_enum[31:0] \test_enum
     attribute \src "dut.sv:32.9-36.12"
@@ -266,60 +275,60 @@ module \enum_simple
       attribute \src "dut.sv:34.13-34.17"
       case 
         attribute \src "dut.sv:18.4-27.18"
-        switch $auto$expression.cpp:1586:import_operation$1
+        switch $eq$dut.sv:18$1_Y
           attribute \src "dut.sv:18.4-27.18"
           case 1'1
             assign $0\test_enum[31:0] 1
           attribute \src "dut.sv:18.4-27.18"
           case 
             attribute \src "dut.sv:20.9-27.18"
-            switch $auto$expression.cpp:1586:import_operation$3
+            switch $eq$dut.sv:20$3_Y
               attribute \src "dut.sv:20.9-27.18"
               case 1'1
                 assign $0\test_enum[31:0] 2
               attribute \src "dut.sv:20.9-27.18"
               case 
                 attribute \src "dut.sv:22.9-27.18"
-                switch $auto$expression.cpp:1586:import_operation$5
+                switch $eq$dut.sv:22$5_Y
                   attribute \src "dut.sv:22.9-27.18"
                   case 1'1
                     assign $0\test_enum[31:0] 3
                   attribute \src "dut.sv:22.9-27.18"
                   case 
                     attribute \src "dut.sv:24.9-27.18"
-                    switch $auto$expression.cpp:1586:import_operation$7
+                    switch $eq$dut.sv:24$7_Y
                       attribute \src "dut.sv:24.9-27.18"
                       case 1'1
                         assign $0\test_enum[31:0] 0
                       attribute \src "dut.sv:24.9-27.18"
                       case 
-                        assign $auto$process.cpp:102:import_immediate_assert$9 1'1
+                        assign $auto$process.cpp:111:import_immediate_assert$9 1'1
                     end
                 end
             end
         end
         attribute \src "dut.sv:30.4-37.18"
-        switch $auto$expression.cpp:1586:import_operation$11
+        switch $eq$dut.sv:30$11_Y
           attribute \src "dut.sv:30.4-37.18"
           case 1'1
             assign $0\state[1:0] 2'01
           attribute \src "dut.sv:30.4-37.18"
           case 
             attribute \src "dut.sv:32.9-37.18"
-            switch $auto$expression.cpp:1586:import_operation$13
+            switch $eq$dut.sv:32$13_Y
               attribute \src "dut.sv:32.9-37.18"
               case 1'1
                 assign $0\state[1:0] 2'10
               attribute \src "dut.sv:32.9-37.18"
               case 
                 attribute \src "dut.sv:34.9-37.18"
-                switch $auto$expression.cpp:1586:import_operation$15
+                switch $eq$dut.sv:34$15_Y
                   attribute \src "dut.sv:34.9-37.18"
                   case 1'1
                     assign $0\state[1:0] 2'00
                   attribute \src "dut.sv:34.9-37.18"
                   case 
-                    assign $auto$process.cpp:102:import_immediate_assert$17 1'1
+                    assign $auto$process.cpp:111:import_immediate_assert$17 1'1
                 end
             end
         end
@@ -330,14 +339,14 @@ module \enum_simple
   end
   attribute \src "dut.sv:41.2-46.5"
   process $proc$dut.sv:41$1
-    assign $auto$process.cpp:102:import_immediate_assert$21 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$25 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$27 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$31 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$21 1'1
-    assign $auto$process.cpp:102:import_immediate_assert$25 1'1
-    assign $auto$process.cpp:102:import_immediate_assert$27 1'1
-    assign $auto$process.cpp:102:import_immediate_assert$31 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$21 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$25 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$27 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$31 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$21 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$25 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$27 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$31 1'1
     sync always
   end
 end

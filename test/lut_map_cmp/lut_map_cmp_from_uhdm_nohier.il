@@ -5,9 +5,6 @@ attribute \src "dut.sv:1.1-35.10"
 attribute \cells_not_processed 1
 module \lut_map_cmp
   parameter \LUT_WIDTH 4
-  wire $auto$expression.cpp:1586:import_operation$21
-  wire $auto$expression.cpp:1586:import_operation$33
-  wire $auto$expression.cpp:1586:import_operation$9
   wire $auto$rtlil.cc:3011:Lt$16
   wire $auto$rtlil.cc:3011:Lt$28
   wire $auto$rtlil.cc:3011:Lt$4
@@ -27,6 +24,12 @@ module \lut_map_cmp
   wire $auto$rtlil.cc:3018:Gt$32
   wire $auto$rtlil.cc:3018:Gt$44
   wire $auto$rtlil.cc:3018:Gt$8
+  attribute \src "dut.sv:14.16-14.43"
+  wire $eq$dut.sv:14$9_Y
+  attribute \src "dut.sv:21.16-21.43"
+  wire $eq$dut.sv:21$21_Y
+  attribute \src "dut.sv:28.16-28.53"
+  wire $eq$dut.sv:28$33_Y
   attribute \src "dut.sv:2.14-2.15"
   wire width 4 input 1 \a
   attribute \src "dut.sv:3.9-3.13"
@@ -82,7 +85,7 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A 4'1010
     connect \B \a
-    connect \Y $auto$expression.cpp:1586:import_operation$9
+    connect \Y $eq$dut.sv:14$9_Y
   end
   attribute \src "dut.sv:21.16-21.43"
   cell $eq $eq$dut.sv:21$22
@@ -93,7 +96,7 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B 4'1010
-    connect \Y $auto$expression.cpp:1586:import_operation$21
+    connect \Y $eq$dut.sv:21$21_Y
   end
   attribute \src "dut.sv:28.16-28.53"
   cell $eq $eq$dut.sv:28$34
@@ -104,7 +107,7 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A 4'0101
     connect \B \a
-    connect \Y $auto$expression.cpp:1586:import_operation$33
+    connect \Y $eq$dut.sv:28$33_Y
   end
   cell $ge $ge$dut.sv:12$5
     parameter \A_SIGNED 0
@@ -300,19 +303,19 @@ module \lut_map_cmp
   connect \o1_2 $auto$rtlil.cc:3011:Lt$4
   connect \o1_3 $auto$rtlil.cc:3017:Ge$6
   connect \o1_4 $auto$rtlil.cc:3018:Gt$8
-  connect \o1_5 $auto$expression.cpp:1586:import_operation$9
+  connect \o1_5 $eq$dut.sv:14$9_Y
   connect \o1_6 $auto$rtlil.cc:3014:Ne$12
   connect \o2_1 $auto$rtlil.cc:3012:Le$14
   connect \o2_2 $auto$rtlil.cc:3011:Lt$16
   connect \o2_3 $auto$rtlil.cc:3017:Ge$18
   connect \o2_4 $auto$rtlil.cc:3018:Gt$20
-  connect \o2_5 $auto$expression.cpp:1586:import_operation$21
+  connect \o2_5 $eq$dut.sv:21$21_Y
   connect \o2_6 $auto$rtlil.cc:3014:Ne$24
   connect \o3_1 $auto$rtlil.cc:3012:Le$26
   connect \o3_2 $auto$rtlil.cc:3011:Lt$28
   connect \o3_3 $auto$rtlil.cc:3017:Ge$30
   connect \o3_4 $auto$rtlil.cc:3018:Gt$32
-  connect \o3_5 $auto$expression.cpp:1586:import_operation$33
+  connect \o3_5 $eq$dut.sv:28$33_Y
   connect \o3_6 $auto$rtlil.cc:3014:Ne$36
   connect \o4_1 $auto$rtlil.cc:3012:Le$38
   connect \o4_2 $auto$rtlil.cc:3011:Lt$40

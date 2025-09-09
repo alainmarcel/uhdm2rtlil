@@ -4,8 +4,8 @@ attribute \src "dut.sv:1.1-13.10"
 attribute \cells_not_processed 1
 module \forloops
   wire width 4 $0\y
-  wire width 32 $auto$expression.cpp:1442:import_operation$1
-  wire width 32 $auto$expression.cpp:1465:import_operation$3
+  wire width 32 $auto$expression.cpp:1468:import_operation$1
+  wire width 32 $auto$expression.cpp:1491:import_operation$3
   attribute \src "dut.sv:1.29-1.30"
   wire input 2 \a
   attribute \src "dut.sv:1.32-1.33"
@@ -30,7 +30,7 @@ module \forloops
     parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
-    connect \Y $auto$expression.cpp:1442:import_operation$1
+    connect \Y $auto$expression.cpp:1468:import_operation$1
   end
   cell $sub $sub$dut.sv:11$4
     parameter \A_SIGNED 0
@@ -40,18 +40,18 @@ module \forloops
     parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
-    connect \Y $auto$expression.cpp:1465:import_operation$3
+    connect \Y $auto$expression.cpp:1491:import_operation$3
   end
   attribute \always_ff 1
   attribute \src "dut.sv:3.2-7.5"
   process $proc$dut.sv:3$1
     sync posedge \clk
-      update \x $auto$expression.cpp:1442:import_operation$1 [3:0]
+      update \x $auto$expression.cpp:1468:import_operation$1 [3:0]
   end
   attribute \src "dut.sv:8.2-12.5"
   process $proc$dut.sv:8$1
     assign $0\y \y
-    assign $0\y $auto$expression.cpp:1465:import_operation$3 [3:0]
+    assign $0\y $auto$expression.cpp:1491:import_operation$3 [3:0]
     sync always
       update \y $0\y
   end
