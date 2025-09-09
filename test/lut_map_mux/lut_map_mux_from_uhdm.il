@@ -11,7 +11,7 @@ module \lut_map_mux
   wire input 3 \s
   attribute \src "dut.sv:3.12-3.13"
   wire output 4 \y
-  cell $mux $auto$expression.cpp:771:import_operation$1
+  cell $mux $mux$dut.sv:5$1
     parameter \WIDTH 1
     connect \A \b
     connect \B \a

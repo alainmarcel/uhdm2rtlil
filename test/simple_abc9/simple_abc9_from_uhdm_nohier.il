@@ -12,7 +12,7 @@ module \MUXF7
   wire output 4 \O
   attribute \src "dut.sv:317.28-317.29"
   wire input 3 \S
-  cell $mux $auto$expression.cpp:771:import_operation$1
+  cell $mux $mux$dut.sv:318$1
     parameter \WIDTH 1
     connect \A \I0
     connect \B \I1
@@ -69,7 +69,7 @@ module \abc9_test004
   wire width 2 input 1 \a
   attribute \src "dut.sv:13.43-13.44"
   wire output 2 \o
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$11
+  cell $reduce_xor $reduce_xor$dut.sv:14$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -89,14 +89,14 @@ module \abc9_test005
   wire output 2 \o
   attribute \src "dut.sv:17.53-17.54"
   wire output 3 \p
-  cell $not $auto$expression.cpp:518:import_operation$15
+  cell $not $not$dut.sv:19$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \o
     connect \Y $auto$rtlil.cc:2959:Not$16
   end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$13
+  cell $reduce_xor $reduce_xor$dut.sv:18$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -115,14 +115,14 @@ module \abc9_test006
   wire width 2 input 1 \a
   attribute \src "dut.sv:22.49-22.50"
   wire width 3 output 2 \o
-  cell $not $auto$expression.cpp:518:import_operation$19
+  cell $not $not$dut.sv:24$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \o [0]
     connect \Y $auto$rtlil.cc:2959:Not$20
   end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$17
+  cell $reduce_xor $reduce_xor$dut.sv:23$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -145,7 +145,7 @@ module \abc9_test007
   wire \c
   attribute \src "dut.sv:28.37-28.38"
   wire output 2 \o
-  cell $not $auto$expression.cpp:518:import_operation$21
+  cell $not $not$dut.sv:30$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -180,7 +180,7 @@ module \abc9_test008
   wire \c
   attribute \src "dut.sv:39.37-39.38"
   wire output 2 \o
-  cell $not $auto$expression.cpp:518:import_operation$23
+  cell $not $not$dut.sv:41$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -202,7 +202,7 @@ module \abc9_test008_sub
   wire input 1 \a
   attribute \src "dut.sv:46.41-46.42"
   wire output 2 \b
-  cell $not $auto$expression.cpp:518:import_operation$3
+  cell $not $not$dut.sv:47$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -226,20 +226,6 @@ module \abc9_test009
   wire \latch
   attribute \src "dut.sv:50.37-50.39"
   wire input 2 \oe
-  cell $not $auto$expression.cpp:518:import_operation$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \latch
-    connect \Y $auto$rtlil.cc:2959:Not$26
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$27
-    parameter \WIDTH 1
-    connect \A 1'z
-    connect \B $auto$rtlil.cc:2959:Not$26
-    connect \S \oe
-    connect \Y $auto$rtlil.cc:3094:Mux$28
-  end
   attribute \src "dut.sv:53.9-53.12"
   cell $logic_not $logic_not$dut.sv:53.9-53.12$3
     parameter \A_SIGNED 0
@@ -247,6 +233,20 @@ module \abc9_test009
     parameter \Y_WIDTH 1
     connect \A \oe
     connect \Y $logic_not$dut.sv:53.9-53.12$3_Y
+  end
+  cell $mux $mux$dut.sv:55$27
+    parameter \WIDTH 1
+    connect \A 1'z
+    connect \B $auto$rtlil.cc:2959:Not$26
+    connect \S \oe
+    connect \Y $auto$rtlil.cc:3094:Mux$28
+  end
+  cell $not $not$dut.sv:55$25
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \latch
+    connect \Y $auto$rtlil.cc:2959:Not$26
   end
   attribute \src "dut.sv:52.1-54.21"
   process $proc$dut.sv:52$1
@@ -279,20 +279,6 @@ module \abc9_test010
   wire width 8 \latch
   attribute \src "dut.sv:58.43-58.45"
   wire input 2 \oe
-  cell $not $auto$expression.cpp:518:import_operation$29
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 8
-    parameter \Y_WIDTH 8
-    connect \A \latch
-    connect \Y $auto$rtlil.cc:2959:Not$30
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$31
-    parameter \WIDTH 8
-    connect \A 8'0000000z
-    connect \B $auto$rtlil.cc:2959:Not$30
-    connect \S \oe
-    connect \Y $auto$rtlil.cc:3094:Mux$32
-  end
   attribute \src "dut.sv:61.9-61.12"
   cell $logic_not $logic_not$dut.sv:61.9-61.12$4
     parameter \A_SIGNED 0
@@ -300,6 +286,20 @@ module \abc9_test010
     parameter \Y_WIDTH 1
     connect \A \oe
     connect \Y $logic_not$dut.sv:61.9-61.12$4_Y
+  end
+  cell $mux $mux$dut.sv:63$31
+    parameter \WIDTH 8
+    connect \A 8'0000000z
+    connect \B $auto$rtlil.cc:2959:Not$30
+    connect \S \oe
+    connect \Y $auto$rtlil.cc:3094:Mux$32
+  end
+  cell $not $not$dut.sv:63$29
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A \latch
+    connect \Y $auto$rtlil.cc:2959:Not$30
   end
   attribute \src "dut.sv:60.1-62.21"
   process $proc$dut.sv:60$1
@@ -365,19 +365,19 @@ module \abc9_test012
   wire \latch
   attribute \src "dut.sv:74.37-74.39"
   wire input 2 \oe
-  cell $not $auto$expression.cpp:518:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \latch
-    connect \Y $auto$rtlil.cc:2959:Not$34
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$35
+  cell $mux $mux$dut.sv:79$35
     parameter \WIDTH 8
     connect \A 8'0000000z
     connect \B { 7'0000000 $auto$rtlil.cc:2959:Not$34 }
     connect \S \oe
     connect \Y $auto$rtlil.cc:3094:Mux$36
+  end
+  cell $not $not$dut.sv:79$33
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \latch
+    connect \Y $auto$rtlil.cc:2959:Not$34
   end
   connect \io $auto$rtlil.cc:3094:Mux$36 [0]
 end
@@ -399,27 +399,6 @@ module \abc9_test012_sub
   wire width 8 \latch
   attribute \src "dut.sv:97.47-97.49"
   wire input 2 \oe
-  cell $not $auto$expression.cpp:518:import_operation$5
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A \latch [3:0]
-    connect \Y $auto$rtlil.cc:2959:Not$6
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$7
-    parameter \WIDTH 4
-    connect \A 4'000z
-    connect \B $auto$rtlil.cc:2959:Not$6
-    connect \S \oe
-    connect \Y $auto$rtlil.cc:3094:Mux$8
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$9
-    parameter \WIDTH 6
-    connect \A 6'00000z
-    connect \B { \latch [4] \latch [7:3] }
-    connect \S $logic_not$dut.sv:105.18-105.21$2_Y
-    connect \Y $auto$rtlil.cc:3094:Mux$10
-  end
   attribute \src "dut.sv:100.9-100.12"
   cell $logic_not $logic_not$dut.sv:100.9-100.12$1
     parameter \A_SIGNED 0
@@ -435,6 +414,27 @@ module \abc9_test012_sub
     parameter \Y_WIDTH 1
     connect \A \oe
     connect \Y $logic_not$dut.sv:105.18-105.21$2_Y
+  end
+  cell $mux $mux$dut.sv:104$7
+    parameter \WIDTH 4
+    connect \A 4'000z
+    connect \B $auto$rtlil.cc:2959:Not$6
+    connect \S \oe
+    connect \Y $auto$rtlil.cc:3094:Mux$8
+  end
+  cell $mux $mux$dut.sv:105$9
+    parameter \WIDTH 6
+    connect \A 6'00000z
+    connect \B { \latch [4] \latch [7:3] }
+    connect \S $logic_not$dut.sv:105.18-105.21$2_Y
+    connect \Y $auto$rtlil.cc:3094:Mux$10
+  end
+  cell $not $not$dut.sv:104$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A \latch [3:0]
+    connect \Y $auto$rtlil.cc:2959:Not$6
   end
   attribute \src "dut.sv:99.1-103.26"
   process $proc$dut.sv:99$1
@@ -472,27 +472,6 @@ module \abc9_test013
   wire width 4 \latch
   attribute \src "dut.sv:82.43-82.45"
   wire input 2 \oe
-  cell $not $auto$expression.cpp:518:import_operation$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A \latch
-    connect \Y $auto$rtlil.cc:2959:Not$38
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$39
-    parameter \WIDTH 4
-    connect \A 4'000z
-    connect \B $auto$rtlil.cc:2959:Not$38
-    connect \S \oe
-    connect \Y $auto$rtlil.cc:3094:Mux$40
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$41
-    parameter \WIDTH 6
-    connect \A 6'00000z
-    connect \B { 5'x \latch [3] }
-    connect \S $logic_not$dut.sv:90.18-90.21$7_Y
-    connect \Y $auto$rtlil.cc:3094:Mux$42
-  end
   attribute \src "dut.sv:85.9-85.12"
   cell $logic_not $logic_not$dut.sv:85.9-85.12$6
     parameter \A_SIGNED 0
@@ -508,6 +487,27 @@ module \abc9_test013
     parameter \Y_WIDTH 1
     connect \A \oe
     connect \Y $logic_not$dut.sv:90.18-90.21$7_Y
+  end
+  cell $mux $mux$dut.sv:89$39
+    parameter \WIDTH 4
+    connect \A 4'000z
+    connect \B $auto$rtlil.cc:2959:Not$38
+    connect \S \oe
+    connect \Y $auto$rtlil.cc:3094:Mux$40
+  end
+  cell $mux $mux$dut.sv:90$41
+    parameter \WIDTH 6
+    connect \A 6'00000z
+    connect \B { 5'x \latch [3] }
+    connect \S $logic_not$dut.sv:90.18-90.21$7_Y
+    connect \Y $auto$rtlil.cc:3094:Mux$42
+  end
+  cell $not $not$dut.sv:89$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A \latch
+    connect \Y $auto$rtlil.cc:2959:Not$38
   end
   attribute \src "dut.sv:84.1-88.26"
   process $proc$dut.sv:84$1
@@ -552,14 +552,14 @@ module \abc9_test015
   attribute \keep 1
   attribute \src "dut.sv:110.17-110.18"
   wire \d
-  cell $not $auto$expression.cpp:518:import_operation$43
+  cell $not $not$dut.sv:109$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \a
     connect \Y $auto$rtlil.cc:2959:Not$44
   end
-  cell $not $auto$expression.cpp:518:import_operation$45
+  cell $not $not$dut.sv:111$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -583,19 +583,19 @@ module \abc9_test016
   attribute \reg 1
   attribute \src "dut.sv:116.16-116.17"
   wire \c
-  cell $not $auto$expression.cpp:518:import_operation$47
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \Y $auto$rtlil.cc:2959:Not$48
-  end
-  cell $not $auto$expression.cpp:518:import_operation$49
+  cell $not $not$dut.sv:115$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \a
     connect \Y $auto$rtlil.cc:2959:Not$50
+  end
+  cell $not $not$dut.sv:117$47
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \Y $auto$rtlil.cc:2959:Not$48
   end
   attribute \src "dut.sv:117.1-117.19"
   process $proc$dut.sv:117$1
@@ -619,7 +619,7 @@ module \abc9_test017
   attribute \reg 1
   attribute \src "dut.sv:122.16-122.17"
   wire \c
-  cell $not $auto$expression.cpp:518:import_operation$51
+  cell $not $not$dut.sv:121$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -649,14 +649,14 @@ module \abc9_test018
   attribute \keep 1
   attribute \src "dut.sv:128.23-128.24"
   wire width 2 \d
-  cell $not $auto$expression.cpp:518:import_operation$53
+  cell $not $not$dut.sv:127$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \a
     connect \Y $auto$rtlil.cc:2959:Not$54
   end
-  cell $reduce_and $auto$expression.cpp:526:import_operation$55
+  cell $reduce_and $reduce_and$dut.sv:129$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -683,14 +683,14 @@ module \abc9_test019
   attribute \reg 1
   attribute \src "dut.sv:135.5-135.6"
   wire \d
-  cell $not $auto$expression.cpp:518:import_operation$59
+  cell $not $not$dut.sv:133$59
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \a
     connect \Y $auto$rtlil.cc:2959:Not$60
   end
-  cell $reduce_and $auto$expression.cpp:526:import_operation$57
+  cell $reduce_and $reduce_and$dut.sv:136$57
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -724,14 +724,14 @@ module \abc9_test020
   attribute \reg 1
   attribute \src "dut.sv:142.16-142.17"
   wire \d
-  cell $not $auto$expression.cpp:518:import_operation$63
+  cell $not $not$dut.sv:140$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \a
     connect \Y $auto$rtlil.cc:2959:Not$64
   end
-  cell $reduce_and $auto$expression.cpp:526:import_operation$61
+  cell $reduce_and $reduce_and$dut.sv:143$61
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -863,7 +863,7 @@ module \abc9_test022
   attribute \reg 1
   attribute \src "dut.sv:232.16-232.51"
   wire width 8 \m_eth_payload_axis_tkeep_reg
-  cell $mux $auto$expression.cpp:771:import_operation$65
+  cell $mux $mux$dut.sv:235$65
     parameter \WIDTH 8
     connect \A 8'00001111
     connect \B 8'11111111
@@ -891,8 +891,8 @@ attribute \cells_not_processed 1
 module \abc9_test023
   parameter \N 2
   parameter \M 2
-  wire width 4 $auto$expression.cpp:660:import_operation$71
-  wire width 4 $auto$expression.cpp:681:import_operation$73
+  wire width 4 $auto$expression.cpp:1537:import_operation$71
+  wire width 4 $auto$expression.cpp:1559:import_operation$73
   wire width 4 $auto$module.cpp:650:import_continuous_assign$69
   attribute \src "dut.sv:243.14-243.17"
   wire width 8 input 1 \din
@@ -900,26 +900,6 @@ module \abc9_test023
   wire width 2 output 2 \dout
   attribute \src "dut.sv:246.17-246.21"
   wire width 4 \mask
-  cell $shl $auto$expression.cpp:672:import_operation$72
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 4
-    connect \A \mask
-    connect \B \din [1:0]
-    connect \Y $auto$expression.cpp:660:import_operation$71
-  end
-  cell $shr $auto$expression.cpp:696:import_operation$74
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 4
-    connect \A $auto$expression.cpp:660:import_operation$71
-    connect \B 2
-    connect \Y $auto$expression.cpp:681:import_operation$73
-  end
   cell $pos $auto$module.cpp:651:import_continuous_assign$70
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
@@ -927,8 +907,28 @@ module \abc9_test023
     connect \A 2'11
     connect \Y $auto$module.cpp:650:import_continuous_assign$69
   end
+  cell $shl $shl$dut.sv:247$72
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 4
+    connect \A \mask
+    connect \B \din [1:0]
+    connect \Y $auto$expression.cpp:1537:import_operation$71
+  end
+  cell $shr $shr$dut.sv:247$74
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 4
+    connect \A $auto$expression.cpp:1537:import_operation$71
+    connect \B 2
+    connect \Y $auto$expression.cpp:1559:import_operation$73
+  end
   connect \mask $auto$module.cpp:650:import_continuous_assign$69
-  connect \dout $auto$expression.cpp:681:import_operation$73 [1:0]
+  connect \dout $auto$expression.cpp:1559:import_operation$73 [1:0]
 end
 attribute \src "dut.sv:250.1-252.10"
 attribute \cells_not_processed 1

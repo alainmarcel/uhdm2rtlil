@@ -6,14 +6,14 @@ attribute \cells_not_processed 1
 module \mul_plain
   parameter \M 6
   parameter \N 6
-  wire width 12 $auto$expression.cpp:613:import_operation$1
+  wire width 12 $auto$expression.cpp:1488:import_operation$1
   attribute \src "dut.sv:1.18-1.19"
   wire width 6 input 1 \a
   attribute \src "dut.sv:1.21-1.22"
   wire width 6 input 2 \b
   attribute \src "dut.sv:1.24-1.25"
   wire width 12 output 3 \p
-  cell $mul $auto$expression.cpp:630:import_operation$2
+  cell $mul $mul$dut.sv:10$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -21,7 +21,7 @@ module \mul_plain
     parameter \Y_WIDTH 12
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:613:import_operation$1
+    connect \Y $auto$expression.cpp:1488:import_operation$1
   end
-  connect \p $auto$expression.cpp:613:import_operation$1
+  connect \p $auto$expression.cpp:1488:import_operation$1
 end

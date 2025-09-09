@@ -46,15 +46,15 @@ module top(clk, z);
     .B(state[1]),
     .Y(_03_)
   );
-  \$_ORNOT_  _10_ (
-    .A(state[0]),
-    .B(state[1]),
-    .Y(_01_)
-  );
-  \$_XNOR_  _11_ (
+  \$_XNOR_  _10_ (
     .A(state[0]),
     .B(state[1]),
     .Y(_02_)
+  );
+  \$_ORNOT_  _11_ (
+    .A(state[0]),
+    .B(state[1]),
+    .Y(_01_)
   );
   \$_ORNOT_  _12_ (
     .A(wide_state[1]),

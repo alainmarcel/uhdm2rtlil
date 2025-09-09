@@ -40,46 +40,6 @@ module \unbased_unsized
   wire width 64 \o11
   attribute \src "dut.sv:12.24-12.27"
   wire width 64 \o12
-  cell $eqx $auto$expression.cpp:708:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o09
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$rtlil.cc:3015:Eqx$34
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o10
-    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $auto$rtlil.cc:3015:Eqx$38
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o11
-    connect \B 64'----------------------------------------------------------------
-    connect \Y $auto$rtlil.cc:3015:Eqx$42
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$45
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o12
-    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $auto$rtlil.cc:3015:Eqx$46
-  end
   attribute \src "dut.sv:29.9-29.38"
   cell $check $auto$process.cpp:109:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
@@ -90,20 +50,6 @@ module \unbased_unsized
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
     connect \A 1'0
-    connect \ARGS { }
-    connect \EN 1'1
-    connect \TRG { }
-  end
-  attribute \src "dut.sv:30.9-30.38"
-  cell $check $auto$process.cpp:109:import_immediate_assert$16
-    parameter \ARGS_WIDTH 0
-    parameter \FLAVOR "assert"
-    parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
-    parameter \TRG_ENABLE 0
-    parameter \TRG_POLARITY 0'x
-    parameter \TRG_WIDTH 0
-    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -163,6 +109,60 @@ module \unbased_unsized
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
+  end
+  attribute \src "dut.sv:28.9-28.38"
+  cell $check $auto$process.cpp:109:import_immediate_assert$8
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
+  end
+  cell $eqx $eqx$dut.sv:35$33
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o09
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
+    connect \Y $auto$rtlil.cc:3015:Eqx$34
+  end
+  cell $eqx $eqx$dut.sv:36$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o10
+    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
+    connect \Y $auto$rtlil.cc:3015:Eqx$38
+  end
+  cell $eqx $eqx$dut.sv:37$41
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o11
+    connect \B 64'----------------------------------------------------------------
+    connect \Y $auto$rtlil.cc:3015:Eqx$42
+  end
+  cell $eqx $eqx$dut.sv:38$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o12
+    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    connect \Y $auto$rtlil.cc:3015:Eqx$46
   end
   cell \pass_through \pt09
     connect \inp 64'0000000000000000000000000000000000000000000000000000000000000000

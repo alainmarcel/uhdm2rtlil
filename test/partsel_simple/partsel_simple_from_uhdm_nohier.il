@@ -3,8 +3,8 @@ autoidx 11
 attribute \src "dut.sv:1.1-5.10"
 attribute \cells_not_processed 1
 module \partsel_simple
-  wire width 64 $auto$expression.cpp:569:import_operation$7
-  wire width 3 $auto$expression.cpp:660:import_operation$1
+  wire width 64 $auto$expression.cpp:1442:import_operation$7
+  wire width 3 $auto$expression.cpp:1537:import_operation$1
   wire width 6 $auto$module.cpp:650:import_continuous_assign$3
   wire width 4 $auto$module.cpp:650:import_continuous_assign$5
   wire width 4 $auto$module.cpp:650:import_continuous_assign$9
@@ -18,7 +18,7 @@ module \partsel_simple
   wire width 4 output 4 \slice_down
   attribute \src "dut.sv:1.72-1.80"
   wire width 4 output 3 \slice_up
-  cell $add $auto$expression.cpp:583:import_operation$8
+  cell $add $add$dut.sv:4$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
@@ -26,17 +26,7 @@ module \partsel_simple
     parameter \Y_WIDTH 64
     connect \A \offset
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:569:import_operation$7
-  end
-  cell $shl $auto$expression.cpp:672:import_operation$2
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 3
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 3
-    connect \A \idx
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:660:import_operation$1
+    connect \Y $auto$expression.cpp:1442:import_operation$7
   end
   cell $pos $auto$module.cpp:651:import_continuous_assign$10
     parameter \A_SIGNED 0
@@ -49,7 +39,7 @@ module \partsel_simple
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 6
-    connect \A $auto$expression.cpp:660:import_operation$1
+    connect \A $auto$expression.cpp:1537:import_operation$1
     connect \Y $auto$module.cpp:650:import_continuous_assign$3
   end
   cell $pos $auto$module.cpp:651:import_continuous_assign$6
@@ -58,6 +48,16 @@ module \partsel_simple
     parameter \Y_WIDTH 4
     connect \A { }
     connect \Y $auto$module.cpp:650:import_continuous_assign$5
+  end
+  cell $shl $shl$dut.sv:2$2
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 3
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 3
+    connect \A \idx
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
+    connect \Y $auto$expression.cpp:1537:import_operation$1
   end
   connect \offset $auto$module.cpp:650:import_continuous_assign$3
   connect \slice_up $auto$module.cpp:650:import_continuous_assign$5

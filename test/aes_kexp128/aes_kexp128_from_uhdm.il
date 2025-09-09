@@ -31,57 +31,6 @@ module \aes_key_expand_128
   wire width 4 output 6 \wo_2
   attribute \src "dut.sv:4.60-4.64"
   wire width 4 output 7 \wo_3
-  cell $xor $auto$expression.cpp:514:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A \w[0]
-    connect \B \w[1]
-    connect \Y $auto$rtlil.cc:3008:Xor$14
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$14
-    connect \B \w[2]
-    connect \Y $auto$rtlil.cc:3008:Xor$10
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$17
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$10
-    connect \B \w[3]
-    connect \Y $auto$rtlil.cc:3008:Xor$18
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$11
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$10
-    connect \B \key [7:4]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$12
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$19
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$18
-    connect \B \key [3:0]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$20
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$5
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$14
-    connect \B \key [11:8]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$6
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:16.1-21.4"
   cell $dffe $auto$ff.cc:266:slice$25
@@ -92,6 +41,27 @@ module \aes_key_expand_128
     connect \D \key [15:12]
     connect \EN \kld
     connect \Q \w[0]
+  end
+  cell $mux $mux$dut.sv:18$5
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$14
+    connect \B \key [11:8]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$6
+  end
+  cell $mux $mux$dut.sv:19$11
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$10
+    connect \B \key [7:4]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$12
+  end
+  cell $mux $mux$dut.sv:20$19
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$18
+    connect \B \key [3:0]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$20
   end
   attribute \always_ff 1
   attribute \src "dut.sv:16.1-21.4"
@@ -119,6 +89,36 @@ module \aes_key_expand_128
     connect \CLK \clk
     connect \D $auto$rtlil.cc:3094:Mux$12
     connect \Q \w[2]
+  end
+  cell $xor $xor$dut.sv:18$3
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A \w[0]
+    connect \B \w[1]
+    connect \Y $auto$rtlil.cc:3008:Xor$14
+  end
+  cell $xor $xor$dut.sv:19$9
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$14
+    connect \B \w[2]
+    connect \Y $auto$rtlil.cc:3008:Xor$10
+  end
+  cell $xor $xor$dut.sv:20$17
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$10
+    connect \B \w[3]
+    connect \Y $auto$rtlil.cc:3008:Xor$18
   end
   connect \wo_0 \w[0]
   connect \wo_1 \w[1]

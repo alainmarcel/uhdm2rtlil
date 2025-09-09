@@ -8,6 +8,7 @@
 #include "uhdm2rtlil.h"
 #include <uhdm/logic_var.h>
 #include <uhdm/logic_net.h>
+#include <uhdm/logic_typespec.h>
 #include <uhdm/net.h>
 #include <uhdm/port.h>
 #include <uhdm/struct_typespec.h>
@@ -33,8 +34,717 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
-// Helper function to extract function return value from a statement
-// This looks for assignments to the function name
+// Helper function to generate consistent source-location-based cell names
+static std::string generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type, int& autoidx) {
+    std::string cell_name;
+    if (uhdm_obj && !uhdm_obj->VpiFile().empty()) {
+        // Extract just the filename from the full path
+        std::string_view full_path = uhdm_obj->VpiFile();
+        size_t pos = full_path.find_last_of("/\\");
+        std::string filename = (pos != std::string::npos) ? 
+            std::string(full_path.substr(pos + 1)) : std::string(full_path);
+        
+        cell_name = stringf("$%s$%s:%d$%d", cell_type.c_str(), filename.c_str(), 
+            uhdm_obj->VpiLineNo(), autoidx++);
+    } else {
+        cell_name = stringf("$%s$expression.cpp:%d$%d", cell_type.c_str(), __LINE__, autoidx++);
+    }
+    return cell_name;
+}
+
+// Helper function to process a statement into a case rule for function process generation
+void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
+                                        RTLIL::Wire* result_wire,
+                                        const std::map<std::string, RTLIL::SigSpec>& input_mapping,
+                                        const std::string& func_name,
+                                        int& temp_counter,
+                                        const std::string& func_call_context,
+                                        const std::map<std::string, int>& local_var_widths) {
+    if (!stmt || !case_rule) return;
+    
+    if (mode_debug) {
+        log("  process_stmt_to_case: func=%s, stmt type=%d\n", func_name.c_str(), stmt->UhdmType());
+    }
+    
+    int type = stmt->UhdmType();
+    switch(type) {
+    case uhdmbegin: {
+        // Handle begin-end block
+        const begin* bg = any_cast<const begin*>(stmt);
+        if (bg && bg->Stmts()) {
+            for (auto s : *bg->Stmts()) {
+                process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+            }
+        }
+        break;
+    }
+    
+    case uhdmcase_stmt: {
+        // Handle case statement as a switch
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (!cs) break;
+        
+        // Get the case expression
+        RTLIL::SigSpec case_expr;
+        if (cs->VpiCondition()) {
+            case_expr = import_expression(any_cast<const expr*>(cs->VpiCondition()));
+        }
+        
+        // Create a switch rule with source location
+        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+        sw->signal = case_expr;
+        
+        // Add source location attribute using existing helper
+        add_src_attribute(sw->attributes, cs);
+        
+        case_rule->switches.push_back(sw);
+        
+        if (cs->Case_items()) {
+            for (auto item : *cs->Case_items()) {
+                const case_item* ci = any_cast<const case_item*>(item);
+                if (!ci) continue;
+                
+                RTLIL::CaseRule* item_case = new RTLIL::CaseRule;
+                
+                // Add source location attribute for the case item
+                add_src_attribute(item_case->attributes, ci);
+                
+                // Get the case value
+                if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
+                    // Regular case item
+                    RTLIL::SigSpec case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)));
+                    // Ensure case value has same width as case expression
+                    if (case_value.size() < case_expr.size()) {
+                        case_value.extend_u0(case_expr.size());
+                    } else if (case_value.size() > case_expr.size()) {
+                        case_value = case_value.extract(0, case_expr.size());
+                    }
+                    item_case->compare.push_back(case_value);
+                } // else default case (empty compare list)
+                
+                // For nested case statements, create intermediate wires and chaining assignments
+                // Check if the case body contains another case statement
+                bool has_nested_case = false;
+                if (ci->Stmt()) {
+                    const any* inner_stmt = ci->Stmt();
+                    if (inner_stmt->UhdmType() == uhdmcase_stmt || 
+                        inner_stmt->UhdmType() == uhdmif_else ||
+                        (inner_stmt->UhdmType() == uhdmbegin && 
+                         static_cast<const begin*>(inner_stmt)->Stmts() &&
+                         !static_cast<const begin*>(inner_stmt)->Stmts()->empty())) {
+                        has_nested_case = true;
+                    }
+                }
+                
+                // Always add empty action first (matching Verilog frontend)
+                item_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+                
+                if (has_nested_case) {
+                    // Create intermediate result wire for this case branch
+                    temp_counter++;
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
+                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
+                    
+                    // Add source attribute to the intermediate wire
+                    add_src_attribute(intermediate_wire->attributes, ci);
+                    
+                    // Add assignment from intermediate wire to result
+                    item_case->actions.push_back(RTLIL::SigSig(result_wire, intermediate_wire));
+                    
+                    // Process the case body with the intermediate wire as the target
+                    process_stmt_to_case(ci->Stmt(), item_case, intermediate_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                } else {
+                    // Simple case - process directly without intermediate wire
+                    if (ci->Stmt()) {
+                        process_stmt_to_case(ci->Stmt(), item_case, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                    }
+                }
+                
+                sw->cases.push_back(item_case);
+            }
+        }
+        break;
+    }
+    
+    case uhdmif_else: {
+        // Handle if-else statement as a switch
+        const if_else* ie = any_cast<const if_else*>(stmt);
+        if (ie) {
+            // Get condition
+            RTLIL::SigSpec cond;
+            if (ie->VpiCondition()) {
+                cond = import_expression(any_cast<const expr*>(ie->VpiCondition()));
+            }
+            
+            // Create a switch rule for the if-else with source location
+            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+            sw->signal = cond;
+            
+            // Add source location attribute
+            add_src_attribute(sw->attributes, ie);
+            
+            case_rule->switches.push_back(sw);
+            
+            // If branch (when condition is true)
+            if (ie->VpiStmt()) {
+                RTLIL::CaseRule* if_case = new RTLIL::CaseRule;
+                
+                // Add source location for the if branch
+                const any* if_stmt = ie->VpiStmt();
+                if (if_stmt) {
+                    add_src_attribute(if_case->attributes, if_stmt);
+                }
+                
+                // Make sure the compare value has same width as condition
+                RTLIL::SigSpec true_val(1, cond.size());
+                if_case->compare.push_back(true_val); // Match 1'b1 with proper width
+                
+                // Add empty action first
+                if_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+                
+                // Check if if branch contains nested structures
+                bool has_nested = false;
+                if (if_stmt && (if_stmt->UhdmType() == uhdmif_else || 
+                                if_stmt->UhdmType() == uhdmcase_stmt)) {
+                    has_nested = true;
+                }
+                
+                if (has_nested) {
+                    // Create intermediate wire for nested structure
+                    temp_counter++;
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
+                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
+                    
+                    // Add source attribute to the intermediate wire
+                    add_src_attribute(intermediate_wire->attributes, ie);
+                    
+                    // Add assignment from intermediate wire to result
+                    if_case->actions.push_back(RTLIL::SigSig(result_wire, intermediate_wire));
+                    
+                    // Process with intermediate wire
+                    process_stmt_to_case(ie->VpiStmt(), if_case, intermediate_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                } else {
+                    // Process directly
+                    process_stmt_to_case(ie->VpiStmt(), if_case, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                }
+                
+                sw->cases.push_back(if_case);
+            }
+            
+            // Else branch (default case)
+            if (ie->VpiElseStmt()) {
+                RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
+                
+                // Add source location for the else branch
+                const any* else_stmt = ie->VpiElseStmt();
+                if (else_stmt) {
+                    add_src_attribute(else_case->attributes, else_stmt);
+                }
+                
+                // Empty compare list makes it the default
+                // Add empty action first
+                else_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+                
+                // Check if else branch contains nested structures
+                bool has_nested = false;
+                if (else_stmt && (else_stmt->UhdmType() == uhdmif_else || 
+                                  else_stmt->UhdmType() == uhdmcase_stmt)) {
+                    has_nested = true;
+                }
+                
+                if (has_nested) {
+                    // Create intermediate wire for nested structure
+                    temp_counter++;
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
+                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
+                    
+                    // Add source attribute to the intermediate wire
+                    if (else_stmt) {
+                        add_src_attribute(intermediate_wire->attributes, else_stmt);
+                    }
+                    
+                    // Add assignment from intermediate wire to result
+                    else_case->actions.push_back(RTLIL::SigSig(result_wire, intermediate_wire));
+                    
+                    // Process with intermediate wire
+                    process_stmt_to_case(ie->VpiElseStmt(), else_case, intermediate_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                } else {
+                    // Process directly
+                    process_stmt_to_case(ie->VpiElseStmt(), else_case, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                }
+                
+                sw->cases.push_back(else_case);
+            }
+        }
+        break;
+    }
+    
+    case uhdmassignment: {
+        // Handle assignment
+        const assignment* assign = any_cast<const assignment*>(stmt);
+        if (assign && assign->Lhs() && assign->Rhs()) {
+            RTLIL::SigSpec lhs_sig;
+            RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()));
+            
+            // Check if LHS is the function name (return value)
+            if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs_ref) {
+                    std::string lhs_name = std::string(lhs_ref->VpiName());
+                    if (lhs_name == func_name) {
+                        // Assign to the result wire
+                        lhs_sig = result_wire;
+                    } else {
+                        // Check if it's a local variable or input
+                        auto it = input_mapping.find(lhs_name);
+                        if (it != input_mapping.end()) {
+                            lhs_sig = it->second;
+                        } else {
+                            // Create a function-scoped temporary wire for local variable
+                            // Use a unique name to avoid conflicts between functions
+                            std::string local_var_name = stringf("$%s$%s$local_%s", 
+                                func_name.c_str(), func_call_context.c_str(), lhs_name.c_str());
+                            RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(local_var_name));
+                            if (!temp_wire) {
+                                // Check if we have the width from the function's variable declarations
+                                int wire_width = rhs_sig.size(); // Default to RHS width
+                                auto width_it = local_var_widths.find(lhs_name);
+                                if (width_it != local_var_widths.end()) {
+                                    wire_width = width_it->second;
+                                    if (mode_debug) {
+                                        log("UHDM: Using declared width %d for local variable %s\n", 
+                                            wire_width, lhs_name.c_str());
+                                    }
+                                } else {
+                                    // Fall back to RHS width but cap it at reasonable values
+                                    if (wire_width > 64) {
+                                        log_warning("Large width %d for local variable %s, using 64\n", 
+                                            wire_width, lhs_name.c_str());
+                                        wire_width = 64;
+                                    }
+                                }
+                                temp_wire = module->addWire(RTLIL::escape_id(local_var_name), wire_width);
+                            }
+                            lhs_sig = temp_wire;
+                        }
+                    }
+                }
+            } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
+                // Handle bit select assignment
+                const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                std::string base_name = std::string(bs->VpiName());
+                
+                if (base_name == func_name) {
+                    // Assigning to a bit of the return value
+                    RTLIL::SigSpec index_sig;
+                    if (bs->VpiIndex()) {
+                        index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()));
+                    }
+                    
+                    if (index_sig.is_fully_const()) {
+                        int idx = index_sig.as_int();
+                        if (idx >= 0 && idx < result_wire->width) {
+                            lhs_sig = RTLIL::SigSpec(result_wire, idx, 1);
+                        }
+                    }
+                }
+            }
+            
+            // Add the assignment action
+            if (lhs_sig.size() > 0) {
+                case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
+            }
+        }
+        break;
+    }
+    
+    case uhdmfor_stmt: {
+        // Handle for loops - need to unroll at compile time for synthesis
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (fs) {
+                // Get loop components
+                const any* init_stmt = nullptr;
+                const any* condition = fs->VpiCondition();
+                const any* inc_stmt = nullptr;
+                const any* loop_body = fs->VpiStmt();
+                
+                // Get init statement
+                if (fs->VpiForInitStmts() && !fs->VpiForInitStmts()->empty()) {
+                    init_stmt = fs->VpiForInitStmts()->at(0);
+                } else if (fs->VpiForInitStmt()) {
+                    init_stmt = fs->VpiForInitStmt();
+                }
+                
+                // Get increment statement
+                if (fs->VpiForIncStmts() && !fs->VpiForIncStmts()->empty()) {
+                    inc_stmt = fs->VpiForIncStmts()->at(0);
+                } else if (fs->VpiForIncStmt()) {
+                    inc_stmt = fs->VpiForIncStmt();
+                }
+                
+                if (!init_stmt || !condition || !inc_stmt || !loop_body) {
+                    log("UHDM: Warning - incomplete for loop structure in function %s (init:%p, cond:%p, inc:%p, body:%p)\n",
+                        func_name.c_str(), init_stmt, condition, inc_stmt, loop_body);
+                    break;
+                }
+                
+                // Try to extract loop bounds for unrolling
+                bool can_unroll = false;
+                std::string loop_var_name;
+                int64_t start_value = 0;
+                int64_t end_value = 0;
+                int64_t increment = 1;
+                bool inclusive = false;
+                
+                if (mode_debug) {
+                    log("    Attempting to unroll for loop in function %s\n", func_name.c_str());
+                    log("      init_stmt type: %d\n", init_stmt ? init_stmt->UhdmType() : -1);
+                    log("      condition type: %d\n", condition ? condition->UhdmType() : -1);
+                    log("      inc_stmt type: %d\n", inc_stmt ? inc_stmt->UhdmType() : -1);
+                }
+                
+                // Extract initialization: i = start_value
+                if (init_stmt->UhdmType() == uhdmassignment) {
+                    const assignment* init_assign = any_cast<const assignment*>(init_stmt);
+                    if (init_assign->Lhs() && init_assign->Lhs()->UhdmType() == uhdmref_obj) {
+                        const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
+                        loop_var_name = ref->VpiName();
+                        
+                        if (init_assign->Rhs() && init_assign->Rhs()->UhdmType() == uhdmconstant) {
+                            const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
+                            RTLIL::SigSpec init_spec = import_constant(const_val);
+                            if (init_spec.is_fully_const()) {
+                                start_value = init_spec.as_const().as_int();
+                                can_unroll = true;
+                            }
+                        }
+                    }
+                }
+                
+                // Extract condition: i < end_value or i <= end_value
+                if (can_unroll && condition->UhdmType() == uhdmoperation) {
+                    const operation* cond_op = any_cast<const operation*>(condition);
+                    int op_type = cond_op->VpiOpType();
+                    
+                    if (op_type == vpiLeOp) {
+                        inclusive = true;
+                    } else if (op_type == vpiLtOp) {
+                        inclusive = false;
+                    } else {
+                        can_unroll = false;
+                    }
+                    
+                    if (can_unroll && cond_op->Operands() && cond_op->Operands()->size() == 2) {
+                        auto operands = cond_op->Operands();
+                        const any* left_op = operands->at(0);
+                        const any* right_op = operands->at(1);
+                        
+                        // Check that left operand is our loop variable
+                        if (left_op->UhdmType() == uhdmref_obj) {
+                            const ref_obj* ref = any_cast<const ref_obj*>(left_op);
+                            if (std::string(ref->VpiName()) == loop_var_name) {
+                                // Get the end value
+                                if (right_op->UhdmType() == uhdmref_obj) {
+                                    // It's a parameter reference, resolve it
+                                    const ref_obj* param_ref = any_cast<const ref_obj*>(right_op);
+                                    RTLIL::SigSpec param_value = import_ref_obj(param_ref);
+                                    
+                                    if (param_value.is_fully_const()) {
+                                        end_value = param_value.as_const().as_int();
+                                    } else {
+                                        can_unroll = false;
+                                    }
+                                } else if (right_op->UhdmType() == uhdmconstant) {
+                                    const constant* const_val = any_cast<const constant*>(right_op);
+                                    RTLIL::SigSpec const_spec = import_constant(const_val);
+                                    if (const_spec.is_fully_const()) {
+                                        end_value = const_spec.as_const().as_int();
+                                    } else {
+                                        can_unroll = false;
+                                    }
+                                } else {
+                                    can_unroll = false;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Extract increment: i++ or i = i + 1
+                if (can_unroll && inc_stmt->UhdmType() == uhdmoperation) {
+                    const operation* inc_op = any_cast<const operation*>(inc_stmt);
+                    if (inc_op->VpiOpType() == 62) { // vpiPostIncOp
+                        increment = 1;
+                    } else if (inc_op->VpiOpType() == vpiAddOp) {
+                        // Check for i = i + 1 pattern
+                        increment = 1; // Simplified for now
+                    }
+                } else if (can_unroll && inc_stmt->UhdmType() == uhdmassignment) {
+                    // Handle i = i + 1 style increment
+                    const assignment* inc_assign = any_cast<const assignment*>(inc_stmt);
+                    if (inc_assign->Rhs() && inc_assign->Rhs()->UhdmType() == uhdmoperation) {
+                        const operation* add_op = any_cast<const operation*>(inc_assign->Rhs());
+                        if (add_op->VpiOpType() == vpiAddOp) {
+                            increment = 1; // Simplified assumption
+                        }
+                    }
+                }
+                
+                if (can_unroll) {
+                    // Unroll the loop
+                    int64_t loop_end = inclusive ? end_value : end_value - 1;
+                    
+                    if (mode_debug) {
+                        log("    Unrolling for loop: %s from %lld to %lld\n", 
+                            loop_var_name.c_str(), (long long)start_value, (long long)loop_end);
+                    }
+                    
+                    // Store loop variable in loop_values for substitution during expression import
+                    for (int64_t i = start_value; i <= loop_end; i += increment) {
+                        // Set the loop variable value - use loop_values for substitution
+                        loop_values[loop_var_name] = i;
+                        
+                        if (mode_debug) {
+                            log("      Iteration %lld\n", (long long)i);
+                        }
+                        
+                        // Process the loop body with the current iteration value
+                        process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        
+                        // For loops that build arrays (like func_loop), don't return early
+                        // The result is accumulated in function_results[func_name]
+                    }
+                    
+                    // Clear loop variable after loop
+                    loop_values.erase(loop_var_name);
+                    
+                    // Loop has been unrolled into the case rule
+                } else {
+                    log("UHDM: Warning - for loop in function cannot be unrolled (non-constant bounds)\n");
+                }
+        }
+        break;
+    }
+    
+    default:
+        // Other statement types - ignore for now
+        break;
+    }
+}
+
+// Generate a process block for a function call
+RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def, const std::string& func_name,
+                                                        const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire,
+                                                        const func_call* fc) {
+    // Create a unique process for this function call
+    static int global_temp_counter = 7; // Global counter for temp wire numbering
+    
+    // Generate process name
+    std::string proc_name;
+    
+    // Extract source location information
+    std::string src_attr = fc ? get_src_attribute(fc) : get_src_attribute(func_def);
+    std::string filename = "dut.sv"; // Default filename
+    int call_line = 1; // Default line number
+    
+    // Parse the source attribute to extract filename and line number
+    if (!src_attr.empty()) {
+        size_t colon_pos = src_attr.find(':');
+        if (colon_pos != std::string::npos) {
+            filename = src_attr.substr(0, colon_pos);
+            size_t dot_pos = src_attr.find('.', colon_pos);
+            if (dot_pos != std::string::npos) {
+                std::string line_str = src_attr.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+                call_line = std::stoi(line_str);
+            }
+        }
+    }
+    
+    // Use the call site line number for the process name (matching Verilog frontend)
+    proc_name = stringf("$proc$%s:%d$%d", filename.c_str(), call_line, global_temp_counter);
+    RTLIL::Process* proc = module->addProcess(RTLIL::escape_id(proc_name));
+    
+    // Add source attribute from function call location
+    if (fc) {
+        add_src_attribute(proc->attributes, fc);
+    }
+    
+    // Create the root case for the process  
+    proc->root_case = RTLIL::CaseRule();
+    RTLIL::CaseRule* root_case = &proc->root_case;
+    
+    // Add placeholder empty assignments (the Verilog frontend does this for some reason)
+    for (int i = 0; i < 5; i++) {
+        root_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+    }
+    
+    // Create temporary wires for function call context
+    std::string func_call_id = stringf("%s$func$%s:%d$2", func_name.c_str(), filename.c_str(), call_line);
+    std::string func_result_id = stringf("%s$func$%s:%d$1", func_name.c_str(), filename.c_str(), call_line);
+    
+    // Map function inputs to temporary wires
+    std::map<std::string, RTLIL::SigSpec> input_mapping;
+    std::vector<RTLIL::Wire*> arg_temp_wires;
+    
+    // Track local variable widths from function declaration
+    std::map<std::string, int> local_var_widths;
+    
+    // Process local variables from function definition
+    if (func_def->Variables()) {
+        for (auto var : *func_def->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            int var_width = 1; // Default width
+            
+            // Try to get the actual width from the variable's typespec
+            if (var->UhdmType() == uhdmlogic_var) {
+                const logic_var* lv = any_cast<const logic_var*>(var);
+                if (lv && lv->Typespec()) {
+                    const ref_typespec* rts = lv->Typespec();
+                    if (rts && rts->Actual_typespec()) {
+                        const typespec* actual_ts = rts->Actual_typespec();
+                        // Check if it's a logic typespec with ranges
+                        if (actual_ts->UhdmType() == uhdmlogic_typespec) {
+                            const logic_typespec* lts = any_cast<const logic_typespec*>(actual_ts);
+                            if (lts && lts->Ranges()) {
+                                for (auto range : *lts->Ranges()) {
+                                    RTLIL::SigSpec left_sig = import_expression(any_cast<const expr*>(range->Left_expr()));
+                                    RTLIL::SigSpec right_sig = import_expression(any_cast<const expr*>(range->Right_expr()));
+                                    if (left_sig.is_fully_const() && right_sig.is_fully_const()) {
+                                        int left_val = left_sig.as_int();
+                                        int right_val = right_sig.as_int();
+                                        var_width = std::abs(left_val - right_val) + 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            local_var_widths[var_name] = var_width;
+            if (mode_debug) {
+                log("UHDM: Function %s local variable %s width=%d\n", 
+                    func_name.c_str(), var_name.c_str(), var_width);
+            }
+        }
+    }
+    
+    if (func_def->Io_decls() && !args.empty()) {
+        int arg_idx = 0;
+        for (auto io_decl : *func_def->Io_decls()) {
+            if (arg_idx < args.size()) {
+                std::string io_name = std::string(io_decl->VpiName());
+                int width = args[arg_idx].size();
+                
+                // Create temporary wire for this argument
+                global_temp_counter++;
+                std::string temp_name = stringf("$0\\%s.%s[%d:0]$%d", 
+                    func_call_id.c_str(), io_name.c_str(), width - 1, global_temp_counter);
+                RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
+                arg_temp_wires.push_back(temp_wire);
+                
+                // Add assignment from actual argument to temp wire
+                root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
+                
+                // Map for use in function body
+                input_mapping[io_name] = args[arg_idx];
+                arg_idx++;
+            }
+        }
+    }
+    
+    // Create temporary result wires with proper naming
+    global_temp_counter++;
+    std::string temp_result2_name = stringf("$0\\%s.$result[%d:0]$%d", 
+        func_call_id.c_str(), result_wire->width - 1, global_temp_counter);
+    global_temp_counter++;
+    std::string temp_result1_name = stringf("$1\\%s.$result[%d:0]$%d", 
+        func_call_id.c_str(), result_wire->width - 1, global_temp_counter);
+    
+    RTLIL::Wire* temp_result2_wire = module->addWire(RTLIL::escape_id(temp_result2_name), result_wire->width);
+    RTLIL::Wire* temp_result1_wire = module->addWire(RTLIL::escape_id(temp_result1_name), result_wire->width);
+    
+    // Add assignment chaining for results
+    root_case->actions.push_back(RTLIL::SigSig(temp_result2_wire, temp_result1_wire));
+    
+    std::string temp_result_final_name = stringf("$0\\%s.$result[%d:0]$%d",
+        func_result_id.c_str(), result_wire->width - 1, global_temp_counter - 4);
+    RTLIL::Wire* temp_result_final_wire = module->addWire(RTLIL::escape_id(temp_result_final_name), result_wire->width);
+    root_case->actions.push_back(RTLIL::SigSig(temp_result_final_wire, temp_result1_wire));
+    
+    // Create the main function result wire
+    std::string result_var = stringf("%s$func$%s.$result", func_name.c_str(), func_name.c_str());
+    RTLIL::Wire* func_result_wire = module->wire(RTLIL::escape_id(result_var));
+    if (!func_result_wire) {
+        func_result_wire = module->addWire(RTLIL::escape_id(result_var), result_wire->width);
+    }
+    
+    // Process the function body into switches
+    int func_temp_counter = global_temp_counter;
+    process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
+    
+    // Create nosync wires for the function context (these get set to 'x)
+    std::string result_wire_name = stringf("\\%s.$result", func_call_id.c_str());
+    
+    RTLIL::Wire* nosync_result = module->wire(RTLIL::escape_id(result_wire_name));
+    if (!nosync_result) {
+        nosync_result = module->addWire(RTLIL::escape_id(result_wire_name), result_wire->width);
+        nosync_result->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+    }
+    
+    // Create nosync wires for each argument (the Verilog frontend creates these for all arguments)
+    std::vector<RTLIL::Wire*> nosync_arg_wires;
+    if (func_def->Io_decls()) {
+        for (auto io_decl : *func_def->Io_decls()) {
+            std::string io_name = std::string(io_decl->VpiName());
+            std::string nosync_name = stringf("\\%s.%s", func_call_id.c_str(), io_name.c_str());
+            
+            // Determine width from the corresponding argument
+            int width = 1;
+            int idx = 0;
+            for (auto io : *func_def->Io_decls()) {
+                if (io == io_decl && idx < args.size()) {
+                    width = args[idx].size();
+                    break;
+                }
+                idx++;
+            }
+            
+            RTLIL::Wire* nosync_wire = module->wire(RTLIL::escape_id(nosync_name));
+            if (!nosync_wire) {
+                nosync_wire = module->addWire(RTLIL::escape_id(nosync_name), width);
+                nosync_wire->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+            }
+            nosync_arg_wires.push_back(nosync_wire);
+        }
+    }
+    
+    // Add sync rule to update outputs (matching Verilog frontend exactly)
+    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+    sync->type = RTLIL::STa;  // Always
+    
+    // Main result assignment - only update the function result wire directly from temp result
+    sync->actions.push_back(RTLIL::SigSig(func_result_wire, temp_result_final_wire));
+    
+    // Set nosync wires to 'x (matching Verilog frontend order exactly)
+    sync->actions.push_back(RTLIL::SigSig(nosync_result, RTLIL::SigSpec(RTLIL::State::Sx, nosync_result->width)));
+    // All argument nosync wires (including state)
+    for (auto nosync_wire : nosync_arg_wires) {
+        sync->actions.push_back(RTLIL::SigSig(nosync_wire, RTLIL::SigSpec(RTLIL::State::Sx, nosync_wire->width)));
+    }
+    
+    proc->syncs.push_back(sync);
+    
+    // Connect the internal function result wire to the external result wire
+    module->connect(result_wire, func_result_wire);
+    
+    return proc;
+}
+
 RTLIL::SigSpec UhdmImporter::extract_function_return_value(const any* stmt, const std::string& func_name, int width) {
     if (!stmt) {
         return RTLIL::SigSpec(RTLIL::State::Sx, width);
@@ -321,6 +1031,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                 int ret_width = 1;
                 if (func_def->Return()) {
                     ret_width = get_width(func_def->Return(), current_instance);
+//                    if (ret_width <= 0 || ret_width > 1024) {
+                        // Fallback to default width if get_width fails
+//                        ret_width = 8; // Common default for this test
+//                        log("UHDM: Warning: Could not determine function return width, using default %d\n", ret_width);
+//                    }
                 }
                 
                 // Create a unique wire for this function call result
@@ -338,116 +1053,14 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
                     }
                 }
                 
-                // Map function input declarations to argument signals
-                std::map<std::string, RTLIL::SigSpec> input_mapping;
-                if (func_def->Io_decls() && !args.empty()) {
-                    int arg_idx = 0;
-                    for (auto io_decl : *func_def->Io_decls()) {
-                        if (arg_idx < args.size()) {
-                            std::string io_name = std::string(io_decl->VpiName());
-                            input_mapping[io_name] = args[arg_idx];
-                            log("UHDM:   Mapping function input '%s' to argument %d\n", io_name.c_str(), arg_idx);
-                            arg_idx++;
-                        }
-                    }
-                }
+                // Generate a process block for this function call
+                // Pass the function call object to get accurate source locations
+                generate_function_process(func_def, func_name, args, result_wire, fc);
                 
-                // For functions, we'll build a combinational mux tree
-                // This is a simpler approach that works for FSM-style functions
-                
-                // Save current context
-                std::map<std::string, RTLIL::Wire*> saved_name_map = name_map;
-                
-                // Add input mappings to name_map temporarily
-                for (const auto& [name, sig] : input_mapping) {
-                    // Create temporary wires for inputs if needed
-                    std::string temp_wire_name = stringf("$func_%s_input_%s_%d", 
-                        func_name.c_str(), name.c_str(), func_call_counter - 1);
-                    RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_wire_name), sig.size());
-                    name_map[name] = temp_wire;
-                    
-                    // Connect input to temp wire
-                    module->connect(RTLIL::SigSpec(temp_wire), sig);
-                }
-                
-                // Process the function statement to build the mux tree
-                if (func_def->Stmt()) {
-                    const any* stmt = func_def->Stmt();
-                    
-                    // Handle case statement - most common in FSM functions
-                    if (stmt->UhdmType() == uhdmcase_stmt) {
-                        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
-                        if (cs) {
-                            // Get the case expression (what we're switching on)
-                            RTLIL::SigSpec case_expr;
-                            if (cs->VpiCondition()) {
-                                case_expr = import_expression(any_cast<const expr*>(cs->VpiCondition()));
-                            }
-                            
-                            // Build a mux tree for the case statement
-                            RTLIL::SigSpec final_result;
-                            RTLIL::SigSpec default_value = RTLIL::SigSpec(RTLIL::State::Sx, ret_width);
-                            
-                            // Collect all case items to build mux tree
-                            std::vector<std::pair<RTLIL::SigSpec, RTLIL::SigSpec>> case_values;
-                            
-                            if (cs->Case_items()) {
-                                for (auto item : *cs->Case_items()) {
-                                    const case_item* ci = any_cast<const case_item*>(item);
-                                    if (!ci) continue;
-                                    
-                                    // Get the value for this case
-                                    RTLIL::SigSpec case_value;
-                                    if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
-                                        // Regular case item with expression
-                                        case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)));
-                                    } else {
-                                        // Default case - handled separately
-                                        default_value = extract_function_return_value(ci->Stmt(), func_name, ret_width);
-                                        continue;
-                                    }
-                                    
-                                    // Extract the return value from the case statement
-                                    RTLIL::SigSpec return_value = extract_function_return_value(ci->Stmt(), func_name, ret_width);
-                                    
-                                    case_values.push_back({case_value, return_value});
-                                }
-                            }
-                            
-                            // Build the mux tree
-                            if (!case_values.empty()) {
-                                final_result = default_value;
-                                
-                                // Build mux chain from the end backwards
-                                for (auto it = case_values.rbegin(); it != case_values.rend(); ++it) {
-                                    // Create equality comparison
-                                    RTLIL::Wire* eq_wire = module->addWire(NEW_ID, 1);
-                                    module->addEq(NEW_ID, case_expr, it->first, eq_wire);
-                                    
-                                    // Create mux: if case matches, use case value, else use accumulated result
-                                    RTLIL::Wire* mux_out = module->addWire(NEW_ID, ret_width);
-                                    module->addMux(NEW_ID, final_result, it->second, eq_wire, mux_out);
-                                    
-                                    final_result = mux_out;
-                                }
-                                
-                                // Connect final result to output wire
-                                module->connect(result_wire, final_result);
-                            }
-                        }
-                    } else {
-                        // For other statement types, we'd need more complex handling
-                        log_warning("Function %s has unsupported statement type for inlining\n", func_name.c_str());
-                    }
-                }
-                
-                // Restore name_map
-                name_map = saved_name_map;
-                
-                log("UHDM: Created inline function logic for %s (return width=%d, %d arguments)\n", 
+                log("UHDM: Created function process for %s (return width=%d, %d arguments)\n", 
                     func_name.c_str(), ret_width, (int)args.size());
                 
-                // Note: This is still a partial implementation
+                // Note: The function is now implemented as a process block
                 // Full support would require:
                 // 1. Complete statement processing (if/else, assignments, etc.)
                 // 2. Proper handling of local variables
@@ -665,7 +1278,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Check if operand is signed - for unary minus with $signed, assume signed
                 bool is_signed = true;  // Default to signed for unary minus
                 
-                module->addNeg(NEW_ID, operands[0], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "neg", autoidx);
+                module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
                 return result;
             }
             break;
@@ -714,71 +1328,111 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiLogAndOp:
             if (operands.size() == 2)
-                return module->LogicAnd(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "logic_and", autoidx);
+                    return module->LogicAnd(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiLogOrOp:
             if (operands.size() == 2)
-                return module->LogicOr(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "logic_or", autoidx);
+                    return module->LogicOr(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiBitAndOp:
             if (operands.size() == 2)
-                return module->And(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "and", autoidx);
+                    return module->And(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiBitOrOp:
             if (operands.size() == 2)
-                return module->Or(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "or", autoidx);
+                    return module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiBitXorOp:
             if (operands.size() == 2)
-                return module->Xor(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "xor", autoidx);
+                    return module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiBitNegOp:
             if (operands.size() == 1)
-                return module->Not(NEW_ID, operands[0]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                    return module->Not(RTLIL::escape_id(cell_name), operands[0]);
+                }
             break;
         case vpiBitXNorOp:  // Both vpiBitXNorOp and vpiBitXnorOp are the same
             if (operands.size() == 2)
-                return module->Xnor(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "xnor", autoidx);
+                    return module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiUnaryAndOp:
             if (operands.size() == 1)
-                return module->ReduceAnd(NEW_ID, operands[0]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_and", autoidx);
+                    return module->ReduceAnd(RTLIL::escape_id(cell_name), operands[0]);
+                }
             break;
         case vpiUnaryOrOp:
             if (operands.size() == 1)
-                return module->ReduceOr(NEW_ID, operands[0]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_or", autoidx);
+                    return module->ReduceOr(RTLIL::escape_id(cell_name), operands[0]);
+                }
             break;
         case vpiUnaryXorOp:
             if (operands.size() == 1)
-                return module->ReduceXor(NEW_ID, operands[0]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_xor", autoidx);
+                    return module->ReduceXor(RTLIL::escape_id(cell_name), operands[0]);
+                }
             break;
         case vpiUnaryNandOp:
             if (operands.size() == 1) {
                 // Unary NAND is NOT(REDUCE_AND)
-                RTLIL::SigSpec and_result = module->ReduceAnd(NEW_ID, operands[0]);
-                return module->Not(NEW_ID, and_result);
+                std::string and_cell_name = generate_cell_name(uhdm_op, "reduce_and", autoidx);
+                RTLIL::SigSpec and_result = module->ReduceAnd(RTLIL::escape_id(and_cell_name), operands[0]);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                return module->Not(RTLIL::escape_id(not_cell_name), and_result);
             } else if (operands.size() == 2) {
                 // Binary NAND (when UHDM uses unary op for binary ~&)
-                RTLIL::SigSpec and_result = module->And(NEW_ID, operands[0], operands[1]);
-                return module->Not(NEW_ID, and_result);
+                std::string and_cell_name = generate_cell_name(uhdm_op, "and", autoidx);
+                RTLIL::SigSpec and_result = module->And(RTLIL::escape_id(and_cell_name), operands[0], operands[1]);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                return module->Not(RTLIL::escape_id(not_cell_name), and_result);
             }
             break;
         case vpiUnaryNorOp:
             if (operands.size() == 1) {
                 // Unary NOR is NOT(REDUCE_OR)
-                RTLIL::SigSpec or_result = module->ReduceOr(NEW_ID, operands[0]);
-                return module->Not(NEW_ID, or_result);
+                std::string or_cell_name = generate_cell_name(uhdm_op, "reduce_or", autoidx);
+                RTLIL::SigSpec or_result = module->ReduceOr(RTLIL::escape_id(or_cell_name), operands[0]);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                return module->Not(RTLIL::escape_id(not_cell_name), or_result);
             } else if (operands.size() == 2) {
                 // Binary NOR (when UHDM uses unary op for binary ~|)
-                RTLIL::SigSpec or_result = module->Or(NEW_ID, operands[0], operands[1]);
-                return module->Not(NEW_ID, or_result);
+                std::string or_cell_name = generate_cell_name(uhdm_op, "or", autoidx);
+                RTLIL::SigSpec or_result = module->Or(RTLIL::escape_id(or_cell_name), operands[0], operands[1]);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                return module->Not(RTLIL::escape_id(not_cell_name), or_result);
             }
             break;
         case vpiUnaryXNorOp:
             if (operands.size() == 1) {
                 // Unary XNOR is NOT(REDUCE_XOR)
-                RTLIL::SigSpec xor_result = module->ReduceXor(NEW_ID, operands[0]);
-                return module->Not(NEW_ID, xor_result);
+                std::string xor_cell_name = generate_cell_name(uhdm_op, "reduce_xor", autoidx);
+                RTLIL::SigSpec xor_result = module->ReduceXor(RTLIL::escape_id(xor_cell_name), operands[0]);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                return module->Not(RTLIL::escape_id(not_cell_name), xor_result);
             }
             break;
         case vpiAddOp:
@@ -799,7 +1453,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                module->addAdd(NEW_ID, operands[0], operands[1], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "add", autoidx);
+                module->addAdd(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -821,7 +1476,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                module->addSub(NEW_ID, operands[0], operands[1], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "sub", autoidx);
+                module->addSub(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -846,7 +1502,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                module->addMul(NEW_ID, operands[0], operands[1], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "mul", autoidx);
+                module->addMul(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -867,7 +1524,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 // Use Pow cell for power operation
-                module->addPow(NEW_ID, operands[0], operands[1], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "pow", autoidx);
+                module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -888,7 +1546,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 // Use Shl cell for left shift operation
-                module->addShl(NEW_ID, operands[0], operands[1], result, is_signed);
+                std::string cell_name = generate_cell_name(uhdm_op, "shl", autoidx);
+                module->addShl(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
@@ -910,41 +1569,73 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 
                 // Use Shr cell for right shift operation (or Sshr for signed)
                 if (is_signed) {
-                    module->addSshr(NEW_ID, operands[0], operands[1], result, is_signed);
+                    std::string cell_name = generate_cell_name(uhdm_op, "sshr", autoidx);
+                    module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 } else {
-                    module->addShr(NEW_ID, operands[0], operands[1], result, false);
+                    std::string cell_name = generate_cell_name(uhdm_op, "shr", autoidx);
+                    module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, false);
                 }
                 return result;
             }
             break;
         case vpiEqOp:
             if (operands.size() == 2)
-                return module->Eq(NEW_ID, operands[0], operands[1]);
+                //return module->Eq(NEW_ID, operands[0], operands[1]);
+            {
+                // Create output wire for the comparison
+                RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
+                
+                // Create cell with source location-based name
+                std::string cell_name = generate_cell_name(uhdm_op, "eq", autoidx);
+                
+                RTLIL::Cell* eq_cell = module->addEq(RTLIL::escape_id(cell_name), 
+                    operands[0], operands[1], result_wire);
+                add_src_attribute(eq_cell->attributes, uhdm_op);
+                return result_wire;
+            }
             break;
         case vpiCaseEqOp:
             // Case equality (===) - use $eqx which properly handles X and Z values
             if (operands.size() == 2)
-                return module->Eqx(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "eqx", autoidx);
+                    return module->Eqx(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiNeqOp:
             if (operands.size() == 2)
-                return module->Ne(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "ne", autoidx);
+                    return module->Ne(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiLtOp:
             if (operands.size() == 2)
-                return module->Lt(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "lt", autoidx);
+                    return module->Lt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiLeOp:
             if (operands.size() == 2)
-                return module->Le(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "le", autoidx);
+                    return module->Le(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiGtOp:
             if (operands.size() == 2)
-                return module->Gt(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "gt", autoidx);
+                    return module->Gt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiGeOp:
             if (operands.size() == 2)
-                return module->Ge(NEW_ID, operands[0], operands[1]);
+                {
+                    std::string cell_name = generate_cell_name(uhdm_op, "ge", autoidx);
+                    return module->Ge(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                }
             break;
         case vpiConditionOp:
             if (operands.size() == 3) {
@@ -962,7 +1653,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (cond.size() > 1) {
                     log("UHDM: Reducing %d-bit condition to 1-bit\n", cond.size());
                     // Reduce multi-bit condition to single bit using ReduceBool
-                    cond = module->ReduceBool(NEW_ID, cond);
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_bool", autoidx);
+                    cond = module->ReduceBool(RTLIL::escape_id(cell_name), cond);
                 }
                 
                 // Match operand widths for the mux output
@@ -987,7 +1679,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // sig_a = value when selector is 0 (false value)
                 // sig_b = value when selector is 1 (true value)
                 // sig_s = selector
-                return module->Mux(NEW_ID, false_val, true_val, cond);
+                std::string cell_name = generate_cell_name(uhdm_op, "mux", autoidx);
+                return module->Mux(RTLIL::escape_id(cell_name), false_val, true_val, cond);
             }
             break;
         case vpiConcatOp:
@@ -1645,7 +2338,8 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
     
     // Create $shiftx cell
-    RTLIL::Cell* shiftx_cell = module->addCell(NEW_ID, ID($shiftx));
+    std::string cell_name = generate_cell_name(uhdm_bit, "shiftx", autoidx);
+    RTLIL::Cell* shiftx_cell = module->addCell(RTLIL::escape_id(cell_name), ID($shiftx));
     shiftx_cell->setParam(ID::A_SIGNED, 0);
     shiftx_cell->setParam(ID::B_SIGNED, 0);
     shiftx_cell->setParam(ID::A_WIDTH, base.size());

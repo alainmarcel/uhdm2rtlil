@@ -5,21 +5,21 @@ attribute \cells_not_processed 1
 module \enum_simple
   wire width 2 $0\state[1:0]
   wire width 32 $0\test_enum[31:0]
+  wire $auto$expression.cpp:1586:import_operation$1
+  wire $auto$expression.cpp:1586:import_operation$11
+  wire $auto$expression.cpp:1586:import_operation$13
+  wire $auto$expression.cpp:1586:import_operation$15
+  wire $auto$expression.cpp:1586:import_operation$23
+  wire $auto$expression.cpp:1586:import_operation$29
+  wire $auto$expression.cpp:1586:import_operation$3
+  wire $auto$expression.cpp:1586:import_operation$5
+  wire $auto$expression.cpp:1586:import_operation$7
   wire $auto$process.cpp:102:import_immediate_assert$17
   wire $auto$process.cpp:102:import_immediate_assert$21
   wire $auto$process.cpp:102:import_immediate_assert$25
   wire $auto$process.cpp:102:import_immediate_assert$27
   wire $auto$process.cpp:102:import_immediate_assert$31
   wire $auto$process.cpp:102:import_immediate_assert$9
-  wire $auto$rtlil.cc:3013:Eq$12
-  wire $auto$rtlil.cc:3013:Eq$14
-  wire $auto$rtlil.cc:3013:Eq$16
-  wire $auto$rtlil.cc:3013:Eq$2
-  wire $auto$rtlil.cc:3013:Eq$24
-  wire $auto$rtlil.cc:3013:Eq$30
-  wire $auto$rtlil.cc:3013:Eq$4
-  wire $auto$rtlil.cc:3013:Eq$6
-  wire $auto$rtlil.cc:3013:Eq$8
   wire $auto$rtlil.cc:3014:Ne$20
   attribute \src "dut.sv:2.26-2.29"
   wire input 1 \clk
@@ -57,106 +57,6 @@ module \enum_simple
   attribute \enum_value_00000000000000000000000000000011 "\\s3"
   attribute \src "dut.sv:4.24-4.33"
   wire width 32 \test_enum
-  cell $eq $auto$expression.cpp:703:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \test_enum
-    connect \B 0
-    connect \Y $auto$rtlil.cc:3013:Eq$2
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$11
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 0
-    connect \Y $auto$rtlil.cc:3013:Eq$12
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 1
-    connect \Y $auto$rtlil.cc:3013:Eq$14
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 2
-    connect \Y $auto$rtlil.cc:3013:Eq$16
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$23
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A 0
-    connect \B 1'0
-    connect \Y $auto$rtlil.cc:3013:Eq$24
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$29
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \enum_const
-    connect \B 1
-    connect \Y $auto$rtlil.cc:3013:Eq$30
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$3
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \test_enum
-    connect \B 1
-    connect \Y $auto$rtlil.cc:3013:Eq$4
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$5
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \test_enum
-    connect \B 2
-    connect \Y $auto$rtlil.cc:3013:Eq$6
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$7
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \test_enum
-    connect \B 3
-    connect \Y $auto$rtlil.cc:3013:Eq$8
-  end
-  cell $ne $auto$expression.cpp:712:import_operation$19
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 2'11
-    connect \Y $auto$rtlil.cc:3014:Ne$20
-  end
   attribute \src "dut.sv:27.5-27.18"
   cell $check $auto$process.cpp:109:import_immediate_assert$10
     parameter \ARGS_WIDTH 0
@@ -208,7 +108,7 @@ module \enum_simple
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$24
+    connect \A $auto$expression.cpp:1586:import_operation$23
     connect \ARGS { }
     connect \EN $auto$process.cpp:102:import_immediate_assert$25
     connect \TRG { }
@@ -236,10 +136,119 @@ module \enum_simple
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$30
+    connect \A $auto$expression.cpp:1586:import_operation$29
     connect \ARGS { }
     connect \EN $auto$process.cpp:102:import_immediate_assert$31
     connect \TRG { }
+  end
+  attribute \src "dut.sv:18.8-18.23"
+  cell $eq $eq$dut.sv:18$2
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \test_enum
+    connect \B 0
+    connect \Y $auto$expression.cpp:1586:import_operation$1
+  end
+  attribute \src "dut.sv:20.13-20.28"
+  cell $eq $eq$dut.sv:20$4
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \test_enum
+    connect \B 1
+    connect \Y $auto$expression.cpp:1586:import_operation$3
+  end
+  attribute \src "dut.sv:22.13-22.28"
+  cell $eq $eq$dut.sv:22$6
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \test_enum
+    connect \B 2
+    connect \Y $auto$expression.cpp:1586:import_operation$5
+  end
+  attribute \src "dut.sv:24.13-24.28"
+  cell $eq $eq$dut.sv:24$8
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \test_enum
+    connect \B 3
+    connect \Y $auto$expression.cpp:1586:import_operation$7
+  end
+  attribute \src "dut.sv:30.8-30.20"
+  cell $eq $eq$dut.sv:30$12
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 0
+    connect \Y $auto$expression.cpp:1586:import_operation$11
+  end
+  attribute \src "dut.sv:32.13-32.25"
+  cell $eq $eq$dut.sv:32$14
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 1
+    connect \Y $auto$expression.cpp:1586:import_operation$13
+  end
+  attribute \src "dut.sv:34.13-34.25"
+  cell $eq $eq$dut.sv:34$16
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 2
+    connect \Y $auto$expression.cpp:1586:import_operation$15
+  end
+  attribute \src "dut.sv:43.10-43.18"
+  cell $eq $eq$dut.sv:43$24
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A 0
+    connect \B 1'0
+    connect \Y $auto$expression.cpp:1586:import_operation$23
+  end
+  attribute \src "dut.sv:45.10-45.27"
+  cell $eq $eq$dut.sv:45$30
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \enum_const
+    connect \B 1
+    connect \Y $auto$expression.cpp:1586:import_operation$29
+  end
+  cell $ne $ne$dut.sv:42$19
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 2'11
+    connect \Y $auto$rtlil.cc:3014:Ne$20
   end
   attribute \always_ff 1
   attribute \src "dut.sv:12.2-39.5"
@@ -257,28 +266,28 @@ module \enum_simple
       attribute \src "dut.sv:34.13-34.17"
       case 
         attribute \src "dut.sv:18.4-27.18"
-        switch $auto$rtlil.cc:3013:Eq$2
+        switch $auto$expression.cpp:1586:import_operation$1
           attribute \src "dut.sv:18.4-27.18"
           case 1'1
             assign $0\test_enum[31:0] 1
           attribute \src "dut.sv:18.4-27.18"
           case 
             attribute \src "dut.sv:20.9-27.18"
-            switch $auto$rtlil.cc:3013:Eq$4
+            switch $auto$expression.cpp:1586:import_operation$3
               attribute \src "dut.sv:20.9-27.18"
               case 1'1
                 assign $0\test_enum[31:0] 2
               attribute \src "dut.sv:20.9-27.18"
               case 
                 attribute \src "dut.sv:22.9-27.18"
-                switch $auto$rtlil.cc:3013:Eq$6
+                switch $auto$expression.cpp:1586:import_operation$5
                   attribute \src "dut.sv:22.9-27.18"
                   case 1'1
                     assign $0\test_enum[31:0] 3
                   attribute \src "dut.sv:22.9-27.18"
                   case 
                     attribute \src "dut.sv:24.9-27.18"
-                    switch $auto$rtlil.cc:3013:Eq$8
+                    switch $auto$expression.cpp:1586:import_operation$7
                       attribute \src "dut.sv:24.9-27.18"
                       case 1'1
                         assign $0\test_enum[31:0] 0
@@ -290,21 +299,21 @@ module \enum_simple
             end
         end
         attribute \src "dut.sv:30.4-37.18"
-        switch $auto$rtlil.cc:3013:Eq$12
+        switch $auto$expression.cpp:1586:import_operation$11
           attribute \src "dut.sv:30.4-37.18"
           case 1'1
             assign $0\state[1:0] 2'01
           attribute \src "dut.sv:30.4-37.18"
           case 
             attribute \src "dut.sv:32.9-37.18"
-            switch $auto$rtlil.cc:3013:Eq$14
+            switch $auto$expression.cpp:1586:import_operation$13
               attribute \src "dut.sv:32.9-37.18"
               case 1'1
                 assign $0\state[1:0] 2'10
               attribute \src "dut.sv:32.9-37.18"
               case 
                 attribute \src "dut.sv:34.9-37.18"
-                switch $auto$rtlil.cc:3013:Eq$16
+                switch $auto$expression.cpp:1586:import_operation$15
                   attribute \src "dut.sv:34.9-37.18"
                   case 1'1
                     assign $0\state[1:0] 2'00

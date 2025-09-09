@@ -13,7 +13,7 @@ module \mux2
   wire input 1 \S
   attribute \src "dut.sv:1.20-1.21"
   wire output 4 \Y
-  cell $mux $auto$expression.cpp:771:import_operation$1
+  cell $mux $mux$dut.sv:7$1
     parameter \WIDTH 1
     connect \A \A
     connect \B \B

@@ -3,6 +3,8 @@ autoidx 71
 attribute \src "dut.sv:9.1-37.10"
 attribute \top 1
 module \top
+  wire $auto$expression.cpp:1586:import_operation$41
+  wire $auto$expression.cpp:1586:import_operation$43
   wire $auto$opt_dff.cc:247:make_patterns_logic$56
   wire $auto$opt_dff.cc:247:make_patterns_logic$66
   wire $auto$opt_dff.cc:247:make_patterns_logic$69
@@ -11,11 +13,9 @@ module \top
   wire $auto$process.cpp:34:create_temp_wire$11
   wire $auto$process.cpp:34:create_temp_wire$13
   wire $auto$process.cpp:34:create_temp_wire$21
-  wire $auto$process.cpp:34:create_temp_wire$25
   wire $auto$process.cpp:34:create_temp_wire$27
   wire $auto$process.cpp:34:create_temp_wire$31
   wire $auto$process.cpp:34:create_temp_wire$33
-  wire $auto$process.cpp:34:create_temp_wire$5
   wire $auto$process.cpp:34:create_temp_wire$7
   wire $auto$rtlil.cc:2959:Not$61
   wire width 32 $auto$rtlil.cc:3094:Mux$10
@@ -49,33 +49,6 @@ module \top
   wire width 32 \wide_state
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
-  cell $xor $auto$expression.cpp:514:import_operation$45
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$5
-    connect \B $auto$process.cpp:34:create_temp_wire$25
-    connect \Y \z
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \wide_state [1:0]
-    connect \B 2'01
-    connect \Y $auto$process.cpp:34:create_temp_wire$5
-  end
-  cell $logic_not $auto$expression.cpp:703:import_operation$43
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \Y $auto$process.cpp:34:create_temp_wire$25
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-20.8"
   cell $sdffe $auto$ff.cc:266:slice$55
@@ -122,21 +95,21 @@ module \top
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:34:create_temp_wire$5 $auto$process.cpp:34:create_temp_wire$11 $auto$process.cpp:34:create_temp_wire$1 }
+    connect \A { $auto$process.cpp:34:create_temp_wire$11 $auto$expression.cpp:1586:import_operation$41 $auto$process.cpp:34:create_temp_wire$1 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$56
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:34:create_temp_wire$25 $auto$process.cpp:34:create_temp_wire$31 $auto$process.cpp:34:create_temp_wire$21 }
+    connect \A { $auto$process.cpp:34:create_temp_wire$31 $auto$expression.cpp:1586:import_operation$43 $auto$process.cpp:34:create_temp_wire$21 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$66
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$70
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:34:create_temp_wire$25 $auto$process.cpp:34:create_temp_wire$21 }
+    connect \A { $auto$expression.cpp:1586:import_operation$43 $auto$process.cpp:34:create_temp_wire$21 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$69
   end
   cell $not $auto$opt_dff.cc:303:combine_resets$60
@@ -183,6 +156,14 @@ module \top
     connect \B 2'11
     connect \Y $auto$process.cpp:34:create_temp_wire$21
   end
+  attribute \src "dut.sv:29.13-29.27"
+  cell $logic_not $auto$process.cpp:40:create_eq_cell$26
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \Y $auto$expression.cpp:1586:import_operation$43
+  end
   attribute \src "dut.sv:30.13-30.27"
   cell $eq $auto$process.cpp:40:create_eq_cell$32
     parameter \A_SIGNED 0
@@ -193,6 +174,17 @@ module \top
     connect \A \state
     connect \B 2'01
     connect \Y $auto$process.cpp:34:create_temp_wire$31
+  end
+  attribute \src "dut.sv:16.13-16.34"
+  cell $eq $auto$process.cpp:40:create_eq_cell$6
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \wide_state [1:0]
+    connect \B 2'01
+    connect \Y $auto$expression.cpp:1586:import_operation$41
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$15
     parameter \WIDTH 32
@@ -212,7 +204,7 @@ module \top
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3094:Mux$24
     connect \B 2'01
-    connect \S $auto$process.cpp:34:create_temp_wire$25
+    connect \S $auto$expression.cpp:1586:import_operation$43
     connect \Y $auto$rtlil.cc:3094:Mux$30
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$3
@@ -233,7 +225,7 @@ module \top
     parameter \WIDTH 32
     connect \A $auto$rtlil.cc:3094:Mux$4
     connect \B 2
-    connect \S $auto$process.cpp:34:create_temp_wire$5
+    connect \S $auto$expression.cpp:1586:import_operation$41
     connect \Y $auto$rtlil.cc:3094:Mux$10
   end
   cell $or $auto$process.cpp:56:create_or_cell$14
@@ -253,7 +245,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$21
-    connect \B $auto$process.cpp:34:create_temp_wire$25
+    connect \B $auto$expression.cpp:1586:import_operation$43
     connect \Y $auto$process.cpp:34:create_temp_wire$27
   end
   cell $or $auto$process.cpp:56:create_or_cell$34
@@ -273,8 +265,18 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$1
-    connect \B $auto$process.cpp:34:create_temp_wire$5
+    connect \B $auto$expression.cpp:1586:import_operation$41
     connect \Y $auto$process.cpp:34:create_temp_wire$7
+  end
+  cell $xor $xor$dut.sv:35$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$expression.cpp:1586:import_operation$41
+    connect \B $auto$expression.cpp:1586:import_operation$43
+    connect \Y \z
   end
   connect \wide_state [31:2] 30'000000000000000000000000000000
 end

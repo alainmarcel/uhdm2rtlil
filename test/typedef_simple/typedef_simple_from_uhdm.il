@@ -4,10 +4,10 @@ attribute \keep 1
 attribute \src "dut.sv:1.1-19.10"
 attribute \top 1
 module \top
-  wire $auto$rtlil.cc:3013:Eq$10
-  wire $auto$rtlil.cc:3013:Eq$14
-  wire $auto$rtlil.cc:3013:Eq$2
-  wire $auto$rtlil.cc:3013:Eq$6
+  wire $auto$expression.cpp:1586:import_operation$1
+  wire $auto$expression.cpp:1586:import_operation$13
+  wire $auto$expression.cpp:1586:import_operation$5
+  wire $auto$expression.cpp:1586:import_operation$9
   attribute \init 8'11111111
   attribute \keep 1
   attribute \src "dut.sv:11.20-11.22"
@@ -28,46 +28,6 @@ module \top
   attribute \src "dut.sv:10.20-10.24"
   attribute \wiretype "\\int8_t"
   wire width 8 signed \int8
-  cell $eq $auto$expression.cpp:703:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \int2
-    connect \B 2'10
-    connect \Y $auto$rtlil.cc:3013:Eq$2
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 8
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 8
-    parameter \Y_WIDTH 1
-    connect \A \ch
-    connect \B 8'11111111
-    connect \Y $auto$rtlil.cc:3013:Eq$14
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$5
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \int4
-    connect \B 4'1111
-    connect \Y $auto$rtlil.cc:3013:Eq$6
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$9
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 8
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 8
-    parameter \Y_WIDTH 1
-    connect \A \int8
-    connect \B 8'11111111
-    connect \Y $auto$rtlil.cc:3013:Eq$10
-  end
   attribute \src "dut.sv:16.12-16.40"
   cell $check $auto$process.cpp:109:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
@@ -77,7 +37,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$10
+    connect \A $auto$expression.cpp:1586:import_operation$9
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -91,7 +51,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$14
+    connect \A $auto$expression.cpp:1586:import_operation$13
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -105,7 +65,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$2
+    connect \A $auto$expression.cpp:1586:import_operation$1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -119,9 +79,53 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3013:Eq$6
+    connect \A $auto$expression.cpp:1586:import_operation$5
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
+  end
+  attribute \src "dut.sv:14.19-14.32"
+  cell $eq $eq$dut.sv:14$2
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \int2
+    connect \B 2'10
+    connect \Y $auto$expression.cpp:1586:import_operation$1
+  end
+  attribute \src "dut.sv:15.19-15.34"
+  cell $eq $eq$dut.sv:15$6
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \int4
+    connect \B 4'1111
+    connect \Y $auto$expression.cpp:1586:import_operation$5
+  end
+  attribute \src "dut.sv:16.19-16.38"
+  cell $eq $eq$dut.sv:16$10
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 1
+    connect \A \int8
+    connect \B 8'11111111
+    connect \Y $auto$expression.cpp:1586:import_operation$9
+  end
+  attribute \src "dut.sv:17.19-17.38"
+  cell $eq $eq$dut.sv:17$14
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 1
+    connect \A \ch
+    connect \B 8'11111111
+    connect \Y $auto$expression.cpp:1586:import_operation$13
   end
 end

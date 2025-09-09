@@ -85,7 +85,7 @@ module \gen_test1
   wire width 16 \tmp1
   attribute \src "dut.sv:1.29-1.30"
   wire width 8 output 4 \y
-  cell $and $auto$expression.cpp:506:import_operation$13
+  cell $and $and$dut.sv:14$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -95,7 +95,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y \gen1[1].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$21
+  cell $and $and$dut.sv:14$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -105,7 +105,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y \gen1[2].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$29
+  cell $and $and$dut.sv:14$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -115,7 +115,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y \gen1[3].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$37
+  cell $and $and$dut.sv:14$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -125,7 +125,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y \gen1[4].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$45
+  cell $and $and$dut.sv:14$45
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -135,7 +135,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y \gen1[5].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$5
+  cell $and $and$dut.sv:14$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -145,7 +145,7 @@ module \gen_test1
     connect \B \b [0]
     connect \Y \gen1[0].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$53
+  cell $and $and$dut.sv:14$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -155,7 +155,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y \gen1[6].and_wire
   end
-  cell $and $auto$expression.cpp:506:import_operation$61
+  cell $and $and$dut.sv:14$61
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -165,7 +165,7 @@ module \gen_test1
     connect \B \b [7]
     connect \Y \gen1[7].and_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$15
+  cell $or $or$dut.sv:15$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -175,7 +175,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y \gen1[1].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$23
+  cell $or $or$dut.sv:15$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -185,7 +185,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y \gen1[2].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$31
+  cell $or $or$dut.sv:15$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -195,7 +195,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y \gen1[3].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$39
+  cell $or $or$dut.sv:15$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -205,7 +205,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y \gen1[4].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$47
+  cell $or $or$dut.sv:15$47
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -215,7 +215,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y \gen1[5].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$55
+  cell $or $or$dut.sv:15$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -225,7 +225,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y \gen1[6].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$63
+  cell $or $or$dut.sv:15$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -235,7 +235,7 @@ module \gen_test1
     connect \B \b [7]
     connect \Y \gen1[7].or_wire
   end
-  cell $or $auto$expression.cpp:510:import_operation$7
+  cell $or $or$dut.sv:15$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -244,62 +244,6 @@ module \gen_test1
     connect \A \a [0]
     connect \B \b [0]
     connect \Y \gen1[0].or_wire
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$65
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire \gen1[0].and_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$66
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$67
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire \gen1[1].or_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$68
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$69
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$70
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$71
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$72
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$73
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$74
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$75
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$76
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$77
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[6].or_wire \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$78
-  end
-  cell $reduce_xor $auto$expression.cpp:534:import_operation$79
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { \gen1[7].and_wire \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire }
-    connect \Y $auto$rtlil.cc:2964:ReduceXor$80
   end
   attribute \always_ff 1
   attribute \src "dut.sv:32.3-33.18"
@@ -372,6 +316,62 @@ module \gen_test1
     connect \CLK \clk
     connect \D $auto$rtlil.cc:2964:ReduceXor$80
     connect \Q \y [7]
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$65
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire \gen1[0].and_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$66
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$67
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire \gen1[1].or_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$68
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$69
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$70
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$71
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$72
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$73
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$74
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$75
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$76
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$77
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[6].or_wire \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$78
+  end
+  cell $reduce_xor $reduce_xor$dut.sv:33$79
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { \gen1[7].and_wire \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire }
+    connect \Y $auto$rtlil.cc:2964:ReduceXor$80
   end
   connect \gen3[0].gen4[0].tmpbuf \gen1[0].and_wire
   connect \gen3[0].gen4[1].tmpbuf \gen1[2].and_wire

@@ -9,6 +9,12 @@ module \fsm
   parameter \GNT0 3'010
   parameter \GNT1 3'100
   parameter \GNT2 3'101
+  wire $auto$expression.cpp:1586:import_operation$1
+  wire $auto$expression.cpp:1586:import_operation$15
+  wire $auto$expression.cpp:1586:import_operation$27
+  wire $auto$expression.cpp:1586:import_operation$47
+  wire $auto$expression.cpp:1586:import_operation$67
+  wire $auto$expression.cpp:1586:import_operation$81
   wire $auto$process.cpp:34:create_temp_wire$11
   wire $auto$process.cpp:34:create_temp_wire$13
   wire $auto$process.cpp:34:create_temp_wire$41
@@ -34,12 +40,6 @@ module \fsm
   wire $auto$rtlil.cc:3006:And$56
   wire $auto$rtlil.cc:3006:And$70
   wire $auto$rtlil.cc:3006:And$84
-  wire $auto$rtlil.cc:3013:Eq$16
-  wire $auto$rtlil.cc:3013:Eq$2
-  wire $auto$rtlil.cc:3013:Eq$28
-  wire $auto$rtlil.cc:3013:Eq$48
-  wire $auto$rtlil.cc:3013:Eq$68
-  wire $auto$rtlil.cc:3013:Eq$82
   wire width 3 $auto$rtlil.cc:3094:Mux$20
   wire $auto$rtlil.cc:3094:Mux$22
   wire $auto$rtlil.cc:3094:Mux$32
@@ -74,66 +74,6 @@ module \fsm
   attribute \reg 1
   attribute \src "dut.sv:13.20-13.25"
   wire width 3 \state
-  cell $eq $auto$expression.cpp:703:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \reset
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$2
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_0
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$16
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$27
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_1
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$28
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$47
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_0
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$48
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$67
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_1
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$68
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$81
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_0
-    connect \B 1'1
-    connect \Y $auto$rtlil.cc:3013:Eq$82
-  end
   cell $and $auto$process.cpp:3121:import_statement_sync$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -141,7 +81,7 @@ module \fsm
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$13
-    connect \B $auto$rtlil.cc:3013:Eq$16
+    connect \B $auto$expression.cpp:1586:import_operation$15
     connect \Y $auto$rtlil.cc:3006:And$18
   end
   cell $and $auto$process.cpp:3121:import_statement_sync$29
@@ -151,7 +91,7 @@ module \fsm
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3006:And$26
-    connect \B $auto$rtlil.cc:3013:Eq$28
+    connect \B $auto$expression.cpp:1586:import_operation$27
     connect \Y $auto$rtlil.cc:3006:And$30
   end
   cell $and $auto$process.cpp:3121:import_statement_sync$49
@@ -161,14 +101,14 @@ module \fsm
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$45
-    connect \B $auto$rtlil.cc:3013:Eq$48
+    connect \B $auto$expression.cpp:1586:import_operation$47
     connect \Y $auto$rtlil.cc:3006:And$50
   end
   cell $not $auto$process.cpp:3142:import_statement_sync$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3013:Eq$16
+    connect \A $auto$expression.cpp:1586:import_operation$15
     connect \Y $auto$rtlil.cc:2959:Not$24
   end
   cell $and $auto$process.cpp:3142:import_statement_sync$25
@@ -185,7 +125,7 @@ module \fsm
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3013:Eq$28
+    connect \A $auto$expression.cpp:1586:import_operation$27
     connect \Y $auto$rtlil.cc:2959:Not$36
   end
   cell $and $auto$process.cpp:3142:import_statement_sync$37
@@ -202,7 +142,7 @@ module \fsm
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3013:Eq$48
+    connect \A $auto$expression.cpp:1586:import_operation$47
     connect \Y $auto$rtlil.cc:2959:Not$54
   end
   cell $and $auto$process.cpp:3142:import_statement_sync$55
@@ -219,7 +159,7 @@ module \fsm
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3013:Eq$2
+    connect \A $auto$expression.cpp:1586:import_operation$1
     connect \Y $auto$rtlil.cc:2959:Not$10
   end
   attribute \src "dut.sv:25.15-33.26"
@@ -284,7 +224,7 @@ module \fsm
     parameter \WIDTH 3
     connect \A \state
     connect \B 3'001
-    connect \S $auto$rtlil.cc:3013:Eq$2
+    connect \S $auto$expression.cpp:1586:import_operation$1
     connect \Y $auto$rtlil.cc:3094:Mux$4
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$31
@@ -312,7 +252,7 @@ module \fsm
     parameter \WIDTH 1
     connect \A \gnt_0
     connect \B 1'0
-    connect \S $auto$rtlil.cc:3013:Eq$2
+    connect \S $auto$expression.cpp:1586:import_operation$1
     connect \Y $auto$rtlil.cc:3094:Mux$6
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$51
@@ -340,7 +280,7 @@ module \fsm
     parameter \WIDTH 1
     connect \A \gnt_1
     connect \B 1'0
-    connect \S $auto$rtlil.cc:3013:Eq$2
+    connect \S $auto$expression.cpp:1586:import_operation$1
     connect \Y $auto$rtlil.cc:3094:Mux$8
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$71
@@ -385,7 +325,7 @@ module \fsm
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$65
-    connect \B $auto$rtlil.cc:3013:Eq$68
+    connect \B $auto$expression.cpp:1586:import_operation$67
     connect \Y $auto$rtlil.cc:3006:And$70
   end
   cell $and $auto$process.cpp:4663:import_if_stmt_sync$83
@@ -395,7 +335,7 @@ module \fsm
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process.cpp:34:create_temp_wire$79
-    connect \B $auto$rtlil.cc:3013:Eq$82
+    connect \B $auto$expression.cpp:1586:import_operation$81
     connect \Y $auto$rtlil.cc:3006:And$84
   end
   cell $and $auto$process.cpp:48:create_and_cell$14
@@ -481,6 +421,72 @@ module \fsm
     connect \A $auto$process.cpp:34:create_temp_wire$63
     connect \B $auto$process.cpp:34:create_temp_wire$75
     connect \Y $auto$process.cpp:34:create_temp_wire$77
+  end
+  attribute \src "dut.sv:18.15-18.28"
+  cell $eq $eq$dut.sv:18$2
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \reset
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$1
+  end
+  attribute \src "dut.sv:25.27-25.40"
+  cell $eq $eq$dut.sv:25$16
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_0
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$15
+  end
+  attribute \src "dut.sv:28.36-28.49"
+  cell $eq $eq$dut.sv:28$28
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_1
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$27
+  end
+  attribute \src "dut.sv:34.27-34.40"
+  cell $eq $eq$dut.sv:34$48
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_0
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$47
+  end
+  attribute \src "dut.sv:40.27-40.40"
+  cell $eq $eq$dut.sv:40$68
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_1
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$67
+  end
+  attribute \src "dut.sv:44.27-44.40"
+  cell $eq $eq$dut.sv:44$82
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_0
+    connect \B 1'1
+    connect \Y $auto$expression.cpp:1586:import_operation$81
   end
   attribute \always_ff 1
   attribute \src "dut.sv:16.5-50.12"

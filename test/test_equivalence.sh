@@ -86,23 +86,27 @@ fi
 # Only fail if UHDM has X assignments that Verilog doesn't have for the same signal
 if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1; then
     # UHDM has X assignments - check if Verilog has them too
-    UHDM_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | sed 's/^[[:space:]]*assign[[:space:]]*\([^[:space:]]*\).*/\1/' | sort -u)
-    VERILOG_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$VERILOG_SYNTH" 2>/dev/null | sed 's/^[[:space:]]*assign[[:space:]]*\([^[:space:]]*\).*/\1/' | sort -u || true)
+    # Extract signal names more carefully, handling escaped identifiers and spaces
+    UHDM_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sort -u)
+    VERILOG_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$VERILOG_SYNTH" 2>/dev/null | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sort -u || true)
     
     # Check each X assignment in UHDM
     HAS_UNIQUE_X=0
-    for signal in $UHDM_X_ASSIGNS; do
-        # Escape special characters for grep
-        escaped_signal=$(echo "$signal" | sed 's/\[/\\[/g; s/\]/\\]/g')
-        if ! echo "$VERILOG_X_ASSIGNS" | grep -q "^$escaped_signal$"; then
+    while IFS= read -r signal; do
+        # Skip empty lines
+        [ -z "$signal" ] && continue
+        
+        # Check if this exact signal exists in Verilog X assignments
+        if ! echo "$VERILOG_X_ASSIGNS" | grep -Fx "$signal" > /dev/null 2>&1; then
             if [ $HAS_UNIQUE_X -eq 0 ]; then
                 echo "❌ CRITICAL ERROR for $TEST_NAME: UHDM synthesized netlist contains X assignments not present in Verilog!"
                 echo "   UHDM has X assignment to signal: $signal"
                 HAS_UNIQUE_X=1
             fi
-            grep "assign $signal.*=.*x" "$UHDM_SYNTH" | head -1
+            # Show the actual assignment line
+            grep -F "assign $signal " "$UHDM_SYNTH" | head -1
         fi
-    done
+    done <<< "$UHDM_X_ASSIGNS"
     
     if [ $HAS_UNIQUE_X -eq 1 ]; then
         echo "   This indicates a serious bug in $TEST_NAME - the design is non-functional"

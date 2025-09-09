@@ -3,8 +3,8 @@ autoidx 7
 attribute \src "dut.sv:1.1-10.10"
 attribute \top 1
 module \opt_share_test
-  wire width 16 $auto$expression.cpp:569:import_operation$1
-  wire width 16 $auto$expression.cpp:591:import_operation$3
+  wire width 16 $auto$expression.cpp:1442:import_operation$1
+  wire width 16 $auto$expression.cpp:1465:import_operation$3
   attribute \src "dut.sv:2.17-2.18"
   wire width 16 input 1 \a
   attribute \src "dut.sv:3.17-3.18"
@@ -13,7 +13,7 @@ module \opt_share_test
   wire width 16 output 4 \res
   attribute \src "dut.sv:4.17-4.20"
   wire input 3 \sel
-  cell $add $auto$expression.cpp:583:import_operation$2
+  cell $add $add$dut.sv:8$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_SIGNED 0
@@ -21,23 +21,23 @@ module \opt_share_test
     parameter \Y_WIDTH 16
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:569:import_operation$1
+    connect \Y $auto$expression.cpp:1442:import_operation$1
   end
-  cell $sub $auto$expression.cpp:605:import_operation$4
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 16
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 16
-    parameter \Y_WIDTH 16
-    connect \A \a
-    connect \B \b
-    connect \Y $auto$expression.cpp:591:import_operation$3
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$5
+  cell $mux $mux$dut.sv:8$5
     parameter \WIDTH 16
-    connect \A $auto$expression.cpp:591:import_operation$3
-    connect \B $auto$expression.cpp:569:import_operation$1
+    connect \A $auto$expression.cpp:1465:import_operation$3
+    connect \B $auto$expression.cpp:1442:import_operation$1
     connect \S \sel
     connect \Y \res
+  end
+  cell $sub $sub$dut.sv:8$4
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 16
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$expression.cpp:1465:import_operation$3
   end
 end

@@ -32,16 +32,6 @@ module \always03
   wire output 10 \out2
   attribute \src "dut.sv:1.71-1.75"
   wire output 11 \out3
-  cell $xor $auto$expression.cpp:514:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \out1
-    connect \B \out2
-    connect \Y $auto$rtlil.cc:3008:Xor$16
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:7.1-20.4"
   cell $dffe $auto$ff.cc:266:slice$20
@@ -120,5 +110,15 @@ module \always03
     connect \CLK \clock
     connect \D $auto$rtlil.cc:3008:Xor$16
     connect \Q \out1
+  end
+  cell $xor $xor$dut.sv:19$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \out1
+    connect \B \out2
+    connect \Y $auto$rtlil.cc:3008:Xor$16
   end
 end

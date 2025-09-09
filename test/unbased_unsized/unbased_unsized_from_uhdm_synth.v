@@ -1186,21 +1186,6 @@ module unbased_unsized();
     .EN(1'h1),
     .TRG()
   );
-  (* src = "dut.sv:30.9-30.38" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967295),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _379_ (
-    .A(1'h1),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
   (* src = "dut.sv:35.9-35.38" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -1210,7 +1195,7 @@ module unbased_unsized();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _380_ (
+  ) _379_ (
     .A(_000_),
     .ARGS(),
     .EN(1'h1),
@@ -1225,7 +1210,7 @@ module unbased_unsized();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _381_ (
+  ) _380_ (
     .A(_001_),
     .ARGS(),
     .EN(1'h1),
@@ -1240,8 +1225,23 @@ module unbased_unsized();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _382_ (
+  ) _381_ (
     .A(_002_),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* src = "dut.sv:38.9-38.38" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967295),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _382_ (
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()

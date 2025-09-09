@@ -314,6 +314,17 @@ struct UhdmImporter {
     static RTLIL::Const extract_const_from_value(const std::string& value_str);
     RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
     
+    // Process function body and generate process blocks
+    void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
+                              RTLIL::Wire* result_wire,
+                              const std::map<std::string, RTLIL::SigSpec>& input_mapping,
+                              const std::string& func_name,
+                              int& temp_counter,
+                              const std::string& func_call_context,
+                              const std::map<std::string, int>& local_var_widths = {});
+    RTLIL::Process* generate_function_process(const UHDM::function* func_def, const std::string& func_name,
+                                              const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire, const UHDM::func_call* fc);
+    
     // Signal name extraction from UHDM
     bool extract_signal_names_from_process(const UHDM::any* stmt, 
                                          std::string& output_signal, 

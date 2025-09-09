@@ -6,7 +6,7 @@ attribute \top 1
 module \priority_memory
   parameter \ABITS 4
   parameter \WIDTH 8
-  wire $auto$rtlil.cc:3013:Eq$5
+  wire $auto$expression.cpp:1586:import_operation$4
   wire $auto$rtlil.cc:3026:LogicAnd$7
   wire width 4 $memwr$\mem$addr$1
   wire width 8 $memwr$\mem$data$2
@@ -45,26 +45,6 @@ module \priority_memory
   wire input 7 \wren_b
   attribute \src "dut.sv:15.18-15.21"
   memory width 8 size 16 \mem
-  cell $logic_and $auto$expression.cpp:498:import_operation$6
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \wren_a
-    connect \B $auto$rtlil.cc:3013:Eq$5
-    connect \Y $auto$rtlil.cc:3026:LogicAnd$7
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$4
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \addr_a
-    connect \B \addr_b
-    connect \Y $auto$rtlil.cc:3013:Eq$5
-  end
   cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$39
     parameter \ABITS 4
     parameter \CLK_ENABLE 1'1
@@ -77,6 +57,27 @@ module \priority_memory
     connect \CLK \clk
     connect \DATA $memwr$\mem$data$2
     connect \EN { $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 $memwr$\mem$en$3 }
+  end
+  attribute \src "dut.sv:34.18-34.34"
+  cell $eq $eq$dut.sv:34$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \addr_a
+    connect \B \addr_b
+    connect \Y $auto$expression.cpp:1586:import_operation$4
+  end
+  cell $logic_and $logic_and$dut.sv:34$6
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \wren_a
+    connect \B $auto$expression.cpp:1586:import_operation$4
+    connect \Y $auto$rtlil.cc:3026:LogicAnd$7
   end
   attribute \src "dut.sv:33.8-37.28"
   cell $mux $procmux$11

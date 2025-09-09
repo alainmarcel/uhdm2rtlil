@@ -47,7 +47,7 @@ module \code_hdl_models_parallel_crc
   wire width 16 \next_crc
   attribute \src "dut.sv:9.1-9.6"
   wire input 2 \reset
-  cell $xor $auto$expression.cpp:514:import_operation$1
+  cell $xor $xor$dut.sv:40$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -57,107 +57,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [0]
     connect \Y $auto$rtlil.cc:3008:Xor$2
   end
-  cell $xor $auto$expression.cpp:514:import_operation$11
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [3]
-    connect \B \crc_reg [7]
-    connect \Y $auto$rtlil.cc:3008:Xor$12
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [4]
-    connect \B \crc_reg [8]
-    connect \Y $auto$rtlil.cc:3008:Xor$14
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [7]
-    connect \B \data_in [5]
-    connect \Y $auto$rtlil.cc:3008:Xor$16
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$17
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$16
-    connect \B \data_in [0]
-    connect \Y $auto$rtlil.cc:3008:Xor$18
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$19
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$18
-    connect \B \crc_reg [4]
-    connect \Y $auto$rtlil.cc:3008:Xor$20
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$21
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$20
-    connect \B \crc_reg [9]
-    connect \Y $auto$rtlil.cc:3008:Xor$22
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$23
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$22
-    connect \B \crc_reg [11]
-    connect \Y $auto$rtlil.cc:3008:Xor$24
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [6]
-    connect \B \data_in [1]
-    connect \Y $auto$rtlil.cc:3008:Xor$26
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$27
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$26
-    connect \B \crc_reg [5]
-    connect \Y $auto$rtlil.cc:3008:Xor$28
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$29
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$28
-    connect \B \crc_reg [10]
-    connect \Y $auto$rtlil.cc:3008:Xor$30
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$3
+  cell $xor $xor$dut.sv:40$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -167,107 +67,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [4]
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $xor $auto$expression.cpp:514:import_operation$31
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [7]
-    connect \B \data_in [2]
-    connect \Y $auto$rtlil.cc:3008:Xor$32
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$32
-    connect \B \crc_reg [6]
-    connect \Y $auto$rtlil.cc:3008:Xor$34
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$35
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$34
-    connect \B \crc_reg [11]
-    connect \Y $auto$rtlil.cc:3008:Xor$36
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [3]
-    connect \B \crc_reg [0]
-    connect \Y $auto$rtlil.cc:3008:Xor$38
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$39
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$38
-    connect \B \crc_reg [7]
-    connect \Y $auto$rtlil.cc:3008:Xor$40
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [4]
-    connect \B \crc_reg [1]
-    connect \Y $auto$rtlil.cc:3008:Xor$42
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$43
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$42
-    connect \B \crc_reg [8]
-    connect \Y $auto$rtlil.cc:3008:Xor$44
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$45
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [5]
-    connect \B \crc_reg [2]
-    connect \Y $auto$rtlil.cc:3008:Xor$46
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$47
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$46
-    connect \B \crc_reg [9]
-    connect \Y $auto$rtlil.cc:3008:Xor$48
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$49
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \data_in [6]
-    connect \B \crc_reg [3]
-    connect \Y $auto$rtlil.cc:3008:Xor$50
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$5
+  cell $xor $xor$dut.sv:40$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -277,17 +77,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y $auto$rtlil.cc:3008:Xor$6
   end
-  cell $xor $auto$expression.cpp:514:import_operation$51
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3008:Xor$50
-    connect \B \crc_reg [10]
-    connect \Y $auto$rtlil.cc:3008:Xor$52
-  end
-  cell $xor $auto$expression.cpp:514:import_operation$7
+  cell $xor $xor$dut.sv:41$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -297,7 +87,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [5]
     connect \Y $auto$rtlil.cc:3008:Xor$8
   end
-  cell $xor $auto$expression.cpp:514:import_operation$9
+  cell $xor $xor$dut.sv:42$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -306,6 +96,216 @@ module \code_hdl_models_parallel_crc
     connect \A \data_in [2]
     connect \B \crc_reg [6]
     connect \Y $auto$rtlil.cc:3008:Xor$10
+  end
+  cell $xor $xor$dut.sv:43$11
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [3]
+    connect \B \crc_reg [7]
+    connect \Y $auto$rtlil.cc:3008:Xor$12
+  end
+  cell $xor $xor$dut.sv:44$13
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [4]
+    connect \B \crc_reg [8]
+    connect \Y $auto$rtlil.cc:3008:Xor$14
+  end
+  cell $xor $xor$dut.sv:45$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [7]
+    connect \B \data_in [5]
+    connect \Y $auto$rtlil.cc:3008:Xor$16
+  end
+  cell $xor $xor$dut.sv:45$17
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$16
+    connect \B \data_in [0]
+    connect \Y $auto$rtlil.cc:3008:Xor$18
+  end
+  cell $xor $xor$dut.sv:45$19
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$18
+    connect \B \crc_reg [4]
+    connect \Y $auto$rtlil.cc:3008:Xor$20
+  end
+  cell $xor $xor$dut.sv:45$21
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$20
+    connect \B \crc_reg [9]
+    connect \Y $auto$rtlil.cc:3008:Xor$22
+  end
+  cell $xor $xor$dut.sv:45$23
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$22
+    connect \B \crc_reg [11]
+    connect \Y $auto$rtlil.cc:3008:Xor$24
+  end
+  cell $xor $xor$dut.sv:46$25
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [6]
+    connect \B \data_in [1]
+    connect \Y $auto$rtlil.cc:3008:Xor$26
+  end
+  cell $xor $xor$dut.sv:46$27
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$26
+    connect \B \crc_reg [5]
+    connect \Y $auto$rtlil.cc:3008:Xor$28
+  end
+  cell $xor $xor$dut.sv:46$29
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$28
+    connect \B \crc_reg [10]
+    connect \Y $auto$rtlil.cc:3008:Xor$30
+  end
+  cell $xor $xor$dut.sv:47$31
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [7]
+    connect \B \data_in [2]
+    connect \Y $auto$rtlil.cc:3008:Xor$32
+  end
+  cell $xor $xor$dut.sv:47$33
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$32
+    connect \B \crc_reg [6]
+    connect \Y $auto$rtlil.cc:3008:Xor$34
+  end
+  cell $xor $xor$dut.sv:47$35
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$34
+    connect \B \crc_reg [11]
+    connect \Y $auto$rtlil.cc:3008:Xor$36
+  end
+  cell $xor $xor$dut.sv:48$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [3]
+    connect \B \crc_reg [0]
+    connect \Y $auto$rtlil.cc:3008:Xor$38
+  end
+  cell $xor $xor$dut.sv:48$39
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$38
+    connect \B \crc_reg [7]
+    connect \Y $auto$rtlil.cc:3008:Xor$40
+  end
+  cell $xor $xor$dut.sv:49$41
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [4]
+    connect \B \crc_reg [1]
+    connect \Y $auto$rtlil.cc:3008:Xor$42
+  end
+  cell $xor $xor$dut.sv:49$43
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$42
+    connect \B \crc_reg [8]
+    connect \Y $auto$rtlil.cc:3008:Xor$44
+  end
+  cell $xor $xor$dut.sv:50$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [5]
+    connect \B \crc_reg [2]
+    connect \Y $auto$rtlil.cc:3008:Xor$46
+  end
+  cell $xor $xor$dut.sv:50$47
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$46
+    connect \B \crc_reg [9]
+    connect \Y $auto$rtlil.cc:3008:Xor$48
+  end
+  cell $xor $xor$dut.sv:51$49
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \data_in [6]
+    connect \B \crc_reg [3]
+    connect \Y $auto$rtlil.cc:3008:Xor$50
+  end
+  cell $xor $xor$dut.sv:51$51
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3008:Xor$50
+    connect \B \crc_reg [10]
+    connect \Y $auto$rtlil.cc:3008:Xor$52
   end
   attribute \always_ff 1
   attribute \src "dut.sv:29.1-38.4"

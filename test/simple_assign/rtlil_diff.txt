@@ -44,16 +44,14 @@
    attribute \src "dut.sv:2.16-2.17"
    wire input 1 \a
    attribute \src "dut.sv:3.16-3.17"
-@@ -43,8 +32,7 @@
+@@ -43,7 +32,6 @@
    wire output 8 \out_not
    attribute \src "dut.sv:8.17-8.23"
    wire output 7 \out_or
 -  attribute \src "dut.sv:14.22-14.27"
--  cell $and $and$dut.sv:14$1
-+  cell $and $auto$expression.cpp:506:import_operation$1
+   cell $and $and$dut.sv:14$1
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
-     parameter \B_SIGNED 0
 @@ -52,21 +40,19 @@
      parameter \Y_WIDTH 1
      connect \A \a
@@ -63,35 +61,34 @@
    end
 -  attribute \src "dut.sv:14.22-14.31"
 -  cell $and $and$dut.sv:14$2
-+  cell $and $auto$expression.cpp:506:import_operation$11
++  cell $and $and$dut.sv:14$3
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
      parameter \B_WIDTH 1
      parameter \Y_WIDTH 1
 -    connect \A $and$dut.sv:14$1_Y
--    connect \B \c
++    connect \A $auto$rtlil.cc:3006:And$2
+     connect \B \c
 -    connect \Y $and$dut.sv:14$2_Y
-+    connect \A \a
-+    connect \B \b
-+    connect \Y $auto$rtlil.cc:3006:And$12
++    connect \Y $auto$rtlil.cc:3006:And$4
    end
 -  attribute \src "dut.sv:16.24-16.29"
 -  cell $and $and$dut.sv:16$6
-+  cell $and $auto$expression.cpp:506:import_operation$15
++  cell $and $and$dut.sv:16$11
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
-@@ -74,51 +60,49 @@
+@@ -74,51 +60,46 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
 -    connect \Y $and$dut.sv:16$6_Y
-+    connect \Y $auto$rtlil.cc:3006:And$16
++    connect \Y $auto$rtlil.cc:3006:And$12
    end
 -  attribute \src "dut.sv:17.37-17.46"
 -  cell $and $and$dut.sv:17$10
-+  cell $and $auto$expression.cpp:506:import_operation$17
++  cell $and $and$dut.sv:17$15
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -100,13 +97,13 @@
 -    connect \A $and$dut.sv:17$9_Y
 -    connect \B \e
 -    connect \Y $and$dut.sv:17$10_Y
-+    connect \A \c
-+    connect \B \d
-+    connect \Y $auto$rtlil.cc:3006:And$18
++    connect \A \a
++    connect \B \b
++    connect \Y $auto$rtlil.cc:3006:And$16
    end
 -  attribute \src "dut.sv:17.27-17.32"
 -  cell $and $and$dut.sv:17$8
-+  cell $and $auto$expression.cpp:506:import_operation$19
++  cell $and $and$dut.sv:17$17
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -115,13 +112,13 @@
 -    connect \A \a
 -    connect \B \b
 -    connect \Y $and$dut.sv:17$8_Y
-+    connect \A $auto$rtlil.cc:3006:And$18
-+    connect \B \e
-+    connect \Y $auto$rtlil.cc:3006:And$20
++    connect \A \c
++    connect \B \d
++    connect \Y $auto$rtlil.cc:3006:And$18
    end
 -  attribute \src "dut.sv:17.37-17.42"
 -  cell $and $and$dut.sv:17$9
-+  cell $and $auto$expression.cpp:506:import_operation$3
++  cell $and $and$dut.sv:17$19
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -130,31 +127,28 @@
 -    connect \A \c
 -    connect \B \d
 -    connect \Y $and$dut.sv:17$9_Y
-+    connect \A $auto$rtlil.cc:3006:And$2
-+    connect \B \c
-+    connect \Y $auto$rtlil.cc:3006:And$4
++    connect \A $auto$rtlil.cc:3006:And$18
++    connect \B \e
++    connect \Y $auto$rtlil.cc:3006:And$20
    end
 -  attribute \src "dut.sv:16.22-16.30"
 -  cell $not $not$dut.sv:16$7
-+  cell $or $auto$expression.cpp:510:import_operation$21
++  cell $not $not$dut.sv:16$13
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
-+    parameter \B_SIGNED 0
-+    parameter \B_WIDTH 1
      parameter \Y_WIDTH 1
 -    connect \A $and$dut.sv:16$6_Y
 -    connect \Y $not$dut.sv:16$7_Y
-+    connect \A $auto$rtlil.cc:3006:And$16
-+    connect \B $auto$rtlil.cc:3006:And$20
-+    connect \Y $auto$rtlil.cc:3007:Or$22
++    connect \A $auto$rtlil.cc:3006:And$12
++    connect \Y $auto$rtlil.cc:2959:Not$14
    end
 -  attribute \src "dut.sv:15.21-15.26"
 -  cell $or $or$dut.sv:15$3
-+  cell $or $auto$expression.cpp:510:import_operation$5
++  cell $or $or$dut.sv:15$5
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
-@@ -126,43 +110,37 @@
+@@ -126,43 +107,40 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
@@ -163,7 +157,7 @@
    end
 -  attribute \src "dut.sv:15.21-15.30"
 -  cell $or $or$dut.sv:15$4
-+  cell $or $auto$expression.cpp:510:import_operation$7
++  cell $or $or$dut.sv:15$7
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -177,7 +171,7 @@
    end
 -  attribute \src "dut.sv:15.21-15.34"
 -  cell $or $or$dut.sv:15$5
-+  cell $or $auto$expression.cpp:510:import_operation$9
++  cell $or $or$dut.sv:15$9
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
      parameter \B_SIGNED 0
@@ -191,17 +185,18 @@
    end
 -  attribute \src "dut.sv:17.26-17.47"
 -  cell $or $or$dut.sv:17$11
-+  cell $not $auto$expression.cpp:518:import_operation$13
++  cell $or $or$dut.sv:17$21
      parameter \A_SIGNED 0
      parameter \A_WIDTH 1
--    parameter \B_SIGNED 0
--    parameter \B_WIDTH 1
+     parameter \B_SIGNED 0
+     parameter \B_WIDTH 1
      parameter \Y_WIDTH 1
 -    connect \A $and$dut.sv:17$8_Y
 -    connect \B $and$dut.sv:17$10_Y
 -    connect \Y $or$dut.sv:17$11_Y
-+    connect \A $auto$rtlil.cc:3006:And$12
-+    connect \Y $auto$rtlil.cc:2959:Not$14
++    connect \A $auto$rtlil.cc:3006:And$16
++    connect \B $auto$rtlil.cc:3006:And$20
++    connect \Y $auto$rtlil.cc:3007:Or$22
    end
 -  connect \out_and $and$dut.sv:14$2_Y
 -  connect \out_or $or$dut.sv:15$5_Y
