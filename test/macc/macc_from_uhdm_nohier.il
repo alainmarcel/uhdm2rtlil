@@ -12,8 +12,8 @@ module \macc
   wire width 32 $0\mult_reg[31:0]
   wire width 40 $0\old_result
   wire $0\sload_reg[0:0]
-  wire width 40 $auto$expression.cpp:569:import_operation$3
-  wire width 32 $auto$expression.cpp:613:import_operation$1
+  wire width 40 $auto$expression.cpp:1442:import_operation$3
+  wire width 32 $auto$expression.cpp:1488:import_operation$1
   wire $auto$module.cpp:681:import_continuous_assign$10
   wire width 32 $auto$module.cpp:681:import_continuous_assign$12
   wire width 40 $auto$module.cpp:681:import_continuous_assign$14
@@ -49,7 +49,7 @@ module \macc
   attribute \reg 1
   attribute \src "dut.sv:14.5-14.18"
   wire \sload_reg
-  cell $add $auto$expression.cpp:583:import_operation$4
+  cell $add $add$dut.sv:35$4
     parameter \A_SIGNED 1
     parameter \A_WIDTH 40
     parameter \B_SIGNED 1
@@ -57,9 +57,9 @@ module \macc
     parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:569:import_operation$3
+    connect \Y $auto$expression.cpp:1442:import_operation$3
   end
-  cell $mul $auto$expression.cpp:630:import_operation$2
+  cell $mul $mul$dut.sv:32$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \B_SIGNED 1
@@ -67,7 +67,7 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:613:import_operation$1
+    connect \Y $auto$expression.cpp:1488:import_operation$1
   end
   attribute \src "dut.sv:13.25-13.30"
   process $proc$dut.sv:13$5
@@ -133,9 +133,9 @@ module \macc
       case 1'1
         assign $0\a_reg[15:0] \a
         assign $0\b_reg[15:0] \b
-        assign $0\mult_reg[31:0] $auto$expression.cpp:613:import_operation$1
+        assign $0\mult_reg[31:0] $auto$expression.cpp:1488:import_operation$1
         assign $0\sload_reg[0:0] \sload
-        assign $0\adder_out[39:0] $auto$expression.cpp:569:import_operation$3
+        assign $0\adder_out[39:0] $auto$expression.cpp:1442:import_operation$3
       case 
     end
     sync posedge \clk
@@ -153,8 +153,8 @@ attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 41 $auto$expression.cpp:569:import_operation$17
-  wire width 32 $auto$expression.cpp:613:import_operation$15
+  wire width 41 $auto$expression.cpp:1442:import_operation$17
+  wire width 32 $auto$expression.cpp:1488:import_operation$15
   wire width 16 $auto$module.cpp:681:import_continuous_assign$34
   wire width 16 $auto$module.cpp:681:import_continuous_assign$36
   wire width 16 $auto$module.cpp:681:import_continuous_assign$38
@@ -207,17 +207,7 @@ module \macc2
   wire \overflow_reg
   attribute \src "dut.sv:47.8-47.11"
   wire input 3 \rst
-  cell $or $auto$expression.cpp:510:import_operation$49
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3017:Ge$48
-    connect \B \overflow_reg
-    connect \Y $auto$rtlil.cc:3007:Or$50
-  end
-  cell $add $auto$expression.cpp:583:import_operation$18
+  cell $add $add$dut.sv:66$18
     parameter \A_SIGNED 1
     parameter \A_WIDTH 41
     parameter \B_SIGNED 1
@@ -225,34 +215,7 @@ module \macc2
     parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:569:import_operation$17
-  end
-  cell $mul $auto$expression.cpp:630:import_operation$16
-    parameter \A_SIGNED 1
-    parameter \A_WIDTH 16
-    parameter \B_SIGNED 1
-    parameter \B_WIDTH 16
-    parameter \Y_WIDTH 32
-    connect \A \a_reg2
-    connect \B \b_reg2
-    connect \Y $auto$expression.cpp:613:import_operation$15
-  end
-  cell $ge $auto$expression.cpp:728:import_operation$47
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 41
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \adder_out
-    connect \B 64'0000000000000000000000001000000000000000000000000000000000000000
-    connect \Y $auto$rtlil.cc:3017:Ge$48
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$51
-    parameter \WIDTH 64
-    connect \A { 23'00000000000000000000000 \adder_out }
-    connect \B 64'0000000000000000000000000111111111111111111111111111111111111111
-    connect \S \overflow
-    connect \Y $auto$rtlil.cc:3094:Mux$52
+    connect \Y $auto$expression.cpp:1442:import_operation$17
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$19
     parameter \WIDTH 16
@@ -284,14 +247,14 @@ module \macc2
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$27
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:613:import_operation$15
+    connect \A $auto$expression.cpp:1488:import_operation$15
     connect \B 0
     connect \S \rst
     connect \Y $auto$rtlil.cc:3094:Mux$28
   end
   cell $mux $auto$process.cpp:4297:import_assignment_sync$29
     parameter \WIDTH 41
-    connect \A $auto$expression.cpp:569:import_operation$17
+    connect \A $auto$expression.cpp:1442:import_operation$17
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
     connect \Y $auto$rtlil.cc:3094:Mux$30
@@ -302,6 +265,43 @@ module \macc2
     connect \B 1'0
     connect \S \rst
     connect \Y $auto$rtlil.cc:3094:Mux$32
+  end
+  cell $ge $ge$dut.sv:79$47
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 41
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \adder_out
+    connect \B 64'0000000000000000000000001000000000000000000000000000000000000000
+    connect \Y $auto$rtlil.cc:3017:Ge$48
+  end
+  cell $mul $mul$dut.sv:64$16
+    parameter \A_SIGNED 1
+    parameter \A_WIDTH 16
+    parameter \B_SIGNED 1
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 32
+    connect \A \a_reg2
+    connect \B \b_reg2
+    connect \Y $auto$expression.cpp:1488:import_operation$15
+  end
+  cell $mux $mux$dut.sv:82$51
+    parameter \WIDTH 64
+    connect \A { 23'00000000000000000000000 \adder_out }
+    connect \B 64'0000000000000000000000000111111111111111111111111111111111111111
+    connect \S \overflow
+    connect \Y $auto$rtlil.cc:3094:Mux$52
+  end
+  cell $or $or$dut.sv:79$49
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3017:Ge$48
+    connect \B \overflow_reg
+    connect \Y $auto$rtlil.cc:3007:Or$50
   end
   attribute \src "dut.sv:53.25-53.30"
   process $proc$dut.sv:53$33

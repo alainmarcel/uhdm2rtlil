@@ -9,3 +9,7 @@
 case_expr_const
 forloops
 mem2reg_test1
+
+# Tests with partial function support (function calls work, but not full function definitions):
+code_tidbits_fsm_using_function
+many_functions

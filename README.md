@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 93 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (90/93 tests functional)
+- **Total Tests**: 94 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 94% (89/94 tests functional)
 - **Perfect Matches**: 84 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
@@ -23,10 +23,12 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 3 tests with issues:
+- **Known Failures**: 5 tests with issues:
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
+  - `code_tidbits_fsm_using_function` - Partial function support (function calls work, full definitions not yet supported)
+  - `many_functions` - Partial function support (function calls work, full definitions not yet supported)
 - **Recent Fixes**:
   - `genblk_order` - Fixed nested generate blocks with same name ✅
     - Reordered generate scope import to process nested scopes before continuous assignments
@@ -44,11 +46,15 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - Improved shift register detection to run before array_net processing ✅
   - Fixed traversal depth in `has_only_constant_array_accesses` for proper dynamic access detection ✅
   - Added support for vpiIf statement type in array access checking ✅
-  - `code_tidbits_fsm_using_function` - Added function call support with inlining ✅
-    - Implemented func_call expression handling in expression.cpp
+  - `code_tidbits_fsm_using_function` - Added partial function support ⚠️
+    - Implemented func_call expression handling with inlining
     - Functions are inlined as combinational logic (mux trees for case statements)
     - Maps function arguments to temporary wires and extracts return value
-    - Produces functionally equivalent but more optimized netlist (26 vs 34 gates)
+    - Function calls work but full function definitions not yet complete
+  - Added consistent cell naming with source location tracking for all cell types ✅
+    - Created `generate_cell_name()` helper function for standardized naming
+    - Applied to all arithmetic, logical, comparison, and reduction operations
+    - Improves debugging with source file and line number in cell names
 
 ## Architecture & Workflow
 
@@ -97,7 +103,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Expressions**: 
   - Arithmetic, logical, bitwise, comparison, ternary operators
   - System function calls ($signed, $unsigned)
-  - User-defined function calls with inlining
+  - User-defined function calls with partial support (inlining works, full function definitions in progress)
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
   - Parameter references with HEX/BIN/DEC formats

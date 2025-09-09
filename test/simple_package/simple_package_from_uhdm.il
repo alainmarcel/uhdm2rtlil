@@ -9,8 +9,8 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \COUNTER_WIDTH 5
   wire width 5 $0\counter
   attribute \unused_bits "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:569:import_operation$5
-  wire $auto$rtlil.cc:3013:Eq$8
+  wire width 64 $auto$expression.cpp:1442:import_operation$5
+  wire $auto$expression.cpp:1586:import_operation$7
   attribute \src "dut.sv:65.38-65.41"
   wire input 1 \clk
   attribute \src "dut.sv:75.31-75.38"
@@ -21,7 +21,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   wire width 50 output 4 \data_out
   attribute \src "dut.sv:66.38-66.43"
   wire input 2 \rst_n
-  cell $add $auto$expression.cpp:583:import_operation$6
+  cell $add $add$dut.sv:85$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \B_SIGNED 0
@@ -29,14 +29,15 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:569:import_operation$5 [63:5] $0\counter }
+    connect \Y { $auto$expression.cpp:1442:import_operation$5 [63:5] $0\counter }
   end
-  cell $logic_not $auto$expression.cpp:703:import_operation$7
+  attribute \src "dut.sv:91.17-91.29"
+  cell $logic_not $eq$dut.sv:91$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A \counter
-    connect \Y $auto$rtlil.cc:3013:Eq$8
+    connect \Y $auto$expression.cpp:1586:import_operation$7
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -70,10 +71,10 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \WIDTH 1
     connect \A \data_in [1]
     connect \B 1'1
-    connect \S $auto$rtlil.cc:3013:Eq$8
+    connect \S $auto$expression.cpp:1586:import_operation$7
     connect \Y \data_out [0]
   end
-  connect $auto$expression.cpp:569:import_operation$5 [4:0] $0\counter
+  connect $auto$expression.cpp:1442:import_operation$5 [4:0] $0\counter
 end
 attribute \dynports 1
 attribute \src "dut.sv:25.1-59.10"
@@ -87,6 +88,8 @@ module \simple_package
   wire width 50 output 4 \bus_out
   attribute \src "dut.sv:28.38-28.41"
   wire input 1 \clk
+  attribute \nosync 1
+  wire width 32 \increment_data$func$dut.sv:47$2.input_data
   attribute \src "dut.sv:35.23-35.35"
   attribute \wiretype "\\my_pkg::bus_transaction_t"
   wire width 50 \internal_bus
@@ -103,13 +106,13 @@ module \simple_package
     connect \ARST \rst_n
     connect \CLK \clk
     connect \D \bus_in
-    connect \Q { 32'00000000000000000000000000000000 \internal_bus [17:0] }
+    connect \Q \internal_bus
   end
   cell $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101 \sub_inst
     connect \clk \clk
-    connect \data_in { 32'00000000000000000000000000000000 \internal_bus [17:0] }
+    connect \data_in \internal_bus
     connect \data_out \bus_out
     connect \rst_n \rst_n
   end
-  connect \internal_bus [49:18] 0
+  connect \increment_data$func$dut.sv:47$2.input_data 32'x
 end

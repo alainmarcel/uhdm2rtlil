@@ -6,7 +6,7 @@ attribute \top 1
 module \mul_signed_async
   parameter \M 8
   parameter \N 6
-  wire width 14 $auto$expression.cpp:613:import_operation$1
+  wire width 14 $auto$expression.cpp:1488:import_operation$1
   attribute \src "dut.sv:1.40-1.41"
   wire width 8 input 4 \a
   attribute \reg 1
@@ -25,16 +25,6 @@ module \mul_signed_async
   wire width 14 output 6 signed \p
   attribute \src "dut.sv:1.31-1.34"
   wire input 2 \rst
-  cell $mul $auto$expression.cpp:630:import_operation$2
-    parameter \A_SIGNED 1
-    parameter \A_WIDTH 8
-    parameter \B_SIGNED 1
-    parameter \B_WIDTH 6
-    parameter \Y_WIDTH 14
-    connect \A \a_reg
-    connect \B \b_reg
-    connect \Y $auto$expression.cpp:613:import_operation$1
-  end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
   attribute \src "dut.sv:18.5-30.8"
@@ -46,7 +36,7 @@ module \mul_signed_async
     parameter \WIDTH 14
     connect \ARST \rst
     connect \CLK \clk
-    connect \D $auto$expression.cpp:613:import_operation$1
+    connect \D $auto$expression.cpp:1488:import_operation$1
     connect \EN \en
     connect \Q \p
   end
@@ -79,5 +69,15 @@ module \mul_signed_async
     connect \D \b
     connect \EN \en
     connect \Q \b_reg
+  end
+  cell $mul $mul$dut.sv:28$2
+    parameter \A_SIGNED 1
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 1
+    parameter \B_WIDTH 6
+    parameter \Y_WIDTH 14
+    connect \A \a_reg
+    connect \B \b_reg
+    connect \Y $auto$expression.cpp:1488:import_operation$1
   end
 end

@@ -61,7 +61,7 @@ module \dffa1
   wire input 3 \d
   attribute \src "dut.sv:20.28-20.29"
   wire output 4 \q
-  cell $not $auto$expression.cpp:518:import_operation$1
+  cell $not $not$dut.sv:24$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
@@ -145,13 +145,6 @@ module \dffa3
   wire input 3 \d
   attribute \src "dut.sv:42.28-42.29"
   wire output 4 \q
-  cell $not $auto$expression.cpp:518:import_operation$3
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $logic_not$dut.sv:46.8-46.13$2_Y
-    connect \Y $auto$rtlil.cc:2959:Not$4
-  end
   attribute \src "dut.sv:46.8-46.13"
   cell $logic_not $logic_not$dut.sv:46.8-46.13$2
     parameter \A_SIGNED 0
@@ -159,6 +152,13 @@ module \dffa3
     parameter \Y_WIDTH 1
     connect \A \arst
     connect \Y $logic_not$dut.sv:46.8-46.13$2_Y
+  end
+  cell $not $not$dut.sv:46$3
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $logic_not$dut.sv:46.8-46.13$2_Y
+    connect \Y $auto$rtlil.cc:2959:Not$4
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -260,7 +260,7 @@ module \dffsr1
   wire input 3 \d
   attribute \src "dut.sv:72.29-72.30"
   wire output 4 \q
-  cell $xor $auto$expression.cpp:514:import_operation$5
+  cell $xor $xor$dut.sv:77$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -309,7 +309,7 @@ module \dffsr2
   wire input 2 \preset
   attribute \src "dut.sv:83.38-83.39"
   wire output 5 \q
-  cell $logic_and $auto$expression.cpp:498:import_operation$7
+  cell $logic_and $logic_and$dut.sv:88$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -319,7 +319,7 @@ module \dffsr2
     connect \B $logic_not$dut.sv:88.32-88.38$4_Y
     connect \Y $auto$rtlil.cc:3026:LogicAnd$8
   end
-  cell $logic_and $auto$expression.cpp:498:import_operation$9
+  cell $logic_and $logic_and$dut.sv:88$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

@@ -3,7 +3,7 @@ autoidx 11
 attribute \src "dut.sv:1.1-16.10"
 attribute \top 1
 module \mul_sync_enable_test
-  wire width 9 $auto$expression.cpp:613:import_operation$1
+  wire width 9 $auto$expression.cpp:1488:import_operation$1
   attribute \src "dut.sv:1.44-1.45"
   wire width 6 input 4 \a
   attribute \src "dut.sv:1.47-1.48"
@@ -16,16 +16,6 @@ module \mul_sync_enable_test
   wire width 9 output 6 \p
   attribute \src "dut.sv:1.35-1.38"
   wire input 2 \rst
-  cell $mul $auto$expression.cpp:630:import_operation$2
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 6
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 3
-    parameter \Y_WIDTH 9
-    connect \A \a
-    connect \B \b
-    connect \Y $auto$expression.cpp:613:import_operation$1
-  end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-15.8"
   cell $sdffe $auto$ff.cc:266:slice$10
@@ -35,9 +25,19 @@ module \mul_sync_enable_test
     parameter \SRST_VALUE 9'000000000
     parameter \WIDTH 9
     connect \CLK \clk
-    connect \D $auto$expression.cpp:613:import_operation$1
+    connect \D $auto$expression.cpp:1488:import_operation$1
     connect \EN \en
     connect \Q \p
     connect \SRST \rst
+  end
+  cell $mul $mul$dut.sv:13$2
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 6
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 9
+    connect \A \a
+    connect \B \b
+    connect \Y $auto$expression.cpp:1488:import_operation$1
   end
 end

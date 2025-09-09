@@ -35,37 +35,35 @@ module \aes_key_expand_128
   wire width 4 output 6 \wo_2
   attribute \src "dut.sv:4.60-4.64"
   wire width 4 output 7 \wo_3
-  cell $xor $auto$expression.cpp:514:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
+  cell $mux $mux$dut.sv:17$1
+    parameter \WIDTH 4
     connect \A \w[0]
-    connect \B \w[1]
-    connect \Y $auto$rtlil.cc:3008:Xor$14
+    connect \B \key [15:12]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$2
   end
-  cell $xor $auto$expression.cpp:514:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$14
-    connect \B \w[2]
-    connect \Y $auto$rtlil.cc:3008:Xor$16
+  cell $mux $mux$dut.sv:18$5
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$4
+    connect \B \key [11:8]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$6
   end
-  cell $xor $auto$expression.cpp:514:import_operation$17
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$16
-    connect \B \w[3]
-    connect \Y $auto$rtlil.cc:3008:Xor$18
+  cell $mux $mux$dut.sv:19$11
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$10
+    connect \B \key [7:4]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$12
   end
-  cell $xor $auto$expression.cpp:514:import_operation$3
+  cell $mux $mux$dut.sv:20$19
+    parameter \WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$18
+    connect \B \key [3:0]
+    connect \S \kld
+    connect \Y $auto$rtlil.cc:3094:Mux$20
+  end
+  cell $xor $xor$dut.sv:18$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -75,7 +73,7 @@ module \aes_key_expand_128
     connect \B \w[1]
     connect \Y $auto$rtlil.cc:3008:Xor$4
   end
-  cell $xor $auto$expression.cpp:514:import_operation$7
+  cell $xor $xor$dut.sv:19$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -85,7 +83,7 @@ module \aes_key_expand_128
     connect \B \w[1]
     connect \Y $auto$rtlil.cc:3008:Xor$8
   end
-  cell $xor $auto$expression.cpp:514:import_operation$9
+  cell $xor $xor$dut.sv:19$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -95,33 +93,35 @@ module \aes_key_expand_128
     connect \B \w[2]
     connect \Y $auto$rtlil.cc:3008:Xor$10
   end
-  cell $mux $auto$expression.cpp:771:import_operation$1
-    parameter \WIDTH 4
+  cell $xor $xor$dut.sv:20$13
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
     connect \A \w[0]
-    connect \B \key [15:12]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$2
+    connect \B \w[1]
+    connect \Y $auto$rtlil.cc:3008:Xor$14
   end
-  cell $mux $auto$expression.cpp:771:import_operation$11
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$10
-    connect \B \key [7:4]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$12
+  cell $xor $xor$dut.sv:20$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$14
+    connect \B \w[2]
+    connect \Y $auto$rtlil.cc:3008:Xor$16
   end
-  cell $mux $auto$expression.cpp:771:import_operation$19
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$18
-    connect \B \key [3:0]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$20
-  end
-  cell $mux $auto$expression.cpp:771:import_operation$5
-    parameter \WIDTH 4
-    connect \A $auto$rtlil.cc:3008:Xor$4
-    connect \B \key [11:8]
-    connect \S \kld
-    connect \Y $auto$rtlil.cc:3094:Mux$6
+  cell $xor $xor$dut.sv:20$17
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A $auto$rtlil.cc:3008:Xor$16
+    connect \B \w[3]
+    connect \Y $auto$rtlil.cc:3008:Xor$18
   end
   attribute \always_ff 1
   attribute \src "dut.sv:16.1-21.4"

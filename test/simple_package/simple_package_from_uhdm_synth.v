@@ -616,6 +616,8 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* src = "dut.sv:31.38-31.45" *)
   output [49:0] bus_out;
   wire [49:0] bus_out;
+  (* nosync = 32'd1 *)
+  wire [31:0] \increment_data$func$dut.sv:47$2.input_data ;
   (* src = "dut.sv:35.23-35.35" *)
   (* wiretype = "\\my_pkg::bus_transaction_t" *)
   wire [49:0] internal_bus;
@@ -781,11 +783,299 @@ module simple_package(clk, rst_n, bus_in, bus_out);
     .Q(internal_bus[17]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[18]  /* _18_ */ (
+    .C(clk),
+    .D(bus_in[18]),
+    .Q(internal_bus[18]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[19]  /* _19_ */ (
+    .C(clk),
+    .D(bus_in[19]),
+    .Q(internal_bus[19]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[20]  /* _20_ */ (
+    .C(clk),
+    .D(bus_in[20]),
+    .Q(internal_bus[20]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[21]  /* _21_ */ (
+    .C(clk),
+    .D(bus_in[21]),
+    .Q(internal_bus[21]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[22]  /* _22_ */ (
+    .C(clk),
+    .D(bus_in[22]),
+    .Q(internal_bus[22]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[23]  /* _23_ */ (
+    .C(clk),
+    .D(bus_in[23]),
+    .Q(internal_bus[23]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[24]  /* _24_ */ (
+    .C(clk),
+    .D(bus_in[24]),
+    .Q(internal_bus[24]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[25]  /* _25_ */ (
+    .C(clk),
+    .D(bus_in[25]),
+    .Q(internal_bus[25]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[26]  /* _26_ */ (
+    .C(clk),
+    .D(bus_in[26]),
+    .Q(internal_bus[26]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[27]  /* _27_ */ (
+    .C(clk),
+    .D(bus_in[27]),
+    .Q(internal_bus[27]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[28]  /* _28_ */ (
+    .C(clk),
+    .D(bus_in[28]),
+    .Q(internal_bus[28]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[29]  /* _29_ */ (
+    .C(clk),
+    .D(bus_in[29]),
+    .Q(internal_bus[29]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[30]  /* _30_ */ (
+    .C(clk),
+    .D(bus_in[30]),
+    .Q(internal_bus[30]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[31]  /* _31_ */ (
+    .C(clk),
+    .D(bus_in[31]),
+    .Q(internal_bus[31]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[32]  /* _32_ */ (
+    .C(clk),
+    .D(bus_in[32]),
+    .Q(internal_bus[32]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[33]  /* _33_ */ (
+    .C(clk),
+    .D(bus_in[33]),
+    .Q(internal_bus[33]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[34]  /* _34_ */ (
+    .C(clk),
+    .D(bus_in[34]),
+    .Q(internal_bus[34]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[35]  /* _35_ */ (
+    .C(clk),
+    .D(bus_in[35]),
+    .Q(internal_bus[35]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[36]  /* _36_ */ (
+    .C(clk),
+    .D(bus_in[36]),
+    .Q(internal_bus[36]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[37]  /* _37_ */ (
+    .C(clk),
+    .D(bus_in[37]),
+    .Q(internal_bus[37]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[38]  /* _38_ */ (
+    .C(clk),
+    .D(bus_in[38]),
+    .Q(internal_bus[38]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[39]  /* _39_ */ (
+    .C(clk),
+    .D(bus_in[39]),
+    .Q(internal_bus[39]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[40]  /* _40_ */ (
+    .C(clk),
+    .D(bus_in[40]),
+    .Q(internal_bus[40]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[41]  /* _41_ */ (
+    .C(clk),
+    .D(bus_in[41]),
+    .Q(internal_bus[41]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[42]  /* _42_ */ (
+    .C(clk),
+    .D(bus_in[42]),
+    .Q(internal_bus[42]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[43]  /* _43_ */ (
+    .C(clk),
+    .D(bus_in[43]),
+    .Q(internal_bus[43]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[44]  /* _44_ */ (
+    .C(clk),
+    .D(bus_in[44]),
+    .Q(internal_bus[44]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[45]  /* _45_ */ (
+    .C(clk),
+    .D(bus_in[45]),
+    .Q(internal_bus[45]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[46]  /* _46_ */ (
+    .C(clk),
+    .D(bus_in[46]),
+    .Q(internal_bus[46]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[47]  /* _47_ */ (
+    .C(clk),
+    .D(bus_in[47]),
+    .Q(internal_bus[47]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[48]  /* _48_ */ (
+    .C(clk),
+    .D(bus_in[48]),
+    .Q(internal_bus[48]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[49]  /* _49_ */ (
+    .C(clk),
+    .D(bus_in[49]),
+    .Q(internal_bus[49]),
+    .R(rst_n)
+  );
   \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101  sub_inst (
     .clk(clk),
-    .data_in({ 32'h00000000, internal_bus[17:0] }),
+    .data_in(internal_bus),
     .data_out(bus_out),
     .rst_n(rst_n)
   );
-  assign internal_bus[49:18] = 32'd0;
+  assign \increment_data$func$dut.sv:47$2.input_data  = 32'hxxxxxxxx;
 endmodule

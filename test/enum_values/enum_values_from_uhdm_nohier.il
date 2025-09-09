@@ -3,6 +3,8 @@ autoidx 47
 attribute \src "dut.sv:9.1-37.10"
 attribute \cells_not_processed 1
 module \top
+  wire $auto$expression.cpp:1586:import_operation$41
+  wire $auto$expression.cpp:1586:import_operation$43
   wire $auto$process.cpp:34:create_temp_wire$1
   wire $auto$process.cpp:34:create_temp_wire$11
   wire $auto$process.cpp:34:create_temp_wire$13
@@ -16,8 +18,6 @@ module \top
   wire $auto$process.cpp:4951:import_case_stmt_sync$17
   wire $auto$process.cpp:4951:import_case_stmt_sync$37
   wire $auto$rtlil.cc:3008:Xor$46
-  wire $auto$rtlil.cc:3013:Eq$42
-  wire $auto$rtlil.cc:3013:Eq$44
   wire width 32 $auto$rtlil.cc:3094:Mux$10
   wire width 32 $auto$rtlil.cc:3094:Mux$16
   wire width 32 $auto$rtlil.cc:3094:Mux$20
@@ -49,36 +49,6 @@ module \top
   wire width 32 \wide_state
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
-  cell $xor $auto$expression.cpp:514:import_operation$45
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3013:Eq$42
-    connect \B $auto$rtlil.cc:3013:Eq$44
-    connect \Y $auto$rtlil.cc:3008:Xor$46
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \wide_state
-    connect \B 1
-    connect \Y $auto$rtlil.cc:3013:Eq$42
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$43
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 0
-    connect \Y $auto$rtlil.cc:3013:Eq$44
-  end
   attribute \src "dut.sv:17.13-17.34"
   cell $eq $auto$process.cpp:40:create_eq_cell$12
     parameter \A_SIGNED 0
@@ -248,6 +218,38 @@ module \top
     connect \A $auto$process.cpp:34:create_temp_wire$1
     connect \B $auto$process.cpp:34:create_temp_wire$5
     connect \Y $auto$process.cpp:34:create_temp_wire$7
+  end
+  attribute \src "dut.sv:35.17-35.33"
+  cell $eq $eq$dut.sv:35$42
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \wide_state
+    connect \B 1
+    connect \Y $auto$expression.cpp:1586:import_operation$41
+  end
+  attribute \src "dut.sv:35.38-35.48"
+  cell $eq $eq$dut.sv:35$44
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 0
+    connect \Y $auto$expression.cpp:1586:import_operation$43
+  end
+  cell $xor $xor$dut.sv:35$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$expression.cpp:1586:import_operation$41
+    connect \B $auto$expression.cpp:1586:import_operation$43
+    connect \Y $auto$rtlil.cc:3008:Xor$46
   end
   attribute \always_ff 1
   attribute \src "dut.sv:13.5-20.8"

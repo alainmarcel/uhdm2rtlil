@@ -9,11 +9,11 @@ module \fsm
   parameter \GNT0 3'010
   parameter \GNT1 3'100
   parameter \GNT2 3'101
+  wire $auto$opt_dff.cc:247:make_patterns_logic$100
   wire $auto$opt_dff.cc:247:make_patterns_logic$103
-  wire $auto$opt_dff.cc:247:make_patterns_logic$106
   wire $auto$opt_dff.cc:247:make_patterns_logic$110
   wire $auto$opt_dff.cc:247:make_patterns_logic$113
-  wire $auto$opt_dff.cc:306:combine_resets$99
+  wire $auto$opt_dff.cc:306:combine_resets$106
   wire $auto$process.cpp:34:create_temp_wire$11
   wire $auto$process.cpp:34:create_temp_wire$13
   wire $auto$process.cpp:34:create_temp_wire$41
@@ -69,31 +69,14 @@ module \fsm
   wire width 3 \state
   attribute \always_ff 1
   attribute \src "dut.sv:16.5-50.12"
-  cell $sdffe $auto$ff.cc:266:slice$102
+  cell $dffe $auto$ff.cc:266:slice$102
     parameter \CLK_POLARITY 1
     parameter \EN_POLARITY 1
-    parameter \SRST_POLARITY 1
-    parameter \SRST_VALUE 2'01
-    parameter \WIDTH 2
-    connect \CLK \clock
-    connect \D { $auto$rtlil.cc:3094:Mux$86 [2] $auto$rtlil.cc:3094:Mux$86 [0] }
-    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$103
-    connect \Q { \state [2] \state [0] }
-    connect \SRST $auto$process.cpp:34:create_temp_wire$91
-  end
-  attribute \always_ff 1
-  attribute \src "dut.sv:16.5-50.12"
-  cell $sdffe $auto$ff.cc:266:slice$105
-    parameter \CLK_POLARITY 1
-    parameter \EN_POLARITY 1
-    parameter \SRST_POLARITY 1
-    parameter \SRST_VALUE 1'0
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$52 [1]
-    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$106
-    connect \Q \state [1]
-    connect \SRST $auto$opt_dff.cc:306:combine_resets$99
+    connect \D $auto$rtlil.cc:3094:Mux$88
+    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$103
+    connect \Q \gnt_1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:16.5-50.12"
@@ -101,59 +84,76 @@ module \fsm
     parameter \CLK_POLARITY 1
     parameter \EN_POLARITY 1
     parameter \SRST_POLARITY 1
+    parameter \SRST_VALUE 2'01
+    parameter \WIDTH 2
+    connect \CLK \clock
+    connect \D { $auto$rtlil.cc:3094:Mux$86 [2] $auto$rtlil.cc:3094:Mux$86 [0] }
+    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$110
+    connect \Q { \state [2] \state [0] }
+    connect \SRST $auto$process.cpp:34:create_temp_wire$91
+  end
+  attribute \always_ff 1
+  attribute \src "dut.sv:16.5-50.12"
+  cell $sdffe $auto$ff.cc:266:slice$112
+    parameter \CLK_POLARITY 1
+    parameter \EN_POLARITY 1
+    parameter \SRST_POLARITY 1
+    parameter \SRST_VALUE 1'0
+    parameter \WIDTH 1
+    connect \CLK \clock
+    connect \D $auto$rtlil.cc:3094:Mux$52 [1]
+    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$113
+    connect \Q \state [1]
+    connect \SRST $auto$opt_dff.cc:306:combine_resets$106
+  end
+  attribute \always_ff 1
+  attribute \src "dut.sv:16.5-50.12"
+  cell $sdffe $auto$ff.cc:266:slice$99
+    parameter \CLK_POLARITY 1
+    parameter \EN_POLARITY 1
+    parameter \SRST_POLARITY 1
     parameter \SRST_VALUE 1'0
     parameter \WIDTH 1
     connect \CLK \clock
     connect \D $auto$rtlil.cc:3094:Mux$22
-    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$110
+    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$100
     connect \Q \gnt_0
     connect \SRST $auto$rtlil.cc:3006:And$56
   end
-  attribute \always_ff 1
-  attribute \src "dut.sv:16.5-50.12"
-  cell $dffe $auto$ff.cc:266:slice$112
-    parameter \CLK_POLARITY 1
-    parameter \EN_POLARITY 1
-    parameter \WIDTH 1
-    connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$88
-    connect \EN $auto$opt_dff.cc:247:make_patterns_logic$113
-    connect \Q \gnt_1
-  end
-  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$104
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 8
-    parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$56 $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
-    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$103
-  end
-  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$107
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 5
-    parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
-    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$106
-  end
-  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$111
+  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$101
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A { $auto$rtlil.cc:3006:And$18 \reset }
-    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$110
+    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$100
   end
-  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$114
+  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$104
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 1
     connect \A { $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$30 \reset }
+    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$103
+  end
+  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$111
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \Y_WIDTH 1
+    connect \A { $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$56 $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
+    connect \Y $auto$opt_dff.cc:247:make_patterns_logic$110
+  end
+  cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$114
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 5
+    parameter \Y_WIDTH 1
+    connect \A { $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$113
   end
-  cell $reduce_or $auto$opt_dff.cc:307:combine_resets$100
+  cell $reduce_or $auto$opt_dff.cc:307:combine_resets$107
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 1
     connect \A { $auto$process.cpp:34:create_temp_wire$91 $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$56 }
-    connect \Y $auto$opt_dff.cc:306:combine_resets$99
+    connect \Y $auto$opt_dff.cc:306:combine_resets$106
   end
   cell $and $auto$process.cpp:3121:import_statement_sync$17
     parameter \A_SIGNED 0

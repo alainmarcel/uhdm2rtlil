@@ -51,27 +51,8 @@ module \lut_map_cmp
   wire output 22 \o4_3
   attribute \src "dut.sv:6.27-6.31"
   wire output 23 \o4_4
-  cell $eq $auto$expression.cpp:703:import_operation$21
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'1010
-    connect \Y \o2_5
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'0101
-    connect \B \a
-    connect \Y \o3_5
-  end
-  cell $eq $auto$expression.cpp:703:import_operation$9
+  attribute \src "dut.sv:14.16-14.43"
+  cell $eq $eq$dut.sv:14$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -81,17 +62,8 @@ module \lut_map_cmp
     connect \B \a
     connect \Y \o1_5
   end
-  cell $ne $auto$expression.cpp:712:import_operation$11
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'1010
-    connect \B \a
-    connect \Y \o1_6
-  end
-  cell $ne $auto$expression.cpp:712:import_operation$23
+  attribute \src "dut.sv:21.16-21.43"
+  cell $eq $eq$dut.sv:21$22
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -99,9 +71,10 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B 4'1010
-    connect \Y \o2_6
+    connect \Y \o2_5
   end
-  cell $ne $auto$expression.cpp:712:import_operation$35
+  attribute \src "dut.sv:28.16-28.53"
+  cell $eq $eq$dut.sv:28$34
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -109,29 +82,9 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A 4'0101
     connect \B \a
-    connect \Y \o3_6
+    connect \Y \o3_5
   end
-  cell $lt $auto$expression.cpp:716:import_operation$15
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'1010
-    connect \Y \o2_2
-  end
-  cell $lt $auto$expression.cpp:716:import_operation$27
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'0101
-    connect \B \a
-    connect \Y \o3_2
-  end
-  cell $lt $auto$expression.cpp:716:import_operation$3
+  cell $ge $ge$dut.sv:12$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -139,99 +92,9 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A 4'1010
     connect \B \a
-    connect \Y \o1_2
+    connect \Y \o1_3
   end
-  cell $lt $auto$expression.cpp:716:import_operation$39
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'0000
-    connect \Y \o4_2
-  end
-  cell $le $auto$expression.cpp:720:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'1010
-    connect \B \a
-    connect \Y \o1_1
-  end
-  cell $le $auto$expression.cpp:720:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'1010
-    connect \Y \o2_1
-  end
-  cell $le $auto$expression.cpp:720:import_operation$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'0101
-    connect \B \a
-    connect \Y \o3_1
-  end
-  cell $le $auto$expression.cpp:720:import_operation$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'0000
-    connect \Y \o4_1
-  end
-  cell $gt $auto$expression.cpp:724:import_operation$19
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'1010
-    connect \Y \o2_4
-  end
-  cell $gt $auto$expression.cpp:724:import_operation$31
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'0101
-    connect \B \a
-    connect \Y \o3_4
-  end
-  cell $gt $auto$expression.cpp:724:import_operation$43
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B 4'0000
-    connect \Y \o4_4
-  end
-  cell $gt $auto$expression.cpp:724:import_operation$7
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 4
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 4
-    parameter \Y_WIDTH 1
-    connect \A 4'1010
-    connect \B \a
-    connect \Y \o1_4
-  end
-  cell $ge $auto$expression.cpp:728:import_operation$17
+  cell $ge $ge$dut.sv:19$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -241,7 +104,7 @@ module \lut_map_cmp
     connect \B 4'1010
     connect \Y \o2_3
   end
-  cell $ge $auto$expression.cpp:728:import_operation$29
+  cell $ge $ge$dut.sv:26$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -251,7 +114,7 @@ module \lut_map_cmp
     connect \B \a
     connect \Y \o3_3
   end
-  cell $ge $auto$expression.cpp:728:import_operation$41
+  cell $ge $ge$dut.sv:33$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -261,7 +124,7 @@ module \lut_map_cmp
     connect \B 4'0000
     connect \Y \o4_3
   end
-  cell $ge $auto$expression.cpp:728:import_operation$5
+  cell $gt $gt$dut.sv:13$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \B_SIGNED 0
@@ -269,6 +132,146 @@ module \lut_map_cmp
     parameter \Y_WIDTH 1
     connect \A 4'1010
     connect \B \a
-    connect \Y \o1_3
+    connect \Y \o1_4
+  end
+  cell $gt $gt$dut.sv:20$19
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'1010
+    connect \Y \o2_4
+  end
+  cell $gt $gt$dut.sv:27$31
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'0101
+    connect \B \a
+    connect \Y \o3_4
+  end
+  cell $gt $gt$dut.sv:34$43
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'0000
+    connect \Y \o4_4
+  end
+  cell $le $le$dut.sv:10$1
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'1010
+    connect \B \a
+    connect \Y \o1_1
+  end
+  cell $le $le$dut.sv:17$13
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'1010
+    connect \Y \o2_1
+  end
+  cell $le $le$dut.sv:24$25
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'0101
+    connect \B \a
+    connect \Y \o3_1
+  end
+  cell $le $le$dut.sv:31$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'0000
+    connect \Y \o4_1
+  end
+  cell $lt $lt$dut.sv:11$3
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'1010
+    connect \B \a
+    connect \Y \o1_2
+  end
+  cell $lt $lt$dut.sv:18$15
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'1010
+    connect \Y \o2_2
+  end
+  cell $lt $lt$dut.sv:25$27
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'0101
+    connect \B \a
+    connect \Y \o3_2
+  end
+  cell $lt $lt$dut.sv:32$39
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'0000
+    connect \Y \o4_2
+  end
+  cell $ne $ne$dut.sv:15$11
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'1010
+    connect \B \a
+    connect \Y \o1_6
+  end
+  cell $ne $ne$dut.sv:22$23
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A \a
+    connect \B 4'1010
+    connect \Y \o2_6
+  end
+  cell $ne $ne$dut.sv:29$35
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 4
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 1
+    connect \A 4'0101
+    connect \B \a
+    connect \Y \o3_6
   end
 end

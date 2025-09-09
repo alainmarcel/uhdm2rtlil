@@ -47,20 +47,16 @@
 -\$_NOR_  _08_ (
 -.A(wide_state[1]),
 -.B(wide_state[0]),
+-.Y(_01_)
 +\$_XOR_  _09_ (
 +.A(state[0]),
 +.B(state[1]),
 +.Y(_03_)
-+);
-+\$_ORNOT_  _10_ (
-+.A(state[0]),
-+.B(state[1]),
- .Y(_01_)
  );
 -\$_ANDNOT_  _09_ (
 -.A(wide_state[0]),
 -.B(wide_state[1]),
-+\$_XNOR_  _11_ (
++\$_XNOR_  _10_ (
 +.A(state[0]),
 +.B(state[1]),
  .Y(_02_)
@@ -69,7 +65,11 @@
 -.A(_01_),
 -.B(_00_),
 -.Y(_06_[0])
--);
++\$_ORNOT_  _11_ (
++.A(state[0]),
++.B(state[1]),
++.Y(_01_)
+ );
 -\$_XOR_  _11_ (
 +\$_ORNOT_  _12_ (
  .A(wide_state[1]),

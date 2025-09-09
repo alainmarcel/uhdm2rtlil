@@ -70,126 +70,6 @@ module \unbased_unsized
   wire width 64 \o15
   attribute \src "dut.sv:13.24-13.27"
   wire width 64 \o16
-  cell $eqx $auto$expression.cpp:708:import_operation$1
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o01
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$rtlil.cc:3015:Eqx$2
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$13
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o04
-    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $auto$rtlil.cc:3015:Eqx$14
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$17
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o05
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$rtlil.cc:3015:Eqx$18
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$21
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o06
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000111
-    connect \Y $auto$rtlil.cc:3015:Eqx$22
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o07
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000xxx
-    connect \Y $auto$rtlil.cc:3015:Eqx$26
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$29
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o08
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000zzz
-    connect \Y $auto$rtlil.cc:3015:Eqx$30
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$33
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o09
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$rtlil.cc:3015:Eqx$34
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o10
-    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $auto$rtlil.cc:3015:Eqx$38
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$41
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o11
-    connect \B 64'----------------------------------------------------------------
-    connect \Y $auto$rtlil.cc:3015:Eqx$42
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$45
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o12
-    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $auto$rtlil.cc:3015:Eqx$46
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$5
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o02
-    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $auto$rtlil.cc:3015:Eqx$6
-  end
-  cell $eqx $auto$expression.cpp:708:import_operation$9
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o03
-    connect \B 64'----------------------------------------------------------------
-    connect \Y $auto$rtlil.cc:3015:Eqx$10
-  end
   cell $pos $auto$module.cpp:651:import_continuous_assign$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
@@ -371,6 +251,126 @@ module \unbased_unsized
     connect \ARGS { }
     connect \EN $auto$process.cpp:102:import_immediate_assert$7
     connect \TRG { }
+  end
+  cell $eqx $eqx$dut.sv:27$1
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o01
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
+    connect \Y $auto$rtlil.cc:3015:Eqx$2
+  end
+  cell $eqx $eqx$dut.sv:28$5
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o02
+    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
+    connect \Y $auto$rtlil.cc:3015:Eqx$6
+  end
+  cell $eqx $eqx$dut.sv:29$9
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o03
+    connect \B 64'----------------------------------------------------------------
+    connect \Y $auto$rtlil.cc:3015:Eqx$10
+  end
+  cell $eqx $eqx$dut.sv:30$13
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o04
+    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    connect \Y $auto$rtlil.cc:3015:Eqx$14
+  end
+  cell $eqx $eqx$dut.sv:31$17
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o05
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
+    connect \Y $auto$rtlil.cc:3015:Eqx$18
+  end
+  cell $eqx $eqx$dut.sv:32$21
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o06
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000111
+    connect \Y $auto$rtlil.cc:3015:Eqx$22
+  end
+  cell $eqx $eqx$dut.sv:33$25
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o07
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000xxx
+    connect \Y $auto$rtlil.cc:3015:Eqx$26
+  end
+  cell $eqx $eqx$dut.sv:34$29
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o08
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000zzz
+    connect \Y $auto$rtlil.cc:3015:Eqx$30
+  end
+  cell $eqx $eqx$dut.sv:35$33
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o09
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
+    connect \Y $auto$rtlil.cc:3015:Eqx$34
+  end
+  cell $eqx $eqx$dut.sv:36$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o10
+    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
+    connect \Y $auto$rtlil.cc:3015:Eqx$38
+  end
+  cell $eqx $eqx$dut.sv:37$41
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o11
+    connect \B 64'----------------------------------------------------------------
+    connect \Y $auto$rtlil.cc:3015:Eqx$42
+  end
+  cell $eqx $eqx$dut.sv:38$45
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o12
+    connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    connect \Y $auto$rtlil.cc:3015:Eqx$46
   end
   cell \pass_through \pt09
     connect \inp 64'0000000000000000000000000000000000000000000000000000000000000000

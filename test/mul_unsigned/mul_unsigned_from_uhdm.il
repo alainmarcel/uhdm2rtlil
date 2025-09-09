@@ -29,7 +29,7 @@ module \mul_unsigned
   attribute \reg 1
   attribute \src "dut.sv:18.18-18.20"
   wire width 9 \rB
-  cell $mul $auto$expression.cpp:630:import_operation$2
+  cell $mul $mul$dut.sv:25$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0

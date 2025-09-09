@@ -13,7 +13,7 @@ module \mul
   wire width 6 input 1 \x
   attribute \src "dut.sv:5.25-5.26"
   wire width 6 input 2 \y
-  cell $mul $auto$expression.cpp:630:import_operation$2
+  cell $mul $mul$dut.sv:9$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \B_SIGNED 0
