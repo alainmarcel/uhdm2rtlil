@@ -37,6 +37,7 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   output out3;
   wire out3;
   wire _00_;
+  (* src = "dut.sv:18.4-18.15" *)
   wire _01_;
   wire _02_;
   wire _03_;
@@ -60,12 +61,12 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
     .A(in7),
     .B(in6),
     .S(_04_),
-    .Y(_02_)
+    .Y(_01_)
   );
   \$_XOR_  _09_ (
     .A(out2),
     .B(out1),
-    .Y(_01_)
+    .Y(_02_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-20.4" *)
@@ -79,14 +80,14 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   (* src = "dut.sv:7.1-20.4" *)
   \$_DFF_P_  out1_reg /* _11_ */ (
     .C(clock),
-    .D(_01_),
+    .D(_02_),
     .Q(out1)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-20.4" *)
   \$_DFFE_PP_  out3_reg /* _12_ */ (
     .C(clock),
-    .D(_02_),
+    .D(_01_),
     .E(_00_),
     .Q(out3)
   );

@@ -12,8 +12,8 @@ module \macc
   wire width 32 $0\mult_reg[31:0]
   wire width 40 $0\old_result
   wire $0\sload_reg[0:0]
-  wire width 40 $auto$expression.cpp:1442:import_operation$3
-  wire width 32 $auto$expression.cpp:1488:import_operation$1
+  wire width 40 $auto$expression.cpp:1468:import_operation$3
+  wire width 32 $auto$expression.cpp:1514:import_operation$1
   wire $auto$module.cpp:681:import_continuous_assign$10
   wire width 32 $auto$module.cpp:681:import_continuous_assign$12
   wire width 40 $auto$module.cpp:681:import_continuous_assign$14
@@ -57,7 +57,7 @@ module \macc
     parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1442:import_operation$3
+    connect \Y $auto$expression.cpp:1468:import_operation$3
   end
   cell $mul $mul$dut.sv:32$2
     parameter \A_SIGNED 1
@@ -67,7 +67,7 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1488:import_operation$1
+    connect \Y $auto$expression.cpp:1514:import_operation$1
   end
   attribute \src "dut.sv:13.25-13.30"
   process $proc$dut.sv:13$5
@@ -133,9 +133,9 @@ module \macc
       case 1'1
         assign $0\a_reg[15:0] \a
         assign $0\b_reg[15:0] \b
-        assign $0\mult_reg[31:0] $auto$expression.cpp:1488:import_operation$1
+        assign $0\mult_reg[31:0] $auto$expression.cpp:1514:import_operation$1
         assign $0\sload_reg[0:0] \sload
-        assign $0\adder_out[39:0] $auto$expression.cpp:1442:import_operation$3
+        assign $0\adder_out[39:0] $auto$expression.cpp:1468:import_operation$3
       case 
     end
     sync posedge \clk
@@ -153,8 +153,8 @@ attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 41 $auto$expression.cpp:1442:import_operation$17
-  wire width 32 $auto$expression.cpp:1488:import_operation$15
+  wire width 41 $auto$expression.cpp:1468:import_operation$17
+  wire width 32 $auto$expression.cpp:1514:import_operation$15
   wire width 16 $auto$module.cpp:681:import_continuous_assign$34
   wire width 16 $auto$module.cpp:681:import_continuous_assign$36
   wire width 16 $auto$module.cpp:681:import_continuous_assign$38
@@ -162,15 +162,22 @@ module \macc2
   wire width 32 $auto$module.cpp:681:import_continuous_assign$42
   wire width 41 $auto$module.cpp:681:import_continuous_assign$44
   wire $auto$module.cpp:681:import_continuous_assign$46
+  attribute \src "dut.sv:70.3-70.13"
+  wire width 16 $auto$process.cpp:4310:import_assignment_sync$19
+  attribute \src "dut.sv:71.3-71.14"
+  wire width 16 $auto$process.cpp:4310:import_assignment_sync$21
+  attribute \src "dut.sv:72.3-72.13"
+  wire width 16 $auto$process.cpp:4310:import_assignment_sync$23
+  attribute \src "dut.sv:73.3-73.14"
+  wire width 16 $auto$process.cpp:4310:import_assignment_sync$25
+  attribute \src "dut.sv:74.3-74.16"
+  wire width 32 $auto$process.cpp:4310:import_assignment_sync$27
+  attribute \src "dut.sv:75.3-75.17"
+  wire width 41 $auto$process.cpp:4310:import_assignment_sync$29
+  attribute \src "dut.sv:76.3-76.23"
+  wire $auto$process.cpp:4310:import_assignment_sync$31
   wire $auto$rtlil.cc:3007:Or$50
   wire $auto$rtlil.cc:3017:Ge$48
-  wire width 16 $auto$rtlil.cc:3094:Mux$20
-  wire width 16 $auto$rtlil.cc:3094:Mux$22
-  wire width 16 $auto$rtlil.cc:3094:Mux$24
-  wire width 16 $auto$rtlil.cc:3094:Mux$26
-  wire width 32 $auto$rtlil.cc:3094:Mux$28
-  wire width 41 $auto$rtlil.cc:3094:Mux$30
-  wire $auto$rtlil.cc:3094:Mux$32
   wire width 64 $auto$rtlil.cc:3094:Mux$52
   attribute \src "dut.sv:48.28-48.29"
   wire width 16 input 4 signed \a
@@ -215,56 +222,63 @@ module \macc2
     parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1442:import_operation$17
+    connect \Y $auto$expression.cpp:1468:import_operation$17
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$19
+  attribute \src "dut.sv:70.3-70.13"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$20
     parameter \WIDTH 16
     connect \A \a
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$20
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$19
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$21
+  attribute \src "dut.sv:71.3-71.14"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$22
     parameter \WIDTH 16
     connect \A \a_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$22
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$21
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$23
+  attribute \src "dut.sv:72.3-72.13"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$24
     parameter \WIDTH 16
     connect \A \b
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$24
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$23
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$25
+  attribute \src "dut.sv:73.3-73.14"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$26
     parameter \WIDTH 16
     connect \A \b_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$26
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$25
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$27
+  attribute \src "dut.sv:74.3-74.16"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$28
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:1488:import_operation$15
+    connect \A $auto$expression.cpp:1514:import_operation$15
     connect \B 0
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$28
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$27
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$29
+  attribute \src "dut.sv:75.3-75.17"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$30
     parameter \WIDTH 41
-    connect \A $auto$expression.cpp:1442:import_operation$17
+    connect \A $auto$expression.cpp:1468:import_operation$17
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$30
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$29
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$31
+  attribute \src "dut.sv:76.3-76.23"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$32
     parameter \WIDTH 1
     connect \A \overflow
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$rtlil.cc:3094:Mux$32
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$31
   end
   cell $ge $ge$dut.sv:79$47
     parameter \A_SIGNED 0
@@ -284,7 +298,7 @@ module \macc2
     parameter \Y_WIDTH 32
     connect \A \a_reg2
     connect \B \b_reg2
-    connect \Y $auto$expression.cpp:1488:import_operation$15
+    connect \Y $auto$expression.cpp:1514:import_operation$15
   end
   cell $mux $mux$dut.sv:82$51
     parameter \WIDTH 64
@@ -356,13 +370,13 @@ module \macc2
   attribute \src "dut.sv:57.1-78.4"
   process $proc$dut.sv:57$1
     sync posedge \clk
-      update \overflow_reg $auto$rtlil.cc:3094:Mux$32
-      update \a_reg $auto$rtlil.cc:3094:Mux$20
-      update \b_reg2 $auto$rtlil.cc:3094:Mux$26
-      update \a_reg2 $auto$rtlil.cc:3094:Mux$22
-      update \b_reg $auto$rtlil.cc:3094:Mux$24
-      update \mult_reg $auto$rtlil.cc:3094:Mux$28
-      update \adder_out $auto$rtlil.cc:3094:Mux$30
+      update \overflow_reg $auto$process.cpp:4310:import_assignment_sync$31
+      update \a_reg $auto$process.cpp:4310:import_assignment_sync$19
+      update \b_reg2 $auto$process.cpp:4310:import_assignment_sync$25
+      update \a_reg2 $auto$process.cpp:4310:import_assignment_sync$21
+      update \b_reg $auto$process.cpp:4310:import_assignment_sync$23
+      update \mult_reg $auto$process.cpp:4310:import_assignment_sync$27
+      update \adder_out $auto$process.cpp:4310:import_assignment_sync$29
   end
   connect \overflow $auto$rtlil.cc:3007:Or$50
   connect \accum_out $auto$rtlil.cc:3094:Mux$52 [39:0]

@@ -27,12 +27,19 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   wire _02_;
   wire _03_;
   wire _04_;
+  (* src = "dut.sv:26.27-26.45" *)
   wire _05_;
+  (* src = "dut.sv:35.27-35.45" *)
   wire _06_;
+  (* src = "dut.sv:45.27-45.45" *)
   wire _07_;
+  (* src = "dut.sv:45.27-45.45" *)
   wire _08_;
+  (* src = "dut.sv:46.27-46.41" *)
   wire _09_;
+  (* src = "dut.sv:34.23-39.26" *)
   wire _10_;
+  (* src = "dut.sv:48.15-48.44" *)
   wire _11_;
   wire _12_;
   wire _13_;
@@ -93,7 +100,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   \$_ANDNOT_  _50_ (
     .A(_12_),
     .B(_15_),
-    .Y(_07_)
+    .Y(_10_)
   );
   \$_ORNOT_  _51_ (
     .A(state[1]),
@@ -142,7 +149,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   \$_ANDNOT_  _60_ (
     .A(_24_),
     .B(reset),
-    .Y(_05_)
+    .Y(_11_)
   );
   \$_OR_  _61_ (
     .A(_21_),
@@ -156,7 +163,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   );
   \$_OR_  _63_ (
     .A(_26_),
-    .B(_07_),
+    .B(_10_),
     .Y(_27_)
   );
   \$_OR_  _64_ (
@@ -171,7 +178,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   );
   \$_OR_  _66_ (
     .A(_29_),
-    .B(_05_),
+    .B(_11_),
     .Y(_30_)
   );
   \$_OR_  _67_ (
@@ -202,20 +209,20 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   \$_OR_  _72_ (
     .A(_29_),
     .B(_26_),
-    .Y(_10_)
+    .Y(_08_)
   );
   \$_OR_  _73_ (
-    .A(_10_),
+    .A(_08_),
     .B(_34_),
     .Y(_01_)
   );
   \$_ANDNOT_  _74_ (
     .A(req_0),
     .B(_31_),
-    .Y(_06_)
+    .Y(_05_)
   );
   \$_OR_  _75_ (
-    .A(_06_),
+    .A(_05_),
     .B(reset),
     .Y(_00_)
   );
@@ -246,12 +253,12 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   );
   \$_OR_  _81_ (
     .A(_39_),
-    .B(_07_),
+    .B(_10_),
     .Y(_40_)
   );
   \$_OR_  _82_ (
     .A(_40_),
-    .B(_10_),
+    .B(_08_),
     .Y(_41_)
   );
   \$_OR_  _83_ (
@@ -265,7 +272,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
     .Y(_03_)
   );
   \$_MUX_  _85_ (
-    .A(_06_),
+    .A(_05_),
     .B(req_1),
     .S(_35_),
     .Y(_42_)
@@ -273,7 +280,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   \$_OR_  _86_ (
     .A(_42_),
     .B(_39_),
-    .Y(_08_)
+    .Y(_06_)
   );
   \$_MUX_  _87_ (
     .A(req_0),
@@ -289,7 +296,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   \$_NOR_  _89_ (
     .A(_44_),
     .B(_29_),
-    .Y(_09_)
+    .Y(_07_)
   );
   \$_MUX_  _90_ (
     .A(_33_),
@@ -301,13 +308,13 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
     .A(_45_),
     .B(req_1),
     .S(_29_),
-    .Y(_11_)
+    .Y(_09_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:16.5-50.12" *)
   \$_SDFFE_PP0P_  \state_reg[1]  /* _92_ */ (
     .C(clock),
-    .D(_08_),
+    .D(_06_),
     .E(_03_),
     .Q(state[1]),
     .R(_04_)
@@ -316,7 +323,7 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   (* src = "dut.sv:16.5-50.12" *)
   \$_DFFE_PP_  gnt_1_reg /* _93_ */ (
     .C(clock),
-    .D(_11_),
+    .D(_09_),
     .E(_01_),
     .Q(gnt_1)
   );
@@ -324,27 +331,27 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   (* src = "dut.sv:16.5-50.12" *)
   \$_SDFFE_PP0P_  gnt_0_reg /* _94_ */ (
     .C(clock),
-    .D(_06_),
+    .D(_05_),
     .E(_00_),
     .Q(gnt_0),
-    .R(_07_)
+    .R(_10_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:16.5-50.12" *)
   \$_SDFFE_PP1P_  \state_reg[0]  /* _95_ */ (
     .C(clock),
-    .D(_09_),
+    .D(_07_),
     .E(_02_),
     .Q(state[0]),
-    .R(_05_)
+    .R(_11_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:16.5-50.12" *)
   \$_SDFFE_PP0P_  \state_reg[2]  /* _96_ */ (
     .C(clock),
-    .D(_10_),
+    .D(_08_),
     .E(_02_),
     .Q(state[2]),
-    .R(_05_)
+    .R(_11_)
   );
 endmodule

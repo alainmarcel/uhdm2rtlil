@@ -31,12 +31,15 @@ bool UhdmImporter::is_vpi_type(const UHDM::any* obj, int vpi_type) {
 
 // Create a temporary wire
 RTLIL::SigSpec UhdmImporter::create_temp_wire(int width) {
-    return module->addWire(NEW_ID, width);
+    RTLIL::Wire* wire = module->addWire(NEW_ID, width);
+    return wire;
 }
 
 // Create equality comparison cell
 RTLIL::SigSpec UhdmImporter::create_eq_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
-    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Wire* wire = module->addWire(NEW_ID, 1);
+    if (src) add_src_attribute(wire->attributes, src);
+    RTLIL::SigSpec result = wire;
     RTLIL::Cell* cell = module->addEq(NEW_ID, a, b, result);
     if (src) add_src_attribute(cell->attributes, src);
     return result;
@@ -44,7 +47,9 @@ RTLIL::SigSpec UhdmImporter::create_eq_cell(const RTLIL::SigSpec& a, const RTLIL
 
 // Create AND cell
 RTLIL::SigSpec UhdmImporter::create_and_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
-    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Wire* wire = module->addWire(NEW_ID, 1);
+    if (src) add_src_attribute(wire->attributes, src);
+    RTLIL::SigSpec result = wire;
     RTLIL::Cell* cell = module->addAnd(NEW_ID, a, b, result);
     if (src) add_src_attribute(cell->attributes, src);
     return result;
@@ -52,7 +57,9 @@ RTLIL::SigSpec UhdmImporter::create_and_cell(const RTLIL::SigSpec& a, const RTLI
 
 // Create OR cell
 RTLIL::SigSpec UhdmImporter::create_or_cell(const RTLIL::SigSpec& a, const RTLIL::SigSpec& b, const UHDM::any* src) {
-    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Wire* wire = module->addWire(NEW_ID, 1);
+    if (src) add_src_attribute(wire->attributes, src);
+    RTLIL::SigSpec result = wire;
     RTLIL::Cell* cell = module->addOr(NEW_ID, a, b, result);
     if (src) add_src_attribute(cell->attributes, src);
     return result;
@@ -60,7 +67,9 @@ RTLIL::SigSpec UhdmImporter::create_or_cell(const RTLIL::SigSpec& a, const RTLIL
 
 // Create NOT cell
 RTLIL::SigSpec UhdmImporter::create_not_cell(const RTLIL::SigSpec& a, const UHDM::any* src) {
-    RTLIL::SigSpec result = create_temp_wire(1);
+    RTLIL::Wire* wire = module->addWire(NEW_ID, 1);
+    if (src) add_src_attribute(wire->attributes, src);
+    RTLIL::SigSpec result = wire;
     RTLIL::Cell* cell = module->addNot(NEW_ID, a, result);
     if (src) add_src_attribute(cell->attributes, src);
     return result;
@@ -2981,11 +2990,13 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             }
             if (else_stmt) {
                 // Invert condition for else branch
+                const any* src_obj = if_st ? static_cast<const any*>(if_st) : static_cast<const any*>(if_el);
                 if (!prev_condition.empty()) {
                     // For nested if-else, AND the previous condition with NOT of current
-                    current_condition = module->And(NEW_ID, prev_condition, module->Not(NEW_ID, cond));
+                    RTLIL::SigSpec not_cond = create_not_cell(cond, src_obj);
+                    current_condition = create_and_cell(prev_condition, not_cond, src_obj);
                 } else {
-                    current_condition = module->Not(NEW_ID, cond);
+                    current_condition = create_not_cell(cond, src_obj);
                 }
                 import_statement_with_loop_vars(else_stmt, sync, is_reset, var_substitutions);
             }
@@ -3139,9 +3150,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     if (!condition.empty()) {
                         current_condition = prev_condition;
                         if (!prev_condition.empty()) {
-                            current_condition = module->And(NEW_ID, prev_condition, module->Not(NEW_ID, condition));
+                            RTLIL::SigSpec not_cond = create_not_cell(condition, if_else_stmt);
+                            current_condition = create_and_cell(prev_condition, not_cond, if_else_stmt);
                         } else {
-                            current_condition = module->Not(NEW_ID, condition);
+                            current_condition = create_not_cell(condition, if_else_stmt);
                         }
                     }
                     
@@ -4294,7 +4306,12 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         }
         
         // Create multiplexer: condition ? rhs : else_value
-        RTLIL::SigSpec mux_result = module->Mux(NEW_ID, else_value, rhs, current_condition);
+        // Create wire and cell separately to add source attributes
+        RTLIL::Wire* mux_wire = module->addWire(NEW_ID, lhs.size());
+        if (uhdm_assign) add_src_attribute(mux_wire->attributes, uhdm_assign);
+        RTLIL::Cell* mux_cell = module->addMux(NEW_ID, else_value, rhs, current_condition, mux_wire);
+        if (uhdm_assign) add_src_attribute(mux_cell->attributes, uhdm_assign);
+        RTLIL::SigSpec mux_result = mux_wire;
         
         // Store in pending assignments (will be added to sync rule later)
         pending_sync_assignments[lhs] = mux_result;
@@ -4911,7 +4928,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                 case_condition = eq_sig;
                             } else {
                                 // OR multiple case values together
-                                case_condition = create_or_cell(case_condition, eq_sig);
+                                case_condition = create_or_cell(case_condition, eq_sig, case_item);
                             }
                             
                             log("          Case value: %s\n", log_signal(expr_sig));
@@ -4925,7 +4942,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                             all_non_default_conditions = case_condition;
                         } else {
                             // OR with other non-default conditions
-                            all_non_default_conditions = create_or_cell(all_non_default_conditions, case_condition);
+                            all_non_default_conditions = create_or_cell(all_non_default_conditions, case_condition, case_item);
                         }
                     }
                 } else {
@@ -4949,14 +4966,16 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                         if (!all_non_default_conditions.empty()) {
                             // Create NOT of all non-default conditions
                             RTLIL::Wire* not_wire = module->addWire(NEW_ID, 1);
-                            module->addNotGate(NEW_ID, all_non_default_conditions, not_wire);
+                            if (case_item) add_src_attribute(not_wire->attributes, case_item);
+                            RTLIL::Cell* not_cell = module->addNotGate(NEW_ID, all_non_default_conditions, not_wire);
+                            if (case_item) add_src_attribute(not_cell->attributes, case_item);
                             RTLIL::SigSpec default_condition(not_wire);
                             
                             if (current_condition.empty()) {
                                 current_condition = default_condition;
                             } else {
                                 // AND with existing condition
-                                current_condition = create_and_cell(current_condition, default_condition);
+                                current_condition = create_and_cell(current_condition, default_condition, case_item);
                             }
                             log("          Using negation of all non-default conditions for default case\n");
                         }
@@ -4965,7 +4984,7 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                             current_condition = case_condition;
                         } else {
                             // AND with existing condition
-                            current_condition = create_and_cell(current_condition, case_condition);
+                            current_condition = create_and_cell(current_condition, case_condition, case_item);
                         }
                     }
                     

@@ -14,44 +14,76 @@ module \fsm
   wire $auto$opt_dff.cc:247:make_patterns_logic$110
   wire $auto$opt_dff.cc:247:make_patterns_logic$113
   wire $auto$opt_dff.cc:306:combine_resets$106
-  wire $auto$process.cpp:34:create_temp_wire$11
-  wire $auto$process.cpp:34:create_temp_wire$13
-  wire $auto$process.cpp:34:create_temp_wire$41
-  wire $auto$process.cpp:34:create_temp_wire$43
-  wire $auto$process.cpp:34:create_temp_wire$45
-  wire $auto$process.cpp:34:create_temp_wire$61
-  wire $auto$process.cpp:34:create_temp_wire$63
-  wire $auto$process.cpp:34:create_temp_wire$65
-  wire $auto$process.cpp:34:create_temp_wire$75
-  wire $auto$process.cpp:34:create_temp_wire$77
-  wire $auto$process.cpp:34:create_temp_wire$79
-  wire $auto$process.cpp:34:create_temp_wire$91
-  wire $auto$process.cpp:4951:import_case_stmt_sync$89
-  wire $auto$rtlil.cc:2959:Not$10
-  wire $auto$rtlil.cc:2959:Not$24
-  wire $auto$rtlil.cc:2959:Not$36
+  attribute \src "dut.sv:25.15-33.26"
+  wire $auto$process.cpp:40:create_eq_cell$11
+  attribute \src "dut.sv:34.15-39.26"
+  wire $auto$process.cpp:40:create_eq_cell$41
+  attribute \src "dut.sv:40.15-43.26"
+  wire $auto$process.cpp:40:create_eq_cell$61
+  attribute \src "dut.sv:44.15-47.26"
+  wire $auto$process.cpp:40:create_eq_cell$75
+  attribute \src "dut.sv:26.27-26.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$19
+  attribute \src "dut.sv:27.27-27.37"
+  wire $auto$process.cpp:4310:import_assignment_sync$21
+  attribute \src "dut.sv:19.13-19.31"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$3
+  attribute \src "dut.sv:29.27-29.37"
+  wire $auto$process.cpp:4310:import_assignment_sync$31
+  attribute \src "dut.sv:30.27-30.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$33
+  attribute \src "dut.sv:32.27-32.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$39
+  attribute \src "dut.sv:20.13-20.23"
+  wire $auto$process.cpp:4310:import_assignment_sync$5
+  attribute \src "dut.sv:35.27-35.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$51
+  attribute \src "dut.sv:38.27-38.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$59
+  attribute \src "dut.sv:41.27-41.45"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$71
+  attribute \src "dut.sv:42.27-42.41"
+  wire $auto$process.cpp:4310:import_assignment_sync$73
+  attribute \src "dut.sv:45.27-45.45"
+  attribute \unused_bits "1"
+  wire width 3 $auto$process.cpp:4310:import_assignment_sync$85
+  attribute \src "dut.sv:46.27-46.41"
+  wire $auto$process.cpp:4310:import_assignment_sync$87
+  attribute \src "dut.sv:48.15-48.44"
+  wire $auto$process.cpp:4968:import_case_stmt_sync$89
+  attribute \src "dut.sv:25.15-33.26"
+  wire $auto$process.cpp:50:create_and_cell$13
+  attribute \src "dut.sv:25.23-33.26"
+  wire $auto$process.cpp:50:create_and_cell$25
+  attribute \src "dut.sv:28.32-33.26"
+  wire $auto$process.cpp:50:create_and_cell$37
+  attribute \src "dut.sv:34.15-39.26"
+  wire $auto$process.cpp:50:create_and_cell$45
+  attribute \src "dut.sv:34.23-39.26"
+  wire $auto$process.cpp:50:create_and_cell$55
+  attribute \src "dut.sv:40.15-43.26"
+  wire $auto$process.cpp:50:create_and_cell$65
+  attribute \src "dut.sv:44.15-47.26"
+  wire $auto$process.cpp:50:create_and_cell$79
+  attribute \src "dut.sv:48.15-48.44"
+  wire $auto$process.cpp:50:create_and_cell$91
+  attribute \src "dut.sv:34.15-39.26"
+  wire $auto$process.cpp:60:create_or_cell$43
+  attribute \src "dut.sv:40.15-43.26"
+  wire $auto$process.cpp:60:create_or_cell$63
+  attribute \src "dut.sv:44.15-47.26"
+  wire $auto$process.cpp:60:create_or_cell$77
+  attribute \src "dut.sv:25.23-33.26"
+  wire $auto$process.cpp:70:create_not_cell$23
+  attribute \src "dut.sv:28.32-33.26"
+  wire $auto$process.cpp:70:create_not_cell$35
+  attribute \src "dut.sv:18.11-49.20"
+  wire $auto$process.cpp:70:create_not_cell$9
   wire $auto$rtlil.cc:3006:And$18
-  wire $auto$rtlil.cc:3006:And$26
   wire $auto$rtlil.cc:3006:And$30
-  wire $auto$rtlil.cc:3006:And$38
   wire $auto$rtlil.cc:3006:And$50
-  wire $auto$rtlil.cc:3006:And$56
   wire $auto$rtlil.cc:3006:And$70
   wire $auto$rtlil.cc:3006:And$84
-  wire width 3 $auto$rtlil.cc:3094:Mux$20
-  wire $auto$rtlil.cc:3094:Mux$22
-  wire $auto$rtlil.cc:3094:Mux$32
-  wire width 3 $auto$rtlil.cc:3094:Mux$34
-  wire width 3 $auto$rtlil.cc:3094:Mux$4
-  wire width 3 $auto$rtlil.cc:3094:Mux$40
-  wire width 3 $auto$rtlil.cc:3094:Mux$52
-  wire $auto$rtlil.cc:3094:Mux$6
-  wire width 3 $auto$rtlil.cc:3094:Mux$60
-  wire width 3 $auto$rtlil.cc:3094:Mux$72
-  wire $auto$rtlil.cc:3094:Mux$74
-  attribute \unused_bits "1"
-  wire width 3 $auto$rtlil.cc:3094:Mux$86
-  wire $auto$rtlil.cc:3094:Mux$88
   attribute \src "dut.sv:1.15-1.20"
   wire input 1 \clock
   attribute \src "dut.sv:1.43-1.48"
@@ -74,7 +106,7 @@ module \fsm
     parameter \EN_POLARITY 1
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$88
+    connect \D $auto$process.cpp:4310:import_assignment_sync$87
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$103
     connect \Q \gnt_1
   end
@@ -87,10 +119,10 @@ module \fsm
     parameter \SRST_VALUE 2'01
     parameter \WIDTH 2
     connect \CLK \clock
-    connect \D { $auto$rtlil.cc:3094:Mux$86 [2] $auto$rtlil.cc:3094:Mux$86 [0] }
+    connect \D { $auto$process.cpp:4310:import_assignment_sync$85 [2] $auto$process.cpp:4310:import_assignment_sync$85 [0] }
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$110
     connect \Q { \state [2] \state [0] }
-    connect \SRST $auto$process.cpp:34:create_temp_wire$91
+    connect \SRST $auto$process.cpp:50:create_and_cell$91
   end
   attribute \always_ff 1
   attribute \src "dut.sv:16.5-50.12"
@@ -101,7 +133,7 @@ module \fsm
     parameter \SRST_VALUE 1'0
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$52 [1]
+    connect \D $auto$process.cpp:4310:import_assignment_sync$51 [1]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$113
     connect \Q \state [1]
     connect \SRST $auto$opt_dff.cc:306:combine_resets$106
@@ -115,10 +147,10 @@ module \fsm
     parameter \SRST_VALUE 1'0
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$22
+    connect \D $auto$process.cpp:4310:import_assignment_sync$21
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$100
     connect \Q \gnt_0
-    connect \SRST $auto$rtlil.cc:3006:And$56
+    connect \SRST $auto$process.cpp:50:create_and_cell$55
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$101
     parameter \A_SIGNED 0
@@ -138,341 +170,369 @@ module \fsm
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$56 $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
+    connect \A { $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$process.cpp:50:create_and_cell$55 $auto$rtlil.cc:3006:And$50 $auto$process.cpp:50:create_and_cell$37 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$110
   end
   cell $reduce_bool $auto$opt_dff.cc:248:make_patterns_logic$114
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:3006:And$50 $auto$rtlil.cc:3006:And$38 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
+    connect \A { $auto$rtlil.cc:3006:And$50 $auto$process.cpp:50:create_and_cell$37 $auto$rtlil.cc:3006:And$30 $auto$rtlil.cc:3006:And$18 \reset }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$113
   end
   cell $reduce_or $auto$opt_dff.cc:307:combine_resets$107
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 1
-    connect \A { $auto$process.cpp:34:create_temp_wire$91 $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$rtlil.cc:3006:And$56 }
+    connect \A { $auto$process.cpp:50:create_and_cell$91 $auto$rtlil.cc:3006:And$84 $auto$rtlil.cc:3006:And$70 $auto$process.cpp:50:create_and_cell$55 }
     connect \Y $auto$opt_dff.cc:306:combine_resets$106
   end
-  cell $and $auto$process.cpp:3121:import_statement_sync$17
+  cell $and $auto$process.cpp:3132:import_statement_sync$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$13
+    connect \A $auto$process.cpp:50:create_and_cell$13
     connect \B \req_0
     connect \Y $auto$rtlil.cc:3006:And$18
   end
-  cell $and $auto$process.cpp:3121:import_statement_sync$29
+  cell $and $auto$process.cpp:3132:import_statement_sync$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3006:And$26
+    connect \A $auto$process.cpp:50:create_and_cell$25
     connect \B \req_1
     connect \Y $auto$rtlil.cc:3006:And$30
   end
-  cell $and $auto$process.cpp:3121:import_statement_sync$49
+  cell $and $auto$process.cpp:3132:import_statement_sync$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$45
+    connect \A $auto$process.cpp:50:create_and_cell$45
     connect \B \req_0
     connect \Y $auto$rtlil.cc:3006:And$50
   end
-  cell $not $auto$process.cpp:3142:import_statement_sync$23
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_0
-    connect \Y $auto$rtlil.cc:2959:Not$24
-  end
-  cell $and $auto$process.cpp:3142:import_statement_sync$25
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$13
-    connect \B $auto$rtlil.cc:2959:Not$24
-    connect \Y $auto$rtlil.cc:3006:And$26
-  end
-  cell $not $auto$process.cpp:3142:import_statement_sync$35
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \req_1
-    connect \Y $auto$rtlil.cc:2959:Not$36
-  end
-  cell $and $auto$process.cpp:3142:import_statement_sync$37
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3006:And$26
-    connect \B $auto$rtlil.cc:2959:Not$36
-    connect \Y $auto$rtlil.cc:3006:And$38
-  end
-  cell $and $auto$process.cpp:3142:import_statement_sync$55
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$45
-    connect \B $auto$rtlil.cc:2959:Not$24
-    connect \Y $auto$rtlil.cc:3006:And$56
-  end
-  cell $not $auto$process.cpp:3144:import_statement_sync$9
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \reset
-    connect \Y $auto$rtlil.cc:2959:Not$10
-  end
-  attribute \src "dut.sv:25.15-33.26"
-  cell $eq $auto$process.cpp:40:create_eq_cell$12
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 3
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 3
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 3'001
-    connect \Y $auto$process.cpp:34:create_temp_wire$11
-  end
-  attribute \src "dut.sv:34.15-39.26"
-  cell $eq $auto$process.cpp:40:create_eq_cell$42
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 3
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 3
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 3'010
-    connect \Y $auto$process.cpp:34:create_temp_wire$41
-  end
-  attribute \src "dut.sv:40.15-43.26"
-  cell $eq $auto$process.cpp:40:create_eq_cell$62
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 3
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 3
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 3'100
-    connect \Y $auto$process.cpp:34:create_temp_wire$61
-  end
-  attribute \src "dut.sv:44.15-47.26"
-  cell $eq $auto$process.cpp:40:create_eq_cell$76
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 3
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 3
-    parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 3'101
-    connect \Y $auto$process.cpp:34:create_temp_wire$75
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$19
+  attribute \src "dut.sv:26.27-26.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$20
     parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$4
+    connect \A $auto$process.cpp:4310:import_assignment_sync$3
     connect \B 3'010
     connect \S $auto$rtlil.cc:3006:And$18
-    connect \Y $auto$rtlil.cc:3094:Mux$20
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$19
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$21
+  attribute \src "dut.sv:27.27-27.37"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$22
     parameter \WIDTH 1
-    connect \A $auto$rtlil.cc:3094:Mux$6
+    connect \A $auto$process.cpp:4310:import_assignment_sync$5
     connect \B 1'1
     connect \S $auto$rtlil.cc:3006:And$18
-    connect \Y $auto$rtlil.cc:3094:Mux$22
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$21
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$3
+  attribute \src "dut.sv:29.27-29.37"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$32
+    parameter \WIDTH 1
+    connect \A $auto$process.cpp:4310:import_assignment_sync$5
+    connect \B 1'1
+    connect \S $auto$rtlil.cc:3006:And$30
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$31
+  end
+  attribute \src "dut.sv:30.27-30.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$34
+    parameter \WIDTH 3
+    connect \A $auto$process.cpp:4310:import_assignment_sync$19
+    connect \B 3'010
+    connect \S $auto$rtlil.cc:3006:And$30
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$33
+  end
+  attribute \src "dut.sv:19.13-19.31"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$4
     parameter \WIDTH 3
     connect \A 3'x
     connect \B 3'001
     connect \S \reset
-    connect \Y $auto$rtlil.cc:3094:Mux$4
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$3
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$31
-    parameter \WIDTH 1
-    connect \A $auto$rtlil.cc:3094:Mux$6
-    connect \B 1'1
-    connect \S $auto$rtlil.cc:3006:And$30
-    connect \Y $auto$rtlil.cc:3094:Mux$32
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$33
+  attribute \src "dut.sv:32.27-32.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$40
     parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$20
-    connect \B 3'010
-    connect \S $auto$rtlil.cc:3006:And$30
-    connect \Y $auto$rtlil.cc:3094:Mux$34
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$39
-    parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$34
+    connect \A $auto$process.cpp:4310:import_assignment_sync$33
     connect \B 3'001
-    connect \S $auto$rtlil.cc:3006:And$38
-    connect \Y $auto$rtlil.cc:3094:Mux$40
+    connect \S $auto$process.cpp:50:create_and_cell$37
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$39
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$5
+  attribute \src "dut.sv:35.27-35.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$52
+    parameter \WIDTH 3
+    connect \A $auto$process.cpp:4310:import_assignment_sync$39
+    connect \B 3'010
+    connect \S $auto$rtlil.cc:3006:And$50
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$51
+  end
+  attribute \src "dut.sv:20.13-20.23"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$6
     parameter \WIDTH 1
     connect \A 1'x
     connect \B 1'0
     connect \S \reset
-    connect \Y $auto$rtlil.cc:3094:Mux$6
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$5
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$51
+  attribute \src "dut.sv:38.27-38.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$60
     parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$40
-    connect \B 3'010
-    connect \S $auto$rtlil.cc:3006:And$50
-    connect \Y $auto$rtlil.cc:3094:Mux$52
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$59
-    parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$52
+    connect \A $auto$process.cpp:4310:import_assignment_sync$51
     connect \B 3'001
-    connect \S $auto$rtlil.cc:3006:And$56
-    connect \Y $auto$rtlil.cc:3094:Mux$60
+    connect \S $auto$process.cpp:50:create_and_cell$55
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$59
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$71
+  attribute \src "dut.sv:41.27-41.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$72
     parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$60
+    connect \A $auto$process.cpp:4310:import_assignment_sync$59
     connect \B 3'101
     connect \S $auto$rtlil.cc:3006:And$70
-    connect \Y $auto$rtlil.cc:3094:Mux$72
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$71
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$73
+  attribute \src "dut.sv:42.27-42.41"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$74
     parameter \WIDTH 1
-    connect \A $auto$rtlil.cc:3094:Mux$32
+    connect \A $auto$process.cpp:4310:import_assignment_sync$31
     connect \B \req_0
     connect \S $auto$rtlil.cc:3006:And$70
-    connect \Y $auto$rtlil.cc:3094:Mux$74
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$73
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$85
+  attribute \src "dut.sv:45.27-45.45"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$86
     parameter \WIDTH 3
-    connect \A $auto$rtlil.cc:3094:Mux$72
+    connect \A $auto$process.cpp:4310:import_assignment_sync$71
     connect \B 3'100
     connect \S $auto$rtlil.cc:3006:And$84
-    connect \Y $auto$rtlil.cc:3094:Mux$86
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$85
   end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$87
+  attribute \src "dut.sv:46.27-46.41"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$88
     parameter \WIDTH 1
-    connect \A $auto$rtlil.cc:3094:Mux$74
+    connect \A $auto$process.cpp:4310:import_assignment_sync$73
     connect \B \req_1
     connect \S $auto$rtlil.cc:3006:And$84
-    connect \Y $auto$rtlil.cc:3094:Mux$88
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$87
   end
-  cell $and $auto$process.cpp:4663:import_if_stmt_sync$69
+  attribute \src "dut.sv:25.15-33.26"
+  cell $eq $auto$process.cpp:43:create_eq_cell$12
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 3
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 3'001
+    connect \Y $auto$process.cpp:40:create_eq_cell$11
+  end
+  attribute \src "dut.sv:34.15-39.26"
+  cell $eq $auto$process.cpp:43:create_eq_cell$42
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 3
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 3'010
+    connect \Y $auto$process.cpp:40:create_eq_cell$41
+  end
+  attribute \src "dut.sv:40.15-43.26"
+  cell $eq $auto$process.cpp:43:create_eq_cell$62
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 3
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 3'100
+    connect \Y $auto$process.cpp:40:create_eq_cell$61
+  end
+  attribute \src "dut.sv:44.15-47.26"
+  cell $eq $auto$process.cpp:43:create_eq_cell$76
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 3
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 1
+    connect \A \state
+    connect \B 3'101
+    connect \Y $auto$process.cpp:40:create_eq_cell$75
+  end
+  cell $and $auto$process.cpp:4680:import_if_stmt_sync$69
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$65
+    connect \A $auto$process.cpp:50:create_and_cell$65
     connect \B \req_1
     connect \Y $auto$rtlil.cc:3006:And$70
   end
-  cell $and $auto$process.cpp:4663:import_if_stmt_sync$83
+  cell $and $auto$process.cpp:4680:import_if_stmt_sync$83
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$79
+    connect \A $auto$process.cpp:50:create_and_cell$79
     connect \B \req_0
     connect \Y $auto$rtlil.cc:3006:And$84
   end
-  cell $and $auto$process.cpp:48:create_and_cell$14
+  attribute \src "dut.sv:48.15-48.44"
+  cell $_NOT_ $auto$process.cpp:4970:import_case_stmt_sync$90
+    connect \A $auto$process.cpp:60:create_or_cell$77
+    connect \Y $auto$process.cpp:4968:import_case_stmt_sync$89
+  end
+  attribute \src "dut.sv:25.15-33.26"
+  cell $and $auto$process.cpp:53:create_and_cell$14
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:2959:Not$10
-    connect \B $auto$process.cpp:34:create_temp_wire$11
-    connect \Y $auto$process.cpp:34:create_temp_wire$13
+    connect \A $auto$process.cpp:70:create_not_cell$9
+    connect \B $auto$process.cpp:40:create_eq_cell$11
+    connect \Y $auto$process.cpp:50:create_and_cell$13
   end
-  cell $and $auto$process.cpp:48:create_and_cell$46
+  attribute \src "dut.sv:25.23-33.26"
+  cell $and $auto$process.cpp:53:create_and_cell$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:2959:Not$10
-    connect \B $auto$process.cpp:34:create_temp_wire$41
-    connect \Y $auto$process.cpp:34:create_temp_wire$45
+    connect \A $auto$process.cpp:50:create_and_cell$13
+    connect \B $auto$process.cpp:70:create_not_cell$23
+    connect \Y $auto$process.cpp:50:create_and_cell$25
   end
-  cell $and $auto$process.cpp:48:create_and_cell$66
+  attribute \src "dut.sv:28.32-33.26"
+  cell $and $auto$process.cpp:53:create_and_cell$38
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:2959:Not$10
-    connect \B $auto$process.cpp:34:create_temp_wire$61
-    connect \Y $auto$process.cpp:34:create_temp_wire$65
+    connect \A $auto$process.cpp:50:create_and_cell$25
+    connect \B $auto$process.cpp:70:create_not_cell$35
+    connect \Y $auto$process.cpp:50:create_and_cell$37
   end
-  cell $and $auto$process.cpp:48:create_and_cell$80
+  attribute \src "dut.sv:34.15-39.26"
+  cell $and $auto$process.cpp:53:create_and_cell$46
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:2959:Not$10
-    connect \B $auto$process.cpp:34:create_temp_wire$75
-    connect \Y $auto$process.cpp:34:create_temp_wire$79
+    connect \A $auto$process.cpp:70:create_not_cell$9
+    connect \B $auto$process.cpp:40:create_eq_cell$41
+    connect \Y $auto$process.cpp:50:create_and_cell$45
   end
-  cell $and $auto$process.cpp:48:create_and_cell$92
+  attribute \src "dut.sv:34.23-39.26"
+  cell $and $auto$process.cpp:53:create_and_cell$56
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:2959:Not$10
-    connect \B $auto$process.cpp:4951:import_case_stmt_sync$89
-    connect \Y $auto$process.cpp:34:create_temp_wire$91
+    connect \A $auto$process.cpp:50:create_and_cell$45
+    connect \B $auto$process.cpp:70:create_not_cell$23
+    connect \Y $auto$process.cpp:50:create_and_cell$55
   end
-  cell $_NOT_ $auto$process.cpp:4952:import_case_stmt_sync$90
-    connect \A $auto$process.cpp:34:create_temp_wire$77
-    connect \Y $auto$process.cpp:4951:import_case_stmt_sync$89
-  end
-  cell $or $auto$process.cpp:56:create_or_cell$44
+  attribute \src "dut.sv:40.15-43.26"
+  cell $and $auto$process.cpp:53:create_and_cell$66
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$11
-    connect \B $auto$process.cpp:34:create_temp_wire$41
-    connect \Y $auto$process.cpp:34:create_temp_wire$43
+    connect \A $auto$process.cpp:70:create_not_cell$9
+    connect \B $auto$process.cpp:40:create_eq_cell$61
+    connect \Y $auto$process.cpp:50:create_and_cell$65
   end
-  cell $or $auto$process.cpp:56:create_or_cell$64
+  attribute \src "dut.sv:44.15-47.26"
+  cell $and $auto$process.cpp:53:create_and_cell$80
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$43
-    connect \B $auto$process.cpp:34:create_temp_wire$61
-    connect \Y $auto$process.cpp:34:create_temp_wire$63
+    connect \A $auto$process.cpp:70:create_not_cell$9
+    connect \B $auto$process.cpp:40:create_eq_cell$75
+    connect \Y $auto$process.cpp:50:create_and_cell$79
   end
-  cell $or $auto$process.cpp:56:create_or_cell$78
+  attribute \src "dut.sv:48.15-48.44"
+  cell $and $auto$process.cpp:53:create_and_cell$92
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$process.cpp:34:create_temp_wire$63
-    connect \B $auto$process.cpp:34:create_temp_wire$75
-    connect \Y $auto$process.cpp:34:create_temp_wire$77
+    connect \A $auto$process.cpp:70:create_not_cell$9
+    connect \B $auto$process.cpp:4968:import_case_stmt_sync$89
+    connect \Y $auto$process.cpp:50:create_and_cell$91
+  end
+  attribute \src "dut.sv:34.15-39.26"
+  cell $or $auto$process.cpp:63:create_or_cell$44
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$process.cpp:40:create_eq_cell$11
+    connect \B $auto$process.cpp:40:create_eq_cell$41
+    connect \Y $auto$process.cpp:60:create_or_cell$43
+  end
+  attribute \src "dut.sv:40.15-43.26"
+  cell $or $auto$process.cpp:63:create_or_cell$64
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$process.cpp:60:create_or_cell$43
+    connect \B $auto$process.cpp:40:create_eq_cell$61
+    connect \Y $auto$process.cpp:60:create_or_cell$63
+  end
+  attribute \src "dut.sv:44.15-47.26"
+  cell $or $auto$process.cpp:63:create_or_cell$78
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$process.cpp:60:create_or_cell$63
+    connect \B $auto$process.cpp:40:create_eq_cell$75
+    connect \Y $auto$process.cpp:60:create_or_cell$77
+  end
+  attribute \src "dut.sv:18.11-49.20"
+  cell $not $auto$process.cpp:73:create_not_cell$10
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \reset
+    connect \Y $auto$process.cpp:70:create_not_cell$9
+  end
+  attribute \src "dut.sv:25.23-33.26"
+  cell $not $auto$process.cpp:73:create_not_cell$24
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_0
+    connect \Y $auto$process.cpp:70:create_not_cell$23
+  end
+  attribute \src "dut.sv:28.32-33.26"
+  cell $not $auto$process.cpp:73:create_not_cell$36
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \req_1
+    connect \Y $auto$process.cpp:70:create_not_cell$35
   end
 end

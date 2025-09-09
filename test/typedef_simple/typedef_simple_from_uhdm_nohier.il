@@ -3,14 +3,18 @@ autoidx 17
 attribute \src "dut.sv:1.1-19.10"
 attribute \cells_not_processed 1
 module \top
-  wire $auto$expression.cpp:1586:import_operation$1
-  wire $auto$expression.cpp:1586:import_operation$13
-  wire $auto$expression.cpp:1586:import_operation$5
-  wire $auto$expression.cpp:1586:import_operation$9
-  wire $auto$process.cpp:102:import_immediate_assert$11
-  wire $auto$process.cpp:102:import_immediate_assert$15
-  wire $auto$process.cpp:102:import_immediate_assert$3
-  wire $auto$process.cpp:102:import_immediate_assert$7
+  wire $auto$process.cpp:111:import_immediate_assert$11
+  wire $auto$process.cpp:111:import_immediate_assert$15
+  wire $auto$process.cpp:111:import_immediate_assert$3
+  wire $auto$process.cpp:111:import_immediate_assert$7
+  attribute \src "dut.sv:14.19-14.32"
+  wire $eq$dut.sv:14$1_Y
+  attribute \src "dut.sv:15.19-15.34"
+  wire $eq$dut.sv:15$5_Y
+  attribute \src "dut.sv:16.19-16.38"
+  wire $eq$dut.sv:16$9_Y
+  attribute \src "dut.sv:17.19-17.38"
+  wire $eq$dut.sv:17$13_Y
   attribute \init 8'11111111
   attribute \keep 1
   attribute \src "dut.sv:11.20-11.22"
@@ -32,7 +36,7 @@ module \top
   attribute \wiretype "\\int8_t"
   wire width 8 signed \int8
   attribute \src "dut.sv:16.12-16.40"
-  cell $check $auto$process.cpp:109:import_immediate_assert$12
+  cell $check $auto$process.cpp:118:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -40,13 +44,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$9
+    connect \A $eq$dut.sv:16$9_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$11
+    connect \EN $auto$process.cpp:111:import_immediate_assert$11
     connect \TRG { }
   end
   attribute \src "dut.sv:17.12-17.40"
-  cell $check $auto$process.cpp:109:import_immediate_assert$16
+  cell $check $auto$process.cpp:118:import_immediate_assert$16
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -54,13 +58,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$13
+    connect \A $eq$dut.sv:17$13_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$15
+    connect \EN $auto$process.cpp:111:import_immediate_assert$15
     connect \TRG { }
   end
   attribute \src "dut.sv:14.12-14.34"
-  cell $check $auto$process.cpp:109:import_immediate_assert$4
+  cell $check $auto$process.cpp:118:import_immediate_assert$4
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -68,13 +72,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$1
+    connect \A $eq$dut.sv:14$1_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$3
+    connect \EN $auto$process.cpp:111:import_immediate_assert$3
     connect \TRG { }
   end
   attribute \src "dut.sv:15.12-15.36"
-  cell $check $auto$process.cpp:109:import_immediate_assert$8
+  cell $check $auto$process.cpp:118:import_immediate_assert$8
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -82,9 +86,9 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$5
+    connect \A $eq$dut.sv:15$5_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:102:import_immediate_assert$7
+    connect \EN $auto$process.cpp:111:import_immediate_assert$7
     connect \TRG { }
   end
   attribute \src "dut.sv:14.19-14.32"
@@ -96,7 +100,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int2
     connect \B 2'10
-    connect \Y $auto$expression.cpp:1586:import_operation$1
+    connect \Y $eq$dut.sv:14$1_Y
   end
   attribute \src "dut.sv:15.19-15.34"
   cell $eq $eq$dut.sv:15$6
@@ -107,7 +111,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int4
     connect \B 4'1111
-    connect \Y $auto$expression.cpp:1586:import_operation$5
+    connect \Y $eq$dut.sv:15$5_Y
   end
   attribute \src "dut.sv:16.19-16.38"
   cell $eq $eq$dut.sv:16$10
@@ -118,7 +122,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int8
     connect \B 8'11111111
-    connect \Y $auto$expression.cpp:1586:import_operation$9
+    connect \Y $eq$dut.sv:16$9_Y
   end
   attribute \src "dut.sv:17.19-17.38"
   cell $eq $eq$dut.sv:17$14
@@ -129,30 +133,30 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \ch
     connect \B 8'11111111
-    connect \Y $auto$expression.cpp:1586:import_operation$13
+    connect \Y $eq$dut.sv:17$13_Y
   end
   attribute \src "dut.sv:14.2-14.34"
   process $proc$dut.sv:14$1
-    assign $auto$process.cpp:102:import_immediate_assert$3 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$3 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$3 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$3 1'1
     sync always
   end
   attribute \src "dut.sv:15.2-15.36"
   process $proc$dut.sv:15$1
-    assign $auto$process.cpp:102:import_immediate_assert$7 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$7 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$7 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$7 1'1
     sync always
   end
   attribute \src "dut.sv:16.2-16.40"
   process $proc$dut.sv:16$1
-    assign $auto$process.cpp:102:import_immediate_assert$11 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$11 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$11 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$11 1'1
     sync always
   end
   attribute \src "dut.sv:17.2-17.40"
   process $proc$dut.sv:17$1
-    assign $auto$process.cpp:102:import_immediate_assert$15 1'0
-    assign $auto$process.cpp:102:import_immediate_assert$15 1'1
+    assign $auto$process.cpp:111:import_immediate_assert$15 1'0
+    assign $auto$process.cpp:111:import_immediate_assert$15 1'1
     sync always
   end
 end

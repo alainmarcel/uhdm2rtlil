@@ -5,7 +5,8 @@ attribute \src "dut.sv:2.1-27.10"
 attribute \top 1
 module \counter
   parameter \WIDTH 8
-  wire $auto$expression.cpp:1586:import_operation$3
+  attribute \src "dut.sv:24.21-24.43"
+  wire $eq$dut.sv:24$3_Y
   attribute \src "dut.sv:5.18-5.21"
   wire input 1 \clk
   attribute \src "dut.sv:8.30-8.35"
@@ -52,7 +53,7 @@ module \counter
     parameter \Y_WIDTH 1
     connect \A \count
     connect \B 8'11111111
-    connect \Y $auto$expression.cpp:1586:import_operation$3
+    connect \Y $eq$dut.sv:24$3_Y
   end
   cell $logic_and $logic_and$dut.sv:24$5
     parameter \A_SIGNED 0
@@ -60,7 +61,7 @@ module \counter
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:1586:import_operation$3
+    connect \A $eq$dut.sv:24$3_Y
     connect \B \enable
     connect \Y \overflow
   end

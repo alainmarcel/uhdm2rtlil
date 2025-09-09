@@ -4,10 +4,14 @@ attribute \keep 1
 attribute \src "dut.sv:1.1-19.10"
 attribute \top 1
 module \top
-  wire $auto$expression.cpp:1586:import_operation$1
-  wire $auto$expression.cpp:1586:import_operation$13
-  wire $auto$expression.cpp:1586:import_operation$5
-  wire $auto$expression.cpp:1586:import_operation$9
+  attribute \src "dut.sv:14.19-14.32"
+  wire $eq$dut.sv:14$1_Y
+  attribute \src "dut.sv:15.19-15.34"
+  wire $eq$dut.sv:15$5_Y
+  attribute \src "dut.sv:16.19-16.38"
+  wire $eq$dut.sv:16$9_Y
+  attribute \src "dut.sv:17.19-17.38"
+  wire $eq$dut.sv:17$13_Y
   attribute \init 8'11111111
   attribute \keep 1
   attribute \src "dut.sv:11.20-11.22"
@@ -29,7 +33,7 @@ module \top
   attribute \wiretype "\\int8_t"
   wire width 8 signed \int8
   attribute \src "dut.sv:16.12-16.40"
-  cell $check $auto$process.cpp:109:import_immediate_assert$12
+  cell $check $auto$process.cpp:118:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -37,13 +41,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$9
+    connect \A $eq$dut.sv:16$9_Y
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
   attribute \src "dut.sv:17.12-17.40"
-  cell $check $auto$process.cpp:109:import_immediate_assert$16
+  cell $check $auto$process.cpp:118:import_immediate_assert$16
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -51,13 +55,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$13
+    connect \A $eq$dut.sv:17$13_Y
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
   attribute \src "dut.sv:14.12-14.34"
-  cell $check $auto$process.cpp:109:import_immediate_assert$4
+  cell $check $auto$process.cpp:118:import_immediate_assert$4
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -65,13 +69,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$1
+    connect \A $eq$dut.sv:14$1_Y
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
   attribute \src "dut.sv:15.12-15.36"
-  cell $check $auto$process.cpp:109:import_immediate_assert$8
+  cell $check $auto$process.cpp:118:import_immediate_assert$8
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -79,7 +83,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$expression.cpp:1586:import_operation$5
+    connect \A $eq$dut.sv:15$5_Y
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -93,7 +97,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int2
     connect \B 2'10
-    connect \Y $auto$expression.cpp:1586:import_operation$1
+    connect \Y $eq$dut.sv:14$1_Y
   end
   attribute \src "dut.sv:15.19-15.34"
   cell $eq $eq$dut.sv:15$6
@@ -104,7 +108,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int4
     connect \B 4'1111
-    connect \Y $auto$expression.cpp:1586:import_operation$5
+    connect \Y $eq$dut.sv:15$5_Y
   end
   attribute \src "dut.sv:16.19-16.38"
   cell $eq $eq$dut.sv:16$10
@@ -115,7 +119,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \int8
     connect \B 8'11111111
-    connect \Y $auto$expression.cpp:1586:import_operation$9
+    connect \Y $eq$dut.sv:16$9_Y
   end
   attribute \src "dut.sv:17.19-17.38"
   cell $eq $eq$dut.sv:17$14
@@ -126,6 +130,6 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \ch
     connect \B 8'11111111
-    connect \Y $auto$expression.cpp:1586:import_operation$13
+    connect \Y $eq$dut.sv:17$13_Y
   end
 end

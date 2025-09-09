@@ -9,8 +9,9 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \COUNTER_WIDTH 5
   wire width 5 $0\counter
   attribute \unused_bits "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1442:import_operation$5
-  wire $auto$expression.cpp:1586:import_operation$7
+  wire width 64 $auto$expression.cpp:1468:import_operation$5
+  attribute \src "dut.sv:91.17-91.29"
+  wire $eq$dut.sv:91$7_Y
   attribute \src "dut.sv:65.38-65.41"
   wire input 1 \clk
   attribute \src "dut.sv:75.31-75.38"
@@ -29,7 +30,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:1442:import_operation$5 [63:5] $0\counter }
+    connect \Y { $auto$expression.cpp:1468:import_operation$5 [63:5] $0\counter }
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $logic_not $eq$dut.sv:91$8
@@ -37,7 +38,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A \counter
-    connect \Y $auto$expression.cpp:1586:import_operation$7
+    connect \Y $eq$dut.sv:91$7_Y
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -71,10 +72,10 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \WIDTH 1
     connect \A \data_in [1]
     connect \B 1'1
-    connect \S $auto$expression.cpp:1586:import_operation$7
+    connect \S $eq$dut.sv:91$7_Y
     connect \Y \data_out [0]
   end
-  connect $auto$expression.cpp:1442:import_operation$5 [4:0] $0\counter
+  connect $auto$expression.cpp:1468:import_operation$5 [4:0] $0\counter
 end
 attribute \dynports 1
 attribute \src "dut.sv:25.1-59.10"
@@ -89,6 +90,7 @@ module \simple_package
   attribute \src "dut.sv:28.38-28.41"
   wire input 1 \clk
   attribute \nosync 1
+  attribute \src "dut.sv:47.34-47.61"
   wire width 32 \increment_data$func$dut.sv:47$2.input_data
   attribute \src "dut.sv:35.23-35.35"
   attribute \wiretype "\\my_pkg::bus_transaction_t"

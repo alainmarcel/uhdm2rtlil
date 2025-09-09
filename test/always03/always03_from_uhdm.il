@@ -4,12 +4,16 @@ attribute \src "dut.sv:1.1-22.10"
 attribute \top 1
 module \always03
   wire $auto$opt_dff.cc:247:make_patterns_logic$22
-  wire $auto$rtlil.cc:2959:Not$10
-  wire $auto$rtlil.cc:3006:And$12
+  attribute \src "dut.sv:18.4-18.15"
+  wire $auto$process.cpp:4310:import_assignment_sync$13
+  attribute \src "dut.sv:16.4-16.15"
+  wire $auto$process.cpp:4310:import_assignment_sync$7
+  attribute \src "dut.sv:15.3-18.16"
+  wire $auto$process.cpp:50:create_and_cell$11
+  attribute \src "dut.sv:15.3-18.16"
+  wire $auto$process.cpp:70:create_not_cell$9
   wire $auto$rtlil.cc:3006:And$6
   wire $auto$rtlil.cc:3008:Xor$16
-  wire $auto$rtlil.cc:3094:Mux$14
-  wire $auto$rtlil.cc:3094:Mux$8
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
   attribute \src "dut.sv:1.24-1.27"
@@ -50,7 +54,7 @@ module \always03
     parameter \EN_POLARITY 1
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$rtlil.cc:3094:Mux$14
+    connect \D $auto$process.cpp:4310:import_assignment_sync$13
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$22
     connect \Q \out3
   end
@@ -58,10 +62,10 @@ module \always03
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A { $auto$rtlil.cc:3006:And$12 $auto$rtlil.cc:3006:And$6 }
+    connect \A { $auto$process.cpp:50:create_and_cell$11 $auto$rtlil.cc:3006:And$6 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$22
   end
-  cell $and $auto$process.cpp:3121:import_statement_sync$5
+  cell $and $auto$process.cpp:3132:import_statement_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -71,36 +75,40 @@ module \always03
     connect \B \in5
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$process.cpp:3142:import_statement_sync$11
+  attribute \src "dut.sv:18.4-18.15"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$14
+    parameter \WIDTH 1
+    connect \A $auto$process.cpp:4310:import_assignment_sync$7
+    connect \B \in7
+    connect \S $auto$process.cpp:50:create_and_cell$11
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$13
+  end
+  attribute \src "dut.sv:16.4-16.15"
+  cell $mux $auto$process.cpp:4312:import_assignment_sync$8
+    parameter \WIDTH 1
+    connect \A 1'x
+    connect \B \in6
+    connect \S $auto$rtlil.cc:3006:And$6
+    connect \Y $auto$process.cpp:4310:import_assignment_sync$7
+  end
+  attribute \src "dut.sv:15.3-18.16"
+  cell $and $auto$process.cpp:53:create_and_cell$12
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in4
-    connect \B $auto$rtlil.cc:2959:Not$10
-    connect \Y $auto$rtlil.cc:3006:And$12
+    connect \B $auto$process.cpp:70:create_not_cell$9
+    connect \Y $auto$process.cpp:50:create_and_cell$11
   end
-  cell $not $auto$process.cpp:3142:import_statement_sync$9
+  attribute \src "dut.sv:15.3-18.16"
+  cell $not $auto$process.cpp:73:create_not_cell$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \in5
-    connect \Y $auto$rtlil.cc:2959:Not$10
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$13
-    parameter \WIDTH 1
-    connect \A $auto$rtlil.cc:3094:Mux$8
-    connect \B \in7
-    connect \S $auto$rtlil.cc:3006:And$12
-    connect \Y $auto$rtlil.cc:3094:Mux$14
-  end
-  cell $mux $auto$process.cpp:4297:import_assignment_sync$7
-    parameter \WIDTH 1
-    connect \A 1'x
-    connect \B \in6
-    connect \S $auto$rtlil.cc:3006:And$6
-    connect \Y $auto$rtlil.cc:3094:Mux$8
+    connect \Y $auto$process.cpp:70:create_not_cell$9
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.1-20.4"

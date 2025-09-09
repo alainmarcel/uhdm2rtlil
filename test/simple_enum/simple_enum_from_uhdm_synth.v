@@ -20,7 +20,9 @@ module enum_simple(clk, rst);
   wire _07_;
   wire _08_;
   wire _09_;
+  (* src = "dut.sv:30.8-30.20" *)
   wire _10_;
+  (* src = "dut.sv:32.13-32.25" *)
   wire _11_;
   wire _12_;
   wire _13_;
@@ -55,7 +57,7 @@ module enum_simple(clk, rst);
   \$_NAND_  _19_ (
     .A(state[1]),
     .B(state[0]),
-    .Y(_03_)
+    .Y(_01_)
   );
   \$_NOR_  _20_ (
     .A(test_enum[1]),
@@ -65,7 +67,7 @@ module enum_simple(clk, rst);
   \$_OR_  _21_ (
     .A(_12_),
     .B(rst),
-    .Y(_07_)
+    .Y(_05_)
   );
   \$_ANDNOT_  _22_ (
     .A(test_enum[0]),
@@ -80,7 +82,7 @@ module enum_simple(clk, rst);
   \$_ANDNOT_  _24_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
-    .Y(_10_)
+    .Y(_08_)
   );
   \$_AND_  _25_ (
     .A(test_enum[1]),
@@ -89,43 +91,43 @@ module enum_simple(clk, rst);
   );
   \$_OR_  _26_ (
     .A(_15_),
-    .B(_10_),
+    .B(_08_),
     .Y(_16_)
   );
   \$_OR_  _27_ (
     .A(_16_),
     .B(_14_),
-    .Y(_05_)
+    .Y(_03_)
   );
   \$_OR_  _28_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
-    .Y(_02_)
+    .Y(_00_)
   );
   \$_NOR_  _29_ (
     .A(state[1]),
     .B(state[0]),
-    .Y(_00_)
+    .Y(_10_)
   );
   \$_OR_  _30_ (
-    .A(_00_),
+    .A(_10_),
     .B(rst),
-    .Y(_06_)
+    .Y(_04_)
   );
   \$_ANDNOT_  _31_ (
     .A(state[0]),
     .B(state[1]),
-    .Y(_01_)
+    .Y(_11_)
   );
   \$_XOR_  _32_ (
     .A(state[1]),
     .B(state[0]),
-    .Y(_04_)
+    .Y(_02_)
   );
   \$_XOR_  _33_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
-    .Y(_11_)
+    .Y(_09_)
   );
   \$_NOT_  _34_ (
     .A(rst),
@@ -133,25 +135,25 @@ module enum_simple(clk, rst);
   );
   \$_ANDNOT_  _35_ (
     .A(_17_),
-    .B(_03_),
-    .Y(_08_)
+    .B(_01_),
+    .Y(_06_)
   );
   \$_OR_  _36_ (
-    .A(_02_),
+    .A(_00_),
     .B(_12_),
     .Y(_18_)
   );
   \$_ANDNOT_  _37_ (
     .A(_17_),
     .B(_18_),
-    .Y(_09_)
+    .Y(_07_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.2-39.5" *)
   \$_SDFFE_PP0P_  \state_reg[0]  /* _38_ */ (
     .C(clk),
-    .D(_00_),
-    .E(_03_),
+    .D(_10_),
+    .E(_01_),
     .Q(state[0]),
     .R(rst)
   );
@@ -159,8 +161,8 @@ module enum_simple(clk, rst);
   (* src = "dut.sv:12.2-39.5" *)
   \$_SDFFE_PP1P_  \test_enum_reg[1]  /* _39_ */ (
     .C(clk),
-    .D(_11_),
-    .E(_05_),
+    .D(_09_),
+    .E(_03_),
     .Q(test_enum[1]),
     .R(rst)
   );
@@ -168,19 +170,19 @@ module enum_simple(clk, rst);
   (* src = "dut.sv:12.2-39.5" *)
   \$_SDFFE_PP1P_  \test_enum_reg[0]  /* _40_ */ (
     .C(clk),
-    .D(_10_),
-    .E(_02_),
+    .D(_08_),
+    .E(_00_),
     .Q(test_enum[0]),
-    .R(_07_)
+    .R(_05_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.2-39.5" *)
   \$_SDFFE_PP0P_  \state_reg[1]  /* _41_ */ (
     .C(clk),
-    .D(_01_),
-    .E(_04_),
+    .D(_11_),
+    .E(_02_),
     .Q(state[1]),
-    .R(_06_)
+    .R(_04_)
   );
   (* src = "dut.sv:27.5-27.18" *)
   \$check  #(
@@ -194,7 +196,7 @@ module enum_simple(clk, rst);
   ) _42_ (
     .A(1'h0),
     .ARGS(),
-    .EN(_09_),
+    .EN(_07_),
     .TRG(clk)
   );
   (* src = "dut.sv:37.5-37.18" *)
@@ -209,7 +211,7 @@ module enum_simple(clk, rst);
   ) _43_ (
     .A(1'h0),
     .ARGS(),
-    .EN(_08_),
+    .EN(_06_),
     .TRG(clk)
   );
   (* src = "dut.sv:42.3-42.25" *)
@@ -222,7 +224,7 @@ module enum_simple(clk, rst);
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
   ) _44_ (
-    .A(_03_),
+    .A(_01_),
     .ARGS(),
     .EN(1'h1),
     .TRG()

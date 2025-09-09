@@ -9,7 +9,7 @@ module \mul_signed_async
   wire width 8 $0\a_reg
   wire width 6 $0\b_reg
   wire width 14 $0\p
-  wire width 14 $auto$expression.cpp:1488:import_operation$1
+  wire width 14 $auto$expression.cpp:1514:import_operation$1
   attribute \src "dut.sv:1.40-1.41"
   wire width 8 input 4 \a
   attribute \reg 1
@@ -36,7 +36,7 @@ module \mul_signed_async
     parameter \Y_WIDTH 14
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1488:import_operation$1
+    connect \Y $auto$expression.cpp:1514:import_operation$1
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -60,7 +60,7 @@ module \mul_signed_async
           case 1'1
             assign $0\a_reg \a
             assign $0\b_reg \b
-            assign $0\p $auto$expression.cpp:1488:import_operation$1
+            assign $0\p $auto$expression.cpp:1514:import_operation$1
           attribute \src "dut.sv:25.14-29.12"
           case 
         end

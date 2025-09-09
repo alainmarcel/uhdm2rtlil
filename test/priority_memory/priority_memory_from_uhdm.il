@@ -6,8 +6,9 @@ attribute \top 1
 module \priority_memory
   parameter \ABITS 4
   parameter \WIDTH 8
-  wire $auto$expression.cpp:1586:import_operation$4
   wire $auto$rtlil.cc:3026:LogicAnd$7
+  attribute \src "dut.sv:34.18-34.34"
+  wire $eq$dut.sv:34$4_Y
   wire width 4 $memwr$\mem$addr$1
   wire width 8 $memwr$\mem$data$2
   wire $memwr$\mem$en$3
@@ -67,7 +68,7 @@ module \priority_memory
     parameter \Y_WIDTH 1
     connect \A \addr_a
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:1586:import_operation$4
+    connect \Y $eq$dut.sv:34$4_Y
   end
   cell $logic_and $logic_and$dut.sv:34$6
     parameter \A_SIGNED 0
@@ -76,7 +77,7 @@ module \priority_memory
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \wren_a
-    connect \B $auto$expression.cpp:1586:import_operation$4
+    connect \B $eq$dut.sv:34$4_Y
     connect \Y $auto$rtlil.cc:3026:LogicAnd$7
   end
   attribute \src "dut.sv:33.8-37.28"
