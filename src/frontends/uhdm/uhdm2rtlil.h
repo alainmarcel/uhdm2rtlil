@@ -171,6 +171,14 @@ struct UhdmImporter {
     };
     std::vector<ProcessMemoryWrite> pending_memory_writes;
     
+    struct AssignedSignal {
+        std::string name;
+        const expr* lhs_expr;  // The full LHS expression (could be part select)
+        int msb = -1;
+        int lsb = -1;
+        bool is_part_select = false;
+    };
+
     // Track pending sync assignments to merge multiple updates to same signal
     std::map<RTLIL::SigSpec, RTLIL::SigSpec> pending_sync_assignments;
     
@@ -307,7 +315,14 @@ struct UhdmImporter {
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
     std::string get_src_attribute(const UHDM::any* uhdm_obj);
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
-    
+    UHDM::VectorOfany *begin_block_stmts(const any *stmt);
+    void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
+    void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names); 
+    bool contains_complex_constructs(const any* stmt);
+    bool is_memory_write(const assignment* assign, RTLIL::Module* module);
+    void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);
+    const assignment* find_assignment_for_lhs(const any* stmt, const expr* lhs_expr);
+
     // Helper to extract RTLIL::Const from UHDM Value string
     static RTLIL::Const extract_const_from_value(const std::string& value_str);
     RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
