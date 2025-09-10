@@ -7,92 +7,92 @@ module \many_functions
   parameter \WIDTH 8
   parameter \DEPTH 4
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $0\func_arith$func$dut.sv:138$1.$result[7:0]$8
+  wire width 8 $0\func_arith$func$dut.sv:138$1.$result$8
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $0\func_arith$func$dut.sv:138$2.$result[7:0]$11
+  wire width 8 $0\func_arith$func$dut.sv:138$2.$result$11
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $0\func_arith$func$dut.sv:138$2.x[7:0]$8
+  wire width 8 $0\func_arith$func$dut.sv:138$2.x$8
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $0\func_arith$func$dut.sv:138$2.y[7:0]$9
+  wire width 8 $0\func_arith$func$dut.sv:138$2.y$9
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $0\func_arith$func$dut.sv:138$2.z[7:0]$10
+  wire width 8 $0\func_arith$func$dut.sv:138$2.z$10
   attribute \src "dut.sv:139.23-139.43"
-  wire width 8 $0\func_bool$func$dut.sv:139$1.$result[7:0]$13
+  wire width 8 $0\func_bool$func$dut.sv:139$1.$result$13
   attribute \src "dut.sv:139.23-139.43"
-  wire width 8 $0\func_bool$func$dut.sv:139$2.$result[7:0]$16
+  wire width 8 $0\func_bool$func$dut.sv:139$2.$result$16
   attribute \src "dut.sv:139.23-139.43"
-  wire width 2 $0\func_bool$func$dut.sv:139$2.mode[1:0]$15
+  wire width 2 $0\func_bool$func$dut.sv:139$2.mode$15
   attribute \src "dut.sv:139.23-139.43"
-  wire width 8 $0\func_bool$func$dut.sv:139$2.x[7:0]$13
+  wire width 8 $0\func_bool$func$dut.sv:139$2.x$13
   attribute \src "dut.sv:139.23-139.43"
-  wire width 8 $0\func_bool$func$dut.sv:139$2.y[7:0]$14
+  wire width 8 $0\func_bool$func$dut.sv:139$2.y$14
   attribute \src "dut.sv:140.23-140.40"
-  wire width 8 $0\func_case$func$dut.sv:140$1.$result[7:0]$17
+  wire width 8 $0\func_case$func$dut.sv:140$1.$result$17
   attribute \src "dut.sv:140.23-140.40"
-  wire width 8 $0\func_case$func$dut.sv:140$2.$result[7:0]$20
+  wire width 8 $0\func_case$func$dut.sv:140$2.$result$20
   attribute \src "dut.sv:140.23-140.40"
-  wire width 2 $0\func_case$func$dut.sv:140$2.sel[1:0]$19
+  wire width 2 $0\func_case$func$dut.sv:140$2.sel$19
   attribute \src "dut.sv:140.23-140.40"
-  wire width 8 $0\func_case$func$dut.sv:140$2.x[7:0]$18
+  wire width 8 $0\func_case$func$dut.sv:140$2.x$18
   attribute \src "dut.sv:142.23-142.35"
-  wire width 8 $0\func_loop$func$dut.sv:142$1.$result[7:0]$25
+  wire width 8 $0\func_loop$func$dut.sv:142$1.$result$25
   attribute \src "dut.sv:142.23-142.35"
-  wire width 8 $0\func_loop$func$dut.sv:142$2.$result[7:0]$28
+  wire width 8 $0\func_loop$func$dut.sv:142$2.$result$28
   attribute \src "dut.sv:142.23-142.35"
-  wire width 8 $0\func_loop$func$dut.sv:142$2.x[7:0]$27
+  wire width 8 $0\func_loop$func$dut.sv:142$2.x$27
   attribute \src "dut.sv:143.24-143.45"
-  wire width 8 $0\func_mixed$func$dut.sv:143$1.$result[7:0]$30
+  wire width 8 $0\func_mixed$func$dut.sv:143$1.$result$30
   attribute \src "dut.sv:143.24-143.45"
-  wire width 8 $0\func_mixed$func$dut.sv:143$2.$result[7:0]$33
+  wire width 8 $0\func_mixed$func$dut.sv:143$2.$result$33
   attribute \src "dut.sv:143.24-143.45"
-  wire width 2 $0\func_mixed$func$dut.sv:143$2.mode[1:0]$32
+  wire width 2 $0\func_mixed$func$dut.sv:143$2.mode$32
   attribute \src "dut.sv:143.24-143.45"
-  wire width 8 $0\func_mixed$func$dut.sv:143$2.x[7:0]$30
+  wire width 8 $0\func_mixed$func$dut.sv:143$2.x$30
   attribute \src "dut.sv:143.24-143.45"
-  wire width 8 $0\func_mixed$func$dut.sv:143$2.y[7:0]$31
+  wire width 8 $0\func_mixed$func$dut.sv:143$2.y$31
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $0\func_nested$func$dut.sv:141$1.$result[7:0]$22
+  wire width 8 $0\func_nested$func$dut.sv:141$1.$result$22
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $0\func_nested$func$dut.sv:141$2.$result[7:0]$25
+  wire width 8 $0\func_nested$func$dut.sv:141$2.$result$25
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $0\func_nested$func$dut.sv:141$2.x[7:0]$22
+  wire width 8 $0\func_nested$func$dut.sv:141$2.x$22
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $0\func_nested$func$dut.sv:141$2.y[7:0]$23
+  wire width 8 $0\func_nested$func$dut.sv:141$2.y$23
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $0\func_nested$func$dut.sv:141$2.z[7:0]$24
+  wire width 8 $0\func_nested$func$dut.sv:141$2.z$24
   attribute \src "dut.sv:102.17-105.20"
-  wire width 8 $17\func_mixed$func$dut.sv:143$2.$result[7:0]$35
+  wire width 8 $17\func_mixed$func$dut.sv:143$2.$result$35
   attribute \src "dut.sv:106.17-112.20"
-  wire width 8 $18\func_mixed$func$dut.sv:143$2.$result[7:0]$36
+  wire width 8 $18\func_mixed$func$dut.sv:143$2.$result$36
   attribute \src "dut.sv:113.17-120.20"
-  wire width 8 $18\func_mixed$func$dut.sv:143$2.$result[7:0]$37
+  wire width 8 $18\func_mixed$func$dut.sv:143$2.$result$37
   attribute \src "dut.sv:121.17-130.20"
-  wire width 8 $19\func_mixed$func$dut.sv:143$2.$result[7:0]$38
+  wire width 8 $19\func_mixed$func$dut.sv:143$2.$result$38
   attribute \src "dut.sv:138.24-138.43"
-  wire width 8 $1\func_arith$func$dut.sv:138$2.$result[7:0]$12
+  wire width 8 $1\func_arith$func$dut.sv:138$2.$result$12
   attribute \src "dut.sv:139.23-139.43"
-  wire width 8 $1\func_bool$func$dut.sv:139$2.$result[7:0]$17
+  wire width 8 $1\func_bool$func$dut.sv:139$2.$result$17
   attribute \src "dut.sv:140.23-140.40"
-  wire width 8 $1\func_case$func$dut.sv:140$2.$result[7:0]$21
+  wire width 8 $1\func_case$func$dut.sv:140$2.$result$21
   attribute \src "dut.sv:142.23-142.35"
-  wire width 8 $1\func_loop$func$dut.sv:142$2.$result[7:0]$29
+  wire width 8 $1\func_loop$func$dut.sv:142$2.$result$29
   attribute \src "dut.sv:143.24-143.45"
-  wire width 8 $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34
+  wire width 8 $1\func_mixed$func$dut.sv:143$2.$result$34
   attribute \src "dut.sv:141.25-141.45"
-  wire width 8 $1\func_nested$func$dut.sv:141$2.$result[7:0]$26
+  wire width 8 $1\func_nested$func$dut.sv:141$2.$result$26
   attribute \src "dut.sv:38.18-43.38"
-  wire width 8 $9\func_bool$func$dut.sv:139$2.$result[7:0]$18
+  wire width 8 $9\func_bool$func$dut.sv:139$2.$result$18
   attribute \src "dut.sv:40.18-43.38"
-  wire width 8 $9\func_bool$func$dut.sv:139$2.$result[7:0]$19
-  wire $auto$expression.cpp:1468:import_operation$1
-  wire $auto$expression.cpp:1468:import_operation$41
-  wire $auto$expression.cpp:1491:import_operation$3
-  wire $auto$expression.cpp:1563:import_operation$29
-  wire $auto$expression.cpp:1563:import_operation$31
-  wire $auto$expression.cpp:1563:import_operation$33
-  wire $auto$expression.cpp:1563:import_operation$45
-  wire $auto$expression.cpp:1563:import_operation$5
-  wire $auto$expression.cpp:1585:import_operation$43
+  wire width 8 $9\func_bool$func$dut.sv:139$2.$result$19
+  wire $auto$expression.cpp:1478:import_operation$1
+  wire $auto$expression.cpp:1478:import_operation$41
+  wire $auto$expression.cpp:1501:import_operation$3
+  wire $auto$expression.cpp:1573:import_operation$29
+  wire $auto$expression.cpp:1573:import_operation$31
+  wire $auto$expression.cpp:1573:import_operation$33
+  wire $auto$expression.cpp:1573:import_operation$45
+  wire $auto$expression.cpp:1573:import_operation$5
+  wire $auto$expression.cpp:1595:import_operation$43
   wire $auto$rtlil.cc:2959:Not$28
   wire $auto$rtlil.cc:3006:And$16
   wire $auto$rtlil.cc:3006:And$26
@@ -223,7 +223,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:1468:import_operation$41
+    connect \Y $auto$expression.cpp:1478:import_operation$41
   end
   cell $add $add$dut.sv:23$2
     parameter \A_SIGNED 0
@@ -233,7 +233,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:1468:import_operation$1
+    connect \Y $auto$expression.cpp:1478:import_operation$1
   end
   cell $and $and$dut.sv:128$49
     parameter \A_SIGNED 0
@@ -383,7 +383,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1563:import_operation$45
+    connect \Y $auto$expression.cpp:1573:import_operation$45
   end
   cell $shl $shl$dut.sv:25$6
     parameter \A_SIGNED 0
@@ -393,7 +393,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1563:import_operation$5
+    connect \Y $auto$expression.cpp:1573:import_operation$5
   end
   cell $shl $shl$dut.sv:54$30
     parameter \A_SIGNED 0
@@ -403,7 +403,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1563:import_operation$29
+    connect \Y $auto$expression.cpp:1573:import_operation$29
   end
   cell $shl $shl$dut.sv:55$32
     parameter \A_SIGNED 0
@@ -413,7 +413,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:1563:import_operation$31
+    connect \Y $auto$expression.cpp:1573:import_operation$31
   end
   cell $shl $shl$dut.sv:56$34
     parameter \A_SIGNED 0
@@ -423,7 +423,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \x
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:1563:import_operation$33
+    connect \Y $auto$expression.cpp:1573:import_operation$33
   end
   cell $shr $shr$dut.sv:116$44
     parameter \A_SIGNED 0
@@ -433,7 +433,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1585:import_operation$43
+    connect \Y $auto$expression.cpp:1595:import_operation$43
   end
   cell $sub $sub$dut.sv:24$4
     parameter \A_SIGNED 0
@@ -443,7 +443,7 @@ module \many_functions
     parameter \Y_WIDTH 1
     connect \A \temp
     connect \B \z
-    connect \Y $auto$expression.cpp:1491:import_operation$3
+    connect \Y $auto$expression.cpp:1501:import_operation$3
   end
   cell $xor $xor$dut.sv:27$11
     parameter \A_SIGNED 0
@@ -472,18 +472,18 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_arith$func$dut.sv:138$2.x[7:0]$8 \a
-    assign $0\func_arith$func$dut.sv:138$2.y[7:0]$9 \b
-    assign $0\func_arith$func$dut.sv:138$2.z[7:0]$10 \c
-    assign $0\func_arith$func$dut.sv:138$2.$result[7:0]$11 $1\func_arith$func$dut.sv:138$2.$result[7:0]$12
-    assign $0\func_arith$func$dut.sv:138$1.$result[7:0]$8 $1\func_arith$func$dut.sv:138$2.$result[7:0]$12
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1468:import_operation$1
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1491:import_operation$3
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1563:import_operation$5
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$rtlil.cc:3007:Or$10
-    assign $1\func_arith$func$dut.sv:138$2.$result[7:0]$12 $auto$rtlil.cc:3008:Xor$12
+    assign $0\func_arith$func$dut.sv:138$2.x$8 \a
+    assign $0\func_arith$func$dut.sv:138$2.y$9 \b
+    assign $0\func_arith$func$dut.sv:138$2.z$10 \c
+    assign $0\func_arith$func$dut.sv:138$2.$result$11 $1\func_arith$func$dut.sv:138$2.$result$12
+    assign $0\func_arith$func$dut.sv:138$1.$result$8 $1\func_arith$func$dut.sv:138$2.$result$12
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp { 7'0000000 $auto$expression.cpp:1478:import_operation$1 }
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp { 7'0000000 $auto$expression.cpp:1501:import_operation$3 }
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp { 7'0000000 $auto$expression.cpp:1573:import_operation$5 }
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp { 7'0000000 $auto$rtlil.cc:3007:Or$10 }
+    assign $1\func_arith$func$dut.sv:138$2.$result$12 { 7'0000000 $auto$rtlil.cc:3008:Xor$12 }
     sync always
-      update \func_arith$func$func_arith.$result $0\func_arith$func$dut.sv:138$1.$result[7:0]$8
+      update \func_arith$func$func_arith.$result $0\func_arith$func$dut.sv:138$1.$result$8
       update \func_arith$func$dut.sv:138$2.$result 8'x
       update \func_arith$func$dut.sv:138$2.x 8'x
       update \func_arith$func$dut.sv:138$2.y 8'x
@@ -496,46 +496,46 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_bool$func$dut.sv:139$2.x[7:0]$13 \a
-    assign $0\func_bool$func$dut.sv:139$2.y[7:0]$14 \b
-    assign $0\func_bool$func$dut.sv:139$2.mode[1:0]$15 \sel
-    assign $0\func_bool$func$dut.sv:139$2.$result[7:0]$16 $1\func_bool$func$dut.sv:139$2.$result[7:0]$17
-    assign $0\func_bool$func$dut.sv:139$1.$result[7:0]$13 $1\func_bool$func$dut.sv:139$2.$result[7:0]$17
+    assign $0\func_bool$func$dut.sv:139$2.x$13 \a
+    assign $0\func_bool$func$dut.sv:139$2.y$14 \b
+    assign $0\func_bool$func$dut.sv:139$2.mode$15 \sel
+    assign $0\func_bool$func$dut.sv:139$2.$result$16 $1\func_bool$func$dut.sv:139$2.$result$17
+    assign $0\func_bool$func$dut.sv:139$1.$result$13 $1\func_bool$func$dut.sv:139$2.$result$17
     attribute \src "dut.sv:36.13-43.38"
     switch $eq$dut.sv:36$13_Y
       attribute \src "dut.sv:37.17-37.34"
       case 1'1
         assign { } { }
-        assign $1\func_bool$func$dut.sv:139$2.$result[7:0]$17 $auto$rtlil.cc:3006:And$16
+        assign $1\func_bool$func$dut.sv:139$2.$result$17 { 7'0000000 $auto$rtlil.cc:3006:And$16 }
       attribute \src "dut.sv:38.18-43.38"
       case 
         assign { } { }
-        assign $1\func_bool$func$dut.sv:139$2.$result[7:0]$17 $9\func_bool$func$dut.sv:139$2.$result[7:0]$18
+        assign $1\func_bool$func$dut.sv:139$2.$result$17 $9\func_bool$func$dut.sv:139$2.$result$18
         attribute \src "dut.sv:38.18-43.38"
         switch $eq$dut.sv:38$17_Y
           attribute \src "dut.sv:39.17-39.34"
           case 1'1
             assign { } { }
-            assign $9\func_bool$func$dut.sv:139$2.$result[7:0]$18 $auto$rtlil.cc:3007:Or$20
+            assign $9\func_bool$func$dut.sv:139$2.$result$18 { 7'0000000 $auto$rtlil.cc:3007:Or$20 }
           attribute \src "dut.sv:40.18-43.38"
           case 
             assign { } { }
-            assign $9\func_bool$func$dut.sv:139$2.$result[7:0]$18 $9\func_bool$func$dut.sv:139$2.$result[7:0]$19
+            assign $9\func_bool$func$dut.sv:139$2.$result$18 $9\func_bool$func$dut.sv:139$2.$result$19
             attribute \src "dut.sv:40.18-43.38"
             switch $eq$dut.sv:40$21_Y
               attribute \src "dut.sv:41.17-41.34"
               case 1'1
                 assign { } { }
-                assign $9\func_bool$func$dut.sv:139$2.$result[7:0]$19 $auto$rtlil.cc:3008:Xor$24
+                assign $9\func_bool$func$dut.sv:139$2.$result$19 { 7'0000000 $auto$rtlil.cc:3008:Xor$24 }
               attribute \src "dut.sv:43.17-43.37"
               case 
                 assign { } { }
-                assign $9\func_bool$func$dut.sv:139$2.$result[7:0]$19 $auto$rtlil.cc:2959:Not$28
+                assign $9\func_bool$func$dut.sv:139$2.$result$19 { 7'0000000 $auto$rtlil.cc:2959:Not$28 }
             end
         end
     end
     sync always
-      update \func_bool$func$func_bool.$result $0\func_bool$func$dut.sv:139$1.$result[7:0]$13
+      update \func_bool$func$func_bool.$result $0\func_bool$func$dut.sv:139$1.$result$13
       update \func_bool$func$dut.sv:139$2.$result 8'x
       update \func_bool$func$dut.sv:139$2.x 8'x
       update \func_bool$func$dut.sv:139$2.y 8'x
@@ -548,35 +548,35 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_case$func$dut.sv:140$2.x[7:0]$18 \a
-    assign $0\func_case$func$dut.sv:140$2.sel[1:0]$19 \sel
-    assign $0\func_case$func$dut.sv:140$2.$result[7:0]$20 $1\func_case$func$dut.sv:140$2.$result[7:0]$21
-    assign $0\func_case$func$dut.sv:140$1.$result[7:0]$17 $1\func_case$func$dut.sv:140$2.$result[7:0]$21
+    assign $0\func_case$func$dut.sv:140$2.x$18 \a
+    assign $0\func_case$func$dut.sv:140$2.sel$19 \sel
+    assign $0\func_case$func$dut.sv:140$2.$result$20 $1\func_case$func$dut.sv:140$2.$result$21
+    assign $0\func_case$func$dut.sv:140$1.$result$17 $1\func_case$func$dut.sv:140$2.$result$21
     attribute \src "dut.sv:52.13-58.20"
     switch \sel
       attribute \src "dut.sv:53.17-53.38"
       case 2'00
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result[7:0]$21 \x
+        assign $1\func_case$func$dut.sv:140$2.$result$21 { 7'0000000 \x }
       attribute \src "dut.sv:54.17-54.43"
       case 2'01
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result[7:0]$21 $auto$expression.cpp:1563:import_operation$29
+        assign $1\func_case$func$dut.sv:140$2.$result$21 { 7'0000000 $auto$expression.cpp:1573:import_operation$29 }
       attribute \src "dut.sv:55.17-55.43"
       case 2'10
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result[7:0]$21 $auto$expression.cpp:1563:import_operation$31
+        assign $1\func_case$func$dut.sv:140$2.$result$21 { 7'0000000 $auto$expression.cpp:1573:import_operation$31 }
       attribute \src "dut.sv:56.17-56.43"
       case 2'11
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result[7:0]$21 $auto$expression.cpp:1563:import_operation$33
+        assign $1\func_case$func$dut.sv:140$2.$result$21 { 7'0000000 $auto$expression.cpp:1573:import_operation$33 }
       attribute \src "dut.sv:57.17-57.40"
       case 
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result[7:0]$21 64'0000000000000000000000000000000000000000000000000000000000000000
+        assign $1\func_case$func$dut.sv:140$2.$result$21 8'00000000
     end
     sync always
-      update \func_case$func$func_case.$result $0\func_case$func$dut.sv:140$1.$result[7:0]$17
+      update \func_case$func$func_case.$result $0\func_case$func$dut.sv:140$1.$result$17
       update \func_case$func$dut.sv:140$2.$result 8'x
       update \func_case$func$dut.sv:140$2.x 8'x
       update \func_case$func$dut.sv:140$2.sel 2'x
@@ -588,11 +588,11 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_nested$func$dut.sv:141$2.x[7:0]$22 \a
-    assign $0\func_nested$func$dut.sv:141$2.y[7:0]$23 \b
-    assign $0\func_nested$func$dut.sv:141$2.z[7:0]$24 \c
-    assign $0\func_nested$func$dut.sv:141$2.$result[7:0]$25 $1\func_nested$func$dut.sv:141$2.$result[7:0]$26
-    assign $0\func_nested$func$dut.sv:141$1.$result[7:0]$22 $1\func_nested$func$dut.sv:141$2.$result[7:0]$26
+    assign $0\func_nested$func$dut.sv:141$2.x$22 \a
+    assign $0\func_nested$func$dut.sv:141$2.y$23 \b
+    assign $0\func_nested$func$dut.sv:141$2.z$24 \c
+    assign $0\func_nested$func$dut.sv:141$2.$result$25 $1\func_nested$func$dut.sv:141$2.$result$26
+    assign $0\func_nested$func$dut.sv:141$1.$result$22 $1\func_nested$func$dut.sv:141$2.$result$26
     attribute \src "dut.sv:66.13-76.16"
     switch $auto$rtlil.cc:3018:Gt$36
       attribute \src "dut.sv:66.24-71.16"
@@ -603,11 +603,11 @@ module \many_functions
           attribute \src "dut.sv:68.21-68.36"
           case 1'1
             assign { } { }
-            assign $1\func_nested$func$dut.sv:141$2.$result[7:0]$26 \x
+            assign $1\func_nested$func$dut.sv:141$2.$result$26 { 7'0000000 \x }
           attribute \src "dut.sv:70.21-70.36"
           case 
             assign { } { }
-            assign $1\func_nested$func$dut.sv:141$2.$result[7:0]$26 \z
+            assign $1\func_nested$func$dut.sv:141$2.$result$26 { 7'0000000 \z }
         end
       attribute \src "dut.sv:71.22-76.16"
       case 
@@ -617,15 +617,15 @@ module \many_functions
           attribute \src "dut.sv:73.21-73.36"
           case 1'1
             assign { } { }
-            assign $1\func_nested$func$dut.sv:141$2.$result[7:0]$26 \y
+            assign $1\func_nested$func$dut.sv:141$2.$result$26 { 7'0000000 \y }
           attribute \src "dut.sv:75.21-75.36"
           case 
             assign { } { }
-            assign $1\func_nested$func$dut.sv:141$2.$result[7:0]$26 \z
+            assign $1\func_nested$func$dut.sv:141$2.$result$26 { 7'0000000 \z }
         end
     end
     sync always
-      update \func_nested$func$func_nested.$result $0\func_nested$func$dut.sv:141$1.$result[7:0]$22
+      update \func_nested$func$func_nested.$result $0\func_nested$func$dut.sv:141$1.$result$22
       update \func_nested$func$dut.sv:141$2.$result 8'x
       update \func_nested$func$dut.sv:141$2.x 8'x
       update \func_nested$func$dut.sv:141$2.y 8'x
@@ -638,12 +638,12 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_loop$func$dut.sv:142$2.x[7:0]$27 \a
-    assign $0\func_loop$func$dut.sv:142$2.$result[7:0]$28 $1\func_loop$func$dut.sv:142$2.$result[7:0]$29
-    assign $0\func_loop$func$dut.sv:142$1.$result[7:0]$25 $1\func_loop$func$dut.sv:142$2.$result[7:0]$29
-    assign $1\func_loop$func$dut.sv:142$2.$result[7:0]$29 64'0000000000000000000000000000000000000000000000000000000000000000
+    assign $0\func_loop$func$dut.sv:142$2.x$27 \a
+    assign $0\func_loop$func$dut.sv:142$2.$result$28 $1\func_loop$func$dut.sv:142$2.$result$29
+    assign $0\func_loop$func$dut.sv:142$1.$result$25 $1\func_loop$func$dut.sv:142$2.$result$29
+    assign $1\func_loop$func$dut.sv:142$2.$result$29 8'00000000
     sync always
-      update \func_loop$func$func_loop.$result $0\func_loop$func$dut.sv:142$1.$result[7:0]$25
+      update \func_loop$func$func_loop.$result $0\func_loop$func$dut.sv:142$1.$result$25
       update \func_loop$func$dut.sv:142$2.$result 8'x
       update \func_loop$func$dut.sv:142$2.x 8'x
   end
@@ -654,43 +654,43 @@ module \many_functions
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_mixed$func$dut.sv:143$2.x[7:0]$30 \a
-    assign $0\func_mixed$func$dut.sv:143$2.y[7:0]$31 \b
-    assign $0\func_mixed$func$dut.sv:143$2.mode[1:0]$32 \sel
-    assign $0\func_mixed$func$dut.sv:143$2.$result[7:0]$33 $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34
-    assign $0\func_mixed$func$dut.sv:143$1.$result[7:0]$30 $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34
-    assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34 \result
+    assign $0\func_mixed$func$dut.sv:143$2.x$30 \a
+    assign $0\func_mixed$func$dut.sv:143$2.y$31 \b
+    assign $0\func_mixed$func$dut.sv:143$2.mode$32 \sel
+    assign $0\func_mixed$func$dut.sv:143$2.$result$33 $1\func_mixed$func$dut.sv:143$2.$result$34
+    assign $0\func_mixed$func$dut.sv:143$1.$result$30 $1\func_mixed$func$dut.sv:143$2.$result$34
+    assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result 8'00000000
+    assign $1\func_mixed$func$dut.sv:143$2.$result$34 { 7'0000000 \result }
     attribute \src "dut.sv:101.13-131.20"
     switch \mode
       attribute \src "dut.sv:102.17-105.20"
       case 1'0
         assign { } { }
-        assign $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34 $17\func_mixed$func$dut.sv:143$2.$result[7:0]$35
-        assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1468:import_operation$41
+        assign $1\func_mixed$func$dut.sv:143$2.$result$34 $17\func_mixed$func$dut.sv:143$2.$result$35
+        assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result { 7'0000000 $auto$expression.cpp:1478:import_operation$41 }
       attribute \src "dut.sv:106.17-112.20"
       case 1'1
         assign { } { }
-        assign $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34 $18\func_mixed$func$dut.sv:143$2.$result[7:0]$36
+        assign $1\func_mixed$func$dut.sv:143$2.$result$34 $18\func_mixed$func$dut.sv:143$2.$result$36
       attribute \src "dut.sv:113.17-120.20"
       case 1'0
         assign { } { }
-        assign $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34 $18\func_mixed$func$dut.sv:143$2.$result[7:0]$37
+        assign $1\func_mixed$func$dut.sv:143$2.$result$34 $18\func_mixed$func$dut.sv:143$2.$result$37
         attribute \src "dut.sv:115.21-119.24"
         switch 1'x
           attribute \src "dut.sv:115.37-117.24"
           case 1'1
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1585:import_operation$43
+            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result { 7'0000000 $auto$expression.cpp:1595:import_operation$43 }
           attribute \src "dut.sv:117.30-119.24"
           case 
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1563:import_operation$45
+            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result { 7'0000000 $auto$expression.cpp:1573:import_operation$45 }
         end
       attribute \src "dut.sv:121.17-130.20"
       case 1'1
         assign { } { }
-        assign $1\func_mixed$func$dut.sv:143$2.$result[7:0]$34 $19\func_mixed$func$dut.sv:143$2.$result[7:0]$38
+        assign $1\func_mixed$func$dut.sv:143$2.$result$34 $19\func_mixed$func$dut.sv:143$2.$result$38
         attribute \src "dut.sv:123.21-129.24"
         switch $auto$rtlil.cc:3018:Gt$48
           attribute \src "dut.sv:123.32-127.24"
@@ -703,7 +703,7 @@ module \many_functions
         end
     end
     sync always
-      update \func_mixed$func$func_mixed.$result $0\func_mixed$func$dut.sv:143$1.$result[7:0]$30
+      update \func_mixed$func$func_mixed.$result $0\func_mixed$func$dut.sv:143$1.$result$30
       update \func_mixed$func$dut.sv:143$2.$result 8'x
       update \func_mixed$func$dut.sv:143$2.x 8'x
       update \func_mixed$func$dut.sv:143$2.y 8'x

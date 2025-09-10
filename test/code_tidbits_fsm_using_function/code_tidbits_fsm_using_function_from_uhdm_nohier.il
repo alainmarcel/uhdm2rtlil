@@ -9,15 +9,15 @@ module \fsm_using_function
   parameter \GNT0 3'010
   parameter \GNT1 3'100
   attribute \src "dut.sv:29.21-29.54"
-  wire width 3 $0\fsm_function$func$dut.sv:29$1.$result[2:0]$8
+  wire width 3 $0\fsm_function$func$dut.sv:29$1.$result$8
   attribute \src "dut.sv:29.21-29.54"
-  wire width 3 $0\fsm_function$func$dut.sv:29$2.$result[2:0]$11
+  wire width 3 $0\fsm_function$func$dut.sv:29$2.$result$11
   attribute \src "dut.sv:29.21-29.54"
-  wire $0\fsm_function$func$dut.sv:29$2.req_0[0:0]$9
+  wire $0\fsm_function$func$dut.sv:29$2.req_0$9
   attribute \src "dut.sv:29.21-29.54"
-  wire $0\fsm_function$func$dut.sv:29$2.req_1[0:0]$10
+  wire $0\fsm_function$func$dut.sv:29$2.req_1$10
   attribute \src "dut.sv:29.21-29.54"
-  wire width 3 $0\fsm_function$func$dut.sv:29$2.state[2:0]$8
+  wire width 3 $0\fsm_function$func$dut.sv:29$2.state$8
   attribute \src "dut.sv:66.1-92.4"
   wire $0\gnt_0[0:0]
   attribute \src "dut.sv:66.1-92.4"
@@ -25,15 +25,15 @@ module \fsm_using_function
   attribute \src "dut.sv:57.1-64.4"
   wire width 3 $0\state[2:0]
   attribute \src "dut.sv:29.21-29.54"
-  wire width 3 $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12
+  wire width 3 $1\fsm_function$func$dut.sv:29$2.$result$12
   attribute \src "dut.sv:36.4-42.18"
-  wire width 3 $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13
+  wire width 3 $6\fsm_function$func$dut.sv:29$2.$result$13
   attribute \src "dut.sv:38.24-42.18"
-  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14
+  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result$14
   attribute \src "dut.sv:43.4-47.18"
-  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15
+  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result$15
   attribute \src "dut.sv:48.4-52.18"
-  wire width 3 $8\fsm_function$func$dut.sv:29$2.$result[2:0]$16
+  wire width 3 $8\fsm_function$func$dut.sv:29$2.$result$16
   attribute \src "dut.sv:36.15-36.28"
   wire $eq$dut.sv:36$5_Y
   attribute \src "dut.sv:38.28-38.41"
@@ -150,76 +150,76 @@ module \fsm_using_function
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\fsm_function$func$dut.sv:29$2.state[2:0]$8 \state
-    assign $0\fsm_function$func$dut.sv:29$2.req_0[0:0]$9 \req_0
-    assign $0\fsm_function$func$dut.sv:29$2.req_1[0:0]$10 \req_1
-    assign $0\fsm_function$func$dut.sv:29$2.$result[2:0]$11 $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12
-    assign $0\fsm_function$func$dut.sv:29$1.$result[2:0]$8 $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12
+    assign $0\fsm_function$func$dut.sv:29$2.state$8 \state
+    assign $0\fsm_function$func$dut.sv:29$2.req_0$9 \req_0
+    assign $0\fsm_function$func$dut.sv:29$2.req_1$10 \req_1
+    assign $0\fsm_function$func$dut.sv:29$2.$result$11 $1\fsm_function$func$dut.sv:29$2.$result$12
+    assign $0\fsm_function$func$dut.sv:29$1.$result$8 $1\fsm_function$func$dut.sv:29$2.$result$12
     attribute \src "dut.sv:35.3-54.10"
     switch \state
       attribute \src "dut.sv:36.4-42.18"
       case 3'001
         assign { } { }
-        assign $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12 $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13
+        assign $1\fsm_function$func$dut.sv:29$2.$result$12 $6\fsm_function$func$dut.sv:29$2.$result$13
         attribute \src "dut.sv:36.11-42.18"
         switch $eq$dut.sv:36$5_Y
           attribute \src "dut.sv:36.30-38.18"
           case 1'1
             assign { } { }
-            assign $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13 3'010
+            assign $6\fsm_function$func$dut.sv:29$2.$result$13 3'010
           attribute \src "dut.sv:38.24-42.18"
           case 
             assign { } { }
-            assign $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14
+            assign $6\fsm_function$func$dut.sv:29$2.$result$13 $7\fsm_function$func$dut.sv:29$2.$result$14
             attribute \src "dut.sv:38.24-42.18"
             switch $eq$dut.sv:38$7_Y
               attribute \src "dut.sv:38.43-40.18"
               case 1'1
                 assign { } { }
-                assign $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14 3'100
+                assign $7\fsm_function$func$dut.sv:29$2.$result$14 3'100
               attribute \src "dut.sv:40.24-42.18"
               case 
                 assign { } { }
-                assign $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14 3'001
+                assign $7\fsm_function$func$dut.sv:29$2.$result$14 3'001
             end
         end
       attribute \src "dut.sv:43.4-47.18"
       case 3'010
         assign { } { }
-        assign $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15
+        assign $1\fsm_function$func$dut.sv:29$2.$result$12 $7\fsm_function$func$dut.sv:29$2.$result$15
         attribute \src "dut.sv:43.11-47.18"
         switch $eq$dut.sv:43$9_Y
           attribute \src "dut.sv:43.30-45.18"
           case 1'1
             assign { } { }
-            assign $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15 3'010
+            assign $7\fsm_function$func$dut.sv:29$2.$result$15 3'010
           attribute \src "dut.sv:45.24-47.18"
           case 
             assign { } { }
-            assign $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15 3'001
+            assign $7\fsm_function$func$dut.sv:29$2.$result$15 3'001
         end
       attribute \src "dut.sv:48.4-52.18"
       case 3'100
         assign { } { }
-        assign $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12 $8\fsm_function$func$dut.sv:29$2.$result[2:0]$16
+        assign $1\fsm_function$func$dut.sv:29$2.$result$12 $8\fsm_function$func$dut.sv:29$2.$result$16
         attribute \src "dut.sv:48.11-52.18"
         switch $eq$dut.sv:48$11_Y
           attribute \src "dut.sv:48.30-50.14"
           case 1'1
             assign { } { }
-            assign $8\fsm_function$func$dut.sv:29$2.$result[2:0]$16 3'100
+            assign $8\fsm_function$func$dut.sv:29$2.$result$16 3'100
           attribute \src "dut.sv:50.20-52.18"
           case 
             assign { } { }
-            assign $8\fsm_function$func$dut.sv:29$2.$result[2:0]$16 3'001
+            assign $8\fsm_function$func$dut.sv:29$2.$result$16 3'001
         end
       attribute \src "dut.sv:53.4-53.34"
       case 
         assign { } { }
-        assign $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12 3'001
+        assign $1\fsm_function$func$dut.sv:29$2.$result$12 3'001
     end
     sync always
-      update \fsm_function$func$fsm_function.$result $0\fsm_function$func$dut.sv:29$1.$result[2:0]$8
+      update \fsm_function$func$fsm_function.$result $0\fsm_function$func$dut.sv:29$1.$result$8
       update \fsm_function$func$dut.sv:29$2.$result 3'x
       update \fsm_function$func$dut.sv:29$2.state 3'x
       update \fsm_function$func$dut.sv:29$2.req_0 1'x

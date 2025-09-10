@@ -142,8 +142,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (has_nested_case) {
                     // Create intermediate result wire for this case branch
                     temp_counter++;
-                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
-                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
+                        temp_counter / 2, func_call_context.c_str(), temp_counter);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -213,8 +213,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (has_nested) {
                     // Create intermediate wire for nested structure
                     temp_counter++;
-                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
-                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
+                        temp_counter / 2, func_call_context.c_str(), temp_counter);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -257,8 +257,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (has_nested) {
                     // Create intermediate wire for nested structure
                     temp_counter++;
-                    std::string intermediate_wire_name = stringf("$%d\\%s.$result[%d:0]$%d", 
-                        temp_counter / 2, func_call_context.c_str(), result_wire->width - 1, temp_counter);
+                    std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
+                        temp_counter / 2, func_call_context.c_str(), temp_counter);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -355,6 +355,16 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             
             // Add the assignment action
             if (lhs_sig.size() > 0) {
+                // Truncate or extend RHS to match LHS width
+                if (rhs_sig.size() != lhs_sig.size()) {
+                    if (rhs_sig.size() > lhs_sig.size()) {
+                        // Truncate to match LHS
+                        rhs_sig = rhs_sig.extract(0, lhs_sig.size());
+                    } else {
+                        // Extend to match LHS
+                        rhs_sig.extend_u0(lhs_sig.size());
+                    }
+                }
                 case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
             }
         }
@@ -642,8 +652,8 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 
                 // Create temporary wire for this argument
                 global_temp_counter++;
-                std::string temp_name = stringf("$0\\%s.%s[%d:0]$%d", 
-                    func_call_id.c_str(), io_name.c_str(), width - 1, global_temp_counter);
+                std::string temp_name = stringf("$0\\%s.%s$%d", 
+                    func_call_id.c_str(), io_name.c_str(), global_temp_counter);
                 RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
                 
                 // Add source attribute to temp wire
@@ -665,11 +675,11 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     
     // Create temporary result wires with proper naming
     global_temp_counter++;
-    std::string temp_result2_name = stringf("$0\\%s.$result[%d:0]$%d", 
-        func_call_id.c_str(), result_wire->width - 1, global_temp_counter);
+    std::string temp_result2_name = stringf("$0\\%s.$result$%d", 
+        func_call_id.c_str(), global_temp_counter);
     global_temp_counter++;
-    std::string temp_result1_name = stringf("$1\\%s.$result[%d:0]$%d", 
-        func_call_id.c_str(), result_wire->width - 1, global_temp_counter);
+    std::string temp_result1_name = stringf("$1\\%s.$result$%d", 
+        func_call_id.c_str(), global_temp_counter);
     
     RTLIL::Wire* temp_result2_wire = module->addWire(RTLIL::escape_id(temp_result2_name), result_wire->width);
     RTLIL::Wire* temp_result1_wire = module->addWire(RTLIL::escape_id(temp_result1_name), result_wire->width);
@@ -683,8 +693,8 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     // Add assignment chaining for results
     root_case->actions.push_back(RTLIL::SigSig(temp_result2_wire, temp_result1_wire));
     
-    std::string temp_result_final_name = stringf("$0\\%s.$result[%d:0]$%d",
-        func_result_id.c_str(), result_wire->width - 1, global_temp_counter - 4);
+    std::string temp_result_final_name = stringf("$0\\%s.$result$%d",
+        func_result_id.c_str(), global_temp_counter - 4);
     RTLIL::Wire* temp_result_final_wire = module->addWire(RTLIL::escape_id(temp_result_final_name), result_wire->width);
     
     // Add source attribute to final result wire
