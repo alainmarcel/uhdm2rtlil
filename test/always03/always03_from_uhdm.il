@@ -5,9 +5,9 @@ attribute \top 1
 module \always03
   wire $auto$opt_dff.cc:247:make_patterns_logic$22
   attribute \src "dut.sv:18.4-18.15"
-  wire $auto$process.cpp:3562:import_assignment_sync$13
+  wire $auto$process.cpp:3454:import_assignment_sync$13
   attribute \src "dut.sv:16.4-16.15"
-  wire $auto$process.cpp:3562:import_assignment_sync$7
+  wire $auto$process.cpp:3454:import_assignment_sync$7
   attribute \src "dut.sv:15.3-18.16"
   wire $auto$process_helper.cpp:68:create_and_cell$11
   attribute \src "dut.sv:15.3-18.16"
@@ -54,7 +54,7 @@ module \always03
     parameter \EN_POLARITY 1
     parameter \WIDTH 1
     connect \CLK \clock
-    connect \D $auto$process.cpp:3562:import_assignment_sync$13
+    connect \D $auto$process.cpp:3454:import_assignment_sync$13
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$22
     connect \Q \out3
   end
@@ -65,7 +65,7 @@ module \always03
     connect \A { $auto$process_helper.cpp:68:create_and_cell$11 $auto$rtlil.cc:3006:And$6 }
     connect \Y $auto$opt_dff.cc:247:make_patterns_logic$22
   end
-  cell $and $auto$process.cpp:2445:import_statement_sync$5
+  cell $and $auto$process.cpp:2337:import_statement_sync$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -76,20 +76,20 @@ module \always03
     connect \Y $auto$rtlil.cc:3006:And$6
   end
   attribute \src "dut.sv:18.4-18.15"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$14
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$14
     parameter \WIDTH 1
-    connect \A $auto$process.cpp:3562:import_assignment_sync$7
+    connect \A $auto$process.cpp:3454:import_assignment_sync$7
     connect \B \in7
     connect \S $auto$process_helper.cpp:68:create_and_cell$11
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$13
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$13
   end
   attribute \src "dut.sv:16.4-16.15"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$8
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$8
     parameter \WIDTH 1
     connect \A 1'x
     connect \B \in6
     connect \S $auto$rtlil.cc:3006:And$6
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$7
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$7
   end
   attribute \src "dut.sv:15.3-18.16"
   cell $and $auto$process_helper.cpp:71:create_and_cell$12
