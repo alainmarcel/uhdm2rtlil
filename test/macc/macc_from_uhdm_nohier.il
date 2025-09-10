@@ -18,8 +18,8 @@ module \macc
   wire width 40 $0\old_result
   attribute \src "dut.sv:27.1-36.5"
   wire $0\sload_reg[0:0]
-  wire width 40 $auto$expression.cpp:1468:import_operation$3
-  wire width 32 $auto$expression.cpp:1514:import_operation$1
+  wire width 40 $auto$expression.cpp:1478:import_operation$3
+  wire width 32 $auto$expression.cpp:1524:import_operation$1
   wire $auto$module.cpp:681:import_continuous_assign$10
   wire width 32 $auto$module.cpp:681:import_continuous_assign$12
   wire width 40 $auto$module.cpp:681:import_continuous_assign$14
@@ -63,7 +63,7 @@ module \macc
     parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1468:import_operation$3
+    connect \Y $auto$expression.cpp:1478:import_operation$3
   end
   cell $mul $mul$dut.sv:32$2
     parameter \A_SIGNED 1
@@ -73,7 +73,7 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1514:import_operation$1
+    connect \Y $auto$expression.cpp:1524:import_operation$1
   end
   attribute \src "dut.sv:13.25-13.30"
   process $proc$dut.sv:13$5
@@ -139,9 +139,9 @@ module \macc
       case 1'1
         assign $0\a_reg[15:0] \a
         assign $0\b_reg[15:0] \b
-        assign $0\mult_reg[31:0] $auto$expression.cpp:1514:import_operation$1
+        assign $0\mult_reg[31:0] $auto$expression.cpp:1524:import_operation$1
         assign $0\sload_reg[0:0] \sload
-        assign $0\adder_out[39:0] $auto$expression.cpp:1468:import_operation$3
+        assign $0\adder_out[39:0] $auto$expression.cpp:1478:import_operation$3
       case 
     end
     sync posedge \clk
@@ -159,8 +159,8 @@ attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 41 $auto$expression.cpp:1468:import_operation$17
-  wire width 32 $auto$expression.cpp:1514:import_operation$15
+  wire width 41 $auto$expression.cpp:1478:import_operation$17
+  wire width 32 $auto$expression.cpp:1524:import_operation$15
   wire width 16 $auto$module.cpp:681:import_continuous_assign$34
   wire width 16 $auto$module.cpp:681:import_continuous_assign$36
   wire width 16 $auto$module.cpp:681:import_continuous_assign$38
@@ -228,7 +228,7 @@ module \macc2
     parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1468:import_operation$17
+    connect \Y $auto$expression.cpp:1478:import_operation$17
   end
   attribute \src "dut.sv:70.3-70.13"
   cell $mux $auto$process.cpp:3480:import_assignment_sync$20
@@ -265,7 +265,7 @@ module \macc2
   attribute \src "dut.sv:74.3-74.16"
   cell $mux $auto$process.cpp:3480:import_assignment_sync$28
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:1514:import_operation$15
+    connect \A $auto$expression.cpp:1524:import_operation$15
     connect \B 0
     connect \S \rst
     connect \Y $auto$process.cpp:3478:import_assignment_sync$27
@@ -273,7 +273,7 @@ module \macc2
   attribute \src "dut.sv:75.3-75.17"
   cell $mux $auto$process.cpp:3480:import_assignment_sync$30
     parameter \WIDTH 41
-    connect \A $auto$expression.cpp:1468:import_operation$17
+    connect \A $auto$expression.cpp:1478:import_operation$17
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
     connect \Y $auto$process.cpp:3478:import_assignment_sync$29
@@ -304,7 +304,7 @@ module \macc2
     parameter \Y_WIDTH 32
     connect \A \a_reg2
     connect \B \b_reg2
-    connect \Y $auto$expression.cpp:1514:import_operation$15
+    connect \Y $auto$expression.cpp:1524:import_operation$15
   end
   cell $mux $mux$dut.sv:82$51
     parameter \WIDTH 64

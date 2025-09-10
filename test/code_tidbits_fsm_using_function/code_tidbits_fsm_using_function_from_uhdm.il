@@ -9,11 +9,11 @@ module \fsm_using_function
   parameter \GNT0 3'010
   parameter \GNT1 3'100
   attribute \src "dut.sv:36.4-42.18"
-  wire width 3 $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13
+  wire width 3 $6\fsm_function$func$dut.sv:29$2.$result$13
   attribute \src "dut.sv:38.24-42.18"
-  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14
+  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result$14
   attribute \src "dut.sv:43.4-47.18"
-  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15
+  wire width 3 $7\fsm_function$func$dut.sv:29$2.$result$15
   wire $procmux$18_CMP
   wire $procmux$25_CMP
   wire $procmux$36_CMP
@@ -89,7 +89,7 @@ module \fsm_using_function
     connect \A 3'001
     connect \B 3'010
     connect \S \req_0
-    connect \Y $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15
+    connect \Y $7\fsm_function$func$dut.sv:29$2.$result$15
   end
   attribute \full_case 1
   attribute \src "dut.sv:38.43-40.18|dut.sv:38.24-42.18"
@@ -98,16 +98,16 @@ module \fsm_using_function
     connect \A 3'001
     connect \B 3'100
     connect \S \req_1
-    connect \Y $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14
+    connect \Y $7\fsm_function$func$dut.sv:29$2.$result$14
   end
   attribute \full_case 1
   attribute \src "dut.sv:36.30-38.18|dut.sv:36.11-42.18"
   cell $mux $procmux$41
     parameter \WIDTH 3
-    connect \A $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14
+    connect \A $7\fsm_function$func$dut.sv:29$2.$result$14
     connect \B 3'010
     connect \S \req_0
-    connect \Y $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13
+    connect \Y $6\fsm_function$func$dut.sv:29$2.$result$13
   end
   attribute \full_case 1
   attribute \src "dut.sv:48.4-52.18|dut.sv:35.3-54.10"
@@ -115,7 +115,7 @@ module \fsm_using_function
     parameter \S_WIDTH 3
     parameter \WIDTH 3
     connect \A 3'001
-    connect \B { $6\fsm_function$func$dut.sv:29$2.$result[2:0]$13 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$15 $7\fsm_function$func$dut.sv:29$2.$result[2:0]$14 }
+    connect \B { $6\fsm_function$func$dut.sv:29$2.$result$13 $7\fsm_function$func$dut.sv:29$2.$result$15 $7\fsm_function$func$dut.sv:29$2.$result$14 }
     connect \S { $procmux$36_CMP $procmux$25_CMP $procmux$18_CMP }
     connect \Y \fsm_function$func$fsm_function.$result
   end

@@ -3,22 +3,22 @@ autoidx 81
 attribute \src "dut.sv:1.1-38.10"
 attribute \cells_not_processed 1
 module \gen_test1
-  wire width 64 $auto$expression.cpp:1468:import_operation$1
-  wire width 64 $auto$expression.cpp:1468:import_operation$17
-  wire width 64 $auto$expression.cpp:1468:import_operation$25
-  wire width 64 $auto$expression.cpp:1468:import_operation$33
-  wire width 64 $auto$expression.cpp:1468:import_operation$41
-  wire width 64 $auto$expression.cpp:1468:import_operation$49
-  wire width 64 $auto$expression.cpp:1468:import_operation$57
-  wire width 64 $auto$expression.cpp:1468:import_operation$9
-  wire $auto$expression.cpp:2366:import_bit_select$11
-  wire $auto$expression.cpp:2366:import_bit_select$19
-  wire $auto$expression.cpp:2366:import_bit_select$27
-  wire $auto$expression.cpp:2366:import_bit_select$3
-  wire $auto$expression.cpp:2366:import_bit_select$35
-  wire $auto$expression.cpp:2366:import_bit_select$43
-  wire $auto$expression.cpp:2366:import_bit_select$51
-  wire $auto$expression.cpp:2366:import_bit_select$59
+  wire width 64 $auto$expression.cpp:1478:import_operation$1
+  wire width 64 $auto$expression.cpp:1478:import_operation$17
+  wire width 64 $auto$expression.cpp:1478:import_operation$25
+  wire width 64 $auto$expression.cpp:1478:import_operation$33
+  wire width 64 $auto$expression.cpp:1478:import_operation$41
+  wire width 64 $auto$expression.cpp:1478:import_operation$49
+  wire width 64 $auto$expression.cpp:1478:import_operation$57
+  wire width 64 $auto$expression.cpp:1478:import_operation$9
+  wire $auto$expression.cpp:2376:import_bit_select$11
+  wire $auto$expression.cpp:2376:import_bit_select$19
+  wire $auto$expression.cpp:2376:import_bit_select$27
+  wire $auto$expression.cpp:2376:import_bit_select$3
+  wire $auto$expression.cpp:2376:import_bit_select$35
+  wire $auto$expression.cpp:2376:import_bit_select$43
+  wire $auto$expression.cpp:2376:import_bit_select$51
+  wire $auto$expression.cpp:2376:import_bit_select$59
   wire $auto$rtlil.cc:2964:ReduceXor$66
   wire $auto$rtlil.cc:2964:ReduceXor$68
   wire $auto$rtlil.cc:2964:ReduceXor$70
@@ -125,7 +125,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$17
+    connect \Y $auto$expression.cpp:1478:import_operation$17
   end
   cell $add $add$dut.sv:18$2
     parameter \A_SIGNED 0
@@ -135,7 +135,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 0
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$1
+    connect \Y $auto$expression.cpp:1478:import_operation$1
   end
   cell $add $add$dut.sv:18$34
     parameter \A_SIGNED 0
@@ -145,7 +145,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$33
+    connect \Y $auto$expression.cpp:1478:import_operation$33
   end
   cell $add $add$dut.sv:18$50
     parameter \A_SIGNED 0
@@ -155,7 +155,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 6
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$49
+    connect \Y $auto$expression.cpp:1478:import_operation$49
   end
   cell $add $add$dut.sv:21$10
     parameter \A_SIGNED 0
@@ -165,7 +165,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$9
+    connect \Y $auto$expression.cpp:1478:import_operation$9
   end
   cell $add $add$dut.sv:21$26
     parameter \A_SIGNED 0
@@ -175,7 +175,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$25
+    connect \Y $auto$expression.cpp:1478:import_operation$25
   end
   cell $add $add$dut.sv:21$42
     parameter \A_SIGNED 0
@@ -185,7 +185,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$41
+    connect \Y $auto$expression.cpp:1478:import_operation$41
   end
   cell $add $add$dut.sv:21$58
     parameter \A_SIGNED 0
@@ -195,7 +195,7 @@ module \gen_test1
     parameter \Y_WIDTH 64
     connect \A 7
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:1468:import_operation$57
+    connect \Y $auto$expression.cpp:1478:import_operation$57
   end
   cell $and $and$dut.sv:14$13
     parameter \A_SIGNED 0
@@ -421,8 +421,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$17
-    connect \Y $auto$expression.cpp:2366:import_bit_select$19
+    connect \B $auto$expression.cpp:1478:import_operation$17
+    connect \Y $auto$expression.cpp:2376:import_bit_select$19
   end
   attribute \src "dut.sv:18.11-18.20"
   cell $shiftx $shiftx$dut.sv:18$36
@@ -432,8 +432,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$33
-    connect \Y $auto$expression.cpp:2366:import_bit_select$35
+    connect \B $auto$expression.cpp:1478:import_operation$33
+    connect \Y $auto$expression.cpp:2376:import_bit_select$35
   end
   attribute \src "dut.sv:18.11-18.20"
   cell $shiftx $shiftx$dut.sv:18$4
@@ -443,8 +443,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$1
-    connect \Y $auto$expression.cpp:2366:import_bit_select$3
+    connect \B $auto$expression.cpp:1478:import_operation$1
+    connect \Y $auto$expression.cpp:2376:import_bit_select$3
   end
   attribute \src "dut.sv:18.11-18.20"
   cell $shiftx $shiftx$dut.sv:18$52
@@ -454,8 +454,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$49
-    connect \Y $auto$expression.cpp:2366:import_bit_select$51
+    connect \B $auto$expression.cpp:1478:import_operation$49
+    connect \Y $auto$expression.cpp:2376:import_bit_select$51
   end
   attribute \src "dut.sv:21.11-21.20"
   cell $shiftx $shiftx$dut.sv:21$12
@@ -465,8 +465,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$9
-    connect \Y $auto$expression.cpp:2366:import_bit_select$11
+    connect \B $auto$expression.cpp:1478:import_operation$9
+    connect \Y $auto$expression.cpp:2376:import_bit_select$11
   end
   attribute \src "dut.sv:21.11-21.20"
   cell $shiftx $shiftx$dut.sv:21$28
@@ -476,8 +476,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$25
-    connect \Y $auto$expression.cpp:2366:import_bit_select$27
+    connect \B $auto$expression.cpp:1478:import_operation$25
+    connect \Y $auto$expression.cpp:2376:import_bit_select$27
   end
   attribute \src "dut.sv:21.11-21.20"
   cell $shiftx $shiftx$dut.sv:21$44
@@ -487,8 +487,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$41
-    connect \Y $auto$expression.cpp:2366:import_bit_select$43
+    connect \B $auto$expression.cpp:1478:import_operation$41
+    connect \Y $auto$expression.cpp:2376:import_bit_select$43
   end
   attribute \src "dut.sv:21.11-21.20"
   cell $shiftx $shiftx$dut.sv:21$60
@@ -498,8 +498,8 @@ module \gen_test1
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \tmp1
-    connect \B $auto$expression.cpp:1468:import_operation$57
-    connect \Y $auto$expression.cpp:2366:import_bit_select$59
+    connect \B $auto$expression.cpp:1478:import_operation$57
+    connect \Y $auto$expression.cpp:2376:import_bit_select$59
   end
   attribute \always_ff 1
   attribute \src "dut.sv:32.3-33.18"
@@ -550,35 +550,35 @@ module \gen_test1
       update \y [7] $auto$rtlil.cc:2964:ReduceXor$80
   end
   connect \tmp1 [0] \gen1[0].and_wire
-  connect $auto$expression.cpp:2366:import_bit_select$3 \gen1[0].or_wire
+  connect $auto$expression.cpp:2376:import_bit_select$3 \gen1[0].or_wire
   connect \gen1[0].and_wire $auto$rtlil.cc:3006:And$6
   connect \gen1[0].or_wire $auto$rtlil.cc:3007:Or$8
   connect \tmp1 [1] \gen1[1].or_wire
-  connect $auto$expression.cpp:2366:import_bit_select$11 \gen1[1].and_wire
+  connect $auto$expression.cpp:2376:import_bit_select$11 \gen1[1].and_wire
   connect \gen1[1].and_wire $auto$rtlil.cc:3006:And$14
   connect \gen1[1].or_wire $auto$rtlil.cc:3007:Or$16
   connect \tmp1 [2] \gen1[2].and_wire
-  connect $auto$expression.cpp:2366:import_bit_select$19 \gen1[2].or_wire
+  connect $auto$expression.cpp:2376:import_bit_select$19 \gen1[2].or_wire
   connect \gen1[2].and_wire $auto$rtlil.cc:3006:And$22
   connect \gen1[2].or_wire $auto$rtlil.cc:3007:Or$24
   connect \tmp1 [3] \gen1[3].or_wire
-  connect $auto$expression.cpp:2366:import_bit_select$27 \gen1[3].and_wire
+  connect $auto$expression.cpp:2376:import_bit_select$27 \gen1[3].and_wire
   connect \gen1[3].and_wire $auto$rtlil.cc:3006:And$30
   connect \gen1[3].or_wire $auto$rtlil.cc:3007:Or$32
   connect \tmp1 [4] \gen1[4].and_wire
-  connect $auto$expression.cpp:2366:import_bit_select$35 \gen1[4].or_wire
+  connect $auto$expression.cpp:2376:import_bit_select$35 \gen1[4].or_wire
   connect \gen1[4].and_wire $auto$rtlil.cc:3006:And$38
   connect \gen1[4].or_wire $auto$rtlil.cc:3007:Or$40
   connect \tmp1 [5] \gen1[5].or_wire
-  connect $auto$expression.cpp:2366:import_bit_select$43 \gen1[5].and_wire
+  connect $auto$expression.cpp:2376:import_bit_select$43 \gen1[5].and_wire
   connect \gen1[5].and_wire $auto$rtlil.cc:3006:And$46
   connect \gen1[5].or_wire $auto$rtlil.cc:3007:Or$48
   connect \tmp1 [6] \gen1[6].and_wire
-  connect $auto$expression.cpp:2366:import_bit_select$51 \gen1[6].or_wire
+  connect $auto$expression.cpp:2376:import_bit_select$51 \gen1[6].or_wire
   connect \gen1[6].and_wire $auto$rtlil.cc:3006:And$54
   connect \gen1[6].or_wire $auto$rtlil.cc:3007:Or$56
   connect \tmp1 [7] \gen1[7].or_wire
-  connect $auto$expression.cpp:2366:import_bit_select$59 \gen1[7].and_wire
+  connect $auto$expression.cpp:2376:import_bit_select$59 \gen1[7].and_wire
   connect \gen1[7].and_wire $auto$rtlil.cc:3006:And$62
   connect \gen1[7].or_wire $auto$rtlil.cc:3007:Or$64
   connect \gen3[0].gen4[0].tmpbuf \tmp1 [0]
