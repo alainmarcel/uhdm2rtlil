@@ -278,10 +278,8 @@ struct UhdmImporter {
     void import_statement_sync(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::Process* proc);
     void import_statement_comb(const UHDM::any* uhdm_stmt, RTLIL::CaseRule* case_rule);
-    void import_begin_block_sync(const UHDM::begin* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
-    void import_begin_block_comb(const UHDM::begin* uhdm_begin, RTLIL::Process* proc);
-    void import_named_begin_block_sync(const UHDM::named_begin* uhdm_named, RTLIL::SyncRule* sync, bool is_reset);
-    void import_named_begin_block_comb(const UHDM::named_begin* uhdm_named, RTLIL::Process* proc);
+    void import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset);
+    void import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL::Process* proc);
     void import_assignment_sync(const UHDM::assignment* uhdm_assign, RTLIL::SyncRule* sync);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::Process* proc);
     void import_assignment_comb(const UHDM::assignment* uhdm_assign, RTLIL::CaseRule* case_rule);

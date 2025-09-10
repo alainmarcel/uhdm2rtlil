@@ -3032,23 +3032,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
     
     switch (stmt_type) {
         case vpiBegin:
+        case vpiNamedBegin:
             log("        Processing begin block\n");
             log_flush();
-            import_begin_block_sync(any_cast<const begin*>(uhdm_stmt), sync, is_reset);
+            import_begin_block_sync(any_cast<const scope*>(uhdm_stmt), sync, is_reset);
             log("        Begin block processed\n");
             log_flush();
             break;
-        case vpiNamedBegin: {
-            log("        Processing named begin block\n");
-            log_flush();
-            // named_begin has similar structure to begin
-            const named_begin* named = any_cast<const named_begin*>(uhdm_stmt);
-            // Create a wrapper to handle named_begin
-            import_named_begin_block_sync(named, sync, is_reset);
-            log("        Named begin block processed\n");
-            log_flush();
-            break;
-        }
         case vpiAssignment:
             log("        Processing assignment\n");
             log_flush();
@@ -3951,10 +3941,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
     
     switch (stmt_type) {
         case vpiBegin:
-            import_begin_block_comb(any_cast<const begin*>(uhdm_stmt), proc);
-            break;
         case vpiNamedBegin:
-            import_named_begin_block_comb(any_cast<const named_begin*>(uhdm_stmt), proc);
+            import_begin_block_comb(any_cast<const scope*>(uhdm_stmt), proc);
             break;
         case vpiAssignment:
             import_assignment_comb(any_cast<const assignment*>(uhdm_stmt), proc);
@@ -3995,12 +3983,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
 }
 
 // Import begin block for sync context
-void UhdmImporter::import_begin_block_sync(const begin* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset) {
+void UhdmImporter::import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL::SyncRule* sync, bool is_reset) {
     log("          import_begin_block_sync called\n");
     log_flush();
-    
-    if (uhdm_begin->Stmts()) {
-        auto stmts = uhdm_begin->Stmts();
+    VectorOfany* stmts = begin_block_stmts(uhdm_begin);
+    if (stmts) {
         log("          Begin block has %zu statements\n", stmts->size());
         log_flush();
         
@@ -4047,83 +4034,17 @@ void UhdmImporter::import_begin_block_sync(const begin* uhdm_begin, RTLIL::SyncR
 }
 
 // Import begin block for comb context
-void UhdmImporter::import_begin_block_comb(const begin* uhdm_begin, RTLIL::Process* proc) {
+void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL::Process* proc) {
     log("    import_begin_block_comb (Process*): Begin block\n");
-    if (uhdm_begin->Stmts()) {
-        log("    Begin block has %d statements\n", (int)uhdm_begin->Stmts()->size());
-        for (auto stmt : *uhdm_begin->Stmts()) {
+    VectorOfany* stmts = begin_block_stmts(uhdm_begin);
+    if (stmts) {
+        log("    Begin block has %d statements\n", (int)stmts->size());
+        for (auto stmt : *stmts) {
             log("    Processing statement type %d in begin block\n", stmt->VpiType());
             import_statement_comb(stmt, proc);
         }
     } else {
         log("    Begin block has no statements\n");
-    }
-}
-
-// Import named_begin block for sync context
-void UhdmImporter::import_named_begin_block_sync(const named_begin* uhdm_named, RTLIL::SyncRule* sync, bool is_reset) {
-    log("          import_named_begin_block_sync called\n");
-    log_flush();
-    
-    if (uhdm_named->Stmts()) {
-        auto stmts = uhdm_named->Stmts();
-        log("          Named begin block has %zu statements\n", stmts->size());
-        log_flush();
-        
-        int stmt_idx = 0;
-        for (auto stmt : *stmts) {
-            log("          Processing statement %d/%zu in named begin block\n", stmt_idx + 1, stmts->size());
-            log_flush();
-            
-            // Skip assignments to integer variables that are only used in for loops
-            // This prevents loop variables like 'j' from appearing in the output
-            if (stmt->VpiType() == vpiAssignment) {
-                const assignment* assign = any_cast<const assignment*>(stmt);
-                if (assign->Lhs()) {
-                    std::string var_name;
-                    if (assign->Lhs()->VpiType() == vpiRefVar) {
-                        var_name = std::string(any_cast<const ref_var*>(assign->Lhs())->VpiName());
-                    } else if (assign->Lhs()->VpiType() == vpiRefObj) {
-                        var_name = std::string(any_cast<const ref_obj*>(assign->Lhs())->VpiName());
-                    }
-                    
-                    // TODO: More generic solution
-                    // Check if this is an integer variable (like i, j used in loops)
-                    // For now, skip assignments to common loop variable names
-                    if (var_name == "i" || var_name == "j" || var_name == "k") {
-                        log("          Skipping assignment to loop variable '%s'\n", var_name.c_str());
-                        stmt_idx++;
-                        continue;
-                    }
-                }
-            }
-            
-            import_statement_sync(stmt, sync, is_reset);
-            log("          Statement %d/%zu processed\n", stmt_idx + 1, stmts->size());
-            log_flush();
-            stmt_idx++;
-        }
-    } else {
-        log("          Named begin block has no statements\n");
-        log_flush();
-    }
-    
-    log("          import_named_begin_block_sync returning\n");
-    log_flush();
-}
-
-// Import named_begin block for comb context
-void UhdmImporter::import_named_begin_block_comb(const named_begin* uhdm_named, RTLIL::Process* proc) {
-    std::string block_name = !uhdm_named->VpiName().empty() ? std::string(uhdm_named->VpiName()) : "(unnamed)";
-    log("    import_named_begin_block_comb (Process*): Named block '%s'\n", block_name.c_str());
-    if (uhdm_named->Stmts()) {
-        log("    Named begin has %d statements\n", (int)uhdm_named->Stmts()->size());
-        for (auto stmt : *uhdm_named->Stmts()) {
-            log("    Processing statement type %d in named_begin\n", stmt->VpiType());
-            import_statement_comb(stmt, proc);
-        }
-    } else {
-        log("    Named begin has no statements\n");
     }
 }
 
