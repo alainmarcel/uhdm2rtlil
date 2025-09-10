@@ -163,19 +163,19 @@ module \macc2
   wire width 41 $auto$module.cpp:681:import_continuous_assign$44
   wire $auto$module.cpp:681:import_continuous_assign$46
   attribute \src "dut.sv:70.3-70.13"
-  wire width 16 $auto$process.cpp:3562:import_assignment_sync$19
+  wire width 16 $auto$process.cpp:3454:import_assignment_sync$19
   attribute \src "dut.sv:71.3-71.14"
-  wire width 16 $auto$process.cpp:3562:import_assignment_sync$21
+  wire width 16 $auto$process.cpp:3454:import_assignment_sync$21
   attribute \src "dut.sv:72.3-72.13"
-  wire width 16 $auto$process.cpp:3562:import_assignment_sync$23
+  wire width 16 $auto$process.cpp:3454:import_assignment_sync$23
   attribute \src "dut.sv:73.3-73.14"
-  wire width 16 $auto$process.cpp:3562:import_assignment_sync$25
+  wire width 16 $auto$process.cpp:3454:import_assignment_sync$25
   attribute \src "dut.sv:74.3-74.16"
-  wire width 32 $auto$process.cpp:3562:import_assignment_sync$27
+  wire width 32 $auto$process.cpp:3454:import_assignment_sync$27
   attribute \src "dut.sv:75.3-75.17"
-  wire width 41 $auto$process.cpp:3562:import_assignment_sync$29
+  wire width 41 $auto$process.cpp:3454:import_assignment_sync$29
   attribute \src "dut.sv:76.3-76.23"
-  wire $auto$process.cpp:3562:import_assignment_sync$31
+  wire $auto$process.cpp:3454:import_assignment_sync$31
   wire $auto$rtlil.cc:3007:Or$50
   wire $auto$rtlil.cc:3017:Ge$48
   wire width 64 $auto$rtlil.cc:3094:Mux$52
@@ -225,60 +225,60 @@ module \macc2
     connect \Y $auto$expression.cpp:1468:import_operation$17
   end
   attribute \src "dut.sv:70.3-70.13"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$20
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$20
     parameter \WIDTH 16
     connect \A \a
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$19
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$19
   end
   attribute \src "dut.sv:71.3-71.14"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$22
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$22
     parameter \WIDTH 16
     connect \A \a_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$21
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$21
   end
   attribute \src "dut.sv:72.3-72.13"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$24
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$24
     parameter \WIDTH 16
     connect \A \b
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$23
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$23
   end
   attribute \src "dut.sv:73.3-73.14"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$26
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$26
     parameter \WIDTH 16
     connect \A \b_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$25
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$25
   end
   attribute \src "dut.sv:74.3-74.16"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$28
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$28
     parameter \WIDTH 32
     connect \A $auto$expression.cpp:1514:import_operation$15
     connect \B 0
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$27
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$27
   end
   attribute \src "dut.sv:75.3-75.17"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$30
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$30
     parameter \WIDTH 41
     connect \A $auto$expression.cpp:1468:import_operation$17
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$29
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$29
   end
   attribute \src "dut.sv:76.3-76.23"
-  cell $mux $auto$process.cpp:3564:import_assignment_sync$32
+  cell $mux $auto$process.cpp:3456:import_assignment_sync$32
     parameter \WIDTH 1
     connect \A \overflow
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:3562:import_assignment_sync$31
+    connect \Y $auto$process.cpp:3454:import_assignment_sync$31
   end
   cell $ge $ge$dut.sv:79$47
     parameter \A_SIGNED 0
@@ -370,13 +370,13 @@ module \macc2
   attribute \src "dut.sv:57.1-78.4"
   process $proc$dut.sv:57$1
     sync posedge \clk
-      update \overflow_reg $auto$process.cpp:3562:import_assignment_sync$31
-      update \a_reg $auto$process.cpp:3562:import_assignment_sync$19
-      update \b_reg2 $auto$process.cpp:3562:import_assignment_sync$25
-      update \a_reg2 $auto$process.cpp:3562:import_assignment_sync$21
-      update \b_reg $auto$process.cpp:3562:import_assignment_sync$23
-      update \mult_reg $auto$process.cpp:3562:import_assignment_sync$27
-      update \adder_out $auto$process.cpp:3562:import_assignment_sync$29
+      update \overflow_reg $auto$process.cpp:3454:import_assignment_sync$31
+      update \a_reg $auto$process.cpp:3454:import_assignment_sync$19
+      update \b_reg2 $auto$process.cpp:3454:import_assignment_sync$25
+      update \a_reg2 $auto$process.cpp:3454:import_assignment_sync$21
+      update \b_reg $auto$process.cpp:3454:import_assignment_sync$23
+      update \mult_reg $auto$process.cpp:3454:import_assignment_sync$27
+      update \adder_out $auto$process.cpp:3454:import_assignment_sync$29
   end
   connect \overflow $auto$rtlil.cc:3007:Or$50
   connect \accum_out $auto$rtlil.cc:3094:Mux$52 [39:0]
