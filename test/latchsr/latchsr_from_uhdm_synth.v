@@ -21,6 +21,7 @@ module latchsr(d, clk, en, clr, pre, q);
   (* src = "dut.sv:1.57-1.58" *)
   output q;
   wire q;
+  (* src = "dut.sv:2.2-8.11" *)
   wire _00_;
   wire _01_;
   wire _02_;

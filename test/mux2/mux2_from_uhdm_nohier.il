@@ -3,6 +3,7 @@ autoidx 3
 attribute \src "dut.sv:1.1-8.10"
 attribute \cells_not_processed 1
 module \mux2
+  attribute \src "dut.sv:6.5-7.18"
   wire $0\Y
   wire $auto$rtlil.cc:3094:Mux$2
   attribute \src "dut.sv:1.16-1.17"

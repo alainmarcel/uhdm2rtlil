@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:1.1-10.10"
 attribute \cells_not_processed 1
 module \adffn
+  attribute \src "dut.sv:5.4-9.16"
   wire $0\q
   attribute \src "dut.sv:6.10-6.14"
   wire $logic_not$dut.sv:6.10-6.14$1_Y

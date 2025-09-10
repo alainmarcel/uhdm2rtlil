@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:2.1-18.10"
 attribute \cells_not_processed 1
 module \simple_always_ff
+  attribute \src "dut.sv:10.5-16.8"
   wire width 8 $0\extra_result
   attribute \src "dut.sv:11.13-11.19"
   wire $logic_not$dut.sv:11.13-11.19$1_Y

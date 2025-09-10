@@ -8,8 +8,11 @@ module \simple_fsm
   parameter \WORK 2'01
   parameter \WAIT 2'10
   parameter \DONE 2'11
+  attribute \src "dut.sv:55.1-63.4"
   wire $0\busy
+  attribute \src "dut.sv:28.1-52.4"
   wire width 2 $0\next_state
+  attribute \src "dut.sv:20.1-25.4"
   wire width 2 $0\state
   attribute \src "dut.sv:7.17-7.21"
   wire output 5 \busy

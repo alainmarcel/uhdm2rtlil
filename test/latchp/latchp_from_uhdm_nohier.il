@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:1.1-5.10"
 attribute \cells_not_processed 1
 module \latchp
+  attribute \src "dut.sv:2.2-4.11"
   wire $0\q
   attribute \src "dut.sv:1.26-1.29"
   wire input 2 \clk

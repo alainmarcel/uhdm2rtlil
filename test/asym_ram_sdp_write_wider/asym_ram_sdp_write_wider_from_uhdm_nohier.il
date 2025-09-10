@@ -15,6 +15,7 @@ module \asym_ram_sdp_write_wider
   parameter \minWIDTH 4
   parameter \RATIO 4
   parameter \log2RATIO 64'0000000000000000000000000000000000000000000000000000000000000010
+  attribute \src "dut.sv:52.2-56.5"
   wire width 4 $0\readB[3:0]
   wire $auto$rtlil.cc:3006:And$2
   wire $auto$rtlil.cc:3006:And$4
@@ -56,7 +57,7 @@ module \asym_ram_sdp_write_wider
   wire input 3 \weA
   attribute \src "dut.sv:49.21-49.24"
   memory width 4 size 1024 \RAM
-  cell $and $auto$process.cpp:2198:import_statement_with_loop_vars$1
+  cell $and $auto$process.cpp:2222:import_statement_with_loop_vars$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -66,7 +67,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3006:And$2
   end
-  cell $and $auto$process.cpp:2198:import_statement_with_loop_vars$3
+  cell $and $auto$process.cpp:2222:import_statement_with_loop_vars$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -76,7 +77,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3006:And$4
   end
-  cell $and $auto$process.cpp:2198:import_statement_with_loop_vars$5
+  cell $and $auto$process.cpp:2222:import_statement_with_loop_vars$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -86,7 +87,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3006:And$6
   end
-  cell $and $auto$process.cpp:2198:import_statement_with_loop_vars$7
+  cell $and $auto$process.cpp:2222:import_statement_with_loop_vars$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0

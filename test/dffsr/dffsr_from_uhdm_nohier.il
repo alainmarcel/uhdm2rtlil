@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:1.1-9.10"
 attribute \cells_not_processed 1
 module \dffsr
+  attribute \src "dut.sv:2.2-8.11"
   wire $0\q
   attribute \src "dut.sv:1.21-1.24"
   wire input 1 \clk

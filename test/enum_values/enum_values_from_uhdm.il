@@ -9,18 +9,18 @@ module \top
   wire $auto$opt_dff.cc:306:combine_resets$62
   attribute \src "dut.sv:17.17-17.33"
   attribute \unused_bits "2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$process.cpp:3454:import_assignment_sync$15
+  wire width 32 $auto$process.cpp:3478:import_assignment_sync$15
   attribute \src "dut.sv:28.16-28.26"
-  wire width 2 $auto$process.cpp:3454:import_assignment_sync$23
+  wire width 2 $auto$process.cpp:3478:import_assignment_sync$23
   attribute \src "dut.sv:29.16-29.26"
-  wire width 2 $auto$process.cpp:3454:import_assignment_sync$29
+  wire width 2 $auto$process.cpp:3478:import_assignment_sync$29
   attribute \src "dut.sv:15.17-15.33"
-  wire width 32 $auto$process.cpp:3454:import_assignment_sync$3
+  wire width 32 $auto$process.cpp:3478:import_assignment_sync$3
   attribute \src "dut.sv:30.16-30.26"
   attribute \unused_bits "1"
-  wire width 2 $auto$process.cpp:3454:import_assignment_sync$35
+  wire width 2 $auto$process.cpp:3478:import_assignment_sync$35
   attribute \src "dut.sv:16.17-16.33"
-  wire width 32 $auto$process.cpp:3454:import_assignment_sync$9
+  wire width 32 $auto$process.cpp:3478:import_assignment_sync$9
   attribute \src "dut.sv:15.13-15.34"
   wire $auto$process_helper.cpp:58:create_eq_cell$1
   attribute \src "dut.sv:17.13-17.34"
@@ -74,7 +74,7 @@ module \top
     parameter \SRST_VALUE 2'00
     parameter \WIDTH 2
     connect \CLK \clk
-    connect \D $auto$process.cpp:3454:import_assignment_sync$15 [1:0]
+    connect \D $auto$process.cpp:3478:import_assignment_sync$15 [1:0]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$56
     connect \Q \wide_state [1:0]
     connect \SRST $auto$process_helper.cpp:78:create_or_cell$13
@@ -88,7 +88,7 @@ module \top
     parameter \SRST_VALUE 1'1
     parameter \WIDTH 1
     connect \CLK \clk
-    connect \D $auto$process.cpp:3454:import_assignment_sync$35 [0]
+    connect \D $auto$process.cpp:3478:import_assignment_sync$35 [0]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$66
     connect \Q \state [0]
     connect \SRST $auto$process_helper.cpp:78:create_or_cell$33
@@ -102,7 +102,7 @@ module \top
     parameter \SRST_VALUE 1'1
     parameter \WIDTH 1
     connect \CLK \clk
-    connect \D $auto$process.cpp:3454:import_assignment_sync$29 [1]
+    connect \D $auto$process.cpp:3478:import_assignment_sync$29 [1]
     connect \EN $auto$opt_dff.cc:247:make_patterns_logic$69
     connect \Q \state [1]
     connect \SRST $auto$opt_dff.cc:306:combine_resets$62
@@ -143,52 +143,52 @@ module \top
     connect \Y $auto$opt_dff.cc:306:combine_resets$62
   end
   attribute \src "dut.sv:16.17-16.33"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$10
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$10
     parameter \WIDTH 32
-    connect \A $auto$process.cpp:3454:import_assignment_sync$3
+    connect \A $auto$process.cpp:3478:import_assignment_sync$3
     connect \B 2
     connect \S $auto$process_helper.cpp:58:create_eq_cell$5
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$9
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$9
   end
   attribute \src "dut.sv:17.17-17.33"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$16
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$16
     parameter \WIDTH 32
-    connect \A $auto$process.cpp:3454:import_assignment_sync$9
+    connect \A $auto$process.cpp:3478:import_assignment_sync$9
     connect \B 3
     connect \S $auto$process_helper.cpp:58:create_eq_cell$11
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$15
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$15
   end
   attribute \src "dut.sv:28.16-28.26"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$24
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$24
     parameter \WIDTH 2
     connect \A 2'x
     connect \B 2'00
     connect \S $auto$process_helper.cpp:58:create_eq_cell$21
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$23
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$23
   end
   attribute \src "dut.sv:29.16-29.26"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$30
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$30
     parameter \WIDTH 2
-    connect \A $auto$process.cpp:3454:import_assignment_sync$23
+    connect \A $auto$process.cpp:3478:import_assignment_sync$23
     connect \B 2'01
     connect \S $auto$process_helper.cpp:58:create_eq_cell$25
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$29
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$29
   end
   attribute \src "dut.sv:30.16-30.26"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$36
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$36
     parameter \WIDTH 2
-    connect \A $auto$process.cpp:3454:import_assignment_sync$29
+    connect \A $auto$process.cpp:3478:import_assignment_sync$29
     connect \B 2'10
     connect \S $auto$process_helper.cpp:58:create_eq_cell$31
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$35
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$35
   end
   attribute \src "dut.sv:15.17-15.33"
-  cell $mux $auto$process.cpp:3456:import_assignment_sync$4
+  cell $mux $auto$process.cpp:3480:import_assignment_sync$4
     parameter \WIDTH 32
     connect \A 32'000000000000000000000000000000xx
     connect \B 1
     connect \S $auto$process_helper.cpp:58:create_eq_cell$1
-    connect \Y $auto$process.cpp:3454:import_assignment_sync$3
+    connect \Y $auto$process.cpp:3478:import_assignment_sync$3
   end
   attribute \src "dut.sv:17.13-17.34"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$12

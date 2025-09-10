@@ -3,6 +3,7 @@ autoidx 3
 attribute \src "dut.sv:2.1-16.10"
 attribute \cells_not_processed 1
 module \simple_counter
+  attribute \src "dut.sv:8.5-14.8"
   wire width 8 $0\count
   wire width 8 $auto$expression.cpp:1468:import_operation$1
   attribute \src "dut.sv:9.13-9.19"

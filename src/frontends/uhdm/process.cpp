@@ -531,6 +531,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 if (!temp_wire) {
                     // Create temp wire only if it doesn't exist
                     temp_wire = module->addWire(temp_name, signal_spec.size());
+                    // Add source attribute from the process
+                    if (uhdm_process) {
+                        add_src_attribute(temp_wire->attributes, uhdm_process);
+                    }
                 }
                 temp_wires[sig.name] = temp_wire;
                 
@@ -875,6 +879,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         
                         // Create the temp wire
                         RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                        // Add source attribute from the process
+                        if (uhdm_process) {
+                            add_src_attribute(temp_wire->attributes, uhdm_process);
+                        }
                         temp_wires[sig_name] = temp_wire;
                         
                         // Initialize temp wire with current value
@@ -912,6 +920,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     
                     // Create the temp wire
                     RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                    // Add source attribute from the process
+                    if (uhdm_process) {
+                        add_src_attribute(temp_wire->attributes, uhdm_process);
+                    }
                     temp_wires[sig_name] = temp_wire;
                     
                     // Initialize temp wire with current value
@@ -1079,6 +1091,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                         if (orig_wire) {
                                             std::string temp_name = stringf("$0\\%s[%d:0]", sig_name.c_str(), orig_wire->width - 1);
                                             RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                                            // Add source attribute from the process
+                                            if (uhdm_process) {
+                                                add_src_attribute(temp_wire->attributes, uhdm_process);
+                                            }
                                             register_temp_wires[sig_name] = temp_wire;
                                             log("        Created temp wire %s for register %s\n", temp_name.c_str(), sig_name.c_str());
                                         }
@@ -1110,6 +1126,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 std::string elem_name = stringf("%s[%s]", base_name.c_str(), index_str.c_str());
                                 std::string temp_name = stringf("$0%s[%d:0]", wire_name.c_str(), wire->width - 1);
                                 RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), wire->width);
+                                // Add source attribute from the process
+                                if (uhdm_process) {
+                                    add_src_attribute(temp_wire->attributes, uhdm_process);
+                                }
                                 
                                 register_temp_wires[elem_name] = temp_wire;
                                 log("        Created temp wire %s for shift register element %s\n", temp_name.c_str(), elem_name.c_str());
@@ -1427,6 +1447,10 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             }
             
             temp_wire = module->addWire(temp_name, lhs_spec.size());
+            // Add source attribute from the process
+            if (uhdm_process) {
+                add_src_attribute(temp_wire->attributes, uhdm_process);
+            }
             signal_temp_wires[sig.name] = temp_wire;
             signal_specs[sig.name] = lhs_spec;
             

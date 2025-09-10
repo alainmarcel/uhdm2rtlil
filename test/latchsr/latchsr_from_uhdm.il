@@ -3,6 +3,7 @@ autoidx 36
 attribute \src "dut.sv:1.1-9.10"
 attribute \top 1
 module \latchsr
+  attribute \src "dut.sv:2.2-8.11"
   wire $0\q
   wire $auto$rtlil.cc:2959:Not$10
   wire $auto$rtlil.cc:2959:Not$12

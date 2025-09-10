@@ -3,7 +3,9 @@ autoidx 33
 attribute \src "dut.sv:2.1-48.10"
 attribute \cells_not_processed 1
 module \enum_simple
+  attribute \src "dut.sv:12.2-39.5"
   wire width 2 $0\state[1:0]
+  attribute \src "dut.sv:12.2-39.5"
   wire width 32 $0\test_enum[31:0]
   wire $auto$process.cpp:31:import_immediate_assert$17
   wire $auto$process.cpp:31:import_immediate_assert$21

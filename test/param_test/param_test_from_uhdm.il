@@ -7,6 +7,7 @@ module \param_test
   parameter \WIDTH 8
   parameter \DEPTH 16
   parameter \INIT_VALUE 8'10101010
+  attribute \src "dut.sv:13.5-18.8"
   attribute \unused_bits "2 3 4 5 6 7"
   wire width 8 $0\data_out[7:0]
   attribute \src "dut.sv:6.29-6.32"

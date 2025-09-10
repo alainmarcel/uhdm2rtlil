@@ -9,8 +9,11 @@ module \fsm
   parameter \GNT0 3'010
   parameter \GNT1 3'100
   parameter \GNT2 3'101
+  attribute \src "dut.sv:16.5-50.12"
   wire $0\gnt_0[0:0]
+  attribute \src "dut.sv:16.5-50.12"
   wire $0\gnt_1[0:0]
+  attribute \src "dut.sv:16.5-50.12"
   wire width 3 $0\state[2:0]
   attribute \src "dut.sv:18.15-18.28"
   wire $eq$dut.sv:18$1_Y
