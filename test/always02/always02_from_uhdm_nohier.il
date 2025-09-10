@@ -5,7 +5,7 @@ attribute \cells_not_processed 1
 module \always02
   wire width 64 $auto$expression.cpp:1468:import_operation$1
   attribute \src "dut.sv:10.3-10.13"
-  wire width 4 $auto$process.cpp:4216:import_assignment_sync$3
+  wire width 4 $auto$process.cpp:3562:import_assignment_sync$3
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
   attribute \src "dut.sv:1.31-1.36"
@@ -23,17 +23,17 @@ module \always02
     connect \Y $auto$expression.cpp:1468:import_operation$1
   end
   attribute \src "dut.sv:10.3-10.13"
-  cell $mux $auto$process.cpp:4218:import_assignment_sync$4
+  cell $mux $auto$process.cpp:3564:import_assignment_sync$4
     parameter \WIDTH 4
     connect \A $auto$expression.cpp:1468:import_operation$1 [3:0]
     connect \B 4'0000
     connect \S \reset
-    connect \Y $auto$process.cpp:4216:import_assignment_sync$3
+    connect \Y $auto$process.cpp:3562:import_assignment_sync$3
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.1-11.4"
   process $proc$dut.sv:7$1
     sync posedge \clock
-      update \count $auto$process.cpp:4216:import_assignment_sync$3
+      update \count $auto$process.cpp:3562:import_assignment_sync$3
   end
 end

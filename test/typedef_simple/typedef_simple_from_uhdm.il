@@ -33,7 +33,7 @@ module \top
   attribute \wiretype "\\int8_t"
   wire width 8 signed \int8
   attribute \src "dut.sv:16.12-16.40"
-  cell $check $auto$process.cpp:135:import_immediate_assert$12
+  cell $check $auto$process.cpp:38:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -47,7 +47,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:17.12-17.40"
-  cell $check $auto$process.cpp:135:import_immediate_assert$16
+  cell $check $auto$process.cpp:38:import_immediate_assert$16
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -61,7 +61,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:14.12-14.34"
-  cell $check $auto$process.cpp:135:import_immediate_assert$4
+  cell $check $auto$process.cpp:38:import_immediate_assert$4
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -75,7 +75,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:15.12-15.36"
-  cell $check $auto$process.cpp:135:import_immediate_assert$8
+  cell $check $auto$process.cpp:38:import_immediate_assert$8
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
