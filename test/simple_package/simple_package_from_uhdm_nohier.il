@@ -8,7 +8,9 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 5
+  attribute \src "dut.sv:77.5-97.8"
   wire width 5 $0\counter
+  attribute \src "dut.sv:77.5-97.8"
   wire width 50 $0\data_out
   wire width 64 $auto$expression.cpp:1468:import_operation$5
   attribute \src "dut.sv:91.17-91.29"
@@ -103,6 +105,7 @@ module \simple_package
   wire width 32 $0\increment_data$func$dut.sv:47$2.$result[31:0]$9
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 $0\increment_data$func$dut.sv:47$2.input_data[31:0]$8
+  attribute \src "dut.sv:38.5-49.8"
   wire width 50 $0\internal_bus
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 $1\increment_data$func$dut.sv:47$2.$result[31:0]$10
@@ -188,7 +191,9 @@ module \sub_module
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 32
+  attribute \src "dut.sv:77.5-97.8"
   wire width 5 $0\counter
+  attribute \src "dut.sv:77.5-97.8"
   wire width 50 $0\data_out
   wire width 64 $auto$expression.cpp:1468:import_operation$1
   attribute \src "dut.sv:91.17-91.29"

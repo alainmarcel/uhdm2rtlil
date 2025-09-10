@@ -3,7 +3,9 @@ autoidx 11
 attribute \src "dut.sv:2.1-54.10"
 attribute \cells_not_processed 1
 module \nested_struct_nopack
+  attribute \src "dut.sv:31.5-37.8"
   wire width 62 $0\out_struct[61:0]
+  attribute \src "dut.sv:40.5-52.8"
   wire width 62 $0\processed_data
   wire width 8 $auto$expression.cpp:1468:import_operation$1
   wire width 16 $auto$expression.cpp:1468:import_operation$7

@@ -5,8 +5,11 @@ attribute \src "dut.sv:2.1-27.10"
 attribute \cells_not_processed 1
 module \counter
   parameter \WIDTH 8
+  attribute \src "dut.sv:14.5-20.8"
   wire width 8 $0\count
+  attribute \src "dut.sv:22.5-25.8"
   wire width 8 $0\count_next
+  attribute \src "dut.sv:22.5-25.8"
   wire $0\overflow
   wire width 8 $auto$expression.cpp:1468:import_operation$1
   wire $auto$rtlil.cc:3026:LogicAnd$6

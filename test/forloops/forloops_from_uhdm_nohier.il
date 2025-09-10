@@ -3,6 +3,7 @@ autoidx 5
 attribute \src "dut.sv:1.1-13.10"
 attribute \cells_not_processed 1
 module \forloops
+  attribute \src "dut.sv:8.2-12.5"
   wire width 4 $0\y
   wire width 32 $auto$expression.cpp:1468:import_operation$1
   wire width 32 $auto$expression.cpp:1491:import_operation$3

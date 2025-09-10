@@ -214,6 +214,7 @@ end
 attribute \src "dut.sv:50.1-56.10"
 attribute \cells_not_processed 1
 module \abc9_test009
+  attribute \src "dut.sv:52.1-54.21"
   wire $0\latch
   wire $auto$rtlil.cc:2959:Not$26
   wire $auto$rtlil.cc:3094:Mux$28
@@ -267,6 +268,7 @@ end
 attribute \src "dut.sv:58.1-64.10"
 attribute \cells_not_processed 1
 module \abc9_test010
+  attribute \src "dut.sv:60.1-62.21"
   wire width 8 $0\latch
   wire width 8 $auto$rtlil.cc:2959:Not$30
   wire width 8 $auto$rtlil.cc:3094:Mux$32
@@ -320,6 +322,7 @@ end
 attribute \src "dut.sv:66.1-72.10"
 attribute \cells_not_processed 1
 module \abc9_test011
+  attribute \src "dut.sv:68.1-70.21"
   wire $0\latch
   attribute \src "dut.sv:69.9-69.12"
   wire $logic_not$dut.sv:69.9-69.12$5_Y
@@ -384,6 +387,7 @@ end
 attribute \src "dut.sv:97.1-106.10"
 attribute \cells_not_processed 1
 module \abc9_test012_sub
+  attribute \src "dut.sv:99.1-103.26"
   wire width 4 $0\
   wire width 4 $auto$rtlil.cc:2959:Not$6
   wire width 6 $auto$rtlil.cc:3094:Mux$10
@@ -457,6 +461,7 @@ end
 attribute \src "dut.sv:82.1-91.10"
 attribute \cells_not_processed 1
 module \abc9_test013
+  attribute \src "dut.sv:84.1-88.26"
   wire width 4 $0\
   wire width 4 $auto$rtlil.cc:2959:Not$38
   wire width 4 $auto$rtlil.cc:3094:Mux$40
@@ -572,6 +577,7 @@ end
 attribute \src "dut.sv:114.1-118.10"
 attribute \cells_not_processed 1
 module \abc9_test016
+  attribute \src "dut.sv:117.1-117.19"
   wire $0\c
   wire $auto$rtlil.cc:2959:Not$48
   wire $auto$rtlil.cc:2959:Not$50
@@ -609,6 +615,7 @@ end
 attribute \src "dut.sv:120.1-124.10"
 attribute \cells_not_processed 1
 module \abc9_test017
+  attribute \src "dut.sv:123.1-123.17"
   wire $0\c
   wire $auto$rtlil.cc:2959:Not$52
   attribute \src "dut.sv:120.27-120.28"
@@ -669,6 +676,7 @@ end
 attribute \src "dut.sv:132.1-137.10"
 attribute \cells_not_processed 1
 module \abc9_test019
+  attribute \src "dut.sv:136.1-136.19"
   wire $0\d
   wire $auto$rtlil.cc:2959:Not$60
   wire $auto$rtlil.cc:2962:ReduceAnd$58
@@ -709,6 +717,7 @@ end
 attribute \src "dut.sv:139.1-144.10"
 attribute \cells_not_processed 1
 module \abc9_test020
+  attribute \src "dut.sv:143.1-143.19"
   wire $0\d
   wire $auto$rtlil.cc:2959:Not$64
   wire $auto$rtlil.cc:2962:ReduceAnd$62
@@ -992,6 +1001,7 @@ end
 attribute \src "dut.sv:267.1-271.10"
 attribute \cells_not_processed 1
 module \abc9_test030
+  attribute \src "dut.sv:268.1-270.12"
   wire width 4 $0\q
   attribute \src "dut.sv:267.33-267.34"
   wire width 4 input 1 \d
@@ -1043,6 +1053,7 @@ end
 attribute \src "dut.sv:278.1-282.10"
 attribute \cells_not_processed 1
 module \abc9_test032
+  attribute \src "dut.sv:279.1-281.17"
   wire $0\q
   attribute \src "dut.sv:278.27-278.30"
   wire input 1 \clk
@@ -1075,6 +1086,7 @@ end
 attribute \src "dut.sv:284.1-288.10"
 attribute \cells_not_processed 1
 module \abc9_test033
+  attribute \src "dut.sv:285.1-287.17"
   wire $0\q
   attribute \src "dut.sv:284.27-284.30"
   wire input 1 \clk

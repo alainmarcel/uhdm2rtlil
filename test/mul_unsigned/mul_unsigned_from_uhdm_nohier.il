@@ -6,11 +6,17 @@ attribute \cells_not_processed 1
 module \mul_unsigned
   parameter \WIDTHA 6
   parameter \WIDTHB 9
+  attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[0][14:0]
+  attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[1][14:0]
+  attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[2][14:0]
+  attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[3][14:0]
+  attribute \src "dut.sv:21.1-28.5"
   wire width 6 $0\rA[5:0]
+  attribute \src "dut.sv:21.1-28.5"
   wire width 9 $0\rB[8:0]
   wire width 15 $auto$expression.cpp:1514:import_operation$1
   attribute \src "dut.sv:10.27-10.28"

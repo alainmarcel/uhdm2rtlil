@@ -3,7 +3,9 @@ autoidx 5
 attribute \src "dut.sv:7.1-27.10"
 attribute \cells_not_processed 1
 module \struct_array
+  attribute \src "dut.sv:23.5-26.8"
   wire width 8 $0\data_out
+  attribute \src "dut.sv:23.5-26.8"
   wire width 4 $0\tag_out
   wire width 8 $auto$expression.cpp:1468:import_operation$1
   wire width 4 $auto$rtlil.cc:3008:Xor$4

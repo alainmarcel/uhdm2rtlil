@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:2.1-20.10"
 attribute \cells_not_processed 1
 module \mux4
+  attribute \src "dut.sv:11.5-19.8"
   wire $0\Y
   attribute \src "dut.sv:2.18-2.19"
   wire width 4 input 2 \D

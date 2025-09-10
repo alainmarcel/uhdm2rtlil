@@ -3,6 +3,7 @@ autoidx 8
 attribute \src "dut.sv:2.1-16.10"
 attribute \top 1
 module \simple_counter
+  attribute \src "dut.sv:8.5-14.8"
   wire width 8 $0\count
   attribute \src "dut.sv:3.18-3.21"
   wire input 1 \clk

@@ -3,6 +3,7 @@ autoidx 3
 attribute \src "dut.sv:1.1-16.10"
 attribute \cells_not_processed 1
 module \mul_sync_enable_test
+  attribute \src "dut.sv:7.5-15.8"
   wire width 9 $0\p[8:0]
   wire width 9 $auto$expression.cpp:1514:import_operation$1
   attribute \src "dut.sv:1.44-1.45"

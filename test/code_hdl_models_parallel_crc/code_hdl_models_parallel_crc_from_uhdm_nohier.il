@@ -3,6 +3,7 @@ autoidx 53
 attribute \src "dut.sv:7.1-53.10"
 attribute \cells_not_processed 1
 module \code_hdl_models_parallel_crc
+  attribute \src "dut.sv:29.1-38.4"
   wire width 16 $0\crc_reg[15:0]
   wire $auto$rtlil.cc:3008:Xor$10
   wire $auto$rtlil.cc:3008:Xor$12

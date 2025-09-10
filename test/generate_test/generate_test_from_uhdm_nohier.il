@@ -82,6 +82,7 @@ attribute \cells_not_processed 1
 module \generate_test
   parameter \NUM_UNITS 4
   parameter \DATA_WIDTH 8
+  attribute \src "dut.sv:94.17-100.20"
   wire width 8 $0\extra_result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[0]$1_Y

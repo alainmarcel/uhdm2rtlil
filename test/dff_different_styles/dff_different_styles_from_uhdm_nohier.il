@@ -19,6 +19,7 @@ end
 attribute \src "dut.sv:9.1-18.10"
 attribute \cells_not_processed 1
 module \dffa
+  attribute \src "dut.sv:12.1-17.4"
   wire $0\q
   attribute \src "dut.sv:9.18-9.22"
   wire input 2 \arst
@@ -51,6 +52,7 @@ end
 attribute \src "dut.sv:20.1-29.10"
 attribute \cells_not_processed 1
 module \dffa1
+  attribute \src "dut.sv:23.1-28.4"
   wire $0\q
   wire $auto$rtlil.cc:2959:Not$2
   attribute \src "dut.sv:20.19-20.23"
@@ -91,6 +93,7 @@ end
 attribute \src "dut.sv:31.1-40.10"
 attribute \cells_not_processed 1
 module \dffa2
+  attribute \src "dut.sv:34.1-39.4"
   wire $0\q
   attribute \src "dut.sv:35.6-35.11"
   wire $logic_not$dut.sv:35.6-35.11$1_Y
@@ -133,6 +136,7 @@ end
 attribute \src "dut.sv:42.1-51.10"
 attribute \cells_not_processed 1
 module \dffa3
+  attribute \src "dut.sv:45.1-50.4"
   wire $0\q
   wire $auto$rtlil.cc:2959:Not$4
   attribute \src "dut.sv:46.8-46.13"
@@ -183,6 +187,7 @@ end
 attribute \src "dut.sv:53.1-66.10"
 attribute \cells_not_processed 1
 module \dffa4
+  attribute \src "dut.sv:56.1-65.4"
   wire $0\q
   attribute \src "dut.sv:61.11-61.17"
   wire $logic_not$dut.sv:61.11-61.17$3_Y
@@ -250,6 +255,7 @@ end
 attribute \src "dut.sv:72.1-81.10"
 attribute \cells_not_processed 1
 module \dffsr1
+  attribute \src "dut.sv:75.1-80.4"
   wire $0\q
   wire $auto$rtlil.cc:3008:Xor$6
   attribute \src "dut.sv:72.20-72.24"
@@ -356,6 +362,7 @@ end
 attribute \src "dut.sv:92.1-103.10"
 attribute \cells_not_processed 1
 module \dffsr2_sub
+  attribute \src "dut.sv:95.1-102.4"
   wire $0\q
   attribute \src "dut.sv:92.32-92.37"
   wire input 3 \clear

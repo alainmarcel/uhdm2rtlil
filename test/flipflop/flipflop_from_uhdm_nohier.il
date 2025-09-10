@@ -3,6 +3,7 @@ autoidx 1
 attribute \src "dut.sv:2.1-17.10"
 attribute \cells_not_processed 1
 module \flipflop
+  attribute \src "dut.sv:9.5-15.8"
   wire $0\q
   attribute \src "dut.sv:10.13-10.19"
   wire $logic_not$dut.sv:10.13-10.19$1_Y

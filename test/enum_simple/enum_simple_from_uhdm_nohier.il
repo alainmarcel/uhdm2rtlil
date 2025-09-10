@@ -3,7 +3,9 @@ autoidx 1
 attribute \src "dut.sv:1.1-38.10"
 attribute \cells_not_processed 1
 module \enum_simple
+  attribute \src "dut.sv:17.5-22.8"
   wire width 2 $0\current_state
+  attribute \src "dut.sv:25.5-33.8"
   wire width 2 $0\next_state
   attribute \src "dut.sv:2.16-2.19"
   wire input 1 \clk

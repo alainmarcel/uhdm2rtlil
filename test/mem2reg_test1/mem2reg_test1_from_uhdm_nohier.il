@@ -3,7 +3,9 @@ autoidx 1
 attribute \src "dut.sv:1.1-17.10"
 attribute \cells_not_processed 1
 module \mem2reg_test1
+  attribute \src "dut.sv:9.1-15.4"
   wire width 4 $0\array
+  attribute \src "dut.sv:9.1-15.4"
   wire width 4 $0\out_data
   attribute \src "dut.sv:1.22-1.29"
   wire width 2 input 1 \in_addr

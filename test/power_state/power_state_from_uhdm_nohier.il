@@ -7,7 +7,9 @@ module \power_state
   parameter \IDLE 3'001
   parameter \GNT0 3'010
   parameter \GNT1 3'100
+  attribute \src "dut.sv:14.3-40.6"
   wire $0\gnt_0[0:0]
+  attribute \src "dut.sv:14.3-40.6"
   wire $0\gnt_1[0:0]
   attribute \src "dut.sv:16.9-16.22"
   wire $eq$dut.sv:16$1_Y

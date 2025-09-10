@@ -6,8 +6,11 @@ attribute \cells_not_processed 1
 module \mul_signed_async
   parameter \M 8
   parameter \N 6
+  attribute \src "dut.sv:18.5-30.8"
   wire width 8 $0\a_reg
+  attribute \src "dut.sv:18.5-30.8"
   wire width 6 $0\b_reg
+  attribute \src "dut.sv:18.5-30.8"
   wire width 14 $0\p
   wire width 14 $auto$expression.cpp:1514:import_operation$1
   attribute \src "dut.sv:1.40-1.41"

@@ -18,8 +18,11 @@ module \fsm_using_function
   wire $0\fsm_function$func$dut.sv:29$2.req_1[0:0]$10
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 $0\fsm_function$func$dut.sv:29$2.state[2:0]$8
+  attribute \src "dut.sv:66.1-92.4"
   wire $0\gnt_0[0:0]
+  attribute \src "dut.sv:66.1-92.4"
   wire $0\gnt_1[0:0]
+  attribute \src "dut.sv:57.1-64.4"
   wire width 3 $0\state[2:0]
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 $1\fsm_function$func$dut.sv:29$2.$result[2:0]$12
