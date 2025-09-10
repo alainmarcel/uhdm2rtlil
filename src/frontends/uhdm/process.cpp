@@ -855,11 +855,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     const any* else_stmt = nullptr;
                     
                     if (simple_if_stmt->VpiType() == vpiIfElse) {
-                        const if_else* if_else_stmt = static_cast<const if_else*>(simple_if_stmt);
+                        const if_else* if_else_stmt = any_cast<const if_else*>(simple_if_stmt);
                         then_stmt = if_else_stmt->VpiStmt();
                         else_stmt = if_else_stmt->VpiElseStmt();
                     } else if (simple_if_stmt->VpiType() == vpiIf) {
-                        const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(simple_if_stmt);
+                        const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(simple_if_stmt);
                         then_stmt = if_stmt->VpiStmt();
                         else_stmt = nullptr;  // vpiIf has no else branch
                     }
@@ -1036,14 +1036,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 const any* else_stmt = nullptr;
                 
                 if (simple_if_stmt->VpiType() == vpiIfElse) {
-                    const if_else* if_else_stmt = static_cast<const if_else*>(simple_if_stmt);
+                    const if_else* if_else_stmt = any_cast<const if_else*>(simple_if_stmt);
                     if (auto condition_expr = if_else_stmt->VpiCondition()) {
                         condition = import_expression(condition_expr);
                     }
                     then_stmt = if_else_stmt->VpiStmt();
                     else_stmt = if_else_stmt->VpiElseStmt();
                 } else if (simple_if_stmt->VpiType() == vpiIf) {
-                    const UHDM::if_stmt* if_stmt = static_cast<const UHDM::if_stmt*>(simple_if_stmt);
+                    const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(simple_if_stmt);
                     if (auto condition_expr = if_stmt->VpiCondition()) {
                         condition = import_expression(condition_expr);
                     }
@@ -2321,7 +2321,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             }
             if (else_stmt) {
                 // Invert condition for else branch
-                const any* src_obj = if_st ? static_cast<const any*>(if_st) : static_cast<const any*>(if_el);
+                const any* src_obj = if_st ? any_cast<const any*>(if_st) : any_cast<const any*>(if_el);
                 if (!prev_condition.empty()) {
                     // For nested if-else, AND the previous condition with NOT of current
                     RTLIL::SigSpec not_cond = create_not_cell(cond, src_obj);
