@@ -83,6 +83,23 @@ RTLIL::SigSpec UhdmImporter::create_mux_cell(const RTLIL::SigSpec& sel, const RT
     return result;
 }
 
+UHDM::VectorOfany *begin_block_stmts(const any *stmt)
+{
+    UHDM::VectorOfany *stmts = nullptr;
+    if (stmt->VpiType() == vpiBegin) {
+        const UHDM::begin *begin_stmt = any_cast<const UHDM::begin *>(stmt);
+        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+            stmts = begin_stmt->Stmts();
+        }
+    } else {
+        const UHDM::named_begin *begin_stmt = any_cast<const UHDM::named_begin *>(stmt);
+        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+            stmts = begin_stmt->Stmts();
+        }
+    }
+    return stmts;
+}
+
 // Process assignment to get LHS and RHS
 void UhdmImporter::process_assignment_lhs_rhs(const UHDM::assignment* assign, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs) {
     if (!assign) return;
@@ -351,18 +368,10 @@ static void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal
             }
             break;
         }
-        case vpiBegin: {
-            auto begin_block = any_cast<const UHDM::begin*>(stmt);
-            if (auto stmts = begin_block->Stmts()) {
-                for (auto s : *stmts) {
-                    extract_assigned_signals(s, signals);
-                }
-            }
-            break;
-        }
+        case vpiBegin:
         case vpiNamedBegin: {
-            auto named_block = any_cast<const UHDM::named_begin*>(stmt);
-            if (auto stmts = named_block->Stmts()) {
+            UHDM::VectorOfany* stmts = begin_block_stmts(stmt);
+            if (stmts) { 
                 for (auto s : *stmts) {
                     extract_assigned_signals(s, signals);
                 }
@@ -420,14 +429,12 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
     }
     
     // Handle begin block
-    if (stmt->VpiType() == vpiBegin) {
-        const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(stmt);
-        if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
-            // Get first statement from begin block
-            stmt = (*begin_stmt->Stmts())[0];
-            log("UHDM: Unwrapped begin block, found inner statement type: %s (vpiType=%d)\n", 
-                UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
-        }
+    VectorOfany* stmts = begin_block_stmts(stmt);
+    if (stmts) {
+        // Get first statement from begin block
+        stmt = stmts->at(0);
+        log("UHDM: Unwrapped begin block, found inner statement type: %s (vpiType=%d)\n",
+            UhdmName(stmt->UhdmType()).c_str(), stmt->VpiType());
     }
     
     // For simple_counter, we need to extract from the if statement structure
@@ -445,11 +452,11 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
             if (auto then_stmt = if_else_stmt->VpiStmt()) {
                 log("UHDM: Then statement type: %s (vpiType=%d)\n", UhdmName(then_stmt->UhdmType()).c_str(), then_stmt->VpiType());
                 // Handle begin blocks
-                if (then_stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(then_stmt);
-                    if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+                if (then_stmt->VpiType() == vpiBegin || then_stmt->VpiType() == vpiNamedBegin) {
+                    VectorOfany* stmts = begin_block_stmts(then_stmt);
+                    if (stmts) {
                         // Look for assignment inside begin block
-                        for (auto stmt : *begin_stmt->Stmts()) {
+                        for (auto stmt : *stmts) {
                             if (stmt->VpiType() == vpiAssignment) {
                                 then_stmt = stmt;
                                 break;
@@ -509,11 +516,11 @@ bool UhdmImporter::extract_signal_names_from_process(const UHDM::any* stmt,
                 log("UHDM: Found else statement, type: %s (vpiType=%d)\n", 
                     UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
                 // Handle begin blocks
-                if (else_stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin_stmt = any_cast<const UHDM::begin*>(else_stmt);
-                    if (begin_stmt->Stmts() && !begin_stmt->Stmts()->empty()) {
+                if (else_stmt->VpiType() == vpiBegin || else_stmt->VpiType() == vpiNamedBegin) {
+                    VectorOfany* stmts = begin_block_stmts(stmt);
+                    if (stmts) {
                         // Look for assignment inside begin block
-                        for (auto stmt : *begin_stmt->Stmts()) {
+                        for (auto stmt : *stmts) {
                             if (stmt->VpiType() == vpiAssignment) {
                                 else_stmt = stmt;
                                 break;
@@ -656,42 +663,38 @@ static bool contains_complex_constructs(const any* stmt) {
     if (stmt_type == vpiFor || stmt_type == vpiForever || stmt_type == vpiWhile) {
         return true;
     }
-    
+     
     // Note: Memory writes (bit select assignments) are now allowed in simple if patterns
     // They will be handled specially during switch statement generation
     
-    // Check for begin blocks
-    if (stmt_type == vpiBegin) {
-        try {
-            const begin* begin_stmt = any_cast<const begin*>(stmt);
-            if (begin_stmt && begin_stmt->Stmts()) {
-                for (auto sub_stmt : *begin_stmt->Stmts()) {
-                    if (sub_stmt && contains_complex_constructs(sub_stmt)) {
-                        return true;
-                    }
+    // Check for begin blocks (both regular and named)
+    if (stmt_type == vpiBegin || stmt_type == vpiNamedBegin) {
+        VectorOfany* stmts = begin_block_stmts(stmt);
+        if (stmts) {
+            for (auto sub_stmt : *stmts) {
+                if (sub_stmt && contains_complex_constructs(sub_stmt)) {
+                    return true;
                 }
             }
-        } catch (...) {
-            // Failed to cast - not a begin block
-            return false;
         }
-    }
-    
-    // Check for nested if statements
-    if (stmt_type == vpiIf || stmt_type == vpiIfElse) {
-        try {
-            const if_else* if_stmt = any_cast<const if_else*>(stmt);
-            if (if_stmt) {
-                if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
-                    return true;
-                }
-                if (if_stmt->VpiElseStmt() && contains_complex_constructs(if_stmt->VpiElseStmt())) {
-                    return true;
-                }
+    } else if (stmt_type == vpiIf) {
+        // Check for nested if statements
+        const UHDM::if_stmt* if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
+        if (if_stmt) {
+            if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
+                return true;
             }
-        } catch (...) {
-            // Failed to cast - this is not an if_else statement
-            return false;
+        }
+    } else if (stmt_type == vpiIfElse) {
+        // Check for nested if statements
+        const if_else* if_stmt = any_cast<const if_else*>(stmt);
+        if (if_stmt) {
+            if (if_stmt->VpiStmt() && contains_complex_constructs(if_stmt->VpiStmt())) {
+                return true;
+            }
+            if (if_stmt->VpiElseStmt() && contains_complex_constructs(if_stmt->VpiElseStmt())) {
+                return true;
+            }
         }
     }
     
@@ -743,19 +746,11 @@ static void scan_for_memory_writes(const any* stmt, std::set<std::string>& memor
             }
             break;
         }
-        case vpiBegin: {
-            const begin* begin_stmt = any_cast<const begin*>(stmt);
-            if (begin_stmt->Stmts()) {
-                for (auto sub_stmt : *begin_stmt->Stmts()) {
-                    scan_for_memory_writes(sub_stmt, memory_names, module);
-                }
-            }
-            break;
-        }
+        case vpiBegin:
         case vpiNamedBegin: {
-            const named_begin* named_stmt = any_cast<const named_begin*>(stmt);
-            if (named_stmt->Stmts()) {
-                for (auto sub_stmt : *named_stmt->Stmts()) {
+            VectorOfany* stmts = begin_block_stmts(stmt);
+            if (stmts) {
+                for (auto sub_stmt : *stmts) {
                     scan_for_memory_writes(sub_stmt, memory_names, module);
                 }
             }
@@ -805,21 +800,11 @@ static const assignment* find_assignment_for_lhs(const any* stmt, const expr* lh
             }
             break;
         }
-        case vpiBegin: {
-            auto begin_stmt = any_cast<const UHDM::begin*>(stmt);
-            if (begin_stmt->Stmts()) {
-                for (auto s : *begin_stmt->Stmts()) {
-                    if (auto result = find_assignment_for_lhs(s, lhs_expr)) {
-                        return result;
-                    }
-                }
-            }
-            break;
-        }
+        case vpiBegin:
         case vpiNamedBegin: {
-            auto named_stmt = any_cast<const UHDM::named_begin*>(stmt);
-            if (named_stmt->Stmts()) {
-                for (auto s : *named_stmt->Stmts()) {
+            VectorOfany* stmts = begin_block_stmts(stmt);
+            if (stmts) {
+                for (auto s : *stmts) {
                     if (auto result = find_assignment_for_lhs(s, lhs_expr)) {
                         return result;
                     }
@@ -1326,11 +1311,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 if (stmt->VpiType() == vpiIfElse) {
                     // Direct if_else statement
                     if_else_stmt = any_cast<const if_else*>(stmt);
-                } else if (stmt->VpiType() == vpiBegin) {
+                } else if (stmt->VpiType() == vpiBegin || stmt->VpiType() == vpiNamedBegin) {
+                    UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
                     // If_else inside a begin block
-                    const UHDM::begin* begin = any_cast<const UHDM::begin*>(stmt);
-                    if (begin->Stmts() && !begin->Stmts()->empty()) {
-                        const any* first_stmt = (*begin->Stmts())[0];
+                    if (stmts) {
+                        const any* first_stmt = (*stmts)[0];
                         if (first_stmt->VpiType() == vpiIfElse) {
                             if_else_stmt = any_cast<const if_else*>(first_stmt);
                         }
@@ -1501,10 +1486,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("      Detected vpiIf, setting is_simple_if_else = true\n");
                     simple_if_stmt = any_cast<const UHDM::if_stmt*>(stmt);
                     is_simple_if_else = true;
-                } else if (stmt->VpiType() == vpiBegin) {
-                    const UHDM::begin* begin = any_cast<const UHDM::begin*>(stmt);
-                    if (begin->Stmts() && begin->Stmts()->size() == 1) {
-                        const any* first_stmt = (*begin->Stmts())[0];
+                } else if (stmt->VpiType() == vpiBegin || stmt->VpiType() == vpiNamedBegin) {
+                    UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
+                    if (stmts && stmts->size() == 1) {
+                        const any* first_stmt = stmts->at(0);
                         if (first_stmt->VpiType() == vpiIfElse) {
                             simple_if_stmt = any_cast<const if_else*>(first_stmt);
                             is_simple_if_else = true;
@@ -1796,10 +1781,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 bool has_shift_register = false;
                 std::set<std::string> shift_register_arrays;
                 
-                if (stmt && stmt->VpiType() == vpiBegin) {
-                    const begin* begin_stmt = any_cast<const begin*>(stmt);
-                    if (begin_stmt->Stmts()) {
-                        for (auto sub_stmt : *begin_stmt->Stmts()) {
+                if (stmt && ((stmt->VpiType() == vpiBegin) || (stmt->VpiType() == vpiNamedBegin))) {
+                    UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
+                    if (stmts) {
+                        for (auto sub_stmt : *stmts) {
                             if (sub_stmt->VpiType() == vpiFor) {
                                 const for_stmt* for_loop = any_cast<const for_stmt*>(sub_stmt);
                                 if (for_loop->VpiStmt() && for_loop->VpiStmt()->VpiType() == vpiAssignment) {
@@ -1843,10 +1828,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     
                     // First create temp wires for regular registers (rA, rB)
                     // We'll scan the begin block for non-for-loop assignments
-                    if (stmt && stmt->VpiType() == vpiBegin) {
-                        const begin* begin_stmt = any_cast<const begin*>(stmt);
-                        if (begin_stmt->Stmts()) {
-                            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                    if (stmt && ((stmt->VpiType() == vpiBegin) || (stmt->VpiType() == vpiNamedBegin))) {
+                        UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
+                        if (stmts) {
+                            for (auto sub_stmt : *stmts) {
                                 if (sub_stmt->VpiType() == vpiAssignment) {
                                     const assignment* assign = any_cast<const assignment*>(sub_stmt);
                                     if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
@@ -1911,10 +1896,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                     
                     // Process the begin block statements
-                    if (stmt && stmt->VpiType() == vpiBegin) {
-                        const begin* begin_stmt = any_cast<const begin*>(stmt);
-                        if (begin_stmt->Stmts()) {
-                            for (auto sub_stmt : *begin_stmt->Stmts()) {
+                    if (stmt && ((stmt->VpiType() == vpiBegin) || (stmt->VpiType() == vpiNamedBegin))) {
+                        UHDM::VectorOfany *stmts = begin_block_stmts(stmt);
+                        if (stmts) {
+                            for (auto sub_stmt : *stmts) {
                                 if (sub_stmt->VpiType() == vpiAssignment) {
                                     // Regular assignment like rA <= A
                                     const assignment* assign = any_cast<const assignment*>(sub_stmt);
@@ -3011,15 +2996,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
         case vpiBegin:
         case vpiNamedBegin: {
             // Handle begin blocks with variable substitution
-            const VectorOfany* stmts = nullptr;
-            if (stmt_type == vpiBegin) {
-                const begin* block = any_cast<const begin*>(uhdm_stmt);
-                stmts = block->Stmts();
-            } else {
-                const named_begin* block = any_cast<const named_begin*>(uhdm_stmt);
-                stmts = block->Stmts();
-            }
-            
+            const VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
             if (stmts) {
                 for (auto stmt : *stmts) {
                     import_statement_with_loop_vars(stmt, sync, is_reset, var_substitutions);
@@ -3249,11 +3226,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             std::map<std::string, uint64_t> initial_values;
             
             // Check if the for loop is inside a begin block
-            if (for_loop->VpiParent() && for_loop->VpiParent()->VpiType() == vpiBegin) {
-                const begin* parent_begin = any_cast<const begin*>(for_loop->VpiParent());
-                if (parent_begin->Stmts()) {
+            const UHDM::any* loop_parent = for_loop->VpiParent();
+            if (loop_parent && (loop_parent->VpiType() == vpiBegin || loop_parent->VpiType() == vpiNamedBegin)) {
+                VectorOfany* stmts = begin_block_stmts(loop_parent);
+                if (stmts) {
                     // Scan preceding statements for variable assignments
-                    for (auto stmt : *parent_begin->Stmts()) {
+                    for (auto stmt : *stmts) {
                         if (stmt == uhdm_stmt) break;  // Stop when we reach the for loop
                         
                         if (stmt->VpiType() == vpiAssignment) {
@@ -3486,14 +3464,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     }
                 } else if (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) {
                     // Handle both regular begin and named begin blocks
-                    const VectorOfany* stmts = nullptr;
-                    if (body->VpiType() == vpiBegin) {
-                        const begin* begin_block = any_cast<const begin*>(body);
-                        stmts = begin_block->Stmts();
-                    } else {
-                        const named_begin* named_block = any_cast<const named_begin*>(body);
-                        stmts = named_block->Stmts();
-                    }
+                    const VectorOfany* stmts = begin_block_stmts(body);
                     if (stmts && !stmts->empty()) {
                     // Check for specific patterns
                     auto first_stmt = stmts->at(0);
@@ -3557,10 +3528,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                         max_index = std::max(max_index, (size_t)end_value);
                                     }
                                 }
-                            } else if (stmt->VpiType() == vpiBegin) {
-                                const begin* blk = any_cast<const begin*>(stmt);
-                                if (blk->Stmts()) {
-                                    for (auto s : *blk->Stmts()) {
+                            } else if (stmt->VpiType() == vpiBegin || stmt->VpiType() == vpiNamedBegin) {
+                                VectorOfany* stmts = begin_block_stmts(stmt);
+                                if (stmts) {
+                                    for (auto s : *stmts) {
                                         scan_for_arrays(s);
                                     }
                                 }
@@ -3636,10 +3607,12 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 
                                 // Find initial values for variables used in the loop
                                 // Look for assignments before the for loop in the parent scope
-                                if (for_loop->VpiParent() && for_loop->VpiParent()->VpiType() == vpiBegin) {
-                                    const begin* parent_begin = any_cast<const begin*>(for_loop->VpiParent());
-                                    if (parent_begin->Stmts()) {
-                                        for (auto stmt : *parent_begin->Stmts()) {
+                                const UHDM::any* loop_parent = for_loop->VpiParent();
+                                if (loop_parent && (loop_parent->VpiType() == vpiBegin || loop_parent->VpiType() == vpiNamedBegin)) {
+                                    VectorOfany* stmts = begin_block_stmts(loop_parent);
+                                    if (stmts) {
+                                        // Scan preceding statements for variable assignments
+                                        for (auto stmt : *stmts) {
                                             if (stmt == for_loop) break; // Stop at the for loop
                                             
                                             if (stmt->VpiType() == vpiAssignment) {
@@ -3974,6 +3947,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         return;
     
     int stmt_type = uhdm_stmt->VpiType();
+    log("    import_statement_comb(Process*): type=%d\n", stmt_type);
     
     switch (stmt_type) {
         case vpiBegin:
@@ -4074,10 +4048,15 @@ void UhdmImporter::import_begin_block_sync(const begin* uhdm_begin, RTLIL::SyncR
 
 // Import begin block for comb context
 void UhdmImporter::import_begin_block_comb(const begin* uhdm_begin, RTLIL::Process* proc) {
+    log("    import_begin_block_comb (Process*): Begin block\n");
     if (uhdm_begin->Stmts()) {
+        log("    Begin block has %d statements\n", (int)uhdm_begin->Stmts()->size());
         for (auto stmt : *uhdm_begin->Stmts()) {
+            log("    Processing statement type %d in begin block\n", stmt->VpiType());
             import_statement_comb(stmt, proc);
         }
+    } else {
+        log("    Begin block has no statements\n");
     }
 }
 
@@ -4135,10 +4114,16 @@ void UhdmImporter::import_named_begin_block_sync(const named_begin* uhdm_named, 
 
 // Import named_begin block for comb context
 void UhdmImporter::import_named_begin_block_comb(const named_begin* uhdm_named, RTLIL::Process* proc) {
+    std::string block_name = !uhdm_named->VpiName().empty() ? std::string(uhdm_named->VpiName()) : "(unnamed)";
+    log("    import_named_begin_block_comb (Process*): Named block '%s'\n", block_name.c_str());
     if (uhdm_named->Stmts()) {
+        log("    Named begin has %d statements\n", (int)uhdm_named->Stmts()->size());
         for (auto stmt : *uhdm_named->Stmts()) {
+            log("    Processing statement type %d in named_begin\n", stmt->VpiType());
             import_statement_comb(stmt, proc);
         }
+    } else {
+        log("    Named begin has no statements\n");
     }
 }
 
@@ -4740,7 +4725,10 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             
             log("    Importing else statement, type: %s (vpiType=%d)\n",
                 UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
+            log("    Else case has %d actions before import\n", (int)else_case->actions.size());
             import_statement_comb(else_stmt, else_case);
+            log("    Else case has %d actions after import\n", (int)else_case->actions.size());
+            log("    Else case has %d switches after import\n", (int)else_case->switches.size());
             
             sw->cases.push_back(else_case);
         } else {
@@ -5241,22 +5229,76 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
             break;
         }
-        case vpiBegin: {
-            auto begin = any_cast<const UHDM::begin*>(uhdm_stmt);
-            if (auto stmts = begin->Stmts()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
+            log("        import_statement_comb(CaseRule*): Begin block\n");
+            if (stmts) {
+                log("        Begin has %d statements\n", (int)stmts->size());
                 for (auto stmt : *stmts) {
+                    log("        Processing statement type %d in begin\n", stmt->VpiType());
                     import_statement_comb(stmt, case_rule);
                 }
+            } else {
+                log("        Begin has no statements\n");
             }
             break;
         }
-        case vpiNamedBegin: {
-            auto named = any_cast<const UHDM::named_begin*>(uhdm_stmt);
-            if (auto stmts = named->Stmts()) {
-                for (auto stmt : *stmts) {
-                    import_statement_comb(stmt, case_rule);
+        case vpiCase: {
+            log("        import_statement_comb(CaseRule*): Case statement\n");
+            const case_stmt* uhdm_case = any_cast<const case_stmt*>(uhdm_stmt);
+            
+            // Get the case expression
+            RTLIL::SigSpec case_expr;
+            if (auto condition = uhdm_case->VpiCondition()) {
+                case_expr = import_expression(condition);
+                log("        Case expression: %s\n", log_signal(case_expr));
+            }
+            
+            // Create a switch rule for the case statement
+            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+            sw->signal = case_expr;
+            add_src_attribute(sw->attributes, uhdm_case);
+            
+            // Import each case item
+            if (uhdm_case->Case_items()) {
+                log("        Case has %d items\n", (int)uhdm_case->Case_items()->size());
+                
+                for (auto item : *uhdm_case->Case_items()) {
+                    const case_item* ci = any_cast<const case_item*>(item);
+                    if (!ci) continue;
+                    
+                    // Create a case rule for this item
+                    RTLIL::CaseRule* item_case = new RTLIL::CaseRule;
+                    add_src_attribute(item_case->attributes, ci);
+                    
+                    // Get the case item expressions (can be multiple for comma-separated values)
+                    if (ci->VpiExprs()) {
+                        for (auto expr : *ci->VpiExprs()) {
+                            if (expr) {
+                                RTLIL::SigSpec item_expr = import_expression(any_cast<const UHDM::expr*>(expr));
+                                item_case->compare.push_back(item_expr);
+                                log("        Case item expression: %s\n", log_signal(item_expr));
+                            }
+                        }
+                    } else {
+                        // Default case - empty compare list
+                        log("        Default case item\n");
+                    }
+                    
+                    // Import the statement(s) for this case item
+                    if (ci->Stmt()) {
+                        log("        Importing case item body (type=%d)\n", ci->Stmt()->VpiType());
+                        import_statement_comb(ci->Stmt(), item_case);
+                    }
+                    
+                    sw->cases.push_back(item_case);
                 }
             }
+            
+            // Add the switch to the current case rule
+            case_rule->switches.push_back(sw);
+            log("        Case statement imported with %d cases\n", (int)sw->cases.size());
             break;
         }
         case vpiIf: {
@@ -5512,11 +5554,12 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 break;
             }
             
-            case vpiBegin: {
-                auto begin = any_cast<const UHDM::begin*>(stmt);
-                if (begin && begin->Stmts()) {
-                    log("        Begin block has %d statements\n", (int)begin->Stmts()->size());
-                    for (auto sub_stmt : *begin->Stmts()) {
+            case vpiBegin:
+            case vpiNamedBegin: {
+                VectorOfany* stmts = begin_block_stmts(stmt);
+                if (stmts) {
+                    log("        Begin block has %d statements\n", (int)stmts->size());
+                    for (auto sub_stmt : *stmts) {
                         log("        Begin sub-statement type: %d\n", sub_stmt->VpiType());
                         if (!check_array_access(sub_stmt, cur_depth + 1)) return false;
                     }
@@ -5525,21 +5568,7 @@ bool UhdmImporter::has_only_constant_array_accesses(const std::string& array_nam
                 }
                 break;
             }
-            
-            case vpiNamedBegin: {
-                auto named_begin = any_cast<const UHDM::named_begin*>(stmt);
-                if (named_begin && named_begin->Stmts()) {
-                    log("        Named begin block has %d statements\n", (int)named_begin->Stmts()->size());
-                    for (auto sub_stmt : *named_begin->Stmts()) {
-                        log("        Named begin sub-statement type: %d\n", sub_stmt->VpiType());
-                        if (!check_array_access(sub_stmt, cur_depth + 1)) return false;
-                    }
-                } else {
-                    log("        Named begin block has no statements\n");
-                }
-                break;
-            }
-            
+
             case vpiIfElse: {
                 auto if_stmt = any_cast<const UHDM::if_else*>(stmt);
                 if (if_stmt) {
@@ -5782,9 +5811,9 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
     log("    Analyzing reset block for memory for-loops (module: %s)\n", module->name.c_str());
     
     // Check if the reset statement is a begin block
-    if (reset_stmt->VpiType() == vpiBegin) {
-        const UHDM::begin* begin_block = any_cast<const UHDM::begin*>(reset_stmt);
-        if (auto stmts = begin_block->Stmts()) {
+    if (reset_stmt->VpiType() == vpiBegin || reset_stmt->VpiType() == vpiNamedBegin) {
+        UHDM::VectorOfany* stmts = begin_block_stmts(reset_stmt);
+        if (stmts) {
             log("    Reset begin block has %zu statements\n", stmts->size()); 
             
             for (auto stmt : *stmts) {

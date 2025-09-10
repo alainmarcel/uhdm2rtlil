@@ -14,18 +14,18 @@ attribute \cells_not_processed 1
 module \unbased_unsized
   wire width 64 $auto$module.cpp:650:import_continuous_assign$49
   wire width 64 $auto$module.cpp:650:import_continuous_assign$51
-  wire $auto$process.cpp:111:import_immediate_assert$11
-  wire $auto$process.cpp:111:import_immediate_assert$15
-  wire $auto$process.cpp:111:import_immediate_assert$19
-  wire $auto$process.cpp:111:import_immediate_assert$23
-  wire $auto$process.cpp:111:import_immediate_assert$27
-  wire $auto$process.cpp:111:import_immediate_assert$3
-  wire $auto$process.cpp:111:import_immediate_assert$31
-  wire $auto$process.cpp:111:import_immediate_assert$35
-  wire $auto$process.cpp:111:import_immediate_assert$39
-  wire $auto$process.cpp:111:import_immediate_assert$43
-  wire $auto$process.cpp:111:import_immediate_assert$47
-  wire $auto$process.cpp:111:import_immediate_assert$7
+  wire $auto$process.cpp:128:import_immediate_assert$11
+  wire $auto$process.cpp:128:import_immediate_assert$15
+  wire $auto$process.cpp:128:import_immediate_assert$19
+  wire $auto$process.cpp:128:import_immediate_assert$23
+  wire $auto$process.cpp:128:import_immediate_assert$27
+  wire $auto$process.cpp:128:import_immediate_assert$3
+  wire $auto$process.cpp:128:import_immediate_assert$31
+  wire $auto$process.cpp:128:import_immediate_assert$35
+  wire $auto$process.cpp:128:import_immediate_assert$39
+  wire $auto$process.cpp:128:import_immediate_assert$43
+  wire $auto$process.cpp:128:import_immediate_assert$47
+  wire $auto$process.cpp:128:import_immediate_assert$7
   wire $auto$rtlil.cc:3015:Eqx$10
   wire $auto$rtlil.cc:3015:Eqx$14
   wire $auto$rtlil.cc:3015:Eqx$18
@@ -85,7 +85,7 @@ module \unbased_unsized
     connect \Y $auto$module.cpp:650:import_continuous_assign$51
   end
   attribute \src "dut.sv:29.9-29.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$12
+  cell $check $auto$process.cpp:135:import_immediate_assert$12
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -95,11 +95,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$10
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$11
+    connect \EN $auto$process.cpp:128:import_immediate_assert$11
     connect \TRG { }
   end
   attribute \src "dut.sv:30.9-30.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$16
+  cell $check $auto$process.cpp:135:import_immediate_assert$16
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -109,11 +109,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$14
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$15
+    connect \EN $auto$process.cpp:128:import_immediate_assert$15
     connect \TRG { }
   end
   attribute \src "dut.sv:31.9-31.42"
-  cell $check $auto$process.cpp:118:import_immediate_assert$20
+  cell $check $auto$process.cpp:135:import_immediate_assert$20
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -123,11 +123,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$18
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$19
+    connect \EN $auto$process.cpp:128:import_immediate_assert$19
     connect \TRG { }
   end
   attribute \src "dut.sv:32.9-32.42"
-  cell $check $auto$process.cpp:118:import_immediate_assert$24
+  cell $check $auto$process.cpp:135:import_immediate_assert$24
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -137,11 +137,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$22
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$23
+    connect \EN $auto$process.cpp:128:import_immediate_assert$23
     connect \TRG { }
   end
   attribute \src "dut.sv:33.9-33.42"
-  cell $check $auto$process.cpp:118:import_immediate_assert$28
+  cell $check $auto$process.cpp:135:import_immediate_assert$28
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -151,11 +151,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$26
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$27
+    connect \EN $auto$process.cpp:128:import_immediate_assert$27
     connect \TRG { }
   end
   attribute \src "dut.sv:34.9-34.42"
-  cell $check $auto$process.cpp:118:import_immediate_assert$32
+  cell $check $auto$process.cpp:135:import_immediate_assert$32
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -165,11 +165,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$30
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$31
+    connect \EN $auto$process.cpp:128:import_immediate_assert$31
     connect \TRG { }
   end
   attribute \src "dut.sv:35.9-35.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$36
+  cell $check $auto$process.cpp:135:import_immediate_assert$36
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -179,11 +179,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$34
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$35
+    connect \EN $auto$process.cpp:128:import_immediate_assert$35
     connect \TRG { }
   end
   attribute \src "dut.sv:27.9-27.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$4
+  cell $check $auto$process.cpp:135:import_immediate_assert$4
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -193,11 +193,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$2
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$3
+    connect \EN $auto$process.cpp:128:import_immediate_assert$3
     connect \TRG { }
   end
   attribute \src "dut.sv:36.9-36.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$40
+  cell $check $auto$process.cpp:135:import_immediate_assert$40
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -207,11 +207,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$38
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$39
+    connect \EN $auto$process.cpp:128:import_immediate_assert$39
     connect \TRG { }
   end
   attribute \src "dut.sv:37.9-37.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$44
+  cell $check $auto$process.cpp:135:import_immediate_assert$44
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -221,11 +221,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$42
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$43
+    connect \EN $auto$process.cpp:128:import_immediate_assert$43
     connect \TRG { }
   end
   attribute \src "dut.sv:38.9-38.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$48
+  cell $check $auto$process.cpp:135:import_immediate_assert$48
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -235,11 +235,11 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$46
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$47
+    connect \EN $auto$process.cpp:128:import_immediate_assert$47
     connect \TRG { }
   end
   attribute \src "dut.sv:28.9-28.38"
-  cell $check $auto$process.cpp:118:import_immediate_assert$8
+  cell $check $auto$process.cpp:135:import_immediate_assert$8
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -249,7 +249,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3015:Eqx$6
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:import_immediate_assert$7
+    connect \EN $auto$process.cpp:128:import_immediate_assert$7
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:27$1
@@ -390,30 +390,30 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:26.5-39.8"
   process $proc$dut.sv:26$1
-    assign $auto$process.cpp:111:import_immediate_assert$3 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$7 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$11 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$15 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$19 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$23 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$27 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$31 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$35 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$39 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$43 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$47 1'0
-    assign $auto$process.cpp:111:import_immediate_assert$3 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$7 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$11 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$15 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$19 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$23 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$27 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$31 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$35 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$39 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$43 1'1
-    assign $auto$process.cpp:111:import_immediate_assert$47 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$3 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$7 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$11 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$15 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$19 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$23 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$27 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$31 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$35 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$39 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$43 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$47 1'0
+    assign $auto$process.cpp:128:import_immediate_assert$3 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$7 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$11 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$15 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$19 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$23 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$27 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$31 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$35 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$39 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$43 1'1
+    assign $auto$process.cpp:128:import_immediate_assert$47 1'1
     sync always
   end
   connect \o01 64'0000000000000000000000000000000000000000000000000000000000000000
