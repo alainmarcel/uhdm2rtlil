@@ -55,7 +55,7 @@ static std::string generate_cell_name(const UHDM::any* uhdm_obj, const std::stri
 // Helper function to process a statement into a case rule for function process generation
 void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_rule,
                                         RTLIL::Wire* result_wire,
-                                        const std::map<std::string, RTLIL::SigSpec>& input_mapping,
+                                        std::map<std::string, RTLIL::SigSpec>& input_mapping,
                                         const std::string& func_name,
                                         int& temp_counter,
                                         const std::string& func_call_context,
@@ -329,6 +329,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 temp_wire = module->addWire(RTLIL::escape_id(local_var_name), wire_width);
                             }
                             lhs_sig = temp_wire;
+                            
+                            // Add the local variable to input_mapping so it can be referenced later
+                            input_mapping[lhs_name] = lhs_sig;
                         }
                     }
                 }
@@ -620,8 +623,10 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                             const logic_typespec* lts = any_cast<const logic_typespec*>(actual_ts);
                             if (lts && lts->Ranges()) {
                                 for (auto range : *lts->Ranges()) {
-                                    RTLIL::SigSpec left_sig = import_expression(any_cast<const expr*>(range->Left_expr()));
-                                    RTLIL::SigSpec right_sig = import_expression(any_cast<const expr*>(range->Right_expr()));
+                                    // Need to evaluate range expressions with parameters available
+                                    // Pass nullptr for input_mapping to use module parameters
+                                    RTLIL::SigSpec left_sig = import_expression(any_cast<const expr*>(range->Left_expr()), nullptr);
+                                    RTLIL::SigSpec right_sig = import_expression(any_cast<const expr*>(range->Right_expr()), nullptr);
                                     if (left_sig.is_fully_const() && right_sig.is_fully_const()) {
                                         int left_val = left_sig.as_int();
                                         int right_val = right_sig.as_int();
@@ -759,6 +764,23 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         }
     }
     
+    // Create nosync wires for local variables
+    std::vector<RTLIL::Wire*> nosync_local_wires;
+    for (const auto& [var_name, var_width] : local_var_widths) {
+        std::string nosync_name = stringf("\\%s.%s", func_call_id.c_str(), var_name.c_str());
+        
+        RTLIL::Wire* nosync_wire = module->wire(RTLIL::escape_id(nosync_name));
+        if (!nosync_wire) {
+            nosync_wire = module->addWire(RTLIL::escape_id(nosync_name), var_width);
+            nosync_wire->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+            // Add source attribute
+            if (fc) {
+                add_src_attribute(nosync_wire->attributes, fc);
+            }
+        }
+        nosync_local_wires.push_back(nosync_wire);
+    }
+    
     // Add sync rule to update outputs (matching Verilog frontend exactly)
     RTLIL::SyncRule* sync = new RTLIL::SyncRule;
     sync->type = RTLIL::STa;  // Always
@@ -770,6 +792,10 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     sync->actions.push_back(RTLIL::SigSig(nosync_result, RTLIL::SigSpec(RTLIL::State::Sx, nosync_result->width)));
     // All argument nosync wires (including state)
     for (auto nosync_wire : nosync_arg_wires) {
+        sync->actions.push_back(RTLIL::SigSig(nosync_wire, RTLIL::SigSpec(RTLIL::State::Sx, nosync_wire->width)));
+    }
+    // All local variable nosync wires
+    for (auto nosync_wire : nosync_local_wires) {
         sync->actions.push_back(RTLIL::SigSig(nosync_wire, RTLIL::SigSpec(RTLIL::State::Sx, nosync_wire->width)));
     }
     

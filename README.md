@@ -104,7 +104,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - **Expressions**: 
   - Arithmetic, logical, bitwise, comparison, ternary operators
   - System function calls ($signed, $unsigned)
-  - User-defined function calls with partial support (inlining works, full function definitions in progress)
+  - User-defined function calls with good support (simple functions, arithmetic, boolean logic, case statements, nested if-else)
   - Struct member access (e.g., `bus.field`)
   - Hierarchical signal references
   - Parameter references with HEX/BIN/DEC formats
