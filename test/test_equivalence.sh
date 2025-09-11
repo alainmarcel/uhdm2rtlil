@@ -141,6 +141,7 @@ read_verilog -sv VERILOG_SYNTH_FILE
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gold
 
 # Read and process UHDM version (gate)
@@ -150,6 +151,7 @@ read_verilog -sv UHDM_SYNTH_FILE
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gate
 
 # Print statistics for both designs to detect sequential vs combinational
