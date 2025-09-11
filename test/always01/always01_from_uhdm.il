@@ -4,7 +4,7 @@ attribute \src "dut.sv:1.1-10.10"
 attribute \top 1
 module \always01
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1478:import_operation$1
+  wire width 64 $auto$expression.cpp:1504:import_operation$1
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
   attribute \src "dut.sv:1.31-1.36"
@@ -19,7 +19,7 @@ module \always01
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1478:import_operation$1
+    connect \Y $auto$expression.cpp:1504:import_operation$1
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.1-8.34"
@@ -29,7 +29,7 @@ module \always01
     parameter \SRST_VALUE 4'0000
     parameter \WIDTH 4
     connect \CLK \clock
-    connect \D $auto$expression.cpp:1478:import_operation$1 [3:0]
+    connect \D $auto$expression.cpp:1504:import_operation$1 [3:0]
     connect \Q \count
     connect \SRST \reset
   end

@@ -11,7 +11,7 @@ module \counter
   wire width 8 $0\count_next
   attribute \src "dut.sv:22.5-25.8"
   wire $0\overflow
-  wire width 8 $auto$expression.cpp:1478:import_operation$1
+  wire width 8 $auto$expression.cpp:1504:import_operation$1
   wire $auto$rtlil.cc:3026:LogicAnd$6
   attribute \src "dut.sv:24.21-24.43"
   wire $eq$dut.sv:24$3_Y
@@ -37,7 +37,7 @@ module \counter
     parameter \Y_WIDTH 8
     connect \A \count
     connect \B 1'1
-    connect \Y $auto$expression.cpp:1478:import_operation$1
+    connect \Y $auto$expression.cpp:1504:import_operation$1
   end
   attribute \src "dut.sv:24.21-24.43"
   cell $eq $eq$dut.sv:24$4
@@ -98,7 +98,7 @@ module \counter
   process $proc$dut.sv:22$1
     assign $0\count_next \count_next
     assign $0\overflow \overflow
-    assign $0\count_next $auto$expression.cpp:1478:import_operation$1
+    assign $0\count_next $auto$expression.cpp:1504:import_operation$1
     assign $0\overflow $auto$rtlil.cc:3026:LogicAnd$6
     sync always
       update \count_next $0\count_next

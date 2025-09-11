@@ -330,7 +330,7 @@ struct UhdmImporter {
     // Process function body and generate process blocks
     void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
                               RTLIL::Wire* result_wire,
-                              const std::map<std::string, RTLIL::SigSpec>& input_mapping,
+                              std::map<std::string, RTLIL::SigSpec>& input_mapping,
                               const std::string& func_name,
                               int& temp_counter,
                               const std::string& func_call_context,

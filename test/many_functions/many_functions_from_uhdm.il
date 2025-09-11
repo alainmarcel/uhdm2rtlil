@@ -18,8 +18,10 @@ module \many_functions
   wire width 8 $9\func_bool$func$dut.sv:139$2.$result$18
   attribute \src "dut.sv:40.18-43.38"
   wire width 8 $9\func_bool$func$dut.sv:139$2.$result$19
+  wire width 8 $auto$expression.cpp:1599:import_operation$5
   wire width 8 $auto$rtlil.cc:2959:Not$28
   wire width 8 $auto$rtlil.cc:3006:And$16
+  wire width 8 $auto$rtlil.cc:3007:Or$10
   wire width 8 $auto$rtlil.cc:3007:Or$20
   wire width 8 $auto$rtlil.cc:3008:Xor$24
   wire $auto$rtlil.cc:3018:Gt$36
@@ -40,6 +42,9 @@ module \many_functions
   wire width 8 input 2 \b
   attribute \src "dut.sv:8.30-8.31"
   wire width 8 input 3 \c
+  attribute \nosync 1
+  attribute \src "dut.sv:138.24-138.43"
+  wire width 8 \func_arith$func$dut.sv:138$2.temp
   attribute \nosync 1
   attribute \src "dut.sv:138.24-138.43"
   wire width 8 \func_arith$func$dut.sv:138$2.x
@@ -66,10 +71,19 @@ module \many_functions
   wire width 8 \func_case$func$dut.sv:140$2.x
   attribute \nosync 1
   attribute \src "dut.sv:142.23-142.35"
+  wire \func_loop$func$dut.sv:142$2.i
+  attribute \nosync 1
+  attribute \src "dut.sv:142.23-142.35"
   wire width 8 \func_loop$func$dut.sv:142$2.x
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
+  wire \func_mixed$func$dut.sv:143$2.i
+  attribute \nosync 1
+  attribute \src "dut.sv:143.24-143.45"
   wire width 2 \func_mixed$func$dut.sv:143$2.mode
+  attribute \nosync 1
+  attribute \src "dut.sv:143.24-143.45"
+  wire width 8 \func_mixed$func$dut.sv:143$2.result
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
   wire width 8 \func_mixed$func$dut.sv:143$2.x
@@ -99,7 +113,6 @@ module \many_functions
   wire width 8 output 8 \out_nested
   attribute \src "dut.sv:9.24-9.27"
   wire width 2 input 4 \sel
-  wire \temp
   cell $and $and$dut.sv:26$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
@@ -146,6 +159,16 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3006:And$16
     connect \Y $auto$rtlil.cc:2959:Not$28
+  end
+  cell $or $or$dut.sv:26$9
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 8
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A { $auto$rtlil.cc:3007:Or$10 [7] $auto$expression.cpp:1599:import_operation$5 [7:1] }
+    connect \B $auto$rtlil.cc:3006:And$16
+    connect \Y { $auto$rtlil.cc:3007:Or$10 [7] $auto$expression.cpp:1599:import_operation$5 [7:1] }
   end
   cell $or $or$dut.sv:39$19
     parameter \A_SIGNED 0
@@ -278,11 +301,11 @@ module \many_functions
   end
   cell $xor $xor$dut.sv:27$11
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \temp
+    connect \A { $auto$rtlil.cc:3007:Or$10 [7] $auto$expression.cpp:1599:import_operation$5 [7:1] }
     connect \B \c
     connect \Y \out_arith
   end
@@ -296,6 +319,9 @@ module \many_functions
     connect \B \b
     connect \Y $auto$rtlil.cc:3008:Xor$24
   end
+  connect $auto$expression.cpp:1599:import_operation$5 [0] 1'0
+  connect $auto$rtlil.cc:3007:Or$10 [6:0] $auto$expression.cpp:1599:import_operation$5 [7:1]
+  connect \func_arith$func$dut.sv:138$2.temp 8'x
   connect \func_arith$func$dut.sv:138$2.x 8'x
   connect \func_arith$func$dut.sv:138$2.y 8'x
   connect \func_arith$func$dut.sv:138$2.z 8'x
@@ -304,8 +330,11 @@ module \many_functions
   connect \func_bool$func$dut.sv:139$2.y 8'x
   connect \func_case$func$dut.sv:140$2.sel 2'x
   connect \func_case$func$dut.sv:140$2.x 8'x
+  connect \func_loop$func$dut.sv:142$2.i 1'x
   connect \func_loop$func$dut.sv:142$2.x 8'x
+  connect \func_mixed$func$dut.sv:143$2.i 1'x
   connect \func_mixed$func$dut.sv:143$2.mode 2'x
+  connect \func_mixed$func$dut.sv:143$2.result 8'x
   connect \func_mixed$func$dut.sv:143$2.x 8'x
   connect \func_mixed$func$dut.sv:143$2.y 8'x
   connect \func_nested$func$dut.sv:141$2.x 8'x

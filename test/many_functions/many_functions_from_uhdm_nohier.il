@@ -84,15 +84,15 @@ module \many_functions
   wire width 8 $9\func_bool$func$dut.sv:139$2.$result$18
   attribute \src "dut.sv:40.18-43.38"
   wire width 8 $9\func_bool$func$dut.sv:139$2.$result$19
-  wire width 8 $auto$expression.cpp:1478:import_operation$1
-  wire width 8 $auto$expression.cpp:1478:import_operation$41
-  wire width 8 $auto$expression.cpp:1501:import_operation$3
-  wire width 8 $auto$expression.cpp:1573:import_operation$29
-  wire width 8 $auto$expression.cpp:1573:import_operation$31
-  wire width 8 $auto$expression.cpp:1573:import_operation$33
-  wire width 8 $auto$expression.cpp:1573:import_operation$45
-  wire $auto$expression.cpp:1573:import_operation$5
-  wire width 8 $auto$expression.cpp:1595:import_operation$43
+  wire width 8 $auto$expression.cpp:1504:import_operation$1
+  wire width 8 $auto$expression.cpp:1504:import_operation$41
+  wire width 8 $auto$expression.cpp:1527:import_operation$3
+  wire width 8 $auto$expression.cpp:1599:import_operation$29
+  wire width 8 $auto$expression.cpp:1599:import_operation$31
+  wire width 8 $auto$expression.cpp:1599:import_operation$33
+  wire width 8 $auto$expression.cpp:1599:import_operation$45
+  wire width 8 $auto$expression.cpp:1599:import_operation$5
+  wire width 8 $auto$expression.cpp:1621:import_operation$43
   wire width 8 $auto$rtlil.cc:2959:Not$28
   wire width 8 $auto$rtlil.cc:3006:And$16
   wire width 8 $auto$rtlil.cc:3006:And$26
@@ -132,6 +132,9 @@ module \many_functions
   wire width 8 \func_arith$func$dut.sv:138$2.$result
   attribute \nosync 1
   attribute \src "dut.sv:138.24-138.43"
+  wire width 8 \func_arith$func$dut.sv:138$2.temp
+  attribute \nosync 1
+  attribute \src "dut.sv:138.24-138.43"
   wire width 8 \func_arith$func$dut.sv:138$2.x
   attribute \nosync 1
   attribute \src "dut.sv:138.24-138.43"
@@ -168,6 +171,9 @@ module \many_functions
   wire width 8 \func_loop$func$dut.sv:142$2.$result
   attribute \nosync 1
   attribute \src "dut.sv:142.23-142.35"
+  wire \func_loop$func$dut.sv:142$2.i
+  attribute \nosync 1
+  attribute \src "dut.sv:142.23-142.35"
   wire width 8 \func_loop$func$dut.sv:142$2.x
   wire width 8 \func_mixed$func$dut.sv:143$1.$result
   attribute \nosync 1
@@ -175,7 +181,13 @@ module \many_functions
   wire width 8 \func_mixed$func$dut.sv:143$2.$result
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
+  wire \func_mixed$func$dut.sv:143$2.i
+  attribute \nosync 1
+  attribute \src "dut.sv:143.24-143.45"
   wire width 2 \func_mixed$func$dut.sv:143$2.mode
+  attribute \nosync 1
+  attribute \src "dut.sv:143.24-143.45"
+  wire width 8 \func_mixed$func$dut.sv:143$2.result
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
   wire width 8 \func_mixed$func$dut.sv:143$2.x
@@ -207,10 +219,8 @@ module \many_functions
   wire width 8 output 10 \out_mixed
   attribute \src "dut.sv:13.30-13.40"
   wire width 8 output 8 \out_nested
-  wire \result
   attribute \src "dut.sv:9.24-9.27"
   wire width 2 input 4 \sel
-  wire \temp
   cell $add $add$dut.sv:104$42
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
@@ -219,7 +229,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1478:import_operation$41
+    connect \Y $auto$expression.cpp:1504:import_operation$41
   end
   cell $add $add$dut.sv:23$2
     parameter \A_SIGNED 0
@@ -229,7 +239,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1478:import_operation$1
+    connect \Y $auto$expression.cpp:1504:import_operation$1
   end
   cell $and $and$dut.sv:128$49
     parameter \A_SIGNED 0
@@ -353,11 +363,11 @@ module \many_functions
   end
   cell $or $or$dut.sv:26$9
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \temp
+    connect \A $func_arith$func_arith$func$dut.sv:138$2$local_temp
     connect \B $auto$rtlil.cc:3006:And$8
     connect \Y $auto$rtlil.cc:3007:Or$10
   end
@@ -379,17 +389,17 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1573:import_operation$45
+    connect \Y $auto$expression.cpp:1599:import_operation$45
   end
   cell $shl $shl$dut.sv:25$6
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \temp
+    parameter \Y_WIDTH 8
+    connect \A $func_arith$func_arith$func$dut.sv:138$2$local_temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1573:import_operation$5
+    connect \Y $auto$expression.cpp:1599:import_operation$5
   end
   cell $shl $shl$dut.sv:54$30
     parameter \A_SIGNED 0
@@ -399,7 +409,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1573:import_operation$29
+    connect \Y $auto$expression.cpp:1599:import_operation$29
   end
   cell $shl $shl$dut.sv:55$32
     parameter \A_SIGNED 0
@@ -409,7 +419,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:1573:import_operation$31
+    connect \Y $auto$expression.cpp:1599:import_operation$31
   end
   cell $shl $shl$dut.sv:56$34
     parameter \A_SIGNED 0
@@ -419,7 +429,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:1573:import_operation$33
+    connect \Y $auto$expression.cpp:1599:import_operation$33
   end
   cell $shr $shr$dut.sv:116$44
     parameter \A_SIGNED 0
@@ -429,25 +439,25 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \b
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1595:import_operation$43
+    connect \Y $auto$expression.cpp:1621:import_operation$43
   end
   cell $sub $sub$dut.sv:24$4
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \temp
+    connect \A $func_arith$func_arith$func$dut.sv:138$2$local_temp
     connect \B \c
-    connect \Y $auto$expression.cpp:1501:import_operation$3
+    connect \Y $auto$expression.cpp:1527:import_operation$3
   end
   cell $xor $xor$dut.sv:27$11
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 8
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \temp
+    connect \A $func_arith$func_arith$func$dut.sv:138$2$local_temp
     connect \B \c
     connect \Y $auto$rtlil.cc:3008:Xor$12
   end
@@ -473,9 +483,9 @@ module \many_functions
     assign $0\func_arith$func$dut.sv:138$2.z$10 \c
     assign $0\func_arith$func$dut.sv:138$2.$result$11 $1\func_arith$func$dut.sv:138$2.$result$12
     assign $0\func_arith$func$dut.sv:138$1.$result$8 $1\func_arith$func$dut.sv:138$2.$result$12
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1478:import_operation$1
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1501:import_operation$3
-    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp { 7'0000000 $auto$expression.cpp:1573:import_operation$5 }
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1504:import_operation$1
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1527:import_operation$3
+    assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$expression.cpp:1599:import_operation$5
     assign $func_arith$func_arith$func$dut.sv:138$2$local_temp $auto$rtlil.cc:3007:Or$10
     assign $1\func_arith$func$dut.sv:138$2.$result$12 $auto$rtlil.cc:3008:Xor$12
     sync always
@@ -484,6 +494,7 @@ module \many_functions
       update \func_arith$func$dut.sv:138$2.x 8'x
       update \func_arith$func$dut.sv:138$2.y 8'x
       update \func_arith$func$dut.sv:138$2.z 8'x
+      update \func_arith$func$dut.sv:138$2.temp 8'x
   end
   attribute \src "dut.sv:139.23-139.43"
   process $proc$dut.sv:139$12
@@ -557,15 +568,15 @@ module \many_functions
       attribute \src "dut.sv:54.17-54.43"
       case 2'01
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1573:import_operation$29
+        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1599:import_operation$29
       attribute \src "dut.sv:55.17-55.43"
       case 2'10
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1573:import_operation$31
+        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1599:import_operation$31
       attribute \src "dut.sv:56.17-56.43"
       case 2'11
         assign { } { }
-        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1573:import_operation$33
+        assign $1\func_case$func$dut.sv:140$2.$result$21 $auto$expression.cpp:1599:import_operation$33
       attribute \src "dut.sv:57.17-57.40"
       case 
         assign { } { }
@@ -642,6 +653,7 @@ module \many_functions
       update \func_loop$func$dut.sv:142$1.$result $0\func_loop$func$dut.sv:142$1.$result$25
       update \func_loop$func$dut.sv:142$2.$result 8'x
       update \func_loop$func$dut.sv:142$2.x 8'x
+      update \func_loop$func$dut.sv:142$2.i 1'x
   end
   attribute \src "dut.sv:143.24-143.45"
   process $proc$dut.sv:143$29
@@ -656,14 +668,14 @@ module \many_functions
     assign $0\func_mixed$func$dut.sv:143$2.$result$33 $1\func_mixed$func$dut.sv:143$2.$result$34
     assign $0\func_mixed$func$dut.sv:143$1.$result$30 $1\func_mixed$func$dut.sv:143$2.$result$34
     assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result 8'00000000
-    assign $1\func_mixed$func$dut.sv:143$2.$result$34 { 7'0000000 \result }
+    assign $1\func_mixed$func$dut.sv:143$2.$result$34 $func_mixed$func_mixed$func$dut.sv:143$2$local_result
     attribute \src "dut.sv:101.13-131.20"
     switch \sel
       attribute \src "dut.sv:102.17-105.20"
       case 2'00
         assign { } { }
         assign $1\func_mixed$func$dut.sv:143$2.$result$34 $17\func_mixed$func$dut.sv:143$2.$result$35
-        assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1478:import_operation$41
+        assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1504:import_operation$41
       attribute \src "dut.sv:106.17-112.20"
       case 2'01
         assign { } { }
@@ -677,11 +689,11 @@ module \many_functions
           attribute \src "dut.sv:115.37-117.24"
           case 1'1
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1595:import_operation$43
+            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1621:import_operation$43
           attribute \src "dut.sv:117.30-119.24"
           case 
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1573:import_operation$45
+            assign $func_mixed$func_mixed$func$dut.sv:143$2$local_result $auto$expression.cpp:1599:import_operation$45
         end
       attribute \src "dut.sv:121.17-130.20"
       case 2'11
@@ -704,6 +716,8 @@ module \many_functions
       update \func_mixed$func$dut.sv:143$2.x 8'x
       update \func_mixed$func$dut.sv:143$2.y 8'x
       update \func_mixed$func$dut.sv:143$2.mode 2'x
+      update \func_mixed$func$dut.sv:143$2.i 1'x
+      update \func_mixed$func$dut.sv:143$2.result 8'x
   end
   connect $func_func_arith_result_0 \func_arith$func$dut.sv:138$1.$result
   connect \out_arith $func_func_arith_result_0
