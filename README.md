@@ -27,8 +27,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
-  - `code_tidbits_fsm_using_function` - Partial function support (function calls work, full definitions not yet supported)
-  - `many_functions` - Partial function support (function calls work, full definitions not yet supported)
+  - `many_functions` - Has remaining issues with some function output assignments
 - **Recent Fixes**:
   - `genblk_order` - Fixed nested generate blocks with same name ✅
     - Reordered generate scope import to process nested scopes before continuous assignments
@@ -46,11 +45,13 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - Improved shift register detection to run before array_net processing ✅
   - Fixed traversal depth in `has_only_constant_array_accesses` for proper dynamic access detection ✅
   - Added support for vpiIf statement type in array access checking ✅
-  - `code_tidbits_fsm_using_function` - Added partial function support ⚠️
-    - Implemented func_call expression handling with inlining
-    - Functions are inlined as combinational logic (mux trees for case statements)
-    - Maps function arguments to temporary wires and extracts return value
-    - Function calls work but full function definitions not yet complete
+  - **Function Support** - Significantly improved ✅
+    - Function calls in continuous assignments now fully working
+    - Proper parameter mapping from function arguments to actual signals
+    - Function bodies converted to RTLIL processes with correct wire naming
+    - Support for functions with if/else, case statements, and expressions
+    - `code_tidbits_fsm_using_function` now passes equivalence check
+    - `simple_function` test added and passing
   - Added consistent cell naming with source location tracking for all cell types ✅
     - Created `generate_cell_name()` helper function for standardized naming
     - Applied to all arithmetic, logical, comparison, and reduction operations

@@ -41,7 +41,7 @@
  (* unused_bits = "2" *)
  wire [2:0] _24_;
 -(* src = "dut.sv:31.33-31.33" *)
--wire [2:0] \fsm_function$func$dut.sv:29$1.$result ;
+ wire [2:0] \fsm_function$func$dut.sv:29$1.$result ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:33.12-33.17" *)
 +(* src = "dut.sv:29.21-29.54" *)
@@ -54,37 +54,15 @@
 -(* src = "dut.sv:32.22-32.27" *)
 +(* src = "dut.sv:29.21-29.54" *)
  wire [2:0] \fsm_function$func$dut.sv:29$2.state ;
-+wire [2:0] \fsm_function$func$fsm_function.$result ;
  (* src = "dut.sv:27.27-27.37" *)
  wire [2:0] next_state;
 +(* \reg  = 32'd1 *)
  (* src = "dut.sv:26.27-26.32" *)
  wire [2:0] state;
  \$_NOT_  _25_ (
-@@ -158,7 +158,7 @@
- \$_ORNOT_  _44_ (
- .A(_16_),
- .B(_08_),
--.Y(\fsm_function$func$dut.sv:29$1.$result [0])
-+.Y(\fsm_function$func$fsm_function.$result [0])
- );
- \$_OR_  _45_ (
- .A(_04_),
-@@ -178,7 +178,7 @@
- \$_ANDNOT_  _48_ (
- .A(_08_),
- .B(_19_),
--.Y(\fsm_function$func$dut.sv:29$1.$result [1])
-+.Y(\fsm_function$func$fsm_function.$result [1])
- );
- \$_OR_  _49_ (
- .A(_02_),
-@@ -203,8 +203,9 @@
- \$_ANDNOT_  _53_ (
- .A(_08_),
+@@ -205,6 +205,7 @@
  .B(_23_),
--.Y(\fsm_function$func$dut.sv:29$1.$result [2])
-+.Y(\fsm_function$func$fsm_function.$result [2])
+ .Y(\fsm_function$func$dut.sv:29$1.$result [2])
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:66.1-92.4" *)
@@ -98,7 +76,7 @@
  (* src = "dut.sv:66.1-92.4" *)
  \$_SDFF_PP0_  gnt_1_reg /* _55_ */ (
  .C(clock),
-@@ -219,29 +221,32 @@
+@@ -219,6 +221,7 @@
  .Q(gnt_1),
  .R(reset)
  );
@@ -106,8 +84,7 @@
  (* src = "dut.sv:57.1-64.4" *)
  \$_SDFF_PP1_  \state_reg[0]  /* _56_ */ (
  .C(clock),
--.D(\fsm_function$func$dut.sv:29$1.$result [0]),
-+.D(\fsm_function$func$fsm_function.$result [0]),
+@@ -226,6 +229,7 @@
  .Q(state[0]),
  .R(reset)
  );
@@ -115,8 +92,7 @@
  (* src = "dut.sv:57.1-64.4" *)
  \$_SDFF_PP0_  \state_reg[1]  /* _57_ */ (
  .C(clock),
--.D(\fsm_function$func$dut.sv:29$1.$result [1]),
-+.D(\fsm_function$func$fsm_function.$result [1]),
+@@ -233,6 +237,7 @@
  .Q(state[1]),
  .R(reset)
  );
@@ -124,14 +100,3 @@
  (* src = "dut.sv:57.1-64.4" *)
  \$_SDFF_PP0_  \state_reg[2]  /* _58_ */ (
  .C(clock),
--.D(\fsm_function$func$dut.sv:29$1.$result [2]),
-+.D(\fsm_function$func$fsm_function.$result [2]),
- .Q(state[2]),
- .R(reset)
- );
- assign \fsm_function$func$dut.sv:29$2.req_0  = 1'hx;
- assign \fsm_function$func$dut.sv:29$2.req_1  = 1'hx;
- assign \fsm_function$func$dut.sv:29$2.state  = 3'hx;
--assign next_state = \fsm_function$func$dut.sv:29$1.$result ;
-+assign next_state = \fsm_function$func$fsm_function.$result ;
- endmodule

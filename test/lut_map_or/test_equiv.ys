@@ -9,6 +9,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/lut_map_or/lut_map_or_from_verilog_
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gold
 
 # Read and process UHDM version (gate)
@@ -18,6 +19,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/lut_map_or/lut_map_or_from_uhdm_syn
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gate
 
 # Print statistics for both designs to detect sequential vs combinational

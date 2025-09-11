@@ -87,7 +87,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         // Get the case expression
         RTLIL::SigSpec case_expr;
         if (cs->VpiCondition()) {
-            case_expr = import_expression(any_cast<const expr*>(cs->VpiCondition()));
+            case_expr = import_expression(any_cast<const expr*>(cs->VpiCondition()), &input_mapping);
         }
         
         // Create a switch rule with source location
@@ -112,7 +112,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Get the case value
                 if (ci->VpiExprs() && !ci->VpiExprs()->empty()) {
                     // Regular case item
-                    RTLIL::SigSpec case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)));
+                    RTLIL::SigSpec case_value = import_expression(any_cast<const expr*>(ci->VpiExprs()->at(0)), &input_mapping);
                     // Ensure case value has same width as case expression
                     if (case_value.size() < case_expr.size()) {
                         case_value.extend_u0(case_expr.size());
@@ -174,7 +174,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             // Get condition
             RTLIL::SigSpec cond;
             if (ie->VpiCondition()) {
-                cond = import_expression(any_cast<const expr*>(ie->VpiCondition()));
+                cond = import_expression(any_cast<const expr*>(ie->VpiCondition()), &input_mapping);
             }
             
             // Create a switch rule for the if-else with source location
@@ -287,7 +287,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         const assignment* assign = any_cast<const assignment*>(stmt);
         if (assign && assign->Lhs() && assign->Rhs()) {
             RTLIL::SigSpec lhs_sig;
-            RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()));
+            RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
             
             // Check if LHS is the function name (return value)
             if (assign->Lhs()->UhdmType() == uhdmref_obj) {
@@ -341,7 +341,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // Assigning to a bit of the return value
                     RTLIL::SigSpec index_sig;
                     if (bs->VpiIndex()) {
-                        index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()));
+                        index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
                     }
                     
                     if (index_sig.is_fully_const()) {
@@ -460,7 +460,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 if (right_op->UhdmType() == uhdmref_obj) {
                                     // It's a parameter reference, resolve it
                                     const ref_obj* param_ref = any_cast<const ref_obj*>(right_op);
-                                    RTLIL::SigSpec param_value = import_ref_obj(param_ref);
+                                    RTLIL::SigSpec param_value = import_ref_obj(param_ref, nullptr, &input_mapping);
                                     
                                     if (param_value.is_fully_const()) {
                                         end_value = param_value.as_const().as_int();
@@ -704,8 +704,8 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     
     root_case->actions.push_back(RTLIL::SigSig(temp_result_final_wire, temp_result1_wire));
     
-    // Create the main function result wire
-    std::string result_var = stringf("%s$func$%s.$result", func_name.c_str(), func_name.c_str());
+    // Create the main function result wire (using func_result_id for proper source location)
+    std::string result_var = stringf("%s.$result", func_result_id.c_str());
     RTLIL::Wire* func_result_wire = module->wire(RTLIL::escape_id(result_var));
     if (!func_result_wire) {
         func_result_wire = module->addWire(RTLIL::escape_id(result_var), result_wire->width);
@@ -885,7 +885,7 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
 }
 
 // Import any expression
-RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
+RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (!uhdm_expr)
         return RTLIL::SigSpec();
     
@@ -904,22 +904,22 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr) {
         case vpiConstant:
             return import_constant(any_cast<const constant*>(uhdm_expr));
         case vpiOperation:
-            return import_operation(any_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_operation(any_cast<const operation*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiRefObj:
-            return import_ref_obj(any_cast<const ref_obj*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_ref_obj(any_cast<const ref_obj*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiPartSelect:
-            return import_part_select(any_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_part_select(any_cast<const part_select*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiBitSelect:
-            return import_bit_select(any_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_bit_select(any_cast<const bit_select*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiAssignment:
             // This should not be called on assignment directly
             // Assignment is a statement, not an expression
             log_warning("vpiAssignment (type 3) passed to import_expression - assignments should be handled as statements, not expressions\n");
             return RTLIL::SigSpec();
         case vpiHierPath:
-            return import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiIndexedPartSelect:
-            return import_indexed_part_select(any_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance);
+            return import_indexed_part_select(any_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiPort:
             // Handle port as expression - this happens when ports are referenced in connections
             {
@@ -1255,7 +1255,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
 }
 
 // Import operation
-RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Try to reduce it first
     ExprEval eval;
     bool invalidValue = false;
@@ -1276,7 +1276,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
         }
         for (auto operand : *uhdm_op->Operands()) {
-            RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand));
+            RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
             if (op_type == vpiConditionOp) {
                 log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
             }
@@ -1885,12 +1885,22 @@ RTLIL::Wire* UhdmImporter::find_wire_in_scope(const std::string& signal_name, co
 }
 
 // Import reference to object
-RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Get the referenced object name
     std::string ref_name = std::string(uhdm_ref->VpiName());
     
     if (mode_debug)
         log("    Importing ref_obj: %s (current_gen_scope: %s)\n", ref_name.c_str(), get_current_gen_scope().c_str());
+    
+    // Check if this is a function input parameter
+    if (input_mapping) {
+        auto it = input_mapping->find(ref_name);
+        if (it != input_mapping->end()) {
+            if (mode_debug)
+                log("    Found %s in function input_mapping\n", ref_name.c_str());
+            return it->second;
+        }
+    }
     
     // Check if the ref_obj has an Actual_group() that points to the real signal
     // This is used in generate blocks where ref_obj names include generate scope prefixes
@@ -2147,7 +2157,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
 }
 
 // Import part select (e.g., sig[7:0])
-RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing part select\n");
     
@@ -2195,7 +2205,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression
-        base = import_expression(any_cast<const expr*>(parent));
+        base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
     
     log("      Base signal width: %d\n", base.size());
@@ -2204,12 +2214,12 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     // Get range
     int left = -1, right = -1;
     if (auto left_expr = uhdm_part->Left_range()) {
-        RTLIL::SigSpec left_sig = import_expression(left_expr);
+        RTLIL::SigSpec left_sig = import_expression(left_expr, input_mapping);
         if (left_sig.is_fully_const())
             left = left_sig.as_const().as_int();
     }
     if (auto right_expr = uhdm_part->Right_range()) {
-        RTLIL::SigSpec right_sig = import_expression(right_expr);
+        RTLIL::SigSpec right_sig = import_expression(right_expr, input_mapping);
         if (right_sig.is_fully_const())
             right = right_sig.as_const().as_int();
     }
@@ -2244,7 +2254,7 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
 }
 
 // Import bit select (e.g., sig[3])
-RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const UHDM::scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing bit select\n");
     
@@ -2264,7 +2274,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         RTLIL::Memory* memory = module->memories.at(mem_id);
         
         // Get the address expression
-        RTLIL::SigSpec addr = import_expression(uhdm_bit->VpiIndex());
+        RTLIL::SigSpec addr = import_expression(uhdm_bit->VpiIndex(), input_mapping);
         
         // Create a unique name for the cell
         RTLIL::IdString cell_id = new_id("memrd_" + signal_name);
@@ -2306,7 +2316,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     // If wire not found, check if this is a shift register array element
     if (!wire) {
         // Get the index
-        RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
+        RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
         if (index.is_fully_const()) {
             int idx = index.as_const().as_int();
             // Try to find the wire with the array index in the name
@@ -2322,11 +2332,28 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     }
     
     if (!wire) {
+        // Check if this is a function input parameter
+        if (input_mapping) {
+            auto it = input_mapping->find(signal_name);
+            if (it != input_mapping->end()) {
+                // This is a function parameter, use the mapped signal
+                RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
+                if (index.is_fully_const()) {
+                    int idx = index.as_const().as_int();
+                    if (idx >= 0 && idx < it->second.size()) {
+                        return it->second.extract(idx, 1);
+                    }
+                }
+                // For non-constant index, we'd need to create a mux tree
+                // For now, just return the mapped signal
+                return it->second;
+            }
+        }
         log_error("Could not find wire '%s' for bit select\n", signal_name.c_str());
     }
     
     RTLIL::SigSpec base(wire);
-    RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex());
+    RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
     
     if (index.size() == 0) {
         log_warning("Bit select index expression returned empty SigSpec for signal %s\n", signal_name.c_str());
@@ -2395,7 +2422,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
 }
 
 // Import indexed part select (e.g., data[i*8 +: 8])
-RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     log("    Importing indexed part select\n");
     
     // Get the parent object - this should contain the base signal
@@ -2442,18 +2469,18 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression
-        base = import_expression(any_cast<const expr*>(parent));
+        base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
     
     log("      Base signal width: %d\n", base.size());
     
     // Get the base index expression
-    RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr());
+    RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr(), input_mapping);
     log("      Base index: %s\n", base_index.is_fully_const() ? 
         std::to_string(base_index.as_const().as_int()).c_str() : "non-const");
     
     // Get the width expression
-    RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr());
+    RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr(), input_mapping);
     log("      Width: %s\n", width_expr.is_fully_const() ? 
         std::to_string(width_expr.as_const().as_int()).c_str() : "non-const");
     
@@ -2501,7 +2528,7 @@ RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat, const U
 }
 
 // Import hierarchical path (e.g., bus.a, interface.signal)
-RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst) {
+RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing hier_path\n");
     

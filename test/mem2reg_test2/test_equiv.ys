@@ -9,6 +9,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/mem2reg_test2/mem2reg_test2_from_ve
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gold
 
 # Read and process UHDM version (gate)
@@ -18,6 +19,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/mem2reg_test2/mem2reg_test2_from_uh
 hierarchy -auto-top
 proc
 flatten
+async2sync  # Convert async reset to sync for equivalence checking
 design -stash gate
 
 # Print statistics for both designs to detect sequential vs combinational
