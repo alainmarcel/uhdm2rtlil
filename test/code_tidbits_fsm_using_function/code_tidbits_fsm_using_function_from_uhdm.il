@@ -21,6 +21,7 @@ module \fsm_using_function
   wire $procmux$61_Y
   attribute \src "dut.sv:7.1-7.6"
   wire input 1 \clock
+  wire width 3 \fsm_function$func$dut.sv:29$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:29.21-29.54"
   wire \fsm_function$func$dut.sv:29$2.req_0
@@ -30,7 +31,6 @@ module \fsm_using_function
   attribute \nosync 1
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 \fsm_function$func$dut.sv:29$2.state
-  wire width 3 \fsm_function$func$fsm_function.$result
   attribute \src "dut.sv:11.1-11.6"
   wire output 5 \gnt_0
   attribute \src "dut.sv:12.1-12.6"
@@ -78,7 +78,7 @@ module \fsm_using_function
     parameter \SRST_VALUE 3'001
     parameter \WIDTH 3
     connect \CLK \clock
-    connect \D \fsm_function$func$fsm_function.$result
+    connect \D \fsm_function$func$dut.sv:29$1.$result
     connect \Q \state
     connect \SRST \reset
   end
@@ -117,7 +117,7 @@ module \fsm_using_function
     connect \A 3'001
     connect \B { $6\fsm_function$func$dut.sv:29$2.$result$13 $7\fsm_function$func$dut.sv:29$2.$result$15 $7\fsm_function$func$dut.sv:29$2.$result$14 }
     connect \S { $procmux$36_CMP $procmux$25_CMP $procmux$18_CMP }
-    connect \Y \fsm_function$func$fsm_function.$result
+    connect \Y \fsm_function$func$dut.sv:29$1.$result
   end
   attribute \full_case 1
   attribute \src "dut.sv:43.4-47.18|dut.sv:35.3-54.10"
@@ -176,5 +176,5 @@ module \fsm_using_function
   connect \fsm_function$func$dut.sv:29$2.req_0 1'x
   connect \fsm_function$func$dut.sv:29$2.req_1 1'x
   connect \fsm_function$func$dut.sv:29$2.state 3'x
-  connect \next_state \fsm_function$func$fsm_function.$result
+  connect \next_state \fsm_function$func$dut.sv:29$1.$result
 end

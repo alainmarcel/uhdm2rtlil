@@ -49,6 +49,7 @@ module \fsm_using_function
   wire width 3 $func_fsm_function_result_0
   attribute \src "dut.sv:7.1-7.6"
   wire input 1 \clock
+  wire width 3 \fsm_function$func$dut.sv:29$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 \fsm_function$func$dut.sv:29$2.$result
@@ -61,7 +62,6 @@ module \fsm_using_function
   attribute \nosync 1
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 \fsm_function$func$dut.sv:29$2.state
-  wire width 3 \fsm_function$func$fsm_function.$result
   attribute \src "dut.sv:11.1-11.6"
   wire output 5 \gnt_0
   attribute \src "dut.sv:12.1-12.6"
@@ -219,7 +219,7 @@ module \fsm_using_function
         assign $1\fsm_function$func$dut.sv:29$2.$result$12 3'001
     end
     sync always
-      update \fsm_function$func$fsm_function.$result $0\fsm_function$func$dut.sv:29$1.$result$8
+      update \fsm_function$func$dut.sv:29$1.$result $0\fsm_function$func$dut.sv:29$1.$result$8
       update \fsm_function$func$dut.sv:29$2.$result 3'x
       update \fsm_function$func$dut.sv:29$2.state 3'x
       update \fsm_function$func$dut.sv:29$2.req_0 1'x
@@ -278,6 +278,6 @@ module \fsm_using_function
       update \gnt_0 $0\gnt_0[0:0]
       update \gnt_1 $0\gnt_1[0:0]
   end
-  connect $func_fsm_function_result_0 \fsm_function$func$fsm_function.$result
+  connect $func_fsm_function_result_0 \fsm_function$func$dut.sv:29$1.$result
   connect \next_state $func_fsm_function_result_0
 end

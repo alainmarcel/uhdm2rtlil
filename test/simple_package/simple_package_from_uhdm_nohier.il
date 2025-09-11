@@ -118,13 +118,13 @@ module \simple_package
   wire width 50 output 4 \bus_out
   attribute \src "dut.sv:28.38-28.41"
   wire input 1 \clk
+  wire width 32 \increment_data$func$dut.sv:47$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 \increment_data$func$dut.sv:47$2.$result
   attribute \nosync 1
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 \increment_data$func$dut.sv:47$2.input_data
-  wire width 32 \increment_data$func$increment_data.$result
   attribute \src "dut.sv:35.23-35.35"
   attribute \wiretype "\\my_pkg::bus_transaction_t"
   wire width 50 \internal_bus
@@ -178,11 +178,11 @@ module \simple_package
     assign $0\increment_data$func$dut.sv:47$2.$result$9 $1\increment_data$func$dut.sv:47$2.$result$10
     assign $0\increment_data$func$dut.sv:47$1.$result$6 $1\increment_data$func$dut.sv:47$2.$result$10
     sync always
-      update \increment_data$func$increment_data.$result $0\increment_data$func$dut.sv:47$1.$result$6
+      update \increment_data$func$dut.sv:47$1.$result $0\increment_data$func$dut.sv:47$1.$result$6
       update \increment_data$func$dut.sv:47$2.$result 32'x
       update \increment_data$func$dut.sv:47$2.input_data 32'x
   end
-  connect $func_increment_data_result_0 \increment_data$func$increment_data.$result
+  connect $func_increment_data_result_0 \increment_data$func$dut.sv:47$1.$result
 end
 attribute \dynports 1
 attribute \src "dut.sv:62.1-99.10"
