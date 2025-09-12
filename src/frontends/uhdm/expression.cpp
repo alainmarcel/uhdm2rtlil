@@ -166,6 +166,40 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 sw->cases.push_back(item_case);
             }
         }
+        
+        // Add a default case if one doesn't exist (matching Verilog frontend behavior)
+        // Check if we already have a default case (one with empty compare list)
+        bool has_default = false;
+        for (auto case_item : sw->cases) {
+            if (case_item->compare.empty()) {
+                has_default = true;
+                break;
+            }
+        }
+        
+        if (!has_default) {
+            // Add default case that preserves current values
+            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+            // Empty compare list means default case
+            // Add empty action (matching Verilog frontend)
+            default_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+            
+            // For functions, we need to preserve the current result value and any local variables
+            // The result wire should maintain its current value in the default case
+            default_case->actions.push_back(RTLIL::SigSig(result_wire, result_wire));
+            
+            // Also preserve any local variables (like 'i' in for loops)
+            // Find local variables by looking for wires with "local_" in their name
+            for (auto &wire_pair : module->wires_) {
+                std::string wire_name = wire_pair.second->name.str();
+                if (wire_name.find("$" + std::string(func_call_context) + "$local_") != std::string::npos) {
+                    // This is a local variable for this function, preserve its value
+                    default_case->actions.push_back(RTLIL::SigSig(wire_pair.second, wire_pair.second));
+                }
+            }
+            
+            sw->cases.push_back(default_case);
+        }
         break;
     }
     
@@ -307,8 +341,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         } else {
                             // Create a function-scoped temporary wire for local variable
                             // Use a unique name to avoid conflicts between functions
-                            std::string local_var_name = stringf("$%s$%s$local_%s", 
-                                func_name.c_str(), func_call_context.c_str(), lhs_name.c_str());
+                            // func_call_context already contains the function name, so don't duplicate it
+                            std::string local_var_name = stringf("$%s$local_%s", 
+                                func_call_context.c_str(), lhs_name.c_str());
                             RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(local_var_name));
                             if (!temp_wire) {
                                 // Check if we have the width from the function's variable declarations
@@ -342,17 +377,60 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                 std::string base_name = std::string(bs->VpiName());
                 
-                if (base_name == func_name) {
-                    // Assigning to a bit of the return value
+                if (base_name == func_name || base_name == "result") {
+                    // Assigning to a bit of the return value or result variable
                     RTLIL::SigSpec index_sig;
                     if (bs->VpiIndex()) {
                         index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
+                        if (mode_debug) {
+                            log("      Bit select index for %s: is_const=%d, value=%s\n", 
+                                base_name.c_str(), index_sig.is_fully_const(), 
+                                index_sig.is_fully_const() ? std::to_string(index_sig.as_int()).c_str() : "non-const");
+                        }
                     }
                     
                     if (index_sig.is_fully_const()) {
                         int idx = index_sig.as_int();
-                        if (idx >= 0 && idx < result_wire->width) {
-                            lhs_sig = RTLIL::SigSpec(result_wire, idx, 1);
+                        
+                        // Get the target wire - either result_wire or the local result variable
+                        RTLIL::Wire* target_wire = result_wire;
+                        if (base_name == "result") {
+                            // Check if we have a local result variable
+                            auto it = input_mapping.find("result");
+                            if (it != input_mapping.end() && it->second.is_wire()) {
+                                target_wire = it->second.as_wire();
+                            } else {
+                                // Create or get the local result variable
+                                std::string local_var_name = stringf("$%s$local_result", func_call_context.c_str());
+                                target_wire = module->wire(RTLIL::escape_id(local_var_name));
+                                if (!target_wire) {
+                                    target_wire = module->addWire(RTLIL::escape_id(local_var_name), result_wire->width);
+                                    input_mapping["result"] = target_wire;
+                                }
+                            }
+                        }
+                        
+                        if (idx >= 0 && idx < target_wire->width) {
+                            lhs_sig = RTLIL::SigSpec(target_wire, idx, 1);
+                        }
+                    } else {
+                        log("UHDM: Warning - non-constant bit select index in function %s\n", func_name.c_str());
+                    }
+                } else {
+                    // Handle bit select on other variables
+                    auto it = input_mapping.find(base_name);
+                    if (it != input_mapping.end()) {
+                        RTLIL::SigSpec index_sig;
+                        if (bs->VpiIndex()) {
+                            index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
+                        }
+                        
+                        if (index_sig.is_fully_const()) {
+                            int idx = index_sig.as_int();
+                            RTLIL::SigSpec base_sig = it->second;
+                            if (idx >= 0 && idx < base_sig.size()) {
+                                lhs_sig = base_sig.extract(idx, 1);
+                            }
                         }
                     }
                 }
@@ -379,6 +457,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     case uhdmfor_stmt: {
         // Handle for loops - need to unroll at compile time for synthesis
         const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        log("UHDM: Processing for loop in function %s\n", func_name.c_str());
         if (fs) {
                 // Get loop components
                 const any* init_stmt = nullptr;
@@ -464,31 +543,79 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         const any* right_op = operands->at(1);
                         
                         // Check that left operand is our loop variable
+                        // Handle both ref_obj and ref_var (integer variables use ref_var)
+                        bool is_loop_var = false;
                         if (left_op->UhdmType() == uhdmref_obj) {
                             const ref_obj* ref = any_cast<const ref_obj*>(left_op);
-                            if (std::string(ref->VpiName()) == loop_var_name) {
-                                // Get the end value
-                                if (right_op->UhdmType() == uhdmref_obj) {
-                                    // It's a parameter reference, resolve it
-                                    const ref_obj* param_ref = any_cast<const ref_obj*>(right_op);
-                                    RTLIL::SigSpec param_value = import_ref_obj(param_ref, nullptr, &input_mapping);
-                                    
-                                    if (param_value.is_fully_const()) {
-                                        end_value = param_value.as_const().as_int();
-                                    } else {
-                                        can_unroll = false;
-                                    }
-                                } else if (right_op->UhdmType() == uhdmconstant) {
-                                    const constant* const_val = any_cast<const constant*>(right_op);
-                                    RTLIL::SigSpec const_spec = import_constant(const_val);
-                                    if (const_spec.is_fully_const()) {
-                                        end_value = const_spec.as_const().as_int();
-                                    } else {
-                                        can_unroll = false;
-                                    }
+                            is_loop_var = (std::string(ref->VpiName()) == loop_var_name);
+                        } else if (left_op->UhdmType() == uhdmref_var) {
+                            const ref_var* ref = any_cast<const ref_var*>(left_op);
+                            is_loop_var = (std::string(ref->VpiName()) == loop_var_name);
+                        }
+                        
+                        if (is_loop_var) {
+                            // Get the end value
+                            if (right_op->UhdmType() == uhdmref_obj) {
+                                // It's a parameter reference, resolve it
+                                const ref_obj* param_ref = any_cast<const ref_obj*>(right_op);
+                                RTLIL::SigSpec param_value = import_ref_obj(param_ref, nullptr, &input_mapping);
+                                
+                                if (param_value.is_fully_const()) {
+                                    end_value = param_value.as_const().as_int();
                                 } else {
                                     can_unroll = false;
                                 }
+                            } else if (right_op->UhdmType() == uhdmconstant) {
+                                const constant* const_val = any_cast<const constant*>(right_op);
+                                RTLIL::SigSpec const_spec = import_constant(const_val);
+                                if (const_spec.is_fully_const()) {
+                                    end_value = const_spec.as_const().as_int();
+                                } else {
+                                    can_unroll = false;
+                                }
+                            } else if (right_op->UhdmType() == uhdmoperation) {
+                                // Handle operations like WIDTH/2 using expression evaluator
+                                const operation* op = any_cast<const operation*>(right_op);
+                                log("UHDM: Evaluating operation for loop end value in function %s\n", func_name.c_str());
+                                
+                                // Use ExprEval to reduce the expression to a constant
+                                ExprEval eval;
+                                bool invalidValue = false;
+                                if (mode_debug) {
+                                    log("DEBUG: Attempting to reduce operation type %d\n", op->VpiOpType());
+                                }
+                                // Pass the current instance context for proper parameter resolution
+                                expr* res = eval.reduceExpr(op, invalidValue, current_instance, op->VpiParent(), true);
+                                
+                                if (mode_debug) {
+                                    log("DEBUG: reduceExpr result: res=%p, invalidValue=%d\n", res, invalidValue);
+                                    if (res) {
+                                        log("DEBUG: Result type: %d\n", res->UhdmType());
+                                    }
+                                }
+                                
+                                if (res && res->UhdmType() == uhdmconstant) {
+                                    const constant* const_val = dynamic_cast<const UHDM::constant*>(res);
+                                    RTLIL::SigSpec const_spec = import_constant(const_val);
+                                    if (const_spec.is_fully_const()) {
+                                        end_value = const_spec.as_const().as_int();
+                                        log("UHDM: Operation evaluated to constant: %lld\n", (long long)end_value);
+                                        if (mode_debug) {
+                                            log("DEBUG: Evaluated operation for end value: %lld\n", (long long)end_value);
+                                        }
+                                    } else {
+                                        can_unroll = false;
+                                        log("UHDM: Operation could not be reduced to constant\n");
+                                    }
+                                } else {
+                                    can_unroll = false;
+                                    log("UHDM: Operation result not constant, cannot unroll\n");
+                                    if (mode_debug) {
+                                        log("DEBUG: Operation result not constant (invalidValue=%d)\n", invalidValue);
+                                    }
+                                }
+                            } else {
+                                can_unroll = false;
                             }
                         }
                     }
@@ -497,7 +624,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Extract increment: i++ or i = i + 1
                 if (can_unroll && inc_stmt->UhdmType() == uhdmoperation) {
                     const operation* inc_op = any_cast<const operation*>(inc_stmt);
-                    if (inc_op->VpiOpType() == 62) { // vpiPostIncOp
+                    if (inc_op->VpiOpType() == vpiPostIncOp) { 
                         increment = 1;
                     } else if (inc_op->VpiOpType() == vpiAddOp) {
                         // Check for i = i + 1 pattern
@@ -512,6 +639,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             increment = 1; // Simplified assumption
                         }
                     }
+                }
+                
+                if (mode_debug) {
+                    log("DEBUG: Loop unroll check: can_unroll=%d, start=%lld, end=%lld, increment=%lld\n",
+                        can_unroll, (long long)start_value, (long long)end_value, (long long)increment);
                 }
                 
                 if (can_unroll) {
@@ -536,6 +668,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                         
                         // Process the loop body with the current iteration value
+                        if (mode_debug) {
+                            log("      Processing loop body for iteration %lld\n", (long long)i);
+                        }
                         process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
                         
                         // For loops that build arrays (like func_loop), don't return early
@@ -1340,6 +1475,140 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         }
     }
     
+    // Check if all operands are constant - if so, we can evaluate the operation
+    // But only do this when we're in a function context with loop variables
+    bool all_const = true;
+    for (const auto& op : operands) {
+        if (!op.is_fully_const()) {
+            all_const = false;
+            break;
+        }
+    }
+    
+    // If all operands are constant AND we have loop variables (indicating we're in a loop unrolling context),
+    // evaluate the operation and return a constant
+    if (all_const && operands.size() > 0 && !loop_values.empty()) {
+        RTLIL::Const result;
+        bool can_evaluate = true;
+        
+        switch (op_type) {
+            case vpiAddOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_add(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiSubOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_sub(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiMultOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_mul(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiDivOp:
+                if (operands.size() == 2 && operands[1].as_const().as_int() != 0) {
+                    result = RTLIL::const_div(operands[0].as_const(), operands[1].as_const(), false, false, 32);
+                }
+                break;
+            case vpiModOp:
+                if (operands.size() == 2 && operands[1].as_const().as_int() != 0) {
+                    result = RTLIL::const_mod(operands[0].as_const(), operands[1].as_const(), false, false, 32);
+                }
+                break;
+            case vpiLShiftOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_shl(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiRShiftOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_shr(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiBitAndOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_and(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiBitOrOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_or(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiBitXorOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_xor(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
+            case vpiBitNegOp:
+                if (operands.size() == 1) {
+                    result = RTLIL::const_not(operands[0].as_const(), RTLIL::Const(), false, false, -1);
+                }
+                break;
+            case vpiUnaryAndOp:
+                if (operands.size() == 1) {
+                    result = operands[0].as_const().is_fully_ones() ? RTLIL::Const(1, 1) : RTLIL::Const(0, 1);
+                }
+                break;
+            case vpiUnaryOrOp:
+                if (operands.size() == 1) {
+                    result = operands[0].as_const().is_fully_zero() ? RTLIL::Const(0, 1) : RTLIL::Const(1, 1);
+                }
+                break;
+            case vpiUnaryXorOp:
+                if (operands.size() == 1) {
+                    int popcount = 0;
+                    RTLIL::Const op_const = operands[0].as_const();
+                    for (auto bit : op_const.bits())
+                        if (bit == RTLIL::State::S1) popcount++;
+                    result = RTLIL::Const(popcount & 1, 1);
+                }
+                break;
+            case vpiEqOp:
+                if (operands.size() == 2) {
+                    result = operands[0].as_const() == operands[1].as_const() ? RTLIL::Const(1, 1) : RTLIL::Const(0, 1);
+                }
+                break;
+            case vpiNeqOp:
+                if (operands.size() == 2) {
+                    result = operands[0].as_const() != operands[1].as_const() ? RTLIL::Const(1, 1) : RTLIL::Const(0, 1);
+                }
+                break;
+            case vpiLtOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_lt(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiLeOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_le(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiGtOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_gt(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            case vpiGeOp:
+                if (operands.size() == 2) {
+                    result = RTLIL::const_ge(operands[0].as_const(), operands[1].as_const(), false, false, 1);
+                }
+                break;
+            default:
+                can_evaluate = false;
+                break;
+        }
+        
+        if (can_evaluate && result.size() > 0) {
+            if (mode_debug) {
+                log("    Evaluated constant operation type %d to value %s\n", op_type, result.as_string().c_str());
+            }
+            return RTLIL::SigSpec(result);
+        }
+    }
+    
     switch (op_type) {
         case vpiMinusOp:
             // Unary minus operation
@@ -1556,6 +1825,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 
                 std::string cell_name = generate_cell_name(uhdm_op, "sub", autoidx);
                 module->addSub(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                return result;
+            }
+            break;
+        case vpiDivOp:
+            if (operands.size() == 2) {
+                // For division, create a div cell
+                int result_width = operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                
+                // Check if operands are signed
+                bool is_signed = false;
+                for (const auto& operand : operands) {
+                    if (operand.is_wire()) {
+                        RTLIL::Wire* wire = operand.as_wire();
+                        if (wire && wire->is_signed) {
+                            is_signed = true;
+                            break;
+                        }
+                    }
+                }
+                
+                std::string cell_name = generate_cell_name(uhdm_op, "div", autoidx);
+                module->addDiv(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;

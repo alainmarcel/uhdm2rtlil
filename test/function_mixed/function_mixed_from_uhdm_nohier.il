@@ -26,21 +26,21 @@ module \function_mixed
   wire width 8 $19\func_mixed$func$dut.sv:58$2.$result$19
   attribute \src "dut.sv:58.18-58.40"
   wire width 8 $1\func_mixed$func$dut.sv:58$2.$result$8
-  wire width 8 $auto$expression.cpp:1520:import_operation$11
-  wire width 8 $auto$expression.cpp:1520:import_operation$24
-  wire width 8 $auto$expression.cpp:1520:import_operation$28
-  wire width 8 $auto$expression.cpp:1520:import_operation$32
-  wire width 8 $auto$expression.cpp:1520:import_operation$36
-  wire width 8 $auto$expression.cpp:1615:import_operation$17
-  wire width 8 $auto$expression.cpp:1637:import_operation$15
-  wire width 8 $auto$expression.cpp:1637:import_operation$22
-  wire width 8 $auto$expression.cpp:1637:import_operation$26
-  wire width 8 $auto$expression.cpp:1637:import_operation$30
-  wire width 8 $auto$expression.cpp:1637:import_operation$34
+  wire width 8 $auto$expression.cpp:1789:import_operation$11
+  wire width 8 $auto$expression.cpp:1789:import_operation$24
+  wire width 8 $auto$expression.cpp:1789:import_operation$28
+  wire width 8 $auto$expression.cpp:1789:import_operation$32
+  wire width 8 $auto$expression.cpp:1789:import_operation$36
+  wire width 8 $auto$expression.cpp:1907:import_operation$17
+  wire width 8 $auto$expression.cpp:1929:import_operation$15
+  wire width 8 $auto$expression.cpp:1929:import_operation$22
+  wire width 8 $auto$expression.cpp:1929:import_operation$26
+  wire width 8 $auto$expression.cpp:1929:import_operation$30
+  wire width 8 $auto$expression.cpp:1929:import_operation$34
   wire width 8 $auto$rtlil.cc:3006:And$39
   wire $auto$rtlil.cc:3018:Gt$21
   wire width 8 $func_func_mixed_result_0
-  wire width 8 $func_mixed$func_mixed$func$dut.sv:58$2$local_result
+  wire width 8 $func_mixed$func$dut.sv:58$2$local_result
   wire width 8 \func_mixed$func$dut.sv:58$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:58.18-58.40"
@@ -76,7 +76,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:1520:import_operation$11
+    connect \Y $auto$expression.cpp:1789:import_operation$11
   end
   cell $add $add$dut.sv:45$25
     parameter \A_SIGNED 0
@@ -84,9 +84,9 @@ module \function_mixed
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $func_mixed$func_mixed$func$dut.sv:58$2$local_result
-    connect \B $auto$expression.cpp:1637:import_operation$22
-    connect \Y $auto$expression.cpp:1520:import_operation$24
+    connect \A $func_mixed$func$dut.sv:58$2$local_result
+    connect \B $auto$expression.cpp:1929:import_operation$22
+    connect \Y $auto$expression.cpp:1789:import_operation$24
   end
   cell $add $add$dut.sv:45$29
     parameter \A_SIGNED 0
@@ -94,9 +94,9 @@ module \function_mixed
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $func_mixed$func_mixed$func$dut.sv:58$2$local_result
-    connect \B $auto$expression.cpp:1637:import_operation$26
-    connect \Y $auto$expression.cpp:1520:import_operation$28
+    connect \A $func_mixed$func$dut.sv:58$2$local_result
+    connect \B $auto$expression.cpp:1929:import_operation$26
+    connect \Y $auto$expression.cpp:1789:import_operation$28
   end
   cell $add $add$dut.sv:45$33
     parameter \A_SIGNED 0
@@ -104,9 +104,9 @@ module \function_mixed
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $func_mixed$func_mixed$func$dut.sv:58$2$local_result
-    connect \B $auto$expression.cpp:1637:import_operation$30
-    connect \Y $auto$expression.cpp:1520:import_operation$32
+    connect \A $func_mixed$func$dut.sv:58$2$local_result
+    connect \B $auto$expression.cpp:1929:import_operation$30
+    connect \Y $auto$expression.cpp:1789:import_operation$32
   end
   cell $add $add$dut.sv:45$37
     parameter \A_SIGNED 0
@@ -114,9 +114,9 @@ module \function_mixed
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $func_mixed$func_mixed$func$dut.sv:58$2$local_result
-    connect \B $auto$expression.cpp:1637:import_operation$34
-    connect \Y $auto$expression.cpp:1520:import_operation$36
+    connect \A $func_mixed$func$dut.sv:58$2$local_result
+    connect \B $auto$expression.cpp:1929:import_operation$34
+    connect \Y $auto$expression.cpp:1789:import_operation$36
   end
   cell $and $and$dut.sv:48$38
     parameter \A_SIGNED 0
@@ -146,7 +146,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1615:import_operation$17
+    connect \Y $auto$expression.cpp:1907:import_operation$17
   end
   cell $shr $shr$dut.sv:36$16
     parameter \A_SIGNED 0
@@ -156,7 +156,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \y
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1637:import_operation$15
+    connect \Y $auto$expression.cpp:1929:import_operation$15
   end
   cell $shr $shr$dut.sv:45$23
     parameter \A_SIGNED 0
@@ -166,7 +166,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B 0
-    connect \Y $auto$expression.cpp:1637:import_operation$22
+    connect \Y $auto$expression.cpp:1929:import_operation$22
   end
   cell $shr $shr$dut.sv:45$27
     parameter \A_SIGNED 0
@@ -176,7 +176,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B 1
-    connect \Y $auto$expression.cpp:1637:import_operation$26
+    connect \Y $auto$expression.cpp:1929:import_operation$26
   end
   cell $shr $shr$dut.sv:45$31
     parameter \A_SIGNED 0
@@ -186,7 +186,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B 2
-    connect \Y $auto$expression.cpp:1637:import_operation$30
+    connect \Y $auto$expression.cpp:1929:import_operation$30
   end
   cell $shr $shr$dut.sv:45$35
     parameter \A_SIGNED 0
@@ -196,7 +196,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B 3
-    connect \Y $auto$expression.cpp:1637:import_operation$34
+    connect \Y $auto$expression.cpp:1929:import_operation$34
   end
   attribute \src "dut.sv:58.18-58.40"
   process $proc$dut.sv:58$3
@@ -210,19 +210,27 @@ module \function_mixed
     assign $0\func_mixed$func$dut.sv:58$2.mode$6 \mode
     assign $0\func_mixed$func$dut.sv:58$2.$result$7 $1\func_mixed$func$dut.sv:58$2.$result$8
     assign $0\func_mixed$func$dut.sv:58$1.$result$9 $1\func_mixed$func$dut.sv:58$2.$result$8
-    assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result 8'00000000
-    assign $1\func_mixed$func$dut.sv:58$2.$result$8 $func_mixed$func_mixed$func$dut.sv:58$2$local_result
+    assign $func_mixed$func$dut.sv:58$2$local_result 8'00000000
+    assign $1\func_mixed$func$dut.sv:58$2.$result$8 $func_mixed$func$dut.sv:58$2$local_result
     attribute \src "dut.sv:21.13-51.20"
     switch \mode
       attribute \src "dut.sv:22.17-25.20"
       case 2'00
         assign { } { }
         assign $1\func_mixed$func$dut.sv:58$2.$result$8 $10\func_mixed$func$dut.sv:58$2.$result$10
-        assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1520:import_operation$11
+        assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1789:import_operation$11
       attribute \src "dut.sv:26.17-32.20"
       case 2'01
         assign { } { }
         assign $1\func_mixed$func$dut.sv:58$2.$result$8 $13\func_mixed$func$dut.sv:58$2.$result$13
+        assign $func_mixed$func$dut.sv:58$2$local_result [0] \x [0]
+        assign $func_mixed$func$dut.sv:58$2$local_result [1] \y [0]
+        assign $func_mixed$func$dut.sv:58$2$local_result [2] \x [1]
+        assign $func_mixed$func$dut.sv:58$2$local_result [3] \y [1]
+        assign $func_mixed$func$dut.sv:58$2$local_result [4] \x [2]
+        assign $func_mixed$func$dut.sv:58$2$local_result [5] \y [2]
+        assign $func_mixed$func$dut.sv:58$2$local_result [6] \x [3]
+        assign $func_mixed$func$dut.sv:58$2$local_result [7] \y [3]
       attribute \src "dut.sv:33.17-40.20"
       case 2'10
         assign { } { }
@@ -232,11 +240,11 @@ module \function_mixed
           attribute \src "dut.sv:35.37-37.24"
           case 1'1
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1637:import_operation$15
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1929:import_operation$15
           attribute \src "dut.sv:37.30-39.24"
           case 
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1615:import_operation$17
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1907:import_operation$17
         end
       attribute \src "dut.sv:41.17-50.20"
       case 2'11
@@ -247,15 +255,19 @@ module \function_mixed
           attribute \src "dut.sv:43.32-47.24"
           case 1'1
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1520:import_operation$24
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1520:import_operation$28
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1520:import_operation$32
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1520:import_operation$36
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1789:import_operation$24
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1789:import_operation$28
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1789:import_operation$32
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$expression.cpp:1789:import_operation$36
           attribute \src "dut.sv:47.30-49.24"
           case 
             assign { } { }
-            assign $func_mixed$func_mixed$func$dut.sv:58$2$local_result $auto$rtlil.cc:3006:And$39
+            assign $func_mixed$func$dut.sv:58$2$local_result $auto$rtlil.cc:3006:And$39
         end
+      case 
+        assign { } { }
+        assign $1\func_mixed$func$dut.sv:58$2.$result$8 $1\func_mixed$func$dut.sv:58$2.$result$8
+        assign $func_mixed$func$dut.sv:58$2$local_result $func_mixed$func$dut.sv:58$2$local_result
     end
     sync always
       update \func_mixed$func$dut.sv:58$1.$result $0\func_mixed$func$dut.sv:58$1.$result$9
