@@ -20,45 +20,45 @@ module simple_generate(clk, a, b, y);
   wire \gen_loop[2].tmp ;
   wire \gen_loop[3].tmp ;
   \$_AND_  _0_ (
-    .A(b[1]),
-    .B(a[1]),
-    .Y(\gen_loop[1].tmp )
-  );
-  \$_AND_  _1_ (
-    .A(b[2]),
-    .B(a[2]),
-    .Y(\gen_loop[2].tmp )
-  );
-  \$_AND_  _2_ (
-    .A(b[3]),
-    .B(a[3]),
-    .Y(\gen_loop[3].tmp )
-  );
-  \$_AND_  _3_ (
     .A(b[0]),
     .B(a[0]),
     .Y(\gen_loop[0].tmp )
   );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.9-13.25" *)
-  \$_DFF_P_  \y_reg[0]  /* _4_ */ (
-    .C(clk),
-    .D(\gen_loop[0].tmp ),
-    .Q(y[0])
+  \$_AND_  _1_ (
+    .A(b[1]),
+    .B(a[1]),
+    .Y(\gen_loop[1].tmp )
+  );
+  \$_AND_  _2_ (
+    .A(b[2]),
+    .B(a[2]),
+    .Y(\gen_loop[2].tmp )
+  );
+  \$_AND_  _3_ (
+    .A(b[3]),
+    .B(a[3]),
+    .Y(\gen_loop[3].tmp )
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.9-13.25" *)
-  \$_DFF_P_  \y_reg[1]  /* _5_ */ (
+  \$_DFF_P_  \y_reg[1]  /* _4_ */ (
     .C(clk),
     .D(\gen_loop[1].tmp ),
     .Q(y[1])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.9-13.25" *)
-  \$_DFF_P_  \y_reg[2]  /* _6_ */ (
+  \$_DFF_P_  \y_reg[2]  /* _5_ */ (
     .C(clk),
     .D(\gen_loop[2].tmp ),
     .Q(y[2])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.9-13.25" *)
+  \$_DFF_P_  \y_reg[0]  /* _6_ */ (
+    .C(clk),
+    .D(\gen_loop[0].tmp ),
+    .Q(y[0])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.9-13.25" *)

@@ -20,7 +20,7 @@ module top();
   (* src = "dut.sv:10.20-10.24" *)
   (* wiretype = "\\int8_t" *)
   wire [7:0] int8;
-  (* src = "dut.sv:16.12-16.40" *)
+  (* src = "dut.sv:15.12-15.36" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),

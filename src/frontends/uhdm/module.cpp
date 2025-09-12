@@ -670,7 +670,7 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
             int end_col = uhdm_assign->VpiEndColumnNo();
             
             // Create process name based on line number
-            std::string proc_name = stringf("$proc$dut.sv:%d$%d", line_num, autoidx++);
+            std::string proc_name = stringf("$proc$dut.sv:%d$%d", line_num, incr_autoidx());
             
             // Create an init process for this initialization
             RTLIL::Process *proc = module->addProcess(RTLIL::escape_id(proc_name));

@@ -12,120 +12,123 @@
  .Y(out_data[54])
  );
  \$_NOT_  _034_ (
++.A(in_data[25]),
++.Y(out_data[25])
++);
++\$_NOT_  _035_ (
 +.A(in_data[27]),
 +.Y(out_data[27])
 +);
-+\$_NOT_  _035_ (
++\$_NOT_  _036_ (
 +.A(in_data[28]),
 +.Y(out_data[28])
 +);
-+\$_NOT_  _036_ (
++\$_NOT_  _037_ (
 +.A(in_data[29]),
 +.Y(out_data[29])
 +);
-+\$_NOT_  _037_ (
++\$_NOT_  _038_ (
 +.A(in_data[31]),
 +.Y(out_data[31])
 +);
-+\$_NOT_  _038_ (
++\$_NOT_  _039_ (
  .A(in_data[32]),
  .Y(out_data[32])
  );
 -\$_NOT_  _035_ (
-+\$_NOT_  _039_ (
++\$_NOT_  _040_ (
  .A(in_data[33]),
  .Y(out_data[33])
  );
 -\$_NOT_  _036_ (
-+\$_NOT_  _040_ (
++\$_NOT_  _041_ (
  .A(in_data[34]),
  .Y(out_data[34])
  );
 -\$_NOT_  _037_ (
-+\$_NOT_  _041_ (
++\$_NOT_  _042_ (
  .A(in_data[35]),
  .Y(out_data[35])
  );
 -\$_NOT_  _038_ (
-+\$_NOT_  _042_ (
++\$_NOT_  _043_ (
  .A(in_data[37]),
  .Y(out_data[37])
  );
 -\$_NOT_  _039_ (
-+\$_NOT_  _043_ (
++\$_NOT_  _044_ (
  .A(in_data[38]),
  .Y(out_data[38])
  );
 -\$_NOT_  _040_ (
-+\$_NOT_  _044_ (
++\$_NOT_  _045_ (
  .A(in_data[40]),
  .Y(out_data[40])
  );
 -\$_NOT_  _041_ (
-+\$_NOT_  _045_ (
++\$_NOT_  _046_ (
  .A(in_data[41]),
  .Y(out_data[41])
  );
 -\$_NOT_  _042_ (
-+\$_NOT_  _046_ (
++\$_NOT_  _047_ (
  .A(in_data[43]),
  .Y(out_data[43])
  );
 -\$_NOT_  _043_ (
-+\$_NOT_  _047_ (
++\$_NOT_  _048_ (
  .A(in_data[45]),
  .Y(out_data[45])
  );
 -\$_NOT_  _044_ (
-+\$_NOT_  _048_ (
++\$_NOT_  _049_ (
  .A(in_data[47]),
  .Y(out_data[47])
  );
 -\$_NOT_  _045_ (
-+\$_NOT_  _049_ (
++\$_NOT_  _050_ (
  .A(in_data[48]),
  .Y(out_data[48])
  );
 -\$_NOT_  _046_ (
-+\$_NOT_  _050_ (
++\$_NOT_  _051_ (
  .A(in_data[49]),
  .Y(out_data[49])
  );
 -\$_NOT_  _047_ (
-+\$_NOT_  _051_ (
++\$_NOT_  _052_ (
  .A(in_data[50]),
  .Y(out_data[50])
  );
 -\$_NOT_  _048_ (
-+\$_NOT_  _052_ (
++\$_NOT_  _053_ (
  .A(in_data[52]),
  .Y(out_data[52])
  );
 -\$_NOT_  _049_ (
-+\$_NOT_  _053_ (
++\$_NOT_  _054_ (
  .A(in_data[53]),
  .Y(out_data[53])
  );
 -\$_NOT_  _050_ (
-+\$_NOT_  _054_ (
++\$_NOT_  _055_ (
  .A(in_data[22]),
  .Y(out_data[22])
  );
 -\$_NOT_  _051_ (
-+\$_NOT_  _055_ (
++\$_NOT_  _056_ (
  .A(in_data[23]),
  .Y(out_data[23])
  );
 -\$_NOT_  _052_ (
-+\$_NOT_  _056_ (
++\$_NOT_  _057_ (
  .A(in_data[24]),
  .Y(out_data[24])
  );
 -\$_NOT_  _053_ (
-+\$_NOT_  _057_ (
- .A(in_data[25]),
- .Y(out_data[25])
- );
+-.A(in_data[25]),
+-.Y(out_data[25])
+-);
 -\$_NOT_  _054_ (
 -.A(in_data[27]),
 -.Y(out_data[27])

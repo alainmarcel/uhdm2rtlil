@@ -60,43 +60,67 @@
  (* src = "dut.sv:26.27-26.32" *)
  wire [2:0] state;
  \$_NOT_  _25_ (
-@@ -205,6 +205,7 @@
+@@ -205,41 +205,46 @@
  .B(_23_),
  .Y(\fsm_function$func$dut.sv:29$1.$result [2])
  );
-+(* \always_ff  = 32'd1 *)
- (* src = "dut.sv:66.1-92.4" *)
- \$_SDFF_PP0_  gnt_0_reg /* _54_ */ (
- .C(clock),
-@@ -212,6 +213,7 @@
- .Q(gnt_0),
- .R(reset)
- );
-+(* \always_ff  = 32'd1 *)
- (* src = "dut.sv:66.1-92.4" *)
- \$_SDFF_PP0_  gnt_1_reg /* _55_ */ (
- .C(clock),
-@@ -219,6 +221,7 @@
- .Q(gnt_1),
- .R(reset)
- );
+-(* src = "dut.sv:66.1-92.4" *)
+-\$_SDFF_PP0_  gnt_0_reg /* _54_ */ (
+-.C(clock),
+-.D(_24_[1]),
+-.Q(gnt_0),
+-.R(reset)
+-);
+-(* src = "dut.sv:66.1-92.4" *)
+-\$_SDFF_PP0_  gnt_1_reg /* _55_ */ (
+-.C(clock),
+-.D(_24_[0]),
+-.Q(gnt_1),
+-.R(reset)
+-);
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-64.4" *)
- \$_SDFF_PP1_  \state_reg[0]  /* _56_ */ (
+-\$_SDFF_PP1_  \state_reg[0]  /* _56_ */ (
++\$_SDFF_PP1_  \state_reg[0]  /* _54_ */ (
  .C(clock),
-@@ -226,6 +229,7 @@
+ .D(\fsm_function$func$dut.sv:29$1.$result [0]),
  .Q(state[0]),
  .R(reset)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-64.4" *)
- \$_SDFF_PP0_  \state_reg[1]  /* _57_ */ (
+-\$_SDFF_PP0_  \state_reg[1]  /* _57_ */ (
++\$_SDFF_PP0_  \state_reg[1]  /* _55_ */ (
  .C(clock),
-@@ -233,6 +237,7 @@
+ .D(\fsm_function$func$dut.sv:29$1.$result [1]),
  .Q(state[1]),
  .R(reset)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-64.4" *)
- \$_SDFF_PP0_  \state_reg[2]  /* _58_ */ (
+-\$_SDFF_PP0_  \state_reg[2]  /* _58_ */ (
++\$_SDFF_PP0_  \state_reg[2]  /* _56_ */ (
  .C(clock),
+ .D(\fsm_function$func$dut.sv:29$1.$result [2]),
+ .Q(state[2]),
+ .R(reset)
+ );
++(* \always_ff  = 32'd1 *)
++(* src = "dut.sv:66.1-92.4" *)
++\$_SDFF_PP0_  gnt_0_reg /* _57_ */ (
++.C(clock),
++.D(_24_[1]),
++.Q(gnt_0),
++.R(reset)
++);
++(* \always_ff  = 32'd1 *)
++(* src = "dut.sv:66.1-92.4" *)
++\$_SDFF_PP0_  gnt_1_reg /* _58_ */ (
++.C(clock),
++.D(_24_[0]),
++.Q(gnt_1),
++.R(reset)
++);
+ assign \fsm_function$func$dut.sv:29$2.req_0  = 1'hx;
+ assign \fsm_function$func$dut.sv:29$2.req_1  = 1'hx;
+ assign \fsm_function$func$dut.sv:29$2.state  = 3'hx;

@@ -18,7 +18,7 @@ module function_mixed(x, y, mode, out);
   wire [7:0] out;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:58.18-58.40" *)
-  wire \func_mixed$func$dut.sv:58$2.i ;
+  wire [31:0] \func_mixed$func$dut.sv:58$2.i ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:58.18-58.40" *)
   wire [1:0] \func_mixed$func$dut.sv:58$2.mode ;
@@ -31,7 +31,7 @@ module function_mixed(x, y, mode, out);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:58.18-58.40" *)
   wire [7:0] \func_mixed$func$dut.sv:58$2.y ;
-  assign \func_mixed$func$dut.sv:58$2.i  = 1'hx;
+  assign \func_mixed$func$dut.sv:58$2.i  = 32'hxxxxxxxx;
   assign \func_mixed$func$dut.sv:58$2.mode  = 2'hx;
   assign \func_mixed$func$dut.sv:58$2.result  = 8'hxx;
   assign \func_mixed$func$dut.sv:58$2.x  = 8'hxx;

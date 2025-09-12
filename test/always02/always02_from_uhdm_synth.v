@@ -24,30 +24,30 @@ module always02(clock, reset, count);
     .A(count[0]),
     .Y(_02_[0])
   );
-  \$_AND_  _05_ (
+  \$_NAND_  _05_ (
     .A(count[1]),
     .B(count[0]),
     .Y(_00_)
   );
-  \$_AND_  _06_ (
+  \$_XNOR_  _06_ (
     .A(_00_),
     .B(count[2]),
+    .Y(_03_[2])
+  );
+  \$_ANDNOT_  _07_ (
+    .A(count[2]),
+    .B(_00_),
     .Y(_01_)
   );
-  \$_XOR_  _07_ (
+  \$_XOR_  _08_ (
     .A(_01_),
     .B(count[3]),
     .Y(_03_[3])
   );
-  \$_XOR_  _08_ (
+  \$_XOR_  _09_ (
     .A(count[1]),
     .B(count[0]),
     .Y(_03_[1])
-  );
-  \$_XOR_  _09_ (
-    .A(_00_),
-    .B(count[2]),
-    .Y(_03_[2])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-11.4" *)

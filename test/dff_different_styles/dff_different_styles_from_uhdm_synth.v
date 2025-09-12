@@ -23,18 +23,18 @@ module dffsr2(clk, preset, clear, d, q);
   \$_ANDNOT_  _2_ (
     .A(preset),
     .B(clear),
-    .Y(_1_)
+    .Y(_0_)
   );
   \$_ANDNOT_  _3_ (
     .A(clear),
     .B(preset),
-    .Y(_0_)
+    .Y(_1_)
   );
   dffsr2_sub uut (
-    .clear(_0_),
+    .clear(_1_),
     .clk(clk),
     .d(d),
-    .preset(_1_),
+    .preset(_0_),
     .q(q)
   );
 endmodule

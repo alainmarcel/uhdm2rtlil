@@ -618,7 +618,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   wire [49:0] bus_out;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:47.34-47.61" *)
-  wire [31:0] \increment_data$func$dut.sv:47$2.input_data ;
+  wire [31:0] \increment_data$func$dut.sv:47$8.input_data ;
   (* src = "dut.sv:35.23-35.35" *)
   (* wiretype = "\\my_pkg::bus_transaction_t" *)
   wire [49:0] internal_bus;
@@ -1078,5 +1078,5 @@ module simple_package(clk, rst_n, bus_in, bus_out);
     .data_out(bus_out),
     .rst_n(rst_n)
   );
-  assign \increment_data$func$dut.sv:47$2.input_data  = 32'hxxxxxxxx;
+  assign \increment_data$func$dut.sv:47$8.input_data  = 32'hxxxxxxxx;
 endmodule

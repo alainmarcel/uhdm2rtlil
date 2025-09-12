@@ -14,7 +14,7 @@
  (* wiretype = "\\int8_t" *)
  wire [7:0] int8;
 -(* src = "dut.sv:14.12-14.33" *)
-+(* src = "dut.sv:16.12-16.40" *)
++(* src = "dut.sv:15.12-15.36" *)
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),

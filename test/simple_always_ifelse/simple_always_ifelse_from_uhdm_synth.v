@@ -17,44 +17,44 @@ module simple_always_ifelse(clk, rst_n, unit_result, result);
   output [31:0] result;
   wire [31:0] result;
   \$_AND_  _0_ (
-    .A(unit_result[1]),
-    .B(rst_n),
-    .Y(result[25])
-  );
-  \$_AND_  _1_ (
-    .A(unit_result[2]),
-    .B(rst_n),
-    .Y(result[26])
-  );
-  \$_AND_  _2_ (
-    .A(unit_result[3]),
-    .B(rst_n),
-    .Y(result[27])
-  );
-  \$_AND_  _3_ (
-    .A(unit_result[4]),
-    .B(rst_n),
-    .Y(result[28])
-  );
-  \$_AND_  _4_ (
-    .A(unit_result[5]),
-    .B(rst_n),
-    .Y(result[29])
-  );
-  \$_AND_  _5_ (
-    .A(unit_result[6]),
-    .B(rst_n),
+    .A(rst_n),
+    .B(unit_result[6]),
     .Y(result[30])
   );
-  \$_AND_  _6_ (
+  \$_AND_  _1_ (
     .A(unit_result[7]),
     .B(rst_n),
     .Y(result[31])
   );
-  \$_AND_  _7_ (
-    .A(rst_n),
-    .B(unit_result[0]),
+  \$_AND_  _2_ (
+    .A(unit_result[0]),
+    .B(rst_n),
     .Y(result[24])
+  );
+  \$_AND_  _3_ (
+    .A(unit_result[1]),
+    .B(rst_n),
+    .Y(result[25])
+  );
+  \$_AND_  _4_ (
+    .A(unit_result[2]),
+    .B(rst_n),
+    .Y(result[26])
+  );
+  \$_AND_  _5_ (
+    .A(unit_result[3]),
+    .B(rst_n),
+    .Y(result[27])
+  );
+  \$_AND_  _6_ (
+    .A(unit_result[4]),
+    .B(rst_n),
+    .Y(result[28])
+  );
+  \$_AND_  _7_ (
+    .A(unit_result[5]),
+    .B(rst_n),
+    .Y(result[29])
   );
   assign result[23:0] = { result[31:24], result[31:24], result[31:24] };
 endmodule

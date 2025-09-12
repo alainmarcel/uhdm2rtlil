@@ -207,24 +207,8 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
     .Y(\fsm_function$func$dut.sv:29$1.$result [2])
   );
   (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:66.1-92.4" *)
-  \$_SDFF_PP0_  gnt_0_reg /* _54_ */ (
-    .C(clock),
-    .D(_24_[1]),
-    .Q(gnt_0),
-    .R(reset)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:66.1-92.4" *)
-  \$_SDFF_PP0_  gnt_1_reg /* _55_ */ (
-    .C(clock),
-    .D(_24_[0]),
-    .Q(gnt_1),
-    .R(reset)
-  );
-  (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-64.4" *)
-  \$_SDFF_PP1_  \state_reg[0]  /* _56_ */ (
+  \$_SDFF_PP1_  \state_reg[0]  /* _54_ */ (
     .C(clock),
     .D(\fsm_function$func$dut.sv:29$1.$result [0]),
     .Q(state[0]),
@@ -232,7 +216,7 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-64.4" *)
-  \$_SDFF_PP0_  \state_reg[1]  /* _57_ */ (
+  \$_SDFF_PP0_  \state_reg[1]  /* _55_ */ (
     .C(clock),
     .D(\fsm_function$func$dut.sv:29$1.$result [1]),
     .Q(state[1]),
@@ -240,10 +224,26 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-64.4" *)
-  \$_SDFF_PP0_  \state_reg[2]  /* _58_ */ (
+  \$_SDFF_PP0_  \state_reg[2]  /* _56_ */ (
     .C(clock),
     .D(\fsm_function$func$dut.sv:29$1.$result [2]),
     .Q(state[2]),
+    .R(reset)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:66.1-92.4" *)
+  \$_SDFF_PP0_  gnt_0_reg /* _57_ */ (
+    .C(clock),
+    .D(_24_[1]),
+    .Q(gnt_0),
+    .R(reset)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:66.1-92.4" *)
+  \$_SDFF_PP0_  gnt_1_reg /* _58_ */ (
+    .C(clock),
+    .D(_24_[0]),
+    .Q(gnt_1),
     .R(reset)
   );
   assign \fsm_function$func$dut.sv:29$2.req_0  = 1'hx;
