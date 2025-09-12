@@ -111,22 +111,20 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
         if (colon_pos != std::string::npos && dot_pos != std::string::npos) {
             std::string filename = src_info.substr(0, colon_pos);
             std::string line_num = src_info.substr(colon_pos + 1, dot_pos - colon_pos - 1);
-            proc_name_str = "$proc$" + filename + ":" + line_num + "$1";
+            proc_name_str = "$proc$" + filename + ":" + line_num + "$" + std::to_string(incr_autoidx());
         } else {
             // Fallback if we can't parse the source info properly
-            proc_name_str = "$proc$unknown$1";
+            proc_name_str = "$proc$unknown$" + std::to_string(incr_autoidx());
         }
     } else {
         // No source info available, use generic name
-        proc_name_str = "$proc$unknown$1";
+        proc_name_str = "$proc$unknown$" + std::to_string(incr_autoidx());
     }
     
     // Ensure unique process name by checking if it already exists
     RTLIL::IdString proc_name = RTLIL::escape_id(proc_name_str);
-    int suffix = 1;
     while (module->processes.count(proc_name)) {
-        suffix++;
-        std::string unique_name = proc_name_str.substr(0, proc_name_str.rfind('$')) + "$" + std::to_string(suffix);
+        std::string unique_name = proc_name_str.substr(0, proc_name_str.rfind('$')) + "$" + std::to_string(incr_autoidx());
         proc_name = RTLIL::escape_id(unique_name);
     }
     
@@ -1274,9 +1272,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         RTLIL::Memory* mem = module->memories.at(mem_id);
                         
                         // Create temp wires for this memory
-                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), autoidx++);
-                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), autoidx++);
-                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), autoidx++);
+                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), incr_autoidx());
+                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), incr_autoidx());
+                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), incr_autoidx());
                         
                         // Calculate address width from memory size
                         int addr_width = 1;
@@ -2000,7 +1998,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                             if (module->memories.count(RTLIL::escape_id(mem_name))) {
                                 // This is a memory access
                                 // Create a $memrd cell for this read
-                                std::string cell_name = stringf("memrd_%s_%d", mem_name.c_str(), autoidx++);
+                                std::string cell_name = stringf("memrd_%s_%d", mem_name.c_str(), incr_autoidx());
                                 RTLIL::Cell* memrd = module->addCell(RTLIL::escape_id(cell_name), ID($memrd));
                                 
                                 // Build the address with substituted values
@@ -2051,7 +2049,7 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
                                     memrd->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx));
                                     
                                     // Create output wire for the data
-                                    std::string data_wire_name = stringf("memrd_%s_DATA_%d", mem_name.c_str(), autoidx++);
+                                    std::string data_wire_name = stringf("memrd_%s_DATA_%d", mem_name.c_str(), incr_autoidx());
                                     RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
                                     memrd->setPort(ID::DATA, data_wire);
                                     

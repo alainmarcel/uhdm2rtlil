@@ -526,163 +526,163 @@ module generate_test(clk, rst_n, data_in, operand, mode, result, extra_result);
   wire [7:0] \gen_units[3].unit_result ;
   \$_AND_  _00_ (
     .A(rst_n),
-    .B(\gen_units[0].unit_result [0]),
-    .Y(result[0])
-  );
-  \$_AND_  _01_ (
-    .A(\gen_units[0].unit_result [1]),
-    .B(rst_n),
-    .Y(result[1])
-  );
-  \$_AND_  _02_ (
-    .A(\gen_units[0].unit_result [2]),
-    .B(rst_n),
-    .Y(result[2])
-  );
-  \$_AND_  _03_ (
-    .A(\gen_units[0].unit_result [3]),
-    .B(rst_n),
-    .Y(result[3])
-  );
-  \$_AND_  _04_ (
-    .A(\gen_units[0].unit_result [4]),
-    .B(rst_n),
-    .Y(result[4])
-  );
-  \$_AND_  _05_ (
-    .A(\gen_units[0].unit_result [5]),
-    .B(rst_n),
-    .Y(result[5])
-  );
-  \$_AND_  _06_ (
-    .A(\gen_units[0].unit_result [6]),
-    .B(rst_n),
-    .Y(result[6])
-  );
-  \$_AND_  _07_ (
-    .A(\gen_units[0].unit_result [7]),
-    .B(rst_n),
-    .Y(result[7])
-  );
-  \$_AND_  _08_ (
-    .A(\gen_units[1].unit_result [0]),
-    .B(rst_n),
-    .Y(result[8])
-  );
-  \$_AND_  _09_ (
-    .A(\gen_units[1].unit_result [1]),
-    .B(rst_n),
-    .Y(result[9])
-  );
-  \$_AND_  _10_ (
-    .A(\gen_units[1].unit_result [2]),
-    .B(rst_n),
-    .Y(result[10])
-  );
-  \$_AND_  _11_ (
-    .A(\gen_units[1].unit_result [3]),
-    .B(rst_n),
-    .Y(result[11])
-  );
-  \$_AND_  _12_ (
-    .A(\gen_units[1].unit_result [4]),
-    .B(rst_n),
-    .Y(result[12])
-  );
-  \$_AND_  _13_ (
-    .A(\gen_units[1].unit_result [5]),
-    .B(rst_n),
-    .Y(result[13])
-  );
-  \$_AND_  _14_ (
-    .A(\gen_units[1].unit_result [6]),
-    .B(rst_n),
-    .Y(result[14])
-  );
-  \$_AND_  _15_ (
-    .A(\gen_units[1].unit_result [7]),
-    .B(rst_n),
-    .Y(result[15])
-  );
-  \$_AND_  _16_ (
-    .A(\gen_units[2].unit_result [0]),
-    .B(rst_n),
+    .B(\gen_units[2].unit_result [0]),
     .Y(result[16])
   );
-  \$_AND_  _17_ (
+  \$_AND_  _01_ (
     .A(\gen_units[2].unit_result [1]),
     .B(rst_n),
     .Y(result[17])
   );
-  \$_AND_  _18_ (
+  \$_AND_  _02_ (
     .A(\gen_units[2].unit_result [2]),
     .B(rst_n),
     .Y(result[18])
   );
-  \$_AND_  _19_ (
+  \$_AND_  _03_ (
     .A(\gen_units[2].unit_result [3]),
     .B(rst_n),
     .Y(result[19])
   );
-  \$_AND_  _20_ (
+  \$_AND_  _04_ (
     .A(\gen_units[2].unit_result [4]),
     .B(rst_n),
     .Y(result[20])
   );
-  \$_AND_  _21_ (
+  \$_AND_  _05_ (
     .A(\gen_units[2].unit_result [5]),
     .B(rst_n),
     .Y(result[21])
   );
-  \$_AND_  _22_ (
+  \$_AND_  _06_ (
     .A(\gen_units[2].unit_result [6]),
     .B(rst_n),
     .Y(result[22])
   );
-  \$_AND_  _23_ (
+  \$_AND_  _07_ (
     .A(\gen_units[2].unit_result [7]),
     .B(rst_n),
     .Y(result[23])
   );
-  \$_AND_  _24_ (
+  \$_AND_  _08_ (
     .A(\gen_units[3].unit_result [0]),
     .B(rst_n),
     .Y(result[24])
   );
-  \$_AND_  _25_ (
+  \$_AND_  _09_ (
     .A(\gen_units[3].unit_result [1]),
     .B(rst_n),
     .Y(result[25])
   );
-  \$_AND_  _26_ (
+  \$_AND_  _10_ (
     .A(\gen_units[3].unit_result [2]),
     .B(rst_n),
     .Y(result[26])
   );
-  \$_AND_  _27_ (
+  \$_AND_  _11_ (
     .A(\gen_units[3].unit_result [3]),
     .B(rst_n),
     .Y(result[27])
   );
-  \$_AND_  _28_ (
+  \$_AND_  _12_ (
     .A(\gen_units[3].unit_result [4]),
     .B(rst_n),
     .Y(result[28])
   );
-  \$_AND_  _29_ (
+  \$_AND_  _13_ (
     .A(\gen_units[3].unit_result [5]),
     .B(rst_n),
     .Y(result[29])
   );
-  \$_AND_  _30_ (
+  \$_AND_  _14_ (
     .A(\gen_units[3].unit_result [6]),
     .B(rst_n),
     .Y(result[30])
   );
-  \$_AND_  _31_ (
+  \$_AND_  _15_ (
     .A(\gen_units[3].unit_result [7]),
     .B(rst_n),
     .Y(result[31])
+  );
+  \$_AND_  _16_ (
+    .A(\gen_units[0].unit_result [0]),
+    .B(rst_n),
+    .Y(result[0])
+  );
+  \$_AND_  _17_ (
+    .A(\gen_units[0].unit_result [1]),
+    .B(rst_n),
+    .Y(result[1])
+  );
+  \$_AND_  _18_ (
+    .A(\gen_units[0].unit_result [2]),
+    .B(rst_n),
+    .Y(result[2])
+  );
+  \$_AND_  _19_ (
+    .A(\gen_units[0].unit_result [3]),
+    .B(rst_n),
+    .Y(result[3])
+  );
+  \$_AND_  _20_ (
+    .A(\gen_units[0].unit_result [4]),
+    .B(rst_n),
+    .Y(result[4])
+  );
+  \$_AND_  _21_ (
+    .A(\gen_units[0].unit_result [5]),
+    .B(rst_n),
+    .Y(result[5])
+  );
+  \$_AND_  _22_ (
+    .A(\gen_units[0].unit_result [6]),
+    .B(rst_n),
+    .Y(result[6])
+  );
+  \$_AND_  _23_ (
+    .A(\gen_units[0].unit_result [7]),
+    .B(rst_n),
+    .Y(result[7])
+  );
+  \$_AND_  _24_ (
+    .A(\gen_units[1].unit_result [0]),
+    .B(rst_n),
+    .Y(result[8])
+  );
+  \$_AND_  _25_ (
+    .A(\gen_units[1].unit_result [1]),
+    .B(rst_n),
+    .Y(result[9])
+  );
+  \$_AND_  _26_ (
+    .A(\gen_units[1].unit_result [2]),
+    .B(rst_n),
+    .Y(result[10])
+  );
+  \$_AND_  _27_ (
+    .A(\gen_units[1].unit_result [3]),
+    .B(rst_n),
+    .Y(result[11])
+  );
+  \$_AND_  _28_ (
+    .A(\gen_units[1].unit_result [4]),
+    .B(rst_n),
+    .Y(result[12])
+  );
+  \$_AND_  _29_ (
+    .A(\gen_units[1].unit_result [5]),
+    .B(rst_n),
+    .Y(result[13])
+  );
+  \$_AND_  _30_ (
+    .A(\gen_units[1].unit_result [6]),
+    .B(rst_n),
+    .Y(result[14])
+  );
+  \$_AND_  _31_ (
+    .A(\gen_units[1].unit_result [7]),
+    .B(rst_n),
+    .Y(result[15])
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)

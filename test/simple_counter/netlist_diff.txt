@@ -21,97 +21,67 @@
  wire [7:0] _09_;
  \$_NOT_  _10_ (
  .A(count[0]),
-@@ -104,70 +104,78 @@
+@@ -104,6 +104,7 @@
  .B(count[7]),
  .Y(_09_[7])
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[6]  /* _26_ */ (
--.C(clk),
--.D(_09_[6]),
--.Q(count[6]),
--.R(rst_n)
--);
--(* \always_ff  = 32'd1 *)
--(* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[7]  /* _27_ */ (
-+\$_DFF_PN0_  \count_reg[7]  /* _26_ */ (
- .C(clk),
- .D(_09_[7]),
+ \$_DFF_PN0_  \count_reg[6]  /* _26_ */ (
+@@ -112,6 +113,7 @@
+ .Q(count[6]),
+ .R(rst_n)
+ );
++(* \"has_async_reset"  = 32'd1 *)
+ (* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:8.5-14.8" *)
+ \$_DFF_PN0_  \count_reg[7]  /* _27_ */ (
+@@ -120,6 +122,7 @@
  .Q(count[7]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[0]  /* _28_ */ (
-+\$_DFF_PN0_  \count_reg[0]  /* _27_ */ (
- .C(clk),
- .D(_08_[0]),
+ \$_DFF_PN0_  \count_reg[0]  /* _28_ */ (
+@@ -128,6 +131,7 @@
  .Q(count[0]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[1]  /* _29_ */ (
-+\$_DFF_PN0_  \count_reg[1]  /* _28_ */ (
- .C(clk),
- .D(_09_[1]),
+ \$_DFF_PN0_  \count_reg[1]  /* _29_ */ (
+@@ -136,6 +140,7 @@
  .Q(count[1]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[2]  /* _30_ */ (
-+\$_DFF_PN0_  \count_reg[2]  /* _29_ */ (
- .C(clk),
- .D(_09_[2]),
+ \$_DFF_PN0_  \count_reg[2]  /* _30_ */ (
+@@ -144,6 +149,7 @@
  .Q(count[2]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[3]  /* _31_ */ (
-+\$_DFF_PN0_  \count_reg[3]  /* _30_ */ (
- .C(clk),
- .D(_09_[3]),
+ \$_DFF_PN0_  \count_reg[3]  /* _31_ */ (
+@@ -152,6 +158,7 @@
  .Q(count[3]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[4]  /* _32_ */ (
-+\$_DFF_PN0_  \count_reg[4]  /* _31_ */ (
- .C(clk),
- .D(_09_[4]),
+ \$_DFF_PN0_  \count_reg[4]  /* _32_ */ (
+@@ -160,6 +167,7 @@
  .Q(count[4]),
  .R(rst_n)
  );
 +(* \"has_async_reset"  = 32'd1 *)
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:8.5-14.8" *)
--\$_DFF_PN0_  \count_reg[5]  /* _33_ */ (
-+\$_DFF_PN0_  \count_reg[5]  /* _32_ */ (
- .C(clk),
- .D(_09_[5]),
- .Q(count[5]),
- .R(rst_n)
- );
-+(* \"has_async_reset"  = 32'd1 *)
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:8.5-14.8" *)
-+\$_DFF_PN0_  \count_reg[6]  /* _33_ */ (
-+.C(clk),
-+.D(_09_[6]),
-+.Q(count[6]),
-+.R(rst_n)
-+);
- assign _08_[7:1] = count[7:1];
- assign _09_[0] = _08_[0];
- endmodule
+ \$_DFF_PN0_  \count_reg[5]  /* _33_ */ (

@@ -136,7 +136,7 @@ module enum_simple(clk, rst);
   \$_ANDNOT_  _35_ (
     .A(_17_),
     .B(_01_),
-    .Y(_06_)
+    .Y(_07_)
   );
   \$_OR_  _36_ (
     .A(_00_),
@@ -146,7 +146,7 @@ module enum_simple(clk, rst);
   \$_ANDNOT_  _37_ (
     .A(_17_),
     .B(_18_),
-    .Y(_07_)
+    .Y(_06_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.2-39.5" *)
@@ -196,7 +196,7 @@ module enum_simple(clk, rst);
   ) _42_ (
     .A(1'h0),
     .ARGS(),
-    .EN(_07_),
+    .EN(_06_),
     .TRG(clk)
   );
   (* src = "dut.sv:37.5-37.18" *)
@@ -211,7 +211,7 @@ module enum_simple(clk, rst);
   ) _43_ (
     .A(1'h0),
     .ARGS(),
-    .EN(_06_),
+    .EN(_07_),
     .TRG(clk)
   );
   (* src = "dut.sv:42.3-42.25" *)

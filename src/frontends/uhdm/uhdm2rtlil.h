@@ -367,7 +367,8 @@ struct UhdmImporter {
     RTLIL::SigSpec create_mux_cell(const RTLIL::SigSpec& sel, const RTLIL::SigSpec& b, const RTLIL::SigSpec& a, int width = 0);
     bool is_vpi_type(const UHDM::any* obj, int vpi_type);
     void process_assignment_lhs_rhs(const UHDM::assignment* assign, RTLIL::SigSpec& lhs, RTLIL::SigSpec& rhs);
-    
+    std::string generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type, int& autoidx);
+    int incr_autoidx() { return autoidx++; }
     // Parameterized module creation
     std::string create_parameterized_module(const std::string& base_name, RTLIL::Module* base_module);
 };

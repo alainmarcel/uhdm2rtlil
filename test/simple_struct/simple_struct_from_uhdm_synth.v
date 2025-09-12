@@ -268,83 +268,83 @@ module submodule_8bit(bus, out);
   wire _06_;
   wire _07_;
   \$_NAND_  _08_ (
-    .A(bus[14]),
-    .B(bus[22]),
+    .A(bus[13]),
+    .B(bus[21]),
     .Y(_00_)
   );
   \$_ANDNOT_  _09_ (
-    .A(bus[6]),
+    .A(bus[5]),
     .B(_00_),
-    .Y(out[6])
+    .Y(out[5])
   );
   \$_NAND_  _10_ (
-    .A(bus[15]),
-    .B(bus[23]),
+    .A(bus[14]),
+    .B(bus[22]),
     .Y(_01_)
   );
   \$_ANDNOT_  _11_ (
-    .A(bus[7]),
+    .A(bus[6]),
     .B(_01_),
-    .Y(out[7])
+    .Y(out[6])
   );
   \$_NAND_  _12_ (
-    .A(bus[8]),
-    .B(bus[16]),
+    .A(bus[15]),
+    .B(bus[23]),
     .Y(_02_)
   );
   \$_ANDNOT_  _13_ (
-    .A(bus[0]),
+    .A(bus[7]),
     .B(_02_),
-    .Y(out[0])
+    .Y(out[7])
   );
   \$_NAND_  _14_ (
-    .A(bus[9]),
-    .B(bus[17]),
+    .A(bus[8]),
+    .B(bus[16]),
     .Y(_03_)
   );
   \$_ANDNOT_  _15_ (
-    .A(bus[1]),
+    .A(bus[0]),
     .B(_03_),
-    .Y(out[1])
+    .Y(out[0])
   );
   \$_NAND_  _16_ (
-    .A(bus[10]),
-    .B(bus[18]),
+    .A(bus[9]),
+    .B(bus[17]),
     .Y(_04_)
   );
   \$_ANDNOT_  _17_ (
-    .A(bus[2]),
+    .A(bus[1]),
     .B(_04_),
-    .Y(out[2])
+    .Y(out[1])
   );
   \$_NAND_  _18_ (
-    .A(bus[11]),
-    .B(bus[19]),
+    .A(bus[10]),
+    .B(bus[18]),
     .Y(_05_)
   );
   \$_ANDNOT_  _19_ (
-    .A(bus[3]),
+    .A(bus[2]),
     .B(_05_),
-    .Y(out[3])
+    .Y(out[2])
   );
   \$_NAND_  _20_ (
-    .A(bus[12]),
-    .B(bus[20]),
+    .A(bus[11]),
+    .B(bus[19]),
     .Y(_06_)
   );
   \$_ANDNOT_  _21_ (
-    .A(bus[4]),
+    .A(bus[3]),
     .B(_06_),
-    .Y(out[4])
+    .Y(out[3])
   );
   \$_NAND_  _22_ (
-    .A(bus[13]),
-    .B(bus[21]),
+    .A(bus[12]),
+    .B(bus[20]),
     .Y(_07_)
   );
   \$_ANDNOT_  _23_ (
-    .A(bus[5]),
+    .A(bus[4]),
     .B(_07_),
-    .Y(out[5])
+    .Y(out[4])
   );
 endmodule

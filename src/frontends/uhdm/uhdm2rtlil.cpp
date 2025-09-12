@@ -1744,32 +1744,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
-    
-    // Import processes (always blocks) - re-enabled with debugging
-    log("UHDM: Checking for processes...\n");
-    log_flush();
-    if (uhdm_module->Process()) {
-        log("UHDM: Found %d processes to import\n", (int)uhdm_module->Process()->size());
-        log_flush();
-        for (auto process : *uhdm_module->Process()) {
-            log("UHDM: About to import process\n");
-            log_flush();
-            try {
-                import_process(process);
-                log("UHDM: Successfully imported process\n");
-                log_flush();
-            } catch (const std::exception& e) {
-                log_error("UHDM: Exception in process import: %s\n", e.what());
-            } catch (...) {
-                log_error("UHDM: Unknown exception in process import\n");
-            }
-        }
-    } else {
-        log("UHDM: No processes found\n");
-        log_flush();
-    }
-    
-    // Import continuous assignments
+        // Import continuous assignments
     if (uhdm_module->Cont_assigns()) {
         log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
         int assign_idx = 0;
@@ -1804,6 +1779,31 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
     }
+
+    // Import processes (always blocks) - re-enabled with debugging
+    log("UHDM: Checking for processes...\n");
+    log_flush();
+    if (uhdm_module->Process()) {
+        log("UHDM: Found %d processes to import\n", (int)uhdm_module->Process()->size());
+        log_flush();
+        for (auto process : *uhdm_module->Process()) {
+            log("UHDM: About to import process\n");
+            log_flush();
+            try {
+                import_process(process);
+                log("UHDM: Successfully imported process\n");
+                log_flush();
+            } catch (const std::exception& e) {
+                log_error("UHDM: Exception in process import: %s\n", e.what());
+            } catch (...) {
+                log_error("UHDM: Unknown exception in process import\n");
+            }
+        }
+    } else {
+        log("UHDM: No processes found\n");
+        log_flush();
+    }
+    
     
     // Import primitive gates
     import_primitives(uhdm_module);

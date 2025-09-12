@@ -7,6 +7,8 @@
 
 #include "uhdm2rtlil.h"
 #include <uhdm/logic_var.h>
+#include <uhdm/integer_var.h>
+#include <uhdm/ref_var.h>
 #include <uhdm/logic_net.h>
 #include <uhdm/logic_typespec.h>
 #include <uhdm/net.h>
@@ -35,7 +37,7 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Helper function to generate consistent source-location-based cell names
-static std::string generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type, int& autoidx) {
+std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type, int& autoidx) {
     std::string cell_name;
     if (uhdm_obj && !uhdm_obj->VpiFile().empty()) {
         // Extract just the filename from the full path
@@ -45,9 +47,9 @@ static std::string generate_cell_name(const UHDM::any* uhdm_obj, const std::stri
             std::string(full_path.substr(pos + 1)) : std::string(full_path);
         
         cell_name = stringf("$%s$%s:%d$%d", cell_type.c_str(), filename.c_str(), 
-            uhdm_obj->VpiLineNo(), autoidx++);
+            uhdm_obj->VpiLineNo(), incr_autoidx());
     } else {
-        cell_name = stringf("$%s$expression.cpp:%d$%d", cell_type.c_str(), __LINE__, autoidx++);
+        cell_name = stringf("$%s$expression.cpp:%d$%d", cell_type.c_str(), __LINE__, incr_autoidx());
     }
     return cell_name;
 }
@@ -140,10 +142,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 item_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
                 
                 if (has_nested_case) {
-                    // Create intermediate result wire for this case branch
-                    temp_counter++;
+                    // Create intermediate result wire for this case branch using autoidx
+                    int wire_idx = incr_autoidx();
                     std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
-                        temp_counter / 2, func_call_context.c_str(), temp_counter);
+                        wire_idx, func_call_context.c_str(), wire_idx);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -211,10 +213,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 
                 if (has_nested) {
-                    // Create intermediate wire for nested structure
-                    temp_counter++;
+                    // Create intermediate wire for nested structure using autoidx
+                    int wire_idx = incr_autoidx();
                     std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
-                        temp_counter / 2, func_call_context.c_str(), temp_counter);
+                        wire_idx, func_call_context.c_str(), wire_idx);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -255,10 +257,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
                 
                 if (has_nested) {
-                    // Create intermediate wire for nested structure
-                    temp_counter++;
+                    // Create intermediate wire for nested structure using autoidx
+                    int wire_idx = incr_autoidx();
                     std::string intermediate_wire_name = stringf("$%d\\%s.$result$%d", 
-                        temp_counter / 2, func_call_context.c_str(), temp_counter);
+                        wire_idx, func_call_context.c_str(), wire_idx);
                     RTLIL::Wire* intermediate_wire = module->addWire(RTLIL::escape_id(intermediate_wire_name), result_wire->width);
                     
                     // Add source attribute to the intermediate wire
@@ -403,7 +405,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         func_name.c_str(), init_stmt, condition, inc_stmt, loop_body);
                     break;
                 }
-                
+
                 // Try to extract loop bounds for unrolling
                 bool can_unroll = false;
                 std::string loop_var_name;
@@ -422,11 +424,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Extract initialization: i = start_value
                 if (init_stmt->UhdmType() == uhdmassignment) {
                     const assignment* init_assign = any_cast<const assignment*>(init_stmt);
-                    if (init_assign->Lhs() && init_assign->Lhs()->UhdmType() == uhdmref_obj) {
-                        const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
-                        loop_var_name = ref->VpiName();
+                    if (init_assign->Lhs()) {
+                        // Handle both ref_obj and ref_var (integer variables use ref_var)
+                        if (init_assign->Lhs()->UhdmType() == uhdmref_obj) {
+                            const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
+                            loop_var_name = ref->VpiName();
+                        } else if (init_assign->Lhs()->UhdmType() == uhdmref_var) {
+                            const ref_var* ref = any_cast<const ref_var*>(init_assign->Lhs());
+                            loop_var_name = ref->VpiName();
+                        }
                         
-                        if (init_assign->Rhs() && init_assign->Rhs()->UhdmType() == uhdmconstant) {
+                        if (!loop_var_name.empty() && init_assign->Rhs() && init_assign->Rhs()->UhdmType() == uhdmconstant) {
                             const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
                             RTLIL::SigSpec init_spec = import_constant(const_val);
                             if (init_spec.is_fully_const()) {
@@ -510,6 +518,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     // Unroll the loop
                     int64_t loop_end = inclusive ? end_value : end_value - 1;
                     
+                    log("UHDM: Unrolling for loop: %s from %lld to %lld in function %s\n", 
+                        loop_var_name.c_str(), (long long)start_value, (long long)loop_end, func_name.c_str());
+                    
                     if (mode_debug) {
                         log("    Unrolling for loop: %s from %lld to %lld\n", 
                             loop_var_name.c_str(), (long long)start_value, (long long)loop_end);
@@ -536,7 +547,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     
                     // Loop has been unrolled into the case rule
                 } else {
-                    log("UHDM: Warning - for loop in function cannot be unrolled (non-constant bounds)\n");
+                    log("UHDM: Warning - for loop in function %s cannot be unrolled (can_unroll=%d, loop_var=%s, start=%lld, end=%lld)\n", 
+                        func_name.c_str(), can_unroll, loop_var_name.c_str(), (long long)start_value, (long long)end_value);
                 }
         }
         break;
@@ -553,7 +565,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                                                         const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire,
                                                         const func_call* fc) {
     // Create a unique process for this function call
-    static int global_temp_counter = 7; // Global counter for temp wire numbering
+    // Using incr_autoidx() for all temp wire numbering instead of local counter
     
     // Generate process name
     std::string proc_name;
@@ -576,8 +588,15 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         }
     }
     
+
+    // Create temporary wires for function call context
+    // Use Yosys global autoidx counter to match Verilog frontend naming
+    // The Verilog frontend creates two contexts: one for the external result and one for internal wires
+    std::string func_result_id = stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), call_line, incr_autoidx());
+    std::string func_call_id = stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), call_line, incr_autoidx());
+
     // Use the call site line number for the process name (matching Verilog frontend)
-    proc_name = stringf("$proc$%s:%d$%d", filename.c_str(), call_line, global_temp_counter);
+    proc_name = stringf("$proc$%s:%d$%d", filename.c_str(), call_line, incr_autoidx());
     RTLIL::Process* proc = module->addProcess(RTLIL::escape_id(proc_name));
     
     // Add source attribute from function call location
@@ -594,10 +613,6 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         root_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
     }
     
-    // Create temporary wires for function call context
-    std::string func_call_id = stringf("%s$func$%s:%d$2", func_name.c_str(), filename.c_str(), call_line);
-    std::string func_result_id = stringf("%s$func$%s:%d$1", func_name.c_str(), filename.c_str(), call_line);
-    
     // Map function inputs to temporary wires
     std::map<std::string, RTLIL::SigSpec> input_mapping;
     std::vector<RTLIL::Wire*> arg_temp_wires;
@@ -611,8 +626,12 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
             std::string var_name = std::string(var->VpiName());
             int var_width = 1; // Default width
             
+            // Check for integer variables (always 32-bit in Verilog)
+            if (var->UhdmType() == uhdminteger_var) {
+                var_width = 32;  // Integer variables are always 32-bit signed
+            }
             // Try to get the actual width from the variable's typespec
-            if (var->UhdmType() == uhdmlogic_var) {
+            else if (var->UhdmType() == uhdmlogic_var) {
                 const logic_var* lv = any_cast<const logic_var*>(var);
                 if (lv && lv->Typespec()) {
                     const ref_typespec* rts = lv->Typespec();
@@ -655,10 +674,9 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 std::string io_name = std::string(io_decl->VpiName());
                 int width = args[arg_idx].size();
                 
-                // Create temporary wire for this argument
-                global_temp_counter++;
+                // Create temporary wire for this argument using autoidx
                 std::string temp_name = stringf("$0\\%s.%s$%d", 
-                    func_call_id.c_str(), io_name.c_str(), global_temp_counter);
+                    func_call_id.c_str(), io_name.c_str(), incr_autoidx());
                 RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
                 
                 // Add source attribute to temp wire
@@ -678,13 +696,11 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         }
     }
     
-    // Create temporary result wires with proper naming
-    global_temp_counter++;
+    // Create temporary result wires with proper naming using autoidx
     std::string temp_result2_name = stringf("$0\\%s.$result$%d", 
-        func_call_id.c_str(), global_temp_counter);
-    global_temp_counter++;
+        func_call_id.c_str(), incr_autoidx());
     std::string temp_result1_name = stringf("$1\\%s.$result$%d", 
-        func_call_id.c_str(), global_temp_counter);
+        func_call_id.c_str(), incr_autoidx());
     
     RTLIL::Wire* temp_result2_wire = module->addWire(RTLIL::escape_id(temp_result2_name), result_wire->width);
     RTLIL::Wire* temp_result1_wire = module->addWire(RTLIL::escape_id(temp_result1_name), result_wire->width);
@@ -699,7 +715,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     root_case->actions.push_back(RTLIL::SigSig(temp_result2_wire, temp_result1_wire));
     
     std::string temp_result_final_name = stringf("$0\\%s.$result$%d",
-        func_result_id.c_str(), global_temp_counter - 4);
+        func_result_id.c_str(), incr_autoidx());
     RTLIL::Wire* temp_result_final_wire = module->addWire(RTLIL::escape_id(temp_result_final_name), result_wire->width);
     
     // Add source attribute to final result wire
@@ -717,7 +733,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     }
     
     // Process the function body into switches
-    int func_temp_counter = global_temp_counter;
+    int func_temp_counter = 0; // Not used anymore, kept for compatibility
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
     
     // Create nosync wires for the function context (these get set to 'x)
