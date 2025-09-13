@@ -2781,11 +2781,37 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
     }
     
-    // Check if this is an integer loop variable (common ones like i, j, k)
-    // These should be created as 32-bit wires (integer width in Verilog)
-    if (ref_name == "i" || ref_name == "j" || ref_name == "k") {
-        log("Reference to integer loop variable '%s' - creating 32-bit wire\n", ref_name.c_str());
-        return create_wire(ref_name, 32);
+    // Check if this ref_obj points to a variable with an integer typespec via Actual_group()
+    // The Actual_group() can point directly to an integer_var or other variable types
+    if (uhdm_ref->Actual_group()) {
+        const any* actual = uhdm_ref->Actual_group();
+        
+        // Check if the actual is an integer_var - these are always 32-bit
+        if (actual->UhdmType() == uhdminteger_var) {
+            log("Reference to integer variable '%s' via Actual_group() - creating 32-bit wire\n", ref_name.c_str());
+            return create_wire(ref_name, 32);
+        }
+        
+        // For other variable types, check their typespec
+        const typespec* ts = nullptr;
+        
+        if (actual->UhdmType() == uhdmlogic_var) {
+            const logic_var* log_var = any_cast<const logic_var*>(actual);
+            if (log_var && log_var->Typespec() && log_var->Typespec()->Actual_typespec()) {
+                ts = log_var->Typespec()->Actual_typespec();
+            }
+        } else if (actual->UhdmType() == uhdmvariables) {
+            const variables* var = any_cast<const variables*>(actual);
+            if (var && var->Typespec() && var->Typespec()->Actual_typespec()) {
+                ts = var->Typespec()->Actual_typespec();
+            }
+        }
+        
+        // Check if the typespec is integer
+        if (ts && ts->UhdmType() == uhdminteger_typespec) {
+            log("Reference to variable with integer typespec '%s' - creating 32-bit wire\n", ref_name.c_str());
+            return create_wire(ref_name, 32);
+        }
     }
     
     // If not found, create a new wire
