@@ -15,21 +15,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 102 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 94% (96/102 tests functional)
-- **Perfect Matches**: 91 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Success Rate**: 97% (99/102 tests functional)
+- **Perfect Matches**: 94 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 6 tests with issues:
+- **Known Failures**: 3 tests with issues:
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
-  - `many_functions` - Has remaining issues with some function output assignments
-  - `function_loop` - Loop-based functions with array construction not fully supported
-  - `function_mixed` - Complex mixed-mode functions with nested control flow not fully supported
 - **Recent Fixes**:
   - `genblk_order` - Fixed nested generate blocks with same name ✅
     - Reordered generate scope import to process nested scopes before continuous assignments
@@ -54,9 +51,13 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - Support for functions with if/else, case statements, and expressions
     - Added support for integer variables in functions (32-bit signed)
     - Fixed loop variable detection for ref_var types enabling loop unrolling
+    - Removed hardcoded "result" assumptions - functions can assign to any variable
+    - Fixed parameter vs variable detection in function return value scanning
+    - Added support for named_begin blocks in functions
     - `code_tidbits_fsm_using_function` now passes equivalence check
     - `simple_function` test added and passing
     - New function tests added: `function_arith`, `function_bool`, `function_case`, `function_nested` (all passing)
+    - `function_loop`, `function_mixed`, `many_functions` - Fixed and now passing all tests
   - **Processing Order and autoidx Consistency** ✅
     - Fixed processing order: continuous assignments now processed before always blocks
     - Consistent use of Yosys global autoidx counter for unique naming

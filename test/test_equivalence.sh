@@ -87,8 +87,9 @@ fi
 if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1; then
     # UHDM has X assignments - check if Verilog has them too
     # Extract signal names more carefully, handling escaped identifiers and spaces
-    UHDM_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sort -u)
-    VERILOG_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$VERILOG_SYNTH" 2>/dev/null | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sort -u || true)
+    # Also normalize function-generated signal names by replacing $<integer> with @
+    UHDM_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sed 's/\$[0-9]\+\./\$@./g' | sort -u)
+    VERILOG_X_ASSIGNS=$(grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$VERILOG_SYNTH" 2>/dev/null | sed 's/^[[:space:]]*assign[[:space:]]*//; s/[[:space:]]*=.*//' | sed 's/\$[0-9]\+\./\$@./g' | sort -u || true)
     
     # Check each X assignment in UHDM
     HAS_UNIQUE_X=0
