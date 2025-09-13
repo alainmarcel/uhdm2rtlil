@@ -2869,10 +2869,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                                 const assignment* assign = any_cast<const assignment*>(stmt);
                                                 if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefVar) {
                                                     const ref_var* var_ref = any_cast<const ref_var*>(assign->Lhs());
-                                                    std::string var_name = std::string(var_ref->VpiName());
-                                                    // TODO: More generic solution
-                                                    if (var_name == "j" && assign->Rhs()) {
+                                                    const UHDM::any* actual = var_ref->Actual_group();
+                                                    // TODO: support all flavors of integers (short...)
+                                                    if (actual && (actual->UhdmType() == uhdminteger_var) && assign->Rhs()) {
                                                         if (assign->Rhs()->VpiType() == vpiConstant) {
+                                                            std::string var_name = std::string(var_ref->VpiName());
                                                             const constant* const_val = any_cast<const constant*>(assign->Rhs());
                                                             RTLIL::SigSpec val_spec = import_constant(const_val);
                                                             if (val_spec.is_fully_const()) {
@@ -3261,18 +3262,17 @@ void UhdmImporter::import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL:
             if (stmt->VpiType() == vpiAssignment) {
                 const assignment* assign = any_cast<const assignment*>(stmt);
                 if (assign->Lhs()) {
-                    std::string var_name;
+                    const UHDM::any* actual = nullptr;
                     if (assign->Lhs()->VpiType() == vpiRefVar) {
-                        var_name = std::string(any_cast<const ref_var*>(assign->Lhs())->VpiName());
+                        const ref_var* var = any_cast<const ref_var*>(assign->Lhs());
+                        actual = var->Actual_group();
                     } else if (assign->Lhs()->VpiType() == vpiRefObj) {
-                        var_name = std::string(any_cast<const ref_obj*>(assign->Lhs())->VpiName());
+                        const ref_obj* obj = any_cast<const ref_obj*>(assign->Lhs());
+                        actual = obj->Actual_group();
                     }
-                    
-                    // TODO: More generic solution
-                    // Check if this is an integer variable (like i, j used in loops)
-                    // For now, skip assignments to common loop variable names
-                    if (var_name == "i" || var_name == "j" || var_name == "k") {
-                        log("          Skipping assignment to loop variable '%s'\n", var_name.c_str());
+                    // TODO: support all flavors of integers (short...)
+                    if (actual && actual->UhdmType() == uhdminteger_var) {
+                        log("          Skipping assignment to loop variable '%s'\n", assign->Lhs()->VpiName().data());
                         stmt_idx++;
                         continue;
                     }
