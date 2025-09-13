@@ -128,6 +128,10 @@ struct UhdmImporter {
     // Loop variable values for unrolling
     std::map<std::string, int> loop_values;
     
+    // Track accumulator values across loop iterations
+    // Maps variable name to the current accumulated value
+    std::map<std::string, RTLIL::SigSpec> loop_accumulators;
+    
     // Current condition for conditional memory writes
     RTLIL::SigSpec current_condition;
     
@@ -328,6 +332,8 @@ struct UhdmImporter {
     RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
     
     // Process function body and generate process blocks
+    void scan_for_return_variables(const UHDM::any* stmt, const std::string& func_name,
+                                   std::set<std::string>& return_vars, const UHDM::function* func_def = nullptr);
     void process_stmt_to_case(const UHDM::any* stmt, RTLIL::CaseRule* case_rule,
                               RTLIL::Wire* result_wire,
                               std::map<std::string, RTLIL::SigSpec>& input_mapping,
