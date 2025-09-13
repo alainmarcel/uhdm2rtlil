@@ -81,6 +81,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         break;
     }
     
+    case uhdmnamed_begin: {
+        // Handle named begin-end block
+        const named_begin* nbg = any_cast<const named_begin*>(stmt);
+        if (nbg && nbg->Stmts()) {
+            for (auto s : *nbg->Stmts()) {
+                process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+            }
+        }
+        break;
+    }
+    
     case uhdmcase_stmt: {
         // Handle case statement as a switch
         const case_stmt* cs = any_cast<const case_stmt*>(stmt);
@@ -351,9 +362,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                 if (lhs_ref) {
                     std::string lhs_name = std::string(lhs_ref->VpiName());
-                    if (lhs_name == "result") {
-                        // Check if RHS is an operation that includes "result"
-                        // This indicates accumulation (result = result + expr)
+                    // Check if this variable is mapped in input_mapping (meaning it could be a return variable)
+                    // and if RHS is an accumulative operation
+                    auto it = input_mapping.find(lhs_name);
+                    if (it != input_mapping.end() && it->second == result_wire) {
+                        // This is a return variable being accumulated
                         const operation* rhs_op = any_cast<const operation*>(assign->Rhs());
                         if (rhs_op && rhs_op->VpiOpType() == vpiAddOp) {
                             // This is likely an accumulative pattern
@@ -361,7 +374,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             // but we skip the assignment itself
                             skip_assignment = true;
                             if (mode_debug) {
-                                log("UHDM: Skipping accumulative assignment in loop iteration\n");
+                                log("UHDM: Skipping accumulative assignment to return variable '%s' in loop iteration\n",
+                                    lhs_name.c_str());
                             }
                         }
                     }
@@ -373,14 +387,17 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                 if (lhs_ref) {
                     std::string lhs_name = std::string(lhs_ref->VpiName());
-                    if (lhs_name == func_name || lhs_name == "result") {
-                        // Assign to the result wire
-                        // "result" is the common local variable name for the return value
+                    if (lhs_name == func_name) {
+                        // Direct assignment to function name - use result wire
                         lhs_sig = result_wire;
+                        if (mode_debug) {
+                            log("UHDM: Direct assignment to function %s, using result wire\n", func_name.c_str());
+                        }
                     } else {
-                        // Check if it's a local variable or input
+                        // Check if it's a local variable, input, or return variable
                         auto it = input_mapping.find(lhs_name);
                         if (it != input_mapping.end()) {
+                            // This variable is mapped (could be input arg or return variable)
                             lhs_sig = it->second;
                         } else {
                             // Create a function-scoped temporary wire for local variable
@@ -421,8 +438,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                 std::string base_name = std::string(bs->VpiName());
                 
-                if (base_name == func_name || base_name == "result") {
-                    // Assigning to a bit of the return value or result variable
+                if (base_name == func_name) {
+                    // Assigning to a bit of the return value
                     RTLIL::SigSpec index_sig;
                     if (bs->VpiIndex()) {
                         index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
@@ -436,23 +453,8 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     if (index_sig.is_fully_const()) {
                         int idx = index_sig.as_int();
                         
-                        // Get the target wire - either result_wire or the local result variable
+                        // Use the result_wire for assignments to the function name
                         RTLIL::Wire* target_wire = result_wire;
-                        if (base_name == "result") {
-                            // Check if we have a local result variable
-                            auto it = input_mapping.find("result");
-                            if (it != input_mapping.end() && it->second.is_wire()) {
-                                target_wire = it->second.as_wire();
-                            } else {
-                                // Create or get the local result variable
-                                std::string local_var_name = stringf("$%s$local_result", func_call_context.c_str());
-                                target_wire = module->wire(RTLIL::escape_id(local_var_name));
-                                if (!target_wire) {
-                                    target_wire = module->addWire(RTLIL::escape_id(local_var_name), result_wire->width);
-                                    input_mapping["result"] = target_wire;
-                                }
-                            }
-                        }
                         
                         if (idx >= 0 && idx < target_wire->width) {
                             lhs_sig = RTLIL::SigSpec(target_wire, idx, 1);
@@ -706,8 +708,57 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                     
                     // Store loop variable in loop_values for substitution during expression import
-                    // For accumulative loops, collect all the intermediate results
-                    std::vector<RTLIL::SigSpec> iteration_results;
+                    // For accumulative loops, we need to detect if this is an accumulative pattern
+                    // and handle it specially
+                    
+                    // Check if the loop body contains an accumulative assignment pattern
+                    bool is_accumulative = false;
+                    std::string accumulator_var;
+                    
+                    // Check if the loop body contains an accumulative assignment pattern
+                    // The loop body might be a begin block containing the assignment
+                    const any* check_stmt = loop_body;
+                    
+                    // If it's a begin block, look at the first statement inside
+                    if (check_stmt && check_stmt->UhdmType() == uhdmbegin) {
+                        const begin* bg = any_cast<const begin*>(check_stmt);
+                        if (bg && bg->Stmts() && !bg->Stmts()->empty()) {
+                            check_stmt = bg->Stmts()->at(0);
+                        }
+                    }
+                    
+                    if (check_stmt && check_stmt->UhdmType() == uhdmassignment) {
+                        const assignment* assign = any_cast<const assignment*>(check_stmt);
+                        if (assign && assign->Lhs() && assign->Lhs()->UhdmType() == uhdmref_obj) {
+                            const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                            if (lhs_ref) {
+                                accumulator_var = std::string(lhs_ref->VpiName());
+                                // Check if this variable is in input_mapping (could be result or function name)
+                                auto it = input_mapping.find(accumulator_var);
+                                if (it != input_mapping.end() && assign->Rhs() && 
+                                    assign->Rhs()->UhdmType() == uhdmoperation) {
+                                    const operation* op = any_cast<const operation*>(assign->Rhs());
+                                    if (op && op->VpiOpType() == vpiAddOp) {
+                                        is_accumulative = true;
+                                        log("UHDM: Detected accumulative loop for variable '%s'\n", accumulator_var.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Track the current accumulated value for chaining
+                    RTLIL::SigSpec current_accumulator;
+                    if (is_accumulative) {
+                        // Initialize with the current value of the accumulator variable
+                        auto it = input_mapping.find(accumulator_var);
+                        if (it != input_mapping.end()) {
+                            // Start with zero for the accumulator
+                            current_accumulator = RTLIL::SigSpec(RTLIL::State::S0, it->second.size());
+                            // Store in loop_accumulators so import_expression can use it
+                            loop_accumulators[accumulator_var] = current_accumulator;
+                        }
+                    }
                     
                     for (int64_t i = start_value; i <= loop_end; i += increment) {
                         // Set the loop variable value - use loop_values for substitution
@@ -719,8 +770,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             log("      Iteration %lld (last=%d)\n", (long long)i, is_last_iteration);
                         }
                         
+                        // For accumulative loops, update the accumulator mapping for this iteration
+                        if (is_accumulative && !current_accumulator.empty()) {
+                            loop_accumulators[accumulator_var] = current_accumulator;
+                        }
+                        
                         // Mark whether we should skip assignments (for all but last iteration)
-                        if (!is_last_iteration) {
+                        if (!is_last_iteration && is_accumulative) {
                             loop_values["__in_loop_iteration__"] = 1;
                         }
                         
@@ -728,13 +784,62 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         if (mode_debug) {
                             log("      Processing loop body for iteration %lld\n", (long long)i);
                         }
+                        
+                        // Save the current state of input_mapping for the accumulator
+                        RTLIL::SigSpec saved_accumulator_mapping;
+                        if (is_accumulative) {
+                            auto it = input_mapping.find(accumulator_var);
+                            if (it != input_mapping.end()) {
+                                saved_accumulator_mapping = it->second;
+                                // Temporarily map the accumulator to its current accumulated value
+                                it->second = current_accumulator;
+                            }
+                        }
+                        
                         process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        
+                        // After processing, get the output of this iteration for chaining
+                        if (is_accumulative) {
+                            // Get the assignment from the loop body (might be inside a begin block)
+                            const any* assign_stmt = loop_body;
+                            if (assign_stmt && assign_stmt->UhdmType() == uhdmbegin) {
+                                const begin* bg = any_cast<const begin*>(assign_stmt);
+                                if (bg && bg->Stmts() && !bg->Stmts()->empty()) {
+                                    assign_stmt = bg->Stmts()->at(0);
+                                }
+                            }
+                            
+                            if (assign_stmt && assign_stmt->UhdmType() == uhdmassignment) {
+                                const assignment* assign = any_cast<const assignment*>(assign_stmt);
+                                if (assign && assign->Rhs()) {
+                                    // Import the RHS expression to get the output wire
+                                    RTLIL::SigSpec iter_result = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
+                                    if (!iter_result.empty()) {
+                                        current_accumulator = iter_result;
+                                        log("UHDM: Updated accumulator to iteration %lld result\n", (long long)i);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Restore the original mapping
+                        if (is_accumulative && !saved_accumulator_mapping.empty()) {
+                            input_mapping[accumulator_var] = saved_accumulator_mapping;
+                        }
                         
                         // Clear the loop iteration marker
                         loop_values.erase("__in_loop_iteration__");
-                        
-                        // For loops that build arrays (like func_loop), don't return early
-                        // The result is accumulated in function_results[func_name]
+                    }
+                    
+                    // After the loop, create the final assignment from accumulated value to result
+                    if (is_accumulative && !current_accumulator.empty()) {
+                        auto it = input_mapping.find(accumulator_var);
+                        if (it != input_mapping.end()) {
+                            case_rule->actions.push_back(RTLIL::SigSig(it->second, current_accumulator));
+                            log("UHDM: Created final accumulator assignment for '%s'\n", accumulator_var.c_str());
+                        }
+                        // Clear the accumulator tracking
+                        loop_accumulators.erase(accumulator_var);
                     }
                     
                     // Clear loop variable after loop
@@ -751,6 +856,132 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     
     default:
         // Other statement types - ignore for now
+        break;
+    }
+}
+
+// Helper function to scan a statement and find variables assigned to the function name
+void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string& func_name, 
+                                              std::set<std::string>& return_vars, const function* func_def) {
+    if (!stmt) return;
+    
+    int type = stmt->UhdmType();
+    switch(type) {
+    case uhdmassignment: {
+        const assignment* assign = any_cast<const assignment*>(stmt);
+        if (assign && assign->Lhs() && assign->Rhs()) {
+            // Check if LHS is the function name
+            if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs_ref && std::string(lhs_ref->VpiName()) == func_name) {
+                    // RHS is being assigned to function name - track what it is
+                    // Track intermediate variables that are assigned to the function
+                    if (assign->Rhs()->UhdmType() == uhdmref_obj) {
+                        const ref_obj* rhs_ref = any_cast<const ref_obj*>(assign->Rhs());
+                        if (rhs_ref) {
+                            std::string var_name = std::string(rhs_ref->VpiName());
+                            // Check if this is a local variable (not an input parameter)
+                            // by seeing if it's NOT already in input_mapping
+                            // Input parameters would have been mapped already
+                            bool is_input_param = false;
+                            if (func_def && func_def->Io_decls()) {
+                                for (auto io : *func_def->Io_decls()) {
+                                    if (std::string(io->VpiName()) == var_name) {
+                                        is_input_param = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Also check if this is a parameter (constant) 
+                            // Parameters should not be treated as return variables
+                            bool is_parameter = false;
+                            
+                            // Check if the ref_obj has Actual_group pointing to a parameter
+                            if (rhs_ref->Actual_group() && rhs_ref->Actual_group()->VpiType() == vpiParameter) {
+                                is_parameter = true;
+                            }
+                            
+                            // Also check module parameters
+                            RTLIL::IdString param_id = RTLIL::escape_id(var_name);
+                            if (module && module->parameter_default_values.count(param_id)) {
+                                is_parameter = true;
+                            }
+                            
+                            if (!is_input_param && !is_parameter) {
+                                return_vars.insert(var_name);
+                                if (mode_debug) {
+                                    log("UHDM: Found return variable '%s' for function %s\n", 
+                                        var_name.c_str(), func_name.c_str());
+                                }
+                            } else if (is_parameter && mode_debug) {
+                                log("UHDM: Skipping parameter '%s' in function %s (not a return variable)\n",
+                                    var_name.c_str(), func_name.c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmbegin: {
+        const begin* bg = any_cast<const begin*>(stmt);
+        if (bg && bg->Stmts()) {
+            for (auto s : *bg->Stmts()) {
+                scan_for_return_variables(s, func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmnamed_begin: {
+        const named_begin* nbg = any_cast<const named_begin*>(stmt);
+        if (nbg && nbg->Stmts()) {
+            for (auto s : *nbg->Stmts()) {
+                scan_for_return_variables(s, func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmif_else: {
+        const if_else* ie = any_cast<const if_else*>(stmt);
+        if (ie) {
+            if (ie->VpiStmt()) {
+                scan_for_return_variables(ie->VpiStmt(), func_name, return_vars, func_def);
+            }
+            if (ie->VpiElseStmt()) {
+                scan_for_return_variables(ie->VpiElseStmt(), func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmcase_stmt: {
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (cs && cs->Case_items()) {
+            for (auto item : *cs->Case_items()) {
+                const case_item* ci = any_cast<const case_item*>(item);
+                if (ci && ci->Stmt()) {
+                    scan_for_return_variables(ci->Stmt(), func_name, return_vars, func_def);
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmfor_stmt: {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (fs && fs->VpiStmt()) {
+            scan_for_return_variables(fs->VpiStmt(), func_name, return_vars, func_def);
+        }
+        break;
+    }
+    
+    // Add other statement types as needed
+    default:
         break;
     }
 }
@@ -925,6 +1156,24 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     RTLIL::Wire* func_result_wire = module->wire(RTLIL::escape_id(result_var));
     if (!func_result_wire) {
         func_result_wire = module->addWire(RTLIL::escape_id(result_var), result_wire->width);
+    }
+    
+    // Prescan the function to identify which variables are used as return values
+    std::set<std::string> return_vars;
+    scan_for_return_variables(func_def->Stmt(), func_name, return_vars, func_def);
+    
+    // Always add the function name itself as a return variable
+    // This handles direct assignments like fsm_function = IDLE
+    input_mapping[func_name] = temp_result1_wire;
+    log("UHDM: Mapping function name '%s' to result wire\n", func_name.c_str());
+    
+    // Also add any actual local variables that are assigned to the function name
+    // The prescanning found these intermediate variables
+    // We already filtered out input parameters in scan_for_return_variables
+    for (const auto& var : return_vars) {
+        input_mapping[var] = temp_result1_wire;
+        log("UHDM: Mapping return variable '%s' to result wire for function %s\n",
+            var.c_str(), func_name.c_str());
     }
     
     // Process the function body into switches
@@ -1295,9 +1544,19 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 
                 // Get the function definition
                 const function* func_def = fc->Function();
+                log("UHDM: func_def pointer: %p\n", (void*)func_def);
                 if (!func_def) {
                     log_warning("Function definition not found for %s\n", func_name.c_str());
                     return RTLIL::SigSpec();
+                }
+                
+                if (mode_debug) {
+                    log("UHDM: Function definition found for %s\n", func_name.c_str());
+                    if (func_def->Stmt()) {
+                        log("UHDM: Function has statement body\n");
+                    } else {
+                        log("UHDM: Function has no statement body!\n");
+                    }
                 }
                 
                 // Get function return width
@@ -2292,6 +2551,9 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (it != input_mapping->end()) {
             if (mode_debug)
                 log("    Found %s in function input_mapping\n", ref_name.c_str());
+            log("UHDM: Function parameter %s mapped to signal %s\n", 
+                ref_name.c_str(), it->second.is_wire() ? 
+                it->second.as_wire()->name.c_str() : "const/temp");
             return it->second;
         }
     }
