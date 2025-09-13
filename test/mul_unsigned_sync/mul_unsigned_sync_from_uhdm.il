@@ -6,7 +6,7 @@ attribute \top 1
 module \mul_unsigned_sync
   parameter \M 6
   parameter \N 3
-  wire width 9 $auto$expression.cpp:1858:import_operation$2
+  wire width 9 $auto$expression.cpp:1918:import_operation$2
   attribute \src "dut.sv:1.41-1.42"
   wire width 6 input 4 \a
   attribute \reg 1
@@ -62,7 +62,7 @@ module \mul_unsigned_sync
     parameter \SRST_VALUE 9'000000000
     parameter \WIDTH 9
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1858:import_operation$2
+    connect \D $auto$expression.cpp:1918:import_operation$2
     connect \EN \en
     connect \Q \p
     connect \SRST \rst
@@ -75,6 +75,6 @@ module \mul_unsigned_sync
     parameter \Y_WIDTH 9
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1858:import_operation$2
+    connect \Y $auto$expression.cpp:1918:import_operation$2
   end
 end
