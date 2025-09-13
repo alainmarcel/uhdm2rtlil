@@ -3,7 +3,7 @@ autoidx 3
 attribute \src "dut.sv:3.1-9.10"
 attribute \cells_not_processed 1
 module \mux16
-  wire $auto$expression.cpp:2737:import_bit_select$1
+  wire $auto$expression.cpp:2797:import_bit_select$1
   attribute \src "dut.sv:3.15-3.16"
   wire width 16 input 1 \D
   attribute \src "dut.sv:3.18-3.19"
@@ -19,7 +19,7 @@ module \mux16
     parameter \Y_WIDTH 1
     connect \A \D
     connect \B \S
-    connect \Y $auto$expression.cpp:2737:import_bit_select$1
+    connect \Y $auto$expression.cpp:2797:import_bit_select$1
   end
-  connect \Y $auto$expression.cpp:2737:import_bit_select$1
+  connect \Y $auto$expression.cpp:2797:import_bit_select$1
 end

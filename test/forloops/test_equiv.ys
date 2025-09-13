@@ -5,7 +5,7 @@
 read_verilog -lib +/simcells.v
 
 # Read and process Verilog version (gold)
-read_verilog -sv /home/alain/uhdm2rtlil/test/many_functions/many_functions_from_verilog_synth.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/forloops/forloops_from_verilog_synth.v
 hierarchy -auto-top
 proc
 flatten
@@ -15,7 +15,7 @@ design -stash gold
 # Read and process UHDM version (gate)
 design -reset
 read_verilog -lib +/simcells.v
-read_verilog -sv /home/alain/uhdm2rtlil/test/many_functions/many_functions_from_uhdm_synth.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/forloops/forloops_from_uhdm_synth.v
 hierarchy -auto-top
 proc
 flatten
@@ -51,7 +51,7 @@ select -clear
 # which is specifically designed for gate-level netlists
 design -reset
 read_verilog -lib +/simcells.v
-read_verilog -sv /home/alain/uhdm2rtlil/test/many_functions/many_functions_from_verilog_synth.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/forloops/forloops_from_verilog_synth.v
 hierarchy -auto-top
 proc
 flatten
@@ -59,7 +59,7 @@ design -stash gold_flat
 
 design -reset
 read_verilog -lib +/simcells.v
-read_verilog -sv /home/alain/uhdm2rtlil/test/many_functions/many_functions_from_uhdm_synth.v
+read_verilog -sv /home/alain/uhdm2rtlil/test/forloops/forloops_from_uhdm_synth.v
 hierarchy -auto-top
 proc
 flatten

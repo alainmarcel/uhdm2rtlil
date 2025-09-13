@@ -242,8 +242,21 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Check if if branch contains nested structures
                 bool has_nested = false;
                 if (if_stmt && (if_stmt->UhdmType() == uhdmif_else || 
-                                if_stmt->UhdmType() == uhdmcase_stmt)) {
+                                if_stmt->UhdmType() == uhdmcase_stmt ||
+                                if_stmt->UhdmType() == uhdmfor_stmt)) {
                     has_nested = true;
+                    
+                    // Also check for begin blocks that contain for loops
+                } else if (if_stmt && if_stmt->UhdmType() == uhdmbegin) {
+                    const begin* bg = any_cast<const begin*>(if_stmt);
+                    if (bg && bg->Stmts()) {
+                        for (auto s : *bg->Stmts()) {
+                            if (s->UhdmType() == uhdmfor_stmt) {
+                                has_nested = true;
+                                break;
+                            }
+                        }
+                    }
                 }
                 
                 if (has_nested) {
@@ -325,13 +338,44 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             RTLIL::SigSpec lhs_sig;
             RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
             
+            // For accumulative assignments in loops, we need special handling
+            // The issue is that result = result + expr creates conflicting assignments
+            // when unrolled. We need to skip creating individual assignments and
+            // only keep the final accumulated value.
+            
+            // Check if we're in a loop iteration and this is an accumulative assignment
+            bool skip_assignment = false;
+            if (loop_values.count("__in_loop_iteration__") && 
+                assign->Lhs()->UhdmType() == uhdmref_obj &&
+                assign->Rhs() && assign->Rhs()->UhdmType() == uhdmoperation) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs_ref) {
+                    std::string lhs_name = std::string(lhs_ref->VpiName());
+                    if (lhs_name == "result") {
+                        // Check if RHS is an operation that includes "result"
+                        // This indicates accumulation (result = result + expr)
+                        const operation* rhs_op = any_cast<const operation*>(assign->Rhs());
+                        if (rhs_op && rhs_op->VpiOpType() == vpiAddOp) {
+                            // This is likely an accumulative pattern
+                            // The hardware cells are created by import_expression
+                            // but we skip the assignment itself
+                            skip_assignment = true;
+                            if (mode_debug) {
+                                log("UHDM: Skipping accumulative assignment in loop iteration\n");
+                            }
+                        }
+                    }
+                }
+            }
+            
             // Check if LHS is the function name (return value)
             if (assign->Lhs()->UhdmType() == uhdmref_obj) {
                 const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                 if (lhs_ref) {
                     std::string lhs_name = std::string(lhs_ref->VpiName());
-                    if (lhs_name == func_name) {
+                    if (lhs_name == func_name || lhs_name == "result") {
                         // Assign to the result wire
+                        // "result" is the common local variable name for the return value
                         lhs_sig = result_wire;
                     } else {
                         // Check if it's a local variable or input
@@ -448,7 +492,10 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         rhs_sig.extend_u0(lhs_sig.size());
                     }
                 }
-                case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
+                // Only create the assignment if we're not skipping it
+                if (!skip_assignment) {
+                    case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
+                }
             }
         }
         break;
@@ -659,12 +706,22 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                     }
                     
                     // Store loop variable in loop_values for substitution during expression import
+                    // For accumulative loops, collect all the intermediate results
+                    std::vector<RTLIL::SigSpec> iteration_results;
+                    
                     for (int64_t i = start_value; i <= loop_end; i += increment) {
                         // Set the loop variable value - use loop_values for substitution
                         loop_values[loop_var_name] = i;
                         
+                        bool is_last_iteration = (i + increment > loop_end);
+                        
                         if (mode_debug) {
-                            log("      Iteration %lld\n", (long long)i);
+                            log("      Iteration %lld (last=%d)\n", (long long)i, is_last_iteration);
+                        }
+                        
+                        // Mark whether we should skip assignments (for all but last iteration)
+                        if (!is_last_iteration) {
+                            loop_values["__in_loop_iteration__"] = 1;
                         }
                         
                         // Process the loop body with the current iteration value
@@ -672,6 +729,9 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             log("      Processing loop body for iteration %lld\n", (long long)i);
                         }
                         process_stmt_to_case(loop_body, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                        
+                        // Clear the loop iteration marker
+                        loop_values.erase("__in_loop_iteration__");
                         
                         // For loops that build arrays (like func_loop), don't return early
                         // The result is accumulated in function_results[func_name]
