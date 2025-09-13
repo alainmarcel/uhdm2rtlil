@@ -438,5 +438,71 @@
             "preLaunchTask": "",
             "miDebuggerPath": "/usr/bin/gdb"
         },
+        {
+            "name": "Debug UHDM Plugin - simple_function",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/simple_function/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/simple_function",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on struct handling",
+                    "text": "break UhdmImporter::import_struct",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on expression import",
+                    "text": "break UhdmImporter::import_expression",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UHDM Plugin - function_loop",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/out/current/bin/yosys",
+            "args": [
+                "-s", "${workspaceFolder}/test/function_loop/test_uhdm_read_debug.ys"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/test/function_loop",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on struct handling",
+                    "text": "break UhdmImporter::import_struct",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set breakpoint on expression import",
+                    "text": "break UhdmImporter::import_expression",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
     ]
 }

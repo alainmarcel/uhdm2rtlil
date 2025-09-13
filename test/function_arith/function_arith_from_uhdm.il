@@ -5,7 +5,7 @@ attribute \src "dut.sv:2.1-27.10"
 attribute \top 1
 module \function_arith
   parameter \WIDTH 8
-  wire width 8 $auto$expression.cpp:2205:import_operation$14
+  wire width 8 $auto$expression.cpp:2226:import_operation$14
   wire width 8 $auto$rtlil.cc:3006:And$17
   wire width 8 $auto$rtlil.cc:3007:Or$19
   attribute \src "dut.sv:5.30-5.31"
@@ -44,9 +44,9 @@ module \function_arith
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2205:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2226:import_operation$14 [7:1] }
     connect \B $auto$rtlil.cc:3006:And$17
-    connect \Y { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2205:import_operation$14 [7:1] }
+    connect \Y { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2226:import_operation$14 [7:1] }
   end
   cell $xor $xor$dut.sv:20$20
     parameter \A_SIGNED 0
@@ -54,12 +54,12 @@ module \function_arith
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2205:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3007:Or$19 [7] $auto$expression.cpp:2226:import_operation$14 [7:1] }
     connect \B \c
     connect \Y \out
   end
-  connect $auto$expression.cpp:2205:import_operation$14 [0] 1'0
-  connect $auto$rtlil.cc:3007:Or$19 [6:0] $auto$expression.cpp:2205:import_operation$14 [7:1]
+  connect $auto$expression.cpp:2226:import_operation$14 [0] 1'0
+  connect $auto$rtlil.cc:3007:Or$19 [6:0] $auto$expression.cpp:2226:import_operation$14 [7:1]
   connect \func_arith$func$dut.sv:25$2.temp 8'x
   connect \func_arith$func$dut.sv:25$2.x 8'x
   connect \func_arith$func$dut.sv:25$2.y 8'x

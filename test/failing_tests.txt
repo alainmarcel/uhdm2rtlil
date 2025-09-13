@@ -9,6 +9,3 @@
 case_expr_const
 forloops
 mem2reg_test1
-many_functions  # Has some remaining issues with function output assignments
-function_loop  # Loop-based functions with array construction not fully supported
-function_mixed  # Complex mixed-mode functions with nested control flow not fully supported
