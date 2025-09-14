@@ -1563,19 +1563,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 int ret_width = 1;
                 if (func_def->Return()) {
                     ret_width = get_width(func_def->Return(), current_instance);
-//                    if (ret_width <= 0 || ret_width > 1024) {
-                        // Fallback to default width if get_width fails
-//                        ret_width = 8; // Common default for this test
-//                        log("UHDM: Warning: Could not determine function return width, using default %d\n", ret_width);
-//                    }
                 }
                 
-                // Create a unique wire for this function call result
-                static int func_call_counter = 0;
-                std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
-                RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
-                
-                // Collect arguments
+                // Collect arguments first
                 std::vector<RTLIL::SigSpec> args;
                 std::vector<std::string> arg_names;
                 if (fc->Tf_call_args()) {
@@ -1584,6 +1574,40 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         args.push_back(arg_sig);
                     }
                 }
+                
+                // Check if we're in an initial block and all arguments are constants
+                if (in_initial_block) {
+                    bool all_const = true;
+                    std::vector<RTLIL::Const> const_args;
+                    
+                    for (const auto& arg : args) {
+                        if (arg.is_fully_const()) {
+                            const_args.push_back(arg.as_const());
+                        } else {
+                            all_const = false;
+                            break;
+                        }
+                    }
+                    
+                    if (all_const) {
+                        // Evaluate function at compile time
+                        log("UHDM: Evaluating function %s at compile time in initial block\n", func_name.c_str());
+                        std::map<std::string, RTLIL::Const> output_params;
+                        RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
+                        
+                        // Return the constant result
+                        return RTLIL::SigSpec(result);
+                    } else {
+                        log_error("Function %s in initial block has non-constant arguments and cannot be evaluated at compile time. "
+                                 "Function inlining in initial blocks is not yet supported.\n", func_name.c_str());
+                        return RTLIL::SigSpec();
+                    }
+                }
+                
+                // Create a unique wire for this function call result (only for non-initial blocks)
+                static int func_call_counter = 0;
+                std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
+                RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
                 
                 // Generate a process block for this function call
                 // Pass the function call object to get accurate source locations

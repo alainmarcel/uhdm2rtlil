@@ -4,13 +4,13 @@ attribute \src "dut.sv:1.1-22.10"
 attribute \cells_not_processed 1
 module \always03
   attribute \src "dut.sv:18.4-18.15"
-  wire $auto$process.cpp:3476:import_assignment_sync$14
+  wire $auto$process.cpp:3485:import_assignment_sync$14
   attribute \src "dut.sv:10.3-10.15"
-  wire $auto$process.cpp:3476:import_assignment_sync$2
+  wire $auto$process.cpp:3485:import_assignment_sync$2
   attribute \src "dut.sv:13.3-13.15"
-  wire $auto$process.cpp:3476:import_assignment_sync$4
+  wire $auto$process.cpp:3485:import_assignment_sync$4
   attribute \src "dut.sv:16.4-16.15"
-  wire $auto$process.cpp:3476:import_assignment_sync$8
+  wire $auto$process.cpp:3485:import_assignment_sync$8
   attribute \src "dut.sv:15.3-18.16"
   wire $auto$process_helper.cpp:68:create_and_cell$12
   attribute \src "dut.sv:15.3-18.16"
@@ -41,7 +41,7 @@ module \always03
   wire output 10 \out2
   attribute \src "dut.sv:1.71-1.75"
   wire output 11 \out3
-  cell $and $auto$process.cpp:2359:import_statement_sync$6
+  cell $and $auto$process.cpp:2365:import_statement_sync$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
@@ -52,36 +52,36 @@ module \always03
     connect \Y $auto$rtlil.cc:3006:And$7
   end
   attribute \src "dut.sv:18.4-18.15"
-  cell $mux $auto$process.cpp:3478:import_assignment_sync$15
+  cell $mux $auto$process.cpp:3487:import_assignment_sync$15
     parameter \WIDTH 1
-    connect \A $auto$process.cpp:3476:import_assignment_sync$8
+    connect \A $auto$process.cpp:3485:import_assignment_sync$8
     connect \B \in7
     connect \S $auto$process_helper.cpp:68:create_and_cell$12
-    connect \Y $auto$process.cpp:3476:import_assignment_sync$14
+    connect \Y $auto$process.cpp:3485:import_assignment_sync$14
   end
   attribute \src "dut.sv:10.3-10.15"
-  cell $mux $auto$process.cpp:3478:import_assignment_sync$3
+  cell $mux $auto$process.cpp:3487:import_assignment_sync$3
     parameter \WIDTH 1
     connect \A \in1
     connect \B $logic_not$dut.sv:10.10-10.15$1_Y
     connect \S \in2
-    connect \Y $auto$process.cpp:3476:import_assignment_sync$2
+    connect \Y $auto$process.cpp:3485:import_assignment_sync$2
   end
   attribute \src "dut.sv:13.3-13.15"
-  cell $mux $auto$process.cpp:3478:import_assignment_sync$5
+  cell $mux $auto$process.cpp:3487:import_assignment_sync$5
     parameter \WIDTH 1
     connect \A \out1
     connect \B \out2
     connect \S \in3
-    connect \Y $auto$process.cpp:3476:import_assignment_sync$4
+    connect \Y $auto$process.cpp:3485:import_assignment_sync$4
   end
   attribute \src "dut.sv:16.4-16.15"
-  cell $mux $auto$process.cpp:3478:import_assignment_sync$9
+  cell $mux $auto$process.cpp:3487:import_assignment_sync$9
     parameter \WIDTH 1
     connect \A \out3
     connect \B \in6
     connect \S $auto$rtlil.cc:3006:And$7
-    connect \Y $auto$process.cpp:3476:import_assignment_sync$8
+    connect \Y $auto$process.cpp:3485:import_assignment_sync$8
   end
   attribute \src "dut.sv:15.3-18.16"
   cell $and $auto$process_helper.cpp:71:create_and_cell$13
@@ -124,8 +124,8 @@ module \always03
   attribute \src "dut.sv:7.1-20.4"
   process $proc$dut.sv:7$1
     sync posedge \clock
-      update \out3 $auto$process.cpp:3476:import_assignment_sync$14
+      update \out3 $auto$process.cpp:3485:import_assignment_sync$14
       update \out1 $auto$rtlil.cc:3008:Xor$17
-      update \out2 $auto$process.cpp:3476:import_assignment_sync$4
+      update \out2 $auto$process.cpp:3485:import_assignment_sync$4
   end
 end
