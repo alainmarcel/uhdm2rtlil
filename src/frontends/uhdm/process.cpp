@@ -1597,6 +1597,9 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     if (mode_debug)
         log("    Importing initial block\n");
     
+    // Set flag to indicate we're in an initial block
+    in_initial_block = true;
+    
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
     
@@ -1627,6 +1630,9 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     pending_sync_assignments.clear();
     
     yosys_proc->syncs.push_back(sync_init);
+    
+    // Reset the flag when done
+    in_initial_block = false;
 }
 
 // Helper function to import operation with loop variable substitution

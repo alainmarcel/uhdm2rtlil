@@ -189,6 +189,9 @@ struct UhdmImporter {
     // Current loop variable substitutions for unrolling
     std::map<std::string, int64_t> current_loop_substitutions;
     
+    // Track if we're currently processing an initial block
+    bool in_initial_block = false;
+    
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
     // Main import functions
@@ -343,6 +346,24 @@ struct UhdmImporter {
                               const std::map<std::string, int>& local_var_widths = {});
     RTLIL::Process* generate_function_process(const UHDM::function* func_def, const std::string& func_name,
                                               const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire, const UHDM::func_call* fc);
+    
+    // Evaluate function call at compile time (for initial blocks)
+    RTLIL::Const evaluate_function_call(const UHDM::function* func_def, 
+                                        const std::vector<RTLIL::Const>& const_args,
+                                        std::map<std::string, RTLIL::Const>& output_params);
+    
+    // Helper to evaluate statements during compile-time function evaluation
+    RTLIL::Const evaluate_function_stmt(const UHDM::any* stmt,
+                                        std::map<std::string, RTLIL::Const>& local_vars,
+                                        const std::string& func_name);
+    
+    // Helper to evaluate operations with constant values
+    RTLIL::Const evaluate_operation_const(const UHDM::operation* op,
+                                          const std::map<std::string, RTLIL::Const>& local_vars);
+    
+    // Helper to handle recursive function calls
+    RTLIL::Const evaluate_recursive_function_call(const UHDM::func_call* fc,
+                                                  const std::map<std::string, RTLIL::Const>& parent_vars);
     
     // Signal name extraction from UHDM
     bool extract_signal_names_from_process(const UHDM::any* stmt, 

@@ -9,3 +9,5 @@
 case_expr_const
 forloops
 mem2reg_test1
+fib
+
