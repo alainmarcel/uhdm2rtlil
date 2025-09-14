@@ -11,7 +11,7 @@ module \fib_simple
   wire width 32 $0\double_it$func$dut.sv:11$2.k$4
   attribute \src "dut.sv:11.18-11.31"
   wire width 32 $1\double_it$func$dut.sv:11$2.$result$6
-  wire width 96 $auto$expression.cpp:2206:import_operation$8
+  wire width 96 $auto$expression.cpp:1743:import_operation$8
   wire width 32 $func_double_it_result_0
   wire width 32 \double_it$func$dut.sv:11$1.$result
   attribute \nosync 1
@@ -32,7 +32,7 @@ module \fib_simple
     parameter \Y_WIDTH 96
     connect \A \in
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2206:import_operation$8
+    connect \Y $auto$expression.cpp:1743:import_operation$8
   end
   attribute \src "dut.sv:11.18-11.31"
   process $proc$dut.sv:11$3
@@ -44,7 +44,7 @@ module \fib_simple
     assign $0\double_it$func$dut.sv:11$2.k$4 \in
     assign $0\double_it$func$dut.sv:11$2.$result$5 $1\double_it$func$dut.sv:11$2.$result$6
     assign $0\double_it$func$dut.sv:11$1.$result$7 $1\double_it$func$dut.sv:11$2.$result$6
-    assign $1\double_it$func$dut.sv:11$2.$result$6 $auto$expression.cpp:2206:import_operation$8 [31:0]
+    assign $1\double_it$func$dut.sv:11$2.$result$6 $auto$expression.cpp:1743:import_operation$8 [31:0]
     sync always
       update \double_it$func$dut.sv:11$1.$result $0\double_it$func$dut.sv:11$1.$result$7
       update \double_it$func$dut.sv:11$2.$result 32'x

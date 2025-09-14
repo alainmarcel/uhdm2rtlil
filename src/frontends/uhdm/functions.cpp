@@ -328,4 +328,465 @@ RTLIL::Const UhdmImporter::evaluate_recursive_function_call(const func_call* fc,
     return evaluate_function_call(func_def, arg_values, output_params);
 }
 
+
+RTLIL::SigSpec UhdmImporter::extract_function_return_value(const any* stmt, const std::string& func_name, int width) {
+    if (!stmt) {
+        return RTLIL::SigSpec(RTLIL::State::Sx, width);
+    }
+    
+    // Handle different statement types
+    switch (stmt->UhdmType()) {
+        case uhdmassignment: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (assign && assign->Lhs()) {
+                const ref_obj* lhs = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs && std::string(lhs->VpiName()) == func_name) {
+                    // This is an assignment to the function name - the return value
+                    if (assign->Rhs()) {
+                        return import_expression(any_cast<const expr*>(assign->Rhs()));
+                    }
+                }
+            }
+            break;
+        }
+        case uhdmbegin:
+        case uhdmnamed_begin: {
+            // Look for assignments in begin/end blocks
+            const begin* bg = any_cast<const begin*>(stmt);
+            if (bg && bg->Stmts()) {
+                for (auto s : *bg->Stmts()) {
+                    RTLIL::SigSpec ret = extract_function_return_value(s, func_name, width);
+                    if (!ret.is_fully_undef()) {
+                        return ret;
+                    }
+                }
+            }
+            break;
+        }
+        case uhdmif_else: {
+            // For if/else, we'd need to handle both branches
+            // For now, just try to extract from the if branch
+            const if_else* ie = any_cast<const if_else*>(stmt);
+            if (ie && ie->VpiStmt()) {
+                return extract_function_return_value(ie->VpiStmt(), func_name, width);
+            }
+            break;
+        }
+        default:
+            // For other statement types, return undefined
+            break;
+    }
+    
+    return RTLIL::SigSpec(RTLIL::State::Sx, width);
+}
+
+// Generate a process block for a function call
+RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def, const std::string& func_name,
+                                                        const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire,
+                                                        const func_call* fc) {
+    // Create a unique process for this function call
+    // Using incr_autoidx() for all temp wire numbering instead of local counter
+    
+    // Generate process name
+    std::string proc_name;
+    
+    // Extract source location information
+    std::string src_attr = fc ? get_src_attribute(fc) : get_src_attribute(func_def);
+    std::string filename = "dut.sv"; // Default filename
+    int call_line = 1; // Default line number
+    
+    // Parse the source attribute to extract filename and line number
+    if (!src_attr.empty()) {
+        size_t colon_pos = src_attr.find(':');
+        if (colon_pos != std::string::npos) {
+            filename = src_attr.substr(0, colon_pos);
+            size_t dot_pos = src_attr.find('.', colon_pos);
+            if (dot_pos != std::string::npos) {
+                std::string line_str = src_attr.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+                call_line = std::stoi(line_str);
+            }
+        }
+    }
+    
+
+    // Create temporary wires for function call context
+    // Use Yosys global autoidx counter to match Verilog frontend naming
+    // The Verilog frontend creates two contexts: one for the external result and one for internal wires
+    std::string func_result_id = stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), call_line, incr_autoidx());
+    std::string func_call_id = stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), call_line, incr_autoidx());
+
+    // Use the call site line number for the process name (matching Verilog frontend)
+    proc_name = stringf("$proc$%s:%d$%d", filename.c_str(), call_line, incr_autoidx());
+    RTLIL::Process* proc = module->addProcess(RTLIL::escape_id(proc_name));
+    
+    // Add source attribute from function call location
+    if (fc) {
+        add_src_attribute(proc->attributes, fc);
+    }
+    
+    // Create the root case for the process  
+    proc->root_case = RTLIL::CaseRule();
+    RTLIL::CaseRule* root_case = &proc->root_case;
+    
+    // Add placeholder empty assignments (the Verilog frontend does this for some reason)
+    for (int i = 0; i < 5; i++) {
+        root_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+    }
+    
+    // Map function inputs to temporary wires
+    std::map<std::string, RTLIL::SigSpec> input_mapping;
+    std::vector<RTLIL::Wire*> arg_temp_wires;
+    
+    // Track local variable widths from function declaration
+    std::map<std::string, int> local_var_widths;
+    
+    // Process local variables from function definition
+    if (func_def->Variables()) {
+        for (auto var : *func_def->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            int var_width = 1; // Default width
+            
+            // Check for integer variables (always 32-bit in Verilog)
+            if (var->UhdmType() == uhdminteger_var) {
+                var_width = 32;  // Integer variables are always 32-bit signed
+            }
+            // Try to get the actual width from the variable's typespec
+            else if (var->UhdmType() == uhdmlogic_var) {
+                const logic_var* lv = any_cast<const logic_var*>(var);
+                if (lv && lv->Typespec()) {
+                    const ref_typespec* rts = lv->Typespec();
+                    if (rts && rts->Actual_typespec()) {
+                        const typespec* actual_ts = rts->Actual_typespec();
+                        // Check if it's a logic typespec with ranges
+                        if (actual_ts->UhdmType() == uhdmlogic_typespec) {
+                            const logic_typespec* lts = any_cast<const logic_typespec*>(actual_ts);
+                            if (lts && lts->Ranges()) {
+                                for (auto range : *lts->Ranges()) {
+                                    // Need to evaluate range expressions with parameters available
+                                    // Pass nullptr for input_mapping to use module parameters
+                                    RTLIL::SigSpec left_sig = import_expression(any_cast<const expr*>(range->Left_expr()), nullptr);
+                                    RTLIL::SigSpec right_sig = import_expression(any_cast<const expr*>(range->Right_expr()), nullptr);
+                                    if (left_sig.is_fully_const() && right_sig.is_fully_const()) {
+                                        int left_val = left_sig.as_int();
+                                        int right_val = right_sig.as_int();
+                                        var_width = std::abs(left_val - right_val) + 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            local_var_widths[var_name] = var_width;
+            if (mode_debug) {
+                log("UHDM: Function %s local variable %s width=%d\n", 
+                    func_name.c_str(), var_name.c_str(), var_width);
+            }
+        }
+    }
+    
+    if (func_def->Io_decls() && !args.empty()) {
+        int arg_idx = 0;
+        for (auto io_decl : *func_def->Io_decls()) {
+            if (arg_idx < args.size()) {
+                std::string io_name = std::string(io_decl->VpiName());
+                int width = args[arg_idx].size();
+                
+                // Create temporary wire for this argument using autoidx
+                std::string temp_name = stringf("$0\\%s.%s$%d", 
+                    func_call_id.c_str(), io_name.c_str(), incr_autoidx());
+                RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
+                
+                // Add source attribute to temp wire
+                if (fc) {
+                    add_src_attribute(temp_wire->attributes, fc);
+                }
+                
+                arg_temp_wires.push_back(temp_wire);
+                
+                // Add assignment from actual argument to temp wire
+                root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
+                
+                // Map for use in function body
+                input_mapping[io_name] = args[arg_idx];
+                arg_idx++;
+            }
+        }
+    }
+    
+    // Create temporary result wires with proper naming using autoidx
+    std::string temp_result2_name = stringf("$0\\%s.$result$%d", 
+        func_call_id.c_str(), incr_autoidx());
+    std::string temp_result1_name = stringf("$1\\%s.$result$%d", 
+        func_call_id.c_str(), incr_autoidx());
+    
+    RTLIL::Wire* temp_result2_wire = module->addWire(RTLIL::escape_id(temp_result2_name), result_wire->width);
+    RTLIL::Wire* temp_result1_wire = module->addWire(RTLIL::escape_id(temp_result1_name), result_wire->width);
+    
+    // Add source attributes to these wires
+    if (fc) {
+        add_src_attribute(temp_result2_wire->attributes, fc);
+        add_src_attribute(temp_result1_wire->attributes, fc);
+    }
+    
+    // Add assignment chaining for results
+    root_case->actions.push_back(RTLIL::SigSig(temp_result2_wire, temp_result1_wire));
+    
+    std::string temp_result_final_name = stringf("$0\\%s.$result$%d",
+        func_result_id.c_str(), incr_autoidx());
+    RTLIL::Wire* temp_result_final_wire = module->addWire(RTLIL::escape_id(temp_result_final_name), result_wire->width);
+    
+    // Add source attribute to final result wire
+    if (fc) {
+        add_src_attribute(temp_result_final_wire->attributes, fc);
+    }
+    
+    root_case->actions.push_back(RTLIL::SigSig(temp_result_final_wire, temp_result1_wire));
+    
+    // Create the main function result wire (using func_result_id for proper source location)
+    std::string result_var = stringf("%s.$result", func_result_id.c_str());
+    RTLIL::Wire* func_result_wire = module->wire(RTLIL::escape_id(result_var));
+    if (!func_result_wire) {
+        func_result_wire = module->addWire(RTLIL::escape_id(result_var), result_wire->width);
+    }
+    
+    // Prescan the function to identify which variables are used as return values
+    std::set<std::string> return_vars;
+    scan_for_return_variables(func_def->Stmt(), func_name, return_vars, func_def);
+    
+    // Always add the function name itself as a return variable
+    // This handles direct assignments like fsm_function = IDLE
+    input_mapping[func_name] = temp_result1_wire;
+    log("UHDM: Mapping function name '%s' to result wire\n", func_name.c_str());
+    
+    // Also add any actual local variables that are assigned to the function name
+    // The prescanning found these intermediate variables
+    // We already filtered out input parameters in scan_for_return_variables
+    for (const auto& var : return_vars) {
+        input_mapping[var] = temp_result1_wire;
+        log("UHDM: Mapping return variable '%s' to result wire for function %s\n",
+            var.c_str(), func_name.c_str());
+    }
+    
+    // Process the function body into switches
+    int func_temp_counter = 0; // Not used anymore, kept for compatibility
+    process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
+    
+    // Create nosync wires for the function context (these get set to 'x)
+    std::string result_wire_name = stringf("\\%s.$result", func_call_id.c_str());
+    
+    RTLIL::Wire* nosync_result = module->wire(RTLIL::escape_id(result_wire_name));
+    if (!nosync_result) {
+        nosync_result = module->addWire(RTLIL::escape_id(result_wire_name), result_wire->width);
+        nosync_result->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+        // Add source attribute
+        if (fc) {
+            add_src_attribute(nosync_result->attributes, fc);
+        }
+    }
+    
+    // Create nosync wires for each argument (the Verilog frontend creates these for all arguments)
+    std::vector<RTLIL::Wire*> nosync_arg_wires;
+    if (func_def->Io_decls()) {
+        for (auto io_decl : *func_def->Io_decls()) {
+            std::string io_name = std::string(io_decl->VpiName());
+            std::string nosync_name = stringf("\\%s.%s", func_call_id.c_str(), io_name.c_str());
+            
+            // Determine width from the corresponding argument
+            int width = 1;
+            int idx = 0;
+            for (auto io : *func_def->Io_decls()) {
+                if (io == io_decl && idx < args.size()) {
+                    width = args[idx].size();
+                    break;
+                }
+                idx++;
+            }
+            
+            RTLIL::Wire* nosync_wire = module->wire(RTLIL::escape_id(nosync_name));
+            if (!nosync_wire) {
+                nosync_wire = module->addWire(RTLIL::escape_id(nosync_name), width);
+                nosync_wire->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+                // Add source attribute
+                if (fc) {
+                    add_src_attribute(nosync_wire->attributes, fc);
+                }
+            }
+            nosync_arg_wires.push_back(nosync_wire);
+        }
+    }
+    
+    // Create nosync wires for local variables
+    std::vector<RTLIL::Wire*> nosync_local_wires;
+    for (const auto& [var_name, var_width] : local_var_widths) {
+        std::string nosync_name = stringf("\\%s.%s", func_call_id.c_str(), var_name.c_str());
+        
+        RTLIL::Wire* nosync_wire = module->wire(RTLIL::escape_id(nosync_name));
+        if (!nosync_wire) {
+            nosync_wire = module->addWire(RTLIL::escape_id(nosync_name), var_width);
+            nosync_wire->attributes[RTLIL::escape_id("\\nosync")] = RTLIL::Const(1);
+            // Add source attribute
+            if (fc) {
+                add_src_attribute(nosync_wire->attributes, fc);
+            }
+        }
+        nosync_local_wires.push_back(nosync_wire);
+    }
+    
+    // Add sync rule to update outputs (matching Verilog frontend exactly)
+    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+    sync->type = RTLIL::STa;  // Always
+    
+    // Main result assignment - only update the function result wire directly from temp result
+    sync->actions.push_back(RTLIL::SigSig(func_result_wire, temp_result_final_wire));
+    
+    // Set nosync wires to 'x (matching Verilog frontend order exactly)
+    sync->actions.push_back(RTLIL::SigSig(nosync_result, RTLIL::SigSpec(RTLIL::State::Sx, nosync_result->width)));
+    // All argument nosync wires (including state)
+    for (auto nosync_wire : nosync_arg_wires) {
+        sync->actions.push_back(RTLIL::SigSig(nosync_wire, RTLIL::SigSpec(RTLIL::State::Sx, nosync_wire->width)));
+    }
+    // All local variable nosync wires
+    for (auto nosync_wire : nosync_local_wires) {
+        sync->actions.push_back(RTLIL::SigSig(nosync_wire, RTLIL::SigSpec(RTLIL::State::Sx, nosync_wire->width)));
+    }
+    
+    proc->syncs.push_back(sync);
+    
+    // Connect the internal function result wire to the external result wire
+    module->connect(result_wire, func_result_wire);
+    
+    return proc;
+}
+
+
+// Helper function to scan a statement and find variables assigned to the function name
+void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string& func_name, 
+                                              std::set<std::string>& return_vars, const function* func_def) {
+    if (!stmt) return;
+    
+    int type = stmt->UhdmType();
+    switch(type) {
+    case uhdmassignment: {
+        const assignment* assign = any_cast<const assignment*>(stmt);
+        if (assign && assign->Lhs() && assign->Rhs()) {
+            // Check if LHS is the function name
+            if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs_ref && std::string(lhs_ref->VpiName()) == func_name) {
+                    // RHS is being assigned to function name - track what it is
+                    // Track intermediate variables that are assigned to the function
+                    if (assign->Rhs()->UhdmType() == uhdmref_obj) {
+                        const ref_obj* rhs_ref = any_cast<const ref_obj*>(assign->Rhs());
+                        if (rhs_ref) {
+                            std::string var_name = std::string(rhs_ref->VpiName());
+                            // Check if this is a local variable (not an input parameter)
+                            // by seeing if it's NOT already in input_mapping
+                            // Input parameters would have been mapped already
+                            bool is_input_param = false;
+                            if (func_def && func_def->Io_decls()) {
+                                for (auto io : *func_def->Io_decls()) {
+                                    if (std::string(io->VpiName()) == var_name) {
+                                        is_input_param = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Also check if this is a parameter (constant) 
+                            // Parameters should not be treated as return variables
+                            bool is_parameter = false;
+                            
+                            // Check if the ref_obj has Actual_group pointing to a parameter
+                            if (rhs_ref->Actual_group() && rhs_ref->Actual_group()->VpiType() == vpiParameter) {
+                                is_parameter = true;
+                            }
+                            
+                            // Also check module parameters
+                            RTLIL::IdString param_id = RTLIL::escape_id(var_name);
+                            if (module && module->parameter_default_values.count(param_id)) {
+                                is_parameter = true;
+                            }
+                            
+                            if (!is_input_param && !is_parameter) {
+                                return_vars.insert(var_name);
+                                if (mode_debug) {
+                                    log("UHDM: Found return variable '%s' for function %s\n", 
+                                        var_name.c_str(), func_name.c_str());
+                                }
+                            } else if (is_parameter && mode_debug) {
+                                log("UHDM: Skipping parameter '%s' in function %s (not a return variable)\n",
+                                    var_name.c_str(), func_name.c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmbegin: {
+        const begin* bg = any_cast<const begin*>(stmt);
+        if (bg && bg->Stmts()) {
+            for (auto s : *bg->Stmts()) {
+                scan_for_return_variables(s, func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmnamed_begin: {
+        const named_begin* nbg = any_cast<const named_begin*>(stmt);
+        if (nbg && nbg->Stmts()) {
+            for (auto s : *nbg->Stmts()) {
+                scan_for_return_variables(s, func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmif_else: {
+        const if_else* ie = any_cast<const if_else*>(stmt);
+        if (ie) {
+            if (ie->VpiStmt()) {
+                scan_for_return_variables(ie->VpiStmt(), func_name, return_vars, func_def);
+            }
+            if (ie->VpiElseStmt()) {
+                scan_for_return_variables(ie->VpiElseStmt(), func_name, return_vars, func_def);
+            }
+        }
+        break;
+    }
+    
+    case uhdmcase_stmt: {
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (cs && cs->Case_items()) {
+            for (auto item : *cs->Case_items()) {
+                const case_item* ci = any_cast<const case_item*>(item);
+                if (ci && ci->Stmt()) {
+                    scan_for_return_variables(ci->Stmt(), func_name, return_vars, func_def);
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmfor_stmt: {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (fs && fs->VpiStmt()) {
+            scan_for_return_variables(fs->VpiStmt(), func_name, return_vars, func_def);
+        }
+        break;
+    }
+    
+    // Add other statement types as needed
+    default:
+        break;
+    }
+}
+
+
 YOSYS_NAMESPACE_END
