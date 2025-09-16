@@ -1127,30 +1127,32 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
                 
-                // Check if we're in an initial block and all arguments are constants
-                // If they are, we can evaluate at compile time for optimization
-                if (in_initial_block) {
-                    bool all_const = true;
-                    std::vector<RTLIL::Const> const_args;
-                    
-                    for (const auto& arg : args) {
-                        if (arg.is_fully_const()) {
-                            const_args.push_back(arg.as_const());
-                        } else {
-                            all_const = false;
-                            break;
-                        }
+                // Check if all arguments are constants - if they are, we can evaluate at compile time
+                // This applies to both initial blocks and continuous assignments
+                bool all_const = true;
+                std::vector<RTLIL::Const> const_args;
+                
+                for (const auto& arg : args) {
+                    if (arg.is_fully_const()) {
+                        const_args.push_back(arg.as_const());
+                    } else {
+                        all_const = false;
+                        break;
                     }
+                }
+                
+                if (all_const) {
+                    // Evaluate function at compile time for optimization
+                    log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
+                    std::map<std::string, RTLIL::Const> output_params;
+                    RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
                     
-                    if (all_const) {
-                        // Evaluate function at compile time for optimization
-                        log("UHDM: Evaluating function %s at compile time in initial block\n", func_name.c_str());
-                        std::map<std::string, RTLIL::Const> output_params;
-                        RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
-                        
-                        // Return the constant result
-                        return RTLIL::SigSpec(result);
-                    }
+                    // Return the constant result
+                    return RTLIL::SigSpec(result);
+                }
+                
+                // For initial blocks with non-constant arguments, check if function returns a value
+                if (in_initial_block && !all_const) {
                     // If not all constant, check if function returns a value
                     bool has_return = false;
                     scan_for_direct_return_assignment(func_def->Stmt(), func_name, has_return);

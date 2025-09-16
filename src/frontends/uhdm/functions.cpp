@@ -278,6 +278,46 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             }
             break;
             
+        case vpiLeOp:  // Less than or equal (<=)
+            if (operand_values.size() >= 2) {
+                // Perform less-than-or-equal comparison
+                bool result = operand_values[0].as_int() <= operand_values[1].as_int();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+            
+        case vpiLtOp:  // Less than (<)
+            if (operand_values.size() >= 2) {
+                // Perform less-than comparison
+                bool result = operand_values[0].as_int() < operand_values[1].as_int();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+            
+        case vpiGeOp:  // Greater than or equal (>=)
+            if (operand_values.size() >= 2) {
+                // Perform greater-than-or-equal comparison
+                bool result = operand_values[0].as_int() >= operand_values[1].as_int();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+            
+        case vpiGtOp:  // Greater than (>)
+            if (operand_values.size() >= 2) {
+                // Perform greater-than comparison
+                bool result = operand_values[0].as_int() > operand_values[1].as_int();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+            
+        case vpiNeqOp:  // Not equal (!=)
+            if (operand_values.size() >= 2) {
+                // Perform not-equal comparison
+                bool result = operand_values[0].as_int() != operand_values[1].as_int();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+            
         // Add more operations as needed
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);
