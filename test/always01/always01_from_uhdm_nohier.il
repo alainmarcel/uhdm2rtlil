@@ -3,7 +3,7 @@ autoidx 6
 attribute \src "dut.sv:1.1-10.10"
 attribute \cells_not_processed 1
 module \always01
-  wire width 64 $auto$expression.cpp:1704:import_operation$2
+  wire width 64 $auto$expression.cpp:1706:import_operation$2
   wire width 64 $auto$rtlil.cc:3094:Mux$5
   attribute \src "dut.sv:1.17-1.22"
   wire input 1 \clock
@@ -19,11 +19,11 @@ module \always01
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1704:import_operation$2
+    connect \Y $auto$expression.cpp:1706:import_operation$2
   end
   cell $mux $mux$dut.sv:8$4
     parameter \WIDTH 64
-    connect \A $auto$expression.cpp:1704:import_operation$2
+    connect \A $auto$expression.cpp:1706:import_operation$2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \S \reset
     connect \Y $auto$rtlil.cc:3094:Mux$5

@@ -6,7 +6,7 @@ attribute \cells_not_processed 1
 module \mul_plain
   parameter \M 6
   parameter \N 6
-  wire width 12 $auto$expression.cpp:1773:import_operation$1
+  wire width 12 $auto$expression.cpp:1775:import_operation$1
   attribute \src "dut.sv:1.18-1.19"
   wire width 6 input 1 \a
   attribute \src "dut.sv:1.21-1.22"
@@ -21,7 +21,7 @@ module \mul_plain
     parameter \Y_WIDTH 12
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1773:import_operation$1
+    connect \Y $auto$expression.cpp:1775:import_operation$1
   end
-  connect \p $auto$expression.cpp:1773:import_operation$1
+  connect \p $auto$expression.cpp:1775:import_operation$1
 end
