@@ -3,13 +3,9 @@ autoidx 10
 attribute \src "dut.sv:1.1-12.10"
 attribute \top 1
 module \fib_simple
-  attribute \nosync 1
-  attribute \src "dut.sv:11.18-11.31"
-  wire width 32 \double_it$func$dut.sv:11$2.k
   attribute \src "dut.sv:2.23-2.25"
   wire width 32 input 1 \in
   attribute \src "dut.sv:3.24-3.27"
   wire width 32 output 2 \out
-  connect \double_it$func$dut.sv:11$2.k 32'x
   connect \out { \in [30:0] 1'0 }
 end

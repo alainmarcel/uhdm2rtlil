@@ -376,59 +376,14 @@ module many_functions(a, b, c, sel, out_arith, out_bool, out_case, out_nested, o
   (* src = "dut.sv:138.24-138.43" *)
   wire [7:0] \func_arith$func$dut.sv:138$2.temp ;
   (* nosync = 32'd1 *)
-  (* src = "dut.sv:138.24-138.43" *)
-  wire [7:0] \func_arith$func$dut.sv:138$2.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:138.24-138.43" *)
-  wire [7:0] \func_arith$func$dut.sv:138$2.y ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:138.24-138.43" *)
-  wire [7:0] \func_arith$func$dut.sv:138$2.z ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:139.23-139.43" *)
-  wire [1:0] \func_bool$func$dut.sv:139$23.mode ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:139.23-139.43" *)
-  wire [7:0] \func_bool$func$dut.sv:139$23.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:139.23-139.43" *)
-  wire [7:0] \func_bool$func$dut.sv:139$23.y ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:140.23-140.40" *)
-  wire [1:0] \func_case$func$dut.sv:140$50.sel ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:140.23-140.40" *)
-  wire [7:0] \func_case$func$dut.sv:140$50.x ;
-  (* nosync = 32'd1 *)
   (* src = "dut.sv:142.23-142.35" *)
   wire [31:0] \func_loop$func$dut.sv:142$79.i ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:142.23-142.35" *)
-  wire [7:0] \func_loop$func$dut.sv:142$79.x ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:143.24-143.45" *)
   wire [31:0] \func_mixed$func$dut.sv:143$86.i ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:143.24-143.45" *)
-  wire [1:0] \func_mixed$func$dut.sv:143$86.mode ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:143.24-143.45" *)
   wire [7:0] \func_mixed$func$dut.sv:143$86.result ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:143.24-143.45" *)
-  wire [7:0] \func_mixed$func$dut.sv:143$86.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:143.24-143.45" *)
-  wire [7:0] \func_mixed$func$dut.sv:143$86.y ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:141.25-141.45" *)
-  wire [7:0] \func_nested$func$dut.sv:141$64.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:141.25-141.45" *)
-  wire [7:0] \func_nested$func$dut.sv:141$64.y ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:141.25-141.45" *)
-  wire [7:0] \func_nested$func$dut.sv:141$64.z ;
   \$_XNOR_  _338_ (
     .A(a[2]),
     .B(b[2]),
@@ -2415,23 +2370,8 @@ module many_functions(a, b, c, sel, out_arith, out_bool, out_case, out_nested, o
     .Y(out_arith[7])
   );
   assign \func_arith$func$dut.sv:138$2.temp  = 8'hxx;
-  assign \func_arith$func$dut.sv:138$2.x  = 8'hxx;
-  assign \func_arith$func$dut.sv:138$2.y  = 8'hxx;
-  assign \func_arith$func$dut.sv:138$2.z  = 8'hxx;
-  assign \func_bool$func$dut.sv:139$23.mode  = 2'hx;
-  assign \func_bool$func$dut.sv:139$23.x  = 8'hxx;
-  assign \func_bool$func$dut.sv:139$23.y  = 8'hxx;
-  assign \func_case$func$dut.sv:140$50.sel  = 2'hx;
-  assign \func_case$func$dut.sv:140$50.x  = 8'hxx;
   assign \func_loop$func$dut.sv:142$79.i  = 32'hxxxxxxxx;
-  assign \func_loop$func$dut.sv:142$79.x  = 8'hxx;
   assign \func_mixed$func$dut.sv:143$86.i  = 32'hxxxxxxxx;
-  assign \func_mixed$func$dut.sv:143$86.mode  = 2'hx;
   assign \func_mixed$func$dut.sv:143$86.result  = 8'hxx;
-  assign \func_mixed$func$dut.sv:143$86.x  = 8'hxx;
-  assign \func_mixed$func$dut.sv:143$86.y  = 8'hxx;
-  assign \func_nested$func$dut.sv:141$64.x  = 8'hxx;
-  assign \func_nested$func$dut.sv:141$64.y  = 8'hxx;
-  assign \func_nested$func$dut.sv:141$64.z  = 8'hxx;
   assign out_loop = { a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7] };
 endmodule

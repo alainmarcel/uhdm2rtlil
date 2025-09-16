@@ -46,12 +46,6 @@ module function_case(x, sel, out);
   wire _30_;
   wire _31_;
   wire _32_;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:26.18-26.35" *)
-  wire [1:0] \func_case$func$dut.sv:26$2.sel ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:26.18-26.35" *)
-  wire [7:0] \func_case$func$dut.sv:26$2.x ;
   \$_NOR_  _33_ (
     .A(sel[0]),
     .B(sel[1]),
@@ -264,6 +258,4 @@ module function_case(x, sel, out);
     .S(_00_),
     .Y(out[7])
   );
-  assign \func_case$func$dut.sv:26$2.sel  = 2'hx;
-  assign \func_case$func$dut.sv:26$2.x  = 8'hxx;
 endmodule

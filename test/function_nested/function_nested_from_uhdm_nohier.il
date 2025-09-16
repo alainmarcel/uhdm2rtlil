@@ -25,15 +25,6 @@ module \function_nested
   attribute \nosync 1
   attribute \src "dut.sv:30.18-30.38"
   wire width 8 \func_nested$func$dut.sv:30$2.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.y
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.z
   attribute \src "dut.sv:8.30-8.33"
   wire width 8 output 4 \out
   attribute \src "dut.sv:5.30-5.31"
@@ -48,8 +39,8 @@ module \function_nested
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A \x
-    connect \B \y
+    connect \A $0\func_nested$func$dut.sv:30$2.x$4
+    connect \B $0\func_nested$func$dut.sv:30$2.y$5
     connect \Y $auto$rtlil.cc:3018:Gt$11
   end
   cell $gt $gt$dut.sv:16$12
@@ -58,8 +49,8 @@ module \function_nested
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A \x
-    connect \B \z
+    connect \A $0\func_nested$func$dut.sv:30$2.x$4
+    connect \B $0\func_nested$func$dut.sv:30$2.z$6
     connect \Y $auto$rtlil.cc:3018:Gt$13
   end
   cell $gt $gt$dut.sv:21$14
@@ -68,8 +59,8 @@ module \function_nested
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A \y
-    connect \B \z
+    connect \A $0\func_nested$func$dut.sv:30$2.y$5
+    connect \B $0\func_nested$func$dut.sv:30$2.z$6
     connect \Y $auto$rtlil.cc:3018:Gt$15
   end
   attribute \src "dut.sv:30.18-30.38"
@@ -94,11 +85,11 @@ module \function_nested
           attribute \src "dut.sv:17.21-17.36"
           case 1'1
             assign { } { }
-            assign $1\func_nested$func$dut.sv:30$2.$result$8 \x
+            assign $1\func_nested$func$dut.sv:30$2.$result$8 $0\func_nested$func$dut.sv:30$2.x$4
           attribute \src "dut.sv:19.21-19.36"
           case 
             assign { } { }
-            assign $1\func_nested$func$dut.sv:30$2.$result$8 \z
+            assign $1\func_nested$func$dut.sv:30$2.$result$8 $0\func_nested$func$dut.sv:30$2.z$6
         end
       attribute \src "dut.sv:20.22-25.16"
       case 
@@ -108,19 +99,16 @@ module \function_nested
           attribute \src "dut.sv:22.21-22.36"
           case 1'1
             assign { } { }
-            assign $1\func_nested$func$dut.sv:30$2.$result$8 \y
+            assign $1\func_nested$func$dut.sv:30$2.$result$8 $0\func_nested$func$dut.sv:30$2.y$5
           attribute \src "dut.sv:24.21-24.36"
           case 
             assign { } { }
-            assign $1\func_nested$func$dut.sv:30$2.$result$8 \z
+            assign $1\func_nested$func$dut.sv:30$2.$result$8 $0\func_nested$func$dut.sv:30$2.z$6
         end
     end
     sync always
       update \func_nested$func$dut.sv:30$1.$result $0\func_nested$func$dut.sv:30$1.$result$9
       update \func_nested$func$dut.sv:30$2.$result 8'x
-      update \func_nested$func$dut.sv:30$2.x 8'x
-      update \func_nested$func$dut.sv:30$2.y 8'x
-      update \func_nested$func$dut.sv:30$2.z 8'x
   end
   connect $func_func_nested_result_0 \func_nested$func$dut.sv:30$1.$result
   connect \out $func_func_nested_result_0

@@ -41,15 +41,6 @@ module \function_bool
   attribute \nosync 1
   attribute \src "dut.sv:28.18-28.38"
   wire width 8 \func_bool$func$dut.sv:28$2.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 2 \func_bool$func$dut.sv:28$2.mode
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 8 \func_bool$func$dut.sv:28$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 8 \func_bool$func$dut.sv:28$2.y
   attribute \src "dut.sv:8.30-8.33"
   wire width 8 output 4 \out
   attribute \src "dut.sv:7.24-7.27"
@@ -60,8 +51,8 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
+    connect \A $0\func_bool$func$dut.sv:28$2.x$4
+    connect \B $0\func_bool$func$dut.sv:28$2.y$5
     connect \Y $auto$rtlil.cc:3006:And$13
   end
   cell $and $and$dut.sv:23$24
@@ -70,8 +61,8 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
+    connect \A $0\func_bool$func$dut.sv:28$2.x$4
+    connect \B $0\func_bool$func$dut.sv:28$2.y$5
     connect \Y $auto$rtlil.cc:3006:And$25
   end
   attribute \src "dut.sv:16.17-16.30"
@@ -81,7 +72,7 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A \sel
+    connect \A $0\func_bool$func$dut.sv:28$2.mode$6
     connect \B 2'00
     connect \Y $eq$dut.sv:16$10_Y
   end
@@ -92,7 +83,7 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A \sel
+    connect \A $0\func_bool$func$dut.sv:28$2.mode$6
     connect \B 2'01
     connect \Y $eq$dut.sv:18$15_Y
   end
@@ -103,7 +94,7 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A \sel
+    connect \A $0\func_bool$func$dut.sv:28$2.mode$6
     connect \B 2'10
     connect \Y $eq$dut.sv:20$20_Y
   end
@@ -120,8 +111,8 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
+    connect \A $0\func_bool$func$dut.sv:28$2.x$4
+    connect \B $0\func_bool$func$dut.sv:28$2.y$5
     connect \Y $auto$rtlil.cc:3007:Or$18
   end
   cell $xor $xor$dut.sv:21$22
@@ -130,8 +121,8 @@ module \function_bool
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
+    connect \A $0\func_bool$func$dut.sv:28$2.x$4
+    connect \B $0\func_bool$func$dut.sv:28$2.y$5
     connect \Y $auto$rtlil.cc:3008:Xor$23
   end
   attribute \src "dut.sv:28.18-28.38"
@@ -182,9 +173,6 @@ module \function_bool
     sync always
       update \func_bool$func$dut.sv:28$1.$result $0\func_bool$func$dut.sv:28$1.$result$9
       update \func_bool$func$dut.sv:28$2.$result 8'x
-      update \func_bool$func$dut.sv:28$2.x 8'x
-      update \func_bool$func$dut.sv:28$2.y 8'x
-      update \func_bool$func$dut.sv:28$2.mode 2'x
   end
   connect $func_func_bool_result_0 \func_bool$func$dut.sv:28$1.$result
   connect \out $func_func_bool_result_0

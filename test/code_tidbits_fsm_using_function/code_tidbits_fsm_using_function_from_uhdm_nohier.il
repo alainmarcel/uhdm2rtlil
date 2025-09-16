@@ -53,15 +53,6 @@ module \fsm_using_function
   attribute \nosync 1
   attribute \src "dut.sv:29.21-29.54"
   wire width 3 \fsm_function$func$dut.sv:29$2.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire \fsm_function$func$dut.sv:29$2.req_0
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire \fsm_function$func$dut.sv:29$2.req_1
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire width 3 \fsm_function$func$dut.sv:29$2.state
   attribute \src "dut.sv:11.1-11.6"
   wire output 5 \gnt_0
   attribute \src "dut.sv:12.1-12.6"
@@ -84,7 +75,7 @@ module \fsm_using_function
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \req_0
+    connect \A $0\fsm_function$func$dut.sv:29$2.req_0$5
     connect \B 1'1
     connect \Y $eq$dut.sv:36$11_Y
   end
@@ -95,7 +86,7 @@ module \fsm_using_function
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \req_1
+    connect \A $0\fsm_function$func$dut.sv:29$2.req_1$6
     connect \B 1'1
     connect \Y $eq$dut.sv:38$14_Y
   end
@@ -106,7 +97,7 @@ module \fsm_using_function
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \req_0
+    connect \A $0\fsm_function$func$dut.sv:29$2.req_0$5
     connect \B 1'1
     connect \Y $eq$dut.sv:43$17_Y
   end
@@ -117,7 +108,7 @@ module \fsm_using_function
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \req_1
+    connect \A $0\fsm_function$func$dut.sv:29$2.req_1$6
     connect \B 1'1
     connect \Y $eq$dut.sv:48$20_Y
   end
@@ -156,7 +147,7 @@ module \fsm_using_function
     assign $0\fsm_function$func$dut.sv:29$2.$result$7 $1\fsm_function$func$dut.sv:29$2.$result$8
     assign $0\fsm_function$func$dut.sv:29$1.$result$9 $1\fsm_function$func$dut.sv:29$2.$result$8
     attribute \src "dut.sv:35.3-54.10"
-    switch \state
+    switch $0\fsm_function$func$dut.sv:29$2.state$4
       attribute \src "dut.sv:36.4-42.18"
       case 3'001
         assign { } { }
@@ -221,9 +212,6 @@ module \fsm_using_function
     sync always
       update \fsm_function$func$dut.sv:29$1.$result $0\fsm_function$func$dut.sv:29$1.$result$9
       update \fsm_function$func$dut.sv:29$2.$result 3'x
-      update \fsm_function$func$dut.sv:29$2.state 3'x
-      update \fsm_function$func$dut.sv:29$2.req_0 1'x
-      update \fsm_function$func$dut.sv:29$2.req_1 1'x
   end
   attribute \always_ff 1
   attribute \src "dut.sv:57.1-64.4"

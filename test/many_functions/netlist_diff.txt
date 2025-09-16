@@ -9,7 +9,7 @@
  module many_functions(a, b, c, sel, out_arith, out_bool, out_case, out_nested, out_loop, out_mixed);
  (* src = "dut.sv:6.30-6.31" *)
  input [7:0] a;
-@@ -371,2681 +371,2066 @@
+@@ -371,2681 +371,2006 @@
  wire _335_;
  wire _336_;
  wire _337_;
@@ -125,61 +125,43 @@
 -wire _447_;
 -wire _448_;
 -wire _449_;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:21.27-21.31" *)
 -wire [7:0] \func_arith$func$dut.sv:138$10.temp ;
-+(* src = "dut.sv:138.24-138.43" *)
-+wire [7:0] \func_arith$func$dut.sv:138$2.temp ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:20.27-20.28" *)
 -wire [7:0] \func_arith$func$dut.sv:138$10.x ;
-+(* src = "dut.sv:138.24-138.43" *)
-+wire [7:0] \func_arith$func$dut.sv:138$2.x ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:20.30-20.31" *)
 -wire [7:0] \func_arith$func$dut.sv:138$10.y ;
-+(* src = "dut.sv:138.24-138.43" *)
-+wire [7:0] \func_arith$func$dut.sv:138$2.y ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:20.33-20.34" *)
 -wire [7:0] \func_arith$func$dut.sv:138$10.z ;
-+(* src = "dut.sv:138.24-138.43" *)
-+wire [7:0] \func_arith$func$dut.sv:138$2.z ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:34.21-34.25" *)
 -wire [1:0] \func_bool$func$dut.sv:139$11.mode ;
-+(* src = "dut.sv:139.23-139.43" *)
-+wire [1:0] \func_bool$func$dut.sv:139$23.mode ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:33.27-33.28" *)
 -wire [7:0] \func_bool$func$dut.sv:139$11.x ;
-+(* src = "dut.sv:139.23-139.43" *)
-+wire [7:0] \func_bool$func$dut.sv:139$23.x ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:33.30-33.31" *)
 -wire [7:0] \func_bool$func$dut.sv:139$11.y ;
-+(* src = "dut.sv:139.23-139.43" *)
-+wire [7:0] \func_bool$func$dut.sv:139$23.y ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:50.21-50.24" *)
 -wire [1:0] \func_case$func$dut.sv:140$12.sel ;
-+(* src = "dut.sv:140.23-140.40" *)
-+wire [1:0] \func_case$func$dut.sv:140$50.sel ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:49.27-49.28" *)
 -wire [7:0] \func_case$func$dut.sv:140$12.x ;
-+(* src = "dut.sv:140.23-140.40" *)
-+wire [7:0] \func_case$func$dut.sv:140$50.x ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:83.17-83.18" *)
 -wire [31:0] \func_loop$func$dut.sv:142$14.i ;
-+(* src = "dut.sv:142.23-142.35" *)
-+wire [31:0] \func_loop$func$dut.sv:142$79.i ;
++(* src = "dut.sv:138.24-138.43" *)
++wire [7:0] \func_arith$func$dut.sv:138$2.temp ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:82.27-82.28" *)
 -wire [7:0] \func_loop$func$dut.sv:142$14.x ;
 +(* src = "dut.sv:142.23-142.35" *)
-+wire [7:0] \func_loop$func$dut.sv:142$79.x ;
++wire [31:0] \func_loop$func$dut.sv:142$79.i ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:97.17-97.18" *)
 -wire [31:0] \func_mixed$func$dut.sv:143$15.i ;
@@ -188,34 +170,22 @@
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:95.21-95.25" *)
 -wire [1:0] \func_mixed$func$dut.sv:143$15.mode ;
-+(* src = "dut.sv:143.24-143.45" *)
-+wire [1:0] \func_mixed$func$dut.sv:143$86.mode ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:96.27-96.33" *)
 -wire [7:0] \func_mixed$func$dut.sv:143$15.result ;
-+(* src = "dut.sv:143.24-143.45" *)
-+wire [7:0] \func_mixed$func$dut.sv:143$86.result ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:94.27-94.28" *)
 -wire [7:0] \func_mixed$func$dut.sv:143$15.x ;
-+(* src = "dut.sv:143.24-143.45" *)
-+wire [7:0] \func_mixed$func$dut.sv:143$86.x ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:94.30-94.31" *)
 -wire [7:0] \func_mixed$func$dut.sv:143$15.y ;
-+(* src = "dut.sv:143.24-143.45" *)
-+wire [7:0] \func_mixed$func$dut.sv:143$86.y ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:64.27-64.28" *)
 -wire [7:0] \func_nested$func$dut.sv:141$13.x ;
-+(* src = "dut.sv:141.25-141.45" *)
-+wire [7:0] \func_nested$func$dut.sv:141$64.x ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:64.30-64.31" *)
 -wire [7:0] \func_nested$func$dut.sv:141$13.y ;
-+(* src = "dut.sv:141.25-141.45" *)
-+wire [7:0] \func_nested$func$dut.sv:141$64.y ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:64.33-64.34" *)
 -wire [7:0] \func_nested$func$dut.sv:141$13.z ;
 -\$_AND_  _450_ (
@@ -273,8 +243,8 @@
 -.B(_422_),
 -.S(_160_),
 -.Y(out_bool[0])
-+(* src = "dut.sv:141.25-141.45" *)
-+wire [7:0] \func_nested$func$dut.sv:141$64.z ;
++(* src = "dut.sv:143.24-143.45" *)
++wire [7:0] \func_mixed$func$dut.sv:143$86.result ;
 +\$_XNOR_  _338_ (
 +.A(a[2]),
 +.B(b[2]),
@@ -3940,23 +3910,8 @@
 -assign \func_nested$func$dut.sv:141$13.y  = 8'hxx;
 -assign \func_nested$func$dut.sv:141$13.z  = 8'hxx;
 +assign \func_arith$func$dut.sv:138$2.temp  = 8'hxx;
-+assign \func_arith$func$dut.sv:138$2.x  = 8'hxx;
-+assign \func_arith$func$dut.sv:138$2.y  = 8'hxx;
-+assign \func_arith$func$dut.sv:138$2.z  = 8'hxx;
-+assign \func_bool$func$dut.sv:139$23.mode  = 2'hx;
-+assign \func_bool$func$dut.sv:139$23.x  = 8'hxx;
-+assign \func_bool$func$dut.sv:139$23.y  = 8'hxx;
-+assign \func_case$func$dut.sv:140$50.sel  = 2'hx;
-+assign \func_case$func$dut.sv:140$50.x  = 8'hxx;
 +assign \func_loop$func$dut.sv:142$79.i  = 32'hxxxxxxxx;
-+assign \func_loop$func$dut.sv:142$79.x  = 8'hxx;
 +assign \func_mixed$func$dut.sv:143$86.i  = 32'hxxxxxxxx;
-+assign \func_mixed$func$dut.sv:143$86.mode  = 2'hx;
 +assign \func_mixed$func$dut.sv:143$86.result  = 8'hxx;
-+assign \func_mixed$func$dut.sv:143$86.x  = 8'hxx;
-+assign \func_mixed$func$dut.sv:143$86.y  = 8'hxx;
-+assign \func_nested$func$dut.sv:141$64.x  = 8'hxx;
-+assign \func_nested$func$dut.sv:141$64.y  = 8'hxx;
-+assign \func_nested$func$dut.sv:141$64.z  = 8'hxx;
  assign out_loop = { a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7] };
  endmodule

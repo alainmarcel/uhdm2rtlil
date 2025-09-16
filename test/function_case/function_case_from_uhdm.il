@@ -9,12 +9,6 @@ module \function_case
   wire $procmux$17_CMP
   wire $procmux$18_CMP
   wire $procmux$19_CMP
-  attribute \nosync 1
-  attribute \src "dut.sv:26.18-26.35"
-  wire width 2 \func_case$func$dut.sv:26$2.sel
-  attribute \nosync 1
-  attribute \src "dut.sv:26.18-26.35"
-  wire width 8 \func_case$func$dut.sv:26$2.x
   attribute \src "dut.sv:7.30-7.33"
   wire width 8 output 3 \out
   attribute \src "dut.sv:6.24-6.27"
@@ -76,6 +70,4 @@ module \function_case
     connect \A \sel
     connect \Y $procmux$19_CMP
   end
-  connect \func_case$func$dut.sv:26$2.sel 2'x
-  connect \func_case$func$dut.sv:26$2.x 8'x
 end

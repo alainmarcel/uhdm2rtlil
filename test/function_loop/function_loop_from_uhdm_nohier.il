@@ -21,9 +21,6 @@ module \function_loop
   attribute \nosync 1
   attribute \src "dut.sv:22.18-22.30"
   wire width 32 \func_loop$func$dut.sv:22$2.i
-  attribute \nosync 1
-  attribute \src "dut.sv:22.18-22.30"
-  wire width 8 \func_loop$func$dut.sv:22$2.x
   attribute \src "dut.sv:6.30-6.33"
   wire width 8 output 2 \out
   attribute \src "dut.sv:5.30-5.31"
@@ -50,7 +47,6 @@ module \function_loop
     sync always
       update \func_loop$func$dut.sv:22$1.$result $0\func_loop$func$dut.sv:22$1.$result$7
       update \func_loop$func$dut.sv:22$2.$result 8'x
-      update \func_loop$func$dut.sv:22$2.x 8'x
       update \func_loop$func$dut.sv:22$2.i 32'x
   end
   connect $func_func_loop_result_0 \func_loop$func$dut.sv:22$1.$result

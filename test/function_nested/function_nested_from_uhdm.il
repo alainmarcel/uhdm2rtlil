@@ -10,15 +10,6 @@ module \function_nested
   wire $auto$rtlil.cc:3018:Gt$15
   wire width 8 $procmux$17_Y
   wire width 8 $procmux$21_Y
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.y
-  attribute \nosync 1
-  attribute \src "dut.sv:30.18-30.38"
-  wire width 8 \func_nested$func$dut.sv:30$2.z
   attribute \src "dut.sv:8.30-8.33"
   wire width 8 output 4 \out
   attribute \src "dut.sv:5.30-5.31"
@@ -84,7 +75,4 @@ module \function_nested
     connect \S $auto$rtlil.cc:3018:Gt$11
     connect \Y \out
   end
-  connect \func_nested$func$dut.sv:30$2.x 8'x
-  connect \func_nested$func$dut.sv:30$2.y 8'x
-  connect \func_nested$func$dut.sv:30$2.z 8'x
 end

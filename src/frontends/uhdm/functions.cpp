@@ -492,25 +492,81 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         for (auto io_decl : *func_def->Io_decls()) {
             if (arg_idx < args.size()) {
                 std::string io_name = std::string(io_decl->VpiName());
-                int width = args[arg_idx].size();
+                // Get the actual width from the parameter declaration, not from the argument
+                int width = 32; // Default for integer
                 
-                // Create temporary wire for this argument using autoidx
-                std::string temp_name = stringf("$0\\%s.%s$%d", 
-                    func_call_id.c_str(), io_name.c_str(), incr_autoidx());
-                RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
-                
-                // Add source attribute to temp wire
-                if (fc) {
-                    add_src_attribute(temp_wire->attributes, fc);
+                // Check if this is an integer parameter
+                if (io_decl->Typespec()) {
+                    const ref_typespec* rts = io_decl->Typespec();
+                    if (rts && rts->Actual_typespec()) {
+                        const typespec* actual_ts = rts->Actual_typespec();
+                        // Integer types are always 32-bit
+                        if (actual_ts->UhdmType() == uhdminteger_typespec) {
+                            width = 32;
+                            if (mode_debug) {
+                                log("UHDM: Function parameter %s is integer type, using width=32\n", io_name.c_str());
+                            }
+                        } else {
+                            // For non-integer types, still use the actual argument width
+                            width = args[arg_idx].size();
+                            if (mode_debug) {
+                                log("UHDM: Function parameter %s is not integer (type=%d), using arg width=%d\n", 
+                                    io_name.c_str(), actual_ts->UhdmType(), width);
+                            }
+                        }
+                    } else {
+                        // No actual typespec
+                        width = args[arg_idx].size();
+                        if (mode_debug) {
+                            log("UHDM: Function parameter %s has no actual typespec, using arg width=%d\n", 
+                                io_name.c_str(), width);
+                        }
+                    }
+                } else {
+                    // Fallback to argument width if no typespec
+                    width = args[arg_idx].size();
+                    if (mode_debug) {
+                        log("UHDM: Function parameter %s has no typespec, using arg width=%d\n", 
+                            io_name.c_str(), width);
+                    }
                 }
                 
-                arg_temp_wires.push_back(temp_wire);
+                int direction = io_decl->VpiDirection();
                 
-                // Add assignment from actual argument to temp wire
-                root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
+                // VpiDirection: 1=input, 2=output, 3=inout
+                if (direction == 1) {
+                    // Input parameter - create temp wire and copy input value
+                    std::string temp_name = stringf("$0\\%s.%s$%d", 
+                        func_call_id.c_str(), io_name.c_str(), incr_autoidx());
+                    RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
+                    
+                    // Add source attribute to temp wire
+                    if (fc) {
+                        add_src_attribute(temp_wire->attributes, fc);
+                    }
+                    
+                    arg_temp_wires.push_back(temp_wire);
+                    
+                    // Add assignment from actual argument to temp wire
+                    root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
+                    
+                    // Map input parameter to temp wire for use in function body
+                    input_mapping[io_name] = temp_wire;
+                } else if (direction == 2) {
+                    // Output parameter - map directly to the output wire
+                    // Assignments to this parameter in the function body will
+                    // directly update the output wire
+                    input_mapping[io_name] = args[arg_idx];
+                    if (mode_debug) {
+                        log("UHDM: Mapping output parameter %s to wire with width %d\n", 
+                            io_name.c_str(), width);
+                    }
+                } else if (direction == 3) {
+                    // Inout parameter - needs both input and output handling
+                    // For now, treat like output
+                    input_mapping[io_name] = args[arg_idx];
+                }
                 
-                // Map for use in function body
-                input_mapping[io_name] = args[arg_idx];
                 arg_idx++;
             }
         }
@@ -556,6 +612,17 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     std::set<std::string> return_vars;
     scan_for_return_variables(func_def->Stmt(), func_name, return_vars, func_def);
     
+    // Check if the function actually assigns to its return value
+    bool has_return_assignment = false;
+    scan_for_direct_return_assignment(func_def->Stmt(), func_name, has_return_assignment);
+    
+    // If function doesn't assign to its return value, initialize result to 0
+    // This prevents proc_init errors when called from initial blocks
+    if (!has_return_assignment) {
+        log("UHDM: Function %s doesn't assign to its return value, initializing to 0\n", func_name.c_str());
+        root_case->actions.push_back(RTLIL::SigSig(temp_result1_wire, RTLIL::SigSpec(0, result_wire->width)));
+    }
+    
     // Always add the function name itself as a return variable
     // This handles direct assignments like fsm_function = IDLE
     input_mapping[func_name] = temp_result1_wire;
@@ -572,6 +639,12 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     
     // Process the function body into switches
     int func_temp_counter = 0; // Not used anymore, kept for compatibility
+    log("UHDM: Processing function body for %s\n", func_name.c_str());
+    if (func_def->Stmt()) {
+        log("UHDM: Function has statement of type %d\n", func_def->Stmt()->VpiType());
+    } else {
+        log("UHDM: Function has no statement body!\n");
+    }
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
     
     // Create nosync wires for the function context (these get set to 'x)
@@ -587,10 +660,16 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         }
     }
     
-    // Create nosync wires for each argument (the Verilog frontend creates these for all arguments)
+    // Create nosync wires for output parameters only (input parameters don't need them)
     std::vector<RTLIL::Wire*> nosync_arg_wires;
     if (func_def->Io_decls()) {
         for (auto io_decl : *func_def->Io_decls()) {
+            int direction = io_decl->VpiDirection();
+            // Skip input parameters (direction=1) - they don't need nosync wires with X assignments
+            if (direction == 1) {
+                continue;
+            }
+            
             std::string io_name = std::string(io_decl->VpiName());
             std::string nosync_name = stringf("\\%s.%s", func_call_id.c_str(), io_name.c_str());
             
@@ -661,6 +740,89 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     return proc;
 }
 
+
+// Helper function to check if a function directly assigns to its return value
+void UhdmImporter::scan_for_direct_return_assignment(const any* stmt, const std::string& func_name, 
+                                                     bool& found) {
+    if (!stmt || found) return;
+    
+    int type = stmt->UhdmType();
+    switch(type) {
+    case uhdmassignment: {
+        const assignment* assign = any_cast<const assignment*>(stmt);
+        if (assign && assign->Lhs()) {
+            if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                if (lhs_ref && std::string(lhs_ref->VpiName()) == func_name) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmbegin: {
+        const begin* bg = any_cast<const begin*>(stmt);
+        if (bg && bg->Stmts()) {
+            for (auto s : *bg->Stmts()) {
+                scan_for_direct_return_assignment(s, func_name, found);
+                if (found) return;
+            }
+        }
+        break;
+    }
+    
+    case uhdmnamed_begin: {
+        const named_begin* nbg = any_cast<const named_begin*>(stmt);
+        if (nbg && nbg->Stmts()) {
+            for (auto s : *nbg->Stmts()) {
+                scan_for_direct_return_assignment(s, func_name, found);
+                if (found) return;
+            }
+        }
+        break;
+    }
+    
+    case uhdmif_else: {
+        const if_else* ie = any_cast<const if_else*>(stmt);
+        if (ie) {
+            if (ie->VpiStmt()) {
+                scan_for_direct_return_assignment(ie->VpiStmt(), func_name, found);
+            }
+            if (!found && ie->VpiElseStmt()) {
+                scan_for_direct_return_assignment(ie->VpiElseStmt(), func_name, found);
+            }
+        }
+        break;
+    }
+    
+    case uhdmcase_stmt: {
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (cs && cs->Case_items()) {
+            for (auto item : *cs->Case_items()) {
+                const case_item* ci = any_cast<const case_item*>(item);
+                if (ci && ci->Stmt()) {
+                    scan_for_direct_return_assignment(ci->Stmt(), func_name, found);
+                    if (found) return;
+                }
+            }
+        }
+        break;
+    }
+    
+    case uhdmfor_stmt: {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (fs && fs->VpiStmt()) {
+            scan_for_direct_return_assignment(fs->VpiStmt(), func_name, found);
+        }
+        break;
+    }
+    
+    default:
+        break;
+    }
+}
 
 // Helper function to scan a statement and find variables assigned to the function name
 void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string& func_name, 

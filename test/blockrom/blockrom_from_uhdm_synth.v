@@ -27,6 +27,8 @@ module blockrom(clk, address_in, data_out);
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:10.15-10.25" *)
   wire [7:0] data_out_r;
+  (* src = "dut.sv:13.12-13.13" *)
+  wire [31:0] j;
   \$_AND_  _10_ (
     .A(address_in[2]),
     .B(address_in[1]),
@@ -101,17 +103,17 @@ module blockrom(clk, address_in, data_out);
     .S(address_in[2]),
     .Y(_00_[5])
   );
-  \$_SDFF_PP1_  \data_out_r_reg[6]  /* _24_ */ (
-    .C(clk),
-    .D(_03_),
-    .Q(data_out_r[6]),
-    .R(_02_)
-  );
-  \$_SDFF_PP0_  \data_out_r_reg[7]  /* _25_ */ (
+  \$_SDFF_PP0_  \data_out_r_reg[7]  /* _24_ */ (
     .C(clk),
     .D(address_in[0]),
     .Q(data_out_r[7]),
     .R(address_in[2])
+  );
+  \$_SDFF_PP1_  \data_out_r_reg[6]  /* _25_ */ (
+    .C(clk),
+    .D(_03_),
+    .Q(data_out_r[6]),
+    .R(_02_)
   );
   \$_DFF_P_  \data_out_r_reg[0]  /* _26_ */ (
     .C(clk),
@@ -145,4 +147,5 @@ module blockrom(clk, address_in, data_out);
     .R(_01_)
   );
   assign data_out = data_out_r;
+  assign j = 32'd2810991328;
 endmodule

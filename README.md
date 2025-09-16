@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 102 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (99/102 tests functional)
-- **Perfect Matches**: 94 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 106 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 96% (102/106 tests functional)
+- **Perfect Matches**: 97 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
@@ -54,10 +54,16 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - Removed hardcoded "result" assumptions - functions can assign to any variable
     - Fixed parameter vs variable detection in function return value scanning
     - Added support for named_begin blocks in functions
+    - **Functions with output parameters now fully supported** ✅
+      - Proper distinction between input/output parameters (VpiDirection)
+      - Nested function calls with parameter passing working correctly
+      - Fixed integer parameter width detection (32-bit for integer types)
+      - Removed superfluous X assignments for input parameters
     - `code_tidbits_fsm_using_function` now passes equivalence check
     - `simple_function` test added and passing
     - New function tests added: `function_arith`, `function_bool`, `function_case`, `function_nested` (all passing)
     - `function_loop`, `function_mixed`, `many_functions` - Fixed and now passing all tests
+    - `function_output` - Functions with output parameters and nested calls now passing ✅
   - **Processing Order and autoidx Consistency** ✅
     - Fixed processing order: continuous assignments now processed before always blocks
     - Consistent use of Yosys global autoidx counter for unique naming

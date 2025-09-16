@@ -8,24 +8,31 @@
  module simple_function(clk, rst, a, b, c, q);
  (* src = "dut.sv:3.18-3.21" *)
  input clk;
-@@ -21,16 +21,15 @@
+@@ -21,17 +21,7 @@
  output q;
  wire q;
  wire _0_;
 -(* src = "dut.sv:12.31-12.31" *)
 -wire [0:0] \and_or_tree$func$dut.sv:22$1.$result ;
-+wire \and_or_tree$func$dut.sv:22$1.$result ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.21-13.22" *)
-+(* src = "dut.sv:22.16-22.36" *)
- wire \and_or_tree$func$dut.sv:22$2.x ;
- (* nosync = 32'd1 *)
+-wire \and_or_tree$func$dut.sv:22$2.x ;
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.24-13.25" *)
-+(* src = "dut.sv:22.16-22.36" *)
- wire \and_or_tree$func$dut.sv:22$2.y ;
- (* nosync = 32'd1 *)
+-wire \and_or_tree$func$dut.sv:22$2.y ;
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.27-13.28" *)
-+(* src = "dut.sv:22.16-22.36" *)
- wire \and_or_tree$func$dut.sv:22$2.z ;
+-wire \and_or_tree$func$dut.sv:22$2.z ;
++wire \and_or_tree$func$dut.sv:22$1.$result ;
  (* src = "dut.sv:21.11-21.12" *)
  wire d;
+ \$_AND_  _1_ (
+@@ -52,8 +42,5 @@
+ .Q(q),
+ .R(rst)
+ );
+-assign \and_or_tree$func$dut.sv:22$2.x  = 1'hx;
+-assign \and_or_tree$func$dut.sv:22$2.y  = 1'hx;
+-assign \and_or_tree$func$dut.sv:22$2.z  = 1'hx;
+ assign d = \and_or_tree$func$dut.sv:22$1.$result ;
+ endmodule

@@ -57,6 +57,7 @@ set(UHDM_FRONTEND_SOURCES
     src/frontends/uhdm/uhdm2rtlil.cpp
     src/frontends/uhdm/module.cpp
     src/frontends/uhdm/expression.cpp
+    src/frontends/uhdm/functions.cpp
     src/frontends/uhdm/process.cpp
     src/frontends/uhdm/process_helper.cpp
     src/frontends/uhdm/clocking.cpp

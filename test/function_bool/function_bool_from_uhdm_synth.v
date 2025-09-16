@@ -67,15 +67,6 @@ module function_bool(a, b, sel, out);
   wire _048_;
   wire _049_;
   wire _050_;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:28.18-28.38" *)
-  wire [1:0] \func_bool$func$dut.sv:28$2.mode ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:28.18-28.38" *)
-  wire [7:0] \func_bool$func$dut.sv:28$2.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:28.18-28.38" *)
-  wire [7:0] \func_bool$func$dut.sv:28$2.y ;
   \$_NAND_  _051_ (
     .A(b[0]),
     .B(a[0]),
@@ -387,7 +378,4 @@ module function_bool(a, b, sel, out);
     .S(_002_),
     .Y(out[7])
   );
-  assign \func_bool$func$dut.sv:28$2.mode  = 2'hx;
-  assign \func_bool$func$dut.sv:28$2.x  = 8'hxx;
-  assign \func_bool$func$dut.sv:28$2.y  = 8'hxx;
 endmodule

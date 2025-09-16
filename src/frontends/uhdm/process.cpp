@@ -2981,6 +2981,30 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 }
                                 
                                 log("        Memory initialization loop unrolled successfully\n");
+                                
+                                // Store final values of loop variables after the loop
+                                // Override any previous assignments to these variables
+                                for (const auto& var_pair : loop_vars) {
+                                    const std::string& var_name = var_pair.first;
+                                    int64_t final_value = var_pair.second;
+                                    
+                                    // Skip the loop index variable itself
+                                    if (var_name == loop_var_name) {
+                                        continue;
+                                    }
+                                    
+                                    // Create or override assignment for the final value
+                                    RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
+                                    if (var_wire) {
+                                        // Override the assignment in pending_sync_assignments
+                                        // (not in sync->actions because they haven't been flushed yet)
+                                        RTLIL::SigSpec var_spec(var_wire);
+                                        pending_sync_assignments[var_spec] = RTLIL::Const(final_value, var_wire->width);
+                                        log("        Storing final value of %s = 0x%llx (overriding any previous assignment)\n", 
+                                            var_name.c_str(), (unsigned long long)final_value);
+                                    }
+                                }
+                                
                                 return;  // Done with this specific pattern
                             }
                         }
@@ -3262,28 +3286,6 @@ void UhdmImporter::import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL:
         for (auto stmt : *stmts) {
             log("          Processing statement %d/%zu in begin block\n", stmt_idx + 1, stmts->size());
             log_flush();
-            
-            // Skip assignments to integer variables that are only used in for loops
-            // This prevents loop variables like 'j' from appearing in the output
-            if (stmt->VpiType() == vpiAssignment) {
-                const assignment* assign = any_cast<const assignment*>(stmt);
-                if (assign->Lhs()) {
-                    const UHDM::any* actual = nullptr;
-                    if (assign->Lhs()->VpiType() == vpiRefVar) {
-                        const ref_var* var = any_cast<const ref_var*>(assign->Lhs());
-                        actual = var->Actual_group();
-                    } else if (assign->Lhs()->VpiType() == vpiRefObj) {
-                        const ref_obj* obj = any_cast<const ref_obj*>(assign->Lhs());
-                        actual = obj->Actual_group();
-                    }
-                    // TODO: support all flavors of integers (short...)
-                    if (actual && actual->UhdmType() == uhdminteger_var) {
-                        log("          Skipping assignment to loop variable '%s'\n", assign->Lhs()->VpiName().data());
-                        stmt_idx++;
-                        continue;
-                    }
-                }
-            }
             
             import_statement_sync(stmt, sync, is_reset);
             log("          Statement %d/%zu processed\n", stmt_idx + 1, stmts->size());

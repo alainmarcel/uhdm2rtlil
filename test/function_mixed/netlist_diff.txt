@@ -9,7 +9,7 @@
  module function_mixed(x, y, mode, out);
  (* src = "dut.sv:6.30-6.31" *)
  input [7:0] x;
-@@ -180,1305 +180,947 @@
+@@ -180,1305 +180,935 @@
  wire _162_;
  wire _163_;
  wire _164_;
@@ -80,27 +80,21 @@
 -wire _229_;
 -wire _230_;
 -wire _231_;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:17.17-17.18" *)
 -wire [31:0] \func_mixed$func$dut.sv:58$4.i ;
-+(* src = "dut.sv:58.18-58.40" *)
-+wire [31:0] \func_mixed$func$dut.sv:58$2.i ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:15.21-15.25" *)
 -wire [1:0] \func_mixed$func$dut.sv:58$4.mode ;
-+(* src = "dut.sv:58.18-58.40" *)
-+wire [1:0] \func_mixed$func$dut.sv:58$2.mode ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:16.27-16.33" *)
 -wire [7:0] \func_mixed$func$dut.sv:58$4.result ;
 +(* src = "dut.sv:58.18-58.40" *)
-+wire [7:0] \func_mixed$func$dut.sv:58$2.result ;
++wire [31:0] \func_mixed$func$dut.sv:58$2.i ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:14.27-14.28" *)
 -wire [7:0] \func_mixed$func$dut.sv:58$4.x ;
-+(* src = "dut.sv:58.18-58.40" *)
-+wire [7:0] \func_mixed$func$dut.sv:58$2.x ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:14.30-14.31" *)
 -wire [7:0] \func_mixed$func$dut.sv:58$4.y ;
 -\$_XNOR_  _232_ (
@@ -108,7 +102,7 @@
 -.B(y[7]),
 -.Y(_161_)
 +(* src = "dut.sv:58.18-58.40" *)
-+wire [7:0] \func_mixed$func$dut.sv:58$2.y ;
++wire [7:0] \func_mixed$func$dut.sv:58$2.result ;
 +\$_OR_  _165_ (
 +.A(_083_),
 +.B(_082_),
@@ -168,11 +162,6 @@
 +.A(_089_),
 +.B(_087_),
 +.Y(_090_)
-+);
-+\$_ANDNOT_  _173_ (
-+.A(x[3]),
-+.B(_049_),
-+.Y(_091_)
  );
 -\$_NOR_  _238_ (
 -.A(_165_),
@@ -183,12 +172,17 @@
 -.A(_163_),
 -.B(_166_),
 -.Y(_167_)
++\$_ANDNOT_  _173_ (
++.A(x[3]),
++.B(_049_),
++.Y(_091_)
+ );
+-\$_XNOR_  _240_ (
 +\$_OR_  _174_ (
 +.A(_091_),
 +.B(_090_),
 +.Y(_092_)
- );
--\$_XNOR_  _240_ (
++);
 +\$_MUX_  _175_ (
 +.A(_092_),
 +.B(_085_),
@@ -600,7 +594,21 @@
 +.A(_128_),
 +.B(_129_),
 +.Y(_130_)
-+);
+ );
+-\$_ANDNOT_  _291_ (
+-.A(_215_),
+-.B(_217_),
+-.Y(_218_)
+-);
+-\$_OR_  _292_ (
+-.A(_218_),
+-.B(_209_),
+-.Y(_219_)
+-);
+-\$_XOR_  _293_ (
+-.A(_218_),
+-.B(_209_),
+-.Y(_220_)
 +\$_ANDNOT_  _216_ (
 +.A(_127_),
 +.B(_130_),
@@ -626,20 +634,8 @@
 +.B(_134_),
 +.Y(_135_)
  );
--\$_ANDNOT_  _291_ (
--.A(_215_),
--.B(_217_),
--.Y(_218_)
--);
--\$_OR_  _292_ (
--.A(_218_),
--.B(_209_),
--.Y(_219_)
--);
--\$_XOR_  _293_ (
--.A(_218_),
--.B(_209_),
--.Y(_220_)
+-\$_XOR_  _294_ (
+-.A(_216_),
 +\$_NOR_  _221_ (
 +.A(_135_),
 +.B(_112_),
@@ -649,9 +645,7 @@
 +.A(_136_),
 +.B(_111_),
 +.Y(_137_)
- );
--\$_XOR_  _294_ (
--.A(_216_),
++);
 +\$_XOR_  _223_ (
 +.A(_137_),
  .B(x[7]),
@@ -696,13 +690,13 @@
 +.A(_129_),
 +.B(_128_),
 +.Y(x[1])
- );
--\$_NAND_  _296_ (
++);
 +\$_XOR_  _231_ (
 +.A(x[0]),
 +.B(x[1]),
 +.Y(x[0])
-+);
+ );
+-\$_NAND_  _296_ (
 +\$_NOR_  _232_ (
 +.A(_131_),
 +.B(_125_),
@@ -1992,8 +1986,5 @@
 -assign \func_mixed$func$dut.sv:58$4.x  = 8'hxx;
 -assign \func_mixed$func$dut.sv:58$4.y  = 8'hxx;
 +assign \func_mixed$func$dut.sv:58$2.i  = 32'hxxxxxxxx;
-+assign \func_mixed$func$dut.sv:58$2.mode  = 2'hx;
 +assign \func_mixed$func$dut.sv:58$2.result  = 8'hxx;
-+assign \func_mixed$func$dut.sv:58$2.x  = 8'hxx;
-+assign \func_mixed$func$dut.sv:58$2.y  = 8'hxx;
  endmodule

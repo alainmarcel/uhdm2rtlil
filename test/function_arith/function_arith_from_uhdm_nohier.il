@@ -17,9 +17,9 @@ module \function_arith
   wire width 8 $0\func_arith$func$dut.sv:25$2.z$6
   attribute \src "dut.sv:25.18-25.37"
   wire width 8 $1\func_arith$func$dut.sv:25$2.$result$8
-  wire width 8 $auto$expression.cpp:1674:import_operation$10
-  wire width 8 $auto$expression.cpp:1697:import_operation$12
-  wire width 8 $auto$expression.cpp:1792:import_operation$14
+  wire width 8 $auto$expression.cpp:1704:import_operation$10
+  wire width 8 $auto$expression.cpp:1727:import_operation$12
+  wire width 8 $auto$expression.cpp:1822:import_operation$14
   wire width 8 $auto$rtlil.cc:3006:And$17
   wire width 8 $auto$rtlil.cc:3007:Or$19
   wire width 8 $auto$rtlil.cc:3008:Xor$21
@@ -38,15 +38,6 @@ module \function_arith
   attribute \nosync 1
   attribute \src "dut.sv:25.18-25.37"
   wire width 8 \func_arith$func$dut.sv:25$2.temp
-  attribute \nosync 1
-  attribute \src "dut.sv:25.18-25.37"
-  wire width 8 \func_arith$func$dut.sv:25$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:25.18-25.37"
-  wire width 8 \func_arith$func$dut.sv:25$2.y
-  attribute \nosync 1
-  attribute \src "dut.sv:25.18-25.37"
-  wire width 8 \func_arith$func$dut.sv:25$2.z
   attribute \src "dut.sv:8.30-8.33"
   wire width 8 output 4 \out
   cell $add $add$dut.sv:16$11
@@ -55,9 +46,9 @@ module \function_arith
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
-    connect \Y $auto$expression.cpp:1674:import_operation$10
+    connect \A $0\func_arith$func$dut.sv:25$2.x$4
+    connect \B $0\func_arith$func$dut.sv:25$2.y$5
+    connect \Y $auto$expression.cpp:1704:import_operation$10
   end
   cell $and $and$dut.sv:19$16
     parameter \A_SIGNED 0
@@ -65,8 +56,8 @@ module \function_arith
     parameter \B_SIGNED 0
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \a
-    connect \B \b
+    connect \A $0\func_arith$func$dut.sv:25$2.x$4
+    connect \B $0\func_arith$func$dut.sv:25$2.y$5
     connect \Y $auto$rtlil.cc:3006:And$17
   end
   cell $or $or$dut.sv:19$18
@@ -87,7 +78,7 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1792:import_operation$14
+    connect \Y $auto$expression.cpp:1822:import_operation$14
   end
   cell $sub $sub$dut.sv:17$13
     parameter \A_SIGNED 0
@@ -96,8 +87,8 @@ module \function_arith
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
-    connect \B \c
-    connect \Y $auto$expression.cpp:1697:import_operation$12
+    connect \B $0\func_arith$func$dut.sv:25$2.z$6
+    connect \Y $auto$expression.cpp:1727:import_operation$12
   end
   cell $xor $xor$dut.sv:20$20
     parameter \A_SIGNED 0
@@ -106,7 +97,7 @@ module \function_arith
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
-    connect \B \c
+    connect \B $0\func_arith$func$dut.sv:25$2.z$6
     connect \Y $auto$rtlil.cc:3008:Xor$21
   end
   attribute \src "dut.sv:25.18-25.37"
@@ -121,17 +112,14 @@ module \function_arith
     assign $0\func_arith$func$dut.sv:25$2.z$6 \c
     assign $0\func_arith$func$dut.sv:25$2.$result$7 $1\func_arith$func$dut.sv:25$2.$result$8
     assign $0\func_arith$func$dut.sv:25$1.$result$9 $1\func_arith$func$dut.sv:25$2.$result$8
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1674:import_operation$10
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1697:import_operation$12
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1792:import_operation$14
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1704:import_operation$10
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1727:import_operation$12
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1822:import_operation$14
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$rtlil.cc:3007:Or$19
     assign $1\func_arith$func$dut.sv:25$2.$result$8 $auto$rtlil.cc:3008:Xor$21
     sync always
       update \func_arith$func$dut.sv:25$1.$result $0\func_arith$func$dut.sv:25$1.$result$9
       update \func_arith$func$dut.sv:25$2.$result 8'x
-      update \func_arith$func$dut.sv:25$2.x 8'x
-      update \func_arith$func$dut.sv:25$2.y 8'x
-      update \func_arith$func$dut.sv:25$2.z 8'x
       update \func_arith$func$dut.sv:25$2.temp 8'x
   end
   connect $func_func_arith_result_0 \func_arith$func$dut.sv:25$1.$result

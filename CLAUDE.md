@@ -33,7 +33,7 @@ cd test && ./test_uhdm_workflow.sh <test_name>
 # Example: ./test_uhdm_workflow.sh simple_counter
 
 # Run a test with debugging enabled
-cd test/<test_name> && YOSYS_ENABLE_UHDM_DEBUG=1 ../../out/current/bin/yosys -m ../../build/uhdm2rtlil.so -p "read_uhdm slpp_all/surelog.uhdm"
+cd test/<test_name> && ../../out/current/bin/yosys -m ../../build/uhdm2rtlil.so -p "read_uhdm -debug slpp_all/surelog.uhdm"
 
 # Run all internal tests
 cd test && ./run_all_tests.sh
@@ -96,7 +96,7 @@ The UHDM frontend is in `src/frontends/uhdm/` with these key files:
    - Use `get_current_gen_scope()` for hierarchical naming
 
 4. **Debug Mode**:
-   - Enable with `YOSYS_ENABLE_UHDM_DEBUG=1` environment variable
+   - Enable with `-debug` flag: `read_uhdm -debug slpp_all/surelog.uhdm`
    - Adds extensive logging of UHDM traversal
    - Shows parameter resolution and expression evaluation
 

@@ -9,9 +9,5 @@ module fib_simple(in, out);
   (* src = "dut.sv:3.24-3.27" *)
   output [31:0] out;
   wire [31:0] out;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:11.18-11.31" *)
-  wire [31:0] \double_it$func$dut.sv:11$2.k ;
-  assign \double_it$func$dut.sv:11$2.k  = 32'hxxxxxxxx;
   assign out = { in[30:0], 1'h0 };
 endmodule
