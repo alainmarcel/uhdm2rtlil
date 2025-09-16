@@ -15,20 +15,14 @@ module \function_case
   wire width 8 $0\func_case$func$dut.sv:26$2.x$4
   attribute \src "dut.sv:26.18-26.35"
   wire width 8 $1\func_case$func$dut.sv:26$2.$result$7
-  wire width 8 $auto$expression.cpp:1792:import_operation$11
-  wire width 8 $auto$expression.cpp:1792:import_operation$13
-  wire width 8 $auto$expression.cpp:1792:import_operation$9
+  wire width 8 $auto$expression.cpp:1822:import_operation$11
+  wire width 8 $auto$expression.cpp:1822:import_operation$13
+  wire width 8 $auto$expression.cpp:1822:import_operation$9
   wire width 8 $func_func_case_result_0
   wire width 8 \func_case$func$dut.sv:26$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:26.18-26.35"
   wire width 8 \func_case$func$dut.sv:26$2.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:26.18-26.35"
-  wire width 2 \func_case$func$dut.sv:26$2.sel
-  attribute \nosync 1
-  attribute \src "dut.sv:26.18-26.35"
-  wire width 8 \func_case$func$dut.sv:26$2.x
   attribute \src "dut.sv:7.30-7.33"
   wire width 8 output 3 \out
   attribute \src "dut.sv:6.24-6.27"
@@ -41,9 +35,9 @@ module \function_case
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 8
-    connect \A \x
+    connect \A $0\func_case$func$dut.sv:26$2.x$4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1792:import_operation$9
+    connect \Y $auto$expression.cpp:1822:import_operation$9
   end
   cell $shl $shl$dut.sv:18$12
     parameter \A_SIGNED 0
@@ -51,9 +45,9 @@ module \function_case
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 8
-    connect \A \x
+    connect \A $0\func_case$func$dut.sv:26$2.x$4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:1792:import_operation$11
+    connect \Y $auto$expression.cpp:1822:import_operation$11
   end
   cell $shl $shl$dut.sv:19$14
     parameter \A_SIGNED 0
@@ -61,9 +55,9 @@ module \function_case
     parameter \B_SIGNED 0
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 8
-    connect \A \x
+    connect \A $0\func_case$func$dut.sv:26$2.x$4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:1792:import_operation$13
+    connect \Y $auto$expression.cpp:1822:import_operation$13
   end
   attribute \src "dut.sv:26.18-26.35"
   process $proc$dut.sv:26$3
@@ -77,23 +71,23 @@ module \function_case
     assign $0\func_case$func$dut.sv:26$2.$result$6 $1\func_case$func$dut.sv:26$2.$result$7
     assign $0\func_case$func$dut.sv:26$1.$result$8 $1\func_case$func$dut.sv:26$2.$result$7
     attribute \src "dut.sv:15.13-21.20"
-    switch \sel
+    switch $0\func_case$func$dut.sv:26$2.sel$5
       attribute \src "dut.sv:16.17-16.38"
       case 2'00
         assign { } { }
-        assign $1\func_case$func$dut.sv:26$2.$result$7 \x
+        assign $1\func_case$func$dut.sv:26$2.$result$7 $0\func_case$func$dut.sv:26$2.x$4
       attribute \src "dut.sv:17.17-17.43"
       case 2'01
         assign { } { }
-        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1792:import_operation$9
+        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1822:import_operation$9
       attribute \src "dut.sv:18.17-18.43"
       case 2'10
         assign { } { }
-        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1792:import_operation$11
+        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1822:import_operation$11
       attribute \src "dut.sv:19.17-19.43"
       case 2'11
         assign { } { }
-        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1792:import_operation$13
+        assign $1\func_case$func$dut.sv:26$2.$result$7 $auto$expression.cpp:1822:import_operation$13
       attribute \src "dut.sv:20.17-20.40"
       case 
         assign { } { }
@@ -102,8 +96,6 @@ module \function_case
     sync always
       update \func_case$func$dut.sv:26$1.$result $0\func_case$func$dut.sv:26$1.$result$8
       update \func_case$func$dut.sv:26$2.$result 8'x
-      update \func_case$func$dut.sv:26$2.x 8'x
-      update \func_case$func$dut.sv:26$2.sel 2'x
   end
   connect $func_func_case_result_0 \func_case$func$dut.sv:26$1.$result
   connect \out $func_func_case_result_0

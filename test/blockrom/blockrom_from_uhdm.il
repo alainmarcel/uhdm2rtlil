@@ -17,6 +17,10 @@ module \blockrom
   attribute \reg 1
   attribute \src "dut.sv:10.15-10.25"
   wire width 8 \data_out_r
+  attribute \init 32'10100111100011000101001011100000
+  attribute \src "dut.sv:13.12-13.13"
+  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  wire width 32 \j
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:11.15-11.21"
   memory width 8 size 8 \memory

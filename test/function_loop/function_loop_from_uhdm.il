@@ -8,14 +8,10 @@ module \function_loop
   attribute \nosync 1
   attribute \src "dut.sv:22.18-22.30"
   wire width 32 \func_loop$func$dut.sv:22$2.i
-  attribute \nosync 1
-  attribute \src "dut.sv:22.18-22.30"
-  wire width 8 \func_loop$func$dut.sv:22$2.x
   attribute \src "dut.sv:6.30-6.33"
   wire width 8 output 2 \out
   attribute \src "dut.sv:5.30-5.31"
   wire width 8 input 1 \x
   connect \func_loop$func$dut.sv:22$2.i 32'x
-  connect \func_loop$func$dut.sv:22$2.x 8'x
   connect \out { \x [0] \x [1] \x [2] \x [3] \x [4] \x [5] \x [6] \x [7] }
 end

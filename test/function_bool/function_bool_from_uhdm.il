@@ -23,15 +23,6 @@ module \function_bool
   wire width 8 input 1 \a
   attribute \src "dut.sv:6.30-6.31"
   wire width 8 input 2 \b
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 2 \func_bool$func$dut.sv:28$2.mode
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 8 \func_bool$func$dut.sv:28$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:28.18-28.38"
-  wire width 8 \func_bool$func$dut.sv:28$2.y
   attribute \src "dut.sv:8.30-8.33"
   wire width 8 output 4 \out
   attribute \src "dut.sv:7.24-7.27"
@@ -130,7 +121,4 @@ module \function_bool
     connect \B \b
     connect \Y $auto$rtlil.cc:3008:Xor$23
   end
-  connect \func_bool$func$dut.sv:28$2.mode 2'x
-  connect \func_bool$func$dut.sv:28$2.x 8'x
-  connect \func_bool$func$dut.sv:28$2.y 8'x
 end

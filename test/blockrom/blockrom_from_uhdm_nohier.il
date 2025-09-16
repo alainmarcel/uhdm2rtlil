@@ -121,6 +121,7 @@ module \blockrom
   process $proc$dut.sv:16$1
     sync always
     sync init
+      update \j 32'10100111100011000101001011100000
   end
   attribute \always_ff 1
   attribute \src "dut.sv:29.2-31.5"

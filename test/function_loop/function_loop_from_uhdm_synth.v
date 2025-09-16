@@ -13,10 +13,6 @@ module function_loop(x, out);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:22.18-22.30" *)
   wire [31:0] \func_loop$func$dut.sv:22$2.i ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:22.18-22.30" *)
-  wire [7:0] \func_loop$func$dut.sv:22$2.x ;
   assign \func_loop$func$dut.sv:22$2.i  = 32'hxxxxxxxx;
-  assign \func_loop$func$dut.sv:22$2.x  = 8'hxx;
   assign out = { x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7] };
 endmodule

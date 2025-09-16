@@ -346,6 +346,15 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         // Handle assignment
         const assignment* assign = any_cast<const assignment*>(stmt);
         if (assign && assign->Lhs() && assign->Rhs()) {
+            if (mode_debug) {
+                log("  process_stmt_to_case: Processing assignment\n");
+                if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+                    const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
+                    if (lhs_ref) {
+                        log("    LHS is ref_obj: %s\n", std::string(lhs_ref->VpiName()).c_str());
+                    }
+                }
+            }
             RTLIL::SigSpec lhs_sig;
             RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
             
@@ -1112,12 +1121,14 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 std::vector<std::string> arg_names;
                 if (fc->Tf_call_args()) {
                     for (auto arg : *fc->Tf_call_args()) {
-                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        // Pass input_mapping to resolve nested function parameters
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg), input_mapping);
                         args.push_back(arg_sig);
                     }
                 }
                 
                 // Check if we're in an initial block and all arguments are constants
+                // If they are, we can evaluate at compile time for optimization
                 if (in_initial_block) {
                     bool all_const = true;
                     std::vector<RTLIL::Const> const_args;
@@ -1132,21 +1143,40 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                     
                     if (all_const) {
-                        // Evaluate function at compile time
+                        // Evaluate function at compile time for optimization
                         log("UHDM: Evaluating function %s at compile time in initial block\n", func_name.c_str());
                         std::map<std::string, RTLIL::Const> output_params;
                         RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
                         
                         // Return the constant result
                         return RTLIL::SigSpec(result);
-                    } else {
-                        log_error("Function %s in initial block has non-constant arguments and cannot be evaluated at compile time. "
-                                 "Function inlining in initial blocks is not yet supported.\n", func_name.c_str());
-                        return RTLIL::SigSpec();
                     }
+                    // If not all constant, check if function returns a value
+                    bool has_return = false;
+                    scan_for_direct_return_assignment(func_def->Stmt(), func_name, has_return);
+                    
+                    if (!has_return) {
+                        // Function doesn't assign to its return value
+                        // Still generate process for output parameters, but return 0 for the return value
+                        log("UHDM: Function %s in initial block doesn't assign to its return value\n", func_name.c_str());
+                        
+                        // Create a unique wire for this function call result (needed for output params)
+                        static int func_call_counter = 0;
+                        std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
+                        RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
+                        
+                        // Generate process to handle output parameters
+                        log("UHDM: Calling generate_function_process for %s\n", func_name.c_str());
+                        generate_function_process(func_def, func_name, args, result_wire, fc);
+                        
+                        // But return a constant 0 for the function's return value in initial block
+                        return RTLIL::SigSpec(0, ret_width);
+                    }
+                    
+                    log("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
                 }
                 
-                // Create a unique wire for this function call result (only for non-initial blocks)
+                // Create a unique wire for this function call result
                 static int func_call_counter = 0;
                 std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
                 RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);

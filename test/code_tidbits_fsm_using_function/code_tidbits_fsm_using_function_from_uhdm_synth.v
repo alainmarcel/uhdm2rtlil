@@ -51,15 +51,6 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
   (* unused_bits = "2" *)
   wire [2:0] _24_;
   wire [2:0] \fsm_function$func$dut.sv:29$1.$result ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:29.21-29.54" *)
-  wire \fsm_function$func$dut.sv:29$2.req_0 ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:29.21-29.54" *)
-  wire \fsm_function$func$dut.sv:29$2.req_1 ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:29.21-29.54" *)
-  wire [2:0] \fsm_function$func$dut.sv:29$2.state ;
   (* src = "dut.sv:27.27-27.37" *)
   wire [2:0] next_state;
   (* \reg  = 32'd1 *)
@@ -246,8 +237,5 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
     .Q(gnt_1),
     .R(reset)
   );
-  assign \fsm_function$func$dut.sv:29$2.req_0  = 1'hx;
-  assign \fsm_function$func$dut.sv:29$2.req_1  = 1'hx;
-  assign \fsm_function$func$dut.sv:29$2.state  = 3'hx;
   assign next_state = \fsm_function$func$dut.sv:29$1.$result ;
 endmodule

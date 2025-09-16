@@ -9,20 +9,27 @@
  module function_nested(x, y, z, out);
  (* src = "dut.sv:5.30-5.31" *)
  input [7:0] x;
-@@ -146,13 +146,13 @@
+@@ -145,15 +145,6 @@
+ wire _127_;
  wire _128_;
  wire _129_;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.27-13.28" *)
-+(* src = "dut.sv:30.18-30.38" *)
- wire [7:0] \func_nested$func$dut.sv:30$2.x ;
- (* nosync = 32'd1 *)
+-wire [7:0] \func_nested$func$dut.sv:30$2.x ;
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.30-13.31" *)
-+(* src = "dut.sv:30.18-30.38" *)
- wire [7:0] \func_nested$func$dut.sv:30$2.y ;
- (* nosync = 32'd1 *)
+-wire [7:0] \func_nested$func$dut.sv:30$2.y ;
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.33-13.34" *)
-+(* src = "dut.sv:30.18-30.38" *)
- wire [7:0] \func_nested$func$dut.sv:30$2.z ;
+-wire [7:0] \func_nested$func$dut.sv:30$2.z ;
  \$_ORNOT_  _130_ (
  .A(z[7]),
+ .B(x[7]),
+@@ -868,7 +859,4 @@
+ .S(_009_),
+ .Y(out[7])
+ );
+-assign \func_nested$func$dut.sv:30$2.x  = 8'hxx;
+-assign \func_nested$func$dut.sv:30$2.y  = 8'hxx;
+-assign \func_nested$func$dut.sv:30$2.z  = 8'hxx;
+ endmodule

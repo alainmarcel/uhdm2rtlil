@@ -9,16 +9,23 @@
  module function_case(x, sel, out);
  (* src = "dut.sv:5.30-5.31" *)
  input [7:0] x;
-@@ -46,10 +46,10 @@
+@@ -45,12 +45,6 @@
+ wire _30_;
  wire _31_;
  wire _32_;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:13.21-13.24" *)
-+(* src = "dut.sv:26.18-26.35" *)
- wire [1:0] \func_case$func$dut.sv:26$2.sel ;
- (* nosync = 32'd1 *)
+-wire [1:0] \func_case$func$dut.sv:26$2.sel ;
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:12.27-12.28" *)
-+(* src = "dut.sv:26.18-26.35" *)
- wire [7:0] \func_case$func$dut.sv:26$2.x ;
+-wire [7:0] \func_case$func$dut.sv:26$2.x ;
  \$_NOR_  _33_ (
  .A(sel[0]),
+ .B(sel[1]),
+@@ -263,6 +257,4 @@
+ .S(_00_),
+ .Y(out[7])
+ );
+-assign \func_case$func$dut.sv:26$2.sel  = 2'hx;
+-assign \func_case$func$dut.sv:26$2.x  = 8'hxx;
+ endmodule

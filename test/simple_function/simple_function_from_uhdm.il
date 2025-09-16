@@ -7,15 +7,6 @@ module \simple_function
   attribute \src "dut.sv:5.18-5.19"
   wire input 3 \a
   wire \and_or_tree$func$dut.sv:22$1.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.y
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.z
   attribute \src "dut.sv:6.18-6.19"
   wire input 4 \b
   attribute \src "dut.sv:7.18-7.19"
@@ -60,8 +51,5 @@ module \simple_function
     connect \B \c
     connect \Y \and_or_tree$func$dut.sv:22$1.$result
   end
-  connect \and_or_tree$func$dut.sv:22$2.x 1'x
-  connect \and_or_tree$func$dut.sv:22$2.y 1'x
-  connect \and_or_tree$func$dut.sv:22$2.z 1'x
   connect \d \and_or_tree$func$dut.sv:22$1.$result
 end

@@ -22,15 +22,6 @@ module \fsm_using_function
   attribute \src "dut.sv:7.1-7.6"
   wire input 1 \clock
   wire width 3 \fsm_function$func$dut.sv:29$1.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire \fsm_function$func$dut.sv:29$2.req_0
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire \fsm_function$func$dut.sv:29$2.req_1
-  attribute \nosync 1
-  attribute \src "dut.sv:29.21-29.54"
-  wire width 3 \fsm_function$func$dut.sv:29$2.state
   attribute \src "dut.sv:11.1-11.6"
   wire output 5 \gnt_0
   attribute \src "dut.sv:12.1-12.6"
@@ -173,8 +164,5 @@ module \fsm_using_function
     connect \S $procmux$40_CMP
     connect \Y $procmux$76_Y
   end
-  connect \fsm_function$func$dut.sv:29$2.req_0 1'x
-  connect \fsm_function$func$dut.sv:29$2.req_1 1'x
-  connect \fsm_function$func$dut.sv:29$2.state 3'x
   connect \next_state \fsm_function$func$dut.sv:29$1.$result
 end

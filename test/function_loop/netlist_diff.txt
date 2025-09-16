@@ -9,22 +9,19 @@
  module function_loop(x, out);
  (* src = "dut.sv:5.30-5.31" *)
  input [7:0] x;
-@@ -10,12 +10,12 @@
+@@ -10,12 +10,8 @@
  output [7:0] out;
  wire [7:0] out;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:12.17-12.18" *)
 -wire [31:0] \func_loop$func$dut.sv:22$3.i ;
-+(* src = "dut.sv:22.18-22.30" *)
-+wire [31:0] \func_loop$func$dut.sv:22$2.i ;
- (* nosync = 32'd1 *)
+-(* nosync = 32'd1 *)
 -(* src = "dut.sv:11.27-11.28" *)
 -wire [7:0] \func_loop$func$dut.sv:22$3.x ;
 -assign \func_loop$func$dut.sv:22$3.i  = 32'hxxxxxxxx;
 -assign \func_loop$func$dut.sv:22$3.x  = 8'hxx;
 +(* src = "dut.sv:22.18-22.30" *)
-+wire [7:0] \func_loop$func$dut.sv:22$2.x ;
++wire [31:0] \func_loop$func$dut.sv:22$2.i ;
 +assign \func_loop$func$dut.sv:22$2.i  = 32'hxxxxxxxx;
-+assign \func_loop$func$dut.sv:22$2.x  = 8'hxx;
  assign out = { x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7] };
  endmodule

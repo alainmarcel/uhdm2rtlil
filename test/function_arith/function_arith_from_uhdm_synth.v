@@ -35,15 +35,6 @@ module function_arith(a, b, c, out);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:25.18-25.37" *)
   wire [7:0] \func_arith$func$dut.sv:25$2.temp ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:25.18-25.37" *)
-  wire [7:0] \func_arith$func$dut.sv:25$2.x ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:25.18-25.37" *)
-  wire [7:0] \func_arith$func$dut.sv:25$2.y ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:25.18-25.37" *)
-  wire [7:0] \func_arith$func$dut.sv:25$2.z ;
   \$_AND_  _16_ (
     .A(b[0]),
     .B(a[0]),
@@ -165,7 +156,4 @@ module function_arith(a, b, c, out);
     .Y(out[7])
   );
   assign \func_arith$func$dut.sv:25$2.temp  = 8'hxx;
-  assign \func_arith$func$dut.sv:25$2.x  = 8'hxx;
-  assign \func_arith$func$dut.sv:25$2.y  = 8'hxx;
-  assign \func_arith$func$dut.sv:25$2.z  = 8'hxx;
 endmodule

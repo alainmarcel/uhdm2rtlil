@@ -4,25 +4,25 @@ attribute \src "dut.sv:9.1-37.10"
 attribute \cells_not_processed 1
 module \top
   attribute \src "dut.sv:15.17-15.33"
-  wire width 32 $auto$process.cpp:3482:import_assignment_sync$10
+  wire width 32 $auto$process.cpp:3484:import_assignment_sync$10
   attribute \src "dut.sv:16.17-16.33"
-  wire width 32 $auto$process.cpp:3482:import_assignment_sync$16
+  wire width 32 $auto$process.cpp:3484:import_assignment_sync$16
   attribute \src "dut.sv:17.17-17.33"
-  wire width 32 $auto$process.cpp:3482:import_assignment_sync$22
+  wire width 32 $auto$process.cpp:3484:import_assignment_sync$22
   attribute \src "dut.sv:18.22-18.38"
-  wire width 32 $auto$process.cpp:3482:import_assignment_sync$26
+  wire width 32 $auto$process.cpp:3484:import_assignment_sync$26
   attribute \src "dut.sv:28.16-28.26"
-  wire width 2 $auto$process.cpp:3482:import_assignment_sync$31
+  wire width 2 $auto$process.cpp:3484:import_assignment_sync$31
   attribute \src "dut.sv:29.16-29.26"
-  wire width 2 $auto$process.cpp:3482:import_assignment_sync$37
+  wire width 2 $auto$process.cpp:3484:import_assignment_sync$37
   attribute \src "dut.sv:30.16-30.26"
-  wire width 2 $auto$process.cpp:3482:import_assignment_sync$43
+  wire width 2 $auto$process.cpp:3484:import_assignment_sync$43
   attribute \src "dut.sv:31.22-31.32"
-  wire width 2 $auto$process.cpp:3482:import_assignment_sync$47
+  wire width 2 $auto$process.cpp:3484:import_assignment_sync$47
   attribute \src "dut.sv:18.13-18.39"
-  wire $auto$process.cpp:4143:import_case_stmt_sync$24
+  wire $auto$process.cpp:4145:import_case_stmt_sync$24
   attribute \src "dut.sv:31.13-31.33"
-  wire $auto$process.cpp:4143:import_case_stmt_sync$45
+  wire $auto$process.cpp:4145:import_case_stmt_sync$45
   attribute \src "dut.sv:16.13-16.34"
   wire $auto$process_helper.cpp:58:create_eq_cell$12
   attribute \src "dut.sv:17.13-17.34"
@@ -72,78 +72,78 @@ module \top
   attribute \src "dut.sv:9.30-9.31"
   wire output 2 \z
   attribute \src "dut.sv:15.17-15.33"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$11
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$11
     parameter \WIDTH 32
     connect \A \wide_state
     connect \B 1
     connect \S $auto$process_helper.cpp:58:create_eq_cell$8
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$10
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$10
   end
   attribute \src "dut.sv:16.17-16.33"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$17
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$17
     parameter \WIDTH 32
-    connect \A $auto$process.cpp:3482:import_assignment_sync$10
+    connect \A $auto$process.cpp:3484:import_assignment_sync$10
     connect \B 2
     connect \S $auto$process_helper.cpp:58:create_eq_cell$12
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$16
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$16
   end
   attribute \src "dut.sv:17.17-17.33"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$23
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$23
     parameter \WIDTH 32
-    connect \A $auto$process.cpp:3482:import_assignment_sync$16
+    connect \A $auto$process.cpp:3484:import_assignment_sync$16
     connect \B 3
     connect \S $auto$process_helper.cpp:58:create_eq_cell$18
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$22
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$22
   end
   attribute \src "dut.sv:18.22-18.38"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$27
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$27
     parameter \WIDTH 32
-    connect \A $auto$process.cpp:3482:import_assignment_sync$22
+    connect \A $auto$process.cpp:3484:import_assignment_sync$22
     connect \B 0
-    connect \S $auto$process.cpp:4143:import_case_stmt_sync$24
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$26
+    connect \S $auto$process.cpp:4145:import_case_stmt_sync$24
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$26
   end
   attribute \src "dut.sv:28.16-28.26"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$32
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$32
     parameter \WIDTH 2
     connect \A \state
     connect \B 2'00
     connect \S $auto$process_helper.cpp:58:create_eq_cell$29
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$31
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$31
   end
   attribute \src "dut.sv:29.16-29.26"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$38
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$38
     parameter \WIDTH 2
-    connect \A $auto$process.cpp:3482:import_assignment_sync$31
+    connect \A $auto$process.cpp:3484:import_assignment_sync$31
     connect \B 2'01
     connect \S $auto$process_helper.cpp:58:create_eq_cell$33
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$37
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$37
   end
   attribute \src "dut.sv:30.16-30.26"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$44
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$44
     parameter \WIDTH 2
-    connect \A $auto$process.cpp:3482:import_assignment_sync$37
+    connect \A $auto$process.cpp:3484:import_assignment_sync$37
     connect \B 2'10
     connect \S $auto$process_helper.cpp:58:create_eq_cell$39
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$43
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$43
   end
   attribute \src "dut.sv:31.22-31.32"
-  cell $mux $auto$process.cpp:3484:import_assignment_sync$48
+  cell $mux $auto$process.cpp:3486:import_assignment_sync$48
     parameter \WIDTH 2
-    connect \A $auto$process.cpp:3482:import_assignment_sync$43
+    connect \A $auto$process.cpp:3484:import_assignment_sync$43
     connect \B 2'11
-    connect \S $auto$process.cpp:4143:import_case_stmt_sync$45
-    connect \Y $auto$process.cpp:3482:import_assignment_sync$47
+    connect \S $auto$process.cpp:4145:import_case_stmt_sync$45
+    connect \Y $auto$process.cpp:3484:import_assignment_sync$47
   end
   attribute \src "dut.sv:18.13-18.39"
-  cell $_NOT_ $auto$process.cpp:4145:import_case_stmt_sync$25
+  cell $_NOT_ $auto$process.cpp:4147:import_case_stmt_sync$25
     connect \A $auto$process_helper.cpp:78:create_or_cell$20
-    connect \Y $auto$process.cpp:4143:import_case_stmt_sync$24
+    connect \Y $auto$process.cpp:4145:import_case_stmt_sync$24
   end
   attribute \src "dut.sv:31.13-31.33"
-  cell $_NOT_ $auto$process.cpp:4145:import_case_stmt_sync$46
+  cell $_NOT_ $auto$process.cpp:4147:import_case_stmt_sync$46
     connect \A $auto$process_helper.cpp:78:create_or_cell$41
-    connect \Y $auto$process.cpp:4143:import_case_stmt_sync$45
+    connect \Y $auto$process.cpp:4145:import_case_stmt_sync$45
   end
   attribute \src "dut.sv:16.13-16.34"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$13
@@ -291,13 +291,13 @@ module \top
   attribute \src "dut.sv:13.5-20.8"
   process $proc$dut.sv:13$7
     sync posedge \clk
-      update \wide_state $auto$process.cpp:3482:import_assignment_sync$26
+      update \wide_state $auto$process.cpp:3484:import_assignment_sync$26
   end
   attribute \always_ff 1
   attribute \src "dut.sv:26.5-33.8"
   process $proc$dut.sv:26$28
     sync posedge \clk
-      update \state $auto$process.cpp:3482:import_assignment_sync$47
+      update \state $auto$process.cpp:3484:import_assignment_sync$47
   end
   connect \z $auto$rtlil.cc:3008:Xor$6
 end

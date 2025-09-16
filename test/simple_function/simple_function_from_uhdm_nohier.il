@@ -26,15 +26,6 @@ module \simple_function
   attribute \nosync 1
   attribute \src "dut.sv:22.16-22.36"
   wire \and_or_tree$func$dut.sv:22$2.$result
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.x
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.y
-  attribute \nosync 1
-  attribute \src "dut.sv:22.16-22.36"
-  wire \and_or_tree$func$dut.sv:22$2.z
   attribute \src "dut.sv:6.18-6.19"
   wire input 4 \b
   attribute \src "dut.sv:7.18-7.19"
@@ -53,8 +44,8 @@ module \simple_function
     parameter \B_SIGNED 0
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \a
-    connect \B \b
+    connect \A $0\and_or_tree$func$dut.sv:22$2.x$4
+    connect \B $0\and_or_tree$func$dut.sv:22$2.y$5
     connect \Y $auto$rtlil.cc:3006:And$11
   end
   cell $or $or$dut.sv:16$12
@@ -64,7 +55,7 @@ module \simple_function
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3006:And$11
-    connect \B \c
+    connect \B $0\and_or_tree$func$dut.sv:22$2.z$6
     connect \Y $auto$rtlil.cc:3007:Or$13
   end
   attribute \src "dut.sv:22.16-22.36"
@@ -83,9 +74,6 @@ module \simple_function
     sync always
       update \and_or_tree$func$dut.sv:22$1.$result $0\and_or_tree$func$dut.sv:22$1.$result$9
       update \and_or_tree$func$dut.sv:22$2.$result 1'x
-      update \and_or_tree$func$dut.sv:22$2.x 1'x
-      update \and_or_tree$func$dut.sv:22$2.y 1'x
-      update \and_or_tree$func$dut.sv:22$2.z 1'x
   end
   attribute \always_ff 1
   attribute \src "dut.sv:25.5-30.8"
