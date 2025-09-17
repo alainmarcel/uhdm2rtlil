@@ -12,7 +12,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   wire width 5 $0\counter
   attribute \src "dut.sv:77.5-97.8"
   wire width 50 $0\data_out
-  wire width 64 $auto$expression.cpp:1706:import_operation$15
+  wire width 64 $auto$expression.cpp:1698:import_operation$15
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$17_Y
   attribute \src "dut.sv:78.13-78.19"
@@ -35,7 +35,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1706:import_operation$15
+    connect \Y $auto$expression.cpp:1698:import_operation$15
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $eq $eq$dut.sv:91$18
@@ -73,7 +73,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
         assign \data_out [0] 1'0
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\counter $auto$expression.cpp:1706:import_operation$15 [4:0]
+        assign $0\counter $auto$expression.cpp:1698:import_operation$15 [4:0]
         assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $eq$dut.sv:91$17_Y
@@ -109,7 +109,7 @@ module \simple_package
   wire width 50 $0\internal_bus
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 $1\increment_data$func$dut.sv:47$8.$result$12
-  wire width 32 $func_increment_data_result_0
+  wire width 32 $increment_data$func$dut.sv:47$0_result
   attribute \src "dut.sv:39.13-39.19"
   wire $logic_not$dut.sv:39.13-39.19$2_Y
   attribute \src "dut.sv:30.38-30.44"
@@ -157,7 +157,7 @@ module \simple_package
       attribute \src "dut.sv:13.13-13.17"
       case 
         assign $0\internal_bus \bus_in
-        assign \internal_bus [49:18] $func_increment_data_result_0
+        assign \internal_bus [49:18] $increment_data$func$dut.sv:47$0_result
     end
     sync posedge \clk
       update \internal_bus $0\internal_bus
@@ -179,7 +179,7 @@ module \simple_package
       update \increment_data$func$dut.sv:47$7.$result $0\increment_data$func$dut.sv:47$7.$result$13
       update \increment_data$func$dut.sv:47$8.$result 32'x
   end
-  connect $func_increment_data_result_0 \increment_data$func$dut.sv:47$7.$result
+  connect $increment_data$func$dut.sv:47$0_result \increment_data$func$dut.sv:47$7.$result
 end
 attribute \dynports 1
 attribute \src "dut.sv:62.1-99.10"
@@ -192,7 +192,7 @@ module \sub_module
   wire width 5 $0\counter
   attribute \src "dut.sv:77.5-97.8"
   wire width 50 $0\data_out
-  wire width 64 $auto$expression.cpp:1706:import_operation$2
+  wire width 64 $auto$expression.cpp:1698:import_operation$2
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$4_Y
   attribute \src "dut.sv:78.13-78.19"
@@ -215,7 +215,7 @@ module \sub_module
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1706:import_operation$2
+    connect \Y $auto$expression.cpp:1698:import_operation$2
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $eq $eq$dut.sv:91$5
@@ -253,7 +253,7 @@ module \sub_module
         assign \data_out [0] 1'0
       attribute \src "dut.sv:13.13-13.17"
       case 
-        assign $0\counter $auto$expression.cpp:1706:import_operation$2 [4:0]
+        assign $0\counter $auto$expression.cpp:1698:import_operation$2 [4:0]
         assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $eq$dut.sv:91$4_Y

@@ -991,4 +991,190 @@ void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string&
 }
 
 
+// New context-aware function processing implementation
+RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_def,
+                                                          const std::vector<RTLIL::SigSpec>& args,
+                                                          const func_call* call_site,
+                                                          FunctionCallContext* parent_ctx) {
+    if (!func_def) {
+        log_error("Function definition is null in process_function_with_context\n");
+        return RTLIL::SigSpec();
+    }
+    
+    std::string func_name = std::string(func_def->VpiName());
+    
+    // Check if all arguments are constant - if so, evaluate at compile time
+    bool all_const = true;
+    std::vector<RTLIL::Const> const_args;
+    
+    for (const auto& arg : args) {
+        if (arg.is_fully_const()) {
+            const_args.push_back(arg.as_const());
+        } else {
+            all_const = false;
+            break;
+        }
+    }
+    
+    if (all_const) {
+        log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
+        std::map<std::string, RTLIL::Const> output_params;
+        RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
+        return RTLIL::SigSpec(result);
+    }
+    
+    // Create new context for this call
+    FunctionCallContext ctx;
+    ctx.function_name = func_name;
+    ctx.instance_id = create_function_instance_id(func_name, call_site);
+    ctx.arguments = args;
+    ctx.call_site = call_site;
+    ctx.func_def = func_def;
+    ctx.call_depth = function_call_stack.getCallDepth(func_name);
+    
+    // Extract source location
+    std::string src_attr = call_site ? get_src_attribute(call_site) : get_src_attribute(func_def);
+    ctx.source_file = "dut.sv"; // Default
+    ctx.source_line = 1;        // Default
+    
+    if (!src_attr.empty()) {
+        size_t colon_pos = src_attr.find(':');
+        if (colon_pos != std::string::npos) {
+            ctx.source_file = src_attr.substr(0, colon_pos);
+            size_t dot_pos = src_attr.find('.', colon_pos);
+            if (dot_pos != std::string::npos) {
+                std::string line_str = src_attr.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+                ctx.source_line = std::stoi(line_str);
+            }
+        }
+    }
+    
+    // Check for recursion
+    if (function_call_stack.isRecursive(func_name)) {
+        log("UHDM: Recursive call to function %s detected (depth=%d)\n", 
+            func_name.c_str(), ctx.call_depth);
+        
+        // For recursive calls with non-constant arguments, we need to limit depth
+        // to prevent infinite recursion during synthesis
+        if (ctx.call_depth > 2) { // Limit recursion depth for synthesis
+            log("UHDM: Reached maximum recursion depth for %s, returning undefined\n", func_name.c_str());
+            
+            // Get return width
+            int ret_width = 32; // Default
+            if (func_def->Return()) {
+                ret_width = get_width(func_def->Return(), current_instance);
+            }
+            
+            return RTLIL::SigSpec(RTLIL::State::Sx, ret_width); // Return undefined
+        }
+        
+        return handle_recursive_call(ctx, parent_ctx);
+    }
+    
+    // Push context onto stack
+    if (!function_call_stack.push(ctx)) {
+        log_error("Function call stack overflow for %s\n", func_name.c_str());
+        return RTLIL::SigSpec();
+    }
+    
+    // Generate process for this function instance
+    generate_process_for_context(ctx);
+    
+    // Pop context from stack
+    function_call_stack.pop();
+    
+    // Return the result wire
+    if (ctx.result_wire) {
+        return RTLIL::SigSpec(ctx.result_wire);
+    }
+    
+    return RTLIL::SigSpec();
+}
+
+// Create unique instance ID for a function call
+std::string UhdmImporter::create_function_instance_id(const std::string& func_name,
+                                                      const func_call* call_site) {
+    // Extract source location for unique naming
+    std::string src_attr = call_site ? get_src_attribute(call_site) : "";
+    std::string filename = "dut.sv";
+    int line = 1;
+    
+    if (!src_attr.empty()) {
+        size_t colon_pos = src_attr.find(':');
+        if (colon_pos != std::string::npos) {
+            filename = src_attr.substr(0, colon_pos);
+            size_t dot_pos = src_attr.find('.', colon_pos);
+            if (dot_pos != std::string::npos) {
+                std::string line_str = src_attr.substr(colon_pos + 1, dot_pos - colon_pos - 1);
+                line = std::stoi(line_str);
+            }
+        }
+    }
+    
+    // Generate unique instance ID
+    return function_call_stack.generateInstanceId(func_name, line, function_instance_counter++);
+}
+
+// Handle recursive function calls
+RTLIL::SigSpec UhdmImporter::handle_recursive_call(FunctionCallContext& ctx,
+                                                   FunctionCallContext* parent_ctx) {
+    log("UHDM: Handling recursive call to %s (instance: %s)\n", 
+        ctx.function_name.c_str(), ctx.instance_id.c_str());
+    
+    // Create a unique result wire for this recursive instance
+    std::string result_wire_name = stringf("$func_%s_result_%d", 
+                                           ctx.function_name.c_str(), 
+                                           function_instance_counter++);
+    int width = 32; // Default width, should be extracted from function definition
+    
+    // Get actual return width from function
+    if (ctx.func_def && ctx.func_def->Return()) {
+        width = get_width(ctx.func_def->Return(), current_instance);
+    }
+    
+    ctx.result_wire = module->addWire(RTLIL::escape_id(result_wire_name), width);
+    
+    // Push context and generate process
+    if (!function_call_stack.push(ctx)) {
+        log_error("Stack overflow in recursive call to %s\n", ctx.function_name.c_str());
+        return RTLIL::SigSpec(ctx.result_wire);
+    }
+    
+    // Generate the process for this recursive instance
+    generate_process_for_context(ctx);
+    
+    // Pop context
+    function_call_stack.pop();
+    
+    return RTLIL::SigSpec(ctx.result_wire);
+}
+
+// Generate process for a specific function context
+RTLIL::Process* UhdmImporter::generate_process_for_context(const FunctionCallContext& ctx) {
+    log("UHDM: Generating process for function %s (instance: %s)\n", 
+        ctx.function_name.c_str(), ctx.instance_id.c_str());
+    
+    // For now, delegate to the existing generate_function_process
+    // In a full implementation, this would use the context to generate unique wires
+    
+    // Create a result wire for this context
+    std::string result_wire_name = stringf("$%s_result", ctx.instance_id.c_str());
+    int width = 32; // Default
+    
+    if (ctx.func_def && ctx.func_def->Return()) {
+        width = get_width(ctx.func_def->Return(), current_instance);
+    }
+    
+    RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), width);
+    
+    // Cast away const for compatibility with existing function
+    // In a full implementation, we'd refactor generate_function_process to be const-correct
+    FunctionCallContext& mutable_ctx = const_cast<FunctionCallContext&>(ctx);
+    mutable_ctx.result_wire = result_wire;
+    
+    // Call the existing function with the context's information
+    return generate_function_process(ctx.func_def, ctx.function_name, 
+                                    ctx.arguments, result_wire, ctx.call_site);
+}
+
 YOSYS_NAMESPACE_END

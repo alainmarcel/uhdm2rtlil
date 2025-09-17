@@ -46,7 +46,7 @@ module \fsm_using_function
   wire $eq$dut.sv:59$23_Y
   attribute \src "dut.sv:68.5-68.18"
   wire $eq$dut.sv:68$26_Y
-  wire width 3 $func_fsm_function_result_0
+  wire width 3 $fsm_function$func$dut.sv:29$0_result
   attribute \src "dut.sv:7.1-7.6"
   wire input 1 \clock
   wire width 3 \fsm_function$func$dut.sv:29$1.$result
@@ -266,6 +266,6 @@ module \fsm_using_function
       update \gnt_0 $0\gnt_0[0:0]
       update \gnt_1 $0\gnt_1[0:0]
   end
-  connect $func_fsm_function_result_0 \fsm_function$func$dut.sv:29$1.$result
-  connect \next_state $func_fsm_function_result_0
+  connect $fsm_function$func$dut.sv:29$0_result \fsm_function$func$dut.sv:29$1.$result
+  connect \next_state $fsm_function$func$dut.sv:29$0_result
 end

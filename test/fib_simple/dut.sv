@@ -1,12 +1,30 @@
-module fib_simple(
-    input wire [31:0] in,
-    output wire [31:0] out
+module gate(
+    off, fib2
 );
-    function automatic integer double_it(
+    input wire signed [31:0] off;
+
+    function automatic integer fib(
         input integer k
     );
-        double_it = k * 2;
+        if (k == 0)
+            fib = 0;
+        else if (k == 1)
+            fib = 1;
+        else
+            fib = fib(k - 1) + fib(k - 2);
     endfunction
 
-    assign out = double_it(in);
+    function automatic integer fib_wrap(
+        input integer k,
+        output integer o
+    );
+        o = off + fib(k);
+    endfunction
+
+    output integer fib2;
+   
+    initial begin : blk
+        integer unused;
+        unused = fib_wrap(2, fib2);
+    end
 endmodule

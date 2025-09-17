@@ -1162,14 +1162,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         // Still generate process for output parameters, but return 0 for the return value
                         log("UHDM: Function %s in initial block doesn't assign to its return value\n", func_name.c_str());
                         
-                        // Create a unique wire for this function call result (needed for output params)
-                        static int func_call_counter = 0;
-                        std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
-                        RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
+                        // Process function for output parameters (result wire created internally)
                         
                         // Generate process to handle output parameters
-                        log("UHDM: Calling generate_function_process for %s\n", func_name.c_str());
-                        generate_function_process(func_def, func_name, args, result_wire, fc);
+                        log("UHDM: Processing function %s with context-aware method\n", func_name.c_str());
+                        process_function_with_context(func_def, args, fc, nullptr);
                         
                         // But return a constant 0 for the function's return value in initial block
                         return RTLIL::SigSpec(0, ret_width);
@@ -1178,25 +1175,20 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     log("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
                 }
                 
-                // Create a unique wire for this function call result
-                static int func_call_counter = 0;
-                std::string result_wire_name = stringf("$func_%s_result_%d", func_name.c_str(), func_call_counter++);
-                RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
+                // Use the new context-aware function processing
+                FunctionCallContext* parent_ctx = nullptr;
                 
-                // Generate a process block for this function call
-                // Pass the function call object to get accurate source locations
-                generate_function_process(func_def, func_name, args, result_wire, fc);
+                // If we're inside a function (input_mapping is not null), we should track the parent context
+                // For now, we'll pass nullptr but this will be enhanced to get proper parent context
+                if (input_mapping) {
+                    // TODO: Get parent context from the call stack
+                    parent_ctx = nullptr;
+                }
                 
-                log("UHDM: Created function process for %s (return width=%d, %d arguments)\n", 
+                // Process the function using the new context-aware method
+                log("UHDM: Processing function %s with context-aware method (return width=%d, %d arguments)\n", 
                     func_name.c_str(), ret_width, (int)args.size());
-                
-                // Note: The function is now implemented as a process block
-                // Full support would require:
-                // 1. Complete statement processing (if/else, assignments, etc.)
-                // 2. Proper handling of local variables
-                // 3. Support for all expression types within the function
-                
-                return RTLIL::SigSpec(result_wire);
+                return process_function_with_context(func_def, args, fc, parent_ctx);
             }
             break;
         default:
