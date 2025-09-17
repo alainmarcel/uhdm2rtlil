@@ -3,26 +3,28 @@ autoidx 92
 attribute \src "dut.sv:1.1-48.10"
 attribute \top 1
 module \gate
-  attribute \src "dut.sv:2.5-2.9"
-  wire width 32 output 1 signed \fib0
-  attribute \src "dut.sv:2.11-2.15"
-  wire width 32 output 2 signed \fib1
-  attribute \src "dut.sv:2.17-2.21"
-  wire width 32 output 3 signed \fib2
-  attribute \src "dut.sv:2.23-2.27"
-  wire width 32 output 4 signed \fib3
-  attribute \src "dut.sv:2.29-2.33"
-  wire width 32 output 5 signed \fib4
-  attribute \src "dut.sv:2.35-2.39"
-  wire width 32 output 6 signed \fib5
-  attribute \src "dut.sv:2.41-2.45"
-  wire width 32 output 7 signed \fib6
-  attribute \src "dut.sv:2.47-2.51"
-  wire width 32 output 8 signed \fib7
-  attribute \src "dut.sv:2.53-2.57"
-  wire width 32 output 9 signed \fib8
-  attribute \src "dut.sv:2.59-2.63"
-  wire width 32 output 10 signed \fib9
+  attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
+  wire width 64 $auto$expression.cpp:1698:import_operation$18
+  attribute \src "dut.sv:2.10-2.14"
+  wire width 32 output 2 signed \fib0
+  attribute \src "dut.sv:2.16-2.20"
+  wire width 32 output 3 signed \fib1
+  attribute \src "dut.sv:2.22-2.26"
+  wire width 32 output 4 signed \fib2
+  attribute \src "dut.sv:2.28-2.32"
+  wire width 32 output 5 signed \fib3
+  attribute \src "dut.sv:2.34-2.38"
+  wire width 32 output 6 signed \fib4
+  attribute \src "dut.sv:2.40-2.44"
+  wire width 32 output 7 signed \fib5
+  attribute \src "dut.sv:2.46-2.50"
+  wire width 32 output 8 signed \fib6
+  attribute \src "dut.sv:2.52-2.56"
+  wire width 32 output 9 signed \fib7
+  attribute \src "dut.sv:2.58-2.62"
+  wire width 32 output 10 signed \fib8
+  attribute \src "dut.sv:2.64-2.68"
+  wire width 32 output 11 signed \fib9
   attribute \nosync 1
   attribute \src "dut.sv:37.18-37.35"
   wire width 32 \fib_wrap$func$dut.sv:37$3.o
@@ -53,19 +55,103 @@ module \gate
   attribute \nosync 1
   attribute \src "dut.sv:46.18-46.35"
   wire width 32 \fib_wrap$func$dut.sv:46$84.o
+  attribute \src "dut.sv:2.5-2.8"
+  wire width 32 input 1 \off
   attribute \init 0
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
   wire width 32 \unused
-  connect \fib0 0
-  connect \fib1 1
-  connect \fib2 1
-  connect \fib3 2
-  connect \fib4 3
-  connect \fib5 5
-  connect \fib6 8
-  connect \fib7 13
-  connect \fib8 21
-  connect \fib9 34
+  cell $add $add$dut.sv:21$19
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A \off
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    connect \Y { $auto$expression.cpp:1698:import_operation$18 [63:32] \fib1 }
+  end
+  cell $add $add$dut.sv:21$28
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 1
+    connect \Y \fib2
+  end
+  cell $add $add$dut.sv:21$37
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 2
+    connect \Y \fib3
+  end
+  cell $add $add$dut.sv:21$46
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 3
+    connect \Y \fib4
+  end
+  cell $add $add$dut.sv:21$55
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 5
+    connect \Y \fib5
+  end
+  cell $add $add$dut.sv:21$64
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 8
+    connect \Y \fib6
+  end
+  cell $add $add$dut.sv:21$73
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 13
+    connect \Y \fib7
+  end
+  cell $add $add$dut.sv:21$82
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 21
+    connect \Y \fib8
+  end
+  cell $add $add$dut.sv:21$91
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_SIGNED 0
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 34
+    connect \Y \fib9
+  end
+  connect $auto$expression.cpp:1698:import_operation$18 [31:0] \fib1
+  connect \fib0 \off
   connect \fib_wrap$func$dut.sv:37$3.o 32'x
   connect \fib_wrap$func$dut.sv:38$12.o 32'x
   connect \fib_wrap$func$dut.sv:39$21.o 32'x

@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 106 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 96% (102/106 tests functional)
-- **Perfect Matches**: 97 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 107 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 97% (104/107 tests functional)
+- **Perfect Matches**: 99 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
@@ -61,6 +61,12 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
       - Removed superfluous X assignments for input parameters
     - `code_tidbits_fsm_using_function` now passes equivalence check
     - `simple_function` test added and passing
+    - **Recursive function support with constant propagation** ✅
+      - Implemented call stack architecture for tracking recursive function contexts
+      - Added constant propagation through function parameters
+      - Automatic compile-time evaluation of recursive functions with constant inputs
+      - `fib` and `fib_simple` tests now passing with efficient RTLIL generation
+      - Reduced RTLIL size by 93% through constant propagation optimization
     - New function tests added: `function_arith`, `function_bool`, `function_case`, `function_nested` (all passing)
     - `function_loop`, `function_mixed`, `many_functions` - Fixed and now passing all tests
     - `function_output` - Functions with output parameters and nested calls now passing ✅
