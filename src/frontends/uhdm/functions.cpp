@@ -1032,6 +1032,22 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     ctx.func_def = func_def;
     ctx.call_depth = function_call_stack.getCallDepth(func_name);
     
+    // Track constant values for parameters
+    if (func_def->Io_decls()) {
+        int arg_idx = 0;
+        for (auto io_decl : *func_def->Io_decls()) {
+            if (arg_idx < args.size()) {
+                std::string param_name = std::string(io_decl->VpiName());
+                if (args[arg_idx].is_fully_const()) {
+                    ctx.const_wire_values[param_name] = args[arg_idx].as_const();
+                    log("UHDM: Parameter %s has constant value %s\n", 
+                        param_name.c_str(), args[arg_idx].as_const().as_string().c_str());
+                }
+                arg_idx++;
+            }
+        }
+    }
+    
     // Extract source location
     std::string src_attr = call_site ? get_src_attribute(call_site) : get_src_attribute(func_def);
     ctx.source_file = "dut.sv"; // Default
@@ -1154,8 +1170,8 @@ RTLIL::Process* UhdmImporter::generate_process_for_context(const FunctionCallCon
     log("UHDM: Generating process for function %s (instance: %s)\n", 
         ctx.function_name.c_str(), ctx.instance_id.c_str());
     
-    // For now, delegate to the existing generate_function_process
-    // In a full implementation, this would use the context to generate unique wires
+    // Note: The context is already on the stack from process_function_with_context
+    // No need to manage current_function_context as it's now tracked by the stack
     
     // Create a result wire for this context
     std::string result_wire_name = stringf("$%s_result", ctx.instance_id.c_str());
@@ -1168,13 +1184,14 @@ RTLIL::Process* UhdmImporter::generate_process_for_context(const FunctionCallCon
     RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), width);
     
     // Cast away const for compatibility with existing function
-    // In a full implementation, we'd refactor generate_function_process to be const-correct
     FunctionCallContext& mutable_ctx = const_cast<FunctionCallContext&>(ctx);
     mutable_ctx.result_wire = result_wire;
     
     // Call the existing function with the context's information
-    return generate_function_process(ctx.func_def, ctx.function_name, 
+    RTLIL::Process* proc = generate_function_process(ctx.func_def, ctx.function_name, 
                                     ctx.arguments, result_wire, ctx.call_site);
+    
+    return proc;
 }
 
 YOSYS_NAMESPACE_END
