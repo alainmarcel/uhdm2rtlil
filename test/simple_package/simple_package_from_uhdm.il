@@ -10,7 +10,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   attribute \src "dut.sv:77.5-97.8"
   wire width 5 $0\counter
   attribute \unused_bits "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1706:import_operation$15
+  wire width 64 $auto$expression.cpp:1698:import_operation$15
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$17_Y
   attribute \src "dut.sv:65.38-65.41"
@@ -31,7 +31,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A \counter
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:1706:import_operation$15 [63:5] $0\counter }
+    connect \Y { $auto$expression.cpp:1698:import_operation$15 [63:5] $0\counter }
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $logic_not $eq$dut.sv:91$18
@@ -76,7 +76,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \S $eq$dut.sv:91$17_Y
     connect \Y \data_out [0]
   end
-  connect $auto$expression.cpp:1706:import_operation$15 [4:0] $0\counter
+  connect $auto$expression.cpp:1698:import_operation$15 [4:0] $0\counter
 end
 attribute \dynports 1
 attribute \src "dut.sv:25.1-59.10"

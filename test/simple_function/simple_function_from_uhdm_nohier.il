@@ -17,9 +17,9 @@ module \simple_function
   wire $0\q[0:0]
   attribute \src "dut.sv:22.16-22.36"
   wire $1\and_or_tree$func$dut.sv:22$2.$result$8
+  wire $and_or_tree$func$dut.sv:22$0_result
   wire $auto$rtlil.cc:3006:And$11
   wire $auto$rtlil.cc:3007:Or$13
-  wire $func_and_or_tree_result_0
   attribute \src "dut.sv:5.18-5.19"
   wire input 3 \a
   wire \and_or_tree$func$dut.sv:22$1.$result
@@ -91,6 +91,6 @@ module \simple_function
     sync posedge \clk
       update \q $0\q[0:0]
   end
-  connect $func_and_or_tree_result_0 \and_or_tree$func$dut.sv:22$1.$result
-  connect \d $func_and_or_tree_result_0
+  connect $and_or_tree$func$dut.sv:22$0_result \and_or_tree$func$dut.sv:22$1.$result
+  connect \d $and_or_tree$func$dut.sv:22$0_result
 end

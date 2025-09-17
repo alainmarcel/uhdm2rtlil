@@ -32,7 +32,7 @@ module \function_bool
   wire $eq$dut.sv:18$15_Y
   attribute \src "dut.sv:20.22-20.35"
   wire $eq$dut.sv:20$20_Y
-  wire width 8 $func_func_bool_result_0
+  wire width 8 $func_bool$func$dut.sv:28$0_result
   attribute \src "dut.sv:5.30-5.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:6.30-6.31"
@@ -174,6 +174,6 @@ module \function_bool
       update \func_bool$func$dut.sv:28$1.$result $0\func_bool$func$dut.sv:28$1.$result$9
       update \func_bool$func$dut.sv:28$2.$result 8'x
   end
-  connect $func_func_bool_result_0 \func_bool$func$dut.sv:28$1.$result
-  connect \out $func_func_bool_result_0
+  connect $func_bool$func$dut.sv:28$0_result \func_bool$func$dut.sv:28$1.$result
+  connect \out $func_bool$func$dut.sv:28$0_result
 end

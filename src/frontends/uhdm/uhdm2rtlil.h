@@ -62,6 +62,109 @@ struct UhdmClocking {
     RTLIL::Cell *addAdff(IdString name, SigSpec sig_d, SigSpec sig_q, Const arst_value);
 };
 
+// Function call context for tracking individual function invocations
+struct FunctionCallContext {
+    // Identification
+    std::string function_name;
+    std::string instance_id;  // Unique ID like func$file:line$idx
+    
+    // Variable tracking
+    std::map<std::string, RTLIL::SigSpec> wire_mappings;    // Variable -> Wire
+    std::map<std::string, RTLIL::Const> const_values;       // Variable -> Const value
+    std::vector<RTLIL::SigSpec> arguments;
+    
+    // Metadata
+    int call_depth;
+    int source_line;
+    std::string source_file;
+    const UHDM::func_call* call_site;
+    const UHDM::function* func_def;
+    
+    // For connecting instances
+    RTLIL::Wire* result_wire;
+    std::vector<RTLIL::Wire*> output_wires;
+};
+
+// Call stack manager for recursive function handling
+class FunctionCallStack {
+private:
+    std::vector<FunctionCallContext> stack;
+    std::map<std::string, RTLIL::Process*> generated_processes;
+    std::map<std::string, RTLIL::SigSpec> memoized_results;
+    static constexpr int MAX_DEPTH = 100;
+    
+public:
+    // Stack operations
+    bool push(FunctionCallContext ctx) {
+        if (stack.size() >= MAX_DEPTH) {
+            return false;
+        }
+        stack.push_back(std::move(ctx));
+        return true;
+    }
+    
+    void pop() {
+        if (!stack.empty()) {
+            stack.pop_back();
+        }
+    }
+    
+    FunctionCallContext& current() {
+        return stack.back();
+    }
+    
+    const FunctionCallContext* parent() const {
+        if (stack.size() < 2) {
+            return nullptr;
+        }
+        return &stack[stack.size() - 2];
+    }
+    
+    // Query operations
+    bool isRecursive(const std::string& func_name) const {
+        for (const auto& ctx : stack) {
+            if (ctx.function_name == func_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    int getCallDepth(const std::string& func_name) const {
+        int depth = 0;
+        for (const auto& ctx : stack) {
+            if (ctx.function_name == func_name) {
+                depth++;
+            }
+        }
+        return depth;
+    }
+    
+    std::string generateInstanceId(const std::string& func_name, int line, int idx) {
+        return stringf("%s$func$dut.sv:%d$%d", func_name.c_str(), line, idx);
+    }
+    
+    // Memoization
+    bool hasCachedResult(const std::string& key) const {
+        return memoized_results.count(key) > 0;
+    }
+    
+    RTLIL::SigSpec getCachedResult(const std::string& key) const {
+        auto it = memoized_results.find(key);
+        return it != memoized_results.end() ? it->second : RTLIL::SigSpec();
+    }
+    
+    void cacheResult(const std::string& key, RTLIL::SigSpec result) {
+        memoized_results[key] = result;
+    }
+    
+    // Check if empty
+    bool empty() const { return stack.empty(); }
+    
+    // Get stack size
+    size_t size() const { return stack.size(); }
+};
+
 // Main importer class for UHDM to RTLIL conversion
 struct UhdmImporter {
     RTLIL::Design *design;
@@ -149,6 +252,13 @@ struct UhdmImporter {
     
     // Track current process context for assertions
     bool in_always_ff_context = false;
+    
+    // Function call stack for recursive function support
+    FunctionCallStack function_call_stack;
+    
+    // Instance counter for generating unique function instance IDs
+    int function_instance_counter = 0;
+    FunctionCallContext* current_function_context = nullptr;
     RTLIL::SigSpec current_ff_clock_sig;
     
     // Temporary wires for combinational processes
@@ -347,6 +457,23 @@ struct UhdmImporter {
                               const std::map<std::string, int>& local_var_widths = {});
     RTLIL::Process* generate_function_process(const UHDM::function* func_def, const std::string& func_name,
                                               const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire, const UHDM::func_call* fc);
+    
+    // New context-aware function processing
+    RTLIL::SigSpec process_function_with_context(const UHDM::function* func_def,
+                                                 const std::vector<RTLIL::SigSpec>& args,
+                                                 const UHDM::func_call* call_site,
+                                                 FunctionCallContext* parent_ctx = nullptr);
+    
+    // Helper to create unique instance IDs for function calls
+    std::string create_function_instance_id(const std::string& func_name,
+                                            const UHDM::func_call* call_site);
+    
+    // Helper to handle recursive function calls with context
+    RTLIL::SigSpec handle_recursive_call(FunctionCallContext& ctx,
+                                         FunctionCallContext* parent_ctx);
+    
+    // Generate process for a specific function context
+    RTLIL::Process* generate_process_for_context(const FunctionCallContext& ctx);
     
     // Evaluate function call at compile time (for initial blocks)
     RTLIL::Const evaluate_function_call(const UHDM::function* func_def, 

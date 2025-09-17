@@ -13,7 +13,7 @@ module \function_loop
   wire width 8 $0\func_loop$func$dut.sv:22$2.x$4
   attribute \src "dut.sv:22.18-22.30"
   wire width 8 $1\func_loop$func$dut.sv:22$2.$result$6
-  wire width 8 $func_func_loop_result_0
+  wire width 8 $func_loop$func$dut.sv:22$0_result
   wire width 8 \func_loop$func$dut.sv:22$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:22.18-22.30"
@@ -49,6 +49,6 @@ module \function_loop
       update \func_loop$func$dut.sv:22$2.$result 8'x
       update \func_loop$func$dut.sv:22$2.i 32'x
   end
-  connect $func_func_loop_result_0 \func_loop$func$dut.sv:22$1.$result
-  connect \out $func_func_loop_result_0
+  connect $func_loop$func$dut.sv:22$0_result \func_loop$func$dut.sv:22$1.$result
+  connect \out $func_loop$func$dut.sv:22$0_result
 end

@@ -20,7 +20,7 @@ module \function_nested
   wire $auto$rtlil.cc:3018:Gt$11
   wire $auto$rtlil.cc:3018:Gt$13
   wire $auto$rtlil.cc:3018:Gt$15
-  wire width 8 $func_func_nested_result_0
+  wire width 8 $func_nested$func$dut.sv:30$0_result
   wire width 8 \func_nested$func$dut.sv:30$1.$result
   attribute \nosync 1
   attribute \src "dut.sv:30.18-30.38"
@@ -110,6 +110,6 @@ module \function_nested
       update \func_nested$func$dut.sv:30$1.$result $0\func_nested$func$dut.sv:30$1.$result$9
       update \func_nested$func$dut.sv:30$2.$result 8'x
   end
-  connect $func_func_nested_result_0 \func_nested$func$dut.sv:30$1.$result
-  connect \out $func_func_nested_result_0
+  connect $func_nested$func$dut.sv:30$0_result \func_nested$func$dut.sv:30$1.$result
+  connect \out $func_nested$func$dut.sv:30$0_result
 end

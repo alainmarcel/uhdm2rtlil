@@ -7,7 +7,7 @@ module \mul
   parameter \X_WIDTH 6
   parameter \Y_WIDTH 6
   parameter \A_WIDTH 12
-  wire width 12 $auto$expression.cpp:1775:import_operation$1
+  wire width 12 $auto$expression.cpp:1767:import_operation$1
   attribute \src "dut.sv:7.26-7.27"
   wire width 12 output 3 \A
   attribute \src "dut.sv:4.25-4.26"
@@ -22,7 +22,7 @@ module \mul
     parameter \Y_WIDTH 12
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:1775:import_operation$1
+    connect \Y $auto$expression.cpp:1767:import_operation$1
   end
-  connect \A $auto$expression.cpp:1775:import_operation$1
+  connect \A $auto$expression.cpp:1767:import_operation$1
 end
