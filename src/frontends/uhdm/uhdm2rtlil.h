@@ -71,6 +71,7 @@ struct FunctionCallContext {
     // Variable tracking
     std::map<std::string, RTLIL::SigSpec> wire_mappings;    // Variable -> Wire
     std::map<std::string, RTLIL::Const> const_values;       // Variable -> Const value
+    std::map<std::string, RTLIL::Const> const_wire_values; // Track constant values of wires
     std::vector<RTLIL::SigSpec> arguments;
     
     // Metadata
@@ -109,8 +110,12 @@ public:
         }
     }
     
-    FunctionCallContext& current() {
-        return stack.back();
+    // Return pointer to current context (top of stack), nullptr if empty
+    FunctionCallContext* current() {
+        if (!stack.empty()) {
+            return &stack.back();
+        }
+        return nullptr;
     }
     
     const FunctionCallContext* parent() const {
@@ -258,7 +263,11 @@ struct UhdmImporter {
     
     // Instance counter for generating unique function instance IDs
     int function_instance_counter = 0;
-    FunctionCallContext* current_function_context = nullptr;
+    
+    // Get current function context for constant propagation (top of stack)
+    FunctionCallContext* getCurrentFunctionContext() { 
+        return function_call_stack.current();
+    }
     RTLIL::SigSpec current_ff_clock_sig;
     
     // Temporary wires for combinational processes

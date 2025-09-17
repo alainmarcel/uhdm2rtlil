@@ -2141,6 +2141,16 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (it != input_mapping->end()) {
             if (mode_debug)
                 log("    Found %s in function input_mapping\n", ref_name.c_str());
+            
+            // Check if we have a constant value for this parameter
+            FunctionCallContext* ctx = getCurrentFunctionContext();
+            if (ctx && ctx->const_wire_values.count(ref_name)) {
+                RTLIL::Const const_val = ctx->const_wire_values[ref_name];
+                log("UHDM: Function parameter %s has constant value %s\n", 
+                    ref_name.c_str(), const_val.as_string().c_str());
+                return RTLIL::SigSpec(const_val);
+            }
+            
             log("UHDM: Function parameter %s mapped to signal %s\n", 
                 ref_name.c_str(), it->second.is_wire() ? 
                 it->second.as_wire()->name.c_str() : "const/temp");

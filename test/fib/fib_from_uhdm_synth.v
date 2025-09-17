@@ -38,51 +38,51 @@ module gate(fib0, fib1, fib2, fib3, fib4, fib5, fib6, fib7, fib8, fib9);
   wire [31:0] \fib_wrap$func$dut.sv:37$3.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:38.18-38.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:38$138.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:38$12.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:39.18-39.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:39$273.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:39$21.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:40.18-40.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:40$408.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:40$30.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:41.18-41.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:41$543.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:41$39.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:42.18-42.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:42$678.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:42$48.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:43.18-43.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:43$813.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:43$57.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:44.18-44.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:44$948.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:44$66.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:45.18-45.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:45$1083.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:45$75.o ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:46.18-46.35" *)
-  wire [31:0] \fib_wrap$func$dut.sv:46$1218.o ;
+  wire [31:0] \fib_wrap$func$dut.sv:46$84.o ;
   wire [31:0] unused;
   assign fib0 = 32'd0;
   assign fib1 = 32'd1;
   assign fib2 = 32'd1;
   assign fib3 = 32'd2;
-  assign fib4 = 32'hxxxxxxxx;
-  assign fib5 = 32'hxxxxxxxx;
-  assign fib6 = 32'hxxxxxxxx;
-  assign fib7 = 32'hxxxxxxxx;
-  assign fib8 = 32'hxxxxxxxx;
-  assign fib9 = 32'hxxxxxxxx;
+  assign fib4 = 32'd3;
+  assign fib5 = 32'd5;
+  assign fib6 = 32'd8;
+  assign fib7 = 32'd13;
+  assign fib8 = 32'd21;
+  assign fib9 = 32'd34;
   assign \fib_wrap$func$dut.sv:37$3.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:38$138.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:39$273.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:40$408.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:41$543.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:42$678.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:43$813.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:44$948.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:45$1083.o  = 32'hxxxxxxxx;
-  assign \fib_wrap$func$dut.sv:46$1218.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:38$12.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:39$21.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:40$30.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:41$39.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:42$48.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:43$57.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:44$66.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:45$75.o  = 32'hxxxxxxxx;
+  assign \fib_wrap$func$dut.sv:46$84.o  = 32'hxxxxxxxx;
   assign unused = 32'd0;
 endmodule
