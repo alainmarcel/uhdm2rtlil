@@ -157,7 +157,7 @@ module \fsm_using_function
           attribute \src "dut.sv:36.30-38.18"
           case 1'1
             assign { } { }
-            assign $10\fsm_function$func$dut.sv:29$2.$result$10 3'010
+            assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'010
           attribute \src "dut.sv:38.24-42.18"
           case 
             assign { } { }
@@ -167,11 +167,11 @@ module \fsm_using_function
               attribute \src "dut.sv:38.43-40.18"
               case 1'1
                 assign { } { }
-                assign $13\fsm_function$func$dut.sv:29$2.$result$13 3'100
+                assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'100
               attribute \src "dut.sv:40.24-42.18"
               case 
                 assign { } { }
-                assign $13\fsm_function$func$dut.sv:29$2.$result$13 3'001
+                assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'001
             end
         end
       attribute \src "dut.sv:43.4-47.18"
@@ -183,11 +183,11 @@ module \fsm_using_function
           attribute \src "dut.sv:43.30-45.18"
           case 1'1
             assign { } { }
-            assign $16\fsm_function$func$dut.sv:29$2.$result$16 3'010
+            assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'010
           attribute \src "dut.sv:45.24-47.18"
           case 
             assign { } { }
-            assign $16\fsm_function$func$dut.sv:29$2.$result$16 3'001
+            assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'001
         end
       attribute \src "dut.sv:48.4-52.18"
       case 3'100
@@ -198,11 +198,11 @@ module \fsm_using_function
           attribute \src "dut.sv:48.30-50.14"
           case 1'1
             assign { } { }
-            assign $19\fsm_function$func$dut.sv:29$2.$result$19 3'100
+            assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'100
           attribute \src "dut.sv:50.20-52.18"
           case 
             assign { } { }
-            assign $19\fsm_function$func$dut.sv:29$2.$result$19 3'001
+            assign $1\fsm_function$func$dut.sv:29$2.$result$8 3'001
         end
       attribute \src "dut.sv:53.4-53.34"
       case 

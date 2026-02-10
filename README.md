@@ -14,19 +14,20 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 107 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (104/107 tests functional)
-- **Perfect Matches**: 99 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 110 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 96% (106/110 tests functional)
+- **Perfect Matches**: 101 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 3 tests with issues:
+- **Known Failures**: 4 tests with issues:
   - `case_expr_const` - Equivalence check failure (expected)
   - `forloops` - Equivalence check failure (expected)
   - `mem2reg_test1` - Equivalence check failure
+  - `scopes` - True failure (combinational feedback loop in function/task scoping)
 - **Recent Fixes**:
   - `genblk_order` - Fixed nested generate blocks with same name ✅
     - Reordered generate scope import to process nested scopes before continuous assignments
@@ -70,6 +71,13 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - New function tests added: `function_arith`, `function_bool`, `function_case`, `function_nested` (all passing)
     - `function_loop`, `function_mixed`, `many_functions` - Fixed and now passing all tests
     - `function_output` - Functions with output parameters and nested calls now passing ✅
+  - **Task Inlining in Always Blocks** ✅
+    - Task calls in combinational always blocks are now inlined with proper parameter mapping
+    - Supports input/output parameters and local variables within tasks
+    - Named begin blocks inside tasks create hierarchical wires with correct scoping
+    - `current_comb_values` tracking ensures task bodies read correct in-progress signal values
+    - Variable shadowing in nested scopes handled via save/restore pattern on task_mapping
+    - `scope_task` test now passing formal equivalence check
   - **Processing Order and autoidx Consistency** ✅
     - Fixed processing order: continuous assignments now processed before always blocks
     - Consistent use of Yosys global autoidx counter for unique naming
@@ -251,7 +259,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (110 total - 105 passing, 5 known issues)
+### Current Test Cases (110 total - 106 passing, 4 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -333,7 +341,7 @@ The Yosys test runner:
 #### Scope & Variable Shadowing
 - **scope_func** - Function calls with variable inputs in always blocks (tests function scope resolution)
 - **scopes** - Functions, tasks, and nested blocks with variable shadowing (tests complex scoping) *(known failure)*
-- **scope_task** - Tasks with nested named blocks and local variables (tests task scope) *(known failure)*
+- **scope_task** - Tasks with nested named blocks and local variables (tests task inlining in always blocks)
 
 #### Arrays & Memory
 - **arrays01** - 4-bit x16 array with synchronous read and write (tests memory inference)
@@ -408,8 +416,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 105 of 110 tests are passing or working as expected
-- 5 tests are in the failing_tests.txt file (expected failures)
+- 106 of 110 tests are passing or working as expected
+- 4 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -462,8 +470,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **110 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **100 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **105 tests passing** - with 5 known failures documented in failing_tests.txt
+- **101 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **106 tests passing** - with 4 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 

@@ -482,50 +482,46 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                 if (lhs_ref) {
                     std::string lhs_name = std::string(lhs_ref->VpiName());
-                    if (lhs_name == func_name) {
+                    // Check input_mapping first - this handles function params, return variable,
+                    // and block-local variables that may shadow the function name
+                    auto it = input_mapping.find(lhs_name);
+                    if (it != input_mapping.end()) {
+                        lhs_sig = it->second;
+                        if (mode_debug) {
+                            log("UHDM: Assignment to mapped variable %s\n", lhs_name.c_str());
+                        }
+                    } else if (lhs_name == func_name) {
                         // Direct assignment to function name - use result wire
+                        // (only if not shadowed by a block-local variable in input_mapping)
                         lhs_sig = result_wire;
                         if (mode_debug) {
                             log("UHDM: Direct assignment to function %s, using result wire\n", func_name.c_str());
                         }
                     } else {
-                        // Check if it's a local variable, input, or return variable
-                        auto it = input_mapping.find(lhs_name);
-                        if (it != input_mapping.end()) {
-                            // This variable is mapped (could be input arg or return variable)
-                            lhs_sig = it->second;
-                        } else {
-                            // Create a function-scoped temporary wire for local variable
-                            // Use a unique name to avoid conflicts between functions
-                            // func_call_context already contains the function name, so don't duplicate it
-                            std::string local_var_name = stringf("$%s$local_%s",
-                                func_call_context.c_str(), lhs_name.c_str());
-                            RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(local_var_name));
-                            if (!temp_wire) {
-                                // Check if we have the width from the function's variable declarations
-                                int wire_width = rhs_sig.size(); // Default to RHS width
-                                auto width_it = local_var_widths.find(lhs_name);
-                                if (width_it != local_var_widths.end()) {
-                                    wire_width = width_it->second;
-                                    if (mode_debug) {
-                                        log("UHDM: Using declared width %d for local variable %s\n",
-                                            wire_width, lhs_name.c_str());
-                                    }
-                                } else {
-                                    // Fall back to RHS width but cap it at reasonable values
-                                    if (wire_width > 64) {
-                                        log_warning("Large width %d for local variable %s, using 64\n",
-                                            wire_width, lhs_name.c_str());
-                                        wire_width = 64;
-                                    }
+                        // Create a function-scoped temporary wire for local variable
+                        std::string local_var_name = stringf("$%s$local_%s",
+                            func_call_context.c_str(), lhs_name.c_str());
+                        RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(local_var_name));
+                        if (!temp_wire) {
+                            int wire_width = rhs_sig.size();
+                            auto width_it = local_var_widths.find(lhs_name);
+                            if (width_it != local_var_widths.end()) {
+                                wire_width = width_it->second;
+                                if (mode_debug) {
+                                    log("UHDM: Using declared width %d for local variable %s\n",
+                                        wire_width, lhs_name.c_str());
                                 }
-                                temp_wire = module->addWire(RTLIL::escape_id(local_var_name), wire_width);
+                            } else {
+                                if (wire_width > 64) {
+                                    log_warning("Large width %d for local variable %s, using 64\n",
+                                        wire_width, lhs_name.c_str());
+                                    wire_width = 64;
+                                }
                             }
-                            lhs_sig = temp_wire;
-
-                            // Add the local variable to input_mapping so it can be referenced later
-                            input_mapping[lhs_name] = lhs_sig;
+                            temp_wire = module->addWire(RTLIL::escape_id(local_var_name), wire_width);
                         }
+                        lhs_sig = temp_wire;
+                        input_mapping[lhs_name] = lhs_sig;
                     }
                 }
             } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {

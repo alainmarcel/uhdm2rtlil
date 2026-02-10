@@ -248,6 +248,66 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        case vpiTaskCall: {
+            // For task calls, we only extract:
+            // 1. Output parameter targets (caller's arguments for output params)
+            // 2. Module signals directly assigned by the task body
+            // We do NOT extract task-internal variables (they are handled by task inlining)
+            auto tc = any_cast<const UHDM::task_call*>(stmt);
+            if (tc && tc->Task()) {
+                auto task_def = tc->Task();
+                auto io_decls = task_def->Io_decls();
+                auto args = tc->Tf_call_args();
+
+                // Collect task-local variable names to filter them out
+                std::set<std::string> task_local_names;
+                if (io_decls) {
+                    for (auto io_any : *io_decls) {
+                        auto io = any_cast<const UHDM::io_decl*>(io_any);
+                        if (io) task_local_names.insert(std::string(io->VpiName()));
+                    }
+                }
+                if (task_def->Variables()) {
+                    for (auto var : *task_def->Variables()) {
+                        task_local_names.insert(std::string(var->VpiName()));
+                    }
+                }
+
+                // Extract output parameter targets from the call site
+                if (io_decls && args) {
+                    size_t n = std::min(io_decls->size(), args->size());
+                    for (size_t i = 0; i < n; i++) {
+                        auto io = any_cast<const UHDM::io_decl*>((*io_decls)[i]);
+                        if (io && io->VpiDirection() == 2) { // Output
+                            auto arg = (*args)[i];
+                            if (auto arg_expr = dynamic_cast<const UHDM::expr*>(arg)) {
+                                AssignedSignal sig;
+                                sig.lhs_expr = arg_expr;
+                                sig.is_part_select = false;
+                                if (arg_expr->VpiType() == vpiRefObj) {
+                                    auto ref = any_cast<const UHDM::ref_obj*>(arg_expr);
+                                    sig.name = std::string(ref->VpiName());
+                                    signals.push_back(sig);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Extract module signals assigned inside the task body
+                // Only include signals that exist as module wires (skip task-internal variables)
+                std::vector<AssignedSignal> task_body_signals;
+                if (auto task_stmt = task_def->Stmt()) {
+                    extract_assigned_signals(task_stmt, task_body_signals);
+                }
+                for (auto& sig : task_body_signals) {
+                    if (!task_local_names.count(sig.name) && name_map.count(sig.name)) {
+                        signals.push_back(sig);
+                    }
+                }
+            }
+            break;
+        }
     }
 }
 
