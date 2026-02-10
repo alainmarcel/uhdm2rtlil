@@ -251,51 +251,143 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (91 total - 88 passing, 3 known issues)
-- **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
+### Current Test Cases (110 total - 105 passing, 5 known issues)
+
+#### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
-- **counter** - More complex counter design
-- **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
-- **simple_assign** - Basic continuous assignments
-- **simple_always_ff** - Sequential always_ff blocks with clock and reset
-- **simple_always_ifelse** - Always blocks with if-else conditional logic
-- **simple_hierarchy** - Module instantiation and port connections
-- **simple_interface** - Interface-based connections
-- **simple_memory** - Memory arrays and access patterns
-- **simple_memory_noreset** - Memory array without reset signal
-- **param_test** - Parameter passing and overrides
-- **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
-- **simple_fsm** - Finite state machine with parameterized states (tests parameter references in case statements)
-- **simple_instance_array** - Primitive gate arrays (tests and, or, xor, nand, not gates with array instances) *(UHDM-only)*
-- **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
-- **struct_array** - Arrays of packed structs with complex indexing and member access
-- **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
-- **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
-- **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
-- **nested_struct_nopack** - Nested structs without packages (tests synchronous if-else with switch statement generation)
-- **simple_nested_struct_nopack** - Simpler nested struct test without packages
+- **dff_styles** - Simple D flip-flop with synchronous clock edge
+- **dff_different_styles** - Multiple DFF variants with different reset styles and polarities
+- **dffsr** - D flip-flop with async set/reset
+- **adff** - Async D flip-flop with async reset (from Yosys test suite)
+- **adffn** - Async D flip-flop with negative-edge async reset (from Yosys test suite)
+- **dffs** - D flip-flop with synchronous preset (from Yosys test suite)
+- **ndffnr** - Negative edge flip-flop with reset (from Yosys test suite)
 - **latchp** - Positive level-sensitive latch (tests latch inference from combinational always blocks)
 - **latchn** - Negative level-sensitive latch (tests inverted enable condition handling)
 - **latchsr** - Latch with set/reset functionality (tests nested if-else in combinational context)
-- **adff** - Async D flip-flop with async reset (from Yosys test suite)
-- **adffn** - Async D flip-flop with negative-edge async reset (from Yosys test suite)
-- **adffs** - Async D flip-flop with set (from Yosys test suite)
-- **dffs** - D flip-flop with synchronous preset (from Yosys test suite)
-- **add_sub** - Adder/subtractor with carry (from Yosys test suite)
+
+#### Counters & Sequential Designs
+- **simple_counter** - 8-bit counter with async reset (tests increment logic, reset handling)
+- **counter** - More complex counter design
+- **always01** - 4-bit synchronous counter with mux-based async reset
+- **always02** - 4-bit counter with synchronous reset in nested block
+- **always03** - Mixed blocking and non-blocking assignments with if-else chains
+- **simple_always_ff** - Sequential always_ff blocks with clock and reset
+- **simple_always_ifelse** - Always blocks with if-else conditional logic
+
+#### Combinational Logic - Boolean & Arithmetic
+- **lut_map_and** - Simple AND gate (tests basic 2-input logic)
+- **lut_map_or** - Simple OR gate (tests basic 2-input logic)
+- **lut_map_xor** - Simple XOR gate (tests basic 2-input logic)
+- **lut_map_not** - Simple NOT gate (tests unary operators)
+- **lut_map_mux** - 2-to-1 multiplexer with ternary operator
+- **lut_map_cmp** - Multiple comparison operators (<=, <, >=, >, ==, !=) with constants
 - **logic_ops** - Logical operations with bit ordering (from Yosys test suite)
-- **ndffnr** - Negative edge flip-flop with reset (from Yosys test suite)
-- **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
-- **mul** - Multiplication with correct result width calculation (tests arithmetic operation width inference)
-- **mul_plain** - Simple combinational multiplier from Gatemate test suite
-- **mul_signed_async** - Signed multiplier with async reset and pipeline registers from Gatemate test suite
-- **mul_unsigned_sync** - Unsigned multiplier with sync reset and pipeline registers from Gatemate test suite
+- **opt_share_add_sub** - Shared add/subtract using ternary selection (tests operator sharing)
+- **simple_assign** - Basic continuous assignments
+- **partsel_simple** - Part selection with dynamic offset using +: and -: operators
+- **wreduce_test0** - Signed arithmetic with width reduction
+- **wreduce_test1** - Arithmetic operations with output width reduction
+- **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
+
+#### Multiplexers
 - **mux2** - 2-to-1 multiplexer using conditional operator (tests ternary expression)
 - **mux4** - 4-to-1 multiplexer using case statement (tests case statement with bit selection)
 - **mux8** - 8-to-1 multiplexer using nested conditional operators (tests complex ternary chains)
 - **mux16** - 16-to-1 multiplexer using dynamic bit selection (tests non-constant indexed access)
+
+#### Multipliers & Arithmetic Pipelines
+- **mul** - Multiplication with correct result width calculation (tests arithmetic width inference)
+- **mul_plain** - Simple combinational multiplier from Gatemate test suite
+- **mul_signed_async** - Signed multiplier with async reset and pipeline registers
+- **mul_unsigned** - 16x24-bit multiplier with 3-stage pipelined result
+- **mul_unsigned_sync** - Unsigned multiplier with sync reset and pipeline registers
+- **mul_unsigned_sync_simple** - 6x3-bit synchronous multiplier with clock enable
+- **mul_sync_enable_test** - 6x3-bit multiplier with synchronous reset and enable
+- **mul_sync_reset_test** - 6x3-bit multiplier with synchronous reset
 - **macc** - Multiply-accumulate unit from Xilinx (tests power operator, large constants, process structures)
-- **code_hdl_models_decoder_2to4_gates** - 2-to-4 decoder using primitive gates (tests gate instantiation and connections)
-- **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z), cast operations, and full assertion support (✅ PASSING)
+
+#### State Machines
+- **simple_fsm** - Finite state machine with parameterized states (tests parameter references in case statements)
+- **fsm** - 3-state finite state machine with grant signals
+- **code_tidbits_fsm_using_function** - FSM implemented with combinational function (tests function-based state logic)
+- **power_state** - Output logic decoder for state machine
+- **simple_enum** - Enum-based state machine with assertions
+- **unique_case** - Unique case statements with for loops and break statements *(UHDM-only)*
+
+#### Functions
+- **simple_function** - AND-OR tree function driving flip-flop (tests function in continuous assignment)
+- **function_arith** - Arithmetic function with add/subtract/shift/AND/XOR
+- **function_bool** - Boolean logic function with if-else modes
+- **function_case** - Case statement function with shift operations
+- **function_loop** - Loop-based bit reversal function
+- **function_nested** - Nested if-else maximum finder
+- **function_mixed** - Mixed arithmetic, bit manipulation, and conditional modes
+- **function_output** - Function with output parameter assignments
+- **many_functions** - Multiple function types: arithmetic, boolean, case, nested, loop, mixed
+- **fib** - Recursive Fibonacci with wrapper function and output parameters
+- **fib_simple** - Fibonacci with wrapper function output assignments
+- **fib_recursion** - Direct recursive Fibonacci in initial block
+- **fib_initial** - Initial block with function call evaluation
+
+#### Scope & Variable Shadowing
+- **scope_func** - Function calls with variable inputs in always blocks (tests function scope resolution)
+- **scopes** - Functions, tasks, and nested blocks with variable shadowing (tests complex scoping) *(known failure)*
+- **scope_task** - Tasks with nested named blocks and local variables (tests task scope) *(known failure)*
+
+#### Arrays & Memory
+- **arrays01** - 4-bit x16 array with synchronous read and write (tests memory inference)
+- **simple_memory** - Memory arrays and access patterns
+- **simple_memory_noreset** - Memory array without reset signal
+- **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
+- **priority_memory** - Priority-based memory access patterns
+- **mem2reg_test1** - Combinational array with write and simultaneous read *(known failure)*
+- **mem2reg_test2** - Annotated 8-element array with loop-based writes and reads
+- **asym_ram_sdp_read_wider** - Asymmetric RAM with read port 4x wider than write
+- **asym_ram_sdp_write_wider** - Asymmetric RAM with write port 4x wider than read
+- **sp_read_first** - Single port RAM with read-first semantics
+- **sp_read_or_write** - Single port RAM with read-or-write semantics
+- **sp_write_first** - Single port RAM with write-first semantics
+
+#### Data Types & Structs
+- **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
+- **struct_array** - Arrays of packed structs with complex indexing and member access
+- **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
+- **nested_struct_nopack** - Nested structs without packages (tests synchronous if-else with switch statements)
+- **simple_nested_struct_nopack** - Simpler nested struct test without packages
+- **enum_simple** - State machine with typedef enum and state transitions
+- **enum_values** - Multiple enum types with custom values and attributes
+- **typedef_simple** - Multiple typedef definitions with signed/unsigned types
+
+#### Generate & Parameterization
+- **param_test** - Parameter passing and overrides
+- **generate_test** - Generate for loops and if-else generate blocks with proper instance naming
+- **simple_generate** - Generate loop with AND gates clocked per-bit
+- **forgen01** - Generate block with nested loops computing prime LUT
+- **forgen02** - Generate block implementing parameterized ripple adder
+- **gen_test1** - Nested generate loops with if-then conditional blocks
+- **genblk_order** - Nested generate blocks with variable shadowing
+- **genvar_loop_decl_1** - Generate loop with inline genvar declaration and width arrays
+- **genvar_loop_decl_2** - Generate with genvar shadowing and hierarchical references
+- **carryadd** - Generate-based carry adder with hierarchical references
+- **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
+- **case_expr_const** - Case statement with constant expressions *(known failure)*
+
+#### Module Hierarchy & Interfaces
+- **simple_hierarchy** - Module instantiation and port connections
+- **simple_interface** - Interface-based connections
+- **simple_instance_array** - Primitive gate arrays (and, or, xor, nand, not with array instances) *(UHDM-only)*
+- **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
+- **custom_map_incomp** - Custom technology mapping with incomplete instantiation *(UHDM-only)*
+
+#### Primitives & Miscellaneous
+- **verilog_primitives** - Instantiation of buf, not, and xnor primitives
+- **escape_id** - Module and signal names with special characters and escapes
+- **code_hdl_models_decoder_2to4_gates** - 2-to-4 decoder using primitive gates
+- **code_hdl_models_parallel_crc** - 16-bit parallel CRC with combinational feedback logic
+- **aes_kexp128** - AES key expansion circuit with XOR feedback and array registers
+- **simple_abc9** - ABC9 test collection with blackbox, whitebox, and various port types
+- **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
 
 ### Test Management
 
@@ -316,8 +408,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 88 of 91 tests are passing or working as expected
-- 3 tests are in the failing_tests.txt file (expected failures)
+- 105 of 110 tests are passing or working as expected
+- 5 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -368,10 +460,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **91 test cases**:
+The UHDM frontend test suite includes **110 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **83 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **88 tests passing** - with 3 known failures documented in failing_tests.txt
+- **100 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **105 tests passing** - with 5 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 

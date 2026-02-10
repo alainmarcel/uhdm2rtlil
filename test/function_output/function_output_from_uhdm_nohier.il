@@ -19,8 +19,8 @@ module \gate
   wire width 32 $1\fib_wrap$func$dut.sv:25$3.$result$7
   attribute \src "dut.sv:26.18-26.35"
   wire width 32 $1\fib_wrap$func$dut.sv:26$12.$result$16
-  wire width 64 $auto$expression.cpp:1698:import_operation$18
-  wire width 64 $auto$expression.cpp:1698:import_operation$9
+  wire width 64 $auto$expression.cpp:1784:import_operation$18
+  wire width 64 $auto$expression.cpp:1784:import_operation$9
   wire width 32 $fib_wrap$func$dut.sv:25$0_result
   wire width 32 $fib_wrap$func$dut.sv:26$1_result
   attribute \src "dut.sv:2.10-2.14"
@@ -52,7 +52,7 @@ module \gate
     parameter \Y_WIDTH 64
     connect \A \off
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$expression.cpp:1698:import_operation$9
+    connect \Y $auto$expression.cpp:1784:import_operation$9
   end
   cell $add $add$dut.sv:16$19
     parameter \A_SIGNED 0
@@ -62,7 +62,7 @@ module \gate
     parameter \Y_WIDTH 64
     connect \A \off
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1698:import_operation$18
+    connect \Y $auto$expression.cpp:1784:import_operation$18
   end
   attribute \src "dut.sv:23.5-27.8"
   process $proc$dut.sv:23$1
@@ -81,7 +81,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:25$3.$result$6 $1\fib_wrap$func$dut.sv:25$3.$result$7
     assign $0\fib_wrap$func$dut.sv:25$2.$result$8 $1\fib_wrap$func$dut.sv:25$3.$result$7
     assign $1\fib_wrap$func$dut.sv:25$3.$result$7 0
-    assign \fib0 $auto$expression.cpp:1698:import_operation$9 [31:0]
+    assign \fib0 $auto$expression.cpp:1784:import_operation$9 [31:0]
     sync always
       update \fib_wrap$func$dut.sv:25$2.$result $0\fib_wrap$func$dut.sv:25$2.$result$8
       update \fib_wrap$func$dut.sv:25$3.$result 32'x
@@ -98,7 +98,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:26$12.$result$15 $1\fib_wrap$func$dut.sv:26$12.$result$16
     assign $0\fib_wrap$func$dut.sv:26$11.$result$17 $1\fib_wrap$func$dut.sv:26$12.$result$16
     assign $1\fib_wrap$func$dut.sv:26$12.$result$16 0
-    assign \fib1 $auto$expression.cpp:1698:import_operation$18 [31:0]
+    assign \fib1 $auto$expression.cpp:1784:import_operation$18 [31:0]
     sync always
       update \fib_wrap$func$dut.sv:26$11.$result $0\fib_wrap$func$dut.sv:26$11.$result$17
       update \fib_wrap$func$dut.sv:26$12.$result 32'x

@@ -26,6 +26,7 @@
 #include <uhdm/case_stmt.h>
 #include <uhdm/case_item.h>
 #include <uhdm/for_stmt.h>
+#include <uhdm/range.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -189,13 +190,63 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
         
         case vpiBegin:
         case vpiNamedBegin: {
+            // Both begin and named_begin blocks create a new scope where variables can shadow outer ones
+            // Create a copy of local_vars for this block's scope
+            std::map<std::string, RTLIL::Const> block_vars = local_vars;
+            
+            // Track which variables are local to this block (for scope management)
+            std::set<std::string> local_only_vars;
+            
+            // Handle both begin and named_begin blocks
+            VectorOfvariables* block_variables = nullptr;
+            if (stmt->VpiType() == vpiNamedBegin) {
+                const named_begin* nbg = any_cast<const named_begin*>(stmt);
+                if (nbg) {
+                    block_variables = nbg->Variables();
+                    if (!nbg->VpiName().empty()) {
+                        log("    Entering named block: %s\n", std::string(nbg->VpiName()).c_str());
+                    }
+                }
+            } else {
+                const begin* bg = any_cast<const begin*>(stmt);
+                if (bg) {
+                    block_variables = bg->Variables();
+                }
+            }
+            
+            // Process local variable declarations (applies to both begin and named_begin)
+            if (block_variables) {
+                for (auto var : *block_variables) {
+                    std::string var_name = std::string(var->VpiName());
+                    
+                    // Use the existing get_width helper function (DRY principle)
+                    int width = get_width(var, current_instance);
+                    
+                    // Initialize the local variable to 0
+                    block_vars[var_name] = RTLIL::Const(0, width);
+                    local_only_vars.insert(var_name);
+                    log("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n", 
+                        var_name.c_str(), width);
+                }
+            }
+            
             // Execute all statements in the block
             VectorOfany* stmts = begin_block_stmts(stmt);
             if (stmts) {
                 RTLIL::Const last_result;
                 for (auto s : *stmts) {
-                    last_result = evaluate_function_stmt(s, local_vars, func_name);
+                    last_result = evaluate_function_stmt(s, block_vars, func_name);
                 }
+                
+                // Copy any updates to non-local variables back to the parent scope
+                // Local variables declared in this block should not affect the parent scope
+                for (auto& [name, value] : block_vars) {
+                    if (local_only_vars.find(name) == local_only_vars.end()) {
+                        // This variable is not local to this block, update parent scope
+                        local_vars[name] = value;
+                    }
+                }
+                
                 return last_result;
             }
             break;
@@ -266,6 +317,16 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             if (operand_values.size() >= 2) {
                 // Perform multiplication
                 int result = operand_values[0].as_int() * operand_values[1].as_int();
+                return RTLIL::Const(result, 32);
+            }
+            break;
+            
+        case vpiBitXorOp:  // XOR operator (^)
+            if (operand_values.size() >= 2) {
+                // Perform XOR
+                int result = operand_values[0].as_int() ^ operand_values[1].as_int();
+                log("      XOR: %d ^ %d = %d\n", 
+                    operand_values[0].as_int(), operand_values[1].as_int(), result);
                 return RTLIL::Const(result, 32);
             }
             break;
@@ -685,6 +746,7 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     } else {
         log("UHDM: Function has no statement body!\n");
     }
+    
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
     
     // Create nosync wires for the function context (these get set to 'x)

@@ -359,6 +359,7 @@ struct UhdmImporter {
     
     // Expression handling
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
+    
     RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
     RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
@@ -464,6 +465,7 @@ struct UhdmImporter {
                               int& temp_counter,
                               const std::string& func_call_context,
                               const std::map<std::string, int>& local_var_widths = {});
+    
     RTLIL::Process* generate_function_process(const UHDM::function* func_def, const std::string& func_name,
                                               const std::vector<RTLIL::SigSpec>& args, RTLIL::Wire* result_wire, const UHDM::func_call* fc);
     
