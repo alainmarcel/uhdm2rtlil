@@ -316,8 +316,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 88 of 91 tests are passing or working as expected
-- 3 tests are in the failing_tests.txt file (expected failures)
+- 105 of 110 tests are passing or working as expected
+- 5 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -368,10 +368,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **91 test cases**:
+The UHDM frontend test suite includes **110 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **83 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **88 tests passing** - with 3 known failures documented in failing_tests.txt
+- **100 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **105 tests passing** - with 5 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 

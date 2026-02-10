@@ -71,22 +71,108 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     int type = stmt->UhdmType();
     switch(type) {
     case uhdmbegin: {
-        // Handle begin-end block
+        // Handle begin-end block with scope support for local variables
         const begin* bg = any_cast<const begin*>(stmt);
-        if (bg && bg->Stmts()) {
-            for (auto s : *bg->Stmts()) {
-                process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+        if (bg) {
+            // Save and shadow variables declared in this block
+            std::map<std::string, RTLIL::SigSpec> saved_mappings;
+            std::set<std::string> block_local_vars;
+
+            if (bg->Variables()) {
+                for (auto var : *bg->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = 1;
+
+                    // Save old mapping if it exists
+                    auto it = input_mapping.find(var_name);
+                    if (it != input_mapping.end()) {
+                        saved_mappings[var_name] = it->second;
+                    }
+                    block_local_vars.insert(var_name);
+
+                    // Create a wire for this local variable and shadow in input_mapping
+                    std::string local_wire_name = stringf("$%s$blk_%s_%d",
+                        func_call_context.c_str(), var_name.c_str(), incr_autoidx());
+                    RTLIL::Wire* local_wire = module->addWire(RTLIL::escape_id(local_wire_name), width);
+                    input_mapping[var_name] = RTLIL::SigSpec(local_wire);
+
+                    if (mode_debug) {
+                        log("    Created block-local variable %s (width=%d)\n", var_name.c_str(), width);
+                    }
+                }
+            }
+
+            if (bg->Stmts()) {
+                for (auto s : *bg->Stmts()) {
+                    process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                }
+            }
+
+            // Restore shadowed variables
+            for (auto& [name, sig] : saved_mappings) {
+                input_mapping[name] = sig;
+            }
+            // Remove variables that only existed in this block scope
+            for (const auto& var_name : block_local_vars) {
+                if (saved_mappings.find(var_name) == saved_mappings.end()) {
+                    input_mapping.erase(var_name);
+                }
             }
         }
         break;
     }
-    
+
     case uhdmnamed_begin: {
-        // Handle named begin-end block
+        // Handle named begin-end block with scope support for local variables
         const named_begin* nbg = any_cast<const named_begin*>(stmt);
-        if (nbg && nbg->Stmts()) {
-            for (auto s : *nbg->Stmts()) {
-                process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+        if (nbg) {
+            // Save and shadow variables declared in this block
+            std::map<std::string, RTLIL::SigSpec> saved_mappings;
+            std::set<std::string> block_local_vars;
+            std::string block_name = nbg->VpiName().empty() ? "blk" : std::string(nbg->VpiName());
+
+            if (nbg->Variables()) {
+                for (auto var : *nbg->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = 1;
+
+                    // Save old mapping if it exists
+                    auto it = input_mapping.find(var_name);
+                    if (it != input_mapping.end()) {
+                        saved_mappings[var_name] = it->second;
+                    }
+                    block_local_vars.insert(var_name);
+
+                    // Create a wire for this local variable and shadow in input_mapping
+                    std::string local_wire_name = stringf("$%s$%s_%s_%d",
+                        func_call_context.c_str(), block_name.c_str(), var_name.c_str(), incr_autoidx());
+                    RTLIL::Wire* local_wire = module->addWire(RTLIL::escape_id(local_wire_name), width);
+                    input_mapping[var_name] = RTLIL::SigSpec(local_wire);
+
+                    if (mode_debug) {
+                        log("    Created block-local variable %s in named block %s (width=%d)\n",
+                            var_name.c_str(), block_name.c_str(), width);
+                    }
+                }
+            }
+
+            if (nbg->Stmts()) {
+                for (auto s : *nbg->Stmts()) {
+                    process_stmt_to_case(s, case_rule, result_wire, input_mapping, func_name, temp_counter, func_call_context, local_var_widths);
+                }
+            }
+
+            // Restore shadowed variables
+            for (auto& [name, sig] : saved_mappings) {
+                input_mapping[name] = sig;
+            }
+            // Remove variables that only existed in this block scope
+            for (const auto& var_name : block_local_vars) {
+                if (saved_mappings.find(var_name) == saved_mappings.end()) {
+                    input_mapping.erase(var_name);
+                }
             }
         }
         break;
@@ -412,7 +498,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             // Create a function-scoped temporary wire for local variable
                             // Use a unique name to avoid conflicts between functions
                             // func_call_context already contains the function name, so don't duplicate it
-                            std::string local_var_name = stringf("$%s$local_%s", 
+                            std::string local_var_name = stringf("$%s$local_%s",
                                 func_call_context.c_str(), lhs_name.c_str());
                             RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(local_var_name));
                             if (!temp_wire) {
@@ -422,13 +508,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 if (width_it != local_var_widths.end()) {
                                     wire_width = width_it->second;
                                     if (mode_debug) {
-                                        log("UHDM: Using declared width %d for local variable %s\n", 
+                                        log("UHDM: Using declared width %d for local variable %s\n",
                                             wire_width, lhs_name.c_str());
                                     }
                                 } else {
                                     // Fall back to RHS width but cap it at reasonable values
                                     if (wire_width > 64) {
-                                        log_warning("Large width %d for local variable %s, using 64\n", 
+                                        log_warning("Large width %d for local variable %s, using 64\n",
                                             wire_width, lhs_name.c_str());
                                         wire_width = 64;
                                     }
@@ -436,7 +522,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                                 temp_wire = module->addWire(RTLIL::escape_id(local_var_name), wire_width);
                             }
                             lhs_sig = temp_wire;
-                            
+
                             // Add the local variable to input_mapping so it can be referenced later
                             input_mapping[lhs_name] = lhs_sig;
                         }
@@ -1089,10 +1175,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     log_warning("Failed to cast expression to func_call\n");
                     return RTLIL::SigSpec();
                 }
-                
+
                 std::string func_name = std::string(fc->VpiName());
                 log("UHDM: Processing function call: %s\n", func_name.c_str());
-                
+
                 // Get the function definition
                 const function* func_def = fc->Function();
                 log("UHDM: func_def pointer: %p\n", (void*)func_def);
@@ -1100,7 +1186,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     log_warning("Function definition not found for %s\n", func_name.c_str());
                     return RTLIL::SigSpec();
                 }
-                
+
                 if (mode_debug) {
                     log("UHDM: Function definition found for %s\n", func_name.c_str());
                     if (func_def->Stmt()) {
@@ -1109,13 +1195,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         log("UHDM: Function has no statement body!\n");
                     }
                 }
-                
+
                 // Get function return width
                 int ret_width = 1;
                 if (func_def->Return()) {
                     ret_width = get_width(func_def->Return(), current_instance);
                 }
-                
+
                 // Collect arguments first
                 std::vector<RTLIL::SigSpec> args;
                 std::vector<std::string> arg_names;
@@ -1126,12 +1212,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         args.push_back(arg_sig);
                     }
                 }
-                
+
                 // Check if all arguments are constants - if they are, we can evaluate at compile time
                 // This applies to both initial blocks and continuous assignments
                 bool all_const = true;
                 std::vector<RTLIL::Const> const_args;
-                
+
                 for (const auto& arg : args) {
                     if (arg.is_fully_const()) {
                         const_args.push_back(arg.as_const());
@@ -1140,53 +1226,53 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         break;
                     }
                 }
-                
+
                 if (all_const) {
                     // Evaluate function at compile time for optimization
                     log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
                     std::map<std::string, RTLIL::Const> output_params;
                     RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
-                    
+
                     // Return the constant result
                     return RTLIL::SigSpec(result);
                 }
-                
+
                 // For initial blocks with non-constant arguments, check if function returns a value
                 if (in_initial_block && !all_const) {
                     // If not all constant, check if function returns a value
                     bool has_return = false;
                     scan_for_direct_return_assignment(func_def->Stmt(), func_name, has_return);
-                    
+
                     if (!has_return) {
                         // Function doesn't assign to its return value
                         // Still generate process for output parameters, but return 0 for the return value
                         log("UHDM: Function %s in initial block doesn't assign to its return value\n", func_name.c_str());
-                        
+
                         // Process function for output parameters (result wire created internally)
-                        
+
                         // Generate process to handle output parameters
                         log("UHDM: Processing function %s with context-aware method\n", func_name.c_str());
                         process_function_with_context(func_def, args, fc, nullptr);
-                        
+
                         // But return a constant 0 for the function's return value in initial block
                         return RTLIL::SigSpec(0, ret_width);
                     }
-                    
+
                     log("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
                 }
-                
+
                 // Use the new context-aware function processing
                 FunctionCallContext* parent_ctx = nullptr;
-                
+
                 // If we're inside a function (input_mapping is not null), we should track the parent context
                 // For now, we'll pass nullptr but this will be enhanced to get proper parent context
                 if (input_mapping) {
                     // TODO: Get parent context from the call stack
                     parent_ctx = nullptr;
                 }
-                
+
                 // Process the function using the new context-aware method
-                log("UHDM: Processing function %s with context-aware method (return width=%d, %d arguments)\n", 
+                log("UHDM: Processing function %s with context-aware method (return width=%d, %d arguments)\n",
                     func_name.c_str(), ret_width, (int)args.size());
                 return process_function_with_context(func_def, args, fc, parent_ctx);
             }

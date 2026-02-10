@@ -11,7 +11,7 @@ module \gate
   wire width 32 $0\fib_wrap$func$dut.sv:28$3.k$5
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 $1\fib_wrap$func$dut.sv:28$3.$result$7
-  wire width 32 $auto$expression.cpp:1698:import_operation$9
+  wire width 32 $auto$expression.cpp:1784:import_operation$9
   wire width 32 $fib_wrap$func$dut.sv:28$0_result
   attribute \src "dut.sv:2.10-2.14"
   wire width 32 output 2 signed \fib2
@@ -33,7 +33,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 1
-    connect \Y $auto$expression.cpp:1698:import_operation$9
+    connect \Y $auto$expression.cpp:1784:import_operation$9
   end
   attribute \src "dut.sv:26.5-29.8"
   process $proc$dut.sv:26$1
@@ -52,7 +52,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:28$3.$result$6 $1\fib_wrap$func$dut.sv:28$3.$result$7
     assign $0\fib_wrap$func$dut.sv:28$2.$result$8 $1\fib_wrap$func$dut.sv:28$3.$result$7
     assign $1\fib_wrap$func$dut.sv:28$3.$result$7 0
-    assign \fib2 $auto$expression.cpp:1698:import_operation$9
+    assign \fib2 $auto$expression.cpp:1784:import_operation$9
     sync always
       update \fib_wrap$func$dut.sv:28$2.$result $0\fib_wrap$func$dut.sv:28$2.$result$8
       update \fib_wrap$func$dut.sv:28$3.$result 32'x
