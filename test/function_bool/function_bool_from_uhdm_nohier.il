@@ -152,7 +152,7 @@ module \function_bool
           attribute \src "dut.sv:19.17-19.34"
           case 1'1
             assign { } { }
-            assign $14\func_bool$func$dut.sv:28$2.$result$14 $auto$rtlil.cc:3007:Or$18
+            assign $1\func_bool$func$dut.sv:28$2.$result$8 $auto$rtlil.cc:3007:Or$18
           attribute \src "dut.sv:20.18-23.38"
           case 
             assign { } { }
@@ -162,11 +162,11 @@ module \function_bool
               attribute \src "dut.sv:21.17-21.34"
               case 1'1
                 assign { } { }
-                assign $19\func_bool$func$dut.sv:28$2.$result$19 $auto$rtlil.cc:3008:Xor$23
+                assign $1\func_bool$func$dut.sv:28$2.$result$8 $auto$rtlil.cc:3008:Xor$23
               attribute \src "dut.sv:23.17-23.37"
               case 
                 assign { } { }
-                assign $19\func_bool$func$dut.sv:28$2.$result$19 $auto$rtlil.cc:2959:Not$27
+                assign $1\func_bool$func$dut.sv:28$2.$result$8 $auto$rtlil.cc:2959:Not$27
             end
         end
     end

@@ -17,8 +17,8 @@ module \scope_func
   wire width 16 $0\y
   attribute \src "dut.sv:22.13-22.30"
   wire width 16 $1\func_01$func$dut.sv:22$5.$result$10
-  wire width 16 $auto$expression.cpp:1784:import_operation$12
-  wire width 16 $auto$expression.cpp:1784:import_operation$2
+  wire width 16 $auto$expression.cpp:1780:import_operation$12
+  wire width 16 $auto$expression.cpp:1780:import_operation$2
   wire width 16 $func_01$func$dut.sv:22$0_result
   wire width 16 \func_01$func$dut.sv:22$4.$result
   attribute \nosync 1
@@ -38,7 +38,7 @@ module \scope_func
     parameter \Y_WIDTH 16
     connect \A \x
     connect \B \k
-    connect \Y $auto$expression.cpp:1784:import_operation$2
+    connect \Y $auto$expression.cpp:1780:import_operation$2
   end
   cell $add $add$dut.sv:6$13
     parameter \A_SIGNED 0
@@ -48,7 +48,7 @@ module \scope_func
     parameter \Y_WIDTH 16
     connect \A $0\func_01$func$dut.sv:22$5.x$7
     connect \B $0\func_01$func$dut.sv:22$5.y$8
-    connect \Y $auto$expression.cpp:1784:import_operation$12
+    connect \Y $auto$expression.cpp:1780:import_operation$12
   end
   attribute \src "dut.sv:16.5-23.8"
   process $proc$dut.sv:16$1
@@ -67,11 +67,11 @@ module \scope_func
     assign { } { }
     assign { } { }
     assign { } { }
-    assign $0\func_01$func$dut.sv:22$5.x$7 $auto$expression.cpp:1784:import_operation$2
+    assign $0\func_01$func$dut.sv:22$5.x$7 $auto$expression.cpp:1780:import_operation$2
     assign $0\func_01$func$dut.sv:22$5.y$8 \x
     assign $0\func_01$func$dut.sv:22$5.$result$9 $1\func_01$func$dut.sv:22$5.$result$10
     assign $0\func_01$func$dut.sv:22$4.$result$11 $1\func_01$func$dut.sv:22$5.$result$10
-    assign $1\func_01$func$dut.sv:22$5.$result$10 $auto$expression.cpp:1784:import_operation$12
+    assign $1\func_01$func$dut.sv:22$5.$result$10 $auto$expression.cpp:1780:import_operation$12
     sync always
       update \func_01$func$dut.sv:22$4.$result $0\func_01$func$dut.sv:22$4.$result$11
       update \func_01$func$dut.sv:22$5.$result 16'x

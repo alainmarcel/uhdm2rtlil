@@ -28,6 +28,8 @@
 #include <uhdm/struct_typespec.h>
 #include <uhdm/package.h>
 #include <uhdm/ExprEval.h>
+#include <uhdm/task_call.h>
+#include <uhdm/task.h>
 
 #include "kernel/yosys.h"
 #include "kernel/sigtools.h"
@@ -248,6 +250,10 @@ struct UhdmImporter {
     
     // Context for handling async reset (maps signal name to temp wire)
     std::map<std::string, RTLIL::Wire*> current_signal_temp_wires;
+
+    // Track current signal values during combinational always block processing
+    // Maps signal name to its current SigSpec value (for task inlining)
+    std::map<std::string, RTLIL::SigSpec> current_comb_values;
     
     // Track sync assignment targets for proper if-else handling
     std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
@@ -422,7 +428,14 @@ struct UhdmImporter {
     void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
     void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
     void import_case_stmt_comb(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
-    
+
+    // Task inlining for combinational processes
+    void import_task_call_comb(const UHDM::task_call* tc, RTLIL::Process* proc);
+    void inline_task_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
+                               std::map<std::string, RTLIL::SigSpec>& task_mapping,
+                               const std::string& context, const std::string& block_prefix,
+                               const UHDM::any* process_src);
+
     // Assertion handling
     void import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire);
     
