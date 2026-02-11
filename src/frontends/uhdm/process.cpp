@@ -1652,9 +1652,40 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
     }
     pending_sync_assignments.clear();
-    
+
+    // Deduplicate initial assignments across processes.
+    // Surelog may generate multiple initial blocks for the same signal from generate unrolling.
+    // Generate-scope assignments take priority over module-level assignments.
+    bool current_from_gen = !gen_scope_stack.empty();
+    std::vector<RTLIL::SigSig> deduped_actions;
+    for (auto& action : sync_init->actions) {
+        std::string sig_name = log_signal(action.first);
+        auto it = initial_signal_assignments.find(sig_name);
+        if (it != initial_signal_assignments.end()) {
+            auto& prev = it->second;
+            // If previous was from generate scope and current is not, keep previous (generate wins)
+            if (prev.from_generate_scope && !current_from_gen) {
+                log("    Dedup: keeping generate-scope init for %s (skipping module-level)\n", sig_name.c_str());
+                continue;
+            }
+            // Otherwise update previous assignment to this new value
+            if (prev.sync && prev.action_idx < (int)prev.sync->actions.size()) {
+                prev.sync->actions[prev.action_idx].second = action.second;
+                log("    Dedup: updated previous init for %s\n", sig_name.c_str());
+            }
+            // Update tracking to reflect generate scope status
+            prev.from_generate_scope = current_from_gen;
+        } else {
+            // Track this new assignment
+            int idx = deduped_actions.size();
+            deduped_actions.push_back(action);
+            initial_signal_assignments[sig_name] = {sync_init, idx, current_from_gen};
+        }
+    }
+    sync_init->actions = deduped_actions;
+
     yosys_proc->syncs.push_back(sync_init);
-    
+
     // Reset the flag when done
     in_initial_block = false;
 }
@@ -2583,22 +2614,28 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 }
             }
             
-            // Extract condition: i <= end_value or i < end_value
+            // Extract condition: i <= end_value or i < end_value or i != end_value
+            bool is_neq_condition = false;
             if (can_unroll && condition->VpiType() == vpiOperation) {
                 const operation* cond_op = any_cast<const operation*>(condition);
                 if (cond_op->VpiOpType() == vpiLeOp) {
                     inclusive = true;
                 } else if (cond_op->VpiOpType() == vpiLtOp) {
                     inclusive = false;
+                } else if (cond_op->VpiOpType() == vpiNeqOp) {
+                    // != condition: loop runs while var != end_value
+                    // With increment +1, this is equivalent to < end_value
+                    inclusive = false;
+                    is_neq_condition = true;
                 } else {
                     can_unroll = false;
                 }
-                
+
                 if (can_unroll && cond_op->Operands() && cond_op->Operands()->size() == 2) {
                     auto operands = cond_op->Operands();
                     const any* left_op = operands->at(0);
                     const any* right_op = operands->at(1);
-                    
+
                     // Check that left operand is our loop variable
                     if (left_op->VpiType() == vpiRefObj) {
                         const ref_obj* ref = any_cast<const ref_obj*>(left_op);
@@ -2608,11 +2645,11 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 // It's a parameter reference, resolve it using import_ref_obj
                                 const ref_obj* param_ref = any_cast<const ref_obj*>(right_op);
                                 RTLIL::SigSpec param_value = import_ref_obj(param_ref);
-                                
+
                                 if (param_value.is_fully_const()) {
                                     end_value = param_value.as_const().as_int();
-                                    log("        Loop condition: %s %s %s (resolved to %lld)\n", 
-                                        loop_var_name.c_str(), inclusive ? "<=" : "<", 
+                                    log("        Loop condition: %s %s %s (resolved to %lld)\n",
+                                        loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"),
                                         std::string(param_ref->VpiName()).c_str(), (long long)end_value);
                                 } else {
                                     can_unroll = false;
@@ -2623,8 +2660,29 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 RTLIL::SigSpec const_spec = import_constant(const_val);
                                 if (const_spec.is_fully_const()) {
                                     end_value = const_spec.as_const().as_int();
-                                    log("        Loop condition: %s %s %lld\n", 
-                                        loop_var_name.c_str(), inclusive ? "<=" : "<", (long long)end_value);
+                                    log("        Loop condition: %s %s %lld\n",
+                                        loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
+                                } else {
+                                    can_unroll = false;
+                                }
+                            } else if (right_op->VpiType() == vpiFuncCall || right_op->VpiType() == vpiSysFuncCall) {
+                                // Function call as end value - evaluate it
+                                RTLIL::SigSpec func_result = import_expression(any_cast<const expr*>(right_op));
+                                if (func_result.is_fully_const()) {
+                                    end_value = func_result.as_const().as_int();
+                                    log("        Loop condition: %s %s func_call (resolved to %lld)\n",
+                                        loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
+                                } else {
+                                    can_unroll = false;
+                                    log("        Cannot resolve function call to constant for loop bound\n");
+                                }
+                            } else if (right_op->VpiType() == vpiOperation) {
+                                // Operation as end value - evaluate it
+                                RTLIL::SigSpec op_result = import_expression(any_cast<const expr*>(right_op));
+                                if (op_result.is_fully_const()) {
+                                    end_value = op_result.as_const().as_int();
+                                    log("        Loop condition: %s %s operation (resolved to %lld)\n",
+                                        loop_var_name.c_str(), is_neq_condition ? "!=" : (inclusive ? "<=" : "<"), (long long)end_value);
                                 } else {
                                     can_unroll = false;
                                 }
@@ -3230,8 +3288,63 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 log_warning("For loop unrolling not implemented for this pattern\n");
                             }
                         }
+                    } else if (can_unroll && (body->VpiType() == vpiIf || body->VpiType() == vpiIfElse)) {
+                        // For loop body is an if/if-else statement - use interpreter
+                        log("        For loop body is if/if-else - using interpreter\n");
+                        std::map<std::string, int64_t> variables;
+                        std::map<std::string, std::vector<int64_t>> arrays;
+
+                        // Initialize loop variable
+                        variables[loop_var_name] = start_value;
+
+                        // Find preceding variable initializations from parent scope
+                        const UHDM::any* loop_parent2 = for_loop->VpiParent();
+                        if (loop_parent2 && (loop_parent2->VpiType() == vpiBegin || loop_parent2->VpiType() == vpiNamedBegin)) {
+                            VectorOfany* parent_stmts = begin_block_stmts(loop_parent2);
+                            if (parent_stmts) {
+                                for (auto stmt : *parent_stmts) {
+                                    if (stmt == uhdm_stmt) break;
+                                    if (stmt->VpiType() == vpiAssignment) {
+                                        const assignment* assign = any_cast<const assignment*>(stmt);
+                                        if (assign->Lhs() && assign->Rhs()) {
+                                            std::string var_name;
+                                            if (assign->Lhs()->VpiType() == vpiRefObj) {
+                                                const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                                                var_name = std::string(ref->VpiName());
+                                            } else if (assign->Lhs()->VpiType() == vpiRefVar) {
+                                                const ref_var* ref = any_cast<const ref_var*>(assign->Lhs());
+                                                var_name = std::string(ref->VpiName());
+                                            }
+                                            if (!var_name.empty() && assign->Rhs()->VpiType() == vpiConstant) {
+                                                const constant* cv = any_cast<const constant*>(assign->Rhs());
+                                                RTLIL::SigSpec cs = import_constant(cv);
+                                                if (cs.is_fully_const()) {
+                                                    variables[var_name] = cs.as_const().as_int();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Execute the entire for loop using the interpreter
+                        bool break_flag = false;
+                        bool continue_flag = false;
+                        interpret_statement(uhdm_stmt, variables, arrays, break_flag, continue_flag);
+
+                        // Apply the final variable values as sync assignments
+                        for (auto& [var_name, final_value] : variables) {
+                            if (var_name == loop_var_name) continue;
+                            RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
+                            if (var_wire) {
+                                pending_sync_assignments[RTLIL::SigSpec(var_wire)] = RTLIL::Const(final_value, var_wire->width);
+                                log("        Interpreter result: %s = %lld\n", var_name.c_str(), (long long)final_value);
+                            }
+                        }
+                        log("        For loop with if body interpreted successfully\n");
                     } else {
-                        log_warning("For loop unrolling not implemented for this statement type\n");
+                        log_warning("For loop unrolling not implemented for this statement type %d\n", body ? body->VpiType() : -1);
                     }
             } else {
                 if (!can_unroll) {

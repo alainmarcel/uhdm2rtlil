@@ -379,6 +379,13 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             }
             break;
             
+        case vpiBitNegOp:  // Bitwise negation (~)
+            if (operand_values.size() >= 1) {
+                RTLIL::Const result_c = RTLIL::const_not(operand_values[0], RTLIL::Const(), false, false, -1);
+                return result_c;
+            }
+            break;
+
         // Add more operations as needed
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);

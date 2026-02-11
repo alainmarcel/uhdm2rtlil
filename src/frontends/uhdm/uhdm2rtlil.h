@@ -322,6 +322,15 @@ struct UhdmImporter {
     
     // Track if we're currently processing an initial block
     bool in_initial_block = false;
+
+    // Track initial block assignments per signal to handle duplicates from generate unrolling.
+    // Maps signal name to {sync_rule, action_index, from_generate_scope}.
+    struct InitAssignInfo {
+        RTLIL::SyncRule* sync;
+        int action_idx;
+        bool from_generate_scope;
+    };
+    std::map<std::string, InitAssignInfo> initial_signal_assignments;
     
     UhdmImporter(RTLIL::Design *design, bool keep_names = true, bool debug = false);
     
