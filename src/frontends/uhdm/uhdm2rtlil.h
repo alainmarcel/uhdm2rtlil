@@ -147,8 +147,8 @@ public:
         return depth;
     }
     
-    std::string generateInstanceId(const std::string& func_name, int line, int idx) {
-        return stringf("%s$func$dut.sv:%d$%d", func_name.c_str(), line, idx);
+    std::string generateInstanceId(const std::string& func_name, const std::string& filename, int line, int idx) {
+        return stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), line, idx);
     }
     
     // Memoization
@@ -252,8 +252,14 @@ struct UhdmImporter {
     std::map<std::string, RTLIL::Wire*> current_signal_temp_wires;
 
     // Track current signal values during combinational always block processing
-    // Maps signal name to its current SigSpec value (for task inlining)
+    // Maps signal name to its current SigSpec value (for task/function inlining)
     std::map<std::string, RTLIL::SigSpec> current_comb_values;
+
+    // Maps hierarchical wire name to short VpiName (e.g., "foo.y" → "y") for named begin block variables
+    std::map<std::string, std::string> comb_value_aliases;
+
+    // Current combinational process pointer (non-null during import_always_comb statement processing)
+    RTLIL::Process* current_comb_process = nullptr;
     
     // Track sync assignment targets for proper if-else handling
     std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
@@ -433,6 +439,14 @@ struct UhdmImporter {
     void import_task_call_comb(const UHDM::task_call* tc, RTLIL::Process* proc);
     void inline_task_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
                                std::map<std::string, RTLIL::SigSpec>& task_mapping,
+                               const std::string& context, const std::string& block_prefix,
+                               const UHDM::any* process_src);
+
+    // Function inlining for combinational processes
+    RTLIL::SigSpec import_func_call_comb(const UHDM::func_call* fc, RTLIL::Process* proc);
+    void inline_func_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
+                               std::map<std::string, RTLIL::SigSpec>& func_mapping,
+                               const std::string& func_name,
                                const std::string& context, const std::string& block_prefix,
                                const UHDM::any* process_src);
 

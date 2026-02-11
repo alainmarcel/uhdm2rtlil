@@ -117,14 +117,14 @@ module \fsm
     assign $0\gnt_0[0:0] \gnt_0
     assign $0\gnt_1[0:0] \gnt_1
     assign $0\state[2:0] \state
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:18.11-49.20"
     switch $eq$dut.sv:18$2_Y
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:18.30-22.14"
       case 1'1
         assign $0\state[2:0] 3'001
         assign $0\gnt_0[0:0] 1'0
         assign $0\gnt_1[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:24.13-49.20"
       case 
         attribute \src "dut.sv:24.13-49.20"
         switch \state

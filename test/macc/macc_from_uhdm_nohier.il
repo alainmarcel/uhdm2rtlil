@@ -18,13 +18,13 @@ module \macc
   wire width 40 $0\old_result
   attribute \src "dut.sv:27.1-36.5"
   wire $0\sload_reg[0:0]
-  wire width 40 $auto$expression.cpp:1780:import_operation$15
-  wire width 32 $auto$expression.cpp:1849:import_operation$13
-  wire width 40 $auto$module.cpp:681:import_continuous_assign$10
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$2
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$4
-  wire $auto$module.cpp:681:import_continuous_assign$6
-  wire width 32 $auto$module.cpp:681:import_continuous_assign$8
+  wire width 40 $auto$expression.cpp:1787:import_operation$15
+  wire width 32 $auto$expression.cpp:1856:import_operation$13
+  wire width 40 $auto$module.cpp:683:import_continuous_assign$10
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$2
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$4
+  wire $auto$module.cpp:683:import_continuous_assign$6
+  wire width 32 $auto$module.cpp:683:import_continuous_assign$8
   attribute \src "dut.sv:9.28-9.29"
   wire width 16 input 4 signed \a
   attribute \reg 1
@@ -63,7 +63,7 @@ module \macc
     parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1780:import_operation$15
+    connect \Y $auto$expression.cpp:1787:import_operation$15
   end
   cell $mul $mul$dut.sv:32$14
     parameter \A_SIGNED 1
@@ -73,42 +73,42 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1849:import_operation$13
+    connect \Y $auto$expression.cpp:1856:import_operation$13
   end
   attribute \src "dut.sv:13.25-13.30"
   process $proc$dut.sv:13$1
-    assign $auto$module.cpp:681:import_continuous_assign$2 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$2 16'0000000000000000
     sync always
     sync init
-      update \a_reg $auto$module.cpp:681:import_continuous_assign$2
+      update \a_reg $auto$module.cpp:683:import_continuous_assign$2
   end
   attribute \src "dut.sv:13.36-13.41"
   process $proc$dut.sv:13$3
-    assign $auto$module.cpp:681:import_continuous_assign$4 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$4 16'0000000000000000
     sync always
     sync init
-      update \b_reg $auto$module.cpp:681:import_continuous_assign$4
+      update \b_reg $auto$module.cpp:683:import_continuous_assign$4
   end
   attribute \src "dut.sv:14.5-14.14"
   process $proc$dut.sv:14$5
-    assign $auto$module.cpp:681:import_continuous_assign$6 1'0
+    assign $auto$module.cpp:683:import_continuous_assign$6 1'0
     sync always
     sync init
-      update \sload_reg $auto$module.cpp:681:import_continuous_assign$6
+      update \sload_reg $auto$module.cpp:683:import_continuous_assign$6
   end
   attribute \src "dut.sv:15.27-15.35"
   process $proc$dut.sv:15$7
-    assign $auto$module.cpp:681:import_continuous_assign$8 0
+    assign $auto$module.cpp:683:import_continuous_assign$8 0
     sync always
     sync init
-      update \mult_reg $auto$module.cpp:681:import_continuous_assign$8
+      update \mult_reg $auto$module.cpp:683:import_continuous_assign$8
   end
   attribute \src "dut.sv:16.26-16.35"
   process $proc$dut.sv:16$9
-    assign $auto$module.cpp:681:import_continuous_assign$10 40'0000000000000000000000000000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$10 40'0000000000000000000000000000000000000000
     sync always
     sync init
-      update \adder_out $auto$module.cpp:681:import_continuous_assign$10
+      update \adder_out $auto$module.cpp:683:import_continuous_assign$10
   end
   attribute \src "dut.sv:17.1-25.4"
   process $proc$dut.sv:17$11
@@ -133,15 +133,15 @@ module \macc
     assign $0\b_reg[15:0] \b_reg
     assign $0\mult_reg[31:0] \mult_reg
     assign $0\sload_reg[0:0] \sload_reg
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:28.2-36.5"
     switch \ce
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:29.2-36.5"
       case 1'1
         assign $0\a_reg[15:0] \a
         assign $0\b_reg[15:0] \b
-        assign $0\mult_reg[31:0] $auto$expression.cpp:1849:import_operation$13
+        assign $0\mult_reg[31:0] $auto$expression.cpp:1856:import_operation$13
         assign $0\sload_reg[0:0] \sload
-        assign $0\adder_out[39:0] $auto$expression.cpp:1780:import_operation$15
+        assign $0\adder_out[39:0] $auto$expression.cpp:1787:import_operation$15
       case 
     end
     sync posedge \clk
@@ -159,29 +159,29 @@ attribute \cells_not_processed 1
 module \macc2
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 41 $auto$expression.cpp:1780:import_operation$40
-  wire width 32 $auto$expression.cpp:1849:import_operation$38
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$18
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$20
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$22
-  wire width 16 $auto$module.cpp:681:import_continuous_assign$24
-  wire width 32 $auto$module.cpp:681:import_continuous_assign$26
-  wire width 41 $auto$module.cpp:681:import_continuous_assign$28
-  wire $auto$module.cpp:681:import_continuous_assign$30
+  wire width 41 $auto$expression.cpp:1787:import_operation$40
+  wire width 32 $auto$expression.cpp:1856:import_operation$38
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$18
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$20
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$22
+  wire width 16 $auto$module.cpp:683:import_continuous_assign$24
+  wire width 32 $auto$module.cpp:683:import_continuous_assign$26
+  wire width 41 $auto$module.cpp:683:import_continuous_assign$28
+  wire $auto$module.cpp:683:import_continuous_assign$30
   attribute \src "dut.sv:70.3-70.13"
-  wire width 16 $auto$process.cpp:3890:import_assignment_sync$42
+  wire width 16 $auto$process.cpp:4336:import_assignment_sync$42
   attribute \src "dut.sv:71.3-71.14"
-  wire width 16 $auto$process.cpp:3890:import_assignment_sync$44
+  wire width 16 $auto$process.cpp:4336:import_assignment_sync$44
   attribute \src "dut.sv:72.3-72.13"
-  wire width 16 $auto$process.cpp:3890:import_assignment_sync$46
+  wire width 16 $auto$process.cpp:4336:import_assignment_sync$46
   attribute \src "dut.sv:73.3-73.14"
-  wire width 16 $auto$process.cpp:3890:import_assignment_sync$48
+  wire width 16 $auto$process.cpp:4336:import_assignment_sync$48
   attribute \src "dut.sv:74.3-74.16"
-  wire width 32 $auto$process.cpp:3890:import_assignment_sync$50
+  wire width 32 $auto$process.cpp:4336:import_assignment_sync$50
   attribute \src "dut.sv:75.3-75.17"
-  wire width 41 $auto$process.cpp:3890:import_assignment_sync$52
+  wire width 41 $auto$process.cpp:4336:import_assignment_sync$52
   attribute \src "dut.sv:76.3-76.23"
-  wire $auto$process.cpp:3890:import_assignment_sync$54
+  wire $auto$process.cpp:4336:import_assignment_sync$54
   wire $auto$rtlil.cc:3007:Or$34
   wire $auto$rtlil.cc:3017:Ge$32
   wire width 64 $auto$rtlil.cc:3094:Mux$36
@@ -228,63 +228,63 @@ module \macc2
     parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1780:import_operation$40
+    connect \Y $auto$expression.cpp:1787:import_operation$40
   end
   attribute \src "dut.sv:70.3-70.13"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$43
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$43
     parameter \WIDTH 16
     connect \A \a
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$42
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$42
   end
   attribute \src "dut.sv:71.3-71.14"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$45
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$45
     parameter \WIDTH 16
     connect \A \a_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$44
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$44
   end
   attribute \src "dut.sv:72.3-72.13"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$47
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$47
     parameter \WIDTH 16
     connect \A \b
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$46
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$46
   end
   attribute \src "dut.sv:73.3-73.14"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$49
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$49
     parameter \WIDTH 16
     connect \A \b_reg
     connect \B 16'0000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$48
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$48
   end
   attribute \src "dut.sv:74.3-74.16"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$51
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$51
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:1849:import_operation$38
+    connect \A $auto$expression.cpp:1856:import_operation$38
     connect \B 0
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$50
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$50
   end
   attribute \src "dut.sv:75.3-75.17"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$53
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$53
     parameter \WIDTH 41
-    connect \A $auto$expression.cpp:1780:import_operation$40
+    connect \A $auto$expression.cpp:1787:import_operation$40
     connect \B 41'00000000000000000000000000000000000000000
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$52
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$52
   end
   attribute \src "dut.sv:76.3-76.23"
-  cell $mux $auto$process.cpp:3892:import_assignment_sync$55
+  cell $mux $auto$process.cpp:4338:import_assignment_sync$55
     parameter \WIDTH 1
     connect \A \overflow
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:3890:import_assignment_sync$54
+    connect \Y $auto$process.cpp:4336:import_assignment_sync$54
   end
   cell $ge $ge$dut.sv:79$31
     parameter \A_SIGNED 0
@@ -304,7 +304,7 @@ module \macc2
     parameter \Y_WIDTH 32
     connect \A \a_reg2
     connect \B \b_reg2
-    connect \Y $auto$expression.cpp:1849:import_operation$38
+    connect \Y $auto$expression.cpp:1856:import_operation$38
   end
   cell $mux $mux$dut.sv:82$35
     parameter \WIDTH 64
@@ -325,64 +325,64 @@ module \macc2
   end
   attribute \src "dut.sv:53.25-53.30"
   process $proc$dut.sv:53$17
-    assign $auto$module.cpp:681:import_continuous_assign$18 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$18 16'0000000000000000
     sync always
     sync init
-      update \a_reg $auto$module.cpp:681:import_continuous_assign$18
+      update \a_reg $auto$module.cpp:683:import_continuous_assign$18
   end
   attribute \src "dut.sv:53.36-53.41"
   process $proc$dut.sv:53$19
-    assign $auto$module.cpp:681:import_continuous_assign$20 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$20 16'0000000000000000
     sync always
     sync init
-      update \b_reg $auto$module.cpp:681:import_continuous_assign$20
+      update \b_reg $auto$module.cpp:683:import_continuous_assign$20
   end
   attribute \src "dut.sv:53.47-53.53"
   process $proc$dut.sv:53$21
-    assign $auto$module.cpp:681:import_continuous_assign$22 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$22 16'0000000000000000
     sync always
     sync init
-      update \a_reg2 $auto$module.cpp:681:import_continuous_assign$22
+      update \a_reg2 $auto$module.cpp:683:import_continuous_assign$22
   end
   attribute \src "dut.sv:53.59-53.65"
   process $proc$dut.sv:53$23
-    assign $auto$module.cpp:681:import_continuous_assign$24 16'0000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$24 16'0000000000000000
     sync always
     sync init
-      update \b_reg2 $auto$module.cpp:681:import_continuous_assign$24
+      update \b_reg2 $auto$module.cpp:683:import_continuous_assign$24
   end
   attribute \src "dut.sv:54.27-54.35"
   process $proc$dut.sv:54$25
-    assign $auto$module.cpp:681:import_continuous_assign$26 0
+    assign $auto$module.cpp:683:import_continuous_assign$26 0
     sync always
     sync init
-      update \mult_reg $auto$module.cpp:681:import_continuous_assign$26
+      update \mult_reg $auto$module.cpp:683:import_continuous_assign$26
   end
   attribute \src "dut.sv:55.24-55.33"
   process $proc$dut.sv:55$27
-    assign $auto$module.cpp:681:import_continuous_assign$28 41'00000000000000000000000000000000000000000
+    assign $auto$module.cpp:683:import_continuous_assign$28 41'00000000000000000000000000000000000000000
     sync always
     sync init
-      update \adder_out $auto$module.cpp:681:import_continuous_assign$28
+      update \adder_out $auto$module.cpp:683:import_continuous_assign$28
   end
   attribute \src "dut.sv:56.5-56.17"
   process $proc$dut.sv:56$29
-    assign $auto$module.cpp:681:import_continuous_assign$30 1'0
+    assign $auto$module.cpp:683:import_continuous_assign$30 1'0
     sync always
     sync init
-      update \overflow_reg $auto$module.cpp:681:import_continuous_assign$30
+      update \overflow_reg $auto$module.cpp:683:import_continuous_assign$30
   end
   attribute \always_ff 1
   attribute \src "dut.sv:57.1-78.4"
   process $proc$dut.sv:57$37
     sync posedge \clk
-      update \overflow_reg $auto$process.cpp:3890:import_assignment_sync$54
-      update \a_reg $auto$process.cpp:3890:import_assignment_sync$42
-      update \b_reg2 $auto$process.cpp:3890:import_assignment_sync$48
-      update \a_reg2 $auto$process.cpp:3890:import_assignment_sync$44
-      update \b_reg $auto$process.cpp:3890:import_assignment_sync$46
-      update \mult_reg $auto$process.cpp:3890:import_assignment_sync$50
-      update \adder_out $auto$process.cpp:3890:import_assignment_sync$52
+      update \overflow_reg $auto$process.cpp:4336:import_assignment_sync$54
+      update \a_reg $auto$process.cpp:4336:import_assignment_sync$42
+      update \b_reg2 $auto$process.cpp:4336:import_assignment_sync$48
+      update \a_reg2 $auto$process.cpp:4336:import_assignment_sync$44
+      update \b_reg $auto$process.cpp:4336:import_assignment_sync$46
+      update \mult_reg $auto$process.cpp:4336:import_assignment_sync$50
+      update \adder_out $auto$process.cpp:4336:import_assignment_sync$52
   end
   connect \overflow $auto$rtlil.cc:3007:Or$34
   connect \accum_out $auto$rtlil.cc:3094:Mux$36 [39:0]

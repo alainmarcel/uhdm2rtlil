@@ -12,7 +12,7 @@
 -  attribute \src "dut.sv:12.22-12.34"
 -  wire width 8 $add$dut.sv:12$3_Y
 +  wire width 8 $0\count
-+  wire width 8 $auto$expression.cpp:1780:import_operation$2
++  wire width 8 $auto$expression.cpp:1787:import_operation$2
    attribute \src "dut.sv:9.13-9.19"
 -  wire $logic_not$dut.sv:9$2_Y
 +  wire $logic_not$dut.sv:9.13-9.19$1_Y
@@ -31,7 +31,7 @@
      connect \A \count
      connect \B 1'1
 -    connect \Y $add$dut.sv:12$3_Y
-+    connect \Y $auto$expression.cpp:1780:import_operation$2
++    connect \Y $auto$expression.cpp:1787:import_operation$2
    end
    attribute \src "dut.sv:9.13-9.19"
 -  cell $logic_not $logic_not$dut.sv:9$2
@@ -48,21 +48,20 @@
    attribute \src "dut.sv:8.5-14.8"
    process $proc$dut.sv:8$1
 -    assign $0\count[7:0] \count
--    attribute \src "dut.sv:9.9-13.12"
++    assign $0\count \count
+     attribute \src "dut.sv:9.9-13.12"
 -    switch $logic_not$dut.sv:9$2_Y
 -      attribute \src "dut.sv:9.13-9.19"
-+    assign $0\count \count
-+    attribute \src "dut.sv:11.9-15.12"
 +    switch $logic_not$dut.sv:9.13-9.19$1_Y
-+      attribute \src "dut.sv:11.13-11.19"
++      attribute \src "dut.sv:9.21-11.12"
        case 1'1
 -        assign $0\count[7:0] 8'00000000
 -      attribute \src "dut.sv:11.13-11.17"
 +        assign $0\count 8'00000000
-+      attribute \src "dut.sv:13.13-13.17"
++      attribute \src "dut.sv:11.18-13.12"
        case 
 -        assign $0\count[7:0] $add$dut.sv:12$3_Y
-+        assign $0\count $auto$expression.cpp:1780:import_operation$2
++        assign $0\count $auto$expression.cpp:1787:import_operation$2
      end
      sync posedge \clk
 -      update \count $0\count[7:0]

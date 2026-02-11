@@ -82,7 +82,7 @@ module \scope_task
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
-    connect \B $auto$expression.cpp:1856:import_operation$6 [15:0]
+    connect \B $0\task_01$func$dut.sv:36$2.temp[15:0]$5
     connect \Y $auto$expression.cpp:1787:import_operation$8
   end
   cell $mul $mul$dut.sv:8$7
@@ -99,7 +99,7 @@ module \scope_task
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:1787:import_operation$16 [15:0]
+    connect \A $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15
     connect \Y $auto$expression.cpp:1621:import_operation$18
   end
   cell $xor $xor$dut.sv:25$20
@@ -108,8 +108,8 @@ module \scope_task
     parameter \B_SIGNED 0
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A 16'0000000000000000
-    connect \B $auto$expression.cpp:1621:import_operation$18
+    connect \A $0\task_02$func$dut.sv:39$10.foo.x[15:0]$13
+    connect \B $0\task_02$func$dut.sv:39$10.foo.z[15:0]$14
     connect \Y $auto$rtlil.cc:3008:Xor$21
   end
   attribute \src "dut.sv:31.5-41.8"
@@ -123,15 +123,15 @@ module \scope_task
     assign $0\task_01$func$dut.sv:36$2.a[3:0]$3 \k
     assign $0\task_01$func$dut.sv:36$2.temp[15:0]$5 $auto$expression.cpp:1856:import_operation$6 [15:0]
     assign $0\task_01$func$dut.sv:36$2.result[15:0]$4 $auto$expression.cpp:1787:import_operation$8
-    assign $0\temp1 $auto$expression.cpp:1787:import_operation$8
-    assign $0\x $auto$expression.cpp:1787:import_operation$8
+    assign $0\temp1 $0\task_01$func$dut.sv:36$2.result[15:0]$4
+    assign $0\x $0\task_01$func$dut.sv:36$2.result[15:0]$4
     assign $0\task_02$func$dut.sv:39$10.a[3:0]$11 \k
     assign $0\task_02$func$dut.sv:39$10.foo.x[15:0]$13 16'0000000000000000
     assign $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15 $auto$expression.cpp:1787:import_operation$16 [15:0]
     assign $0\task_02$func$dut.sv:39$10.foo.z[15:0]$14 $auto$expression.cpp:1621:import_operation$18
     assign $0\task_02$func$dut.sv:39$10.result[15:0]$12 $auto$rtlil.cc:3008:Xor$21
-    assign $0\temp2 $auto$rtlil.cc:3008:Xor$21
-    assign $0\y $auto$rtlil.cc:3008:Xor$21
+    assign $0\temp2 $0\task_02$func$dut.sv:39$10.result[15:0]$12
+    assign $0\y $0\task_02$func$dut.sv:39$10.result[15:0]$12
     sync always
       update \temp1 $0\temp1
       update \temp2 $0\temp2

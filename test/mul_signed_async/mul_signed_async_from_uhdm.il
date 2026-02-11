@@ -6,7 +6,7 @@ attribute \top 1
 module \mul_signed_async
   parameter \M 8
   parameter \N 6
-  wire width 14 $auto$expression.cpp:1849:import_operation$2
+  wire width 14 $auto$expression.cpp:1856:import_operation$2
   attribute \src "dut.sv:1.40-1.41"
   wire width 8 input 4 \a
   attribute \reg 1
@@ -36,7 +36,7 @@ module \mul_signed_async
     parameter \WIDTH 14
     connect \ARST \rst
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1849:import_operation$2
+    connect \D $auto$expression.cpp:1856:import_operation$2
     connect \EN \en
     connect \Q \p
   end
@@ -78,6 +78,6 @@ module \mul_signed_async
     parameter \Y_WIDTH 14
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1849:import_operation$2
+    connect \Y $auto$expression.cpp:1856:import_operation$2
   end
 end

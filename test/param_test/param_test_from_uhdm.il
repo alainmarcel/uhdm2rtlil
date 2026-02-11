@@ -40,7 +40,7 @@ module \param_test
     connect \Q \data_out [1:0]
   end
   attribute \full_case 1
-  attribute \src "dut.sv:32.13-32.16|dut.sv:32.9-36.12"
+  attribute \src "dut.sv:15.13-15.35|dut.sv:14.9-17.33"
   cell $mux $procmux$3
     parameter \WIDTH 8
     connect \A \data_in

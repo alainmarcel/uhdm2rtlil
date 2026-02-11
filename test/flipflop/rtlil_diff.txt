@@ -35,18 +35,17 @@
    attribute \src "dut.sv:9.5-15.8"
    process $proc$dut.sv:9$1
 -    assign $0\q[0:0] \q
--    attribute \src "dut.sv:10.9-14.12"
++    assign $0\q \q
+     attribute \src "dut.sv:10.9-14.12"
 -    switch $logic_not$dut.sv:10$2_Y
 -      attribute \src "dut.sv:10.13-10.19"
-+    assign $0\q \q
-+    attribute \src "dut.sv:11.9-15.12"
 +    switch $logic_not$dut.sv:10.13-10.19$1_Y
-+      attribute \src "dut.sv:11.13-11.19"
++      attribute \src "dut.sv:10.21-12.12"
        case 1'1
 -        assign $0\q[0:0] 1'0
 -      attribute \src "dut.sv:12.13-12.17"
 +        assign $0\q 1'0
-+      attribute \src "dut.sv:13.13-13.17"
++      attribute \src "dut.sv:12.18-14.12"
        case 
 -        assign $0\q[0:0] \d
 +        assign $0\q \d

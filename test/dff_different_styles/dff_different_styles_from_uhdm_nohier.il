@@ -34,12 +34,12 @@ module \dffa
   attribute \src "dut.sv:12.1-17.4"
   process $proc$dut.sv:12$3
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:13.2-16.10"
     switch \arst
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:14.3-14.9"
       case 1'1
         assign $0\q 1'1
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:16.3-16.9"
       case 
         assign $0\q \d
     end
@@ -75,12 +75,12 @@ module \dffa1
   attribute \src "dut.sv:23.1-28.4"
   process $proc$dut.sv:23$4
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:24.2-27.10"
     switch $auto$rtlil.cc:2959:Not$6
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:25.3-25.9"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:27.3-27.9"
       case 
         assign $0\q \d
     end
@@ -118,12 +118,12 @@ module \dffa2
   attribute \src "dut.sv:34.1-39.4"
   process $proc$dut.sv:34$7
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:35.2-38.10"
     switch $logic_not$dut.sv:35.6-35.11$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:36.3-36.9"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:38.3-38.9"
       case 
         assign $0\q \d
     end
@@ -169,12 +169,12 @@ module \dffa3
   attribute \src "dut.sv:45.1-50.4"
   process $proc$dut.sv:45$8
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:46.2-49.10"
     switch $auto$rtlil.cc:2959:Not$10
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:47.3-47.9"
       case 1'1
         assign $0\q \d
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:49.3-49.9"
       case 
         assign $0\q 1'1
     end
@@ -217,12 +217,12 @@ module \dffa4
   attribute \src "dut.sv:56.1-65.4"
   process $proc$dut.sv:56$11
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:57.2-64.10"
     switch \arst1
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:58.3-58.9"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:59.7-64.10"
       case 
         attribute \src "dut.sv:59.7-64.10"
         switch \arst2
@@ -281,12 +281,12 @@ module \dffsr1
   attribute \src "dut.sv:75.1-80.4"
   process $proc$dut.sv:75$12
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:76.2-79.10"
     switch \arst
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:77.3-77.11"
       case 1'1
         assign $0\q $auto$rtlil.cc:3008:Xor$14
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:79.3-79.9"
       case 
         assign $0\q \d
     end
@@ -380,12 +380,12 @@ module \dffsr2_sub
   attribute \src "dut.sv:95.1-102.4"
   process $proc$dut.sv:95$1
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:96.2-101.10"
     switch \preset
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:97.3-97.9"
       case 1'1
         assign $0\q 1'1
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:98.7-101.10"
       case 
         attribute \src "dut.sv:98.7-101.10"
         switch \clear

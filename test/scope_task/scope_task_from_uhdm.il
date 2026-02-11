@@ -5,14 +5,33 @@ attribute \top 1
 module \scope_task
   attribute \src "dut.sv:36.9-36.26"
   wire width 16 $0\task_01$func$dut.sv:36$2.temp[15:0]$5
-  attribute \src "dut.sv:39.9-39.26"
-  wire width 16 $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15
   attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1780:import_operation$16
+  wire width 64 $auto$expression.cpp:1787:import_operation$16
   attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67"
-  wire width 68 $auto$expression.cpp:1849:import_operation$6
+  wire width 68 $auto$expression.cpp:1856:import_operation$6
   attribute \src "dut.sv:1.31-1.32"
   wire width 4 input 1 \k
+  attribute \nosync 1
+  attribute \src "dut.sv:4.21-4.22"
+  wire width 4 \task_01$func$dut.sv:36$2.a
+  attribute \nosync 1
+  attribute \src "dut.sv:5.23-5.29"
+  wire width 16 \task_01$func$dut.sv:36$2.result
+  attribute \nosync 1
+  attribute \src "dut.sv:6.9-6.19"
+  wire width 16 \task_01$func$dut.sv:36$2.temp
+  attribute \nosync 1
+  attribute \src "dut.sv:15.21-15.22"
+  wire width 4 \task_02$func$dut.sv:39$10.a
+  attribute \src "dut.sv:21.28-21.29"
+  wire width 16 \task_02$func$dut.sv:39$10.foo.bar.x
+  attribute \src "dut.sv:18.24-18.25"
+  wire width 16 \task_02$func$dut.sv:39$10.foo.x
+  attribute \src "dut.sv:18.27-18.28"
+  wire width 16 \task_02$func$dut.sv:39$10.foo.z
+  attribute \nosync 1
+  attribute \src "dut.sv:16.23-16.29"
+  wire width 16 \task_02$func$dut.sv:39$10.result
   attribute \reg 1
   attribute \src "dut.sv:29.16-29.21"
   wire width 16 \temp1
@@ -31,7 +50,7 @@ module \scope_task
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000001001101
     connect \B \k
-    connect \Y { $auto$expression.cpp:1780:import_operation$16 [63:16] $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15 }
+    connect \Y { $auto$expression.cpp:1787:import_operation$16 [63:16] \task_02$func$dut.sv:39$10.foo.bar.x }
   end
   cell $add $add$dut.sv:9$9
     parameter \A_SIGNED 0
@@ -51,17 +70,24 @@ module \scope_task
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y { $auto$expression.cpp:1849:import_operation$6 [67:16] $0\task_01$func$dut.sv:36$2.temp[15:0]$5 }
+    connect \Y { $auto$expression.cpp:1856:import_operation$6 [67:16] $0\task_01$func$dut.sv:36$2.temp[15:0]$5 }
   end
   cell $neg $neg$dut.sv:23$19
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15
+    connect \A \task_02$func$dut.sv:39$10.foo.bar.x
     connect \Y \y
   end
-  connect $auto$expression.cpp:1780:import_operation$16 [15:0] $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15
-  connect $auto$expression.cpp:1849:import_operation$6 [15:0] $0\task_01$func$dut.sv:36$2.temp[15:0]$5
+  connect $auto$expression.cpp:1787:import_operation$16 [15:0] \task_02$func$dut.sv:39$10.foo.bar.x
+  connect $auto$expression.cpp:1856:import_operation$6 [15:0] $0\task_01$func$dut.sv:36$2.temp[15:0]$5
+  connect \task_01$func$dut.sv:36$2.a 4'x
+  connect \task_01$func$dut.sv:36$2.result 16'x
+  connect \task_01$func$dut.sv:36$2.temp 16'x
+  connect \task_02$func$dut.sv:39$10.a 4'x
+  connect \task_02$func$dut.sv:39$10.foo.x 16'0000000000000000
+  connect \task_02$func$dut.sv:39$10.foo.z \y
+  connect \task_02$func$dut.sv:39$10.result 16'x
   connect \temp1 \x
   connect \temp2 \y
 end

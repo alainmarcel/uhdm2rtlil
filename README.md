@@ -15,19 +15,16 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 110 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 96% (106/110 tests functional)
-- **Perfect Matches**: 101 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Success Rate**: 99% (109/110 tests functional)
+- **Perfect Matches**: 104 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 4 tests with issues:
-  - `case_expr_const` - Equivalence check failure (expected)
+- **Known Failures**: 1 test with issues:
   - `forloops` - Equivalence check failure (expected)
-  - `mem2reg_test1` - Equivalence check failure
-  - `scopes` - True failure (combinational feedback loop in function/task scoping)
 - **Recent Fixes**:
   - `genblk_order` - Fixed nested generate blocks with same name ✅
     - Reordered generate scope import to process nested scopes before continuous assignments
@@ -78,6 +75,13 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - `current_comb_values` tracking ensures task bodies read correct in-progress signal values
     - Variable shadowing in nested scopes handled via save/restore pattern on task_mapping
     - `scope_task` test now passing formal equivalence check
+  - **Function Inlining in Combinational Always Blocks** ✅
+    - Function calls with variable arguments in always @* blocks are now inlined into the calling process
+    - Eliminates combinational feedback loops caused by separate RTLIL processes for function calls
+    - Named begin blocks within functions properly track intermediate values via `comb_value_aliases`
+    - Cell chaining through `current_comb_values` ensures RHS expressions read from cell outputs, not wires
+    - Save/restore pattern on `current_comb_values` for correct variable scoping in named begin blocks
+    - `scopes` test now passing formal equivalence check (functions + tasks + nested blocks with variable shadowing)
   - **Processing Order and autoidx Consistency** ✅
     - Fixed processing order: continuous assignments now processed before always blocks
     - Consistent use of Yosys global autoidx counter for unique naming
@@ -259,7 +263,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (110 total - 106 passing, 4 known issues)
+### Current Test Cases (110 total - 109 passing, 1 known issue)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -340,7 +344,7 @@ The Yosys test runner:
 
 #### Scope & Variable Shadowing
 - **scope_func** - Function calls with variable inputs in always blocks (tests function scope resolution)
-- **scopes** - Functions, tasks, and nested blocks with variable shadowing (tests complex scoping) *(known failure)*
+- **scopes** - Functions, tasks, and nested blocks with variable shadowing (tests complex scoping)
 - **scope_task** - Tasks with nested named blocks and local variables (tests task inlining in always blocks)
 
 #### Arrays & Memory
@@ -349,7 +353,7 @@ The Yosys test runner:
 - **simple_memory_noreset** - Memory array without reset signal
 - **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
 - **priority_memory** - Priority-based memory access patterns
-- **mem2reg_test1** - Combinational array with write and simultaneous read *(known failure)*
+- **mem2reg_test1** - Combinational array with write and simultaneous read
 - **mem2reg_test2** - Annotated 8-element array with loop-based writes and reads
 - **asym_ram_sdp_read_wider** - Asymmetric RAM with read port 4x wider than write
 - **asym_ram_sdp_write_wider** - Asymmetric RAM with write port 4x wider than read
@@ -379,7 +383,7 @@ The Yosys test runner:
 - **genvar_loop_decl_2** - Generate with genvar shadowing and hierarchical references
 - **carryadd** - Generate-based carry adder with hierarchical references
 - **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
-- **case_expr_const** - Case statement with constant expressions *(known failure)*
+- **case_expr_const** - Case statement with constant expressions
 
 #### Module Hierarchy & Interfaces
 - **simple_hierarchy** - Module instantiation and port connections
@@ -416,8 +420,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 106 of 110 tests are passing or working as expected
-- 4 tests are in the failing_tests.txt file (expected failures)
+- 109 of 110 tests are passing or working as expected
+- 1 test is in the failing_tests.txt file (expected failure)
 
 ### Important Test Workflow Note
 
@@ -470,8 +474,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **110 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **101 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **106 tests passing** - with 4 known failures documented in failing_tests.txt
+- **104 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **109 tests passing** - with 1 known failure documented in failing_tests.txt
 
 ## Recent Improvements
 

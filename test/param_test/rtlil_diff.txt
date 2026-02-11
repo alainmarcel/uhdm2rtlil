@@ -18,16 +18,15 @@
    attribute \src "dut.sv:13.5-18.8"
    process $proc$dut.sv:13$1
      assign $0\data_out[7:0] \data_out
--    attribute \src "dut.sv:14.9-17.33"
-+    attribute \src "dut.sv:32.9-36.12"
+     attribute \src "dut.sv:14.9-17.33"
      switch \rst
 -      attribute \src "dut.sv:14.13-14.16"
-+      attribute \src "dut.sv:32.13-32.16"
++      attribute \src "dut.sv:15.13-15.35"
        case 1'1
 -        assign $0\data_out[7:0] 8'10101010
 -      attribute \src "dut.sv:16.9-16.13"
 +        assign $0\data_out[7:0] 8'000000--
-+      attribute \src "dut.sv:34.13-34.17"
++      attribute \src "dut.sv:17.13-17.32"
        case 
          assign $0\data_out[7:0] \data_in
      end

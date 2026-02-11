@@ -493,9 +493,9 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     
     // Extract source location information
     std::string src_attr = fc ? get_src_attribute(fc) : get_src_attribute(func_def);
-    std::string filename = "dut.sv"; // Default filename
-    int call_line = 1; // Default line number
-    
+    std::string filename;
+    int call_line = 1;
+
     // Parse the source attribute to extract filename and line number
     if (!src_attr.empty()) {
         size_t colon_pos = src_attr.find(':');
@@ -508,7 +508,6 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
             }
         }
     }
-    
 
     // Create temporary wires for function call context
     // Use Yosys global autoidx counter to match Verilog frontend naming
@@ -1112,8 +1111,8 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
     
     // Extract source location
     std::string src_attr = call_site ? get_src_attribute(call_site) : get_src_attribute(func_def);
-    ctx.source_file = "dut.sv"; // Default
-    ctx.source_line = 1;        // Default
+    ctx.source_file = "";
+    ctx.source_line = 1;
     
     if (!src_attr.empty()) {
         size_t colon_pos = src_attr.find(':');
@@ -1174,9 +1173,9 @@ std::string UhdmImporter::create_function_instance_id(const std::string& func_na
                                                       const func_call* call_site) {
     // Extract source location for unique naming
     std::string src_attr = call_site ? get_src_attribute(call_site) : "";
-    std::string filename = "dut.sv";
+    std::string filename;
     int line = 1;
-    
+
     if (!src_attr.empty()) {
         size_t colon_pos = src_attr.find(':');
         if (colon_pos != std::string::npos) {
@@ -1188,9 +1187,9 @@ std::string UhdmImporter::create_function_instance_id(const std::string& func_na
             }
         }
     }
-    
+
     // Generate unique instance ID
-    return function_call_stack.generateInstanceId(func_name, line, function_instance_counter++);
+    return function_call_stack.generateInstanceId(func_name, filename, line, function_instance_counter++);
 }
 
 // Handle recursive function calls

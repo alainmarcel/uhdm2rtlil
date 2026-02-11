@@ -34,12 +34,12 @@ module \enum_simple
   attribute \src "dut.sv:17.5-22.8"
   process $proc$dut.sv:17$1
     assign $0\current_state \current_state
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:18.9-21.41"
     switch \reset
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:19.13-19.34"
       case 1'1
         assign $0\current_state 2'00
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:21.13-21.40"
       case 
         assign $0\current_state \next_state
     end

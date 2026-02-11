@@ -57,12 +57,12 @@ module \simple_always_ifelse
   attribute \always_ff 1
   attribute \src "dut.sv:13.13-19.16"
   process $proc$dut.sv:13$1
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[0]$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:14.29-16.20"
       case 1'1
         assign \result [7:0] 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:16.26-18.20"
       case 
         assign \result [7:0] \unit_result
     end
@@ -73,12 +73,12 @@ module \simple_always_ifelse
   attribute \always_ff 1
   attribute \src "dut.sv:13.13-19.16"
   process $proc$dut.sv:13$2
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[1]$2_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:14.29-16.20"
       case 1'1
         assign \result [15:8] 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:16.26-18.20"
       case 
         assign \result [15:8] \unit_result
     end
@@ -89,12 +89,12 @@ module \simple_always_ifelse
   attribute \always_ff 1
   attribute \src "dut.sv:13.13-19.16"
   process $proc$dut.sv:13$3
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[2]$3_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:14.29-16.20"
       case 1'1
         assign \result [23:16] 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:16.26-18.20"
       case 
         assign \result [23:16] \unit_result
     end
@@ -105,12 +105,12 @@ module \simple_always_ifelse
   attribute \always_ff 1
   attribute \src "dut.sv:13.13-19.16"
   process $proc$dut.sv:13$4
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[3]$4_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:14.29-16.20"
       case 1'1
         assign \result [31:24] 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:16.26-18.20"
       case 
         assign \result [31:24] \unit_result
     end

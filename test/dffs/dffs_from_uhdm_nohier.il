@@ -25,12 +25,12 @@ module \dffs
   attribute \src "dut.sv:7.5-11.16"
   process $proc$dut.sv:7$2
     assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:8.7-11.16"
     switch \pre
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:9.9-9.18"
       case 1'1
         assign $0\q[0:0] 1'1
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:11.9-11.15"
       case 
         assign $0\q[0:0] \d
     end

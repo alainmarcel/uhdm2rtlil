@@ -3,7 +3,7 @@ autoidx 12
 attribute \src "dut.sv:1.1-16.10"
 attribute \top 1
 module \mul_sync_enable_test
-  wire width 9 $auto$expression.cpp:1849:import_operation$2
+  wire width 9 $auto$expression.cpp:1856:import_operation$2
   attribute \src "dut.sv:1.44-1.45"
   wire width 6 input 4 \a
   attribute \src "dut.sv:1.47-1.48"
@@ -25,7 +25,7 @@ module \mul_sync_enable_test
     parameter \SRST_VALUE 9'000000000
     parameter \WIDTH 9
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1849:import_operation$2
+    connect \D $auto$expression.cpp:1856:import_operation$2
     connect \EN \en
     connect \Q \p
     connect \SRST \rst
@@ -38,6 +38,6 @@ module \mul_sync_enable_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1849:import_operation$2
+    connect \Y $auto$expression.cpp:1856:import_operation$2
   end
 end

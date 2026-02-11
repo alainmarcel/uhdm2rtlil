@@ -14,7 +14,7 @@ module \simple_always_ifelse
   attribute \src "dut.sv:6.35-6.46"
   wire width 8 input 3 \unit_result
   attribute \full_case 1
-  attribute \src "dut.sv:11.13-11.19|dut.sv:11.9-15.12"
+  attribute \src "dut.sv:14.29-16.20|dut.sv:14.17-18.20"
   cell $mux $procmux$6
     parameter \WIDTH 8
     connect \A 8'00000000

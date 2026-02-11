@@ -32,10 +32,10 @@ module \simple_always_ff
     assign $0\extra_result \extra_result
     attribute \src "dut.sv:11.9-15.12"
     switch $logic_not$dut.sv:11.13-11.19$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:11.21-13.12"
       case 1'1
         assign $0\extra_result 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:13.18-15.12"
       case 
         attribute \src "dut.sv:13.18-15.12"
         switch \mode

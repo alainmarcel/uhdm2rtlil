@@ -12,7 +12,7 @@ module \mul_signed_async
   wire width 6 $0\b_reg
   attribute \src "dut.sv:18.5-30.8"
   wire width 14 $0\p
-  wire width 14 $auto$expression.cpp:1849:import_operation$2
+  wire width 14 $auto$expression.cpp:1856:import_operation$2
   attribute \src "dut.sv:1.40-1.41"
   wire width 8 input 4 \a
   attribute \reg 1
@@ -39,7 +39,7 @@ module \mul_signed_async
     parameter \Y_WIDTH 14
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1849:import_operation$2
+    connect \Y $auto$expression.cpp:1856:import_operation$2
   end
   attribute \"has_async_reset" 1
   attribute \always_ff 1
@@ -48,14 +48,14 @@ module \mul_signed_async
     assign $0\a_reg \a_reg
     assign $0\b_reg \b_reg
     assign $0\p \p
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:20.9-29.12"
     switch \rst
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:20.18-24.12"
       case 1'1
         assign $0\a_reg 8'00000000
         assign $0\b_reg 6'000000
         assign $0\p 14'00000000000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:25.14-29.12"
       case 
         attribute \src "dut.sv:25.14-29.12"
         switch \en
@@ -63,7 +63,7 @@ module \mul_signed_async
           case 1'1
             assign $0\a_reg \a
             assign $0\b_reg \b
-            assign $0\p $auto$expression.cpp:1849:import_operation$2
+            assign $0\p $auto$expression.cpp:1856:import_operation$2
           attribute \src "dut.sv:25.14-29.12"
           case 
         end

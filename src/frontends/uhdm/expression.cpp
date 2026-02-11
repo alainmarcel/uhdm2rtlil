@@ -1257,6 +1257,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     log("UHDM: Function %s in initial block has non-constant arguments, generating process\n", func_name.c_str());
                 }
 
+                // If we're in a combinational always block, inline the function
+                // instead of creating a separate process (avoids feedback loops)
+                if (current_comb_process) {
+                    log("UHDM: Inlining function %s into combinational process\n", func_name.c_str());
+                    return import_func_call_comb(fc, current_comb_process);
+                }
+
                 // Use the new context-aware function processing
                 FunctionCallContext* parent_ctx = nullptr;
 
