@@ -1030,6 +1030,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     net_map.clear();
     wire_map.clear();
     name_map.clear();
+    initial_signal_assignments.clear();
     
     // Import parameters
     if (uhdm_module->Parameters()) {

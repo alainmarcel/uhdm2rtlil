@@ -6,7 +6,7 @@ attribute \dynports 1
 attribute \src "dut.sv:2.2-2.62"
 attribute \cells_not_processed 1
 module $paramod\custom_map_incomp::ALU\MODE="AND"
-  parameter \MODE 1'x
+  parameter \MODE 24'010000010100111001000100
   attribute \src "dut.sv:2.42-2.43"
   wire \A
   attribute \src "dut.sv:2.49-2.50"

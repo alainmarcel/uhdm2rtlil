@@ -1155,6 +1155,12 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 } else if (func_name == "$unsigned" && args.size() == 1) {
                     // $unsigned just returns the argument with unsigned interpretation
                     return args[0];
+                } else if (func_name == "$floor" && args.size() == 1) {
+                    // $floor for integer arguments is identity (integer division already truncates)
+                    return args[0];
+                } else if (func_name == "$ceil" && args.size() == 1) {
+                    // $ceil for integer arguments is identity
+                    return args[0];
                 } else {
                     log_warning("Unhandled system function call: %s with %d arguments\n", 
                                func_name.c_str(), (int)args.size());
@@ -1422,6 +1428,37 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 log_warning("Failed to parse UInt constant '%s': %s\n", value.c_str(), e.what());
                 return RTLIL::SigSpec(RTLIL::State::Sx);
             }
+        }
+        case vpiStringConst: {
+            // Handle string constants like "FOO" (format: "STRING:FOO")
+            std::string str_val;
+            if (value.substr(0, 7) == "STRING:") {
+                str_val = value.substr(7);
+            } else {
+                str_val = value;
+            }
+
+            if (mode_debug)
+                log("    vpiStringConst: value='%s', str='%s', size=%d\n", value.c_str(), str_val.c_str(), size);
+
+            // Convert string to bits: each character is 8 bits, big-endian (first char = MSB)
+            int bit_width = str_val.size() * 8;
+            if (size > 0 && size != bit_width) {
+                bit_width = size;
+            }
+
+            RTLIL::Const const_val(0, bit_width);
+            for (int i = 0; i < (int)str_val.size(); i++) {
+                unsigned char c = str_val[str_val.size() - 1 - i];
+                for (int j = 0; j < 8; j++) {
+                    int bit_idx = i * 8 + j;
+                    if (bit_idx < bit_width) {
+                        const_val.bits()[bit_idx] = (c & (1 << j)) ? RTLIL::State::S1 : RTLIL::State::S0;
+                    }
+                }
+            }
+
+            return RTLIL::SigSpec(const_val);
         }
         default:
             log_warning("Unsupported constant type: %d\n", const_type);
@@ -2569,10 +2606,18 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         if (wire) {
             base = RTLIL::SigSpec(wire);
         } else {
-            std::string gen_scope = get_current_gen_scope();
-            log_warning("Base signal '%s' not found in module or generate scope %s\n", 
-                base_signal_name.c_str(), gen_scope.c_str());
-            return RTLIL::SigSpec();
+            // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
+            RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
+            if (module->parameter_default_values.count(param_id)) {
+                base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
+                log("      Resolved '%s' as parameter for part select (width=%d)\n",
+                    base_signal_name.c_str(), base.size());
+            } else {
+                std::string gen_scope = get_current_gen_scope();
+                log_warning("Base signal '%s' not found in module or generate scope %s\n",
+                    base_signal_name.c_str(), gen_scope.c_str());
+                return RTLIL::SigSpec();
+            }
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression
@@ -2833,10 +2878,18 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         if (wire) {
             base = RTLIL::SigSpec(wire);
         } else {
-            std::string gen_scope = get_current_gen_scope();
-            log_warning("Base signal '%s' not found in module or generate scope %s\n", 
-                base_signal_name.c_str(), gen_scope.c_str());
-            return RTLIL::SigSpec();
+            // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
+            RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
+            if (module->parameter_default_values.count(param_id)) {
+                base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
+                log("      Resolved '%s' as parameter for part select (width=%d)\n",
+                    base_signal_name.c_str(), base.size());
+            } else {
+                std::string gen_scope = get_current_gen_scope();
+                log_warning("Base signal '%s' not found in module or generate scope %s\n",
+                    base_signal_name.c_str(), gen_scope.c_str());
+                return RTLIL::SigSpec();
+            }
         }
     } else {
         // If we can't get the name directly, try importing the parent as an expression

@@ -176,6 +176,14 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
                     break;
                 }
                 
+                case vpiBitNegOp: { // Bitwise negation (~)
+                    if (operands.size() >= 1) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        return ~a;
+                    }
+                    break;
+                }
+
                 case vpiPostIncOp: { // Post-increment operator
                     if (operands.size() >= 1) {
                         if (operands[0]->UhdmType() == uhdmref_obj) {
@@ -213,11 +221,40 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
             break;
         }
         
+        case uhdmfunc_call: {
+            // Handle user function calls by evaluating via import_expression
+            RTLIL::SigSpec result = import_expression(any_cast<const UHDM::expr*>(expr));
+            if (result.is_fully_const()) {
+                return result.as_const().as_int();
+            }
+            log_warning("Function call in interpreter did not resolve to constant\n");
+            return 0;
+        }
+
+        case uhdmsys_func_call: {
+            // Handle system function calls ($floor, $ceil, etc.)
+            RTLIL::SigSpec result = import_expression(any_cast<const UHDM::expr*>(expr));
+            if (result.is_fully_const()) {
+                return result.as_const().as_int();
+            }
+            log_warning("System function call in interpreter did not resolve to constant\n");
+            return 0;
+        }
+
+        case uhdmpart_select: {
+            // Handle part selects like OUTPUT[15:8]
+            RTLIL::SigSpec result = import_expression(any_cast<const UHDM::expr*>(expr));
+            if (result.is_fully_const()) {
+                return result.as_const().as_int();
+            }
+            return 0;
+        }
+
         default:
             log_warning("Unsupported expression type %d\n", expr_type);
             break;
     }
-    
+
     return 0;
 }
 

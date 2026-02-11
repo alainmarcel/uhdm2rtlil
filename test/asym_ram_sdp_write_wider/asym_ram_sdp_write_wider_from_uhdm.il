@@ -118,7 +118,7 @@ module \asym_ram_sdp_write_wider
     connect \DATA $memwr$\RAM$3_DATA
     connect \EN $memwr$\RAM$0_EN
   end
-  cell $and $auto$process.cpp:2250:import_statement_with_loop_vars$3
+  cell $and $auto$process.cpp:2281:import_statement_with_loop_vars$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_SIGNED 0
