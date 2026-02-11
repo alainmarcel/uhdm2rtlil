@@ -217,12 +217,12 @@ module \fsm_using_function
   attribute \src "dut.sv:57.1-64.4"
   process $proc$dut.sv:57$22
     assign $0\state[2:0] \state
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:59.3-63.6"
     switch $eq$dut.sv:59$23_Y
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:59.22-61.6"
       case 1'1
         assign $0\state[2:0] 3'001
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:61.12-63.6"
       case 
         assign $0\state[2:0] \next_state
     end
@@ -234,13 +234,13 @@ module \fsm_using_function
   process $proc$dut.sv:66$25
     assign $0\gnt_0[0:0] \gnt_0
     assign $0\gnt_1[0:0] \gnt_1
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:68.1-91.4"
     switch $eq$dut.sv:68$26_Y
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:68.20-71.4"
       case 1'1
         assign $0\gnt_0[0:0] 1'0
         assign $0\gnt_1[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:72.6-91.4"
       case 
         attribute \src "dut.sv:73.3-90.10"
         switch \state

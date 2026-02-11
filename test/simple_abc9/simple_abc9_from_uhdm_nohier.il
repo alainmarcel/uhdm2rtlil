@@ -861,7 +861,7 @@ end
 attribute \src "dut.sv:226.1-236.10"
 attribute \cells_not_processed 1
 module \abc9_test022
-  wire width 8 $auto$module.cpp:681:import_continuous_assign$75
+  wire width 8 $auto$module.cpp:683:import_continuous_assign$75
   wire width 8 $auto$rtlil.cc:3094:Mux$78
   attribute \src "dut.sv:228.24-228.27"
   wire input 1 \clk
@@ -881,10 +881,10 @@ module \abc9_test022
   end
   attribute \src "dut.sv:232.16-232.44"
   process $proc$dut.sv:232$74
-    assign $auto$module.cpp:681:import_continuous_assign$75 8'00000000
+    assign $auto$module.cpp:683:import_continuous_assign$75 8'00000000
     sync always
     sync init
-      update \m_eth_payload_axis_tkeep_reg $auto$module.cpp:681:import_continuous_assign$75
+      update \m_eth_payload_axis_tkeep_reg $auto$module.cpp:683:import_continuous_assign$75
   end
   attribute \always_ff 1
   attribute \src "dut.sv:234.5-235.59"
@@ -1068,12 +1068,12 @@ module \abc9_test032
   attribute \src "dut.sv:279.1-281.17"
   process $proc$dut.sv:279$92
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:280.5-281.17"
     switch \r
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:280.12-280.21"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:281.10-281.16"
       case 
         assign $0\q \d
     end
@@ -1101,12 +1101,12 @@ module \abc9_test033
   attribute \src "dut.sv:285.1-287.17"
   process $proc$dut.sv:285$93
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:286.5-287.17"
     switch \r
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:286.12-286.21"
       case 1'1
         assign $0\q 1'1
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:287.10-287.16"
       case 
         assign $0\q \d
     end

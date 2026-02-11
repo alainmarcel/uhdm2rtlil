@@ -147,8 +147,8 @@ public:
         return depth;
     }
     
-    std::string generateInstanceId(const std::string& func_name, int line, int idx) {
-        return stringf("%s$func$dut.sv:%d$%d", func_name.c_str(), line, idx);
+    std::string generateInstanceId(const std::string& func_name, const std::string& filename, int line, int idx) {
+        return stringf("%s$func$%s:%d$%d", func_name.c_str(), filename.c_str(), line, idx);
     }
     
     // Memoization

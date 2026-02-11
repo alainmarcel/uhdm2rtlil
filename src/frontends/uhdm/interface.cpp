@@ -327,7 +327,7 @@ void UhdmImporter::create_interface_module_with_width(const std::string& interfa
     iface_module->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(interface_name);
     iface_module->attributes[RTLIL::escape_id("is_interface")] = RTLIL::Const(1);
     iface_module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
-    iface_module->attributes[ID::src] = RTLIL::Const("dut.sv:2.1-18.13");
+    // Note: no src attribute available - interface module is created from parameters only
     
     // Add WIDTH parameter
     RTLIL::IdString param_id = RTLIL::escape_id("WIDTH");

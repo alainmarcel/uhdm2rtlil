@@ -34,12 +34,12 @@ module \simple_fsm
   attribute \src "dut.sv:20.1-25.4"
   process $proc$dut.sv:20$1
     assign $0\state \state
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:21.5-24.29"
     switch \reset
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:22.9-22.22"
       case 1'1
         assign $0\state 2'00
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:24.9-24.28"
       case 
         assign $0\state \next_state
     end

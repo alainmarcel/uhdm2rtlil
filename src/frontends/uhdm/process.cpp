@@ -574,12 +574,16 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             RTLIL::CaseRule* sw = new RTLIL::CaseRule;
                             sw->switches.push_back(new RTLIL::SwitchRule);
                             sw->switches[0]->signal = cond_sig;
-                            sw->switches[0]->attributes[ID::src] = RTLIL::Const("dut.sv:11.9-15.12");
-                            
+                            std::string if_else_src = get_src_attribute(if_else_stmt);
+                            if (!if_else_src.empty())
+                                sw->switches[0]->attributes[ID::src] = RTLIL::Const(if_else_src);
+
                             // Case for true (reset)
                             RTLIL::CaseRule* case_true = new RTLIL::CaseRule;
                             case_true->compare.push_back(RTLIL::Const(1, 1));
-                            case_true->attributes[ID::src] = RTLIL::Const("dut.sv:11.13-11.19");
+                            std::string then_src = if_else_stmt->VpiStmt() ? get_src_attribute(if_else_stmt->VpiStmt()) : "";
+                            if (!then_src.empty())
+                                case_true->attributes[ID::src] = RTLIL::Const(then_src);
                             
                             // Import reset assignments into case_true
                             if (auto then_stmt = if_else_stmt->VpiStmt()) {
@@ -608,8 +612,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             
                             // Case for false (else)
                             RTLIL::CaseRule* case_false = new RTLIL::CaseRule;
-                            case_false->attributes[ID::src] = RTLIL::Const("dut.sv:13.13-13.17");
-                            
+                            std::string else_src = if_else_stmt->VpiElseStmt() ? get_src_attribute(if_else_stmt->VpiElseStmt()) : "";
+                            if (!else_src.empty())
+                                case_false->attributes[ID::src] = RTLIL::Const(else_src);
+
                             // Handle else statement
                             if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
                                 // Set up context for import
@@ -957,12 +963,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // Create switch statement
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
                 sw->signal = condition;
-                sw->attributes[ID::src] = RTLIL::Const("dut.sv:32.9-36.12");
-                
+                std::string sw_src = get_src_attribute(simple_if_stmt);
+                if (!sw_src.empty())
+                    sw->attributes[ID::src] = RTLIL::Const(sw_src);
+
                 // Case for true (then branch)
                 RTLIL::CaseRule* case_true = new RTLIL::CaseRule;
                 case_true->compare.push_back(RTLIL::Const(1, 1));
-                case_true->attributes[ID::src] = RTLIL::Const("dut.sv:32.13-32.16");
+                if (then_stmt) {
+                    std::string then_src2 = get_src_attribute(then_stmt);
+                    if (!then_src2.empty())
+                        case_true->attributes[ID::src] = RTLIL::Const(then_src2);
+                }
                 
                 // Import then assignments
                 if (then_stmt) {
@@ -982,7 +994,9 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 
                 // Import else assignments if present
                 if (else_stmt) {
-                    case_default->attributes[ID::src] = RTLIL::Const("dut.sv:34.13-34.17");
+                    std::string else_src2 = get_src_attribute(else_stmt);
+                    if (!else_src2.empty())
+                        case_default->attributes[ID::src] = RTLIL::Const(else_src2);
                     // Map signal names to temp wires for import
                     for (const auto& [sig_name, temp_wire] : temp_wires) {
                         current_signal_temp_wires[sig_name] = temp_wire;
@@ -2973,8 +2987,16 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                     // Variables have been updated by processing the statements above
                                     
                                     // Create memory initialization cell
+                                    std::string meminit_file;
+                                    int meminit_line = 0;
+                                    if (for_loop && !for_loop->VpiFile().empty()) {
+                                        std::string full_path = std::string(for_loop->VpiFile());
+                                        auto sp = full_path.find_last_of("/\\");
+                                        meminit_file = (sp != std::string::npos) ? full_path.substr(sp + 1) : full_path;
+                                        meminit_line = for_loop->VpiLineNo();
+                                    }
                                     RTLIL::Cell *cell = module->addCell(
-                                        stringf("$meminit$\\%s$dut.sv:22$%d", memory_name.c_str(), 12 + (int)i),
+                                        stringf("$meminit$\\%s$%s:%d$%d", memory_name.c_str(), meminit_file.c_str(), meminit_line, 12 + (int)i),
                                         ID($meminit_v2)
                                     );
                                     cell->setParam(ID::MEMID, RTLIL::Const("\\" + memory_name));
@@ -3437,11 +3459,12 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
 
     std::string task_name = std::string(tc->VpiName());
     int call_line = tc->VpiLineNo();
-    std::string call_file = !tc->VpiFile().empty() ? std::string(tc->VpiFile()) : "dut.sv";
-    // Extract just the filename from the path
-    auto slash_pos = call_file.rfind('/');
-    if (slash_pos != std::string::npos)
-        call_file = call_file.substr(slash_pos + 1);
+    std::string call_file;
+    if (!tc->VpiFile().empty()) {
+        std::string full_path = std::string(tc->VpiFile());
+        auto slash_pos = full_path.rfind('/');
+        call_file = (slash_pos != std::string::npos) ? full_path.substr(slash_pos + 1) : full_path;
+    }
 
     int ctx_idx = incr_autoidx();
     std::string context = stringf("%s$func$%s:%d$%d", task_name.c_str(), call_file.c_str(), call_line, ctx_idx);
@@ -3787,10 +3810,12 @@ RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::P
 
     std::string func_name = std::string(fc->VpiName());
     int call_line = fc->VpiLineNo();
-    std::string call_file = !fc->VpiFile().empty() ? std::string(fc->VpiFile()) : "dut.sv";
-    auto slash_pos = call_file.rfind('/');
-    if (slash_pos != std::string::npos)
-        call_file = call_file.substr(slash_pos + 1);
+    std::string call_file;
+    if (!fc->VpiFile().empty()) {
+        std::string full_path = std::string(fc->VpiFile());
+        auto slash_pos = full_path.rfind('/');
+        call_file = (slash_pos != std::string::npos) ? full_path.substr(slash_pos + 1) : full_path;
+    }
 
     // Get return width
     int ret_width = 1;

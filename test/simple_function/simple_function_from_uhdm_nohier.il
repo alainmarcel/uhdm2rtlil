@@ -79,12 +79,12 @@ module \simple_function
   attribute \src "dut.sv:25.5-30.8"
   process $proc$dut.sv:25$14
     assign $0\q[0:0] \q
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:26.9-29.20"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:27.13-27.22"
       case 1'1
         assign $0\q[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:29.13-29.19"
       case 
         assign $0\q[0:0] \d
     end

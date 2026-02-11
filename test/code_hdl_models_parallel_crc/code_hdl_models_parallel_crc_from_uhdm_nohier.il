@@ -312,12 +312,12 @@ module \code_hdl_models_parallel_crc
   attribute \src "dut.sv:29.1-38.4"
   process $proc$dut.sv:29$53
     assign $0\crc_reg[15:0] \crc_reg
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:30.1-38.4"
     switch \reset
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:30.12-32.4"
       case 1'1
         assign $0\crc_reg[15:0] 16'1111111111111111
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:32.10-38.4"
       case 
         attribute \src "dut.sv:32.10-38.4"
         switch \enable

@@ -48,14 +48,14 @@ module \mul_signed_async
     assign $0\a_reg \a_reg
     assign $0\b_reg \b_reg
     assign $0\p \p
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:20.9-29.12"
     switch \rst
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:20.18-24.12"
       case 1'1
         assign $0\a_reg 8'00000000
         assign $0\b_reg 6'000000
         assign $0\p 14'00000000000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:25.14-29.12"
       case 
         attribute \src "dut.sv:25.14-29.12"
         switch \en

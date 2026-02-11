@@ -3,8 +3,8 @@ autoidx 5
 attribute \src "dut.sv:2.1-18.10"
 attribute \cells_not_processed 1
 module \genblk_order_top
-  wire $auto$module.cpp:681:import_continuous_assign$2
-  wire $auto$module.cpp:681:import_continuous_assign$4
+  wire $auto$module.cpp:683:import_continuous_assign$2
+  wire $auto$module.cpp:683:import_continuous_assign$4
   attribute \src "dut.sv:3.14-3.18"
   wire output 1 \out1
   attribute \src "dut.sv:4.14-4.18"
@@ -13,17 +13,17 @@ module \genblk_order_top
   wire \outer.foo.x
   attribute \src "dut.sv:11.11-11.12"
   process $proc$dut.sv:11$1
-    assign $auto$module.cpp:681:import_continuous_assign$2 1'1
+    assign $auto$module.cpp:683:import_continuous_assign$2 1'1
     sync always
     sync init
-      update \outer.foo.foo.x $auto$module.cpp:681:import_continuous_assign$2
+      update \outer.foo.foo.x $auto$module.cpp:683:import_continuous_assign$2
   end
   attribute \src "dut.sv:9.10-9.11"
   process $proc$dut.sv:9$3
-    assign $auto$module.cpp:681:import_continuous_assign$4 1'0
+    assign $auto$module.cpp:683:import_continuous_assign$4 1'0
     sync always
     sync init
-      update \outer.foo.x $auto$module.cpp:681:import_continuous_assign$4
+      update \outer.foo.x $auto$module.cpp:683:import_continuous_assign$4
   end
   connect \out1 \outer.foo.foo.x
   connect \out2 \outer.foo.foo.x

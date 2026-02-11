@@ -62,16 +62,16 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   process $proc$dut.sv:77$14
     assign $0\counter \counter
     assign $0\data_out \data_out
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:78.9-96.12"
     switch $logic_not$dut.sv:78.13-78.19$3_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:78.21-84.12"
       case 1'1
         assign $0\counter 5'00000
         assign \data_out [49:18] 0
         assign \data_out [17:2] 16'0000000000000000
         assign \data_out [1] 1'0
         assign \data_out [0] 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:84.18-96.12"
       case 
         assign $0\counter $auto$expression.cpp:1787:import_operation$15 [4:0]
         assign $0\data_out \data_in
@@ -146,15 +146,15 @@ module \simple_package
   attribute \src "dut.sv:38.5-49.8"
   process $proc$dut.sv:38$6
     assign $0\internal_bus \internal_bus
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:39.9-48.12"
     switch $logic_not$dut.sv:39.13-39.19$2_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:39.21-44.12"
       case 1'1
         assign \internal_bus [49:18] 0
         assign \internal_bus [17:2] 16'0000000000000000
         assign \internal_bus [1] 1'0
         assign \internal_bus [0] 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:44.18-48.12"
       case 
         assign $0\internal_bus \bus_in
         assign \internal_bus [49:18] $increment_data$func$dut.sv:47$0_result
@@ -242,16 +242,16 @@ module \sub_module
   process $proc$dut.sv:77$1
     assign $0\counter \counter
     assign $0\data_out \data_out
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:78.9-96.12"
     switch $logic_not$dut.sv:78.13-78.19$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:78.21-84.12"
       case 1'1
         assign $0\counter 5'00000
         assign \data_out [49:18] 0
         assign \data_out [17:2] 16'0000000000000000
         assign \data_out [1] 1'0
         assign \data_out [0] 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:84.18-96.12"
       case 
         assign $0\counter $auto$expression.cpp:1787:import_operation$2 [4:0]
         assign $0\data_out \data_in

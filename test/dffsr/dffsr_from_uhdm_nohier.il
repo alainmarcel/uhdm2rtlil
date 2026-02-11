@@ -21,12 +21,12 @@ module \dffsr
   attribute \src "dut.sv:2.2-8.11"
   process $proc$dut.sv:2$1
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:3.3-8.11"
     switch \clr
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:4.4-4.10"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:5.8-8.11"
       case 
         attribute \src "dut.sv:5.8-8.11"
         switch \set

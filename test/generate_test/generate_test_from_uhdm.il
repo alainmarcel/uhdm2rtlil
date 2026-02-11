@@ -85,7 +85,7 @@ module \generate_test
     connect \Q \extra_result
   end
   attribute \full_case 1
-  attribute \src "dut.sv:11.13-11.19|dut.sv:11.9-15.12"
+  attribute \src "dut.sv:69.29-71.20|dut.sv:69.17-73.20"
   cell $mux $procmux$15
     parameter \WIDTH 8
     connect \A 8'00000000
@@ -94,7 +94,7 @@ module \generate_test
     connect \Y \result [23:16]
   end
   attribute \full_case 1
-  attribute \src "dut.sv:11.13-11.19|dut.sv:11.9-15.12"
+  attribute \src "dut.sv:69.29-71.20|dut.sv:69.17-73.20"
   cell $mux $procmux$18
     parameter \WIDTH 8
     connect \A 8'00000000
@@ -103,7 +103,7 @@ module \generate_test
     connect \Y \result [31:24]
   end
   attribute \full_case 1
-  attribute \src "dut.sv:11.13-11.19|dut.sv:11.9-15.12"
+  attribute \src "dut.sv:69.29-71.20|dut.sv:69.17-73.20"
   cell $mux $procmux$21
     parameter \WIDTH 8
     connect \A 8'00000000
@@ -112,7 +112,7 @@ module \generate_test
     connect \Y \result [7:0]
   end
   attribute \full_case 1
-  attribute \src "dut.sv:11.13-11.19|dut.sv:11.9-15.12"
+  attribute \src "dut.sv:69.29-71.20|dut.sv:69.17-73.20"
   cell $mux $procmux$24
     parameter \WIDTH 8
     connect \A 8'00000000

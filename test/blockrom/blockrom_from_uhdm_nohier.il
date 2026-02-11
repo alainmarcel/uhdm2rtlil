@@ -24,7 +24,7 @@ module \blockrom
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:11.15-11.21"
   memory width 8 size 8 \memory
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$12
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$12
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 12
@@ -34,7 +34,7 @@ module \blockrom
     connect \DATA 8'01111010
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$13
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$13
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 13
@@ -44,7 +44,7 @@ module \blockrom
     connect \DATA 8'11000010
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$14
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$14
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 14
@@ -54,7 +54,7 @@ module \blockrom
     connect \DATA 8'01100011
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$15
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$15
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 15
@@ -64,7 +64,7 @@ module \blockrom
     connect \DATA 8'10111110
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$16
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$16
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 16
@@ -74,7 +74,7 @@ module \blockrom
     connect \DATA 8'01011011
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$17
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$17
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 17
@@ -84,7 +84,7 @@ module \blockrom
     connect \DATA 8'01001010
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$18
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$18
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 18
@@ -94,7 +94,7 @@ module \blockrom
     connect \DATA 8'01101100
     connect \EN 8'11111111
   end
-  cell $meminit_v2 $meminit$\memory$dut.sv:22$19
+  cell $meminit_v2 $meminit$\memory$dut.sv:18$19
     parameter \ABITS 32
     parameter \MEMID "\\memory"
     parameter \PRIORITY 19

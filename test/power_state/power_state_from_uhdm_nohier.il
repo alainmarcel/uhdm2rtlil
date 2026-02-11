@@ -39,13 +39,13 @@ module \power_state
   process $proc$dut.sv:14$1
     assign $0\gnt_0[0:0] \gnt_0
     assign $0\gnt_1[0:0] \gnt_1
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:16.5-39.8"
     switch $eq$dut.sv:16$2_Y
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:16.24-19.8"
       case 1'1
         assign $0\gnt_0[0:0] 1'0
         assign $0\gnt_1[0:0] 1'0
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:20.10-39.8"
       case 
         attribute \src "dut.sv:21.7-38.14"
         switch \state

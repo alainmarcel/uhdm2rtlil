@@ -85,10 +85,10 @@ module \nested_struct_nopack
     assign $0\out_struct[61:0] \out_struct
     attribute \src "dut.sv:32.9-36.12"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:32.18-34.12"
       case 1'1
         assign $0\out_struct[61:0] 62'00000000000000000000000000000000000000000000000000000000000000
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:34.18-36.12"
       case 
         assign $0\out_struct[61:0] \processed_data
     end

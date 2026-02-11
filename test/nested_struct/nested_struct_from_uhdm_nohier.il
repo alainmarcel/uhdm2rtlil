@@ -77,12 +77,12 @@ module \nested_struct
   attribute \src "dut.sv:36.5-42.8"
   process $proc$dut.sv:36$1
     assign $0\out_data[61:0] \out_data
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:37.9-41.12"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:37.18-39.12"
       case 1'1
         assign $0\out_data[61:0] 62'00000000000000000000000000000000000000000000000000000000000000
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:39.18-41.12"
       case 
         assign $0\out_data[61:0] \processed_data
     end

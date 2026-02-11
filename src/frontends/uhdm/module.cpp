@@ -664,18 +664,20 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         if (is_constant) {
             // This is a constant initialization, create an init process
             // Get the source location for the process name
+            std::string assign_src = get_src_attribute(uhdm_assign);
+            std::string assign_file;
             int line_num = uhdm_assign->VpiLineNo();
-            int col_num = uhdm_assign->VpiColumnNo();
-            int end_line = uhdm_assign->VpiEndLineNo();
-            int end_col = uhdm_assign->VpiEndColumnNo();
-            
-            // Create process name based on line number
-            std::string proc_name = stringf("$proc$dut.sv:%d$%d", line_num, incr_autoidx());
-            
+            if (!assign_src.empty()) {
+                size_t cp = assign_src.find(':');
+                if (cp != std::string::npos)
+                    assign_file = assign_src.substr(0, cp);
+            }
+            std::string proc_name = stringf("$proc$%s:%d$%d", assign_file.c_str(), line_num, incr_autoidx());
+
             // Create an init process for this initialization
             RTLIL::Process *proc = module->addProcess(RTLIL::escape_id(proc_name));
-            proc->attributes[ID::src] = stringf("dut.sv:%d.%d-%d.%d", 
-                line_num, col_num, end_line, end_col);
+            if (!assign_src.empty())
+                proc->attributes[ID::src] = assign_src;
             
             // Create a temporary wire for the assignment
             RTLIL::Wire *temp_wire = module->addWire(NEW_ID, lhs.size());

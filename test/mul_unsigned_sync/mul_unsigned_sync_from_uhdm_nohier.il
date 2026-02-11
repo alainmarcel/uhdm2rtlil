@@ -47,14 +47,14 @@ module \mul_unsigned_sync
     assign $0\a_reg[5:0] \a_reg
     assign $0\b_reg[2:0] \b_reg
     assign $0\p[8:0] \p
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:20.9-29.12"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:20.18-24.12"
       case 1'1
         assign $0\a_reg[5:0] 6'000000
         assign $0\b_reg[2:0] 3'000
         assign $0\p[8:0] 9'000000000
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:25.14-29.12"
       case 
         attribute \src "dut.sv:25.14-29.12"
         switch \en

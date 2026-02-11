@@ -73,12 +73,12 @@ module \counter
   attribute \src "dut.sv:14.5-20.8"
   process $proc$dut.sv:14$1
     assign $0\count \count
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:15.9-19.12"
     switch $logic_not$dut.sv:15.13-15.19$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:15.21-17.12"
       case 1'1
         assign $0\count 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:17.18-19.12"
       case 
         attribute \src "dut.sv:17.18-19.12"
         switch \enable

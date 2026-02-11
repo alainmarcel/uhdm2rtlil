@@ -37,12 +37,12 @@ module \simple_counter
   attribute \src "dut.sv:8.5-14.8"
   process $proc$dut.sv:8$1
     assign $0\count \count
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:9.9-13.12"
     switch $logic_not$dut.sv:9.13-9.19$1_Y
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:9.21-11.12"
       case 1'1
         assign $0\count 8'00000000
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:11.18-13.12"
       case 
         assign $0\count $auto$expression.cpp:1787:import_operation$2
     end

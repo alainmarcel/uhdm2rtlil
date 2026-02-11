@@ -424,7 +424,7 @@ module \enum_simple
     connect \Y $procmux$69_Y
   end
   attribute \full_case 1
-  attribute \src "dut.sv:32.13-32.16|dut.sv:32.9-36.12"
+  attribute \src "dut.sv:13.12-16.6|dut.sv:13.3-38.6"
   cell $mux $procmux$72
     parameter \WIDTH 1
     connect \A $procmux$69_Y
@@ -469,7 +469,7 @@ module \enum_simple
     connect \Y $procmux$84_Y
   end
   attribute \full_case 1
-  attribute \src "dut.sv:32.13-32.16|dut.sv:32.9-36.12"
+  attribute \src "dut.sv:13.12-16.6|dut.sv:13.3-38.6"
   cell $mux $procmux$87
     parameter \WIDTH 1
     connect \A $procmux$84_Y

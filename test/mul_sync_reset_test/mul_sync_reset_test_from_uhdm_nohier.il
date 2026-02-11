@@ -30,12 +30,12 @@ module \mul_sync_reset_test
   attribute \src "dut.sv:7.5-15.8"
   process $proc$dut.sv:7$1
     assign $0\p[8:0] \p
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:9.9-14.12"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:9.18-11.12"
       case 1'1
         assign $0\p[8:0] 9'000000000
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:12.14-14.12"
       case 
         assign $0\p[8:0] $auto$expression.cpp:1856:import_operation$2
     end

@@ -268,13 +268,13 @@ module \enum_simple
     assign $auto$process.cpp:32:import_immediate_assert$18 1'0
     assign $0\state[1:0] \state
     assign $0\test_enum[31:0] \test_enum
-    attribute \src "dut.sv:32.9-36.12"
+    attribute \src "dut.sv:13.3-38.6"
     switch \rst
-      attribute \src "dut.sv:32.13-32.16"
+      attribute \src "dut.sv:13.12-16.6"
       case 1'1
         assign $0\test_enum[31:0] 3
         assign $0\state[1:0] 2'00
-      attribute \src "dut.sv:34.13-34.17"
+      attribute \src "dut.sv:16.12-38.6"
       case 
         attribute \src "dut.sv:18.4-27.18"
         switch $eq$dut.sv:18$2_Y

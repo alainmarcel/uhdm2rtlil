@@ -24,12 +24,12 @@ module \adff
   attribute \src "dut.sv:5.4-9.16"
   process $proc$dut.sv:5$2
     assign $0\q \q
-    attribute \src "dut.sv:11.9-15.12"
+    attribute \src "dut.sv:6.7-9.16"
     switch \clr
-      attribute \src "dut.sv:11.13-11.19"
+      attribute \src "dut.sv:7.9-7.18"
       case 1'1
         assign $0\q 1'0
-      attribute \src "dut.sv:13.13-13.17"
+      attribute \src "dut.sv:9.9-9.15"
       case 
         assign $0\q \d
     end
