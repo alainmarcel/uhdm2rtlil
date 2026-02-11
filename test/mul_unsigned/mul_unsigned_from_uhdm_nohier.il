@@ -18,7 +18,7 @@ module \mul_unsigned
   wire width 6 $0\rA[5:0]
   attribute \src "dut.sv:21.1-28.5"
   wire width 9 $0\rB[8:0]
-  wire width 15 $auto$expression.cpp:1849:import_operation$2
+  wire width 15 $auto$expression.cpp:1856:import_operation$2
   attribute \src "dut.sv:10.27-10.28"
   wire width 6 input 2 \A
   attribute \src "dut.sv:10.30-10.31"
@@ -51,7 +51,7 @@ module \mul_unsigned
     parameter \Y_WIDTH 15
     connect \A \rA
     connect \B \rB
-    connect \Y $auto$expression.cpp:1849:import_operation$2
+    connect \Y $auto$expression.cpp:1856:import_operation$2
   end
   attribute \always_ff 1
   attribute \src "dut.sv:21.1-28.5"
@@ -64,7 +64,7 @@ module \mul_unsigned
     assign $0\rB[8:0] \rB
     assign $0\rA[5:0] \A
     assign $0\rB[8:0] \B
-    assign $0\M[0][14:0] $auto$expression.cpp:1849:import_operation$2
+    assign $0\M[0][14:0] $auto$expression.cpp:1856:import_operation$2
     assign $0\M[1][14:0] $0\M[0][14:0]
     assign $0\M[2][14:0] $0\M[1][14:0]
     assign $0\M[3][14:0] $0\M[2][14:0]

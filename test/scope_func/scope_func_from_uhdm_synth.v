@@ -13,6 +13,12 @@ module scope_func(k, x, y);
   output [15:0] y;
   wire [15:0] y;
   wire _0_;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:4.22-4.23" *)
+  wire [15:0] \func_01$func$dut.sv:22$4.x ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:4.25-4.26" *)
+  wire [15:0] \func_01$func$dut.sv:22$4.y ;
   \$_NOT_  _1_ (
     .A(k[1]),
     .Y(y[1])
@@ -37,6 +43,8 @@ module scope_func(k, x, y);
     .B(_0_),
     .Y(y[4])
   );
+  assign \func_01$func$dut.sv:22$4.x  = 16'hxxxx;
+  assign \func_01$func$dut.sv:22$4.y  = 16'hxxxx;
   assign x = 16'h0001;
   assign { y[15:5], y[0] } = { 11'h000, k[0] };
 endmodule

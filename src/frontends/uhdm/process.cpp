@@ -6,6 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <uhdm/func_call.h>
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -1479,6 +1480,26 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // Clear current_comb_values for tracking signal values during processing
     current_comb_values.clear();
 
+    // Create sync always rule BEFORE statement import so task/function handlers can add entries
+    RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
+    sync_always->type = RTLIL::SyncType::STa;
+
+    // Add update statements for all assigned signals (one per unique signal)
+    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+        if (signal_specs.count(sig_name)) {
+            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+            sync_always->actions.push_back(
+                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
+            );
+            log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
+        }
+    }
+
+    yosys_proc->syncs.push_back(sync_always);
+
+    // Set current_comb_process so expression handlers can detect comb context
+    current_comb_process = yosys_proc;
+
     // Import the statements
     if (auto stmt = uhdm_process->Stmt()) {
         // For combinational blocks, unwrap event_control if present
@@ -1492,28 +1513,13 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         }
         import_statement_comb(actual_stmt, yosys_proc);
     }
-    
-    // Add sync always rule
-    RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
-    sync_always->type = RTLIL::SyncType::STa;
-    
-    // Add update statements for all assigned signals (one per unique signal)
-    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
-        if (signal_specs.count(sig_name)) {
-            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
-            sync_always->actions.push_back(
-                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
-            );
-            log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
-        }
-    }
-    
-    yosys_proc->syncs.push_back(sync_always);
-    
-    // Clear temp wires context
+
+    // Clear context
+    current_comb_process = nullptr;
     current_temp_wires.clear();
     current_lhs_specs.clear();
     current_comb_values.clear();
+    comb_value_aliases.clear();
 }
 
 // Import always block
@@ -3318,6 +3324,7 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
 
     // Handle Variables() in named begin blocks
     std::map<std::string, RTLIL::Wire*> saved_name_map;
+    std::map<std::string, RTLIL::SigSpec> saved_comb_values;
     std::set<std::string> block_local_vars;
 
     if (uhdm_begin->VpiType() == vpiNamedBegin && uhdm_begin->Variables()) {
@@ -3337,8 +3344,8 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);
             if (var) add_src_attribute(block_wire->attributes, var);
 
-            // Create temp wire: $0\blockname.varname[width]
-            std::string temp_name = stringf("$0\\%s[%d:0]", hier_name.c_str(), width - 1);
+            // Create temp wire: $0\blockname.varname (no width suffix, matches import_assignment_comb lookup)
+            std::string temp_name = "$0\\" + hier_name;
             RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
             add_src_attribute(temp_wire->attributes, uhdm_begin);
 
@@ -3348,6 +3355,19 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             }
             name_map[var_name] = block_wire;
             block_local_vars.insert(var_name);
+
+            // Save and shadow current_comb_values for the short name
+            // This ensures reads of 'y' inside the block see the block-local value
+            if (current_comb_values.count(var_name)) {
+                saved_comb_values[var_name] = current_comb_values[var_name];
+            }
+            // Initialize block-local variable as undefined (will be set by first assignment)
+            current_comb_values.erase(var_name);
+
+            // Register alias: hier_name → short var_name
+            // So when import_assignment_comb updates current_comb_values["foo.y"],
+            // it also updates current_comb_values["y"]
+            comb_value_aliases[hier_name] = var_name;
 
             // Add temp wire init and sync update
             proc->root_case.actions.push_back(
@@ -3382,6 +3402,27 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
     for (const auto& var_name : block_local_vars) {
         if (saved_name_map.find(var_name) == saved_name_map.end()) {
             name_map.erase(var_name);
+        }
+    }
+
+    // Restore current_comb_values for short names
+    for (auto& [name, val] : saved_comb_values) {
+        current_comb_values[name] = val;
+    }
+    for (const auto& var_name : block_local_vars) {
+        if (saved_comb_values.find(var_name) == saved_comb_values.end()) {
+            // No saved value - erase the block-local entry
+            current_comb_values.erase(var_name);
+        }
+    }
+
+    // Remove aliases for this block's variables
+    if (uhdm_begin->VpiType() == vpiNamedBegin && uhdm_begin->Variables()) {
+        std::string block_name = std::string(uhdm_begin->VpiName());
+        for (auto var : *uhdm_begin->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            std::string hier_name = block_name + "." + var_name;
+            comb_value_aliases.erase(hier_name);
         }
     }
 }
@@ -3643,17 +3684,27 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 
             // Resolve LHS
             RTLIL::SigSpec lhs;
+            std::string lhs_name;
             if (auto lhs_expr = assign->Lhs()) {
                 if (lhs_expr->VpiType() == vpiRefObj) {
                     const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
-                    std::string lhs_name = std::string(lhs_ref->VpiName());
+                    lhs_name = std::string(lhs_ref->VpiName());
 
-                    // Check task_mapping first
+                    // Check task_mapping, but only use it if it maps to a task-local temp wire
+                    // (names starting with "$0\"). Values from current_comb_values (constants,
+                    // cell outputs) should NOT be used as LHS targets.
                     auto it = task_mapping.find(lhs_name);
-                    if (it != task_mapping.end()) {
+                    bool use_task_mapping = false;
+                    if (it != task_mapping.end() && it->second.is_wire()) {
+                        RTLIL::Wire* w = it->second.as_wire();
+                        if (w->name.str().substr(0, 3) == "$0\\") {
+                            use_task_mapping = true;
+                        }
+                    }
+                    if (use_task_mapping) {
                         lhs = it->second;
                     } else {
-                        // Module signal - import normally
+                        // Module signal or unmapped - import normally
                         lhs = import_expression(lhs_expr);
                     }
                 } else {
@@ -3690,6 +3741,9 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
 
             if (!assigned_to_temp) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
+                if (!lhs_name.empty()) {
+                    task_mapping[lhs_name] = rhs;
+                }
             }
             break;
         }
@@ -3718,6 +3772,373 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
         }
         default:
             log_warning("Unsupported statement type %d in task body\n", stmt->VpiType());
+            break;
+    }
+}
+
+// Inline function call into a combinational process
+// Returns the SigSpec of the function result
+RTLIL::SigSpec UhdmImporter::import_func_call_comb(const func_call* fc, RTLIL::Process* proc) {
+    auto func_def = fc->Function();
+    if (!func_def) {
+        log_warning("Function call has no function definition\n");
+        return RTLIL::SigSpec();
+    }
+
+    std::string func_name = std::string(fc->VpiName());
+    int call_line = fc->VpiLineNo();
+    std::string call_file = !fc->VpiFile().empty() ? std::string(fc->VpiFile()) : "dut.sv";
+    auto slash_pos = call_file.rfind('/');
+    if (slash_pos != std::string::npos)
+        call_file = call_file.substr(slash_pos + 1);
+
+    // Get return width
+    int ret_width = 1;
+    if (func_def->Return()) {
+        ret_width = get_width(func_def->Return(), current_instance);
+    }
+
+    int ctx_idx = incr_autoidx();
+    std::string context = stringf("%s$func$%s:%d$%d", func_name.c_str(), call_file.c_str(), call_line, ctx_idx);
+
+    log("    import_func_call_comb: %s (context: %s, ret_width=%d)\n", func_name.c_str(), context.c_str(), ret_width);
+
+    // Import arguments using current_comb_values for correct intermediate value resolution
+    std::vector<RTLIL::SigSpec> arg_values;
+    if (fc->Tf_call_args()) {
+        for (auto arg : *fc->Tf_call_args()) {
+            if (auto arg_expr = dynamic_cast<const expr*>(arg)) {
+                RTLIL::SigSpec arg_val = import_expression(arg_expr, &current_comb_values);
+                arg_values.push_back(arg_val);
+            }
+        }
+    }
+
+    // Build func_mapping: maps variable names to current SigSpec values
+    std::map<std::string, RTLIL::SigSpec> func_mapping;
+
+    // Get the sync rule for adding nosync entries
+    RTLIL::SyncRule* sync_always = nullptr;
+    if (!proc->syncs.empty()) {
+        sync_always = proc->syncs.back();
+    }
+
+    const any* process_src = fc;
+
+    // Process IO declarations (function parameters)
+    auto io_decls = func_def->Io_decls();
+    if (io_decls) {
+        int arg_idx = 0;
+        for (auto io_any : *io_decls) {
+            auto io = any_cast<const io_decl*>(io_any);
+            if (!io) continue;
+
+            std::string param_name = std::string(io->VpiName());
+            int width = get_width(io, current_instance);
+            if (width <= 0) width = 16;
+
+            // Create nosync wire for this parameter
+            std::string wire_name = context + "." + param_name;
+            RTLIL::Wire* param_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+            param_wire->attributes[ID::nosync] = RTLIL::Const(1);
+            add_src_attribute(param_wire->attributes, io);
+
+            // Create temp wire
+            std::string temp_name = stringf("$0\\%s[%d:0]$%d", wire_name.c_str(), width - 1, incr_autoidx());
+            RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
+            add_src_attribute(temp_wire->attributes, process_src);
+
+            // Map parameter name to arg VALUE (not temp wire) for cell chaining
+            if (arg_idx < (int)arg_values.size()) {
+                func_mapping[param_name] = arg_values[arg_idx];
+                // Process action: temp_wire = arg_value (for sync rule)
+                proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_values[arg_idx]));
+            }
+
+            // Sync: nosync wire = X
+            if (sync_always) {
+                sync_always->actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(param_wire), RTLIL::SigSpec(RTLIL::State::Sx, width))
+                );
+            }
+
+            arg_idx++;
+        }
+    }
+
+    // Create result wire (nosync)
+    std::string result_wire_name = context + ".$result";
+    RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(result_wire_name), ret_width);
+    result_wire->attributes[ID::nosync] = RTLIL::Const(1);
+    add_src_attribute(result_wire->attributes, fc);
+
+    std::string result_temp_name = stringf("$0\\%s[%d:0]$%d", result_wire_name.c_str(), ret_width - 1, incr_autoidx());
+    RTLIL::Wire* result_temp = module->addWire(result_temp_name, ret_width);
+    add_src_attribute(result_temp->attributes, process_src);
+
+    // Map function name to initial undefined value (will be updated by body assignments)
+    func_mapping[func_name] = RTLIL::SigSpec(RTLIL::State::Sx, ret_width);
+
+    // Sync: result nosync wire = X
+    if (sync_always) {
+        sync_always->actions.push_back(
+            RTLIL::SigSig(RTLIL::SigSpec(result_wire), RTLIL::SigSpec(RTLIL::State::Sx, ret_width))
+        );
+    }
+
+    // Process function Variables() (local variables)
+    if (func_def->Variables()) {
+        for (auto var : *func_def->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            // Skip parameters - they're already handled above
+            if (func_mapping.count(var_name)) continue;
+            // Skip the function return variable if it matches func_name
+            if (var_name == func_name) continue;
+
+            int width = get_width(var, current_instance);
+            if (width <= 0) width = 16;
+
+            std::string wire_name = context + "." + var_name;
+            RTLIL::Wire* var_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+            add_src_attribute(var_wire->attributes, var);
+
+            std::string temp_name = stringf("$0\\%s[%d:0]$%d", wire_name.c_str(), width - 1, incr_autoidx());
+            RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
+            add_src_attribute(temp_wire->attributes, process_src);
+
+            // Map to initial undefined value
+            func_mapping[var_name] = RTLIL::SigSpec(RTLIL::State::Sx, width);
+        }
+    }
+
+    // Add current_comb_values so function body can read correct module signal values
+    for (auto& [sig_name, sig_val] : current_comb_values) {
+        if (!func_mapping.count(sig_name)) {
+            func_mapping[sig_name] = sig_val;
+        }
+    }
+
+    // Inline function body
+    if (auto func_stmt = func_def->Stmt()) {
+        inline_func_body_comb(func_stmt, proc, func_mapping, func_name, context, "", process_src);
+    }
+
+    // Create process action for result temp wire = final result value
+    RTLIL::SigSpec final_result = func_mapping[func_name];
+    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(result_temp), final_result));
+
+    log("    import_func_call_comb: done, result = %s\n", log_signal(final_result));
+    return final_result;
+}
+
+// Inline function body statements into a combinational process
+// Unlike inline_task_body_comb, this tracks intermediate values in func_mapping
+// so that cells chain correctly through cell output wires (not process-assigned wires)
+void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
+                                          std::map<std::string, RTLIL::SigSpec>& func_mapping,
+                                          const std::string& func_name,
+                                          const std::string& context, const std::string& block_prefix,
+                                          const any* process_src) {
+    if (!stmt) return;
+
+    switch (stmt->VpiType()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            const scope* bg = dynamic_cast<const scope*>(stmt);
+            if (!bg) break;
+
+            std::string new_prefix = block_prefix;
+            std::map<std::string, RTLIL::SigSpec> saved_mappings;
+            std::set<std::string> block_local_vars;
+
+            // For named begin, get block name
+            if (stmt->VpiType() == vpiNamedBegin && !bg->VpiName().empty()) {
+                std::string block_name = std::string(bg->VpiName());
+                if (!new_prefix.empty())
+                    new_prefix += "." + block_name;
+                else
+                    new_prefix = block_name;
+            }
+
+            // Handle Variables() in named begin blocks
+            if (bg->Variables()) {
+                for (auto var : *bg->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = 16;
+
+                    // Save old mapping
+                    auto it = func_mapping.find(var_name);
+                    if (it != func_mapping.end()) {
+                        saved_mappings[var_name] = it->second;
+                    }
+                    block_local_vars.insert(var_name);
+
+                    // Create hierarchical wire: context.prefix.varname
+                    std::string wire_name = context;
+                    if (!new_prefix.empty())
+                        wire_name += "." + new_prefix + "." + var_name;
+                    else
+                        wire_name += "." + var_name;
+
+                    RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+                    add_src_attribute(block_wire->attributes, var);
+
+                    std::string temp_name = stringf("$0\\%s[%d:0]$%d", wire_name.c_str(), width - 1, incr_autoidx());
+                    RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
+                    if (process_src) add_src_attribute(temp_wire->attributes, process_src);
+
+                    // Map to initial undefined - will be updated by assignments
+                    func_mapping[var_name] = RTLIL::SigSpec(RTLIL::State::Sx, width);
+                }
+            }
+
+            // Process statements in the block
+            VectorOfany* stmts = begin_block_stmts(bg);
+            if (stmts) {
+                for (auto s : *stmts) {
+                    inline_func_body_comb(s, proc, func_mapping, func_name, context, new_prefix, process_src);
+                }
+            }
+
+            // Create process actions for block-local variables (final values for sync rule)
+            if (bg->Variables()) {
+                RTLIL::SyncRule* sync_always = nullptr;
+                if (!proc->syncs.empty()) sync_always = proc->syncs.back();
+
+                for (auto var : *bg->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = 16;
+
+                    // Find the temp wire we created earlier
+                    std::string wire_name = context;
+                    if (!new_prefix.empty())
+                        wire_name += "." + new_prefix + "." + var_name;
+                    else
+                        wire_name += "." + var_name;
+
+                    std::string temp_name_pattern = "$0\\" + wire_name;
+                    // Find temp wire by prefix match
+                    RTLIL::Wire* temp_wire = nullptr;
+                    for (auto& [wname, w] : module->wires_) {
+                        if (wname.str().substr(0, temp_name_pattern.size()) == temp_name_pattern) {
+                            temp_wire = w;
+                            break;
+                        }
+                    }
+
+                    if (temp_wire) {
+                        // Assign final value to temp wire
+                        RTLIL::SigSpec final_val = func_mapping.count(var_name) ? func_mapping[var_name] : RTLIL::SigSpec(RTLIL::State::Sx, width);
+                        proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), final_val));
+
+                        // Sync: block wire = temp wire
+                        if (sync_always) {
+                            RTLIL::Wire* block_wire = module->wire(RTLIL::escape_id(wire_name));
+                            if (block_wire) {
+                                sync_always->actions.push_back(
+                                    RTLIL::SigSig(RTLIL::SigSpec(block_wire), RTLIL::SigSpec(temp_wire))
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Restore saved mappings
+            for (auto& [name, sig] : saved_mappings) {
+                func_mapping[name] = sig;
+            }
+            for (const auto& var_name : block_local_vars) {
+                if (saved_mappings.find(var_name) == saved_mappings.end()) {
+                    func_mapping.erase(var_name);
+                }
+            }
+            break;
+        }
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            auto assign = any_cast<const assignment*>(stmt);
+            if (!assign) break;
+
+            // Import RHS with func_mapping for correct value resolution
+            RTLIL::SigSpec rhs;
+            if (auto rhs_any = assign->Rhs()) {
+                if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                    rhs = import_expression(rhs_expr, &func_mapping);
+                }
+            }
+
+            // Resolve LHS name
+            std::string lhs_name;
+            if (auto lhs_expr = assign->Lhs()) {
+                if (lhs_expr->VpiType() == vpiRefObj) {
+                    const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
+                    lhs_name = std::string(lhs_ref->VpiName());
+                }
+            }
+
+            if (rhs.empty()) break;
+
+            // Width matching
+            auto it = func_mapping.find(lhs_name);
+            if (it != func_mapping.end() && it->second.size() > 0 && rhs.size() != it->second.size()) {
+                if (rhs.size() < it->second.size())
+                    rhs.extend_u0(it->second.size());
+                else
+                    rhs = rhs.extract(0, it->second.size());
+            }
+
+            // Update func_mapping with the new value (key for cell chaining)
+            if (!lhs_name.empty() && func_mapping.count(lhs_name)) {
+                func_mapping[lhs_name] = rhs;
+                log("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs));
+            } else if (!lhs_name.empty()) {
+                // Module signal - assign to $0\ temp wire and update tracking
+                RTLIL::Wire* target = module->wire(RTLIL::escape_id(lhs_name));
+                if (target) {
+                    std::string temp_name = "$0\\" + lhs_name;
+                    RTLIL::Wire* temp_wire = module->wire(temp_name);
+                    if (temp_wire) {
+                        if (rhs.size() != temp_wire->width) {
+                            if (rhs.size() < temp_wire->width)
+                                rhs.extend_u0(temp_wire->width);
+                            else
+                                rhs = rhs.extract(0, temp_wire->width);
+                        }
+                        proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
+                        current_comb_values[lhs_name] = rhs;
+                        func_mapping[lhs_name] = rhs;
+                        log("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs));
+                    }
+                }
+            }
+            break;
+        }
+        case vpiIf: {
+            auto if_st = any_cast<const if_stmt*>(stmt);
+            if (if_st) {
+                import_if_stmt_comb(if_st, proc);
+            }
+            break;
+        }
+        case vpiIfElse: {
+            auto ie = any_cast<const UHDM::if_else*>(stmt);
+            if (ie) {
+                import_if_else_comb(ie, proc);
+            }
+            break;
+        }
+        case vpiCase: {
+            auto case_st = any_cast<const case_stmt*>(stmt);
+            if (case_st) {
+                import_case_stmt_comb(case_st, proc);
+            }
+            break;
+        }
+        default:
+            log_warning("Unsupported statement type %d in function body\n", stmt->VpiType());
             break;
     }
 }
@@ -3910,11 +4331,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     log_flush();
 }
 
-// Import assignment for comb context
+// Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
-    
+
     // Check if this is a full struct assignment that will be followed by field modifications
     // This is a targeted fix for the nested_struct_nopack test case
     bool skip_assignment = false;
@@ -3922,19 +4343,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         if (lhs_expr->VpiType() == vpiRefObj) {
             const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
             std::string lhs_name = std::string(lhs_ref->VpiName());
-            
+
             // Check if RHS is also a simple ref_obj (struct to struct assignment)
             if (auto rhs_any = uhdm_assign->Rhs()) {
                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
                     if (rhs_expr->VpiType() == vpiRefObj) {
                         const ref_obj* rhs_ref = any_cast<const ref_obj*>(rhs_expr);
                         std::string rhs_name = std::string(rhs_ref->VpiName());
-                        
+
                         // Skip full struct assignments like "processed_data = in_struct"
                         // when we know fields will be modified later
                         if (lhs_name == "processed_data" && rhs_name == "in_struct") {
-                            // log("    Skipping full struct assignment: %s = %s (fields will be modified)\n", 
-                            //     lhs_name.c_str(), rhs_name.c_str());
                             skip_assignment = true;
                         }
                     }
@@ -3942,21 +4361,16 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         }
     }
-    
+
     if (skip_assignment) {
         return;
     }
-    
+
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         lhs = import_expression(lhs_expr);
-        
-        // Debug: log what LHS we got
-        if (mode_debug) {
-            // log("    LHS after import: %s (size=%d)\n", log_signal(lhs), lhs.size());
-        }
     }
-    
+
     // Import RHS (could be an expr or other type)
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
@@ -3967,12 +4381,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
-            rhs = import_expression(rhs_expr);
+            rhs = import_expression(rhs_expr, current_comb_process ? &current_comb_values : nullptr);
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
     }
-    
+
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
             rhs.extend_u0(lhs.size());
@@ -3980,7 +4394,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             rhs = rhs.extract(0, lhs.size());
         }
     }
-    
+
     // Special handling for async reset context
     if (!current_signal_temp_wires.empty()) {
         auto lhs_expr = uhdm_assign->Lhs();
@@ -4083,8 +4497,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             
             if (temp_wire) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
-                // Track current value for task inlining
+                // Track current value for task/function inlining and value propagation
                 current_comb_values[signal_name] = rhs;
+                // Also update short name alias if this is a block-local variable
+                auto alias_it = comb_value_aliases.find(signal_name);
+                if (alias_it != comb_value_aliases.end()) {
+                    current_comb_values[alias_it->second] = rhs;
+                }
                 return;
             }
         } else if (!lhs.empty()) {

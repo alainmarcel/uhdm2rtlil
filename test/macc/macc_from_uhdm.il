@@ -6,8 +6,8 @@ attribute \top 1
 module \macc
   parameter \SIZEIN 16
   parameter \SIZEOUT 40
-  wire width 40 $auto$expression.cpp:1780:import_operation$15
-  wire width 32 $auto$expression.cpp:1849:import_operation$13
+  wire width 40 $auto$expression.cpp:1787:import_operation$15
+  wire width 32 $auto$expression.cpp:1856:import_operation$13
   attribute \src "dut.sv:9.28-9.29"
   wire width 16 input 4 signed \a
   attribute \init 16'0000000000000000
@@ -51,7 +51,7 @@ module \macc
     parameter \Y_WIDTH 40
     connect \A \old_result
     connect \B \mult_reg
-    connect \Y $auto$expression.cpp:1780:import_operation$15
+    connect \Y $auto$expression.cpp:1787:import_operation$15
   end
   attribute \always_ff 1
   attribute \src "dut.sv:27.1-36.5"
@@ -71,7 +71,7 @@ module \macc
     parameter \EN_POLARITY 1
     parameter \WIDTH 40
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1780:import_operation$15
+    connect \D $auto$expression.cpp:1787:import_operation$15
     connect \EN \ce
     connect \Q \adder_out
   end
@@ -93,7 +93,7 @@ module \macc
     parameter \EN_POLARITY 1
     parameter \WIDTH 32
     connect \CLK \clk
-    connect \D $auto$expression.cpp:1849:import_operation$13
+    connect \D $auto$expression.cpp:1856:import_operation$13
     connect \EN \ce
     connect \Q \mult_reg
   end
@@ -116,7 +116,7 @@ module \macc
     parameter \Y_WIDTH 32
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:1849:import_operation$13
+    connect \Y $auto$expression.cpp:1856:import_operation$13
   end
   attribute \full_case 1
   attribute \src "dut.sv:18.2-24.27"

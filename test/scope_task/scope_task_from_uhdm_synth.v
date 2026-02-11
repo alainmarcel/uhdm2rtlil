@@ -64,6 +64,27 @@ module scope_task(k, x, y);
   wire _049_;
   wire _050_;
   wire _051_;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:4.21-4.22" *)
+  wire [3:0] \task_01$func$dut.sv:36$2.a ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:5.23-5.29" *)
+  wire [15:0] \task_01$func$dut.sv:36$2.result ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:6.9-6.19" *)
+  wire [15:0] \task_01$func$dut.sv:36$2.temp ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:15.21-15.22" *)
+  wire [3:0] \task_02$func$dut.sv:39$10.a ;
+  (* src = "dut.sv:21.28-21.29" *)
+  wire [15:0] \task_02$func$dut.sv:39$10.foo.bar.x ;
+  (* src = "dut.sv:18.24-18.25" *)
+  wire [15:0] \task_02$func$dut.sv:39$10.foo.x ;
+  (* src = "dut.sv:18.27-18.28" *)
+  wire [15:0] \task_02$func$dut.sv:39$10.foo.z ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:16.23-16.29" *)
+  wire [15:0] \task_02$func$dut.sv:39$10.result ;
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:29.16-29.21" *)
   wire [15:0] temp1;
@@ -391,6 +412,14 @@ module scope_task(k, x, y);
     .B(k[2]),
     .Y(y[4])
   );
+  assign \task_01$func$dut.sv:36$2.a  = 4'hx;
+  assign \task_01$func$dut.sv:36$2.result  = 16'hxxxx;
+  assign \task_01$func$dut.sv:36$2.temp  = 16'hxxxx;
+  assign \task_02$func$dut.sv:39$10.a  = 4'hx;
+  assign \task_02$func$dut.sv:39$10.foo.bar.x  = 16'h00xx;
+  assign \task_02$func$dut.sv:39$10.foo.x  = 16'h0000;
+  assign \task_02$func$dut.sv:39$10.foo.z  = { 11'h7fd, y[4:3], k[2], y[1:0] };
+  assign \task_02$func$dut.sv:39$10.result  = 16'hxxxx;
   assign temp1 = { 6'h00, x[9:1], k[0] };
   assign temp2 = { 11'h7fd, y[4:3], k[2], y[1:0] };
   assign { x[15:10], x[0] } = { 6'h00, k[0] };

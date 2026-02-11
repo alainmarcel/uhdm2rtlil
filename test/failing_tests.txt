@@ -6,8 +6,5 @@
 # The test runner will pass if all failures are listed here
 
 # Tests that currently fail:
-case_expr_const
 forloops
-mem2reg_test1
-scopes
 

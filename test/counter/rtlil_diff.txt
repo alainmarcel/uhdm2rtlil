@@ -23,7 +23,7 @@
 +  wire width 8 $0\count_next
 +  attribute \src "dut.sv:22.5-25.8"
 +  wire $0\overflow
-+  wire width 8 $auto$expression.cpp:1780:import_operation$3
++  wire width 8 $auto$expression.cpp:1787:import_operation$3
 +  wire $auto$rtlil.cc:3026:LogicAnd$8
    attribute \src "dut.sv:24.21-24.43"
    wire $eq$dut.sv:24$5_Y
@@ -48,7 +48,7 @@
      connect \A \count
      connect \B 1'1
 -    connect \Y $add$dut.sv:23$4_Y
-+    connect \Y $auto$expression.cpp:1780:import_operation$3
++    connect \Y $auto$expression.cpp:1787:import_operation$3
    end
    attribute \src "dut.sv:24.21-24.43"
 -  cell $eq $eq$dut.sv:24$5
@@ -130,7 +130,7 @@
 +  process $proc$dut.sv:22$2
 +    assign $0\count_next \count_next
 +    assign $0\overflow \overflow
-+    assign $0\count_next $auto$expression.cpp:1780:import_operation$3
++    assign $0\count_next $auto$expression.cpp:1787:import_operation$3
 +    assign $0\overflow $auto$rtlil.cc:3026:LogicAnd$8
      sync always
 -      update \overflow $0\overflow[0:0]

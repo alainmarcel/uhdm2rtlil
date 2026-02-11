@@ -5,7 +5,7 @@ attribute \cells_not_processed 1
 module \mul_sync_reset_test
   attribute \src "dut.sv:7.5-15.8"
   wire width 9 $0\p[8:0]
-  wire width 9 $auto$expression.cpp:1849:import_operation$2
+  wire width 9 $auto$expression.cpp:1856:import_operation$2
   attribute \src "dut.sv:1.39-1.40"
   wire width 6 input 3 \a
   attribute \src "dut.sv:1.42-1.43"
@@ -24,7 +24,7 @@ module \mul_sync_reset_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1849:import_operation$2
+    connect \Y $auto$expression.cpp:1856:import_operation$2
   end
   attribute \always_ff 1
   attribute \src "dut.sv:7.5-15.8"
@@ -37,7 +37,7 @@ module \mul_sync_reset_test
         assign $0\p[8:0] 9'000000000
       attribute \src "dut.sv:34.13-34.17"
       case 
-        assign $0\p[8:0] $auto$expression.cpp:1849:import_operation$2
+        assign $0\p[8:0] $auto$expression.cpp:1856:import_operation$2
     end
     sync posedge \clk
       update \p $0\p[8:0]
