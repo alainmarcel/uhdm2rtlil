@@ -600,7 +600,11 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         lhs_expr ? lhs_expr->VpiType() : -1,
         lhs_expr ? UHDM::UhdmName(lhs_expr->UhdmType()).c_str() : "null");
     RTLIL::SigSpec lhs = import_expression(lhs_expr);
+    // Set context width from LHS so arithmetic operations produce correctly-sized results
+    // Per Verilog semantics, LHS width propagates into RHS expression evaluation
+    expression_context_width = lhs.size();
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
+    expression_context_width = 0;
     
     log("  Continuous assignment: LHS size=%d, RHS size=%d, is_net_decl=%d\n", 
         lhs.size(), rhs.size(), is_net_decl_assign);
@@ -805,37 +809,43 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         base_module_name = base_module_name.substr(5);
     }
     
-    // Collect parameters to build parameterized module name
-    std::map<std::string, RTLIL::Const> params;
+    // Build parameterized module name using VpiValue format (matching import_module naming)
+    std::string module_name = base_module_name;
+    bool has_params = false;
     if (uhdm_inst->Param_assigns()) {
+        std::string param_string;
         for (auto param : *uhdm_inst->Param_assigns()) {
             std::string param_name = std::string(param->Lhs()->VpiName());
-            
+
             if (auto rhs = param->Rhs()) {
-                RTLIL::SigSpec value = import_expression(any_cast<const expr*>(rhs));
-                
-                if (value.is_fully_const()) {
-                    params[param_name] = value.as_const();
+                if (auto const_val = dynamic_cast<const constant*>(rhs)) {
+                    std::string val_str = std::string(const_val->VpiValue());
+
+                    // Parse value from format like "UINT:5", "INT:5"
+                    size_t colon_pos = val_str.find(':');
+                    std::string value_type = "";
+                    if (colon_pos != std::string::npos) {
+                        value_type = val_str.substr(0, colon_pos);
+                        val_str = val_str.substr(colon_pos + 1);
+                    }
+
+                    if (!val_str.empty() && value_type != "STRING") {
+                        param_string += "\\" + param_name + "=s32'";
+                        try {
+                            int val = std::stoi(val_str);
+                            for (int i = 31; i >= 0; i--) {
+                                param_string += ((val >> i) & 1) ? "1" : "0";
+                            }
+                        } catch (const std::exception& e) {
+                            param_string += "00000000000000000000000000000000";
+                        }
+                        has_params = true;
+                    }
                 }
             }
         }
-    }
-    
-    // Build parameterized module name like Yosys does
-    std::string module_name = base_module_name;
-    if (!params.empty()) {
-        module_name = "$paramod\\" + base_module_name;
-        for (const auto& [pname, pval] : params) {
-            module_name += "\\" + pname + "=";
-            // Format parameter value
-            if (pval.flags & RTLIL::CONST_FLAG_SIGNED) {
-                module_name += "s";
-            }
-            module_name += std::to_string(pval.size()) + "'";
-            // Add binary representation
-            for (int i = pval.size() - 1; i >= 0; i--) {
-                module_name += (pval[i] == RTLIL::State::S1) ? "1" : "0";
-            }
+        if (has_params) {
+            module_name = "$paramod\\" + base_module_name + param_string;
         }
     }
     
@@ -867,233 +877,64 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     // Check if the module definition exists
     RTLIL::IdString module_id = RTLIL::escape_id(module_name);
     if (!design->module(module_id)) {
-        // Module doesn't exist - need to create it
-        // For parameterized modules, we need the base module first
+        // Module doesn't exist - import it using the elaborated UHDM instance
+        // which has parameter-resolved port widths and fully elaborated generate scopes
+        log("UHDM: Module %s doesn't exist, importing from elaborated instance\n", module_name.c_str());
+
+        // Save current module context
+        RTLIL::Module* saved_module = module;
+        const module_inst* saved_instance = current_instance;
+        auto saved_wire_map = wire_map;
+        auto saved_name_map = name_map;
+        auto saved_net_map = net_map;
+        auto saved_gen_scope_stack = gen_scope_stack;
+        auto saved_initial_signal_assignments = initial_signal_assignments;
+
+        // Import the elaborated instance as a module
+        // import_module() will build the correct parameterized name,
+        // import ports with resolved widths, and import generate scopes
+        import_module(uhdm_inst);
+
+        // Restore context
+        module = saved_module;
+        current_instance = saved_instance;
+        wire_map = saved_wire_map;
+        name_map = saved_name_map;
+        net_map = saved_net_map;
+        gen_scope_stack = saved_gen_scope_stack;
+        initial_signal_assignments = saved_initial_signal_assignments;
+
+        // Also import the base (non-parameterized) module if it doesn't exist
         RTLIL::IdString base_module_id = RTLIL::escape_id(base_module_name);
         if (!design->module(base_module_id)) {
-            // Base module doesn't exist either - need to import it from UHDM
             if (uhdm_design && uhdm_design->AllModules()) {
-                // Search for the module definition in AllModules
                 for (const module_inst* mod_def : *uhdm_design->AllModules()) {
                     std::string def_name = std::string(mod_def->VpiDefName());
                     if (def_name.find("work@") == 0) {
                         def_name = def_name.substr(5);
                     }
                     if (def_name == base_module_name) {
-                        log("UHDM: Found module definition for %s, importing it\n", base_module_name.c_str());
-                        // Save current module context
-                        RTLIL::Module* saved_module = module;
-                        const module_inst* saved_instance = current_instance;
-                        
-                        // Save parent module's maps
-                        auto saved_wire_map = wire_map;
-                        auto saved_name_map = name_map;
-                        
-                        // Import the module definition
+                        RTLIL::Module* saved_module2 = module;
+                        const module_inst* saved_instance2 = current_instance;
+                        auto saved_wire_map2 = wire_map;
+                        auto saved_name_map2 = name_map;
+                        auto saved_net_map2 = net_map;
+                        auto saved_gen_scope_stack2 = gen_scope_stack;
+                        auto saved_initial2 = initial_signal_assignments;
+
                         import_module(mod_def);
-                        
-                        // Restore context
-                        module = saved_module;
-                        current_instance = saved_instance;
-                        
-                        // Restore parent module's maps
-                        wire_map = saved_wire_map;
-                        name_map = saved_name_map;
+
+                        module = saved_module2;
+                        current_instance = saved_instance2;
+                        wire_map = saved_wire_map2;
+                        name_map = saved_name_map2;
+                        net_map = saved_net_map2;
+                        gen_scope_stack = saved_gen_scope_stack2;
+                        initial_signal_assignments = saved_initial2;
                         break;
                     }
                 }
             }
-        }
-        
-        // Now create the parameterized version if needed
-        if (!params.empty() && design->module(base_module_id)) {
-            log("UHDM: Creating parameterized module %s\n", module_name.c_str());
-            RTLIL::Module* base_mod = design->module(base_module_id);
-            RTLIL::Module* param_mod = design->addModule(module_id);
-            
-            // Copy attributes from base module
-            param_mod->attributes = base_mod->attributes;
-            // Add hdlname attribute with the original module name
-            param_mod->attributes[RTLIL::escape_id("hdlname")] = RTLIL::Const(base_module_name);
-            param_mod->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
-            // Mark the module as parametric - this is crucial!
-            param_mod->avail_parameters = base_mod->avail_parameters;
-            if (param_mod->avail_parameters.empty()) {
-                // If base module doesn't have parameters declared, add them
-                for (const auto& [pname, pval] : params) {
-                    param_mod->avail_parameters(RTLIL::escape_id(pname));
-                }
-            }
-            
-            param_mod->parameter_default_values = base_mod->parameter_default_values;
-            
-            // Update parameters
-            for (const auto& [pname, pval] : params) {
-                param_mod->parameter_default_values[RTLIL::escape_id(pname)] = pval;
-            }
-            
-            // Copy and resize wires/ports based on WIDTH parameter
-            int width = params.count("WIDTH") ? params.at("WIDTH").as_int() : 8;
-            for (auto &wire_pair : base_mod->wires_) {
-                RTLIL::Wire* base_wire = wire_pair.second;
-                
-                // For interface ports, keep width as 1
-                int wire_width = width;
-                if (base_wire->attributes.count(RTLIL::escape_id("is_interface"))) {
-                    wire_width = 1;
-                }
-                
-                RTLIL::Wire* param_wire = param_mod->addWire(base_wire->name, wire_width);
-                param_wire->attributes = base_wire->attributes;
-                param_wire->port_id = base_wire->port_id;
-                param_wire->port_input = base_wire->port_input;
-                param_wire->port_output = base_wire->port_output;
-                
-            }
-            
-            // Import the module contents from UHDM for this parameterized instance
-            // This ensures cells are created with proper wire references
-            if (uhdm_design && uhdm_design->AllModules()) {
-                // Find the UHDM module definition
-                for (const module_inst* mod_def : *uhdm_design->AllModules()) {
-                    std::string def_name = std::string(mod_def->VpiDefName());
-                    if (def_name.find("work@") == 0) {
-                        def_name = def_name.substr(5);
-                    }
-                    if (def_name == base_module_name) {
-                        // Save current module context
-                        RTLIL::Module* saved_module = module;
-                        const module_inst* saved_instance = current_instance;
-                        
-                        // Save parent module's maps
-                        auto saved_wire_map = wire_map;
-                        auto saved_name_map = name_map;
-                        
-                        // Set context to the parameterized module
-                        module = param_mod;
-                        current_instance = mod_def;
-                        
-                        // Clear wire and name maps for clean import
-                        wire_map.clear();
-                        name_map.clear();
-                        
-                        // Map the parameterized wires we already created
-                        for (auto &wire_pair : param_mod->wires_) {
-                            name_map[wire_pair.first.str().substr(1)] = wire_pair.second;
-                            
-                            // Check if this is an interface port that needs interface_type attribute
-                            RTLIL::Wire* param_wire = wire_pair.second;
-                            if (param_wire->attributes.count(RTLIL::escape_id("is_interface")) &&
-                                !param_wire->attributes.count(RTLIL::escape_id("interface_type"))) {
-                                // Find the corresponding port in the module definition
-                                if (mod_def->Ports()) {
-                                    for (auto port : *mod_def->Ports()) {
-                                        std::string port_name = std::string(port->VpiName());
-                                        if (RTLIL::escape_id(port_name) == param_wire->name.str()) {
-                                            // Found the port, check if it has interface typespec
-                                            if (port->Typespec()) {
-                                                const UHDM::ref_typespec* ref_typespec = port->Typespec();
-                                                const UHDM::typespec* typespec = nullptr;
-                                                
-                                                if (ref_typespec && ref_typespec->Actual_typespec()) {
-                                                    typespec = ref_typespec->Actual_typespec();
-                                                }
-                                                
-                                                if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
-                                                    const UHDM::interface_typespec* iface_ts = any_cast<const UHDM::interface_typespec*>(typespec);
-                                                    
-                                                    std::string interface_type;
-                                                    std::string modport_name;
-                                                    
-                                                    // Check if this is a modport
-                                                    if (iface_ts->VpiIsModPort()) {
-                                                        modport_name = std::string(iface_ts->VpiName());
-                                                        
-                                                        // The parent should be the actual interface typespec
-                                                        if (iface_ts->VpiParent() && iface_ts->VpiParent()->UhdmType() == uhdminterface_typespec) {
-                                                            const UHDM::interface_typespec* parent_iface_ts = 
-                                                                any_cast<const UHDM::interface_typespec*>(iface_ts->VpiParent());
-                                                            interface_type = std::string(parent_iface_ts->VpiName());
-                                                        }
-                                                    } else {
-                                                        interface_type = std::string(iface_ts->VpiName());
-                                                    }
-                                                    
-                                                    if (!interface_type.empty()) {
-                                                        if (interface_type.find("work@") == 0) {
-                                                            interface_type = interface_type.substr(5);
-                                                        }
-                                                        
-                                                        // Check if we need to use a parameterized interface name
-                                                        // The parameterized module has WIDTH parameter, so we should check if
-                                                        // a parameterized interface with the same WIDTH exists
-                                                        std::string final_interface_type = interface_type;
-                                                        if (param_mod->parameter_default_values.count(RTLIL::escape_id("WIDTH"))) {
-                                                            // Build the parameterized interface name
-                                                            std::string param_interface_name = "$paramod\\" + interface_type;
-                                                            param_interface_name += "\\WIDTH=";
-                                                            RTLIL::Const width_val = param_mod->parameter_default_values.at(RTLIL::escape_id("WIDTH"));
-                                                            if (width_val.flags & RTLIL::CONST_FLAG_SIGNED) {
-                                                                param_interface_name += "s";
-                                                            }
-                                                            param_interface_name += std::to_string(width_val.size()) + "'";
-                                                            // Add binary representation
-                                                            for (int i = width_val.size() - 1; i >= 0; i--) {
-                                                                param_interface_name += (width_val[i] == RTLIL::State::S1) ? "1" : "0";
-                                                            }
-                                                            
-                                                            // Check if this parameterized interface module exists
-                                                            if (design->module(RTLIL::escape_id(param_interface_name))) {
-                                                                final_interface_type = param_interface_name;
-                                                                log("UHDM: Using parameterized interface name: %s\n", final_interface_type.c_str());
-                                                            }
-                                                        }
-                                                        
-                                                        param_wire->attributes[RTLIL::escape_id("interface_type")] = RTLIL::Const("\\" + final_interface_type);
-                                                        log("UHDM: Added interface_type attribute '%s' to parameterized module wire '%s'\n", 
-                                                            final_interface_type.c_str(), param_wire->name.c_str());
-                                                    }
-                                                    
-                                                    if (!modport_name.empty()) {
-                                                        param_wire->attributes[RTLIL::escape_id("interface_modport")] = RTLIL::Const(modport_name);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Import continuous assignments
-                        if (mod_def->Cont_assigns()) {
-                            for (auto cont_assign : *mod_def->Cont_assigns()) {
-                                import_continuous_assign(cont_assign);
-                            }
-                        }
-                        
-                        // Import always blocks
-                        if (mod_def->Process()) {
-                            for (auto process : *mod_def->Process()) {
-                                import_process(process);
-                            }
-                        }
-                        
-                        // Restore context
-                        module = saved_module;
-                        current_instance = saved_instance;
-                        
-                        // Restore the parent module's maps
-                        wire_map = saved_wire_map;
-                        name_map = saved_name_map;
-                        
-                        break;
-                    }
-                }
-            }
-            
-            param_mod->fixup_ports();
         }
     }
     

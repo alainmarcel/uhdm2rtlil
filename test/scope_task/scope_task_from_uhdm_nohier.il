@@ -27,10 +27,10 @@ module \scope_task
   wire width 16 $0\x
   attribute \src "dut.sv:31.5-41.8"
   wire width 16 $0\y
-  wire width 16 $auto$expression.cpp:1658:import_operation$18
-  wire width 64 $auto$expression.cpp:1824:import_operation$16
-  wire width 16 $auto$expression.cpp:1824:import_operation$8
-  wire width 68 $auto$expression.cpp:1893:import_operation$6
+  wire width 16 $auto$expression.cpp:1782:import_operation$18
+  wire width 64 $auto$expression.cpp:1951:import_operation$16
+  wire width 16 $auto$expression.cpp:1951:import_operation$8
+  wire width 68 $auto$expression.cpp:2023:import_operation$6
   wire width 16 $auto$rtlil.cc:3008:Xor$21
   attribute \src "dut.sv:1.31-1.32"
   wire width 4 input 1 \k
@@ -73,7 +73,7 @@ module \scope_task
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000001001101
     connect \B \k
-    connect \Y $auto$expression.cpp:1824:import_operation$16
+    connect \Y $auto$expression.cpp:1951:import_operation$16
   end
   cell $add $add$dut.sv:9$9
     parameter \A_SIGNED 0
@@ -82,8 +82,8 @@ module \scope_task
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
-    connect \B $auto$expression.cpp:1893:import_operation$6 [15:0]
-    connect \Y $auto$expression.cpp:1824:import_operation$8
+    connect \B $auto$expression.cpp:2023:import_operation$6 [15:0]
+    connect \Y $auto$expression.cpp:1951:import_operation$8
   end
   cell $mul $mul$dut.sv:8$7
     parameter \A_SIGNED 0
@@ -93,14 +93,14 @@ module \scope_task
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y $auto$expression.cpp:1893:import_operation$6
+    connect \Y $auto$expression.cpp:2023:import_operation$6
   end
   cell $neg $neg$dut.sv:23$19
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:1824:import_operation$16 [15:0]
-    connect \Y $auto$expression.cpp:1658:import_operation$18
+    connect \A $auto$expression.cpp:1951:import_operation$16 [15:0]
+    connect \Y $auto$expression.cpp:1782:import_operation$18
   end
   cell $xor $xor$dut.sv:25$20
     parameter \A_SIGNED 0
@@ -109,7 +109,7 @@ module \scope_task
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000000000
-    connect \B $auto$expression.cpp:1658:import_operation$18
+    connect \B $auto$expression.cpp:1782:import_operation$18
     connect \Y $auto$rtlil.cc:3008:Xor$21
   end
   attribute \src "dut.sv:31.5-41.8"
@@ -121,14 +121,14 @@ module \scope_task
     assign $0\x 16'0000000000111100
     assign $0\y 16'0000000000000000
     assign $0\task_01$func$dut.sv:36$2.a[3:0]$3 \k
-    assign $0\task_01$func$dut.sv:36$2.temp[15:0]$5 $auto$expression.cpp:1893:import_operation$6 [15:0]
-    assign $0\task_01$func$dut.sv:36$2.result[15:0]$4 $auto$expression.cpp:1824:import_operation$8
-    assign $0\temp1 $auto$expression.cpp:1824:import_operation$8
-    assign $0\x $auto$expression.cpp:1824:import_operation$8
+    assign $0\task_01$func$dut.sv:36$2.temp[15:0]$5 $auto$expression.cpp:2023:import_operation$6 [15:0]
+    assign $0\task_01$func$dut.sv:36$2.result[15:0]$4 $auto$expression.cpp:1951:import_operation$8
+    assign $0\temp1 $auto$expression.cpp:1951:import_operation$8
+    assign $0\x $auto$expression.cpp:1951:import_operation$8
     assign $0\task_02$func$dut.sv:39$10.a[3:0]$11 \k
     assign $0\task_02$func$dut.sv:39$10.foo.x[15:0]$13 16'0000000000000000
-    assign $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15 $auto$expression.cpp:1824:import_operation$16 [15:0]
-    assign $0\task_02$func$dut.sv:39$10.foo.z[15:0]$14 $auto$expression.cpp:1658:import_operation$18
+    assign $0\task_02$func$dut.sv:39$10.foo.bar.x[15:0]$15 $auto$expression.cpp:1951:import_operation$16 [15:0]
+    assign $0\task_02$func$dut.sv:39$10.foo.z[15:0]$14 $auto$expression.cpp:1782:import_operation$18
     assign $0\task_02$func$dut.sv:39$10.result[15:0]$12 $auto$rtlil.cc:3008:Xor$21
     assign $0\temp2 $auto$rtlil.cc:3008:Xor$21
     assign $0\y $auto$rtlil.cc:3008:Xor$21

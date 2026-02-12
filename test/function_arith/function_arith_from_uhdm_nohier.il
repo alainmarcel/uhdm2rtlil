@@ -17,9 +17,9 @@ module \function_arith
   wire width 8 $0\func_arith$func$dut.sv:25$2.z$6
   attribute \src "dut.sv:25.18-25.37"
   wire width 8 $1\func_arith$func$dut.sv:25$2.$result$8
-  wire width 8 $auto$expression.cpp:1824:import_operation$10
-  wire width 8 $auto$expression.cpp:1847:import_operation$12
-  wire width 8 $auto$expression.cpp:1942:import_operation$14
+  wire width 8 $auto$expression.cpp:1951:import_operation$10
+  wire width 8 $auto$expression.cpp:1977:import_operation$12
+  wire width 8 $auto$expression.cpp:2072:import_operation$14
   wire width 8 $auto$rtlil.cc:3006:And$17
   wire width 8 $auto$rtlil.cc:3007:Or$19
   wire width 8 $auto$rtlil.cc:3008:Xor$21
@@ -48,7 +48,7 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $0\func_arith$func$dut.sv:25$2.x$4
     connect \B $0\func_arith$func$dut.sv:25$2.y$5
-    connect \Y $auto$expression.cpp:1824:import_operation$10
+    connect \Y $auto$expression.cpp:1951:import_operation$10
   end
   cell $and $and$dut.sv:19$16
     parameter \A_SIGNED 0
@@ -78,7 +78,7 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1942:import_operation$14
+    connect \Y $auto$expression.cpp:2072:import_operation$14
   end
   cell $sub $sub$dut.sv:17$13
     parameter \A_SIGNED 0
@@ -88,7 +88,7 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B $0\func_arith$func$dut.sv:25$2.z$6
-    connect \Y $auto$expression.cpp:1847:import_operation$12
+    connect \Y $auto$expression.cpp:1977:import_operation$12
   end
   cell $xor $xor$dut.sv:20$20
     parameter \A_SIGNED 0
@@ -112,9 +112,9 @@ module \function_arith
     assign $0\func_arith$func$dut.sv:25$2.z$6 \c
     assign $0\func_arith$func$dut.sv:25$2.$result$7 $1\func_arith$func$dut.sv:25$2.$result$8
     assign $0\func_arith$func$dut.sv:25$1.$result$9 $1\func_arith$func$dut.sv:25$2.$result$8
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1824:import_operation$10
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1847:import_operation$12
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1942:import_operation$14
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1951:import_operation$10
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:1977:import_operation$12
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2072:import_operation$14
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$rtlil.cc:3007:Or$19
     assign $1\func_arith$func$dut.sv:25$2.$result$8 $auto$rtlil.cc:3008:Xor$21
     sync always

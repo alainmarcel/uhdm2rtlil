@@ -12,8 +12,8 @@ end
 attribute \src "dut.sv:8.1-40.10"
 attribute \cells_not_processed 1
 module \unbased_unsized
-  wire width 64 $auto$module.cpp:650:import_continuous_assign$1
-  wire width 64 $auto$module.cpp:650:import_continuous_assign$3
+  wire width 64 $auto$module.cpp:654:import_continuous_assign$1
+  wire width 64 $auto$module.cpp:654:import_continuous_assign$3
   wire $auto$process.cpp:32:import_immediate_assert$12
   wire $auto$process.cpp:32:import_immediate_assert$16
   wire $auto$process.cpp:32:import_immediate_assert$20
@@ -70,19 +70,19 @@ module \unbased_unsized
   wire width 64 \o15
   attribute \src "dut.sv:13.24-13.27"
   wire width 64 \o16
-  cell $pos $auto$module.cpp:651:import_continuous_assign$2
+  cell $pos $auto$module.cpp:655:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'x
-    connect \Y $auto$module.cpp:650:import_continuous_assign$1
+    connect \Y $auto$module.cpp:654:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:651:import_continuous_assign$4
+  cell $pos $auto$module.cpp:655:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'zzz
-    connect \Y $auto$module.cpp:650:import_continuous_assign$3
+    connect \Y $auto$module.cpp:654:import_continuous_assign$3
   end
   attribute \src "dut.sv:28.9-28.38"
   cell $check $auto$process.cpp:39:import_immediate_assert$13
@@ -422,6 +422,6 @@ module \unbased_unsized
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
-  connect \o07 $auto$module.cpp:650:import_continuous_assign$1
-  connect \o08 $auto$module.cpp:650:import_continuous_assign$3
+  connect \o07 $auto$module.cpp:654:import_continuous_assign$1
+  connect \o08 $auto$module.cpp:654:import_continuous_assign$3
 end

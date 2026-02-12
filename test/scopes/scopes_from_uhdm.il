@@ -8,11 +8,11 @@ module \scopes_test_01
   attribute \src "dut.sv:52.3-52.13"
   wire width 16 $0\task_01$func$dut.sv:52$2.y[15:0]$4
   attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1824:import_operation$14
-  wire width 16 $auto$expression.cpp:1824:import_operation$26
-  wire width 16 $auto$expression.cpp:1824:import_operation$7
+  wire width 64 $auto$expression.cpp:1951:import_operation$14
+  wire width 16 $auto$expression.cpp:1951:import_operation$26
+  wire width 16 $auto$expression.cpp:1951:import_operation$7
   attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67"
-  wire width 68 $auto$expression.cpp:1893:import_operation$5
+  wire width 68 $auto$expression.cpp:2023:import_operation$5
   wire width 16 $auto$rtlil.cc:3008:Xor$30
   attribute \src "dut.sv:55.15-55.16"
   wire width 16 \foo.y
@@ -61,7 +61,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
     connect \B $0\task_01$func$dut.sv:52$2.y[15:0]$4
-    connect \Y $auto$expression.cpp:1824:import_operation$7
+    connect \Y $auto$expression.cpp:1951:import_operation$7
   end
   cell $add $add$dut.sv:42$15
     parameter \A_SIGNED 0
@@ -71,7 +71,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000001001101
     connect \B \k
-    connect \Y { $auto$expression.cpp:1824:import_operation$14 [63:16] \task_02$func$dut.sv:53$9.foo.bar.x }
+    connect \Y { $auto$expression.cpp:1951:import_operation$14 [63:16] \task_02$func$dut.sv:53$9.foo.bar.x }
   end
   cell $add $add$dut.sv:5$27
     parameter \A_SIGNED 0
@@ -81,7 +81,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 16
     connect \A { $0\func_01$func$dut.sv:60$22.x[15:0]$23 [15:4] \task_02$func$dut.sv:53$9.foo.z [3] $0\func_01$func$dut.sv:60$22.x[15:0]$23 [2] \task_02$func$dut.sv:53$9.foo.z [1] $0\func_01$func$dut.sv:60$22.x[15:0]$23 [0] }
     connect \B \foo.y
-    connect \Y $auto$expression.cpp:1824:import_operation$26
+    connect \Y $auto$expression.cpp:1951:import_operation$26
   end
   cell $add $add$dut.sv:57$21
     parameter \A_SIGNED 0
@@ -89,7 +89,7 @@ module \scopes_test_01
     parameter \B_SIGNED 0
     parameter \B_WIDTH 4
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:1824:import_operation$7
+    connect \A $auto$expression.cpp:1951:import_operation$7
     connect \B \k
     connect \Y \foo.y
   end
@@ -108,7 +108,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y { $auto$expression.cpp:1893:import_operation$5 [67:16] $0\task_01$func$dut.sv:52$2.y[15:0]$4 }
+    connect \Y { $auto$expression.cpp:2023:import_operation$5 [67:16] $0\task_01$func$dut.sv:52$2.y[15:0]$4 }
   end
   cell $neg $neg$dut.sv:43$17
     parameter \A_SIGNED 1
@@ -143,13 +143,13 @@ module \scopes_test_01
     parameter \B_SIGNED 0
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:1824:import_operation$26
+    connect \A $auto$expression.cpp:1951:import_operation$26
     connect \B \foo.y
     connect \Y $auto$rtlil.cc:3008:Xor$30
   end
   connect { $0\func_01$func$dut.sv:60$22.x[15:0]$23 [3] $0\func_01$func$dut.sv:60$22.x[15:0]$23 [1] } { \task_02$func$dut.sv:53$9.foo.z [3] \task_02$func$dut.sv:53$9.foo.z [1] }
-  connect $auto$expression.cpp:1824:import_operation$14 [15:0] \task_02$func$dut.sv:53$9.foo.bar.x
-  connect $auto$expression.cpp:1893:import_operation$5 [15:0] $0\task_01$func$dut.sv:52$2.y[15:0]$4
+  connect $auto$expression.cpp:1951:import_operation$14 [15:0] \task_02$func$dut.sv:53$9.foo.bar.x
+  connect $auto$expression.cpp:2023:import_operation$5 [15:0] $0\task_01$func$dut.sv:52$2.y[15:0]$4
   connect \func_01$func$dut.sv:60$22.blk.x \foo.y
   connect \func_01$func$dut.sv:60$22.x 16'x
   connect \func_01$func$dut.sv:60$22.y 16'x
