@@ -235,6 +235,10 @@ struct UhdmImporter {
         return path;
     }
     
+    // Context width for expression evaluation (from LHS of continuous assignments)
+    // Used to propagate LHS width into arithmetic operations per Verilog semantics
+    int expression_context_width = 0;
+
     // Loop variable values for unrolling
     std::map<std::string, int> loop_values;
     

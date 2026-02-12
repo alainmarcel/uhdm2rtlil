@@ -16,20 +16,25 @@ module param_test(clk, rst, data_in, data_out);
   (* src = "dut.sv:9.29-9.37" *)
   output [7:0] data_out;
   wire [7:0] data_out;
-  wire [1:0] _00_;
-  \$_ANDNOT_  _01_ (
-    .A(data_in[0]),
-    .B(rst),
-    .Y(_00_[0])
-  );
-  \$_ANDNOT_  _02_ (
-    .A(data_in[1]),
-    .B(rst),
-    .Y(_00_[1])
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.5-18.8" *)
+  \$_SDFF_PP0_  \data_out_reg[0]  /* _0_ */ (
+    .C(clk),
+    .D(data_in[0]),
+    .Q(data_out[0]),
+    .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[2]  /* _03_ */ (
+  \$_SDFF_PP1_  \data_out_reg[1]  /* _1_ */ (
+    .C(clk),
+    .D(data_in[1]),
+    .Q(data_out[1]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.5-18.8" *)
+  \$_SDFF_PP0_  \data_out_reg[2]  /* _2_ */ (
     .C(clk),
     .D(data_in[2]),
     .Q(data_out[2]),
@@ -37,7 +42,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[3]  /* _04_ */ (
+  \$_SDFF_PP1_  \data_out_reg[3]  /* _3_ */ (
     .C(clk),
     .D(data_in[3]),
     .Q(data_out[3]),
@@ -45,7 +50,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[4]  /* _05_ */ (
+  \$_SDFF_PP0_  \data_out_reg[4]  /* _4_ */ (
     .C(clk),
     .D(data_in[4]),
     .Q(data_out[4]),
@@ -53,7 +58,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[5]  /* _06_ */ (
+  \$_SDFF_PP1_  \data_out_reg[5]  /* _5_ */ (
     .C(clk),
     .D(data_in[5]),
     .Q(data_out[5]),
@@ -61,7 +66,7 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[6]  /* _07_ */ (
+  \$_SDFF_PP0_  \data_out_reg[6]  /* _6_ */ (
     .C(clk),
     .D(data_in[6]),
     .Q(data_out[6]),
@@ -69,24 +74,10 @@ module param_test(clk, rst, data_in, data_out);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:13.5-18.8" *)
-  \$_SDFF_PP0_  \data_out_reg[7]  /* _08_ */ (
+  \$_SDFF_PP1_  \data_out_reg[7]  /* _7_ */ (
     .C(clk),
     .D(data_in[7]),
     .Q(data_out[7]),
     .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_P_  \data_out_reg[0]  /* _09_ */ (
-    .C(clk),
-    .D(_00_[0]),
-    .Q(data_out[0])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:13.5-18.8" *)
-  \$_DFF_P_  \data_out_reg[1]  /* _10_ */ (
-    .C(clk),
-    .D(_00_[1]),
-    .Q(data_out[1])
   );
 endmodule

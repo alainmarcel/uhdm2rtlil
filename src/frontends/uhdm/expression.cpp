@@ -31,6 +31,8 @@
 #include <uhdm/begin.h>
 #include <uhdm/named_begin.h>
 #include <uhdm/if_else.h>
+#include <uhdm/var_select.h>
+#include <uhdm/array_net.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -1039,6 +1041,105 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
             return import_hier_path(any_cast<const hier_path*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
         case vpiIndexedPartSelect:
             return import_indexed_part_select(any_cast<const indexed_part_select*>(uhdm_expr), current_scope ? current_scope : current_instance, input_mapping);
+        case vpiVarSelect:
+            // Handle variable array selection: array[index] or array[index][part_select]
+            {
+                const var_select* vs = any_cast<const var_select*>(uhdm_expr);
+                std::string base_name = std::string(vs->VpiName());
+                log("  import_expression: vpiVarSelect base='%s'\n", base_name.c_str());
+
+                // Get the indices from Exprs()
+                auto exprs = vs->Exprs();
+                if (!exprs || exprs->empty()) {
+                    log_warning("vpiVarSelect '%s' has no index expressions\n", base_name.c_str());
+                    return RTLIL::SigSpec();
+                }
+
+                // First expression should be the array index
+                const expr* first_idx = (*exprs)[0];
+                RTLIL::SigSpec idx_sig = import_expression(first_idx, input_mapping);
+
+                if (!idx_sig.is_fully_const()) {
+                    log_warning("vpiVarSelect '%s': non-constant array index\n", base_name.c_str());
+                    return RTLIL::SigSpec();
+                }
+
+                int array_idx = idx_sig.as_const().as_int();
+                std::string element_name = base_name + "[" + std::to_string(array_idx) + "]";
+                log("  vpiVarSelect: resolved to element '%s'\n", element_name.c_str());
+
+                // Find the wire for this array element
+                RTLIL::Wire* element_wire = nullptr;
+
+                // Try with generate scope prefix
+                std::string gen_scope = get_current_gen_scope();
+                if (!gen_scope.empty()) {
+                    std::string hier_name = gen_scope + "." + element_name;
+                    if (name_map.count(hier_name))
+                        element_wire = name_map[hier_name];
+                }
+
+                // Try direct name
+                if (!element_wire && name_map.count(element_name))
+                    element_wire = name_map[element_name];
+
+                // Try escaped RTLIL name
+                if (!element_wire) {
+                    RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                    element_wire = module->wire(wire_id);
+                }
+
+                if (!element_wire) {
+                    log_warning("vpiVarSelect: wire '%s' not found\n", element_name.c_str());
+                    return RTLIL::SigSpec();
+                }
+
+                RTLIL::SigSpec result(element_wire);
+
+                // If there's a second expression (part_select), apply it
+                if (exprs->size() > 1) {
+                    const expr* second_idx = (*exprs)[1];
+                    if (second_idx->VpiType() == vpiPartSelect) {
+                        const part_select* ps = any_cast<const part_select*>(second_idx);
+                        const expr* left_range = ps->Left_range();
+                        const expr* right_range = ps->Right_range();
+
+                        RTLIL::SigSpec left_sig = import_expression(left_range, input_mapping);
+                        RTLIL::SigSpec right_sig = import_expression(right_range, input_mapping);
+
+                        if (left_sig.is_fully_const() && right_sig.is_fully_const()) {
+                            int left_val = left_sig.as_const().as_int();
+                            int right_val = right_sig.as_const().as_int();
+                            int width = std::abs(left_val - right_val) + 1;
+                            int offset = std::min(left_val, right_val);
+
+                            log("  vpiVarSelect: part select [%d:%d] on %d-bit wire\n",
+                                left_val, right_val, element_wire->width);
+
+                            if (offset + width <= element_wire->width) {
+                                result = result.extract(offset, width);
+                            } else {
+                                log_warning("vpiVarSelect: part select [%d:%d] out of range for %d-bit wire '%s'\n",
+                                    left_val, right_val, element_wire->width, element_name.c_str());
+                            }
+                        } else {
+                            log_warning("vpiVarSelect: non-constant part select on '%s'\n", element_name.c_str());
+                        }
+                    } else if (second_idx->VpiType() == vpiBitSelect) {
+                        // Single bit select
+                        RTLIL::SigSpec bit_sig = import_expression(second_idx, input_mapping);
+                        if (bit_sig.is_fully_const()) {
+                            int bit_idx = bit_sig.as_const().as_int();
+                            if (bit_idx < element_wire->width) {
+                                result = result.extract(bit_idx, 1);
+                            }
+                        }
+                    }
+                }
+
+                log("  vpiVarSelect: result size=%d\n", result.size());
+                return result;
+            }
         case vpiPort:
             // Handle port as expression - this happens when ports are referenced in connections
             {
@@ -1631,6 +1732,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result = RTLIL::const_ge(operands[0].as_const(), operands[1].as_const(), false, false, 1);
                 }
                 break;
+            case vpiMultiConcatOp:
+                if (operands.size() == 2) {
+                    int rep_count = operands[0].as_const().as_int();
+                    RTLIL::Const inner = operands[1].as_const();
+                    RTLIL::Const rep_result;
+                    for (int i = 0; i < rep_count; i++) {
+                        for (auto bit : inner.bits())
+                            rep_result.bits().push_back(bit);
+                    }
+                    result = rep_result;
+                }
+                break;
+            case vpiConcatOp:
+                if (operands.size() >= 1) {
+                    RTLIL::Const concat_result;
+                    for (int i = operands.size() - 1; i >= 0; i--) {
+                        RTLIL::Const op_const = operands[i].as_const();
+                        for (auto bit : op_const.bits())
+                            concat_result.bits().push_back(bit);
+                    }
+                    result = concat_result;
+                }
+                break;
             default:
                 can_evaluate = false;
                 break;
@@ -1820,7 +1944,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiAddOp:
             if (operands.size() == 2) {
                 // For addition, create an add cell
+                // Use context width from LHS if available (Verilog context-determined sizing)
                 int result_width = std::max(operands[0].size(), operands[1].size());
+                if (expression_context_width > result_width)
+                    result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed
@@ -1843,7 +1970,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiSubOp:
             if (operands.size() == 2) {
                 // For subtraction, create a sub cell
+                // Use context width from LHS if available (Verilog context-determined sizing)
                 int result_width = std::max(operands[0].size(), operands[1].size());
+                if (expression_context_width > result_width)
+                    result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed
@@ -2107,6 +2237,33 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        case vpiMultiConcatOp:
+            // Repeated concatenation {count{expr}}
+            {
+                if (operands.size() == 2) {
+                    // First operand is the replication count (must be constant)
+                    if (!operands[0].is_fully_const()) {
+                        log_warning("Non-constant replication count in multi-concat\n");
+                        return RTLIL::SigSpec();
+                    }
+                    int rep_count = operands[0].as_const().as_int();
+                    log_debug("UHDM: Processing vpiMultiConcatOp: replicating %d-bit signal %d times\n",
+                              operands[1].size(), rep_count);
+                    if (rep_count <= 0) {
+                        log_warning("Invalid replication count %d in multi-concat\n", rep_count);
+                        return RTLIL::SigSpec();
+                    }
+                    RTLIL::SigSpec result;
+                    for (int i = 0; i < rep_count; i++) {
+                        result.append(operands[1]);
+                    }
+                    log_debug("UHDM: Multi-concat result size: %d\n", result.size());
+                    return result;
+                }
+                log_warning("vpiMultiConcatOp: expected 2 operands, got %d\n", (int)operands.size());
+                return RTLIL::SigSpec();
+            }
+            break;
         case vpiCastOp:
             // Cast operation like 3'('x) or 64'(value)
             log("    Processing cast operation\n");
@@ -2354,49 +2511,45 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         
         if (actual->VpiType() == vpiParameter) {
             const parameter* param = any_cast<const parameter*>(actual);
-            // Get the parameter value - parameters typically store values as constants
-            std::string val_str = std::string(param->VpiValue());
-            
-            // Parse value from format like "UINT:0", "UINT:1", "HEX:AA", etc.
+            std::string param_name = std::string(param->VpiName());
+
+            // For parameterized modules, prefer the module's actual parameter value
+            // over the base module's VpiValue (which may be the unelaborated default)
             RTLIL::Const param_value;
-            if (!val_str.empty()) {
-                size_t colon_pos = val_str.find(':');
-                if (colon_pos != std::string::npos) {
-                    std::string type_part = val_str.substr(0, colon_pos);
-                    std::string value_part = val_str.substr(colon_pos + 1);
-                    
-                    if (type_part == "HEX") {
-                        // Parse hexadecimal value
-                        param_value = RTLIL::Const::from_string(value_part);
-                    } else if (type_part == "BIN") {
-                        // Parse binary value
-                        param_value = RTLIL::Const::from_string(value_part);
+            RTLIL::IdString p_id = RTLIL::escape_id(param_name);
+            if (module->parameter_default_values.count(p_id)) {
+                param_value = module->parameter_default_values.at(p_id);
+                if (mode_debug)
+                    log("UHDM: Using module parameter %s value %s (overrides base VpiValue)\n",
+                        param_name.c_str(), param_value.as_string().c_str());
+            } else {
+                // Fall back to VpiValue from the UHDM parameter object
+                std::string val_str = std::string(param->VpiValue());
+
+                // Parse value from format like "UINT:0", "UINT:1", "HEX:AA", etc.
+                if (!val_str.empty()) {
+                    size_t colon_pos = val_str.find(':');
+                    if (colon_pos != std::string::npos) {
+                        std::string type_part = val_str.substr(0, colon_pos);
+                        std::string value_part = val_str.substr(colon_pos + 1);
+
+                        if (type_part == "HEX") {
+                            param_value = RTLIL::Const::from_string(value_part);
+                        } else if (type_part == "BIN") {
+                            param_value = RTLIL::Const::from_string(value_part);
+                        } else {
+                            param_value = RTLIL::Const(std::stoi(value_part), 32);
+                        }
                     } else {
-                        // Parse as decimal integer (UINT, INT)
-                        param_value = RTLIL::Const(std::stoi(value_part), 32);
+                        param_value = RTLIL::Const(std::stoi(val_str), 32);
                     }
                 } else {
-                    // Try to parse as integer directly
-                    param_value = RTLIL::Const(std::stoi(val_str), 32);
-                }
-            } else {
-                // If no VpiValue, check if there's an expression
-                if (param->Expr()) {
-                    RTLIL::SigSpec expr_val = import_expression(any_cast<const expr*>(param->Expr()));
-                    if (expr_val.is_fully_const()) {
-                        param_value = expr_val.as_const();
-                    }
-                }
-                
-                // If still no value, try looking up the parameter by name in the module
-                if (param_value.size() == 0) {
-                    std::string param_name = std::string(param->VpiName());
-                    RTLIL::IdString param_id = RTLIL::escape_id(param_name);
-                    if (module->parameter_default_values.count(param_id)) {
-                        param_value = module->parameter_default_values.at(param_id);
-                        if (mode_debug)
-                            log("UHDM: Found parameter %s in module with value %s\n", 
-                                param_name.c_str(), param_value.as_string().c_str());
+                    // If no VpiValue, check if there's an expression
+                    if (param->Expr()) {
+                        RTLIL::SigSpec expr_val = import_expression(any_cast<const expr*>(param->Expr()));
+                        if (expr_val.is_fully_const()) {
+                            param_value = expr_val.as_const();
+                        }
                     }
                 }
             }

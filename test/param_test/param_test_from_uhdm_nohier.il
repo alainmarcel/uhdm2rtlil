@@ -25,7 +25,7 @@ module \param_test
     switch \rst
       attribute \src "dut.sv:15.13-15.35"
       case 1'1
-        assign $0\data_out[7:0] 8'000000--
+        assign $0\data_out[7:0] 8'10101010
       attribute \src "dut.sv:17.13-17.32"
       case 
         assign $0\data_out[7:0] \data_in

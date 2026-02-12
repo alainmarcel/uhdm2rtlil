@@ -2,12 +2,11 @@
 autoidx 14
 attribute \hdlname "adder"
 attribute \dynports 1
-attribute \src "dut.sv:4.1-12.10"
+attribute \src "dut.sv:49.17-55.19"
 attribute \cells_not_processed 1
-module $paramod\adder\WIDTH=32'00000000000000000000000000001000
+module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
-  wire width 8 $auto$expression.cpp:1824:import_operation$1
-  wire width 8 $auto$expression.cpp:1824:import_operation$6
+  wire width 8 $auto$expression.cpp:1951:import_operation$6
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
@@ -22,18 +21,17 @@ module $paramod\adder\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1824:import_operation$6
+    connect \Y $auto$expression.cpp:1951:import_operation$6
   end
-  connect \sum $auto$expression.cpp:1824:import_operation$6
+  connect \sum $auto$expression.cpp:1951:import_operation$6
 end
 attribute \hdlname "subtractor"
 attribute \dynports 1
-attribute \src "dut.sv:15.1-23.10"
+attribute \src "dut.sv:58.17-64.19"
 attribute \cells_not_processed 1
-module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
+module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
-  wire width 8 $auto$expression.cpp:1847:import_operation$3
-  wire width 8 $auto$expression.cpp:1847:import_operation$9
+  wire width 8 $auto$expression.cpp:1977:import_operation$9
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
@@ -48,16 +46,16 @@ module $paramod\subtractor\WIDTH=32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1847:import_operation$9
+    connect \Y $auto$expression.cpp:1977:import_operation$9
   end
-  connect \diff $auto$expression.cpp:1847:import_operation$9
+  connect \diff $auto$expression.cpp:1977:import_operation$9
 end
 attribute \dynports 1
 attribute \src "dut.sv:4.1-12.10"
 attribute \cells_not_processed 1
 module \adder
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  wire width 8 $auto$expression.cpp:1824:import_operation$1
+  wire width 8 $auto$expression.cpp:1951:import_operation$1
   attribute \src "dut.sv:7.30-7.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:8.30-8.31"
@@ -72,9 +70,9 @@ module \adder
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1824:import_operation$1
+    connect \Y $auto$expression.cpp:1951:import_operation$1
   end
-  connect \sum $auto$expression.cpp:1824:import_operation$1
+  connect \sum $auto$expression.cpp:1951:import_operation$1
 end
 attribute \dynports 1
 attribute \src "dut.sv:26.1-110.10"
@@ -154,31 +152,31 @@ module \generate_test
     connect \Y $logic_not$dut.sv:95.25-95.31$extra_logic.store_extra$5_Y
   end
   attribute \src "dut.sv:84.13-90.15"
-  cell $paramod\adder\WIDTH=32'00000000000000000000000000001000 \extra_logic.extra_adder
+  cell $paramod\adder\WIDTH=s32'00000000000000000000000000001000 \extra_logic.extra_adder
     connect \a \result [7:0]
     connect \b \result [15:8]
     connect \sum \extra_logic.extra_sum
   end
   attribute \src "dut.sv:49.17-55.19"
-  cell $paramod\adder\WIDTH=32'00000000000000000000000000001000 \gen_units[0].even_unit.adder_inst
+  cell $paramod\adder\WIDTH=s32'00000000000000000000000000001000 \gen_units[0].even_unit.adder_inst
     connect \a \data_in [7:0]
     connect \b \operand [7:0]
     connect \sum \gen_units[0].unit_result
   end
   attribute \src "dut.sv:58.17-64.19"
-  cell $paramod\subtractor\WIDTH=32'00000000000000000000000000001000 \gen_units[1].odd_unit.subtractor_inst
+  cell $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000 \gen_units[1].odd_unit.subtractor_inst
     connect \a \data_in [15:8]
     connect \b \operand [15:8]
     connect \diff \gen_units[1].unit_result
   end
   attribute \src "dut.sv:49.17-55.19"
-  cell $paramod\adder\WIDTH=32'00000000000000000000000000001000 \gen_units[2].even_unit.adder_inst
+  cell $paramod\adder\WIDTH=s32'00000000000000000000000000001000 \gen_units[2].even_unit.adder_inst
     connect \a \data_in [23:16]
     connect \b \operand [23:16]
     connect \sum \gen_units[2].unit_result
   end
   attribute \src "dut.sv:58.17-64.19"
-  cell $paramod\subtractor\WIDTH=32'00000000000000000000000000001000 \gen_units[3].odd_unit.subtractor_inst
+  cell $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000 \gen_units[3].odd_unit.subtractor_inst
     connect \a \data_in [31:24]
     connect \b \operand [31:24]
     connect \diff \gen_units[3].unit_result
@@ -279,7 +277,7 @@ attribute \src "dut.sv:15.1-23.10"
 attribute \cells_not_processed 1
 module \subtractor
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  wire width 8 $auto$expression.cpp:1847:import_operation$3
+  wire width 8 $auto$expression.cpp:1977:import_operation$3
   attribute \src "dut.sv:18.30-18.31"
   wire width 8 input 1 \a
   attribute \src "dut.sv:19.30-19.31"
@@ -294,7 +292,7 @@ module \subtractor
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:1847:import_operation$3
+    connect \Y $auto$expression.cpp:1977:import_operation$3
   end
-  connect \diff $auto$expression.cpp:1847:import_operation$3
+  connect \diff $auto$expression.cpp:1977:import_operation$3
 end

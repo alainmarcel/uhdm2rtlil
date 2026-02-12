@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 111 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (109/111 tests functional)
+- **Total Tests**: 112 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 97% (109/112 tests functional)
 - **Perfect Matches**: 104 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
@@ -23,10 +23,16 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 2 tests with issues:
+- **Known Failures**: 3 tests with issues:
   - `forloops` - Equivalence check failure (expected)
   - `const_func` - UHDM path produces correct results but Yosys Verilog frontend mishandles default-parameter instance (equiv mismatch)
+  - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Fixes**:
+  - `multiplier` - 4x4 2D array multiplier with parameterized RippleCarryAdder and FullAdder ✅
+    - Implemented `vpiMultiConcatOp` (replication operator `{N{expr}}`)
+    - Implemented `vpiVarSelect` for 2D array part selects (e.g., `PP[i-1][M+i-1:0]`)
+    - Added expression context width propagation for Verilog context-determined sizing
+    - Fixed parameter resolution in elaborated modules to use actual values over base defaults
   - `const_func` - Constant functions in generate blocks with string parameters ✅
     - Added `vpiStringConst` support for string parameter constants
     - Added `$floor`/`$ceil` system function handling
@@ -273,7 +279,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (111 total - 109 passing, 2 known issues)
+### Current Test Cases (112 total - 109 passing, 3 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -392,6 +398,7 @@ The Yosys test runner:
 - **genvar_loop_decl_1** - Generate loop with inline genvar declaration and width arrays
 - **genvar_loop_decl_2** - Generate with genvar shadowing and hierarchical references
 - **carryadd** - Generate-based carry adder with hierarchical references
+- **multiplier** - 4x4 2D array multiplier with parameterized RippleCarryAdder and FullAdder using generate loops *(known equiv mismatch - SAT proves outputs equivalent)*
 - **const_func** - Constant functions in generate blocks with string parameters, `$floor`, and bitwise negation *(known equiv mismatch - UHDM path is correct)*
 - **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
 - **case_expr_const** - Case statement with constant expressions
@@ -431,8 +438,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 109 of 111 tests are passing or working as expected
-- 2 tests are in the failing_tests.txt file (expected failures)
+- 109 of 112 tests are passing or working as expected
+- 3 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -485,10 +492,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **111 test cases**:
+The UHDM frontend test suite includes **112 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
 - **104 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **109 tests passing** - with 2 known failures documented in failing_tests.txt
+- **109 tests passing** - with 3 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
