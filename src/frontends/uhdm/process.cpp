@@ -4646,7 +4646,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         } else if (!lhs.empty()) {
             // This might be a bit slice - extract the base wire
-            RTLIL::SigChunk first_chunk = lhs.chunks()[0];
+            RTLIL::SigChunk first_chunk = *lhs.chunks().begin();
             if (first_chunk.wire) {
                 std::string signal_name = first_chunk.wire->name.str();
                 if (signal_name[0] == '\\') {
@@ -4989,8 +4989,8 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
                                     size_t max_width = std::max(case_value.size(), expr_value.size());
                                     RTLIL::Const case_extended = case_value;
                                     RTLIL::Const expr_extended = expr_value;
-                                    case_extended.bits().resize(max_width, RTLIL::State::S0);
-                                    expr_extended.bits().resize(max_width, RTLIL::State::S0);
+                                    case_extended.resize(max_width, RTLIL::State::S0);
+                                    expr_extended.resize(max_width, RTLIL::State::S0);
                                     
                                     if (case_extended == expr_extended) {
                                         case_matches = true;
