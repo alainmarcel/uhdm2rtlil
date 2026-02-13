@@ -674,7 +674,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             if (target_module) {
                                 RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
                                 if (port_wire && conn.size() == 1 && conn.is_fully_const()) {
-                                    RTLIL::State bit_val = conn.as_const().bits()[0];
+                                    RTLIL::State bit_val = conn.as_const()[0];
                                     // Check if this is an unbased unsized literal that should be extended
                                     if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
                                         bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
@@ -1406,10 +1406,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     if (src_wire && src_wire->is_signed) {
                                         // Sign extend
                                         RTLIL::Const val = init_value.as_const();
-                                        bool sign_bit = val.bits().back() == RTLIL::State::S1;
-                                        while (val.bits().size() < (size_t)lhs.size()) {
-                                            val.bits().push_back(sign_bit ? RTLIL::State::S1 : RTLIL::State::S0);
-                                        }
+                                        RTLIL::State sign_bit = val.back() == RTLIL::State::S1 ? RTLIL::State::S1 : RTLIL::State::S0;
+                                        val.resize(lhs.size(), sign_bit);
                                         init_value = RTLIL::SigSpec(val);
                                     } else {
                                         init_value.extend_u0(lhs.size(), false);
@@ -1456,10 +1454,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 if (init_value.is_fully_const()) {
                                     RTLIL::Const val = init_value.as_const();
                                     // Sign extend: replicate the MSB
-                                    bool sign_bit = val.bits().back() == RTLIL::State::S1;
-                                    while (val.bits().size() < (size_t)lhs.size()) {
-                                        val.bits().push_back(sign_bit ? RTLIL::State::S1 : RTLIL::State::S0);
-                                    }
+                                    RTLIL::State sign_bit = val.back() == RTLIL::State::S1 ? RTLIL::State::S1 : RTLIL::State::S0;
+                                    val.resize(lhs.size(), sign_bit);
                                     init_value = RTLIL::SigSpec(val);
                                 } else {
                                     init_value.extend_u0(lhs.size(), true);

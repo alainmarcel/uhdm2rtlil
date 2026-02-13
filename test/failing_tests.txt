@@ -7,9 +7,6 @@
 
 # Tests that currently fail:
 forloops
-# const_func: UHDM path is correct (outC=1 for default FOO instance per SV assertion),
-# but equiv fails because Yosys Verilog frontend gives outC=0 for the default-parameter instance
-const_func
 # multiplier: SAT proves primary outputs are equivalent, but equiv_make fails because
 # internal FullAdder instance naming differs (UHDM: unit_0..N vs Verilog: \addbit[0].unit)
 multiplier

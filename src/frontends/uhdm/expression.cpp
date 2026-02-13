@@ -39,7 +39,7 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Helper function to generate consistent source-location-based cell names
-std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type, int& autoidx) {
+std::string UhdmImporter::generate_cell_name(const UHDM::any* uhdm_obj, const std::string& cell_type) {
     std::string cell_name;
     if (uhdm_obj && !uhdm_obj->VpiFile().empty()) {
         // Extract just the filename from the full path
@@ -1439,9 +1439,9 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             if (size > 0 && const_val.size() != size) {
                 // Resize to match specified size
                 if (const_val.size() < size) {
-                    const_val.bits().resize(size, RTLIL::State::S0);
+                    const_val.resize(size, RTLIL::State::S0);
                 } else {
-                    const_val.bits().resize(size);
+                    const_val.resize(size, RTLIL::State::S0);
                 }
             }
             return RTLIL::SigSpec(const_val);
@@ -1554,7 +1554,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 for (int j = 0; j < 8; j++) {
                     int bit_idx = i * 8 + j;
                     if (bit_idx < bit_width) {
-                        const_val.bits()[bit_idx] = (c & (1 << j)) ? RTLIL::State::S1 : RTLIL::State::S0;
+                        const_val.set(bit_idx, (c & (1 << j)) ? RTLIL::State::S1 : RTLIL::State::S0);
                     }
                 }
             }
@@ -1697,7 +1697,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (operands.size() == 1) {
                     int popcount = 0;
                     RTLIL::Const op_const = operands[0].as_const();
-                    for (auto bit : op_const.bits())
+                    for (auto bit : op_const)
                         if (bit == RTLIL::State::S1) popcount++;
                     result = RTLIL::Const(popcount & 1, 1);
                 }
@@ -1738,8 +1738,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     RTLIL::Const inner = operands[1].as_const();
                     RTLIL::Const rep_result;
                     for (int i = 0; i < rep_count; i++) {
-                        for (auto bit : inner.bits())
-                            rep_result.bits().push_back(bit);
+                        rep_result.append(inner);
                     }
                     result = rep_result;
                 }
@@ -1749,8 +1748,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     RTLIL::Const concat_result;
                     for (int i = operands.size() - 1; i >= 0; i--) {
                         RTLIL::Const op_const = operands[i].as_const();
-                        for (auto bit : op_const.bits())
-                            concat_result.bits().push_back(bit);
+                        concat_result.append(op_const);
                     }
                     result = concat_result;
                 }
@@ -1784,7 +1782,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Check if operand is signed - for unary minus with $signed, assume signed
                 bool is_signed = true;  // Default to signed for unary minus
                 
-                std::string cell_name = generate_cell_name(uhdm_op, "neg", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "neg");
                 module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
                 return result;
             }
@@ -1835,109 +1833,109 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiLogAndOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "logic_and", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "logic_and");
                     return module->LogicAnd(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiLogOrOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "logic_or", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "logic_or");
                     return module->LogicOr(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiBitAndOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "and", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "and");
                     return module->And(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiBitOrOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "or", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "or");
                     return module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiBitXorOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "xor", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "xor");
                     return module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiBitNegOp:
             if (operands.size() == 1)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "not");
                     return module->Not(RTLIL::escape_id(cell_name), operands[0]);
                 }
             break;
         case vpiBitXNorOp:  // Both vpiBitXNorOp and vpiBitXnorOp are the same
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "xnor", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "xnor");
                     return module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiUnaryAndOp:
             if (operands.size() == 1)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_and", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_and");
                     return module->ReduceAnd(RTLIL::escape_id(cell_name), operands[0]);
                 }
             break;
         case vpiUnaryOrOp:
             if (operands.size() == 1)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_or", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_or");
                     return module->ReduceOr(RTLIL::escape_id(cell_name), operands[0]);
                 }
             break;
         case vpiUnaryXorOp:
             if (operands.size() == 1)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_xor", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_xor");
                     return module->ReduceXor(RTLIL::escape_id(cell_name), operands[0]);
                 }
             break;
         case vpiUnaryNandOp:
             if (operands.size() == 1) {
                 // Unary NAND is NOT(REDUCE_AND)
-                std::string and_cell_name = generate_cell_name(uhdm_op, "reduce_and", autoidx);
+                std::string and_cell_name = generate_cell_name(uhdm_op, "reduce_and");
                 RTLIL::SigSpec and_result = module->ReduceAnd(RTLIL::escape_id(and_cell_name), operands[0]);
-                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not");
                 return module->Not(RTLIL::escape_id(not_cell_name), and_result);
             } else if (operands.size() == 2) {
                 // Binary NAND (when UHDM uses unary op for binary ~&)
-                std::string and_cell_name = generate_cell_name(uhdm_op, "and", autoidx);
+                std::string and_cell_name = generate_cell_name(uhdm_op, "and");
                 RTLIL::SigSpec and_result = module->And(RTLIL::escape_id(and_cell_name), operands[0], operands[1]);
-                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not");
                 return module->Not(RTLIL::escape_id(not_cell_name), and_result);
             }
             break;
         case vpiUnaryNorOp:
             if (operands.size() == 1) {
                 // Unary NOR is NOT(REDUCE_OR)
-                std::string or_cell_name = generate_cell_name(uhdm_op, "reduce_or", autoidx);
+                std::string or_cell_name = generate_cell_name(uhdm_op, "reduce_or");
                 RTLIL::SigSpec or_result = module->ReduceOr(RTLIL::escape_id(or_cell_name), operands[0]);
-                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not");
                 return module->Not(RTLIL::escape_id(not_cell_name), or_result);
             } else if (operands.size() == 2) {
                 // Binary NOR (when UHDM uses unary op for binary ~|)
-                std::string or_cell_name = generate_cell_name(uhdm_op, "or", autoidx);
+                std::string or_cell_name = generate_cell_name(uhdm_op, "or");
                 RTLIL::SigSpec or_result = module->Or(RTLIL::escape_id(or_cell_name), operands[0], operands[1]);
-                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not");
                 return module->Not(RTLIL::escape_id(not_cell_name), or_result);
             }
             break;
         case vpiUnaryXNorOp:
             if (operands.size() == 1) {
                 // Unary XNOR is NOT(REDUCE_XOR)
-                std::string xor_cell_name = generate_cell_name(uhdm_op, "reduce_xor", autoidx);
+                std::string xor_cell_name = generate_cell_name(uhdm_op, "reduce_xor");
                 RTLIL::SigSpec xor_result = module->ReduceXor(RTLIL::escape_id(xor_cell_name), operands[0]);
-                std::string not_cell_name = generate_cell_name(uhdm_op, "not", autoidx);
+                std::string not_cell_name = generate_cell_name(uhdm_op, "not");
                 return module->Not(RTLIL::escape_id(not_cell_name), xor_result);
             }
             break;
@@ -1962,7 +1960,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                std::string cell_name = generate_cell_name(uhdm_op, "add", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "add");
                 module->addAdd(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -1988,7 +1986,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                std::string cell_name = generate_cell_name(uhdm_op, "sub", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "sub");
                 module->addSub(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -2011,7 +2009,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                std::string cell_name = generate_cell_name(uhdm_op, "div", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "div");
                 module->addDiv(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -2037,7 +2035,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                 }
                 
-                std::string cell_name = generate_cell_name(uhdm_op, "mul", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "mul");
                 module->addMul(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -2059,7 +2057,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 // Use Pow cell for power operation
-                std::string cell_name = generate_cell_name(uhdm_op, "pow", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "pow");
                 module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -2081,7 +2079,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 // Use Shl cell for left shift operation
-                std::string cell_name = generate_cell_name(uhdm_op, "shl", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "shl");
                 module->addShl(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
@@ -2104,10 +2102,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 
                 // Use Shr cell for right shift operation (or Sshr for signed)
                 if (is_signed) {
-                    std::string cell_name = generate_cell_name(uhdm_op, "sshr", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "sshr");
                     module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 } else {
-                    std::string cell_name = generate_cell_name(uhdm_op, "shr", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "shr");
                     module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, false);
                 }
                 return result;
@@ -2118,12 +2116,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 //return module->Eq(NEW_ID, operands[0], operands[1]);
             {
                 // Create output wire for the comparison with proper naming
-                std::string wire_name = generate_cell_name(uhdm_op, "eq", autoidx) + "_Y";
+                std::string wire_name = generate_cell_name(uhdm_op, "eq") + "_Y";
                 RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(wire_name), 1);
                 add_src_attribute(result_wire->attributes, uhdm_op);
                 
                 // Create cell with source location-based name
-                std::string cell_name = generate_cell_name(uhdm_op, "eq", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "eq");
                 
                 RTLIL::Cell* eq_cell = module->addEq(RTLIL::escape_id(cell_name), 
                     operands[0], operands[1], result_wire);
@@ -2135,42 +2133,42 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // Case equality (===) - use $eqx which properly handles X and Z values
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "eqx", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "eqx");
                     return module->Eqx(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiNeqOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "ne", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "ne");
                     return module->Ne(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiLtOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "lt", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "lt");
                     return module->Lt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiLeOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "le", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "le");
                     return module->Le(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiGtOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "gt", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "gt");
                     return module->Gt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
         case vpiGeOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "ge", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "ge");
                     return module->Ge(RTLIL::escape_id(cell_name), operands[0], operands[1]);
                 }
             break;
@@ -2190,7 +2188,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (cond.size() > 1) {
                     log("UHDM: Reducing %d-bit condition to 1-bit\n", cond.size());
                     // Reduce multi-bit condition to single bit using ReduceBool
-                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_bool", autoidx);
+                    std::string cell_name = generate_cell_name(uhdm_op, "reduce_bool");
                     cond = module->ReduceBool(RTLIL::escape_id(cell_name), cond);
                 }
                 
@@ -2216,7 +2214,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // sig_a = value when selector is 0 (false value)
                 // sig_b = value when selector is 1 (true value)
                 // sig_s = selector
-                std::string cell_name = generate_cell_name(uhdm_op, "mux", autoidx);
+                std::string cell_name = generate_cell_name(uhdm_op, "mux");
                 return module->Mux(RTLIL::escape_id(cell_name), false_val, true_val, cond);
             }
             break;
@@ -2303,7 +2301,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             bool all_z = true;
                             bool all_0 = true;
                             bool all_1 = true;
-                            for (auto bit : const_val.bits()) {
+                            for (auto bit : const_val) {
                                 if (bit != RTLIL::State::Sx) all_x = false;
                                 if (bit != RTLIL::State::Sz) all_z = false;
                                 if (bit != RTLIL::State::S0) all_0 = false;
@@ -2331,10 +2329,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         // For other constants, resize appropriately
                         if (const_val.size() < target_width) {
                             // Zero-extend
-                            const_val.bits().resize(target_width, RTLIL::State::S0);
+                            const_val.resize(target_width, RTLIL::State::S0);
                         } else if (const_val.size() > target_width) {
                             // Truncate
-                            const_val.bits().resize(target_width);
+                            const_val.resize(target_width, RTLIL::State::S0);
                         }
                         return RTLIL::SigSpec(const_val);
                     }
@@ -2972,7 +2970,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
     
     // Create $shiftx cell
-    std::string cell_name = generate_cell_name(uhdm_bit, "shiftx", autoidx);
+    std::string cell_name = generate_cell_name(uhdm_bit, "shiftx");
     RTLIL::Cell* shiftx_cell = module->addCell(RTLIL::escape_id(cell_name), ID($shiftx));
     shiftx_cell->setParam(ID::A_SIGNED, 0);
     shiftx_cell->setParam(ID::B_SIGNED, 0);

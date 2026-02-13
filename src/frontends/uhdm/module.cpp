@@ -642,7 +642,7 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
             // Extend single bit to match LHS width by replicating the bit
             // This handles unbased unsized literals like 'x, 'z, '0, '1 correctly
             if (rhs.is_fully_const()) {
-                RTLIL::State bit_val = rhs.as_const().bits()[0];
+                RTLIL::State bit_val = rhs.as_const()[0];
                 rhs = RTLIL::SigSpec(RTLIL::Const(bit_val, lhs.size()));
             } else {
                 // For non-constant single bits, zero-extend
@@ -1007,7 +1007,7 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         
                         // Handle unbased unsized literals - extend single-bit constants to port width
                         if (port_wire && actual_sig.size() == 1 && actual_sig.is_fully_const()) {
-                            RTLIL::State bit_val = actual_sig.as_const().bits()[0];
+                            RTLIL::State bit_val = actual_sig.as_const()[0];
                             // Check if this is an unbased unsized literal that should be extended
                             // (single bit of 0, 1, X, or Z)
                             if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
