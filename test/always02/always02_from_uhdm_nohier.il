@@ -11,7 +11,7 @@ module \always02
   wire width 4 output 3 \count
   wire width 64 $auto$expression.cpp:1949:import_operation$2
   attribute \src "dut.sv:10.3-10.13"
-  wire width 4 $auto$process.cpp:4449:import_assignment_sync$4
+  wire width 4 $auto$process.cpp:4570:import_assignment_sync$4
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -23,17 +23,17 @@ module \always02
     connect \Y $auto$expression.cpp:1949:import_operation$2
   end
   attribute \src "dut.sv:10.3-10.13"
-  cell $mux $auto$process.cpp:4451:import_assignment_sync$5
+  cell $mux $auto$process.cpp:4572:import_assignment_sync$5
     parameter \WIDTH 4
     connect \A $auto$expression.cpp:1949:import_operation$2 [3:0]
     connect \B 4'0000
     connect \S \reset
-    connect \Y $auto$process.cpp:4449:import_assignment_sync$4
+    connect \Y $auto$process.cpp:4570:import_assignment_sync$4
   end
   attribute \src "dut.sv:7.1-11.4"
   attribute \always_ff 1
   process $proc$dut.sv:7$1
     sync posedge \clock
-      update \count $auto$process.cpp:4449:import_assignment_sync$4
+      update \count $auto$process.cpp:4570:import_assignment_sync$4
   end
 end

@@ -180,11 +180,15 @@ int UhdmMemoryAnalyzer::calculate_address_width(int size) {
     return bits;
 }
 
-// Analyze memory usage in always blocks
+// Analyze memory usage in always blocks (skip initial blocks - they're simulation-only)
 void UhdmMemoryAnalyzer::analyze_memory_usage_in_processes(const module_inst* uhdm_module) {
     if (!uhdm_module->Process()) return;
-    
+
     for (auto process : *uhdm_module->Process()) {
+        // Skip initial blocks - they don't contain synthesizable memory operations
+        int proc_type = process->VpiType();
+        if (proc_type == vpiInitial)
+            continue;
         analyze_always_block(process);
     }
 }
@@ -210,11 +214,18 @@ void UhdmMemoryAnalyzer::analyze_statement_for_memory(const any* statement, cons
         auto assign = any_cast<const assignment*>(statement);
         analyze_assignment_for_memory(assign, context);
     } else if (stmt_type == vpiIf) {
-        auto if_stmt = any_cast<const if_else*>(statement);
-        if (auto then_stmt = if_stmt->VpiStmt()) {
+        auto if_s = any_cast<const UHDM::if_stmt*>(statement);
+        if (auto then_stmt = if_s->VpiStmt()) {
             analyze_statement_for_memory(then_stmt, context + "_if");
         }
-        // Handle else clause if present
+    } else if (stmt_type == vpiIfElse) {
+        auto if_e = any_cast<const UHDM::if_else*>(statement);
+        if (auto then_stmt = if_e->VpiStmt()) {
+            analyze_statement_for_memory(then_stmt, context + "_if");
+        }
+        if (auto else_stmt = if_e->VpiElseStmt()) {
+            analyze_statement_for_memory(else_stmt, context + "_else");
+        }
     } else if (stmt_type == vpiBegin) {
         auto begin_stmt = any_cast<const UHDM::begin*>(statement);
         if (auto stmts = begin_stmt->Stmts()) {

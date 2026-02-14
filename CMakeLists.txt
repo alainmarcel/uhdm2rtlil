@@ -95,6 +95,7 @@ target_compile_options(uhdm2rtlil PRIVATE
     -Werror               # Treat all warnings as errors
     -Wno-unused-parameter # Yosys headers have many unused parameters
     -Wno-sign-compare     # Common in Yosys code
+    -Wno-array-bounds     # False positive in Yosys io.h header
 )
 
 # Add required Yosys defines

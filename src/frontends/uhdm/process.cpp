@@ -1617,45 +1617,86 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
 }
 
 // Import initial block
+// Helper: check if a UHDM statement tree contains complex control flow (if/case)
+// that requires the comb approach with switch rules instead of the sync approach
+static bool statement_contains_control_flow(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiIf || type == vpiIfElse || type == vpiCase) return true;
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts()) {
+                if (statement_contains_control_flow(child)) return true;
+            }
+        }
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts()) {
+                if (statement_contains_control_flow(child)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
         log("    Importing initial block\n");
-    
+
     // Set flag to indicate we're in an initial block
     in_initial_block = true;
-    
+
+    // Choose import strategy based on initial block content:
+    // - Default: sync approach (handles simple assignments and for-loop unrolling)
+    // - Complex control flow (case/if): comb approach (creates switch rules)
+    //   The sync approach can't handle case/if because it creates mux cells
+    //   which cause "Failed to get a constant init value" errors in PROC_INIT
+    bool use_comb_approach = false;
+    if (auto stmt = uhdm_process->Stmt()) {
+        use_comb_approach = statement_contains_control_flow(stmt);
+    }
+
+    if (use_comb_approach) {
+        import_initial_comb(uhdm_process, yosys_proc);
+    } else {
+        import_initial_sync(uhdm_process, yosys_proc);
+    }
+
+    // Reset the flag when done
+    in_initial_block = false;
+}
+
+// Import initial block using sync approach (handles for loops via import_statement_sync)
+void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
+    log("    Importing initial block (sync approach - has for loops)\n");
+
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
-    
-    // Initial blocks need two sync rules:
-    // 1. sync always (empty signal list)
-    // 2. sync init (STi type)
-    
-    // First, create the "sync always" rule with empty signal
+
+    // Create the "sync always" rule
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
-    sync_always->type = RTLIL::SyncType::STa;  // STa is "always" with empty signal
-    sync_always->signal = RTLIL::SigSpec();  // Empty signal - this is required for STa
-    log("    Created sync always rule (STa) with signal size: %d\n", sync_always->signal.size());
+    sync_always->type = RTLIL::SyncType::STa;
+    sync_always->signal = RTLIL::SigSpec();
     yosys_proc->syncs.push_back(sync_always);
-    
-    // Then create the init sync rule
+
+    // Create the init sync rule
     RTLIL::SyncRule* sync_init = new RTLIL::SyncRule();
     sync_init->type = RTLIL::SyncType::STi;
-    sync_init->signal = RTLIL::SigSpec();  // STi also requires empty signal
-    
+    sync_init->signal = RTLIL::SigSpec();
+
     if (auto stmt = uhdm_process->Stmt()) {
         import_statement_sync(stmt, sync_init, false);
     }
-    
+
     // Flush pending sync assignments to the sync rule
     for (const auto& [lhs, rhs] : pending_sync_assignments) {
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
     }
     pending_sync_assignments.clear();
 
-    // Deduplicate initial assignments across processes.
-    // Surelog may generate multiple initial blocks for the same signal from generate unrolling.
-    // Generate-scope assignments take priority over module-level assignments.
+    // Deduplicate initial assignments across processes
     bool current_from_gen = !gen_scope_stack.empty();
     std::vector<RTLIL::SigSig> deduped_actions;
     for (auto& action : sync_init->actions) {
@@ -1663,20 +1704,14 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
         auto it = initial_signal_assignments.find(sig_name);
         if (it != initial_signal_assignments.end()) {
             auto& prev = it->second;
-            // If previous was from generate scope and current is not, keep previous (generate wins)
             if (prev.from_generate_scope && !current_from_gen) {
-                log("    Dedup: keeping generate-scope init for %s (skipping module-level)\n", sig_name.c_str());
                 continue;
             }
-            // Otherwise update previous assignment to this new value
             if (prev.sync && prev.action_idx < (int)prev.sync->actions.size()) {
                 prev.sync->actions[prev.action_idx].second = action.second;
-                log("    Dedup: updated previous init for %s\n", sig_name.c_str());
             }
-            // Update tracking to reflect generate scope status
             prev.from_generate_scope = current_from_gen;
         } else {
-            // Track this new assignment
             int idx = deduped_actions.size();
             deduped_actions.push_back(action);
             initial_signal_assignments[sig_name] = {sync_init, idx, current_from_gen};
@@ -1685,9 +1720,92 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     sync_init->actions = deduped_actions;
 
     yosys_proc->syncs.push_back(sync_init);
+}
 
-    // Reset the flag when done
-    in_initial_block = false;
+// Import initial block using comb approach (handles complex case/if via switch rules)
+void UhdmImporter::import_initial_comb(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
+    log("    Importing initial block (comb approach - complex control flow)\n");
+
+    // Extract signals that will be assigned in this process
+    std::vector<AssignedSignal> assigned_signals;
+    if (auto stmt = uhdm_process->Stmt()) {
+        extract_assigned_signals(stmt, assigned_signals);
+    }
+
+    // Create temporary wires for assigned signals (one per unique signal name)
+    std::map<const expr*, RTLIL::Wire*> temp_wires;
+    std::map<const expr*, RTLIL::SigSpec> lhs_specs;
+    std::map<std::string, RTLIL::Wire*> signal_temp_wires;
+    std::map<std::string, RTLIL::SigSpec> signal_specs;
+
+    for (const auto& sig : assigned_signals) {
+        RTLIL::SigSpec lhs_spec = import_expression(sig.lhs_expr);
+        lhs_specs[sig.lhs_expr] = lhs_spec;
+
+        RTLIL::Wire* temp_wire = nullptr;
+        if (signal_temp_wires.count(sig.name)) {
+            temp_wire = signal_temp_wires[sig.name];
+        } else {
+            std::string temp_name = "$0\\" + sig.name;
+            if (module->wire(temp_name)) {
+                temp_wire = module->wire(temp_name);
+            } else {
+                temp_wire = module->addWire(temp_name, lhs_spec.size());
+                if (uhdm_process) {
+                    add_src_attribute(temp_wire->attributes, uhdm_process);
+                }
+            }
+            signal_temp_wires[sig.name] = temp_wire;
+            signal_specs[sig.name] = lhs_spec;
+        }
+        temp_wires[sig.lhs_expr] = temp_wire;
+    }
+
+    // Store temp wires in module context for use in statement import
+    current_temp_wires = temp_wires;
+    current_lhs_specs = lhs_specs;
+
+    // Initialize temp wires with current signal values
+    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+        if (signal_specs.count(sig_name)) {
+            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+            yosys_proc->root_case.actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec)
+            );
+        }
+    }
+
+    current_comb_values.clear();
+
+    // Create sync always rule
+    RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
+    sync_always->type = RTLIL::SyncType::STa;
+
+    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+        if (signal_specs.count(sig_name)) {
+            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+            sync_always->actions.push_back(
+                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
+            );
+        }
+    }
+
+    yosys_proc->syncs.push_back(sync_always);
+
+    // Set current_comb_process so expression handlers can detect comb context
+    current_comb_process = yosys_proc;
+
+    // Import the statements using the combinational approach (creates switch/case rules)
+    if (auto stmt = uhdm_process->Stmt()) {
+        import_statement_comb(stmt, yosys_proc);
+    }
+
+    // Clear context
+    current_comb_process = nullptr;
+    current_temp_wires.clear();
+    current_lhs_specs.clear();
+    current_comb_values.clear();
+    comb_value_aliases.clear();
 }
 
 // Helper function to import operation with loop variable substitution
@@ -2408,10 +2526,14 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 RTLIL::SigSpec condition;
                 if (auto condition_expr = if_else_stmt->VpiCondition()) {
                     condition = import_expression(condition_expr);
+                    // Reduce multi-bit conditions to 1 bit (mux select must be 1 bit)
+                    if (condition.size() > 1) {
+                        condition = module->ReduceBool(NEW_ID, condition);
+                    }
                     log("        If-else condition: %s\n", log_signal(condition));
                     log_flush();
                 }
-                
+
                 // Store the current condition context
                 RTLIL::SigSpec prev_condition = current_condition;
                 if (!condition.empty()) {
@@ -3457,14 +3579,19 @@ void UhdmImporter::import_begin_block_sync(const UHDM::scope* uhdm_begin, RTLIL:
 void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL::Process* proc) {
     log("    import_begin_block_comb (Process*): Begin block\n");
 
-    // Handle Variables() in named begin blocks
+    // Handle Variables() in begin blocks (both named and unnamed)
     std::map<std::string, RTLIL::Wire*> saved_name_map;
     std::map<std::string, RTLIL::SigSpec> saved_comb_values;
     std::set<std::string> block_local_vars;
+    std::string block_name;
 
-    if (uhdm_begin->VpiType() == vpiNamedBegin && uhdm_begin->Variables()) {
-        std::string block_name = std::string(uhdm_begin->VpiName());
-        log("    Named begin block '%s' has variables\n", block_name.c_str());
+    if (uhdm_begin->Variables()) {
+        if (uhdm_begin->VpiType() == vpiNamedBegin && !uhdm_begin->VpiName().empty()) {
+            block_name = std::string(uhdm_begin->VpiName());
+        } else {
+            block_name = "$unnamed_block$" + std::to_string(++unnamed_block_counter);
+        }
+        log("    Begin block '%s' has variables\n", block_name.c_str());
 
         RTLIL::SyncRule* sync_always = nullptr;
         if (!proc->syncs.empty()) sync_always = proc->syncs.back();
@@ -3479,7 +3606,7 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);
             if (var) add_src_attribute(block_wire->attributes, var);
 
-            // Create temp wire: $0\blockname.varname (no width suffix, matches import_assignment_comb lookup)
+            // Create temp wire: $0\blockname.varname
             std::string temp_name = "$0\\" + hier_name;
             RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
             add_src_attribute(temp_wire->attributes, uhdm_begin);
@@ -3492,16 +3619,12 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             block_local_vars.insert(var_name);
 
             // Save and shadow current_comb_values for the short name
-            // This ensures reads of 'y' inside the block see the block-local value
             if (current_comb_values.count(var_name)) {
                 saved_comb_values[var_name] = current_comb_values[var_name];
             }
-            // Initialize block-local variable as undefined (will be set by first assignment)
             current_comb_values.erase(var_name);
 
-            // Register alias: hier_name → short var_name
-            // So when import_assignment_comb updates current_comb_values["foo.y"],
-            // it also updates current_comb_values["y"]
+            // Register alias: hier_name -> short var_name
             comb_value_aliases[hier_name] = var_name;
 
             // Add temp wire init and sync update
@@ -3546,14 +3669,12 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
     }
     for (const auto& var_name : block_local_vars) {
         if (saved_comb_values.find(var_name) == saved_comb_values.end()) {
-            // No saved value - erase the block-local entry
             current_comb_values.erase(var_name);
         }
     }
 
     // Remove aliases for this block's variables
-    if (uhdm_begin->VpiType() == vpiNamedBegin && uhdm_begin->Variables()) {
-        std::string block_name = std::string(uhdm_begin->VpiName());
+    if (!block_name.empty() && uhdm_begin->Variables()) {
         for (auto var : *uhdm_begin->Variables()) {
             std::string var_name = std::string(var->VpiName());
             std::string hier_name = block_name + "." + var_name;
@@ -4804,11 +4925,16 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
     RTLIL::SigSpec condition;
     if (auto condition_expr = uhdm_if->VpiCondition()) {
         condition = import_expression(condition_expr);
-        
+
+        // Reduce multi-bit conditions to 1 bit (mux select must be 1 bit)
+        if (condition.size() > 1) {
+            condition = module->ReduceBool(NEW_ID, condition);
+        }
+
         if (mode_debug)
             log("    If statement condition: %s\n", log_signal(condition));
     }
-    
+
     // For memory writes, we'll use the condition as the enable signal
     // Store the current condition context
     RTLIL::SigSpec prev_condition = current_condition;
@@ -4843,11 +4969,16 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
 // Import if_else statement for comb context
 void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
     log("    import_if_else_comb: Importing if_else statement\n");
-    
+
     // Get the condition
     if (auto condition = uhdm_if_else->VpiCondition()) {
         RTLIL::SigSpec condition_sig = import_expression(condition);
-        
+
+        // Reduce multi-bit conditions to 1 bit for switch/compare matching
+        if (condition_sig.size() > 1) {
+            condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+        }
+
         if (mode_debug)
             log("    If_else condition: %s\n", log_signal(condition_sig));
         
@@ -4902,11 +5033,16 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
 void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc) {
     // Always log for debugging
     log("    import_if_stmt_comb: Importing if statement (UhdmType=%d)\n", uhdm_if->UhdmType());
-    
+
     // Get the condition
     if (auto condition = uhdm_if->VpiCondition()) {
         RTLIL::SigSpec condition_sig = import_expression(condition);
-        
+
+        // Reduce multi-bit conditions to 1 bit for switch/compare matching
+        if (condition_sig.size() > 1) {
+            condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+        }
+
         if (mode_debug)
             log("    If condition: %s\n", log_signal(condition_sig));
         
@@ -5384,8 +5520,64 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         }
         case vpiBegin:
         case vpiNamedBegin: {
-            VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
             log("        import_statement_comb(CaseRule*): Begin block\n");
+            const scope* begin_scope = any_cast<const scope*>(uhdm_stmt);
+
+            // Handle local variables in begin blocks
+            std::map<std::string, RTLIL::Wire*> saved_name_map;
+            std::set<std::string> block_local_vars;
+            std::string block_name;
+
+            if (begin_scope->Variables()) {
+                if (begin_scope->VpiType() == vpiNamedBegin && !begin_scope->VpiName().empty()) {
+                    block_name = std::string(begin_scope->VpiName());
+                } else {
+                    block_name = "$unnamed_block$" + std::to_string(++unnamed_block_counter);
+                }
+                log("        Begin block '%s' has variables\n", block_name.c_str());
+
+                // Find the sync always rule for adding sync updates
+                RTLIL::SyncRule* sync_always = nullptr;
+                if (current_comb_process && !current_comb_process->syncs.empty()) {
+                    sync_always = current_comb_process->syncs.back();
+                }
+
+                for (auto var : *begin_scope->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = 16;
+
+                    std::string hier_name = block_name + "." + var_name;
+                    RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);
+                    if (var) add_src_attribute(block_wire->attributes, var);
+
+                    std::string temp_name = "$0\\" + hier_name;
+                    RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
+                    add_src_attribute(temp_wire->attributes, begin_scope);
+
+                    if (name_map.count(var_name)) {
+                        saved_name_map[var_name] = name_map[var_name];
+                    }
+                    name_map[var_name] = block_wire;
+                    block_local_vars.insert(var_name);
+                    comb_value_aliases[hier_name] = var_name;
+                    current_comb_values.erase(var_name);
+
+                    case_rule->actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(block_wire))
+                    );
+                    if (sync_always) {
+                        sync_always->actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(block_wire), RTLIL::SigSpec(temp_wire))
+                        );
+                    }
+
+                    log("        Created block-local wire %s (temp: %s, width: %d)\n",
+                        block_wire->name.c_str(), temp_wire->name.c_str(), width);
+                }
+            }
+
+            VectorOfany* stmts = begin_block_stmts(uhdm_stmt);
             if (stmts) {
                 log("        Begin has %d statements\n", (int)stmts->size());
                 for (auto stmt : *stmts) {
@@ -5394,6 +5586,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
             } else {
                 log("        Begin has no statements\n");
+            }
+
+            // Restore name_map
+            for (auto& [name, wire] : saved_name_map) {
+                name_map[name] = wire;
+            }
+            for (const auto& var_name : block_local_vars) {
+                if (saved_name_map.find(var_name) == saved_name_map.end()) {
+                    name_map.erase(var_name);
+                }
+            }
+            // Remove aliases
+            if (!block_name.empty() && begin_scope->Variables()) {
+                for (auto var : *begin_scope->Variables()) {
+                    std::string var_name = std::string(var->VpiName());
+                    comb_value_aliases.erase(block_name + "." + var_name);
+                }
             }
             break;
         }
@@ -5430,6 +5639,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         for (auto expr : *ci->VpiExprs()) {
                             if (expr) {
                                 RTLIL::SigSpec item_expr = import_expression(any_cast<const UHDM::expr*>(expr));
+                                // Ensure case value has same width as switch signal
+                                if (item_expr.size() != case_expr.size()) {
+                                    if (item_expr.size() < case_expr.size()) {
+                                        item_expr.extend_u0(case_expr.size());
+                                    } else {
+                                        item_expr = item_expr.extract(0, case_expr.size());
+                                    }
+                                }
                                 item_case->compare.push_back(item_expr);
                                 log("        Case item expression: %s\n", log_signal(item_expr));
                             }
@@ -5457,11 +5674,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiIf: {
             // Handle simple if statement
             auto if_stmt = any_cast<const UHDM::if_stmt*>(uhdm_stmt);
-            
+
             // Get the condition
             if (auto condition = if_stmt->VpiCondition()) {
                 RTLIL::SigSpec condition_sig = import_expression(condition);
-                
+
+                // Reduce multi-bit conditions to 1 bit for switch/compare matching
+                if (condition_sig.size() > 1) {
+                    condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+                }
+
                 if (mode_debug)
                     log("        If condition in case: %s\n", log_signal(condition_sig));
                 
@@ -5497,11 +5719,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiIfElse: {
             // Handle if_else statement which has an else branch
             auto if_else_stmt = any_cast<const UHDM::if_else*>(uhdm_stmt);
-            
+
             // Get the condition
             if (auto condition = if_else_stmt->VpiCondition()) {
                 RTLIL::SigSpec condition_sig = import_expression(condition);
-                
+
+                // Reduce multi-bit conditions to 1 bit for switch/compare matching
+                if (condition_sig.size() > 1) {
+                    condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+                }
+
                 if (mode_debug)
                     log("        If_else condition in case: %s\n", log_signal(condition_sig));
                 

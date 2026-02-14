@@ -4,25 +4,25 @@ attribute \top 1
 attribute \src "dut.sv:3.1-49.10"
 module \case_expr_const
   attribute \src "dut.sv:5.16-5.17"
-  attribute \init 1'1
   wire output 1 \a
   attribute \src "dut.sv:5.19-5.20"
   wire output 2 \b
   attribute \src "dut.sv:5.22-5.23"
   wire output 3 \c
   attribute \src "dut.sv:5.25-5.26"
-  attribute \init 1'1
   wire output 4 \d
   attribute \src "dut.sv:5.28-5.29"
-  attribute \init 1'1
   wire output 5 \e
   attribute \src "dut.sv:5.31-5.32"
-  attribute \init 1'0
   wire output 6 \f
   attribute \src "dut.sv:5.34-5.35"
-  attribute \init 1'1
   wire output 7 \g
   attribute \src "dut.sv:5.37-5.38"
-  attribute \init 1'1
   wire output 8 \h
+  connect \h 1'1
+  connect \g 1'0
+  connect \f 1'1
+  connect \e 1'1
+  connect \d 1'1
+  connect \a 1'1
 end
