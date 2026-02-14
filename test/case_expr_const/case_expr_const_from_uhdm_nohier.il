@@ -20,14 +20,135 @@ module \case_expr_const
   attribute \src "dut.sv:5.37-5.38"
   wire output 8 \h
   attribute \src "dut.sv:7.5-48.8"
+  wire $0\a
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\b
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\c
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\d
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\e
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\f
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\g
+  attribute \src "dut.sv:7.5-48.8"
+  wire $0\h
+  attribute \src "dut.sv:7.5-48.8"
   process $proc$dut.sv:7$1
+    assign $0\a \a
+    assign $0\b \b
+    assign $0\c \c
+    assign $0\d \d
+    assign $0\e \e
+    assign $0\f \f
+    assign $0\g \g
+    assign $0\h \h
+    attribute \src "dut.sv:8.9-11.16"
+    switch 2'00
+    attribute \src "dut.sv:9.13-9.28"
+      case 2'00
+        assign $0\a 1'1
+    attribute \src "dut.sv:10.13-10.28"
+      case 
+        assign $0\a 1'0
+    end
+    attribute \src "dut.sv:12.9-15.16"
+    switch 2'11
+    attribute \src "dut.sv:13.13-13.28"
+      case 2'01
+        assign $0\b 1'0
+    attribute \src "dut.sv:14.13-14.28"
+      case 2'10
+        assign $0\b 1'1
+    end
+    attribute \src "dut.sv:16.9-19.16"
+    switch 2'11
+    attribute \src "dut.sv:17.13-17.28"
+      case 2'00
+        assign $0\c 1'0
+    attribute \src "dut.sv:18.13-18.28"
+      case 2'10
+        assign $0\c 1'1
+    end
+    attribute \src "dut.sv:20.9-24.16"
+    switch 2'11
+    attribute \src "dut.sv:21.13-21.28"
+      case 2'00
+        assign $0\d 1'0
+    attribute \src "dut.sv:22.13-22.28"
+      case 2'10
+        assign $0\d 1'0
+    attribute \src "dut.sv:23.13-23.28"
+      case 
+        assign $0\d 1'1
+    end
+    attribute \src "dut.sv:25.9-29.16"
+    switch 2'11
+    attribute \src "dut.sv:26.13-26.28"
+      case 2'00
+        assign $0\e 1'0
+    attribute \src "dut.sv:27.13-27.28"
+      case 2'10
+        assign $0\e 1'0
+    attribute \src "dut.sv:28.13-28.28"
+      case 
+        assign $0\e 1'1
+    end
+    attribute \src "dut.sv:30.9-34.16"
+    switch 1'1
+    attribute \src "dut.sv:31.13-31.28"
+      case 1'0
+        assign $0\f 1'0
+    attribute \src "dut.sv:32.13-32.28"
+      case 1'1
+        assign $0\f 1'1
+    attribute \src "dut.sv:33.13-33.28"
+      case 
+        assign $0\f 1'0
+    end
+    attribute \src "dut.sv:35.9-40.16"
+    switch 1'1
+    attribute \src "dut.sv:36.13-36.28"
+      case 1'0
+        assign $0\g 1'0
+    attribute \src "dut.sv:37.13-37.28"
+      case 1'0
+        assign $0\g 1'0
+    attribute \src "dut.sv:38.13-38.28"
+      case 1'1
+        assign $0\g 1'0
+    attribute \src "dut.sv:39.13-39.28"
+      case 
+        assign $0\g 1'1
+    end
+    attribute \src "dut.sv:41.9-47.16"
+    switch 1'1
+    attribute \src "dut.sv:42.13-42.28"
+      case 1'0
+        assign $0\h 1'0
+    attribute \src "dut.sv:43.13-43.28"
+      case 1'1
+        assign $0\h 1'1
+    attribute \src "dut.sv:44.13-44.28"
+      case 1'0
+        assign $0\h 1'0
+    attribute \src "dut.sv:45.13-45.28"
+      case 1'1
+        assign $0\h 1'0
+    attribute \src "dut.sv:46.13-46.28"
+      case 
+        assign $0\h 1'0
+    end
     sync always
-    sync init
-      update \a 1'1
-      update \d 1'1
-      update \e 1'1
-      update \f 1'0
-      update \g 1'1
-      update \h 1'1
+      update \a $0\a
+      update \b $0\b
+      update \c $0\c
+      update \d $0\d
+      update \e $0\e
+      update \f $0\f
+      update \g $0\g
+      update \h $0\h
   end
 end

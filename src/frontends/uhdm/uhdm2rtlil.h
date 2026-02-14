@@ -327,6 +327,9 @@ struct UhdmImporter {
     // Track if we're currently processing an initial block
     bool in_initial_block = false;
 
+    // Counter for generating unique unnamed block names
+    int unnamed_block_counter = 0;
+
     // Track initial block assignments per signal to handle duplicates from generate unrolling.
     // Maps signal name to {sync_rule, action_index, from_generate_scope}.
     struct InitAssignInfo {
@@ -426,6 +429,8 @@ struct UhdmImporter {
     void import_always_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_always(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_initial_sync(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_initial_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     
     // TARGETED FIX: Memory for-loop processing
     bool is_memory_array(const UHDM::net* uhdm_net);

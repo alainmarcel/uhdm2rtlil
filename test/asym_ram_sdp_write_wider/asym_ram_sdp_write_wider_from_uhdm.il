@@ -98,7 +98,7 @@ module \asym_ram_sdp_write_wider
     connect \EN $memwr$\RAM$0_EN
     connect \CLK \clkA
   end
-  cell $and $auto$process.cpp:2281:import_statement_with_loop_vars$9
+  cell $and $auto$process.cpp:2399:import_statement_with_loop_vars$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
