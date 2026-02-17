@@ -541,6 +541,10 @@ struct UhdmImporter {
                                         std::map<std::string, RTLIL::Const>& local_vars,
                                         const std::string& func_name);
     
+    // Helper to evaluate a single operand in compile-time context
+    RTLIL::Const evaluate_single_operand(const UHDM::any* operand,
+                                         const std::map<std::string, RTLIL::Const>& local_vars);
+
     // Helper to evaluate operations with constant values
     RTLIL::Const evaluate_operation_const(const UHDM::operation* op,
                                           const std::map<std::string, RTLIL::Const>& local_vars);

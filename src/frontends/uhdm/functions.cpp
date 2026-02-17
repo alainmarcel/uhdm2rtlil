@@ -31,14 +31,23 @@
 YOSYS_NAMESPACE_BEGIN
 
 // Evaluate function call at compile time (for initial blocks)
-RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def, 
+RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def,
                                                   const std::vector<RTLIL::Const>& const_args,
                                                   std::map<std::string, RTLIL::Const>& output_params) {
     if (!func_def) {
         log_error("Function definition is null in evaluate_function_call\n");
         return RTLIL::Const();
     }
-    
+
+    // Recursion depth limit to prevent infinite loops
+    static int recursion_depth = 0;
+    if (recursion_depth > 1000) {
+        log_warning("Recursion depth limit exceeded in evaluate_function_call for '%s'\n",
+                    std::string(func_def->VpiName()).c_str());
+        return RTLIL::Const(0, 32);
+    }
+    recursion_depth++;
+
     std::string func_name = std::string(func_def->VpiName());
     log("Evaluating function %s at compile time\n", func_name.c_str());
     
@@ -91,11 +100,12 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     }
     
     // Return the function's result
+    recursion_depth--;
     if (local_vars.count(func_name)) {
         log("  Function result = %s\n", local_vars[func_name].as_string().c_str());
         return local_vars[func_name];
     }
-    
+
     return RTLIL::Const(0, 32);
 }
 
@@ -257,42 +267,59 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
 }
 
 // Helper to evaluate operations with constant values
+// Helper: evaluate a single operand in compile-time context
+RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
+                                                    const std::map<std::string, RTLIL::Const>& local_vars) {
+    if (!operand) return RTLIL::Const();
+    RTLIL::Const val;
+    if (operand->VpiType() == vpiConstant) {
+        const constant* c = any_cast<const constant*>(operand);
+        RTLIL::SigSpec sig = import_constant(c);
+        if (sig.is_fully_const()) {
+            val = sig.as_const();
+        }
+    } else if (operand->VpiType() == vpiRefObj) {
+        const ref_obj* ref = any_cast<const ref_obj*>(operand);
+        std::string var_name = std::string(ref->VpiName());
+        if (local_vars.count(var_name)) {
+            val = local_vars.at(var_name);
+        }
+    } else if (operand->VpiType() == vpiOperation) {
+        const operation* sub_op = any_cast<const operation*>(operand);
+        val = evaluate_operation_const(sub_op, local_vars);
+    } else if (operand->VpiType() == vpiFuncCall) {
+        const func_call* fc = any_cast<const func_call*>(operand);
+        val = evaluate_recursive_function_call(fc, local_vars);
+    }
+    return val;
+}
+
 RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
                                                     const std::map<std::string, RTLIL::Const>& local_vars) {
     if (!op) return RTLIL::Const();
-    
+
     int op_type = op->VpiOpType();
     auto operands = op->Operands();
-    
+
     if (!operands || operands->empty()) {
         return RTLIL::Const();
     }
-    
-    // Evaluate operands
+
+    // Handle ternary (vpiConditionOp) with LAZY evaluation
+    // Must evaluate condition first, then only the taken branch
+    if (op_type == vpiConditionOp && operands->size() >= 3) {
+        RTLIL::Const cond = evaluate_single_operand((*operands)[0], local_vars);
+        if (!cond.is_fully_zero()) {
+            return evaluate_single_operand((*operands)[1], local_vars);
+        } else {
+            return evaluate_single_operand((*operands)[2], local_vars);
+        }
+    }
+
+    // Evaluate operands eagerly for all other operations
     std::vector<RTLIL::Const> operand_values;
     for (auto operand : *operands) {
-        RTLIL::Const val;
-        if (operand->VpiType() == vpiConstant) {
-            const constant* c = any_cast<const constant*>(operand);
-            RTLIL::SigSpec sig = import_constant(c);
-            if (sig.is_fully_const()) {
-                val = sig.as_const();
-            }
-        } else if (operand->VpiType() == vpiRefObj) {
-            const ref_obj* ref = any_cast<const ref_obj*>(operand);
-            std::string var_name = std::string(ref->VpiName());
-            if (local_vars.count(var_name)) {
-                val = local_vars.at(var_name);
-            }
-        } else if (operand->VpiType() == vpiOperation) {
-            const operation* sub_op = any_cast<const operation*>(operand);
-            val = evaluate_operation_const(sub_op, local_vars);
-        } else if (operand->VpiType() == vpiFuncCall) {
-            // Handle function calls in expressions
-            const func_call* fc = any_cast<const func_call*>(operand);
-            val = evaluate_recursive_function_call(fc, local_vars);
-        }
-        operand_values.push_back(val);
+        operand_values.push_back(evaluate_single_operand(operand, local_vars));
     }
     
     // Perform the operation
@@ -386,7 +413,38 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             }
             break;
 
-        // Add more operations as needed
+        case vpiMinusOp:  // Unary minus (-)
+            if (operand_values.size() >= 1) {
+                int result = -operand_values[0].as_int();
+                return RTLIL::Const(result, operand_values[0].size());
+            }
+            break;
+
+        case vpiRShiftOp:  // Right shift (>>)
+            if (operand_values.size() >= 2) {
+                RTLIL::Const result_c = RTLIL::const_shr(operand_values[0], operand_values[1], false, false, -1);
+                return result_c;
+            }
+            break;
+
+        case vpiLShiftOp:  // Left shift (<<)
+            if (operand_values.size() >= 2) {
+                RTLIL::Const result_c = RTLIL::const_shl(operand_values[0], operand_values[1], false, false, -1);
+                return result_c;
+            }
+            break;
+
+        case vpiConcatOp: {  // Concatenation ({a, b, ...})
+            RTLIL::Const::Builder builder;
+            // Concatenation: MSB first, so iterate in reverse to build LSB-first RTLIL::Const
+            for (int i = (int)operand_values.size() - 1; i >= 0; i--) {
+                for (int j = 0; j < operand_values[i].size(); j++) {
+                    builder.push_back(operand_values[i][j]);
+                }
+            }
+            return builder.build();
+        }
+
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);
             break;
