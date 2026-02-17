@@ -171,7 +171,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Handle part selects like result[7:0]
                         auto part_sel = any_cast<const part_select*>(lhs_expr);
                         sig.is_part_select = true;
-                        
+
                         if (auto parent = part_sel->VpiParent()) {
                             if (parent->VpiType() == vpiRefObj) {
                                 auto ref = any_cast<const ref_obj*>(parent);
@@ -179,10 +179,15 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             } else if (!parent->VpiName().empty()) {
                                 sig.name = std::string(parent->VpiName());
                             }
-                        } else if (!part_sel->VpiName().empty()) {
+                        }
+                        // Fallback: get name directly from part_select if parent didn't provide it
+                        if (sig.name.empty() && !part_sel->VpiDefName().empty()) {
+                            sig.name = std::string(part_sel->VpiDefName());
+                        }
+                        if (sig.name.empty() && !part_sel->VpiName().empty()) {
                             sig.name = std::string(part_sel->VpiName());
                         }
-                        
+
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiBitSelect) {
