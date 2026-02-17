@@ -81,7 +81,7 @@ module \Multiplier_flat
   wire width 96 $auto$expression.cpp:2021:import_operation$11
   wire width 96 $auto$expression.cpp:1998:import_operation$13
   wire width 32 $auto$expression.cpp:1949:import_operation$15
-  wire width 5 $auto$module.cpp:654:import_continuous_assign$17
+  wire width 5 $auto$module.cpp:657:import_continuous_assign$17
   wire width 64 $auto$expression.cpp:1949:import_operation$19
   wire width 64 $auto$expression.cpp:1975:import_operation$21
   wire width 64 $auto$expression.cpp:1949:import_operation$23
@@ -100,7 +100,7 @@ module \Multiplier_flat
   wire width 96 $auto$expression.cpp:2021:import_operation$41
   wire width 96 $auto$expression.cpp:1998:import_operation$43
   wire width 32 $auto$expression.cpp:1949:import_operation$45
-  wire width 6 $auto$module.cpp:654:import_continuous_assign$47
+  wire width 6 $auto$module.cpp:657:import_continuous_assign$47
   wire width 64 $auto$expression.cpp:1949:import_operation$49
   wire width 64 $auto$expression.cpp:1975:import_operation$51
   wire width 64 $auto$expression.cpp:1949:import_operation$53
@@ -119,7 +119,7 @@ module \Multiplier_flat
   wire width 96 $auto$expression.cpp:2021:import_operation$71
   wire width 96 $auto$expression.cpp:1998:import_operation$73
   wire width 32 $auto$expression.cpp:1949:import_operation$75
-  wire width 7 $auto$module.cpp:654:import_continuous_assign$77
+  wire width 7 $auto$module.cpp:657:import_continuous_assign$77
   wire width 64 $auto$expression.cpp:1949:import_operation$79
   wire width 64 $auto$expression.cpp:1975:import_operation$81
   wire width 64 $auto$expression.cpp:1949:import_operation$83
@@ -197,12 +197,12 @@ module \Multiplier_flat
     connect \B 1
     connect \Y $auto$expression.cpp:1949:import_operation$15
   end
-  cell $pos $auto$module.cpp:655:import_continuous_assign$18
+  cell $pos $auto$module.cpp:658:import_continuous_assign$18
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 5
     connect \A { }
-    connect \Y $auto$module.cpp:654:import_continuous_assign$17
+    connect \Y $auto$module.cpp:657:import_continuous_assign$17
   end
   cell $add $add$dut.sv:54$20
     parameter \A_SIGNED 0
@@ -352,12 +352,12 @@ module \Multiplier_flat
     connect \B 2
     connect \Y $auto$expression.cpp:1949:import_operation$45
   end
-  cell $pos $auto$module.cpp:655:import_continuous_assign$48
+  cell $pos $auto$module.cpp:658:import_continuous_assign$48
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 6
     connect \A { }
-    connect \Y $auto$module.cpp:654:import_continuous_assign$47
+    connect \Y $auto$module.cpp:657:import_continuous_assign$47
   end
   cell $add $add$dut.sv:54$50
     parameter \A_SIGNED 0
@@ -507,12 +507,12 @@ module \Multiplier_flat
     connect \B 3
     connect \Y $auto$expression.cpp:1949:import_operation$75
   end
-  cell $pos $auto$module.cpp:655:import_continuous_assign$78
+  cell $pos $auto$module.cpp:658:import_continuous_assign$78
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 7
     connect \A { }
-    connect \Y $auto$module.cpp:654:import_continuous_assign$77
+    connect \Y $auto$module.cpp:657:import_continuous_assign$77
   end
   cell $add $add$dut.sv:54$80
     parameter \A_SIGNED 0
@@ -605,13 +605,13 @@ module \Multiplier_flat
     connect \Y $auto$rtlil.cc:3386:And$96
   end
   connect \addPartialProduct[1].gA { $auto$rtlil.cc:3386:And$6 1'0 }
-  connect \addPartialProduct[1].gB $auto$module.cpp:654:import_continuous_assign$17
+  connect \addPartialProduct[1].gB $auto$module.cpp:657:import_continuous_assign$17
   connect { } { }
   connect \addPartialProduct[2].gA { $auto$rtlil.cc:3386:And$36 2'00 }
-  connect \addPartialProduct[2].gB $auto$module.cpp:654:import_continuous_assign$47
+  connect \addPartialProduct[2].gB $auto$module.cpp:657:import_continuous_assign$47
   connect { } { }
   connect \addPartialProduct[3].gA { $auto$rtlil.cc:3386:And$66 3'000 }
-  connect \addPartialProduct[3].gB $auto$module.cpp:654:import_continuous_assign$77
+  connect \addPartialProduct[3].gB $auto$module.cpp:657:import_continuous_assign$77
   connect { } { }
   connect \PP [4:0] { 1'0 $auto$rtlil.cc:3386:And$96 }
   connect \P \PP [25:18]

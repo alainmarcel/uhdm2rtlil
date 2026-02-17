@@ -546,8 +546,11 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     // Handle net type
     int net_type = uhdm_net->VpiNetType();
     if (net_type == vpiReg) {
-        // Reg type - can be driven by procedural code
-        w->attributes[ID::reg] = RTLIL::Const(1);
+        // Don't set \reg for nets driven by module instance output ports
+        // These are continuously driven and should not be treated as registers
+        if (instance_output_driven_nets.count(netname) == 0) {
+            w->attributes[ID::reg] = RTLIL::Const(1);
+        }
     }
     
     // Store in maps
@@ -815,6 +818,10 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     if (uhdm_inst->Param_assigns()) {
         std::string param_string;
         for (auto param : *uhdm_inst->Param_assigns()) {
+            // Skip localparams - they can't be overridden
+            if (auto lhs_param = dynamic_cast<const parameter*>(param->Lhs())) {
+                if (lhs_param->VpiLocalParam()) continue;
+            }
             std::string param_name = std::string(param->Lhs()->VpiName());
 
             if (auto rhs = param->Rhs()) {
@@ -831,8 +838,12 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
 
                     if (!val_str.empty() && value_type != "STRING") {
                         param_string += "\\" + param_name + "=s32'";
+                        // Determine numeric base from type prefix
+                        int base = 10;
+                        if (value_type == "BIN") base = 2;
+                        else if (value_type == "HEX") base = 16;
                         try {
-                            int val = std::stoi(val_str);
+                            int val = std::stoi(val_str, nullptr, base);
                             for (int i = 31; i >= 0; i--) {
                                 param_string += ((val >> i) & 1) ? "1" : "0";
                             }

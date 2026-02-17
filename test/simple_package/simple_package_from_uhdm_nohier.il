@@ -134,7 +134,7 @@ module \simple_package
     connect \A \rst_n
     connect \Y $logic_not$dut.sv:39.13-39.19$2_Y
   end
-  cell $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101 \sub_inst
+  cell $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000 \sub_inst
     connect \clk \clk
     connect \rst_n \rst_n
     connect \data_in \internal_bus
@@ -184,7 +184,7 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:52.5-57.7"
 attribute \dynports 1
 attribute \hdlname "sub_module"
-module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101
+module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000
   parameter \ADDR_WIDTH 16
   parameter \DATA_WIDTH 32
   parameter \COUNTER_WIDTH 5

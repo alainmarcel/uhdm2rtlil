@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 115 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (113/115 tests functional)
-- **Perfect Matches**: 108 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 116 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (114/116 tests functional)
+- **Perfect Matches**: 109 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `custom_map_incomp` - Custom mapping features
   - `nested_struct` - Complex nested structures
@@ -27,6 +27,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `alu_sub` - Multi-module ALU with localparam case statements and submodule instantiation
   - `initval` - Initial values on registers with mixed combinational/clocked part-select assignments
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
