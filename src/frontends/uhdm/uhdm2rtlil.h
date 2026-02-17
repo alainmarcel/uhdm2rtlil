@@ -185,6 +185,10 @@ struct UhdmImporter {
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
     std::set<std::string> imported_module_signatures;
+
+    // Track nets driven by module instance output ports
+    // These should not have the \reg attribute even if declared as reg
+    std::set<std::string> instance_output_driven_nets;
     
     // Track top-level modules (those with vpiTop:1 property)
     std::set<std::string> top_level_modules;

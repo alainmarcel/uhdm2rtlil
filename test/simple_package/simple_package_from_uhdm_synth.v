@@ -3,7 +3,7 @@
 (* dynports =  1  *)
 (* src = "dut.sv:52.5-57.7" *)
 (* hdlname = "sub_module" *)
-module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101 (clk, rst_n, data_in, data_out);
+module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000 (clk, rst_n, data_in, data_out);
   (* src = "dut.sv:65.38-65.41" *)
   input clk;
   wire clk;
@@ -781,7 +781,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
     .Q(internal_bus[17]),
     .R(rst_n)
   );
-  \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000\COUNTER_WIDTH=s32'00000000000000000000000000000101  sub_inst (
+  \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000  sub_inst (
     .clk(clk),
     .data_in({ 32'h00000000, internal_bus[17:0] }),
     .data_out(bus_out),

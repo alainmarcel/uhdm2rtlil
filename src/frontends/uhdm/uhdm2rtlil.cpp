@@ -324,6 +324,31 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log("UHDM: Starting interface expansion\n");
     expand_interfaces();
     
+    // Post-process: Remove \reg attribute from wires driven by cell output ports.
+    // In SystemVerilog, 'reg' variables connected to module instance outputs are
+    // continuously driven and should not be treated as registers.
+    log("UHDM: Removing \\reg from wires driven by cell outputs\n");
+    for (auto mod : design->modules()) {
+        for (auto cell : mod->cells()) {
+            RTLIL::Module* cell_module = design->module(cell->type);
+            if (!cell_module) continue;
+            for (auto &conn : cell->connections()) {
+                RTLIL::Wire* port_wire = cell_module->wire(conn.first);
+                if (port_wire && port_wire->port_output) {
+                    // This connection drives signals from a cell output port
+                    for (auto &bit : conn.second) {
+                        if (bit.wire && bit.wire->attributes.count(ID::reg)) {
+                            log("UHDM: Removing \\reg from wire '%s' in module %s (driven by cell %s port %s)\n",
+                                bit.wire->name.c_str(), mod->name.c_str(),
+                                cell->name.c_str(), conn.first.c_str());
+                            bit.wire->attributes.erase(ID::reg);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Post-process: Detect and mark blackbox modules
     // This must be done after all instances are created
     log("UHDM: Detecting blackbox modules\n");
@@ -390,11 +415,16 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         for (auto param_assign : *uhdm_module->Param_assigns()) {
             if (param_assign->Lhs() && param_assign->Rhs()) {
                 std::string param_name;
+                bool is_local_param = false;
                 // Get parameter name from LHS
                 if (auto ref = dynamic_cast<const parameter*>(param_assign->Lhs())) {
                     param_name = std::string(ref->VpiName());
+                    is_local_param = ref->VpiLocalParam();
                 }
-                
+
+                // Skip localparams - they can't be overridden
+                if (is_local_param) continue;
+
                 if (!param_name.empty()) {
                     param_signature += "$" + param_name + "=";
                     // Get parameter value from RHS
@@ -507,22 +537,26 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             yosys_modname += "\\" + param_name + "=\"" + str_value + "\"";
                         } else {
                             // Handle numeric parameter
-                            // Remove type prefix if present (e.g., "UINT:", "INT:")
+                            // Remove type prefix if present and determine base
+                            int base = 10;
                             size_t colon_pos = param_value.find(':');
                             if (colon_pos != std::string::npos) {
+                                std::string prefix = param_value.substr(0, colon_pos);
                                 param_value = param_value.substr(colon_pos + 1);
+                                if (prefix == "BIN") base = 2;
+                                else if (prefix == "HEX") base = 16;
                             }
-                            
+
                             // Convert to Yosys format
                             yosys_modname += "\\" + param_name + "=s32'";
                             // Pad value to 32 bits
                             try {
-                                int val = std::stoi(param_value);
+                                int val = std::stoi(param_value, nullptr, base);
                                 for (int i = 31; i >= 0; i--) {
                                     yosys_modname += ((val >> i) & 1) ? "1" : "0";
                                 }
                             } catch (const std::exception& e) {
-                                log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n", 
+                                log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n",
                                            param_value.c_str(), e.what());
                                 // Use zero as default
                                 yosys_modname += "00000000000000000000000000000000";
@@ -613,20 +647,30 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     is_string = true;
                                     value_to_use = param_value.substr(7);
                                 }
-                                
+
                                 // Convert to Yosys format
                                 if (is_string) {
                                     cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
                                 } else {
                                     cell_type += "\\" + param_name + "=s32'";
+                                    // Strip type prefix and determine base
+                                    int base = 10;
+                                    size_t colon_pos = value_to_use.find(':');
+                                    if (colon_pos != std::string::npos) {
+                                        std::string prefix = value_to_use.substr(0, colon_pos);
+                                        value_to_use = value_to_use.substr(colon_pos + 1);
+                                        if (prefix == "BIN") base = 2;
+                                        else if (prefix == "HEX") base = 16;
+                                    }
                                     // Pad value to 32 bits
                                     try {
-                                        int val = std::stoi(value_to_use);
+                                        int val = std::stoi(value_to_use, nullptr, base);
                                         for (int i = 31; i >= 0; i--) {
                                             cell_type += ((val >> i) & 1) ? "1" : "0";
                                         }
-                                    } catch (const std::invalid_argument& e) {
-                                        log_error("UHDM: Failed to parse parameter value '%s' as integer\n", value_to_use.c_str());
+                                    } catch (const std::exception& e) {
+                                        log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n", value_to_use.c_str(), e.what());
+                                        cell_type += "00000000000000000000000000000000";
                                     }
                                 }
                             }
@@ -953,11 +997,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         for (auto param_assign : *uhdm_module->Param_assigns()) {
             if (param_assign->Lhs() && param_assign->Rhs()) {
                 std::string param_name;
+                bool is_local_param = false;
                 // Get parameter name from LHS
                 if (auto param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
                     param_name = std::string(param->VpiName());
+                    is_local_param = param->VpiLocalParam();
                 }
-                
+
+                // Skip localparams - they can't be overridden and shouldn't
+                // create parameterized module names
+                if (is_local_param) continue;
+
                 if (!param_name.empty()) {
                     if (auto const_val = dynamic_cast<const constant*>(param_assign->Rhs())) {
                         // Get the actual integer value
@@ -980,14 +1030,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 // Handle numeric parameters
                                 // Convert to Yosys format
                                 param_string += "\\" + param_name + "=s32'";
+                                // Determine numeric base from type prefix
+                                int base = 10;
+                                if (value_type == "BIN") base = 2;
+                                else if (value_type == "HEX") base = 16;
                                 // Pad value to 32 bits
                                 try {
-                                    int val = std::stoi(val_str);
+                                    int val = std::stoi(val_str, nullptr, base);
                                     for (int i = 31; i >= 0; i--) {
                                         param_string += ((val >> i) & 1) ? "1" : "0";
                                     }
                                 } catch (const std::exception& e) {
-                                    log_warning("Failed to convert parameter value '%s' to integer: %s\n", 
+                                    log_warning("Failed to convert parameter value '%s' to integer: %s\n",
                                                val_str.c_str(), e.what());
                                     // Use zero as default
                                     param_string += "00000000000000000000000000000000";
@@ -1481,6 +1535,32 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
     
+    // Pre-scan child module instances to find nets driven by output ports.
+    // Nets connected to module instance outputs should not have the \reg attribute,
+    // even if declared as 'reg' in SystemVerilog, because they are continuously driven.
+    instance_output_driven_nets.clear();
+    if (uhdm_module->Modules()) {
+        for (auto child_inst : *uhdm_module->Modules()) {
+            if (child_inst->Ports()) {
+                for (auto port : *child_inst->Ports()) {
+                    if (port->VpiDirection() == vpiOutput && port->High_conn()) {
+                        const any* high_conn = port->High_conn();
+                        if (high_conn->UhdmType() == uhdmref_obj) {
+                            const ref_obj* ref = any_cast<const ref_obj*>(high_conn);
+                            std::string name = std::string(ref->VpiName());
+                            if (!name.empty()) {
+                                instance_output_driven_nets.insert(name);
+                                log("UHDM: Pre-scan: net '%s' is driven by output port '%s' of instance '%s'\n",
+                                    name.c_str(), std::string(port->VpiName()).c_str(),
+                                    std::string(child_inst->VpiName()).c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Import nets
     if (uhdm_module->Nets()) {
         log("UHDM: Found %d nets to import\n", (int)uhdm_module->Nets()->size());
