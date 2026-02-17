@@ -1399,9 +1399,21 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
     std::string value = std::string(uhdm_const->VpiValue());
     int size = uhdm_const->VpiSize();
     
-    log("UHDM: Importing constant: %s (type=%d, size=%d)\n", 
+    log("UHDM: Importing constant: %s (type=%d, size=%d)\n",
         value.c_str(), const_type, size);
-    
+
+    // If VpiConstType is 0 (undefined), infer the type from the value string prefix
+    if (const_type == 0 && !value.empty()) {
+        if (value.substr(0, 5) == "UINT:") const_type = vpiUIntConst;
+        else if (value.substr(0, 4) == "INT:") const_type = vpiIntConst;
+        else if (value.substr(0, 4) == "BIN:") const_type = vpiBinaryConst;
+        else if (value.substr(0, 4) == "HEX:") const_type = vpiHexConst;
+        else if (value.substr(0, 4) == "DEC:") const_type = vpiDecConst;
+        else if (value.substr(0, 7) == "STRING:") const_type = vpiStringConst;
+        if (const_type != 0)
+            log("UHDM: Inferred constant type %d from value prefix\n", const_type);
+    }
+
     switch (const_type) {
         case vpiBinaryConst: {
             std::string bin_str;

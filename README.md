@@ -289,7 +289,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (115 total - 113 passing, 2 known issues)
+### Current Test Cases (117 total - 115 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -422,6 +422,7 @@ The Yosys test runner:
 - **simple_instance_array** - Primitive gate arrays (and, or, xor, nand, not with array instances) *(UHDM-only)*
 - **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
 - **custom_map_incomp** - Custom technology mapping with incomplete instantiation *(UHDM-only)*
+- **arraycells** - Array cell instantiation with bit-sliced port connections (e.g., `aoi12 p [31:0] (a, b, c, y)`)
 
 #### Primitives & Miscellaneous
 - **verilog_primitives** - Instantiation of buf, not, and xnor primitives
@@ -451,7 +452,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 113 of 115 tests are passing or working as expected
+- 115 of 117 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -505,10 +506,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **115 test cases**:
+The UHDM frontend test suite includes **117 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
 - **108 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **113 tests passing** - with 2 known failures documented in failing_tests.txt
+- **115 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
