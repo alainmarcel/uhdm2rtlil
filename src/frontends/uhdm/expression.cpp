@@ -1600,15 +1600,75 @@ static void mark_result_signed(RTLIL::SigSpec& result) {
 
 // Import operation
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
-    // Try to reduce it first
+    int op_type = uhdm_op->VpiOpType();
+
+    // Handle side-effect operations before reduceExpr (which doesn't understand them)
+    if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
+        op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
+        // Inc/dec as expression: emit side-effect and return updated value
+        if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
+            const expr* operand = any_cast<const expr*>((*uhdm_op->Operands())[0]);
+            // Import with value tracking for the cell input (current value)
+            RTLIL::SigSpec cell_input = import_expression(operand, input_mapping);
+            // Import without value tracking for the side-effect target (actual wire)
+            RTLIL::SigSpec target_wire = import_expression(operand, nullptr);
+            if (cell_input.size() == 0) return RTLIL::SigSpec();
+
+            RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
+            RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
+
+            if (op_type == vpiPostIncOp || op_type == vpiPreIncOp) {
+                module->addAdd(NEW_ID, cell_input, one, result, false);
+            } else {
+                module->addSub(NEW_ID, cell_input, one, result, false);
+            }
+
+            // Emit side-effect: target_wire = result
+            if (current_comb_process) {
+                emit_comb_assign(target_wire, result, current_comb_process);
+            }
+
+            return result;
+        }
+        return RTLIL::SigSpec();
+    }
+
+    if (op_type == vpiAssignmentOp) {
+        // Assignment-as-expression: (y = expr)
+        // operand[0] = target ref, operand[1] = value expr
+        if (uhdm_op->Operands() && uhdm_op->Operands()->size() >= 2) {
+            // Import target without value tracking (need actual wire for side-effect LHS)
+            RTLIL::SigSpec target = import_expression(any_cast<const expr*>((*uhdm_op->Operands())[0]), nullptr);
+            // Import value with value tracking (need current values for correct computation)
+            RTLIL::SigSpec value = import_expression(any_cast<const expr*>((*uhdm_op->Operands())[1]), input_mapping);
+
+            if (target.size() == 0 || value.size() == 0) return RTLIL::SigSpec();
+
+            // Size match
+            if (value.size() != target.size()) {
+                if (value.size() < target.size())
+                    value.extend_u0(target.size());
+                else
+                    value = value.extract(0, target.size());
+            }
+
+            // Emit side-effect: target = value
+            if (current_comb_process) {
+                emit_comb_assign(target, value, current_comb_process);
+            }
+
+            return value;
+        }
+        return RTLIL::SigSpec();
+    }
+
+    // Try to reduce it first (for non-side-effect operations)
     ExprEval eval;
     bool invalidValue = false;
     expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
     if (res && res->UhdmType() == uhdmconstant) {
         return import_constant(dynamic_cast<const UHDM::constant*>(res));
     }
-
-    int op_type = uhdm_op->VpiOpType();
     
     if (mode_debug)
         log("    Importing operation: %d\n", op_type);

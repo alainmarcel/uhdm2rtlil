@@ -482,6 +482,10 @@ struct UhdmImporter {
     RTLIL::SigSpec import_concat(const UHDM::operation* uhdm_concat, const UHDM::scope* inst = nullptr);
     RTLIL::SigSpec import_hier_path(const UHDM::hier_path* uhdm_hier, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     
+    // Side-effect helpers for assignment expressions and inc/dec
+    void emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc);
+    RTLIL::SigSpec map_to_temp_wire(RTLIL::SigSpec sig);
+
     // Utility functions
     RTLIL::IdString new_id(const std::string& name);
     std::string get_name(const UHDM::any* uhdm_obj);

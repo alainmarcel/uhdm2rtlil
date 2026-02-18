@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 118 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (116/118 tests functional)
-- **Perfect Matches**: 112 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 120 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (118/120 tests functional)
+- **Perfect Matches**: 114 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -26,9 +26,15 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions: increment/decrement operators, nested assignment expressions
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
+  - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions ✅
+    - Implemented increment/decrement operators (`x++`, `--x`) as both statements and expressions
+    - Implemented nested assignment expressions (`x = (y = z + 1) + 1`) with proper side-effect ordering
+    - Added `emit_comb_assign()` and `map_to_temp_wire()` helpers for correct `$0\` temp wire mapping
+    - Value tracking (`current_comb_values`) ensures cell inputs chain correctly through sequential operations
   - `port_sign_extend` - Signed port propagation from UHDM nets to port wires ✅
     - Fixed `import_net()` to update signedness on existing port wires from `VpiSigned` on logic_net
     - Fixed operation signedness for arithmetic/comparison/shift operations via operand analysis
@@ -169,8 +175,10 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - `always_ff` - Sequential logic with proper clock/reset inference
   - `always_comb` - Combinational logic
   - `always` - Mixed sequential/combinational logic
-- **Expressions**: 
+- **Expressions**:
   - Arithmetic, logical, bitwise, comparison, ternary operators
+  - Increment/decrement operators (`x++`, `--x`) as statements and in expressions
+  - Assignment expressions (`x = (y = expr) + 1`) with proper side-effect ordering
   - System function calls ($signed, $unsigned, $floor, $ceil)
   - User-defined function calls with good support (simple functions, arithmetic, boolean logic, case statements, nested if-else)
   - Struct member access (e.g., `bus.field`)
@@ -296,7 +304,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (118 total - 116 passing, 2 known issues)
+### Current Test Cases (120 total - 118 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -336,6 +344,8 @@ The Yosys test runner:
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
 - **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, and arithmetic operations
+- **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
+- **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
 
 #### Multiplexers
 - **mux2** - 2-to-1 multiplexer using conditional operator (tests ternary expression)
@@ -460,7 +470,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 116 of 118 tests are passing or working as expected
+- 118 of 120 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -514,12 +524,23 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **118 test cases**:
+The UHDM frontend test suite includes **120 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **112 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **116 tests passing** - with 2 known failures documented in failing_tests.txt
+- **114 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **118 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Assignment Expressions and Increment/Decrement Operators
+- Implemented SystemVerilog assignment expressions: `x = (y = z + 1) + 1`
+- Implemented increment/decrement operators as both statements (`x++`, `--x`) and expressions (`z = ++x`)
+- Handles `vpiPostIncOp`/`vpiPreIncOp`/`vpiPostDecOp`/`vpiPreDecOp` (ops 62-65) in `import_operation()` and `import_statement_comb()`
+- Handles `vpiAssignmentOp` (op 82) for nested assignment-as-expression in `import_operation()`
+- Side-effect operations are handled before `reduceExpr` to prevent incorrect constant folding
+- Added `emit_comb_assign()` helper for emitting process assignments with proper `$0\` temp wire mapping
+- Added `map_to_temp_wire()` helper for mapping signals to their temp wire equivalents
+- Value tracking (`current_comb_values`) updated after each side-effect to ensure correct data flow chaining
+- Separate value-tracked and non-tracked imports: tracked values for cell inputs (correct data flow), raw wires for side-effect targets (correct assignment targets)
 
 ### Port Signedness and Sign Extension
 - Fixed signed port propagation from UHDM elaborated nets to port wires
