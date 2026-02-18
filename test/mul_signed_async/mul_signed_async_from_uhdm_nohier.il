@@ -7,15 +7,15 @@ module \mul_signed_async
   parameter \M 8
   parameter \N 6
   attribute \src "dut.sv:1.26-1.29"
-  wire input 1 \clk
+  wire input 1 signed \clk
   attribute \src "dut.sv:1.31-1.34"
-  wire input 2 \rst
+  wire input 2 signed \rst
   attribute \src "dut.sv:1.36-1.38"
-  wire input 3 \en
+  wire input 3 signed \en
   attribute \src "dut.sv:1.40-1.41"
-  wire width 8 input 4 \a
+  wire width 8 input 4 signed \a
   attribute \src "dut.sv:1.43-1.44"
-  wire width 6 input 5 \b
+  wire width 6 input 5 signed \b
   attribute \src "dut.sv:1.46-1.47"
   wire width 14 output 6 signed \p
   attribute \src "dut.sv:11.24-11.29"
@@ -30,7 +30,7 @@ module \mul_signed_async
   wire width 6 $0\b_reg
   attribute \src "dut.sv:18.5-30.8"
   wire width 14 $0\p
-  wire width 14 $auto$expression.cpp:2033:import_operation$2
+  wire width 14 $auto$expression.cpp:2067:import_operation$2
   cell $mul $mul$dut.sv:28$3
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -39,7 +39,7 @@ module \mul_signed_async
     parameter \Y_WIDTH 14
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:2033:import_operation$2
+    connect \Y $auto$expression.cpp:2067:import_operation$2
   end
   attribute \src "dut.sv:18.5-30.8"
   attribute \always_ff 1
@@ -63,7 +63,7 @@ module \mul_signed_async
           case 1'1
             assign $0\a_reg \a
             assign $0\b_reg \b
-            assign $0\p $auto$expression.cpp:2033:import_operation$2
+            assign $0\p $auto$expression.cpp:2067:import_operation$2
         attribute \src "dut.sv:25.14-29.12"
           case 
         end

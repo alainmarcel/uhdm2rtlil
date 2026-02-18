@@ -14,33 +14,33 @@ module \initval
   attribute \src "dut.sv:3.13-3.25"
   attribute \reg 1
   wire width 4 \last_bar
-  wire width 4 $auto$module.cpp:690:import_continuous_assign$2
-  wire width 4 $auto$module.cpp:690:import_continuous_assign$4
-  wire width 4 $auto$module.cpp:690:import_continuous_assign$6
+  wire width 4 $auto$module.cpp:696:import_continuous_assign$2
+  wire width 4 $auto$module.cpp:696:import_continuous_assign$4
+  wire width 4 $auto$module.cpp:696:import_continuous_assign$6
   attribute \src "dut.sv:6.3-7.26"
   wire width 2 $0\foo
   attribute \src "dut.sv:17.3-18.24"
   wire width 3 $0\asdf
   attribute \src "dut.sv:2.13-2.16"
   process $proc$dut.sv:2$1
-    assign $auto$module.cpp:690:import_continuous_assign$2 4'0000
+    assign $auto$module.cpp:696:import_continuous_assign$2 4'0000
     sync always
     sync init
-      update \foo $auto$module.cpp:690:import_continuous_assign$2
+      update \foo $auto$module.cpp:696:import_continuous_assign$2
   end
   attribute \src "dut.sv:3.13-3.21"
   process $proc$dut.sv:3$3
-    assign $auto$module.cpp:690:import_continuous_assign$4 4'0000
+    assign $auto$module.cpp:696:import_continuous_assign$4 4'0000
     sync always
     sync init
-      update \last_bar $auto$module.cpp:690:import_continuous_assign$4
+      update \last_bar $auto$module.cpp:696:import_continuous_assign$4
   end
   attribute \src "dut.sv:4.13-4.17"
   process $proc$dut.sv:4$5
-    assign $auto$module.cpp:690:import_continuous_assign$6 4'1xxx
+    assign $auto$module.cpp:696:import_continuous_assign$6 4'1xxx
     sync always
     sync init
-      update \asdf $auto$module.cpp:690:import_continuous_assign$6
+      update \asdf $auto$module.cpp:696:import_continuous_assign$6
   end
   attribute \src "dut.sv:6.3-7.26"
   process $proc$dut.sv:6$7

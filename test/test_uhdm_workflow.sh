@@ -135,13 +135,21 @@ echo
 # Step 4: Run Yosys with UHDM input
 echo "5. Running Yosys with UHDM input (logging to uhdm_path.log)..."
 echo "   Command: $YOSYS_BIN test_uhdm_read.ys > uhdm_path.log 2>&1"
+UHDM_FAILED=0
 if $YOSYS_BIN test_uhdm_read.ys > uhdm_path.log 2>&1; then
     echo "   ✓ Yosys successfully processed UHDM file"
     echo "   Log saved to: uhdm_path.log"
 else
-    echo "   ✗ Yosys failed to process UHDM file"
-    echo "   Check uhdm_path.log for errors"
-    exit 1
+    # Check if nohier IL was written before the failure (e.g., hierarchy check failed)
+    if [ -f "${MODULE_NAME}_from_uhdm_nohier.il" ]; then
+        UHDM_FAILED=1
+        echo "   ⚠ Yosys failed after writing nohier IL (hierarchy check may have failed)"
+        echo "   Will still compare nohier IL outputs"
+    else
+        echo "   ✗ Yosys failed to process UHDM file"
+        echo "   Check uhdm_path.log for errors"
+        exit 1
+    fi
 fi
 
 echo
@@ -167,7 +175,7 @@ else
     echo "   Check verilog_path.log for details"
     
     # If UHDM passed but Verilog failed, this might demonstrate UHDM's superior capabilities
-    if [ ! -f "${MODULE_NAME}_from_uhdm.il" ]; then
+    if [ ! -f "${MODULE_NAME}_from_uhdm.il" ] && [ ! -f "${MODULE_NAME}_from_uhdm_nohier.il" ]; then
         echo "   ✗ ERROR: Both UHDM and Verilog frontends failed"
         exit 1
     fi

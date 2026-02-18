@@ -14,11 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 116 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (114/116 tests functional)
-- **Perfect Matches**: 109 tests with identical RTLIL output between UHDM and Verilog frontends
-- **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
-  - `custom_map_incomp` - Custom mapping features
+- **Total Tests**: 118 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (116/118 tests functional)
+- **Perfect Matches**: 112 tests with identical RTLIL output between UHDM and Verilog frontends
+- **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
@@ -27,10 +26,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
-  - `alu_sub` - Multi-module ALU with localparam case statements and submodule instantiation
-  - `initval` - Initial values on registers with mixed combinational/clocked part-select assignments
+  - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
+  - `port_sign_extend` - Signed port propagation from UHDM nets to port wires ✅
+    - Fixed `import_net()` to update signedness on existing port wires from `VpiSigned` on logic_net
+    - Fixed operation signedness for arithmetic/comparison/shift operations via operand analysis
+    - Added signed constant detection via `int_typespec` on `Actual_typespec()`
+    - Restored unbased unsized literal extension for 1-bit constants to port width
+  - `custom_map_incomp` - Techmap cell handling without blackbox module creation ✅
+    - `_TECHMAP_REPLACE_` instances now create cells with base module name (namespace-stripped)
+    - Parameters passed directly on the cell with proper string constant preservation
+    - No module definition created for techmap replacement modules
   - `struct_access` - Packed struct field access with complex initial blocks ✅
     - Fixed memory analyzer crash on initial blocks (skip vpiInitial in memory analysis)
     - Fixed vpiIf/vpiIfElse type casting in memory_analysis.cpp (vpiIf→if_stmt, vpiIfElse→if_else)
@@ -289,7 +296,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (117 total - 115 passing, 2 known issues)
+### Current Test Cases (118 total - 116 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -328,6 +335,7 @@ The Yosys test runner:
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
+- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, and arithmetic operations
 
 #### Multiplexers
 - **mux2** - 2-to-1 multiplexer using conditional operator (tests ternary expression)
@@ -421,7 +429,7 @@ The Yosys test runner:
 - **simple_interface** - Interface-based connections
 - **simple_instance_array** - Primitive gate arrays (and, or, xor, nand, not with array instances) *(UHDM-only)*
 - **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
-- **custom_map_incomp** - Custom technology mapping with incomplete instantiation *(UHDM-only)*
+- **custom_map_incomp** - Custom technology mapping with `_TECHMAP_REPLACE_` cell and string parameters
 - **arraycells** - Array cell instantiation with bit-sliced port connections (e.g., `aoi12 p [31:0] (a, b, c, y)`)
 
 #### Primitives & Miscellaneous
@@ -452,7 +460,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 115 of 117 tests are passing or working as expected
+- 116 of 118 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -506,12 +514,27 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **117 test cases**:
-- **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (custom_map_incomp, nested_struct, simple_instance_array, simple_package, unique_case)
-- **108 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **115 tests passing** - with 2 known failures documented in failing_tests.txt
+The UHDM frontend test suite includes **118 test cases**:
+- **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
+- **112 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **116 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Port Signedness and Sign Extension
+- Fixed signed port propagation from UHDM elaborated nets to port wires
+- In `import_net()`, when a net already exists in `name_map` (created by `import_port()`), the `VpiSigned` flag is now checked and applied to the existing wire
+- Added operation signedness analysis: arithmetic, comparison, and shift operations check both operands for signedness
+- Signed constant detection via `int_typespec` on `Actual_typespec()` for constants like `1'sb1`
+- Restored unbased unsized literal extension for 1-bit constants (`'0`, `'1`, `'x`, `'z`) connecting to wider ports
+- Re-enabled AllModules import with top-level skip for proper port direction information on non-top modules
+
+### Techmap Cell Handling (_TECHMAP_REPLACE_)
+- Special handling for `_TECHMAP_REPLACE_` instances: no blackbox module definition is created
+- Cell is created with the base module name (parent namespace stripped, e.g., `custom_map_incomp::ALU` → `ALU`)
+- Parameters are passed directly on the cell with proper string constant preservation (`"AND"` not binary)
+- Port connections are made directly from the parent module's wires
+- Test infrastructure updated to handle tests where both frontends fail at `hierarchy -check` by comparing nohier IL outputs
 
 ### Initial Block Import Strategy
 - Split `import_initial` into two strategies based on statement content analysis
