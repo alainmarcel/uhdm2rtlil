@@ -13,8 +13,8 @@ module \FullAdder
   wire output 4 \S
   attribute \src "dut.sv:130.47-130.51"
   wire output 5 \Cout
-  wire width 2 $auto$expression.cpp:1995:import_operation$1
-  wire width 2 $auto$expression.cpp:1995:import_operation$3
+  wire width 2 $auto$expression.cpp:2055:import_operation$1
+  wire width 2 $auto$expression.cpp:2055:import_operation$3
   cell $add $add$dut.sv:131$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -23,7 +23,7 @@ module \FullAdder
     parameter \Y_WIDTH 2
     connect \A \A
     connect \B \B
-    connect \Y $auto$expression.cpp:1995:import_operation$1
+    connect \Y $auto$expression.cpp:2055:import_operation$1
   end
   cell $add $add$dut.sv:131$4
     parameter \A_SIGNED 0
@@ -31,11 +31,11 @@ module \FullAdder
     parameter \A_WIDTH 2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:1995:import_operation$1
+    connect \A $auto$expression.cpp:2055:import_operation$1
     connect \B \Cin
-    connect \Y $auto$expression.cpp:1995:import_operation$3
+    connect \Y $auto$expression.cpp:2055:import_operation$3
   end
-  connect { \Cout \S } $auto$expression.cpp:1995:import_operation$3
+  connect { \Cout \S } $auto$expression.cpp:2055:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:109.1-128.10"
@@ -76,58 +76,58 @@ module \Multiplier_flat
   wire width 5 \addPartialProduct[1].gS
   wire \addPartialProduct[1].Cout
   wire width 4 $auto$rtlil.cc:3386:And$6
-  wire width 64 $auto$expression.cpp:2021:import_operation$7
-  wire width 32 $auto$expression.cpp:1995:import_operation$9
-  wire width 96 $auto$expression.cpp:2067:import_operation$11
-  wire width 96 $auto$expression.cpp:2044:import_operation$13
-  wire width 32 $auto$expression.cpp:1995:import_operation$15
+  wire width 64 $auto$expression.cpp:2081:import_operation$7
+  wire width 32 $auto$expression.cpp:2055:import_operation$9
+  wire width 96 $auto$expression.cpp:2127:import_operation$11
+  wire width 96 $auto$expression.cpp:2104:import_operation$13
+  wire width 32 $auto$expression.cpp:2055:import_operation$15
   wire width 5 $auto$module.cpp:663:import_continuous_assign$17
-  wire width 64 $auto$expression.cpp:1995:import_operation$19
-  wire width 64 $auto$expression.cpp:2021:import_operation$21
-  wire width 64 $auto$expression.cpp:1995:import_operation$23
-  wire width 64 $auto$expression.cpp:1995:import_operation$25
-  wire width 128 $auto$expression.cpp:2067:import_operation$27
-  wire width 128 $auto$expression.cpp:2044:import_operation$29
-  wire width 32 $auto$expression.cpp:1995:import_operation$31
-  wire width 64 $auto$expression.cpp:1995:import_operation$33
+  wire width 64 $auto$expression.cpp:2055:import_operation$19
+  wire width 64 $auto$expression.cpp:2081:import_operation$21
+  wire width 64 $auto$expression.cpp:2055:import_operation$23
+  wire width 64 $auto$expression.cpp:2055:import_operation$25
+  wire width 128 $auto$expression.cpp:2127:import_operation$27
+  wire width 128 $auto$expression.cpp:2104:import_operation$29
+  wire width 32 $auto$expression.cpp:2055:import_operation$31
+  wire width 64 $auto$expression.cpp:2055:import_operation$33
   wire width 6 \addPartialProduct[2].gA
   wire width 6 \addPartialProduct[2].gB
   wire width 6 \addPartialProduct[2].gS
   wire \addPartialProduct[2].Cout
   wire width 4 $auto$rtlil.cc:3386:And$36
-  wire width 64 $auto$expression.cpp:2021:import_operation$37
-  wire width 32 $auto$expression.cpp:1995:import_operation$39
-  wire width 96 $auto$expression.cpp:2067:import_operation$41
-  wire width 96 $auto$expression.cpp:2044:import_operation$43
-  wire width 32 $auto$expression.cpp:1995:import_operation$45
+  wire width 64 $auto$expression.cpp:2081:import_operation$37
+  wire width 32 $auto$expression.cpp:2055:import_operation$39
+  wire width 96 $auto$expression.cpp:2127:import_operation$41
+  wire width 96 $auto$expression.cpp:2104:import_operation$43
+  wire width 32 $auto$expression.cpp:2055:import_operation$45
   wire width 6 $auto$module.cpp:663:import_continuous_assign$47
-  wire width 64 $auto$expression.cpp:1995:import_operation$49
-  wire width 64 $auto$expression.cpp:2021:import_operation$51
-  wire width 64 $auto$expression.cpp:1995:import_operation$53
-  wire width 64 $auto$expression.cpp:1995:import_operation$55
-  wire width 128 $auto$expression.cpp:2067:import_operation$57
-  wire width 128 $auto$expression.cpp:2044:import_operation$59
-  wire width 32 $auto$expression.cpp:1995:import_operation$61
-  wire width 64 $auto$expression.cpp:1995:import_operation$63
+  wire width 64 $auto$expression.cpp:2055:import_operation$49
+  wire width 64 $auto$expression.cpp:2081:import_operation$51
+  wire width 64 $auto$expression.cpp:2055:import_operation$53
+  wire width 64 $auto$expression.cpp:2055:import_operation$55
+  wire width 128 $auto$expression.cpp:2127:import_operation$57
+  wire width 128 $auto$expression.cpp:2104:import_operation$59
+  wire width 32 $auto$expression.cpp:2055:import_operation$61
+  wire width 64 $auto$expression.cpp:2055:import_operation$63
   wire width 7 \addPartialProduct[3].gA
   wire width 7 \addPartialProduct[3].gB
   wire width 7 \addPartialProduct[3].gS
   wire \addPartialProduct[3].Cout
   wire width 4 $auto$rtlil.cc:3386:And$66
-  wire width 64 $auto$expression.cpp:2021:import_operation$67
-  wire width 32 $auto$expression.cpp:1995:import_operation$69
-  wire width 96 $auto$expression.cpp:2067:import_operation$71
-  wire width 96 $auto$expression.cpp:2044:import_operation$73
-  wire width 32 $auto$expression.cpp:1995:import_operation$75
+  wire width 64 $auto$expression.cpp:2081:import_operation$67
+  wire width 32 $auto$expression.cpp:2055:import_operation$69
+  wire width 96 $auto$expression.cpp:2127:import_operation$71
+  wire width 96 $auto$expression.cpp:2104:import_operation$73
+  wire width 32 $auto$expression.cpp:2055:import_operation$75
   wire width 7 $auto$module.cpp:663:import_continuous_assign$77
-  wire width 64 $auto$expression.cpp:1995:import_operation$79
-  wire width 64 $auto$expression.cpp:2021:import_operation$81
-  wire width 64 $auto$expression.cpp:1995:import_operation$83
-  wire width 64 $auto$expression.cpp:1995:import_operation$85
-  wire width 128 $auto$expression.cpp:2067:import_operation$87
-  wire width 128 $auto$expression.cpp:2044:import_operation$89
-  wire width 32 $auto$expression.cpp:1995:import_operation$91
-  wire width 64 $auto$expression.cpp:1995:import_operation$93
+  wire width 64 $auto$expression.cpp:2055:import_operation$79
+  wire width 64 $auto$expression.cpp:2081:import_operation$81
+  wire width 64 $auto$expression.cpp:2055:import_operation$83
+  wire width 64 $auto$expression.cpp:2055:import_operation$85
+  wire width 128 $auto$expression.cpp:2127:import_operation$87
+  wire width 128 $auto$expression.cpp:2104:import_operation$89
+  wire width 32 $auto$expression.cpp:2055:import_operation$91
+  wire width 64 $auto$expression.cpp:2055:import_operation$93
   wire width 4 $auto$rtlil.cc:3386:And$96
   attribute \src "dut.sv:65.5-65.86"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 \addPartialProduct[1].adder
@@ -155,7 +155,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$7
+    connect \Y $auto$expression.cpp:2081:import_operation$7
   end
   cell $add $add$dut.sv:53$10
     parameter \A_SIGNED 0
@@ -165,7 +165,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 1
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$9
+    connect \Y $auto$expression.cpp:2055:import_operation$9
   end
   cell $mul $mul$dut.sv:53$12
     parameter \A_SIGNED 0
@@ -173,9 +173,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2021:import_operation$7
-    connect \B $auto$expression.cpp:1995:import_operation$9
-    connect \Y $auto$expression.cpp:2067:import_operation$11
+    connect \A $auto$expression.cpp:2081:import_operation$7
+    connect \B $auto$expression.cpp:2055:import_operation$9
+    connect \Y $auto$expression.cpp:2127:import_operation$11
   end
   cell $div $div$dut.sv:53$14
     parameter \A_SIGNED 0
@@ -183,9 +183,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 96
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2067:import_operation$11
+    connect \A $auto$expression.cpp:2127:import_operation$11
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$13
+    connect \Y $auto$expression.cpp:2104:import_operation$13
   end
   cell $add $add$dut.sv:53$16
     parameter \A_SIGNED 0
@@ -195,7 +195,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 1
-    connect \Y $auto$expression.cpp:1995:import_operation$15
+    connect \Y $auto$expression.cpp:2055:import_operation$15
   end
   cell $pos $auto$module.cpp:664:import_continuous_assign$18
     parameter \A_SIGNED 0
@@ -212,7 +212,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$19
+    connect \Y $auto$expression.cpp:2055:import_operation$19
   end
   cell $sub $sub$dut.sv:54$22
     parameter \A_SIGNED 0
@@ -220,9 +220,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$19
+    connect \A $auto$expression.cpp:2055:import_operation$19
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$21
+    connect \Y $auto$expression.cpp:2081:import_operation$21
   end
   cell $add $add$dut.sv:54$24
     parameter \A_SIGNED 0
@@ -232,7 +232,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$23
+    connect \Y $auto$expression.cpp:2055:import_operation$23
   end
   cell $add $add$dut.sv:54$26
     parameter \A_SIGNED 0
@@ -240,9 +240,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$23
+    connect \A $auto$expression.cpp:2055:import_operation$23
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$25
+    connect \Y $auto$expression.cpp:2055:import_operation$25
   end
   cell $mul $mul$dut.sv:54$28
     parameter \A_SIGNED 0
@@ -250,9 +250,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2021:import_operation$21
-    connect \B $auto$expression.cpp:1995:import_operation$25
-    connect \Y $auto$expression.cpp:2067:import_operation$27
+    connect \A $auto$expression.cpp:2081:import_operation$21
+    connect \B $auto$expression.cpp:2055:import_operation$25
+    connect \Y $auto$expression.cpp:2127:import_operation$27
   end
   cell $div $div$dut.sv:54$30
     parameter \A_SIGNED 0
@@ -260,9 +260,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 128
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2067:import_operation$27
+    connect \A $auto$expression.cpp:2127:import_operation$27
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$29
+    connect \Y $auto$expression.cpp:2104:import_operation$29
   end
   cell $add $add$dut.sv:54$32
     parameter \A_SIGNED 0
@@ -272,7 +272,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 1
-    connect \Y $auto$expression.cpp:1995:import_operation$31
+    connect \Y $auto$expression.cpp:2055:import_operation$31
   end
   cell $add $add$dut.sv:54$34
     parameter \A_SIGNED 0
@@ -280,9 +280,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$31
+    connect \A $auto$expression.cpp:2055:import_operation$31
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$33
+    connect \Y $auto$expression.cpp:2055:import_operation$33
   end
   attribute \src "dut.sv:65.5-65.86"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 \addPartialProduct[2].adder
@@ -310,7 +310,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$37
+    connect \Y $auto$expression.cpp:2081:import_operation$37
   end
   cell $add $add$dut.sv:53$40
     parameter \A_SIGNED 0
@@ -320,7 +320,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 2
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$39
+    connect \Y $auto$expression.cpp:2055:import_operation$39
   end
   cell $mul $mul$dut.sv:53$42
     parameter \A_SIGNED 0
@@ -328,9 +328,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2021:import_operation$37
-    connect \B $auto$expression.cpp:1995:import_operation$39
-    connect \Y $auto$expression.cpp:2067:import_operation$41
+    connect \A $auto$expression.cpp:2081:import_operation$37
+    connect \B $auto$expression.cpp:2055:import_operation$39
+    connect \Y $auto$expression.cpp:2127:import_operation$41
   end
   cell $div $div$dut.sv:53$44
     parameter \A_SIGNED 0
@@ -338,9 +338,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 96
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2067:import_operation$41
+    connect \A $auto$expression.cpp:2127:import_operation$41
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$43
+    connect \Y $auto$expression.cpp:2104:import_operation$43
   end
   cell $add $add$dut.sv:53$46
     parameter \A_SIGNED 0
@@ -350,7 +350,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 2
-    connect \Y $auto$expression.cpp:1995:import_operation$45
+    connect \Y $auto$expression.cpp:2055:import_operation$45
   end
   cell $pos $auto$module.cpp:664:import_continuous_assign$48
     parameter \A_SIGNED 0
@@ -367,7 +367,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$49
+    connect \Y $auto$expression.cpp:2055:import_operation$49
   end
   cell $sub $sub$dut.sv:54$52
     parameter \A_SIGNED 0
@@ -375,9 +375,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$49
+    connect \A $auto$expression.cpp:2055:import_operation$49
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$51
+    connect \Y $auto$expression.cpp:2081:import_operation$51
   end
   cell $add $add$dut.sv:54$54
     parameter \A_SIGNED 0
@@ -387,7 +387,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$53
+    connect \Y $auto$expression.cpp:2055:import_operation$53
   end
   cell $add $add$dut.sv:54$56
     parameter \A_SIGNED 0
@@ -395,9 +395,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$53
+    connect \A $auto$expression.cpp:2055:import_operation$53
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$55
+    connect \Y $auto$expression.cpp:2055:import_operation$55
   end
   cell $mul $mul$dut.sv:54$58
     parameter \A_SIGNED 0
@@ -405,9 +405,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2021:import_operation$51
-    connect \B $auto$expression.cpp:1995:import_operation$55
-    connect \Y $auto$expression.cpp:2067:import_operation$57
+    connect \A $auto$expression.cpp:2081:import_operation$51
+    connect \B $auto$expression.cpp:2055:import_operation$55
+    connect \Y $auto$expression.cpp:2127:import_operation$57
   end
   cell $div $div$dut.sv:54$60
     parameter \A_SIGNED 0
@@ -415,9 +415,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 128
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2067:import_operation$57
+    connect \A $auto$expression.cpp:2127:import_operation$57
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$59
+    connect \Y $auto$expression.cpp:2104:import_operation$59
   end
   cell $add $add$dut.sv:54$62
     parameter \A_SIGNED 0
@@ -427,7 +427,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 2
-    connect \Y $auto$expression.cpp:1995:import_operation$61
+    connect \Y $auto$expression.cpp:2055:import_operation$61
   end
   cell $add $add$dut.sv:54$64
     parameter \A_SIGNED 0
@@ -435,9 +435,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$61
+    connect \A $auto$expression.cpp:2055:import_operation$61
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$63
+    connect \Y $auto$expression.cpp:2055:import_operation$63
   end
   attribute \src "dut.sv:65.5-65.86"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 \addPartialProduct[3].adder
@@ -465,7 +465,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$67
+    connect \Y $auto$expression.cpp:2081:import_operation$67
   end
   cell $add $add$dut.sv:53$70
     parameter \A_SIGNED 0
@@ -475,7 +475,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$69
+    connect \Y $auto$expression.cpp:2055:import_operation$69
   end
   cell $mul $mul$dut.sv:53$72
     parameter \A_SIGNED 0
@@ -483,9 +483,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2021:import_operation$67
-    connect \B $auto$expression.cpp:1995:import_operation$69
-    connect \Y $auto$expression.cpp:2067:import_operation$71
+    connect \A $auto$expression.cpp:2081:import_operation$67
+    connect \B $auto$expression.cpp:2055:import_operation$69
+    connect \Y $auto$expression.cpp:2127:import_operation$71
   end
   cell $div $div$dut.sv:53$74
     parameter \A_SIGNED 0
@@ -493,9 +493,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 96
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 96
-    connect \A $auto$expression.cpp:2067:import_operation$71
+    connect \A $auto$expression.cpp:2127:import_operation$71
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$73
+    connect \Y $auto$expression.cpp:2104:import_operation$73
   end
   cell $add $add$dut.sv:53$76
     parameter \A_SIGNED 0
@@ -505,7 +505,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 3
-    connect \Y $auto$expression.cpp:1995:import_operation$75
+    connect \Y $auto$expression.cpp:2055:import_operation$75
   end
   cell $pos $auto$module.cpp:664:import_continuous_assign$78
     parameter \A_SIGNED 0
@@ -522,7 +522,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$79
+    connect \Y $auto$expression.cpp:2055:import_operation$79
   end
   cell $sub $sub$dut.sv:54$82
     parameter \A_SIGNED 0
@@ -530,9 +530,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$79
+    connect \A $auto$expression.cpp:2055:import_operation$79
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$81
+    connect \Y $auto$expression.cpp:2081:import_operation$81
   end
   cell $add $add$dut.sv:54$84
     parameter \A_SIGNED 0
@@ -542,7 +542,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 64
     connect \A 3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$83
+    connect \Y $auto$expression.cpp:2055:import_operation$83
   end
   cell $add $add$dut.sv:54$86
     parameter \A_SIGNED 0
@@ -550,9 +550,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$83
+    connect \A $auto$expression.cpp:2055:import_operation$83
     connect \B 8
-    connect \Y $auto$expression.cpp:1995:import_operation$85
+    connect \Y $auto$expression.cpp:2055:import_operation$85
   end
   cell $mul $mul$dut.sv:54$88
     parameter \A_SIGNED 0
@@ -560,9 +560,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2021:import_operation$81
-    connect \B $auto$expression.cpp:1995:import_operation$85
-    connect \Y $auto$expression.cpp:2067:import_operation$87
+    connect \A $auto$expression.cpp:2081:import_operation$81
+    connect \B $auto$expression.cpp:2055:import_operation$85
+    connect \Y $auto$expression.cpp:2127:import_operation$87
   end
   cell $div $div$dut.sv:54$90
     parameter \A_SIGNED 0
@@ -570,9 +570,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 128
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 128
-    connect \A $auto$expression.cpp:2067:import_operation$87
+    connect \A $auto$expression.cpp:2127:import_operation$87
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2044:import_operation$89
+    connect \Y $auto$expression.cpp:2104:import_operation$89
   end
   cell $add $add$dut.sv:54$92
     parameter \A_SIGNED 0
@@ -582,7 +582,7 @@ module \Multiplier_flat
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 3
-    connect \Y $auto$expression.cpp:1995:import_operation$91
+    connect \Y $auto$expression.cpp:2055:import_operation$91
   end
   cell $add $add$dut.sv:54$94
     parameter \A_SIGNED 0
@@ -590,9 +590,9 @@ module \Multiplier_flat
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$91
+    connect \A $auto$expression.cpp:2055:import_operation$91
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:1995:import_operation$93
+    connect \Y $auto$expression.cpp:2055:import_operation$93
   end
   cell $and $and$dut.sv:29$95
     parameter \A_SIGNED 0
@@ -848,22 +848,22 @@ module \Multiplier_2D
   wire width 5 \addPartialProduct[1].gS
   wire \addPartialProduct[1].Cout
   wire width 4 $auto$rtlil.cc:3386:And$98
-  wire width 32 $auto$expression.cpp:1995:import_operation$99
-  wire width 64 $auto$expression.cpp:2021:import_operation$101
+  wire width 32 $auto$expression.cpp:2055:import_operation$99
+  wire width 64 $auto$expression.cpp:2081:import_operation$101
   wire width 6 \addPartialProduct[2].gA
   wire width 6 \addPartialProduct[2].gB
   wire width 6 \addPartialProduct[2].gS
   wire \addPartialProduct[2].Cout
   wire width 4 $auto$rtlil.cc:3386:And$104
-  wire width 32 $auto$expression.cpp:1995:import_operation$105
-  wire width 64 $auto$expression.cpp:2021:import_operation$107
+  wire width 32 $auto$expression.cpp:2055:import_operation$105
+  wire width 64 $auto$expression.cpp:2081:import_operation$107
   wire width 7 \addPartialProduct[3].gA
   wire width 7 \addPartialProduct[3].gB
   wire width 7 \addPartialProduct[3].gS
   wire \addPartialProduct[3].Cout
   wire width 4 $auto$rtlil.cc:3386:And$110
-  wire width 32 $auto$expression.cpp:1995:import_operation$111
-  wire width 64 $auto$expression.cpp:2021:import_operation$113
+  wire width 32 $auto$expression.cpp:2055:import_operation$111
+  wire width 64 $auto$expression.cpp:2081:import_operation$113
   wire width 4 $auto$rtlil.cc:3386:And$116
   attribute \src "dut.sv:100.5-101.56"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 \addPartialProduct[1].adder
@@ -891,7 +891,7 @@ module \Multiplier_2D
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 1
-    connect \Y $auto$expression.cpp:1995:import_operation$99
+    connect \Y $auto$expression.cpp:2055:import_operation$99
   end
   cell $sub $sub$dut.sv:96$102
     parameter \A_SIGNED 0
@@ -899,9 +899,9 @@ module \Multiplier_2D
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$99
+    connect \A $auto$expression.cpp:2055:import_operation$99
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$101
+    connect \Y $auto$expression.cpp:2081:import_operation$101
   end
   attribute \src "dut.sv:100.5-101.56"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 \addPartialProduct[2].adder
@@ -929,7 +929,7 @@ module \Multiplier_2D
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 2
-    connect \Y $auto$expression.cpp:1995:import_operation$105
+    connect \Y $auto$expression.cpp:2055:import_operation$105
   end
   cell $sub $sub$dut.sv:96$108
     parameter \A_SIGNED 0
@@ -937,9 +937,9 @@ module \Multiplier_2D
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$105
+    connect \A $auto$expression.cpp:2055:import_operation$105
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$107
+    connect \Y $auto$expression.cpp:2081:import_operation$107
   end
   attribute \src "dut.sv:100.5-101.56"
   cell $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 \addPartialProduct[3].adder
@@ -967,7 +967,7 @@ module \Multiplier_2D
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B 3
-    connect \Y $auto$expression.cpp:1995:import_operation$111
+    connect \Y $auto$expression.cpp:2055:import_operation$111
   end
   cell $sub $sub$dut.sv:96$114
     parameter \A_SIGNED 0
@@ -975,9 +975,9 @@ module \Multiplier_2D
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:1995:import_operation$111
+    connect \A $auto$expression.cpp:2055:import_operation$111
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2021:import_operation$113
+    connect \Y $auto$expression.cpp:2081:import_operation$113
   end
   cell $and $and$dut.sv:87$115
     parameter \A_SIGNED 0

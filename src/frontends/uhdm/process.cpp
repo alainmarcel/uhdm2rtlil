@@ -3489,6 +3489,49 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
     log_flush();
 }
 
+// Emit an assignment in a comb process, mapping LHS to its $0\ temp wire
+void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLIL::Process* proc) {
+    // Size match
+    if (rhs.size() != lhs.size()) {
+        if (rhs.size() < lhs.size())
+            rhs.extend_u0(lhs.size());
+        else
+            rhs = rhs.extract(0, lhs.size());
+    }
+
+    // Map LHS wire to its $0\ temp wire (same logic as import_assignment_comb)
+    RTLIL::SigSpec mapped_lhs = map_to_temp_wire(lhs);
+    proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
+
+    // Update value tracking so subsequent expressions see the new value
+    if (lhs.is_wire()) {
+        RTLIL::Wire* target_wire = lhs.as_wire();
+        std::string signal_name = target_wire->name.str();
+        if (signal_name[0] == '\\')
+            signal_name = signal_name.substr(1);
+        current_comb_values[signal_name] = rhs;
+        auto alias_it = comb_value_aliases.find(signal_name);
+        if (alias_it != comb_value_aliases.end())
+            current_comb_values[alias_it->second] = rhs;
+    }
+}
+
+// Map a signal to its $0\ temp wire if one exists (for comb process assignments)
+RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
+    if (!current_temp_wires.empty() && sig.is_wire()) {
+        RTLIL::Wire* target_wire = sig.as_wire();
+        std::string signal_name = target_wire->name.str();
+        if (signal_name[0] == '\\')
+            signal_name = signal_name.substr(1);
+
+        std::string temp_name = "$0\\" + signal_name;
+        RTLIL::Wire* temp_wire = module->wire(temp_name);
+        if (temp_wire)
+            return RTLIL::SigSpec(temp_wire);
+    }
+    return sig;
+}
+
 // Import statement for combinational context
 void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* proc) {
     if (!uhdm_stmt)
@@ -3538,6 +3581,34 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             const task_call* tc = any_cast<const task_call*>(uhdm_stmt);
             if (tc) {
                 import_task_call_comb(tc, proc);
+            }
+            break;
+        }
+        case vpiOperation: {
+            const operation* op = any_cast<const operation*>(uhdm_stmt);
+            int op_type = op->VpiOpType();
+            if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
+                op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
+                if (op->Operands() && !op->Operands()->empty()) {
+                    const expr* operand = any_cast<const expr*>((*op->Operands())[0]);
+                    // Use value tracking for cell input (current value after previous assignments)
+                    RTLIL::SigSpec cell_input = import_expression(operand,
+                        current_comb_process ? &current_comb_values : nullptr);
+                    // Get actual wire for side-effect target (without value tracking)
+                    RTLIL::SigSpec target_wire = import_expression(operand, nullptr);
+                    if (cell_input.size() > 0) {
+                        RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
+                        RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
+                        if (op_type == vpiPostIncOp || op_type == vpiPreIncOp) {
+                            module->addAdd(NEW_ID, cell_input, one, result, false);
+                        } else {
+                            module->addSub(NEW_ID, cell_input, one, result, false);
+                        }
+                        emit_comb_assign(target_wire, result, proc);
+                    }
+                }
+            } else {
+                log_warning("Unsupported operation type %d as statement\n", op_type);
             }
             break;
         }
@@ -5791,10 +5862,44 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             log("        Immediate assert processed in case\n");
             break;
         }
-        
+
+        case vpiOperation: {
+            const operation* op = any_cast<const operation*>(uhdm_stmt);
+            int op_type = op->VpiOpType();
+            if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
+                op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
+                if (op->Operands() && !op->Operands()->empty()) {
+                    const expr* operand = any_cast<const expr*>((*op->Operands())[0]);
+                    RTLIL::SigSpec cell_input = import_expression(operand,
+                        current_comb_process ? &current_comb_values : nullptr);
+                    RTLIL::SigSpec target_wire = import_expression(operand, nullptr);
+                    if (cell_input.size() > 0) {
+                        RTLIL::SigSpec one = RTLIL::SigSpec(RTLIL::Const(1, cell_input.size()));
+                        RTLIL::SigSpec result = module->addWire(NEW_ID, cell_input.size());
+                        if (op_type == vpiPostIncOp || op_type == vpiPreIncOp) {
+                            module->addAdd(NEW_ID, cell_input, one, result, false);
+                        } else {
+                            module->addSub(NEW_ID, cell_input, one, result, false);
+                        }
+                        case_rule->actions.push_back(RTLIL::SigSig(map_to_temp_wire(target_wire), result));
+                        // Update value tracking
+                        if (target_wire.is_wire()) {
+                            std::string sig_name = target_wire.as_wire()->name.str();
+                            if (sig_name[0] == '\\') sig_name = sig_name.substr(1);
+                            current_comb_values[sig_name] = result;
+                        }
+                    }
+                }
+            } else {
+                if (mode_debug)
+                    log("        Unsupported operation type %d as statement in case\n", op_type);
+            }
+            break;
+        }
+
         default:
             if (mode_debug)
-                log("        Unsupported statement type in case: %s (vpiType=%d)\n", 
+                log("        Unsupported statement type in case: %s (vpiType=%d)\n",
                     UhdmName(uhdm_stmt->UhdmType()).c_str(), stmt_type);
             break;
     }

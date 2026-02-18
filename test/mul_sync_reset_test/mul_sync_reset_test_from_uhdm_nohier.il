@@ -15,7 +15,7 @@ module \mul_sync_reset_test
   wire width 9 output 5 \p
   attribute \src "dut.sv:7.5-15.8"
   wire width 9 $0\p[8:0]
-  wire width 9 $auto$expression.cpp:2067:import_operation$2
+  wire width 9 $auto$expression.cpp:2127:import_operation$2
   cell $mul $mul$dut.sv:13$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -24,7 +24,7 @@ module \mul_sync_reset_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2067:import_operation$2
+    connect \Y $auto$expression.cpp:2127:import_operation$2
   end
   attribute \src "dut.sv:7.5-15.8"
   attribute \always_ff 1
@@ -37,7 +37,7 @@ module \mul_sync_reset_test
         assign $0\p[8:0] 9'000000000
     attribute \src "dut.sv:12.14-14.12"
       case 
-        assign $0\p[8:0] $auto$expression.cpp:2067:import_operation$2
+        assign $0\p[8:0] $auto$expression.cpp:2127:import_operation$2
     end
     sync posedge \clk
       update \p $0\p[8:0]
