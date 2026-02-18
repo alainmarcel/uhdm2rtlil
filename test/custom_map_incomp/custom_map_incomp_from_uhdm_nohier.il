@@ -2,7 +2,6 @@
 autoidx 1
 attribute \cells_not_processed 1
 attribute \src "dut.sv:1.1-3.10"
-attribute \blackbox 1
 module \custom_map_incomp
   attribute \src "dut.sv:1.38-1.39"
   wire width 8 input 1 \A
@@ -10,18 +9,10 @@ module \custom_map_incomp
   wire width 8 input 2 \B
   attribute \src "dut.sv:1.57-1.58"
   wire width 8 output 3 \Y
-end
-attribute \cells_not_processed 1
-attribute \src "dut.sv:2.2-2.62"
-attribute \dynports 1
-attribute \hdlname "custom_map_incomp::ALU"
-attribute \blackbox 1
-module $paramod\custom_map_incomp::ALU\MODE="AND"
-  parameter \MODE 24'010000010100111001000100
-  attribute \src "dut.sv:2.42-2.43"
-  wire \A
-  attribute \src "dut.sv:2.49-2.50"
-  wire \B
-  attribute \src "dut.sv:2.56-2.57"
-  wire \Y
+  cell \ALU \_TECHMAP_REPLACE_
+    parameter \MODE "AND"
+    connect \A \A
+    connect \B \B
+    connect \Y \Y
+  end
 end

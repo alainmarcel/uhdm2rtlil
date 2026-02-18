@@ -255,25 +255,26 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         }
     }
     
-    // First import all module definitions from AllModules if available
-    // This ensures we have all the base module definitions before creating instances
+    // Import non-top-level module definitions from AllModules for structural info
+    // (port directions, etc.). Top-level modules are skipped here and imported
+    // from the elaborated hierarchy (TopModules) which has complete information.
+    // NOTE: AllModules signal types (signedness) may be incorrect; when modules
+    // are re-encountered in the elaborated hierarchy, signedness will be updated.
     if (uhdm_design->AllModules()) {
-        log("UHDM: Found %d module definitions in AllModules\n", (int)uhdm_design->AllModules()->size());
-        for (const module_inst* uhdm_mod : *uhdm_design->AllModules()) {
-            std::string mod_name = std::string(uhdm_mod->VpiDefName());
+        log("UHDM: Found %d module definitions in AllModules\n",
+            (int)uhdm_design->AllModules()->size());
+        for (auto module_def : *uhdm_design->AllModules()) {
+            std::string mod_name = std::string(module_def->VpiDefName());
             if (mod_name.find("work@") == 0) {
                 mod_name = mod_name.substr(5);
             }
-            
-            // Skip top-level modules as they will be imported from the hierarchy
-            // with their generate blocks intact
+            // Skip top-level modules - they must be imported from the elaborated
+            // hierarchy to get complete module body (processes, assigns, etc.)
             if (top_level_module_names.find(mod_name) != top_level_module_names.end()) {
                 log("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
                 continue;
             }
-            
-            log("UHDM: Importing module definition: %s\n", uhdm_mod->VpiDefName().data());
-            import_module(uhdm_mod);
+            import_module(module_def);
         }
     }
     
@@ -364,6 +365,7 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             // This is truly an empty module with no implementation, mark it as blackbox
             module->set_bool_attribute(ID::blackbox);
             log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
+
         }
     }
     
@@ -401,13 +403,95 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
 // Recursively import module hierarchy starting from a module instance
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
-    
+
     // Get module name
     std::string module_name = std::string(uhdm_module->VpiDefName());
     if (module_name.find("work@") == 0) {
         module_name = module_name.substr(5);
     }
-    
+
+    // Special handling for _TECHMAP_REPLACE_ instances:
+    // These are techmap replacement modules where Yosys provides the definition.
+    // We should NOT create a module definition, just a cell reference with the
+    // base module name and parameters passed directly on the cell.
+    std::string inst_name = std::string(uhdm_module->VpiName());
+    if (inst_name.find("_TECHMAP_") == 0 && create_instances && uhdm_module->VpiParent()) {
+        if (auto parent_mod = dynamic_cast<const module_inst*>(uhdm_module->VpiParent())) {
+            std::string parent_name = std::string(parent_mod->VpiDefName());
+            if (parent_name.find("work@") == 0) parent_name = parent_name.substr(5);
+
+            RTLIL::Module* parent_rtlil_module = design->module(RTLIL::escape_id(parent_name));
+            if (parent_rtlil_module) {
+                // Strip parent namespace from module name (e.g. "parent::ALU" -> "ALU")
+                std::string cell_type = module_name;
+                size_t ns_pos = cell_type.rfind("::");
+                if (ns_pos != std::string::npos)
+                    cell_type = cell_type.substr(ns_pos + 2);
+
+                log("UHDM: Creating techmap cell %s of type %s in parent %s\n",
+                    inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
+
+                // Save/set context for expression evaluation
+                RTLIL::Module* saved_module = this->module;
+                auto saved_name_map = this->name_map;
+                auto saved_wire_map = this->wire_map;
+                this->module = parent_rtlil_module;
+                this->name_map.clear();
+                for (auto &wire_pair : parent_rtlil_module->wires_) {
+                    std::string wn = wire_pair.first.str();
+                    if (wn[0] == '\\') wn = wn.substr(1);
+                    this->name_map[wn] = wire_pair.second;
+                }
+
+                RTLIL::Cell* cell = parent_rtlil_module->addCell(
+                    RTLIL::escape_id(inst_name),
+                    RTLIL::escape_id(cell_type));
+
+                // Pass parameters directly on the cell
+                if (uhdm_module->Param_assigns()) {
+                    for (auto pa : *uhdm_module->Param_assigns()) {
+                        if (pa->Lhs() && pa->Rhs()) {
+                            std::string pname;
+                            if (auto p = dynamic_cast<const parameter*>(pa->Lhs()))
+                                pname = std::string(p->VpiName());
+                            if (!pname.empty()) {
+                                // Check if RHS is a string constant - preserve as string
+                                if (auto c = dynamic_cast<const constant*>(pa->Rhs())) {
+                                    if (c->VpiConstType() == vpiStringConst) {
+                                        std::string str_val = std::string(c->VpiValue());
+                                        if (str_val.substr(0, 7) == "STRING:")
+                                            str_val = str_val.substr(7);
+                                        cell->parameters[RTLIL::escape_id(pname)] = RTLIL::Const(str_val);
+                                        continue;
+                                    }
+                                }
+                                RTLIL::SigSpec val = import_expression(any_cast<const expr*>(pa->Rhs()));
+                                if (val.is_fully_const())
+                                    cell->parameters[RTLIL::escape_id(pname)] = val.as_const();
+                            }
+                        }
+                    }
+                }
+
+                // Connect ports
+                if (uhdm_module->Ports()) {
+                    for (auto port : *uhdm_module->Ports()) {
+                        std::string port_name = std::string(port->VpiName());
+                        if (port->High_conn()) {
+                            RTLIL::SigSpec conn = import_expression(any_cast<const expr*>(port->High_conn()));
+                            cell->setPort(RTLIL::escape_id(port_name), conn);
+                        }
+                    }
+                }
+
+                this->module = saved_module;
+                this->name_map = saved_name_map;
+                this->wire_map = saved_wire_map;
+                return;
+            }
+        }
+    }
+
     // Build parameter signature
     std::string param_signature = module_name;
     if (uhdm_module->Param_assigns()) {
@@ -480,32 +564,38 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
     if (!module_already_imported) {
         // Mark as imported
         imported_module_signatures.insert(param_signature);
-        
+
         // Import the module definition
         log("UHDM: Final param_signature: %s\n", param_signature.c_str());
         log("UHDM: Importing module from hierarchy: %s\n", param_signature.c_str());
         log_flush();
-        
+
         // Save current context before importing child module
         RTLIL::Module* saved_module = module;
         const module_inst* saved_instance = current_instance;
         auto saved_wire_map = wire_map;
         auto saved_name_map = name_map;
         auto saved_net_map = net_map;
-        
+
         // Clear maps before importing new module to avoid cross-module wire references
         wire_map.clear();
         name_map.clear();
         net_map.clear();
-        
+
         import_module(uhdm_module);
-        
+
         // Restore parent context
         module = saved_module;
         current_instance = saved_instance;
         wire_map = saved_wire_map;
         name_map = saved_name_map;
         net_map = saved_net_map;
+
+        // Look up the newly created module so cell creation code can find it
+        RTLIL::Module* new_mod = design->module(RTLIL::escape_id(module_name));
+        if (new_mod) {
+            module = new_mod;
+        }
     } else {
         log("UHDM: Module definition %s already imported, but will still create instance\n", param_signature.c_str());
         
@@ -710,16 +800,36 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     for (auto port : *uhdm_module->Ports()) {
                         std::string port_name = std::string(port->VpiName());
                         if (port->High_conn()) {
-                            RTLIL::SigSpec conn = import_expression(any_cast<const expr*>(port->High_conn()));
-                            
+                            const expr* high_conn = any_cast<const expr*>(port->High_conn());
+                            RTLIL::SigSpec conn = import_expression(high_conn);
+
+                            // For signed constants connected to wider ports, create a signed
+                            // intermediate wire so the hierarchy pass will sign-extend them.
+                            // Unsigned constants are left as-is (hierarchy zero-extends).
+                            if (conn.is_fully_const() && high_conn->UhdmType() == uhdmconstant) {
+                                bool is_signed_const = false;
+                                if (auto ref_ts = high_conn->Typespec()) {
+                                    if (auto actual_ts = ref_ts->Actual_typespec()) {
+                                        if (actual_ts->UhdmType() == uhdmint_typespec) {
+                                            is_signed_const = true;
+                                        }
+                                    }
+                                }
+                                if (is_signed_const) {
+                                    RTLIL::Wire* signed_wire = module->addWire(NEW_ID, conn.size());
+                                    signed_wire->is_signed = true;
+                                    module->connect(RTLIL::SigSpec(signed_wire), conn);
+                                    conn = RTLIL::SigSpec(signed_wire);
+                                    log("UHDM: Created signed intermediate wire for signed constant on port %s\n", port_name.c_str());
+                                }
+                            }
+
                             // Handle unbased unsized literals - extend single-bit constants to port width
-                            // Get the target module to find port width
                             RTLIL::Module* target_module = design->module(cell->type);
                             if (target_module) {
                                 RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
                                 if (port_wire && conn.size() == 1 && conn.is_fully_const()) {
                                     RTLIL::State bit_val = conn.as_const()[0];
-                                    // Check if this is an unbased unsized literal that should be extended
                                     if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
                                         bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
                                         int port_width = port_wire->width;
@@ -728,7 +838,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     }
                                 }
                             }
-                            
+
                             cell->setPort(RTLIL::escape_id(port_name), conn);
                             log("UHDM: Connected port %s\n", port_name.c_str());
                         }
@@ -1065,10 +1175,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     if (mode_debug)
         log("Importing module: %s (ID: %s)\n", modname.c_str(), mod_id.c_str());
     
-    // Check if module already exists
+    // Check if module already exists (e.g., from AllModules import)
     if (design->module(mod_id)) {
+        // Module already exists, but update wire signedness from the elaborated nets
+        // AllModules definitions may have incorrect signedness; the elaborated hierarchy
+        // has the correct, fully-resolved signal attributes.
+        RTLIL::Module* existing_mod = design->module(mod_id);
+        if (uhdm_module->Nets()) {
+            for (auto net : *uhdm_module->Nets()) {
+                std::string netname = std::string(net->VpiName());
+                RTLIL::Wire* w = existing_mod->wire(RTLIL::escape_id(netname));
+                if (w && !w->is_signed && net->VpiSigned()) {
+                    log("UHDM: Updating wire '%s' signedness in existing module %s from elaborated net\n",
+                        netname.c_str(), modname.c_str());
+                    w->is_signed = true;
+                }
+            }
+        }
         if (mode_debug)
-            log("Module %s already exists, skipping\n", modname.c_str());
+            log("Module %s already exists, updated signedness from elaborated nets\n", modname.c_str());
         return;
     }
     
@@ -1725,21 +1850,27 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                     
-                    // Get the packed width from the underlying net
+                    // Get the packed width and signedness from the underlying net
                     int element_width = 1;
+                    bool element_signed = false;
                     if (array->Nets() && !array->Nets()->empty()) {
-                        element_width = get_width((*array->Nets())[0], uhdm_module);
+                        auto net = (*array->Nets())[0];
+                        element_width = get_width(net, uhdm_module);
+                        if (net->VpiSigned())
+                            element_signed = true;
                     }
-                    
+
                     // Create individual wires for each array element
                     for (int i = 0; i < array_size; i++) {
                         std::string element_name = array_name + "[" + std::to_string(i) + "]";
                         RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
                         if (!module->wire(wire_id)) {
                             RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                            if (element_signed)
+                                wire->is_signed = true;
                             add_src_attribute(wire->attributes, array);
                             name_map[element_name] = wire;
-                            log("UHDM: Created wire '%s' (width=%d) for array element\n", wire->name.c_str(), element_width);
+                            log("UHDM: Created wire '%s' (width=%d, signed=%d) for array element\n", wire->name.c_str(), element_width, element_signed);
                         }
                     }
                 }
@@ -1910,6 +2041,17 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // NOTE: Module instances (ref_modules) are imported through the hierarchy traversal
     // (TopModules), not directly here. This is by design to maintain proper hierarchy.
     
+    // For ports with no direction (dir=0), default to inout before fixup_ports
+    // strips them. This handles modules where UHDM doesn't provide port directions
+    // (e.g., techmap replacement modules like _TECHMAP_REPLACE_).
+    for (auto &port_name : module->ports) {
+        RTLIL::Wire* w = module->wire(port_name);
+        if (w && w->port_id > 0 && !w->port_input && !w->port_output) {
+            w->port_input = true;
+            w->port_output = true;
+        }
+    }
+
     // Finalize module
     module->fixup_ports();
     

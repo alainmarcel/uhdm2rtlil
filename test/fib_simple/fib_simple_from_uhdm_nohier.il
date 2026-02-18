@@ -4,7 +4,7 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:1.1-30.10"
 module \gate
   attribute \src "dut.sv:2.5-2.8"
-  wire width 32 input 1 \off
+  wire width 32 input 1 signed \off
   attribute \src "dut.sv:2.10-2.14"
   wire width 32 output 2 signed \fib2
   wire width 32 \unused
@@ -18,7 +18,7 @@ module \gate
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 $0\fib_wrap$func$dut.sv:28$2.$result$8
   wire width 32 \fib_wrap$func$dut.sv:28$2.$result
-  wire width 32 $auto$expression.cpp:1961:import_operation$9
+  wire width 32 $auto$expression.cpp:1995:import_operation$9
   attribute \nosync 1
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 \fib_wrap$func$dut.sv:28$3.$result
@@ -26,14 +26,14 @@ module \gate
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 \fib_wrap$func$dut.sv:28$3.o
   cell $add $add$dut.sv:21$10
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 1
-    connect \Y $auto$expression.cpp:1961:import_operation$9
+    connect \Y $auto$expression.cpp:1995:import_operation$9
   end
   attribute \src "dut.sv:26.5-29.8"
   process $proc$dut.sv:26$1
@@ -52,7 +52,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:28$3.$result$6 $1\fib_wrap$func$dut.sv:28$3.$result$7
     assign $0\fib_wrap$func$dut.sv:28$2.$result$8 $1\fib_wrap$func$dut.sv:28$3.$result$7
     assign $1\fib_wrap$func$dut.sv:28$3.$result$7 0
-    assign \fib2 $auto$expression.cpp:1961:import_operation$9
+    assign \fib2 $auto$expression.cpp:1995:import_operation$9
     sync always
       update \fib_wrap$func$dut.sv:28$2.$result $0\fib_wrap$func$dut.sv:28$2.$result$8
       update \fib_wrap$func$dut.sv:28$3.$result 32'x

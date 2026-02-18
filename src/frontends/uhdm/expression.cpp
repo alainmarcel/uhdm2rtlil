@@ -1579,6 +1579,25 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
     }
 }
 
+// Check if any operand comes from a signed wire
+static bool check_operands_signed(const std::vector<RTLIL::SigSpec>& operands) {
+    for (const auto& operand : operands) {
+        if (operand.is_wire()) {
+            RTLIL::Wire* wire = operand.as_wire();
+            if (wire && wire->is_signed)
+                return true;
+        }
+    }
+    return false;
+}
+
+// Mark the output wire of a SigSpec as signed
+static void mark_result_signed(RTLIL::SigSpec& result) {
+    if (result.is_wire()) {
+        result.as_wire()->is_signed = true;
+    }
+}
+
 // Import operation
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     // Try to reduce it first
@@ -1859,36 +1878,51 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitAndOp:
             if (operands.size() == 2)
                 {
+                    bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "and");
-                    return module->And(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    RTLIL::SigSpec result = module->And(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (is_signed) mark_result_signed(result);
+                    return result;
                 }
             break;
         case vpiBitOrOp:
             if (operands.size() == 2)
                 {
+                    bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "or");
-                    return module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    RTLIL::SigSpec result = module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (is_signed) mark_result_signed(result);
+                    return result;
                 }
             break;
         case vpiBitXorOp:
             if (operands.size() == 2)
                 {
+                    bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "xor");
-                    return module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    RTLIL::SigSpec result = module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (is_signed) mark_result_signed(result);
+                    return result;
                 }
             break;
         case vpiBitNegOp:
             if (operands.size() == 1)
                 {
+                    bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "not");
-                    return module->Not(RTLIL::escape_id(cell_name), operands[0]);
+                    RTLIL::SigSpec result = module->Not(RTLIL::escape_id(cell_name), operands[0], is_signed);
+                    if (is_signed) mark_result_signed(result);
+                    return result;
                 }
             break;
         case vpiBitXNorOp:  // Both vpiBitXNorOp and vpiBitXnorOp are the same
             if (operands.size() == 2)
                 {
+                    bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "xnor");
-                    return module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    RTLIL::SigSpec result = module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (is_signed) mark_result_signed(result);
+                    return result;
                 }
             break;
         case vpiUnaryAndOp:
@@ -2191,10 +2225,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // operands[1] is the true value
                 // operands[2] is the false value
                 // Mux takes (name, selector, false_val, true_val)
-                
+
                 log("UHDM: ConditionOp - operand sizes: cond=%d, true=%d, false=%d\n",
                     operands[0].size(), operands[1].size(), operands[2].size());
-                
+
+                // Check if the true/false operands are signed
+                std::vector<RTLIL::SigSpec> value_operands = {operands[1], operands[2]};
+                bool is_signed = check_operands_signed(value_operands);
+
                 // Ensure the condition is 1-bit
                 RTLIL::SigSpec cond = operands[0];
                 if (cond.size() > 1) {
@@ -2203,31 +2241,34 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     std::string cell_name = generate_cell_name(uhdm_op, "reduce_bool");
                     cond = module->ReduceBool(RTLIL::escape_id(cell_name), cond);
                 }
-                
+
                 // Match operand widths for the mux output
                 int max_width = std::max(operands[1].size(), operands[2].size());
                 RTLIL::SigSpec true_val = operands[1];
                 RTLIL::SigSpec false_val = operands[2];
-                
+
                 // Extend operands to match widths if needed
+                // Use sign-extension when operands are signed
                 if (true_val.size() < max_width) {
                     true_val = RTLIL::SigSpec(true_val);
-                    true_val.extend_u0(max_width);
+                    true_val.extend_u0(max_width, is_signed);
                 }
                 if (false_val.size() < max_width) {
                     false_val = RTLIL::SigSpec(false_val);
-                    false_val.extend_u0(max_width);
+                    false_val.extend_u0(max_width, is_signed);
                 }
-                
-                log("UHDM: Creating Mux with selector size=%d, true_val size=%d, false_val size=%d\n",
-                    cond.size(), true_val.size(), false_val.size());
-                
+
+                log("UHDM: Creating Mux with selector size=%d, true_val size=%d, false_val size=%d, signed=%d\n",
+                    cond.size(), true_val.size(), false_val.size(), is_signed);
+
                 // Mux signature: Mux(name, sig_a, sig_b, sig_s)
                 // sig_a = value when selector is 0 (false value)
                 // sig_b = value when selector is 1 (true value)
                 // sig_s = selector
                 std::string cell_name = generate_cell_name(uhdm_op, "mux");
-                return module->Mux(RTLIL::escape_id(cell_name), false_val, true_val, cond);
+                RTLIL::SigSpec result = module->Mux(RTLIL::escape_id(cell_name), false_val, true_val, cond);
+                if (is_signed) mark_result_signed(result);
+                return result;
             }
             break;
         case vpiConcatOp:

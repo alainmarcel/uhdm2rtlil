@@ -4,7 +4,7 @@ attribute \top 1
 attribute \src "dut.sv:1.1-30.10"
 module \gate
   attribute \src "dut.sv:2.5-2.8"
-  wire width 32 input 1 \off
+  wire width 32 input 1 signed \off
   attribute \src "dut.sv:2.10-2.14"
   wire width 32 output 2 signed \fib2
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
@@ -14,8 +14,8 @@ module \gate
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 \fib_wrap$func$dut.sv:28$3.o
   cell $add $add$dut.sv:21$10
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

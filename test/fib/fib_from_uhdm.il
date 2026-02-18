@@ -4,7 +4,7 @@ attribute \top 1
 attribute \src "dut.sv:1.1-48.10"
 module \gate
   attribute \src "dut.sv:2.5-2.8"
-  wire width 32 input 1 \off
+  wire width 32 input 1 signed \off
   attribute \src "dut.sv:2.10-2.14"
   wire width 32 output 2 signed \fib0
   attribute \src "dut.sv:2.16-2.20"
@@ -44,7 +44,7 @@ module \gate
   attribute \src "dut.sv:43.18-43.35"
   wire width 32 \fib_wrap$func$dut.sv:43$57.o
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:1961:import_operation$18
+  wire width 64 $auto$expression.cpp:1995:import_operation$18
   attribute \nosync 1
   attribute \src "dut.sv:40.18-40.35"
   wire width 32 \fib_wrap$func$dut.sv:40$30.o
@@ -61,8 +61,8 @@ module \gate
   attribute \src "dut.sv:45.18-45.35"
   wire width 32 \fib_wrap$func$dut.sv:45$75.o
   cell $add $add$dut.sv:21$91
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -71,18 +71,18 @@ module \gate
     connect \Y \fib9
   end
   cell $add $add$dut.sv:21$19
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
     connect \A \off
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:1961:import_operation$18 [63:32] \fib1 }
+    connect \Y { $auto$expression.cpp:1995:import_operation$18 [63:32] \fib1 }
   end
   cell $add $add$dut.sv:21$28
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -91,8 +91,8 @@ module \gate
     connect \Y \fib2
   end
   cell $add $add$dut.sv:21$37
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -101,8 +101,8 @@ module \gate
     connect \Y \fib3
   end
   cell $add $add$dut.sv:21$46
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -111,8 +111,8 @@ module \gate
     connect \Y \fib4
   end
   cell $add $add$dut.sv:21$55
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -121,8 +121,8 @@ module \gate
     connect \Y \fib5
   end
   cell $add $add$dut.sv:21$64
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -131,8 +131,8 @@ module \gate
     connect \Y \fib6
   end
   cell $add $add$dut.sv:21$73
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -141,8 +141,8 @@ module \gate
     connect \Y \fib7
   end
   cell $add $add$dut.sv:21$82
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -155,7 +155,7 @@ module \gate
   connect \fib_wrap$func$dut.sv:37$3.o 32'x
   connect \fib_wrap$func$dut.sv:38$12.o 32'x
   connect \fib_wrap$func$dut.sv:40$30.o 32'x
-  connect $auto$expression.cpp:1961:import_operation$18 [31:0] \fib1
+  connect $auto$expression.cpp:1995:import_operation$18 [31:0] \fib1
   connect \fib_wrap$func$dut.sv:43$57.o 32'x
   connect \fib_wrap$func$dut.sv:44$66.o 32'x
   connect \fib_wrap$func$dut.sv:39$21.o 32'x
@@ -168,7 +168,7 @@ attribute \src "dut.sv:50.1-65.10"
 attribute \blackbox 1
 module \gold
   attribute \src "dut.sv:51.5-51.8"
-  wire width 32 input 1 \off
+  wire width 32 input 1 signed \off
   attribute \src "dut.sv:51.10-51.14"
   wire width 32 output 2 signed \fib0
   attribute \src "dut.sv:51.16-51.20"

@@ -274,9 +274,14 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     if (mode_debug)
         log("  Importing net: %s\n", netname.c_str());
     
-    // Skip if already created as port or net
+    // If already created as port, still check signedness from the net object
+    // (ports don't carry VpiSigned, but the corresponding net does)
     if (name_map.count(netname)) {
-        log("UHDM: Net '%s' already exists in name_map, skipping\n", netname.c_str());
+        RTLIL::Wire* w = name_map[netname];
+        if (w && !w->is_signed && uhdm_net->VpiSigned()) {
+            log("UHDM: Net '%s' already exists as port, updating signedness from net VpiSigned\n", netname.c_str());
+            w->is_signed = true;
+        }
         log_flush();
         return;
     }
@@ -421,16 +426,17 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
             }
             
             if (is_signed) {
-                log("UHDM: Net '%s' is signed, setting is_signed=true\n", netname.c_str());
+                log("UHDM: Net '%s' is signed (from typespec), setting is_signed=true\n", netname.c_str());
                 w->is_signed = true;
-            } else {
-                log("UHDM: Net '%s' is not signed\n", netname.c_str());
             }
-        } else {
-            log("UHDM: No actual typespec found for net '%s'\n", netname.c_str());
         }
-    } else {
-        log("UHDM: Net '%s' has no typespec\n", netname.c_str());
+    }
+
+    // Also check VpiSigned() directly on the net object itself
+    // (Surelog may set signed on the net rather than the typespec)
+    if (!w->is_signed && uhdm_net->VpiSigned()) {
+        log("UHDM: Net '%s' is signed (from VpiSigned), setting is_signed=true\n", netname.c_str());
+        w->is_signed = true;
     }
     
     // Import attributes (e.g., (* keep *))
@@ -1016,24 +1022,28 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             log("    Port wire not found for port: %s\n", port_name.c_str());
                         }
                         
-                        // Handle unbased unsized literals - extend single-bit constants to port width
-                        if (port_wire && actual_sig.size() == 1 && actual_sig.is_fully_const()) {
-                            RTLIL::State bit_val = actual_sig.as_const()[0];
-                            // Check if this is an unbased unsized literal that should be extended
-                            // (single bit of 0, 1, X, or Z)
-                            if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
-                                bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
-                                int port_width = port_wire->width;
-                                actual_sig = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
-                                log("    Extended unbased unsized literal '%s' to port width %d\n", 
-                                    bit_val == RTLIL::State::S0 ? "0" :
-                                    bit_val == RTLIL::State::S1 ? "1" :
-                                    bit_val == RTLIL::State::Sx ? "x" : "z", port_width);
+                        // For signed constants connected to wider ports, create a signed
+                        // intermediate wire so the hierarchy pass will sign-extend them.
+                        // Unsigned constants are left as-is (hierarchy zero-extends).
+                        if (actual_sig.is_fully_const()) {
+                            const expr* high_conn_expr = any_cast<const expr*>(high_conn);
+                            bool is_signed_const = false;
+                            if (high_conn_expr && high_conn_expr->UhdmType() == uhdmconstant) {
+                                if (auto ref_ts = high_conn_expr->Typespec()) {
+                                    if (auto actual_ts = ref_ts->Actual_typespec()) {
+                                        if (actual_ts->UhdmType() == uhdmint_typespec) {
+                                            is_signed_const = true;
+                                        }
+                                    }
+                                }
                             }
-                        } else if (!port_wire && actual_sig.size() == 1 && actual_sig.is_fully_const()) {
-                            // Port wire not found yet, but we still need to handle unbased unsized literals
-                            // Try to infer the width from the port definition if available
-                            log("    Warning: Port wire not found for unbased unsized literal, cannot extend\n");
+                            if (is_signed_const) {
+                                RTLIL::Wire* signed_wire = module->addWire(NEW_ID, actual_sig.size());
+                                signed_wire->is_signed = true;
+                                module->connect(RTLIL::SigSpec(signed_wire), actual_sig);
+                                actual_sig = RTLIL::SigSpec(signed_wire);
+                                log("    Created signed intermediate wire for signed constant on port %s\n", port_name.c_str());
+                            }
                         }
                         
                         if (port_wire && port_wire->attributes.count(RTLIL::escape_id("interface_port"))) {
