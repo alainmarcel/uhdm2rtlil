@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 120 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (118/120 tests functional)
-- **Perfect Matches**: 114 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 121 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (119/121 tests functional)
+- **Perfect Matches**: 115 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -312,7 +312,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (120 total - 118 passing, 2 known issues)
+### Current Test Cases (121 total - 119 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -334,6 +334,7 @@ The Yosys test runner:
 - **always01** - 4-bit synchronous counter with mux-based async reset
 - **always02** - 4-bit counter with synchronous reset in nested block
 - **always03** - Mixed blocking and non-blocking assignments with if-else chains
+- **counters_repeat** - Repeat loop counter using `repeat(32)` with mixed blocking/non-blocking assignments and carry chain
 - **simple_always_ff** - Sequential always_ff blocks with clock and reset
 - **simple_always_ifelse** - Always blocks with if-else conditional logic
 
@@ -478,7 +479,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 118 of 120 tests are passing or working as expected
+- 119 of 121 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -532,10 +533,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **120 test cases**:
+The UHDM frontend test suite includes **121 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **114 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **118 tests passing** - with 2 known failures documented in failing_tests.txt
+- **115 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **119 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
