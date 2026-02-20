@@ -2602,6 +2602,250 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             log_flush();
             break;
         }
+        case vpiRepeat: {
+            log("        Processing repeat loop\n");
+            log_flush();
+            const UHDM::repeat* repeat_stmt = any_cast<const UHDM::repeat*>(uhdm_stmt);
+
+            // 1. Evaluate repeat count
+            int repeat_count = 0;
+            if (repeat_stmt->VpiCondition()) {
+                RTLIL::SigSpec count_sig = import_expression(repeat_stmt->VpiCondition());
+                if (count_sig.is_fully_const()) {
+                    repeat_count = count_sig.as_const().as_int();
+                } else {
+                    log_warning("Repeat count is not a constant, skipping repeat loop\n");
+                    break;
+                }
+            }
+            if (repeat_count <= 0 || repeat_count > 100000) {
+                log_warning("Repeat count %d is out of range, skipping\n", repeat_count);
+                break;
+            }
+            log("        Repeat count: %d\n", repeat_count);
+
+            // 2. Get body statements
+            const any* repeat_body = repeat_stmt->VpiStmt();
+            if (!repeat_body) {
+                log_warning("Repeat loop has no body\n");
+                break;
+            }
+
+            const VectorOfany* body_stmts = nullptr;
+            if (repeat_body->VpiType() == vpiBegin || repeat_body->VpiType() == vpiNamedBegin) {
+                body_stmts = begin_block_stmts(repeat_body);
+            }
+
+            // 3. Analyze body statements to find loop index and blocking intermediates
+            // Loop index: blocking assignment matching pattern var = var + 1
+            // Blocking intermediates: other blocking assignments
+            std::string index_var_name;
+            std::set<std::string> blocking_var_names;
+
+            auto analyze_stmts = [&](const VectorOfany* stmts) {
+                if (!stmts) return;
+                for (auto stmt : *stmts) {
+                    if (stmt->VpiType() != vpiAssignment) continue;
+                    const assignment* assign = any_cast<const assignment*>(stmt);
+                    if (!assign->VpiBlocking()) continue;
+
+                    // Get LHS variable name
+                    std::string lhs_name;
+                    if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
+                        const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                        lhs_name = std::string(ref->VpiName());
+                    }
+                    if (lhs_name.empty()) continue;
+
+                    // Check if this is an index increment: var = var + 1
+                    bool is_index_incr = false;
+                    if (assign->Rhs() && assign->Rhs()->VpiType() == vpiOperation) {
+                        const operation* rhs_op = any_cast<const operation*>(assign->Rhs());
+                        if (rhs_op->VpiOpType() == vpiAddOp && rhs_op->Operands() && rhs_op->Operands()->size() == 2) {
+                            auto op0 = (*rhs_op->Operands())[0];
+                            auto op1 = (*rhs_op->Operands())[1];
+                            // Check: ref(same_name) + constant(1)
+                            if (op0->VpiType() == vpiRefObj && op1->VpiType() == vpiConstant) {
+                                const ref_obj* ref0 = any_cast<const ref_obj*>(op0);
+                                if (std::string(ref0->VpiName()) == lhs_name) {
+                                    const constant* c1 = any_cast<const constant*>(op1);
+                                    RTLIL::SigSpec c1_sig = import_constant(c1);
+                                    if (c1_sig.is_fully_const() && c1_sig.as_const().as_int() == 1) {
+                                        is_index_incr = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (is_index_incr && index_var_name.empty()) {
+                        index_var_name = lhs_name;
+                        log("        Detected loop index variable: %s\n", lhs_name.c_str());
+                    } else {
+                        blocking_var_names.insert(lhs_name);
+                        log("        Detected blocking intermediate variable: %s\n", lhs_name.c_str());
+                    }
+                }
+            };
+
+            if (body_stmts) {
+                analyze_stmts(body_stmts);
+            }
+
+            // 4. Get initial values for blocking variables from pending_sync_assignments
+            // The preceding assignments (carry = 1, i = 0) have already been stored
+            int initial_index = 0;
+            std::map<std::string, RTLIL::SigSpec> blocking_values;
+
+            // Find initial value of index variable
+            if (!index_var_name.empty()) {
+                RTLIL::Wire* idx_wire = module->wire(RTLIL::escape_id(index_var_name));
+                if (idx_wire) {
+                    RTLIL::SigSpec idx_spec(idx_wire);
+                    if (pending_sync_assignments.count(idx_spec)) {
+                        RTLIL::SigSpec init_val = pending_sync_assignments[idx_spec];
+                        if (init_val.is_fully_const()) {
+                            initial_index = init_val.as_const().as_int();
+                            log("        Initial index value: %d\n", initial_index);
+                        }
+                    }
+                }
+            }
+
+            // Find initial values of blocking intermediate variables
+            for (const auto& var_name : blocking_var_names) {
+                RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
+                if (var_wire) {
+                    RTLIL::SigSpec var_spec(var_wire);
+                    if (pending_sync_assignments.count(var_spec)) {
+                        blocking_values[var_name] = pending_sync_assignments[var_spec];
+                        log("        Initial blocking value for %s: %s\n",
+                            var_name.c_str(), log_signal(pending_sync_assignments[var_spec]));
+                    }
+                }
+            }
+
+            // 5. Unroll the loop
+            log("        Unrolling repeat loop %d times\n", repeat_count);
+            for (int k = 0; k < repeat_count; k++) {
+                // Set loop index in loop_values for compile-time substitution
+                if (!index_var_name.empty()) {
+                    loop_values[index_var_name] = initial_index + k;
+                    if (mode_debug)
+                        log("        Iteration %d: %s = %d\n", k, index_var_name.c_str(), initial_index + k);
+                }
+
+                auto process_stmts = [&](const VectorOfany* stmts) {
+                    if (!stmts) return;
+                    for (auto stmt : *stmts) {
+                        if (stmt->VpiType() != vpiAssignment) {
+                            // Non-assignment statement, delegate
+                            import_statement_sync(stmt, sync, is_reset);
+                            continue;
+                        }
+
+                        const assignment* assign = any_cast<const assignment*>(stmt);
+
+                        if (assign->VpiBlocking()) {
+                            // Blocking assignment
+                            std::string lhs_name;
+                            if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
+                                const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                                lhs_name = std::string(ref->VpiName());
+                            }
+
+                            // Skip index increment — handled by loop_values
+                            if (lhs_name == index_var_name) {
+                                continue;
+                            }
+
+                            // Evaluate RHS with blocking_values as input_mapping
+                            RTLIL::SigSpec rhs_spec;
+                            if (assign->Rhs()) {
+                                rhs_spec = import_expression(any_cast<const expr*>(assign->Rhs()),
+                                                             &blocking_values);
+                            }
+
+                            // Update blocking_values for this variable
+                            if (!lhs_name.empty() && !rhs_spec.empty()) {
+                                blocking_values[lhs_name] = rhs_spec;
+                                if (mode_debug)
+                                    log("        Updated blocking var %s = %s\n",
+                                        lhs_name.c_str(), log_signal(rhs_spec));
+                            }
+                        } else {
+                            // Non-blocking assignment: count[i] <= expr
+                            // Import LHS with loop_values (but not blocking_values)
+                            RTLIL::SigSpec lhs_spec;
+                            if (assign->Lhs()) {
+                                lhs_spec = import_expression(assign->Lhs());
+                            }
+
+                            // Import RHS with blocking_values
+                            RTLIL::SigSpec rhs_spec;
+                            if (assign->Rhs()) {
+                                rhs_spec = import_expression(any_cast<const expr*>(assign->Rhs()),
+                                                             &blocking_values);
+                            }
+
+                            // Size match
+                            if (!lhs_spec.empty() && !rhs_spec.empty()) {
+                                if (rhs_spec.size() != lhs_spec.size()) {
+                                    if (rhs_spec.size() < lhs_spec.size())
+                                        rhs_spec.extend_u0(lhs_spec.size());
+                                    else
+                                        rhs_spec = rhs_spec.extract(0, lhs_spec.size());
+                                }
+
+                                // Add to sync actions directly (non-blocking = goes to sync rule)
+                                sync->actions.push_back(RTLIL::SigSig(lhs_spec, rhs_spec));
+                                if (mode_debug)
+                                    log("        Added sync action: %s <= %s\n",
+                                        log_signal(lhs_spec), log_signal(rhs_spec));
+                            }
+                        }
+                    }
+                };
+
+                if (body_stmts) {
+                    process_stmts(body_stmts);
+                } else {
+                    // Single-statement body (no begin block wrapper)
+                    VectorOfany single_stmt_vec;
+                    single_stmt_vec.push_back(const_cast<any*>(repeat_body));
+                    process_stmts(&single_stmt_vec);
+                }
+            }
+
+            // 6. Update pending_sync_assignments with final values of blocking variables
+            for (const auto& [var_name, var_sig] : blocking_values) {
+                RTLIL::Wire* var_wire = module->wire(RTLIL::escape_id(var_name));
+                if (var_wire) {
+                    pending_sync_assignments[RTLIL::SigSpec(var_wire)] = var_sig;
+                    log("        Final blocking value for %s: %s\n",
+                        var_name.c_str(), log_signal(var_sig));
+                }
+            }
+
+            // Update loop index in pending_sync_assignments
+            if (!index_var_name.empty()) {
+                RTLIL::Wire* idx_wire = module->wire(RTLIL::escape_id(index_var_name));
+                if (idx_wire) {
+                    int final_index = initial_index + repeat_count;
+                    pending_sync_assignments[RTLIL::SigSpec(idx_wire)] = RTLIL::Const(final_index, idx_wire->width);
+                    log("        Final index value for %s: %d\n", index_var_name.c_str(), final_index);
+                }
+            }
+
+            // 7. Clean up
+            if (!index_var_name.empty()) {
+                loop_values.erase(index_var_name);
+            }
+
+            log("        Repeat loop unrolled successfully\n");
+            log_flush();
+            break;
+        }
         case vpiFor: {
             log("        Processing for loop in initial block\n");
             log_flush();

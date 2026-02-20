@@ -26,10 +26,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - Repeat loop (`repeat(N)`) support with compile-time unrolling, blocking/non-blocking assignment handling, and loop index/intermediate variable tracking
   - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions: increment/decrement operators, nested assignment expressions
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
+  - Repeat loop (`vpiRepeat`) support in synchronous always blocks ✅
+    - Compile-time unrolling of `repeat(N)` with constant iteration count
+    - Automatic detection of loop index variables (`i = i+1` pattern) and blocking intermediates (`carry`)
+    - Loop index handled via `loop_values` for compile-time bit-select resolution (`count[i]` → `count[k]`)
+    - Blocking variables handled via `input_mapping` for runtime signal chain propagation
+    - Non-blocking assignments added directly to sync rule actions
+    - Proven formally equivalent to Verilog frontend output (65/65 equiv cells)
   - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions ✅
     - Implemented increment/decrement operators (`x++`, `--x`) as both statements and expressions
     - Implemented nested assignment expressions (`x = (y = z + 1) + 1`) with proper side-effect ordering
@@ -185,7 +193,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Hierarchical signal references
   - Parameter references with HEX/BIN/DEC formats
   - Loop variable substitution in generate blocks
-- **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, named begin blocks
+- **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, repeat loops with compile-time unrolling, named begin blocks
 - **Memory**: Array inference, memory initialization, for-loop memory initialization patterns, asymmetric port RAM with different read/write widths
 - **Shift Registers**: Automatic detection and optimization of shift register patterns (e.g., `M[i+1] <= M[i]`)
 - **Generate Blocks**: 
@@ -530,6 +538,17 @@ The UHDM frontend test suite includes **120 test cases**:
 - **118 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Repeat Loop Support
+- Implemented `vpiRepeat` handler in `import_statement_sync()` for compile-time unrolling of `repeat(N)` loops
+- Analyzes body statements to classify blocking assignments into loop index variables and intermediate variables
+- Loop index variables (detected by `var = var + 1` pattern) are handled via `loop_values` for compile-time substitution in bit-selects
+- Blocking intermediate variables (like `carry`) are handled via `input_mapping` for runtime signal chain propagation
+- Non-blocking assignments are added directly to sync rule actions with resolved bit indices
+- Initial values for blocking variables are read from `pending_sync_assignments` (preceding statements)
+- Final values are written back to `pending_sync_assignments` for correct flush at process end
+- Safety limit of 100,000 iterations; non-constant repeat counts produce a warning
+- Formally verified: produces functionally equivalent output to Yosys Verilog frontend
 
 ### Assignment Expressions and Increment/Decrement Operators
 - Implemented SystemVerilog assignment expressions: `x = (y = z + 1) + 1`
