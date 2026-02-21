@@ -3067,7 +3067,7 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             // Extract increment: i++ or i = i + 1
             if (can_unroll && inc_stmt->VpiType() == vpiOperation) {
                 const operation* inc_op = any_cast<const operation*>(inc_stmt);
-                if (inc_op->VpiOpType() == 62) { // vpiPostIncOp
+                if (inc_op->VpiOpType() == vpiPostIncOp) {
                     increment = 1;
                     log("        Loop increment: %s++\n", loop_var_name.c_str());
                 } else {
@@ -4060,7 +4060,7 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
             RTLIL::Wire* temp_wire = module->addWire(temp_name, width);
             if (process_src) add_src_attribute(temp_wire->attributes, process_src);
 
-            if (direction == 1 && args && arg_idx < (int)args->size()) {
+            if (direction == vpiInput && args && arg_idx < (int)args->size()) {
                 // Input param: import caller arg and map task param to its value
                 auto arg = (*args)[arg_idx];
                 RTLIL::SigSpec arg_val;
@@ -4071,7 +4071,7 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
                 proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), arg_val));
                 // Map task param to the caller's arg value for expression evaluation
                 task_mapping[param_name] = arg_val;
-            } else if (direction == 2 && args && arg_idx < (int)args->size()) {
+            } else if (direction == vpiOutput && args && arg_idx < (int)args->size()) {
                 // Output param: map to temp wire, remember caller target
                 task_mapping[param_name] = RTLIL::SigSpec(temp_wire);
                 auto arg = (*args)[arg_idx];

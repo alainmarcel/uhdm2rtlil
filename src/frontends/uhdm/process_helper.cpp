@@ -283,7 +283,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                     size_t n = std::min(io_decls->size(), args->size());
                     for (size_t i = 0; i < n; i++) {
                         auto io = any_cast<const UHDM::io_decl*>((*io_decls)[i]);
-                        if (io && io->VpiDirection() == 2) { // Output
+                        if (io && io->VpiDirection() == vpiOutput) {
                             auto arg = (*args)[i];
                             if (auto arg_expr = dynamic_cast<const UHDM::expr*>(arg)) {
                                 AssignedSignal sig;
