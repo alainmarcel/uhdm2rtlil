@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 122 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (120/122 tests functional)
-- **Perfect Matches**: 116 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 123 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (121/123 tests functional)
+- **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -26,12 +26,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `asgn_binop` - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`)
   - `arrays03` - Packed multidimensional array support with dynamic element access (`in[ix]` where `in` is `logic [0:3][7:0]`)
   - Repeat loop (`repeat(N)`) support with compile-time unrolling, blocking/non-blocking assignment handling, and loop index/intermediate variable tracking
   - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions: increment/decrement operators, nested assignment expressions
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
+  - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`) ✅
+    - Surelog represents `c += b` as assignment with `vpiOpType` = `vpiAddOp` (not `vpiAssignmentOp`)
+    - Added `create_compound_op_cell()` helper mapping `vpiOpType` to RTLIL cells (`$add`, `$sub`, `$mul`, `$div`, `$mod`, `$and`, `$or`, `$xor`, `$shl`, `$shr`, `$sshl`, `$sshr`)
+    - Uses `current_comb_values` to resolve the LHS's current value (e.g., after `c = a`, `c += b` becomes `a + b`)
+    - Handles both Process and CaseRule variants of `import_assignment_comb`
   - Packed multidimensional array support (`logic [0:3][7:0]`, `reg8_t [0:3]`, typedef variants) ✅
     - Fixed wire width computation for `logic_typespec` with `Elem_typespec` (element × range instead of just range)
     - Fixed upto/start_offset: packed multi-dim arrays create flat wires instead of reversed-index wires
@@ -193,6 +199,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - `always` - Mixed sequential/combinational logic
 - **Expressions**:
   - Arithmetic, logical, bitwise, comparison, ternary operators
+  - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`)
   - Increment/decrement operators (`x++`, `--x`) as statements and in expressions
   - Assignment expressions (`x = (y = expr) + 1`) with proper side-effect ordering
   - System function calls ($signed, $unsigned, $floor, $ceil)
@@ -320,7 +327,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (122 total - 120 passing, 2 known issues)
+### Current Test Cases (123 total - 121 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -363,6 +370,7 @@ The Yosys test runner:
 - **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, and arithmetic operations
 - **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
 - **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
+- **asgn_binop** - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`)
 
 #### Multiplexers
 - **mux2** - 2-to-1 multiplexer using conditional operator (tests ternary expression)
@@ -488,7 +496,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 120 of 122 tests are passing or working as expected
+- 121 of 123 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -542,12 +550,20 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **122 test cases**:
+The UHDM frontend test suite includes **123 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **116 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **120 tests passing** - with 2 known failures documented in failing_tests.txt
+- **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **121 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Compound Assignment Operator Support
+- Implemented all 12 compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`
+- Surelog represents compound assignments (e.g., `c += b`) as UHDM `assignment` objects with `vpiOpType` set to the operation type (`vpiAddOp`, `vpiSubOp`, etc.) rather than `vpiAssignmentOp` (regular assign)
+- Added `create_compound_op_cell()` helper that maps `vpiOpType` to the corresponding RTLIL cell (`$add`, `$sub`, `$mul`, `$div`, `$mod`, `$and`, `$or`, `$xor`, `$shl`, `$shr`, `$sshl`, `$sshr`)
+- The LHS's current value is resolved from `current_comb_values` tracking (e.g., after `c = a`, the compound `c += b` correctly generates `$add(a, b)` instead of `$add(c, b)`)
+- Compound op handling added to both `import_assignment_comb` variants (Process and CaseRule)
+- All 12 compound operator modules pass formal equivalence checking
 
 ### Packed Multidimensional Array Support
 - Implemented packed multidimensional array port and net handling for all typespec variants:

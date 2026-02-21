@@ -4905,6 +4905,80 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     log_flush();
 }
 
+// Create a cell for compound assignment operators (+=, -=, *=, etc.)
+// Returns the result SigSpec from the operation cell.
+RTLIL::SigSpec UhdmImporter::create_compound_op_cell(int vpi_op_type, RTLIL::SigSpec lhs_val, RTLIL::SigSpec rhs_val, const assignment* uhdm_assign) {
+    int width = lhs_val.size();
+    RTLIL::SigSpec result = module->addWire(NEW_ID, width);
+    std::string cell_name;
+    bool is_signed = false;
+
+    // Match operand widths
+    if (rhs_val.size() < width)
+        rhs_val.extend_u0(width);
+    else if (rhs_val.size() > width)
+        rhs_val = rhs_val.extract(0, width);
+
+    switch (vpi_op_type) {
+        case vpiAddOp:
+            cell_name = generate_cell_name(uhdm_assign, "add");
+            module->addAdd(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiSubOp:
+            cell_name = generate_cell_name(uhdm_assign, "sub");
+            module->addSub(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiMultOp:
+            cell_name = generate_cell_name(uhdm_assign, "mul");
+            module->addMul(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiDivOp:
+            cell_name = generate_cell_name(uhdm_assign, "div");
+            module->addDiv(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiModOp:
+            cell_name = generate_cell_name(uhdm_assign, "mod");
+            module->addMod(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiBitAndOp:
+            cell_name = generate_cell_name(uhdm_assign, "and");
+            module->addAnd(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiBitOrOp:
+            cell_name = generate_cell_name(uhdm_assign, "or");
+            module->addOr(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiBitXorOp:
+            cell_name = generate_cell_name(uhdm_assign, "xor");
+            module->addXor(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiLShiftOp:
+            cell_name = generate_cell_name(uhdm_assign, "shl");
+            module->addShl(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiRShiftOp:
+            cell_name = generate_cell_name(uhdm_assign, "shr");
+            module->addShr(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiArithLShiftOp:
+            cell_name = generate_cell_name(uhdm_assign, "sshl");
+            module->addSshl(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        case vpiArithRShiftOp:
+            cell_name = generate_cell_name(uhdm_assign, "sshr");
+            module->addSshr(RTLIL::escape_id(cell_name), lhs_val, rhs_val, result, is_signed);
+            break;
+        default:
+            log_warning("Unsupported compound assignment operator type: %d\n", vpi_op_type);
+            return rhs_val;
+    }
+
+    if (uhdm_assign)
+        add_src_attribute(module->cell(RTLIL::escape_id(cell_name))->attributes, uhdm_assign);
+
+    return result;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     RTLIL::SigSpec lhs;
@@ -4961,6 +5035,24 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
     }
 
+    // Handle compound assignment operators (+=, -=, *=, etc.)
+    // Surelog uses vpiOpType on assignments: vpiAssignmentOp = regular assign, others = compound op
+    int op_type = uhdm_assign->VpiOpType();
+    if (op_type != vpiAssignmentOp && op_type != 0) {
+        // Get the current value of the LHS signal for the compound operation
+        RTLIL::SigSpec lhs_current_val = lhs;
+        if (auto lhs_expr = uhdm_assign->Lhs()) {
+            if (lhs_expr->VpiType() == vpiRefObj) {
+                const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
+                std::string sig_name = std::string(ref->VpiName());
+                if (current_comb_values.count(sig_name)) {
+                    lhs_current_val = current_comb_values[sig_name];
+                }
+            }
+        }
+        rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
+    }
+
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
             rhs.extend_u0(lhs.size());
@@ -4973,10 +5065,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     if (!current_signal_temp_wires.empty()) {
         auto lhs_expr = uhdm_assign->Lhs();
         if (!lhs_expr) return;
-        
+
         // Extract the base signal name from the LHS
         std::string signal_name;
-        
+
         if (lhs_expr->VpiType() == vpiRefObj) {
             const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
             if (!ref->VpiName().empty()) {
@@ -5135,7 +5227,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
     }
-    
+
+    // Handle compound assignment operators (+=, -=, *=, etc.)
+    int op_type = uhdm_assign->VpiOpType();
+    if (op_type != vpiRhs && op_type != 0) {
+        RTLIL::SigSpec lhs_current_val = lhs;
+        if (auto lhs_expr = uhdm_assign->Lhs()) {
+            if (lhs_expr->VpiType() == vpiRefObj) {
+                const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
+                std::string sig_name = std::string(ref->VpiName());
+                if (current_comb_values.count(sig_name)) {
+                    lhs_current_val = current_comb_values[sig_name];
+                }
+            }
+        }
+        rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
+    }
+
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
             rhs.extend_u0(lhs.size());

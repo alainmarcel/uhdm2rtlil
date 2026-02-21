@@ -48,7 +48,7 @@ module \top
   attribute \src "dut.sv:17.17-17.33"
   wire width 32 $auto$process.cpp:4885:import_assignment_sync$22
   attribute \src "dut.sv:18.13-18.39"
-  wire $auto$process.cpp:5560:import_case_stmt_sync$24
+  wire $auto$process.cpp:5668:import_case_stmt_sync$24
   attribute \src "dut.sv:18.22-18.38"
   wire width 32 $auto$process.cpp:4885:import_assignment_sync$26
   attribute \src "dut.sv:28.13-28.27"
@@ -68,7 +68,7 @@ module \top
   attribute \src "dut.sv:30.16-30.26"
   wire width 2 $auto$process.cpp:4885:import_assignment_sync$43
   attribute \src "dut.sv:31.13-31.33"
-  wire $auto$process.cpp:5560:import_case_stmt_sync$45
+  wire $auto$process.cpp:5668:import_case_stmt_sync$45
   attribute \src "dut.sv:31.22-31.32"
   wire width 2 $auto$process.cpp:4885:import_assignment_sync$47
   attribute \src "dut.sv:35.17-35.33"
@@ -183,16 +183,16 @@ module \top
     connect \Y $auto$process.cpp:4885:import_assignment_sync$22
   end
   attribute \src "dut.sv:18.13-18.39"
-  cell $_NOT_ $auto$process.cpp:5562:import_case_stmt_sync$25
+  cell $_NOT_ $auto$process.cpp:5670:import_case_stmt_sync$25
     connect \A $auto$process_helper.cpp:78:create_or_cell$20
-    connect \Y $auto$process.cpp:5560:import_case_stmt_sync$24
+    connect \Y $auto$process.cpp:5668:import_case_stmt_sync$24
   end
   attribute \src "dut.sv:18.22-18.38"
   cell $mux $auto$process.cpp:4887:import_assignment_sync$27
     parameter \WIDTH 32
     connect \A $auto$process.cpp:4885:import_assignment_sync$22
     connect \B 0
-    connect \S $auto$process.cpp:5560:import_case_stmt_sync$24
+    connect \S $auto$process.cpp:5668:import_case_stmt_sync$24
     connect \Y $auto$process.cpp:4885:import_assignment_sync$26
   end
   attribute \src "dut.sv:28.13-28.27"
@@ -275,16 +275,16 @@ module \top
     connect \Y $auto$process.cpp:4885:import_assignment_sync$43
   end
   attribute \src "dut.sv:31.13-31.33"
-  cell $_NOT_ $auto$process.cpp:5562:import_case_stmt_sync$46
+  cell $_NOT_ $auto$process.cpp:5670:import_case_stmt_sync$46
     connect \A $auto$process_helper.cpp:78:create_or_cell$41
-    connect \Y $auto$process.cpp:5560:import_case_stmt_sync$45
+    connect \Y $auto$process.cpp:5668:import_case_stmt_sync$45
   end
   attribute \src "dut.sv:31.22-31.32"
   cell $mux $auto$process.cpp:4887:import_assignment_sync$48
     parameter \WIDTH 2
     connect \A $auto$process.cpp:4885:import_assignment_sync$43
     connect \B 2'11
-    connect \S $auto$process.cpp:5560:import_case_stmt_sync$45
+    connect \S $auto$process.cpp:5668:import_case_stmt_sync$45
     connect \Y $auto$process.cpp:4885:import_assignment_sync$47
   end
   attribute \src "dut.sv:13.5-20.8"
