@@ -8,15 +8,15 @@ module \gate
   attribute \src "dut.sv:4.16-4.17"
   wire width 4 \x
   wire \blk[0].sub.x
-  wire width 10 $auto$module.cpp:663:import_continuous_assign$1
-  cell $pos $auto$module.cpp:664:import_continuous_assign$2
+  wire width 10 $auto$module.cpp:738:import_continuous_assign$1
+  cell $pos $auto$module.cpp:739:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \Y_WIDTH 10
     connect \A { 1'- \x \blk[0].sub.x }
-    connect \Y $auto$module.cpp:663:import_continuous_assign$1
+    connect \Y $auto$module.cpp:738:import_continuous_assign$1
   end
   connect \x 4'0010
   connect \blk[0].sub.x 1'1
-  connect \out $auto$module.cpp:663:import_continuous_assign$1
+  connect \out $auto$module.cpp:738:import_continuous_assign$1
 end

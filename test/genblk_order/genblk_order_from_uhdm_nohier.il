@@ -9,21 +9,21 @@ module \genblk_order_top
   wire output 2 \out2
   wire \outer.foo.x
   wire \outer.foo.foo.x
-  wire $auto$module.cpp:696:import_continuous_assign$2
-  wire $auto$module.cpp:696:import_continuous_assign$4
+  wire $auto$module.cpp:771:import_continuous_assign$2
+  wire $auto$module.cpp:771:import_continuous_assign$4
   attribute \src "dut.sv:11.11-11.12"
   process $proc$dut.sv:11$1
-    assign $auto$module.cpp:696:import_continuous_assign$2 1'1
+    assign $auto$module.cpp:771:import_continuous_assign$2 1'1
     sync always
     sync init
-      update \outer.foo.foo.x $auto$module.cpp:696:import_continuous_assign$2
+      update \outer.foo.foo.x $auto$module.cpp:771:import_continuous_assign$2
   end
   attribute \src "dut.sv:9.10-9.11"
   process $proc$dut.sv:9$3
-    assign $auto$module.cpp:696:import_continuous_assign$4 1'0
+    assign $auto$module.cpp:771:import_continuous_assign$4 1'0
     sync always
     sync init
-      update \outer.foo.x $auto$module.cpp:696:import_continuous_assign$4
+      update \outer.foo.x $auto$module.cpp:771:import_continuous_assign$4
   end
   connect \out1 \outer.foo.foo.x
   connect \out2 \outer.foo.foo.x

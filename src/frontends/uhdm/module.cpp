@@ -177,23 +177,29 @@ void UhdmImporter::import_port(const port* uhdm_port) {
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
-                    auto range = (*logic_typespec->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
-                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            left = left_spec.as_int();
-                            right = right_spec.as_int();
-                            
-                            // Check if range is reversed (e.g., [0:7] instead of [7:0])
-                            if (left < right) {
-                                upto = true;
-                                start_offset = left;
-                                log("UHDM: Port '%s' has reversed bit ordering [%d:%d]\n", portname.c_str(), left, right);
-                            } else {
-                                start_offset = right;
-                                log("UHDM: Port '%s' has normal bit ordering [%d:%d]\n", portname.c_str(), left, right);
+                    // For packed multidimensional arrays (multiple ranges or Elem_typespec),
+                    // the wire is flat - don't set upto/start_offset
+                    bool is_packed_multidim = logic_typespec->Ranges()->size() > 1 ||
+                                              logic_typespec->Elem_typespec() != nullptr;
+                    if (!is_packed_multidim) {
+                        auto range = (*logic_typespec->Ranges())[0];
+                        if (range->Left_expr() && range->Right_expr()) {
+                            RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+
+                            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                                left = left_spec.as_int();
+                                right = right_spec.as_int();
+
+                                // Check if range is reversed (e.g., [0:7] instead of [7:0])
+                                if (left < right) {
+                                    upto = true;
+                                    start_offset = left;
+                                    log("UHDM: Port '%s' has reversed bit ordering [%d:%d]\n", portname.c_str(), left, right);
+                                } else {
+                                    start_offset = right;
+                                    log("UHDM: Port '%s' has normal bit ordering [%d:%d]\n", portname.c_str(), left, right);
+                                }
                             }
                         }
                     }
@@ -201,11 +207,74 @@ void UhdmImporter::import_port(const port* uhdm_port) {
             }
         }
     }
-    
+
     RTLIL::Wire* w = create_wire(portname, width, upto, start_offset);
-    
+
     // Add source attribute
     add_src_attribute(w->attributes, uhdm_port);
+
+    // Store packed array metadata for use in bit_select handling
+    if (uhdm_port->Typespec()) {
+        auto ref_ts = uhdm_port->Typespec();
+        if (ref_ts && ref_ts->Actual_typespec()) {
+            auto ts = ref_ts->Actual_typespec();
+            if (ts->UhdmType() == uhdmlogic_typespec) {
+                auto lts = any_cast<const UHDM::logic_typespec*>(ts);
+                if (lts->Ranges() && !lts->Ranges()->empty()) {
+                    int packed_elem_width = 0;
+                    int packed_outer_left = -1, packed_outer_right = -1;
+
+                    auto first_range = (*lts->Ranges())[0];
+                    if (first_range->Left_expr() && first_range->Right_expr()) {
+                        RTLIL::SigSpec fl = import_expression(first_range->Left_expr());
+                        RTLIL::SigSpec fr = import_expression(first_range->Right_expr());
+                        if (fl.is_fully_const() && fr.is_fully_const()) {
+                            packed_outer_left = fl.as_int();
+                            packed_outer_right = fr.as_int();
+                        }
+                    }
+
+                    if (lts->Ranges()->size() > 1) {
+                        packed_elem_width = 1;
+                        for (size_t i = 1; i < lts->Ranges()->size(); i++) {
+                            auto rng = (*lts->Ranges())[i];
+                            if (rng->Left_expr() && rng->Right_expr()) {
+                                RTLIL::SigSpec rl = import_expression(rng->Left_expr());
+                                RTLIL::SigSpec rr = import_expression(rng->Right_expr());
+                                if (rl.is_fully_const() && rr.is_fully_const())
+                                    packed_elem_width *= abs(rl.as_int() - rr.as_int()) + 1;
+                            }
+                        }
+                    } else if (lts->Elem_typespec() != nullptr) {
+                        auto elem_ref = lts->Elem_typespec();
+                        if (elem_ref->Actual_typespec()) {
+                            auto elem_actual = elem_ref->Actual_typespec();
+                            if (elem_actual->UhdmType() == uhdmlogic_typespec) {
+                                auto elem_logic = dynamic_cast<const UHDM::logic_typespec*>(elem_actual);
+                                if (elem_logic && elem_logic->Elem_typespec() != nullptr &&
+                                    elem_logic->Elem_typespec()->Actual_typespec()) {
+                                    packed_elem_width = get_width_from_typespec(
+                                        elem_logic->Elem_typespec()->Actual_typespec(), nullptr);
+                                } else {
+                                    packed_elem_width = get_width_from_typespec(elem_actual, nullptr);
+                                }
+                            } else {
+                                packed_elem_width = get_width_from_typespec(elem_actual, nullptr);
+                            }
+                        }
+                    }
+
+                    if (packed_elem_width > 1) {
+                        w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(packed_elem_width);
+                        w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(packed_outer_left);
+                        w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(packed_outer_right);
+                        log("UHDM: Port '%s' packed array: elem_width=%d, outer=[%d:%d]\n",
+                            portname.c_str(), packed_elem_width, packed_outer_left, packed_outer_right);
+                    }
+                }
+            }
+        }
+    }
     
     // Check if port is signed
     if (auto ref_typespec = uhdm_port->Typespec()) {
@@ -363,23 +432,29 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
-                    auto range = (*logic_typespec->Ranges())[0];
-                    if (range->Left_expr() && range->Right_expr()) {
-                        RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
-                        RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
-                        
-                        if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
-                            left = left_spec.as_int();
-                            right = right_spec.as_int();
-                            
-                            // Check if range is reversed (e.g., [0:7] instead of [7:0])
-                            if (left < right) {
-                                upto = true;
-                                start_offset = left;
-                                log("UHDM: Net '%s' has reversed bit ordering [%d:%d]\n", netname.c_str(), left, right);
-                            } else {
-                                start_offset = right;
-                                log("UHDM: Net '%s' has normal bit ordering [%d:%d]\n", netname.c_str(), left, right);
+                    // For packed multidimensional arrays (multiple ranges or Elem_typespec),
+                    // the wire is flat - don't set upto/start_offset
+                    bool is_packed_multidim = logic_typespec->Ranges()->size() > 1 ||
+                                              logic_typespec->Elem_typespec() != nullptr;
+                    if (!is_packed_multidim) {
+                        auto range = (*logic_typespec->Ranges())[0];
+                        if (range->Left_expr() && range->Right_expr()) {
+                            RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+
+                            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                                left = left_spec.as_int();
+                                right = right_spec.as_int();
+
+                                // Check if range is reversed (e.g., [0:7] instead of [7:0])
+                                if (left < right) {
+                                    upto = true;
+                                    start_offset = left;
+                                    log("UHDM: Net '%s' has reversed bit ordering [%d:%d]\n", netname.c_str(), left, right);
+                                } else {
+                                    start_offset = right;
+                                    log("UHDM: Net '%s' has normal bit ordering [%d:%d]\n", netname.c_str(), left, right);
+                                }
                             }
                         }
                     }
@@ -387,7 +462,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
             }
         }
     }
-    
+
     RTLIL::Wire* w = create_wire(netname, width, upto, start_offset);
     add_src_attribute(w->attributes, uhdm_net);
     
@@ -1353,7 +1428,52 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             log("UHDM: ref_typespec without actual - defaulting to width 32 (int)\n");
             return 32;
         }
-        
+
+        // Handle logic_typespec with Elem_typespec (e.g., reg8_t [0:3] → array of 8-bit elements)
+        // ExprEval::size() only returns the outer range size, so we need to multiply by element width
+        if (typespec->UhdmType() == uhdmlogic_typespec) {
+            auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(typespec);
+            if (logic_ts && logic_ts->Elem_typespec() != nullptr) {
+                auto elem_ref = logic_ts->Elem_typespec();
+                if (elem_ref->Actual_typespec()) {
+                    auto elem_actual = elem_ref->Actual_typespec();
+                    // Check if elem is itself a packed array (typedef alias case like reg2dim1_t)
+                    // In that case, the range on this typespec is redundant and the elem already
+                    // accounts for the full array dimensions
+                    bool elem_is_packed_array = false;
+                    if (elem_actual->UhdmType() == uhdmlogic_typespec) {
+                        auto elem_logic = dynamic_cast<const UHDM::logic_typespec*>(elem_actual);
+                        if (elem_logic && elem_logic->Elem_typespec() != nullptr) {
+                            elem_is_packed_array = true;
+                        }
+                    }
+                    if (elem_is_packed_array) {
+                        // Typedef alias: elem already is the full packed array, just use its width
+                        int total = get_width_from_typespec(elem_actual, inst);
+                        log("UHDM: logic_typespec with packed-array Elem_typespec (typedef alias): total=%d\n", total);
+                        return total;
+                    }
+                    int elem_width = get_width_from_typespec(elem_actual, inst);
+                    if (elem_width > 0 && logic_ts->Ranges() && !logic_ts->Ranges()->empty()) {
+                        auto range = (*logic_ts->Ranges())[0];
+                        if (range->Left_expr() && range->Right_expr()) {
+                            RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
+                            RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                            if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
+                                int l = left_spec.as_int();
+                                int r = right_spec.as_int();
+                                int range_size = abs(l - r) + 1;
+                                int total = elem_width * range_size;
+                                log("UHDM: logic_typespec with Elem_typespec: elem_width=%d, range_size=%d, total=%d\n",
+                                    elem_width, range_size, total);
+                                return total;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Use UHDM::ExprEval to get the actual size of the typespec
         UHDM::ExprEval eval;
         bool invalidValue = false;

@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 121 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (119/121 tests functional)
-- **Perfect Matches**: 115 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Total Tests**: 122 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (120/122 tests functional)
+- **Perfect Matches**: 116 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -26,11 +26,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `arrays03` - Packed multidimensional array support with dynamic element access (`in[ix]` where `in` is `logic [0:3][7:0]`)
   - Repeat loop (`repeat(N)`) support with compile-time unrolling, blocking/non-blocking assignment handling, and loop index/intermediate variable tracking
   - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions: increment/decrement operators, nested assignment expressions
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
 - **Recent Fixes**:
+  - Packed multidimensional array support (`logic [0:3][7:0]`, `reg8_t [0:3]`, typedef variants) ✅
+    - Fixed wire width computation for `logic_typespec` with `Elem_typespec` (element × range instead of just range)
+    - Fixed upto/start_offset: packed multi-dim arrays create flat wires instead of reversed-index wires
+    - Dynamic element access (`in[ix]`) generates `$sub`/`$mul`/`$shiftx` for correct 8-bit element extraction
+    - Handles both direct packed arrays and typedef aliases (`reg2dim_t`, `reg2dim1_t`)
+    - Packed array metadata stored as wire attributes for reliable bit_select detection
   - Repeat loop (`vpiRepeat`) support in synchronous always blocks ✅
     - Compile-time unrolling of `repeat(N)` with constant iteration count
     - Automatic detection of loop index variables (`i = i+1` pattern) and blocking intermediates (`carry`)
@@ -174,8 +181,9 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 ### Supported SystemVerilog Features
 
 - **Module System**: Module definitions, hierarchical instantiation, parameter passing
-- **Data Types**: 
+- **Data Types**:
   - Logic, bit vectors, arrays
+  - Packed multidimensional arrays with dynamic element access (e.g., `logic [0:3][7:0]`, typedef variants)
   - Packed structures with member access via bit slicing
   - Struct arrays with complex indexing
   - Package types and imports
@@ -312,7 +320,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (121 total - 119 passing, 2 known issues)
+### Current Test Cases (122 total - 120 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -404,6 +412,7 @@ The Yosys test runner:
 
 #### Arrays & Memory
 - **arrays01** - 4-bit x16 array with synchronous read and write (tests memory inference)
+- **arrays03** - Packed multidimensional arrays with dynamic element access (tests `logic [0:3][7:0]`, `reg8_t [0:3]`, and typedef variants)
 - **simple_memory** - Memory arrays and access patterns
 - **simple_memory_noreset** - Memory array without reset signal
 - **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
@@ -479,7 +488,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 119 of 121 tests are passing or working as expected
+- 120 of 122 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -533,12 +542,25 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **121 test cases**:
+The UHDM frontend test suite includes **122 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **115 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **119 tests passing** - with 2 known failures documented in failing_tests.txt
+- **116 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
+- **120 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Packed Multidimensional Array Support
+- Implemented packed multidimensional array port and net handling for all typespec variants:
+  - **Variant A**: Direct multi-range (`logic [0:3][7:0]`) — 2+ ranges on a single `logic_typespec`
+  - **Variant B**: Elem_typespec-based (`reg8_t [0:3]`) — `logic_typespec` with `Elem_typespec` pointing to element type
+  - **Typedef aliases**: (`reg2dim1_t` = `typedef reg8_t [0:3]`) — nested Elem_typespec chains
+- Fixed wire width computation in `get_width_from_typespec()`: multiplies element width by range size for Elem_typespec variants, with typedef alias detection to avoid double-counting
+- Fixed upto/start_offset in `import_port()` and `import_net()`: packed multi-dim arrays create flat wires (no `upto` flag) since they're treated as flattened bit vectors in RTLIL
+- Dynamic element access (`in[ix]`) in `import_bit_select()` generates proper arithmetic cells:
+  - For `[0:N]` (ascending) ranges: `$sub(N, ix)` → `$mul(result, elem_width)` → `$shiftx(base, offset, Y_WIDTH=elem_width)`
+  - For `[N:0]` (descending) ranges: `$mul(ix, elem_width)` → `$shiftx(base, offset, Y_WIDTH=elem_width)`
+- Packed array metadata (`packed_elem_width`, `packed_outer_left`, `packed_outer_right`) stored as wire attributes during port import for reliable detection in expression handler
+- All 4 test modules (pcktest1–4) pass formal equivalence checking
 
 ### Repeat Loop Support
 - Implemented `vpiRepeat` handler in `import_statement_sync()` for compile-time unrolling of `repeat(N)` loops

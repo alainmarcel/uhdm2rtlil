@@ -3075,29 +3075,158 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         }
     }
     
-    // Dynamic bit select - create a $shiftx cell
+    // Dynamic bit select - check for packed multidimensional array element access
+    int element_width = 1;
+    int outer_left = -1, outer_right = -1;
+
+    // First check wire attributes set during port/net import
+    if (wire && wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+        element_width = wire->attributes.at(RTLIL::escape_id("packed_elem_width")).as_int();
+        outer_left = wire->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int();
+        outer_right = wire->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int();
+    }
+
+    // Fall back to UHDM typespec detection if no wire attributes
+    if (element_width <= 1) {
+        if (auto actual_group = uhdm_bit->Actual_group()) {
+            const UHDM::ref_typespec* net_ref_ts = nullptr;
+            if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(actual_group)) {
+                net_ref_ts = logic_net->Typespec();
+            } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(actual_group)) {
+                net_ref_ts = logic_var->Typespec();
+            }
+            if (net_ref_ts && net_ref_ts->Actual_typespec()) {
+                auto ts = net_ref_ts->Actual_typespec();
+                if (ts->UhdmType() == uhdmlogic_typespec) {
+                    auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(ts);
+                    if (logic_ts && logic_ts->Ranges() && !logic_ts->Ranges()->empty()) {
+                        auto first_range = (*logic_ts->Ranges())[0];
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            RTLIL::SigSpec l = import_expression(first_range->Left_expr());
+                            RTLIL::SigSpec r = import_expression(first_range->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                outer_left = l.as_int();
+                                outer_right = r.as_int();
+                            }
+                        }
+
+                        if (logic_ts->Ranges()->size() > 1) {
+                            // Variant A: multiple ranges (e.g., [0:3][7:0])
+                            element_width = 1;
+                            for (size_t i = 1; i < logic_ts->Ranges()->size(); i++) {
+                                auto rng = (*logic_ts->Ranges())[i];
+                                if (rng->Left_expr() && rng->Right_expr()) {
+                                    RTLIL::SigSpec rl = import_expression(rng->Left_expr());
+                                    RTLIL::SigSpec rr = import_expression(rng->Right_expr());
+                                    if (rl.is_fully_const() && rr.is_fully_const()) {
+                                        element_width *= abs(rl.as_int() - rr.as_int()) + 1;
+                                    }
+                                }
+                            }
+                        } else if (logic_ts->Elem_typespec() != nullptr) {
+                            // Variant B: Elem_typespec (e.g., reg8_t [0:3])
+                            auto elem_ref = logic_ts->Elem_typespec();
+                            if (elem_ref->Actual_typespec()) {
+                                auto elem_actual = elem_ref->Actual_typespec();
+                                if (elem_actual->UhdmType() == uhdmlogic_typespec) {
+                                    auto elem_logic = dynamic_cast<const UHDM::logic_typespec*>(elem_actual);
+                                    if (elem_logic && elem_logic->Elem_typespec() != nullptr &&
+                                        elem_logic->Elem_typespec()->Actual_typespec()) {
+                                        element_width = get_width_from_typespec(
+                                            elem_logic->Elem_typespec()->Actual_typespec(), inst);
+                                    } else {
+                                        element_width = get_width_from_typespec(elem_actual, inst);
+                                    }
+                                } else {
+                                    element_width = get_width_from_typespec(elem_actual, inst);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (mode_debug)
-        log("    Creating $shiftx for dynamic bit select\n");
-    
+        log("    Creating $shiftx for dynamic bit select (element_width=%d)\n", element_width);
+
+    RTLIL::SigSpec shift_amount;
+    if (element_width > 1) {
+        // Packed array element access - compute byte offset
+        // Zero-extend index to 32 bits for arithmetic cells
+        RTLIL::SigSpec index32 = index;
+        index32.extend_u0(32);
+
+        if (outer_left >= 0 && outer_right >= 0 && outer_left < outer_right) {
+            // Reversed range [0:N] - need $sub(right, ix) then $mul by element_width
+            RTLIL::Wire* sub_wire = module->addWire(NEW_ID, 32);
+            std::string sub_name = generate_cell_name(uhdm_bit, "sub");
+            RTLIL::Cell* sub_cell = module->addCell(RTLIL::escape_id(sub_name), ID($sub));
+            sub_cell->setParam(ID::A_SIGNED, 0);
+            sub_cell->setParam(ID::B_SIGNED, 0);
+            sub_cell->setParam(ID::A_WIDTH, 32);
+            sub_cell->setParam(ID::B_WIDTH, 32);
+            sub_cell->setParam(ID::Y_WIDTH, 32);
+            sub_cell->setPort(ID::A, RTLIL::SigSpec(RTLIL::Const(outer_right, 32)));
+            sub_cell->setPort(ID::B, index32);
+            sub_cell->setPort(ID::Y, sub_wire);
+            add_src_attribute(sub_cell->attributes, uhdm_bit);
+
+            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, 32);
+            std::string mul_name = generate_cell_name(uhdm_bit, "mul");
+            RTLIL::Cell* mul_cell = module->addCell(RTLIL::escape_id(mul_name), ID($mul));
+            mul_cell->setParam(ID::A_SIGNED, 0);
+            mul_cell->setParam(ID::B_SIGNED, 0);
+            mul_cell->setParam(ID::A_WIDTH, 32);
+            mul_cell->setParam(ID::B_WIDTH, 32);
+            mul_cell->setParam(ID::Y_WIDTH, 32);
+            mul_cell->setPort(ID::A, RTLIL::SigSpec(sub_wire));
+            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, 32)));
+            mul_cell->setPort(ID::Y, mul_wire);
+            add_src_attribute(mul_cell->attributes, uhdm_bit);
+
+            shift_amount = RTLIL::SigSpec(mul_wire);
+        } else {
+            // Normal range [N:0] - $mul(ix, element_width)
+            RTLIL::Wire* mul_wire = module->addWire(NEW_ID, 32);
+            std::string mul_name = generate_cell_name(uhdm_bit, "mul");
+            RTLIL::Cell* mul_cell = module->addCell(RTLIL::escape_id(mul_name), ID($mul));
+            mul_cell->setParam(ID::A_SIGNED, 0);
+            mul_cell->setParam(ID::B_SIGNED, 0);
+            mul_cell->setParam(ID::A_WIDTH, 32);
+            mul_cell->setParam(ID::B_WIDTH, 32);
+            mul_cell->setParam(ID::Y_WIDTH, 32);
+            mul_cell->setPort(ID::A, index32);
+            mul_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(element_width, 32)));
+            mul_cell->setPort(ID::Y, mul_wire);
+            add_src_attribute(mul_cell->attributes, uhdm_bit);
+
+            shift_amount = RTLIL::SigSpec(mul_wire);
+        }
+    } else {
+        shift_amount = index;
+    }
+
     // Create output wire for the result
-    RTLIL::Wire* result_wire = module->addWire(NEW_ID, 1);
-    
+    RTLIL::Wire* result_wire = module->addWire(NEW_ID, element_width);
+
     // Create $shiftx cell
     std::string cell_name = generate_cell_name(uhdm_bit, "shiftx");
     RTLIL::Cell* shiftx_cell = module->addCell(RTLIL::escape_id(cell_name), ID($shiftx));
     shiftx_cell->setParam(ID::A_SIGNED, 0);
-    shiftx_cell->setParam(ID::B_SIGNED, 0);
+    shiftx_cell->setParam(ID::B_SIGNED, element_width > 1 ? 1 : 0);
     shiftx_cell->setParam(ID::A_WIDTH, base.size());
-    shiftx_cell->setParam(ID::B_WIDTH, index.size());
-    shiftx_cell->setParam(ID::Y_WIDTH, 1);
-    
+    shiftx_cell->setParam(ID::B_WIDTH, shift_amount.size());
+    shiftx_cell->setParam(ID::Y_WIDTH, element_width);
+
     shiftx_cell->setPort(ID::A, base);
-    shiftx_cell->setPort(ID::B, index);
+    shiftx_cell->setPort(ID::B, shift_amount);
     shiftx_cell->setPort(ID::Y, result_wire);
-    
+
     // Add source attribute
     add_src_attribute(shiftx_cell->attributes, uhdm_bit);
-    
+
     return RTLIL::SigSpec(result_wire);
 }
 
