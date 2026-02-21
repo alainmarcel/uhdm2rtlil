@@ -100,6 +100,33 @@ The UHDM frontend is in `src/frontends/uhdm/` with these key files:
    - Adds extensive logging of UHDM traversal
    - Shows parameter resolution and expression evaluation
 
+5. **AllModules vs TopModules (Elaborated Model)**:
+   - Surelog provides two views: `AllModules` (flat definitions) and `TopModules` (elaborated hierarchy)
+   - **AllModules types cannot be trusted** for signal attributes like signedness (`VpiSigned`), widths, and type information
+   - Only the **Elaborated model** (from `TopModules`) contains the correct, fully-resolved signal types
+   - When importing module definitions, always prefer data from the elaborated instances under `TopModules`
+   - Example: A `wire signed` declared in SV may have `VpiSigned:1` on the elaborated `logic_net` but NOT on the AllModules version
+
+6. **Port vs Net Typespec Inconsistency**:
+   - In the elaborated model, a **port**'s typespec and the corresponding **net**'s typespec can point to **different** typespecs
+   - Example: For `input reg8_t [0:3] in`, the port's `vpiTypedef` ref_typespec points to the full packed array `logic_typespec` (with `Elem_typespec` + Range `[0:3]`), but the net's `vpiTypespec` points to just `reg8_t` (the element type, 8-bit)
+   - When both port and net information is needed (e.g., for packed array detection), store metadata as wire attributes during `import_port()` and read them back later in expression handling
+   - The `Actual_group()` on a `bit_select` resolves to the net, not the port, so it inherits the net's (potentially incomplete) typespec
+
+7. **Packed Multidimensional Array Typespec Variants**:
+   - Surelog represents packed arrays in multiple ways depending on the SV source:
+     - **Multi-range**: `logic [0:3][7:0]` → `logic_typespec` with `Ranges()->size() > 1`
+     - **Elem_typespec**: `reg8_t [0:3]` → `logic_typespec` with `Elem_typespec()` pointing to element type and 1 Range
+     - **Typedef alias**: `typedef reg8_t [0:3] reg2dim1_t` → `logic_typespec` with `Elem_typespec()` pointing to ANOTHER packed array typespec (which itself has `Elem_typespec`), and the Range is **redundant** (duplicated from the inner type)
+   - For typedef aliases, detect nested `Elem_typespec` chains: if `Elem_typespec()->Actual_typespec()` is a `logic_typespec` that itself has `Elem_typespec`, the outer Range must NOT be multiplied again
+   - `ExprEval::size()` returns only the outer dimension count for Elem_typespec variants (e.g., returns 4 for `reg8_t [0:3]` instead of 32), so manual `element_width * range_size` calculation is required
+
+8. **UHDM Inheritance and Typespec Access**:
+   - `bit_select` extends `ref_obj` which has `Actual_group()` → returns the underlying `logic_net` or `logic_var`
+   - Both `logic_net` (via `net` → `nets` → `simple_expr` → `expr`) and `logic_var` (via `variables` → `simple_expr` → `expr`) inherit `Typespec()` from the `expr` base class
+   - `logic_typespec::Elem_typespec()` returns a `ref_typespec*`, which must be followed via `Actual_typespec()` to get the actual element typespec
+   - UHDM dump uses shared objects: a typespec's full details (Ranges, Elem_typespec) may only appear once in the dump even if referenced from multiple places
+
 ## Common Issues and Solutions
 
 ### Test Failures
