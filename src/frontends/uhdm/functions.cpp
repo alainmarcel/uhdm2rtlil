@@ -698,35 +698,34 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                 
                 int direction = io_decl->VpiDirection();
                 
-                // VpiDirection: 1=input, 2=output, 3=inout
-                if (direction == 1) {
+                if (direction == vpiInput) {
                     // Input parameter - create temp wire and copy input value
-                    std::string temp_name = stringf("$0\\%s.%s$%d", 
+                    std::string temp_name = stringf("$0\\%s.%s$%d",
                         func_call_id.c_str(), io_name.c_str(), incr_autoidx());
                     RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), width);
-                    
+
                     // Add source attribute to temp wire
                     if (fc) {
                         add_src_attribute(temp_wire->attributes, fc);
                     }
-                    
+
                     arg_temp_wires.push_back(temp_wire);
-                    
+
                     // Add assignment from actual argument to temp wire
                     root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
-                    
+
                     // Map input parameter to temp wire for use in function body
                     input_mapping[io_name] = temp_wire;
-                } else if (direction == 2) {
+                } else if (direction == vpiOutput) {
                     // Output parameter - map directly to the output wire
                     // Assignments to this parameter in the function body will
                     // directly update the output wire
                     input_mapping[io_name] = args[arg_idx];
                     if (mode_debug) {
-                        log("UHDM: Mapping output parameter %s to wire with width %d\n", 
+                        log("UHDM: Mapping output parameter %s to wire with width %d\n",
                             io_name.c_str(), width);
                     }
-                } else if (direction == 3) {
+                } else if (direction == vpiInout) {
                     // Inout parameter - needs both input and output handling
                     // For now, treat like output
                     input_mapping[io_name] = args[arg_idx];
@@ -831,8 +830,8 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
     if (func_def->Io_decls()) {
         for (auto io_decl : *func_def->Io_decls()) {
             int direction = io_decl->VpiDirection();
-            // Skip input parameters (direction=1) - they don't need nosync wires with X assignments
-            if (direction == 1) {
+            // Skip input parameters - they don't need nosync wires with X assignments
+            if (direction == vpiInput) {
                 continue;
             }
             
