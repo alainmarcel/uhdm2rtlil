@@ -14,18 +14,20 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 123 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (121/123 tests functional)
+- **Total Tests**: 131 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (128/131 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 2 tests with issues:
+- **Known Failures**: 3 tests with issues:
   - `forloops` - Equivalence check failure (expected)
+  - `gen_test5` - Surelog doesn't elaborate generate for-loops with multiplication-based genvar increment (`step = step * CHUNK`)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `gen_test1` through `gen_test9` - 8 generate block tests (gen_test5 excluded as known Surelog limitation): nested generate loops, for-loop in always blocks, conditional generates, hierarchical generates with localparam, descending loops, power operator in initial/always, nested scope shadowing, named generate blocks
   - `asgn_binop` - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`)
   - `arrays03` - Packed multidimensional array support with dynamic element access (`in[ix]` where `in` is `logic [0:3][7:0]`)
   - Repeat loop (`repeat(N)`) support with compile-time unrolling, blocking/non-blocking assignment handling, and loop index/intermediate variable tracking
@@ -327,7 +329,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (123 total - 121 passing, 2 known issues)
+### Current Test Cases (131 total - 128 passing, 3 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -450,7 +452,15 @@ The Yosys test runner:
 - **simple_generate** - Generate loop with AND gates clocked per-bit
 - **forgen01** - Generate block with nested loops computing prime LUT
 - **forgen02** - Generate block implementing parameterized ripple adder
-- **gen_test1** - Nested generate loops with if-then conditional blocks
+- **gen_test1** - Nested generate loops with if-then conditional blocks and sequential always blocks
+- **gen_test2** - For-loop in always block with casez carry propagation
+- **gen_test3** - Conditional generate with if/case and multi-assign statements
+- **gen_test4** - Hierarchical generate with localparam cross-references (`foo[PREV].temp`)
+- **gen_test5** - Nested generate with multiplication-based genvar increment *(known failure - Surelog limitation)*
+- **gen_test6** - Descending generate for-loop (`i = 3; i >= 0; i = i-1`)
+- **gen_test7** - Generate with initial/always blocks and power operator (`2 ** 2`)
+- **gen_test8** - Nested generate scope shadowing with wire constant initialization
+- **gen_test9** - Named generate blocks with scope shadowing and XOR computation
 - **genblk_order** - Nested generate blocks with variable shadowing
 - **genvar_loop_decl_1** - Generate loop with inline genvar declaration and width arrays
 - **genvar_loop_decl_2** - Generate with genvar shadowing and hierarchical references
@@ -496,8 +506,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 121 of 123 tests are passing or working as expected
-- 2 tests are in the failing_tests.txt file (expected failures)
+- 128 of 131 tests are passing or working as expected
+- 3 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -550,10 +560,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **123 test cases**:
+The UHDM frontend test suite includes **131 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **121 tests passing** - with 2 known failures documented in failing_tests.txt
+- **128 tests passing** - with 3 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
