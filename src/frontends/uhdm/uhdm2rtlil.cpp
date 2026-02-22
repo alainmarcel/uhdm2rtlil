@@ -1526,8 +1526,14 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             log("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
                             vars_with_init_expr.push_back(std::make_pair(var, wire));
                         }
+                    } else if (auto struct_v = dynamic_cast<const UHDM::struct_var*>(var)) {
+                        // Handle signedness for struct packed signed
+                        if (struct_v->VpiSigned()) {
+                            wire->is_signed = true;
+                            log("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
+                        }
                     }
-                    
+
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
                 } else {
                     // Wire already exists, but check if we need to handle initial expression
