@@ -15,19 +15,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 131 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (128/131 tests functional)
+- **Success Rate**: 98% (129/131 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 3 tests with issues:
+- **Known Failures**: 2 tests with issues:
   - `forloops` - Equivalence check failure (expected)
-  - `gen_test5` - Surelog doesn't elaborate generate for-loops with multiplication-based genvar increment (`step = step * CHUNK`)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
-  - `gen_test1` through `gen_test9` - 8 generate block tests (gen_test5 excluded as known Surelog limitation): nested generate loops, for-loop in always blocks, conditional generates, hierarchical generates with localparam, descending loops, power operator in initial/always, nested scope shadowing, named generate blocks
+  - `gen_test1` through `gen_test9` - 9 generate block tests: nested generate loops, for-loop in always blocks, conditional generates, hierarchical generates with localparam, nested generate with multiplication-based genvar increment and cross-scope hier paths, descending loops, power operator in initial/always, nested scope shadowing, named generate blocks
   - `asgn_binop` - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`)
   - `arrays03` - Packed multidimensional array support with dynamic element access (`in[ix]` where `in` is `logic [0:3][7:0]`)
   - Repeat loop (`repeat(N)`) support with compile-time unrolling, blocking/non-blocking assignment handling, and loop index/intermediate variable tracking
@@ -46,6 +45,12 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - Dynamic element access (`in[ix]`) generates `$sub`/`$mul`/`$shiftx` for correct 8-bit element extraction
     - Handles both direct packed arrays and typedef aliases (`reg2dim_t`, `reg2dim1_t`)
     - Packed array metadata stored as wire attributes for reliable bit_select detection
+  - Generate for-loop with complex genvar increment and cross-scope hierarchical references (`gen_test5`) ✅
+    - **Surelog fix**: `DesignElaboration.cpp` — for-loop increment now falls back to full expression compilation (`m_helper.getValue()`) when simple evaluator fails, enabling `step = step * CHUNK` where CHUNK is a named parameter
+    - **Surelog/UHDM fix**: `clone_tree.cpp` — `hier_path::DeepClone()` now numerically evaluates symbolic bit_select indices (e.g., `outer[LAST_START]` → `outer[0]`) via `evalIndex()` helper, so gen_scope_array lookups match correctly across generate scopes
+    - **Surelog/UHDM fix**: `ExprEval.cpp` — `reduceExpr()` for `ref_obj` now falls back to `Actual_group()` pointer when name-based lookup fails, resolving localparams in cross-scope contexts
+    - **UHDM frontend fix**: `expression.cpp` — `import_hier_path()` creates wires on-the-fly for forward references to sibling generate scopes not yet processed
+    - 255 gates, formal equivalence verified
   - Repeat loop (`vpiRepeat`) support in synchronous always blocks ✅
     - Compile-time unrolling of `repeat(N)` with constant iteration count
     - Automatic detection of loop index variables (`i = i+1` pattern) and blocking intermediates (`carry`)
@@ -329,7 +334,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (131 total - 128 passing, 3 known issues)
+### Current Test Cases (131 total - 129 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -456,7 +461,7 @@ The Yosys test runner:
 - **gen_test2** - For-loop in always block with casez carry propagation
 - **gen_test3** - Conditional generate with if/case and multi-assign statements
 - **gen_test4** - Hierarchical generate with localparam cross-references (`foo[PREV].temp`)
-- **gen_test5** - Nested generate with multiplication-based genvar increment *(known failure - Surelog limitation)*
+- **gen_test5** - Nested generate with multiplication-based genvar increment (`step = step * CHUNK`) and cross-scope hierarchical references (`steps[PREV].outer[LAST_START].val`)
 - **gen_test6** - Descending generate for-loop (`i = 3; i >= 0; i = i-1`)
 - **gen_test7** - Generate with initial/always blocks and power operator (`2 ** 2`)
 - **gen_test8** - Nested generate scope shadowing with wire constant initialization
@@ -506,8 +511,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 128 of 131 tests are passing or working as expected
-- 3 tests are in the failing_tests.txt file (expected failures)
+- 129 of 131 tests are passing or working as expected
+- 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -563,7 +568,7 @@ uhdm2rtlil/
 The UHDM frontend test suite includes **131 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **128 tests passing** - with 3 known failures documented in failing_tests.txt
+- **129 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 

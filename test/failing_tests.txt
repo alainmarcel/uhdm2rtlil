@@ -7,9 +7,6 @@
 
 # Tests that currently fail:
 forloops
-# gen_test5: Surelog doesn't elaborate generate for-loops with multiplication-based
-# genvar increment (step = step * CHUNK)
-gen_test5
 # multiplier: SAT proves primary outputs are equivalent, but equiv_make fails because
 # internal FullAdder instance naming differs (UHDM: unit_0..N vs Verilog: \addbit[0].unit)
 multiplier
