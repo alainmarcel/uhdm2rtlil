@@ -2,9 +2,7 @@
 autoidx 51
 attribute \cells_not_processed 1
 attribute \src "dut.sv:1.1-48.10"
-attribute \dynports 1
 module \top
-  parameter \BITS 8
   attribute \src "dut.sv:9.4-9.5"
   wire width 19 \s
   attribute \src "dut.sv:16.4-16.9"

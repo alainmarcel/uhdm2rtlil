@@ -9,7 +9,7 @@ module \mux16
   wire width 4 input 2 \S
   attribute \src "dut.sv:3.21-3.22"
   wire output 3 \Y
-  wire $auto$expression.cpp:3207:import_bit_select$1
+  wire $auto$expression.cpp:3203:import_bit_select$1
   attribute \src "dut.sv:8.18-8.19"
   cell $shiftx $shiftx$dut.sv:8$2
     parameter \A_SIGNED 0
@@ -19,7 +19,7 @@ module \mux16
     parameter \Y_WIDTH 1
     connect \A \D
     connect \B \S
-    connect \Y $auto$expression.cpp:3207:import_bit_select$1
+    connect \Y $auto$expression.cpp:3203:import_bit_select$1
   end
-  connect \Y $auto$expression.cpp:3207:import_bit_select$1
+  connect \Y $auto$expression.cpp:3203:import_bit_select$1
 end

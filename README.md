@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 134 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (132/134 tests functional)
+- **Total Tests**: 135 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (133/135 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -26,6 +26,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `typedef_param` - Typedef'd parameters and localparams (`uint2_t`, `int4_t`, `int8_t`, `char_t`) with signed types, chained typedef aliases, localparam visibility, and static assertions
   - `typedef_package` - Package-scoped typedefs (`pkg::uint8_t`, `pkg::enum8_t`), enum types with hex values (`8'hBB`, `8'hCC`), package `localparam`/`parameter` initialized from enum constants, assertions on package-qualified parameters
   - `svtypes_struct_simple` - Packed structs with member access in continuous assignments and assertions, nested structs, `struct packed signed`
   - `gen_test1` through `gen_test9` - 9 generate block tests: nested generate loops, for-loop in always blocks, conditional generates, hierarchical generates with localparam, nested generate with multiplication-based genvar increment and cross-scope hier paths, descending loops, power operator in initial/always, nested scope shadowing, named generate blocks
@@ -37,6 +38,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
 - **Recent Fixes**:
+  - Localparam visibility, INT constant width, and blackbox detection ✅
+    - Fixed `avail_parameters()` to skip `VpiLocalParam` parameters — localparams are stored for expression resolution but not exported as externally-visible parameters
+    - Fixed `vpiIntConst` width: uses `VpiSize()` from elaborated model when available (e.g., 4-bit for `int4_t`, 8-bit for `int8_t`) instead of hardcoded 32
+    - Fixed blackbox detection: empty modules without ports (parameter-only top modules) are no longer marked as blackbox
+    - Fixed `dynports` attribute: only set on modules that have both parameters and ports
   - HEX/BIN enum constant crash and package parameter resolution ✅
     - Fixed `std::stoi()` crash on hex enum values (`HEX:BB`) — added `parse_vpi_value_to_int()` helper supporting HEX/BIN/UINT/INT/DEC prefixes
     - Switched package import from `AllPackages()` to `TopPackages()` (elaborated) for resolved parameter values
@@ -350,7 +356,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (134 total - 132 passing, 2 known issues)
+### Current Test Cases (135 total - 133 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -468,6 +474,7 @@ The Yosys test runner:
 - **svtypes_enum_simple** - Bare enums, typedef enums, parenthesized type declarations, enum constant init, FSM with assertions
 - **svtypes_struct_simple** - Packed structs with member access (`s.a`, `pack1.b`), nested struct member access (`s2.b.x`), `struct packed signed`, continuous assignments and combinational assertions
 - **typedef_simple** - Multiple typedef definitions with signed/unsigned types
+- **typedef_param** - Typedef'd parameters and localparams with signed types, chained typedef aliases (`char_t` = `int8_t` = `logic signed [7:0]`), localparam visibility (only `parameter` exported, `localparam` hidden), and static assertions
 - **typedef_package** - Package-scoped typedefs, enum types with hex values, package localparam/parameter from enum constants, package-qualified assertions
 
 #### Generate & Parameterization
@@ -530,7 +537,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 132 of 134 tests are passing or working as expected
+- 133 of 135 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -584,10 +591,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **134 test cases**:
+The UHDM frontend test suite includes **135 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **132 tests passing** - with 2 known failures documented in failing_tests.txt
+- **133 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 

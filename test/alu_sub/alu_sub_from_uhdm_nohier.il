@@ -9,7 +9,7 @@ module \adder
   wire width 8 input 2 \b
   attribute \src "dut.sv:2.48-2.49"
   wire width 8 output 3 \y
-  wire width 8 $auto$expression.cpp:2056:import_operation$1
+  wire width 8 $auto$expression.cpp:2052:import_operation$1
   cell $add $add$dut.sv:4$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -18,16 +18,13 @@ module \adder
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2056:import_operation$1
+    connect \Y $auto$expression.cpp:2052:import_operation$1
   end
-  connect \y $auto$expression.cpp:2056:import_operation$1
+  connect \y $auto$expression.cpp:2052:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:27.1-61.10"
-attribute \dynports 1
 module \alu
-  parameter \ALU_OP_ADD 4'0000
-  parameter \ALU_OP_SUB 4'0001
   attribute \src "dut.sv:28.8-28.11"
   wire input 1 \clk
   attribute \src "dut.sv:29.14-29.15"
@@ -57,7 +54,7 @@ module \alu
   wire $auto$process_helper.cpp:58:create_eq_cell$8
   attribute \src "dut.sv:51.4-52.17"
   wire $auto$process_helper.cpp:78:create_or_cell$10
-  wire width 8 $auto$expression.cpp:2082:import_operation$12
+  wire width 8 $auto$expression.cpp:2078:import_operation$12
   attribute \src "dut.sv:52.5-52.16"
   wire width 9 $auto$process.cpp:4885:import_assignment_sync$14
   attribute \src "dut.sv:56.9-56.22"
@@ -111,13 +108,13 @@ module \alu
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B \B
-    connect \Y $auto$expression.cpp:2082:import_operation$12
+    connect \Y $auto$expression.cpp:2078:import_operation$12
   end
   attribute \src "dut.sv:52.5-52.16"
   cell $mux $auto$process.cpp:4887:import_assignment_sync$15
     parameter \WIDTH 9
     connect \A $auto$process.cpp:4885:import_assignment_sync$6
-    connect \B { 1'0 $auto$expression.cpp:2082:import_operation$12 }
+    connect \B { 1'0 $auto$expression.cpp:2078:import_operation$12 }
     connect \S $auto$process_helper.cpp:58:create_eq_cell$8
     connect \Y $auto$process.cpp:4885:import_assignment_sync$14
   end

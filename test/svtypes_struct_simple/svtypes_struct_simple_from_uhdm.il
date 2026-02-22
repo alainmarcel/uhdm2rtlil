@@ -2,10 +2,8 @@
 autoidx 51
 attribute \top 1
 attribute \src "dut.sv:1.1-48.10"
-attribute \dynports 1
 attribute \keep 1
 module \top
-  parameter \BITS 8
   attribute \src "dut.sv:9.4-9.5"
   attribute \unused_bits "0"
   wire width 19 \s
