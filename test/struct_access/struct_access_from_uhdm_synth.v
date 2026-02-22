@@ -5,6 +5,8 @@
 (* top =  1  *)
 module top();
   wire fail;
+  (* src = "dut.sv:19.7-19.8" *)
+  wire [29:0] s;
   (* src = "dut.sv:83.9-83.29" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -21,4 +23,5 @@ module top();
     .TRG()
   );
   assign fail = 1'h1;
+  assign s = 30'h3010111f;
 endmodule

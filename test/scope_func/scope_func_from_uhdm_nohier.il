@@ -13,8 +13,8 @@ module \scope_func
   wire width 16 $0\x
   attribute \src "dut.sv:16.5-23.8"
   wire width 16 $0\y
-  wire width 16 $auto$expression.cpp:2055:import_operation$2
-  wire width 16 $auto$expression.cpp:2055:import_operation$5
+  wire width 16 $auto$expression.cpp:2056:import_operation$2
+  wire width 16 $auto$expression.cpp:2056:import_operation$5
   attribute \nosync 1
   attribute \src "dut.sv:4.22-4.23"
   wire width 16 \func_01$func$dut.sv:22$4.x
@@ -30,7 +30,7 @@ module \scope_func
   wire width 16 \func_01$func$dut.sv:22$4.$result
   attribute \src "dut.sv:22.13-22.30"
   wire width 16 $0\func_01$func$dut.sv:22$4.$result[15:0]$9
-  wire width 16 $auto$expression.cpp:2055:import_operation$10
+  wire width 16 $auto$expression.cpp:2056:import_operation$10
   cell $add $add$dut.sv:22$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -39,7 +39,7 @@ module \scope_func
     parameter \Y_WIDTH 16
     connect \A 16'0000000000000001
     connect \B \k
-    connect \Y $auto$expression.cpp:2055:import_operation$2
+    connect \Y $auto$expression.cpp:2056:import_operation$2
   end
   cell $add $add$dut.sv:22$6
     parameter \A_SIGNED 0
@@ -49,7 +49,7 @@ module \scope_func
     parameter \Y_WIDTH 16
     connect \A 16'0000000000000001
     connect \B \k
-    connect \Y $auto$expression.cpp:2055:import_operation$5
+    connect \Y $auto$expression.cpp:2056:import_operation$5
   end
   cell $add $add$dut.sv:6$11
     parameter \A_SIGNED 0
@@ -57,19 +57,19 @@ module \scope_func
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:2055:import_operation$5
+    connect \A $auto$expression.cpp:2056:import_operation$5
     connect \B 16'0000000000000001
-    connect \Y $auto$expression.cpp:2055:import_operation$10
+    connect \Y $auto$expression.cpp:2056:import_operation$10
   end
   attribute \src "dut.sv:16.5-23.8"
   process $proc$dut.sv:16$1
     assign $0\x \x
     assign $0\y \y
     assign $0\x 16'0000000000000001
-    assign $0\func_01$func$dut.sv:22$4.x[15:0]$7 $auto$expression.cpp:2055:import_operation$5
+    assign $0\func_01$func$dut.sv:22$4.x[15:0]$7 $auto$expression.cpp:2056:import_operation$5
     assign $0\func_01$func$dut.sv:22$4.y[15:0]$8 16'0000000000000001
-    assign $0\func_01$func$dut.sv:22$4.$result[15:0]$9 $auto$expression.cpp:2055:import_operation$10
-    assign $0\y $auto$expression.cpp:2055:import_operation$10
+    assign $0\func_01$func$dut.sv:22$4.$result[15:0]$9 $auto$expression.cpp:2056:import_operation$10
+    assign $0\y $auto$expression.cpp:2056:import_operation$10
     sync always
       update \x $0\x
       update \y $0\y

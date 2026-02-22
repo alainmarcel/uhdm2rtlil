@@ -165,7 +165,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$2.indirect
-    connect \B 1'x
+    connect \B \s [29]
     connect \Y $auto$rtlil.cc:3394:Ne$10
   end
   cell $ne $ne$dut.sv:59$11
@@ -216,7 +216,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$3.indirect
-    connect \B 1'x
+    connect \B \s [28]
     connect \Y $auto$rtlil.cc:3394:Ne$22
   end
   cell $ne $ne$dut.sv:59$23
@@ -264,10 +264,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$4.indirect
-    connect \B 1'x
+    connect \B \s [27:20]
     connect \Y $auto$rtlil.cc:3394:Ne$34
   end
   cell $ne $ne$dut.sv:59$35
@@ -315,10 +315,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$5.indirect
-    connect \B 1'x
+    connect \B \s [19:12]
     connect \Y $auto$rtlil.cc:3394:Ne$46
   end
   cell $ne $ne$dut.sv:59$47
@@ -366,10 +366,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 4
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$6.indirect
-    connect \B 1'x
+    connect \B \s [11:8]
     connect \Y $auto$rtlil.cc:3394:Ne$58
   end
   cell $ne $ne$dut.sv:59$59
@@ -417,10 +417,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 4
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$7.indirect
-    connect \B 1'x
+    connect \B \s [7:4]
     connect \Y $auto$rtlil.cc:3394:Ne$70
   end
   cell $ne $ne$dut.sv:59$71
@@ -471,7 +471,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$8.indirect
-    connect \B 1'x
+    connect \B \s [3]
     connect \Y $auto$rtlil.cc:3394:Ne$82
   end
   cell $ne $ne$dut.sv:59$83
@@ -522,7 +522,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$9.indirect
-    connect \B 1'x
+    connect \B \s [2]
     connect \Y $auto$rtlil.cc:3394:Ne$94
   end
   cell $ne $ne$dut.sv:59$95
@@ -573,7 +573,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$10.indirect
-    connect \B 1'x
+    connect \B \s [1]
     connect \Y $auto$rtlil.cc:3394:Ne$106
   end
   cell $ne $ne$dut.sv:59$107
@@ -624,7 +624,7 @@ module \top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$11.indirect
-    connect \B 1'x
+    connect \B \s [0]
     connect \Y $auto$rtlil.cc:3394:Ne$118
   end
   cell $ne $ne$dut.sv:59$119
@@ -672,10 +672,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$12.indirect
-    connect \B 1'x
+    connect \B \s [3:2]
     connect \Y $auto$rtlil.cc:3394:Ne$130
   end
   cell $ne $ne$dut.sv:59$131
@@ -723,10 +723,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 10
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A $unnamed_block$13.indirect
-    connect \B 1'x
+    connect \B \s [1:0]
     connect \Y $auto$rtlil.cc:3394:Ne$142
   end
   cell $ne $ne$dut.sv:59$143
@@ -777,7 +777,16 @@ module \top
   process $proc$dut.sv:21$1
     sync always
     sync init
-      update 1'x 1'1
+      update \s [0] 1'1
+      update \s [1] 1'1
+      update \s [2] 1'1
+      update \s [3] 1'1
+      update \s [28] 1'1
+      update \s [29] 1'1
+      update \s [7:4] 4'0001
+      update \s [11:8] 4'0001
+      update \s [19:12] 8'00000001
+      update \s [27:20] 8'00000001
   end
   attribute \src "dut.sv:64.5-84.8"
   process $proc$dut.sv:64$2
@@ -787,48 +796,48 @@ module \top
     assign $0\$unnamed_block$1.fail $unnamed_block$1.fail
     assign $0\$unnamed_block$1.fail 1'0
     assign $0\$unnamed_block$2.indirect $unnamed_block$2.indirect
-    assign $0\$unnamed_block$2.indirect 10'000000000x
-    assign $0\$unnamed_block$2.indirect 10'000000000x
+    assign $0\$unnamed_block$2.indirect { 9'000000000 \s [29] }
+    assign $0\$unnamed_block$2.indirect { 9'000000000 \s [29] }
     assign $0\$unnamed_block$3.indirect $unnamed_block$3.indirect
-    assign $0\$unnamed_block$3.indirect 10'000000000x
-    assign $0\$unnamed_block$3.indirect 10'000000000x
+    assign $0\$unnamed_block$3.indirect { 9'000000000 \s [28] }
+    assign $0\$unnamed_block$3.indirect { 9'000000000 \s [28] }
     assign $0\$unnamed_block$4.indirect $unnamed_block$4.indirect
-    assign $0\$unnamed_block$4.indirect 10'000000000x
-    assign $0\$unnamed_block$4.indirect 10'000000000x
+    assign $0\$unnamed_block$4.indirect { 2'00 \s [27:20] }
+    assign $0\$unnamed_block$4.indirect { 2'00 \s [27:20] }
     assign $0\$unnamed_block$5.indirect $unnamed_block$5.indirect
-    assign $0\$unnamed_block$5.indirect 10'000000000x
-    assign $0\$unnamed_block$5.indirect 10'000000000x
+    assign $0\$unnamed_block$5.indirect { 2'00 \s [19:12] }
+    assign $0\$unnamed_block$5.indirect { 2'00 \s [19:12] }
     assign $0\$unnamed_block$6.indirect $unnamed_block$6.indirect
-    assign $0\$unnamed_block$6.indirect 10'000000000x
-    assign $0\$unnamed_block$6.indirect 10'000000000x
+    assign $0\$unnamed_block$6.indirect { 6'000000 \s [11:8] }
+    assign $0\$unnamed_block$6.indirect { 6'000000 \s [11:8] }
     assign $0\$unnamed_block$7.indirect $unnamed_block$7.indirect
-    assign $0\$unnamed_block$7.indirect 10'000000000x
-    assign $0\$unnamed_block$7.indirect 10'000000000x
+    assign $0\$unnamed_block$7.indirect { 6'000000 \s [7:4] }
+    assign $0\$unnamed_block$7.indirect { 6'000000 \s [7:4] }
     assign $0\$unnamed_block$8.indirect $unnamed_block$8.indirect
-    assign $0\$unnamed_block$8.indirect 10'000000000x
-    assign $0\$unnamed_block$8.indirect 10'000000000x
+    assign $0\$unnamed_block$8.indirect { 9'000000000 \s [3] }
+    assign $0\$unnamed_block$8.indirect { 9'000000000 \s [3] }
     assign $0\$unnamed_block$9.indirect $unnamed_block$9.indirect
-    assign $0\$unnamed_block$9.indirect 10'000000000x
-    assign $0\$unnamed_block$9.indirect 10'000000000x
+    assign $0\$unnamed_block$9.indirect { 9'000000000 \s [2] }
+    assign $0\$unnamed_block$9.indirect { 9'000000000 \s [2] }
     assign $0\$unnamed_block$10.indirect $unnamed_block$10.indirect
-    assign $0\$unnamed_block$10.indirect 10'000000000x
-    assign $0\$unnamed_block$10.indirect 10'000000000x
+    assign $0\$unnamed_block$10.indirect { 9'000000000 \s [1] }
+    assign $0\$unnamed_block$10.indirect { 9'000000000 \s [1] }
     assign $0\$unnamed_block$11.indirect $unnamed_block$11.indirect
-    assign $0\$unnamed_block$11.indirect 10'000000000x
-    assign $0\$unnamed_block$11.indirect 10'000000000x
+    assign $0\$unnamed_block$11.indirect { 9'000000000 \s [0] }
+    assign $0\$unnamed_block$11.indirect { 9'000000000 \s [0] }
     assign $0\$unnamed_block$12.indirect $unnamed_block$12.indirect
-    assign $0\$unnamed_block$12.indirect 10'000000000x
-    assign $0\$unnamed_block$12.indirect 10'000000000x
+    assign $0\$unnamed_block$12.indirect { 8'00000000 \s [3:2] }
+    assign $0\$unnamed_block$12.indirect { 8'00000000 \s [3:2] }
     assign $0\$unnamed_block$13.indirect $unnamed_block$13.indirect
-    assign $0\$unnamed_block$13.indirect 10'000000000x
-    assign $0\$unnamed_block$13.indirect 10'000000000x
+    assign $0\$unnamed_block$13.indirect { 8'00000000 \s [1:0] }
+    assign $0\$unnamed_block$13.indirect { 8'00000000 \s [1:0] }
     assign $auto$process.cpp:32:import_immediate_assert$149 1'1
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [29]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [29]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -862,7 +871,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [29]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -974,11 +983,11 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [28]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [28]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -1012,7 +1021,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [28]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1124,13 +1133,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [27:20]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 8'10000000
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [27:20]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 8'00000011
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$28
             attribute \src "dut.sv:39.25-39.44"
@@ -1162,9 +1171,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [27:20]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 8'10000000
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1174,7 +1183,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 8'11000000
         attribute \src "dut.sv:46.16-46.39"
         switch 1'1
         attribute \src "dut.sv:46.16-46.39"
@@ -1184,7 +1193,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 8'11100000
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -1194,7 +1203,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 8'11110000
         attribute \src "dut.sv:48.18-48.41"
         switch 1'1
         attribute \src "dut.sv:48.18-48.41"
@@ -1204,7 +1213,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 8'11111000
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -1214,7 +1223,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 8'11111100
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -1224,7 +1233,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 8'01111110
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -1234,7 +1243,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 8'11111111
         attribute \src "dut.sv:52.23-52.46"
         switch 1'0
         attribute \src "dut.sv:52.23-52.46"
@@ -1244,7 +1253,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 8'11111111
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
@@ -1274,13 +1283,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [19:12]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 8'10000000
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [19:12]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 8'00000011
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$40
             attribute \src "dut.sv:39.25-39.44"
@@ -1312,9 +1321,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [19:12]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 8'10000000
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1324,7 +1333,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 8'11000000
         attribute \src "dut.sv:46.16-46.39"
         switch 1'1
         attribute \src "dut.sv:46.16-46.39"
@@ -1334,7 +1343,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 8'11100000
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -1344,7 +1353,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 8'11110000
         attribute \src "dut.sv:48.18-48.41"
         switch 1'1
         attribute \src "dut.sv:48.18-48.41"
@@ -1354,7 +1363,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 8'11111000
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -1364,7 +1373,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 8'11111100
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -1374,7 +1383,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 8'01111110
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -1384,7 +1393,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 8'11111111
         attribute \src "dut.sv:52.23-52.46"
         switch 1'0
         attribute \src "dut.sv:52.23-52.46"
@@ -1394,7 +1403,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 8'11111111
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
@@ -1424,13 +1433,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [11:8]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 4'1000
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [11:8]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 4'0011
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$52
             attribute \src "dut.sv:39.25-39.44"
@@ -1462,9 +1471,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [11:8]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 4'1000
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1474,7 +1483,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 4'1100
         attribute \src "dut.sv:46.16-46.39"
         switch 1'1
         attribute \src "dut.sv:46.16-46.39"
@@ -1484,7 +1493,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 4'1110
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -1494,7 +1503,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:48.18-48.41"
         switch 1'0
         attribute \src "dut.sv:48.18-48.41"
@@ -1504,7 +1513,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -1514,7 +1523,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -1524,7 +1533,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -1534,7 +1543,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:52.23-52.46"
         switch 1'1
         attribute \src "dut.sv:52.23-52.46"
@@ -1544,7 +1553,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
@@ -1574,13 +1583,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [7:4]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 4'1000
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [7:4]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 4'0011
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$64
             attribute \src "dut.sv:39.25-39.44"
@@ -1612,9 +1621,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [7:4]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 4'1000
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1624,7 +1633,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 4'1100
         attribute \src "dut.sv:46.16-46.39"
         switch 1'1
         attribute \src "dut.sv:46.16-46.39"
@@ -1634,7 +1643,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 4'1110
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -1644,7 +1653,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:48.18-48.41"
         switch 1'0
         attribute \src "dut.sv:48.18-48.41"
@@ -1654,7 +1663,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -1664,7 +1673,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -1674,7 +1683,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -1684,7 +1693,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:52.23-52.46"
         switch 1'1
         attribute \src "dut.sv:52.23-52.46"
@@ -1694,7 +1703,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 4'1111
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
@@ -1724,11 +1733,11 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [3]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [3]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -1762,7 +1771,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [3]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -1874,11 +1883,11 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [2]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [2]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -1912,7 +1921,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [2]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -2024,11 +2033,11 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [1]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [1]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -2062,7 +2071,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [1]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -2174,11 +2183,11 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [0]
     attribute \src "dut.sv:37.9-41.20"
       case 1'1
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [0]
         attribute \src "dut.sv:39.17-39.44"
           case 1'1
             attribute \src "dut.sv:39.25-39.44"
@@ -2212,7 +2221,7 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [0]
     attribute \src "dut.sv:45.9-45.38"
       case 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -2324,13 +2333,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [3:2]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 2'10
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [3:2]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 2'11
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$124
             attribute \src "dut.sv:39.25-39.44"
@@ -2362,9 +2371,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [3:2]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 2'10
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -2374,7 +2383,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:46.16-46.39"
         switch 1'0
         attribute \src "dut.sv:46.16-46.39"
@@ -2384,7 +2393,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -2394,7 +2403,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:48.18-48.41"
         switch 1'1
         attribute \src "dut.sv:48.18-48.41"
@@ -2404,7 +2413,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -2414,7 +2423,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -2424,7 +2433,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -2434,7 +2443,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:52.23-52.46"
         switch 1'1
         attribute \src "dut.sv:52.23-52.46"
@@ -2444,7 +2453,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
@@ -2474,13 +2483,13 @@ module \top
       case 
     end
     attribute \src "dut.sv:36.5-43.12"
-    switch 1'x
+    switch \s [1:0]
     attribute \src "dut.sv:37.9-41.20"
-      case 1'1
+      case 2'10
         attribute \src "dut.sv:38.13-41.20"
-        switch 1'x
+        switch \s [1:0]
         attribute \src "dut.sv:39.17-39.44"
-          case 1'1
+          case 2'11
             attribute \src "dut.sv:39.25-39.44"
             switch $auto$rtlil.cc:3346:ReduceBool$136
             attribute \src "dut.sv:39.25-39.44"
@@ -2512,9 +2521,9 @@ module \top
         end
     end
     attribute \src "dut.sv:44.5-55.12"
-    switch 1'x
+    switch \s [1:0]
     attribute \src "dut.sv:45.9-45.38"
-      case 1'1
+      case 2'10
         attribute \src "dut.sv:45.15-45.38"
         switch 1'1
         attribute \src "dut.sv:45.15-45.38"
@@ -2524,7 +2533,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:46.9-46.39"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:46.16-46.39"
         switch 1'0
         attribute \src "dut.sv:46.16-46.39"
@@ -2534,7 +2543,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:47.9-47.40"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:47.17-47.40"
         switch 1'1
         attribute \src "dut.sv:47.17-47.40"
@@ -2544,7 +2553,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:48.9-48.41"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:48.18-48.41"
         switch 1'1
         attribute \src "dut.sv:48.18-48.41"
@@ -2554,7 +2563,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:49.9-49.43"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:49.20-49.43"
         switch 1'1
         attribute \src "dut.sv:49.20-49.43"
@@ -2564,7 +2573,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:50.9-50.44"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:50.21-50.44"
         switch 1'1
         attribute \src "dut.sv:50.21-50.44"
@@ -2574,7 +2583,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:51.9-51.44"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:51.21-51.44"
         switch 1'1
         attribute \src "dut.sv:51.21-51.44"
@@ -2584,7 +2593,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:52.9-52.46"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:52.23-52.46"
         switch 1'1
         attribute \src "dut.sv:52.23-52.46"
@@ -2594,7 +2603,7 @@ module \top
           case 
         end
     attribute \src "dut.sv:53.9-53.48"
-      case 1'1
+      case 2'11
         attribute \src "dut.sv:53.25-53.48"
         switch 1'1
         attribute \src "dut.sv:53.25-53.48"
