@@ -3402,7 +3402,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
                                     return RTLIL::SigSpec(name_map[signal_path]);
                                 } else {
-                                    log("          Not found in name_map\n");
+                                    // Wire not yet created (forward reference across generate scopes)
+                                    // Create it now using the resolved logic_net info
+                                    int width = get_width(net, current_instance);
+                                    RTLIL::Wire* w = create_wire(signal_path, width);
+                                    wire_map[net] = w;
+                                    name_map[signal_path] = w;
+                                    log("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
+                                    return RTLIL::SigSpec(w);
                                 }
                             }
                         }
