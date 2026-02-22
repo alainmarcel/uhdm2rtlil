@@ -358,16 +358,16 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     for (auto module : design->modules()) {
         // A module is considered blackbox if it has no implementation:
         // no processes, no cells, no memories, and no connections (continuous assignments)
-        bool is_empty = module->processes.empty() && 
-                       module->cells_.empty() && 
+        bool is_empty = module->processes.empty() &&
+                       module->cells_.empty() &&
                        module->memories.empty() &&
                        module->connections_.empty();
-        
-        if (is_empty) {
-            // This is truly an empty module with no implementation, mark it as blackbox
+
+        // Only mark as blackbox if the module has ports — a portless empty module
+        // (e.g., parameter-only top module) is not a blackbox
+        if (is_empty && !module->ports.empty()) {
             module->set_bool_attribute(ID::blackbox);
             log("UHDM: Module %s has no implementation, marking as blackbox\n", module->name.c_str());
-
         }
     }
     
@@ -1236,14 +1236,21 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 
                 if (!param_name.empty()) {
                     log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
-                    
+
                     // Get the assigned value
                     RTLIL::SigSpec value_spec = import_expression(any_cast<const expr*>(param_assign->Rhs()));
                     if (value_spec.is_fully_const()) {
                         RTLIL::Const param_value = value_spec.as_const();
                         // Override the parameter value
                         RTLIL::IdString param_id = RTLIL::escape_id(param_name);
-                        module->avail_parameters(param_id);
+                        // Only make non-localparam parameters externally visible
+                        if (auto lhs_param = dynamic_cast<const parameter*>(param_assign->Lhs())) {
+                            if (!lhs_param->VpiLocalParam()) {
+                                module->avail_parameters(param_id);
+                            }
+                        } else {
+                            module->avail_parameters(param_id);
+                        }
                         module->parameter_default_values[param_id] = param_value;
                         log("UHDM: Updated parameter '%s' to value %s\n", 
                             param_name.c_str(), param_value.as_string().c_str());
@@ -2018,8 +2025,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import primitive gate arrays
     import_primitive_arrays(uhdm_module);
     
-    // Add dynports attribute if module has parameters
-    if (!module->avail_parameters.empty()) {
+    // Add dynports attribute if module has parameters and ports
+    if (!module->avail_parameters.empty() && !module->ports.empty()) {
         module->attributes[RTLIL::escape_id("dynports")] = RTLIL::Const(1);
     }
     

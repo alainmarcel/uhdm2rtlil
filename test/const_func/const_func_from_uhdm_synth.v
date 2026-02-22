@@ -1497,21 +1497,6 @@ module top(out);
     .EN(1'h1),
     .TRG()
   );
-  (* src = "dut.sv:84.9-84.25" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967295),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _393_ (
-    .A(1'h0),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
   \$paramod\Example\OUTPUT="FOO"  e1 (
     .outA(a1),
     .outB(b1),

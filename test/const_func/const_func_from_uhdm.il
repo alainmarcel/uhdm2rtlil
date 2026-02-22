@@ -25,8 +25,6 @@ attribute \keep 1
 module \top
   parameter \W 10
   parameter \X 3
-  parameter \Y 3
-  parameter \Z 32'11111111111111111111111111111100
   attribute \src "dut.sv:39.12-39.15"
   wire width 196 output 1 \out
   attribute \src "dut.sv:40.17-40.19"
@@ -437,20 +435,6 @@ module \top
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
     connect \A \d4
-    connect \ARGS { }
-    connect \EN 1'1
-    connect \TRG { }
-  end
-  attribute \src "dut.sv:84.9-84.25"
-  cell $check $auto$process.cpp:39:import_immediate_assert$78
-    parameter \ARGS_WIDTH 0
-    parameter \FLAVOR "assert"
-    parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
-    parameter \TRG_ENABLE 0
-    parameter \TRG_POLARITY 0'x
-    parameter \TRG_WIDTH 0
-    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }

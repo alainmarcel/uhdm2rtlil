@@ -2,15 +2,8 @@
 autoidx 17
 attribute \top 1
 attribute \src "dut.sv:1.1-42.10"
-attribute \dynports 1
 attribute \keep 1
 module \top
-  parameter \A 31'1111111111111111111111111111111
-  parameter \B 31'0011111111111111111111111111111
-  parameter \C 31'0000111111111111111111111111111
-  parameter \D 31'0000001111111111111111111111111
-  parameter \X 4'0000
-  parameter \Y 4'0000
   wire \x
   attribute \src "dut.sv:34.13-41.8"
   wire $0\$unnamed_block$1.x

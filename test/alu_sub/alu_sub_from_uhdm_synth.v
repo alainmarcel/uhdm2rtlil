@@ -246,7 +246,6 @@ module adder(a, b, y);
 endmodule
 
 (* src = "dut.sv:27.1-61.10" *)
-(* dynports =  1  *)
 module alu(clk, A, B, operation, result, CF, ZF, SF);
   (* src = "dut.sv:28.8-28.11" *)
   input clk;

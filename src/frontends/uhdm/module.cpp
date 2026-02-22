@@ -834,11 +834,18 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
     if (has_value) {
         // Add parameter to module
         RTLIL::IdString param_id = RTLIL::escape_id(param_name);
-        module->avail_parameters(param_id);
+        // Only make non-localparam parameters externally visible
+        if (auto param_obj_check = dynamic_cast<const UHDM::parameter*>(uhdm_param)) {
+            if (!param_obj_check->VpiLocalParam()) {
+                module->avail_parameters(param_id);
+            }
+        } else {
+            module->avail_parameters(param_id);
+        }
         module->parameter_default_values[param_id] = param_value;
-        
+
         // Log successful parameter import
-        log("UHDM: Added parameter '%s' to module with value %s\n", 
+        log("UHDM: Added parameter '%s' to module with value %s\n",
             param_name.c_str(), param_value.as_string().c_str());
     }
 }

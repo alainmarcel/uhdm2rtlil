@@ -6,8 +6,6 @@ attribute \dynports 1
 module \blockrom
   parameter \DATA_WIDTH 8
   parameter \ADDRESS_WIDTH 3
-  parameter \WORD 7
-  parameter \DEPTH 7
   attribute \src "dut.sv:3.37-3.40"
   wire input 1 \clk
   attribute \src "dut.sv:4.36-4.46"

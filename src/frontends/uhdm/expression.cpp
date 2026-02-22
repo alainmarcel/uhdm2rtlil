@@ -1507,15 +1507,11 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         case vpiIntConst: {
             std::string int_str = value.substr(4);
             try {
-                // Use stoll to handle larger integers, then create appropriate constant
                 long long int_val = std::stoll(int_str);
-                // Create a constant with the appropriate bit width
-                // For vpiIntConst, we typically use 32 bits but if the value is larger,
-                // we need to determine the actual required width
-                int width = 32;
+                // Use VpiSize when available and reasonable, else default to 32
+                int width = (size > 0 && size <= 64) ? size : 32;
                 if (int_val > INT32_MAX || int_val < INT32_MIN) {
-                    // Calculate required width for the value
-                    width = 64; // Use 64 bits for large values
+                    width = 64;
                 }
                 return RTLIL::SigSpec(RTLIL::Const(int_val, width));
             } catch (const std::exception& e) {

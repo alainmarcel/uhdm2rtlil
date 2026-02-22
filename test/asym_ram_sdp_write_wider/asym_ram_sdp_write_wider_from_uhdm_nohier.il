@@ -10,11 +10,6 @@ module \asym_ram_sdp_write_wider
   parameter \WIDTHA 16
   parameter \SIZEA 256
   parameter \ADDRWIDTHA 8
-  parameter \maxSIZE 1024
-  parameter \maxWIDTH 16
-  parameter \minWIDTH 4
-  parameter \RATIO 4
-  parameter \log2RATIO 64'0000000000000000000000000000000000000000000000000000000000000010
   attribute \src "dut.sv:4.34-4.38"
   wire input 1 \clkA
   attribute \src "dut.sv:4.40-4.44"

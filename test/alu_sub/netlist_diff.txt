@@ -1,14 +1,6 @@
 --- verilog_synth
 +++ uhdm_synth
-@@ -244,6 +244,7 @@
- );
- endmodule
- (* src = "dut.sv:27.1-61.10" *)
-+(* dynports =  1  *)
- module alu(clk, A, B, operation, result, CF, ZF, SF);
- (* src = "dut.sv:28.8-28.11" *)
- input clk;
-@@ -269,7 +270,6 @@
+@@ -269,7 +269,6 @@
  (* src = "dut.sv:35.13-35.15" *)
  output SF;
  wire SF;
@@ -16,7 +8,7 @@
  wire _000_;
  wire _001_;
  wire _002_;
-@@ -279,6 +279,7 @@
+@@ -279,6 +278,7 @@
  wire _006_;
  wire _007_;
  wire _008_;
@@ -24,7 +16,7 @@
  wire _009_;
  wire _010_;
  wire _011_;
-@@ -331,626 +332,462 @@
+@@ -331,626 +331,462 @@
  wire _058_;
  wire _059_;
  wire _060_;
@@ -987,7 +979,7 @@
  module alu_sub(clk, A, B, op, result);
  (* src = "dut.sv:8.8-8.11" *)
  input clk;
-@@ -976,8 +813,6 @@
+@@ -976,8 +812,6 @@
  (* src = "dut.sv:14.11-14.13" *)
  (* unused_bits = "0" *)
  wire ZF;

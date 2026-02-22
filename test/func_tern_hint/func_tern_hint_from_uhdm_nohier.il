@@ -2,14 +2,7 @@
 autoidx 17
 attribute \cells_not_processed 1
 attribute \src "dut.sv:1.1-42.10"
-attribute \dynports 1
 module \top
-  parameter \A 31'1111111111111111111111111111111
-  parameter \B 31'0011111111111111111111111111111
-  parameter \C 31'0000111111111111111111111111111
-  parameter \D 31'0000001111111111111111111111111
-  parameter \X 4'0000
-  parameter \Y 4'0000
   wire $auto$process.cpp:32:import_immediate_assert$2
   wire $auto$process.cpp:32:import_immediate_assert$4
   wire $auto$process.cpp:32:import_immediate_assert$6

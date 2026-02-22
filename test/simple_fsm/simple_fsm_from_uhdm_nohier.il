@@ -2,12 +2,7 @@
 autoidx 4
 attribute \cells_not_processed 1
 attribute \src "dut.sv:2.1-65.10"
-attribute \dynports 1
 module \simple_fsm
-  parameter \IDLE 2'00
-  parameter \WORK 2'01
-  parameter \WAIT 2'10
-  parameter \DONE 2'11
   attribute \src "dut.sv:3.17-3.20"
   wire input 1 \clk
   attribute \src "dut.sv:4.17-4.22"

@@ -49,8 +49,6 @@ attribute \dynports 1
 module \top
   parameter \W 10
   parameter \X 3
-  parameter \Y 3
-  parameter \Z 32'11111111111111111111111111111100
   attribute \src "dut.sv:39.12-39.15"
   wire width 196 output 1 \out
   attribute \src "dut.sv:40.17-40.19"
@@ -543,10 +541,10 @@ module \top
   cell $eq $eq$dut.sv:83$72
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
+    parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A 3
+    connect \A 64'0000000000000000000000000000000000000000000000000000000000000011
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
     connect \Y $eq$dut.sv:83$71_Y
   end
@@ -568,10 +566,10 @@ module \top
   cell $eq $eq$dut.sv:84$76
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
+    parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A 32'11111111111111111111111111111100
+    connect \A 64'1111111111111111111111111111111111111111111111111111111111111100
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111100
     connect \Y $eq$dut.sv:84$75_Y
   end

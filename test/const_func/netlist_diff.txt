@@ -391,29 +391,26 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1537,46 +1493,40 @@
+@@ -1537,46 +1493,25 @@
  .EN(1'h1),
  .TRG()
  );
 -(* keep = 32'd1 *)
 -(* src = "dut.sv:84.9-84.24" *)
-+(* src = "dut.sv:84.9-84.25" *)
- \$check  #(
- .ARGS_WIDTH(32'd0),
- .FLAVOR("assert"),
- .FORMAT(),
+-\$check  #(
+-.ARGS_WIDTH(32'd0),
+-.FLAVOR("assert"),
+-.FORMAT(),
 -.PRIORITY(32'd4294967278),
-+.PRIORITY(32'd4294967295),
- .TRG_ENABLE(32'd0),
- .TRG_POLARITY(),
- .TRG_WIDTH(32'd0)
- ) _393_ (
+-.TRG_ENABLE(32'd0),
+-.TRG_POLARITY(),
+-.TRG_WIDTH(32'd0)
+-) _393_ (
 -.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
- .TRG()
- );
+-.ARGS(),
+-.EN(1'h1),
+-.TRG()
+-);
 -(* module_not_derived = 32'd1 *)
 -(* src = "dut.sv:44.22-44.40" *)
 -Example e1 (
