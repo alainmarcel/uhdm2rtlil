@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 131 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (129/131 tests functional)
+- **Total Tests**: 132 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (130/132 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -33,6 +33,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `asgn_expr` / `asgn_expr2` - SystemVerilog assignment expressions: increment/decrement operators, nested assignment expressions
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
+  - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
 - **Recent Fixes**:
   - Compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`) ✅
     - Surelog represents `c += b` as assignment with `vpiOpType` = `vpiAddOp` (not `vpiAssignmentOp`)
@@ -51,6 +52,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - **Surelog/UHDM fix**: `ExprEval.cpp` — `reduceExpr()` for `ref_obj` now falls back to `Actual_group()` pointer when name-based lookup fails, resolving localparams in cross-scope contexts
     - **UHDM frontend fix**: `expression.cpp` — `import_hier_path()` creates wires on-the-fly for forward references to sibling generate scopes not yet processed
     - 255 gates, formal equivalence verified
+  - Parenthesized type variable declarations (`(states_t) state1;`) ✅
+    - **Surelog grammar fix**: Extended `variable_declaration` rule in `SV3_1aParser.g4` to accept `OPEN_PARENS data_type CLOSE_PARENS` as a type specifier
+    - ANTLR parser strips parentheses at parse time, producing clean VObject tree identical to `states_t state1;`
+    - Surelog correctly creates the variable in UHDM as `logic_net` + `enum_var` with proper typespec
   - Repeat loop (`vpiRepeat`) support in synchronous always blocks ✅
     - Compile-time unrolling of `repeat(N)` with constant iteration count
     - Automatic detection of loop index variables (`i = i+1` pattern) and blocking intermediates (`carry`)
@@ -334,7 +339,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (131 total - 129 passing, 2 known issues)
+### Current Test Cases (132 total - 130 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -449,6 +454,7 @@ The Yosys test runner:
 - **simple_nested_struct_nopack** - Simpler nested struct test without packages
 - **enum_simple** - State machine with typedef enum and state transitions
 - **enum_values** - Multiple enum types with custom values and attributes
+- **svtypes_enum_simple** - Bare enums, typedef enums, parenthesized type declarations, enum constant init, FSM with assertions
 - **typedef_simple** - Multiple typedef definitions with signed/unsigned types
 
 #### Generate & Parameterization
@@ -511,7 +517,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 129 of 131 tests are passing or working as expected
+- 130 of 132 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -565,10 +571,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **131 test cases**:
+The UHDM frontend test suite includes **132 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **129 tests passing** - with 2 known failures documented in failing_tests.txt
+- **130 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
