@@ -594,17 +594,8 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                         std::string const_name = std::string(enum_const->VpiName());
                         std::string const_value = std::string(enum_const->VpiValue());
                         
-                        // Parse the value (format is usually "UINT:value" or "INT:value")
-                        std::string value_str;
-                        size_t colon_pos = const_value.find(':');
-                        if (colon_pos != std::string::npos) {
-                            value_str = const_value.substr(colon_pos + 1);
-                        } else {
-                            value_str = const_value;
-                        }
-                        
                         // Convert value to binary representation for attribute
-                        int value = std::stoi(value_str);
+                        int value = parse_vpi_value_to_int(const_value);
                         int width = get_width(uhdm_net, inst);
                         RTLIL::Const binary_val(value, width);
                         

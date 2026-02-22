@@ -2601,18 +2601,12 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             if (mode_debug)
                 log("UHDM: Found enum constant %s with value %s\n", ref_name.c_str(), val_str.c_str());
             
-            // Parse value from format like "INT:0", "UINT:1", etc.
+            // Parse value from format like "INT:0", "UINT:1", "HEX:BB", etc.
             RTLIL::Const enum_value;
             if (!val_str.empty()) {
-                size_t colon_pos = val_str.find(':');
-                if (colon_pos != std::string::npos) {
-                    std::string value_part = val_str.substr(colon_pos + 1);
-                    // Parse as integer
-                    enum_value = RTLIL::Const(std::stoi(value_part), 32);
-                } else {
-                    // Try to parse as integer directly
-                    enum_value = RTLIL::Const(std::stoi(val_str), 32);
-                }
+                int width = enum_val->VpiSize() > 0 ? enum_val->VpiSize() : 32;
+                int int_val = parse_vpi_value_to_int(val_str);
+                enum_value = RTLIL::Const(int_val, width);
             } else {
                 // Default to 0 if no value specified
                 enum_value = RTLIL::Const(0, 32);
