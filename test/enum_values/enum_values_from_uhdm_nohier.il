@@ -76,10 +76,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \wide_state
-    connect \B 1
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $eq$dut.sv:35$1_Y
   end
   attribute \src "dut.sv:35.38-35.48"
@@ -87,10 +87,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 0
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $eq$dut.sv:35$3_Y
   end
   cell $xor $xor$dut.sv:35$5
@@ -108,10 +108,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \wide_state
-    connect \B 0
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$8
   end
   attribute \src "dut.sv:15.17-15.33"
@@ -127,10 +127,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \wide_state
-    connect \B 1
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$12
   end
   attribute \src "dut.sv:16.13-16.34"
@@ -157,10 +157,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \wide_state
-    connect \B 2
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$18
   end
   attribute \src "dut.sv:17.13-17.34"
@@ -200,10 +200,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 3
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$29
   end
   attribute \src "dut.sv:28.16-28.26"
@@ -219,10 +219,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 0
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$33
   end
   attribute \src "dut.sv:29.13-29.27"
@@ -249,10 +249,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 1
+    connect \B 2'01
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$39
   end
   attribute \src "dut.sv:30.13-30.27"

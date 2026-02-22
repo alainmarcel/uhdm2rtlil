@@ -40,6 +40,23 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// Parse VpiValue format strings ("HEX:BB", "BIN:1010", "UINT:42", etc.) to integer
+static inline int parse_vpi_value_to_int(const std::string& vpi_value) {
+    size_t colon_pos = vpi_value.find(':');
+    if (colon_pos == std::string::npos)
+        return std::stoi(vpi_value);
+
+    std::string type_part = vpi_value.substr(0, colon_pos);
+    std::string value_part = vpi_value.substr(colon_pos + 1);
+
+    if (type_part == "HEX")
+        return (int)std::stoul(value_part, nullptr, 16);
+    else if (type_part == "BIN")
+        return (int)std::stoul(value_part, nullptr, 2);
+    else // UINT, INT, DEC
+        return std::stoi(value_part);
+}
+
 // Forward declarations
 struct UhdmImporter;
 

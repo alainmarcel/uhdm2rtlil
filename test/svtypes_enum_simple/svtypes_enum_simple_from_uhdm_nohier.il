@@ -73,10 +73,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \test_enum
-    connect \B 0
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $eq$dut.sv:18$2_Y
   end
   attribute \src "dut.sv:20.13-20.28"
@@ -84,10 +84,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \test_enum
-    connect \B 1
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $eq$dut.sv:20$4_Y
   end
   attribute \src "dut.sv:22.13-22.28"
@@ -95,10 +95,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \test_enum
-    connect \B 2
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
     connect \Y $eq$dut.sv:22$6_Y
   end
   attribute \src "dut.sv:24.13-24.28"
@@ -106,10 +106,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \test_enum
-    connect \B 3
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
     connect \Y $eq$dut.sv:24$8_Y
   end
   attribute \src "dut.sv:27.5-27.18"
@@ -131,10 +131,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 0
+    connect \B 2'00
     connect \Y $eq$dut.sv:30$12_Y
   end
   attribute \src "dut.sv:32.13-32.25"
@@ -142,10 +142,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 1
+    connect \B 2'01
     connect \Y $eq$dut.sv:32$14_Y
   end
   attribute \src "dut.sv:34.13-34.25"
@@ -153,10 +153,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \state
-    connect \B 2
+    connect \B 2'10
     connect \Y $eq$dut.sv:34$16_Y
   end
   attribute \src "dut.sv:37.5-37.18"
@@ -201,10 +201,10 @@ module \enum_simple
   cell $eq $eq$dut.sv:43$26
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
+    parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A 0
+    connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $eq$dut.sv:43$25_Y
   end
@@ -241,10 +241,10 @@ module \enum_simple
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
-    parameter \B_WIDTH 32
+    parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \enum_const
-    connect \B 1
+    connect \B 2'01
     connect \Y $eq$dut.sv:45$31_Y
   end
   attribute \src "dut.sv:45.3-45.29"

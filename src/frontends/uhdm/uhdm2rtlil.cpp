@@ -147,10 +147,12 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // Store in class member for use during import
     this->top_level_modules = top_level_module_names;
     
-    // First, import all packages
-    if (uhdm_design->AllPackages()) {
-        log("UHDM: Found %d packages in design\n", (int)uhdm_design->AllPackages()->size());
-        for (const package* uhdm_package : *uhdm_design->AllPackages()) {
+    // First, import all packages (prefer TopPackages for resolved values)
+    auto* packages = uhdm_design->TopPackages();
+    if (!packages) packages = uhdm_design->AllPackages();
+    if (packages) {
+        log("UHDM: Found %d packages in design\n", (int)packages->size());
+        for (const package* uhdm_package : *packages) {
             log("UHDM: About to import package: %s\n", uhdm_package->VpiDefName().data());
             import_package(uhdm_package);
         }
@@ -1438,17 +1440,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                                 std::string const_name = std::string(enum_const->VpiName());
                                                 std::string const_value = std::string(enum_const->VpiValue());
                                                 
-                                                // Parse the value (format is usually "UINT:value" or "INT:value")
-                                                std::string value_str;
-                                                size_t colon_pos = const_value.find(':');
-                                                if (colon_pos != std::string::npos) {
-                                                    value_str = const_value.substr(colon_pos + 1);
-                                                } else {
-                                                    value_str = const_value;
-                                                }
-                                                
                                                 // Convert value to binary representation for attribute
-                                                int value = std::stoi(value_str);
+                                                int value = parse_vpi_value_to_int(const_value);
                                                 int width = wire->width;
                                                 RTLIL::Const binary_val(value, width);
                                                 

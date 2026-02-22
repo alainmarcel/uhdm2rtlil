@@ -61,8 +61,24 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                         log_warning("UHDM: Package parameter %s has non-constant value\n", 
                                    full_name.c_str());
                     }
+                } else if (!param_obj->VpiValue().empty()) {
+                    // Fallback: use VpiValue() directly (elaborated params may have resolved value here)
+                    std::string val_str = std::string(param_obj->VpiValue());
+                    int int_val = parse_vpi_value_to_int(val_str);
+                    // Get width from typespec if available, else default 32
+                    int width = 32;
+                    if (param_obj->Typespec()) {
+                        if (auto ts = param_obj->Typespec()->Actual_typespec()) {
+                            int ts_width = get_width_from_typespec(ts);
+                            if (ts_width > 0) width = ts_width;
+                        }
+                    }
+                    RTLIL::Const param_value(int_val, width);
+                    package_parameter_map[full_name] = param_value;
+                    log("UHDM: Package parameter %s = %s (from VpiValue)\n",
+                        full_name.c_str(), param_value.as_string().c_str());
                 } else {
-                    log_warning("UHDM: Package parameter %s has no expression\n", 
+                    log_warning("UHDM: Package parameter %s has no expression\n",
                                full_name.c_str());
                 }
             }
