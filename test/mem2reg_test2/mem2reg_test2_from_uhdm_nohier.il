@@ -14,7 +14,7 @@ module \mem2reg_test2
   attribute \src "dut.sv:1.46-1.50"
   wire width 4 output 5 \data
   attribute \src "dut.sv:12.9-12.10"
-  wire width 32 \i
+  wire width 32 signed \i
   wire width 4 \memrd_mem_DATA
   wire width 3 $memwr$\mem$addr$2
   wire width 4 $memwr$\mem$data$3

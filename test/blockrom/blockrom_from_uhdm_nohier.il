@@ -13,9 +13,9 @@ module \blockrom
   attribute \src "dut.sv:5.36-5.44"
   wire width 8 output 3 \data_out
   attribute \src "dut.sv:13.10-13.11"
-  wire width 32 \i
+  wire width 32 signed \i
   attribute \src "dut.sv:13.12-13.13"
-  wire width 32 \j
+  wire width 32 signed \j
   attribute \src "dut.sv:10.15-10.25"
   attribute \reg 1
   wire width 8 \data_out_r

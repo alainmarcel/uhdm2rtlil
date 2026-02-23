@@ -29,7 +29,7 @@ module \priority_memory
   attribute \src "dut.sv:3.35-3.42"
   wire width 8 output 11 \rdata_b
   attribute \src "dut.sv:17.10-17.11"
-  wire width 32 \i
+  wire width 32 signed \i
   wire width 4 $memwr$\mem$addr$3
   wire width 8 $memwr$\mem$data$4
   wire $memwr$\mem$en$5

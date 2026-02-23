@@ -16,7 +16,7 @@ module \blockrom
   attribute \src "dut.sv:13.12-13.13"
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
   attribute \init 32'10100111100011000101001011100000
-  wire width 32 \j
+  wire width 32 signed \j
   attribute \src "dut.sv:10.15-10.25"
   attribute \reg 1
   wire width 8 \data_out_r

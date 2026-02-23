@@ -13,22 +13,22 @@ module \wreduce_test0
   wire width 16 output 4 \y
   attribute \src "dut.sv:1.60-1.61"
   wire width 16 output 5 \z
-  wire width 9 $auto$expression.cpp:1871:import_operation$1
+  wire width 9 $auto$expression.cpp:1875:import_operation$1
   wire width 16 $auto$module.cpp:741:import_continuous_assign$3
-  wire width 16 $auto$expression.cpp:2055:import_operation$5
+  wire width 16 $auto$expression.cpp:2059:import_operation$5
   wire width 16 $auto$rtlil.cc:3388:Xor$8
   cell $neg $neg$dut.sv:2$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
-    connect \Y $auto$expression.cpp:1871:import_operation$1
+    connect \Y $auto$expression.cpp:1875:import_operation$1
   end
   cell $pos $auto$module.cpp:742:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:1871:import_operation$1
+    connect \A $auto$expression.cpp:1875:import_operation$1
     connect \Y $auto$module.cpp:741:import_continuous_assign$3
   end
   cell $add $add$dut.sv:3$6
@@ -39,7 +39,7 @@ module \wreduce_test0
     parameter \Y_WIDTH 16
     connect \A { 1'0 \a }
     connect \B { 1'0 \b }
-    connect \Y $auto$expression.cpp:2055:import_operation$5
+    connect \Y $auto$expression.cpp:2059:import_operation$5
   end
   cell $xor $xor$dut.sv:4$7
     parameter \A_SIGNED 0
@@ -52,6 +52,6 @@ module \wreduce_test0
     connect \Y $auto$rtlil.cc:3388:Xor$8
   end
   connect \x $auto$module.cpp:741:import_continuous_assign$3
-  connect \y $auto$expression.cpp:2055:import_operation$5
+  connect \y $auto$expression.cpp:2059:import_operation$5
   connect \z $auto$rtlil.cc:3388:Xor$8
 end

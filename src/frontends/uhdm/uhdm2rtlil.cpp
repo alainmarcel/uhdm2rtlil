@@ -1551,6 +1551,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             wire->is_signed = true;
                             log("UHDM: union_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
+                    } else if (var->UhdmType() == uhdminteger_var ||
+                               var->UhdmType() == uhdmbyte_var ||
+                               var->UhdmType() == uhdmshort_int_var ||
+                               var->UhdmType() == uhdmlong_int_var) {
+                        // Built-in signed types: integer, byte, shortint, longint
+                        wire->is_signed = true;
+                        log("UHDM: Variable '%s' is built-in signed type, setting is_signed=true\n", var_name.c_str());
                     }
 
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());

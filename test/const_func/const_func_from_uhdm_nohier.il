@@ -668,7 +668,7 @@ module $paramod\Example\OUTPUT="FOO"
   attribute \src "dut.sv:1.34-1.38"
   wire output 4 \outD
   attribute \src "dut.sv:30.13-30.14"
-  wire width 32 \j
+  wire width 32 signed \j
   attribute \src "dut.sv:27.17-27.34"
   process $proc$dut.sv:27$79
     sync always
@@ -719,7 +719,7 @@ module $paramod\Example\OUTPUT="BAR"
   attribute \src "dut.sv:1.34-1.38"
   wire output 4 \outD
   attribute \src "dut.sv:30.13-30.14"
-  wire width 32 \j
+  wire width 32 signed \j
   attribute \src "dut.sv:31.5-36.8"
   process $proc$dut.sv:31$85
     sync always
@@ -765,7 +765,7 @@ module $paramod\Example\OUTPUT="BAZ"
   attribute \src "dut.sv:1.34-1.38"
   wire output 4 \outD
   attribute \src "dut.sv:30.13-30.14"
-  wire width 32 \j
+  wire width 32 signed \j
   attribute \src "dut.sv:31.5-36.8"
   process $proc$dut.sv:31$90
     sync always

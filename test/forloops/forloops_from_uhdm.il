@@ -18,39 +18,39 @@ module \forloops
   attribute \src "dut.sv:1.61-1.62"
   wire width 4 output 7 \y
   attribute \src "dut.sv:2.10-2.11"
-  wire width 32 \k
+  wire width 32 signed \k
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2055:import_operation$2
+  wire width 32 $auto$expression.cpp:2059:import_operation$2
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2081:import_operation$5
+  wire width 32 $auto$expression.cpp:2085:import_operation$5
   cell $add $add$dut.sv:6$3
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
-    connect \Y $auto$expression.cpp:2055:import_operation$2
+    connect \Y $auto$expression.cpp:2059:import_operation$2
   end
   cell $sub $sub$dut.sv:11$6
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A \k
     connect \B { \a \b }
-    connect \Y { $auto$expression.cpp:2081:import_operation$5 [31:4] \y }
+    connect \Y { $auto$expression.cpp:2085:import_operation$5 [31:4] \y }
   end
   attribute \src "dut.sv:3.2-7.5"
   attribute \always_ff 1
   cell $dff $procdff$7
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2055:import_operation$2 [3:0]
+    connect \D $auto$expression.cpp:2059:import_operation$2 [3:0]
     connect \Q \x
     connect \CLK \clk
   end
-  connect $auto$expression.cpp:2081:import_operation$5 [3:0] \y
+  connect $auto$expression.cpp:2085:import_operation$5 [3:0] \y
 end

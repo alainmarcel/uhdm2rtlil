@@ -12,11 +12,11 @@ module \top
   attribute \src "dut.sv:3.31-3.33"
   wire width 32 output 4 \oz
   attribute \src "dut.sv:5.13-5.14"
-  wire width 32 \x
+  wire width 32 signed \x
   attribute \src "dut.sv:5.16-5.17"
-  wire width 32 \y
+  wire width 32 signed \y
   attribute \src "dut.sv:5.19-5.20"
-  wire width 32 \z
+  wire width 32 signed \z
   connect \z 0
   connect \y 0
   connect \x 101

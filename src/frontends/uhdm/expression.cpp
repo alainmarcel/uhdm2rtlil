@@ -1605,7 +1605,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // Handle side-effect operations before reduceExpr (which doesn't understand them)
     if (op_type == vpiPostIncOp || op_type == vpiPreIncOp ||
         op_type == vpiPostDecOp || op_type == vpiPreDecOp) {
-        // Inc/dec as expression: emit side-effect and return updated value
+        // Inc/dec as expression: emit side-effect and return value
+        // Pre-increment/decrement: return NEW value (after modification)
+        // Post-increment/decrement: return OLD value (before modification)
         if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
             const expr* operand = any_cast<const expr*>((*uhdm_op->Operands())[0]);
             // Import with value tracking for the cell input (current value)
@@ -1623,12 +1625,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 module->addSub(NEW_ID, cell_input, one, result, false);
             }
 
-            // Emit side-effect: target_wire = result
+            // Emit side-effect: target_wire = result (always updates variable)
             if (current_comb_process) {
                 emit_comb_assign(target_wire, result, current_comb_process);
             }
 
-            return result;
+            // Pre: return new value; Post: return old value
+            bool is_pre = (op_type == vpiPreIncOp || op_type == vpiPreDecOp);
+            return is_pre ? result : cell_input;
         }
         return RTLIL::SigSpec();
     }

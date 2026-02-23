@@ -24,7 +24,7 @@ module \mul_signed_async
   attribute \src "dut.sv:12.24-12.29"
   attribute \reg 1
   wire width 6 signed \b_reg
-  wire width 14 $auto$expression.cpp:2127:import_operation$2
+  wire width 14 $auto$expression.cpp:2131:import_operation$2
   cell $mul $mul$dut.sv:28$3
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -33,7 +33,7 @@ module \mul_signed_async
     parameter \Y_WIDTH 14
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:2127:import_operation$2
+    connect \Y $auto$expression.cpp:2131:import_operation$2
   end
   attribute \src "dut.sv:18.5-30.8"
   attribute \always_ff 1
@@ -47,7 +47,7 @@ module \mul_signed_async
     connect \CLK \clk
     connect \EN \en
     connect \ARST \rst
-    connect \D $auto$expression.cpp:2127:import_operation$2
+    connect \D $auto$expression.cpp:2131:import_operation$2
     connect \Q \p
   end
   attribute \src "dut.sv:18.5-30.8"

@@ -41,7 +41,7 @@ module forloops(clk, a, b, p, q, x, y);
   );
   assign k = 4'hx;
   assign y = 4'h1;
-  assign x[3:2] = 2'h0;
+  assign x[3:2] = { x[1], x[1] };
   assign q = 4'hx;
   assign p = 4'hx;
 endmodule
