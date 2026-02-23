@@ -1532,6 +1532,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             wire->is_signed = true;
                             log("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
+                    } else if (auto union_v = dynamic_cast<const UHDM::union_var*>(var)) {
+                        // Handle wiretype attribute for union variables
+                        if (auto ref_ts = union_v->Typespec()) {
+                            std::string wiretype_name;
+                            if (auto actual_ts = ref_ts->Actual_typespec()) {
+                                if (!actual_ts->VpiName().empty())
+                                    wiretype_name = std::string(actual_ts->VpiName());
+                                else if (!ref_ts->VpiName().empty())
+                                    wiretype_name = std::string(ref_ts->VpiName());
+                            }
+                            if (!wiretype_name.empty()) {
+                                wire->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(wiretype_name);
+                                log("UHDM: Added wiretype attribute '\\%s' to union_var '%s'\n", wiretype_name.c_str(), var_name.c_str());
+                            }
+                        }
+                        if (union_v->VpiSigned()) {
+                            wire->is_signed = true;
+                            log("UHDM: union_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
+                        }
                     }
 
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());

@@ -49,7 +49,7 @@ module \alu
   attribute \src "dut.sv:51.4-52.17"
   wire $auto$process_helper.cpp:58:create_eq_cell$8
   wire $auto$opt_dff.cc:234:make_patterns_logic$26
-  wire width 8 $auto$expression.cpp:2078:import_operation$12
+  wire width 8 $auto$expression.cpp:2081:import_operation$12
   attribute \src "dut.sv:52.5-52.16"
   attribute \unused_bits "8"
   wire width 9 $auto$process.cpp:4885:import_assignment_sync$14
@@ -97,13 +97,13 @@ module \alu
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B \B
-    connect \Y $auto$expression.cpp:2078:import_operation$12
+    connect \Y $auto$expression.cpp:2081:import_operation$12
   end
   attribute \src "dut.sv:52.5-52.16"
   cell $mux $auto$process.cpp:4887:import_assignment_sync$15
     parameter \WIDTH 9
     connect \A $auto$process.cpp:4885:import_assignment_sync$6
-    connect \B { 1'0 $auto$expression.cpp:2078:import_operation$12 }
+    connect \B { 1'0 $auto$expression.cpp:2081:import_operation$12 }
     connect \S $auto$process_helper.cpp:58:create_eq_cell$8
     connect \Y $auto$process.cpp:4885:import_assignment_sync$14
   end

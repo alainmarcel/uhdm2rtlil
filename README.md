@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 135 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (133/135 tests functional)
+- **Total Tests**: 136 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (134/136 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -26,6 +26,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `union_simple` - Packed unions: named unions (`w_t`, `instruction_t`), anonymous unions, unions nested within structs (`s_t` containing `instruction_t`), multi-level member access (`ir1.u.opcode`, `s1.ir.u.imm`, `u.byte4.d`)
   - `typedef_param` - Typedef'd parameters and localparams (`uint2_t`, `int4_t`, `int8_t`, `char_t`) with signed types, chained typedef aliases, localparam visibility, and static assertions
   - `typedef_package` - Package-scoped typedefs (`pkg::uint8_t`, `pkg::enum8_t`), enum types with hex values (`8'hBB`, `8'hCC`), package `localparam`/`parameter` initialized from enum constants, assertions on package-qualified parameters
   - `svtypes_struct_simple` - Packed structs with member access in continuous assignments and assertions, nested structs, `struct packed signed`
@@ -38,6 +39,13 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
 - **Recent Fixes**:
+  - Packed union support (`union_var`, `union_typespec`) ✅
+    - Added `union_var` handling in Variables() import with wiretype attribute
+    - Added `union_typespec` width calculation (width of widest member) in `get_width_from_typespec()`
+    - Added `union_typespec` wiretype attribute in net import
+    - Extended `import_hier_path()` to resolve union member access (offset = 0 for all union members)
+    - Extended `calculate_struct_member_offset()` to handle both struct and union typespecs
+    - Fixed `vpiDecConst` crash when `VpiSize()` returns -1 (default to 32-bit width)
   - Localparam visibility, INT constant width, and blackbox detection ✅
     - Fixed `avail_parameters()` to skip `VpiLocalParam` parameters — localparams are stored for expression resolution but not exported as externally-visible parameters
     - Fixed `vpiIntConst` width: uses `VpiSize()` from elaborated model when available (e.g., 4-bit for `int4_t`, 8-bit for `int8_t`) instead of hardcoded 32
@@ -220,6 +228,8 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Logic, bit vectors, arrays
   - Packed multidimensional arrays with dynamic element access (e.g., `logic [0:3][7:0]`, typedef variants)
   - Packed structures with member access via bit slicing
+  - Packed unions with member access (all members overlay at bit offset 0, width = widest member)
+  - Structs containing unions and unions containing structs (nested access)
   - Struct arrays with complex indexing
   - Package types and imports
 - **Procedural Blocks**: 
@@ -356,7 +366,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (135 total - 133 passing, 2 known issues)
+### Current Test Cases (136 total - 134 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -476,6 +486,7 @@ The Yosys test runner:
 - **typedef_simple** - Multiple typedef definitions with signed/unsigned types
 - **typedef_param** - Typedef'd parameters and localparams with signed types, chained typedef aliases (`char_t` = `int8_t` = `logic signed [7:0]`), localparam visibility (only `parameter` exported, `localparam` hidden), and static assertions
 - **typedef_package** - Package-scoped typedefs, enum types with hex values, package localparam/parameter from enum constants, package-qualified assertions
+- **union_simple** - Packed unions: named unions (`w_t`, `instruction_t`), anonymous unions with nested struct, unions nested within structs (`s_t`), multi-level member access through union and struct boundaries
 
 #### Generate & Parameterization
 - **param_test** - Parameter passing and overrides
@@ -537,7 +548,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 133 of 135 tests are passing or working as expected
+- 134 of 136 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -591,12 +602,22 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **135 test cases**:
+The UHDM frontend test suite includes **136 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **133 tests passing** - with 2 known failures documented in failing_tests.txt
+- **134 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Packed Union Support
+- Implemented packed union handling for `union_var` and `union_typespec` UHDM types
+- **Width calculation**: Union width = width of widest member (unlike structs where width = sum of all members)
+- **Member access**: Union members all overlay at bit offset 0 — accessing any member returns a slice starting at the same base offset
+- **Nested access**: Supports arbitrary nesting of structs and unions (e.g., `s1.ir.u.opcode` where `s1` is a struct containing a union `ir` containing a struct `u`)
+- **Variable handling**: `union_var` in Variables() import sets wiretype attribute and propagates signedness
+- **Net handling**: `union_typespec` in net import (for anonymous unions via `struct_net`) sets wiretype attribute
+- **Expression resolution**: Extended `import_hier_path()` and `calculate_struct_member_offset()` to handle both `struct_typespec` and `union_typespec` transparently
+- All 13 assertions in the test are synthesized and formally verified correct by Yosys SAT solver
 
 ### Compound Assignment Operator Support
 - Implemented all 12 compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `<<<=`, `>>>=`
