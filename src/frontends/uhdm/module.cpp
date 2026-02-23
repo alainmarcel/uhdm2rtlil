@@ -732,8 +732,8 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                 RTLIL::State bit_val = rhs.as_const()[0];
                 rhs = RTLIL::SigSpec(RTLIL::Const(bit_val, lhs.size()));
             } else {
-                // For non-constant single bits, zero-extend
-                rhs = {rhs, RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1)};
+                // For non-constant single bits, zero-extend (zeros in MSB, value in LSB)
+                rhs = {RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1), rhs};
             }
         } else if (rhs.size() < lhs.size()) {
             // Zero-extend RHS to match LHS width

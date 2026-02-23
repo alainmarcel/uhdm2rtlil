@@ -180,5 +180,5 @@ module \submodule
     connect \B 1'x
     connect \Y $auto$rtlil.cc:3386:And$4
   end
-  connect \out { $auto$rtlil.cc:3386:And$4 7'0000000 }
+  connect \out { 7'0000000 $auto$rtlil.cc:3386:And$4 }
 end
