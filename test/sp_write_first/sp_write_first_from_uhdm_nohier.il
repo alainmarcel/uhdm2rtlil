@@ -19,7 +19,7 @@ module \sp_write_first
   attribute \src "dut.sv:1.62-1.69"
   wire width 8 output 6 \rdata_a
   attribute \src "dut.sv:14.10-14.11"
-  wire width 32 \i
+  wire width 32 signed \i
   wire width 4 $memwr$\mem$addr$3
   wire width 8 $memwr$\mem$data$4
   wire $memwr$\mem$en$5

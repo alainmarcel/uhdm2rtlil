@@ -20,7 +20,7 @@ module \simple_memory
   attribute \src "dut.sv:11.34-11.42"
   wire width 8 output 6 \data_out
   attribute \src "dut.sv:18.13-18.14"
-  wire width 32 \i
+  wire width 32 signed \i
   wire width 4 $memwr$\memory$addr$2
   wire width 8 $memwr$\memory$data$3
   wire $memwr$\memory$en$4

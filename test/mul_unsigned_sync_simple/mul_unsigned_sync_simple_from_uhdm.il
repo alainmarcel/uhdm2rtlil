@@ -11,7 +11,7 @@ module \mul_unsigned_sync_simple
   wire width 3 input 3 \b
   attribute \src "dut.sv:1.45-1.46"
   wire width 9 output 4 \p
-  wire width 9 $auto$expression.cpp:2127:import_operation$2
+  wire width 9 $auto$expression.cpp:2131:import_operation$2
   cell $mul $mul$dut.sv:9$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -20,14 +20,14 @@ module \mul_unsigned_sync_simple
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2127:import_operation$2
+    connect \Y $auto$expression.cpp:2131:import_operation$2
   end
   attribute \src "dut.sv:7.5-10.8"
   attribute \always_ff 1
   cell $dff $procdff$4
     parameter \WIDTH 9
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2127:import_operation$2
+    connect \D $auto$expression.cpp:2131:import_operation$2
     connect \Q \p
     connect \CLK \clk
   end

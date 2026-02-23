@@ -1439,6 +1439,13 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             return 32;
         }
 
+        // Handle built-in integer types with known widths
+        if (typespec->UhdmType() == uhdmbyte_typespec) return 8;
+        if (typespec->UhdmType() == uhdmshort_int_typespec) return 16;
+        if (typespec->UhdmType() == uhdmint_typespec) return 32;
+        if (typespec->UhdmType() == uhdminteger_typespec) return 32;
+        if (typespec->UhdmType() == uhdmlong_int_typespec) return 64;
+
         // Handle union_typespec: width = width of widest member
         if (typespec->UhdmType() == uhdmunion_typespec) {
             auto union_ts = dynamic_cast<const UHDM::union_typespec*>(typespec);
