@@ -14,7 +14,7 @@ module \function_mixed
   wire width 2 input 3 \mode
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 4 \out
-  wire width 8 $auto$expression.cpp:2052:import_operation$49
+  wire width 8 $auto$expression.cpp:2055:import_operation$49
   wire $procmux$104_CMP
   wire width 8 $procmux$74_Y
   wire $procmux$160_Y
@@ -27,7 +27,7 @@ module \function_mixed
   attribute \nosync 1
   attribute \src "dut.sv:58.18-58.40"
   wire width 8 \func_mixed$func$dut.sv:58$2.result
-  wire width 8 $auto$expression.cpp:2052:import_operation$11
+  wire width 8 $auto$expression.cpp:2055:import_operation$11
   wire $procmux$89_Y
   wire $procmux$58_Y
   wire $procmux$111_Y
@@ -40,11 +40,11 @@ module \function_mixed
   wire $procmux$122_Y
   wire $procmux$109_CMP
   wire $procmux$106_Y
-  wire width 8 $auto$expression.cpp:2052:import_operation$33
+  wire width 8 $auto$expression.cpp:2055:import_operation$33
   wire width 8 $procmux$139_Y
   wire $procmux$84_Y
   wire width 8 $procmux$69_Y
-  wire width 8 $auto$expression.cpp:2052:import_operation$41
+  wire width 8 $auto$expression.cpp:2055:import_operation$41
   wire $procmux$117_Y
   wire $procmux$95_Y
   wire $procmux$133_Y
@@ -56,7 +56,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B \y
-    connect \Y $auto$expression.cpp:2052:import_operation$11
+    connect \Y $auto$expression.cpp:2055:import_operation$11
   end
   attribute \src "dut.sv:41.17-50.20|dut.sv:21.13-51.20"
   attribute \full_case 1
@@ -64,7 +64,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [4] \x [2] $procmux$149_Y $procmux$144_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [4] \x [2] $procmux$149_Y $procmux$144_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [4]
   end
@@ -75,7 +75,7 @@ module \function_mixed
     connect \A 8'x
     connect \B $procmux$139_Y
     connect \S $procmux$109_CMP
-    connect \Y $auto$expression.cpp:2052:import_operation$41
+    connect \Y $auto$expression.cpp:2055:import_operation$41
   end
   cell $gt $gt$dut.sv:43$20
     parameter \A_SIGNED 0
@@ -92,7 +92,7 @@ module \function_mixed
   cell $mux $procmux$95
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2052:import_operation$49 [2]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [2]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$95_Y
   end
@@ -101,7 +101,7 @@ module \function_mixed
   cell $mux $procmux$144
     parameter \WIDTH 1
     connect \A \y [4]
-    connect \B $auto$expression.cpp:2052:import_operation$49 [4]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [4]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$144_Y
   end
@@ -120,7 +120,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [5] \y [2] $procmux$89_Y $procmux$84_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [5] \y [2] $procmux$89_Y $procmux$84_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [5]
   end
@@ -130,7 +130,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [3] \y [1] $procmux$160_Y $procmux$155_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [3] \y [1] $procmux$160_Y $procmux$155_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [3]
   end
@@ -140,7 +140,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [2] \x [1] $procmux$100_Y $procmux$95_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [2] \x [1] $procmux$100_Y $procmux$95_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [2]
   end
@@ -161,14 +161,14 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A \x
     connect \B { 1'0 \x [7:1] }
-    connect \Y $auto$expression.cpp:2052:import_operation$33
+    connect \Y $auto$expression.cpp:2055:import_operation$33
   end
   attribute \src "dut.sv:43.32-47.24|dut.sv:43.21-49.24"
   attribute \full_case 1
   cell $mux $procmux$155
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2052:import_operation$49 [3]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [3]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$155_Y
   end
@@ -177,7 +177,7 @@ module \function_mixed
   cell $mux $procmux$128
     parameter \WIDTH 1
     connect \A \y [6]
-    connect \B $auto$expression.cpp:2052:import_operation$49 [6]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [6]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$128_Y
   end
@@ -199,9 +199,9 @@ module \function_mixed
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:2052:import_operation$33
+    connect \A $auto$expression.cpp:2055:import_operation$33
     connect \B { 2'00 \x [7:2] }
-    connect \Y $auto$expression.cpp:2052:import_operation$41
+    connect \Y $auto$expression.cpp:2055:import_operation$41
   end
   attribute \src "dut.sv:41.17-50.20|dut.sv:21.13-51.20"
   attribute \full_case 1
@@ -209,7 +209,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [6] \x [3] $procmux$133_Y $procmux$128_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [6] \x [3] $procmux$133_Y $procmux$128_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [6]
   end
@@ -218,7 +218,7 @@ module \function_mixed
   cell $mux $procmux$106
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2052:import_operation$49 [1]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [1]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$106_Y
   end
@@ -237,9 +237,9 @@ module \function_mixed
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:2052:import_operation$41
+    connect \A $auto$expression.cpp:2055:import_operation$41
     connect \B { 3'000 \x [7:3] }
-    connect \Y $auto$expression.cpp:2052:import_operation$49
+    connect \Y $auto$expression.cpp:2055:import_operation$49
   end
   attribute \src "dut.sv:35.37-37.24|dut.sv:35.21-39.24"
   attribute \full_case 1
@@ -255,7 +255,7 @@ module \function_mixed
   cell $mux $procmux$58
     parameter \WIDTH 1
     connect \A \y [7]
-    connect \B $auto$expression.cpp:2052:import_operation$49 [7]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [7]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$58_Y
   end
@@ -265,7 +265,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [1] \y [0] $procmux$111_Y $procmux$106_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [1] \y [0] $procmux$111_Y $procmux$106_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [1]
   end
@@ -275,7 +275,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [7] \y [3] $procmux$63_Y $procmux$58_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [7] \y [3] $procmux$63_Y $procmux$58_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [7]
   end
@@ -326,7 +326,7 @@ module \function_mixed
   cell $mux $procmux$69
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2052:import_operation$41
+    connect \B $auto$expression.cpp:2055:import_operation$41
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$69_Y
   end
@@ -346,14 +346,14 @@ module \function_mixed
     connect \A 8'x
     connect \B $procmux$69_Y
     connect \S $procmux$109_CMP
-    connect \Y $auto$expression.cpp:2052:import_operation$33
+    connect \Y $auto$expression.cpp:2055:import_operation$33
   end
   attribute \src "dut.sv:43.32-47.24|dut.sv:43.21-49.24"
   attribute \full_case 1
   cell $mux $procmux$74
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2052:import_operation$33
+    connect \B $auto$expression.cpp:2055:import_operation$33
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$74_Y
   end
@@ -362,7 +362,7 @@ module \function_mixed
   cell $mux $procmux$117
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2052:import_operation$49 [0]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [0]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$117_Y
   end
@@ -389,7 +389,7 @@ module \function_mixed
   cell $mux $procmux$139
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2052:import_operation$49
+    connect \B $auto$expression.cpp:2055:import_operation$49
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$139_Y
   end
@@ -407,7 +407,7 @@ module \function_mixed
   cell $mux $procmux$84
     parameter \WIDTH 1
     connect \A \y [5]
-    connect \B $auto$expression.cpp:2052:import_operation$49 [5]
+    connect \B $auto$expression.cpp:2055:import_operation$49 [5]
     connect \S $auto$rtlil.cc:3398:Gt$21
     connect \Y $procmux$84_Y
   end
@@ -417,7 +417,7 @@ module \function_mixed
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2052:import_operation$11 [0] \x [0] $procmux$122_Y $procmux$117_Y }
+    connect \B { $auto$expression.cpp:2055:import_operation$11 [0] \x [0] $procmux$122_Y $procmux$117_Y }
     connect \S { $procmux$104_CMP $procmux$103_CMP $procmux$102_CMP $procmux$109_CMP }
     connect \Y \out [0]
   end

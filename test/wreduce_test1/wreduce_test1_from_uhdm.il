@@ -16,13 +16,13 @@ module \wreduce_test1
   attribute \src "dut.sv:1.63-1.64"
   wire width 8 output 6 \w
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2078:import_operation$1
+  wire width 32 $auto$expression.cpp:2081:import_operation$1
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2124:import_operation$3
+  wire width 64 $auto$expression.cpp:2127:import_operation$3
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2195:import_operation$5
+  wire width 32 $auto$expression.cpp:2198:import_operation$5
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2173:import_operation$7
+  wire width 32 $auto$expression.cpp:2176:import_operation$7
   cell $sub $sub$dut.sv:2$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -31,7 +31,7 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:2078:import_operation$1 [31:8] \x }
+    connect \Y { $auto$expression.cpp:2081:import_operation$1 [31:8] \x }
   end
   cell $mul $mul$dut.sv:3$4
     parameter \A_SIGNED 0
@@ -41,7 +41,7 @@ module \wreduce_test1
     parameter \Y_WIDTH 64
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:2124:import_operation$3 [63:8] \y }
+    connect \Y { $auto$expression.cpp:2127:import_operation$3 [63:8] \y }
   end
   cell $shr $shr$dut.sv:4$6
     parameter \A_SIGNED 0
@@ -51,7 +51,7 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:2195:import_operation$5 [31:8] \z }
+    connect \Y { $auto$expression.cpp:2198:import_operation$5 [31:8] \z }
   end
   cell $shl $shl$dut.sv:5$8
     parameter \A_SIGNED 0
@@ -61,10 +61,10 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:2173:import_operation$7 [31:8] \w }
+    connect \Y { $auto$expression.cpp:2176:import_operation$7 [31:8] \w }
   end
-  connect $auto$expression.cpp:2173:import_operation$7 [7:0] \w
-  connect $auto$expression.cpp:2195:import_operation$5 [7:0] \z
-  connect $auto$expression.cpp:2124:import_operation$3 [7:0] \y
-  connect $auto$expression.cpp:2078:import_operation$1 [7:0] \x
+  connect $auto$expression.cpp:2176:import_operation$7 [7:0] \w
+  connect $auto$expression.cpp:2198:import_operation$5 [7:0] \z
+  connect $auto$expression.cpp:2127:import_operation$3 [7:0] \y
+  connect $auto$expression.cpp:2081:import_operation$1 [7:0] \x
 end

@@ -8,6 +8,7 @@
 #include "uhdm2rtlil.h"
 #include <uhdm/logic_var.h>
 #include <uhdm/struct_var.h>
+#include <uhdm/union_var.h>
 #include <uhdm/integer_var.h>
 #include <uhdm/ref_var.h>
 #include <uhdm/logic_net.h>
@@ -15,6 +16,7 @@
 #include <uhdm/net.h>
 #include <uhdm/port.h>
 #include <uhdm/struct_typespec.h>
+#include <uhdm/union_typespec.h>
 #include <uhdm/typespec_member.h>
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/assignment.h>
@@ -1498,9 +1500,10 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             try {
                 // Use stoll to handle larger integers
                 long long int_val = std::stoll(dec_str);
-                return RTLIL::SigSpec(RTLIL::Const(int_val, size));
+                int width = (size > 0) ? size : 32;
+                return RTLIL::SigSpec(RTLIL::Const(int_val, width));
             } catch (const std::exception& e) {
-                log_error("Failed to parse decimal constant: value='%s', substr='%s', error=%s\n", 
+                log_error("Failed to parse decimal constant: value='%s', substr='%s', error=%s\n",
                          value.c_str(), dec_str.c_str(), e.what());
             }
         }
@@ -3494,28 +3497,37 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         struct_ref_typespec = logic_net->Typespec();
                     } else if (auto struct_var_obj = dynamic_cast<const UHDM::struct_var*>(struct_uhdm_obj)) {
                         struct_ref_typespec = struct_var_obj->Typespec();
+                    } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = union_var_obj->Typespec();
                     }
-                    
+
                     if (struct_ref_typespec) {
                         const typespec* struct_typespec = struct_ref_typespec->Actual_typespec();
-                        if (struct_typespec && struct_typespec->UhdmType() == uhdmstruct_typespec) {
-                            auto st_spec = any_cast<const UHDM::struct_typespec*>(struct_typespec);
-                            
+                        if (struct_typespec && (struct_typespec->UhdmType() == uhdmstruct_typespec ||
+                                               struct_typespec->UhdmType() == uhdmunion_typespec)) {
+                            bool is_union = (struct_typespec->UhdmType() == uhdmunion_typespec);
+                            const VectorOftypespec_member* members = nullptr;
+                            if (is_union) {
+                                auto u_spec = any_cast<const UHDM::union_typespec*>(struct_typespec);
+                                members = u_spec->Members();
+                            } else {
+                                auto s_spec = any_cast<const UHDM::struct_typespec*>(struct_typespec);
+                                members = s_spec->Members();
+                            }
+
                             if (mode_debug)
-                                log("    Found struct_typespec\n");
-                            
+                                log("    Found %s typespec\n", is_union ? "union" : "struct");
+
                             // Find the first-level member
-                            if (st_spec->Members()) {
+                            if (members) {
                                 int first_member_offset = 0;
                                 const typespec* first_member_typespec = nullptr;
                                 bool found_first_member = false;
-                                
-                                // Iterate through members in reverse order
-                                auto members = st_spec->Members();
+
                                 for (int i = members->size() - 1; i >= 0; i--) {
                                     auto member_spec = (*members)[i];
                                     std::string member_name = std::string(member_spec->VpiName());
-                                    
+
                                     int member_width = 1;
                                     if (auto member_ts = member_spec->Typespec()) {
                                         if (auto actual_ts = member_ts->Actual_typespec()) {
@@ -3525,53 +3537,65 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                             }
                                         }
                                     }
-                                    
+
                                     if (member_name == first_member) {
                                         found_first_member = true;
                                         break;
                                     }
-                                    
-                                    first_member_offset += member_width;
+
+                                    // Only accumulate offset for structs, not unions
+                                    if (!is_union)
+                                        first_member_offset += member_width;
                                 }
-                                
-                                if (found_first_member && first_member_typespec && 
-                                    first_member_typespec->UhdmType() == uhdmstruct_typespec) {
+
+                                if (found_first_member && first_member_typespec &&
+                                    (first_member_typespec->UhdmType() == uhdmstruct_typespec ||
+                                     first_member_typespec->UhdmType() == uhdmunion_typespec)) {
                                     // Now find the second-level member
-                                    auto nested_st_spec = any_cast<const UHDM::struct_typespec*>(first_member_typespec);
-                                    if (nested_st_spec->Members()) {
+                                    bool nested_is_union = (first_member_typespec->UhdmType() == uhdmunion_typespec);
+                                    const VectorOftypespec_member* nested_members = nullptr;
+                                    if (nested_is_union) {
+                                        auto nu_spec = any_cast<const UHDM::union_typespec*>(first_member_typespec);
+                                        nested_members = nu_spec->Members();
+                                    } else {
+                                        auto ns_spec = any_cast<const UHDM::struct_typespec*>(first_member_typespec);
+                                        nested_members = ns_spec->Members();
+                                    }
+                                    if (nested_members) {
                                         int second_member_offset = 0;
                                         int second_member_width = 0;
                                         bool found_second_member = false;
-                                        
-                                        auto nested_members = nested_st_spec->Members();
+
                                         for (int i = nested_members->size() - 1; i >= 0; i--) {
                                             auto member_spec = (*nested_members)[i];
                                             std::string member_name = std::string(member_spec->VpiName());
-                                            
+
                                             int member_width = 1;
                                             if (auto member_ts = member_spec->Typespec()) {
                                                 if (auto actual_ts = member_ts->Actual_typespec()) {
                                                     member_width = get_width_from_typespec(actual_ts, inst);
                                                 }
                                             }
-                                            
+
                                             if (member_name == final_member) {
                                                 second_member_width = member_width;
                                                 found_second_member = true;
                                                 break;
                                             }
-                                            
-                                            second_member_offset += member_width;
+
+                                            // Only accumulate offset for structs, not unions
+                                            if (!nested_is_union)
+                                                second_member_offset += member_width;
                                         }
-                                        
+
                                         if (found_second_member) {
                                             if (mode_debug)
-                                                log("    Found nested struct member: total_offset=%d, width=%d\n", 
+                                                log("    Found nested member: total_offset=%d, width=%d\n",
                                                     first_member_offset + second_member_offset, second_member_width);
-                                            
-                                            // Return bit slice from the struct wire
-                                            return RTLIL::SigSpec(struct_wire, 
-                                                                first_member_offset + second_member_offset, 
+
+                                            // Return bit slice from the wire
+                                            return RTLIL::SigSpec(struct_wire,
+                                                                first_member_offset + second_member_offset,
                                                                 second_member_width);
                                         }
                                     }
@@ -3625,30 +3649,41 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_ref_typespec = port_obj->Typespec();
                 } else if (auto struct_var_obj = dynamic_cast<const UHDM::struct_var*>(base_uhdm_obj)) {
                     base_ref_typespec = struct_var_obj->Typespec();
+                } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(base_uhdm_obj)) {
+                    base_ref_typespec = union_var_obj->Typespec();
                 }
-                
+
                 if (base_ref_typespec) {
                     base_typespec = base_ref_typespec->Actual_typespec();
-                    
-                    // Check if this is a packed struct typespec
-                    if (base_typespec && base_typespec->UhdmType() == uhdmstruct_typespec) {
-                        auto struct_typespec = any_cast<const UHDM::struct_typespec*>(base_typespec);
-                        
+
+                    // Check if this is a packed struct or union typespec
+                    if (base_typespec && (base_typespec->UhdmType() == uhdmstruct_typespec ||
+                                         base_typespec->UhdmType() == uhdmunion_typespec)) {
+                        bool base_is_union = (base_typespec->UhdmType() == uhdmunion_typespec);
+                        const VectorOftypespec_member* members = nullptr;
+                        if (base_is_union) {
+                            auto u_ts = any_cast<const UHDM::union_typespec*>(base_typespec);
+                            members = u_ts->Members();
+                        } else {
+                            auto s_ts = any_cast<const UHDM::struct_typespec*>(base_typespec);
+                            members = s_ts->Members();
+                        }
+
                         if (mode_debug)
-                            log("    Found struct typespec for base wire '%s'\n", base_name.c_str());
-                        
-                        // Find the member in the struct
-                        if (struct_typespec->Members()) {
+                            log("    Found %s typespec for base wire '%s'\n",
+                                base_is_union ? "union" : "struct", base_name.c_str());
+
+                        // Find the member
+                        if (members) {
                             int bit_offset = 0;
                             int member_width = 0;
                             bool found_member = false;
-                            
+
                             // Iterate through members in reverse order (MSB to LSB for packed structs)
-                            auto members = struct_typespec->Members();
                             for (int i = members->size() - 1; i >= 0; i--) {
                                 auto member_spec = (*members)[i];
                                 std::string current_member_name = std::string(member_spec->VpiName());
-                                
+
                                 // Get width of this member
                                 int current_member_width = 1;
                                 if (auto member_ts = member_spec->Typespec()) {
@@ -3659,26 +3694,28 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                     // Try to get width directly from the member
                                     current_member_width = get_width(member_spec, inst);
                                 }
-                                
+
                                 if (current_member_name == member_name) {
                                     member_width = current_member_width;
                                     found_member = true;
                                     break;
                                 }
-                                
-                                bit_offset += current_member_width;
+
+                                // Only accumulate offset for structs, not unions
+                                if (!base_is_union)
+                                    bit_offset += current_member_width;
                             }
                             
                             if (found_member) {
                                 if (mode_debug)
-                                    log("    Found packed struct member: offset=%d, width=%d\n", bit_offset, member_width);
-                                
+                                    log("    Found packed member: offset=%d, width=%d\n", bit_offset, member_width);
+
                                 // Return a bit slice of the base wire
                                 return RTLIL::SigSpec(base_wire, bit_offset, member_width);
                             }
                         }
                     } else if (mode_debug) {
-                        log("    Base wire typespec is not a struct (UhdmType=%s)\n", 
+                        log("    Base wire typespec is not a struct/union (UhdmType=%s)\n",
                             base_typespec ? UhdmName(base_typespec->UhdmType()).c_str() : "null");
                     }
                 } else if (mode_debug) {
@@ -3797,6 +3834,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     ref_ts = net_obj->Typespec();
                 } else if (auto struct_var_obj = dynamic_cast<const UHDM::struct_var*>(struct_uhdm_obj)) {
                     ref_ts = struct_var_obj->Typespec();
+                } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
+                    ref_ts = union_var_obj->Typespec();
                 }
                 
                 if (ref_ts && ref_ts->Actual_typespec()) {
@@ -3857,60 +3896,67 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
     
     // Process each part of the path
     for (const auto& member_name : path_parts) {
-        if (!current_ts || current_ts->UhdmType() != uhdmstruct_typespec) {
+        bool is_struct = current_ts && current_ts->UhdmType() == uhdmstruct_typespec;
+        bool is_union = current_ts && current_ts->UhdmType() == uhdmunion_typespec;
+        if (!is_struct && !is_union) {
             return false;
         }
-        
-        auto struct_ts = any_cast<const struct_typespec*>(current_ts);
-        if (!struct_ts->Members()) {
+
+        const VectorOftypespec_member* members = nullptr;
+        if (is_struct) {
+            auto struct_ts = any_cast<const struct_typespec*>(current_ts);
+            members = struct_ts->Members();
+        } else {
+            auto union_ts = any_cast<const union_typespec*>(current_ts);
+            members = union_ts->Members();
+        }
+        if (!members) {
             return false;
         }
-        
-        // Calculate offset within this struct
-        int offset_in_struct = 0;
+
+        // Calculate offset within this level
+        // For unions: offset is always 0. For structs: accumulate offset.
+        int offset_in_level = 0;
         bool found = false;
-        const typespec* member_ts = nullptr;
-        
+        const typespec* found_member_ts = nullptr;
+
         // Iterate through members in reverse order (MSB to LSB for packed structs)
-        auto members = struct_ts->Members();
         for (int i = members->size() - 1; i >= 0; i--) {
             auto member = (*members)[i];
             std::string current_member_name = std::string(member->VpiName());
-            
+
             if (current_member_name == member_name) {
                 // Found the member
                 if (auto ref_ts = member->Typespec()) {
                     if (auto actual_ts = ref_ts->Actual_typespec()) {
-                        member_ts = actual_ts;
+                        found_member_ts = actual_ts;
                         member_width = get_width_from_typespec(actual_ts, inst);
-                        // log("UHDM:   Found target member '%s' width=%d at offset_in_struct=%d\n", 
-                        //     current_member_name.c_str(), member_width, offset_in_struct);
                     }
                 }
                 found = true;
                 break;
             }
-            
-            // Add width of this member to offset
-            if (auto ref_ts = member->Typespec()) {
-                if (auto actual_ts = ref_ts->Actual_typespec()) {
-                    int width = get_width_from_typespec(actual_ts, inst);
-                    // log("UHDM:   Member '%s' width=%d, offset_in_struct=%d\n", 
-                    //     current_member_name.c_str(), width, offset_in_struct);
-                    offset_in_struct += width;
+
+            // Only accumulate offset for structs, not unions
+            if (is_struct) {
+                if (auto ref_ts = member->Typespec()) {
+                    if (auto actual_ts = ref_ts->Actual_typespec()) {
+                        int width = get_width_from_typespec(actual_ts, inst);
+                        offset_in_level += width;
+                    }
                 }
             }
         }
-        
+
         if (!found) {
             return false;
         }
-        
-        // Add the offset within this struct to the total offset
-        bit_offset += offset_in_struct;
-        
+
+        // Add the offset within this level to the total offset
+        bit_offset += offset_in_level;
+
         // For the next iteration, use the member's typespec
-        current_ts = member_ts;
+        current_ts = found_member_ts;
     }
     
     return member_width > 0;

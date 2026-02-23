@@ -11,6 +11,7 @@
 #include <cctype>
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/uhdm_types.h>
+#include <uhdm/union_typespec.h>
 #include <uhdm/ExprEval.h>
 YOSYS_NAMESPACE_BEGIN
 
@@ -564,6 +565,17 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
                 } else {
                     log("UHDM: Could not get type name for struct\n");
+                }
+            } else if (actual_typespec->UhdmType() == uhdmunion_typespec) {
+                log("UHDM: typespec is a union_typespec\n");
+                std::string type_name;
+                if (!ref_ts->VpiName().empty())
+                    type_name = std::string(ref_ts->VpiName());
+                else if (!actual_typespec->VpiName().empty())
+                    type_name = std::string(actual_typespec->VpiName());
+                if (!type_name.empty()) {
+                    w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                    log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
                 }
             } else if (actual_typespec->UhdmType() == uhdmenum_typespec) {
                 log("UHDM: typespec is an enum_typespec\n");
@@ -1425,6 +1437,26 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             UHDM::decompile(typespec);
             log("UHDM: ref_typespec without actual - defaulting to width 32 (int)\n");
             return 32;
+        }
+
+        // Handle union_typespec: width = width of widest member
+        if (typespec->UhdmType() == uhdmunion_typespec) {
+            auto union_ts = dynamic_cast<const UHDM::union_typespec*>(typespec);
+            if (union_ts && union_ts->Members()) {
+                int max_width = 0;
+                for (auto member : *union_ts->Members()) {
+                    if (auto ref_ts = member->Typespec()) {
+                        if (auto actual_ts = ref_ts->Actual_typespec()) {
+                            int w = get_width_from_typespec(actual_ts, inst);
+                            if (w > max_width) max_width = w;
+                        }
+                    }
+                }
+                if (max_width > 0) {
+                    log("UHDM: union_typespec width = %d (widest member)\n", max_width);
+                    return max_width;
+                }
+            }
         }
 
         // Handle logic_typespec with Elem_typespec (e.g., reg8_t [0:3] → array of 8-bit elements)

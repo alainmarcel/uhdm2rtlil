@@ -13,11 +13,11 @@ module \partsel_simple
   wire width 4 output 4 \slice_down
   attribute \src "dut.sv:2.12-2.18"
   wire width 6 \offset
-  wire width 3 $auto$expression.cpp:2173:import_operation$1
-  wire width 6 $auto$module.cpp:729:import_continuous_assign$3
-  wire width 4 $auto$module.cpp:729:import_continuous_assign$5
-  wire width 64 $auto$expression.cpp:2052:import_operation$7
-  wire width 4 $auto$module.cpp:729:import_continuous_assign$9
+  wire width 3 $auto$expression.cpp:2176:import_operation$1
+  wire width 6 $auto$module.cpp:741:import_continuous_assign$3
+  wire width 4 $auto$module.cpp:741:import_continuous_assign$5
+  wire width 64 $auto$expression.cpp:2055:import_operation$7
+  wire width 4 $auto$module.cpp:741:import_continuous_assign$9
   cell $shl $shl$dut.sv:2$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -26,21 +26,21 @@ module \partsel_simple
     parameter \Y_WIDTH 3
     connect \A \idx
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2173:import_operation$1
+    connect \Y $auto$expression.cpp:2176:import_operation$1
   end
-  cell $pos $auto$module.cpp:730:import_continuous_assign$4
+  cell $pos $auto$module.cpp:742:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 6
-    connect \A $auto$expression.cpp:2173:import_operation$1
-    connect \Y $auto$module.cpp:729:import_continuous_assign$3
+    connect \A $auto$expression.cpp:2176:import_operation$1
+    connect \Y $auto$module.cpp:741:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:730:import_continuous_assign$6
+  cell $pos $auto$module.cpp:742:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 4
     connect \A { }
-    connect \Y $auto$module.cpp:729:import_continuous_assign$5
+    connect \Y $auto$module.cpp:741:import_continuous_assign$5
   end
   cell $add $add$dut.sv:4$8
     parameter \A_SIGNED 0
@@ -50,16 +50,16 @@ module \partsel_simple
     parameter \Y_WIDTH 64
     connect \A \offset
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:2052:import_operation$7
+    connect \Y $auto$expression.cpp:2055:import_operation$7
   end
-  cell $pos $auto$module.cpp:730:import_continuous_assign$10
+  cell $pos $auto$module.cpp:742:import_continuous_assign$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 4
     connect \A { }
-    connect \Y $auto$module.cpp:729:import_continuous_assign$9
+    connect \Y $auto$module.cpp:741:import_continuous_assign$9
   end
-  connect \offset $auto$module.cpp:729:import_continuous_assign$3
-  connect \slice_up $auto$module.cpp:729:import_continuous_assign$5
-  connect \slice_down $auto$module.cpp:729:import_continuous_assign$9
+  connect \offset $auto$module.cpp:741:import_continuous_assign$3
+  connect \slice_up $auto$module.cpp:741:import_continuous_assign$5
+  connect \slice_down $auto$module.cpp:741:import_continuous_assign$9
 end

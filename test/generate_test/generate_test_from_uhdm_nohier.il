@@ -11,7 +11,7 @@ module \adder
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  wire width 8 $auto$expression.cpp:2052:import_operation$1
+  wire width 8 $auto$expression.cpp:2055:import_operation$1
   cell $add $add$dut.sv:11$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -20,9 +20,9 @@ module \adder
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2052:import_operation$1
+    connect \Y $auto$expression.cpp:2055:import_operation$1
   end
-  connect \sum $auto$expression.cpp:2052:import_operation$1
+  connect \sum $auto$expression.cpp:2055:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:15.1-23.10"
@@ -35,7 +35,7 @@ module \subtractor
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  wire width 8 $auto$expression.cpp:2078:import_operation$3
+  wire width 8 $auto$expression.cpp:2081:import_operation$3
   cell $sub $sub$dut.sv:22$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -44,9 +44,9 @@ module \subtractor
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2078:import_operation$3
+    connect \Y $auto$expression.cpp:2081:import_operation$3
   end
-  connect \diff $auto$expression.cpp:2078:import_operation$3
+  connect \diff $auto$expression.cpp:2081:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:26.1-110.10"
@@ -258,7 +258,7 @@ module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  wire width 8 $auto$expression.cpp:2052:import_operation$6
+  wire width 8 $auto$expression.cpp:2055:import_operation$6
   cell $add $add$dut.sv:11$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -267,9 +267,9 @@ module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2052:import_operation$6
+    connect \Y $auto$expression.cpp:2055:import_operation$6
   end
-  connect \sum $auto$expression.cpp:2052:import_operation$6
+  connect \sum $auto$expression.cpp:2055:import_operation$6
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:58.17-64.19"
@@ -283,7 +283,7 @@ module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  wire width 8 $auto$expression.cpp:2078:import_operation$9
+  wire width 8 $auto$expression.cpp:2081:import_operation$9
   cell $sub $sub$dut.sv:22$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -292,7 +292,7 @@ module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2078:import_operation$9
+    connect \Y $auto$expression.cpp:2081:import_operation$9
   end
-  connect \diff $auto$expression.cpp:2078:import_operation$9
+  connect \diff $auto$expression.cpp:2081:import_operation$9
 end
