@@ -3074,6 +3074,40 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                     can_unroll = false;
                     log("        Unsupported loop increment operation: %d\n", inc_op->VpiOpType());
                 }
+            } else if (can_unroll && inc_stmt->VpiType() == vpiAssignment) {
+                // Handle i = i + N form
+                const assignment* inc_assign = any_cast<const assignment*>(inc_stmt);
+                if (inc_assign && inc_assign->Rhs() && inc_assign->Rhs()->VpiType() == vpiOperation) {
+                    const operation* rhs_op = any_cast<const operation*>(inc_assign->Rhs());
+                    if (rhs_op->VpiOpType() == vpiAddOp && rhs_op->Operands() && rhs_op->Operands()->size() == 2) {
+                        auto ops = rhs_op->Operands();
+                        const any* op0 = ops->at(0);
+                        const any* op1 = ops->at(1);
+                        // Check that one operand is the loop variable and the other is a constant
+                        bool var_found = false;
+                        RTLIL::Const inc_const;
+                        if (op0->VpiType() == vpiRefObj) {
+                            const ref_obj* ref = any_cast<const ref_obj*>(op0);
+                            if (std::string(ref->VpiName()) == loop_var_name) var_found = true;
+                        }
+                        if (var_found && op1->VpiType() == vpiConstant) {
+                            const constant* c = any_cast<const constant*>(op1);
+                            RTLIL::SigSpec inc_spec = import_constant(c);
+                            if (inc_spec.is_fully_const()) {
+                                increment = inc_spec.as_const().as_int();
+                                log("        Loop increment: %s = %s + %lld\n", loop_var_name.c_str(), loop_var_name.c_str(), (long long)increment);
+                            } else {
+                                can_unroll = false;
+                            }
+                        } else {
+                            can_unroll = false;
+                        }
+                    } else {
+                        can_unroll = false;
+                    }
+                } else {
+                    can_unroll = false;
+                }
             }
             
             // If we can unroll, check if it's a memory initialization pattern or shift register
@@ -3465,8 +3499,159 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             }
                         }
                     }
+                    // Check for memory initialization with function calls pattern:
+                    // for (i = 0; i < N; i = i+1) begin mem[i] <= func(i); ... end
+                    if (can_unroll && stmts) {
+                        bool all_mem_func_assigns = true;
+                        struct MemFuncAssign {
+                            std::string mem_name;
+                            const func_call* fc;
+                        };
+                        std::vector<MemFuncAssign> mem_func_assigns;
+
+                        for (auto stmt : *stmts) {
+                            if (stmt->VpiType() != vpiAssignment) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+                            const assignment* assign = any_cast<const assignment*>(stmt);
+                            // LHS must be a bit_select of a memory, indexed by the loop variable
+                            if (!assign->Lhs() || assign->Lhs()->VpiType() != vpiBitSelect) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+                            const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                            std::string mem_name = std::string(bs->VpiName());
+
+                            // Check that the index is the loop variable
+                            bool index_is_loop_var = false;
+                            if (bs->VpiIndex()) {
+                                const any* idx = bs->VpiIndex();
+                                if (idx->VpiType() == vpiRefObj) {
+                                    const ref_obj* idx_ref = any_cast<const ref_obj*>(idx);
+                                    if (std::string(idx_ref->VpiName()) == loop_var_name)
+                                        index_is_loop_var = true;
+                                }
+                            }
+                            if (!index_is_loop_var) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+
+                            // RHS must be a func_call
+                            if (!assign->Rhs() || assign->Rhs()->VpiType() != vpiFuncCall) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+                            const func_call* fc = any_cast<const func_call*>(assign->Rhs());
+                            if (!fc || !fc->Function()) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+
+                            // Check that all function arguments are the loop variable or constants
+                            bool args_ok = true;
+                            if (fc->Tf_call_args()) {
+                                for (auto arg : *fc->Tf_call_args()) {
+                                    if (arg->VpiType() == vpiRefObj) {
+                                        const ref_obj* ref = any_cast<const ref_obj*>(arg);
+                                        if (std::string(ref->VpiName()) != loop_var_name) {
+                                            args_ok = false;
+                                            break;
+                                        }
+                                    } else if (arg->VpiType() != vpiConstant) {
+                                        args_ok = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!args_ok) {
+                                all_mem_func_assigns = false;
+                                break;
+                            }
+
+                            mem_func_assigns.push_back({mem_name, fc});
+                        }
+
+                        if (all_mem_func_assigns && !mem_func_assigns.empty()) {
+                            log("        Detected memory initialization with function calls pattern\n");
+
+                            // Get source file info for cell naming
+                            std::string meminit_file;
+                            int meminit_line = 0;
+                            if (for_loop && !for_loop->VpiFile().empty()) {
+                                std::string full_path = std::string(for_loop->VpiFile());
+                                auto sp = full_path.find_last_of("/\\");
+                                meminit_file = (sp != std::string::npos) ? full_path.substr(sp + 1) : full_path;
+                                meminit_line = for_loop->VpiLineNo();
+                            }
+
+                            int64_t loop_end = inclusive ? end_value : end_value - 1;
+                            int priority_base = 12;
+
+                            for (int64_t i = start_value; i <= loop_end; i += increment) {
+                                for (size_t a = 0; a < mem_func_assigns.size(); a++) {
+                                    const auto& mfa = mem_func_assigns[a];
+                                    const func_call* fc = mfa.fc;
+                                    const function* func_def = fc->Function();
+
+                                    // Build constant arguments, substituting loop variable with current value
+                                    std::vector<RTLIL::Const> const_args;
+                                    if (fc->Tf_call_args()) {
+                                        for (auto arg : *fc->Tf_call_args()) {
+                                            if (arg->VpiType() == vpiRefObj) {
+                                                const ref_obj* ref = any_cast<const ref_obj*>(arg);
+                                                if (std::string(ref->VpiName()) == loop_var_name) {
+                                                    const_args.push_back(RTLIL::Const((int)i, 32));
+                                                }
+                                            } else if (arg->VpiType() == vpiConstant) {
+                                                const constant* c = any_cast<const constant*>(arg);
+                                                RTLIL::SigSpec sig = import_constant(c);
+                                                const_args.push_back(sig.as_const());
+                                            }
+                                        }
+                                    }
+
+                                    // Evaluate the function at compile time
+                                    std::map<std::string, RTLIL::Const> output_params;
+                                    RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
+
+                                    // Determine memory width from the memory object
+                                    RTLIL::IdString mem_id = RTLIL::escape_id(mfa.mem_name);
+                                    int mem_width = 8; // default
+                                    if (module->memories.count(mem_id) > 0) {
+                                        mem_width = module->memories.at(mem_id)->width;
+                                    }
+
+                                    // Truncate/extend result to memory width
+                                    int result_int = result.as_int();
+
+                                    int cell_priority = priority_base + (int)(i * mem_func_assigns.size() + a);
+                                    RTLIL::Cell *cell = module->addCell(
+                                        stringf("$meminit$\\%s$%s:%d$%d", mfa.mem_name.c_str(), meminit_file.c_str(), meminit_line, cell_priority),
+                                        ID($meminit_v2)
+                                    );
+                                    cell->setParam(ID::MEMID, RTLIL::Const("\\" + mfa.mem_name));
+                                    cell->setParam(ID::ABITS, RTLIL::Const(32));
+                                    cell->setParam(ID::WIDTH, RTLIL::Const(mem_width));
+                                    cell->setParam(ID::WORDS, RTLIL::Const(1));
+                                    cell->setParam(ID::PRIORITY, RTLIL::Const(cell_priority));
+                                    cell->setPort(ID::ADDR, RTLIL::Const((int)i, 32));
+                                    cell->setPort(ID::DATA, RTLIL::Const(result_int, mem_width));
+                                    cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::S1, mem_width));
+
+                                    log("        Added $meminit for %s[%lld] = 0x%x\n",
+                                        mfa.mem_name.c_str(), (long long)i, result_int);
+                                }
+                            }
+
+                            log("        Memory initialization with function calls unrolled successfully\n");
+                            return;  // Done with this pattern
+                        }
+                    }
+
                     // Fall through to generic unrolling for all other begin block patterns
-                    log("        Attempting to interpret for loop with %zu statements\n", 
+                    log("        Attempting to interpret for loop with %zu statements\n",
                         stmts ? stmts->size() : 0);
                     
                     if (can_unroll && stmts) {
