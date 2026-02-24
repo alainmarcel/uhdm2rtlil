@@ -26,6 +26,8 @@
 #include <uhdm/case_stmt.h>
 #include <uhdm/case_item.h>
 #include <uhdm/for_stmt.h>
+#include <uhdm/while_stmt.h>
+#include <uhdm/repeat.h>
 #include <uhdm/range.h>
 
 YOSYS_NAMESPACE_BEGIN
@@ -73,8 +75,13 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
         }
     }
     
-    // Initialize function return value
-    local_vars[func_name] = RTLIL::Const(0, 32); // Default 32-bit
+    // Initialize function return value with actual width from return type
+    int ret_width = 32; // Default 32-bit
+    if (func_def->Return()) {
+        ret_width = get_width(func_def->Return(), current_instance);
+        if (ret_width <= 0) ret_width = 32;
+    }
+    local_vars[func_name] = RTLIL::Const(0, ret_width);
     
     // Evaluate the function body
     if (func_def->Stmt()) {
@@ -261,8 +268,75 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             }
             break;
         }
+
+        case vpiWhile: {
+            const while_stmt* ws = any_cast<const while_stmt*>(stmt);
+            if (!ws) break;
+
+            RTLIL::Const last_result;
+            int iterations = 0;
+            const int max_iterations = 10000;
+
+            while (iterations < max_iterations) {
+                // Evaluate condition
+                RTLIL::Const cond_value;
+                if (ws->VpiCondition()) {
+                    if (ws->VpiCondition()->VpiType() == vpiOperation) {
+                        const operation* op = any_cast<const operation*>(ws->VpiCondition());
+                        cond_value = evaluate_operation_const(op, local_vars);
+                    } else {
+                        cond_value = evaluate_single_operand(ws->VpiCondition(), local_vars);
+                    }
+                }
+
+                if (cond_value.is_fully_zero()) break;
+
+                // Execute body
+                if (ws->VpiStmt()) {
+                    last_result = evaluate_function_stmt(ws->VpiStmt(), local_vars, func_name);
+                }
+                iterations++;
+            }
+
+            if (iterations >= max_iterations) {
+                log_warning("While loop iteration limit (%d) reached in compile-time evaluation of function '%s'\n",
+                           max_iterations, func_name.c_str());
+            }
+
+            return last_result;
+        }
+
+        case vpiRepeat: {
+            const UHDM::repeat* rp = any_cast<const UHDM::repeat*>(stmt);
+            if (!rp) break;
+
+            // Evaluate repeat count
+            RTLIL::Const count_value;
+            if (rp->VpiCondition()) {
+                count_value = evaluate_single_operand(rp->VpiCondition(), local_vars);
+            }
+
+            int repeat_count = count_value.as_int();
+            if (repeat_count < 0) repeat_count = 0;
+
+            const int max_count = 10000;
+            if (repeat_count > max_count) {
+                log_warning("Repeat count (%d) exceeds limit (%d) in compile-time evaluation of function '%s'\n",
+                           repeat_count, max_count, func_name.c_str());
+                repeat_count = max_count;
+            }
+
+            RTLIL::Const last_result;
+            for (int i = 0; i < repeat_count; i++) {
+                if (rp->VpiStmt()) {
+                    last_result = evaluate_function_stmt(rp->VpiStmt(), local_vars, func_name);
+                }
+            }
+
+            return last_result;
+        }
     }
-    
+
     return RTLIL::Const();
 }
 
@@ -408,7 +482,8 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             
         case vpiBitNegOp:  // Bitwise negation (~)
             if (operand_values.size() >= 1) {
-                RTLIL::Const result_c = RTLIL::const_not(operand_values[0], RTLIL::Const(), false, false, -1);
+                int res_len = std::max(operand_values[0].size(), 1);
+                RTLIL::Const result_c = RTLIL::const_not(operand_values[0], RTLIL::Const(), false, false, res_len);
                 return result_c;
             }
             break;
@@ -422,14 +497,16 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
 
         case vpiRShiftOp:  // Right shift (>>)
             if (operand_values.size() >= 2) {
-                RTLIL::Const result_c = RTLIL::const_shr(operand_values[0], operand_values[1], false, false, -1);
+                int res_len = std::max(operand_values[0].size(), 1);
+                RTLIL::Const result_c = RTLIL::const_shr(operand_values[0], operand_values[1], false, false, res_len);
                 return result_c;
             }
             break;
 
         case vpiLShiftOp:  // Left shift (<<)
             if (operand_values.size() >= 2) {
-                RTLIL::Const result_c = RTLIL::const_shl(operand_values[0], operand_values[1], false, false, -1);
+                int res_len = std::max(operand_values[0].size(), 1);
+                RTLIL::Const result_c = RTLIL::const_shl(operand_values[0], operand_values[1], false, false, res_len);
                 return result_c;
             }
             break;
