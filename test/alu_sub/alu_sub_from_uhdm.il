@@ -45,14 +45,14 @@ module \alu
   attribute \src "dut.sv:49.4-50.17"
   wire $auto$process_helper.cpp:58:create_eq_cell$4
   attribute \src "dut.sv:50.5-50.16"
-  wire width 9 $auto$process.cpp:5070:import_assignment_sync$6
+  wire width 9 $auto$process.cpp:5092:import_assignment_sync$6
   attribute \src "dut.sv:51.4-52.17"
   wire $auto$process_helper.cpp:58:create_eq_cell$8
   wire $auto$opt_dff.cc:234:make_patterns_logic$26
   wire width 8 $auto$expression.cpp:2085:import_operation$12
   attribute \src "dut.sv:52.5-52.16"
   attribute \unused_bits "8"
-  wire width 9 $auto$process.cpp:5070:import_assignment_sync$14
+  wire width 9 $auto$process.cpp:5092:import_assignment_sync$14
   attribute \src "dut.sv:56.9-56.22"
   wire $eq$dut.sv:56$16_Y
   attribute \src "dut.sv:49.4-50.17"
@@ -64,12 +64,12 @@ module \alu
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$4
   end
   attribute \src "dut.sv:50.5-50.16"
-  cell $mux $auto$process.cpp:5072:import_assignment_sync$7
+  cell $mux $auto$process.cpp:5094:import_assignment_sync$7
     parameter \WIDTH 9
     connect \A 9'0xxxxxxxx
     connect \B { 1'0 \added }
     connect \S $auto$process_helper.cpp:58:create_eq_cell$4
-    connect \Y $auto$process.cpp:5070:import_assignment_sync$6
+    connect \Y $auto$process.cpp:5092:import_assignment_sync$6
   end
   attribute \src "dut.sv:51.4-52.17"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$9
@@ -100,12 +100,12 @@ module \alu
     connect \Y $auto$expression.cpp:2085:import_operation$12
   end
   attribute \src "dut.sv:52.5-52.16"
-  cell $mux $auto$process.cpp:5072:import_assignment_sync$15
+  cell $mux $auto$process.cpp:5094:import_assignment_sync$15
     parameter \WIDTH 9
-    connect \A $auto$process.cpp:5070:import_assignment_sync$6
+    connect \A $auto$process.cpp:5092:import_assignment_sync$6
     connect \B { 1'0 $auto$expression.cpp:2085:import_operation$12 }
     connect \S $auto$process_helper.cpp:58:create_eq_cell$8
-    connect \Y $auto$process.cpp:5070:import_assignment_sync$14
+    connect \Y $auto$process.cpp:5092:import_assignment_sync$14
   end
   attribute \src "dut.sv:56.9-56.22"
   cell $logic_not $eq$dut.sv:56$17
@@ -128,7 +128,7 @@ module \alu
     parameter \WIDTH 8
     connect \CLK \clk
     connect \EN $auto$opt_dff.cc:234:make_patterns_logic$26
-    connect \D $auto$process.cpp:5070:import_assignment_sync$14 [7:0]
+    connect \D $auto$process.cpp:5092:import_assignment_sync$14 [7:0]
     connect \Q \tmp [7:0]
   end
   attribute \src "dut.sv:46.2-60.5"

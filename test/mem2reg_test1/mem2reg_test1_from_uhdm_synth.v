@@ -26,12 +26,12 @@ module mem2reg_test1(in_addr, in_data, out_addr, out_data);
   (* unused_bits = "0 1 2 3" *)
   wire [3:0] memrd_array_DATA_7;
   wire [3:0] memrd_array_DATA_8;
-  assign memrd_array_DATA_6 = 4'ha;
-  assign memrd_array_DATA_5 = 4'h7;
   assign memrd_array_DATA_4 = 4'h0;
-  assign memrd_array_DATA_7 = in_data;
+  assign memrd_array_DATA_5 = 4'h7;
   assign memrd_array_DATA_3 = in_data;
+  assign memrd_array_DATA_6 = 4'ha;
   assign memrd_array_DATA_2 = 4'ha;
+  assign memrd_array_DATA_7 = in_data;
   assign memrd_array_DATA_1 = 4'h7;
   assign memrd_array_DATA_8 = 4'hx;
   assign memrd_array_DATA = 4'h0;

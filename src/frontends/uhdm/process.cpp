@@ -1444,33 +1444,55 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // Import the LHS expression to get its SigSpec
         RTLIL::SigSpec lhs_spec = import_expression(sig.lhs_expr);
         lhs_specs[sig.lhs_expr] = lhs_spec;
-        
+
+        // Derive dedup key for temp wire naming.
+        // For part selects (bit/part), use the scope-qualified wire name + bit range
+        // to ensure uniqueness across generate scopes (e.g. rotate test).
+        // For full-wire assignments, use the bare signal name to avoid conflicts
+        // with block-local variable handling (e.g. gen_test7).
+        std::string dedup_key;
+        if (sig.is_part_select && lhs_spec.size() > 0) {
+            RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+            if (first_chunk.wire) {
+                std::string wire_name = first_chunk.wire->name.str();
+                if (wire_name[0] == '\\')
+                    wire_name = wire_name.substr(1);
+                int offset = first_chunk.offset;
+                int width = lhs_spec.size();
+                dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+            } else {
+                dedup_key = sig.name;
+            }
+        } else {
+            dedup_key = sig.name;
+        }
+
         // Check if we already have a temp wire for this signal
         RTLIL::Wire* temp_wire = nullptr;
-        if (signal_temp_wires.count(sig.name)) {
+        if (signal_temp_wires.count(dedup_key)) {
             // Reuse existing temp wire
-            temp_wire = signal_temp_wires[sig.name];
+            temp_wire = signal_temp_wires[dedup_key];
         } else {
             // Create new temp wire with the same width as the LHS
-            std::string temp_name = "$0\\" + sig.name;
-            
-            // Check if temp wire already exists (shouldn't happen with unique signal names)
+            std::string temp_name = "$0\\" + dedup_key;
+
+            // Check if temp wire already exists (shouldn't happen with unique dedup keys)
             if (module->wire(temp_name)) {
                 log_error("Temp wire %s already exists\n", temp_name.c_str());
             }
-            
+
             temp_wire = module->addWire(temp_name, lhs_spec.size());
             // Add source attribute from the process
             if (uhdm_process) {
                 add_src_attribute(temp_wire->attributes, uhdm_process);
             }
-            signal_temp_wires[sig.name] = temp_wire;
-            signal_specs[sig.name] = lhs_spec;
-            
-            log("    Created temp wire %s for signal %s (width=%d)\n", 
+            signal_temp_wires[dedup_key] = temp_wire;
+            signal_specs[dedup_key] = lhs_spec;
+
+            log("    Created temp wire %s for signal %s (width=%d)\n",
                 temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
         }
-        
+
         // Map this expression to the temp wire
         temp_wires[sig.lhs_expr] = temp_wire;
     }
@@ -5365,18 +5387,28 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 if (signal_name[0] == '\\') {
                     signal_name = signal_name.substr(1);  // Remove leading backslash
                 }
-                
-                // Find the temp wire
+
+                // Try per-bit/range temp wire name first (from generate scope bit selects)
+                int msb = first_chunk.offset + lhs.size() - 1;
+                int lsb = first_chunk.offset;
+                std::string ranged_temp_name = "$0\\" + signal_name + "[" + std::to_string(msb) + ":" + std::to_string(lsb) + "]";
+                RTLIL::Wire* temp_wire = module->wire(ranged_temp_name);
+
+                if (temp_wire) {
+                    // Per-bit/range temp wire - assign directly (exact width match)
+                    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
+                    return;
+                }
+
+                // Fallback: full-wire temp wire with bit slice
                 std::string temp_name = "$0\\" + signal_name;
-                RTLIL::Wire* temp_wire = module->wire(temp_name);
-                
+                temp_wire = module->wire(temp_name);
+
                 if (temp_wire) {
                     // Create a bit slice of the temp wire with the same offset
                     RTLIL::SigSpec temp_spec(temp_wire);
                     RTLIL::SigSpec temp_slice = temp_spec.extract(first_chunk.offset, lhs.size());
                     proc->root_case.actions.push_back(RTLIL::SigSig(temp_slice, rhs));
-                    // log("    Assigned to temp wire slice: %s[%d:%d] <= %s\n", 
-                    //     temp_name.c_str(), first_chunk.offset + lhs.size() - 1, first_chunk.offset, log_signal(rhs));
                     return;
                 }
             }

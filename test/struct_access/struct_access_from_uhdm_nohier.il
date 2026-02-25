@@ -137,21 +137,21 @@ module \top
   wire $auto$rtlil.cc:3394:Ne$146
   wire $auto$rtlil.cc:3395:Eqx$148
   wire $auto$process.cpp:32:import_immediate_assert$149
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$3
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$4
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$5
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$6
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$7
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -188,21 +188,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$14
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$15
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$16
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$17
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$18
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$19
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -239,21 +239,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$26
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$27
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$28
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$29
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$29
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$30
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$31
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -290,21 +290,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$rtlil.cc:3394:Ne$38
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$39
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$39
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$40
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$41
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$42
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$43
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -341,21 +341,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \Y $auto$rtlil.cc:3394:Ne$50
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$51
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$51
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$52
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$53
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$53
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$54
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$55
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -392,21 +392,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
     connect \Y $auto$rtlil.cc:3394:Ne$62
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$63
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$63
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$64
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$65
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$65
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$66
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$67
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$67
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -443,21 +443,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
     connect \Y $auto$rtlil.cc:3394:Ne$74
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$75
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$75
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$76
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$77
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$77
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$78
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$79
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$79
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -494,21 +494,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$86
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$87
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$87
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$88
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$89
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$89
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$90
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$91
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$91
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -545,21 +545,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$98
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$99
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$99
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$100
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$101
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$101
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$102
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$103
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$103
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -596,21 +596,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$110
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$111
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$111
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$112
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$113
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$113
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$114
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$115
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$115
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -647,21 +647,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3394:Ne$122
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$123
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$123
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$124
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$125
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$125
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$126
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$127
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$127
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -698,21 +698,21 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
     connect \Y $auto$rtlil.cc:3394:Ne$134
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$135
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$135
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3346:ReduceBool$136
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$137
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$137
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$rtlil.cc:3346:ReduceBool$138
   end
-  cell $reduce_bool $auto$process.cpp:6292:import_statement_comb$139
+  cell $reduce_bool $auto$process.cpp:6324:import_statement_comb$139
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1

@@ -76,7 +76,9 @@ module \abc9_test012_sub
   wire $logic_not$dut.sv:105.18-105.21$1_Y
   wire width 6 $auto$rtlil.cc:3474:Mux$10
   attribute \src "dut.sv:99.1-103.26"
-  wire width 4 $0\latch
+  wire width 4 $0\latch[3:0]
+  attribute \src "dut.sv:99.1-103.26"
+  wire width 4 $0\latch[7:4]
   attribute \src "dut.sv:100.9-100.12"
   wire $logic_not$dut.sv:100.9-100.12$2_Y
   cell $not $not$dut.sv:104$5
@@ -118,18 +120,20 @@ module \abc9_test012_sub
   end
   attribute \src "dut.sv:99.1-103.26"
   process $proc$dut.sv:99$11
-    assign $0\latch \latch [3:0]
+    assign $0\latch[3:0] \latch [3:0]
+    assign $0\latch[7:4] \latch [7:4]
     attribute \src "dut.sv:100.5-103.26"
     switch $logic_not$dut.sv:100.9-100.12$2_Y
     attribute \src "dut.sv:100.5-103.26"
       case 1'1
-        assign $0\latch \io [3:0]
+        assign $0\latch[3:0] \io [3:0]
     attribute \src "dut.sv:100.5-103.26"
       case 
-        assign $0\latch \io [3:0]
+        assign $0\latch[7:4] \io [3:0]
     end
     sync always
-      update \latch [3:0] $0\latch
+      update \latch [3:0] $0\latch[3:0]
+      update \latch [7:4] $0\latch[7:4]
   end
   connect \io [3:0] $auto$rtlil.cc:3474:Mux$8
   connect \io [7:4] $auto$rtlil.cc:3474:Mux$10 [3:0]
@@ -502,6 +506,8 @@ module \abc9_test013
   wire $logic_not$dut.sv:90.18-90.21$6_Y
   wire width 6 $auto$rtlil.cc:3474:Mux$46
   attribute \src "dut.sv:84.1-88.26"
+  wire width 4 $0\latch[3:0]
+  attribute \src "dut.sv:84.1-88.26"
   wire width 4 $0\latch
   attribute \src "dut.sv:85.9-85.12"
   wire $logic_not$dut.sv:85.9-85.12$7_Y
@@ -544,18 +550,20 @@ module \abc9_test013
   end
   attribute \src "dut.sv:84.1-88.26"
   process $proc$dut.sv:84$47
-    assign $0\latch \latch
+    assign $0\latch 4'x
+    assign $0\latch[3:0] \latch
     attribute \src "dut.sv:85.5-88.26"
     switch $logic_not$dut.sv:85.9-85.12$7_Y
     attribute \src "dut.sv:85.5-88.26"
       case 1'1
-        assign $0\latch \io
+        assign $0\latch[3:0] \io
     attribute \src "dut.sv:85.5-88.26"
       case 
         assign $0\latch \io
     end
     sync always
-      update \latch $0\latch
+      update 4'x $0\latch
+      update \latch $0\latch[3:0]
   end
   connect \io $auto$rtlil.cc:3474:Mux$44
 end
