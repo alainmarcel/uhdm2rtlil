@@ -86,13 +86,13 @@ module \port_sign_extend
   wire width 2 signed \tmp9b
   attribute \src "dut.sv:58.19-58.23"
   wire width 3 signed \tmp8[0]
-  wire width 2 $auto$module.cpp:774:import_continuous_assign$2
-  wire width 2 $auto$module.cpp:774:import_continuous_assign$4
-  wire width 3 $auto$module.cpp:774:import_continuous_assign$6
-  wire width 3 $auto$module.cpp:774:import_continuous_assign$8
-  wire width 3 $auto$module.cpp:774:import_continuous_assign$10
-  wire width 3 $auto$module.cpp:774:import_continuous_assign$12
-  wire width 2 $auto$module.cpp:774:import_continuous_assign$14
+  wire width 2 $auto$module.cpp:783:import_continuous_assign$2
+  wire width 2 $auto$module.cpp:783:import_continuous_assign$4
+  wire width 3 $auto$module.cpp:783:import_continuous_assign$6
+  wire width 3 $auto$module.cpp:783:import_continuous_assign$8
+  wire width 3 $auto$module.cpp:783:import_continuous_assign$10
+  wire width 3 $auto$module.cpp:783:import_continuous_assign$12
+  wire width 2 $auto$module.cpp:783:import_continuous_assign$14
   wire signed $auto$uhdm2rtlil.cpp:821:import_module_hierarchy$16
   wire width 2 signed $auto$rtlil.cc:3388:Xor$18
   wire $auto$rtlil.cc:3346:ReduceBool$20
@@ -179,52 +179,52 @@ module \port_sign_extend
   end
   attribute \src "dut.sv:47.20-47.25"
   process $proc$dut.sv:47$1
-    assign $auto$module.cpp:774:import_continuous_assign$2 2'11
+    assign $auto$module.cpp:783:import_continuous_assign$2 2'11
     sync always
     sync init
-      update \tmp5a $auto$module.cpp:774:import_continuous_assign$2
+      update \tmp5a $auto$module.cpp:783:import_continuous_assign$2
   end
   attribute \src "dut.sv:48.20-48.25"
   process $proc$dut.sv:48$3
-    assign $auto$module.cpp:774:import_continuous_assign$4 2'01
+    assign $auto$module.cpp:783:import_continuous_assign$4 2'01
     sync always
     sync init
-      update \tmp5b $auto$module.cpp:774:import_continuous_assign$4
+      update \tmp5b $auto$module.cpp:783:import_continuous_assign$4
   end
   attribute \src "dut.sv:51.20-51.25"
   process $proc$dut.sv:51$5
-    assign $auto$module.cpp:774:import_continuous_assign$6 3'100
+    assign $auto$module.cpp:783:import_continuous_assign$6 3'100
     sync always
     sync init
-      update \tmp6a $auto$module.cpp:774:import_continuous_assign$6
+      update \tmp6a $auto$module.cpp:783:import_continuous_assign$6
   end
   attribute \src "dut.sv:52.20-52.25"
   process $proc$dut.sv:52$7
-    assign $auto$module.cpp:774:import_continuous_assign$8 3'001
+    assign $auto$module.cpp:783:import_continuous_assign$8 3'001
     sync always
     sync init
-      update \tmp6b $auto$module.cpp:774:import_continuous_assign$8
+      update \tmp6b $auto$module.cpp:783:import_continuous_assign$8
   end
   attribute \src "dut.sv:55.20-55.24"
   process $proc$dut.sv:55$9
-    assign $auto$module.cpp:774:import_continuous_assign$10 3'011
+    assign $auto$module.cpp:783:import_continuous_assign$10 3'011
     sync always
     sync init
-      update \tmp7 $auto$module.cpp:774:import_continuous_assign$10
+      update \tmp7 $auto$module.cpp:783:import_continuous_assign$10
   end
   attribute \src "dut.sv:62.20-62.25"
   process $proc$dut.sv:62$11
-    assign $auto$module.cpp:774:import_continuous_assign$12 3'100
+    assign $auto$module.cpp:783:import_continuous_assign$12 3'100
     sync always
     sync init
-      update \tmp9a $auto$module.cpp:774:import_continuous_assign$12
+      update \tmp9a $auto$module.cpp:783:import_continuous_assign$12
   end
   attribute \src "dut.sv:63.20-63.25"
   process $proc$dut.sv:63$13
-    assign $auto$module.cpp:774:import_continuous_assign$14 2'11
+    assign $auto$module.cpp:783:import_continuous_assign$14 2'11
     sync always
     sync init
-      update \tmp9b $auto$module.cpp:774:import_continuous_assign$14
+      update \tmp9b $auto$module.cpp:783:import_continuous_assign$14
   end
   attribute \src "dut.sv:59.2-59.27"
   process $proc$dut.sv:59$15
