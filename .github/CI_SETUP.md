@@ -35,15 +35,15 @@ Runs internal tests only (`run_all_tests.sh`). Depends on the `build` job.
 4. **Run Internal Tests**: Executes `test/run_all_tests.sh`
 5. **Upload Test Results**: Saves test output files
 
-#### Job: `test-all` (runs in parallel with `test`)
+#### Job: `test-yosys` (runs in parallel with `test`)
 
-Runs all tests including Yosys test suite (`run_all_tests.sh --all`). Depends on the `build` job.
+Runs the Yosys test suite (`run_all_tests.sh --yosys`). Depends on the `build` job. Combined with the `test` job, this provides full coverage without overlap.
 
 **Steps:**
-1. **Checkout**: Fetches code with submodules (for test scripts, test cases, and Yosys tests)
+1. **Checkout**: Fetches code with submodules (for test scripts and Yosys tests in `third_party/yosys/tests/`)
 2. **Install Runtime Dependencies**: Installs only the runtime libraries needed to execute binaries
 3. **Download/Extract Build Output**: Retrieves and unpacks build artifacts from the `build` job
-4. **Run All Tests**: Executes `test/run_all_tests.sh --all` (internal + Yosys tests)
+4. **Run Yosys Tests**: Executes `test/run_all_tests.sh --yosys`
 5. **Upload Test Results**: Saves test output files including `test/run/` directory
 
 **Dependencies installed (build job):**
@@ -77,7 +77,7 @@ another_failing_test
 
 After each CI run, the following artifacts are uploaded:
 - **test-results**: Contains `rtlil_diff.txt` and generated `.il` files from internal tests
-- **test-all-results**: Contains test output from all tests (internal + Yosys), including `test/run/` directory
+- **test-yosys-results**: Contains Yosys test output including `test/run/` directory
 - **build-output**: Contains compiled binaries (retained 1 day, used internally between jobs)
 
 **Retention:** 7 days (test results), 1 day (build output)

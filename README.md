@@ -1007,13 +1007,13 @@ GitHub Actions runs on every push and pull request to `main` and `develop` branc
 
 1. **`build`** — Compiles all components (Surelog, Yosys, UHDM Frontend) with ccache acceleration, then packages the binaries into an artifact for downstream jobs
 2. **`test`** — Downloads build artifacts and runs internal tests (`run_all_tests.sh`)
-3. **`test-all`** — Downloads build artifacts and runs the full test suite including Yosys tests (`run_all_tests.sh --all`)
+3. **`test-yosys`** — Downloads build artifacts and runs Yosys tests (`run_all_tests.sh --yosys`)
 
-The `test` and `test-all` jobs run **in parallel** after the build completes, providing fast feedback on internal tests while the comprehensive Yosys test suite runs alongside.
+The `test` and `test-yosys` jobs run **in parallel** after the build completes with no overlap, providing fast feedback on internal tests while the comprehensive Yosys test suite runs alongside.
 
 **Artifacts uploaded:**
 - **test-results** — RTLIL diffs, IL files, and logs from internal tests (7-day retention)
-- **test-all-results** — Full test output including Yosys test results in `test/run/` (7-day retention)
+- **test-yosys-results** — Yosys test results in `test/run/` (7-day retention)
 
 See `.github/workflows/ci.yml` for configuration details.
 

@@ -142,7 +142,7 @@ jobs:
           test/**/*.log
         retention-days: 7
 
-  test-all:
+  test-yosys:
     runs-on: ubuntu-24.04
     needs: build
 
@@ -171,16 +171,16 @@ jobs:
       run: |
         tar xzf build-output.tar.gz
 
-    - name: Run all tests (internal + Yosys)
+    - name: Run Yosys tests
       run: |
         cd test
-        bash run_all_tests.sh --all
+        bash run_all_tests.sh --yosys
 
-    - name: Upload test-all results
+    - name: Upload Yosys test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-all-results
+        name: test-yosys-results
         path: |
           test/**/rtlil_diff.txt
           test/**/*_from_uhdm.il
