@@ -28,10 +28,10 @@ module \always03
   wire $auto$opt_dff.cc:234:make_patterns_logic$22
   wire $auto$rtlil.cc:3388:Xor$17
   attribute \src "dut.sv:18.4-18.15"
-  wire $auto$process.cpp:5092:import_assignment_sync$14
+  wire $auto$process.cpp:5120:import_assignment_sync$14
   wire $auto$rtlil.cc:3386:And$7
   attribute \src "dut.sv:16.4-16.15"
-  wire $auto$process.cpp:5092:import_assignment_sync$8
+  wire $auto$process.cpp:5120:import_assignment_sync$8
   attribute \src "dut.sv:15.3-18.16"
   wire $auto$process_helper.cpp:88:create_not_cell$10
   attribute \src "dut.sv:15.3-18.16"
@@ -55,7 +55,7 @@ module \always03
     parameter \WIDTH 1
     connect \CLK \clock
     connect \EN $auto$opt_dff.cc:234:make_patterns_logic$22
-    connect \D $auto$process.cpp:5092:import_assignment_sync$14
+    connect \D $auto$process.cpp:5120:import_assignment_sync$14
     connect \Q \out3
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$23
@@ -65,7 +65,7 @@ module \always03
     connect \A { $auto$rtlil.cc:3386:And$7 $auto$process_helper.cpp:68:create_and_cell$12 }
     connect \Y $auto$opt_dff.cc:234:make_patterns_logic$22
   end
-  cell $and $auto$process.cpp:2564:import_statement_sync$6
+  cell $and $auto$process.cpp:2592:import_statement_sync$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -76,12 +76,12 @@ module \always03
     connect \Y $auto$rtlil.cc:3386:And$7
   end
   attribute \src "dut.sv:16.4-16.15"
-  cell $mux $auto$process.cpp:5094:import_assignment_sync$9
+  cell $mux $auto$process.cpp:5122:import_assignment_sync$9
     parameter \WIDTH 1
     connect \A 1'x
     connect \B \in6
     connect \S $auto$rtlil.cc:3386:And$7
-    connect \Y $auto$process.cpp:5092:import_assignment_sync$8
+    connect \Y $auto$process.cpp:5120:import_assignment_sync$8
   end
   attribute \src "dut.sv:15.3-18.16"
   cell $not $auto$process_helper.cpp:91:create_not_cell$11
@@ -103,12 +103,12 @@ module \always03
     connect \Y $auto$process_helper.cpp:68:create_and_cell$12
   end
   attribute \src "dut.sv:18.4-18.15"
-  cell $mux $auto$process.cpp:5094:import_assignment_sync$15
+  cell $mux $auto$process.cpp:5122:import_assignment_sync$15
     parameter \WIDTH 1
-    connect \A $auto$process.cpp:5092:import_assignment_sync$8
+    connect \A $auto$process.cpp:5120:import_assignment_sync$8
     connect \B \in7
     connect \S $auto$process_helper.cpp:68:create_and_cell$12
-    connect \Y $auto$process.cpp:5092:import_assignment_sync$14
+    connect \Y $auto$process.cpp:5120:import_assignment_sync$14
   end
   cell $xor $xor$dut.sv:19$16
     parameter \A_SIGNED 0

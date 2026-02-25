@@ -64,7 +64,6 @@ module gate(off, fib2);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:28.18-28.35" *)
   wire [31:0] \fib_wrap$func$dut.sv:28$3.o ;
-  wire [31:0] unused;
   \$_AND_  _052_ (
     .A(off[28]),
     .B(off[29]),
@@ -485,5 +484,4 @@ module gate(off, fib2);
     .Y(fib2[0])
   );
   assign \fib_wrap$func$dut.sv:28$3.o  = 32'hxxxxxxxx;
-  assign unused = 32'd0;
 endmodule

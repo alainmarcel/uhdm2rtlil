@@ -452,6 +452,7 @@ struct UhdmImporter {
     void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial_sync(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    void import_initial_interpreted(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     
     // TARGETED FIX: Memory for-loop processing
     bool is_memory_array(const UHDM::net* uhdm_net);
