@@ -1,0 +1,50 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -243,30 +243,30 @@
+ .Y(O[1])
+ );
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:13.1-28.10" *)
++(* top =  1  *)
+ module wandwor_test1(A, B, C, D, X, Y, Z);
+-(* src = "dut.sv:14.14-14.15" *)
++(* src = "dut.sv:13.23-13.24" *)
+ input [3:0] A;
+ wire [3:0] A;
+-(* src = "dut.sv:14.17-14.18" *)
++(* src = "dut.sv:13.26-13.27" *)
+ input [3:0] B;
+ wire [3:0] B;
+-(* src = "dut.sv:14.20-14.21" *)
++(* src = "dut.sv:13.29-13.30" *)
+ input [3:0] C;
+ wire [3:0] C;
+-(* src = "dut.sv:14.23-14.24" *)
++(* src = "dut.sv:13.32-13.33" *)
+ input [3:0] D;
+ wire [3:0] D;
+-(* src = "dut.sv:15.19-15.20" *)
++(* src = "dut.sv:13.35-13.36" *)
+ (* \wor  = 32'd1 *)
+ output [3:0] X;
+ wire [3:0] X;
+-(* src = "dut.sv:16.20-16.21" *)
++(* src = "dut.sv:13.38-13.39" *)
+ (* \wand  = 32'd1 *)
+ output [3:0] Y;
+ wire [3:0] Y;
+-(* src = "dut.sv:17.9-17.10" *)
++(* src = "dut.sv:13.41-13.42" *)
+ output Z;
+ wire Z;
+ wire _00_;
+@@ -486,8 +486,6 @@
+ .B({ 2'h0, _25_, 1'h0 }),
+ .Y(_35_)
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:19.14-23.3" *)
+ wandwor_bar bar_inst (
+ .I0({ A, B }),
+ .I1({ B, A }),

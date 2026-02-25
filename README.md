@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 140 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (138/140 tests functional)
+- **Total Tests**: 141 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (139/141 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -26,6 +26,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `wandwor` - `wand`/`wor` net types with multi-driver AND/OR resolution, module port connections, multi-bit variants
   - `rotate` - Barrel shift rotation with nested generate loops (5 levels x 32 bits = 160 `always @*` blocks), each assigning to a single bit of a generate-local wire via bit selects
   - `repwhile` - Memory initialization using `while` and `repeat` loops in functions (`mylog2` with `while`, `myexp2` with `repeat`), called from for-loop in initial block, producing 128 `$meminit_v2` cells
   - `asgn_expr_sv` - Full SystemVerilog increment/decrement test: pre/post-increment/decrement as statements and expressions, procedural assignment expressions, byte-width concatenation with `++w`/`w++`
@@ -269,6 +270,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Hierarchical naming (e.g., `gen_loop[0].signal`)
   - Net and variable imports from generate scopes
 - **Packages**: Import statements, package parameters (including localparam/parameter from enum constants), package-scoped typedefs and enum types, struct types, functions
+- **Net Types**: `wand` and `wor` (wire-AND and wire-OR) with proper multi-driver resolution
 - **Primitives**: Gate arrays (and, or, xor, nand, nor, xnor, not, buf)
 - **Advanced Features**: 
   - Interfaces with automatic expansion to individual signals
@@ -379,7 +381,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (140 total - 138 passing, 2 known issues)
+### Current Test Cases (141 total - 139 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -545,6 +547,7 @@ The Yosys test runner:
 - **vector_index** - Bit-select assignments on vectors (tests `assign wire[bit] = value` syntax)
 - **constmsk_test** - OR reduction of concatenations with constant bits (tests `|{A[3], 1'b0, A[1]}` and `|{A[2], 1'b1, A[0]}`)
 - **rotate** - Barrel shift rotation (from Amber23 ARM core) with nested generate loops (5 levels x 32 bits), bit-select assignments in `always @*` blocks, and `wrap()` function for circular indexing
+- **wandwor** - `wand` and `wor` net types with multi-driver resolution via AND/OR logic, module instance port connections, and multi-bit variants
 
 ### Test Management
 
@@ -565,7 +568,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 138 of 140 tests are passing or working as expected
+- 139 of 141 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -619,12 +622,19 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **140 test cases**:
+The UHDM frontend test suite includes **141 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **138 tests passing** - with 2 known failures documented in failing_tests.txt
+- **139 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Wand/Wor Net Type Support
+- Added `wand` (wire-AND) and `wor` (wire-OR) net type propagation from UHDM to RTLIL
+- Surelog encodes these as `VpiNetType()` values `vpiWand` (2) and `vpiWor` (3) on `logic_net` objects
+- Sets `\wand`/`\wor` boolean attributes on RTLIL wires, enabling Yosys hierarchy pass to resolve multi-driver nets with AND/OR logic
+- Handles both the early-return path (net already created as port) and normal net creation path in `import_net()`
+- Test covers single-bit and multi-bit variants, continuous assignments and module port connections
 
 ### Compile-Time Function Evaluation with While/Repeat Loops
 - Extended compile-time function evaluator (`evaluate_function_stmt`) to support `vpiWhile` and `vpiRepeat` loop constructs

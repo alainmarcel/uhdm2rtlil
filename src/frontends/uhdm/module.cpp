@@ -352,6 +352,11 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
             log("UHDM: Net '%s' already exists as port, updating signedness from net VpiSigned\n", netname.c_str());
             w->is_signed = true;
         }
+        int net_type = uhdm_net->VpiNetType();
+        if (net_type == vpiWand)
+            w->set_bool_attribute(ID::wand);
+        else if (net_type == vpiWor)
+            w->set_bool_attribute(ID::wor);
         log_flush();
         return;
     }
@@ -635,6 +640,10 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         if (instance_output_driven_nets.count(netname) == 0) {
             w->attributes[ID::reg] = RTLIL::Const(1);
         }
+    } else if (net_type == vpiWand) {
+        w->set_bool_attribute(ID::wand);
+    } else if (net_type == vpiWor) {
+        w->set_bool_attribute(ID::wor);
     }
     
     // Store in maps
