@@ -7,15 +7,15 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-24.04
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         submodules: recursive
-    
+
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -38,8 +38,8 @@ jobs:
           libfl-dev \
           libunwind-dev \
           libgoogle-perftools-dev \
-          ccache 
-    
+          ccache
+
     - name: Setup GCC-9
       shell: bash
       run: |
@@ -48,30 +48,17 @@ jobs:
         sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
         sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
         sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
-    
+
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ github.job }}-${{ matrix.os }}
+        key: build-${{ runner.os }}
         max-size: 2G
-        
-    # Temporarily disabled - cache restore
-    #- name: Cache build dependencies
-    #  uses: actions/cache@v4
-    #  with:
-    #    path: |
-    #      build/
-    #      third_party/Surelog/build/
-    #      third_party/yosys/
-    #      ~/.cache/pip
-    #    key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', '**/Makefile', '**/requirements.txt') }}
-    #    restore-keys: |
-    #      ${{ runner.os }}-build-
-    
+
     - name: Install Python dependencies
       run: |
         pip3 install orderedmultidict
-    
+
     - name: Setup ccache environment
       run: |
         echo "CC=ccache gcc" >> $GITHUB_ENV
@@ -80,23 +67,69 @@ jobs:
         ccache --set-config=max_size=2G
         ccache --set-config=compression=true
         ccache --zero-stats
-    
+
     - name: Build project
       run: |
         # Clean any potential cmake cache that might have wrong compiler info
         rm -rf build/CMakeCache.txt build/CMakeFiles/
         # Explicitly pass compiler to make/cmake
         make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
-        
+
     - name: Print ccache statistics
       run: |
         ccache --show-stats
-    
-    - name: Run tests
+
+    - name: Package build artifacts
+      run: |
+        # Package the minimal set of binaries needed for testing
+        tar czf build-output.tar.gz \
+          out/current/bin/yosys \
+          out/current/share/ \
+          build/uhdm2rtlil.so \
+          build/third_party/Surelog/bin/ \
+          build/third_party/Surelog/third_party/UHDM/bin/
+
+    - name: Upload build output
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        path: build-output.tar.gz
+        retention-days: 1
+
+  test:
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install runtime dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libtcmalloc-minimal4 \
+          tcl \
+          libffi8 \
+          libreadline8 \
+          python3
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+
+    - name: Extract build output
+      run: |
+        tar xzf build-output.tar.gz
+
+    - name: Run internal tests
       run: |
         cd test
         bash run_all_tests.sh
-    
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -108,13 +141,50 @@ jobs:
           test/**/*_from_verilog.il
           test/**/*.log
         retention-days: 7
-    
-    - name: Upload build artifacts
-      if: success()
+
+  test-all:
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install runtime dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libtcmalloc-minimal4 \
+          tcl \
+          libffi8 \
+          libreadline8 \
+          python3
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+
+    - name: Extract build output
+      run: |
+        tar xzf build-output.tar.gz
+
+    - name: Run all tests (internal + Yosys)
+      run: |
+        cd test
+        bash run_all_tests.sh --all
+
+    - name: Upload test-all results
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts
+        name: test-all-results
         path: |
-          out/
-          build/bin/
+          test/**/rtlil_diff.txt
+          test/**/*_from_uhdm.il
+          test/**/*_from_verilog.il
+          test/**/*.log
+          test/run/
         retention-days: 7

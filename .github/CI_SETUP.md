@@ -6,27 +6,56 @@ This directory contains GitHub Actions workflows for continuous integration.
 
 ### CI Workflow (`.github/workflows/ci.yml`)
 
-Runs on Ubuntu 24.04 with latest development environment for every push and pull request to `main` and `develop` branches.
+Runs on Ubuntu 24.04 for every push and pull request to `main` and `develop` branches. The workflow has three jobs: a shared **build** job followed by two parallel **test** jobs.
+
+#### Job: `build`
+
+Compiles the entire project and uploads build artifacts for the test jobs.
 
 **Steps:**
 1. **Checkout**: Fetches code with submodules
 2. **Install Dependencies**: Installs required system packages including ccache
-3. **Setup ccache**: Configures compiler caching for faster rebuilds
-4. **Cache Build Dependencies**: Caches build artifacts and dependencies between runs
+3. **Setup GCC-9**: Installs and configures gcc-9
+4. **Setup ccache**: Configures compiler caching for faster rebuilds
 5. **Install Python Dependencies**: Installs required Python packages
 6. **Setup ccache Environment**: Configures ccache compiler wrappers
 7. **Build**: Compiles the entire project using `make -j4` with ccache acceleration
 8. **Print ccache Statistics**: Shows cache hit/miss statistics
-9. **Test**: Runs all tests using `test/run_all_tests.sh`
-10. **Upload Artifacts**: Saves test results and build artifacts
+9. **Package Build Artifacts**: Creates a tarball of binaries needed for testing (yosys, uhdm2rtlil.so, surelog, uhdm-dump)
+10. **Upload Build Output**: Uploads the tarball as an artifact for downstream jobs
 
-**Dependencies installed:**
+#### Job: `test` (runs in parallel with `test-all`)
+
+Runs internal tests only (`run_all_tests.sh`). Depends on the `build` job.
+
+**Steps:**
+1. **Checkout**: Fetches code with submodules (for test scripts and test cases)
+2. **Install Runtime Dependencies**: Installs only the runtime libraries needed to execute binaries
+3. **Download/Extract Build Output**: Retrieves and unpacks build artifacts from the `build` job
+4. **Run Internal Tests**: Executes `test/run_all_tests.sh`
+5. **Upload Test Results**: Saves test output files
+
+#### Job: `test-all` (runs in parallel with `test`)
+
+Runs all tests including Yosys test suite (`run_all_tests.sh --all`). Depends on the `build` job.
+
+**Steps:**
+1. **Checkout**: Fetches code with submodules (for test scripts, test cases, and Yosys tests)
+2. **Install Runtime Dependencies**: Installs only the runtime libraries needed to execute binaries
+3. **Download/Extract Build Output**: Retrieves and unpacks build artifacts from the `build` job
+4. **Run All Tests**: Executes `test/run_all_tests.sh --all` (internal + Yosys tests)
+5. **Upload Test Results**: Saves test output files including `test/run/` directory
+
+**Dependencies installed (build job):**
 - Build tools: `build-essential`, `cmake`, `git`, `ccache` (latest versions from Ubuntu 24.04)
 - Languages: `python3`, `python3-pip`
 - Libraries: `libssl-dev`, `zlib1g-dev`, `libtcmalloc-minimal4`, `uuid-dev`
 - Tools: `tcl-dev`, `libffi-dev`, `libreadline-dev`, `bison`, `flex`
 - Performance: `libunwind-dev`, `libgoogle-perftools-dev`
 - Python packages: `orderedmultidict`
+
+**Dependencies installed (test jobs):**
+- Runtime only: `libtcmalloc-minimal4`, `tcl`, `libffi8`, `libreadline8`, `python3`
 
 ## Test Management
 
@@ -47,10 +76,11 @@ another_failing_test
 ### Test Results
 
 After each CI run, the following artifacts are uploaded:
-- **test-results**: Contains `rtlil_diff.txt` and generated `.il` files
-- **build-artifacts**: Contains compiled binaries
+- **test-results**: Contains `rtlil_diff.txt` and generated `.il` files from internal tests
+- **test-all-results**: Contains test output from all tests (internal + Yosys), including `test/run/` directory
+- **build-output**: Contains compiled binaries (retained 1 day, used internally between jobs)
 
-**Retention:** 7 days
+**Retention:** 7 days (test results), 1 day (build output)
 
 ## Local Testing
 
@@ -58,6 +88,9 @@ To run the same tests locally:
 ```bash
 cd test
 bash run_all_tests.sh
+
+# Run all tests (internal + Yosys)
+bash run_all_tests.sh --all
 ```
 
 To see which tests are marked as failing:
@@ -76,16 +109,11 @@ The CI uses multiple caching layers to speed up builds:
    - Automatic cache management across CI runs
    - Statistics printed after each build
 
-2. **GitHub Actions Cache**: Caches build artifacts and dependencies
-   - Build directories: `build/`, `third_party/Surelog/build/`, `third_party/yosys/`
-   - Python packages: `~/.cache/pip`
-   - Cache key based on CMakeLists.txt, Makefile, and requirements.txt changes
-
 ### Performance Improvements
 
 - **First run**: ~45-60 minutes (full compilation)
 - **Subsequent runs**: ~5-15 minutes (with cache hits)
-- **Parallel jobs**: Limited to 4 to prevent resource exhaustion
+- **Parallel jobs**: Build limited to 4 cores; test and test-all run in parallel after build completes
 
 ## Troubleshooting
 
@@ -122,6 +150,9 @@ make -j4
 # Show ccache stats (optional)
 ccache --show-stats
 
-# Test
+# Run internal tests
 cd test && bash run_all_tests.sh
+
+# Run all tests (internal + Yosys)
+cd test && bash run_all_tests.sh --all
 ```

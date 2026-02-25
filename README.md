@@ -1003,11 +1003,17 @@ This "vibe coding" approach has proven highly effective, enabling the implementa
 
 ## Continuous Integration
 
-GitHub Actions automatically:
-- Builds all components (Surelog, Yosys, UHDM Frontend)
-- Runs comprehensive test suite
-- Uploads test results and build artifacts
-- Provides clear pass/fail status
+GitHub Actions runs on every push and pull request to `main` and `develop` branches. The CI workflow has three jobs:
+
+1. **`build`** — Compiles all components (Surelog, Yosys, UHDM Frontend) with ccache acceleration, then packages the binaries into an artifact for downstream jobs
+2. **`test`** — Downloads build artifacts and runs internal tests (`run_all_tests.sh`)
+3. **`test-all`** — Downloads build artifacts and runs the full test suite including Yosys tests (`run_all_tests.sh --all`)
+
+The `test` and `test-all` jobs run **in parallel** after the build completes, providing fast feedback on internal tests while the comprehensive Yosys test suite runs alongside.
+
+**Artifacts uploaded:**
+- **test-results** — RTLIL diffs, IL files, and logs from internal tests (7-day retention)
+- **test-all-results** — Full test output including Yosys test results in `test/run/` (7-day retention)
 
 See `.github/workflows/ci.yml` for configuration details.
 
