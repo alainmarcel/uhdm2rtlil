@@ -9,9 +9,6 @@ module \gate
   wire width 32 output 2 signed \fib0
   attribute \src "dut.sv:2.16-2.20"
   wire width 32 output 3 signed \fib1
-  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  attribute \init 0
-  wire width 32 \unused
   attribute \nosync 1
   attribute \src "dut.sv:26.18-26.35"
   wire width 32 \fib_wrap$func$dut.sv:26$12.o

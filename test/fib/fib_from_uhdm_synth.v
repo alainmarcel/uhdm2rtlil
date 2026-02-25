@@ -374,7 +374,6 @@ module gate(off, fib0, fib1, fib2, fib3, fib4, fib5, fib6, fib7, fib8, fib9);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:46.18-46.35" *)
   wire [31:0] \fib_wrap$func$dut.sv:46$84.o ;
-  wire [31:0] unused;
   \$_NAND_  _308_ (
     .A(off[19]),
     .B(off[20]),
@@ -3089,7 +3088,6 @@ module gate(off, fib0, fib1, fib2, fib3, fib4, fib5, fib6, fib7, fib8, fib9);
   assign \fib_wrap$func$dut.sv:39$21.o  = 32'hxxxxxxxx;
   assign \fib_wrap$func$dut.sv:42$48.o  = 32'hxxxxxxxx;
   assign \fib_wrap$func$dut.sv:46$84.o  = 32'hxxxxxxxx;
-  assign unused = 32'd0;
   assign fib9[4:0] = { fib3[4:1], off[0] };
   assign fib8[3:0] = { fib5[3:2], fib1[1:0] };
   assign fib7[2:0] = { fib5[2], fib1[1:0] };

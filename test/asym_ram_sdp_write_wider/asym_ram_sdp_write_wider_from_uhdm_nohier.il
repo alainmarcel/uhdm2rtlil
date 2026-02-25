@@ -65,7 +65,7 @@ module \asym_ram_sdp_write_wider
     connect \ADDR \addrB
     connect \DATA \memrd_RAM_DATA
   end
-  cell $and $auto$process.cpp:2421:import_statement_with_loop_vars$3
+  cell $and $auto$process.cpp:2449:import_statement_with_loop_vars$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -75,7 +75,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3386:And$4
   end
-  cell $and $auto$process.cpp:2421:import_statement_with_loop_vars$5
+  cell $and $auto$process.cpp:2449:import_statement_with_loop_vars$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -85,7 +85,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3386:And$6
   end
-  cell $and $auto$process.cpp:2421:import_statement_with_loop_vars$7
+  cell $and $auto$process.cpp:2449:import_statement_with_loop_vars$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -95,7 +95,7 @@ module \asym_ram_sdp_write_wider
     connect \B \weA
     connect \Y $auto$rtlil.cc:3386:And$8
   end
-  cell $and $auto$process.cpp:2421:import_statement_with_loop_vars$9
+  cell $and $auto$process.cpp:2449:import_statement_with_loop_vars$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1

@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 141 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (139/141 tests functional)
+- **Total Tests**: 142 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (140/142 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -26,6 +26,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `forloops` - Equivalence check failure (expected)
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
   - `wandwor` - `wand`/`wor` net types with multi-driver AND/OR resolution, module port connections, multi-bit variants
   - `rotate` - Barrel shift rotation with nested generate loops (5 levels x 32 bits = 160 `always @*` blocks), each assigning to a single bit of a generate-local wire via bit selects
   - `repwhile` - Memory initialization using `while` and `repeat` loops in functions (`mylog2` with `while`, `myexp2` with `repeat`), called from for-loop in initial block, producing 128 `$meminit_v2` cells
@@ -44,6 +45,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
 - **Recent Fixes**:
+  - Unnamed block variable declarations with proper scoping via interpreter-based evaluation: inner block-local variables shadow outer/module-level variables correctly ✅
   - Fixed temp wire naming collision in generate scopes: bit/part-select assignments in nested generate loops (e.g., `out[j]` in 160 always blocks) now use scope-qualified temp wire names with bit ranges (`$0\netgen[0].out[3:3]`) to avoid `$0\` name collisions across always blocks ✅
   - Compile-time function evaluation now supports `while` and `repeat` loop constructs, enabling functions like `mylog2` (using `while`) and `myexp2` (using `repeat`) to be evaluated at compile time ✅
   - Fixed for-loop increment handling: `i = i + 1` assignment form now recognized in addition to `i++` post-increment ✅
@@ -261,7 +263,7 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
   - Hierarchical signal references
   - Parameter references with HEX/BIN/DEC formats
   - Loop variable substitution in generate blocks
-- **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, repeat loops with compile-time unrolling, while loops in compile-time function evaluation, named begin blocks
+- **Control Flow**: If-else statements, case statements (including constant evaluation in initial blocks), for loops with compile-time unrolling and variable substitution, repeat loops with compile-time unrolling, while loops in compile-time function evaluation, named and unnamed begin blocks with local variable scoping
 - **Memory**: Array inference, memory initialization, for-loop memory initialization patterns, asymmetric port RAM with different read/write widths
 - **Shift Registers**: Automatic detection and optimization of shift register patterns (e.g., `M[i+1] <= M[i]`)
 - **Generate Blocks**: 
@@ -381,7 +383,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (141 total - 139 passing, 2 known issues)
+### Current Test Cases (142 total - 140 passing, 2 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -473,6 +475,7 @@ The Yosys test runner:
 - **scope_func** - Function calls with variable inputs in always blocks (tests function scope resolution)
 - **scopes** - Functions, tasks, and nested blocks with variable shadowing (tests complex scoping)
 - **scope_task** - Tasks with nested named blocks and local variables (tests task inlining in always blocks)
+- **unnamed_block_decl** - Unnamed begin/end blocks with local integer variable declarations and variable scoping (inner z shadows output z, compile-time evaluated to z=5)
 
 #### Arrays & Memory
 - **arrays01** - 4-bit x16 array with synchronous read and write (tests memory inference)
@@ -568,7 +571,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 139 of 141 tests are passing or working as expected
+- 140 of 142 tests are passing or working as expected
 - 2 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
@@ -622,12 +625,23 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **141 test cases**:
+The UHDM frontend test suite includes **142 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **139 tests passing** - with 2 known failures documented in failing_tests.txt
+- **140 tests passing** - with 2 known failures documented in failing_tests.txt
 
 ## Recent Improvements
+
+### Unnamed Block Variable Declaration Support
+- Added interpreter-based evaluation path for initial blocks containing block-local variable declarations
+- `block_has_local_variables()` helper recursively detects `Variables()` on `begin`/`named_begin` blocks in the UHDM statement tree
+- Extended `interpret_statement()` in `interpreter.cpp` to save/restore block-local variables for proper scoping:
+  - Before entering a begin block: saves existing variable values and initializes block-local vars to 0
+  - After exiting: restores saved values or erases block-local vars that didn't exist in the outer scope
+- New `import_initial_interpreted()` method runs the interpreter, then creates `STi` sync actions for variables that correspond to module-level wires
+- Handles variable shadowing: inner block's `integer z` correctly shadows the module output `z`, with the shadow removed on block exit
+- `import_initial()` now has three routing strategies: interpreter (block-local vars), comb (case/if), sync (default)
+- Test `unnamed_block_decl` verifies the complete scoping chain produces `z = 5` through nested begin blocks
 
 ### Wand/Wor Net Type Support
 - Added `wand` (wire-AND) and `wor` (wire-OR) net type propagation from UHDM to RTLIL

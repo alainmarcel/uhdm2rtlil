@@ -1663,6 +1663,29 @@ static bool statement_contains_control_flow(const any* stmt) {
     return false;
 }
 
+// Helper: check if a UHDM statement tree contains block-local variable declarations
+// that require the interpreter approach for proper scoping
+static bool block_has_local_variables(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Variables() && !b->Variables()->empty()) return true;
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (block_has_local_variables(child)) return true;
+        }
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Variables() && !b->Variables()->empty()) return true;
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (block_has_local_variables(child)) return true;
+        }
+    }
+    return false;
+}
+
 void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
         log("    Importing initial block\n");
@@ -1671,17 +1694,22 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     in_initial_block = true;
 
     // Choose import strategy based on initial block content:
-    // - Default: sync approach (handles simple assignments and for-loop unrolling)
+    // - Block-local variables: interpreter approach (compile-time evaluation with scoping)
     // - Complex control flow (case/if): comb approach (creates switch rules)
     //   The sync approach can't handle case/if because it creates mux cells
     //   which cause "Failed to get a constant init value" errors in PROC_INIT
+    // - Default: sync approach (handles simple assignments and for-loop unrolling)
     bool use_comb_approach = false;
+    bool has_local_vars = false;
     if (auto stmt = uhdm_process->Stmt()) {
         use_comb_approach = statement_contains_control_flow(stmt);
+        has_local_vars = block_has_local_variables(stmt);
     }
 
     if (use_comb_approach) {
         import_initial_comb(uhdm_process, yosys_proc);
+    } else if (has_local_vars) {
+        import_initial_interpreted(uhdm_process, yosys_proc);
     } else {
         import_initial_sync(uhdm_process, yosys_proc);
     }
@@ -6533,6 +6561,47 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
             }
         }
     }
+}
+
+// Import initial block using interpreter approach (handles block-local variable declarations)
+void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
+    log("    Importing initial block (interpreter approach - has block-local variables)\n");
+
+    // Create the "sync always" rule (empty, required by proc pass)
+    RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
+    sync_always->type = RTLIL::SyncType::STa;
+    sync_always->signal = RTLIL::SigSpec();
+    yosys_proc->syncs.push_back(sync_always);
+
+    // Create the init sync rule
+    RTLIL::SyncRule* sync_init = new RTLIL::SyncRule();
+    sync_init->type = RTLIL::SyncType::STi;
+    sync_init->signal = RTLIL::SigSpec();
+
+    // Run the interpreter
+    std::map<std::string, int64_t> variables;
+    std::map<std::string, std::vector<int64_t>> arrays;
+    bool break_flag = false, continue_flag = false;
+
+    if (auto stmt = uhdm_process->Stmt()) {
+        interpret_statement(stmt, variables, arrays, break_flag, continue_flag);
+    }
+
+    // For each variable that maps to a module-level signal, create an init action
+    for (auto& [name, value] : variables) {
+        RTLIL::Wire* wire = module->wire(RTLIL::escape_id(name));
+        if (wire) {
+            RTLIL::SigSpec lhs(wire);
+            RTLIL::SigSpec rhs(RTLIL::Const((int32_t)value, wire->width));
+            sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
+            if (mode_debug) {
+                log("      Initial assignment: %s = %lld (width %d)\n",
+                    name.c_str(), (long long)value, wire->width);
+            }
+        }
+    }
+
+    yosys_proc->syncs.push_back(sync_init);
 }
 
 YOSYS_NAMESPACE_END

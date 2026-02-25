@@ -317,22 +317,60 @@ void UhdmImporter::interpret_statement(const any* stmt,
         
         case uhdmbegin: {
             const begin* begin_block = any_cast<const begin*>(stmt);
+            // Save and initialize block-local variables for proper scoping
+            std::map<std::string, std::pair<bool, int64_t>> saved_vars;
+            if (begin_block->Variables()) {
+                for (auto var : *begin_block->Variables()) {
+                    std::string name = std::string(var->VpiName());
+                    if (variables.count(name))
+                        saved_vars[name] = {true, variables[name]};
+                    else
+                        saved_vars[name] = {false, 0};
+                    variables[name] = 0;
+                }
+            }
             if (begin_block->Stmts()) {
                 for (auto sub_stmt : *begin_block->Stmts()) {
                     interpret_statement(sub_stmt, variables, arrays, break_flag, continue_flag);
-                    if (break_flag || continue_flag) return;
+                    if (break_flag || continue_flag) break;
                 }
+            }
+            // Restore scoping
+            for (auto& [name, saved] : saved_vars) {
+                if (saved.first)
+                    variables[name] = saved.second;
+                else
+                    variables.erase(name);
             }
             break;
         }
         
         case uhdmnamed_begin: {
             const named_begin* named_block = any_cast<const named_begin*>(stmt);
+            // Save and initialize block-local variables for proper scoping
+            std::map<std::string, std::pair<bool, int64_t>> saved_vars;
+            if (named_block->Variables()) {
+                for (auto var : *named_block->Variables()) {
+                    std::string name = std::string(var->VpiName());
+                    if (variables.count(name))
+                        saved_vars[name] = {true, variables[name]};
+                    else
+                        saved_vars[name] = {false, 0};
+                    variables[name] = 0;
+                }
+            }
             if (named_block->Stmts()) {
                 for (auto sub_stmt : *named_block->Stmts()) {
                     interpret_statement(sub_stmt, variables, arrays, break_flag, continue_flag);
-                    if (break_flag || continue_flag) return;
+                    if (break_flag || continue_flag) break;
                 }
+            }
+            // Restore scoping
+            for (auto& [name, saved] : saved_vars) {
+                if (saved.first)
+                    variables[name] = saved.second;
+                else
+                    variables.erase(name);
             }
             break;
         }

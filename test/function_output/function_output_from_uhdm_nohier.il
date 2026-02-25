@@ -9,7 +9,6 @@ module \gate
   wire width 32 output 2 signed \fib0
   attribute \src "dut.sv:2.16-2.20"
   wire width 32 output 3 signed \fib1
-  wire width 32 \unused
   wire width 32 $fib_wrap$func$dut.sv:25$0_result
   attribute \src "dut.sv:25.18-25.35"
   wire width 32 $0\fib_wrap$func$dut.sv:25$3.k$5
@@ -68,7 +67,6 @@ module \gate
   process $proc$dut.sv:23$1
     sync always
     sync init
-      update \unused 0
   end
   attribute \src "dut.sv:25.18-25.35"
   process $proc$dut.sv:25$4

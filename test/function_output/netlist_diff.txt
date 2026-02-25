@@ -19,7 +19,7 @@
  output [31:0] fib1;
  wire [31:0] fib1;
  wire _000_;
-@@ -64,11 +64,12 @@
+@@ -64,11 +64,11 @@
  wire _050_;
  wire _051_;
  (* nosync = 32'd1 *)
@@ -32,11 +32,10 @@
 -wire [31:0] \fib_wrap$func$dut.sv:26$3.o ;
 +(* src = "dut.sv:26.18-26.35" *)
 +wire [31:0] \fib_wrap$func$dut.sv:26$12.o ;
-+wire [31:0] unused;
  \$_AND_  _052_ (
  .A(off[28]),
  .B(off[29]),
-@@ -488,7 +489,8 @@
+@@ -488,7 +488,7 @@
  .A(off[0]),
  .Y(fib1[0])
  );
@@ -44,6 +43,5 @@
 -assign \fib_wrap$func$dut.sv:25$1.o  = 32'hxxxxxxxx;
 +assign \fib_wrap$func$dut.sv:25$3.o  = 32'hxxxxxxxx;
 +assign \fib_wrap$func$dut.sv:26$12.o  = 32'hxxxxxxxx;
-+assign unused = 32'd0;
  assign fib0 = off;
  endmodule
