@@ -18,9 +18,9 @@ module \initval
   wire width 4 $auto$module.cpp:774:import_continuous_assign$4
   wire width 4 $auto$module.cpp:774:import_continuous_assign$6
   attribute \src "dut.sv:6.3-7.26"
-  wire width 2 $0\foo
+  wire width 2 $0\foo[1:0]
   attribute \src "dut.sv:17.3-18.24"
-  wire width 3 $0\asdf
+  wire width 3 $0\asdf[2:0]
   attribute \src "dut.sv:2.13-2.16"
   process $proc$dut.sv:2$1
     assign $auto$module.cpp:774:import_continuous_assign$2 4'0000
@@ -44,10 +44,10 @@ module \initval
   end
   attribute \src "dut.sv:6.3-7.26"
   process $proc$dut.sv:6$7
-    assign $0\foo \foo [1:0]
-    assign $0\foo \bar [1:0]
+    assign $0\foo[1:0] \foo [1:0]
+    assign $0\foo[1:0] \bar [1:0]
     sync always
-      update \foo [1:0] $0\foo
+      update \foo [1:0] $0\foo[1:0]
   end
   attribute \src "dut.sv:9.3-10.26"
   attribute \always_ff 1
@@ -69,9 +69,9 @@ module \initval
   end
   attribute \src "dut.sv:17.3-18.24"
   process $proc$dut.sv:17$11
-    assign $0\asdf \asdf [2:0]
-    assign $0\asdf 3'111
+    assign $0\asdf[2:0] \asdf [2:0]
+    assign $0\asdf[2:0] 3'111
     sync always
-      update \asdf [2:0] $0\asdf
+      update \asdf [2:0] $0\asdf[2:0]
   end
 end

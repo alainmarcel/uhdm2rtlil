@@ -14,14 +14,14 @@ module \mem2reg_test1
   wire width 4 \memrd_array_DATA
   wire width 4 \memrd_array_DATA_8
   wire width 4 \memrd_array_DATA_1
-  wire width 4 \memrd_array_DATA_2
-  attribute \unused_bits "0 1 2 3"
-  wire width 4 \memrd_array_DATA_3
   attribute \unused_bits "0 1 2 3"
   wire width 4 \memrd_array_DATA_7
-  wire width 4 \memrd_array_DATA_4
-  wire width 4 \memrd_array_DATA_5
+  wire width 4 \memrd_array_DATA_2
   wire width 4 \memrd_array_DATA_6
+  attribute \unused_bits "0 1 2 3"
+  wire width 4 \memrd_array_DATA_3
+  wire width 4 \memrd_array_DATA_5
+  wire width 4 \memrd_array_DATA_4
   attribute \src "dut.sv:7.11-7.16"
   memory width 4 size 3 \array
   attribute \src "dut.sv:14.19-14.27"
@@ -37,12 +37,12 @@ module \mem2reg_test1
     connect \ADDR \out_addr
     connect \DATA \memrd_array_DATA_8
   end
-  connect \memrd_array_DATA_6 4'1010
-  connect \memrd_array_DATA_5 4'0111
   connect \memrd_array_DATA_4 4'0000
-  connect \memrd_array_DATA_7 \in_data
+  connect \memrd_array_DATA_5 4'0111
   connect \memrd_array_DATA_3 \in_data
+  connect \memrd_array_DATA_6 4'1010
   connect \memrd_array_DATA_2 4'1010
+  connect \memrd_array_DATA_7 \in_data
   connect \memrd_array_DATA_1 4'0111
   connect \memrd_array_DATA 4'0000
   connect \out_data \memrd_array_DATA_8

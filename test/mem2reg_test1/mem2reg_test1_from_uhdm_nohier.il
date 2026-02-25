@@ -13,10 +13,16 @@ module \mem2reg_test1
   wire width 4 output 4 \out_data
   wire width 4 \memrd_array_DATA
   attribute \src "dut.sv:9.1-15.4"
-  wire width 4 $0\array
+  wire width 4 $0\memrd_array_DATA[3:0]
   wire width 4 \memrd_array_DATA_1
+  attribute \src "dut.sv:9.1-15.4"
+  wire width 4 $0\memrd_array_DATA_1[3:0]
   wire width 4 \memrd_array_DATA_2
+  attribute \src "dut.sv:9.1-15.4"
+  wire width 4 $0\memrd_array_DATA_2[3:0]
   wire width 4 \memrd_array_DATA_3
+  attribute \src "dut.sv:9.1-15.4"
+  wire width 4 $0\memrd_array_DATA_3[3:0]
   attribute \src "dut.sv:9.1-15.4"
   wire width 4 $0\out_data
   wire width 4 \memrd_array_DATA_4
@@ -145,7 +151,10 @@ module \mem2reg_test1
   end
   attribute \src "dut.sv:9.1-15.4"
   process $proc$dut.sv:9$1
-    assign $0\array \memrd_array_DATA
+    assign $0\memrd_array_DATA[3:0] \memrd_array_DATA
+    assign $0\memrd_array_DATA_1[3:0] \memrd_array_DATA_1
+    assign $0\memrd_array_DATA_2[3:0] \memrd_array_DATA_2
+    assign $0\memrd_array_DATA_3[3:0] \memrd_array_DATA_3
     assign $0\out_data \out_data
     assign \memrd_array_DATA_4 4'0000
     assign \memrd_array_DATA_5 4'0111
@@ -153,7 +162,10 @@ module \mem2reg_test1
     assign \memrd_array_DATA_7 \in_data
     assign $0\out_data \memrd_array_DATA_8
     sync always
-      update \memrd_array_DATA $0\array
+      update \memrd_array_DATA $0\memrd_array_DATA[3:0]
+      update \memrd_array_DATA_1 $0\memrd_array_DATA_1[3:0]
+      update \memrd_array_DATA_2 $0\memrd_array_DATA_2[3:0]
+      update \memrd_array_DATA_3 $0\memrd_array_DATA_3[3:0]
       update \out_data $0\out_data
   end
 end
