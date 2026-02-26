@@ -193,14 +193,13 @@ EOF
     fi
     
     # Run Surelog to generate UHDM
-    surelog_success=false
-    if $SURELOG_BIN -parse -d uhdm dut.sv > surelog.log 2>&1; then
-        surelog_success=true
-    fi
-    
+    # Note: Surelog may return non-zero for elaboration warnings/errors (e.g. $error
+    # assertions) but still produce a valid UHDM file, so check for the file instead
+    $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm dut.sv > surelog.log 2>&1 || true
+
     # Run UHDM frontend
     uhdm_success=false
-    if [ "$surelog_success" = true ] && [ -f "slpp_all/surelog.uhdm" ]; then
+    if [ -f "slpp_all/surelog.uhdm" ]; then
         if $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1; then
             uhdm_success=true
         fi
