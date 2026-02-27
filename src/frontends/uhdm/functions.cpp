@@ -13,6 +13,7 @@
 #include <uhdm/operation.h>
 #include <uhdm/constant.h>
 #include <uhdm/ref_obj.h>
+#include <uhdm/bit_select.h>
 #include <uhdm/if_else.h>
 #include <uhdm/if_stmt.h>
 #include <uhdm/begin.h>
@@ -121,30 +122,41 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                                                   std::map<std::string, RTLIL::Const>& local_vars,
                                                   const std::string& func_name) {
     if (!stmt) return RTLIL::Const();
-    
+
     int stmt_type = stmt->VpiType();
-    
+
     switch (stmt_type) {
         case vpiAssignment: {
             const assignment* assign = any_cast<const assignment*>(stmt);
-            
-            // Get LHS name
+
+            // Get LHS info
             std::string lhs_name;
-            if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefObj) {
-                const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
-                lhs_name = std::string(ref->VpiName());
+            bool is_bit_select = false;
+            int bit_index = 0;
+
+            if (assign->Lhs()) {
+                if (assign->Lhs()->VpiType() == vpiRefObj) {
+                    const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
+                    lhs_name = std::string(ref->VpiName());
+                } else if (assign->Lhs()->VpiType() == vpiBitSelect) {
+                    const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
+                    lhs_name = std::string(bs->VpiName());
+                    is_bit_select = true;
+                    if (bs->VpiIndex()) {
+                        RTLIL::Const idx_val = evaluate_single_operand(bs->VpiIndex(), local_vars);
+                        bit_index = idx_val.as_int();
+                    }
+                }
             }
-            
+
             // Evaluate RHS
             RTLIL::Const rhs_value;
             if (assign->Rhs()) {
                 if (assign->Rhs()->VpiType() == vpiOperation) {
                     const operation* op = any_cast<const operation*>(assign->Rhs());
-                    // Evaluate the operation
                     rhs_value = evaluate_operation_const(op, local_vars);
                 } else if (assign->Rhs()->VpiType() == vpiConstant) {
                     const constant* c = any_cast<const constant*>(assign->Rhs());
-                    // Import the constant
                     RTLIL::SigSpec sig = import_constant(c);
                     if (sig.is_fully_const()) {
                         rhs_value = sig.as_const();
@@ -156,26 +168,62 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         rhs_value = local_vars[var_name];
                     }
                 } else if (assign->Rhs()->VpiType() == vpiFuncCall) {
-                    // Handle recursive function calls
                     const func_call* fc = any_cast<const func_call*>(assign->Rhs());
                     rhs_value = evaluate_recursive_function_call(fc, local_vars);
                 }
             }
-            
+
             // Perform assignment
             if (!lhs_name.empty()) {
-                local_vars[lhs_name] = rhs_value;
-                log("    Assigned %s = %s\n", lhs_name.c_str(), rhs_value.as_string().c_str());
+                if (is_bit_select) {
+                    // Bit-select assignment: update specific bit of the variable
+                    if (local_vars.count(lhs_name)) {
+                        RTLIL::Const& target = local_vars[lhs_name];
+                        if (bit_index >= 0 && bit_index < target.size()) {
+                            target.set(bit_index, rhs_value.is_fully_zero() ? RTLIL::S0 : RTLIL::S1);
+                        }
+                    }
+                    log("    Assigned %s[%d] = %s\n", lhs_name.c_str(), bit_index,
+                        rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
+                } else {
+                    local_vars[lhs_name] = rhs_value;
+                    log("    Assigned %s = %s\n", lhs_name.c_str(),
+                        rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
+                }
             }
-            
+
             return rhs_value;
         }
         
-        case vpiIf:
+        case vpiIf: {
+            // if without else: use if_stmt class
+            const if_stmt* is = any_cast<const if_stmt*>(stmt);
+
+            RTLIL::Const cond_value;
+            if (is->VpiCondition()) {
+                if (is->VpiCondition()->VpiType() == vpiOperation) {
+                    const operation* op = any_cast<const operation*>(is->VpiCondition());
+                    cond_value = evaluate_operation_const(op, local_vars);
+                } else if (is->VpiCondition()->VpiType() == vpiRefObj) {
+                    const ref_obj* ref = any_cast<const ref_obj*>(is->VpiCondition());
+                    std::string var_name = std::string(ref->VpiName());
+                    if (local_vars.count(var_name)) {
+                        cond_value = local_vars[var_name];
+                    }
+                }
+            }
+
+            if (!cond_value.is_fully_zero()) {
+                if (is->VpiStmt()) {
+                    return evaluate_function_stmt(is->VpiStmt(), local_vars, func_name);
+                }
+            }
+            break;
+        }
+
         case vpiIfElse: {
             const if_else* ie = any_cast<const if_else*>(stmt);
-            
-            // Evaluate condition
+
             RTLIL::Const cond_value;
             if (ie->VpiCondition()) {
                 if (ie->VpiCondition()->VpiType() == vpiOperation) {
@@ -189,15 +237,12 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     }
                 }
             }
-            
-            // Execute appropriate branch
+
             if (!cond_value.is_fully_zero()) {
-                // Execute then branch
                 if (ie->VpiStmt()) {
                     return evaluate_function_stmt(ie->VpiStmt(), local_vars, func_name);
                 }
             } else {
-                // Execute else branch
                 if (ie->VpiElseStmt()) {
                     return evaluate_function_stmt(ie->VpiElseStmt(), local_vars, func_name);
                 }
@@ -522,6 +567,65 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             return builder.build();
         }
 
+        case vpiBitAndOp:  // Bitwise AND (&)
+            if (operand_values.size() >= 2) {
+                int result = operand_values[0].as_int() & operand_values[1].as_int();
+                return RTLIL::Const(result, 32);
+            }
+            break;
+
+        case vpiBitOrOp:  // Bitwise OR (|)
+            if (operand_values.size() >= 2) {
+                int result = operand_values[0].as_int() | operand_values[1].as_int();
+                return RTLIL::Const(result, 32);
+            }
+            break;
+
+        case vpiBitXNorOp:  // Bitwise XNOR (~^)
+            if (operand_values.size() >= 2) {
+                int result = ~(operand_values[0].as_int() ^ operand_values[1].as_int());
+                return RTLIL::Const(result, 32);
+            }
+            break;
+
+        case vpiLogAndOp:  // Logical AND (&&)
+            if (operand_values.size() >= 2) {
+                bool result = !operand_values[0].is_fully_zero() && !operand_values[1].is_fully_zero();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+
+        case vpiLogOrOp:  // Logical OR (||)
+            if (operand_values.size() >= 2) {
+                bool result = !operand_values[0].is_fully_zero() || !operand_values[1].is_fully_zero();
+                return RTLIL::Const(result ? 1 : 0, 1);
+            }
+            break;
+
+        case vpiDivOp:  // Division (/)
+            if (operand_values.size() >= 2) {
+                int divisor = operand_values[1].as_int();
+                if (divisor != 0) {
+                    int result = operand_values[0].as_int() / divisor;
+                    return RTLIL::Const(result, 32);
+                }
+                log_warning("Division by zero in compile-time evaluation\n");
+                return RTLIL::Const(0, 32);
+            }
+            break;
+
+        case vpiModOp:  // Modulus (%)
+            if (operand_values.size() >= 2) {
+                int divisor = operand_values[1].as_int();
+                if (divisor != 0) {
+                    int result = operand_values[0].as_int() % divisor;
+                    return RTLIL::Const(result, 32);
+                }
+                log_warning("Modulus by zero in compile-time evaluation\n");
+                return RTLIL::Const(0, 32);
+            }
+            break;
+
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);
             break;
@@ -561,6 +665,9 @@ RTLIL::Const UhdmImporter::evaluate_recursive_function_call(const func_call* fc,
             } else if (arg->VpiType() == vpiOperation) {
                 const operation* op = any_cast<const operation*>(arg);
                 val = evaluate_operation_const(op, parent_vars);
+            } else if (arg->VpiType() == vpiFuncCall) {
+                const func_call* nested_fc = any_cast<const func_call*>(arg);
+                val = evaluate_recursive_function_call(nested_fc, parent_vars);
             }
             arg_values.push_back(val);
         }
