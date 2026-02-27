@@ -7,6 +7,9 @@
 
 # Tests that currently fail:
 forloops
+# const_fold_func: 2 unproven equiv cells - out4[0] from recursive runtime function
+# inlining produces wrong value, out6[1] side-effect on module port during compile-time eval
+const_fold_func
 # multiplier: SAT proves primary outputs are equivalent, but equiv_make fails because
 # internal FullAdder instance naming differs (UHDM: unit_0..N vs Verilog: \addbit[0].unit)
 multiplier

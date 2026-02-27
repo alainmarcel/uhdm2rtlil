@@ -14,16 +14,17 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 142 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (140/142 tests functional)
+- **Total Tests**: 143 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 98% (140/143 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 2 tests with issues:
+- **Known Failures**: 3 tests with issues:
   - `forloops` - Equivalence check failure (expected)
+  - `const_fold_func` - 2 unproven equiv cells: `out4[0]` from recursive runtime function inlining and `out6[1]` from compile-time side-effect on module port
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
@@ -44,7 +45,14 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `port_sign_extend` - Port sign extension with signed submodule outputs and signed constants
   - `func_tern_hint` - Recursive functions with ternary type/width hints in self-determined context
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
+  - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - Compile-time function evaluator crash fix and improvements ✅
+    - Fixed `vpiIf`/`vpiIfElse` type casting crash: `vpiIf` (type 22) must use `if_stmt*`, `vpiIfElse` (type 23) must use `if_else*`
+    - Added 7 missing operations: `vpiBitAndOp`, `vpiBitOrOp`, `vpiBitXNorOp`, `vpiLogAndOp`, `vpiLogOrOp`, `vpiDivOp`, `vpiModOp`
+    - Added `vpiBitSelect` LHS handling for bit-select assignments in compile-time evaluation
+    - Added `vpiFuncCall` argument handling in recursive function evaluation
+    - Safety check for `.as_string()` on empty `RTLIL::Const` values
   - Unnamed block variable declarations with proper scoping via interpreter-based evaluation: inner block-local variables shadow outer/module-level variables correctly ✅
   - Fixed temp wire naming collision in generate scopes: bit/part-select assignments in nested generate loops (e.g., `out[j]` in 160 always blocks) now use scope-qualified temp wire names with bit ranges (`$0\netgen[0].out[3:3]`) to avoid `$0\` name collisions across always blocks ✅
   - Compile-time function evaluation now supports `while` and `repeat` loop constructs, enabling functions like `mylog2` (using `while`) and `myexp2` (using `repeat`) to be evaluated at compile time ✅
@@ -383,7 +391,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (142 total - 140 passing, 2 known issues)
+### Current Test Cases (143 total - 140 passing, 3 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -470,6 +478,7 @@ The Yosys test runner:
 - **fib_initial** - Initial block with function call evaluation
 - **func_tern_hint** - Recursive functions with ternary type/width hints and self-determined context
 - **repwhile** - Memory initialization with `while`/`repeat` loop functions (`mylog2`, `myexp2`) called from for-loop in initial block
+- **const_fold_func** - Compile-time constant function evaluation: recursive functions with bitwise ops, bit-select LHS assignments, nested function calls as arguments *(2 unproven equiv cells - known failure)*
 
 #### Scope & Variable Shadowing
 - **scope_func** - Function calls with variable inputs in always blocks (tests function scope resolution)
@@ -571,8 +580,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 140 of 142 tests are passing or working as expected
-- 2 tests are in the failing_tests.txt file (expected failures)
+- 140 of 143 tests are passing or working as expected
+- 3 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -625,10 +634,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **142 test cases**:
+The UHDM frontend test suite includes **143 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **140 tests passing** - with 2 known failures documented in failing_tests.txt
+- **140 tests passing** - with 3 known failures documented in failing_tests.txt
 
 ## Recent Improvements
 
