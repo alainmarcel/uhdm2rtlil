@@ -118,7 +118,7 @@ module port_sign_extend(o1, o2, o3, o4, o5, o6, o7, o8, o9, yay1, nay1, yay2, na
     .out(nay2[1:0])
   );
   PassThrough pt1 (
-    .a(4'hf),
+    .a(4'h1),
     .b(o1)
   );
   PassThrough pt2 (

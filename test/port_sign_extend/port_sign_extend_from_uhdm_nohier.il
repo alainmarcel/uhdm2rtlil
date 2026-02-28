@@ -99,7 +99,7 @@ module \port_sign_extend
   wire width 3 signed $auto$rtlil.cc:3474:Mux$22
   wire width 3 signed $auto$rtlil.cc:3339:Not$24
   cell \PassThrough \pt1
-    connect \a 4'1111
+    connect \a 1'1
     connect \b \o1
   end
   cell \PassThrough \pt2

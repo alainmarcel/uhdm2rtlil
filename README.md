@@ -121,7 +121,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - Fixed `import_net()` to update signedness on existing port wires from `VpiSigned` on logic_net
     - Fixed operation signedness for arithmetic/comparison/shift operations via operand analysis
     - Added signed constant detection via `int_typespec` on `Actual_typespec()`
-    - Restored unbased unsized literal extension for 1-bit constants to port width
+    - Unbased unsized literal extension guarded by `VpiSize() == -1` check — only true unbased unsized literals (`'0`, `'1`, `'x`, `'z`) are extended to port width; sized constants like `1'b1` are left at original width for proper zero-extension by hierarchy pass
   - `custom_map_incomp` - Techmap cell handling without blackbox module creation ✅
     - `_TECHMAP_REPLACE_` instances now create cells with base module name (namespace-stripped)
     - Parameters passed directly on the cell with proper string constant preservation
@@ -431,7 +431,7 @@ The Yosys test runner:
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
-- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, and arithmetic operations
+- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling
 - **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
 - **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
 - **asgn_expr_sv** - Full increment/decrement test from Yosys suite: pre/post-increment/decrement as statements and expressions, byte-width concatenation (`{1'b1, ++w}`, `{2'b10, w++}`), procedural assignment expressions (`x = (y *= 2)`)
@@ -730,7 +730,7 @@ The UHDM frontend test suite includes **143 test cases**:
 - In `import_net()`, when a net already exists in `name_map` (created by `import_port()`), the `VpiSigned` flag is now checked and applied to the existing wire
 - Added operation signedness analysis: arithmetic, comparison, and shift operations check both operands for signedness
 - Signed constant detection via `int_typespec` on `Actual_typespec()` for constants like `1'sb1`
-- Restored unbased unsized literal extension for 1-bit constants (`'0`, `'1`, `'x`, `'z`) connecting to wider ports
+- Unbased unsized literal extension (`'0`, `'1`, `'x`, `'z`) guarded by `VpiSize() == -1` — sized constants like `1'b1` (`VpiSize() == 1`) are no longer incorrectly replicated to port width
 - Re-enabled AllModules import with top-level skip for proper port direction information on non-top modules
 
 ### Techmap Cell Handling (_TECHMAP_REPLACE_)

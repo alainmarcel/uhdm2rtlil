@@ -826,17 +826,20 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 }
                             }
 
-                            // Handle unbased unsized literals - extend single-bit constants to port width
-                            RTLIL::Module* target_module = design->module(cell->type);
-                            if (target_module) {
-                                RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
-                                if (port_wire && conn.size() == 1 && conn.is_fully_const()) {
-                                    RTLIL::State bit_val = conn.as_const()[0];
-                                    if (bit_val == RTLIL::State::S0 || bit_val == RTLIL::State::S1 ||
-                                        bit_val == RTLIL::State::Sx || bit_val == RTLIL::State::Sz) {
-                                        int port_width = port_wire->width;
-                                        conn = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
-                                        log("UHDM: Extended unbased unsized literal to port width %d\n", port_width);
+                            // Handle unbased unsized literals ('0, '1, 'x, 'z) — extend to port width
+                            // Only for truly unbased unsized (VpiSize == -1), NOT sized constants like 1'b1
+                            if (high_conn->UhdmType() == uhdmconstant) {
+                                const constant* uhdm_const = any_cast<const constant*>(high_conn);
+                                if (uhdm_const->VpiSize() == -1) {
+                                    RTLIL::Module* target_module = design->module(cell->type);
+                                    if (target_module) {
+                                        RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
+                                        if (port_wire && conn.size() == 1 && conn.is_fully_const()) {
+                                            RTLIL::State bit_val = conn.as_const()[0];
+                                            int port_width = port_wire->width;
+                                            conn = RTLIL::SigSpec(RTLIL::Const(bit_val, port_width));
+                                            log("UHDM: Extended unbased unsized literal to port width %d\n", port_width);
+                                        }
                                     }
                                 }
                             }
