@@ -95,7 +95,7 @@ module \port_sign_extend
   wire $auto$rtlil.cc:3346:ReduceBool$20
   wire width 2 signed $auto$rtlil.cc:3388:Xor$18
   cell \PassThrough \pt1
-    connect \a 4'1111
+    connect \a 4'0001
     connect \b \o1
   end
   cell \PassThrough \pt2

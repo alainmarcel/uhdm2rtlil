@@ -136,8 +136,7 @@
 -(* module_not_derived = 32'd1 *)
 -(* src = "dut.sv:31.14-31.27" *)
  PassThrough pt1 (
--.a(4'h1),
-+.a(4'hf),
+ .a(4'h1),
  .b(o1)
  );
 -(* module_not_derived = 32'd1 *)
