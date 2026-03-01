@@ -3404,9 +3404,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             if (name_map.count(signal_path)) {
                                 log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
                                 return RTLIL::SigSpec(name_map[signal_path]);
-                            } else {
-                                // Wire not yet created (forward reference across generate scopes)
-                                // Create it now using resolved info
+                            } else if (!name_map.count(path_name)) {
+                                // Wire not yet created and hier_path name also absent —
+                                // forward reference across generate scopes: create it now.
                                 int width = get_width(actual, current_instance);
                                 RTLIL::Wire* w = create_wire(signal_path, width);
                                 wire_map[actual] = w;
@@ -3414,6 +3414,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 log("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
                                 return RTLIL::SigSpec(w);
                             }
+                            // path_name is already in name_map (e.g., interface port "bus.a"):
+                            // fall through so the standard name_map lookup below resolves it.
                         }
                     }
                 }
