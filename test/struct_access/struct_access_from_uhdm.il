@@ -5,6 +5,6 @@ attribute \src "dut.sv:1.1-87.10"
 module \top
   attribute \src "dut.sv:19.7-19.8"
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29"
-  attribute \init 30'110000000100000001000100011111
+  attribute \init 30'111111111111111111111111111111
   wire width 30 \s
 end

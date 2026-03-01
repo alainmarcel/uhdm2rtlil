@@ -32,13 +32,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$18
   wire $auto$expression.cpp:3210:import_bit_select$20
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$22
+  wire $auto$process.cpp:5281:import_assignment_sync$22
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$24
+  wire $auto$process.cpp:6074:import_case_stmt_sync$24
   wire width 64 $auto$expression.cpp:2059:import_operation$26
   wire $auto$expression.cpp:3210:import_bit_select$28
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$30
+  wire $auto$process.cpp:5281:import_assignment_sync$30
   wire $auto$expression.cpp:3210:import_bit_select$32
   wire $auto$expression.cpp:3210:import_bit_select$34
   wire $auto$expression.cpp:3210:import_bit_select$36
@@ -61,13 +61,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$60
   wire $auto$expression.cpp:3210:import_bit_select$62
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$64
+  wire $auto$process.cpp:5281:import_assignment_sync$64
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$66
+  wire $auto$process.cpp:6074:import_case_stmt_sync$66
   wire width 64 $auto$expression.cpp:2059:import_operation$68
   wire $auto$expression.cpp:3210:import_bit_select$70
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$72
+  wire $auto$process.cpp:5281:import_assignment_sync$72
   wire $auto$expression.cpp:3210:import_bit_select$74
   wire $auto$expression.cpp:3210:import_bit_select$76
   wire $auto$expression.cpp:3210:import_bit_select$78
@@ -90,13 +90,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$102
   wire $auto$expression.cpp:3210:import_bit_select$104
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$106
+  wire $auto$process.cpp:5281:import_assignment_sync$106
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$108
+  wire $auto$process.cpp:6074:import_case_stmt_sync$108
   wire width 64 $auto$expression.cpp:2059:import_operation$110
   wire $auto$expression.cpp:3210:import_bit_select$112
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$114
+  wire $auto$process.cpp:5281:import_assignment_sync$114
   wire $auto$expression.cpp:3210:import_bit_select$116
   wire $auto$expression.cpp:3210:import_bit_select$118
   wire $auto$expression.cpp:3210:import_bit_select$120
@@ -119,13 +119,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$144
   wire $auto$expression.cpp:3210:import_bit_select$146
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$148
+  wire $auto$process.cpp:5281:import_assignment_sync$148
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$150
+  wire $auto$process.cpp:6074:import_case_stmt_sync$150
   wire width 64 $auto$expression.cpp:2059:import_operation$152
   wire $auto$expression.cpp:3210:import_bit_select$154
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$156
+  wire $auto$process.cpp:5281:import_assignment_sync$156
   wire $auto$expression.cpp:3210:import_bit_select$158
   wire $auto$expression.cpp:3210:import_bit_select$160
   wire $auto$expression.cpp:3210:import_bit_select$162
@@ -148,13 +148,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$186
   wire $auto$expression.cpp:3210:import_bit_select$188
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$190
+  wire $auto$process.cpp:5281:import_assignment_sync$190
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$192
+  wire $auto$process.cpp:6074:import_case_stmt_sync$192
   wire width 64 $auto$expression.cpp:2059:import_operation$194
   wire $auto$expression.cpp:3210:import_bit_select$196
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$198
+  wire $auto$process.cpp:5281:import_assignment_sync$198
   wire $auto$expression.cpp:3210:import_bit_select$200
   wire $auto$expression.cpp:3210:import_bit_select$202
   wire $auto$expression.cpp:3210:import_bit_select$204
@@ -177,13 +177,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$228
   wire $auto$expression.cpp:3210:import_bit_select$230
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$232
+  wire $auto$process.cpp:5281:import_assignment_sync$232
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$234
+  wire $auto$process.cpp:6074:import_case_stmt_sync$234
   wire width 64 $auto$expression.cpp:2059:import_operation$236
   wire $auto$expression.cpp:3210:import_bit_select$238
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$240
+  wire $auto$process.cpp:5281:import_assignment_sync$240
   wire $auto$expression.cpp:3210:import_bit_select$242
   wire $auto$expression.cpp:3210:import_bit_select$244
   wire $auto$expression.cpp:3210:import_bit_select$246
@@ -206,13 +206,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$270
   wire $auto$expression.cpp:3210:import_bit_select$272
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$274
+  wire $auto$process.cpp:5281:import_assignment_sync$274
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$276
+  wire $auto$process.cpp:6074:import_case_stmt_sync$276
   wire width 64 $auto$expression.cpp:2059:import_operation$278
   wire $auto$expression.cpp:3210:import_bit_select$280
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$282
+  wire $auto$process.cpp:5281:import_assignment_sync$282
   wire $auto$expression.cpp:3210:import_bit_select$284
   wire $auto$expression.cpp:3210:import_bit_select$286
   wire $auto$expression.cpp:3210:import_bit_select$288
@@ -235,13 +235,13 @@ module \gen_test2
   wire width 64 $auto$expression.cpp:2059:import_operation$312
   wire $auto$expression.cpp:3210:import_bit_select$314
   attribute \src "dut.sv:15.5-15.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$316
+  wire $auto$process.cpp:5281:import_assignment_sync$316
   attribute \src "dut.sv:16.4-17.20"
-  wire $auto$process.cpp:6060:import_case_stmt_sync$318
+  wire $auto$process.cpp:6074:import_case_stmt_sync$318
   wire width 64 $auto$expression.cpp:2059:import_operation$320
   wire $auto$expression.cpp:3210:import_bit_select$322
   attribute \src "dut.sv:17.5-17.19"
-  wire $auto$process.cpp:5267:import_assignment_sync$324
+  wire $auto$process.cpp:5281:import_assignment_sync$324
   wire $auto$expression.cpp:3210:import_bit_select$326
   wire $auto$expression.cpp:3210:import_bit_select$328
   wire $auto$expression.cpp:3210:import_bit_select$330
@@ -358,17 +358,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$20
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$23
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$23
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$20
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$16
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$22
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$22
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$25
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$25
     connect \A $auto$process_helper.cpp:78:create_or_cell$16
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$24
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$24
   end
   cell $add $add$dut.sv:17$27
     parameter \A_SIGNED 1
@@ -392,12 +392,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$28
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$31
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$31
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$28
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$24
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$30
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$24
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$30
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$33
@@ -573,17 +573,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$62
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$65
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$65
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$62
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$58
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$64
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$64
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$67
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$67
     connect \A $auto$process_helper.cpp:78:create_or_cell$58
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$66
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$66
   end
   cell $add $add$dut.sv:17$69
     parameter \A_SIGNED 1
@@ -607,12 +607,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$70
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$73
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$73
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$70
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$66
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$72
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$66
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$72
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$75
@@ -788,17 +788,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$104
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$107
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$107
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$104
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$100
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$106
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$106
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$109
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$109
     connect \A $auto$process_helper.cpp:78:create_or_cell$100
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$108
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$108
   end
   cell $add $add$dut.sv:17$111
     parameter \A_SIGNED 1
@@ -822,12 +822,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$112
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$115
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$115
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$112
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$108
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$114
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$108
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$114
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$117
@@ -1003,17 +1003,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$146
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$149
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$149
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$146
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$142
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$148
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$148
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$151
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$151
     connect \A $auto$process_helper.cpp:78:create_or_cell$142
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$150
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$150
   end
   cell $add $add$dut.sv:17$153
     parameter \A_SIGNED 1
@@ -1037,12 +1037,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$154
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$157
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$157
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$154
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$150
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$156
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$150
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$156
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$159
@@ -1218,17 +1218,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$188
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$191
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$191
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$188
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$184
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$190
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$190
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$193
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$193
     connect \A $auto$process_helper.cpp:78:create_or_cell$184
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$192
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$192
   end
   cell $add $add$dut.sv:17$195
     parameter \A_SIGNED 1
@@ -1252,12 +1252,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$196
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$199
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$199
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$196
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$192
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$198
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$192
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$198
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$201
@@ -1433,17 +1433,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$230
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$233
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$233
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$230
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$226
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$232
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$232
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$235
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$235
     connect \A $auto$process_helper.cpp:78:create_or_cell$226
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$234
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$234
   end
   cell $add $add$dut.sv:17$237
     parameter \A_SIGNED 1
@@ -1467,12 +1467,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$238
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$241
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$241
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$238
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$234
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$240
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$234
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$240
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$243
@@ -1648,17 +1648,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$272
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$275
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$275
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$272
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$268
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$274
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$274
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$277
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$277
     connect \A $auto$process_helper.cpp:78:create_or_cell$268
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$276
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$276
   end
   cell $add $add$dut.sv:17$279
     parameter \A_SIGNED 1
@@ -1682,12 +1682,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$280
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$283
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$283
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$280
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$276
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$282
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$276
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$282
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$285
@@ -1863,17 +1863,17 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$314
   end
   attribute \src "dut.sv:15.5-15.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$317
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$317
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$314
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$310
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$316
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$316
   end
   attribute \src "dut.sv:16.4-17.20"
-  cell $_NOT_ $auto$process.cpp:6062:import_case_stmt_sync$319
+  cell $_NOT_ $auto$process.cpp:6076:import_case_stmt_sync$319
     connect \A $auto$process_helper.cpp:78:create_or_cell$310
-    connect \Y $auto$process.cpp:6060:import_case_stmt_sync$318
+    connect \Y $auto$process.cpp:6074:import_case_stmt_sync$318
   end
   cell $add $add$dut.sv:17$321
     parameter \A_SIGNED 1
@@ -1897,12 +1897,12 @@ module \gen_test2
     connect \Y $auto$expression.cpp:3210:import_bit_select$322
   end
   attribute \src "dut.sv:17.5-17.19"
-  cell $mux $auto$process.cpp:5269:import_assignment_sync$325
+  cell $mux $auto$process.cpp:5283:import_assignment_sync$325
     parameter \WIDTH 1
     connect \A $auto$expression.cpp:3210:import_bit_select$322
     connect \B 1'0
-    connect \S $auto$process.cpp:6060:import_case_stmt_sync$318
-    connect \Y $auto$process.cpp:5267:import_assignment_sync$324
+    connect \S $auto$process.cpp:6074:import_case_stmt_sync$318
+    connect \Y $auto$process.cpp:5281:import_assignment_sync$324
   end
   attribute \src "dut.sv:19.3-19.7"
   cell $shiftx $shiftx$dut.sv:19$327
@@ -1973,29 +1973,29 @@ module \gen_test2
   process $proc$dut.sv:10$1
     sync posedge \clk
       update $auto$expression.cpp:3210:import_bit_select$326 $auto$rtlil.cc:3388:Xor$337
-      update $auto$expression.cpp:3210:import_bit_select$322 $auto$process.cpp:5267:import_assignment_sync$324
-      update $auto$expression.cpp:3210:import_bit_select$314 $auto$process.cpp:5267:import_assignment_sync$316
+      update $auto$expression.cpp:3210:import_bit_select$322 $auto$process.cpp:5281:import_assignment_sync$324
+      update $auto$expression.cpp:3210:import_bit_select$314 $auto$process.cpp:5281:import_assignment_sync$316
       update $auto$expression.cpp:3210:import_bit_select$284 $auto$rtlil.cc:3388:Xor$295
-      update $auto$expression.cpp:3210:import_bit_select$280 $auto$process.cpp:5267:import_assignment_sync$282
-      update $auto$expression.cpp:3210:import_bit_select$272 $auto$process.cpp:5267:import_assignment_sync$274
+      update $auto$expression.cpp:3210:import_bit_select$280 $auto$process.cpp:5281:import_assignment_sync$282
+      update $auto$expression.cpp:3210:import_bit_select$272 $auto$process.cpp:5281:import_assignment_sync$274
       update $auto$expression.cpp:3210:import_bit_select$242 $auto$rtlil.cc:3388:Xor$253
-      update $auto$expression.cpp:3210:import_bit_select$238 $auto$process.cpp:5267:import_assignment_sync$240
-      update $auto$expression.cpp:3210:import_bit_select$230 $auto$process.cpp:5267:import_assignment_sync$232
+      update $auto$expression.cpp:3210:import_bit_select$238 $auto$process.cpp:5281:import_assignment_sync$240
+      update $auto$expression.cpp:3210:import_bit_select$230 $auto$process.cpp:5281:import_assignment_sync$232
       update $auto$expression.cpp:3210:import_bit_select$200 $auto$rtlil.cc:3388:Xor$211
-      update $auto$expression.cpp:3210:import_bit_select$196 $auto$process.cpp:5267:import_assignment_sync$198
-      update $auto$expression.cpp:3210:import_bit_select$188 $auto$process.cpp:5267:import_assignment_sync$190
+      update $auto$expression.cpp:3210:import_bit_select$196 $auto$process.cpp:5281:import_assignment_sync$198
+      update $auto$expression.cpp:3210:import_bit_select$188 $auto$process.cpp:5281:import_assignment_sync$190
       update $auto$expression.cpp:3210:import_bit_select$158 $auto$rtlil.cc:3388:Xor$169
-      update $auto$expression.cpp:3210:import_bit_select$154 $auto$process.cpp:5267:import_assignment_sync$156
-      update $auto$expression.cpp:3210:import_bit_select$146 $auto$process.cpp:5267:import_assignment_sync$148
+      update $auto$expression.cpp:3210:import_bit_select$154 $auto$process.cpp:5281:import_assignment_sync$156
+      update $auto$expression.cpp:3210:import_bit_select$146 $auto$process.cpp:5281:import_assignment_sync$148
       update $auto$expression.cpp:3210:import_bit_select$116 $auto$rtlil.cc:3388:Xor$127
-      update $auto$expression.cpp:3210:import_bit_select$112 $auto$process.cpp:5267:import_assignment_sync$114
-      update $auto$expression.cpp:3210:import_bit_select$104 $auto$process.cpp:5267:import_assignment_sync$106
+      update $auto$expression.cpp:3210:import_bit_select$112 $auto$process.cpp:5281:import_assignment_sync$114
+      update $auto$expression.cpp:3210:import_bit_select$104 $auto$process.cpp:5281:import_assignment_sync$106
       update $auto$expression.cpp:3210:import_bit_select$74 $auto$rtlil.cc:3388:Xor$85
-      update $auto$expression.cpp:3210:import_bit_select$70 $auto$process.cpp:5267:import_assignment_sync$72
-      update $auto$expression.cpp:3210:import_bit_select$62 $auto$process.cpp:5267:import_assignment_sync$64
+      update $auto$expression.cpp:3210:import_bit_select$70 $auto$process.cpp:5281:import_assignment_sync$72
+      update $auto$expression.cpp:3210:import_bit_select$62 $auto$process.cpp:5281:import_assignment_sync$64
       update $auto$expression.cpp:3210:import_bit_select$32 $auto$rtlil.cc:3388:Xor$43
-      update $auto$expression.cpp:3210:import_bit_select$28 $auto$process.cpp:5267:import_assignment_sync$30
-      update $auto$expression.cpp:3210:import_bit_select$20 $auto$process.cpp:5267:import_assignment_sync$22
+      update $auto$expression.cpp:3210:import_bit_select$28 $auto$process.cpp:5281:import_assignment_sync$30
+      update $auto$expression.cpp:3210:import_bit_select$20 $auto$process.cpp:5281:import_assignment_sync$22
       update \y [8] \carry [8]
       update \carry [0] 1'0
   end

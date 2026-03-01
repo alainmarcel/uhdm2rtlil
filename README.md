@@ -15,17 +15,19 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 144 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (141/144 tests functional)
-- **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
+- **Success Rate**: 96% (139/144 tests functional)
+- **Passing**: 135 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 3 tests with issues:
+- **Known Failures**: 5 tests with documented issues:
   - `forloops` - Equivalence check failure (expected)
   - `const_fold_func` - 2 unproven equiv cells: `out4[0]` from recursive runtime function inlining and `out6[1]` from compile-time side-effect on module port
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
+  - `case_expr_const` - UHDM fails to evaluate certain case-expression constants at compile time (`g=1'h0` vs expected `1'h1`, `c/b=1'hx` vs expected `1'h1`)
+  - `port_sign_extend` - UHDM produces 1-bit output (`1'h1`) instead of 2-bit sign-extended (`2'h2`)
 - **Recent Additions**:
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
@@ -48,6 +50,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `'1` fill constant now produces all-ones across the full target width for multi-bit struct fields (e.g., 4-bit field gets `4'b1111` not `4'b0001`) ✅
+  - `gen_test7`: `always @*` block-local variable no longer shadowed by same-named generate-scope genvar — fixed in `import_begin_block_comb()` by also shadowing the hierarchical name `gen.x` in `name_map` ✅
+  - Formal equivalence check for constant-only circuits (0 gate cells): now performs actual constant-value comparison between gold and gate netlists instead of trivially passing ✅
+  - Newly detected pre-existing failures (`case_expr_const`, `port_sign_extend`) added to `failing_tests.txt` so CI tracks them as expected ✅
   - Compile-time function evaluator crash fix and improvements ✅
     - Fixed `vpiIf`/`vpiIfElse` type casting crash: `vpiIf` (type 22) must use `if_stmt*`, `vpiIfElse` (type 23) must use `if_else*`
     - Added 7 missing operations: `vpiBitAndOp`, `vpiBitOrOp`, `vpiBitXNorOp`, `vpiLogAndOp`, `vpiLogOrOp`, `vpiDivOp`, `vpiModOp`
@@ -397,7 +403,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (143 total - 140 passing, 3 known issues)
+### Current Test Cases (144 total - 139 passing, 5 known issues)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -437,7 +443,7 @@ The Yosys test runner:
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
-- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling
+- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling *(known failure — 1-bit output instead of 2-bit sign-extended)*
 - **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
 - **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
 - **asgn_expr_sv** - Full increment/decrement test from Yosys suite: pre/post-increment/decrement as statements and expressions, byte-width concatenation (`{1'b1, ++w}`, `{2'b10, w++}`), procedural assignment expressions (`x = (y *= 2)`)
@@ -510,7 +516,7 @@ The Yosys test runner:
 #### Data Types & Structs
 - **simple_struct** - Packed struct handling and member access (tests struct bit slicing)
 - **struct_array** - Arrays of packed structs with complex indexing and member access
-- **struct_access** - Packed struct field access with CHECK macros, case/if in initial blocks, and assertions
+- **struct_access** - Packed struct field access with initial block assignments; fixed `'1` fill constant extension (4-bit field now gets `4'b1111`, not `4'b0001`)
 - **nested_struct** - Nested structs from different packages with complex field access *(UHDM-only)*
 - **nested_struct_nopack** - Nested structs without packages (tests synchronous if-else with switch statements)
 - **simple_nested_struct_nopack** - Simpler nested struct test without packages
@@ -545,7 +551,7 @@ The Yosys test runner:
 - **multiplier** - 4x4 2D array multiplier with parameterized RippleCarryAdder and FullAdder using generate loops *(known equiv mismatch - SAT proves outputs equivalent)*
 - **const_func** - Constant functions in generate blocks with string parameters, `$floor`, and bitwise negation
 - **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
-- **case_expr_const** - Case statement with constant expressions
+- **case_expr_const** - Case statement with constant expressions *(known failure — UHDM fails to evaluate certain case-expression constants at compile time)*
 
 #### Module Hierarchy & Interfaces
 - **simple_hierarchy** - Module instantiation and port connections
@@ -586,8 +592,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 140 of 143 tests are passing or working as expected
-- 3 tests are in the failing_tests.txt file (expected failures)
+- 139 of 144 tests are passing or working as expected
+- 5 tests are in the failing_tests.txt file (expected failures)
 
 ### Important Test Workflow Note
 
@@ -640,12 +646,31 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **143 test cases**:
+The UHDM frontend test suite includes **144 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **117 Perfect matches** - Tests validated by formal equivalence checking between UHDM and Verilog frontends
-- **140 tests passing** - with 3 known failures documented in failing_tests.txt
+- **135 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **5 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier, case_expr_const, port_sign_extend)
 
 ## Recent Improvements
+
+### Unbased Unsized Fill Constant Extension (`'1`)
+- Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)
+- UHDM represents `'1` as `VpiSize() == -1`, `VpiValue() == "BIN:1"` — `import_constant()` returns a 1-bit `SigSpec(S1)` since it has no target-width context
+- **Bug**: the assignment handler called `extend_u0()` (zero-extend) when RHS was narrower than LHS, producing `4'b0001` for a 4-bit field instead of `4'b1111`
+- **Fix in `process.cpp`** (`import_assignment_sync`): detect fill-ones RHS before importing by checking `c->VpiSize() == -1 && VpiValue() == "BIN:1"`, then on size mismatch replicate `S1` to the full LHS width (`SigSpec(S1, lhs.size())`) instead of zero-extending
+- **Fix in `interpreter.cpp`** (`evaluate_expression`): return `-1LL` for `'1` fill constants so `RTLIL::Const(-1, wire->width)` in `import_initial_interpreted` also produces correct all-ones (two's-complement `-1` is all bits set for any width)
+- `struct_access` test now produces `assign s = 30'h3fffffff` (all 30 bits 1), formally verified ✅
+
+### Generate-Scope Variable Shadowing in Named Begin Blocks
+- Fixed `gen_test7`: `always @* begin : proc` block declaring `reg signed [31:0] x` was incorrectly using the generate-scope genvar `\cond.x` (1-bit) instead of the block-local `\proc.x` (32-bit)
+- Root cause: `import_ref_obj()` tries `gen_scope + "." + ref_name` (e.g., `"cond.x"`) before the plain `name_map[ref_name]` lookup — this bypassed the block-local shadow
+- **Fix in `process.cpp`** (`import_begin_block_comb`): when shadowing `name_map[var_name]` with the block-local wire, also shadow the gen-scope hierarchical name `name_map[gen_scope + "." + var_name]`; both entries are added to `block_local_vars` for restore on exit
+- `gen_test7` now produces `out2 = 2` (was `0`), formally verified ✅
+
+### Robust Formal Equivalence for Constant-Only Circuits
+- Fixed `test_equivalence.sh`: when no `$_` gate cells are present (constant-only module), the script previously wrote `# No gates to check` and exited 0 — a vacuous pass
+- **Fix**: compare `assign signal = VALUE;` lines common to both gold (Verilog) and gate (UHDM) netlists; normalise `?`→`x` for high-Z equivalence; skip signals where gold already has undefined bits
+- Exposed two pre-existing bugs now tracked in `failing_tests.txt`: `case_expr_const` and `port_sign_extend`
 
 ### Unnamed Block Variable Declaration Support
 - Added interpreter-based evaluation path for initial blocks containing block-local variable declarations

@@ -16,10 +16,10 @@ module \top
       update \s [3] 1'1
       update \s [28] 1'1
       update \s [29] 1'1
-      update \s [7:4] 4'0001
-      update \s [11:8] 4'0001
-      update \s [19:12] 8'00000001
-      update \s [27:20] 8'00000001
+      update \s [7:4] 4'1111
+      update \s [11:8] 4'1111
+      update \s [19:12] 8'11111111
+      update \s [27:20] 8'11111111
   end
   attribute \src "dut.sv:64.5-84.8"
   process $proc$dut.sv:64$2

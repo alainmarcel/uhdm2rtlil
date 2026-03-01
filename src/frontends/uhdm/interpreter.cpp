@@ -24,6 +24,17 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
     switch (expr_type) {
         case uhdmconstant: {
             const constant* c = any_cast<const constant*>(expr);
+            // Unbased unsized fill constants ('0, '1, 'x, 'z) have vpiSize == -1.
+            // '1 means "fill all bits with 1" — return -1LL (all-ones in two's
+            // complement) so that RTLIL::Const((int32_t)value, wire->width) in
+            // import_initial_interpreted produces the correct all-ones constant
+            // (e.g. 4'b1111 for a 4-bit field) instead of zero-extending to 4'b0001.
+            if (c->VpiSize() == -1) {
+                std::string cval = std::string(c->VpiValue());
+                if (cval == "BIN:1") return -1LL;   // '1 → all-ones
+                if (cval == "BIN:0") return 0LL;    // '0 → all-zeros
+                // 'x and 'z are undefined; treat as 0 for integer evaluation
+            }
             RTLIL::SigSpec val = import_constant(c);
             if (val.is_fully_const()) {
                 return val.as_const().as_int();

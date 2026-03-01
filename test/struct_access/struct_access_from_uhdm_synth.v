@@ -5,5 +5,5 @@
 module top();
   (* src = "dut.sv:19.7-19.8" *)
   wire [29:0] s;
-  assign s = 30'h3010111f;
+  assign s = 30'h3fffffff;
 endmodule

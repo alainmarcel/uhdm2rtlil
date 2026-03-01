@@ -5217,8 +5217,17 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     }
     
     // Import RHS (could be an expr or other type)
+    // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing so we
+    // can extend them by replication rather than zero-extension.  e.g. '1 assigned to
+    // a 4-bit struct field must become 4'b1111, not 4'b0001.
+    bool rhs_is_fill_ones = false;
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            if (rhs_expr->UhdmType() == uhdmconstant) {
+                const constant* c = any_cast<const constant*>(rhs_expr);
+                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
+                    rhs_is_fill_ones = true;
+            }
             log("            Importing RHS expression\n");
             log_flush();
             rhs = import_expression(rhs_expr);
@@ -5228,13 +5237,18 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
     }
-    
+
     if (lhs.size() != rhs.size()) {
         log("            Size mismatch: LHS=%d, RHS=%d\n", lhs.size(), rhs.size());
         log_flush();
         if (rhs.size() < lhs.size()) {
-            // Zero extend
-            rhs.extend_u0(lhs.size());
+            if (rhs_is_fill_ones) {
+                // '1 fill constant: replicate to fill the entire LHS width (all-ones)
+                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            } else {
+                // Zero extend
+                rhs.extend_u0(lhs.size());
+            }
         } else {
             // Truncate
             rhs = rhs.extract(0, lhs.size());

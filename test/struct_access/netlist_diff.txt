@@ -26,6 +26,5 @@
 -.EN(1'h1),
 -.TRG()
 -);
--assign s = 30'h3fffffff;
-+assign s = 30'h3010111f;
+ assign s = 30'h3fffffff;
  endmodule
