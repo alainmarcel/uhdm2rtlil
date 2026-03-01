@@ -1663,6 +1663,108 @@ static bool statement_contains_control_flow(const any* stmt) {
     return false;
 }
 
+// Helper: check if a statement (recursively) assigns to a bit_select (array element)
+// Used to distinguish memory-init loops (comb/sync handles) from scalar-init loops (interpreter)
+static bool body_assigns_to_bit_select(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiAssignment) {
+        const assignment* a = any_cast<const assignment*>(stmt);
+        return a->Lhs() && a->Lhs()->VpiType() == vpiBitSelect;
+    }
+    if (type == vpiFor) {
+        auto fs = any_cast<const for_stmt*>(stmt);
+        return fs->VpiStmt() && body_assigns_to_bit_select(fs->VpiStmt());
+    }
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts())
+            for (auto s : *b->Stmts())
+                if (body_assigns_to_bit_select(s)) return true;
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts())
+            for (auto s : *b->Stmts())
+                if (body_assigns_to_bit_select(s)) return true;
+    } else if (type == vpiIf) {
+        auto s = any_cast<const if_stmt*>(stmt);
+        return s->VpiStmt() && body_assigns_to_bit_select(s->VpiStmt());
+    } else if (type == vpiIfElse) {
+        auto s = any_cast<const if_else*>(stmt);
+        return (s->VpiStmt() && body_assigns_to_bit_select(s->VpiStmt())) ||
+               (s->VpiElseStmt() && body_assigns_to_bit_select(s->VpiElseStmt()));
+    }
+    return false;
+}
+
+// Helper: check if the statement tree contains a for-loop with control flow that assigns
+// to scalar variables. Such loops cannot be handled by comb/sync (they'd create hardware
+// cells for scalar arithmetic) and must be evaluated at compile-time by the interpreter.
+static bool statement_has_scalar_control_for_loop(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiFor) {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (!fs->VpiStmt()) return false;
+        // If the body only assigns to bit_selects, comb/sync can handle it
+        if (body_assigns_to_bit_select(fs->VpiStmt())) return false;
+        // For-loop with control flow and scalar assignments needs the interpreter
+        return statement_contains_control_flow(fs->VpiStmt());
+    }
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts())
+            for (auto child : *b->Stmts())
+                if (statement_has_scalar_control_for_loop(child)) return true;
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts())
+            for (auto child : *b->Stmts())
+                if (statement_has_scalar_control_for_loop(child)) return true;
+    }
+    return false;
+}
+
+// Helper: check if a for-stmt has a for-declaration variable (e.g., for (integer x = ...))
+// Only these need the interpreter approach for proper variable shadowing/scoping
+static bool for_stmt_has_declaration(const for_stmt* fs) {
+    auto check_init_decl = [](const any* init) -> bool {
+        if (!init || init->UhdmType() != uhdmassignment) return false;
+        const assignment* a = any_cast<const assignment*>(init);
+        return a->Lhs() && a->Lhs()->UhdmType() == uhdminteger_var;
+    };
+    if (fs->VpiForInitStmt() && check_init_decl(fs->VpiForInitStmt())) return true;
+    if (fs->VpiForInitStmts()) {
+        for (auto init : *fs->VpiForInitStmts())
+            if (check_init_decl(init)) return true;
+    }
+    return false;
+}
+
+// Helper: check if a UHDM statement tree contains a for-loop with a variable declaration
+// (e.g., for (integer x = ...)) — only these need the interpreter for proper scoping
+static bool statement_has_for_declaration(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiFor) {
+        return for_stmt_has_declaration(any_cast<const for_stmt*>(stmt));
+    }
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (statement_has_for_declaration(child)) return true;
+        }
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (statement_has_for_declaration(child)) return true;
+        }
+    }
+    return false;
+}
+
 // Helper: check if a UHDM statement tree contains block-local variable declarations
 // that require the interpreter approach for proper scoping
 static bool block_has_local_variables(const any* stmt) {
@@ -1694,22 +1796,27 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     in_initial_block = true;
 
     // Choose import strategy based on initial block content:
-    // - Block-local variables: interpreter approach (compile-time evaluation with scoping)
+    // - For-loops with declarations (for (type var = ...)): interpreter
+    // - Block-local variables: interpreter (compile-time evaluation with scoping)
+    // - For-loops with control flow assigning to scalars: interpreter
+    //   (comb/sync would create hardware cells for the arithmetic instead of constants)
     // - Complex control flow (case/if): comb approach (creates switch rules)
-    //   The sync approach can't handle case/if because it creates mux cells
-    //   which cause "Failed to get a constant init value" errors in PROC_INIT
-    // - Default: sync approach (handles simple assignments and for-loop unrolling)
+    // - Default: sync approach (handles simple assignments and memory-init for-loops)
     bool use_comb_approach = false;
     bool has_local_vars = false;
+    bool has_for_decl = false;
+    bool has_scalar_ctrl_loop = false;
     if (auto stmt = uhdm_process->Stmt()) {
         use_comb_approach = statement_contains_control_flow(stmt);
         has_local_vars = block_has_local_variables(stmt);
+        has_for_decl = statement_has_for_declaration(stmt);
+        has_scalar_ctrl_loop = statement_has_scalar_control_for_loop(stmt);
     }
 
-    if (use_comb_approach) {
-        import_initial_comb(uhdm_process, yosys_proc);
-    } else if (has_local_vars) {
+    if (has_for_decl || has_local_vars || has_scalar_ctrl_loop) {
         import_initial_interpreted(uhdm_process, yosys_proc);
+    } else if (use_comb_approach) {
+        import_initial_comb(uhdm_process, yosys_proc);
     } else {
         import_initial_sync(uhdm_process, yosys_proc);
     }
@@ -1745,6 +1852,33 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
     }
     pending_sync_assignments.clear();
+
+    // Resolve cross-process init dependencies: if RHS references a wire whose
+    // init value was computed by an earlier interpreter-based initial block,
+    // substitute the constant value so PROC_INIT can evaluate it
+    for (auto& action : sync_init->actions) {
+        RTLIL::SigSpec& rhs = action.second;
+        if (!rhs.is_fully_const()) {
+            RTLIL::SigSpec resolved;
+            bool all_resolved = true;
+            for (auto& chunk : rhs.chunks()) {
+                if (chunk.wire && interpreter_init_values.count(chunk.wire)) {
+                    RTLIL::Const wire_val = interpreter_init_values[chunk.wire];
+                    // Extract the relevant bits
+                    RTLIL::SigSpec wire_sig(wire_val);
+                    resolved.append(wire_sig.extract(chunk.offset, chunk.width));
+                } else if (chunk.wire) {
+                    all_resolved = false;
+                    break;
+                } else {
+                    resolved.append(chunk);
+                }
+            }
+            if (all_resolved) {
+                rhs = resolved;
+            }
+        }
+    }
 
     // Deduplicate initial assignments across processes
     bool current_from_gen = !gen_scope_stack.empty();
@@ -4168,6 +4302,19 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             name_map[var_name] = block_wire;
             block_local_vars.insert(var_name);
 
+            // Also shadow the gen-scope hierarchical name (e.g. "cond.x") so that the
+            // hierarchical lookup in import_ref_obj() resolves to this block-local wire
+            // instead of a same-named gen-scope variable (e.g. a genvar also named 'x').
+            std::string cur_gen_scope = get_current_gen_scope();
+            if (!cur_gen_scope.empty()) {
+                std::string gen_hier_name = cur_gen_scope + "." + var_name;
+                if (name_map.count(gen_hier_name)) {
+                    saved_name_map[gen_hier_name] = name_map[gen_hier_name];
+                }
+                name_map[gen_hier_name] = block_wire;
+                block_local_vars.insert(gen_hier_name);
+            }
+
             // Save and shadow current_comb_values for the short name
             if (current_comb_values.count(var_name)) {
                 saved_comb_values[var_name] = current_comb_values[var_name];
@@ -5070,8 +5217,17 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     }
     
     // Import RHS (could be an expr or other type)
+    // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing so we
+    // can extend them by replication rather than zero-extension.  e.g. '1 assigned to
+    // a 4-bit struct field must become 4'b1111, not 4'b0001.
+    bool rhs_is_fill_ones = false;
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            if (rhs_expr->UhdmType() == uhdmconstant) {
+                const constant* c = any_cast<const constant*>(rhs_expr);
+                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
+                    rhs_is_fill_ones = true;
+            }
             log("            Importing RHS expression\n");
             log_flush();
             rhs = import_expression(rhs_expr);
@@ -5081,13 +5237,18 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
     }
-    
+
     if (lhs.size() != rhs.size()) {
         log("            Size mismatch: LHS=%d, RHS=%d\n", lhs.size(), rhs.size());
         log_flush();
         if (rhs.size() < lhs.size()) {
-            // Zero extend
-            rhs.extend_u0(lhs.size());
+            if (rhs_is_fill_ones) {
+                // '1 fill constant: replicate to fill the entire LHS width (all-ones)
+                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            } else {
+                // Zero extend
+                rhs.extend_u0(lhs.size());
+            }
         } else {
             // Truncate
             rhs = rhs.extract(0, lhs.size());
@@ -6565,7 +6726,7 @@ void UhdmImporter::process_reset_block_for_memory(const UHDM::any* reset_stmt, R
 
 // Import initial block using interpreter approach (handles block-local variable declarations)
 void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
-    log("    Importing initial block (interpreter approach - has block-local variables)\n");
+    log("    Importing initial block (interpreter approach - has block-local variables or for-loops)\n");
 
     // Create the "sync always" rule (empty, required by proc pass)
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
@@ -6578,7 +6739,8 @@ void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, 
     sync_init->type = RTLIL::SyncType::STi;
     sync_init->signal = RTLIL::SigSpec();
 
-    // Run the interpreter
+    // Run the interpreter — only variables actually written during interpretation
+    // will be in the map at the end, so we only emit init values for those.
     std::map<std::string, int64_t> variables;
     std::map<std::string, std::vector<int64_t>> arrays;
     bool break_flag = false, continue_flag = false;
@@ -6587,17 +6749,43 @@ void UhdmImporter::import_initial_interpreted(const process_stmt* uhdm_process, 
         interpret_statement(stmt, variables, arrays, break_flag, continue_flag);
     }
 
-    // For each variable that maps to a module-level signal, create an init action
+    // For each variable that maps to a module-level signal, create an init action.
+    // Use wire_to_value map to deduplicate: if multiple interpreter variables alias the
+    // same wire (e.g., bare "x" and "gen.x" both point to \gen.x), last write wins.
+    std::string gen_scope = get_current_gen_scope();
+    std::map<RTLIL::Wire*, std::pair<std::string, int64_t>> wire_to_value;
     for (auto& [name, value] : variables) {
-        RTLIL::Wire* wire = module->wire(RTLIL::escape_id(name));
-        if (wire) {
-            RTLIL::SigSpec lhs(wire);
-            RTLIL::SigSpec rhs(RTLIL::Const((int32_t)value, wire->width));
-            sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
-            if (mode_debug) {
-                log("      Initial assignment: %s = %lld (width %d)\n",
-                    name.c_str(), (long long)value, wire->width);
-            }
+        RTLIL::Wire* wire = nullptr;
+        // 1. When in a gen scope, prefer gen-scoped wire (bare "x" -> "gen.x")
+        //    so we don't accidentally pick up a module-level port with the same name.
+        if (!gen_scope.empty()) {
+            auto it = name_map.find(gen_scope + "." + name);
+            if (it != name_map.end())
+                wire = it->second;
+        }
+        // 2. Direct name_map lookup (handles names already in "gen.x" form)
+        if (!wire) {
+            auto it = name_map.find(name);
+            if (it != name_map.end())
+                wire = it->second;
+        }
+        // 3. Fall back to module-level wire lookup
+        if (!wire)
+            wire = module->wire(RTLIL::escape_id(name));
+        if (wire)
+            wire_to_value[wire] = {name, value};
+    }
+    for (auto& [wire, name_val] : wire_to_value) {
+        auto& [name, value] = name_val;
+        RTLIL::Const const_val((int32_t)value, wire->width);
+        RTLIL::SigSpec lhs(wire);
+        RTLIL::SigSpec rhs(const_val);
+        sync_init->actions.push_back(RTLIL::SigSig(lhs, rhs));
+        // Store computed init value for cross-process resolution
+        interpreter_init_values[wire] = const_val;
+        if (mode_debug) {
+            log("      Initial assignment: %s = %lld (width %d)\n",
+                name.c_str(), (long long)value, wire->width);
         }
     }
 

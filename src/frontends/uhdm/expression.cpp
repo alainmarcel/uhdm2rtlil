@@ -3382,34 +3382,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 if (ref->Actual_group()) {
                     const any* actual = ref->Actual_group();
                     log("        ref_obj has Actual_group of type %s\n", UHDM::UhdmName(actual->UhdmType()).c_str());
+
+                    // Extract full name from the actual object (works for logic_net, integer_var, logic_var)
+                    std::string_view actual_full_name;
                     if (actual->UhdmType() == uhdmlogic_net) {
-                        const logic_net* net = any_cast<const logic_net*>(actual);
-                        std::string actual_name = std::string(net->VpiName());
-                        
-                        // Try to find it with generate scope prefix
-                        std::string_view full_name = net->VpiFullName();
-                        if (!full_name.empty()) {
-                            std::string full_str = std::string(full_name);
-                            log("          logic_net full name: %s\n", full_str.c_str());
-                            // Extract module-relative path (remove work@module_name. prefix)
-                            size_t module_end = full_str.find('.');
-                            if (module_end != std::string::npos) {
-                                std::string signal_path = full_str.substr(module_end + 1);
-                                log("          Extracted signal path: %s\n", signal_path.c_str());
-                                if (name_map.count(signal_path)) {
-                                    log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
-                                    return RTLIL::SigSpec(name_map[signal_path]);
-                                } else {
-                                    // Wire not yet created (forward reference across generate scopes)
-                                    // Create it now using the resolved logic_net info
-                                    int width = get_width(net, current_instance);
-                                    RTLIL::Wire* w = create_wire(signal_path, width);
-                                    wire_map[net] = w;
-                                    name_map[signal_path] = w;
-                                    log("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
-                                    return RTLIL::SigSpec(w);
-                                }
+                        actual_full_name = any_cast<const logic_net*>(actual)->VpiFullName();
+                    } else if (actual->UhdmType() == uhdminteger_var) {
+                        actual_full_name = any_cast<const integer_var*>(actual)->VpiFullName();
+                    } else if (actual->UhdmType() == uhdmlogic_var) {
+                        actual_full_name = any_cast<const logic_var*>(actual)->VpiFullName();
+                    }
+
+                    if (!actual_full_name.empty()) {
+                        std::string full_str = std::string(actual_full_name);
+                        log("          Actual full name: %s\n", full_str.c_str());
+                        // Extract module-relative path (remove work@module_name. prefix)
+                        size_t module_end = full_str.find('.');
+                        if (module_end != std::string::npos) {
+                            std::string signal_path = full_str.substr(module_end + 1);
+                            log("          Extracted signal path: %s\n", signal_path.c_str());
+                            if (name_map.count(signal_path)) {
+                                log("          Found in name_map, resolving to: %s\n", name_map[signal_path]->name.c_str());
+                                return RTLIL::SigSpec(name_map[signal_path]);
+                            } else if (!name_map.count(path_name)) {
+                                // Wire not yet created and hier_path name also absent —
+                                // forward reference across generate scopes: create it now.
+                                int width = get_width(actual, current_instance);
+                                RTLIL::Wire* w = create_wire(signal_path, width);
+                                wire_map[actual] = w;
+                                name_map[signal_path] = w;
+                                log("          Created forward-ref wire '%s' (width=%d)\n", signal_path.c_str(), width);
+                                return RTLIL::SigSpec(w);
                             }
+                            // path_name is already in name_map (e.g., interface port "bus.a"):
+                            // fall through so the standard name_map lookup below resolves it.
                         }
                     }
                 }

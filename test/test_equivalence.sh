@@ -129,10 +129,55 @@ fi
 # Check if there are any gates to compare
 GATE_COUNT=$(grep -c -E '\$_' "$VERILOG_SYNTH" || true)
 if [ "$GATE_COUNT" -eq 0 ]; then
-    echo "ℹ️  No gates in synthesized netlist - skipping equivalence check for $TEST_NAME"
-    # Still create the test_equiv.ys file for reference
-    echo "# No gates to check equivalence" > "${TEST_DIR}/test_equiv.ys"
-    exit 0
+    # Constant-only circuit: no logic gates, only assign statements.
+    # The equiv_make flow creates no $equiv cells for portless modules so it passes
+    # vacuously.  Instead, compare constant values for every signal that appears
+    # in BOTH synthesized netlists.
+    echo "ℹ️  No logic gates - comparing constant wire values for $TEST_NAME"
+
+    CONST_FAILED=0
+    CONST_CHECKED=0
+
+    while IFS= read -r gold_line; do
+        # Parse:  assign \signal  = VALUE ;   (backslash-escaped or plain name)
+        signal=$(echo "$gold_line" | sed -E 's/^\s*assign\s+(\\?[^ ]+)\s*=.*/\1/')
+        gold_val=$(echo "$gold_line" | sed -E 's/^\s*assign\s+[^ ]+\s*=\s*([^;]+)\s*;.*/\1/' | tr -d ' ')
+
+        # Look for the same signal in the UHDM synth
+        gate_line=$(grep -E "^\s*assign\s+${signal}\s*=" "$UHDM_SYNTH" 2>/dev/null | head -1 || true)
+        [ -z "$gate_line" ] && continue   # signal absent in gate — skip
+
+        gate_val=$(echo "$gate_line" | sed -E 's/^\s*assign\s+[^ ]+\s*=\s*([^;]+)\s*;.*/\1/' | tr -d ' ')
+        # Normalize: treat '?' (high-Z) and 'x' (unknown) as equivalent in
+        # constant-only circuits — both indicate an unresolved/undriven bit.
+        gold_norm=$(echo "$gold_val" | tr '?' 'x')
+        gate_norm=$(echo "$gate_val" | tr '?' 'x')
+        # Skip if gold itself has undefined bits (nothing useful to compare)
+        if echo "$gold_norm" | grep -q '[xz]'; then
+            continue
+        fi
+        CONST_CHECKED=$((CONST_CHECKED + 1))
+        if [ "$gold_norm" != "$gate_norm" ]; then
+            echo "❌ Signal '$signal': gold=$gold_val  gate=$gate_val"
+            CONST_FAILED=1
+        fi
+    done < <(grep -E '^\s*assign\s+' "$VERILOG_SYNTH" 2>/dev/null || true)
+
+    if [ "$CONST_CHECKED" -eq 0 ]; then
+        # Nothing to compare (e.g. no assign statements at all) — skip
+        echo "ℹ️  No common assign statements to compare — skipping"
+        echo "# No gates or assigns to check equivalence" > "${TEST_DIR}/test_equiv.ys"
+        exit 0
+    fi
+
+    if [ "$CONST_FAILED" -eq 0 ]; then
+        echo "✅ All $CONST_CHECKED common constant assignments match"
+        echo "# Constant-only circuit equivalence verified by value comparison" > "${TEST_DIR}/test_equiv.ys"
+        exit 0
+    else
+        echo "❌ Constant value mismatch — circuits are NOT equivalent for $TEST_NAME"
+        exit 1
+    fi
 fi
 
 # We'll let Yosys auto-detect the top module

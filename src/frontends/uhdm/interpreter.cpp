@@ -24,6 +24,17 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
     switch (expr_type) {
         case uhdmconstant: {
             const constant* c = any_cast<const constant*>(expr);
+            // Unbased unsized fill constants ('0, '1, 'x, 'z) have vpiSize == -1.
+            // '1 means "fill all bits with 1" — return -1LL (all-ones in two's
+            // complement) so that RTLIL::Const((int32_t)value, wire->width) in
+            // import_initial_interpreted produces the correct all-ones constant
+            // (e.g. 4'b1111 for a 4-bit field) instead of zero-extending to 4'b0001.
+            if (c->VpiSize() == -1) {
+                std::string cval = std::string(c->VpiValue());
+                if (cval == "BIN:1") return -1LL;   // '1 → all-ones
+                if (cval == "BIN:0") return 0LL;    // '0 → all-zeros
+                // 'x and 'z are undefined; treat as 0 for integer evaluation
+            }
             RTLIL::SigSpec val = import_constant(c);
             if (val.is_fully_const()) {
                 return val.as_const().as_int();
@@ -34,13 +45,35 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
         case uhdmref_obj: {
             const ref_obj* ref = any_cast<const ref_obj*>(expr);
             std::string name = std::string(ref->VpiName());
-            
+
             auto it = variables.find(name);
             if (it != variables.end()) {
                 return it->second;
             }
-            
-            log_warning("Unknown variable '%s' in expression\n", name.c_str());
+
+            // Fallback: try gen-scope hierarchical name (e.g., "gen.x" for bare "x")
+            std::string gen_scope = get_current_gen_scope();
+            if (!gen_scope.empty()) {
+                std::string hier_name = gen_scope + "." + name;
+                auto it2 = variables.find(hier_name);
+                if (it2 != variables.end()) {
+                    return it2->second;
+                }
+            }
+
+            return 0;
+        }
+
+        case uhdmhier_path: {
+            const hier_path* hp = any_cast<const hier_path*>(expr);
+            std::string name = std::string(hp->VpiName());
+
+            auto it = variables.find(name);
+            if (it != variables.end()) {
+                return it->second;
+            }
+
+            log_warning("Unknown hier_path variable '%s' in expression\n", name.c_str());
             return 0;
         }
         
@@ -184,11 +217,78 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
                     break;
                 }
 
+                case vpiPowerOp: { // Arithmetic power (2 ** x)
+                    if (operands.size() >= 2) {
+                        int64_t base = evaluate_expression(operands[0], variables, arrays);
+                        int64_t exp = evaluate_expression(operands[1], variables, arrays);
+                        int64_t result = 1;
+                        for (int64_t i = 0; i < exp; i++) {
+                            result *= base;
+                        }
+                        return result;
+                    }
+                    break;
+                }
+
+                case vpiLShiftOp: { // Left shift
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a << b;
+                    }
+                    break;
+                }
+
+                case vpiRShiftOp: { // Right shift
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a >> b;
+                    }
+                    break;
+                }
+
+                case vpiBitAndOp: { // Bitwise AND
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a & b;
+                    }
+                    break;
+                }
+
+                case vpiBitOrOp: { // Bitwise OR
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a | b;
+                    }
+                    break;
+                }
+
+                case vpiBitXorOp: { // Bitwise XOR
+                    if (operands.size() >= 2) {
+                        int64_t a = evaluate_expression(operands[0], variables, arrays);
+                        int64_t b = evaluate_expression(operands[1], variables, arrays);
+                        return a ^ b;
+                    }
+                    break;
+                }
+
                 case vpiPostIncOp: { // Post-increment operator
                     if (operands.size() >= 1) {
                         if (operands[0]->UhdmType() == uhdmref_obj) {
                             const ref_obj* ref = any_cast<const ref_obj*>(operands[0]);
                             std::string name = std::string(ref->VpiName());
+                            // Resolve to gen-scope name if short name not found
+                            if (variables.find(name) == variables.end()) {
+                                std::string gen_scope = get_current_gen_scope();
+                                if (!gen_scope.empty()) {
+                                    std::string hier = gen_scope + "." + name;
+                                    if (variables.find(hier) != variables.end())
+                                        name = hier;
+                                }
+                            }
                             int64_t old_val = variables[name];
                             variables[name] = old_val + 1;
                             return old_val;
@@ -270,44 +370,113 @@ void UhdmImporter::interpret_statement(const any* stmt,
     switch (stmt_type) {
         case uhdmassignment: {
             const assignment* assign = any_cast<const assignment*>(stmt);
-            
+
             if (assign->Lhs() && assign->Rhs()) {
                 int64_t rhs_value = evaluate_expression(assign->Rhs(), variables, arrays);
-                
-                // Handle LHS
-                if (assign->Lhs()->UhdmType() == uhdmref_obj) {
+
+                // Resolve LHS variable name
+                std::string lhs_name;
+                bool is_array = false;
+                int64_t array_index = 0;
+                int lhs_type = assign->Lhs()->UhdmType();
+
+                if (lhs_type == uhdmref_obj) {
                     const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
-                    std::string name = std::string(ref->VpiName());
-                    variables[name] = rhs_value;
-                    
-                    if (mode_debug) {
-                        log("        Assign: %s = %lld\n", name.c_str(), (long long)rhs_value);
-                    }
-                } else if (assign->Lhs()->UhdmType() == uhdmref_var) {
+                    lhs_name = std::string(ref->VpiName());
+                } else if (lhs_type == uhdmref_var) {
                     const ref_var* ref = any_cast<const ref_var*>(assign->Lhs());
-                    std::string name = std::string(ref->VpiName());
-                    variables[name] = rhs_value;
-                    
-                    if (mode_debug) {
-                        log("        Assign: %s = %lld\n", name.c_str(), (long long)rhs_value);
-                    }
-                } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
+                    lhs_name = std::string(ref->VpiName());
+                } else if (lhs_type == uhdminteger_var) {
+                    // For-loop variable declarations (e.g., for (integer x = ...))
+                    const integer_var* iv = any_cast<const integer_var*>(assign->Lhs());
+                    lhs_name = std::string(iv->VpiName());
+                } else if (lhs_type == uhdmhier_path) {
+                    // Hierarchical path (e.g., gen.x)
+                    const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
+                    lhs_name = std::string(hp->VpiName());
+                } else if (lhs_type == uhdmbit_select) {
                     const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
-                    std::string array_name = std::string(bs->VpiName());
-                    
+                    lhs_name = std::string(bs->VpiName());
+                    is_array = true;
                     if (bs->VpiIndex()) {
-                        int64_t index = evaluate_expression(bs->VpiIndex(), variables, arrays);
-                        
-                        // Ensure array exists and is large enough
-                        if (arrays[array_name].size() <= (size_t)index) {
-                            arrays[array_name].resize(index + 1, 0);
+                        array_index = evaluate_expression(bs->VpiIndex(), variables, arrays);
+                    }
+                }
+
+                if (!lhs_name.empty()) {
+                    // Handle compound assignments (+=, -=, *=, etc.)
+                    // vpiOpType 82 = simple assignment, 0 = unset
+                    int op_type = assign->VpiOpType();
+                    if (op_type != 82 && op_type != 0) {
+                        // Read current LHS value
+                        int64_t current_val = 0;
+                        if (is_array) {
+                            auto ait = arrays.find(lhs_name);
+                            if (ait != arrays.end() && array_index >= 0 &&
+                                array_index < (int64_t)ait->second.size()) {
+                                current_val = ait->second[array_index];
+                            }
+                        } else {
+                            auto vit = variables.find(lhs_name);
+                            if (vit != variables.end()) {
+                                current_val = vit->second;
+                            } else {
+                                // Try gen-scope fallback for bare name
+                                std::string gen_scope = get_current_gen_scope();
+                                if (!gen_scope.empty()) {
+                                    std::string hier = gen_scope + "." + lhs_name;
+                                    auto vit2 = variables.find(hier);
+                                    if (vit2 != variables.end()) {
+                                        current_val = vit2->second;
+                                        lhs_name = hier; // Use the resolved name
+                                    }
+                                }
+                            }
                         }
-                        
-                        arrays[array_name][index] = rhs_value;
-                        
+
+                        // Apply the compound operation
+                        switch (op_type) {
+                            case vpiAddOp: rhs_value = current_val + rhs_value; break;
+                            case vpiSubOp: rhs_value = current_val - rhs_value; break;
+                            case vpiMultOp: rhs_value = current_val * rhs_value; break;
+                            case vpiDivOp: if (rhs_value != 0) rhs_value = current_val / rhs_value; break;
+                            case vpiModOp: if (rhs_value != 0) rhs_value = current_val % rhs_value; break;
+                            case vpiLShiftOp: rhs_value = current_val << rhs_value; break;
+                            case vpiRShiftOp: rhs_value = current_val >> rhs_value; break;
+                            case vpiBitAndOp: rhs_value = current_val & rhs_value; break;
+                            case vpiBitOrOp: rhs_value = current_val | rhs_value; break;
+                            case vpiBitXorOp: rhs_value = current_val ^ rhs_value; break;
+                            default:
+                                log_warning("Unsupported compound assignment op %d\n", op_type);
+                                break;
+                        }
+                    } else if (!is_array) {
+                        // For simple assignment, resolve bare name to gen-scope if needed
+                        if (variables.find(lhs_name) == variables.end()) {
+                            std::string gen_scope = get_current_gen_scope();
+                            if (!gen_scope.empty()) {
+                                std::string hier = gen_scope + "." + lhs_name;
+                                if (variables.find(hier) != variables.end()) {
+                                    lhs_name = hier;
+                                }
+                            }
+                        }
+                    }
+
+                    // Write the value
+                    if (is_array) {
+                        if (arrays[lhs_name].size() <= (size_t)array_index) {
+                            arrays[lhs_name].resize(array_index + 1, 0);
+                        }
+                        arrays[lhs_name][array_index] = rhs_value;
                         if (mode_debug) {
-                            log("        Assign: %s[%lld] = %lld\n", 
-                                array_name.c_str(), (long long)index, (long long)rhs_value);
+                            log("        Assign: %s[%lld] = %lld\n",
+                                lhs_name.c_str(), (long long)array_index, (long long)rhs_value);
+                        }
+                    } else {
+                        variables[lhs_name] = rhs_value;
+                        if (mode_debug) {
+                            log("        Assign: %s = %lld\n", lhs_name.c_str(), (long long)rhs_value);
                         }
                     }
                 }
@@ -407,7 +576,38 @@ void UhdmImporter::interpret_statement(const any* stmt,
         
         case uhdmfor_stmt: {
             const for_stmt* for_s = any_cast<const for_stmt*>(stmt);
-            
+
+            // Detect for-loop variable declarations (integer_var in ForInitStmt LHS)
+            // These shadow outer variables and must be removed after the loop
+            std::vector<std::string> loop_var_names;
+            auto detect_loop_vars = [&](const any* init) {
+                if (init && init->UhdmType() == uhdmassignment) {
+                    const assignment* a = any_cast<const assignment*>(init);
+                    if (a->Lhs() && a->Lhs()->UhdmType() == uhdminteger_var) {
+                        const integer_var* iv = any_cast<const integer_var*>(a->Lhs());
+                        loop_var_names.push_back(std::string(iv->VpiName()));
+                    }
+                }
+            };
+            if (for_s->VpiForInitStmt()) {
+                detect_loop_vars(for_s->VpiForInitStmt());
+            }
+            if (for_s->VpiForInitStmts()) {
+                for (auto init_stmt : *for_s->VpiForInitStmts()) {
+                    detect_loop_vars(init_stmt);
+                }
+            }
+
+            // Save any existing values that will be shadowed
+            std::map<std::string, std::pair<bool, int64_t>> saved_loop_vars;
+            for (auto& vname : loop_var_names) {
+                auto it = variables.find(vname);
+                if (it != variables.end())
+                    saved_loop_vars[vname] = {true, it->second};
+                else
+                    saved_loop_vars[vname] = {false, 0};
+            }
+
             // Execute init statement(s)
             if (for_s->VpiForInitStmt()) {
                 interpret_statement(for_s->VpiForInitStmt(), variables, arrays, break_flag, continue_flag);
@@ -417,11 +617,11 @@ void UhdmImporter::interpret_statement(const any* stmt,
                     interpret_statement(init_stmt, variables, arrays, break_flag, continue_flag);
                 }
             }
-            
+
             // Execute loop
             int iteration_count = 0;
             const int MAX_ITERATIONS = 100000; // Safety limit
-            
+
             while (iteration_count < MAX_ITERATIONS) {
                 // Check condition
                 if (for_s->VpiCondition()) {
@@ -430,21 +630,21 @@ void UhdmImporter::interpret_statement(const any* stmt,
                         break;
                     }
                 }
-                
+
                 // Execute body
                 if (for_s->VpiStmt()) {
                     interpret_statement(for_s->VpiStmt(), variables, arrays, break_flag, continue_flag);
                 }
-                
+
                 if (break_flag) {
                     break_flag = false;
                     break;
                 }
-                
+
                 if (continue_flag) {
                     continue_flag = false;
                 }
-                
+
                 // Execute increment statement(s)
                 if (for_s->VpiForIncStmt()) {
                     interpret_statement(for_s->VpiForIncStmt(), variables, arrays, break_flag, continue_flag);
@@ -454,12 +654,22 @@ void UhdmImporter::interpret_statement(const any* stmt,
                         interpret_statement(inc_stmt, variables, arrays, break_flag, continue_flag);
                     }
                 }
-                
+
                 iteration_count++;
             }
-            
+
             if (iteration_count >= MAX_ITERATIONS) {
                 log_warning("For loop exceeded maximum iterations (%d)\n", MAX_ITERATIONS);
+            }
+
+            // Remove for-loop declared variables so bare name reverts to
+            // gen-scope hierarchical lookup (variable shadowing ends)
+            for (auto& vname : loop_var_names) {
+                auto& saved = saved_loop_vars[vname];
+                if (saved.first)
+                    variables[vname] = saved.second;
+                else
+                    variables.erase(vname);
             }
             break;
         }

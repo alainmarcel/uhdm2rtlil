@@ -11,7 +11,7 @@ module \test_add
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$2
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$2
   attribute \src "dut.sv:8.4-8.10"
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
@@ -21,13 +21,13 @@ module \test_add
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$2
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$2
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$1
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$2
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$2
     sync always
       update \c $0\c
   end
@@ -43,7 +43,7 @@ module \test_sub
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$5
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$5
   attribute \src "dut.sv:8.4-8.10"
   cell $sub $sub$dut.sv:8$6
     parameter \A_SIGNED 0
@@ -53,13 +53,13 @@ module \test_sub
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$5
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$5
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$4
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$5
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$5
     sync always
       update \c $0\c
   end
@@ -75,7 +75,7 @@ module \test_mul
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$8
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$8
   attribute \src "dut.sv:8.4-8.10"
   cell $mul $mul$dut.sv:8$9
     parameter \A_SIGNED 0
@@ -85,13 +85,13 @@ module \test_mul
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$8
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$8
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$7
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$8
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$8
     sync always
       update \c $0\c
   end
@@ -107,7 +107,7 @@ module \test_div
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$11
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$11
   attribute \src "dut.sv:8.4-8.10"
   cell $div $div$dut.sv:8$12
     parameter \A_SIGNED 0
@@ -117,13 +117,13 @@ module \test_div
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$11
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$11
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$10
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$11
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$11
     sync always
       update \c $0\c
   end
@@ -139,7 +139,7 @@ module \test_mod
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$14
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$14
   attribute \src "dut.sv:8.4-8.10"
   cell $mod $mod$dut.sv:8$15
     parameter \A_SIGNED 0
@@ -149,13 +149,13 @@ module \test_mod
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$14
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$14
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$13
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$14
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$14
     sync always
       update \c $0\c
   end
@@ -171,7 +171,7 @@ module \test_bit_and
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$17
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$17
   attribute \src "dut.sv:8.4-8.10"
   cell $and $and$dut.sv:8$18
     parameter \A_SIGNED 0
@@ -181,13 +181,13 @@ module \test_bit_and
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$17
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$17
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$16
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$17
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$17
     sync always
       update \c $0\c
   end
@@ -203,7 +203,7 @@ module \test_bit_or
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$20
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$20
   attribute \src "dut.sv:8.4-8.10"
   cell $or $or$dut.sv:8$21
     parameter \A_SIGNED 0
@@ -213,13 +213,13 @@ module \test_bit_or
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$20
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$20
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$19
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$20
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$20
     sync always
       update \c $0\c
   end
@@ -235,7 +235,7 @@ module \test_bit_xor
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$23
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$23
   attribute \src "dut.sv:8.4-8.10"
   cell $xor $xor$dut.sv:8$24
     parameter \A_SIGNED 0
@@ -245,13 +245,13 @@ module \test_bit_xor
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$23
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$23
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$22
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$23
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$23
     sync always
       update \c $0\c
   end
@@ -267,7 +267,7 @@ module \test_shl
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$26
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$26
   attribute \src "dut.sv:8.4-8.11"
   cell $shl $shl$dut.sv:8$27
     parameter \A_SIGNED 0
@@ -277,13 +277,13 @@ module \test_shl
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$26
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$26
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$25
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$26
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$26
     sync always
       update \c $0\c
   end
@@ -299,7 +299,7 @@ module \test_shr
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$29
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$29
   attribute \src "dut.sv:8.4-8.11"
   cell $shr $shr$dut.sv:8$30
     parameter \A_SIGNED 0
@@ -309,13 +309,13 @@ module \test_shr
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$29
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$29
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$28
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$29
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$29
     sync always
       update \c $0\c
   end
@@ -331,7 +331,7 @@ module \test_sshl
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$32
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$32
   attribute \src "dut.sv:8.4-8.12"
   cell $sshl $sshl$dut.sv:8$33
     parameter \A_SIGNED 0
@@ -341,13 +341,13 @@ module \test_sshl
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$32
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$32
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$31
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$32
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$32
     sync always
       update \c $0\c
   end
@@ -363,7 +363,7 @@ module \test_sshr
   wire width 4 output 3 \c
   attribute \src "dut.sv:6.3-9.6"
   wire width 4 $0\c
-  wire width 4 $auto$process.cpp:5147:create_compound_op_cell$35
+  wire width 4 $auto$process.cpp:5308:create_compound_op_cell$35
   attribute \src "dut.sv:8.4-8.12"
   cell $sshr $sshr$dut.sv:8$36
     parameter \A_SIGNED 0
@@ -373,13 +373,13 @@ module \test_sshr
     parameter \Y_WIDTH 4
     connect \A \a
     connect \B \b
-    connect \Y $auto$process.cpp:5147:create_compound_op_cell$35
+    connect \Y $auto$process.cpp:5308:create_compound_op_cell$35
   end
   attribute \src "dut.sv:6.3-9.6"
   process $proc$dut.sv:6$34
     assign $0\c \c
     assign $0\c \a
-    assign $0\c $auto$process.cpp:5147:create_compound_op_cell$35
+    assign $0\c $auto$process.cpp:5308:create_compound_op_cell$35
     sync always
       update \c $0\c
   end

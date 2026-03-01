@@ -4,7 +4,6 @@
 (* src = "dut.sv:1.1-42.10" *)
 (* top =  1  *)
 module top();
-  wire x;
   (* src = "dut.sv:32.9-32.24" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -20,21 +19,6 @@ module top();
     .EN(1'h0),
     .TRG()
   );
-  (* src = "dut.sv:40.9-40.19" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967295),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _1_ (
-    .A(1'hx),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
   (* src = "dut.sv:30.9-30.36" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -44,11 +28,10 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _2_ (
+  ) _1_ (
     .A(1'h0),
     .ARGS(),
     .EN(1'h0),
     .TRG()
   );
-  assign x = 1'h1;
 endmodule

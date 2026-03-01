@@ -3,9 +3,9 @@
 (* src = "dut.sv:1.1-39.10" *)
 (* top =  1  *)
 module gen_test7();
+  wire [2:0] \cond.sub_out1 ;
   wire [2:0] \cond.sub_out2 ;
   wire [2:0] \cond.sub_out3 ;
-  wire \cond.x ;
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:2.12-2.16" *)
   wire [2:0] out1;
@@ -14,10 +14,13 @@ module gen_test7();
   wire [2:0] out2;
   (* src = "dut.sv:4.13-4.17" *)
   wire [2:0] out3;
+  (* src = "dut.sv:17.23-17.24" *)
+  wire [31:0] \proc.x ;
+  assign \proc.x  = 32'd2;
   assign \cond.sub_out3  = 3'h7;
-  assign \cond.sub_out2  = 3'h0;
-  assign \cond.x  = 1'h0;
+  assign \cond.sub_out2  = 3'h2;
+  assign \cond.sub_out1  = 3'h4;
   assign out3 = 3'h7;
-  assign out2 = 3'h0;
-  assign out1 = 3'h0;
+  assign out2 = 3'h2;
+  assign out1 = 3'h4;
 endmodule

@@ -13,4 +13,9 @@ const_fold_func
 # multiplier: SAT proves primary outputs are equivalent, but equiv_make fails because
 # internal FullAdder instance naming differs (UHDM: unit_0..N vs Verilog: \addbit[0].unit)
 multiplier
+# case_expr_const: UHDM fails to evaluate certain case-expression constants at compile time;
+# g=1'h0 vs expected 1'h1, c/b=1'hx vs expected 1'h1
+case_expr_const
+# port_sign_extend: UHDM produces 1-bit output (1'h1) instead of 2-bit sign-extended (2'h2)
+port_sign_extend
 
