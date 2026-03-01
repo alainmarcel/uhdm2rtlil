@@ -15,7 +15,7 @@ module \mul_sync_enable_test
   wire width 3 input 5 \b
   attribute \src "dut.sv:1.50-1.51"
   wire width 9 output 6 \p
-  wire width 9 $auto$expression.cpp:2131:import_operation$2
+  wire width 9 $auto$expression.cpp:2219:import_operation$2
   cell $mul $mul$dut.sv:13$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -24,7 +24,7 @@ module \mul_sync_enable_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2131:import_operation$2
+    connect \Y $auto$expression.cpp:2219:import_operation$2
   end
   attribute \src "dut.sv:7.5-15.8"
   attribute \always_ff 1
@@ -37,7 +37,7 @@ module \mul_sync_enable_test
     connect \CLK \clk
     connect \EN \en
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2131:import_operation$2
+    connect \D $auto$expression.cpp:2219:import_operation$2
     connect \Q \p
   end
 end

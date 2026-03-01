@@ -307,9 +307,14 @@ struct UhdmImporter {
     int function_instance_counter = 0;
     
     // Get current function context for constant propagation (top of stack)
-    FunctionCallContext* getCurrentFunctionContext() { 
+    FunctionCallContext* getCurrentFunctionContext() {
         return function_call_stack.current();
     }
+
+    // Collects module-level bit-select writes that occur during compile-time
+    // function evaluation (e.g. side-effects on output regs inside functions).
+    // Key = unescaped signal name, value = per-bit integer (0/1, -1 = unset).
+    std::map<std::string, std::vector<int>> const_eval_module_writes;
     RTLIL::SigSpec current_ff_clock_sig;
     
     // Temporary wires for combinational processes

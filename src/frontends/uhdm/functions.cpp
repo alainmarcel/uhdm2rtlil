@@ -182,6 +182,14 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         if (bit_index >= 0 && bit_index < target.size()) {
                             target.set(bit_index, rhs_value.is_fully_zero() ? RTLIL::S0 : RTLIL::S1);
                         }
+                    } else {
+                        // lhs_name is not a function-local variable — it's a module-level
+                        // signal (e.g. an output reg written as a side effect).  Record
+                        // the write in const_eval_module_writes for later application.
+                        auto& slot = const_eval_module_writes[lhs_name];
+                        if (bit_index >= (int)slot.size())
+                            slot.resize(bit_index + 1, -1);
+                        slot[bit_index] = rhs_value.is_fully_zero() ? 0 : 1;
                     }
                     log("    Assigned %s[%d] = %s\n", lhs_name.c_str(), bit_index,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
@@ -1380,8 +1388,11 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
             func_name.c_str(), ctx.call_depth);
         
         // For recursive calls with non-constant arguments, we need to limit depth
-        // to prevent infinite recursion during synthesis
-        if (ctx.call_depth > 2) { // Limit recursion depth for synthesis
+        // to prevent infinite recursion during synthesis.
+        // With constant-parameter tracking, the recursion terminates naturally
+        // when the guard condition (e.g. exp > 0) evaluates to const-false.
+        // Allow up to 20 levels; non-terminating calls beyond that return X.
+        if (ctx.call_depth > 20) { // Limit recursion depth for synthesis
             log("UHDM: Reached maximum recursion depth for %s, returning undefined\n", func_name.c_str());
             
             // Get return width

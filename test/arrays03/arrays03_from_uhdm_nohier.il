@@ -14,9 +14,9 @@ module \pcktest1
   wire width 2 input 3 \ix
   attribute \src "dut.sv:11.19-11.22"
   wire width 8 output 4 \out
-  wire width 32 $auto$expression.cpp:3161:import_bit_select$2
-  wire width 32 $auto$expression.cpp:3174:import_bit_select$4
-  wire width 8 $auto$expression.cpp:3210:import_bit_select$6
+  wire width 32 $auto$expression.cpp:3249:import_bit_select$2
+  wire width 32 $auto$expression.cpp:3262:import_bit_select$4
+  wire width 8 $auto$expression.cpp:3298:import_bit_select$6
   attribute \src "dut.sv:14.19-14.21"
   cell $sub $sub$dut.sv:14$3
     parameter \A_SIGNED 0
@@ -26,7 +26,7 @@ module \pcktest1
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 30'000000000000000000000000000000 \ix }
-    connect \Y $auto$expression.cpp:3161:import_bit_select$2
+    connect \Y $auto$expression.cpp:3249:import_bit_select$2
   end
   attribute \src "dut.sv:14.19-14.21"
   cell $mul $mul$dut.sv:14$5
@@ -35,9 +35,9 @@ module \pcktest1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:3161:import_bit_select$2
+    connect \A $auto$expression.cpp:3249:import_bit_select$2
     connect \B 8
-    connect \Y $auto$expression.cpp:3174:import_bit_select$4
+    connect \Y $auto$expression.cpp:3262:import_bit_select$4
   end
   attribute \src "dut.sv:14.19-14.21"
   cell $shiftx $shiftx$dut.sv:14$7
@@ -47,14 +47,14 @@ module \pcktest1
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \in
-    connect \B $auto$expression.cpp:3174:import_bit_select$4
-    connect \Y $auto$expression.cpp:3210:import_bit_select$6
+    connect \B $auto$expression.cpp:3262:import_bit_select$4
+    connect \Y $auto$expression.cpp:3298:import_bit_select$6
   end
   attribute \src "dut.sv:13.5-15.8"
   attribute \always_ff 1
   process $proc$dut.sv:13$1
     sync posedge \clk
-      update \out $auto$expression.cpp:3210:import_bit_select$6
+      update \out $auto$expression.cpp:3298:import_bit_select$6
   end
 end
 attribute \cells_not_processed 1
@@ -71,9 +71,9 @@ module \pcktest2
   wire width 2 input 3 \ix
   attribute \src "dut.sv:22.19-22.22"
   wire width 8 output 4 \out
-  wire width 32 $auto$expression.cpp:3161:import_bit_select$9
-  wire width 32 $auto$expression.cpp:3174:import_bit_select$11
-  wire width 8 $auto$expression.cpp:3210:import_bit_select$13
+  wire width 32 $auto$expression.cpp:3249:import_bit_select$9
+  wire width 32 $auto$expression.cpp:3262:import_bit_select$11
+  wire width 8 $auto$expression.cpp:3298:import_bit_select$13
   attribute \src "dut.sv:25.19-25.21"
   cell $sub $sub$dut.sv:25$10
     parameter \A_SIGNED 0
@@ -83,7 +83,7 @@ module \pcktest2
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 30'000000000000000000000000000000 \ix }
-    connect \Y $auto$expression.cpp:3161:import_bit_select$9
+    connect \Y $auto$expression.cpp:3249:import_bit_select$9
   end
   attribute \src "dut.sv:25.19-25.21"
   cell $mul $mul$dut.sv:25$12
@@ -92,9 +92,9 @@ module \pcktest2
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:3161:import_bit_select$9
+    connect \A $auto$expression.cpp:3249:import_bit_select$9
     connect \B 8
-    connect \Y $auto$expression.cpp:3174:import_bit_select$11
+    connect \Y $auto$expression.cpp:3262:import_bit_select$11
   end
   attribute \src "dut.sv:25.19-25.21"
   cell $shiftx $shiftx$dut.sv:25$14
@@ -104,14 +104,14 @@ module \pcktest2
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \in
-    connect \B $auto$expression.cpp:3174:import_bit_select$11
-    connect \Y $auto$expression.cpp:3210:import_bit_select$13
+    connect \B $auto$expression.cpp:3262:import_bit_select$11
+    connect \Y $auto$expression.cpp:3298:import_bit_select$13
   end
   attribute \src "dut.sv:24.5-26.8"
   attribute \always_ff 1
   process $proc$dut.sv:24$8
     sync posedge \clk
-      update \out $auto$expression.cpp:3210:import_bit_select$13
+      update \out $auto$expression.cpp:3298:import_bit_select$13
   end
 end
 attribute \cells_not_processed 1
@@ -128,9 +128,9 @@ module \pcktest3
   wire width 2 input 3 \ix
   attribute \src "dut.sv:33.19-33.22"
   wire width 8 output 4 \out
-  wire width 32 $auto$expression.cpp:3161:import_bit_select$16
-  wire width 32 $auto$expression.cpp:3174:import_bit_select$18
-  wire width 8 $auto$expression.cpp:3210:import_bit_select$20
+  wire width 32 $auto$expression.cpp:3249:import_bit_select$16
+  wire width 32 $auto$expression.cpp:3262:import_bit_select$18
+  wire width 8 $auto$expression.cpp:3298:import_bit_select$20
   attribute \src "dut.sv:36.19-36.21"
   cell $sub $sub$dut.sv:36$17
     parameter \A_SIGNED 0
@@ -140,7 +140,7 @@ module \pcktest3
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 30'000000000000000000000000000000 \ix }
-    connect \Y $auto$expression.cpp:3161:import_bit_select$16
+    connect \Y $auto$expression.cpp:3249:import_bit_select$16
   end
   attribute \src "dut.sv:36.19-36.21"
   cell $mul $mul$dut.sv:36$19
@@ -149,9 +149,9 @@ module \pcktest3
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:3161:import_bit_select$16
+    connect \A $auto$expression.cpp:3249:import_bit_select$16
     connect \B 8
-    connect \Y $auto$expression.cpp:3174:import_bit_select$18
+    connect \Y $auto$expression.cpp:3262:import_bit_select$18
   end
   attribute \src "dut.sv:36.19-36.21"
   cell $shiftx $shiftx$dut.sv:36$21
@@ -161,14 +161,14 @@ module \pcktest3
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \in
-    connect \B $auto$expression.cpp:3174:import_bit_select$18
-    connect \Y $auto$expression.cpp:3210:import_bit_select$20
+    connect \B $auto$expression.cpp:3262:import_bit_select$18
+    connect \Y $auto$expression.cpp:3298:import_bit_select$20
   end
   attribute \src "dut.sv:35.5-37.8"
   attribute \always_ff 1
   process $proc$dut.sv:35$15
     sync posedge \clk
-      update \out $auto$expression.cpp:3210:import_bit_select$20
+      update \out $auto$expression.cpp:3298:import_bit_select$20
   end
 end
 attribute \cells_not_processed 1
@@ -185,9 +185,9 @@ module \pcktest4
   wire width 2 input 3 \ix
   attribute \src "dut.sv:44.19-44.22"
   wire width 8 output 4 \out
-  wire width 32 $auto$expression.cpp:3161:import_bit_select$23
-  wire width 32 $auto$expression.cpp:3174:import_bit_select$25
-  wire width 8 $auto$expression.cpp:3210:import_bit_select$27
+  wire width 32 $auto$expression.cpp:3249:import_bit_select$23
+  wire width 32 $auto$expression.cpp:3262:import_bit_select$25
+  wire width 8 $auto$expression.cpp:3298:import_bit_select$27
   attribute \src "dut.sv:47.19-47.21"
   cell $sub $sub$dut.sv:47$24
     parameter \A_SIGNED 0
@@ -197,7 +197,7 @@ module \pcktest4
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 30'000000000000000000000000000000 \ix }
-    connect \Y $auto$expression.cpp:3161:import_bit_select$23
+    connect \Y $auto$expression.cpp:3249:import_bit_select$23
   end
   attribute \src "dut.sv:47.19-47.21"
   cell $mul $mul$dut.sv:47$26
@@ -206,9 +206,9 @@ module \pcktest4
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:3161:import_bit_select$23
+    connect \A $auto$expression.cpp:3249:import_bit_select$23
     connect \B 8
-    connect \Y $auto$expression.cpp:3174:import_bit_select$25
+    connect \Y $auto$expression.cpp:3262:import_bit_select$25
   end
   attribute \src "dut.sv:47.19-47.21"
   cell $shiftx $shiftx$dut.sv:47$28
@@ -218,13 +218,13 @@ module \pcktest4
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \in
-    connect \B $auto$expression.cpp:3174:import_bit_select$25
-    connect \Y $auto$expression.cpp:3210:import_bit_select$27
+    connect \B $auto$expression.cpp:3262:import_bit_select$25
+    connect \Y $auto$expression.cpp:3298:import_bit_select$27
   end
   attribute \src "dut.sv:46.5-48.8"
   attribute \always_ff 1
   process $proc$dut.sv:46$22
     sync posedge \clk
-      update \out $auto$expression.cpp:3210:import_bit_select$27
+      update \out $auto$expression.cpp:3298:import_bit_select$27
   end
 end
