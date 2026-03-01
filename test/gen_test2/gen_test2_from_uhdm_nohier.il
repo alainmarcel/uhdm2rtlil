@@ -16,9 +16,9 @@ module \gen_test2
   attribute \src "dut.sv:8.11-8.16"
   attribute \reg 1
   wire width 9 \carry
-  wire $auto$expression.cpp:3210:import_bit_select$2
-  wire $auto$expression.cpp:3210:import_bit_select$4
-  wire $auto$expression.cpp:3210:import_bit_select$6
+  wire $auto$expression.cpp:3298:import_bit_select$2
+  wire $auto$expression.cpp:3298:import_bit_select$4
+  wire $auto$expression.cpp:3298:import_bit_select$6
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$8
   attribute \src "dut.sv:14.4-15.20"
@@ -29,25 +29,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$14
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$16
-  wire width 64 $auto$expression.cpp:2059:import_operation$18
-  wire $auto$expression.cpp:3210:import_bit_select$20
+  wire width 64 $auto$expression.cpp:2147:import_operation$18
+  wire $auto$expression.cpp:3298:import_bit_select$20
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$22
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$24
-  wire width 64 $auto$expression.cpp:2059:import_operation$26
-  wire $auto$expression.cpp:3210:import_bit_select$28
+  wire width 64 $auto$expression.cpp:2147:import_operation$26
+  wire $auto$expression.cpp:3298:import_bit_select$28
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$30
-  wire $auto$expression.cpp:3210:import_bit_select$32
-  wire $auto$expression.cpp:3210:import_bit_select$34
-  wire $auto$expression.cpp:3210:import_bit_select$36
+  wire $auto$expression.cpp:3298:import_bit_select$32
+  wire $auto$expression.cpp:3298:import_bit_select$34
+  wire $auto$expression.cpp:3298:import_bit_select$36
   wire $auto$rtlil.cc:3388:Xor$39
-  wire $auto$expression.cpp:3210:import_bit_select$40
+  wire $auto$expression.cpp:3298:import_bit_select$40
   wire $auto$rtlil.cc:3388:Xor$43
-  wire $auto$expression.cpp:3210:import_bit_select$44
-  wire $auto$expression.cpp:3210:import_bit_select$46
-  wire $auto$expression.cpp:3210:import_bit_select$48
+  wire $auto$expression.cpp:3298:import_bit_select$44
+  wire $auto$expression.cpp:3298:import_bit_select$46
+  wire $auto$expression.cpp:3298:import_bit_select$48
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$50
   attribute \src "dut.sv:14.4-15.20"
@@ -58,25 +58,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$56
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$58
-  wire width 64 $auto$expression.cpp:2059:import_operation$60
-  wire $auto$expression.cpp:3210:import_bit_select$62
+  wire width 64 $auto$expression.cpp:2147:import_operation$60
+  wire $auto$expression.cpp:3298:import_bit_select$62
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$64
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$66
-  wire width 64 $auto$expression.cpp:2059:import_operation$68
-  wire $auto$expression.cpp:3210:import_bit_select$70
+  wire width 64 $auto$expression.cpp:2147:import_operation$68
+  wire $auto$expression.cpp:3298:import_bit_select$70
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$72
-  wire $auto$expression.cpp:3210:import_bit_select$74
-  wire $auto$expression.cpp:3210:import_bit_select$76
-  wire $auto$expression.cpp:3210:import_bit_select$78
+  wire $auto$expression.cpp:3298:import_bit_select$74
+  wire $auto$expression.cpp:3298:import_bit_select$76
+  wire $auto$expression.cpp:3298:import_bit_select$78
   wire $auto$rtlil.cc:3388:Xor$81
-  wire $auto$expression.cpp:3210:import_bit_select$82
+  wire $auto$expression.cpp:3298:import_bit_select$82
   wire $auto$rtlil.cc:3388:Xor$85
-  wire $auto$expression.cpp:3210:import_bit_select$86
-  wire $auto$expression.cpp:3210:import_bit_select$88
-  wire $auto$expression.cpp:3210:import_bit_select$90
+  wire $auto$expression.cpp:3298:import_bit_select$86
+  wire $auto$expression.cpp:3298:import_bit_select$88
+  wire $auto$expression.cpp:3298:import_bit_select$90
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$92
   attribute \src "dut.sv:14.4-15.20"
@@ -87,25 +87,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$98
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$100
-  wire width 64 $auto$expression.cpp:2059:import_operation$102
-  wire $auto$expression.cpp:3210:import_bit_select$104
+  wire width 64 $auto$expression.cpp:2147:import_operation$102
+  wire $auto$expression.cpp:3298:import_bit_select$104
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$106
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$108
-  wire width 64 $auto$expression.cpp:2059:import_operation$110
-  wire $auto$expression.cpp:3210:import_bit_select$112
+  wire width 64 $auto$expression.cpp:2147:import_operation$110
+  wire $auto$expression.cpp:3298:import_bit_select$112
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$114
-  wire $auto$expression.cpp:3210:import_bit_select$116
-  wire $auto$expression.cpp:3210:import_bit_select$118
-  wire $auto$expression.cpp:3210:import_bit_select$120
+  wire $auto$expression.cpp:3298:import_bit_select$116
+  wire $auto$expression.cpp:3298:import_bit_select$118
+  wire $auto$expression.cpp:3298:import_bit_select$120
   wire $auto$rtlil.cc:3388:Xor$123
-  wire $auto$expression.cpp:3210:import_bit_select$124
+  wire $auto$expression.cpp:3298:import_bit_select$124
   wire $auto$rtlil.cc:3388:Xor$127
-  wire $auto$expression.cpp:3210:import_bit_select$128
-  wire $auto$expression.cpp:3210:import_bit_select$130
-  wire $auto$expression.cpp:3210:import_bit_select$132
+  wire $auto$expression.cpp:3298:import_bit_select$128
+  wire $auto$expression.cpp:3298:import_bit_select$130
+  wire $auto$expression.cpp:3298:import_bit_select$132
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$134
   attribute \src "dut.sv:14.4-15.20"
@@ -116,25 +116,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$140
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$142
-  wire width 64 $auto$expression.cpp:2059:import_operation$144
-  wire $auto$expression.cpp:3210:import_bit_select$146
+  wire width 64 $auto$expression.cpp:2147:import_operation$144
+  wire $auto$expression.cpp:3298:import_bit_select$146
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$148
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$150
-  wire width 64 $auto$expression.cpp:2059:import_operation$152
-  wire $auto$expression.cpp:3210:import_bit_select$154
+  wire width 64 $auto$expression.cpp:2147:import_operation$152
+  wire $auto$expression.cpp:3298:import_bit_select$154
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$156
-  wire $auto$expression.cpp:3210:import_bit_select$158
-  wire $auto$expression.cpp:3210:import_bit_select$160
-  wire $auto$expression.cpp:3210:import_bit_select$162
+  wire $auto$expression.cpp:3298:import_bit_select$158
+  wire $auto$expression.cpp:3298:import_bit_select$160
+  wire $auto$expression.cpp:3298:import_bit_select$162
   wire $auto$rtlil.cc:3388:Xor$165
-  wire $auto$expression.cpp:3210:import_bit_select$166
+  wire $auto$expression.cpp:3298:import_bit_select$166
   wire $auto$rtlil.cc:3388:Xor$169
-  wire $auto$expression.cpp:3210:import_bit_select$170
-  wire $auto$expression.cpp:3210:import_bit_select$172
-  wire $auto$expression.cpp:3210:import_bit_select$174
+  wire $auto$expression.cpp:3298:import_bit_select$170
+  wire $auto$expression.cpp:3298:import_bit_select$172
+  wire $auto$expression.cpp:3298:import_bit_select$174
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$176
   attribute \src "dut.sv:14.4-15.20"
@@ -145,25 +145,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$182
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$184
-  wire width 64 $auto$expression.cpp:2059:import_operation$186
-  wire $auto$expression.cpp:3210:import_bit_select$188
+  wire width 64 $auto$expression.cpp:2147:import_operation$186
+  wire $auto$expression.cpp:3298:import_bit_select$188
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$190
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$192
-  wire width 64 $auto$expression.cpp:2059:import_operation$194
-  wire $auto$expression.cpp:3210:import_bit_select$196
+  wire width 64 $auto$expression.cpp:2147:import_operation$194
+  wire $auto$expression.cpp:3298:import_bit_select$196
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$198
-  wire $auto$expression.cpp:3210:import_bit_select$200
-  wire $auto$expression.cpp:3210:import_bit_select$202
-  wire $auto$expression.cpp:3210:import_bit_select$204
+  wire $auto$expression.cpp:3298:import_bit_select$200
+  wire $auto$expression.cpp:3298:import_bit_select$202
+  wire $auto$expression.cpp:3298:import_bit_select$204
   wire $auto$rtlil.cc:3388:Xor$207
-  wire $auto$expression.cpp:3210:import_bit_select$208
+  wire $auto$expression.cpp:3298:import_bit_select$208
   wire $auto$rtlil.cc:3388:Xor$211
-  wire $auto$expression.cpp:3210:import_bit_select$212
-  wire $auto$expression.cpp:3210:import_bit_select$214
-  wire $auto$expression.cpp:3210:import_bit_select$216
+  wire $auto$expression.cpp:3298:import_bit_select$212
+  wire $auto$expression.cpp:3298:import_bit_select$214
+  wire $auto$expression.cpp:3298:import_bit_select$216
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$218
   attribute \src "dut.sv:14.4-15.20"
@@ -174,25 +174,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$224
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$226
-  wire width 64 $auto$expression.cpp:2059:import_operation$228
-  wire $auto$expression.cpp:3210:import_bit_select$230
+  wire width 64 $auto$expression.cpp:2147:import_operation$228
+  wire $auto$expression.cpp:3298:import_bit_select$230
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$232
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$234
-  wire width 64 $auto$expression.cpp:2059:import_operation$236
-  wire $auto$expression.cpp:3210:import_bit_select$238
+  wire width 64 $auto$expression.cpp:2147:import_operation$236
+  wire $auto$expression.cpp:3298:import_bit_select$238
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$240
-  wire $auto$expression.cpp:3210:import_bit_select$242
-  wire $auto$expression.cpp:3210:import_bit_select$244
-  wire $auto$expression.cpp:3210:import_bit_select$246
+  wire $auto$expression.cpp:3298:import_bit_select$242
+  wire $auto$expression.cpp:3298:import_bit_select$244
+  wire $auto$expression.cpp:3298:import_bit_select$246
   wire $auto$rtlil.cc:3388:Xor$249
-  wire $auto$expression.cpp:3210:import_bit_select$250
+  wire $auto$expression.cpp:3298:import_bit_select$250
   wire $auto$rtlil.cc:3388:Xor$253
-  wire $auto$expression.cpp:3210:import_bit_select$254
-  wire $auto$expression.cpp:3210:import_bit_select$256
-  wire $auto$expression.cpp:3210:import_bit_select$258
+  wire $auto$expression.cpp:3298:import_bit_select$254
+  wire $auto$expression.cpp:3298:import_bit_select$256
+  wire $auto$expression.cpp:3298:import_bit_select$258
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$260
   attribute \src "dut.sv:14.4-15.20"
@@ -203,25 +203,25 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$266
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$268
-  wire width 64 $auto$expression.cpp:2059:import_operation$270
-  wire $auto$expression.cpp:3210:import_bit_select$272
+  wire width 64 $auto$expression.cpp:2147:import_operation$270
+  wire $auto$expression.cpp:3298:import_bit_select$272
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$274
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$276
-  wire width 64 $auto$expression.cpp:2059:import_operation$278
-  wire $auto$expression.cpp:3210:import_bit_select$280
+  wire width 64 $auto$expression.cpp:2147:import_operation$278
+  wire $auto$expression.cpp:3298:import_bit_select$280
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$282
-  wire $auto$expression.cpp:3210:import_bit_select$284
-  wire $auto$expression.cpp:3210:import_bit_select$286
-  wire $auto$expression.cpp:3210:import_bit_select$288
+  wire $auto$expression.cpp:3298:import_bit_select$284
+  wire $auto$expression.cpp:3298:import_bit_select$286
+  wire $auto$expression.cpp:3298:import_bit_select$288
   wire $auto$rtlil.cc:3388:Xor$291
-  wire $auto$expression.cpp:3210:import_bit_select$292
+  wire $auto$expression.cpp:3298:import_bit_select$292
   wire $auto$rtlil.cc:3388:Xor$295
-  wire $auto$expression.cpp:3210:import_bit_select$296
-  wire $auto$expression.cpp:3210:import_bit_select$298
-  wire $auto$expression.cpp:3210:import_bit_select$300
+  wire $auto$expression.cpp:3298:import_bit_select$296
+  wire $auto$expression.cpp:3298:import_bit_select$298
+  wire $auto$expression.cpp:3298:import_bit_select$300
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:58:create_eq_cell$302
   attribute \src "dut.sv:14.4-15.20"
@@ -232,21 +232,21 @@ module \gen_test2
   wire $auto$process_helper.cpp:58:create_eq_cell$308
   attribute \src "dut.sv:14.4-15.20"
   wire $auto$process_helper.cpp:78:create_or_cell$310
-  wire width 64 $auto$expression.cpp:2059:import_operation$312
-  wire $auto$expression.cpp:3210:import_bit_select$314
+  wire width 64 $auto$expression.cpp:2147:import_operation$312
+  wire $auto$expression.cpp:3298:import_bit_select$314
   attribute \src "dut.sv:15.5-15.19"
   wire $auto$process.cpp:5293:import_assignment_sync$316
   attribute \src "dut.sv:16.4-17.20"
   wire $auto$process.cpp:6086:import_case_stmt_sync$318
-  wire width 64 $auto$expression.cpp:2059:import_operation$320
-  wire $auto$expression.cpp:3210:import_bit_select$322
+  wire width 64 $auto$expression.cpp:2147:import_operation$320
+  wire $auto$expression.cpp:3298:import_bit_select$322
   attribute \src "dut.sv:17.5-17.19"
   wire $auto$process.cpp:5293:import_assignment_sync$324
-  wire $auto$expression.cpp:3210:import_bit_select$326
-  wire $auto$expression.cpp:3210:import_bit_select$328
-  wire $auto$expression.cpp:3210:import_bit_select$330
+  wire $auto$expression.cpp:3298:import_bit_select$326
+  wire $auto$expression.cpp:3298:import_bit_select$328
+  wire $auto$expression.cpp:3298:import_bit_select$330
   wire $auto$rtlil.cc:3388:Xor$333
-  wire $auto$expression.cpp:3210:import_bit_select$334
+  wire $auto$expression.cpp:3298:import_bit_select$334
   wire $auto$rtlil.cc:3388:Xor$337
   attribute \src "dut.sv:13.13-13.14"
   cell $shiftx $shiftx$dut.sv:13$3
@@ -257,7 +257,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$2
+    connect \Y $auto$expression.cpp:3298:import_bit_select$2
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$5
@@ -268,7 +268,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$4
+    connect \Y $auto$expression.cpp:3298:import_bit_select$4
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$7
@@ -279,7 +279,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$6
+    connect \Y $auto$expression.cpp:3298:import_bit_select$6
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$9
@@ -288,7 +288,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$2 $auto$expression.cpp:3210:import_bit_select$4 $auto$expression.cpp:3210:import_bit_select$6 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$2 $auto$expression.cpp:3298:import_bit_select$4 $auto$expression.cpp:3298:import_bit_select$6 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$8
   end
@@ -299,7 +299,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$2 $auto$expression.cpp:3210:import_bit_select$4 $auto$expression.cpp:3210:import_bit_select$6 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$2 $auto$expression.cpp:3298:import_bit_select$4 $auto$expression.cpp:3298:import_bit_select$6 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$10
   end
@@ -321,7 +321,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$2 $auto$expression.cpp:3210:import_bit_select$4 $auto$expression.cpp:3210:import_bit_select$6 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$2 $auto$expression.cpp:3298:import_bit_select$4 $auto$expression.cpp:3298:import_bit_select$6 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$14
   end
@@ -344,7 +344,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$18
+    connect \Y $auto$expression.cpp:2147:import_operation$18
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$21
@@ -354,13 +354,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$18
-    connect \Y $auto$expression.cpp:3210:import_bit_select$20
+    connect \B $auto$expression.cpp:2147:import_operation$18
+    connect \Y $auto$expression.cpp:3298:import_bit_select$20
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$23
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$20
+    connect \A $auto$expression.cpp:3298:import_bit_select$20
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$16
     connect \Y $auto$process.cpp:5293:import_assignment_sync$22
@@ -378,7 +378,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$26
+    connect \Y $auto$expression.cpp:2147:import_operation$26
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$29
@@ -388,13 +388,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$26
-    connect \Y $auto$expression.cpp:3210:import_bit_select$28
+    connect \B $auto$expression.cpp:2147:import_operation$26
+    connect \Y $auto$expression.cpp:3298:import_bit_select$28
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$31
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$28
+    connect \A $auto$expression.cpp:3298:import_bit_select$28
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$24
     connect \Y $auto$process.cpp:5293:import_assignment_sync$30
@@ -408,7 +408,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$32
+    connect \Y $auto$expression.cpp:3298:import_bit_select$32
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$35
@@ -419,7 +419,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$34
+    connect \Y $auto$expression.cpp:3298:import_bit_select$34
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$37
@@ -430,7 +430,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$36
+    connect \Y $auto$expression.cpp:3298:import_bit_select$36
   end
   cell $xor $xor$dut.sv:19$38
     parameter \A_SIGNED 0
@@ -438,8 +438,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$34
-    connect \B $auto$expression.cpp:3210:import_bit_select$36
+    connect \A $auto$expression.cpp:3298:import_bit_select$34
+    connect \B $auto$expression.cpp:3298:import_bit_select$36
     connect \Y $auto$rtlil.cc:3388:Xor$39
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -451,7 +451,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$40
+    connect \Y $auto$expression.cpp:3298:import_bit_select$40
   end
   cell $xor $xor$dut.sv:19$42
     parameter \A_SIGNED 0
@@ -460,7 +460,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$39
-    connect \B $auto$expression.cpp:3210:import_bit_select$40
+    connect \B $auto$expression.cpp:3298:import_bit_select$40
     connect \Y $auto$rtlil.cc:3388:Xor$43
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -472,7 +472,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$44
+    connect \Y $auto$expression.cpp:3298:import_bit_select$44
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$47
@@ -483,7 +483,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$46
+    connect \Y $auto$expression.cpp:3298:import_bit_select$46
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$49
@@ -494,7 +494,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$48
+    connect \Y $auto$expression.cpp:3298:import_bit_select$48
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$51
@@ -503,7 +503,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$44 $auto$expression.cpp:3210:import_bit_select$46 $auto$expression.cpp:3210:import_bit_select$48 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$44 $auto$expression.cpp:3298:import_bit_select$46 $auto$expression.cpp:3298:import_bit_select$48 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$50
   end
@@ -514,7 +514,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$44 $auto$expression.cpp:3210:import_bit_select$46 $auto$expression.cpp:3210:import_bit_select$48 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$44 $auto$expression.cpp:3298:import_bit_select$46 $auto$expression.cpp:3298:import_bit_select$48 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$52
   end
@@ -536,7 +536,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$44 $auto$expression.cpp:3210:import_bit_select$46 $auto$expression.cpp:3210:import_bit_select$48 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$44 $auto$expression.cpp:3298:import_bit_select$46 $auto$expression.cpp:3298:import_bit_select$48 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$56
   end
@@ -559,7 +559,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$60
+    connect \Y $auto$expression.cpp:2147:import_operation$60
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$63
@@ -569,13 +569,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$60
-    connect \Y $auto$expression.cpp:3210:import_bit_select$62
+    connect \B $auto$expression.cpp:2147:import_operation$60
+    connect \Y $auto$expression.cpp:3298:import_bit_select$62
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$65
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$62
+    connect \A $auto$expression.cpp:3298:import_bit_select$62
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$58
     connect \Y $auto$process.cpp:5293:import_assignment_sync$64
@@ -593,7 +593,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$68
+    connect \Y $auto$expression.cpp:2147:import_operation$68
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$71
@@ -603,13 +603,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$68
-    connect \Y $auto$expression.cpp:3210:import_bit_select$70
+    connect \B $auto$expression.cpp:2147:import_operation$68
+    connect \Y $auto$expression.cpp:3298:import_bit_select$70
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$73
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$70
+    connect \A $auto$expression.cpp:3298:import_bit_select$70
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$66
     connect \Y $auto$process.cpp:5293:import_assignment_sync$72
@@ -623,7 +623,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$74
+    connect \Y $auto$expression.cpp:3298:import_bit_select$74
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$77
@@ -634,7 +634,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$76
+    connect \Y $auto$expression.cpp:3298:import_bit_select$76
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$79
@@ -645,7 +645,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$78
+    connect \Y $auto$expression.cpp:3298:import_bit_select$78
   end
   cell $xor $xor$dut.sv:19$80
     parameter \A_SIGNED 0
@@ -653,8 +653,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$76
-    connect \B $auto$expression.cpp:3210:import_bit_select$78
+    connect \A $auto$expression.cpp:3298:import_bit_select$76
+    connect \B $auto$expression.cpp:3298:import_bit_select$78
     connect \Y $auto$rtlil.cc:3388:Xor$81
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -666,7 +666,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$82
+    connect \Y $auto$expression.cpp:3298:import_bit_select$82
   end
   cell $xor $xor$dut.sv:19$84
     parameter \A_SIGNED 0
@@ -675,7 +675,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$81
-    connect \B $auto$expression.cpp:3210:import_bit_select$82
+    connect \B $auto$expression.cpp:3298:import_bit_select$82
     connect \Y $auto$rtlil.cc:3388:Xor$85
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -687,7 +687,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$86
+    connect \Y $auto$expression.cpp:3298:import_bit_select$86
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$89
@@ -698,7 +698,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$88
+    connect \Y $auto$expression.cpp:3298:import_bit_select$88
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$91
@@ -709,7 +709,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$90
+    connect \Y $auto$expression.cpp:3298:import_bit_select$90
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$93
@@ -718,7 +718,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$86 $auto$expression.cpp:3210:import_bit_select$88 $auto$expression.cpp:3210:import_bit_select$90 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$86 $auto$expression.cpp:3298:import_bit_select$88 $auto$expression.cpp:3298:import_bit_select$90 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$92
   end
@@ -729,7 +729,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$86 $auto$expression.cpp:3210:import_bit_select$88 $auto$expression.cpp:3210:import_bit_select$90 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$86 $auto$expression.cpp:3298:import_bit_select$88 $auto$expression.cpp:3298:import_bit_select$90 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$94
   end
@@ -751,7 +751,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$86 $auto$expression.cpp:3210:import_bit_select$88 $auto$expression.cpp:3210:import_bit_select$90 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$86 $auto$expression.cpp:3298:import_bit_select$88 $auto$expression.cpp:3298:import_bit_select$90 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$98
   end
@@ -774,7 +774,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$102
+    connect \Y $auto$expression.cpp:2147:import_operation$102
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$105
@@ -784,13 +784,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$102
-    connect \Y $auto$expression.cpp:3210:import_bit_select$104
+    connect \B $auto$expression.cpp:2147:import_operation$102
+    connect \Y $auto$expression.cpp:3298:import_bit_select$104
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$107
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$104
+    connect \A $auto$expression.cpp:3298:import_bit_select$104
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$100
     connect \Y $auto$process.cpp:5293:import_assignment_sync$106
@@ -808,7 +808,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$110
+    connect \Y $auto$expression.cpp:2147:import_operation$110
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$113
@@ -818,13 +818,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$110
-    connect \Y $auto$expression.cpp:3210:import_bit_select$112
+    connect \B $auto$expression.cpp:2147:import_operation$110
+    connect \Y $auto$expression.cpp:3298:import_bit_select$112
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$115
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$112
+    connect \A $auto$expression.cpp:3298:import_bit_select$112
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$108
     connect \Y $auto$process.cpp:5293:import_assignment_sync$114
@@ -838,7 +838,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$116
+    connect \Y $auto$expression.cpp:3298:import_bit_select$116
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$119
@@ -849,7 +849,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$118
+    connect \Y $auto$expression.cpp:3298:import_bit_select$118
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$121
@@ -860,7 +860,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$120
+    connect \Y $auto$expression.cpp:3298:import_bit_select$120
   end
   cell $xor $xor$dut.sv:19$122
     parameter \A_SIGNED 0
@@ -868,8 +868,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$118
-    connect \B $auto$expression.cpp:3210:import_bit_select$120
+    connect \A $auto$expression.cpp:3298:import_bit_select$118
+    connect \B $auto$expression.cpp:3298:import_bit_select$120
     connect \Y $auto$rtlil.cc:3388:Xor$123
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -881,7 +881,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$124
+    connect \Y $auto$expression.cpp:3298:import_bit_select$124
   end
   cell $xor $xor$dut.sv:19$126
     parameter \A_SIGNED 0
@@ -890,7 +890,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$123
-    connect \B $auto$expression.cpp:3210:import_bit_select$124
+    connect \B $auto$expression.cpp:3298:import_bit_select$124
     connect \Y $auto$rtlil.cc:3388:Xor$127
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -902,7 +902,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$128
+    connect \Y $auto$expression.cpp:3298:import_bit_select$128
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$131
@@ -913,7 +913,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$130
+    connect \Y $auto$expression.cpp:3298:import_bit_select$130
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$133
@@ -924,7 +924,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$132
+    connect \Y $auto$expression.cpp:3298:import_bit_select$132
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$135
@@ -933,7 +933,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$128 $auto$expression.cpp:3210:import_bit_select$130 $auto$expression.cpp:3210:import_bit_select$132 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$128 $auto$expression.cpp:3298:import_bit_select$130 $auto$expression.cpp:3298:import_bit_select$132 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$134
   end
@@ -944,7 +944,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$128 $auto$expression.cpp:3210:import_bit_select$130 $auto$expression.cpp:3210:import_bit_select$132 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$128 $auto$expression.cpp:3298:import_bit_select$130 $auto$expression.cpp:3298:import_bit_select$132 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$136
   end
@@ -966,7 +966,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$128 $auto$expression.cpp:3210:import_bit_select$130 $auto$expression.cpp:3210:import_bit_select$132 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$128 $auto$expression.cpp:3298:import_bit_select$130 $auto$expression.cpp:3298:import_bit_select$132 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$140
   end
@@ -989,7 +989,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$144
+    connect \Y $auto$expression.cpp:2147:import_operation$144
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$147
@@ -999,13 +999,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$144
-    connect \Y $auto$expression.cpp:3210:import_bit_select$146
+    connect \B $auto$expression.cpp:2147:import_operation$144
+    connect \Y $auto$expression.cpp:3298:import_bit_select$146
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$149
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$146
+    connect \A $auto$expression.cpp:3298:import_bit_select$146
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$142
     connect \Y $auto$process.cpp:5293:import_assignment_sync$148
@@ -1023,7 +1023,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$152
+    connect \Y $auto$expression.cpp:2147:import_operation$152
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$155
@@ -1033,13 +1033,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$152
-    connect \Y $auto$expression.cpp:3210:import_bit_select$154
+    connect \B $auto$expression.cpp:2147:import_operation$152
+    connect \Y $auto$expression.cpp:3298:import_bit_select$154
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$157
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$154
+    connect \A $auto$expression.cpp:3298:import_bit_select$154
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$150
     connect \Y $auto$process.cpp:5293:import_assignment_sync$156
@@ -1053,7 +1053,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$158
+    connect \Y $auto$expression.cpp:3298:import_bit_select$158
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$161
@@ -1064,7 +1064,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$160
+    connect \Y $auto$expression.cpp:3298:import_bit_select$160
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$163
@@ -1075,7 +1075,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$162
+    connect \Y $auto$expression.cpp:3298:import_bit_select$162
   end
   cell $xor $xor$dut.sv:19$164
     parameter \A_SIGNED 0
@@ -1083,8 +1083,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$160
-    connect \B $auto$expression.cpp:3210:import_bit_select$162
+    connect \A $auto$expression.cpp:3298:import_bit_select$160
+    connect \B $auto$expression.cpp:3298:import_bit_select$162
     connect \Y $auto$rtlil.cc:3388:Xor$165
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -1096,7 +1096,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$166
+    connect \Y $auto$expression.cpp:3298:import_bit_select$166
   end
   cell $xor $xor$dut.sv:19$168
     parameter \A_SIGNED 0
@@ -1105,7 +1105,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$165
-    connect \B $auto$expression.cpp:3210:import_bit_select$166
+    connect \B $auto$expression.cpp:3298:import_bit_select$166
     connect \Y $auto$rtlil.cc:3388:Xor$169
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -1117,7 +1117,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$170
+    connect \Y $auto$expression.cpp:3298:import_bit_select$170
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$173
@@ -1128,7 +1128,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$172
+    connect \Y $auto$expression.cpp:3298:import_bit_select$172
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$175
@@ -1139,7 +1139,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$174
+    connect \Y $auto$expression.cpp:3298:import_bit_select$174
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$177
@@ -1148,7 +1148,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$170 $auto$expression.cpp:3210:import_bit_select$172 $auto$expression.cpp:3210:import_bit_select$174 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$170 $auto$expression.cpp:3298:import_bit_select$172 $auto$expression.cpp:3298:import_bit_select$174 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$176
   end
@@ -1159,7 +1159,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$170 $auto$expression.cpp:3210:import_bit_select$172 $auto$expression.cpp:3210:import_bit_select$174 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$170 $auto$expression.cpp:3298:import_bit_select$172 $auto$expression.cpp:3298:import_bit_select$174 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$178
   end
@@ -1181,7 +1181,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$170 $auto$expression.cpp:3210:import_bit_select$172 $auto$expression.cpp:3210:import_bit_select$174 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$170 $auto$expression.cpp:3298:import_bit_select$172 $auto$expression.cpp:3298:import_bit_select$174 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$182
   end
@@ -1204,7 +1204,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$186
+    connect \Y $auto$expression.cpp:2147:import_operation$186
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$189
@@ -1214,13 +1214,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$186
-    connect \Y $auto$expression.cpp:3210:import_bit_select$188
+    connect \B $auto$expression.cpp:2147:import_operation$186
+    connect \Y $auto$expression.cpp:3298:import_bit_select$188
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$191
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$188
+    connect \A $auto$expression.cpp:3298:import_bit_select$188
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$184
     connect \Y $auto$process.cpp:5293:import_assignment_sync$190
@@ -1238,7 +1238,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$194
+    connect \Y $auto$expression.cpp:2147:import_operation$194
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$197
@@ -1248,13 +1248,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$194
-    connect \Y $auto$expression.cpp:3210:import_bit_select$196
+    connect \B $auto$expression.cpp:2147:import_operation$194
+    connect \Y $auto$expression.cpp:3298:import_bit_select$196
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$199
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$196
+    connect \A $auto$expression.cpp:3298:import_bit_select$196
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$192
     connect \Y $auto$process.cpp:5293:import_assignment_sync$198
@@ -1268,7 +1268,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$200
+    connect \Y $auto$expression.cpp:3298:import_bit_select$200
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$203
@@ -1279,7 +1279,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$202
+    connect \Y $auto$expression.cpp:3298:import_bit_select$202
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$205
@@ -1290,7 +1290,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$204
+    connect \Y $auto$expression.cpp:3298:import_bit_select$204
   end
   cell $xor $xor$dut.sv:19$206
     parameter \A_SIGNED 0
@@ -1298,8 +1298,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$202
-    connect \B $auto$expression.cpp:3210:import_bit_select$204
+    connect \A $auto$expression.cpp:3298:import_bit_select$202
+    connect \B $auto$expression.cpp:3298:import_bit_select$204
     connect \Y $auto$rtlil.cc:3388:Xor$207
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -1311,7 +1311,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$208
+    connect \Y $auto$expression.cpp:3298:import_bit_select$208
   end
   cell $xor $xor$dut.sv:19$210
     parameter \A_SIGNED 0
@@ -1320,7 +1320,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$207
-    connect \B $auto$expression.cpp:3210:import_bit_select$208
+    connect \B $auto$expression.cpp:3298:import_bit_select$208
     connect \Y $auto$rtlil.cc:3388:Xor$211
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -1332,7 +1332,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$212
+    connect \Y $auto$expression.cpp:3298:import_bit_select$212
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$215
@@ -1343,7 +1343,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$214
+    connect \Y $auto$expression.cpp:3298:import_bit_select$214
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$217
@@ -1354,7 +1354,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$216
+    connect \Y $auto$expression.cpp:3298:import_bit_select$216
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$219
@@ -1363,7 +1363,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$212 $auto$expression.cpp:3210:import_bit_select$214 $auto$expression.cpp:3210:import_bit_select$216 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$212 $auto$expression.cpp:3298:import_bit_select$214 $auto$expression.cpp:3298:import_bit_select$216 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$218
   end
@@ -1374,7 +1374,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$212 $auto$expression.cpp:3210:import_bit_select$214 $auto$expression.cpp:3210:import_bit_select$216 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$212 $auto$expression.cpp:3298:import_bit_select$214 $auto$expression.cpp:3298:import_bit_select$216 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$220
   end
@@ -1396,7 +1396,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$212 $auto$expression.cpp:3210:import_bit_select$214 $auto$expression.cpp:3210:import_bit_select$216 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$212 $auto$expression.cpp:3298:import_bit_select$214 $auto$expression.cpp:3298:import_bit_select$216 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$224
   end
@@ -1419,7 +1419,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$228
+    connect \Y $auto$expression.cpp:2147:import_operation$228
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$231
@@ -1429,13 +1429,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$228
-    connect \Y $auto$expression.cpp:3210:import_bit_select$230
+    connect \B $auto$expression.cpp:2147:import_operation$228
+    connect \Y $auto$expression.cpp:3298:import_bit_select$230
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$233
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$230
+    connect \A $auto$expression.cpp:3298:import_bit_select$230
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$226
     connect \Y $auto$process.cpp:5293:import_assignment_sync$232
@@ -1453,7 +1453,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$236
+    connect \Y $auto$expression.cpp:2147:import_operation$236
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$239
@@ -1463,13 +1463,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$236
-    connect \Y $auto$expression.cpp:3210:import_bit_select$238
+    connect \B $auto$expression.cpp:2147:import_operation$236
+    connect \Y $auto$expression.cpp:3298:import_bit_select$238
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$241
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$238
+    connect \A $auto$expression.cpp:3298:import_bit_select$238
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$234
     connect \Y $auto$process.cpp:5293:import_assignment_sync$240
@@ -1483,7 +1483,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$242
+    connect \Y $auto$expression.cpp:3298:import_bit_select$242
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$245
@@ -1494,7 +1494,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$244
+    connect \Y $auto$expression.cpp:3298:import_bit_select$244
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$247
@@ -1505,7 +1505,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$246
+    connect \Y $auto$expression.cpp:3298:import_bit_select$246
   end
   cell $xor $xor$dut.sv:19$248
     parameter \A_SIGNED 0
@@ -1513,8 +1513,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$244
-    connect \B $auto$expression.cpp:3210:import_bit_select$246
+    connect \A $auto$expression.cpp:3298:import_bit_select$244
+    connect \B $auto$expression.cpp:3298:import_bit_select$246
     connect \Y $auto$rtlil.cc:3388:Xor$249
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -1526,7 +1526,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$250
+    connect \Y $auto$expression.cpp:3298:import_bit_select$250
   end
   cell $xor $xor$dut.sv:19$252
     parameter \A_SIGNED 0
@@ -1535,7 +1535,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$249
-    connect \B $auto$expression.cpp:3210:import_bit_select$250
+    connect \B $auto$expression.cpp:3298:import_bit_select$250
     connect \Y $auto$rtlil.cc:3388:Xor$253
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -1547,7 +1547,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$254
+    connect \Y $auto$expression.cpp:3298:import_bit_select$254
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$257
@@ -1558,7 +1558,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$256
+    connect \Y $auto$expression.cpp:3298:import_bit_select$256
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$259
@@ -1569,7 +1569,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$258
+    connect \Y $auto$expression.cpp:3298:import_bit_select$258
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$261
@@ -1578,7 +1578,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$254 $auto$expression.cpp:3210:import_bit_select$256 $auto$expression.cpp:3210:import_bit_select$258 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$254 $auto$expression.cpp:3298:import_bit_select$256 $auto$expression.cpp:3298:import_bit_select$258 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$260
   end
@@ -1589,7 +1589,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$254 $auto$expression.cpp:3210:import_bit_select$256 $auto$expression.cpp:3210:import_bit_select$258 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$254 $auto$expression.cpp:3298:import_bit_select$256 $auto$expression.cpp:3298:import_bit_select$258 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$262
   end
@@ -1611,7 +1611,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$254 $auto$expression.cpp:3210:import_bit_select$256 $auto$expression.cpp:3210:import_bit_select$258 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$254 $auto$expression.cpp:3298:import_bit_select$256 $auto$expression.cpp:3298:import_bit_select$258 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$266
   end
@@ -1634,7 +1634,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$270
+    connect \Y $auto$expression.cpp:2147:import_operation$270
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$273
@@ -1644,13 +1644,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$270
-    connect \Y $auto$expression.cpp:3210:import_bit_select$272
+    connect \B $auto$expression.cpp:2147:import_operation$270
+    connect \Y $auto$expression.cpp:3298:import_bit_select$272
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$275
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$272
+    connect \A $auto$expression.cpp:3298:import_bit_select$272
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$268
     connect \Y $auto$process.cpp:5293:import_assignment_sync$274
@@ -1668,7 +1668,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$278
+    connect \Y $auto$expression.cpp:2147:import_operation$278
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$281
@@ -1678,13 +1678,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$278
-    connect \Y $auto$expression.cpp:3210:import_bit_select$280
+    connect \B $auto$expression.cpp:2147:import_operation$278
+    connect \Y $auto$expression.cpp:3298:import_bit_select$280
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$283
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$280
+    connect \A $auto$expression.cpp:3298:import_bit_select$280
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$276
     connect \Y $auto$process.cpp:5293:import_assignment_sync$282
@@ -1698,7 +1698,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$284
+    connect \Y $auto$expression.cpp:3298:import_bit_select$284
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$287
@@ -1709,7 +1709,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$286
+    connect \Y $auto$expression.cpp:3298:import_bit_select$286
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$289
@@ -1720,7 +1720,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$288
+    connect \Y $auto$expression.cpp:3298:import_bit_select$288
   end
   cell $xor $xor$dut.sv:19$290
     parameter \A_SIGNED 0
@@ -1728,8 +1728,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$286
-    connect \B $auto$expression.cpp:3210:import_bit_select$288
+    connect \A $auto$expression.cpp:3298:import_bit_select$286
+    connect \B $auto$expression.cpp:3298:import_bit_select$288
     connect \Y $auto$rtlil.cc:3388:Xor$291
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -1741,7 +1741,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$292
+    connect \Y $auto$expression.cpp:3298:import_bit_select$292
   end
   cell $xor $xor$dut.sv:19$294
     parameter \A_SIGNED 0
@@ -1750,7 +1750,7 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$291
-    connect \B $auto$expression.cpp:3210:import_bit_select$292
+    connect \B $auto$expression.cpp:3298:import_bit_select$292
     connect \Y $auto$rtlil.cc:3388:Xor$295
   end
   attribute \src "dut.sv:13.13-13.14"
@@ -1762,7 +1762,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$296
+    connect \Y $auto$expression.cpp:3298:import_bit_select$296
   end
   attribute \src "dut.sv:13.19-13.20"
   cell $shiftx $shiftx$dut.sv:13$299
@@ -1773,7 +1773,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$298
+    connect \Y $auto$expression.cpp:3298:import_bit_select$298
   end
   attribute \src "dut.sv:13.29-13.30"
   cell $shiftx $shiftx$dut.sv:13$301
@@ -1784,7 +1784,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$300
+    connect \Y $auto$expression.cpp:3298:import_bit_select$300
   end
   attribute \src "dut.sv:14.4-15.20"
   cell $eq $auto$process_helper.cpp:61:create_eq_cell$303
@@ -1793,7 +1793,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$296 $auto$expression.cpp:3210:import_bit_select$298 $auto$expression.cpp:3210:import_bit_select$300 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$296 $auto$expression.cpp:3298:import_bit_select$298 $auto$expression.cpp:3298:import_bit_select$300 }
     connect \B 3'-11
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$302
   end
@@ -1804,7 +1804,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$296 $auto$expression.cpp:3210:import_bit_select$298 $auto$expression.cpp:3210:import_bit_select$300 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$296 $auto$expression.cpp:3298:import_bit_select$298 $auto$expression.cpp:3298:import_bit_select$300 }
     connect \B 3'1-1
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$304
   end
@@ -1826,7 +1826,7 @@ module \gen_test2
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A { $auto$expression.cpp:3210:import_bit_select$296 $auto$expression.cpp:3210:import_bit_select$298 $auto$expression.cpp:3210:import_bit_select$300 }
+    connect \A { $auto$expression.cpp:3298:import_bit_select$296 $auto$expression.cpp:3298:import_bit_select$298 $auto$expression.cpp:3298:import_bit_select$300 }
     connect \B 3'11-
     connect \Y $auto$process_helper.cpp:58:create_eq_cell$308
   end
@@ -1849,7 +1849,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$312
+    connect \Y $auto$expression.cpp:2147:import_operation$312
   end
   attribute \src "dut.sv:15.5-15.15"
   cell $shiftx $shiftx$dut.sv:15$315
@@ -1859,13 +1859,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$312
-    connect \Y $auto$expression.cpp:3210:import_bit_select$314
+    connect \B $auto$expression.cpp:2147:import_operation$312
+    connect \Y $auto$expression.cpp:3298:import_bit_select$314
   end
   attribute \src "dut.sv:15.5-15.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$317
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$314
+    connect \A $auto$expression.cpp:3298:import_bit_select$314
     connect \B 1'1
     connect \S $auto$process_helper.cpp:78:create_or_cell$310
     connect \Y $auto$process.cpp:5293:import_assignment_sync$316
@@ -1883,7 +1883,7 @@ module \gen_test2
     parameter \Y_WIDTH 64
     connect \A \i
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2059:import_operation$320
+    connect \Y $auto$expression.cpp:2147:import_operation$320
   end
   attribute \src "dut.sv:17.5-17.15"
   cell $shiftx $shiftx$dut.sv:17$323
@@ -1893,13 +1893,13 @@ module \gen_test2
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \carry
-    connect \B $auto$expression.cpp:2059:import_operation$320
-    connect \Y $auto$expression.cpp:3210:import_bit_select$322
+    connect \B $auto$expression.cpp:2147:import_operation$320
+    connect \Y $auto$expression.cpp:3298:import_bit_select$322
   end
   attribute \src "dut.sv:17.5-17.19"
   cell $mux $auto$process.cpp:5295:import_assignment_sync$325
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$322
+    connect \A $auto$expression.cpp:3298:import_bit_select$322
     connect \B 1'0
     connect \S $auto$process.cpp:6086:import_case_stmt_sync$318
     connect \Y $auto$process.cpp:5293:import_assignment_sync$324
@@ -1913,7 +1913,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \y
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$326
+    connect \Y $auto$expression.cpp:3298:import_bit_select$326
   end
   attribute \src "dut.sv:19.12-19.13"
   cell $shiftx $shiftx$dut.sv:19$329
@@ -1924,7 +1924,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \a
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$328
+    connect \Y $auto$expression.cpp:3298:import_bit_select$328
   end
   attribute \src "dut.sv:19.19-19.20"
   cell $shiftx $shiftx$dut.sv:19$331
@@ -1935,7 +1935,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \b
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$330
+    connect \Y $auto$expression.cpp:3298:import_bit_select$330
   end
   cell $xor $xor$dut.sv:19$332
     parameter \A_SIGNED 0
@@ -1943,8 +1943,8 @@ module \gen_test2
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3210:import_bit_select$328
-    connect \B $auto$expression.cpp:3210:import_bit_select$330
+    connect \A $auto$expression.cpp:3298:import_bit_select$328
+    connect \B $auto$expression.cpp:3298:import_bit_select$330
     connect \Y $auto$rtlil.cc:3388:Xor$333
   end
   attribute \src "dut.sv:19.30-19.31"
@@ -1956,7 +1956,7 @@ module \gen_test2
     parameter \Y_WIDTH 1
     connect \A \carry
     connect \B \i
-    connect \Y $auto$expression.cpp:3210:import_bit_select$334
+    connect \Y $auto$expression.cpp:3298:import_bit_select$334
   end
   cell $xor $xor$dut.sv:19$336
     parameter \A_SIGNED 0
@@ -1965,37 +1965,37 @@ module \gen_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3388:Xor$333
-    connect \B $auto$expression.cpp:3210:import_bit_select$334
+    connect \B $auto$expression.cpp:3298:import_bit_select$334
     connect \Y $auto$rtlil.cc:3388:Xor$337
   end
   attribute \src "dut.sv:10.1-22.4"
   attribute \always_ff 1
   process $proc$dut.sv:10$1
     sync posedge \clk
-      update $auto$expression.cpp:3210:import_bit_select$326 $auto$rtlil.cc:3388:Xor$337
-      update $auto$expression.cpp:3210:import_bit_select$322 $auto$process.cpp:5293:import_assignment_sync$324
-      update $auto$expression.cpp:3210:import_bit_select$314 $auto$process.cpp:5293:import_assignment_sync$316
-      update $auto$expression.cpp:3210:import_bit_select$284 $auto$rtlil.cc:3388:Xor$295
-      update $auto$expression.cpp:3210:import_bit_select$280 $auto$process.cpp:5293:import_assignment_sync$282
-      update $auto$expression.cpp:3210:import_bit_select$272 $auto$process.cpp:5293:import_assignment_sync$274
-      update $auto$expression.cpp:3210:import_bit_select$242 $auto$rtlil.cc:3388:Xor$253
-      update $auto$expression.cpp:3210:import_bit_select$238 $auto$process.cpp:5293:import_assignment_sync$240
-      update $auto$expression.cpp:3210:import_bit_select$230 $auto$process.cpp:5293:import_assignment_sync$232
-      update $auto$expression.cpp:3210:import_bit_select$200 $auto$rtlil.cc:3388:Xor$211
-      update $auto$expression.cpp:3210:import_bit_select$196 $auto$process.cpp:5293:import_assignment_sync$198
-      update $auto$expression.cpp:3210:import_bit_select$188 $auto$process.cpp:5293:import_assignment_sync$190
-      update $auto$expression.cpp:3210:import_bit_select$158 $auto$rtlil.cc:3388:Xor$169
-      update $auto$expression.cpp:3210:import_bit_select$154 $auto$process.cpp:5293:import_assignment_sync$156
-      update $auto$expression.cpp:3210:import_bit_select$146 $auto$process.cpp:5293:import_assignment_sync$148
-      update $auto$expression.cpp:3210:import_bit_select$116 $auto$rtlil.cc:3388:Xor$127
-      update $auto$expression.cpp:3210:import_bit_select$112 $auto$process.cpp:5293:import_assignment_sync$114
-      update $auto$expression.cpp:3210:import_bit_select$104 $auto$process.cpp:5293:import_assignment_sync$106
-      update $auto$expression.cpp:3210:import_bit_select$74 $auto$rtlil.cc:3388:Xor$85
-      update $auto$expression.cpp:3210:import_bit_select$70 $auto$process.cpp:5293:import_assignment_sync$72
-      update $auto$expression.cpp:3210:import_bit_select$62 $auto$process.cpp:5293:import_assignment_sync$64
-      update $auto$expression.cpp:3210:import_bit_select$32 $auto$rtlil.cc:3388:Xor$43
-      update $auto$expression.cpp:3210:import_bit_select$28 $auto$process.cpp:5293:import_assignment_sync$30
-      update $auto$expression.cpp:3210:import_bit_select$20 $auto$process.cpp:5293:import_assignment_sync$22
+      update $auto$expression.cpp:3298:import_bit_select$326 $auto$rtlil.cc:3388:Xor$337
+      update $auto$expression.cpp:3298:import_bit_select$322 $auto$process.cpp:5293:import_assignment_sync$324
+      update $auto$expression.cpp:3298:import_bit_select$314 $auto$process.cpp:5293:import_assignment_sync$316
+      update $auto$expression.cpp:3298:import_bit_select$284 $auto$rtlil.cc:3388:Xor$295
+      update $auto$expression.cpp:3298:import_bit_select$280 $auto$process.cpp:5293:import_assignment_sync$282
+      update $auto$expression.cpp:3298:import_bit_select$272 $auto$process.cpp:5293:import_assignment_sync$274
+      update $auto$expression.cpp:3298:import_bit_select$242 $auto$rtlil.cc:3388:Xor$253
+      update $auto$expression.cpp:3298:import_bit_select$238 $auto$process.cpp:5293:import_assignment_sync$240
+      update $auto$expression.cpp:3298:import_bit_select$230 $auto$process.cpp:5293:import_assignment_sync$232
+      update $auto$expression.cpp:3298:import_bit_select$200 $auto$rtlil.cc:3388:Xor$211
+      update $auto$expression.cpp:3298:import_bit_select$196 $auto$process.cpp:5293:import_assignment_sync$198
+      update $auto$expression.cpp:3298:import_bit_select$188 $auto$process.cpp:5293:import_assignment_sync$190
+      update $auto$expression.cpp:3298:import_bit_select$158 $auto$rtlil.cc:3388:Xor$169
+      update $auto$expression.cpp:3298:import_bit_select$154 $auto$process.cpp:5293:import_assignment_sync$156
+      update $auto$expression.cpp:3298:import_bit_select$146 $auto$process.cpp:5293:import_assignment_sync$148
+      update $auto$expression.cpp:3298:import_bit_select$116 $auto$rtlil.cc:3388:Xor$127
+      update $auto$expression.cpp:3298:import_bit_select$112 $auto$process.cpp:5293:import_assignment_sync$114
+      update $auto$expression.cpp:3298:import_bit_select$104 $auto$process.cpp:5293:import_assignment_sync$106
+      update $auto$expression.cpp:3298:import_bit_select$74 $auto$rtlil.cc:3388:Xor$85
+      update $auto$expression.cpp:3298:import_bit_select$70 $auto$process.cpp:5293:import_assignment_sync$72
+      update $auto$expression.cpp:3298:import_bit_select$62 $auto$process.cpp:5293:import_assignment_sync$64
+      update $auto$expression.cpp:3298:import_bit_select$32 $auto$rtlil.cc:3388:Xor$43
+      update $auto$expression.cpp:3298:import_bit_select$28 $auto$process.cpp:5293:import_assignment_sync$30
+      update $auto$expression.cpp:3298:import_bit_select$20 $auto$process.cpp:5293:import_assignment_sync$22
       update \y [8] \carry [8]
       update \carry [0] 1'0
   end

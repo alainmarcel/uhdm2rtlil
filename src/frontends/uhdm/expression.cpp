@@ -432,7 +432,69 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         }
         break;
     }
-    
+
+    case uhdmif_stmt: {
+        // Handle if-without-else as a one-armed switch.
+        const if_stmt* is = any_cast<const if_stmt*>(stmt);
+        if (is) {
+            RTLIL::SigSpec cond;
+            if (is->VpiCondition()) {
+                cond = import_expression(any_cast<const expr*>(is->VpiCondition()), &input_mapping);
+            }
+
+            // Optimization: constant-false condition — body is dead code, skip entirely.
+            if (cond.is_fully_const() && cond.is_fully_zero())
+                break;
+
+            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+            sw->signal = cond;
+            add_src_attribute(sw->attributes, is);
+            case_rule->switches.push_back(sw);
+
+            if (is->VpiStmt()) {
+                RTLIL::CaseRule* if_case = new RTLIL::CaseRule;
+                add_src_attribute(if_case->attributes, is->VpiStmt());
+                if_case->compare.push_back(RTLIL::SigSpec(1, cond.size()));
+                if_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+
+                const any* if_body = is->VpiStmt();
+                bool has_nested = (if_body->UhdmType() == uhdmif_else ||
+                                   if_body->UhdmType() == uhdmif_stmt ||
+                                   if_body->UhdmType() == uhdmcase_stmt ||
+                                   if_body->UhdmType() == uhdmfor_stmt);
+                if (!has_nested && if_body->UhdmType() == uhdmbegin) {
+                    const begin* bg = any_cast<const begin*>(if_body);
+                    if (bg && bg->Stmts()) {
+                        for (auto s : *bg->Stmts()) {
+                            if (s->UhdmType() == uhdmfor_stmt) { has_nested = true; break; }
+                        }
+                    }
+                }
+
+                if (has_nested) {
+                    int wire_idx = incr_autoidx();
+                    std::string iw_name = stringf("$%d\\%s.$result$%d",
+                        wire_idx, func_call_context.c_str(), wire_idx);
+                    RTLIL::Wire* iw = module->addWire(RTLIL::escape_id(iw_name), result_wire->width);
+                    add_src_attribute(iw->attributes, is);
+                    if_case->actions.push_back(RTLIL::SigSig(result_wire, iw));
+                    process_stmt_to_case(is->VpiStmt(), if_case, iw, input_mapping,
+                                         func_name, temp_counter, func_call_context, local_var_widths);
+                } else {
+                    process_stmt_to_case(is->VpiStmt(), if_case, result_wire, input_mapping,
+                                         func_name, temp_counter, func_call_context, local_var_widths);
+                }
+                sw->cases.push_back(if_case);
+            }
+
+            // No else branch — add empty default so the switch has a catch-all.
+            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+            default_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec()));
+            sw->cases.push_back(default_case);
+        }
+        break;
+    }
+
     case uhdmassignment: {
         // Handle assignment
         const assignment* assign = any_cast<const assignment*>(stmt);
@@ -1334,10 +1396,31 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 if (all_const) {
-                    // Evaluate function at compile time for optimization
+                    // Evaluate function at compile time for optimization.
+                    // Clear side-effect map so this top-level call starts fresh.
+                    const_eval_module_writes.clear();
                     log("UHDM: Evaluating function %s at compile time (all arguments are constant)\n", func_name.c_str());
                     std::map<std::string, RTLIL::Const> output_params;
                     RTLIL::Const result = evaluate_function_call(func_def, const_args, output_params);
+
+                    // Apply any module-level bit-select side effects collected during
+                    // compile-time evaluation (e.g. "out6[exp] = base & 1").
+                    for (auto& [sig_name, bit_vals] : const_eval_module_writes) {
+                        RTLIL::IdString wid = RTLIL::escape_id(sig_name);
+                        RTLIL::Wire* tw = module->wire(wid);
+                        if (!tw && name_map.count(sig_name))
+                            tw = name_map.at(sig_name);
+                        if (tw) {
+                            for (int bi = 0; bi < (int)bit_vals.size(); bi++) {
+                                if (bit_vals[bi] < 0) continue; // unset
+                                RTLIL::SigSpec tgt(RTLIL::SigBit(tw, bi));
+                                RTLIL::SigSpec val(bit_vals[bi] ? RTLIL::State::S1
+                                                                 : RTLIL::State::S0);
+                                module->connect(tgt, val);
+                            }
+                        }
+                    }
+                    const_eval_module_writes.clear();
 
                     // Return the constant result
                     return RTLIL::SigSpec(result);
@@ -1716,9 +1799,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         }
     }
     
-    // If all operands are constant AND we have loop variables (indicating we're in a loop unrolling context),
-    // evaluate the operation and return a constant
-    if (all_const && operands.size() > 0 && !loop_values.empty()) {
+    // If all operands are constant AND we are either in a loop-unrolling context
+    // or inside a function body (where parameters may resolve to constants via
+    // const_wire_values), fold the operation to a constant at this point.
+    // This is essential for recursive functions whose depth-controlling parameter
+    // is known constant — e.g. `exp - 1` where exp == 3 must fold to 2 so the
+    // next-level recursive call can track `exp == 2` and eventually terminate.
+    if (all_const && operands.size() > 0 &&
+        (!loop_values.empty() || getCurrentFunctionContext() != nullptr)) {
         RTLIL::Const result;
         bool can_evaluate = true;
         
