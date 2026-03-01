@@ -135,35 +135,51 @@ if [ "$GATE_COUNT" -eq 0 ]; then
     # in BOTH synthesized netlists.
     echo "ℹ️  No logic gates - comparing constant wire values for $TEST_NAME"
 
+    # Module-aware comparison using awk.
+    # A naive grep across the whole file incorrectly matches same-named signals
+    # (e.g. `assign out = ...`) from different modules.  Track the enclosing
+    # module name and key the gate lookup table as "module:signal".
+    AWK_RESULT=$(awk '
+    FNR == NR {
+        # First file: gate (UHDM synth) — build lookup keyed by module:signal
+        if (match($0, /^[[:space:]]*module[[:space:]]+([^[:space:](;]+)/, m))
+            cur_mod = m[1]
+        if (match($0, /^[[:space:]]*assign[[:space:]]+([^[:space:]=]+)[[:space:]]*=[[:space:]]*(.*);[[:space:]]*$/, a)) {
+            val = a[2]; gsub(/ /, "", val); gsub(/\?/, "x", val)
+            gate[cur_mod ":" a[1]] = val
+        }
+        next
+    }
+    {
+        # Second file: gold (Verilog synth)
+        if (match($0, /^[[:space:]]*module[[:space:]]+([^[:space:](;]+)/, m))
+            cur_mod = m[1]
+        if (match($0, /^[[:space:]]*assign[[:space:]]+([^[:space:]=]+)[[:space:]]*=[[:space:]]*(.*);[[:space:]]*$/, a)) {
+            gold_val = a[2]; gsub(/ /, "", gold_val); gsub(/\?/, "x", gold_val)
+            if (gold_val ~ /[xXzZ]/) next   # undefined in gold — skip
+            key = cur_mod ":" a[1]
+            if (!(key in gate)) next         # absent in gate — skip
+            gate_val = gate[key]
+            checked++
+            if (gold_val != gate_val)
+                print "FAIL:" cur_mod "." a[1] ":gold=" gold_val ":gate=" gate_val
+        }
+    }
+    END { print "CHECKED=" checked+0 }
+    ' "$UHDM_SYNTH" "$VERILOG_SYNTH")
+
+    CONST_CHECKED=$(echo "$AWK_RESULT" | grep '^CHECKED=' | sed 's/CHECKED=//')
     CONST_FAILED=0
-    CONST_CHECKED=0
+    while IFS= read -r fail_line; do
+        [[ "$fail_line" == FAIL:* ]] || continue
+        mod_sig=$(echo "$fail_line" | sed 's/FAIL:\(.*\):gold=.*/\1/')
+        gold_val=$(echo "$fail_line" | sed 's/.*:gold=\(.*\):gate=.*/\1/')
+        gate_val=$(echo "$fail_line" | sed 's/.*:gate=\(.*\)/\1/')
+        echo "❌ Signal '$mod_sig': gold=$gold_val  gate=$gate_val"
+        CONST_FAILED=1
+    done <<< "$AWK_RESULT"
 
-    while IFS= read -r gold_line; do
-        # Parse:  assign \signal  = VALUE ;   (backslash-escaped or plain name)
-        signal=$(echo "$gold_line" | sed -E 's/^\s*assign\s+(\\?[^ ]+)\s*=.*/\1/')
-        gold_val=$(echo "$gold_line" | sed -E 's/^\s*assign\s+[^ ]+\s*=\s*([^;]+)\s*;.*/\1/' | tr -d ' ')
-
-        # Look for the same signal in the UHDM synth
-        gate_line=$(grep -E "^\s*assign\s+${signal}\s*=" "$UHDM_SYNTH" 2>/dev/null | head -1 || true)
-        [ -z "$gate_line" ] && continue   # signal absent in gate — skip
-
-        gate_val=$(echo "$gate_line" | sed -E 's/^\s*assign\s+[^ ]+\s*=\s*([^;]+)\s*;.*/\1/' | tr -d ' ')
-        # Normalize: treat '?' (high-Z) and 'x' (unknown) as equivalent in
-        # constant-only circuits — both indicate an unresolved/undriven bit.
-        gold_norm=$(echo "$gold_val" | tr '?' 'x')
-        gate_norm=$(echo "$gate_val" | tr '?' 'x')
-        # Skip if gold itself has undefined bits (nothing useful to compare)
-        if echo "$gold_norm" | grep -q '[xz]'; then
-            continue
-        fi
-        CONST_CHECKED=$((CONST_CHECKED + 1))
-        if [ "$gold_norm" != "$gate_norm" ]; then
-            echo "❌ Signal '$signal': gold=$gold_val  gate=$gate_val"
-            CONST_FAILED=1
-        fi
-    done < <(grep -E '^\s*assign\s+' "$VERILOG_SYNTH" 2>/dev/null || true)
-
-    if [ "$CONST_CHECKED" -eq 0 ]; then
+    if [ "${CONST_CHECKED:-0}" -eq 0 ]; then
         # Nothing to compare (e.g. no assign statements at all) — skip
         echo "ℹ️  No common assign statements to compare — skipping"
         echo "# No gates or assigns to check equivalence" > "${TEST_DIR}/test_equiv.ys"

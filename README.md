@@ -15,18 +15,17 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 144 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (140/144 tests functional)
-- **Passing**: 136 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: 98% (141/144 tests functional)
+- **Passing**: 137 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 4 tests with documented issues:
+- **Known Failures**: 3 tests with documented issues:
   - `forloops` - Equivalence check failure (expected)
   - `const_fold_func` - 2 unproven equiv cells: `out4[0]` from recursive runtime function inlining and `out6[1]` from compile-time side-effect on module port
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
-  - `port_sign_extend` - UHDM produces 1-bit output (`1'h1`) instead of 2-bit sign-extended (`2'h2`)
 - **Recent Additions**:
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
@@ -53,7 +52,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `gen_test7`: `always @*` block-local variable no longer shadowed by same-named generate-scope genvar — fixed in `import_begin_block_comb()` by also shadowing the hierarchical name `gen.x` in `name_map` ✅
   - Formal equivalence check for constant-only circuits (0 gate cells): now performs actual constant-value comparison between gold and gate netlists instead of trivially passing ✅
   - `case_expr_const` now passing with correct SV LRM 12.5.1 case-statement semantics ✅
-  - `port_sign_extend` added to `failing_tests.txt` so CI tracks it as expected ✅
+  - `port_sign_extend` now passing — the UHDM output was correct all along; the equivalence script had a multi-module grep bug ✅
   - Compile-time function evaluator crash fix and improvements ✅
     - Fixed `vpiIf`/`vpiIfElse` type casting crash: `vpiIf` (type 22) must use `if_stmt*`, `vpiIfElse` (type 23) must use `if_else*`
     - Added 7 missing operations: `vpiBitAndOp`, `vpiBitOrOp`, `vpiBitXNorOp`, `vpiLogAndOp`, `vpiLogOrOp`, `vpiDivOp`, `vpiModOp`
@@ -443,7 +442,7 @@ The Yosys test runner:
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
-- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling *(known failure — 1-bit output instead of 2-bit sign-extended)*
+- **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling
 - **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
 - **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
 - **asgn_expr_sv** - Full increment/decrement test from Yosys suite: pre/post-increment/decrement as statements and expressions, byte-width concatenation (`{1'b1, ++w}`, `{2'b10, w++}`), procedural assignment expressions (`x = (y *= 2)`)
@@ -648,8 +647,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **144 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **136 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **4 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier, port_sign_extend)
+- **137 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **3 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier)
 
 ## Recent Improvements
 
@@ -670,7 +669,7 @@ The UHDM frontend test suite includes **144 test cases**:
 ### Robust Formal Equivalence for Constant-Only Circuits
 - Fixed `test_equivalence.sh`: when no `$_` gate cells are present (constant-only module), the script previously wrote `# No gates to check` and exited 0 — a vacuous pass
 - **Fix**: compare `assign signal = VALUE;` lines common to both gold (Verilog) and gate (UHDM) netlists; normalise `?`→`x` for high-Z equivalence; skip signals where gold already has undefined bits
-- Exposed pre-existing `port_sign_extend` bug now tracked in `failing_tests.txt`
+- `port_sign_extend` equivalence check now passes correctly
 
 ### Case Statement Signed/Unsigned Context Extension (`case_expr_const`)
 - Fixed `import_case_stmt_comb` and the nested `import_statement_comb` (CaseRule* variant) to correctly implement SV LRM 12.5.1 case-statement comparison semantics
@@ -683,6 +682,12 @@ The UHDM frontend test suite includes **144 test cases**:
   3. Extend switch signal and each compare value to context width using `extend_u0(width, is_signed)` — sign-extends when both context and that operand are signed, otherwise zero-extends
 - Added `is_expr_signed()` helper that checks the `'s` sigil in `VpiDecompile()` (e.g. `"1'sb1"`, `"2'sb11"`) to determine constant signedness
 - `case_expr_const` now formally verified: all 8 outputs produce `1'h1` ✅
+
+### Port Sign Extension Equivalence Check (`port_sign_extend`)
+- The UHDM frontend was already producing correct output for this test — `GeneratorSigned2.out` and all sign/zero-extension logic were right
+- **Root cause of false failure**: `test_equivalence.sh` compared constant `assign` statements with a naive file-wide `grep`, making `assign out = 2'h2` (from `GeneratorSigned2`) match `assign out = 1'h1` (from `GeneratorSigned1`) since grep returns the first occurrence in a multi-module file
+- **Fix**: replaced the line-by-line shell loop with a single `awk` pass that tracks the current `module` declaration and keys the gate lookup table as `module:signal`; the gold file is then compared against the same `module:signal` key, ensuring cross-module name collisions are never compared
+- `port_sign_extend` now passes with 18 common constant assignments verified ✅
 
 ### Unnamed Block Variable Declaration Support
 - Added interpreter-based evaluation path for initial blocks containing block-local variable declarations
