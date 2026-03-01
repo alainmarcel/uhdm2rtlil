@@ -43,14 +43,14 @@ module \enum_simple
   wire $eq$dut.sv:22$6_Y
   attribute \src "dut.sv:24.13-24.28"
   wire $eq$dut.sv:24$8_Y
-  wire $auto$process.cpp:32:import_immediate_assert$10
+  wire $auto$process.cpp:44:import_immediate_assert$10
   attribute \src "dut.sv:30.8-30.20"
   wire $eq$dut.sv:30$12_Y
   attribute \src "dut.sv:32.13-32.25"
   wire $eq$dut.sv:32$14_Y
   attribute \src "dut.sv:34.13-34.25"
   wire $eq$dut.sv:34$16_Y
-  wire $auto$process.cpp:32:import_immediate_assert$18
+  wire $auto$process.cpp:44:import_immediate_assert$18
   wire $auto$rtlil.cc:3394:Ne$22
   wire $auto$opt_dff.cc:234:make_patterns_logic$102
   wire $auto$opt_dff.cc:234:make_patterns_logic$99
@@ -115,7 +115,7 @@ module \enum_simple
     connect \Y $eq$dut.sv:24$8_Y
   end
   attribute \src "dut.sv:27.5-27.18"
-  cell $check $auto$process.cpp:39:import_immediate_assert$11
+  cell $check $auto$process.cpp:51:import_immediate_assert$11
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -125,7 +125,7 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$10
+    connect \EN $auto$process.cpp:44:import_immediate_assert$10
     connect \TRG \clk
   end
   attribute \src "dut.sv:30.8-30.20"
@@ -159,7 +159,7 @@ module \enum_simple
     connect \Y $eq$dut.sv:34$16_Y
   end
   attribute \src "dut.sv:37.5-37.18"
-  cell $check $auto$process.cpp:39:import_immediate_assert$19
+  cell $check $auto$process.cpp:51:import_immediate_assert$19
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -169,7 +169,7 @@ module \enum_simple
     parameter \TRG_WIDTH 1
     connect \A 1'0
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$18
+    connect \EN $auto$process.cpp:44:import_immediate_assert$18
     connect \TRG \clk
   end
   cell $ne $ne$dut.sv:42$21
@@ -183,7 +183,7 @@ module \enum_simple
     connect \Y $auto$rtlil.cc:3394:Ne$22
   end
   attribute \src "dut.sv:42.3-42.25"
-  cell $check $auto$process.cpp:39:import_immediate_assert$24
+  cell $check $auto$process.cpp:51:import_immediate_assert$24
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -225,7 +225,7 @@ module \enum_simple
     connect \Q \state [0]
   end
   attribute \src "dut.sv:44.3-44.21"
-  cell $check $auto$process.cpp:39:import_immediate_assert$30
+  cell $check $auto$process.cpp:51:import_immediate_assert$30
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -250,7 +250,7 @@ module \enum_simple
     connect \Y $eq$dut.sv:45$31_Y
   end
   attribute \src "dut.sv:45.3-45.29"
-  cell $check $auto$process.cpp:39:import_immediate_assert$34
+  cell $check $auto$process.cpp:51:import_immediate_assert$34
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -381,7 +381,7 @@ module \enum_simple
     connect \A $procmux$69_Y
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:32:import_immediate_assert$18
+    connect \Y $auto$process.cpp:44:import_immediate_assert$18
   end
   attribute \src "dut.sv:24.9-27.18"
   attribute \full_case 1
@@ -426,7 +426,7 @@ module \enum_simple
     connect \A $procmux$84_Y
     connect \B 1'0
     connect \S \rst
-    connect \Y $auto$process.cpp:32:import_immediate_assert$10
+    connect \Y $auto$process.cpp:44:import_immediate_assert$10
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$111
     parameter \A_SIGNED 0

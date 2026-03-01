@@ -15,7 +15,7 @@ module \top
   attribute \src "dut.sv:82.4-82.5"
   wire width 32 \u
   attribute \src "dut.sv:72.3-72.30"
-  cell $check $auto$process.cpp:39:import_immediate_assert$42
+  cell $check $auto$process.cpp:51:import_immediate_assert$42
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

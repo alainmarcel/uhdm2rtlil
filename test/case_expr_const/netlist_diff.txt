@@ -8,18 +8,3 @@
  module case_expr_const(a, b, c, d, e, f, g, h);
  (* src = "dut.sv:5.16-5.17" *)
  output a;
-@@ -27,11 +27,11 @@
- output h;
- wire h;
- assign h = 1'h1;
--assign g = 1'h1;
-+assign g = 1'h0;
- assign f = 1'h1;
- assign e = 1'h1;
- assign d = 1'h1;
--assign c = 1'h1;
--assign b = 1'h1;
-+assign c = 1'hx;
-+assign b = 1'hx;
- assign a = 1'h1;
- endmodule

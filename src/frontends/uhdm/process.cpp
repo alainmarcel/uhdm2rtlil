@@ -15,6 +15,18 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// Helper: determine if a UHDM expression is signed, for case-statement context extension.
+// For constants, the 's' sigil in the decompile string (e.g. "1'sb1", "2'sb11") is
+// authoritative. Other expression kinds default to unsigned.
+static bool is_expr_signed(const UHDM::expr* e) {
+    if (!e) return false;
+    if (auto c = any_cast<const UHDM::constant*>(e)) {
+        std::string_view deco = c->VpiDecompile();
+        return deco.find("'s") != std::string_view::npos;
+    }
+    return false;
+}
+
 // Generic statement type dispatcher to reduce if-else chains
 
 // Import immediate assertion as $check cell (following DRY principle)
@@ -6118,88 +6130,101 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
 void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc) {
     if (mode_debug)
         log("    Importing case statement for combinational context\n");
-    
-    // Get the case condition (the signal being switched on)
-    if (auto condition = uhdm_case->VpiCondition()) {
-        RTLIL::SigSpec case_sig = import_expression(condition);
-        
-        if (mode_debug)
-            log("    Case condition signal: %s\n", log_signal(case_sig));
-        
-        // Create a switch statement in the process
-        RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
-        sw->signal = case_sig;
-        add_src_attribute(sw->attributes, uhdm_case);
-        
-        // Import case items
-        if (auto case_items = uhdm_case->Case_items()) {
-            if (mode_debug)
-                log("    Found %d case items\n", (int)case_items->size());
-            
-            for (auto case_item : *case_items) {
-                if (mode_debug)
-                    log("    Processing case item\n");
-                
-                RTLIL::CaseRule* case_rule = new RTLIL::CaseRule;
-                add_src_attribute(case_rule->attributes, case_item);
-                
-                // Get case expressions (values to match)
-                if (auto exprs = case_item->VpiExprs()) {
-                    for (auto expr : *exprs) {
-                        // Cast to expr type using any_cast
-                        if (auto case_expr = any_cast<const UHDM::expr*>(expr)) {
-                            RTLIL::SigSpec expr_sig = import_expression(case_expr);
-                            
-                            // Ensure case value has same width as switch signal
-                            if (expr_sig.size() != case_sig.size()) {
-                                if (expr_sig.size() < case_sig.size()) {
-                                    // Zero-extend to match switch signal width
-                                    expr_sig = {expr_sig, RTLIL::SigSpec(RTLIL::State::S0, case_sig.size() - expr_sig.size())};
-                                } else {
-                                    // Truncate to match switch signal width
-                                    expr_sig = expr_sig.extract(0, case_sig.size());
-                                }
-                            }
-                            
-                            case_rule->compare.push_back(expr_sig);
-                            
-                            if (mode_debug)
-                                log("      Case value: %s (width=%d)\n", log_signal(expr_sig), expr_sig.size());
-                        }
-                    }
-                } else {
-                    // This is a default case (no expressions)
-                    if (mode_debug)
-                        log("      Default case\n");
-                }
-                
-                // Import the statement(s) for this case
-                if (auto stmt = case_item->Stmt()) {
-                    if (mode_debug)
-                        log("      Importing case statement\n");
-                    import_statement_comb(stmt, case_rule);
-                }
-                
-                sw->cases.push_back(case_rule);
-            }
-        } else {
-            // No case items found, create empty default case
-            if (mode_debug)
-                log("    No case items found, creating empty default case\n");
-            RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
-            add_src_attribute(default_case->attributes, uhdm_case);
-            sw->cases.push_back(default_case);
-        }
-        
-        // Add the switch to the process
-        proc->root_case.switches.push_back(sw);
-        
-        if (mode_debug)
-            log("    Case statement implementation complete\n");
-        
-    } else {
+
+    const UHDM::expr* condition = uhdm_case->VpiCondition();
+    if (!condition) {
         log_warning("Case statement has no condition\n");
+        return;
     }
+
+    RTLIL::SigSpec case_sig = import_expression(condition);
+    bool case_expr_signed = is_expr_signed(condition);
+
+    if (mode_debug)
+        log("    Case condition signal: %s (signed=%d)\n", log_signal(case_sig), case_expr_signed);
+
+    // --- Pass 1: compute context width and signedness (SV LRM 12.5.1) ---
+    // Context width = max of case expression width and all case-item widths.
+    // Context is signed only when ALL operands are signed.
+    int ctx_width = case_sig.size();
+    bool all_signed = case_expr_signed;
+
+    // Collect pre-imported item expressions so we don't call import_expression twice.
+    struct ItemData {
+        RTLIL::CaseRule* rule;
+        // parallel vectors: compare[i] is the extended SigSpec for item expression i
+        std::vector<std::pair<RTLIL::SigSpec, bool>> exprs; // (sig, is_signed)
+        const UHDM::any* stmt;
+    };
+    std::vector<ItemData> items;
+
+    if (auto case_items = uhdm_case->Case_items()) {
+        if (mode_debug)
+            log("    Found %d case items\n", (int)case_items->size());
+        items.reserve(case_items->size());
+        for (auto case_item : *case_items) {
+            ItemData d;
+            d.rule = new RTLIL::CaseRule;
+            add_src_attribute(d.rule->attributes, case_item);
+            d.stmt = case_item->Stmt();
+            if (auto exprs = case_item->VpiExprs()) {
+                for (auto expr : *exprs) {
+                    if (auto ce = any_cast<const UHDM::expr*>(expr)) {
+                        RTLIL::SigSpec sig = import_expression(ce);
+                        bool sgn = is_expr_signed(ce);
+                        ctx_width = std::max(ctx_width, sig.size());
+                        if (!sgn)
+                            all_signed = false;
+                        d.exprs.push_back({sig, sgn});
+                    }
+                }
+            }
+            items.push_back(std::move(d));
+        }
+    }
+
+    if (mode_debug)
+        log("    Context width=%d all_signed=%d\n", ctx_width, all_signed);
+
+    // --- Extend switch signal to context width ---
+    if (case_sig.size() < ctx_width)
+        case_sig.extend_u0(ctx_width, all_signed && case_expr_signed);
+
+    // --- Build the switch rule ---
+    RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+    sw->signal = case_sig;
+    add_src_attribute(sw->attributes, uhdm_case);
+
+    if (!items.empty()) {
+        for (auto& d : items) {
+            // Extend each case-item compare value to context width
+            for (auto& [sig, sgn] : d.exprs) {
+                if (sig.size() < ctx_width)
+                    sig.extend_u0(ctx_width, all_signed && sgn);
+                else if (sig.size() > ctx_width)
+                    sig = sig.extract(0, ctx_width);
+                d.rule->compare.push_back(sig);
+                if (mode_debug)
+                    log("      Case value: %s (width=%d)\n", log_signal(sig), sig.size());
+            }
+            // Import the body
+            if (d.stmt)
+                import_statement_comb(d.stmt, d.rule);
+            sw->cases.push_back(d.rule);
+        }
+    } else {
+        // No case items — create an empty default case
+        if (mode_debug)
+            log("    No case items found, creating empty default case\n");
+        RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
+        add_src_attribute(default_case->attributes, uhdm_case);
+        sw->cases.push_back(default_case);
+    }
+
+    proc->root_case.switches.push_back(sw);
+
+    if (mode_debug)
+        log("    Case statement implementation complete\n");
 }
 
 // Import statement for case rule context
@@ -6438,63 +6463,77 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiCase: {
             log("        import_statement_comb(CaseRule*): Case statement\n");
             const case_stmt* uhdm_case = any_cast<const case_stmt*>(uhdm_stmt);
-            
-            // Get the case expression
+
+            const UHDM::expr* cond_expr = uhdm_case->VpiCondition();
             RTLIL::SigSpec case_expr;
-            if (auto condition = uhdm_case->VpiCondition()) {
-                case_expr = import_expression(condition);
-                log("        Case expression: %s\n", log_signal(case_expr));
+            bool case_expr_signed = false;
+            if (cond_expr) {
+                case_expr = import_expression(cond_expr);
+                case_expr_signed = is_expr_signed(cond_expr);
+                log("        Case expression: %s (signed=%d)\n", log_signal(case_expr), case_expr_signed);
             }
-            
+
+            // Pass 1: determine context width and signedness (SV LRM 12.5.1)
+            int ctx_width = case_expr.size();
+            bool all_signed = case_expr_signed;
+            struct CaseItemData {
+                RTLIL::CaseRule* rule;
+                std::vector<std::pair<RTLIL::SigSpec, bool>> exprs;
+                const UHDM::any* stmt;
+            };
+            std::vector<CaseItemData> ci_data;
+            if (uhdm_case->Case_items()) {
+                ci_data.reserve(uhdm_case->Case_items()->size());
+                for (auto item : *uhdm_case->Case_items()) {
+                    const case_item* ci = any_cast<const case_item*>(item);
+                    if (!ci) continue;
+                    CaseItemData d;
+                    d.rule = new RTLIL::CaseRule;
+                    add_src_attribute(d.rule->attributes, ci);
+                    d.stmt = ci->Stmt();
+                    if (ci->VpiExprs()) {
+                        for (auto expr : *ci->VpiExprs()) {
+                            if (auto ce = any_cast<const UHDM::expr*>(expr)) {
+                                RTLIL::SigSpec sig = import_expression(ce);
+                                bool sgn = is_expr_signed(ce);
+                                ctx_width = std::max(ctx_width, sig.size());
+                                if (!sgn) all_signed = false;
+                                d.exprs.push_back({sig, sgn});
+                            }
+                        }
+                    }
+                    ci_data.push_back(std::move(d));
+                }
+            }
+
+            log("        Context width=%d all_signed=%d\n", ctx_width, all_signed);
+
+            // Extend switch signal to context width
+            if (case_expr.size() < ctx_width)
+                case_expr.extend_u0(ctx_width, all_signed && case_expr_signed);
+
             // Create a switch rule for the case statement
             RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
             sw->signal = case_expr;
             add_src_attribute(sw->attributes, uhdm_case);
-            
-            // Import each case item
-            if (uhdm_case->Case_items()) {
-                log("        Case has %d items\n", (int)uhdm_case->Case_items()->size());
-                
-                for (auto item : *uhdm_case->Case_items()) {
-                    const case_item* ci = any_cast<const case_item*>(item);
-                    if (!ci) continue;
-                    
-                    // Create a case rule for this item
-                    RTLIL::CaseRule* item_case = new RTLIL::CaseRule;
-                    add_src_attribute(item_case->attributes, ci);
-                    
-                    // Get the case item expressions (can be multiple for comma-separated values)
-                    if (ci->VpiExprs()) {
-                        for (auto expr : *ci->VpiExprs()) {
-                            if (expr) {
-                                RTLIL::SigSpec item_expr = import_expression(any_cast<const UHDM::expr*>(expr));
-                                // Ensure case value has same width as switch signal
-                                if (item_expr.size() != case_expr.size()) {
-                                    if (item_expr.size() < case_expr.size()) {
-                                        item_expr.extend_u0(case_expr.size());
-                                    } else {
-                                        item_expr = item_expr.extract(0, case_expr.size());
-                                    }
-                                }
-                                item_case->compare.push_back(item_expr);
-                                log("        Case item expression: %s\n", log_signal(item_expr));
-                            }
-                        }
-                    } else {
-                        // Default case - empty compare list
-                        log("        Default case item\n");
-                    }
-                    
-                    // Import the statement(s) for this case item
-                    if (ci->Stmt()) {
-                        log("        Importing case item body (type=%d)\n", ci->Stmt()->VpiType());
-                        import_statement_comb(ci->Stmt(), item_case);
-                    }
-                    
-                    sw->cases.push_back(item_case);
+
+            // Pass 2: emit case items with properly extended compare values
+            for (auto& d : ci_data) {
+                for (auto& [sig, sgn] : d.exprs) {
+                    if (sig.size() < ctx_width)
+                        sig.extend_u0(ctx_width, all_signed && sgn);
+                    else if (sig.size() > ctx_width)
+                        sig = sig.extract(0, ctx_width);
+                    d.rule->compare.push_back(sig);
+                    log("        Case item expression: %s\n", log_signal(sig));
                 }
+                if (d.stmt) {
+                    log("        Importing case item body (type=%d)\n", d.stmt->VpiType());
+                    import_statement_comb(d.stmt, d.rule);
+                }
+                sw->cases.push_back(d.rule);
             }
-            
+
             // Add the switch to the current case rule
             case_rule->switches.push_back(sw);
             log("        Case statement imported with %d cases\n", (int)sw->cases.size());
