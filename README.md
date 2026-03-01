@@ -14,8 +14,8 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 143 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 98% (140/143 tests functional)
+- **Total Tests**: 144 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 97% (141/144 tests functional)
 - **Perfect Matches**: 117 tests with identical RTLIL output between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -27,6 +27,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `const_fold_func` - 2 unproven equiv cells: `out4[0]` from recursive runtime function inlining and `out6[1]` from compile-time side-effect on module port
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
 - **Recent Additions**:
+  - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
   - `wandwor` - `wand`/`wor` net types with multi-driver AND/OR resolution, module port connections, multi-bit variants
   - `rotate` - Barrel shift rotation with nested generate loops (5 levels x 32 bits = 160 `always @*` blocks), each assigning to a single bit of a generate-local wire via bit selects
@@ -153,6 +154,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `genvar_loop_decl_2` - Fixed with Surelog update for proper hierarchical path assignment handling ✅
   - `carryadd` - Now passing with fixed carry addition handling ✅
   - `simple_enum` - Now passing with proper enum value handling ✅
+  - `for_decl_shadow` - For-declaration variable shadowing in generate scopes ✅
+    - Fixed interpreter routing: only route to interpreter when for-init has a type declaration (`integer_var`); plain for-loops with existing variables still use sync/comb approaches
+    - Fixed `import_initial_interpreted` output mapping to prefer gen-scope wires (`gen.x`) over same-named module ports (`x`) by checking `gen_scope + "." + name` in `name_map` first
+    - Fixed simple-assignment LHS gen-scope resolution: after for-loop cleanup, bare `x = x * 2` correctly updates `variables["gen.x"]` using existing gen-scope fallback
+    - Added deduplication via `wire_to_value` map so multiple interpreter variable aliases (e.g., `"x"` and `"gen.x"` both pointing to `\gen.x`) emit a single init action with the final computed value
   - `forgen01` - Fixed nested for loops in initial blocks using interpreter ✅
     - Added support for both ref_obj and ref_var in assignment statements
     - Generalized interpreter usage for any complex initialization patterns

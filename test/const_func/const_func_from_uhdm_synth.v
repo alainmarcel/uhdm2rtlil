@@ -16,6 +16,9 @@ module \$paramod\Example\OUTPUT="BAR" (outA, outB, outC, outD);
   (* src = "dut.sv:1.34-1.38" *)
   output outD;
   wire outD;
+  (* src = "dut.sv:30.13-30.14" *)
+  wire [31:0] j;
+  assign j = 32'd65;
   assign outD = 1'h1;
   assign outC = 1'h0;
   assign outB = 24'h000000;
@@ -38,6 +41,9 @@ module \$paramod\Example\OUTPUT="BAZ" (outA, outB, outC, outD);
   (* src = "dut.sv:1.34-1.38" *)
   output outD;
   wire outD;
+  (* src = "dut.sv:30.13-30.14" *)
+  wire [31:0] j;
+  assign j = 32'd65;
   assign outD = 1'h1;
   assign outC = 1'h0;
   assign outB = 24'h004849;
@@ -60,6 +66,9 @@ module \$paramod\Example\OUTPUT="FOO" (outA, outB, outC, outD);
   (* src = "dut.sv:1.34-1.38" *)
   output outD;
   wire outD;
+  (* src = "dut.sv:30.13-30.14" *)
+  wire [31:0] j;
+  assign j = 32'd79;
   assign outD = 1'h0;
   assign outC = 1'h1;
   assign outB = 24'h464f4f;

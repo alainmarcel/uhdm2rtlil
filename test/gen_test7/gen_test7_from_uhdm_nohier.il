@@ -29,7 +29,8 @@ module \gen_test7
   process $proc$dut.sv:10$1
     sync always
     sync init
-      update \out1 3'000
+      update \cond.sub_out1 3'100
+      update \out1 3'100
   end
   attribute \src "dut.sv:16.4-21.7"
   process $proc$dut.sv:16$2

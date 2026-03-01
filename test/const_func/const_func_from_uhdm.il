@@ -15,6 +15,10 @@ module $paramod\Example\OUTPUT="BAZ"
   attribute \src "dut.sv:1.34-1.38"
   attribute \init 1'1
   wire output 4 \outD
+  attribute \src "dut.sv:30.13-30.14"
+  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  attribute \init 65
+  wire width 32 signed \j
   connect \outB 24'000000000100100001001001
   connect \outA 24'000000000000000000000000
 end
@@ -470,6 +474,10 @@ module $paramod\Example\OUTPUT="FOO"
   attribute \src "dut.sv:1.34-1.38"
   attribute \init 1'0
   wire output 4 \outD
+  attribute \src "dut.sv:30.13-30.14"
+  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  attribute \init 79
+  wire width 32 signed \j
   connect \outB 24'010001100100111101001111
   connect \outA 24'000000000000000000000000
 end
@@ -488,6 +496,10 @@ module $paramod\Example\OUTPUT="BAR"
   attribute \src "dut.sv:1.34-1.38"
   attribute \init 1'1
   wire output 4 \outD
+  attribute \src "dut.sv:30.13-30.14"
+  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  attribute \init 65
+  wire width 32 signed \j
   connect \outB 24'000000000000000000000000
   connect \outA 24'010000100100000101010010
 end

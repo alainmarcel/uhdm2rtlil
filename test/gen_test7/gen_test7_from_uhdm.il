@@ -6,19 +6,22 @@ module \gen_test7
   attribute \src "dut.sv:2.12-2.16"
   attribute \reg 1
   attribute \unused_bits "0 1 2"
-  attribute \init 3'000
+  attribute \init 3'100
   wire width 3 \out1
   attribute \src "dut.sv:3.12-3.16"
   attribute \reg 1
   wire width 3 \out2
   attribute \src "dut.sv:4.13-4.17"
   wire width 3 \out3
-  wire \cond.x
+  attribute \unused_bits "0 1 2"
+  attribute \init 3'100
+  wire width 3 \cond.sub_out1
   wire width 3 \cond.sub_out2
   wire width 3 \cond.sub_out3
+  wire \cond.x
+  connect \cond.x 1'0
   connect \cond.sub_out3 3'111
   connect \cond.sub_out2 3'000
-  connect \cond.x 1'0
   connect \out3 3'111
   connect \out2 3'000
 end

@@ -1706,7 +1706,12 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 wire_map[var] = w;
                 // Don't map simple name to avoid conflicts between generate instances
                 name_map[hierarchical_name] = w;  // Map the full hierarchical name
-                log("UHDM: Created wire '%s' (width=%d) for generate scope variable\n", hierarchical_name.c_str(), width);
+                // Set signedness for signed variables (e.g., integer)
+                if (var->VpiSigned()) {
+                    w->is_signed = true;
+                }
+                log("UHDM: Created wire '%s' (width=%d, signed=%d) for generate scope variable\n",
+                    hierarchical_name.c_str(), width, w->is_signed ? 1 : 0);
             }
         }
     }

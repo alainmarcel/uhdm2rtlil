@@ -20,6 +20,7 @@ module \Example
     sync always
     sync init
       update \outD 1'0
+      update \j 79
   end
   attribute \src "dut.sv:24.9-24.26"
   process $proc$dut.sv:24$2
@@ -680,6 +681,7 @@ module $paramod\Example\OUTPUT="FOO"
     sync always
     sync init
       update \outD 1'0
+      update \j 79
   end
   attribute \src "dut.sv:24.9-24.26"
   process $proc$dut.sv:24$81
@@ -725,6 +727,7 @@ module $paramod\Example\OUTPUT="BAR"
     sync always
     sync init
       update \outD 1'1
+      update \j 65
   end
   attribute \src "dut.sv:24.9-24.26"
   process $proc$dut.sv:24$86
@@ -771,6 +774,7 @@ module $paramod\Example\OUTPUT="BAZ"
     sync always
     sync init
       update \outD 1'1
+      update \j 65
   end
   attribute \src "dut.sv:24.9-24.26"
   process $proc$dut.sv:24$91

@@ -6,7 +6,7 @@ attribute \dynports 1
 attribute \hdlname "submodule"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
-  wire width 16 $auto$rtlil.cc:3386:And$10
+  wire width 16 \inst3.bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
@@ -15,14 +15,17 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   wire width 16 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 inout 2 \bus.c
+  wire width 16 \inst3.bus.a
+  wire width 16 \inst3.bus.b
+  wire width 16 $auto$rtlil.cc:3386:And$10
   cell $and $and$dut.sv:27$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A \bus.a
-    connect \B \bus.b
+    connect \A \inst3.bus.a
+    connect \B \inst3.bus.b
     connect \Y $auto$rtlil.cc:3386:And$10
   end
   cell $and $and$dut.sv:27$11
@@ -32,7 +35,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A $auto$rtlil.cc:3386:And$10
-    connect \B \bus.c
+    connect \B \inst3.bus.c
     connect \Y \out
   end
 end
@@ -124,7 +127,7 @@ attribute \dynports 1
 attribute \hdlname "submodule"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
-  wire width 8 $auto$rtlil.cc:3386:And$6
+  wire width 8 \inst1.bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
@@ -133,14 +136,17 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   wire width 8 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 inout 2 \bus.c
+  wire width 8 \inst1.bus.a
+  wire width 8 \inst1.bus.b
+  wire width 8 $auto$rtlil.cc:3386:And$6
   cell $and $and$dut.sv:27$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A \bus.a
-    connect \B \bus.b
+    connect \A \inst1.bus.a
+    connect \B \inst1.bus.b
     connect \Y $auto$rtlil.cc:3386:And$6
   end
   cell $and $and$dut.sv:27$7
@@ -150,7 +156,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3386:And$6
-    connect \B \bus.c
+    connect \B \inst1.bus.c
     connect \Y \out
   end
 end
