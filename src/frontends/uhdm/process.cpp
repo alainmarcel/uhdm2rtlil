@@ -4302,6 +4302,19 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
             name_map[var_name] = block_wire;
             block_local_vars.insert(var_name);
 
+            // Also shadow the gen-scope hierarchical name (e.g. "cond.x") so that the
+            // hierarchical lookup in import_ref_obj() resolves to this block-local wire
+            // instead of a same-named gen-scope variable (e.g. a genvar also named 'x').
+            std::string cur_gen_scope = get_current_gen_scope();
+            if (!cur_gen_scope.empty()) {
+                std::string gen_hier_name = cur_gen_scope + "." + var_name;
+                if (name_map.count(gen_hier_name)) {
+                    saved_name_map[gen_hier_name] = name_map[gen_hier_name];
+                }
+                name_map[gen_hier_name] = block_wire;
+                block_local_vars.insert(gen_hier_name);
+            }
+
             // Save and shadow current_comb_values for the short name
             if (current_comb_values.count(var_name)) {
                 saved_comb_values[var_name] = current_comb_values[var_name];

@@ -38,9 +38,9 @@ module \gen_test7
     assign $0\sub_out2 \cond.sub_out2
     assign $0\x \cond.x
     assign $0\proc.x \proc.x
-    assign \cond.x 1'0
-    assign $0\out2 { 2'00 \cond.x }
-    assign \cond.sub_out2 { 2'00 \cond.x }
+    assign $0\proc.x 2
+    assign $0\out2 3'010
+    assign \cond.sub_out2 3'010
     sync always
       update \out2 $0\out2
       update \cond.sub_out2 $0\sub_out2
