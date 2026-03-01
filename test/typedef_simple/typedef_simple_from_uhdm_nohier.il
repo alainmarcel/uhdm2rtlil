@@ -25,16 +25,16 @@ module \top
   wire width 8 signed \ch
   attribute \src "dut.sv:14.19-14.32"
   wire $eq$dut.sv:14$2_Y
-  wire $auto$process.cpp:32:import_immediate_assert$4
+  wire $auto$process.cpp:44:import_immediate_assert$4
   attribute \src "dut.sv:15.19-15.34"
   wire $eq$dut.sv:15$7_Y
-  wire $auto$process.cpp:32:import_immediate_assert$9
+  wire $auto$process.cpp:44:import_immediate_assert$9
   attribute \src "dut.sv:16.19-16.38"
   wire $eq$dut.sv:16$12_Y
-  wire $auto$process.cpp:32:import_immediate_assert$14
+  wire $auto$process.cpp:44:import_immediate_assert$14
   attribute \src "dut.sv:17.19-17.38"
   wire $eq$dut.sv:17$17_Y
-  wire $auto$process.cpp:32:import_immediate_assert$19
+  wire $auto$process.cpp:44:import_immediate_assert$19
   attribute \src "dut.sv:14.19-14.32"
   cell $eq $eq$dut.sv:14$3
     parameter \A_SIGNED 0
@@ -47,7 +47,7 @@ module \top
     connect \Y $eq$dut.sv:14$2_Y
   end
   attribute \src "dut.sv:14.12-14.34"
-  cell $check $auto$process.cpp:39:import_immediate_assert$5
+  cell $check $auto$process.cpp:51:import_immediate_assert$5
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -57,7 +57,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:14$2_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$4
+    connect \EN $auto$process.cpp:44:import_immediate_assert$4
     connect \TRG { }
   end
   attribute \src "dut.sv:15.19-15.34"
@@ -72,7 +72,7 @@ module \top
     connect \Y $eq$dut.sv:15$7_Y
   end
   attribute \src "dut.sv:15.12-15.36"
-  cell $check $auto$process.cpp:39:import_immediate_assert$10
+  cell $check $auto$process.cpp:51:import_immediate_assert$10
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -82,7 +82,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:15$7_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$9
+    connect \EN $auto$process.cpp:44:import_immediate_assert$9
     connect \TRG { }
   end
   attribute \src "dut.sv:16.19-16.38"
@@ -97,7 +97,7 @@ module \top
     connect \Y $eq$dut.sv:16$12_Y
   end
   attribute \src "dut.sv:16.12-16.40"
-  cell $check $auto$process.cpp:39:import_immediate_assert$15
+  cell $check $auto$process.cpp:51:import_immediate_assert$15
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -107,7 +107,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:16$12_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$14
+    connect \EN $auto$process.cpp:44:import_immediate_assert$14
     connect \TRG { }
   end
   attribute \src "dut.sv:17.19-17.38"
@@ -122,7 +122,7 @@ module \top
     connect \Y $eq$dut.sv:17$17_Y
   end
   attribute \src "dut.sv:17.12-17.40"
-  cell $check $auto$process.cpp:39:import_immediate_assert$20
+  cell $check $auto$process.cpp:51:import_immediate_assert$20
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -132,31 +132,31 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:17$17_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:32:import_immediate_assert$19
+    connect \EN $auto$process.cpp:44:import_immediate_assert$19
     connect \TRG { }
   end
   attribute \src "dut.sv:14.2-14.34"
   process $proc$dut.sv:14$1
-    assign $auto$process.cpp:32:import_immediate_assert$4 1'0
-    assign $auto$process.cpp:32:import_immediate_assert$4 1'1
+    assign $auto$process.cpp:44:import_immediate_assert$4 1'0
+    assign $auto$process.cpp:44:import_immediate_assert$4 1'1
     sync always
   end
   attribute \src "dut.sv:15.2-15.36"
   process $proc$dut.sv:15$6
-    assign $auto$process.cpp:32:import_immediate_assert$9 1'0
-    assign $auto$process.cpp:32:import_immediate_assert$9 1'1
+    assign $auto$process.cpp:44:import_immediate_assert$9 1'0
+    assign $auto$process.cpp:44:import_immediate_assert$9 1'1
     sync always
   end
   attribute \src "dut.sv:16.2-16.40"
   process $proc$dut.sv:16$11
-    assign $auto$process.cpp:32:import_immediate_assert$14 1'0
-    assign $auto$process.cpp:32:import_immediate_assert$14 1'1
+    assign $auto$process.cpp:44:import_immediate_assert$14 1'0
+    assign $auto$process.cpp:44:import_immediate_assert$14 1'1
     sync always
   end
   attribute \src "dut.sv:17.2-17.40"
   process $proc$dut.sv:17$16
-    assign $auto$process.cpp:32:import_immediate_assert$19 1'0
-    assign $auto$process.cpp:32:import_immediate_assert$19 1'1
+    assign $auto$process.cpp:44:import_immediate_assert$19 1'0
+    assign $auto$process.cpp:44:import_immediate_assert$19 1'1
     sync always
   end
 end

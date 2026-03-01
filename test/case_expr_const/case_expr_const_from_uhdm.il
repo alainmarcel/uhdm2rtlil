@@ -20,9 +20,11 @@ module \case_expr_const
   attribute \src "dut.sv:5.37-5.38"
   wire output 8 \h
   connect \h 1'1
-  connect \g 1'0
+  connect \g 1'1
   connect \f 1'1
   connect \e 1'1
   connect \d 1'1
+  connect \c 1'1
+  connect \b 1'1
   connect \a 1'1
 end

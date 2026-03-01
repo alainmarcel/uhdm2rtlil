@@ -5,7 +5,7 @@ attribute \src "dut.sv:1.1-42.10"
 attribute \keep 1
 module \top
   attribute \src "dut.sv:32.9-32.24"
-  cell $check $auto$process.cpp:39:import_immediate_assert$13
+  cell $check $auto$process.cpp:51:import_immediate_assert$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -19,7 +19,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:30.9-30.36"
-  cell $check $auto$process.cpp:39:import_immediate_assert$9
+  cell $check $auto$process.cpp:51:import_immediate_assert$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

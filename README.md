@@ -15,18 +15,17 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 144 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 96% (139/144 tests functional)
-- **Passing**: 135 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: 97% (140/144 tests functional)
+- **Passing**: 136 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 5 tests with documented issues:
+- **Known Failures**: 4 tests with documented issues:
   - `forloops` - Equivalence check failure (expected)
   - `const_fold_func` - 2 unproven equiv cells: `out4[0]` from recursive runtime function inlining and `out6[1]` from compile-time side-effect on module port
   - `multiplier` - SAT proves primary outputs equivalent, but equiv_make fails due to internal FullAdder instance naming differences (UHDM: `unit_0..N` vs Verilog: `\addbit[0].unit`)
-  - `case_expr_const` - UHDM fails to evaluate certain case-expression constants at compile time (`g=1'h0` vs expected `1'h1`, `c/b=1'hx` vs expected `1'h1`)
   - `port_sign_extend` - UHDM produces 1-bit output (`1'h1`) instead of 2-bit sign-extended (`2'h2`)
 - **Recent Additions**:
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
@@ -53,7 +52,8 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `'1` fill constant now produces all-ones across the full target width for multi-bit struct fields (e.g., 4-bit field gets `4'b1111` not `4'b0001`) ✅
   - `gen_test7`: `always @*` block-local variable no longer shadowed by same-named generate-scope genvar — fixed in `import_begin_block_comb()` by also shadowing the hierarchical name `gen.x` in `name_map` ✅
   - Formal equivalence check for constant-only circuits (0 gate cells): now performs actual constant-value comparison between gold and gate netlists instead of trivially passing ✅
-  - Newly detected pre-existing failures (`case_expr_const`, `port_sign_extend`) added to `failing_tests.txt` so CI tracks them as expected ✅
+  - `case_expr_const` now passing with correct SV LRM 12.5.1 case-statement semantics ✅
+  - `port_sign_extend` added to `failing_tests.txt` so CI tracks it as expected ✅
   - Compile-time function evaluator crash fix and improvements ✅
     - Fixed `vpiIf`/`vpiIfElse` type casting crash: `vpiIf` (type 22) must use `if_stmt*`, `vpiIfElse` (type 23) must use `if_else*`
     - Added 7 missing operations: `vpiBitAndOp`, `vpiBitOrOp`, `vpiBitXNorOp`, `vpiLogAndOp`, `vpiLogOrOp`, `vpiDivOp`, `vpiModOp`
@@ -551,7 +551,7 @@ The Yosys test runner:
 - **multiplier** - 4x4 2D array multiplier with parameterized RippleCarryAdder and FullAdder using generate loops *(known equiv mismatch - SAT proves outputs equivalent)*
 - **const_func** - Constant functions in generate blocks with string parameters, `$floor`, and bitwise negation
 - **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
-- **case_expr_const** - Case statement with constant expressions *(known failure — UHDM fails to evaluate certain case-expression constants at compile time)*
+- **case_expr_const** - Case statement with constant expressions including signed case items, mixed signed/unsigned contexts, and context-width extension per SV LRM 12.5.1
 
 #### Module Hierarchy & Interfaces
 - **simple_hierarchy** - Module instantiation and port connections
@@ -648,8 +648,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **144 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **135 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **5 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier, case_expr_const, port_sign_extend)
+- **136 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **4 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier, port_sign_extend)
 
 ## Recent Improvements
 
@@ -670,7 +670,19 @@ The UHDM frontend test suite includes **144 test cases**:
 ### Robust Formal Equivalence for Constant-Only Circuits
 - Fixed `test_equivalence.sh`: when no `$_` gate cells are present (constant-only module), the script previously wrote `# No gates to check` and exited 0 — a vacuous pass
 - **Fix**: compare `assign signal = VALUE;` lines common to both gold (Verilog) and gate (UHDM) netlists; normalise `?`→`x` for high-Z equivalence; skip signals where gold already has undefined bits
-- Exposed two pre-existing bugs now tracked in `failing_tests.txt`: `case_expr_const` and `port_sign_extend`
+- Exposed pre-existing `port_sign_extend` bug now tracked in `failing_tests.txt`
+
+### Case Statement Signed/Unsigned Context Extension (`case_expr_const`)
+- Fixed `import_case_stmt_comb` and the nested `import_statement_comb` (CaseRule* variant) to correctly implement SV LRM 12.5.1 case-statement comparison semantics
+- **Bug 1 — wrong concatenation direction**: code used `{expr_sig, zeros}` (Verilog-style concat puts `expr_sig` at the MSB side, zeros at the LSB), effectively left-shifting the value; `1'sb1` → `2'10` (value 2) instead of `2'01` (zero-extended) or `2'11` (sign-extended)
+- **Bug 2 — missing sign extension**: signed case items such as `1'sb1` (= −1) must be sign-extended to the context width; zero-extending gives value 1, which does not match `2'sb11`
+- **Bug 3 — wrong context width**: the switch signal width was taken from the case expression alone; when a case item is wider (e.g., `3'b0` in `case (1'sb1)`), the comparison must occur at the wider width to avoid spurious matches
+- **Fix**: two-pass approach in `import_case_stmt_comb`:
+  1. Import case expression and all case-item expressions; track width and signedness of each
+  2. Context width = max of all; context signed = all operands signed (any unsigned → unsigned context)
+  3. Extend switch signal and each compare value to context width using `extend_u0(width, is_signed)` — sign-extends when both context and that operand are signed, otherwise zero-extends
+- Added `is_expr_signed()` helper that checks the `'s` sigil in `VpiDecompile()` (e.g. `"1'sb1"`, `"2'sb11"`) to determine constant signedness
+- `case_expr_const` now formally verified: all 8 outputs produce `1'h1` ✅
 
 ### Unnamed Block Variable Declaration Support
 - Added interpreter-based evaluation path for initial blocks containing block-local variable declarations

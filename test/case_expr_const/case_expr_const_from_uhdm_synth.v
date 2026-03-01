@@ -28,11 +28,11 @@ module case_expr_const(a, b, c, d, e, f, g, h);
   output h;
   wire h;
   assign h = 1'h1;
-  assign g = 1'h0;
+  assign g = 1'h1;
   assign f = 1'h1;
   assign e = 1'h1;
   assign d = 1'h1;
-  assign c = 1'hx;
-  assign b = 1'hx;
+  assign c = 1'h1;
+  assign b = 1'h1;
   assign a = 1'h1;
 endmodule

@@ -60,7 +60,7 @@ module \case_expr_const
       case 2'01
         assign $0\b 1'0
     attribute \src "dut.sv:14.13-14.28"
-      case 2'10
+      case 2'11
         assign $0\b 1'1
     end
     attribute \src "dut.sv:16.9-19.16"
@@ -69,7 +69,7 @@ module \case_expr_const
       case 2'00
         assign $0\c 1'0
     attribute \src "dut.sv:18.13-18.28"
-      case 2'10
+      case 2'11
         assign $0\c 1'1
     end
     attribute \src "dut.sv:20.9-24.16"
@@ -78,7 +78,7 @@ module \case_expr_const
       case 2'00
         assign $0\d 1'0
     attribute \src "dut.sv:22.13-22.28"
-      case 2'10
+      case 2'01
         assign $0\d 1'0
     attribute \src "dut.sv:23.13-23.28"
       case 
@@ -90,52 +90,52 @@ module \case_expr_const
       case 2'00
         assign $0\e 1'0
     attribute \src "dut.sv:27.13-27.28"
-      case 2'10
+      case 2'01
         assign $0\e 1'0
     attribute \src "dut.sv:28.13-28.28"
       case 
         assign $0\e 1'1
     end
     attribute \src "dut.sv:30.9-34.16"
-    switch 1'1
+    switch 2'11
     attribute \src "dut.sv:31.13-31.28"
-      case 1'0
+      case 2'00
         assign $0\f 1'0
     attribute \src "dut.sv:32.13-32.28"
-      case 1'1
+      case 2'11
         assign $0\f 1'1
     attribute \src "dut.sv:33.13-33.28"
       case 
         assign $0\f 1'0
     end
     attribute \src "dut.sv:35.9-40.16"
-    switch 1'1
+    switch 3'001
     attribute \src "dut.sv:36.13-36.28"
-      case 1'0
+      case 3'000
         assign $0\g 1'0
     attribute \src "dut.sv:37.13-37.28"
-      case 1'0
+      case 3'000
         assign $0\g 1'0
     attribute \src "dut.sv:38.13-38.28"
-      case 1'1
+      case 3'011
         assign $0\g 1'0
     attribute \src "dut.sv:39.13-39.28"
       case 
         assign $0\g 1'1
     end
     attribute \src "dut.sv:41.9-47.16"
-    switch 1'1
+    switch 3'001
     attribute \src "dut.sv:42.13-42.28"
-      case 1'0
+      case 3'000
         assign $0\h 1'0
     attribute \src "dut.sv:43.13-43.28"
-      case 1'1
+      case 3'001
         assign $0\h 1'1
     attribute \src "dut.sv:44.13-44.28"
-      case 1'0
+      case 3'000
         assign $0\h 1'0
     attribute \src "dut.sv:45.13-45.28"
-      case 1'1
+      case 3'011
         assign $0\h 1'0
     attribute \src "dut.sv:46.13-46.28"
       case 
