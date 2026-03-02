@@ -295,17 +295,30 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                     }
                     break;
                 case uhdmint_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    break;
                 case uhdminteger_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::integer_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    break;
                 case uhdmbyte_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::byte_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    break;
                 case uhdmshort_int_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::short_int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    break;
                 case uhdmlong_int_typespec:
-                    is_signed = true;  // These are signed by default
+                    if (auto ts = dynamic_cast<const UHDM::long_int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
                     break;
                 default:
                     // Other typespec types are not handled
                     break;
             }
-            
+
             if (is_signed) {
                 log("UHDM: Port '%s' is signed\n", portname.c_str());
                 w->is_signed = true;
@@ -493,19 +506,36 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     }
                     break;
                 case uhdmint_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    log("UHDM: int_typespec VpiSigned=%d\n", is_signed);
+                    break;
                 case uhdminteger_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::integer_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    log("UHDM: integer_typespec VpiSigned=%d\n", is_signed);
+                    break;
                 case uhdmbyte_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::byte_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    log("UHDM: byte_typespec VpiSigned=%d\n", is_signed);
+                    break;
                 case uhdmshort_int_typespec:
+                    if (auto ts = dynamic_cast<const UHDM::short_int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    log("UHDM: short_int_typespec VpiSigned=%d\n", is_signed);
+                    break;
                 case uhdmlong_int_typespec:
-                    is_signed = true;  // These are signed by default
-                    log("UHDM: Integer type, signed by default\n");
+                    if (auto ts = dynamic_cast<const UHDM::long_int_typespec*>(actual_typespec))
+                        is_signed = ts->VpiSigned();
+                    log("UHDM: long_int_typespec VpiSigned=%d\n", is_signed);
                     break;
                 default:
                     // Other typespec types are not handled
                     log("UHDM: Unknown typespec type %d\n", actual_typespec->UhdmType());
                     break;
             }
-            
+
             if (is_signed) {
                 log("UHDM: Net '%s' is signed (from typespec), setting is_signed=true\n", netname.c_str());
                 w->is_signed = true;
@@ -745,10 +775,11 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                 rhs = {RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1), rhs};
             }
         } else if (rhs.size() < lhs.size()) {
-            // Zero-extend RHS to match LHS width
+            // Extend RHS to match LHS width; sign-extend if the RHS wire is signed
             log_debug("Extending RHS from %d to %d bits\n", rhs.size(), lhs.size());
+            bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
             RTLIL::SigSpec extended = module->addWire(NEW_ID, lhs.size());
-            module->addPos(NEW_ID, rhs, extended);
+            module->addPos(NEW_ID, rhs, extended, rhs_is_signed);
             rhs = extended;
         } else {
             // Truncate RHS to match LHS width
