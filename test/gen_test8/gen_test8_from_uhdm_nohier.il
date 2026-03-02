@@ -7,12 +7,12 @@ module \gen_test8
   wire width 2 \x
   wire width 2 \A.x
   wire width 2 \A.B.x
-  wire width 2 $auto$module.cpp:783:import_continuous_assign$2
+  wire width 2 $auto$module.cpp:814:import_continuous_assign$2
   wire width 2 \A.C.x
-  wire width 2 $auto$module.cpp:783:import_continuous_assign$4
+  wire width 2 $auto$module.cpp:814:import_continuous_assign$4
   wire width 2 $auto$rtlil.cc:3388:Xor$6
   wire width 2 $auto$rtlil.cc:3388:Xor$8
-  wire width 2 $auto$module.cpp:783:import_continuous_assign$10
+  wire width 2 $auto$module.cpp:814:import_continuous_assign$10
   cell $xor $xor$dut.sv:36$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -35,24 +35,24 @@ module \gen_test8
   end
   attribute \src "dut.sv:15.16-15.17"
   process $proc$dut.sv:15$1
-    assign $auto$module.cpp:783:import_continuous_assign$2 2'00
+    assign $auto$module.cpp:814:import_continuous_assign$2 2'00
     sync always
     sync init
-      update \A.B.x $auto$module.cpp:783:import_continuous_assign$2
+      update \A.B.x $auto$module.cpp:814:import_continuous_assign$2
   end
   attribute \src "dut.sv:26.16-26.17"
   process $proc$dut.sv:26$3
-    assign $auto$module.cpp:783:import_continuous_assign$4 2'01
+    assign $auto$module.cpp:814:import_continuous_assign$4 2'01
     sync always
     sync init
-      update \A.C.x $auto$module.cpp:783:import_continuous_assign$4
+      update \A.C.x $auto$module.cpp:814:import_continuous_assign$4
   end
   attribute \src "dut.sv:10.13-10.14"
   process $proc$dut.sv:10$9
-    assign $auto$module.cpp:783:import_continuous_assign$10 2'11
+    assign $auto$module.cpp:814:import_continuous_assign$10 2'11
     sync always
     sync init
-      update \x $auto$module.cpp:783:import_continuous_assign$10
+      update \x $auto$module.cpp:814:import_continuous_assign$10
   end
   connect \x $auto$rtlil.cc:3388:Xor$8
 end
