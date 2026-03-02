@@ -13,8 +13,8 @@ module \FullAdder
   wire output 4 \S
   attribute \src "dut.sv:130.47-130.51"
   wire output 5 \Cout
-  wire width 2 $auto$expression.cpp:2150:import_operation$1
-  wire width 2 $auto$expression.cpp:2150:import_operation$3
+  wire width 2 $auto$expression.cpp:2149:import_operation$1
+  wire width 2 $auto$expression.cpp:2149:import_operation$3
   cell $add $add$dut.sv:131$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -23,7 +23,7 @@ module \FullAdder
     parameter \Y_WIDTH 2
     connect \A \A
     connect \B \B
-    connect \Y $auto$expression.cpp:2150:import_operation$1
+    connect \Y $auto$expression.cpp:2149:import_operation$1
   end
   cell $add $add$dut.sv:131$4
     parameter \A_SIGNED 0
@@ -31,11 +31,11 @@ module \FullAdder
     parameter \A_WIDTH 2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:2150:import_operation$1
+    connect \A $auto$expression.cpp:2149:import_operation$1
     connect \B \Cin
-    connect \Y $auto$expression.cpp:2150:import_operation$3
+    connect \Y $auto$expression.cpp:2149:import_operation$3
   end
-  connect { \Cout \S } $auto$expression.cpp:2150:import_operation$3
+  connect { \Cout \S } $auto$expression.cpp:2149:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:109.1-128.10"

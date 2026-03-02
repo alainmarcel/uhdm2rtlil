@@ -22,9 +22,9 @@ module \forloops
   attribute \unused_bits "1"
   wire width 2 $auto$rtlil.cc:3339:Not$40
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2176:import_operation$33
+  wire width 32 $auto$expression.cpp:2175:import_operation$33
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2150:import_operation$6
+  wire width 32 $auto$expression.cpp:2149:import_operation$6
   attribute \src "dut.sv:3.2-7.5"
   attribute \always_ff 1
   cell $dff $procdff$36
@@ -49,7 +49,7 @@ module \forloops
     parameter \Y_WIDTH 32
     connect \A 2
     connect \B { \a \b }
-    connect \Y $auto$expression.cpp:2150:import_operation$6
+    connect \Y $auto$expression.cpp:2149:import_operation$6
   end
   cell $not $not$dut.sv:10$29
     parameter \A_SIGNED 0
@@ -66,14 +66,14 @@ module \forloops
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B { \a \b }
-    connect \Y { $auto$expression.cpp:2176:import_operation$33 [31:4] \y }
+    connect \Y { $auto$expression.cpp:2175:import_operation$33 [31:4] \y }
   end
   attribute \src "dut.sv:3.2-7.5"
   attribute \always_ff 1
   cell $dff $procdff$37
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2150:import_operation$6 [3:0]
+    connect \D $auto$expression.cpp:2149:import_operation$6 [3:0]
     connect \Q \x
     connect \CLK \clk
   end
@@ -93,7 +93,7 @@ module \forloops
     connect \A \a
     connect \Y \q [3]
   end
-  connect $auto$expression.cpp:2176:import_operation$33 [3:0] \y
+  connect $auto$expression.cpp:2175:import_operation$33 [3:0] \y
   connect \k 2
   connect \q [1:0] { \a \b }
 end

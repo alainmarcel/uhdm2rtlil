@@ -19,10 +19,10 @@ module \const_fold_func_top
   wire width 4 output 7 \out6
   wire width 4 \flip$func$dut.sv:56$1.$result
   attribute \unused_bits "4 5 6 7"
-  wire width 8 $auto$expression.cpp:2222:import_operation$125
+  wire width 8 $auto$expression.cpp:2221:import_operation$125
   wire width 4 \flip$func$dut.sv:42$87.$result
   attribute \unused_bits "4 5 6 7"
-  wire width 8 $auto$expression.cpp:2222:import_operation$123
+  wire width 8 $auto$expression.cpp:2221:import_operation$123
   wire width 4 \pow_flip_a$func$dut.sv:42$79.$result
   cell $not $not$dut.sv:8$60
     parameter \A_SIGNED 0
@@ -46,7 +46,7 @@ module \const_fold_func_top
     parameter \Y_WIDTH 8
     connect \A \out1
     connect \B \flip$func$dut.sv:42$87.$result
-    connect \Y { $auto$expression.cpp:2222:import_operation$123 [7:4] \pow_flip_a$func$dut.sv:42$79.$result }
+    connect \Y { $auto$expression.cpp:2221:import_operation$123 [7:4] \pow_flip_a$func$dut.sv:42$79.$result }
   end
   cell $not $not$dut.sv:8$94
     parameter \A_SIGNED 0
@@ -63,10 +63,10 @@ module \const_fold_func_top
     parameter \Y_WIDTH 8
     connect \A \flip$func$dut.sv:56$1.$result
     connect \B \pow_flip_a$func$dut.sv:42$79.$result
-    connect \Y { $auto$expression.cpp:2222:import_operation$125 [7:4] \out4 }
+    connect \Y { $auto$expression.cpp:2221:import_operation$125 [7:4] \out4 }
   end
-  connect $auto$expression.cpp:2222:import_operation$123 [3:0] \pow_flip_a$func$dut.sv:42$79.$result
-  connect $auto$expression.cpp:2222:import_operation$125 [3:0] \out4
+  connect $auto$expression.cpp:2221:import_operation$123 [3:0] \pow_flip_a$func$dut.sv:42$79.$result
+  connect $auto$expression.cpp:2221:import_operation$125 [3:0] \out4
   connect \out6 [2:0] 3'010
   connect \out5 4'1010
   connect \out3 \inp

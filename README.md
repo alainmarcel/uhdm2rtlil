@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 144 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (144/144 tests functional)
-- **Passing**: 140 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 145 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (145/145 tests functional)
+- **Passing**: 141 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
 - **Known Failures**: None — all tests passing
 - **Recent Additions**:
+  - `unbased_unsized_shift` - Unbased unsized fill literals (`'0`, `'1`) in shift operations: `'1 << 8` and `'1 << d` in a 64-bit context correctly produce `64'hFFFF_FFFF_FFFF_FF00`; tests both constant and dynamic shift amounts
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
   - `wandwor` - `wand`/`wor` net types with multi-driver AND/OR resolution, module port connections, multi-bit variants
@@ -45,6 +46,8 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `unbased_unsized_shift` — unbased unsized fill literals (`'0`, `'1`, `'x`) in shift operations now produce correct full-width results ✅
+    - `import_constant` now expands fill literals to `expression_context_width` (the LHS width) when processing a continuous assignment, so `'1 << 8` in a 64-bit context becomes `64'hFFFF...FFFF << 8 = 64'hFFFF...FF00` instead of the wrong `1'1 << 8 = 1'0` zero-extended to 64'h0
   - `forloops` — for loops in both clocked (`always @(posedge clk)`) and combinational (`always @*`) blocks now compile-time unrolled correctly ✅
     - Module-level loop variables (`integer k;` declared outside the loop) use `vpiRefObj` in the init node; both `vpiRefVar` and `vpiRefObj` now handled
     - `extract_assigned_signals` now recurses into `vpiFor` bodies so dynamically-indexed signals get proper `$0\` temp wires
@@ -646,9 +649,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **144 test cases**:
+The UHDM frontend test suite includes **145 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **140 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **141 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests passing; failing_tests.txt is empty
 
 ## Recent Improvements

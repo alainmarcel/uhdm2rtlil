@@ -10,7 +10,7 @@ module \always02
   attribute \src "dut.sv:1.31-1.36"
   wire width 4 output 3 \count
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2150:import_operation$2
+  wire width 64 $auto$expression.cpp:2149:import_operation$2
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -19,7 +19,7 @@ module \always02
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2150:import_operation$2
+    connect \Y $auto$expression.cpp:2149:import_operation$2
   end
   attribute \src "dut.sv:7.1-11.4"
   attribute \always_ff 1
@@ -30,7 +30,7 @@ module \always02
     parameter \WIDTH 4
     connect \CLK \clock
     connect \SRST \reset
-    connect \D $auto$expression.cpp:2150:import_operation$2 [3:0]
+    connect \D $auto$expression.cpp:2149:import_operation$2 [3:0]
     connect \Q \count
   end
 end
