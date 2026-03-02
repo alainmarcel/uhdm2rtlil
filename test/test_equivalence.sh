@@ -258,6 +258,7 @@ read_verilog -sv VERILOG_SYNTH_FILE
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gold_flat
 
 design -reset
@@ -266,6 +267,7 @@ read_verilog -sv UHDM_SYNTH_FILE
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gate_flat
 
 design -copy-from gold_flat -as gold *

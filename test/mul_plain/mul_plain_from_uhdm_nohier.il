@@ -12,7 +12,7 @@ module \mul_plain
   wire width 6 input 2 \b
   attribute \src "dut.sv:1.24-1.25"
   wire width 12 output 3 \p
-  wire width 12 $auto$expression.cpp:2219:import_operation$1
+  wire width 12 $auto$expression.cpp:2222:import_operation$1
   cell $mul $mul$dut.sv:10$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -21,7 +21,7 @@ module \mul_plain
     parameter \Y_WIDTH 12
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2219:import_operation$1
+    connect \Y $auto$expression.cpp:2222:import_operation$1
   end
-  connect \p $auto$expression.cpp:2219:import_operation$1
+  connect \p $auto$expression.cpp:2222:import_operation$1
 end
