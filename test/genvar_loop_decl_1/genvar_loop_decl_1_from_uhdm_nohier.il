@@ -6,30 +6,30 @@ module \gate
   attribute \src "dut.sv:3.13-3.14"
   wire width 33 output 1 \a
   wire \genblk1[0].x
-  wire $auto$module.cpp:814:import_continuous_assign$2
+  wire $auto$module.cpp:823:import_continuous_assign$2
   wire width 2 \genblk1[1].x
-  wire width 2 $auto$module.cpp:814:import_continuous_assign$4
-  wire width 33 $auto$module.cpp:781:import_continuous_assign$5
-  cell $pos $auto$module.cpp:782:import_continuous_assign$6
+  wire width 2 $auto$module.cpp:823:import_continuous_assign$4
+  wire width 33 $auto$module.cpp:790:import_continuous_assign$5
+  cell $pos $auto$module.cpp:791:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \Y_WIDTH 33
     connect \A { 1'0 \genblk1[0].x 1'0 \genblk1[1].x 1'0 }
-    connect \Y $auto$module.cpp:781:import_continuous_assign$5
+    connect \Y $auto$module.cpp:790:import_continuous_assign$5
   end
   attribute \src "dut.sv:5.14-5.15"
   process $proc$dut.sv:5$1
-    assign $auto$module.cpp:814:import_continuous_assign$2 1'1
+    assign $auto$module.cpp:823:import_continuous_assign$2 1'1
     sync always
     sync init
-      update \genblk1[0].x $auto$module.cpp:814:import_continuous_assign$2
+      update \genblk1[0].x $auto$module.cpp:823:import_continuous_assign$2
   end
   attribute \src "dut.sv:5.14-5.15"
   process $proc$dut.sv:5$3
-    assign $auto$module.cpp:814:import_continuous_assign$4 2'11
+    assign $auto$module.cpp:823:import_continuous_assign$4 2'11
     sync always
     sync init
-      update \genblk1[1].x $auto$module.cpp:814:import_continuous_assign$4
+      update \genblk1[1].x $auto$module.cpp:823:import_continuous_assign$4
   end
-  connect \a $auto$module.cpp:781:import_continuous_assign$5
+  connect \a $auto$module.cpp:790:import_continuous_assign$5
 end

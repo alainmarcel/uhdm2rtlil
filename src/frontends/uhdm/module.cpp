@@ -612,11 +612,20 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
                     log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
                 }
+            } else if (actual_typespec->UhdmType() == uhdmlogic_typespec) {
+                // For typedef'd logic types (e.g. "typedef logic [3:0] typename"),
+                // the logic_typespec has a non-empty VpiName. Set wiretype attribute.
+                auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_typespec);
+                if (logic_ts && !logic_ts->VpiName().empty()) {
+                    std::string type_name = std::string(logic_ts->VpiName());
+                    w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
+                    log("UHDM: Added wiretype attribute '\\%s' to logic net '%s'\n", type_name.c_str(), w->name.c_str());
+                }
             } else if (actual_typespec->UhdmType() == uhdmenum_typespec) {
                 log("UHDM: typespec is an enum_typespec\n");
                 // Handle enum type attributes
                 const UHDM::enum_typespec* enum_ts = any_cast<const UHDM::enum_typespec*>(actual_typespec);
-                
+
                 // Add wiretype attribute with the enum type name
                 std::string type_name;
                 if (!ref_ts->VpiName().empty()) {
@@ -624,7 +633,7 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                 } else if (!enum_ts->VpiName().empty()) {
                     type_name = enum_ts->VpiName();
                 }
-                
+
                 if (!type_name.empty()) {
                     w->attributes[RTLIL::escape_id("wiretype")] = RTLIL::escape_id(type_name);
                     log("UHDM: Added wiretype attribute '\\%s' to wire '%s'\n", type_name.c_str(), w->name.c_str());
