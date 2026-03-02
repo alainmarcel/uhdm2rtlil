@@ -1298,13 +1298,6 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         
         // First pass: Create all wires without initial values
         for (auto var : *uhdm_module->Variables()) {
-            // Skip integer variables - they are procedural and shouldn't be module-level wires
-            if (var->UhdmType() == uhdmint_var) {
-                std::string var_name = std::string(var->VpiName());
-                log("UHDM: Skipping integer variable '%s' (procedural variable)\n", var_name.c_str());
-                continue;
-            }
-            
             // Check if this is an array_var (memory array)
             if (var->UhdmType() == uhdmarray_var) {
                 auto array_var = any_cast<const UHDM::array_var*>(var);
@@ -1555,12 +1548,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             log("UHDM: union_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
                     } else if (var->UhdmType() == uhdminteger_var ||
+                               var->UhdmType() == uhdmint_var ||
                                var->UhdmType() == uhdmbyte_var ||
                                var->UhdmType() == uhdmshort_int_var ||
                                var->UhdmType() == uhdmlong_int_var) {
-                        // Built-in signed types: integer, byte, shortint, longint
+                        // Built-in signed types: integer, int, byte, shortint, longint
                         wire->is_signed = true;
                         log("UHDM: Variable '%s' is built-in signed type, setting is_signed=true\n", var_name.c_str());
+                        // Defer initial expression to second pass
+                        if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                            if (v->Expr()) {
+                                log("UHDM: Variable '%s' has initial expression - deferring to second pass\n", var_name.c_str());
+                                vars_with_init_expr.push_back(std::make_pair(var, wire));
+                            }
+                        }
                     }
 
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
@@ -1691,10 +1692,38 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                 }
+            } else if (var->UhdmType() == uhdminteger_var ||
+                       var->UhdmType() == uhdmint_var ||
+                       var->UhdmType() == uhdmbyte_var ||
+                       var->UhdmType() == uhdmshort_int_var ||
+                       var->UhdmType() == uhdmlong_int_var) {
+                if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                    if (v->Expr()) {
+                        log("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
+                        RTLIL::SigSpec init_val = import_expression(v->Expr());
+                        if (init_val.size() > 0) {
+                            // Extend to wire width; sign-extend since all these types are signed
+                            if (init_val.size() < wire->width) {
+                                init_val.extend_u0(wire->width, true);
+                            } else if (init_val.size() > wire->width) {
+                                init_val = init_val.extract(0, wire->width);
+                            }
+                            // Create $proc with sync always — Yosys proc+opt_const will fold it
+                            RTLIL::Process* proc = module->addProcess(NEW_ID);
+                            add_src_attribute(proc->attributes, v);
+                            RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
+                            sync_always->type = RTLIL::SyncType::STa;
+                            sync_always->actions.push_back(
+                                RTLIL::SigSig(RTLIL::SigSpec(wire), init_val));
+                            proc->syncs.push_back(sync_always);
+                            log("UHDM: Created init process for variable '%s'\n", var_name.c_str());
+                        }
+                    }
+                }
             }
         }
     }
-    
+
     // Pre-scan child module instances to find nets driven by output ports.
     // Nets connected to module instance outputs should not have the \reg attribute,
     // even if declared as 'reg' in SystemVerilog, because they are continuously driven.
