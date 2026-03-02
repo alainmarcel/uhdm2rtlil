@@ -24,24 +24,57 @@ module forloops(clk, a, b, p, q, x, y);
   (* src = "dut.sv:1.61-1.62" *)
   output [3:0] y;
   wire [3:0] y;
-  wire [3:0] k;
+  (* src = "dut.sv:2.10-2.11" *)
+  wire [31:0] k;
+  \$_NOT_  _0_ (
+    .A(a),
+    .Y(q[3])
+  );
+  \$_NOT_  _1_ (
+    .A(b),
+    .Y(q[2])
+  );
+  \$_XOR_  _2_ (
+    .A(b),
+    .B(a),
+    .Y(y[1])
+  );
+  \$_NOR_  _3_ (
+    .A(b),
+    .B(a),
+    .Y(y[2])
+  );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:3.2-7.5" *)
-  \$_DFF_P_  \x_reg[0]  /* _0_ */ (
+  \$_DFF_P_  \p_reg[0]  /* _4_ */ (
     .C(clk),
     .D(b),
-    .Q(x[0])
+    .Q(p[0])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:3.2-7.5" *)
-  \$_DFF_P_  \x_reg[1]  /* _1_ */ (
+  \$_DFF_P_  \p_reg[1]  /* _5_ */ (
     .C(clk),
     .D(a),
+    .Q(p[1])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:3.2-7.5" *)
+  \$_DFF_P_  \p_reg[2]  /* _6_ */ (
+    .C(clk),
+    .D(q[2]),
+    .Q(p[2])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:3.2-7.5" *)
+  \$_DFF_P_  \x_reg[1]  /* _7_ */ (
+    .C(clk),
+    .D(q[3]),
     .Q(x[1])
   );
-  assign k = 4'hx;
-  assign y = 4'h1;
-  assign x[3:2] = { x[1], x[1] };
-  assign q = 4'hx;
-  assign p = 4'hx;
+  assign k = 32'd2;
+  assign { y[3], y[0] } = { 1'h0, b };
+  assign { x[3:2], x[0] } = { 1'h0, p[1:0] };
+  assign q[1:0] = { a, b };
+  assign p[3] = p[1];
 endmodule

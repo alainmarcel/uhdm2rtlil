@@ -2955,6 +2955,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
+        // If this is a for-loop variable, substitute its current constant value
+        if (loop_values.count(base_signal_name)) {
+            int lv = loop_values.at(base_signal_name);
+            RTLIL::Wire* w = find_wire_in_scope(base_signal_name, "part select width");
+            int bw = w ? w->width : 32;
+            base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
+            log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
+        } else {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
             base = RTLIL::SigSpec(wire);
@@ -2972,13 +2980,13 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 return RTLIL::SigSpec();
             }
         }
+        } // end loop_values else
     } else {
         // If we can't get the name directly, try importing the parent as an expression
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
-    
-    log("      Base signal width: %d\n", base.size());
 
+    log("      Base signal width: %d\n", base.size());
 
     // Get range
     int left = -1, right = -1;
@@ -3356,6 +3364,14 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
+        // If this is a for-loop variable, substitute its current constant value
+        if (loop_values.count(base_signal_name)) {
+            int lv = loop_values.at(base_signal_name);
+            RTLIL::Wire* w = find_wire_in_scope(base_signal_name, "indexed part select width");
+            int bw = w ? w->width : 32;
+            base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
+            log("      IndexedPartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
+        } else {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
             base = RTLIL::SigSpec(wire);
@@ -3373,13 +3389,14 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                 return RTLIL::SigSpec();
             }
         }
+        } // end loop_values else
     } else {
         // If we can't get the name directly, try importing the parent as an expression
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
-    
+
     log("      Base signal width: %d\n", base.size());
-    
+
     // Get the base index expression
     RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr(), input_mapping);
     log("      Base index: %s\n", base_index.is_fully_const() ? 
