@@ -55,6 +55,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/counter/counter_from_verilog_synth.
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gold_flat
 
 design -reset
@@ -63,6 +64,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/counter/counter_from_uhdm_synth.v
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gate_flat
 
 design -copy-from gold_flat -as gold *

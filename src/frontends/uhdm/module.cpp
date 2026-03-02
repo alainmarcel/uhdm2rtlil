@@ -898,8 +898,30 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             }
             inst_name = full_name.substr(start_pos);
         } else {
-            // Fallback to simple name
-            inst_name = std::string(uhdm_inst->VpiName());
+            // The RTLIL module name (possibly parameterized like $paramod\...) doesn't
+            // appear verbatim in the UHDM full path.  Try stripping the current
+            // elaborated-instance prefix (e.g. "work@Top.gen[0].adder") which is
+            // always an ancestor of this child's full path.
+            bool extracted = false;
+            if (current_instance) {
+                std::string ci_fullname = std::string(current_instance->VpiFullName());
+                if (!ci_fullname.empty() && full_name.find(ci_fullname) == 0) {
+                    size_t start_pos = ci_fullname.size();
+                    if (start_pos < full_name.size() && full_name[start_pos] == '.') {
+                        start_pos++;
+                    }
+                    inst_name = full_name.substr(start_pos);
+                    extracted = true;
+                }
+            }
+            if (!extracted) {
+                // Last resort: prepend any active generate-scope path to VpiName()
+                std::string gen_scope = get_current_gen_scope();
+                inst_name = std::string(uhdm_inst->VpiName());
+                if (!gen_scope.empty()) {
+                    inst_name = gen_scope + "." + inst_name;
+                }
+            }
         }
     } else {
         inst_name = std::string(uhdm_inst->VpiName());

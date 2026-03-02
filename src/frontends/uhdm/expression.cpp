@@ -1799,14 +1799,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         }
     }
     
-    // If all operands are constant AND we are either in a loop-unrolling context
-    // or inside a function body (where parameters may resolve to constants via
-    // const_wire_values), fold the operation to a constant at this point.
-    // This is essential for recursive functions whose depth-controlling parameter
-    // is known constant — e.g. `exp - 1` where exp == 3 must fold to 2 so the
-    // next-level recursive call can track `exp == 2` and eventually terminate.
+    // If all operands are constant AND we are in a loop-unrolling, function body,
+    // or generate-scope context (where parameters resolve to iteration-specific
+    // constants), fold the operation to a constant right here.
+    // This is essential for:
+    //  - Recursive functions: `exp - 1` where exp==3 folds to 2 so the next
+    //    recursive call can track `exp==2` and terminate.
+    //  - Generate-scope indexed part-selects: `PP[(i-1)*(i+2*M)/2 +: M+i]`
+    //    where `i` is the generate loop parameter (a constant for each iteration).
     if (all_const && operands.size() > 0 &&
-        (!loop_values.empty() || getCurrentFunctionContext() != nullptr)) {
+        (!loop_values.empty() || getCurrentFunctionContext() != nullptr ||
+         !gen_scope_stack.empty())) {
         RTLIL::Const result;
         bool can_evaluate = true;
         

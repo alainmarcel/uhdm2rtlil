@@ -55,6 +55,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/lut_map_mux/lut_map_mux_from_verilo
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gold_flat
 
 design -reset
@@ -63,6 +64,7 @@ read_verilog -sv /home/alain/uhdm2rtlil/test/lut_map_mux/lut_map_mux_from_uhdm_s
 hierarchy -auto-top
 proc
 flatten
+opt -purge  # Remove dead wires to break circular signal dependencies
 design -stash gate_flat
 
 design -copy-from gold_flat -as gold *

@@ -22,7 +22,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 (A, B, 
   (* src = "dut.sv:116.12-116.14" *)
   wire [5:0] CC;
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit (
+  FullAdder \addbit[0].unit  (
     .A(A[0]),
     .B(B[0]),
     .Cin(Cin),
@@ -30,7 +30,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 (A, B, 
     .S(S[0])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_1 (
+  FullAdder \addbit[1].unit  (
     .A(A[1]),
     .B(B[1]),
     .Cin(CC[1]),
@@ -38,7 +38,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 (A, B, 
     .S(S[1])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_2 (
+  FullAdder \addbit[2].unit  (
     .A(A[2]),
     .B(B[2]),
     .Cin(CC[2]),
@@ -46,7 +46,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 (A, B, 
     .S(S[2])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_3 (
+  FullAdder \addbit[3].unit  (
     .A(A[3]),
     .B(B[3]),
     .Cin(CC[3]),
@@ -54,7 +54,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101 (A, B, 
     .S(S[3])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_4 (
+  FullAdder \addbit[4].unit  (
     .A(A[4]),
     .B(B[4]),
     .Cin(CC[4]),
@@ -86,7 +86,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
   (* src = "dut.sv:116.12-116.14" *)
   wire [6:0] CC;
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit (
+  FullAdder \addbit[0].unit  (
     .A(A[0]),
     .B(B[0]),
     .Cin(Cin),
@@ -94,7 +94,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
     .S(S[0])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_1 (
+  FullAdder \addbit[1].unit  (
     .A(A[1]),
     .B(B[1]),
     .Cin(CC[1]),
@@ -102,7 +102,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
     .S(S[1])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_2 (
+  FullAdder \addbit[2].unit  (
     .A(A[2]),
     .B(B[2]),
     .Cin(CC[2]),
@@ -110,7 +110,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
     .S(S[2])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_3 (
+  FullAdder \addbit[3].unit  (
     .A(A[3]),
     .B(B[3]),
     .Cin(CC[3]),
@@ -118,7 +118,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
     .S(S[3])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_4 (
+  FullAdder \addbit[4].unit  (
     .A(A[4]),
     .B(B[4]),
     .Cin(CC[4]),
@@ -126,7 +126,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000110 (A, B, 
     .S(S[4])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_5 (
+  FullAdder \addbit[5].unit  (
     .A(A[5]),
     .B(B[5]),
     .Cin(CC[5]),
@@ -158,7 +158,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
   (* src = "dut.sv:116.12-116.14" *)
   wire [7:0] CC;
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit (
+  FullAdder \addbit[0].unit  (
     .A(A[0]),
     .B(B[0]),
     .Cin(Cin),
@@ -166,7 +166,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[0])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_1 (
+  FullAdder \addbit[1].unit  (
     .A(A[1]),
     .B(B[1]),
     .Cin(CC[1]),
@@ -174,7 +174,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[1])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_2 (
+  FullAdder \addbit[2].unit  (
     .A(A[2]),
     .B(B[2]),
     .Cin(CC[2]),
@@ -182,7 +182,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[2])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_3 (
+  FullAdder \addbit[3].unit  (
     .A(A[3]),
     .B(B[3]),
     .Cin(CC[3]),
@@ -190,7 +190,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[3])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_4 (
+  FullAdder \addbit[4].unit  (
     .A(A[4]),
     .B(B[4]),
     .Cin(CC[4]),
@@ -198,7 +198,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[4])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_5 (
+  FullAdder \addbit[5].unit  (
     .A(A[5]),
     .B(B[5]),
     .Cin(CC[5]),
@@ -206,7 +206,7 @@ module \$paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111 (A, B, 
     .S(S[5])
   );
   (* src = "dut.sv:124.5-124.50" *)
-  FullAdder unit_6 (
+  FullAdder \addbit[6].unit  (
     .A(A[6]),
     .B(B[6]),
     .Cin(CC[6]),
@@ -358,8 +358,8 @@ module Multiplier_2D(A, B, P);
   );
   \$_AND_  _12_ (
     .A(A[3]),
-    .B(B[2]),
-    .Y(\addPartialProduct[2].gA [5])
+    .B(B[0]),
+    .Y(\addPartialProduct[1].gB [3])
   );
   \$_AND_  _13_ (
     .A(A[3]),
@@ -368,8 +368,8 @@ module Multiplier_2D(A, B, P);
   );
   \$_AND_  _14_ (
     .A(A[3]),
-    .B(B[0]),
-    .Y(\addPartialProduct[1].gB [3])
+    .B(B[2]),
+    .Y(\addPartialProduct[2].gA [5])
   );
   \$_AND_  _15_ (
     .A(A[3]),
@@ -400,9 +400,9 @@ module Multiplier_2D(A, B, P);
     .Cout(\addPartialProduct[3].Cout ),
     .S(\addPartialProduct[3].gS )
   );
+  assign \addPartialProduct[3].gA [2:0] = 3'h0;
   assign \addPartialProduct[2].gB  = { \addPartialProduct[1].Cout , \addPartialProduct[1].gS  };
   assign \addPartialProduct[2].gA [1:0] = 2'h0;
-  assign \addPartialProduct[3].gA [2:0] = 3'h0;
   assign \addPartialProduct[3].gB  = { \addPartialProduct[2].Cout , \addPartialProduct[2].gS  };
   assign \addPartialProduct[1].gA [0] = 1'h0;
   assign \PP[3]  = { \addPartialProduct[3].Cout , \addPartialProduct[3].gS  };

@@ -7,7 +7,4 @@
 
 # Tests that currently fail:
 forloops
-# multiplier: SAT proves primary outputs are equivalent, but equiv_make fails because
-# internal FullAdder instance naming differs (UHDM: unit_0..N vs Verilog: \addbit[0].unit)
-multiplier
 
