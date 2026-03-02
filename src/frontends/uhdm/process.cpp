@@ -1422,6 +1422,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     current_ff_clock_sig = RTLIL::SigSpec();
     current_temp_wires.clear();
     current_lhs_specs.clear();
+    loop_values.clear();
 }
 
 // Import always_comb block
@@ -1454,7 +1455,20 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     
     for (const auto& sig : assigned_signals) {
         // Import the LHS expression to get its SigSpec
-        RTLIL::SigSpec lhs_spec = import_expression(sig.lhs_expr);
+        RTLIL::SigSpec lhs_spec;
+        if (sig.lhs_expr) {
+            lhs_spec = import_expression(sig.lhs_expr);
+        } else {
+            // Signal extracted from a for-loop with dynamic index (lhs_expr is null).
+            // Use the full wire width so we can create a proper temp wire for it.
+            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+            if (!wire) {
+                log_warning("import_always_comb: cannot find wire '%s' for for-loop signal\n",
+                            sig.name.c_str());
+                continue;
+            }
+            lhs_spec = RTLIL::SigSpec(wire);
+        }
         lhs_specs[sig.lhs_expr] = lhs_spec;
 
         // Derive dedup key for temp wire naming.
@@ -1568,6 +1582,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     current_lhs_specs.clear();
     current_comb_values.clear();
     comb_value_aliases.clear();
+    loop_values.clear();
 }
 
 // Import always block
@@ -3158,12 +3173,20 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             bool inclusive = false;
             
             // Extract initialization: i = start_value
+            // Handle both locally-declared loop vars (vpiRefVar) and module-level vars (vpiRefObj)
             if (init_stmt->VpiType() == vpiAssignment) {
                 const assignment* init_assign = any_cast<const assignment*>(init_stmt);
-                if (init_assign->Lhs() && init_assign->Lhs()->VpiType() == vpiRefVar) {
-                    const ref_var* ref = any_cast<const ref_var*>(init_assign->Lhs());
-                    loop_var_name = ref->VpiName();
-                    
+                if (init_assign->Lhs() &&
+                    (init_assign->Lhs()->VpiType() == vpiRefVar ||
+                     init_assign->Lhs()->VpiType() == vpiRefObj)) {
+                    if (init_assign->Lhs()->VpiType() == vpiRefVar) {
+                        const ref_var* ref = any_cast<const ref_var*>(init_assign->Lhs());
+                        loop_var_name = std::string(ref->VpiName());
+                    } else {
+                        const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
+                        loop_var_name = std::string(ref->VpiName());
+                    }
+
                     if (init_assign->Rhs() && init_assign->Rhs()->VpiType() == vpiConstant) {
                         const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
                         RTLIL::SigSpec init_spec = import_constant(const_val);
@@ -3395,6 +3418,24 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             
                             log("        Shift register unrolled successfully\n");
                         }
+                    } else {
+                        // General assignment body: not a shift register.
+                        // Unroll by setting loop_values[k]=i and calling import_statement_sync.
+                        int64_t loop_end = inclusive ? end_value : end_value - 1;
+                        for (int64_t i = start_value; i <= loop_end; i += increment) {
+                            loop_values[loop_var_name] = (int)i;
+                            import_statement_sync(body, sync, is_reset);
+                        }
+                        // Keep the post-loop variable value so subsequent statements in the
+                        // same block (e.g. x <= k + {a,b}) see the correct constant.
+                        int64_t final_val = inclusive ? end_value + increment : end_value;
+                        loop_values[loop_var_name] = (int)final_val;
+                        RTLIL::Wire* loop_var_wire = module->wire(RTLIL::escape_id(loop_var_name));
+                        if (loop_var_wire) {
+                            pending_sync_assignments[RTLIL::SigSpec(loop_var_wire)] =
+                                RTLIL::Const((int)final_val, loop_var_wire->width);
+                        }
+                        log("        General for loop body unrolled successfully\n");
                     }
                 } else if (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) {
                     // Handle both regular begin and named begin blocks
@@ -4234,6 +4275,108 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             } else {
                 log_warning("Unsupported operation type %d as statement\n", op_type);
+            }
+            break;
+        }
+        case vpiFor: {
+            // Unroll a simple for loop in combinational context.
+            // Supports locally-declared loop vars (vpiRefVar) and module-level vars (vpiRefObj).
+            const for_stmt* for_loop = any_cast<const for_stmt*>(uhdm_stmt);
+
+            const any* fl_init = nullptr;
+            const expr* fl_cond = nullptr;
+            const any* fl_inc  = nullptr;
+            const any* fl_body = nullptr;
+
+            if (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty())
+                fl_init = for_loop->VpiForInitStmts()->at(0);
+            fl_cond = for_loop->VpiCondition();
+            if (for_loop->VpiForIncStmts() && !for_loop->VpiForIncStmts()->empty())
+                fl_inc = for_loop->VpiForIncStmts()->at(0);
+            fl_body = for_loop->VpiStmt();
+
+            if (!fl_init || !fl_cond || !fl_body) {
+                log_warning("Comb for loop missing required components\n");
+                break;
+            }
+
+            bool fl_can_unroll = false;
+            std::string fl_var;
+            int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
+            bool fl_inclusive = false;
+
+            // Extract init: k = 0
+            if (fl_init->VpiType() == vpiAssignment) {
+                const assignment* ia = any_cast<const assignment*>(fl_init);
+                if (ia->Lhs() &&
+                    (ia->Lhs()->VpiType() == vpiRefVar || ia->Lhs()->VpiType() == vpiRefObj)) {
+                    if (ia->Lhs()->VpiType() == vpiRefVar)
+                        fl_var = std::string(any_cast<const ref_var*>(ia->Lhs())->VpiName());
+                    else
+                        fl_var = std::string(any_cast<const ref_obj*>(ia->Lhs())->VpiName());
+
+                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant) {
+                        RTLIL::SigSpec s = import_constant(any_cast<const constant*>(ia->Rhs()));
+                        if (s.is_fully_const()) { fl_start = s.as_const().as_int(); fl_can_unroll = true; }
+                    }
+                }
+            }
+
+            // Extract condition: k < N or k <= N
+            if (fl_can_unroll && fl_cond->VpiType() == vpiOperation) {
+                const operation* co = any_cast<const operation*>(fl_cond);
+                if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
+                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false;
+                else fl_can_unroll = false;
+
+                if (fl_can_unroll && co->Operands() && co->Operands()->size() == 2) {
+                    const any* rhs = co->Operands()->at(1);
+                    if (rhs->VpiType() == vpiConstant) {
+                        RTLIL::SigSpec s = import_constant(any_cast<const constant*>(rhs));
+                        if (s.is_fully_const()) fl_end = s.as_const().as_int();
+                        else fl_can_unroll = false;
+                    } else {
+                        fl_can_unroll = false;
+                    }
+                }
+            } else if (fl_can_unroll) {
+                fl_can_unroll = false;
+            }
+
+            // Extract increment: k++ or k = k + N
+            if (fl_can_unroll && fl_inc) {
+                if (fl_inc->VpiType() == vpiOperation) {
+                    const operation* io = any_cast<const operation*>(fl_inc);
+                    if (io->VpiOpType() != vpiPostIncOp) fl_can_unroll = false;
+                } else if (fl_inc->VpiType() == vpiAssignment) {
+                    const assignment* ia = any_cast<const assignment*>(fl_inc);
+                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
+                        const operation* ro = any_cast<const operation*>(ia->Rhs());
+                        if (ro->VpiOpType() == vpiAddOp && ro->Operands() && ro->Operands()->size() == 2) {
+                            const any* op1 = ro->Operands()->at(1);
+                            if (op1->VpiType() == vpiConstant) {
+                                RTLIL::SigSpec s = import_constant(any_cast<const constant*>(op1));
+                                if (s.is_fully_const()) fl_inc_val = s.as_const().as_int();
+                                else fl_can_unroll = false;
+                            } else fl_can_unroll = false;
+                        } else fl_can_unroll = false;
+                    } else fl_can_unroll = false;
+                }
+            }
+
+            if (fl_can_unroll) {
+                int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
+                for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    loop_values[fl_var] = (int)i;
+                    import_statement_comb(fl_body, proc);
+                }
+                // Keep post-loop variable value for subsequent statements in the same block
+                // (e.g. y = k - {a,b} should see k = final value after loop exits)
+                int64_t final_val = fl_inclusive ? fl_end + fl_inc_val : fl_end;
+                loop_values[fl_var] = (int)final_val;
+                log("    Comb for loop unrolled: %s final=%lld\n", fl_var.c_str(), (long long)final_val);
+            } else {
+                log_warning("Cannot unroll for loop in comb context (complex bounds)\n");
             }
             break;
         }

@@ -313,6 +313,31 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             }
             break;
         }
+        case vpiFor: {
+            // Extract signals assigned inside for loop body.
+            // We cannot evaluate the (dynamic) loop index at this stage, so treat
+            // any part-select assignment (e.g. q[k]) as a full-wire assignment by
+            // returning is_part_select=false and lhs_expr=nullptr.  The caller will
+            // create a full-width temp wire for the signal.
+            const for_stmt* for_loop = any_cast<const for_stmt*>(stmt);
+            if (auto body = for_loop->VpiStmt()) {
+                std::vector<AssignedSignal> body_signals;
+                extract_assigned_signals(body, body_signals);
+                for (auto& sig : body_signals) {
+                    if (sig.is_part_select) {
+                        sig.is_part_select = false;
+                        sig.lhs_expr = nullptr; // full-width temp wire needed
+                    }
+                    // Deduplicate by name
+                    bool found = false;
+                    for (const auto& existing : signals) {
+                        if (existing.name == sig.name) { found = true; break; }
+                    }
+                    if (!found) signals.push_back(sig);
+                }
+            }
+            break;
+        }
     }
 }
 

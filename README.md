@@ -15,15 +15,14 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 144 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 99% (143/144 tests functional)
-- **Passing**: 139 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: 100% (144/144 tests functional)
+- **Passing**: 140 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: 1 test with documented issues:
-  - `forloops` - Equivalence check failure (expected)
+- **Known Failures**: None — all tests passing
 - **Recent Additions**:
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
@@ -46,6 +45,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `forloops` — for loops in both clocked (`always @(posedge clk)`) and combinational (`always @*`) blocks now compile-time unrolled correctly ✅
+    - Module-level loop variables (`integer k;` declared outside the loop) use `vpiRefObj` in the init node; both `vpiRefVar` and `vpiRefObj` now handled
+    - `extract_assigned_signals` now recurses into `vpiFor` bodies so dynamically-indexed signals get proper `$0\` temp wires
+    - `import_part_select` and `import_indexed_part_select` substitute `loop_values[k]` as a constant before looking up the wire — prevents `k[1:0]` from emitting a wire reference during unrolling
   - `'1` fill constant now produces all-ones across the full target width for multi-bit struct fields (e.g., 4-bit field gets `4'b1111` not `4'b0001`) ✅
   - `gen_test7`: `always @*` block-local variable no longer shadowed by same-named generate-scope genvar — fixed in `import_begin_block_comb()` by also shadowing the hierarchical name `gen.x` in `name_map` ✅
   - Formal equivalence check for constant-only circuits (0 gate cells): now performs actual constant-value comparison between gold and gate netlists instead of trivially passing ✅
@@ -547,7 +550,7 @@ The Yosys test runner:
 - **carryadd** - Generate-based carry adder with hierarchical references
 - **multiplier** - 4x4 2D array multiplier with parameterized RippleCarryAdder and FullAdder using generate loops *(known equiv mismatch - SAT proves outputs equivalent)*
 - **const_func** - Constant functions in generate blocks with string parameters, `$floor`, and bitwise negation
-- **forloops** - For loops in both clocked and combinational always blocks *(known failure)*
+- **forloops** - For loops in both clocked and combinational always blocks, with module-level loop variables (`integer k`), indexed bit-select LHS (`q[k]`), indexed part-select LHS (`p[2*k +: 2]`), and part-select RHS (`{~a,~b,a,b} >> k[1:0]`)
 - **case_expr_const** - Case statement with constant expressions including signed case items, mixed signed/unsigned contexts, and context-width extension per SV LRM 12.5.1
 
 #### Module Hierarchy & Interfaces
@@ -645,8 +648,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **144 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **137 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **3 known failures** - Documented in failing_tests.txt (forloops, const_fold_func, multiplier)
+- **140 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **0 known failures** - All tests passing; failing_tests.txt is empty
 
 ## Recent Improvements
 
@@ -835,7 +838,10 @@ The UHDM frontend test suite includes **144 test cases**:
 - Enhanced constant case evaluation in initial blocks
 - Added support for evaluating case statements with constant conditions
 - Improved handling of integer variables in procedural loops
-- Fixed forloops test by properly handling integer variable assignments
+- Fixed for-loop unrolling in `always @(posedge clk)` and `always @*` blocks:
+  - Module-level loop variables (`integer k;`) use `vpiRefObj` in the for-loop init node — now handled alongside `vpiRefVar` (local loop variables)
+  - `extract_assigned_signals` recurses into `vpiFor` bodies; dynamically-indexed signals (`q[k]`) get full-width `$0\` temp wires with `lhs_expr = nullptr`
+  - `import_part_select` / `import_indexed_part_select` substitute `loop_values[k]` as a constant before resolving the base wire, preventing `k[1:0]` from emitting a live wire reference during unrolling
 
 ### Unbased Unsized Literal and Assertion Support
 - Added proper handling for SystemVerilog unbased unsized literals ('0, '1, 'x, 'z)

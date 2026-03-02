@@ -25,9 +25,9 @@ module \top
   wire width 64 $auto$expression.cpp:2150:import_operation$14
   wire width 32 $auto$expression.cpp:1703:import_operation$12
   wire width 32 $auto$expression.cpp:1703:import_operation$10
-  wire width 32 $auto$process.cpp:4226:import_statement_comb$8
-  wire width 32 $auto$process.cpp:4226:import_statement_comb$2
-  cell $add $auto$process.cpp:4228:import_statement_comb$3
+  wire width 32 $auto$process.cpp:4267:import_statement_comb$8
+  wire width 32 $auto$process.cpp:4267:import_statement_comb$2
+  cell $add $auto$process.cpp:4269:import_statement_comb$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -35,7 +35,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 1
-    connect \Y $auto$process.cpp:4226:import_statement_comb$2
+    connect \Y $auto$process.cpp:4267:import_statement_comb$2
   end
   cell $add $add$dut.sv:22$19
     parameter \A_SIGNED 0
@@ -57,15 +57,15 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:2150:import_operation$16
   end
-  cell $sub $auto$process.cpp:4230:import_statement_comb$9
+  cell $sub $auto$process.cpp:4271:import_statement_comb$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4226:import_statement_comb$2
+    connect \A $auto$process.cpp:4267:import_statement_comb$2
     connect \B 1
-    connect \Y $auto$process.cpp:4226:import_statement_comb$8
+    connect \Y $auto$process.cpp:4267:import_statement_comb$8
   end
   cell $add $auto$expression.cpp:1706:import_operation$11
     parameter \A_SIGNED 0
@@ -73,7 +73,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4226:import_statement_comb$8
+    connect \A $auto$process.cpp:4267:import_statement_comb$8
     connect \B 1
     connect \Y $auto$expression.cpp:1703:import_operation$10
   end

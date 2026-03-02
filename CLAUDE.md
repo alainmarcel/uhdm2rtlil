@@ -167,11 +167,24 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-Listed in `test/failing_tests.txt`:
-- `carryadd` - UHDM output missing
-- `case_expr_const` - Expected failure
-- `forloops` - Expected failure  
-- `mem2reg_test1` - Equivalence failure
+All 144 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+
+### For Loop Unrolling in Always Blocks
+
+For loops inside `always` blocks are compile-time unrolled using `loop_values`:
+
+1. **Variable type matters for init detection**:
+   - Local `for (int i = 0; ...)` uses `vpiRefVar` in init LHS
+   - Module-level `integer k; ... for (k = 0; ...)` uses `vpiRefObj` in init LHS
+   - Both must be handled when parsing the init statement to set `can_unroll = true`
+
+2. **`extract_assigned_signals` (process_helper.cpp)** needs a `vpiFor` case so that signals assigned inside loops (e.g. `q[k]`) are detected and proper `$0\q` temp wires are created; set `lhs_expr = nullptr` for dynamic-index signals (they need full-width temp wires)
+
+3. **`import_always_comb`**: handle `lhs_expr == nullptr` by looking up the full wire by name instead of calling `import_expression(nullptr)`
+
+4. **`import_part_select` and `import_indexed_part_select` (expression.cpp)**: check `loop_values.count(base_signal_name)` **before** wire lookup; if found, return `RTLIL::Const(loop_val, width)` as the base — `k[1:0]` is a `vpiPartSelect` node (VpiName="k"), not a reference
+
+5. Always call `loop_values.clear()` at the end of `import_always_ff` and `import_always_comb`
 
 ## Code Style
 
