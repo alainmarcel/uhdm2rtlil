@@ -157,7 +157,7 @@ module \top
   wire width 32 \check$func$dut.sv:31$42.c
   attribute \src "dut.sv:31.9-31.23"
   wire width 32 $0\check$func$dut.sv:31$42.c[31:0]$45
-  wire width 32 $auto$expression.cpp:1703:import_operation$46
+  wire width 32 $auto$expression.cpp:1702:import_operation$46
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:35$48.a
@@ -188,7 +188,7 @@ module \top
   wire width 32 \check$func$dut.sv:37$52.c
   attribute \src "dut.sv:37.9-37.23"
   wire width 32 $0\check$func$dut.sv:37$52.c[31:0]$55
-  wire width 32 $auto$expression.cpp:1703:import_operation$56
+  wire width 32 $auto$expression.cpp:1702:import_operation$56
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:39$58.a
@@ -219,7 +219,7 @@ module \top
   wire width 32 \check$func$dut.sv:44$62.c
   attribute \src "dut.sv:44.9-44.23"
   wire width 32 $0\check$func$dut.sv:44$62.c[31:0]$65
-  wire width 32 $auto$expression.cpp:1703:import_operation$66
+  wire width 32 $auto$expression.cpp:1702:import_operation$66
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:46$68.a
@@ -235,7 +235,7 @@ module \top
   wire width 32 \check$func$dut.sv:46$68.c
   attribute \src "dut.sv:46.9-46.23"
   wire width 32 $0\check$func$dut.sv:46$68.c[31:0]$71
-  wire width 32 $auto$expression.cpp:1703:import_operation$72
+  wire width 32 $auto$expression.cpp:1702:import_operation$72
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:48$74.a
@@ -251,8 +251,8 @@ module \top
   wire width 32 \check$func$dut.sv:48$74.c
   attribute \src "dut.sv:48.9-48.23"
   wire width 32 $0\check$func$dut.sv:48$74.c[31:0]$77
-  wire width 64 $auto$expression.cpp:2150:import_operation$78
-  wire width 64 $auto$expression.cpp:2150:import_operation$80
+  wire width 64 $auto$expression.cpp:2149:import_operation$78
+  wire width 64 $auto$expression.cpp:2149:import_operation$80
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:52$82.a
@@ -283,7 +283,7 @@ module \top
   wire width 32 \check$func$dut.sv:54$86.c
   attribute \src "dut.sv:54.9-54.28"
   wire width 32 $0\check$func$dut.sv:54$86.c[31:0]$89
-  wire width 96 $auto$expression.cpp:2222:import_operation$90
+  wire width 96 $auto$expression.cpp:2221:import_operation$90
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:56$92.a
@@ -299,7 +299,7 @@ module \top
   wire width 32 \check$func$dut.sv:56$92.c
   attribute \src "dut.sv:56.9-56.27"
   wire width 32 $0\check$func$dut.sv:56$92.c[31:0]$95
-  wire width 96 $auto$expression.cpp:2222:import_operation$96
+  wire width 96 $auto$expression.cpp:2221:import_operation$96
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:58$98.a
@@ -319,7 +319,7 @@ module \top
   wire width 8 $unnamed_block$1.w
   attribute \src "dut.sv:62.9-71.12"
   wire width 8 $0\$unnamed_block$1.w
-  wire width 8 $auto$expression.cpp:1703:import_operation$102
+  wire width 8 $auto$expression.cpp:1702:import_operation$102
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:66$104.a
@@ -338,7 +338,7 @@ module \top
   attribute \src "dut.sv:67.21-67.27"
   wire $eq$dut.sv:67$108_Y
   wire $auto$process.cpp:44:import_immediate_assert$110
-  wire width 8 $auto$expression.cpp:1703:import_operation$112
+  wire width 8 $auto$expression.cpp:1702:import_operation$112
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:69$114.a
@@ -397,7 +397,7 @@ module \top
     connect \B 1
     connect \Y $auto$process.cpp:4267:import_statement_comb$36
   end
-  cell $add $auto$expression.cpp:1706:import_operation$47
+  cell $add $auto$expression.cpp:1705:import_operation$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -405,37 +405,37 @@ module \top
     parameter \Y_WIDTH 32
     connect \A $auto$process.cpp:4267:import_statement_comb$36
     connect \B 1
-    connect \Y $auto$expression.cpp:1703:import_operation$46
+    connect \Y $auto$expression.cpp:1702:import_operation$46
   end
-  cell $sub $auto$expression.cpp:1708:import_operation$57
+  cell $sub $auto$expression.cpp:1707:import_operation$57
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:1703:import_operation$46
+    connect \A $auto$expression.cpp:1702:import_operation$46
     connect \B 1
-    connect \Y $auto$expression.cpp:1703:import_operation$56
+    connect \Y $auto$expression.cpp:1702:import_operation$56
   end
-  cell $add $auto$expression.cpp:1706:import_operation$67
+  cell $add $auto$expression.cpp:1705:import_operation$67
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:1703:import_operation$56
+    connect \A $auto$expression.cpp:1702:import_operation$56
     connect \B 1
-    connect \Y $auto$expression.cpp:1703:import_operation$66
+    connect \Y $auto$expression.cpp:1702:import_operation$66
   end
-  cell $sub $auto$expression.cpp:1708:import_operation$73
+  cell $sub $auto$expression.cpp:1707:import_operation$73
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:1703:import_operation$66
+    connect \A $auto$expression.cpp:1702:import_operation$66
     connect \B 1
-    connect \Y $auto$expression.cpp:1703:import_operation$72
+    connect \Y $auto$expression.cpp:1702:import_operation$72
   end
   cell $add $add$dut.sv:51$79
     parameter \A_SIGNED 0
@@ -445,7 +445,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A 99
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2150:import_operation$78
+    connect \Y $auto$expression.cpp:2149:import_operation$78
   end
   cell $add $add$dut.sv:51$81
     parameter \A_SIGNED 0
@@ -453,9 +453,9 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:2150:import_operation$78 [31:0]
+    connect \A $auto$expression.cpp:2149:import_operation$78 [31:0]
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2150:import_operation$80
+    connect \Y $auto$expression.cpp:2149:import_operation$80
   end
   cell $mul $mul$dut.sv:55$91
     parameter \A_SIGNED 0
@@ -465,7 +465,7 @@ module \top
     parameter \Y_WIDTH 96
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2222:import_operation$90
+    connect \Y $auto$expression.cpp:2221:import_operation$90
   end
   cell $mul $mul$dut.sv:57$97
     parameter \A_SIGNED 0
@@ -475,9 +475,9 @@ module \top
     parameter \Y_WIDTH 96
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2222:import_operation$96
+    connect \Y $auto$expression.cpp:2221:import_operation$96
   end
-  cell $add $auto$expression.cpp:1706:import_operation$103
+  cell $add $auto$expression.cpp:1705:import_operation$103
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -485,7 +485,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A 8'00000000
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:1703:import_operation$102
+    connect \Y $auto$expression.cpp:1702:import_operation$102
   end
   attribute \src "dut.sv:67.21-67.27"
   cell $eq $eq$dut.sv:67$109
@@ -512,15 +512,15 @@ module \top
     connect \EN $auto$process.cpp:44:import_immediate_assert$110
     connect \TRG { }
   end
-  cell $add $auto$expression.cpp:1706:import_operation$113
+  cell $add $auto$expression.cpp:1705:import_operation$113
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:1703:import_operation$102
+    connect \A $auto$expression.cpp:1702:import_operation$102
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:1703:import_operation$112
+    connect \Y $auto$expression.cpp:1702:import_operation$112
   end
   attribute \src "dut.sv:70.21-70.27"
   cell $eq $eq$dut.sv:70$119
@@ -589,7 +589,7 @@ module \top
     assign $0\check$func$dut.sv:31$42.a[31:0]$43 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:31$42.b[31:0]$44 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:31$42.c[31:0]$45 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $0\x $auto$expression.cpp:1703:import_operation$46
+    assign $0\x $auto$expression.cpp:1702:import_operation$46
     assign $0\z $auto$process.cpp:4267:import_statement_comb$36
     assign $0\check$func$dut.sv:35$48.a[31:0]$49 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:35$48.b[31:0]$50 64'0000000000000000000000000000000000000000000000000000000000000000
@@ -598,8 +598,8 @@ module \top
     assign $0\check$func$dut.sv:37$52.a[31:0]$53 64'0000000000000000000000000000000000000000000000000000000000000010
     assign $0\check$func$dut.sv:37$52.b[31:0]$54 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:37$52.c[31:0]$55 64'0000000000000000000000000000000000000000000000000000000000000010
-    assign $0\x $auto$expression.cpp:1703:import_operation$56
-    assign $0\y $auto$expression.cpp:1703:import_operation$46
+    assign $0\x $auto$expression.cpp:1702:import_operation$56
+    assign $0\y $auto$expression.cpp:1702:import_operation$46
     assign $0\check$func$dut.sv:39$58.a[31:0]$59 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:39$58.b[31:0]$60 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:39$58.c[31:0]$61 64'0000000000000000000000000000000000000000000000000000000000000010
@@ -607,19 +607,19 @@ module \top
     assign $0\check$func$dut.sv:44$62.a[31:0]$63 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:44$62.b[31:0]$64 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:44$62.c[31:0]$65 64'0000000000000000000000000000000000000000000000000000000000000010
-    assign $0\x $auto$expression.cpp:1703:import_operation$66
-    assign $0\y $auto$expression.cpp:1703:import_operation$56
+    assign $0\x $auto$expression.cpp:1702:import_operation$66
+    assign $0\y $auto$expression.cpp:1702:import_operation$56
     assign $0\check$func$dut.sv:46$68.a[31:0]$69 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:46$68.b[31:0]$70 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:46$68.c[31:0]$71 64'0000000000000000000000000000000000000000000000000000000000000010
-    assign $0\x $auto$expression.cpp:1703:import_operation$72
-    assign $0\y $auto$expression.cpp:1703:import_operation$66
+    assign $0\x $auto$expression.cpp:1702:import_operation$72
+    assign $0\y $auto$expression.cpp:1702:import_operation$66
     assign $0\check$func$dut.sv:48$74.a[31:0]$75 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:48$74.b[31:0]$76 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:48$74.c[31:0]$77 64'0000000000000000000000000000000000000000000000000000000000000010
     assign $0\z 99
-    assign $0\y $auto$expression.cpp:2150:import_operation$78 [31:0]
-    assign $0\x $auto$expression.cpp:2150:import_operation$80 [31:0]
+    assign $0\y $auto$expression.cpp:2149:import_operation$78 [31:0]
+    assign $0\x $auto$expression.cpp:2149:import_operation$80 [31:0]
     assign $0\check$func$dut.sv:52$82.a[31:0]$83 64'0000000000000000000000000000000000000000000000000000000001100101
     assign $0\check$func$dut.sv:52$82.b[31:0]$84 64'0000000000000000000000000000000000000000000000000000000001100100
     assign $0\check$func$dut.sv:52$82.c[31:0]$85 64'0000000000000000000000000000000000000000000000000000000001100011
@@ -629,12 +629,12 @@ module \top
     assign $0\check$func$dut.sv:54$86.b[31:0]$88 64'0000000000000000000000000000000000000000000000000000000011001000
     assign $0\check$func$dut.sv:54$86.c[31:0]$89 64'0000000000000000000000000000000000000000000000000000000001100011
     assign $0\z 2
-    assign $0\x $auto$expression.cpp:2222:import_operation$90 [31:0]
+    assign $0\x $auto$expression.cpp:2221:import_operation$90 [31:0]
     assign $0\check$func$dut.sv:56$92.a[31:0]$93 64'0000000000000000000000000000000000000000000000000000000001100000
     assign $0\check$func$dut.sv:56$92.b[31:0]$94 64'0000000000000000000000000000000000000000000000000000000011001000
     assign $0\check$func$dut.sv:56$92.c[31:0]$95 64'0000000000000000000000000000000000000000000000000000000000011000
     assign $0\z 1
-    assign $0\y $auto$expression.cpp:2222:import_operation$96 [31:0]
+    assign $0\y $auto$expression.cpp:2221:import_operation$96 [31:0]
     assign $0\check$func$dut.sv:58$98.a[31:0]$99 64'0000000000000000000000000000000000000000000000000000000001100000
     assign $0\check$func$dut.sv:58$98.b[31:0]$100 64'0000000000000000000000000000000000000000000000000000000000011000
     assign $0\check$func$dut.sv:58$98.c[31:0]$101 64'0000000000000000000000000000000000000000000000000000000000001100
@@ -642,14 +642,14 @@ module \top
     assign $0\z 0
     assign $0\$unnamed_block$1.w $unnamed_block$1.w
     assign $0\$unnamed_block$1.w 8'00000000
-    assign $0\$unnamed_block$1.w $auto$expression.cpp:1703:import_operation$102
+    assign $0\$unnamed_block$1.w $auto$expression.cpp:1702:import_operation$102
     assign $0\x 256
     assign $0\check$func$dut.sv:66$104.a[31:0]$105 64'0000000000000000000000000000000000000000000000000000000100000001
     assign $0\check$func$dut.sv:66$104.b[31:0]$106 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:66$104.c[31:0]$107 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $auto$process.cpp:44:import_immediate_assert$110 1'1
-    assign $0\$unnamed_block$1.w $auto$expression.cpp:1703:import_operation$112
-    assign $0\x { 24'000000000000000000000010 $auto$expression.cpp:1703:import_operation$102 }
+    assign $0\$unnamed_block$1.w $auto$expression.cpp:1702:import_operation$112
+    assign $0\x { 24'000000000000000000000010 $auto$expression.cpp:1702:import_operation$102 }
     assign $0\check$func$dut.sv:69$114.a[31:0]$115 64'0000000000000000000000000000000000000000000000000000001000000001
     assign $0\check$func$dut.sv:69$114.b[31:0]$116 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:69$114.c[31:0]$117 64'0000000000000000000000000000000000000000000000000000000000000000

@@ -1514,21 +1514,20 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             }
             
             // Handle unbased unsized literals (size == -1)
+            // Per SV LRM, '0/'1/'x/'z self-replicate to fill the context width.
+            // If expression_context_width is set (propagated from the LHS), use it
+            // so operations like '1 << 8 produce a full-width shifted result rather
+            // than a 1-bit result that then gets zero-extended.
             if (size == -1) {
-                // For unbased unsized literals like 'x, 'z, '0, '1
-                // These should be handled as special cases
+                int fill_width = (expression_context_width > 0) ? expression_context_width : 1;
                 if (bin_str == "X" || bin_str == "x") {
-                    // Return a single X that will be extended as needed
-                    return RTLIL::SigSpec(RTLIL::State::Sx);
+                    return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, fill_width));
                 } else if (bin_str == "Z" || bin_str == "z") {
-                    // Return a single Z that will be extended as needed
-                    return RTLIL::SigSpec(RTLIL::State::Sz);
+                    return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, fill_width));
                 } else if (bin_str == "0") {
-                    // Return a single 0 that will be extended as needed
-                    return RTLIL::SigSpec(RTLIL::State::S0);
+                    return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S0, fill_width));
                 } else if (bin_str == "1") {
-                    // Return a single 1 that will be extended as needed
-                    return RTLIL::SigSpec(RTLIL::State::S1);
+                    return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S1, fill_width));
                 }
             }
             

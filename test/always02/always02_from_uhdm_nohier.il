@@ -9,7 +9,7 @@ module \always02
   wire input 2 \reset
   attribute \src "dut.sv:1.31-1.36"
   wire width 4 output 3 \count
-  wire width 64 $auto$expression.cpp:2150:import_operation$2
+  wire width 64 $auto$expression.cpp:2149:import_operation$2
   attribute \src "dut.sv:10.3-10.13"
   wire width 4 $auto$process.cpp:5436:import_assignment_sync$4
   cell $add $add$dut.sv:8$3
@@ -20,12 +20,12 @@ module \always02
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2150:import_operation$2
+    connect \Y $auto$expression.cpp:2149:import_operation$2
   end
   attribute \src "dut.sv:10.3-10.13"
   cell $mux $auto$process.cpp:5438:import_assignment_sync$5
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:2150:import_operation$2 [3:0]
+    connect \A $auto$expression.cpp:2149:import_operation$2 [3:0]
     connect \B 4'0000
     connect \S \reset
     connect \Y $auto$process.cpp:5436:import_assignment_sync$4

@@ -9,7 +9,7 @@ module \wandwor_bar
   wire width 8 input 2 \I1
   attribute \src "dut.sv:34.53-34.54"
   wire width 8 output 3 \O
-  wire width 8 $auto$expression.cpp:2150:import_operation$1
+  wire width 8 $auto$expression.cpp:2149:import_operation$1
   cell $add $add$dut.sv:35$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -18,9 +18,9 @@ module \wandwor_bar
     parameter \Y_WIDTH 8
     connect \A \I0
     connect \B \I1
-    connect \Y $auto$expression.cpp:2150:import_operation$1
+    connect \Y $auto$expression.cpp:2149:import_operation$1
   end
-  connect \O $auto$expression.cpp:2150:import_operation$1
+  connect \O $auto$expression.cpp:2149:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:30.1-32.10"
