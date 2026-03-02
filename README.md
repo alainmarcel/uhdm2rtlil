@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 145 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (145/145 tests functional)
-- **Passing**: 141 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 146 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (146/146 tests functional)
+- **Passing**: 142 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
 - **Known Failures**: None — all tests passing
 - **Recent Additions**:
+  - `port_int_types` - Built-in integer port types (`byte`, `byte unsigned`, `shortint`, `shortint unsigned`) with correct sign/zero extension when assigned to wider wires: signed types sign-extend, unsigned types zero-extend
   - `unbased_unsized_shift` - Unbased unsized fill literals (`'0`, `'1`) in shift operations: `'1 << 8` and `'1 << d` in a 64-bit context correctly produce `64'hFFFF_FFFF_FFFF_FF00`; tests both constant and dynamic shift amounts
   - `for_decl_shadow` - For-loop variable declarations that shadow outer generate-scope variables (`for (integer x = 5; ...)` where `x` shadows `gen.x`), cross-scope hierarchical assignment via `hier_path` (`gen.x`), and compound assignments (`+=`) mixing the loop counter with the outer variable — fully compile-time evaluated via the interpreter with correct variable scoping and gen-scope output mapping
   - `unnamed_block_decl` - Unnamed `begin`/`end` blocks with local `integer` variable declarations and variable scoping (inner `z` shadows output `z`), fully compile-time evaluated via interpreter to produce `z = 5`
@@ -46,6 +47,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `port_int_types` — `byte unsigned` and `shortint unsigned` ports no longer incorrectly marked as signed; `$pos` extension cell now sign-extends or zero-extends based on the RHS wire's signedness ✅
+    - `import_port`/`import_nets`: integer typespec signedness now reads `VpiSigned()` instead of hardcoding `true` for all built-in integer types
+    - `import_continuous_assign`: `addPos` now passes `rhs_is_signed` so signed wires sign-extend and unsigned wires zero-extend when widening
   - `unbased_unsized_shift` — unbased unsized fill literals (`'0`, `'1`, `'x`) in shift operations now produce correct full-width results ✅
     - `import_constant` now expands fill literals to `expression_context_width` (the LHS width) when processing a continuous assignment, so `'1 << 8` in a 64-bit context becomes `64'hFFFF...FFFF << 8 = 64'hFFFF...FF00` instead of the wrong `1'1 << 8 = 1'0` zero-extended to 64'h0
   - `forloops` — for loops in both clocked (`always @(posedge clk)`) and combinational (`always @*`) blocks now compile-time unrolled correctly ✅
@@ -406,7 +410,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (144 total - 139 passing, 5 known issues)
+### Current Test Cases (146 total - 142 passing, 4 UHDM-only)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -446,7 +450,9 @@ The Yosys test runner:
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
+- **unbased_unsized_shift** - Unbased unsized fill literals (`'0`, `'1`) in shift operations: `'1 << 8` in a 64-bit context produces `64'hFFFF_FFFF_FFFF_FF00`; tests constant and dynamic shift amounts
 - **port_sign_extend** - Port sign extension with signed submodule outputs, signed constants, arithmetic operations, and correct unbased unsized vs sized constant handling
+- **port_int_types** - Built-in integer port types (`byte`, `byte unsigned`, `shortint`, `shortint unsigned`): signed types sign-extend and unsigned types zero-extend when assigned to wider `[31:0]` wires
 - **asgn_expr** - Assignment expressions: increment/decrement operators as statements and in expressions, nested assignment expressions
 - **asgn_expr2** - Assignment expressions with input-dependent outputs (formal equivalence verified)
 - **asgn_expr_sv** - Full increment/decrement test from Yosys suite: pre/post-increment/decrement as statements and expressions, byte-width concatenation (`{1'b1, ++w}`, `{2'b10, w++}`), procedural assignment expressions (`x = (y *= 2)`)
@@ -649,9 +655,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **145 test cases**:
+The UHDM frontend test suite includes **146 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **141 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **142 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests passing; failing_tests.txt is empty
 
 ## Recent Improvements
