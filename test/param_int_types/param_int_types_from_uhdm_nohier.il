@@ -11,15 +11,15 @@ module \gate
   parameter \e 8'11111011
   attribute \src "dut.sv:1.13-1.16"
   wire width 1024 output 1 \out
-  wire width 1024 $auto$module.cpp:781:import_continuous_assign$1
-  cell $pos $auto$module.cpp:782:import_continuous_assign$2
+  wire width 1024 $auto$module.cpp:790:import_continuous_assign$1
+  cell $pos $auto$module.cpp:791:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 152
     parameter \Y_WIDTH 1024
     connect \A 152'11111111111111111111111111111111111111111111111111111111111111101111111111111101111111111111111111111111111111111111111111111111111111111111110011111011
-    connect \Y $auto$module.cpp:781:import_continuous_assign$1
+    connect \Y $auto$module.cpp:790:import_continuous_assign$1
   end
-  connect \out $auto$module.cpp:781:import_continuous_assign$1
+  connect \out $auto$module.cpp:790:import_continuous_assign$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:11.1-19.10"
@@ -36,13 +36,13 @@ module \gold
   wire width 64 signed \d
   attribute \src "dut.sv:16.10-16.16"
   wire width 8 signed \e
-  wire width 1024 $auto$module.cpp:781:import_continuous_assign$8
-  cell $pos $auto$module.cpp:782:import_continuous_assign$9
+  wire width 1024 $auto$module.cpp:790:import_continuous_assign$8
+  cell $pos $auto$module.cpp:791:import_continuous_assign$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 152
     parameter \Y_WIDTH 1024
     connect \A { \a \b \c \d \e }
-    connect \Y $auto$module.cpp:781:import_continuous_assign$8
+    connect \Y $auto$module.cpp:790:import_continuous_assign$8
   end
   attribute \src "dut.sv:12.13-12.19"
   process $auto$uhdm2rtlil.cpp:1712:import_module$3
@@ -69,5 +69,5 @@ module \gold
     sync always
       update \e 8'11111011
   end
-  connect \out $auto$module.cpp:781:import_continuous_assign$8
+  connect \out $auto$module.cpp:790:import_continuous_assign$8
 end

@@ -19,44 +19,44 @@ module \port_int_types
   wire width 32 output 7 \c_ext
   attribute \src "dut.sv:15.29-15.34"
   wire width 32 output 8 \d_ext
-  wire width 32 $auto$module.cpp:781:import_continuous_assign$1
-  wire width 32 $auto$module.cpp:781:import_continuous_assign$3
-  wire width 32 $auto$module.cpp:781:import_continuous_assign$5
-  wire width 32 $auto$module.cpp:781:import_continuous_assign$7
-  cell $pos $auto$module.cpp:782:import_continuous_assign$2
+  wire width 32 $auto$module.cpp:790:import_continuous_assign$1
+  wire width 32 $auto$module.cpp:790:import_continuous_assign$3
+  wire width 32 $auto$module.cpp:790:import_continuous_assign$5
+  wire width 32 $auto$module.cpp:790:import_continuous_assign$7
+  cell $pos $auto$module.cpp:791:import_continuous_assign$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 32
     connect \A \a
-    connect \Y $auto$module.cpp:781:import_continuous_assign$1
+    connect \Y $auto$module.cpp:790:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:782:import_continuous_assign$4
+  cell $pos $auto$module.cpp:791:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 32
     connect \A \b
-    connect \Y $auto$module.cpp:781:import_continuous_assign$3
+    connect \Y $auto$module.cpp:790:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:782:import_continuous_assign$6
+  cell $pos $auto$module.cpp:791:import_continuous_assign$6
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 32
     connect \A \c
-    connect \Y $auto$module.cpp:781:import_continuous_assign$5
+    connect \Y $auto$module.cpp:790:import_continuous_assign$5
   end
-  cell $pos $auto$module.cpp:782:import_continuous_assign$8
+  cell $pos $auto$module.cpp:791:import_continuous_assign$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 32
     connect \A \d
-    connect \Y $auto$module.cpp:781:import_continuous_assign$7
+    connect \Y $auto$module.cpp:790:import_continuous_assign$7
   end
   connect \a 8'11111111
   connect \b 8'11111110
   connect \c 16'1111111111111101
   connect \d 16'1111111111111100
-  connect \a_ext $auto$module.cpp:781:import_continuous_assign$1
-  connect \b_ext $auto$module.cpp:781:import_continuous_assign$3
-  connect \c_ext $auto$module.cpp:781:import_continuous_assign$5
-  connect \d_ext $auto$module.cpp:781:import_continuous_assign$7
+  connect \a_ext $auto$module.cpp:790:import_continuous_assign$1
+  connect \b_ext $auto$module.cpp:790:import_continuous_assign$3
+  connect \c_ext $auto$module.cpp:790:import_continuous_assign$5
+  connect \d_ext $auto$module.cpp:790:import_continuous_assign$7
 end
