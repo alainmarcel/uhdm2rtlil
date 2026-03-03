@@ -1477,15 +1477,22 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // For full-wire assignments, use the bare signal name to avoid conflicts
         // with block-local variable handling (e.g. gen_test7).
         std::string dedup_key;
-        if (sig.is_part_select && lhs_spec.size() > 0) {
+        if (lhs_spec.size() > 0) {
             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
             if (first_chunk.wire) {
                 std::string wire_name = first_chunk.wire->name.str();
                 if (wire_name[0] == '\\')
                     wire_name = wire_name.substr(1);
-                int offset = first_chunk.offset;
-                int width = lhs_spec.size();
-                dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                if (sig.is_part_select) {
+                    int offset = first_chunk.offset;
+                    int width = lhs_spec.size();
+                    dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                } else {
+                    // For full-wire assignments, use the actual wire name (which includes
+                    // generate scope prefix) to ensure uniqueness across generate scopes
+                    // with same-named local variables (e.g. 'a' in test_integer vs test_integer_unsigned).
+                    dedup_key = wire_name;
+                }
             } else {
                 dedup_key = sig.name;
             }
@@ -5401,16 +5408,17 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 // '1 fill constant: replicate to fill the entire LHS width (all-ones)
                 rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
             } else {
-                // Zero extend
-                rhs.extend_u0(lhs.size());
+                // Sign-extend if RHS is a signed wire or expression result
+                bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
+                rhs.extend_u0(lhs.size(), rhs_is_signed);
             }
         } else {
             // Truncate
             rhs = rhs.extract(0, lhs.size());
         }
     }
-    
-    log("            Adding action to sync rule (condition=%s)\n", 
+
+    log("            Adding action to sync rule (condition=%s)\n",
         current_condition.empty() ? "none" : log_signal(current_condition));
     log_flush();
     
@@ -5606,7 +5614,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            rhs.extend_u0(lhs.size());
+            bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
+            rhs.extend_u0(lhs.size(), rhs_is_signed);
         } else {
             rhs = rhs.extract(0, lhs.size());
         }
@@ -5807,12 +5816,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            rhs.extend_u0(lhs.size());
+            bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
+            rhs.extend_u0(lhs.size(), rhs_is_signed);
         } else {
             rhs = rhs.extract(0, lhs.size());
         }
     }
-    
+
     // Special handling for async reset context
     if (!current_signal_temp_wires.empty()) {
         auto lhs_expr = uhdm_assign->Lhs();
