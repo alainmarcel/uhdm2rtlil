@@ -1774,6 +1774,22 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 }
                 log("UHDM: Created wire '%s' (width=%d, signed=%d) for generate scope variable\n",
                     hierarchical_name.c_str(), width, w->is_signed ? 1 : 0);
+
+                // If the variable has an initializer expression, create a continuous
+                // assignment to drive the wire with its initial value.
+                // e.g. "integer x = -1;" → "assign \gen.x = 32'hFFFFFFFF;"
+                const UHDM::expr* init_expr = var->Expr();
+                if (init_expr) {
+                    RTLIL::SigSpec init_val = import_expression(init_expr);
+                    if (!init_val.empty()) {
+                        if (init_val.size() < w->width)
+                            init_val.extend_u0(w->width, w->is_signed);
+                        else if (init_val.size() > w->width)
+                            init_val = init_val.extract(0, w->width);
+                        module->connect(RTLIL::SigSpec(w), init_val);
+                        log("UHDM: Added initializer assignment for '%s'\n", hierarchical_name.c_str());
+                    }
+                }
             }
         }
     }

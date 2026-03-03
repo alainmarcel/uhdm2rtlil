@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 147 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (147/147 tests functional)
-- **Passing**: 143 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 149 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (149/149 tests functional)
+- **Passing**: 145 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,8 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
 - **Known Failures**: None — all tests passing
 - **Recent Additions**:
+  - `int_types` - Integer atom types (`integer`, `int`, `shortint`, `longint`, `byte`) and integer vector types (`logic`, `reg`, `bit`) in generate blocks, with signed/unsigned variants; verifies correct widths, signedness, sign/zero extension when assigned to wider 128-bit wires; required fixes for **temp wire dedup key**, **sign extension in process assignments**, and **generate scope variable initialization** from `vpiExpr`
+  - `net_types` - `wire`/`wand`/`wor` net types with `logic`, `integer`, and typedef data types; verifies correct multi-driver AND/OR resolution for all type combinations and correct `\wand`/`\wor` Yosys attributes; required a **Surelog fix** (see Recent Fixes)
   - `param_int_types` - Module-level variable declarations with built-in integer types (`integer`, `int`, `shortint`, `longint`, `byte`) with initial values, and matching typed parameters; verifies correct initial values and widths
   - `port_int_types` - Built-in integer port types (`byte`, `byte unsigned`, `shortint`, `shortint unsigned`) with correct sign/zero extension when assigned to wider wires: signed types sign-extend, unsigned types zero-extend
   - `unbased_unsized_shift` - Unbased unsized fill literals (`'0`, `'1`) in shift operations: `'1 << 8` and `'1 << d` in a 64-bit context correctly produce `64'hFFFF_FFFF_FFFF_FF00`; tests both constant and dynamic shift amounts
@@ -48,6 +50,14 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `int_types` — integer atom/vector types in generate blocks now correctly sign/zero-extend when assigned to wider wires ✅
+    - **Temp wire naming fix**: `import_always_comb` dedup key for full-wire assignments now uses the actual wire name (e.g., `test_integer.a`) instead of the bare local variable name (e.g., `a`), preventing `$0\a already exists` conflicts across generate blocks with same-named local vars
+    - **Sign extension in process assignments**: `import_assignment_comb` now checks `rhs.is_wire() && rhs.as_wire()->is_signed` and calls `extend_u0(size, rhs_is_signed)` so signed integer/shortint/longint/byte variables sign-extend to wider targets; unsigned variants still zero-extend
+    - **Generate scope variable initialization**: `import_gen_scope` now processes each variable's `Expr()` (UHDM's `vpiExpr`) and creates a `module->connect()` driving the wire with its initial constant value, so `integer x = -1;` produces a wire with value `32'hFFFFFFFF`
+  - `net_types` — **Surelog fix**: typed net declarations (`wand integer`, `wor typename`, etc.) now produce correct `logic_net` objects with the right `VpiNetType` in the elaborated UHDM model ✅
+    - Root cause: `compileNetDeclaration` in Surelog's `CompileHelper.cpp` overwrote the net keyword (`paNetType_Wand`) with the data type (`paIntegerAtomType_Integer`) in the Signal's `m_type` field, and `ElaborationStep::bindPortType_` further overwrote it for typedef-typed nets — the original net keyword was permanently lost
+    - Fix: added `m_subNetType` field to `Signal` (with `getSubNetType()`/`setSubNetType()`) to preserve the original net keyword separately; `elabSignal` in `NetlistElaboration.cpp` now forces `isNet=true` and uses the stored keyword for all `VpiNetType` computations when `getSubNetType()` is set
+    - Frontend fix: `import_net` now sets the `wiretype` attribute for `logic_typespec` with a non-empty `VpiName` (preserving typedef names like `typename` on nets)
   - `param_int_types` — module-level `int`, `integer`, `shortint`, `longint`, `byte` variable declarations now correctly imported as typed wires with their initial values ✅
     - `int_var` was previously skipped entirely; now handled identically to `integer_var`, `short_int_var`, etc.
     - Initial expressions (`vpiExpr`) for all built-in integer var types now generate a `$proc` with `sync always` so Yosys `proc`+`opt_const` folds them to the correct constant wire values

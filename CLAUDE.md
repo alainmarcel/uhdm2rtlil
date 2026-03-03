@@ -167,7 +167,67 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 144 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 149 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+
+### Signedness Handling
+
+- **Net signedness**: Check both `logic_typespec->VpiSigned()` AND `uhdm_net->VpiSigned()` directly (Surelog may set it on either)
+- **Operation signedness**: Must propagate from operand wires to cell parameters (`A_SIGNED`/`B_SIGNED`) and output wires
+- **Port sign extension**: Yosys hierarchy pass sign-extends based on `wire->is_signed` on the connected signal
+- **Signed constants at ports**: Create a signed intermediate wire so the hierarchy pass knows to sign-extend
+- **Process assignment sign extension**: `import_assignment_comb` must check `rhs.is_wire() && rhs.as_wire()->is_signed` and call `extend_u0(size, rhs_is_signed)` — applies to ALL three overloads of `import_assignment_comb` and to `import_assignment_sync`
+
+### Generate Scope Variable Initialization
+
+- In UHDM, `integer x = -1;` in a generate scope stores the initializer in `variables::Expr()` (`vpiExpr`), NOT as a statement inside the always block
+- `import_gen_scope` must call `var->Expr()` and create `module->connect(wire, import_expression(init_expr))` to drive the wire with its initial constant value
+- Without this, the wire is undriven (X) and any expression using it produces incorrect results
+
+### Temp Wire Dedup Key in `import_always_comb`
+
+- For full-wire assignments (non-part-select), the `dedup_key` must use the actual RTLIL wire name (e.g., `test_integer.a`) not the bare local variable name (e.g., `a`)
+- Without this fix, two generate blocks with the same-named local variable (`a`) both try to create `$0\a`, causing "Temp wire already exists" error
+- Fix: for non-part-select, get `first_chunk.wire->name.str()` from `lhs_spec.chunks()` and use that as the dedup key (same approach already used for part-selects)
+
+### Constant Type Inference
+
+- `VpiConstType()` can return 0 (undefined) while `VpiValue()` has the correct prefix (`UINT:`, `BIN:`, etc.)
+- Added fallback type inference from value string prefix in `import_constant()` (`expression.cpp`)
+
+### Fill Constants (`'0`, `'1`, `'x`, `'z`) — Unbased Unsized Literals
+
+- UHDM: `VpiSize() == -1`, `VpiValue() == "BIN:1"` for the `'1` fill constant
+- `import_constant()` returns a 1-bit `SigSpec(S1)` — must NOT be zero-extended at assignment sites
+- Fix in `import_assignment_sync()` (`process.cpp`): detect fill-ones before importing RHS, then replicate `S1` to the full LHS width instead of calling `extend_u0()`
+- Fix in `interpreter.cpp` `evaluate_expression`: return `-1LL` for `'1` fill constants so `RTLIL::Const(-1, width)` produces all-ones in `import_initial_interpreted`
+- Pattern: check `c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1"` at the assignment site
+
+### Parameterized Module Instance Naming in Generate Scopes
+
+- When `import_instance` tries to find the RTLIL module name prefix in `VpiFullName()`, it FAILS for parameterized modules (e.g., `$paramod\RippleCarryAdder\N=...` vs path `work@Top.gen[0].adder.addbit[0].unit`)
+- Fix: if the RTLIL prefix match fails, try `current_instance->VpiFullName()` as the prefix (always an ancestor of the child's path) → extracts `addbit[0].unit` correctly
+- Last resort fallback: `get_current_gen_scope() + "." + VpiName()` for deeply nested cases
+
+### Constant Folding in Generate Scopes
+
+- `import_operation` only folds all-const operations when `!loop_values.empty() || getCurrentFunctionContext() != nullptr`
+- Generate-scope parameters (e.g., loop variable `i` in `addPartialProduct[i]`) resolve to constants via `VpiValue()` on the `parameter` object, but they do NOT set `loop_values`
+- Fix: also fold when `!gen_scope_stack.empty()` — needed for indexed part-selects like `PP[(i-1)*(i+2*M)/2 +: M+i]`
+
+### Equivalence Checking: Dead Wire Circular Dependencies
+
+- When UHDM and Verilog synthesize differently (e.g., `gB → PP[0]` vs `PP[0] → gB`), `equiv_make` creates circular equiv cells that `equiv_induct` cannot resolve
+- Fix in `test_equivalence.sh`: add `opt -purge` before `design -stash` for both gold and gate — removes dead wires (unused signals) that cause the circular dependency
+
+### Typed Net Declarations (`wand integer`, `wor typename`, etc.)
+
+- Surelog bug: `compileNetDeclaration` overwrites the net keyword (e.g., `paNetType_Wand`) with the data type (e.g., `paIntegerAtomType_Integer`) in `m_type`, losing the original net type
+- Fix: Added `m_subNetType` field to `Signal.h` to preserve the original net keyword separately
+- `CompileHelper.cpp` `compileNetDeclaration`: calls `sig->setSubNetType(subnettype)` when `subnettype != slNoType` after creating the Signal
+- `NetlistElaboration.cpp` `elabSignal`: reads `netKeyword = sig->getSubNetType()`, forces `isNet=true` when set, and uses `netKeyword` for all `getVpiNetType()` calls
+- `ElaborationStep.cpp` `bindPortType_`: for typedef-named logics, calls `sig->setType(paIntVec_TypeLogic)` which OVERWRITES `m_type` — that's why `m_subNetType` as a separate field is essential
+- `module.cpp` `import_net`: added `wiretype` attribute for `logic_typespec` with non-empty `VpiName` (handles typedef'd logic nets like `wire`/`wand`/`wor` with a typename)
+- Result: `wand integer` and `wand typename` correctly appear as `logic_net` with `VpiNetType=vpiWand=2` in TopModules
 
 ### For Loop Unrolling in Always Blocks
 

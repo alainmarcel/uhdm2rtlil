@@ -16,11 +16,11 @@ module \gen_test7
   wire width 3 \cond.sub_out3
   wire \cond.x
   attribute \src "dut.sv:16.4-21.7"
-  wire $0\x
+  wire $0\cond.x
   attribute \src "dut.sv:16.4-21.7"
   wire width 3 $0\out2
   attribute \src "dut.sv:16.4-21.7"
-  wire width 3 $0\sub_out2
+  wire width 3 $0\cond.sub_out2
   attribute \src "dut.sv:17.23-17.24"
   wire width 32 \proc.x
   attribute \src "dut.sv:16.22-16.26"
@@ -34,17 +34,17 @@ module \gen_test7
   end
   attribute \src "dut.sv:16.4-21.7"
   process $proc$dut.sv:16$2
+    assign $0\cond.sub_out2 \cond.sub_out2
+    assign $0\cond.x \cond.x
     assign $0\out2 \out2
-    assign $0\sub_out2 \cond.sub_out2
-    assign $0\x \cond.x
     assign $0\proc.x \proc.x
     assign $0\proc.x 2
     assign $0\out2 3'010
-    assign \cond.sub_out2 3'010
+    assign $0\cond.sub_out2 3'010
     sync always
+      update \cond.sub_out2 $0\cond.sub_out2
+      update \cond.x $0\cond.x
       update \out2 $0\out2
-      update \cond.sub_out2 $0\sub_out2
-      update \cond.x $0\x
       update \proc.x $0\proc.x
   end
   connect \out3 [0] 1'1
