@@ -12,9 +12,9 @@ module \simple_generate
   attribute \src "dut.sv:1.35-1.36"
   wire width 4 output 4 \y
   wire \gen_loop[0].tmp
+  wire \gen_loop[3].tmp
   wire \gen_loop[2].tmp
   wire \gen_loop[1].tmp
-  wire \gen_loop[3].tmp
   cell $and $and$dut.sv:11$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

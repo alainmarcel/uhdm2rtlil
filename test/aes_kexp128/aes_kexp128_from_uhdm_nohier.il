@@ -25,6 +25,14 @@ module \aes_key_expand_128
   wire width 4 \w[2]
   attribute \src "dut.sv:9.11-9.12"
   wire width 4 \w[3]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[0][3:0]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[1][3:0]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[2][3:0]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[3][3:0]
   wire width 4 $auto$rtlil.cc:3474:Mux$3
   wire width 4 $auto$rtlil.cc:3388:Xor$5
   wire width 4 $auto$rtlil.cc:3474:Mux$7
@@ -126,11 +134,19 @@ module \aes_key_expand_128
   attribute \src "dut.sv:16.1-21.4"
   attribute \always_ff 1
   process $proc$dut.sv:16$1
+    assign $0\w[0][3:0] \w[0]
+    assign $0\w[1][3:0] \w[1]
+    assign $0\w[2][3:0] \w[2]
+    assign $0\w[3][3:0] \w[3]
+    assign \w[0] $auto$rtlil.cc:3474:Mux$3
+    assign \w[1] $auto$rtlil.cc:3474:Mux$7
+    assign \w[2] $auto$rtlil.cc:3474:Mux$13
+    assign \w[3] $auto$rtlil.cc:3474:Mux$21
     sync posedge \clk
-      update \w[0] $auto$rtlil.cc:3474:Mux$3
-      update \w[1] $auto$rtlil.cc:3474:Mux$7
-      update \w[2] $auto$rtlil.cc:3474:Mux$13
-      update \w[3] $auto$rtlil.cc:3474:Mux$21
+      update \w[0] $0\w[0][3:0]
+      update \w[1] $0\w[1][3:0]
+      update \w[2] $0\w[2][3:0]
+      update \w[3] $0\w[3][3:0]
   end
   connect \wo_0 \w[0]
   connect \wo_1 \w[1]

@@ -14,9 +14,12 @@ module top(clk, z);
   wire _02_;
   wire _03_;
   wire _04_;
-  wire _05_;
-  wire _06_;
-  wire _07_;
+  (* force_downto = 32'd1 *)
+  (* src = "dut.sv:30.13-30.27|dut.sv:27.9-32.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
+  wire [1:0] _05_;
+  (* force_downto = 32'd1 *)
+  (* src = "dut.sv:17.13-17.34|dut.sv:14.9-19.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
+  wire [1:0] _06_;
   (* another_attribute = 32'd1 *)
   (* enum_type = "$enum0" *)
   (* enum_value_00 = "\\B" *)
@@ -36,86 +39,83 @@ module top(clk, z);
   (* src = "dut.sv:11.18-11.28" *)
   (* wiretype = "\\wide_state_t" *)
   wire [31:0] wide_state;
-  \$_ORNOT_  _08_ (
+  \$_ANDNOT_  _07_ (
     .A(wide_state[1]),
     .B(wide_state[0]),
-    .Y(_04_)
-  );
-  \$_ORNOT_  _09_ (
-    .A(state[0]),
-    .B(state[1]),
-    .Y(_01_)
-  );
-  \$_NOR_  _10_ (
-    .A(state[1]),
-    .B(state[0]),
-    .Y(_06_)
-  );
-  \$_XNOR_  _11_ (
-    .A(state[1]),
-    .B(state[0]),
     .Y(_00_)
   );
-  \$_XOR_  _12_ (
-    .A(state[1]),
-    .B(state[0]),
-    .Y(_03_)
-  );
-  \$_XOR_  _13_ (
+  \$_NOR_  _08_ (
     .A(wide_state[0]),
     .B(wide_state[1]),
-    .Y(_05_)
+    .Y(_01_)
   );
-  \$_NAND_  _14_ (
+  \$_ANDNOT_  _09_ (
     .A(wide_state[0]),
     .B(wide_state[1]),
     .Y(_02_)
   );
-  \$_ANDNOT_  _15_ (
+  \$_OR_  _10_ (
+    .A(_01_),
+    .B(_00_),
+    .Y(_06_[0])
+  );
+  \$_XOR_  _11_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(_05_[1])
+  );
+  \$_NOR_  _12_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(_03_)
+  );
+  \$_ANDNOT_  _13_ (
+    .A(state[1]),
+    .B(state[0]),
+    .Y(_04_)
+  );
+  \$_OR_  _14_ (
+    .A(_04_),
+    .B(_03_),
+    .Y(_05_[0])
+  );
+  \$_XOR_  _15_ (
     .A(wide_state[0]),
     .B(wide_state[1]),
-    .Y(_07_)
+    .Y(_06_[1])
   );
   \$_XOR_  _16_ (
-    .A(_06_),
-    .B(_07_),
+    .A(_03_),
+    .B(_02_),
     .Y(z)
   );
   (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:13.5-20.8" *)
-  \$_SDFFE_PN0P_  \wide_state_reg[0]  /* _17_ */ (
+  (* src = "dut.sv:26.5-33.8" *)
+  \$_DFF_P_  \state_reg[0]  /* _17_ */ (
     .C(clk),
-    .D(_04_),
-    .E(_02_),
-    .Q(wide_state[0]),
-    .R(_02_)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:13.5-20.8" *)
-  \$_SDFFE_PN0P_  \wide_state_reg[1]  /* _18_ */ (
-    .C(clk),
-    .D(_05_),
-    .E(_02_),
-    .Q(wide_state[1]),
-    .R(_02_)
+    .D(_05_[0]),
+    .Q(state[0])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:26.5-33.8" *)
-  \$_SDFFE_PN1P_  \state_reg[0]  /* _19_ */ (
+  \$_DFF_P_  \state_reg[1]  /* _18_ */ (
     .C(clk),
-    .D(_06_),
-    .E(_01_),
-    .Q(state[0]),
-    .R(_01_)
+    .D(_05_[1]),
+    .Q(state[1])
   );
   (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:26.5-33.8" *)
-  \$_SDFFE_PP1P_  \state_reg[1]  /* _20_ */ (
+  (* src = "dut.sv:13.5-20.8" *)
+  \$_DFF_P_  \wide_state_reg[0]  /* _19_ */ (
     .C(clk),
-    .D(1'h0),
-    .E(_00_),
-    .Q(state[1]),
-    .R(_03_)
+    .D(_06_[0]),
+    .Q(wide_state[0])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.5-20.8" *)
+  \$_DFF_P_  \wide_state_reg[1]  /* _20_ */ (
+    .C(clk),
+    .D(_06_[1]),
+    .Q(wide_state[1])
   );
   assign wide_state[31:2] = 30'h00000000;
 endmodule

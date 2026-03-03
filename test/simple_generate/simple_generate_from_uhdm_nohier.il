@@ -12,12 +12,20 @@ module \simple_generate
   attribute \src "dut.sv:1.35-1.36"
   wire width 4 output 4 \y
   wire \gen_loop[0].tmp
+  attribute \src "dut.sv:12.9-13.25"
+  wire $0\y[0:0]
   wire $auto$rtlil.cc:3386:And$3
   wire \gen_loop[1].tmp
+  attribute \src "dut.sv:12.9-13.25"
+  wire $0\y[1:1]
   wire $auto$rtlil.cc:3386:And$6
   wire \gen_loop[2].tmp
+  attribute \src "dut.sv:12.9-13.25"
+  wire $0\y[2:2]
   wire $auto$rtlil.cc:3386:And$9
   wire \gen_loop[3].tmp
+  attribute \src "dut.sv:12.9-13.25"
+  wire $0\y[3:3]
   wire $auto$rtlil.cc:3386:And$12
   cell $and $and$dut.sv:11$2
     parameter \A_SIGNED 0
@@ -62,26 +70,34 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$1
+    assign $0\y[0:0] \y [0]
+    assign $0\y[0:0] \gen_loop[0].tmp
     sync posedge \clk
-      update \y [0] \gen_loop[0].tmp
+      update \y [0] $0\y[0:0]
   end
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$4
+    assign $0\y[1:1] \y [1]
+    assign $0\y[1:1] \gen_loop[1].tmp
     sync posedge \clk
-      update \y [1] \gen_loop[1].tmp
+      update \y [1] $0\y[1:1]
   end
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$7
+    assign $0\y[2:2] \y [2]
+    assign $0\y[2:2] \gen_loop[2].tmp
     sync posedge \clk
-      update \y [2] \gen_loop[2].tmp
+      update \y [2] $0\y[2:2]
   end
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$10
+    assign $0\y[3:3] \y [3]
+    assign $0\y[3:3] \gen_loop[3].tmp
     sync posedge \clk
-      update \y [3] \gen_loop[3].tmp
+      update \y [3] $0\y[3:3]
   end
   connect \gen_loop[0].tmp $auto$rtlil.cc:3386:And$3
   connect \gen_loop[1].tmp $auto$rtlil.cc:3386:And$6

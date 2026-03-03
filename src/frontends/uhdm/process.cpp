@@ -1371,46 +1371,126 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // Clear memory write tracking
                     current_memory_writes.clear();
                 } else {
-                    // No memory writes, use original behavior
-                    log("      No memory writes detected, using original sync rule\n");
+                    // No memory writes: use comb-style implementation to produce a proper
+                    // switch/case structure inside the process body (matching Verilog frontend output).
+                    log("      No memory writes detected, using comb-style switch structure\n");
                     log_flush();
-                    
-                    // Check if clock signal is empty
-                    if (clock_sig.empty()) {
+
+                    if (clock_sig.empty())
                         log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+
+                    // Extract signals assigned in the always_ff body
+                    std::vector<AssignedSignal> assigned_signals;
+                    extract_assigned_signals(stmt, assigned_signals);
+
+                    // Create $0\ temp wires for each uniquely assigned signal (same logic as import_always_comb)
+                    std::map<const UHDM::expr*, RTLIL::Wire*> temp_wires_map;
+                    std::map<std::string, RTLIL::Wire*> signal_temp_wires;
+                    std::map<std::string, RTLIL::SigSpec> signal_specs;
+
+                    for (const auto& sig : assigned_signals) {
+                        RTLIL::SigSpec lhs_spec;
+                        if (sig.lhs_expr) {
+                            lhs_spec = import_expression(sig.lhs_expr);
+                        } else {
+                            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                            if (!wire) {
+                                log_warning("import_always_ff: cannot find wire '%s' for for-loop signal\n",
+                                            sig.name.c_str());
+                                continue;
+                            }
+                            lhs_spec = RTLIL::SigSpec(wire);
+                        }
+
+                        // Compute dedup key (same logic as import_always_comb)
+                        std::string dedup_key;
+                        if (lhs_spec.size() > 0) {
+                            RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                            if (first_chunk.wire) {
+                                std::string wire_name = first_chunk.wire->name.str();
+                                if (wire_name[0] == '\\')
+                                    wire_name = wire_name.substr(1);
+                                if (sig.is_part_select) {
+                                    int offset = first_chunk.offset;
+                                    int width = lhs_spec.size();
+                                    dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                                } else {
+                                    dedup_key = wire_name;
+                                }
+                            } else {
+                                dedup_key = sig.name;
+                            }
+                        } else {
+                            dedup_key = sig.name;
+                        }
+
+                        if (signal_temp_wires.count(dedup_key)) {
+                            temp_wires_map[sig.lhs_expr] = signal_temp_wires[dedup_key];
+                        } else {
+                            std::string temp_name = "$0\\" + dedup_key;
+                            if (module->wire(temp_name))
+                                log_error("Temp wire %s already exists\n", temp_name.c_str());
+                            RTLIL::Wire* temp_wire = module->addWire(temp_name, lhs_spec.size());
+                            if (uhdm_process)
+                                add_src_attribute(temp_wire->attributes, uhdm_process);
+                            signal_temp_wires[dedup_key] = temp_wire;
+                            signal_specs[dedup_key] = lhs_spec;
+                            temp_wires_map[sig.lhs_expr] = temp_wire;
+                            log("    Created FF temp wire %s for signal %s (width=%d)\n",
+                                temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
+                        }
                     }
-                    
+
+                    // Set context so map_to_temp_wire() finds the $0\ wires
+                    current_temp_wires = temp_wires_map;
+
+                    // Add hold defaults: $0\x = \x (ensures registers hold value when not assigned)
+                    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+                        if (signal_specs.count(sig_name)) {
+                            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+                            yosys_proc->root_case.actions.push_back(
+                                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), lhs_spec));
+                            log("    Added hold default: %s = %s\n",
+                                temp_wire->name.c_str(), log_signal(lhs_spec));
+                        }
+                    }
+
+                    // Set up comb-style context with NB semantics (in_always_ff_body_mode
+                    // prevents current_comb_values from being read/written, so all RHS
+                    // expressions see original register values, not updated $0\ values)
+                    current_comb_values.clear();
+                    current_comb_process = yosys_proc;
+                    in_always_ff_body_mode = true;
+
+                    // Import the body using comb-style statement handling (produces switch/case structure)
+                    log("      Importing FF body with comb-style switch structure\n");
+                    import_statement_comb(stmt, yosys_proc);
+                    log("      FF body imported\n");
+
+                    // Clear comb context
+                    in_always_ff_body_mode = false;
+                    current_comb_process = nullptr;
+                    current_temp_wires.clear();
+                    current_comb_values.clear();
+                    comb_value_aliases.clear();
+
+                    // Create sync posedge/negedge rule with update actions: \x <= $0\x
                     RTLIL::SyncRule* sync = new RTLIL::SyncRule;
                     sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
                     sync->signal = clock_sig;
-                    log("      Sync rule created with clock signal size: %d\n", clock_sig.size());
-                    log_flush();
-                    
-                    // Set always_ff context for assert handling
-                    in_always_ff_context = true;
-                    current_ff_clock_sig = clock_sig;
-                    
-                    // Import the statement using the generic import
-                    log("      Importing statement into sync rule\n");
-                    log_flush();
-                    import_statement_sync(stmt, sync, false);
-                    log("      Statement imported\n");
-                    log_flush();
-                    
-                    // Flush pending sync assignments to the sync rule
-                    log("      Flushing %d pending assignments to sync rule\n", (int)pending_sync_assignments.size());
-                    log_flush();
-                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
-                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
-                        log("        Added final assignment: %s <= %s\n", log_signal(lhs), log_signal(rhs));
+
+                    for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
+                        if (signal_specs.count(sig_name)) {
+                            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+                            sync->actions.push_back(
+                                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire)));
+                            log("    Added sync update: %s <= %s\n",
+                                log_signal(lhs_spec), temp_wire->name.c_str());
+                        }
                     }
-                    pending_sync_assignments.clear();
-                    
-                    // Add the sync rule to the process
-                    log("      Adding sync rule to process\n");
-                    log_flush();
+
                     yosys_proc->syncs.push_back(sync);
-                    log("      Sync rule added - import_always_ff complete\n");
+                    log("      Sync rule with comb-style switch structure created\n");
                     log_flush();
                 }
             }
@@ -4176,8 +4256,9 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
     RTLIL::SigSpec mapped_lhs = map_to_temp_wire(lhs);
     proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
 
-    // Update value tracking so subsequent expressions see the new value
-    if (lhs.is_wire()) {
+    // Update value tracking so subsequent expressions see the new value.
+    // Skipped in always_ff body mode (NB semantics: reads use original register values).
+    if (!in_always_ff_body_mode && lhs.is_wire()) {
         RTLIL::Wire* target_wire = lhs.as_wire();
         std::string signal_name = target_wire->name.str();
         if (signal_name[0] == '\\')
@@ -5588,7 +5669,8 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
-            rhs = import_expression(rhs_expr, current_comb_process ? &current_comb_values : nullptr);
+            rhs = import_expression(rhs_expr,
+                (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }

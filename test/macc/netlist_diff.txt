@@ -76,1450 +76,1470 @@
  .Y(_1441_)
  );
  \$_OR_  _4463_ (
-@@ -13763,972 +13770,1110 @@
+@@ -13763,6 +13770,7 @@
  .B(overflow),
  .Y(accum_out[39])
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  overflow_reg_reg /* _4509_ */ (
--.C(clk),
--.D(overflow),
--.Q(overflow_reg),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
+ \$_SDFF_PP0_  overflow_reg_reg /* _4509_ */ (
+ .C(clk),
+@@ -13770,853 +13778,975 @@
+ .Q(overflow_reg),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[0]  /* _4510_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[0]  /* _4510_ */ (
+ .C(clk),
 -.D(b_reg[0]),
 -.Q(b_reg2[0]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2196_[0]),
++.Q(mult_reg[0]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[1]  /* _4511_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[1]  /* _4511_ */ (
+ .C(clk),
 -.D(b_reg[1]),
 -.Q(b_reg2[1]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2197_[1]),
++.Q(mult_reg[1]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[2]  /* _4512_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[2]  /* _4512_ */ (
+ .C(clk),
 -.D(b_reg[2]),
 -.Q(b_reg2[2]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2198_[2]),
++.Q(mult_reg[2]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[3]  /* _4513_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[3]  /* _4513_ */ (
+ .C(clk),
 -.D(b_reg[3]),
 -.Q(b_reg2[3]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2199_[3]),
++.Q(mult_reg[3]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[4]  /* _4514_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[4]  /* _4514_ */ (
+ .C(clk),
 -.D(b_reg[4]),
 -.Q(b_reg2[4]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[4]),
++.Q(mult_reg[4]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[5]  /* _4515_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[5]  /* _4515_ */ (
+ .C(clk),
 -.D(b_reg[5]),
 -.Q(b_reg2[5]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[5]),
++.Q(mult_reg[5]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[6]  /* _4516_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[6]  /* _4516_ */ (
+ .C(clk),
 -.D(b_reg[6]),
 -.Q(b_reg2[6]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[6]),
++.Q(mult_reg[6]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[7]  /* _4517_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[7]  /* _4517_ */ (
+ .C(clk),
 -.D(b_reg[7]),
 -.Q(b_reg2[7]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[7]),
++.Q(mult_reg[7]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[8]  /* _4518_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[8]  /* _4518_ */ (
+ .C(clk),
 -.D(b_reg[8]),
 -.Q(b_reg2[8]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[8]),
++.Q(mult_reg[8]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[9]  /* _4519_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[9]  /* _4519_ */ (
+ .C(clk),
 -.D(b_reg[9]),
 -.Q(b_reg2[9]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[9]),
++.Q(mult_reg[9]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[10]  /* _4520_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[10]  /* _4520_ */ (
+ .C(clk),
 -.D(b_reg[10]),
 -.Q(b_reg2[10]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[10]),
++.Q(mult_reg[10]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[11]  /* _4521_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[11]  /* _4521_ */ (
+ .C(clk),
 -.D(b_reg[11]),
 -.Q(b_reg2[11]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[11]),
++.Q(mult_reg[11]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[12]  /* _4522_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[12]  /* _4522_ */ (
+ .C(clk),
 -.D(b_reg[12]),
 -.Q(b_reg2[12]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[12]),
++.Q(mult_reg[12]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[13]  /* _4523_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[13]  /* _4523_ */ (
+ .C(clk),
 -.D(b_reg[13]),
 -.Q(b_reg2[13]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[13]),
++.Q(mult_reg[13]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[14]  /* _4524_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[14]  /* _4524_ */ (
+ .C(clk),
 -.D(b_reg[14]),
 -.Q(b_reg2[14]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[14]),
++.Q(mult_reg[14]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg2_reg[15]  /* _4525_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[15]  /* _4525_ */ (
+ .C(clk),
 -.D(b_reg[15]),
 -.Q(b_reg2[15]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[15]),
++.Q(mult_reg[15]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[0]  /* _4526_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[16]  /* _4526_ */ (
+ .C(clk),
 -.D(a_reg[0]),
 -.Q(a_reg2[0]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[16]),
++.Q(mult_reg[16]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[1]  /* _4527_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[17]  /* _4527_ */ (
+ .C(clk),
 -.D(a_reg[1]),
 -.Q(a_reg2[1]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[17]),
++.Q(mult_reg[17]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[2]  /* _4528_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[18]  /* _4528_ */ (
+ .C(clk),
 -.D(a_reg[2]),
 -.Q(a_reg2[2]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[18]),
++.Q(mult_reg[18]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[3]  /* _4529_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[19]  /* _4529_ */ (
+ .C(clk),
 -.D(a_reg[3]),
 -.Q(a_reg2[3]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[19]),
++.Q(mult_reg[19]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[4]  /* _4530_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[20]  /* _4530_ */ (
+ .C(clk),
 -.D(a_reg[4]),
 -.Q(a_reg2[4]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[20]),
++.Q(mult_reg[20]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[5]  /* _4531_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[21]  /* _4531_ */ (
+ .C(clk),
 -.D(a_reg[5]),
 -.Q(a_reg2[5]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[21]),
++.Q(mult_reg[21]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[6]  /* _4532_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[22]  /* _4532_ */ (
+ .C(clk),
 -.D(a_reg[6]),
 -.Q(a_reg2[6]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[22]),
++.Q(mult_reg[22]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[7]  /* _4533_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[23]  /* _4533_ */ (
+ .C(clk),
 -.D(a_reg[7]),
 -.Q(a_reg2[7]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[23]),
++.Q(mult_reg[23]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[8]  /* _4534_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[24]  /* _4534_ */ (
+ .C(clk),
 -.D(a_reg[8]),
 -.Q(a_reg2[8]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[24]),
++.Q(mult_reg[24]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[9]  /* _4535_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[25]  /* _4535_ */ (
+ .C(clk),
 -.D(a_reg[9]),
 -.Q(a_reg2[9]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[25]),
++.Q(mult_reg[25]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[10]  /* _4536_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[26]  /* _4536_ */ (
+ .C(clk),
 -.D(a_reg[10]),
 -.Q(a_reg2[10]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[26]),
++.Q(mult_reg[26]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[11]  /* _4537_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[27]  /* _4537_ */ (
+ .C(clk),
 -.D(a_reg[11]),
 -.Q(a_reg2[11]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[27]),
++.Q(mult_reg[27]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[12]  /* _4538_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[28]  /* _4538_ */ (
+ .C(clk),
 -.D(a_reg[12]),
 -.Q(a_reg2[12]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[28]),
++.Q(mult_reg[28]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[13]  /* _4539_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[29]  /* _4539_ */ (
+ .C(clk),
 -.D(a_reg[13]),
 -.Q(a_reg2[13]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[29]),
++.Q(mult_reg[29]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[14]  /* _4540_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[30]  /* _4540_ */ (
+ .C(clk),
 -.D(a_reg[14]),
 -.Q(a_reg2[14]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[30]),
++.Q(mult_reg[30]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \a_reg2_reg[15]  /* _4541_ */ (
--.C(clk),
++\$_SDFF_PP0_  \mult_reg_reg[31]  /* _4541_ */ (
+ .C(clk),
 -.D(a_reg[15]),
 -.Q(a_reg2[15]),
--.R(rst)
--);
--(* src = "dut.sv:57.1-78.4" *)
++.D(_2200_[31]),
++.Q(mult_reg[31]),
+ .R(rst)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[0]  /* _4542_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[0]  /* _4509_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[0]  /* _4542_ */ (
  .C(clk),
- .D(_2194_[0]),
- .Q(adder_out[0]),
+-.D(_2194_[0]),
+-.Q(adder_out[0]),
++.D(b_reg[0]),
++.Q(b_reg2[0]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[1]  /* _4543_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[1]  /* _4510_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[1]  /* _4543_ */ (
  .C(clk),
- .D(_2195_[1]),
- .Q(adder_out[1]),
+-.D(_2195_[1]),
+-.Q(adder_out[1]),
++.D(b_reg[1]),
++.Q(b_reg2[1]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[2]  /* _4544_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[2]  /* _4511_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[2]  /* _4544_ */ (
  .C(clk),
- .D(_2195_[2]),
- .Q(adder_out[2]),
+-.D(_2195_[2]),
+-.Q(adder_out[2]),
++.D(b_reg[2]),
++.Q(b_reg2[2]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[3]  /* _4545_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[3]  /* _4512_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[3]  /* _4545_ */ (
  .C(clk),
- .D(_2195_[3]),
- .Q(adder_out[3]),
+-.D(_2195_[3]),
+-.Q(adder_out[3]),
++.D(b_reg[3]),
++.Q(b_reg2[3]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[4]  /* _4546_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[4]  /* _4513_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[4]  /* _4546_ */ (
  .C(clk),
- .D(_2195_[4]),
- .Q(adder_out[4]),
+-.D(_2195_[4]),
+-.Q(adder_out[4]),
++.D(b_reg[4]),
++.Q(b_reg2[4]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[5]  /* _4547_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[5]  /* _4514_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[5]  /* _4547_ */ (
  .C(clk),
- .D(_2195_[5]),
- .Q(adder_out[5]),
+-.D(_2195_[5]),
+-.Q(adder_out[5]),
++.D(b_reg[5]),
++.Q(b_reg2[5]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[6]  /* _4548_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[6]  /* _4515_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[6]  /* _4548_ */ (
  .C(clk),
- .D(_2195_[6]),
- .Q(adder_out[6]),
+-.D(_2195_[6]),
+-.Q(adder_out[6]),
++.D(b_reg[6]),
++.Q(b_reg2[6]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[7]  /* _4549_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[7]  /* _4516_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[7]  /* _4549_ */ (
  .C(clk),
- .D(_2195_[7]),
- .Q(adder_out[7]),
+-.D(_2195_[7]),
+-.Q(adder_out[7]),
++.D(b_reg[7]),
++.Q(b_reg2[7]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[8]  /* _4550_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[8]  /* _4517_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[8]  /* _4550_ */ (
  .C(clk),
- .D(_2195_[8]),
- .Q(adder_out[8]),
+-.D(_2195_[8]),
+-.Q(adder_out[8]),
++.D(b_reg[8]),
++.Q(b_reg2[8]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[9]  /* _4551_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[9]  /* _4518_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[9]  /* _4551_ */ (
  .C(clk),
- .D(_2195_[9]),
- .Q(adder_out[9]),
+-.D(_2195_[9]),
+-.Q(adder_out[9]),
++.D(b_reg[9]),
++.Q(b_reg2[9]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[10]  /* _4552_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[10]  /* _4519_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[10]  /* _4552_ */ (
  .C(clk),
- .D(_2195_[10]),
- .Q(adder_out[10]),
+-.D(_2195_[10]),
+-.Q(adder_out[10]),
++.D(b_reg[10]),
++.Q(b_reg2[10]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[11]  /* _4553_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[11]  /* _4520_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[11]  /* _4553_ */ (
  .C(clk),
- .D(_2195_[11]),
- .Q(adder_out[11]),
+-.D(_2195_[11]),
+-.Q(adder_out[11]),
++.D(b_reg[11]),
++.Q(b_reg2[11]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[12]  /* _4554_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[12]  /* _4521_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[12]  /* _4554_ */ (
  .C(clk),
- .D(_2195_[12]),
- .Q(adder_out[12]),
+-.D(_2195_[12]),
+-.Q(adder_out[12]),
++.D(b_reg[12]),
++.Q(b_reg2[12]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[13]  /* _4555_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[13]  /* _4522_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[13]  /* _4555_ */ (
  .C(clk),
- .D(_2195_[13]),
- .Q(adder_out[13]),
+-.D(_2195_[13]),
+-.Q(adder_out[13]),
++.D(b_reg[13]),
++.Q(b_reg2[13]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[14]  /* _4556_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[14]  /* _4523_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[14]  /* _4556_ */ (
  .C(clk),
- .D(_2195_[14]),
- .Q(adder_out[14]),
+-.D(_2195_[14]),
+-.Q(adder_out[14]),
++.D(b_reg[14]),
++.Q(b_reg2[14]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[15]  /* _4557_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[15]  /* _4524_ */ (
++\$_SDFF_PP0_  \b_reg2_reg[15]  /* _4557_ */ (
  .C(clk),
- .D(_2195_[15]),
- .Q(adder_out[15]),
+-.D(_2195_[15]),
+-.Q(adder_out[15]),
++.D(b_reg[15]),
++.Q(b_reg2[15]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[16]  /* _4558_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[16]  /* _4525_ */ (
++\$_SDFF_PP0_  \b_reg_reg[0]  /* _4558_ */ (
  .C(clk),
- .D(_2195_[16]),
- .Q(adder_out[16]),
+-.D(_2195_[16]),
+-.Q(adder_out[16]),
++.D(b[0]),
++.Q(b_reg[0]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[17]  /* _4559_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[17]  /* _4526_ */ (
++\$_SDFF_PP0_  \b_reg_reg[1]  /* _4559_ */ (
  .C(clk),
- .D(_2195_[17]),
- .Q(adder_out[17]),
+-.D(_2195_[17]),
+-.Q(adder_out[17]),
++.D(b[1]),
++.Q(b_reg[1]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[18]  /* _4560_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[18]  /* _4527_ */ (
++\$_SDFF_PP0_  \b_reg_reg[2]  /* _4560_ */ (
  .C(clk),
- .D(_2195_[18]),
- .Q(adder_out[18]),
+-.D(_2195_[18]),
+-.Q(adder_out[18]),
++.D(b[2]),
++.Q(b_reg[2]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[19]  /* _4561_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[19]  /* _4528_ */ (
++\$_SDFF_PP0_  \b_reg_reg[3]  /* _4561_ */ (
  .C(clk),
- .D(_2195_[19]),
- .Q(adder_out[19]),
+-.D(_2195_[19]),
+-.Q(adder_out[19]),
++.D(b[3]),
++.Q(b_reg[3]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[20]  /* _4562_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[20]  /* _4529_ */ (
++\$_SDFF_PP0_  \b_reg_reg[4]  /* _4562_ */ (
  .C(clk),
- .D(_2195_[20]),
- .Q(adder_out[20]),
+-.D(_2195_[20]),
+-.Q(adder_out[20]),
++.D(b[4]),
++.Q(b_reg[4]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[21]  /* _4563_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[21]  /* _4530_ */ (
++\$_SDFF_PP0_  \b_reg_reg[5]  /* _4563_ */ (
  .C(clk),
- .D(_2195_[21]),
- .Q(adder_out[21]),
+-.D(_2195_[21]),
+-.Q(adder_out[21]),
++.D(b[5]),
++.Q(b_reg[5]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[22]  /* _4564_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[22]  /* _4531_ */ (
++\$_SDFF_PP0_  \b_reg_reg[6]  /* _4564_ */ (
  .C(clk),
- .D(_2195_[22]),
- .Q(adder_out[22]),
+-.D(_2195_[22]),
+-.Q(adder_out[22]),
++.D(b[6]),
++.Q(b_reg[6]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[23]  /* _4565_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[23]  /* _4532_ */ (
++\$_SDFF_PP0_  \b_reg_reg[7]  /* _4565_ */ (
  .C(clk),
- .D(_2195_[23]),
- .Q(adder_out[23]),
+-.D(_2195_[23]),
+-.Q(adder_out[23]),
++.D(b[7]),
++.Q(b_reg[7]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[24]  /* _4566_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[24]  /* _4533_ */ (
++\$_SDFF_PP0_  \b_reg_reg[8]  /* _4566_ */ (
  .C(clk),
- .D(_2195_[24]),
- .Q(adder_out[24]),
+-.D(_2195_[24]),
+-.Q(adder_out[24]),
++.D(b[8]),
++.Q(b_reg[8]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[25]  /* _4567_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[25]  /* _4534_ */ (
++\$_SDFF_PP0_  \b_reg_reg[9]  /* _4567_ */ (
  .C(clk),
- .D(_2195_[25]),
- .Q(adder_out[25]),
+-.D(_2195_[25]),
+-.Q(adder_out[25]),
++.D(b[9]),
++.Q(b_reg[9]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[26]  /* _4568_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[26]  /* _4535_ */ (
++\$_SDFF_PP0_  \b_reg_reg[10]  /* _4568_ */ (
  .C(clk),
- .D(_2195_[26]),
- .Q(adder_out[26]),
+-.D(_2195_[26]),
+-.Q(adder_out[26]),
++.D(b[10]),
++.Q(b_reg[10]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[27]  /* _4569_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[27]  /* _4536_ */ (
++\$_SDFF_PP0_  \b_reg_reg[11]  /* _4569_ */ (
  .C(clk),
- .D(_2195_[27]),
- .Q(adder_out[27]),
+-.D(_2195_[27]),
+-.Q(adder_out[27]),
++.D(b[11]),
++.Q(b_reg[11]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[28]  /* _4570_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[28]  /* _4537_ */ (
++\$_SDFF_PP0_  \b_reg_reg[12]  /* _4570_ */ (
  .C(clk),
- .D(_2195_[28]),
- .Q(adder_out[28]),
+-.D(_2195_[28]),
+-.Q(adder_out[28]),
++.D(b[12]),
++.Q(b_reg[12]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[29]  /* _4571_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[29]  /* _4538_ */ (
++\$_SDFF_PP0_  \b_reg_reg[13]  /* _4571_ */ (
  .C(clk),
- .D(_2195_[29]),
- .Q(adder_out[29]),
+-.D(_2195_[29]),
+-.Q(adder_out[29]),
++.D(b[13]),
++.Q(b_reg[13]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[30]  /* _4572_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[30]  /* _4539_ */ (
++\$_SDFF_PP0_  \b_reg_reg[14]  /* _4572_ */ (
  .C(clk),
- .D(_2195_[30]),
- .Q(adder_out[30]),
+-.D(_2195_[30]),
+-.Q(adder_out[30]),
++.D(b[14]),
++.Q(b_reg[14]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[31]  /* _4573_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[31]  /* _4540_ */ (
++\$_SDFF_PP0_  \b_reg_reg[15]  /* _4573_ */ (
  .C(clk),
- .D(_2195_[31]),
- .Q(adder_out[31]),
+-.D(_2195_[31]),
+-.Q(adder_out[31]),
++.D(b[15]),
++.Q(b_reg[15]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[32]  /* _4574_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[32]  /* _4541_ */ (
++\$_SDFF_PP0_  \adder_out_reg[0]  /* _4574_ */ (
  .C(clk),
- .D(_2195_[32]),
- .Q(adder_out[32]),
+-.D(_2195_[32]),
+-.Q(adder_out[32]),
++.D(_2194_[0]),
++.Q(adder_out[0]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[33]  /* _4575_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[33]  /* _4542_ */ (
++\$_SDFF_PP0_  \adder_out_reg[1]  /* _4575_ */ (
  .C(clk),
- .D(_2195_[33]),
- .Q(adder_out[33]),
+-.D(_2195_[33]),
+-.Q(adder_out[33]),
++.D(_2195_[1]),
++.Q(adder_out[1]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[34]  /* _4576_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[34]  /* _4543_ */ (
++\$_SDFF_PP0_  \adder_out_reg[2]  /* _4576_ */ (
  .C(clk),
- .D(_2195_[34]),
- .Q(adder_out[34]),
+-.D(_2195_[34]),
+-.Q(adder_out[34]),
++.D(_2195_[2]),
++.Q(adder_out[2]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[35]  /* _4577_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[35]  /* _4544_ */ (
++\$_SDFF_PP0_  \adder_out_reg[3]  /* _4577_ */ (
  .C(clk),
- .D(_2195_[35]),
- .Q(adder_out[35]),
+-.D(_2195_[35]),
+-.Q(adder_out[35]),
++.D(_2195_[3]),
++.Q(adder_out[3]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[36]  /* _4578_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[36]  /* _4545_ */ (
++\$_SDFF_PP0_  \adder_out_reg[4]  /* _4578_ */ (
  .C(clk),
- .D(_2195_[36]),
- .Q(adder_out[36]),
+-.D(_2195_[36]),
+-.Q(adder_out[36]),
++.D(_2195_[4]),
++.Q(adder_out[4]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[37]  /* _4579_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[37]  /* _4546_ */ (
++\$_SDFF_PP0_  \adder_out_reg[5]  /* _4579_ */ (
  .C(clk),
- .D(_2195_[37]),
- .Q(adder_out[37]),
+-.D(_2195_[37]),
+-.Q(adder_out[37]),
++.D(_2195_[5]),
++.Q(adder_out[5]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[38]  /* _4580_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[38]  /* _4547_ */ (
++\$_SDFF_PP0_  \adder_out_reg[6]  /* _4580_ */ (
  .C(clk),
- .D(_2195_[38]),
- .Q(adder_out[38]),
+-.D(_2195_[38]),
+-.Q(adder_out[38]),
++.D(_2195_[6]),
++.Q(adder_out[6]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[39]  /* _4581_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[39]  /* _4548_ */ (
++\$_SDFF_PP0_  \adder_out_reg[7]  /* _4581_ */ (
  .C(clk),
- .D(_2195_[39]),
- .Q(adder_out[39]),
+-.D(_2195_[39]),
+-.Q(adder_out[39]),
++.D(_2195_[7]),
++.Q(adder_out[7]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \adder_out_reg[40]  /* _4582_ */ (
-+\$_SDFF_PP0_  \adder_out_reg[40]  /* _4549_ */ (
++\$_SDFF_PP0_  \adder_out_reg[8]  /* _4582_ */ (
  .C(clk),
- .D(_2195_[40]),
- .Q(adder_out[40]),
+-.D(_2195_[40]),
+-.Q(adder_out[40]),
++.D(_2195_[8]),
++.Q(adder_out[8]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[0]  /* _4583_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[0]  /* _4550_ */ (
++\$_SDFF_PP0_  \adder_out_reg[9]  /* _4583_ */ (
  .C(clk),
- .D(_2196_[0]),
- .Q(mult_reg[0]),
+-.D(_2196_[0]),
+-.Q(mult_reg[0]),
++.D(_2195_[9]),
++.Q(adder_out[9]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[1]  /* _4584_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[1]  /* _4551_ */ (
++\$_SDFF_PP0_  \adder_out_reg[10]  /* _4584_ */ (
  .C(clk),
- .D(_2197_[1]),
- .Q(mult_reg[1]),
+-.D(_2197_[1]),
+-.Q(mult_reg[1]),
++.D(_2195_[10]),
++.Q(adder_out[10]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[2]  /* _4585_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[2]  /* _4552_ */ (
++\$_SDFF_PP0_  \adder_out_reg[11]  /* _4585_ */ (
  .C(clk),
- .D(_2198_[2]),
- .Q(mult_reg[2]),
+-.D(_2198_[2]),
+-.Q(mult_reg[2]),
++.D(_2195_[11]),
++.Q(adder_out[11]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[3]  /* _4586_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[3]  /* _4553_ */ (
++\$_SDFF_PP0_  \adder_out_reg[12]  /* _4586_ */ (
  .C(clk),
- .D(_2199_[3]),
- .Q(mult_reg[3]),
+-.D(_2199_[3]),
+-.Q(mult_reg[3]),
++.D(_2195_[12]),
++.Q(adder_out[12]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[4]  /* _4587_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[4]  /* _4554_ */ (
++\$_SDFF_PP0_  \adder_out_reg[13]  /* _4587_ */ (
  .C(clk),
- .D(_2200_[4]),
- .Q(mult_reg[4]),
+-.D(_2200_[4]),
+-.Q(mult_reg[4]),
++.D(_2195_[13]),
++.Q(adder_out[13]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[5]  /* _4588_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[5]  /* _4555_ */ (
++\$_SDFF_PP0_  \adder_out_reg[14]  /* _4588_ */ (
  .C(clk),
- .D(_2200_[5]),
- .Q(mult_reg[5]),
+-.D(_2200_[5]),
+-.Q(mult_reg[5]),
++.D(_2195_[14]),
++.Q(adder_out[14]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[6]  /* _4589_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[6]  /* _4556_ */ (
++\$_SDFF_PP0_  \adder_out_reg[15]  /* _4589_ */ (
  .C(clk),
- .D(_2200_[6]),
- .Q(mult_reg[6]),
+-.D(_2200_[6]),
+-.Q(mult_reg[6]),
++.D(_2195_[15]),
++.Q(adder_out[15]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[7]  /* _4590_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[7]  /* _4557_ */ (
++\$_SDFF_PP0_  \adder_out_reg[16]  /* _4590_ */ (
  .C(clk),
- .D(_2200_[7]),
- .Q(mult_reg[7]),
+-.D(_2200_[7]),
+-.Q(mult_reg[7]),
++.D(_2195_[16]),
++.Q(adder_out[16]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[8]  /* _4591_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[8]  /* _4558_ */ (
++\$_SDFF_PP0_  \adder_out_reg[17]  /* _4591_ */ (
  .C(clk),
- .D(_2200_[8]),
- .Q(mult_reg[8]),
+-.D(_2200_[8]),
+-.Q(mult_reg[8]),
++.D(_2195_[17]),
++.Q(adder_out[17]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[9]  /* _4592_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[9]  /* _4559_ */ (
++\$_SDFF_PP0_  \adder_out_reg[18]  /* _4592_ */ (
  .C(clk),
- .D(_2200_[9]),
- .Q(mult_reg[9]),
+-.D(_2200_[9]),
+-.Q(mult_reg[9]),
++.D(_2195_[18]),
++.Q(adder_out[18]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[10]  /* _4593_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[10]  /* _4560_ */ (
++\$_SDFF_PP0_  \adder_out_reg[19]  /* _4593_ */ (
  .C(clk),
- .D(_2200_[10]),
- .Q(mult_reg[10]),
+-.D(_2200_[10]),
+-.Q(mult_reg[10]),
++.D(_2195_[19]),
++.Q(adder_out[19]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[11]  /* _4594_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[11]  /* _4561_ */ (
++\$_SDFF_PP0_  \adder_out_reg[20]  /* _4594_ */ (
  .C(clk),
- .D(_2200_[11]),
- .Q(mult_reg[11]),
+-.D(_2200_[11]),
+-.Q(mult_reg[11]),
++.D(_2195_[20]),
++.Q(adder_out[20]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[12]  /* _4595_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[12]  /* _4562_ */ (
++\$_SDFF_PP0_  \adder_out_reg[21]  /* _4595_ */ (
  .C(clk),
- .D(_2200_[12]),
- .Q(mult_reg[12]),
+-.D(_2200_[12]),
+-.Q(mult_reg[12]),
++.D(_2195_[21]),
++.Q(adder_out[21]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[13]  /* _4596_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[13]  /* _4563_ */ (
++\$_SDFF_PP0_  \adder_out_reg[22]  /* _4596_ */ (
  .C(clk),
- .D(_2200_[13]),
- .Q(mult_reg[13]),
+-.D(_2200_[13]),
+-.Q(mult_reg[13]),
++.D(_2195_[22]),
++.Q(adder_out[22]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[14]  /* _4597_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[14]  /* _4564_ */ (
++\$_SDFF_PP0_  \adder_out_reg[23]  /* _4597_ */ (
  .C(clk),
- .D(_2200_[14]),
- .Q(mult_reg[14]),
+-.D(_2200_[14]),
+-.Q(mult_reg[14]),
++.D(_2195_[23]),
++.Q(adder_out[23]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[15]  /* _4598_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[15]  /* _4565_ */ (
++\$_SDFF_PP0_  \adder_out_reg[24]  /* _4598_ */ (
  .C(clk),
- .D(_2200_[15]),
- .Q(mult_reg[15]),
+-.D(_2200_[15]),
+-.Q(mult_reg[15]),
++.D(_2195_[24]),
++.Q(adder_out[24]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[16]  /* _4599_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[16]  /* _4566_ */ (
++\$_SDFF_PP0_  \adder_out_reg[25]  /* _4599_ */ (
  .C(clk),
- .D(_2200_[16]),
- .Q(mult_reg[16]),
+-.D(_2200_[16]),
+-.Q(mult_reg[16]),
++.D(_2195_[25]),
++.Q(adder_out[25]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[17]  /* _4600_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[17]  /* _4567_ */ (
++\$_SDFF_PP0_  \adder_out_reg[26]  /* _4600_ */ (
  .C(clk),
- .D(_2200_[17]),
- .Q(mult_reg[17]),
+-.D(_2200_[17]),
+-.Q(mult_reg[17]),
++.D(_2195_[26]),
++.Q(adder_out[26]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[18]  /* _4601_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[18]  /* _4568_ */ (
++\$_SDFF_PP0_  \adder_out_reg[27]  /* _4601_ */ (
  .C(clk),
- .D(_2200_[18]),
- .Q(mult_reg[18]),
+-.D(_2200_[18]),
+-.Q(mult_reg[18]),
++.D(_2195_[27]),
++.Q(adder_out[27]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[19]  /* _4602_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[19]  /* _4569_ */ (
++\$_SDFF_PP0_  \adder_out_reg[28]  /* _4602_ */ (
  .C(clk),
- .D(_2200_[19]),
- .Q(mult_reg[19]),
+-.D(_2200_[19]),
+-.Q(mult_reg[19]),
++.D(_2195_[28]),
++.Q(adder_out[28]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[20]  /* _4603_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[20]  /* _4570_ */ (
++\$_SDFF_PP0_  \adder_out_reg[29]  /* _4603_ */ (
  .C(clk),
- .D(_2200_[20]),
- .Q(mult_reg[20]),
+-.D(_2200_[20]),
+-.Q(mult_reg[20]),
++.D(_2195_[29]),
++.Q(adder_out[29]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[21]  /* _4604_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[21]  /* _4571_ */ (
++\$_SDFF_PP0_  \adder_out_reg[30]  /* _4604_ */ (
  .C(clk),
- .D(_2200_[21]),
- .Q(mult_reg[21]),
+-.D(_2200_[21]),
+-.Q(mult_reg[21]),
++.D(_2195_[30]),
++.Q(adder_out[30]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[22]  /* _4605_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[22]  /* _4572_ */ (
++\$_SDFF_PP0_  \adder_out_reg[31]  /* _4605_ */ (
  .C(clk),
- .D(_2200_[22]),
- .Q(mult_reg[22]),
+-.D(_2200_[22]),
+-.Q(mult_reg[22]),
++.D(_2195_[31]),
++.Q(adder_out[31]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[23]  /* _4606_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[23]  /* _4573_ */ (
++\$_SDFF_PP0_  \adder_out_reg[32]  /* _4606_ */ (
  .C(clk),
- .D(_2200_[23]),
- .Q(mult_reg[23]),
+-.D(_2200_[23]),
+-.Q(mult_reg[23]),
++.D(_2195_[32]),
++.Q(adder_out[32]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[24]  /* _4607_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[24]  /* _4574_ */ (
++\$_SDFF_PP0_  \adder_out_reg[33]  /* _4607_ */ (
  .C(clk),
- .D(_2200_[24]),
- .Q(mult_reg[24]),
+-.D(_2200_[24]),
+-.Q(mult_reg[24]),
++.D(_2195_[33]),
++.Q(adder_out[33]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[25]  /* _4608_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[25]  /* _4575_ */ (
++\$_SDFF_PP0_  \adder_out_reg[34]  /* _4608_ */ (
  .C(clk),
- .D(_2200_[25]),
- .Q(mult_reg[25]),
+-.D(_2200_[25]),
+-.Q(mult_reg[25]),
++.D(_2195_[34]),
++.Q(adder_out[34]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[26]  /* _4609_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[26]  /* _4576_ */ (
++\$_SDFF_PP0_  \adder_out_reg[35]  /* _4609_ */ (
  .C(clk),
- .D(_2200_[26]),
- .Q(mult_reg[26]),
+-.D(_2200_[26]),
+-.Q(mult_reg[26]),
++.D(_2195_[35]),
++.Q(adder_out[35]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[27]  /* _4610_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[27]  /* _4577_ */ (
++\$_SDFF_PP0_  \adder_out_reg[36]  /* _4610_ */ (
  .C(clk),
- .D(_2200_[27]),
- .Q(mult_reg[27]),
+-.D(_2200_[27]),
+-.Q(mult_reg[27]),
++.D(_2195_[36]),
++.Q(adder_out[36]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[28]  /* _4611_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[28]  /* _4578_ */ (
++\$_SDFF_PP0_  \adder_out_reg[37]  /* _4611_ */ (
  .C(clk),
- .D(_2200_[28]),
- .Q(mult_reg[28]),
+-.D(_2200_[28]),
+-.Q(mult_reg[28]),
++.D(_2195_[37]),
++.Q(adder_out[37]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[29]  /* _4612_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[29]  /* _4579_ */ (
++\$_SDFF_PP0_  \adder_out_reg[38]  /* _4612_ */ (
  .C(clk),
- .D(_2200_[29]),
- .Q(mult_reg[29]),
+-.D(_2200_[29]),
+-.Q(mult_reg[29]),
++.D(_2195_[38]),
++.Q(adder_out[38]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[30]  /* _4613_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[30]  /* _4580_ */ (
++\$_SDFF_PP0_  \adder_out_reg[39]  /* _4613_ */ (
  .C(clk),
- .D(_2200_[30]),
- .Q(mult_reg[30]),
+-.D(_2200_[30]),
+-.Q(mult_reg[30]),
++.D(_2195_[39]),
++.Q(adder_out[39]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \mult_reg_reg[31]  /* _4614_ */ (
-+\$_SDFF_PP0_  \mult_reg_reg[31]  /* _4581_ */ (
++\$_SDFF_PP0_  \adder_out_reg[40]  /* _4614_ */ (
  .C(clk),
- .D(_2200_[31]),
- .Q(mult_reg[31]),
+-.D(_2200_[31]),
+-.Q(mult_reg[31]),
++.D(_2195_[40]),
++.Q(adder_out[40]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[0]  /* _4582_ */ (
-+.C(clk),
-+.D(b_reg[0]),
-+.Q(b_reg2[0]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[1]  /* _4583_ */ (
-+.C(clk),
-+.D(b_reg[1]),
-+.Q(b_reg2[1]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[2]  /* _4584_ */ (
-+.C(clk),
-+.D(b_reg[2]),
-+.Q(b_reg2[2]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[3]  /* _4585_ */ (
-+.C(clk),
-+.D(b_reg[3]),
-+.Q(b_reg2[3]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[4]  /* _4586_ */ (
-+.C(clk),
-+.D(b_reg[4]),
-+.Q(b_reg2[4]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[5]  /* _4587_ */ (
-+.C(clk),
-+.D(b_reg[5]),
-+.Q(b_reg2[5]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[6]  /* _4588_ */ (
-+.C(clk),
-+.D(b_reg[6]),
-+.Q(b_reg2[6]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[7]  /* _4589_ */ (
-+.C(clk),
-+.D(b_reg[7]),
-+.Q(b_reg2[7]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[8]  /* _4590_ */ (
-+.C(clk),
-+.D(b_reg[8]),
-+.Q(b_reg2[8]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[9]  /* _4591_ */ (
-+.C(clk),
-+.D(b_reg[9]),
-+.Q(b_reg2[9]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[10]  /* _4592_ */ (
-+.C(clk),
-+.D(b_reg[10]),
-+.Q(b_reg2[10]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[11]  /* _4593_ */ (
-+.C(clk),
-+.D(b_reg[11]),
-+.Q(b_reg2[11]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[12]  /* _4594_ */ (
-+.C(clk),
-+.D(b_reg[12]),
-+.Q(b_reg2[12]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[13]  /* _4595_ */ (
-+.C(clk),
-+.D(b_reg[13]),
-+.Q(b_reg2[13]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[14]  /* _4596_ */ (
-+.C(clk),
-+.D(b_reg[14]),
-+.Q(b_reg2[14]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg2_reg[15]  /* _4597_ */ (
-+.C(clk),
-+.D(b_reg[15]),
-+.Q(b_reg2[15]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[0]  /* _4598_ */ (
-+.C(clk),
-+.D(a_reg[0]),
-+.Q(a_reg2[0]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[1]  /* _4599_ */ (
-+.C(clk),
-+.D(a_reg[1]),
-+.Q(a_reg2[1]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[2]  /* _4600_ */ (
-+.C(clk),
-+.D(a_reg[2]),
-+.Q(a_reg2[2]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[0]  /* _4615_ */ (
-+\$_SDFF_PP0_  \a_reg2_reg[3]  /* _4601_ */ (
-+.C(clk),
-+.D(a_reg[3]),
-+.Q(a_reg2[3]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[4]  /* _4602_ */ (
-+.C(clk),
-+.D(a_reg[4]),
-+.Q(a_reg2[4]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[5]  /* _4603_ */ (
-+.C(clk),
-+.D(a_reg[5]),
-+.Q(a_reg2[5]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[6]  /* _4604_ */ (
-+.C(clk),
-+.D(a_reg[6]),
-+.Q(a_reg2[6]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[7]  /* _4605_ */ (
-+.C(clk),
-+.D(a_reg[7]),
-+.Q(a_reg2[7]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[8]  /* _4606_ */ (
-+.C(clk),
-+.D(a_reg[8]),
-+.Q(a_reg2[8]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[9]  /* _4607_ */ (
-+.C(clk),
-+.D(a_reg[9]),
-+.Q(a_reg2[9]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[10]  /* _4608_ */ (
-+.C(clk),
-+.D(a_reg[10]),
-+.Q(a_reg2[10]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[11]  /* _4609_ */ (
-+.C(clk),
-+.D(a_reg[11]),
-+.Q(a_reg2[11]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[12]  /* _4610_ */ (
-+.C(clk),
-+.D(a_reg[12]),
-+.Q(a_reg2[12]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[13]  /* _4611_ */ (
-+.C(clk),
-+.D(a_reg[13]),
-+.Q(a_reg2[13]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[14]  /* _4612_ */ (
-+.C(clk),
-+.D(a_reg[14]),
-+.Q(a_reg2[14]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \a_reg2_reg[15]  /* _4613_ */ (
-+.C(clk),
-+.D(a_reg[15]),
-+.Q(a_reg2[15]),
-+.R(rst)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  \b_reg_reg[0]  /* _4614_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[0]  /* _4615_ */ (
  .C(clk),
- .D(b[0]),
- .Q(b_reg[0]),
+-.D(b[0]),
+-.Q(b_reg[0]),
++.D(a_reg[0]),
++.Q(a_reg2[0]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[1]  /* _4616_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[1]  /* _4615_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[1]  /* _4616_ */ (
  .C(clk),
- .D(b[1]),
- .Q(b_reg[1]),
+-.D(b[1]),
+-.Q(b_reg[1]),
++.D(a_reg[1]),
++.Q(a_reg2[1]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[2]  /* _4617_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[2]  /* _4616_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[2]  /* _4617_ */ (
  .C(clk),
- .D(b[2]),
- .Q(b_reg[2]),
+-.D(b[2]),
+-.Q(b_reg[2]),
++.D(a_reg[2]),
++.Q(a_reg2[2]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[3]  /* _4618_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[3]  /* _4617_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[3]  /* _4618_ */ (
  .C(clk),
- .D(b[3]),
- .Q(b_reg[3]),
+-.D(b[3]),
+-.Q(b_reg[3]),
++.D(a_reg[3]),
++.Q(a_reg2[3]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[4]  /* _4619_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[4]  /* _4618_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[4]  /* _4619_ */ (
  .C(clk),
- .D(b[4]),
- .Q(b_reg[4]),
+-.D(b[4]),
+-.Q(b_reg[4]),
++.D(a_reg[4]),
++.Q(a_reg2[4]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[5]  /* _4620_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[5]  /* _4619_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[5]  /* _4620_ */ (
  .C(clk),
- .D(b[5]),
- .Q(b_reg[5]),
+-.D(b[5]),
+-.Q(b_reg[5]),
++.D(a_reg[5]),
++.Q(a_reg2[5]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[6]  /* _4621_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[6]  /* _4620_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[6]  /* _4621_ */ (
  .C(clk),
- .D(b[6]),
- .Q(b_reg[6]),
+-.D(b[6]),
+-.Q(b_reg[6]),
++.D(a_reg[6]),
++.Q(a_reg2[6]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[7]  /* _4622_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[7]  /* _4621_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[7]  /* _4622_ */ (
  .C(clk),
- .D(b[7]),
- .Q(b_reg[7]),
+-.D(b[7]),
+-.Q(b_reg[7]),
++.D(a_reg[7]),
++.Q(a_reg2[7]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[8]  /* _4623_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[8]  /* _4622_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[8]  /* _4623_ */ (
  .C(clk),
- .D(b[8]),
- .Q(b_reg[8]),
+-.D(b[8]),
+-.Q(b_reg[8]),
++.D(a_reg[8]),
++.Q(a_reg2[8]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[9]  /* _4624_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[9]  /* _4623_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[9]  /* _4624_ */ (
  .C(clk),
- .D(b[9]),
- .Q(b_reg[9]),
+-.D(b[9]),
+-.Q(b_reg[9]),
++.D(a_reg[9]),
++.Q(a_reg2[9]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[10]  /* _4625_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[10]  /* _4624_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[10]  /* _4625_ */ (
  .C(clk),
- .D(b[10]),
- .Q(b_reg[10]),
+-.D(b[10]),
+-.Q(b_reg[10]),
++.D(a_reg[10]),
++.Q(a_reg2[10]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[11]  /* _4626_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[11]  /* _4625_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[11]  /* _4626_ */ (
  .C(clk),
- .D(b[11]),
- .Q(b_reg[11]),
+-.D(b[11]),
+-.Q(b_reg[11]),
++.D(a_reg[11]),
++.Q(a_reg2[11]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[12]  /* _4627_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[12]  /* _4626_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[12]  /* _4627_ */ (
  .C(clk),
- .D(b[12]),
- .Q(b_reg[12]),
+-.D(b[12]),
+-.Q(b_reg[12]),
++.D(a_reg[12]),
++.Q(a_reg2[12]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[13]  /* _4628_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[13]  /* _4627_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[13]  /* _4628_ */ (
  .C(clk),
- .D(b[13]),
- .Q(b_reg[13]),
+-.D(b[13]),
+-.Q(b_reg[13]),
++.D(a_reg[13]),
++.Q(a_reg2[13]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[14]  /* _4629_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[14]  /* _4628_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[14]  /* _4629_ */ (
  .C(clk),
- .D(b[14]),
- .Q(b_reg[14]),
+-.D(b[14]),
+-.Q(b_reg[14]),
++.D(a_reg[14]),
++.Q(a_reg2[14]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
 -\$_SDFF_PP0_  \b_reg_reg[15]  /* _4630_ */ (
-+\$_SDFF_PP0_  \b_reg_reg[15]  /* _4629_ */ (
++\$_SDFF_PP0_  \a_reg2_reg[15]  /* _4630_ */ (
  .C(clk),
- .D(b[15]),
- .Q(b_reg[15]),
+-.D(b[15]),
+-.Q(b_reg[15]),
++.D(a_reg[15]),
++.Q(a_reg2[15]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[0]  /* _4631_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[0]  /* _4630_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[0]  /* _4631_ */ (
  .C(clk),
- .D(a[0]),
+@@ -14624,6 +14754,7 @@
  .Q(a_reg[0]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[1]  /* _4632_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[1]  /* _4631_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[1]  /* _4632_ */ (
  .C(clk),
- .D(a[1]),
+@@ -14631,6 +14762,7 @@
  .Q(a_reg[1]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[2]  /* _4633_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[2]  /* _4632_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[2]  /* _4633_ */ (
  .C(clk),
- .D(a[2]),
+@@ -14638,6 +14770,7 @@
  .Q(a_reg[2]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[3]  /* _4634_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[3]  /* _4633_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[3]  /* _4634_ */ (
  .C(clk),
- .D(a[3]),
+@@ -14645,6 +14778,7 @@
  .Q(a_reg[3]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[4]  /* _4635_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[4]  /* _4634_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[4]  /* _4635_ */ (
  .C(clk),
- .D(a[4]),
+@@ -14652,6 +14786,7 @@
  .Q(a_reg[4]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[5]  /* _4636_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[5]  /* _4635_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[5]  /* _4636_ */ (
  .C(clk),
- .D(a[5]),
+@@ -14659,6 +14794,7 @@
  .Q(a_reg[5]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[6]  /* _4637_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[6]  /* _4636_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[6]  /* _4637_ */ (
  .C(clk),
- .D(a[6]),
+@@ -14666,6 +14802,7 @@
  .Q(a_reg[6]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[7]  /* _4638_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[7]  /* _4637_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[7]  /* _4638_ */ (
  .C(clk),
- .D(a[7]),
+@@ -14673,6 +14810,7 @@
  .Q(a_reg[7]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[8]  /* _4639_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[8]  /* _4638_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[8]  /* _4639_ */ (
  .C(clk),
- .D(a[8]),
+@@ -14680,6 +14818,7 @@
  .Q(a_reg[8]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[9]  /* _4640_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[9]  /* _4639_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[9]  /* _4640_ */ (
  .C(clk),
- .D(a[9]),
+@@ -14687,6 +14826,7 @@
  .Q(a_reg[9]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[10]  /* _4641_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[10]  /* _4640_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[10]  /* _4641_ */ (
  .C(clk),
- .D(a[10]),
+@@ -14694,6 +14834,7 @@
  .Q(a_reg[10]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[11]  /* _4642_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[11]  /* _4641_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[11]  /* _4642_ */ (
  .C(clk),
- .D(a[11]),
+@@ -14701,6 +14842,7 @@
  .Q(a_reg[11]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[12]  /* _4643_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[12]  /* _4642_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[12]  /* _4643_ */ (
  .C(clk),
- .D(a[12]),
+@@ -14708,6 +14850,7 @@
  .Q(a_reg[12]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[13]  /* _4644_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[13]  /* _4643_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[13]  /* _4644_ */ (
  .C(clk),
- .D(a[13]),
+@@ -14715,6 +14858,7 @@
  .Q(a_reg[13]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[14]  /* _4645_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[14]  /* _4644_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[14]  /* _4645_ */ (
  .C(clk),
- .D(a[14]),
+@@ -14722,6 +14866,7 @@
  .Q(a_reg[14]),
  .R(rst)
  );
 +(* \always_ff  = 32'd1 *)
  (* src = "dut.sv:57.1-78.4" *)
--\$_SDFF_PP0_  \a_reg_reg[15]  /* _4646_ */ (
-+\$_SDFF_PP0_  \a_reg_reg[15]  /* _4645_ */ (
+ \$_SDFF_PP0_  \a_reg_reg[15]  /* _4646_ */ (
  .C(clk),
- .D(a[15]),
- .Q(a_reg[15]),
- .R(rst)
- );
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:57.1-78.4" *)
-+\$_SDFF_PP0_  overflow_reg_reg /* _4646_ */ (
-+.C(clk),
-+.D(overflow),
-+.Q(overflow_reg),
-+.R(rst)
-+);
- assign _2200_[3:0] = { _2199_[3], _2198_[2], _2197_[1], _2196_[0] };
- assign _2199_[2:0] = { _2198_[2], _2197_[1], _2196_[0] };
- assign _2198_[1:0] = { _2197_[1], _2196_[0] };

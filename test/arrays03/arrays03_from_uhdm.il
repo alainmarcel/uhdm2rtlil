@@ -14,9 +14,10 @@ module \pcktest4
   wire width 2 input 3 \ix
   attribute \src "dut.sv:44.19-44.22"
   wire width 8 output 4 \out
+  attribute \src "dut.sv:46.5-48.8"
+  wire width 8 $0\out
   attribute \unused_bits "29 30 31"
   wire width 32 $auto$expression.cpp:3272:import_bit_select$23
-  wire width 8 $auto$expression.cpp:3321:import_bit_select$27
   attribute \src "dut.sv:47.19-47.21"
   cell $sub $sub$dut.sv:47$24
     parameter \A_SIGNED 0
@@ -33,7 +34,7 @@ module \pcktest4
   cell $dff $procdff$29
     parameter \WIDTH 8
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:3321:import_bit_select$27
+    connect \D $0\out
     connect \Q \out
     connect \CLK \clk
   end
@@ -46,6 +47,6 @@ module \pcktest4
     parameter \Y_WIDTH 8
     connect \A \in
     connect \B { $auto$expression.cpp:3272:import_bit_select$23 [28:0] 3'000 }
-    connect \Y $auto$expression.cpp:3321:import_bit_select$27
+    connect \Y $0\out
   end
 end

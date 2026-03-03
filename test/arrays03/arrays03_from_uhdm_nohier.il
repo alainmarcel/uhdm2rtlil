@@ -14,6 +14,8 @@ module \pcktest1
   wire width 2 input 3 \ix
   attribute \src "dut.sv:11.19-11.22"
   wire width 8 output 4 \out
+  attribute \src "dut.sv:13.5-15.8"
+  wire width 8 $0\out
   wire width 32 $auto$expression.cpp:3272:import_bit_select$2
   wire width 32 $auto$expression.cpp:3285:import_bit_select$4
   wire width 8 $auto$expression.cpp:3321:import_bit_select$6
@@ -53,8 +55,10 @@ module \pcktest1
   attribute \src "dut.sv:13.5-15.8"
   attribute \always_ff 1
   process $proc$dut.sv:13$1
+    assign $0\out \out
+    assign $0\out $auto$expression.cpp:3321:import_bit_select$6
     sync posedge \clk
-      update \out $auto$expression.cpp:3321:import_bit_select$6
+      update \out $0\out
   end
 end
 attribute \cells_not_processed 1
@@ -71,6 +75,8 @@ module \pcktest2
   wire width 2 input 3 \ix
   attribute \src "dut.sv:22.19-22.22"
   wire width 8 output 4 \out
+  attribute \src "dut.sv:24.5-26.8"
+  wire width 8 $0\out
   wire width 32 $auto$expression.cpp:3272:import_bit_select$9
   wire width 32 $auto$expression.cpp:3285:import_bit_select$11
   wire width 8 $auto$expression.cpp:3321:import_bit_select$13
@@ -110,8 +116,10 @@ module \pcktest2
   attribute \src "dut.sv:24.5-26.8"
   attribute \always_ff 1
   process $proc$dut.sv:24$8
+    assign $0\out \out
+    assign $0\out $auto$expression.cpp:3321:import_bit_select$13
     sync posedge \clk
-      update \out $auto$expression.cpp:3321:import_bit_select$13
+      update \out $0\out
   end
 end
 attribute \cells_not_processed 1
@@ -128,6 +136,8 @@ module \pcktest3
   wire width 2 input 3 \ix
   attribute \src "dut.sv:33.19-33.22"
   wire width 8 output 4 \out
+  attribute \src "dut.sv:35.5-37.8"
+  wire width 8 $0\out
   wire width 32 $auto$expression.cpp:3272:import_bit_select$16
   wire width 32 $auto$expression.cpp:3285:import_bit_select$18
   wire width 8 $auto$expression.cpp:3321:import_bit_select$20
@@ -167,8 +177,10 @@ module \pcktest3
   attribute \src "dut.sv:35.5-37.8"
   attribute \always_ff 1
   process $proc$dut.sv:35$15
+    assign $0\out \out
+    assign $0\out $auto$expression.cpp:3321:import_bit_select$20
     sync posedge \clk
-      update \out $auto$expression.cpp:3321:import_bit_select$20
+      update \out $0\out
   end
 end
 attribute \cells_not_processed 1
@@ -185,6 +197,8 @@ module \pcktest4
   wire width 2 input 3 \ix
   attribute \src "dut.sv:44.19-44.22"
   wire width 8 output 4 \out
+  attribute \src "dut.sv:46.5-48.8"
+  wire width 8 $0\out
   wire width 32 $auto$expression.cpp:3272:import_bit_select$23
   wire width 32 $auto$expression.cpp:3285:import_bit_select$25
   wire width 8 $auto$expression.cpp:3321:import_bit_select$27
@@ -224,7 +238,9 @@ module \pcktest4
   attribute \src "dut.sv:46.5-48.8"
   attribute \always_ff 1
   process $proc$dut.sv:46$22
+    assign $0\out \out
+    assign $0\out $auto$expression.cpp:3321:import_bit_select$27
     sync posedge \clk
-      update \out $auto$expression.cpp:3321:import_bit_select$27
+      update \out $0\out
   end
 end

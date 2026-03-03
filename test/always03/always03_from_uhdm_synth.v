@@ -36,41 +36,43 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   (* src = "dut.sv:1.71-1.75" *)
   output out3;
   wire out3;
+  (* src = "dut.sv:7.1-20.4" *)
   wire _00_;
-  (* src = "dut.sv:18.4-18.15" *)
   wire _01_;
   wire _02_;
   wire _03_;
-  wire _04_;
-  \$_XOR_  _05_ (
+  \$_MUX_  _04_ (
+    .A(in7),
+    .B(in6),
+    .S(in5),
+    .Y(_03_)
+  );
+  \$_NOT_  _05_ (
+    .A(out1),
+    .Y(_01_)
+  );
+  \$_XOR_  _06_ (
     .A(out2),
     .B(out1),
     .Y(_02_)
   );
-  \$_ANDNOT_  _06_ (
-    .A(in4),
-    .B(in5),
-    .Y(_03_)
-  );
   \$_MUX_  _07_ (
-    .A(in6),
-    .B(in7),
-    .S(_03_),
-    .Y(_01_)
-  );
-  \$_AND_  _08_ (
-    .A(in5),
-    .B(in4),
-    .Y(_04_)
-  );
-  \$_OR_  _09_ (
-    .A(_04_),
-    .B(_03_),
+    .A(_02_),
+    .B(_01_),
+    .S(in2),
     .Y(_00_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-20.4" *)
-  \$_DFFE_PN_  out2_reg /* _10_ */ (
+  \$_DFFE_PP_  out3_reg /* _08_ */ (
+    .C(clock),
+    .D(_03_),
+    .E(in4),
+    .Q(out3)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:7.1-20.4" *)
+  \$_DFFE_PN_  out2_reg /* _09_ */ (
     .C(clock),
     .D(out1),
     .E(in3),
@@ -78,17 +80,9 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-20.4" *)
-  \$_DFFE_PP_  out3_reg /* _11_ */ (
+  \$_DFF_P_  out1_reg /* _10_ */ (
     .C(clock),
-    .D(_01_),
-    .E(_00_),
-    .Q(out3)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:7.1-20.4" *)
-  \$_DFF_P_  out1_reg /* _12_ */ (
-    .C(clock),
-    .D(_02_),
+    .D(_00_),
     .Q(out1)
   );
 endmodule

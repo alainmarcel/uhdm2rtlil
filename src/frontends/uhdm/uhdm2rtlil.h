@@ -299,6 +299,10 @@ struct UhdmImporter {
     
     // Track current process context for assertions
     bool in_always_ff_context = false;
+
+    // When true, suppress current_comb_values read/write so that
+    // always_ff body processing uses original register values (NB semantics)
+    bool in_always_ff_body_mode = false;
     
     // Function call stack for recursive function support
     FunctionCallStack function_call_stack;

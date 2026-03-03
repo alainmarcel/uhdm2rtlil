@@ -46,6 +46,8 @@ module \gen_test1
   wire $auto$rtlil.cc:3386:And$30
   wire $auto$rtlil.cc:3387:Or$32
   wire width 5 \gen3[0].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[0:0]
   wire $auto$rtlil.cc:3344:ReduceXor$35
   wire \gen3[0].gen4[0].tmpbuf
   wire \gen3[0].gen4[1].tmpbuf
@@ -53,6 +55,8 @@ module \gen_test1
   wire \gen3[0].gen4[3].tmpbuf
   wire \gen3[0].gen4[4].tmpbuf
   wire width 5 \gen3[1].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[1:1]
   wire $auto$rtlil.cc:3344:ReduceXor$38
   wire \gen3[1].gen4[0].tmpbuf
   wire \gen3[1].gen4[1].tmpbuf
@@ -60,6 +64,8 @@ module \gen_test1
   wire \gen3[1].gen4[3].tmpbuf
   wire \gen3[1].gen4[4].tmpbuf
   wire width 5 \gen3[2].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[2:2]
   wire $auto$rtlil.cc:3344:ReduceXor$41
   wire \gen3[2].gen4[0].tmpbuf
   wire \gen3[2].gen4[1].tmpbuf
@@ -67,6 +73,8 @@ module \gen_test1
   wire \gen3[2].gen4[3].tmpbuf
   wire \gen3[2].gen4[4].tmpbuf
   wire width 5 \gen3[3].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[3:3]
   wire $auto$rtlil.cc:3344:ReduceXor$44
   wire \gen3[3].gen4[0].tmpbuf
   wire \gen3[3].gen4[1].tmpbuf
@@ -74,6 +82,8 @@ module \gen_test1
   wire \gen3[3].gen4[3].tmpbuf
   wire \gen3[3].gen4[4].tmpbuf
   wire width 5 \gen3[4].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[4:4]
   wire $auto$rtlil.cc:3344:ReduceXor$47
   wire \gen3[4].gen4[0].tmpbuf
   wire \gen3[4].gen4[1].tmpbuf
@@ -81,6 +91,8 @@ module \gen_test1
   wire \gen3[4].gen4[3].tmpbuf
   wire \gen3[4].gen4[4].tmpbuf
   wire width 5 \gen3[5].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[5:5]
   wire $auto$rtlil.cc:3344:ReduceXor$50
   wire \gen3[5].gen4[0].tmpbuf
   wire \gen3[5].gen4[1].tmpbuf
@@ -88,6 +100,8 @@ module \gen_test1
   wire \gen3[5].gen4[3].tmpbuf
   wire \gen3[5].gen4[4].tmpbuf
   wire width 5 \gen3[6].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[6:6]
   wire $auto$rtlil.cc:3344:ReduceXor$53
   wire \gen3[6].gen4[0].tmpbuf
   wire \gen3[6].gen4[1].tmpbuf
@@ -95,6 +109,8 @@ module \gen_test1
   wire \gen3[6].gen4[3].tmpbuf
   wire \gen3[6].gen4[4].tmpbuf
   wire width 5 \gen3[7].tmp2
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[7:7]
   wire $auto$rtlil.cc:3344:ReduceXor$56
   wire \gen3[7].gen4[0].tmpbuf
   wire \gen3[7].gen4[1].tmpbuf
@@ -320,50 +336,66 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$33
+    assign $0\y[0:0] \y [0]
+    assign $0\y[0:0] $auto$rtlil.cc:3344:ReduceXor$35
     sync posedge \clk
-      update \y [0] $auto$rtlil.cc:3344:ReduceXor$35
+      update \y [0] $0\y[0:0]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$36
+    assign $0\y[1:1] \y [1]
+    assign $0\y[1:1] $auto$rtlil.cc:3344:ReduceXor$38
     sync posedge \clk
-      update \y [1] $auto$rtlil.cc:3344:ReduceXor$38
+      update \y [1] $0\y[1:1]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$39
+    assign $0\y[2:2] \y [2]
+    assign $0\y[2:2] $auto$rtlil.cc:3344:ReduceXor$41
     sync posedge \clk
-      update \y [2] $auto$rtlil.cc:3344:ReduceXor$41
+      update \y [2] $0\y[2:2]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$42
+    assign $0\y[3:3] \y [3]
+    assign $0\y[3:3] $auto$rtlil.cc:3344:ReduceXor$44
     sync posedge \clk
-      update \y [3] $auto$rtlil.cc:3344:ReduceXor$44
+      update \y [3] $0\y[3:3]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$45
+    assign $0\y[4:4] \y [4]
+    assign $0\y[4:4] $auto$rtlil.cc:3344:ReduceXor$47
     sync posedge \clk
-      update \y [4] $auto$rtlil.cc:3344:ReduceXor$47
+      update \y [4] $0\y[4:4]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$48
+    assign $0\y[5:5] \y [5]
+    assign $0\y[5:5] $auto$rtlil.cc:3344:ReduceXor$50
     sync posedge \clk
-      update \y [5] $auto$rtlil.cc:3344:ReduceXor$50
+      update \y [5] $0\y[5:5]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$51
+    assign $0\y[6:6] \y [6]
+    assign $0\y[6:6] $auto$rtlil.cc:3344:ReduceXor$53
     sync posedge \clk
-      update \y [6] $auto$rtlil.cc:3344:ReduceXor$53
+      update \y [6] $0\y[6:6]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$54
+    assign $0\y[7:7] \y [7]
+    assign $0\y[7:7] $auto$rtlil.cc:3344:ReduceXor$56
     sync posedge \clk
-      update \y [7] $auto$rtlil.cc:3344:ReduceXor$56
+      update \y [7] $0\y[7:7]
   end
   connect \tmp1 [0] \gen1[0].and_wire
   connect \tmp1 [8] \gen1[0].or_wire

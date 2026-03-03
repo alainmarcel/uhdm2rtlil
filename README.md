@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 150 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (150/150 tests functional)
-- **Passing**: 146 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 151 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (151/151 tests functional)
+- **Passing**: 147 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
 - **Known Failures**: None — all tests passing
 - **Recent Additions**:
+  - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
   - `func_typename_ret` - Functions whose return type is a typedef (local or package-scoped): `function automatic T func1` where `T = logic[1:0]` and `function automatic P::S func2` where `P::S = logic[3:0]`; verifies correct width and sign extension of signed parameters assigned to typedef'd return variables
   - `int_types` - Integer atom types (`integer`, `int`, `shortint`, `longint`, `byte`) and integer vector types (`logic`, `reg`, `bit`) in generate blocks, with signed/unsigned variants; verifies correct widths, signedness, sign/zero extension when assigned to wider 128-bit wires; required fixes for **temp wire dedup key**, **sign extension in process assignments**, and **generate scope variable initialization** from `vpiExpr`
   - `net_types` - `wire`/`wand`/`wor` net types with `logic`, `integer`, and typedef data types; verifies correct multi-driver AND/OR resolution for all type combinations and correct `\wand`/`\wor` Yosys attributes; required a **Surelog fix** (see Recent Fixes)
@@ -51,6 +52,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `fsm2` / `always_ff` RTLIL process structure — `import_always_ff` now generates a proper `switch`/`case` structure inside the process body (matching the Verilog frontend) instead of pre-computing all combinational logic as mux cells outside the process ✅
+    - **Root cause**: The previous implementation used `import_statement_sync` → `pending_sync_assignments`, which created a flat list of mux cells in the module and a sync rule pointing to the final mux outputs — a structurally very different representation compared to the Verilog frontend's `switch`/`case` inside the process
+    - **Fix**: Replaced the "no memory writes" path in `import_always_ff` with the same `$0\temp-wire` + `import_statement_comb` approach used by `import_always_comb`; added `in_always_ff_body_mode` flag to suppress `current_comb_values` reads/writes during the body, enforcing non-blocking assignment semantics (all RHS expressions see original register values, not intermediate `$0\` values)
+    - **Result**: Gate count dropped from 109→83 (matching the Verilog frontend), formal equivalence passes, and FSM extraction/optimization passes can now recognize the register structure
   - `func_typename_ret` — functions with typedef return types now correctly sign-extend signed parameters when Surelog const-folds the call ✅
     - **Root cause**: Surelog evaluates `func1(1'b1)` at elaboration and stores the result as `BIN:1, vpiSize:2` (with `inp` as `input reg signed inp`, 1-bit signed = -1). The raw bits `1` zero-padded to 2 bits gives `2'b01 = 1` instead of the correct sign-extended `2'b11 = 3`
     - **Key insight**: Even though Surelog doesn't set `VpiSigned()` on the `io_decl`, the folded constant's `vpiTypespec → ref_typespec → logic_typespec` still has `VpiSigned():true` from the signed parameter declaration

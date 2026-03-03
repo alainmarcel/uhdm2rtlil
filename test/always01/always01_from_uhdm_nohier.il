@@ -9,6 +9,8 @@ module \always01
   wire input 2 \reset
   attribute \src "dut.sv:1.31-1.36"
   wire width 4 output 3 \count
+  attribute \src "dut.sv:7.1-8.34"
+  wire width 4 $0\count
   wire width 64 $auto$expression.cpp:2162:import_operation$2
   wire width 64 $auto$rtlil.cc:3474:Mux$5
   cell $add $add$dut.sv:8$3
@@ -31,7 +33,9 @@ module \always01
   attribute \src "dut.sv:7.1-8.34"
   attribute \always_ff 1
   process $proc$dut.sv:7$1
+    assign $0\count \count
+    assign $0\count $auto$rtlil.cc:3474:Mux$5 [3:0]
     sync posedge \clock
-      update \count $auto$rtlil.cc:3474:Mux$5 [3:0]
+      update \count $0\count
   end
 end

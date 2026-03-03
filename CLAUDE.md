@@ -167,7 +167,7 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 150 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 151 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
 
 ### Signedness Handling
 
@@ -236,6 +236,18 @@ All 150 tests are currently passing (0 failures). `test/failing_tests.txt` is em
 - `ElaborationStep.cpp` `bindPortType_`: for typedef-named logics, calls `sig->setType(paIntVec_TypeLogic)` which OVERWRITES `m_type` — that's why `m_subNetType` as a separate field is essential
 - `module.cpp` `import_net`: added `wiretype` attribute for `logic_typespec` with non-empty `VpiName` (handles typedef'd logic nets like `wire`/`wand`/`wor` with a typename)
 - Result: `wand integer` and `wand typename` correctly appear as `logic_net` with `VpiNetType=vpiWand=2` in TopModules
+
+### Always FF RTLIL Process Structure (`import_always_ff`)
+
+- **Goal**: `import_always_ff` must produce a proper RTLIL process with `switch`/`case` structure inside the body (matching the Verilog frontend), NOT mux cells outside the process
+- **Old approach** (wrong): `import_statement_sync` → `pending_sync_assignments` → flat mux-cell chains; produced 109 gates vs Verilog's 83 for a simple FSM
+- **New approach** (correct): same `$0\temp-wire` + `import_statement_comb` pattern as `import_always_comb`, but with a posedge sync rule instead of STa
+- **Non-blocking semantics**: `in_always_ff_body_mode = true` flag suppresses `current_comb_values` reads/writes during body processing; ensures all RHS expressions see original register values (not updated `$0\` values), matching SystemVerilog's non-blocking assignment semantics
+  - Guards in `emit_comb_assign`: skip `current_comb_values[signal] = rhs` when flag is set
+  - Guards in `import_assignment_comb`: skip passing `&current_comb_values` to `import_expression` when flag is set
+- **Hold defaults**: add `$0\x = \x` to `root_case.actions` for ALL assigned signals before body processing; ensures registers hold value when conditionally assigned; body's unconditional assignments override the hold via later entries in `root_case.actions`
+- **Structure**: `root_case.actions` (defaults) → `switch` statements (from body) → `sync posedge \clk: update \x $0\x`
+- **`in_always_ff_context`** flag (separate): still used for assertion handling; not the same as `in_always_ff_body_mode`
 
 ### For Loop Unrolling in Always Blocks
 

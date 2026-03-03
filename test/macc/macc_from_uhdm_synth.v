@@ -13773,335 +13773,15 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[0]  /* _4509_ */ (
+  \$_SDFF_PP0_  overflow_reg_reg /* _4509_ */ (
     .C(clk),
-    .D(_2194_[0]),
-    .Q(adder_out[0]),
+    .D(overflow),
+    .Q(overflow_reg),
     .R(rst)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[1]  /* _4510_ */ (
-    .C(clk),
-    .D(_2195_[1]),
-    .Q(adder_out[1]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[2]  /* _4511_ */ (
-    .C(clk),
-    .D(_2195_[2]),
-    .Q(adder_out[2]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[3]  /* _4512_ */ (
-    .C(clk),
-    .D(_2195_[3]),
-    .Q(adder_out[3]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[4]  /* _4513_ */ (
-    .C(clk),
-    .D(_2195_[4]),
-    .Q(adder_out[4]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[5]  /* _4514_ */ (
-    .C(clk),
-    .D(_2195_[5]),
-    .Q(adder_out[5]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[6]  /* _4515_ */ (
-    .C(clk),
-    .D(_2195_[6]),
-    .Q(adder_out[6]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[7]  /* _4516_ */ (
-    .C(clk),
-    .D(_2195_[7]),
-    .Q(adder_out[7]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[8]  /* _4517_ */ (
-    .C(clk),
-    .D(_2195_[8]),
-    .Q(adder_out[8]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[9]  /* _4518_ */ (
-    .C(clk),
-    .D(_2195_[9]),
-    .Q(adder_out[9]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[10]  /* _4519_ */ (
-    .C(clk),
-    .D(_2195_[10]),
-    .Q(adder_out[10]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[11]  /* _4520_ */ (
-    .C(clk),
-    .D(_2195_[11]),
-    .Q(adder_out[11]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[12]  /* _4521_ */ (
-    .C(clk),
-    .D(_2195_[12]),
-    .Q(adder_out[12]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[13]  /* _4522_ */ (
-    .C(clk),
-    .D(_2195_[13]),
-    .Q(adder_out[13]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[14]  /* _4523_ */ (
-    .C(clk),
-    .D(_2195_[14]),
-    .Q(adder_out[14]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[15]  /* _4524_ */ (
-    .C(clk),
-    .D(_2195_[15]),
-    .Q(adder_out[15]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[16]  /* _4525_ */ (
-    .C(clk),
-    .D(_2195_[16]),
-    .Q(adder_out[16]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[17]  /* _4526_ */ (
-    .C(clk),
-    .D(_2195_[17]),
-    .Q(adder_out[17]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[18]  /* _4527_ */ (
-    .C(clk),
-    .D(_2195_[18]),
-    .Q(adder_out[18]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[19]  /* _4528_ */ (
-    .C(clk),
-    .D(_2195_[19]),
-    .Q(adder_out[19]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[20]  /* _4529_ */ (
-    .C(clk),
-    .D(_2195_[20]),
-    .Q(adder_out[20]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[21]  /* _4530_ */ (
-    .C(clk),
-    .D(_2195_[21]),
-    .Q(adder_out[21]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[22]  /* _4531_ */ (
-    .C(clk),
-    .D(_2195_[22]),
-    .Q(adder_out[22]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[23]  /* _4532_ */ (
-    .C(clk),
-    .D(_2195_[23]),
-    .Q(adder_out[23]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[24]  /* _4533_ */ (
-    .C(clk),
-    .D(_2195_[24]),
-    .Q(adder_out[24]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[25]  /* _4534_ */ (
-    .C(clk),
-    .D(_2195_[25]),
-    .Q(adder_out[25]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[26]  /* _4535_ */ (
-    .C(clk),
-    .D(_2195_[26]),
-    .Q(adder_out[26]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[27]  /* _4536_ */ (
-    .C(clk),
-    .D(_2195_[27]),
-    .Q(adder_out[27]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[28]  /* _4537_ */ (
-    .C(clk),
-    .D(_2195_[28]),
-    .Q(adder_out[28]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[29]  /* _4538_ */ (
-    .C(clk),
-    .D(_2195_[29]),
-    .Q(adder_out[29]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[30]  /* _4539_ */ (
-    .C(clk),
-    .D(_2195_[30]),
-    .Q(adder_out[30]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[31]  /* _4540_ */ (
-    .C(clk),
-    .D(_2195_[31]),
-    .Q(adder_out[31]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[32]  /* _4541_ */ (
-    .C(clk),
-    .D(_2195_[32]),
-    .Q(adder_out[32]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[33]  /* _4542_ */ (
-    .C(clk),
-    .D(_2195_[33]),
-    .Q(adder_out[33]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[34]  /* _4543_ */ (
-    .C(clk),
-    .D(_2195_[34]),
-    .Q(adder_out[34]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[35]  /* _4544_ */ (
-    .C(clk),
-    .D(_2195_[35]),
-    .Q(adder_out[35]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[36]  /* _4545_ */ (
-    .C(clk),
-    .D(_2195_[36]),
-    .Q(adder_out[36]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[37]  /* _4546_ */ (
-    .C(clk),
-    .D(_2195_[37]),
-    .Q(adder_out[37]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[38]  /* _4547_ */ (
-    .C(clk),
-    .D(_2195_[38]),
-    .Q(adder_out[38]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[39]  /* _4548_ */ (
-    .C(clk),
-    .D(_2195_[39]),
-    .Q(adder_out[39]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \adder_out_reg[40]  /* _4549_ */ (
-    .C(clk),
-    .D(_2195_[40]),
-    .Q(adder_out[40]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[0]  /* _4550_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[0]  /* _4510_ */ (
     .C(clk),
     .D(_2196_[0]),
     .Q(mult_reg[0]),
@@ -14109,7 +13789,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[1]  /* _4551_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[1]  /* _4511_ */ (
     .C(clk),
     .D(_2197_[1]),
     .Q(mult_reg[1]),
@@ -14117,7 +13797,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[2]  /* _4552_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[2]  /* _4512_ */ (
     .C(clk),
     .D(_2198_[2]),
     .Q(mult_reg[2]),
@@ -14125,7 +13805,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[3]  /* _4553_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[3]  /* _4513_ */ (
     .C(clk),
     .D(_2199_[3]),
     .Q(mult_reg[3]),
@@ -14133,7 +13813,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[4]  /* _4554_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[4]  /* _4514_ */ (
     .C(clk),
     .D(_2200_[4]),
     .Q(mult_reg[4]),
@@ -14141,7 +13821,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[5]  /* _4555_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[5]  /* _4515_ */ (
     .C(clk),
     .D(_2200_[5]),
     .Q(mult_reg[5]),
@@ -14149,7 +13829,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[6]  /* _4556_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[6]  /* _4516_ */ (
     .C(clk),
     .D(_2200_[6]),
     .Q(mult_reg[6]),
@@ -14157,7 +13837,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[7]  /* _4557_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[7]  /* _4517_ */ (
     .C(clk),
     .D(_2200_[7]),
     .Q(mult_reg[7]),
@@ -14165,7 +13845,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[8]  /* _4558_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[8]  /* _4518_ */ (
     .C(clk),
     .D(_2200_[8]),
     .Q(mult_reg[8]),
@@ -14173,7 +13853,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[9]  /* _4559_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[9]  /* _4519_ */ (
     .C(clk),
     .D(_2200_[9]),
     .Q(mult_reg[9]),
@@ -14181,7 +13861,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[10]  /* _4560_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[10]  /* _4520_ */ (
     .C(clk),
     .D(_2200_[10]),
     .Q(mult_reg[10]),
@@ -14189,7 +13869,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[11]  /* _4561_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[11]  /* _4521_ */ (
     .C(clk),
     .D(_2200_[11]),
     .Q(mult_reg[11]),
@@ -14197,7 +13877,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[12]  /* _4562_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[12]  /* _4522_ */ (
     .C(clk),
     .D(_2200_[12]),
     .Q(mult_reg[12]),
@@ -14205,7 +13885,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[13]  /* _4563_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[13]  /* _4523_ */ (
     .C(clk),
     .D(_2200_[13]),
     .Q(mult_reg[13]),
@@ -14213,7 +13893,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[14]  /* _4564_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[14]  /* _4524_ */ (
     .C(clk),
     .D(_2200_[14]),
     .Q(mult_reg[14]),
@@ -14221,7 +13901,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[15]  /* _4565_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[15]  /* _4525_ */ (
     .C(clk),
     .D(_2200_[15]),
     .Q(mult_reg[15]),
@@ -14229,7 +13909,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[16]  /* _4566_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[16]  /* _4526_ */ (
     .C(clk),
     .D(_2200_[16]),
     .Q(mult_reg[16]),
@@ -14237,7 +13917,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[17]  /* _4567_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[17]  /* _4527_ */ (
     .C(clk),
     .D(_2200_[17]),
     .Q(mult_reg[17]),
@@ -14245,7 +13925,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[18]  /* _4568_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[18]  /* _4528_ */ (
     .C(clk),
     .D(_2200_[18]),
     .Q(mult_reg[18]),
@@ -14253,7 +13933,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[19]  /* _4569_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[19]  /* _4529_ */ (
     .C(clk),
     .D(_2200_[19]),
     .Q(mult_reg[19]),
@@ -14261,7 +13941,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[20]  /* _4570_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[20]  /* _4530_ */ (
     .C(clk),
     .D(_2200_[20]),
     .Q(mult_reg[20]),
@@ -14269,7 +13949,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[21]  /* _4571_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[21]  /* _4531_ */ (
     .C(clk),
     .D(_2200_[21]),
     .Q(mult_reg[21]),
@@ -14277,7 +13957,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[22]  /* _4572_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[22]  /* _4532_ */ (
     .C(clk),
     .D(_2200_[22]),
     .Q(mult_reg[22]),
@@ -14285,7 +13965,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[23]  /* _4573_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[23]  /* _4533_ */ (
     .C(clk),
     .D(_2200_[23]),
     .Q(mult_reg[23]),
@@ -14293,7 +13973,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[24]  /* _4574_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[24]  /* _4534_ */ (
     .C(clk),
     .D(_2200_[24]),
     .Q(mult_reg[24]),
@@ -14301,7 +13981,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[25]  /* _4575_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[25]  /* _4535_ */ (
     .C(clk),
     .D(_2200_[25]),
     .Q(mult_reg[25]),
@@ -14309,7 +13989,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[26]  /* _4576_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[26]  /* _4536_ */ (
     .C(clk),
     .D(_2200_[26]),
     .Q(mult_reg[26]),
@@ -14317,7 +13997,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[27]  /* _4577_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[27]  /* _4537_ */ (
     .C(clk),
     .D(_2200_[27]),
     .Q(mult_reg[27]),
@@ -14325,7 +14005,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[28]  /* _4578_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[28]  /* _4538_ */ (
     .C(clk),
     .D(_2200_[28]),
     .Q(mult_reg[28]),
@@ -14333,7 +14013,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[29]  /* _4579_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[29]  /* _4539_ */ (
     .C(clk),
     .D(_2200_[29]),
     .Q(mult_reg[29]),
@@ -14341,7 +14021,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[30]  /* _4580_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[30]  /* _4540_ */ (
     .C(clk),
     .D(_2200_[30]),
     .Q(mult_reg[30]),
@@ -14349,7 +14029,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \mult_reg_reg[31]  /* _4581_ */ (
+  \$_SDFF_PP0_  \mult_reg_reg[31]  /* _4541_ */ (
     .C(clk),
     .D(_2200_[31]),
     .Q(mult_reg[31]),
@@ -14357,7 +14037,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[0]  /* _4582_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[0]  /* _4542_ */ (
     .C(clk),
     .D(b_reg[0]),
     .Q(b_reg2[0]),
@@ -14365,7 +14045,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[1]  /* _4583_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[1]  /* _4543_ */ (
     .C(clk),
     .D(b_reg[1]),
     .Q(b_reg2[1]),
@@ -14373,7 +14053,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[2]  /* _4584_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[2]  /* _4544_ */ (
     .C(clk),
     .D(b_reg[2]),
     .Q(b_reg2[2]),
@@ -14381,7 +14061,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[3]  /* _4585_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[3]  /* _4545_ */ (
     .C(clk),
     .D(b_reg[3]),
     .Q(b_reg2[3]),
@@ -14389,7 +14069,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[4]  /* _4586_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[4]  /* _4546_ */ (
     .C(clk),
     .D(b_reg[4]),
     .Q(b_reg2[4]),
@@ -14397,7 +14077,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[5]  /* _4587_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[5]  /* _4547_ */ (
     .C(clk),
     .D(b_reg[5]),
     .Q(b_reg2[5]),
@@ -14405,7 +14085,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[6]  /* _4588_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[6]  /* _4548_ */ (
     .C(clk),
     .D(b_reg[6]),
     .Q(b_reg2[6]),
@@ -14413,7 +14093,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[7]  /* _4589_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[7]  /* _4549_ */ (
     .C(clk),
     .D(b_reg[7]),
     .Q(b_reg2[7]),
@@ -14421,7 +14101,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[8]  /* _4590_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[8]  /* _4550_ */ (
     .C(clk),
     .D(b_reg[8]),
     .Q(b_reg2[8]),
@@ -14429,7 +14109,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[9]  /* _4591_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[9]  /* _4551_ */ (
     .C(clk),
     .D(b_reg[9]),
     .Q(b_reg2[9]),
@@ -14437,7 +14117,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[10]  /* _4592_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[10]  /* _4552_ */ (
     .C(clk),
     .D(b_reg[10]),
     .Q(b_reg2[10]),
@@ -14445,7 +14125,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[11]  /* _4593_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[11]  /* _4553_ */ (
     .C(clk),
     .D(b_reg[11]),
     .Q(b_reg2[11]),
@@ -14453,7 +14133,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[12]  /* _4594_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[12]  /* _4554_ */ (
     .C(clk),
     .D(b_reg[12]),
     .Q(b_reg2[12]),
@@ -14461,7 +14141,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[13]  /* _4595_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[13]  /* _4555_ */ (
     .C(clk),
     .D(b_reg[13]),
     .Q(b_reg2[13]),
@@ -14469,7 +14149,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[14]  /* _4596_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[14]  /* _4556_ */ (
     .C(clk),
     .D(b_reg[14]),
     .Q(b_reg2[14]),
@@ -14477,7 +14157,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg2_reg[15]  /* _4597_ */ (
+  \$_SDFF_PP0_  \b_reg2_reg[15]  /* _4557_ */ (
     .C(clk),
     .D(b_reg[15]),
     .Q(b_reg2[15]),
@@ -14485,135 +14165,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[0]  /* _4598_ */ (
-    .C(clk),
-    .D(a_reg[0]),
-    .Q(a_reg2[0]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[1]  /* _4599_ */ (
-    .C(clk),
-    .D(a_reg[1]),
-    .Q(a_reg2[1]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[2]  /* _4600_ */ (
-    .C(clk),
-    .D(a_reg[2]),
-    .Q(a_reg2[2]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[3]  /* _4601_ */ (
-    .C(clk),
-    .D(a_reg[3]),
-    .Q(a_reg2[3]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[4]  /* _4602_ */ (
-    .C(clk),
-    .D(a_reg[4]),
-    .Q(a_reg2[4]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[5]  /* _4603_ */ (
-    .C(clk),
-    .D(a_reg[5]),
-    .Q(a_reg2[5]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[6]  /* _4604_ */ (
-    .C(clk),
-    .D(a_reg[6]),
-    .Q(a_reg2[6]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[7]  /* _4605_ */ (
-    .C(clk),
-    .D(a_reg[7]),
-    .Q(a_reg2[7]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[8]  /* _4606_ */ (
-    .C(clk),
-    .D(a_reg[8]),
-    .Q(a_reg2[8]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[9]  /* _4607_ */ (
-    .C(clk),
-    .D(a_reg[9]),
-    .Q(a_reg2[9]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[10]  /* _4608_ */ (
-    .C(clk),
-    .D(a_reg[10]),
-    .Q(a_reg2[10]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[11]  /* _4609_ */ (
-    .C(clk),
-    .D(a_reg[11]),
-    .Q(a_reg2[11]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[12]  /* _4610_ */ (
-    .C(clk),
-    .D(a_reg[12]),
-    .Q(a_reg2[12]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[13]  /* _4611_ */ (
-    .C(clk),
-    .D(a_reg[13]),
-    .Q(a_reg2[13]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[14]  /* _4612_ */ (
-    .C(clk),
-    .D(a_reg[14]),
-    .Q(a_reg2[14]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg2_reg[15]  /* _4613_ */ (
-    .C(clk),
-    .D(a_reg[15]),
-    .Q(a_reg2[15]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[0]  /* _4614_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[0]  /* _4558_ */ (
     .C(clk),
     .D(b[0]),
     .Q(b_reg[0]),
@@ -14621,7 +14173,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[1]  /* _4615_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[1]  /* _4559_ */ (
     .C(clk),
     .D(b[1]),
     .Q(b_reg[1]),
@@ -14629,7 +14181,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[2]  /* _4616_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[2]  /* _4560_ */ (
     .C(clk),
     .D(b[2]),
     .Q(b_reg[2]),
@@ -14637,7 +14189,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[3]  /* _4617_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[3]  /* _4561_ */ (
     .C(clk),
     .D(b[3]),
     .Q(b_reg[3]),
@@ -14645,7 +14197,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[4]  /* _4618_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[4]  /* _4562_ */ (
     .C(clk),
     .D(b[4]),
     .Q(b_reg[4]),
@@ -14653,7 +14205,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[5]  /* _4619_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[5]  /* _4563_ */ (
     .C(clk),
     .D(b[5]),
     .Q(b_reg[5]),
@@ -14661,7 +14213,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[6]  /* _4620_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[6]  /* _4564_ */ (
     .C(clk),
     .D(b[6]),
     .Q(b_reg[6]),
@@ -14669,7 +14221,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[7]  /* _4621_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[7]  /* _4565_ */ (
     .C(clk),
     .D(b[7]),
     .Q(b_reg[7]),
@@ -14677,7 +14229,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[8]  /* _4622_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[8]  /* _4566_ */ (
     .C(clk),
     .D(b[8]),
     .Q(b_reg[8]),
@@ -14685,7 +14237,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[9]  /* _4623_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[9]  /* _4567_ */ (
     .C(clk),
     .D(b[9]),
     .Q(b_reg[9]),
@@ -14693,7 +14245,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[10]  /* _4624_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[10]  /* _4568_ */ (
     .C(clk),
     .D(b[10]),
     .Q(b_reg[10]),
@@ -14701,7 +14253,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[11]  /* _4625_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[11]  /* _4569_ */ (
     .C(clk),
     .D(b[11]),
     .Q(b_reg[11]),
@@ -14709,7 +14261,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[12]  /* _4626_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[12]  /* _4570_ */ (
     .C(clk),
     .D(b[12]),
     .Q(b_reg[12]),
@@ -14717,7 +14269,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[13]  /* _4627_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[13]  /* _4571_ */ (
     .C(clk),
     .D(b[13]),
     .Q(b_reg[13]),
@@ -14725,7 +14277,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[14]  /* _4628_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[14]  /* _4572_ */ (
     .C(clk),
     .D(b[14]),
     .Q(b_reg[14]),
@@ -14733,7 +14285,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \b_reg_reg[15]  /* _4629_ */ (
+  \$_SDFF_PP0_  \b_reg_reg[15]  /* _4573_ */ (
     .C(clk),
     .D(b[15]),
     .Q(b_reg[15]),
@@ -14741,7 +14293,463 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[0]  /* _4630_ */ (
+  \$_SDFF_PP0_  \adder_out_reg[0]  /* _4574_ */ (
+    .C(clk),
+    .D(_2194_[0]),
+    .Q(adder_out[0]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[1]  /* _4575_ */ (
+    .C(clk),
+    .D(_2195_[1]),
+    .Q(adder_out[1]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[2]  /* _4576_ */ (
+    .C(clk),
+    .D(_2195_[2]),
+    .Q(adder_out[2]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[3]  /* _4577_ */ (
+    .C(clk),
+    .D(_2195_[3]),
+    .Q(adder_out[3]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[4]  /* _4578_ */ (
+    .C(clk),
+    .D(_2195_[4]),
+    .Q(adder_out[4]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[5]  /* _4579_ */ (
+    .C(clk),
+    .D(_2195_[5]),
+    .Q(adder_out[5]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[6]  /* _4580_ */ (
+    .C(clk),
+    .D(_2195_[6]),
+    .Q(adder_out[6]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[7]  /* _4581_ */ (
+    .C(clk),
+    .D(_2195_[7]),
+    .Q(adder_out[7]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[8]  /* _4582_ */ (
+    .C(clk),
+    .D(_2195_[8]),
+    .Q(adder_out[8]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[9]  /* _4583_ */ (
+    .C(clk),
+    .D(_2195_[9]),
+    .Q(adder_out[9]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[10]  /* _4584_ */ (
+    .C(clk),
+    .D(_2195_[10]),
+    .Q(adder_out[10]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[11]  /* _4585_ */ (
+    .C(clk),
+    .D(_2195_[11]),
+    .Q(adder_out[11]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[12]  /* _4586_ */ (
+    .C(clk),
+    .D(_2195_[12]),
+    .Q(adder_out[12]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[13]  /* _4587_ */ (
+    .C(clk),
+    .D(_2195_[13]),
+    .Q(adder_out[13]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[14]  /* _4588_ */ (
+    .C(clk),
+    .D(_2195_[14]),
+    .Q(adder_out[14]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[15]  /* _4589_ */ (
+    .C(clk),
+    .D(_2195_[15]),
+    .Q(adder_out[15]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[16]  /* _4590_ */ (
+    .C(clk),
+    .D(_2195_[16]),
+    .Q(adder_out[16]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[17]  /* _4591_ */ (
+    .C(clk),
+    .D(_2195_[17]),
+    .Q(adder_out[17]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[18]  /* _4592_ */ (
+    .C(clk),
+    .D(_2195_[18]),
+    .Q(adder_out[18]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[19]  /* _4593_ */ (
+    .C(clk),
+    .D(_2195_[19]),
+    .Q(adder_out[19]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[20]  /* _4594_ */ (
+    .C(clk),
+    .D(_2195_[20]),
+    .Q(adder_out[20]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[21]  /* _4595_ */ (
+    .C(clk),
+    .D(_2195_[21]),
+    .Q(adder_out[21]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[22]  /* _4596_ */ (
+    .C(clk),
+    .D(_2195_[22]),
+    .Q(adder_out[22]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[23]  /* _4597_ */ (
+    .C(clk),
+    .D(_2195_[23]),
+    .Q(adder_out[23]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[24]  /* _4598_ */ (
+    .C(clk),
+    .D(_2195_[24]),
+    .Q(adder_out[24]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[25]  /* _4599_ */ (
+    .C(clk),
+    .D(_2195_[25]),
+    .Q(adder_out[25]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[26]  /* _4600_ */ (
+    .C(clk),
+    .D(_2195_[26]),
+    .Q(adder_out[26]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[27]  /* _4601_ */ (
+    .C(clk),
+    .D(_2195_[27]),
+    .Q(adder_out[27]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[28]  /* _4602_ */ (
+    .C(clk),
+    .D(_2195_[28]),
+    .Q(adder_out[28]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[29]  /* _4603_ */ (
+    .C(clk),
+    .D(_2195_[29]),
+    .Q(adder_out[29]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[30]  /* _4604_ */ (
+    .C(clk),
+    .D(_2195_[30]),
+    .Q(adder_out[30]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[31]  /* _4605_ */ (
+    .C(clk),
+    .D(_2195_[31]),
+    .Q(adder_out[31]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[32]  /* _4606_ */ (
+    .C(clk),
+    .D(_2195_[32]),
+    .Q(adder_out[32]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[33]  /* _4607_ */ (
+    .C(clk),
+    .D(_2195_[33]),
+    .Q(adder_out[33]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[34]  /* _4608_ */ (
+    .C(clk),
+    .D(_2195_[34]),
+    .Q(adder_out[34]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[35]  /* _4609_ */ (
+    .C(clk),
+    .D(_2195_[35]),
+    .Q(adder_out[35]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[36]  /* _4610_ */ (
+    .C(clk),
+    .D(_2195_[36]),
+    .Q(adder_out[36]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[37]  /* _4611_ */ (
+    .C(clk),
+    .D(_2195_[37]),
+    .Q(adder_out[37]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[38]  /* _4612_ */ (
+    .C(clk),
+    .D(_2195_[38]),
+    .Q(adder_out[38]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[39]  /* _4613_ */ (
+    .C(clk),
+    .D(_2195_[39]),
+    .Q(adder_out[39]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \adder_out_reg[40]  /* _4614_ */ (
+    .C(clk),
+    .D(_2195_[40]),
+    .Q(adder_out[40]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[0]  /* _4615_ */ (
+    .C(clk),
+    .D(a_reg[0]),
+    .Q(a_reg2[0]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[1]  /* _4616_ */ (
+    .C(clk),
+    .D(a_reg[1]),
+    .Q(a_reg2[1]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[2]  /* _4617_ */ (
+    .C(clk),
+    .D(a_reg[2]),
+    .Q(a_reg2[2]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[3]  /* _4618_ */ (
+    .C(clk),
+    .D(a_reg[3]),
+    .Q(a_reg2[3]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[4]  /* _4619_ */ (
+    .C(clk),
+    .D(a_reg[4]),
+    .Q(a_reg2[4]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[5]  /* _4620_ */ (
+    .C(clk),
+    .D(a_reg[5]),
+    .Q(a_reg2[5]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[6]  /* _4621_ */ (
+    .C(clk),
+    .D(a_reg[6]),
+    .Q(a_reg2[6]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[7]  /* _4622_ */ (
+    .C(clk),
+    .D(a_reg[7]),
+    .Q(a_reg2[7]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[8]  /* _4623_ */ (
+    .C(clk),
+    .D(a_reg[8]),
+    .Q(a_reg2[8]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[9]  /* _4624_ */ (
+    .C(clk),
+    .D(a_reg[9]),
+    .Q(a_reg2[9]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[10]  /* _4625_ */ (
+    .C(clk),
+    .D(a_reg[10]),
+    .Q(a_reg2[10]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[11]  /* _4626_ */ (
+    .C(clk),
+    .D(a_reg[11]),
+    .Q(a_reg2[11]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[12]  /* _4627_ */ (
+    .C(clk),
+    .D(a_reg[12]),
+    .Q(a_reg2[12]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[13]  /* _4628_ */ (
+    .C(clk),
+    .D(a_reg[13]),
+    .Q(a_reg2[13]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[14]  /* _4629_ */ (
+    .C(clk),
+    .D(a_reg[14]),
+    .Q(a_reg2[14]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg2_reg[15]  /* _4630_ */ (
+    .C(clk),
+    .D(a_reg[15]),
+    .Q(a_reg2[15]),
+    .R(rst)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:57.1-78.4" *)
+  \$_SDFF_PP0_  \a_reg_reg[0]  /* _4631_ */ (
     .C(clk),
     .D(a[0]),
     .Q(a_reg[0]),
@@ -14749,7 +14757,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[1]  /* _4631_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[1]  /* _4632_ */ (
     .C(clk),
     .D(a[1]),
     .Q(a_reg[1]),
@@ -14757,7 +14765,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[2]  /* _4632_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[2]  /* _4633_ */ (
     .C(clk),
     .D(a[2]),
     .Q(a_reg[2]),
@@ -14765,7 +14773,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[3]  /* _4633_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[3]  /* _4634_ */ (
     .C(clk),
     .D(a[3]),
     .Q(a_reg[3]),
@@ -14773,7 +14781,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[4]  /* _4634_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[4]  /* _4635_ */ (
     .C(clk),
     .D(a[4]),
     .Q(a_reg[4]),
@@ -14781,7 +14789,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[5]  /* _4635_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[5]  /* _4636_ */ (
     .C(clk),
     .D(a[5]),
     .Q(a_reg[5]),
@@ -14789,7 +14797,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[6]  /* _4636_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[6]  /* _4637_ */ (
     .C(clk),
     .D(a[6]),
     .Q(a_reg[6]),
@@ -14797,7 +14805,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[7]  /* _4637_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[7]  /* _4638_ */ (
     .C(clk),
     .D(a[7]),
     .Q(a_reg[7]),
@@ -14805,7 +14813,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[8]  /* _4638_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[8]  /* _4639_ */ (
     .C(clk),
     .D(a[8]),
     .Q(a_reg[8]),
@@ -14813,7 +14821,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[9]  /* _4639_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[9]  /* _4640_ */ (
     .C(clk),
     .D(a[9]),
     .Q(a_reg[9]),
@@ -14821,7 +14829,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[10]  /* _4640_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[10]  /* _4641_ */ (
     .C(clk),
     .D(a[10]),
     .Q(a_reg[10]),
@@ -14829,7 +14837,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[11]  /* _4641_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[11]  /* _4642_ */ (
     .C(clk),
     .D(a[11]),
     .Q(a_reg[11]),
@@ -14837,7 +14845,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[12]  /* _4642_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[12]  /* _4643_ */ (
     .C(clk),
     .D(a[12]),
     .Q(a_reg[12]),
@@ -14845,7 +14853,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[13]  /* _4643_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[13]  /* _4644_ */ (
     .C(clk),
     .D(a[13]),
     .Q(a_reg[13]),
@@ -14853,7 +14861,7 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[14]  /* _4644_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[14]  /* _4645_ */ (
     .C(clk),
     .D(a[14]),
     .Q(a_reg[14]),
@@ -14861,18 +14869,10 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  \a_reg_reg[15]  /* _4645_ */ (
+  \$_SDFF_PP0_  \a_reg_reg[15]  /* _4646_ */ (
     .C(clk),
     .D(a[15]),
     .Q(a_reg[15]),
-    .R(rst)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:57.1-78.4" *)
-  \$_SDFF_PP0_  overflow_reg_reg /* _4646_ */ (
-    .C(clk),
-    .D(overflow),
-    .Q(overflow_reg),
     .R(rst)
   );
   assign _2200_[3:0] = { _2199_[3], _2198_[2], _2197_[1], _2196_[0] };
