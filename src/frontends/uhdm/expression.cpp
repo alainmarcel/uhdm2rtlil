@@ -1534,9 +1534,22 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             // Create constant with proper size
             RTLIL::Const const_val = RTLIL::Const::from_string(bin_str);
             if (size > 0 && const_val.size() != size) {
-                // Resize to match specified size
                 if (const_val.size() < size) {
-                    const_val.resize(size, RTLIL::State::S0);
+                    // Check if sign extension is needed via the constant's typespec.
+                    // Surelog may fold a function call like func1(1'b1) → BIN:1 vpiSize:2
+                    // where the typespec still has VpiSigned:1 from the signed parameter.
+                    bool is_signed = false;
+                    if (uhdm_const->Typespec()) {
+                        const UHDM::typespec* actual_ts = uhdm_const->Typespec()->Actual_typespec();
+                        if (actual_ts && actual_ts->UhdmType() == uhdmlogic_typespec) {
+                            auto logic_ts = dynamic_cast<const UHDM::logic_typespec*>(actual_ts);
+                            if (logic_ts && logic_ts->VpiSigned())
+                                is_signed = true;
+                        }
+                    }
+                    RTLIL::SigSpec sig(const_val);
+                    sig.extend_u0(size, is_signed);
+                    return sig;
                 } else {
                     const_val.resize(size, RTLIL::State::S0);
                 }

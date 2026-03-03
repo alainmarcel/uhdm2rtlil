@@ -167,7 +167,7 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 149 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 150 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
 
 ### Signedness Handling
 
@@ -193,6 +193,14 @@ All 149 tests are currently passing (0 failures). `test/failing_tests.txt` is em
 
 - `VpiConstType()` can return 0 (undefined) while `VpiValue()` has the correct prefix (`UINT:`, `BIN:`, etc.)
 - Added fallback type inference from value string prefix in `import_constant()` (`expression.cpp`)
+
+### Surelog Const-Folded Function Results: Signed BIN Constants
+
+- When Surelog evaluates a function call at compile time (elaboration), it may store the result as a `BIN` constant with `vpiSize` equal to the function return type width
+- If the function body assigns a **signed parameter** to the return variable (e.g., `func1 = inp` where `inp` is `input reg signed inp`), Surelog stores the raw bit value without sign-extension (e.g., `BIN:1, vpiSize:2` instead of `BIN:11, vpiSize:2`)
+- The constant's `vpiTypespec → ref_typespec → logic_typespec` will have `VpiSigned():true` even when the constant value string is shorter than `vpiSize`
+- Fix in `import_constant()` (`expression.cpp`): for `vpiBinaryConst` with `size > const_val.size()`, check `uhdm_const->Typespec()->Actual_typespec()->VpiSigned()` and if true, use `extend_u0(size, true)` (sign-extend) instead of zero-extending
+- Pattern: `input reg signed inp` → `VpiSigned:1` on the typespec of the resulting folded constant
 
 ### Fill Constants (`'0`, `'1`, `'x`, `'z`) — Unbased Unsized Literals
 
