@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 149 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (149/149 tests functional)
-- **Passing**: 145 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 150 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (150/150 tests functional)
+- **Passing**: 146 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
 - **Known Failures**: None — all tests passing
 - **Recent Additions**:
+  - `func_typename_ret` - Functions whose return type is a typedef (local or package-scoped): `function automatic T func1` where `T = logic[1:0]` and `function automatic P::S func2` where `P::S = logic[3:0]`; verifies correct width and sign extension of signed parameters assigned to typedef'd return variables
   - `int_types` - Integer atom types (`integer`, `int`, `shortint`, `longint`, `byte`) and integer vector types (`logic`, `reg`, `bit`) in generate blocks, with signed/unsigned variants; verifies correct widths, signedness, sign/zero extension when assigned to wider 128-bit wires; required fixes for **temp wire dedup key**, **sign extension in process assignments**, and **generate scope variable initialization** from `vpiExpr`
   - `net_types` - `wire`/`wand`/`wor` net types with `logic`, `integer`, and typedef data types; verifies correct multi-driver AND/OR resolution for all type combinations and correct `\wand`/`\wor` Yosys attributes; required a **Surelog fix** (see Recent Fixes)
   - `param_int_types` - Module-level variable declarations with built-in integer types (`integer`, `int`, `shortint`, `longint`, `byte`) with initial values, and matching typed parameters; verifies correct initial values and widths
@@ -50,6 +51,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `func_typename_ret` — functions with typedef return types now correctly sign-extend signed parameters when Surelog const-folds the call ✅
+    - **Root cause**: Surelog evaluates `func1(1'b1)` at elaboration and stores the result as `BIN:1, vpiSize:2` (with `inp` as `input reg signed inp`, 1-bit signed = -1). The raw bits `1` zero-padded to 2 bits gives `2'b01 = 1` instead of the correct sign-extended `2'b11 = 3`
+    - **Key insight**: Even though Surelog doesn't set `VpiSigned()` on the `io_decl`, the folded constant's `vpiTypespec → ref_typespec → logic_typespec` still has `VpiSigned():true` from the signed parameter declaration
+    - **Fix in `import_constant()`** (`expression.cpp`): for `vpiBinaryConst` with `size > const_val.size()`, check `uhdm_const->Typespec()->Actual_typespec()->VpiSigned()` and if true, call `extend_u0(size, true)` (sign-extend via MSB replication) instead of zero-extending
   - `int_types` — integer atom/vector types in generate blocks now correctly sign/zero-extend when assigned to wider wires ✅
     - **Temp wire naming fix**: `import_always_comb` dedup key for full-wire assignments now uses the actual wire name (e.g., `test_integer.a`) instead of the bare local variable name (e.g., `a`), preventing `$0\a already exists` conflicts across generate blocks with same-named local vars
     - **Sign extension in process assignments**: `import_assignment_comb` now checks `rhs.is_wire() && rhs.as_wire()->is_signed` and calls `extend_u0(size, rhs_is_signed)` so signed integer/shortint/longint/byte variables sign-extend to wider targets; unsigned variants still zero-extend
