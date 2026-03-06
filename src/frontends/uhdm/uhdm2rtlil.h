@@ -534,6 +534,8 @@ struct UhdmImporter {
     bool contains_complex_constructs(const any* stmt);
     bool is_memory_write(const assignment* assign, RTLIL::Module* module);
     void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);
+    bool has_for_loop(const any* stmt);
+    bool needs_sync_path(const any* stmt, bool inside_conditional = false);
     const assignment* find_assignment_for_lhs(const any* stmt, const expr* lhs_expr);
 
     // Helper to extract RTLIL::Const from UHDM Value string

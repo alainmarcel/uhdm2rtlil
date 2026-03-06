@@ -15,14 +15,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 151 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (151/151 tests functional)
-- **Passing**: 147 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: ~97% (147/151 tests functional, 4 known pre-existing failures)
+- **Passing**: 143 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
-- **Known Failures**: None — all tests passing
+- **Known Failures** (4 pre-existing bugs now exposed by improved `test_equivalence.sh`):
+  - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
+  - `mem2reg_test1` - Combinational array with simultaneous write and read (memory in `always @*` not handled)
+  - `mem2reg_test2` - Annotated 8-element array with loop-based writes/reads (memory inside `always_ff` for loop — 0 gates)
+  - `partsel_simple` - Part selection with dynamic offset (`+:` / `-:`) — part-select expression width issue (0 gates)
 - **Recent Additions**:
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
   - `func_typename_ret` - Functions whose return type is a typedef (local or package-scoped): `function automatic T func1` where `T = logic[1:0]` and `function automatic P::S func2` where `P::S = logic[3:0]`; verifies correct width and sign extension of signed parameters assigned to typedef'd return variables
@@ -56,6 +60,12 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
     - **Root cause**: The previous implementation used `import_statement_sync` → `pending_sync_assignments`, which created a flat list of mux cells in the module and a sync rule pointing to the final mux outputs — a structurally very different representation compared to the Verilog frontend's `switch`/`case` inside the process
     - **Fix**: Replaced the "no memory writes" path in `import_always_ff` with the same `$0\temp-wire` + `import_statement_comb` approach used by `import_always_comb`; added `in_always_ff_body_mode` flag to suppress `current_comb_values` reads/writes during the body, enforcing non-blocking assignment semantics (all RHS expressions see original register values, not intermediate `$0\` values)
     - **Result**: Gate count dropped from 109→83 (matching the Verilog frontend), formal equivalence passes, and FSM extraction/optimization passes can now recognize the register structure
+  - **always_ff path selection regressions** — four tests broken by the always_ff comb-path change are now fixed ✅
+    - **Root cause**: The new comb-style path lacked handlers for `vpiRepeat`, for loops inside conditionals (`CaseRule*` variant of `import_statement_comb` had no `vpiFor`), and memory writes inside for loops
+    - `aes_kexp128` — **dedup_key fix**: array element `w[0]` (a `vpiBitSelect` that resolves to a complete wire) had `is_part_select=true`, causing the temp wire key to get a spurious range suffix `"w[0][3:0]"` instead of `"w[0]"` → `map_to_temp_wire` lookup failed → X output; fixed by guarding the range-suffix path with `!lhs_spec.is_wire()`
+    - `counters_repeat` — `vpiRepeat` loops had no handler in `import_statement_comb`; new `needs_sync_path()` helper detects `vpiRepeat` and routes to the old `import_statement_sync` path which handles repeat-loop carry tracking via `blocking_values`
+    - `asym_ram_sdp_read_wider` — for loop inside `if (enaB)` conditional hit the `CaseRule*` variant of `import_statement_comb` which had no `vpiFor` handler; `needs_sync_path()` detects for-in-conditional and routes to `import_statement_with_loop_vars` via the sync path
+    - `asym_ram_sdp_write_wider` — memory writes (`RAM[...] <= ...`) inside a for loop were correctly detected by `scan_for_memory_writes` but the custom memory-write `CaseRule*` path cannot unroll for loops; new `has_for_loop()` helper detects this pattern and routes to the sync path (`import_statement_sync` → `pending_memory_writes` → proper memwr cells)
   - `func_typename_ret` — functions with typedef return types now correctly sign-extend signed parameters when Surelog const-folds the call ✅
     - **Root cause**: Surelog evaluates `func1(1'b1)` at elaboration and stores the result as `BIN:1, vpiSize:2` (with `inp` as `input reg signed inp`, 1-bit signed = -1). The raw bits `1` zero-padded to 2 bits gives `2'b01 = 1` instead of the correct sign-extended `2'b11 = 3`
     - **Key insight**: Even though Surelog doesn't set `VpiSigned()` on the `io_decl`, the folded constant's `vpiTypespec → ref_typespec → logic_typespec` still has `VpiSigned():true` from the signed parameter declaration
@@ -434,7 +444,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (147 total - 143 passing, 4 UHDM-only)
+### Current Test Cases (151 total — 143 passing equivalence, 4 UHDM-only, 4 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -626,8 +636,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 139 of 144 tests are passing or working as expected
-- 5 tests are in the failing_tests.txt file (expected failures)
+- 147 of 151 tests are passing or working as expected (143 equiv + 4 UHDM-only)
+- 4 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test1`, `mem2reg_test2`, `partsel_simple`)
 
 ### Important Test Workflow Note
 
@@ -680,10 +690,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **147 test cases**:
+The UHDM frontend test suite includes **151 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
 - **143 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **0 known failures** - All tests passing; failing_tests.txt is empty
+- **4 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test1`, `mem2reg_test2`, `partsel_simple`)
 
 ## Recent Improvements
 
@@ -893,7 +903,7 @@ The UHDM frontend test suite includes **147 test cases**:
 - Memory writes in loops now generate proper `$memwr$` temporary wires matching Verilog frontend structure
 - Added priority values to memwr statements for correct write ordering
 - Eliminated external combinational cells in favor of process-internal switch statements
-- All 53 tests now pass with no known failures
+- `asym_ram_sdp_write_wider` restored to passing after always_ff comb-path regression (see Recent Fixes)
 
 ### Process Structure Improvements for always_ff Blocks
 - Fixed process structure generation to use switch statements inside process bodies instead of external mux cells

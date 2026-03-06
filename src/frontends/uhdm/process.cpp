@@ -1284,14 +1284,39 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     return;
                 }
                 
-                if (!memory_names.empty()) {
+                if (!memory_names.empty() && has_for_loop(stmt)) {
+                    // Memory writes inside for loops: the custom CaseRule* memory-write
+                    // path cannot handle for-loop unrolling.  Fall back to import_statement_sync
+                    // which processes them correctly via import_statement_with_loop_vars.
+                    log("      Found memory writes inside for loop, using sync path\n");
+                    log_flush();
+
+                    if (clock_sig.empty())
+                        log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+
+                    pending_sync_assignments.clear();
+                    import_statement_sync(stmt, sync, false);
+
+                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                    }
+                    pending_sync_assignments.clear();
+
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Sync rule created (memory-in-for-loop fallback)\n");
+                    log_flush();
+                } else if (!memory_names.empty()) {
                     log("      Found memory writes to: ");
                     for (const auto& mem_name : memory_names) {
                         log("%s ", mem_name.c_str());
                     }
                     log("\n");
                     log_flush();
-                    
+
                     // Create temp wires for memory control signals
                     current_memory_writes.clear();
                     for (const auto& mem_name : memory_names) {
@@ -1370,9 +1395,35 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     
                     // Clear memory write tracking
                     current_memory_writes.clear();
+                } else if (needs_sync_path(stmt)) {
+                    // Body contains a repeat loop or a for loop nested inside a conditional.
+                    // These are not handled by import_statement_comb; fall back to the old
+                    // import_statement_sync path which handles them correctly.
+                    log("      No memory writes but body needs sync path (repeat/nested for), using sync path\n");
+                    log_flush();
+
+                    if (clock_sig.empty())
+                        log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+
+                    pending_sync_assignments.clear();
+                    import_statement_sync(stmt, sync, false);
+
+                    for (const auto& [lhs, rhs] : pending_sync_assignments) {
+                        sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                    }
+                    pending_sync_assignments.clear();
+
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Sync rule created (blocking-assignment fallback)\n");
+                    log_flush();
                 } else {
-                    // No memory writes: use comb-style implementation to produce a proper
-                    // switch/case structure inside the process body (matching Verilog frontend output).
+                    // No memory writes and no blocking assignments: use comb-style
+                    // implementation to produce a proper switch/case structure inside
+                    // the process body (matching Verilog frontend output).
                     log("      No memory writes detected, using comb-style switch structure\n");
                     log_flush();
 
@@ -1410,7 +1461,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 std::string wire_name = first_chunk.wire->name.str();
                                 if (wire_name[0] == '\\')
                                     wire_name = wire_name.substr(1);
-                                if (sig.is_part_select) {
+                                if (sig.is_part_select && !lhs_spec.is_wire()) {
                                     int offset = first_chunk.offset;
                                     int width = lhs_spec.size();
                                     dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
@@ -1563,7 +1614,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 std::string wire_name = first_chunk.wire->name.str();
                 if (wire_name[0] == '\\')
                     wire_name = wire_name.substr(1);
-                if (sig.is_part_select) {
+                if (sig.is_part_select && !lhs_spec.is_wire()) {
                     int offset = first_chunk.offset;
                     int width = lhs_spec.size();
                     dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
