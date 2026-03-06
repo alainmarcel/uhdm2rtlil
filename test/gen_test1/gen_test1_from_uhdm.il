@@ -24,67 +24,75 @@ module \gen_test1
   wire \gen1[2].and_wire
   wire \gen1[2].or_wire
   wire \gen3[7].gen4[0].tmpbuf
-  wire $auto$rtlil.cc:3344:ReduceXor$56
+  wire width 5 \gen3[5].tmp2
   wire \gen1[3].and_wire
   wire \gen1[3].or_wire
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[7:7]
   wire width 5 \gen3[7].tmp2
-  wire \gen3[6].gen4[4].tmpbuf
   wire \gen1[4].and_wire
   wire \gen1[4].or_wire
+  wire \gen3[6].gen4[4].tmpbuf
   wire \gen3[6].gen4[3].tmpbuf
-  wire \gen3[6].gen4[2].tmpbuf
   wire \gen1[5].and_wire
   wire \gen1[5].or_wire
+  wire \gen3[6].gen4[2].tmpbuf
   wire \gen3[6].gen4[1].tmpbuf
-  wire \gen3[6].gen4[0].tmpbuf
   wire \gen1[6].and_wire
   wire \gen1[6].or_wire
-  wire $auto$rtlil.cc:3344:ReduceXor$53
-  wire width 5 \gen3[6].tmp2
+  wire \gen3[6].gen4[0].tmpbuf
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[5:5]
   wire \gen1[7].and_wire
   wire \gen1[7].or_wire
-  wire \gen3[5].gen4[4].tmpbuf
-  wire \gen3[5].gen4[3].tmpbuf
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[6:6]
+  wire width 5 \gen3[6].tmp2
   wire width 5 \gen3[0].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$35
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[0:0]
+  wire \gen3[5].gen4[4].tmpbuf
   wire \gen3[0].gen4[0].tmpbuf
   wire \gen3[0].gen4[1].tmpbuf
   wire \gen3[0].gen4[2].tmpbuf
   wire \gen3[0].gen4[3].tmpbuf
   wire \gen3[0].gen4[4].tmpbuf
   wire width 5 \gen3[1].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$38
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[1:1]
+  wire \gen3[5].gen4[3].tmpbuf
   wire \gen3[1].gen4[0].tmpbuf
   wire \gen3[1].gen4[1].tmpbuf
   wire \gen3[1].gen4[2].tmpbuf
   wire \gen3[1].gen4[3].tmpbuf
   wire \gen3[1].gen4[4].tmpbuf
   wire width 5 \gen3[2].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$41
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[2:2]
+  wire \gen3[5].gen4[2].tmpbuf
   wire \gen3[2].gen4[0].tmpbuf
   wire \gen3[2].gen4[1].tmpbuf
   wire \gen3[2].gen4[2].tmpbuf
   wire \gen3[2].gen4[3].tmpbuf
   wire \gen3[2].gen4[4].tmpbuf
   wire width 5 \gen3[3].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$44
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[3:3]
+  wire \gen3[5].gen4[1].tmpbuf
   wire \gen3[3].gen4[0].tmpbuf
   wire \gen3[3].gen4[1].tmpbuf
   wire \gen3[3].gen4[2].tmpbuf
   wire \gen3[3].gen4[3].tmpbuf
   wire \gen3[3].gen4[4].tmpbuf
   wire width 5 \gen3[4].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$47
+  attribute \src "dut.sv:32.3-33.18"
+  wire $0\y[4:4]
+  wire \gen3[5].gen4[0].tmpbuf
   wire \gen3[4].gen4[0].tmpbuf
   wire \gen3[4].gen4[1].tmpbuf
   wire \gen3[4].gen4[2].tmpbuf
   wire \gen3[4].gen4[3].tmpbuf
   wire \gen3[4].gen4[4].tmpbuf
-  wire width 5 \gen3[5].tmp2
-  wire $auto$rtlil.cc:3344:ReduceXor$50
-  wire \gen3[5].gen4[0].tmpbuf
-  wire \gen3[5].gen4[1].tmpbuf
-  wire \gen3[5].gen4[2].tmpbuf
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -250,63 +258,63 @@ module \gen_test1
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire \gen1[0].and_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$35
+    connect \Y $0\y[0:0]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire \gen1[1].or_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$38
+    connect \Y $0\y[1:1]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$40
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$41
+    connect \Y $0\y[2:2]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$43
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$44
+    connect \Y $0\y[3:3]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$46
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$47
+    connect \Y $0\y[4:4]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$49
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$50
+    connect \Y $0\y[5:5]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$52
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[6].or_wire \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$53
+    connect \Y $0\y[6:6]
   end
   cell $reduce_xor $reduce_xor$dut.sv:33$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 1
     connect \A { \gen1[7].and_wire \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire }
-    connect \Y $auto$rtlil.cc:3344:ReduceXor$56
+    connect \Y $0\y[7:7]
   end
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   cell $dff $procdff$57
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$56
+    connect \D $0\y[7:7]
     connect \Q \y [7]
     connect \CLK \clk
   end
@@ -315,7 +323,7 @@ module \gen_test1
   cell $dff $procdff$58
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$53
+    connect \D $0\y[6:6]
     connect \Q \y [6]
     connect \CLK \clk
   end
@@ -324,7 +332,7 @@ module \gen_test1
   cell $dff $procdff$59
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$50
+    connect \D $0\y[5:5]
     connect \Q \y [5]
     connect \CLK \clk
   end
@@ -333,7 +341,7 @@ module \gen_test1
   cell $dff $procdff$60
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$47
+    connect \D $0\y[4:4]
     connect \Q \y [4]
     connect \CLK \clk
   end
@@ -342,7 +350,7 @@ module \gen_test1
   cell $dff $procdff$61
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$44
+    connect \D $0\y[3:3]
     connect \Q \y [3]
     connect \CLK \clk
   end
@@ -351,7 +359,7 @@ module \gen_test1
   cell $dff $procdff$62
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$41
+    connect \D $0\y[2:2]
     connect \Q \y [2]
     connect \CLK \clk
   end
@@ -360,7 +368,7 @@ module \gen_test1
   cell $dff $procdff$63
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$38
+    connect \D $0\y[1:1]
     connect \Q \y [1]
     connect \CLK \clk
   end
@@ -369,46 +377,45 @@ module \gen_test1
   cell $dff $procdff$64
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3344:ReduceXor$35
+    connect \D $0\y[0:0]
     connect \Q \y [0]
     connect \CLK \clk
   end
-  connect \gen3[5].gen4[2].tmpbuf \gen1[1].and_wire
-  connect \gen3[5].gen4[1].tmpbuf \gen1[7].or_wire
-  connect \gen3[5].gen4[0].tmpbuf \gen1[5].or_wire
-  connect \gen3[5].tmp2 { \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire }
   connect \gen3[4].gen4[4].tmpbuf \gen1[4].or_wire
   connect \gen3[4].gen4[3].tmpbuf \gen1[2].or_wire
   connect \gen3[4].gen4[2].tmpbuf \gen1[0].or_wire
   connect \gen3[4].gen4[1].tmpbuf \gen1[6].and_wire
   connect \gen3[4].gen4[0].tmpbuf \gen1[4].and_wire
+  connect \gen3[5].gen4[0].tmpbuf \gen1[5].or_wire
   connect \gen3[4].tmp2 { \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire }
   connect \gen3[3].gen4[4].tmpbuf \gen1[3].and_wire
   connect \gen3[3].gen4[3].tmpbuf \gen1[1].and_wire
   connect \gen3[3].gen4[2].tmpbuf \gen1[7].or_wire
   connect \gen3[3].gen4[1].tmpbuf \gen1[5].or_wire
   connect \gen3[3].gen4[0].tmpbuf \gen1[3].or_wire
+  connect \gen3[5].gen4[1].tmpbuf \gen1[7].or_wire
   connect \gen3[3].tmp2 { \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire }
   connect \gen3[2].gen4[4].tmpbuf \gen1[2].or_wire
   connect \gen3[2].gen4[3].tmpbuf \gen1[0].or_wire
   connect \gen3[2].gen4[2].tmpbuf \gen1[6].and_wire
   connect \gen3[2].gen4[1].tmpbuf \gen1[4].and_wire
   connect \gen3[2].gen4[0].tmpbuf \gen1[2].and_wire
+  connect \gen3[5].gen4[2].tmpbuf \gen1[1].and_wire
   connect \gen3[2].tmp2 { \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire }
   connect \gen3[1].gen4[4].tmpbuf \gen1[1].and_wire
   connect \gen3[1].gen4[3].tmpbuf \gen1[7].or_wire
   connect \gen3[1].gen4[2].tmpbuf \gen1[5].or_wire
   connect \gen3[1].gen4[1].tmpbuf \gen1[3].or_wire
   connect \gen3[1].gen4[0].tmpbuf \gen1[1].or_wire
+  connect \gen3[5].gen4[3].tmpbuf \gen1[3].and_wire
   connect \gen3[1].tmp2 { \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire \gen1[3].or_wire \gen1[1].or_wire }
   connect \gen3[0].gen4[4].tmpbuf \gen1[0].or_wire
   connect \gen3[0].gen4[3].tmpbuf \gen1[6].and_wire
   connect \gen3[0].gen4[2].tmpbuf \gen1[4].and_wire
   connect \gen3[0].gen4[1].tmpbuf \gen1[2].and_wire
   connect \gen3[0].gen4[0].tmpbuf \gen1[0].and_wire
-  connect \gen3[0].tmp2 { \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire \gen1[0].and_wire }
-  connect \gen3[5].gen4[3].tmpbuf \gen1[3].and_wire
   connect \gen3[5].gen4[4].tmpbuf \gen1[5].and_wire
+  connect \gen3[0].tmp2 { \gen1[0].or_wire \gen1[6].and_wire \gen1[4].and_wire \gen1[2].and_wire \gen1[0].and_wire }
   connect \gen3[6].tmp2 { \gen1[6].or_wire \gen1[4].or_wire \gen1[2].or_wire \gen1[0].or_wire \gen1[6].and_wire }
   connect \gen3[6].gen4[0].tmpbuf \gen1[6].and_wire
   connect \gen3[6].gen4[1].tmpbuf \gen1[0].or_wire
@@ -416,6 +423,7 @@ module \gen_test1
   connect \gen3[6].gen4[3].tmpbuf \gen1[4].or_wire
   connect \gen3[6].gen4[4].tmpbuf \gen1[6].or_wire
   connect \gen3[7].tmp2 { \gen1[7].and_wire \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire }
+  connect \gen3[5].tmp2 { \gen1[5].and_wire \gen1[3].and_wire \gen1[1].and_wire \gen1[7].or_wire \gen1[5].or_wire }
   connect \gen3[7].gen4[0].tmpbuf \gen1[7].or_wire
   connect \gen3[7].gen4[1].tmpbuf \gen1[1].and_wire
   connect \gen3[7].gen4[2].tmpbuf \gen1[3].and_wire

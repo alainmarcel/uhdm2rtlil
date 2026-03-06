@@ -10,9 +10,13 @@ module \dff_styles
   attribute \src "dut.sv:2.27-2.28"
   wire output 3 \q
   attribute \src "dut.sv:5.1-6.9"
+  wire $0\q
+  attribute \src "dut.sv:5.1-6.9"
   attribute \always_ff 1
   process $proc$dut.sv:5$1
+    assign $0\q \q
+    assign $0\q \d
     sync posedge \clk
-      update \q \d
+      update \q $0\q
   end
 end

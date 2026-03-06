@@ -506,8 +506,6 @@ module \abc9_test013
   wire $logic_not$dut.sv:90.18-90.21$6_Y
   wire width 6 $auto$rtlil.cc:3474:Mux$46
   attribute \src "dut.sv:84.1-88.26"
-  wire width 4 $0\latch[3:0]
-  attribute \src "dut.sv:84.1-88.26"
   wire width 4 $0\latch
   attribute \src "dut.sv:85.9-85.12"
   wire $logic_not$dut.sv:85.9-85.12$7_Y
@@ -550,20 +548,18 @@ module \abc9_test013
   end
   attribute \src "dut.sv:84.1-88.26"
   process $proc$dut.sv:84$47
-    assign $0\latch 4'x
-    assign $0\latch[3:0] \latch
+    assign $0\latch \latch
     attribute \src "dut.sv:85.5-88.26"
     switch $logic_not$dut.sv:85.9-85.12$7_Y
     attribute \src "dut.sv:85.5-88.26"
       case 1'1
-        assign $0\latch[3:0] \io
+        assign $0\latch \io
     attribute \src "dut.sv:85.5-88.26"
       case 
         assign $0\latch \io
     end
     sync always
-      update 4'x $0\latch
-      update \latch $0\latch[3:0]
+      update \latch $0\latch
   end
   connect \io $auto$rtlil.cc:3474:Mux$44
 end
@@ -907,6 +903,8 @@ module \abc9_test022
   attribute \reg 1
   wire width 8 \m_eth_payload_axis_tkeep_reg
   wire width 8 $auto$module.cpp:823:import_continuous_assign$75
+  attribute \src "dut.sv:234.5-235.59"
+  wire width 8 $0\m_eth_payload_axis_tkeep_reg
   wire width 8 $auto$rtlil.cc:3474:Mux$78
   cell $mux $mux$dut.sv:235$77
     parameter \WIDTH 8
@@ -925,8 +923,10 @@ module \abc9_test022
   attribute \src "dut.sv:234.5-235.59"
   attribute \always_ff 1
   process $proc$dut.sv:234$76
+    assign $0\m_eth_payload_axis_tkeep_reg \m_eth_payload_axis_tkeep_reg
+    assign $0\m_eth_payload_axis_tkeep_reg $auto$rtlil.cc:3474:Mux$78
     sync posedge \clk
-      update \m_eth_payload_axis_tkeep_reg $auto$rtlil.cc:3474:Mux$78
+      update \m_eth_payload_axis_tkeep_reg $0\m_eth_payload_axis_tkeep_reg
   end
   connect \m_eth_payload_axis_tkeep \m_eth_payload_axis_tkeep_reg
 end
@@ -1065,16 +1065,24 @@ module \abc9_test031
   attribute \src "dut.sv:273.57-273.59"
   wire output 5 \q2
   attribute \src "dut.sv:274.1-274.32"
+  wire $0\q1
+  attribute \src "dut.sv:275.1-275.33"
+  wire $0\q2
+  attribute \src "dut.sv:274.1-274.32"
   attribute \always_ff 1
   process $proc$dut.sv:274$90
+    assign $0\q1 \q1
+    assign $0\q1 \d
     sync posedge \clk1
-      update \q1 \d
+      update \q1 $0\q1
   end
   attribute \src "dut.sv:275.1-275.33"
   attribute \always_ff 1
   process $proc$dut.sv:275$91
+    assign $0\q2 \q2
+    assign $0\q2 \q1
     sync negedge \clk2
-      update \q2 \q1
+      update \q2 $0\q2
   end
 end
 attribute \cells_not_processed 1
@@ -1155,16 +1163,24 @@ module \abc9_test034
   attribute \src "dut.sv:290.50-290.52"
   wire output 4 \q2
   attribute \src "dut.sv:291.1-291.31"
+  wire $0\q1
+  attribute \src "dut.sv:292.1-292.32"
+  wire $0\q2
+  attribute \src "dut.sv:291.1-291.31"
   attribute \always_ff 1
   process $proc$dut.sv:291$94
+    assign $0\q1 \q1
+    assign $0\q1 \d
     sync posedge \clk
-      update \q1 \d
+      update \q1 $0\q1
   end
   attribute \src "dut.sv:292.1-292.32"
   attribute \always_ff 1
   process $proc$dut.sv:292$95
+    assign $0\q2 \q2
+    assign $0\q2 \q1
     sync posedge \clk
-      update \q2 \q1
+      update \q2 $0\q2
   end
 end
 attribute \cells_not_processed 1
@@ -1177,16 +1193,24 @@ module \abc9_test035
   attribute \src "dut.sv:295.52-295.53"
   wire width 2 output 3 \q
   attribute \src "dut.sv:296.1-296.33"
+  wire $0\q[0:0]
+  attribute \src "dut.sv:297.1-297.36"
+  wire $0\q[1:1]
+  attribute \src "dut.sv:296.1-296.33"
   attribute \always_ff 1
   process $proc$dut.sv:296$96
+    assign $0\q[0:0] \q [0]
+    assign $0\q[0:0] \d
     sync posedge \clk
-      update \q [0] \d
+      update \q [0] $0\q[0:0]
   end
   attribute \src "dut.sv:297.1-297.36"
   attribute \always_ff 1
   process $proc$dut.sv:297$97
+    assign $0\q[1:1] \q [1]
+    assign $0\q[1:1] \q [0]
     sync negedge \clk
-      update \q [1] \q [0]
+      update \q [1] $0\q[1:1]
   end
 end
 attribute \cells_not_processed 1

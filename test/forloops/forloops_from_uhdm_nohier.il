@@ -19,6 +19,10 @@ module \forloops
   wire width 4 output 7 \y
   attribute \src "dut.sv:2.10-2.11"
   wire width 32 signed \k
+  attribute \src "dut.sv:3.2-7.5"
+  wire width 4 $0\p
+  attribute \src "dut.sv:3.2-7.5"
+  wire width 4 $0\x
   wire width 64 $auto$rtlil.cc:3388:Xor$3
   wire width 64 $auto$rtlil.cc:3388:Xor$5
   wire width 32 $auto$expression.cpp:2162:import_operation$6
@@ -178,11 +182,14 @@ module \forloops
   attribute \src "dut.sv:3.2-7.5"
   attribute \always_ff 1
   process $proc$dut.sv:3$1
+    assign $0\p \p
+    assign $0\x \x
+    assign $0\p [1:0] $auto$rtlil.cc:3388:Xor$3 [1:0]
+    assign $0\p [3:2] $auto$rtlil.cc:3388:Xor$5 [1:0]
+    assign $0\x $auto$expression.cpp:2162:import_operation$6 [3:0]
     sync posedge \clk
-      update \p [1:0] $auto$rtlil.cc:3388:Xor$3 [1:0]
-      update \p [3:2] $auto$rtlil.cc:3388:Xor$5 [1:0]
-      update \x $auto$expression.cpp:2162:import_operation$6 [3:0]
-      update \k 2
+      update \p $0\p
+      update \x $0\x
   end
   attribute \src "dut.sv:8.2-12.5"
   process $proc$dut.sv:8$8

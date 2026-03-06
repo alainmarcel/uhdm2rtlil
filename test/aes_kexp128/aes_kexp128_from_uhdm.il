@@ -25,12 +25,15 @@ module \aes_key_expand_128
   wire width 4 \w[2]
   attribute \src "dut.sv:9.11-9.12"
   wire width 4 \w[3]
-  wire width 4 $auto$rtlil.cc:3474:Mux$21
-  wire width 4 $auto$rtlil.cc:3388:Xor$19
-  wire width 4 $auto$rtlil.cc:3474:Mux$7
   wire width 4 $auto$rtlil.cc:3388:Xor$15
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[1]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[2]
+  attribute \src "dut.sv:16.1-21.4"
+  wire width 4 $0\w[3]
+  wire width 4 $auto$rtlil.cc:3388:Xor$19
   wire width 4 $auto$rtlil.cc:3388:Xor$11
-  wire width 4 $auto$rtlil.cc:3474:Mux$13
   attribute \src "dut.sv:16.1-21.4"
   attribute \always_ff 1
   cell $dffe $auto$ff.cc:337:slice$26
@@ -47,7 +50,7 @@ module \aes_key_expand_128
   cell $dff $procdff$24
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3474:Mux$13
+    connect \D $0\w[2]
     connect \Q \w[2]
     connect \CLK \clk
   end
@@ -56,14 +59,14 @@ module \aes_key_expand_128
     connect \A $auto$rtlil.cc:3388:Xor$15
     connect \B \key [11:8]
     connect \S \kld
-    connect \Y $auto$rtlil.cc:3474:Mux$7
+    connect \Y $0\w[1]
   end
   attribute \src "dut.sv:16.1-21.4"
   attribute \always_ff 1
   cell $dff $procdff$25
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3474:Mux$21
+    connect \D $0\w[3]
     connect \Q \w[3]
     connect \CLK \clk
   end
@@ -72,7 +75,7 @@ module \aes_key_expand_128
   cell $dff $procdff$23
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3474:Mux$7
+    connect \D $0\w[1]
     connect \Q \w[1]
     connect \CLK \clk
   end
@@ -81,7 +84,7 @@ module \aes_key_expand_128
     connect \A $auto$rtlil.cc:3388:Xor$11
     connect \B \key [7:4]
     connect \S \kld
-    connect \Y $auto$rtlil.cc:3474:Mux$13
+    connect \Y $0\w[2]
   end
   cell $xor $xor$dut.sv:20$14
     parameter \A_SIGNED 0
@@ -118,7 +121,7 @@ module \aes_key_expand_128
     connect \A $auto$rtlil.cc:3388:Xor$19
     connect \B \key [3:0]
     connect \S \kld
-    connect \Y $auto$rtlil.cc:3474:Mux$21
+    connect \Y $0\w[3]
   end
   connect \wo_3 \w[3]
   connect \wo_2 \w[2]

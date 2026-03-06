@@ -19,6 +19,8 @@ module \blockrom
   attribute \src "dut.sv:10.15-10.25"
   attribute \reg 1
   wire width 8 \data_out_r
+  attribute \src "dut.sv:29.2-31.5"
+  wire width 8 $0\data_out_r
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:11.15-11.21"
   memory width 8 size 8 \memory
@@ -124,8 +126,10 @@ module \blockrom
   attribute \src "dut.sv:29.2-31.5"
   attribute \always_ff 1
   process $proc$dut.sv:29$2
+    assign $0\data_out_r \data_out_r
+    assign $0\data_out_r \memrd_memory_DATA
     sync posedge \clk
-      update \data_out_r \memrd_memory_DATA
+      update \data_out_r $0\data_out_r
   end
   connect \data_out \data_out_r
 end

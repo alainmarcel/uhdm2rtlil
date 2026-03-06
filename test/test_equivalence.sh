@@ -101,10 +101,12 @@ if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1
 
         # Check if this exact signal exists in Verilog X assignments
         if ! echo "$VERILOG_X_ASSIGNS" | grep -Fx "$signal" > /dev/null 2>&1; then
-            # Skip internal task/function wires that don't exist in Verilog output at all
-            # These are implementation details (nosync wires) that differ between frontends
+            # Skip internal wires that don't appear anywhere in the Verilog output.
+            # The original check used grep -oP '\\[...]' which only matched
+            # backslash-escaped identifiers and silently skipped plain port names
+            # like `doB` — masking real failures.
             NORM_SIGNAL=$(echo "$signal" | sed 's/^[[:space:]]*//')
-            if ! echo "$VERILOG_ALL_SIGNALS" | grep -Fx "\\$NORM_SIGNAL" > /dev/null 2>&1; then
+            if ! grep -qF "$NORM_SIGNAL" "$VERILOG_SYNTH" 2>/dev/null; then
                 echo "ℹ️  Skipping X check for internal wire not in Verilog output: $signal"
                 continue
             fi
@@ -126,8 +128,24 @@ if grep -E "assign.*=.*[0-9]+'\w*x|assign.*=.*'x" "$UHDM_SYNTH" > /dev/null 2>&1
     fi
 fi
 
+# Count synthesised logic cells in both netlists.
+VERILOG_GATE_COUNT=$(grep -c -E '\$_' "$VERILOG_SYNTH" || true)
+UHDM_GATE_COUNT=$(grep -c -E '\$_' "$UHDM_SYNTH" || true)
+
+# If UHDM synthesises to zero logic cells while Verilog has real gates, the
+# UHDM frontend clearly failed to generate circuit logic (e.g. memory writes
+# inside for-loops were silently dropped, always_ff body not generated, etc.).
+# Running the formal equiv flow in this situation is vacuous: equiv_make cuts
+# all DFF feedback loops, both sides collapse to constant-x, and equiv_simple
+# trivially proves x == x.  Catch it here instead.
+if [ "$UHDM_GATE_COUNT" -eq 0 ] && [ "$VERILOG_GATE_COUNT" -gt 0 ]; then
+    echo "❌ CRITICAL: UHDM synthesised netlist has 0 logic cells; Verilog has $VERILOG_GATE_COUNT."
+    echo "   The UHDM frontend failed to generate the circuit — formal check would pass vacuously."
+    exit 1
+fi
+
 # Check if there are any gates to compare
-GATE_COUNT=$(grep -c -E '\$_' "$VERILOG_SYNTH" || true)
+GATE_COUNT=$VERILOG_GATE_COUNT
 if [ "$GATE_COUNT" -eq 0 ]; then
     # Constant-only circuit: no logic gates, only assign statements.
     # The equiv_make flow creates no $equiv cells for portless modules so it passes

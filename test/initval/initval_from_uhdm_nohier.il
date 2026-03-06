@@ -19,6 +19,12 @@ module \initval
   wire width 4 $auto$module.cpp:823:import_continuous_assign$6
   attribute \src "dut.sv:6.3-7.26"
   wire width 2 $0\foo[1:0]
+  attribute \src "dut.sv:9.3-10.26"
+  wire width 2 $0\foo[3:2]
+  attribute \src "dut.sv:12.3-13.21"
+  wire width 4 $0\last_bar
+  attribute \src "dut.sv:15.3-16.23"
+  wire $0\asdf[3:3]
   attribute \src "dut.sv:17.3-18.24"
   wire width 3 $0\asdf[2:0]
   attribute \src "dut.sv:2.13-2.16"
@@ -52,20 +58,26 @@ module \initval
   attribute \src "dut.sv:9.3-10.26"
   attribute \always_ff 1
   process $proc$dut.sv:9$8
+    assign $0\foo[3:2] \foo [3:2]
+    assign $0\foo[3:2] \bar [3:2]
     sync posedge \clk
-      update \foo [3:2] \bar [3:2]
+      update \foo [3:2] $0\foo[3:2]
   end
   attribute \src "dut.sv:12.3-13.21"
   attribute \always_ff 1
   process $proc$dut.sv:12$9
+    assign $0\last_bar \last_bar
+    assign $0\last_bar \bar
     sync posedge \clk
-      update \last_bar \bar
+      update \last_bar $0\last_bar
   end
   attribute \src "dut.sv:15.3-16.23"
   attribute \always_ff 1
   process $proc$dut.sv:15$10
+    assign $0\asdf[3:3] \asdf [3]
+    assign $0\asdf[3:3] \bar [3]
     sync posedge \clk
-      update \asdf [3] \bar [3]
+      update \asdf [3] $0\asdf[3:3]
   end
   attribute \src "dut.sv:17.3-18.24"
   process $proc$dut.sv:17$11

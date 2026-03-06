@@ -15,13 +15,21 @@ module gen_test1(clk, a, b, y);
   (* src = "dut.sv:1.29-1.30" *)
   output [7:0] y;
   wire [7:0] y;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _00_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _01_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _02_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _03_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _04_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _05_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _06_;
+  (* src = "dut.sv:32.3-33.18" *)
   wire _07_;
   wire _08_;
   wire _09_;

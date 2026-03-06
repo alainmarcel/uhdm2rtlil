@@ -717,7 +717,99 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
             }
             break;
         }
+        case vpiFor: {
+            const for_stmt* for_loop = any_cast<const for_stmt*>(stmt);
+            if (auto body = for_loop->VpiStmt()) {
+                scan_for_memory_writes(body, memory_names, module);
+            }
+            break;
+        }
+        case vpiRepeat: {
+            const UHDM::repeat* repeat_s = any_cast<const UHDM::repeat*>(stmt);
+            if (auto body = repeat_s->VpiStmt()) {
+                scan_for_memory_writes(body, memory_names, module);
+            }
+            break;
+        }
     }
+}
+
+// Helper: return true if the statement tree contains a for loop (at any depth).
+bool UhdmImporter::has_for_loop(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiFor) return true;
+    if (type == vpiBegin || type == vpiNamedBegin) {
+        VectorOfany* stmts = begin_block_stmts(stmt);
+        if (stmts) for (auto s : *stmts) if (has_for_loop(s)) return true;
+    }
+    if (type == vpiIf) {
+        const UHDM::if_stmt* if_s = any_cast<const UHDM::if_stmt*>(stmt);
+        if (if_s->VpiStmt() && has_for_loop(if_s->VpiStmt())) return true;
+    }
+    if (type == vpiIfElse) {
+        const if_else* if_e = any_cast<const if_else*>(stmt);
+        if (if_e->VpiStmt() && has_for_loop(if_e->VpiStmt())) return true;
+        if (if_e->VpiElseStmt() && has_for_loop(if_e->VpiElseStmt())) return true;
+    }
+    return false;
+}
+
+// Helper: return true if the always_ff body requires the old import_statement_sync path.
+// The comb path handles for loops at the top level of a Process (via the vpiFor case in
+// import_statement_comb(Process*)), but fails in two situations:
+//  1. vpiRepeat loops (not handled at all in import_statement_comb)
+//  2. vpiFor loops nested inside a conditional (CaseRule* version lacks vpiFor)
+// In either case, fall back to import_statement_sync which handles these via
+// import_statement_with_loop_vars / the vpiRepeat handler.
+bool UhdmImporter::needs_sync_path(const any* stmt, bool inside_conditional) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+
+    // vpiRepeat is not handled by import_statement_comb at all.
+    if (type == vpiRepeat) return true;
+
+    // A for loop inside a conditional (CaseRule* context) is not handled.
+    if (type == vpiFor && inside_conditional) return true;
+
+    // For a for loop at the top level, just recurse into its body with the
+    // inside_conditional flag unchanged (still false at the process level).
+    if (type == vpiFor) {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        if (fs->VpiStmt()) return needs_sync_path(fs->VpiStmt(), false);
+        return false;
+    }
+
+    // Conditionals flip the flag for their bodies.
+    if (type == vpiIf) {
+        const UHDM::if_stmt* if_s = any_cast<const UHDM::if_stmt*>(stmt);
+        if (if_s->VpiStmt() && needs_sync_path(if_s->VpiStmt(), true)) return true;
+        return false;
+    }
+    if (type == vpiIfElse) {
+        const if_else* if_e = any_cast<const if_else*>(stmt);
+        if (if_e->VpiStmt() && needs_sync_path(if_e->VpiStmt(), true)) return true;
+        if (if_e->VpiElseStmt() && needs_sync_path(if_e->VpiElseStmt(), true)) return true;
+        return false;
+    }
+    if (type == vpiCase) {
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (cs->Case_items()) {
+            for (auto ci : *cs->Case_items()) {
+                if (ci->Stmt() && needs_sync_path(ci->Stmt(), true)) return true;
+            }
+        }
+        return false;
+    }
+    if (type == vpiBegin || type == vpiNamedBegin) {
+        VectorOfany* stmts = begin_block_stmts(stmt);
+        if (stmts) {
+            for (auto s : *stmts) {
+                if (needs_sync_path(s, inside_conditional)) return true;
+            }
+        }
+    }
+    return false;
 }
 
 // Find assignment statement for a given LHS expression

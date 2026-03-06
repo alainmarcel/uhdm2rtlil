@@ -24,24 +24,22 @@ module forloops(clk, a, b, p, q, x, y);
   (* src = "dut.sv:1.61-1.62" *)
   output [3:0] y;
   wire [3:0] y;
-  (* src = "dut.sv:2.10-2.11" *)
-  wire [31:0] k;
   \$_NOT_  _0_ (
-    .A(a),
-    .Y(q[3])
-  );
-  \$_NOT_  _1_ (
     .A(b),
     .Y(q[2])
   );
+  \$_NOT_  _1_ (
+    .A(a),
+    .Y(q[3])
+  );
   \$_XOR_  _2_ (
-    .A(b),
-    .B(a),
+    .A(a),
+    .B(b),
     .Y(y[1])
   );
   \$_NOR_  _3_ (
-    .A(b),
-    .B(a),
+    .A(a),
+    .B(b),
     .Y(y[2])
   );
   (* \always_ff  = 32'd1 *)
@@ -72,7 +70,6 @@ module forloops(clk, a, b, p, q, x, y);
     .D(q[3]),
     .Q(x[1])
   );
-  assign k = 32'd2;
   assign { y[3], y[0] } = { 1'h0, b };
   assign { x[3:2], x[0] } = { 1'h0, p[1:0] };
   assign q[1:0] = { a, b };
