@@ -2001,14 +2001,42 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", 
                     has_const_only ? "true" : "false", array_name.c_str());
                 bool is_comb_only_net = comb_only_arrays.count(array_name) > 0;
-                bool should_be_memory = !has_const_only && !is_comb_only_net;
+
+                // Also force individual-wire expansion if the array has the (* mem2reg *) attribute
+                bool has_mem2reg_attr = false;
+                if (array->Attributes()) {
+                    for (auto attr : *array->Attributes()) {
+                        if (std::string(attr->VpiName()) == "mem2reg") {
+                            has_mem2reg_attr = true;
+                            break;
+                        }
+                    }
+                }
+                // Also check the inner logic_net's attributes (Surelog may put the attr there)
+                if (!has_mem2reg_attr && array->Nets()) {
+                    for (auto net : *array->Nets()) {
+                        if (net->Attributes()) {
+                            for (auto attr : *net->Attributes()) {
+                                if (std::string(attr->VpiName()) == "mem2reg") {
+                                    has_mem2reg_attr = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (has_mem2reg_attr) break;
+                    }
+                }
+
+                bool should_be_memory = !has_const_only && !is_comb_only_net && !has_mem2reg_attr;
 
                 if (should_be_memory) {
                     log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array);
                 } else {
-                    // Has only constant accesses, OR is comb-only — create individual element wires
-                    if (is_comb_only_net)
+                    // Has only constant accesses, is comb-only, or has (* mem2reg *) attr
+                    if (has_mem2reg_attr)
+                        log("UHDM: Array net '%s' has mem2reg attribute, expanding to individual registers\n", array_name.c_str());
+                    else if (is_comb_only_net)
                         log("UHDM: Array net '%s' is comb-only, creating individual registers\n", array_name.c_str());
                     else
                         log("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());

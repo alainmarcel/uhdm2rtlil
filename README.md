@@ -15,8 +15,8 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 152 tests covering comprehensive SystemVerilog features
-- **Success Rate**: ~99% (150/152 tests functional, 2 known pre-existing failures)
-- **Passing**: 146 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: ~99% (151/152 tests functional, 1 known pre-existing failure)
+- **Passing**: 147 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -25,7 +25,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Known Failures** (3 pre-existing bugs now exposed by improved `test_equivalence.sh`):
   - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
-  - `mem2reg_test2` - Annotated 8-element array with loop-based writes/reads (memory inside `always_ff` for loop — 0 gates)
+  - `mem2reg_test2` - Annotated 8-element array with `(* mem2reg *)` attribute, for-loop writes, and dynamic write/read in `always @(posedge clk)` — correctly expanded to 8 flip-flop elements ✅
 - **Recent Additions**:
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
@@ -56,6 +56,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `mem2reg_test2` — register arrays with `(* mem2reg *)` attribute in `always @(posedge clk)` blocks now correctly expanded to individual flip-flop wires ✅
+    - **Root cause**: `(* mem2reg *)` attribute was not propagated by Surelog and the array was kept as a `$memory` object; the clocked always block generated broken `MemWriteAction` entries that caused a segfault during synthesis
+    - **Attribute detection**: scan `array_net->Attributes()` (and inner `logic_net->Attributes()`) for `VpiName() == "mem2reg"` → force individual-wire expansion instead of `$memory`
+    - **Dynamic write in sync path** (`mem[addr] <= 0`): added per-element mux handling in `import_assignment_sync` — for each element `N`, emits `\mem[N] = (condition && addr==N) ? rhs : prev_val` into `pending_sync_assignments`, which becomes a posedge sync update
+    - **Dynamic read** (`assign data = mem[addr]`): handled by the existing `import_bit_select` mux-chain fix (reads individual element wires)
   - `mem2reg_test1` — combinational arrays (`reg [W:0] arr [N:0]`) accessed in `always @*` blocks now correctly synthesized using individual element wires and mux logic ✅
     - **Root cause**: Arrays only used in `always @*` were still treated as `$memory` objects; dynamic reads returned X (no writes to the memory) and dynamic writes were ignored
     - **Pre-scan**: new `comb_only_arrays` set identifies arrays accessed exclusively from combinational always blocks before module import; these are expanded to individual wires (`\array[0]`, `\array[1]`, etc.) instead of `$memory`
@@ -456,7 +461,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (152 total — 146 passing equivalence, 5 UHDM-only, 2 known failures)
+### Current Test Cases (152 total — 147 passing equivalence, 5 UHDM-only, 1 known failure)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -562,7 +567,7 @@ The Yosys test runner:
 - **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
 - **priority_memory** - Priority-based memory access patterns
 - **mem2reg_test1** - Combinational array with dynamic write and read in `always @*`: `array[dyn_addr] = in_data; out = array[out_addr]` — correctly synthesized with individual element wires and mux chains ✅
-- **mem2reg_test2** - Annotated 8-element array with loop-based writes and reads
+- **mem2reg_test2** - `(* mem2reg *)` annotated 8-element array with for-loop writes and dynamic address read/write in `always @(posedge clk)` ✅
 - **asym_ram_sdp_read_wider** - Asymmetric RAM with read port 4x wider than write
 - **asym_ram_sdp_write_wider** - Asymmetric RAM with write port 4x wider than read
 - **sp_read_first** - Single port RAM with read-first semantics
@@ -648,8 +653,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 150 of 152 tests are passing or working as expected (146 equiv + 5 UHDM-only)
-- 2 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test2`)
+- 151 of 152 tests are passing or working as expected (147 equiv + 5 UHDM-only)
+- 1 test is in the `failing_tests.txt` file (expected failure: `gen_test3`)
 
 ### Important Test Workflow Note
 
@@ -704,8 +709,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **152 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **146 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **2 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test2`)
+- **147 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **1 known failure** - Pre-existing bug now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking this issue (`gen_test3`)
 
 ## Recent Improvements
 

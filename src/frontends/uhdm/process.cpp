@@ -5497,10 +5497,74 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     // Regular assignment
     log("            Processing regular assignment (not memory write)\n");
     log_flush();
-    
+
+    // Check for dynamic write to an expanded array (individual element wires, not $memory).
+    // e.g. mem[dyn_addr] <= data  where mem[0]..mem[7] exist as RTLIL wires.
+    if (auto lhs_chk = uhdm_assign->Lhs()) {
+        if (lhs_chk->VpiType() == vpiBitSelect) {
+            const bit_select* bs = any_cast<const bit_select*>(lhs_chk);
+            std::string bs_name = std::string(bs->VpiName());
+            RTLIL::IdString bs_mem_id = RTLIL::escape_id(bs_name);
+            RTLIL::Wire* first_elem = !module->memories.count(bs_mem_id)
+                ? module->wire(RTLIL::escape_id(bs_name + "[0]")) : nullptr;
+            if (first_elem) {
+                auto idx_expr = bs->VpiIndex();
+                // Try to get a constant index (loop variables may have been substituted)
+                RTLIL::SigSpec dyn_idx = import_expression(idx_expr);
+                if (!dyn_idx.is_fully_const()) {
+                    // Dynamic write to expanded array — per-element conditional update
+                    RTLIL::SigSpec dyn_rhs;
+                    if (auto rhs_any = uhdm_assign->Rhs()) {
+                        if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                            dyn_rhs = import_expression(rhs_e);
+                    }
+                    int num_elems = 0;
+                    while (module->wire(RTLIL::escape_id(bs_name + "[" + std::to_string(num_elems) + "]")))
+                        num_elems++;
+
+                    for (int i = 0; i < num_elems; i++) {
+                        std::string ename = bs_name + "[" + std::to_string(i) + "]";
+                        RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
+                        RTLIL::SigSpec elem_lhs(ew);
+
+                        // sel = (dyn_idx == i)
+                        RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+                        module->addEq(NEW_ID, dyn_idx, RTLIL::SigSpec(RTLIL::Const(i, GetSize(dyn_idx))), sel);
+
+                        // Combine with current_condition: full_cond = condition && sel
+                        RTLIL::SigSpec full_cond;
+                        if (!current_condition.empty()) {
+                            RTLIL::Wire* both = module->addWire(NEW_ID, 1);
+                            module->addAnd(NEW_ID, current_condition, RTLIL::SigSpec(sel), both);
+                            full_cond = RTLIL::SigSpec(both);
+                        } else {
+                            full_cond = RTLIL::SigSpec(sel);
+                        }
+
+                        // else_value: previous pending assignment or the wire itself
+                        RTLIL::SigSpec else_val;
+                        if (pending_sync_assignments.count(elem_lhs))
+                            else_val = pending_sync_assignments.at(elem_lhs);
+                        else
+                            else_val = elem_lhs;
+
+                        RTLIL::SigSpec rhs_sized = dyn_rhs;
+                        if (rhs_sized.size() < ew->width) rhs_sized.extend_u0(ew->width);
+                        else if (rhs_sized.size() > ew->width) rhs_sized = rhs_sized.extract(0, ew->width);
+
+                        RTLIL::Wire* mux_out = module->addWire(NEW_ID, ew->width);
+                        module->addMux(NEW_ID, else_val, rhs_sized, full_cond, mux_out);
+                        pending_sync_assignments[elem_lhs] = RTLIL::SigSpec(mux_out);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
-    
+
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         log("            Importing LHS expression\n");
