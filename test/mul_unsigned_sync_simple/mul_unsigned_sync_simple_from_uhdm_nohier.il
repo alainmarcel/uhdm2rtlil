@@ -13,7 +13,7 @@ module \mul_unsigned_sync_simple
   wire width 9 output 4 \p
   attribute \src "dut.sv:7.5-10.8"
   wire width 9 $0\p
-  wire width 9 $auto$expression.cpp:2234:import_operation$2
+  wire width 9 $auto$expression.cpp:2262:import_operation$2
   cell $mul $mul$dut.sv:9$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -22,13 +22,13 @@ module \mul_unsigned_sync_simple
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2234:import_operation$2
+    connect \Y $auto$expression.cpp:2262:import_operation$2
   end
   attribute \src "dut.sv:7.5-10.8"
   attribute \always_ff 1
   process $proc$dut.sv:7$1
     assign $0\p \p
-    assign $0\p $auto$expression.cpp:2234:import_operation$2
+    assign $0\p $auto$expression.cpp:2262:import_operation$2
     sync posedge \clk
       update \p $0\p
   end

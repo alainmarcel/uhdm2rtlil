@@ -36,6 +36,10 @@
 #include <uhdm/if_else.h>
 #include <uhdm/var_select.h>
 #include <uhdm/array_net.h>
+#include <uhdm/packed_array_typespec.h>
+#include <uhdm/packed_array_var.h>
+#include <uhdm/bit_select.h>
+#include <uhdm/part_select.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -1757,6 +1761,30 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             }
 
             return value;
+        }
+        return RTLIL::SigSpec();
+    }
+
+    if (op_type == vpiAssignmentPatternOp) {
+        // Struct/array aggregate: '{field: val, field: val, ...}
+        // Surelog stores the value expressions directly as operands (hier_path, ref_obj, etc.),
+        // in struct field definition order (first field = MSB for packed structs).
+        // Same concatenation order as vpiConcatOp: first operand at MSB.
+        if (uhdm_op->Operands()) {
+            std::vector<RTLIL::SigSpec> field_sigs;
+            for (auto operand : *uhdm_op->Operands()) {
+                const expr* field_expr = any_cast<const expr*>(operand);
+                if (!field_expr) continue;
+                RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
+                if (mode_debug)
+                    log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
+                field_sigs.push_back(val);
+            }
+            // Concatenate: first field at MSB (iterate in reverse and append, like vpiConcatOp)
+            RTLIL::SigSpec result;
+            for (int i = (int)field_sigs.size() - 1; i >= 0; i--)
+                result.append(field_sigs[i]);
+            return result;
         }
         return RTLIL::SigSpec();
     }
@@ -3563,7 +3591,141 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (mode_debug)
             log("    hier_path has no Path_elems\n");
     }
-    
+
+    // Handle packed array element + struct field access: sig[i].field[hi:lo]
+    // Path_elems pattern: [bit_select(sig[i]), part_select(field[hi:lo])]
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pelems = *uhdm_hier->Path_elems();
+        if (pelems[0]->UhdmType() == uhdmbit_select &&
+            pelems[1]->UhdmType() == uhdmpart_select) {
+            const bit_select* bs = any_cast<const bit_select*>(pelems[0]);
+            const part_select* ps = any_cast<const part_select*>(pelems[1]);
+            if (bs && ps && bs->VpiIndex() && ps->Left_range() && ps->Right_range()) {
+                std::string base_name = std::string(bs->VpiName());
+                RTLIL::Wire* base_wire = name_map.count(base_name) ? name_map[base_name] : nullptr;
+                if (!base_wire) {
+                    // Try with current gen scope prefix
+                    std::string gen_prefix = get_current_gen_scope();
+                    if (!gen_prefix.empty()) {
+                        std::string scoped = gen_prefix + "." + base_name;
+                        if (name_map.count(scoped)) base_wire = name_map[scoped];
+                    }
+                }
+                RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+                RTLIL::SigSpec left_sig = import_expression(ps->Left_range(), input_mapping);
+                RTLIL::SigSpec right_sig = import_expression(ps->Right_range(), input_mapping);
+                std::string field_name = std::string(ps->VpiName());
+
+                if (base_wire && idx_sig.is_fully_const() &&
+                    left_sig.is_fully_const() && right_sig.is_fully_const()) {
+                    int elem_idx = idx_sig.as_const().as_int();
+                    int ps_left  = left_sig.as_const().as_int();
+                    int ps_right = right_sig.as_const().as_int();
+
+                    // Find UHDM object for base wire to get packed_array_typespec
+                    const any* base_uhdm = nullptr;
+                    for (auto& kv : wire_map) {
+                        if (kv.second == base_wire) { base_uhdm = kv.first; break; }
+                    }
+
+                    // Get array ranges and element struct typespec from the UHDM object.
+                    // packed_array_var has Ranges() directly and Elements() for child vars.
+                    // For logic_net with packed_array_typespec, use the typespec chain.
+                    const VectorOfrange* arr_ranges = nullptr;
+                    const UHDM::struct_typespec* st = nullptr;
+                    if (base_uhdm) {
+                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(base_uhdm)) {
+                            arr_ranges = pav->Ranges();
+                            // Get element struct type from first element (a struct_var)
+                            if (pav->Elements() && !pav->Elements()->empty()) {
+                                const any* elem0 = (*pav->Elements())[0];
+                                const ref_typespec* elem_rts = nullptr;
+                                if (auto sv = dynamic_cast<const UHDM::struct_var*>(elem0))
+                                    elem_rts = sv->Typespec();
+                                if (elem_rts) {
+                                    const typespec* ets = elem_rts->Actual_typespec();
+                                    if (ets && ets->UhdmType() == uhdmstruct_typespec)
+                                        st = any_cast<const UHDM::struct_typespec*>(ets);
+                                }
+                            }
+                        } else if (auto ln = dynamic_cast<const UHDM::logic_net*>(base_uhdm)) {
+                            const ref_typespec* rts = ln->Typespec();
+                            if (rts) {
+                                const typespec* ts = rts->Actual_typespec();
+                                if (ts && ts->UhdmType() == uhdmpacked_array_typespec) {
+                                    auto pa = any_cast<const packed_array_typespec*>(ts);
+                                    arr_ranges = pa->Ranges();
+                                    if (pa->Elem_typespec()) {
+                                        const typespec* ets = pa->Elem_typespec()->Actual_typespec();
+                                        if (ets && ets->UhdmType() == uhdmstruct_typespec)
+                                            st = any_cast<const UHDM::struct_typespec*>(ets);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (st && arr_ranges && !arr_ranges->empty()) {
+
+                        // Compute element width from struct members
+                        int elem_width = 0;
+                        if (st->Members()) {
+                            for (auto m : *st->Members()) {
+                                if (auto mts = m->Typespec())
+                                    if (auto ats = mts->Actual_typespec())
+                                        elem_width += get_width_from_typespec(ats, inst);
+                            }
+                        }
+
+                        // Array bounds from first range
+                        const UHDM::range* arr_range = (*arr_ranges)[0];
+                        RTLIL::SigSpec rl = import_expression(arr_range->Left_expr(), input_mapping);
+                        RTLIL::SigSpec rr = import_expression(arr_range->Right_expr(), input_mapping);
+                        if (rl.is_fully_const() && rr.is_fully_const() && elem_width > 0) {
+                            int arr_l = rl.as_const().as_int();
+                            int arr_r = rr.as_const().as_int();
+                            int arr_low = std::min(arr_l, arr_r);
+
+                            // Element offset from LSB of base wire
+                            int elem_offset = (elem_idx - arr_low) * elem_width;
+
+                            // Find field offset (from LSB of element) and width
+                            int field_offset = 0;
+                            bool found_field = false;
+                            if (st->Members()) {
+                                // Iterate in reverse (last member = LSB)
+                                for (int i = (int)st->Members()->size()-1; i >= 0; i--) {
+                                    auto m = (*st->Members())[i];
+                                    int mw = 0;
+                                    if (auto mts = m->Typespec())
+                                        if (auto ats = mts->Actual_typespec())
+                                            mw = get_width_from_typespec(ats, inst);
+                                    if (std::string(m->VpiName()) == field_name) {
+                                        (void)mw;
+                                        found_field = true;
+                                        break;
+                                    }
+                                    field_offset += mw;
+                                }
+                            }
+
+                            if (found_field) {
+                                int abs_start = elem_offset + field_offset + ps_right;
+                                int abs_len   = ps_left - ps_right + 1;
+                                if (mode_debug)
+                                    log("    Packed array struct: %s[%d].%s[%d:%d] → wire[%d+:%d]\n",
+                                        base_name.c_str(), elem_idx, field_name.c_str(),
+                                        ps_left, ps_right, abs_start, abs_len);
+                                if (abs_start >= 0 && abs_start + abs_len <= base_wire->width)
+                                    return RTLIL::SigSpec(base_wire).extract(abs_start, abs_len);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // First check if this is a generate hierarchy wire (e.g., blk[0].sub.x)
     // These are already created during generate scope import
     if (name_map.count(path_name)) {

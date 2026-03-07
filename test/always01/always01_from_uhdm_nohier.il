@@ -11,7 +11,7 @@ module \always01
   wire width 4 output 3 \count
   attribute \src "dut.sv:7.1-8.34"
   wire width 4 $0\count
-  wire width 64 $auto$expression.cpp:2162:import_operation$2
+  wire width 64 $auto$expression.cpp:2190:import_operation$2
   wire width 64 $auto$rtlil.cc:3474:Mux$5
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
@@ -21,11 +21,11 @@ module \always01
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$2
+    connect \Y $auto$expression.cpp:2190:import_operation$2
   end
   cell $mux $mux$dut.sv:8$4
     parameter \WIDTH 64
-    connect \A $auto$expression.cpp:2162:import_operation$2
+    connect \A $auto$expression.cpp:2190:import_operation$2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \S \reset
     connect \Y $auto$rtlil.cc:3474:Mux$5
