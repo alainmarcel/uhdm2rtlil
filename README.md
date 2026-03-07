@@ -14,20 +14,22 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 151 tests covering comprehensive SystemVerilog features
-- **Success Rate**: ~97% (147/151 tests functional, 4 known pre-existing failures)
-- **Passing**: 143 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 4 tests demonstrating UHDM's superior SystemVerilog support:
+- **Total Tests**: 152 tests covering comprehensive SystemVerilog features
+- **Success Rate**: ~97% (148/152 tests functional, 4 known pre-existing failures)
+- **Passing**: 144 tests with formal equivalence verified between UHDM and Verilog frontends
+- **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
+  - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Known Failures** (4 pre-existing bugs now exposed by improved `test_equivalence.sh`):
   - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
   - `mem2reg_test1` - Combinational array with simultaneous write and read (memory in `always @*` not handled)
   - `mem2reg_test2` - Annotated 8-element array with loop-based writes/reads (memory inside `always_ff` for loop — 0 gates)
   - `partsel_simple` - Part selection with dynamic offset (`+:` / `-:`) — part-select expression width issue (0 gates)
 - **Recent Additions**:
+  - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
   - `func_typename_ret` - Functions whose return type is a typedef (local or package-scoped): `function automatic T func1` where `T = logic[1:0]` and `function automatic P::S func2` where `P::S = logic[3:0]`; verifies correct width and sign extension of signed parameters assigned to typedef'd return variables
   - `int_types` - Integer atom types (`integer`, `int`, `shortint`, `longint`, `byte`) and integer vector types (`logic`, `reg`, `bit`) in generate blocks, with signed/unsigned variants; verifies correct widths, signedness, sign/zero extension when assigned to wider 128-bit wires; required fixes for **temp wire dedup key**, **sign extension in process assignments**, and **generate scope variable initialization** from `vpiExpr`
@@ -56,6 +58,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `gen_struct_access` — struct aggregate assignment and packed array of structs field access now correctly synthesized ✅
+    - **`vpiAssignmentPatternOp` (op type 75)**: `'{f1: expr1, f2: expr2}` struct literals were producing empty signals. Surelog stores the field VALUE expressions directly as `Operands()` (as `hier_path` objects, not `tagged_pattern` wrappers as implied by the UHDM dump's visitor output). Fix in `import_operation`: early-return handler for `vpiAssignmentPatternOp` casts each operand as `const expr*` and concatenates values MSB-first (same order as `vpiConcatOp`)
+    - **Packed array of structs field access** (`sig[i].field[hi:lo]` via `hier_path`): `import_hier_path` now detects the `[bit_select, part_select]` Path_elems pattern and computes absolute bit offsets. `packed_array_var.Typespec()` is null — instead uses `pav->Ranges()` for array dimension and `pav->Elements()[0]` (a `struct_var`) for the element struct typespec. Element offset = `(index − arr_low) × element_width`; field offset accumulated by iterating struct members in reverse (LSB first); result is a plain `extract()` on the base wire
   - `fsm2` / `always_ff` RTLIL process structure — `import_always_ff` now generates a proper `switch`/`case` structure inside the process body (matching the Verilog frontend) instead of pre-computing all combinational logic as mux cells outside the process ✅
     - **Root cause**: The previous implementation used `import_statement_sync` → `pending_sync_assignments`, which created a flat list of mux cells in the module and a sync rule pointing to the final mux outputs — a structurally very different representation compared to the Verilog frontend's `switch`/`case` inside the process
     - **Fix**: Replaced the "no memory writes" path in `import_always_ff` with the same `$0\temp-wire` + `import_statement_comb` approach used by `import_always_comb`; added `in_always_ff_body_mode` flag to suppress `current_comb_values` reads/writes during the body, enforcing non-blocking assignment semantics (all RHS expressions see original register values, not intermediate `$0\` values)

@@ -20,21 +20,21 @@ module \mem2reg_test2
   wire $auto$process_helper.cpp:88:create_not_cell$2
   wire $auto$rtlil.cc:3386:And$5
   wire width 4 \memrd_mem_DATA_1
-  wire width 64 $auto$expression.cpp:2162:import_operation$6
+  wire width 64 $auto$expression.cpp:2190:import_operation$6
   wire width 4 \memrd_mem_DATA_2
-  wire width 64 $auto$expression.cpp:2162:import_operation$8
+  wire width 64 $auto$expression.cpp:2190:import_operation$8
   wire width 4 \memrd_mem_DATA_3
-  wire width 64 $auto$expression.cpp:2162:import_operation$10
+  wire width 64 $auto$expression.cpp:2190:import_operation$10
   wire width 4 \memrd_mem_DATA_4
-  wire width 64 $auto$expression.cpp:2162:import_operation$12
+  wire width 64 $auto$expression.cpp:2190:import_operation$12
   wire width 4 \memrd_mem_DATA_5
-  wire width 64 $auto$expression.cpp:2162:import_operation$14
+  wire width 64 $auto$expression.cpp:2190:import_operation$14
   wire width 4 \memrd_mem_DATA_6
-  wire width 64 $auto$expression.cpp:2162:import_operation$16
+  wire width 64 $auto$expression.cpp:2190:import_operation$16
   wire width 4 \memrd_mem_DATA_7
-  wire width 64 $auto$expression.cpp:2162:import_operation$18
+  wire width 64 $auto$expression.cpp:2190:import_operation$18
   wire width 4 \memrd_mem_DATA_8
-  wire width 64 $auto$expression.cpp:2162:import_operation$20
+  wire width 64 $auto$expression.cpp:2190:import_operation$20
   attribute \src "dut.sv:19.2-24.5"
   wire $auto$process_helper.cpp:88:create_not_cell$22
   attribute \src "dut.sv:19.2-24.5"
@@ -93,7 +93,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$6
+    connect \Y $auto$expression.cpp:2190:import_operation$6
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_2
@@ -116,7 +116,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$8
+    connect \Y $auto$expression.cpp:2190:import_operation$8
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_3
@@ -139,7 +139,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$10
+    connect \Y $auto$expression.cpp:2190:import_operation$10
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_4
@@ -162,7 +162,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$12
+    connect \Y $auto$expression.cpp:2190:import_operation$12
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_5
@@ -185,7 +185,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$14
+    connect \Y $auto$expression.cpp:2190:import_operation$14
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_6
@@ -208,7 +208,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_6
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$16
+    connect \Y $auto$expression.cpp:2190:import_operation$16
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_7
@@ -231,7 +231,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_7
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$18
+    connect \Y $auto$expression.cpp:2190:import_operation$18
   end
   attribute \src "dut.sv:21.18-21.19"
   cell $memrd \memrd_mem_8
@@ -254,7 +254,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 64
     connect \A \memrd_mem_DATA_8
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2162:import_operation$20
+    connect \Y $auto$expression.cpp:2190:import_operation$20
   end
   attribute \src "dut.sv:19.2-24.5"
   cell $not $auto$process_helper.cpp:91:create_not_cell$23
@@ -288,14 +288,14 @@ module \mem2reg_test2
       memwr \mem 5 4'0101 { \reset \reset \reset \reset } 0'x
       memwr \mem 6 4'0110 { \reset \reset \reset \reset } 0'x
       memwr \mem 7 4'0111 { \reset \reset \reset \reset } 0'x
-      memwr \mem 0 $auto$expression.cpp:2162:import_operation$6 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 1 $auto$expression.cpp:2162:import_operation$8 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 2 $auto$expression.cpp:2162:import_operation$10 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 3 $auto$expression.cpp:2162:import_operation$12 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 4 $auto$expression.cpp:2162:import_operation$14 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 5 $auto$expression.cpp:2162:import_operation$16 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 6 $auto$expression.cpp:2162:import_operation$18 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
-      memwr \mem 7 $auto$expression.cpp:2162:import_operation$20 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 0 $auto$expression.cpp:2190:import_operation$6 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 1 $auto$expression.cpp:2190:import_operation$8 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 2 $auto$expression.cpp:2190:import_operation$10 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 3 $auto$expression.cpp:2190:import_operation$12 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 4 $auto$expression.cpp:2190:import_operation$14 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 5 $auto$expression.cpp:2190:import_operation$16 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 6 $auto$expression.cpp:2190:import_operation$18 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
+      memwr \mem 7 $auto$expression.cpp:2190:import_operation$20 [3:0] { $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 $auto$rtlil.cc:3386:And$5 } 0'x
       memwr \mem \addr 4'0000 { $auto$process_helper.cpp:68:create_and_cell$24 $auto$process_helper.cpp:68:create_and_cell$24 $auto$process_helper.cpp:68:create_and_cell$24 $auto$process_helper.cpp:68:create_and_cell$24 } 0'x
   end
   connect \data \memrd_mem_DATA
