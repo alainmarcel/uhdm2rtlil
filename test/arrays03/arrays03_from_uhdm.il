@@ -17,7 +17,7 @@ module \pcktest4
   attribute \src "dut.sv:46.5-48.8"
   wire width 8 $0\out
   attribute \unused_bits "29 30 31"
-  wire width 32 $auto$expression.cpp:3300:import_bit_select$23
+  wire width 32 $auto$expression.cpp:3301:import_bit_select$23
   attribute \src "dut.sv:47.19-47.21"
   cell $sub $sub$dut.sv:47$24
     parameter \A_SIGNED 0
@@ -27,7 +27,7 @@ module \pcktest4
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 30'000000000000000000000000000000 \ix }
-    connect \Y $auto$expression.cpp:3300:import_bit_select$23
+    connect \Y $auto$expression.cpp:3301:import_bit_select$23
   end
   attribute \src "dut.sv:46.5-48.8"
   attribute \always_ff 1
@@ -46,7 +46,7 @@ module \pcktest4
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \in
-    connect \B { $auto$expression.cpp:3300:import_bit_select$23 [28:0] 3'000 }
+    connect \B { $auto$expression.cpp:3301:import_bit_select$23 [28:0] 3'000 }
     connect \Y $0\out
   end
 end

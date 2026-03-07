@@ -30,7 +30,7 @@ module \function_arith
   wire width 8 $auto$expression.cpp:2190:import_operation$10
   wire width 8 $func_arith$func$dut.sv:25$2$local_temp
   wire width 8 $auto$expression.cpp:2216:import_operation$12
-  wire width 8 $auto$expression.cpp:2311:import_operation$14
+  wire width 8 $auto$expression.cpp:2312:import_operation$14
   wire width 8 $auto$rtlil.cc:3386:And$17
   wire width 8 $auto$rtlil.cc:3387:Or$19
   wire width 8 $auto$rtlil.cc:3388:Xor$21
@@ -68,7 +68,7 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2311:import_operation$14
+    connect \Y $auto$expression.cpp:2312:import_operation$14
   end
   cell $and $and$dut.sv:19$16
     parameter \A_SIGNED 0
@@ -114,7 +114,7 @@ module \function_arith
     assign $0\func_arith$func$dut.sv:25$1.$result$9 $1\func_arith$func$dut.sv:25$2.$result$8
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2190:import_operation$10
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2216:import_operation$12
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2311:import_operation$14
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2312:import_operation$14
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$rtlil.cc:3387:Or$19
     assign $1\func_arith$func$dut.sv:25$2.$result$8 $auto$rtlil.cc:3388:Xor$21
     sync always

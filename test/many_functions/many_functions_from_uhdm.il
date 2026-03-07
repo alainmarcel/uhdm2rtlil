@@ -41,7 +41,7 @@ module \many_functions
   wire width 8 $auto$expression.cpp:2190:import_operation$10
   wire width 8 $procmux$153_Y
   wire width 8 $auto$expression.cpp:2190:import_operation$125
-  wire width 8 $auto$expression.cpp:2311:import_operation$14
+  wire width 8 $auto$expression.cpp:2312:import_operation$14
   wire width 8 $auto$rtlil.cc:3386:And$17
   wire width 8 $auto$rtlil.cc:3387:Or$19
   wire width 8 $procmux$223_Y
@@ -126,9 +126,9 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2311:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2312:import_operation$14 [7:1] }
     connect \B $auto$rtlil.cc:3386:And$17
-    connect \Y { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2311:import_operation$14 [7:1] }
+    connect \Y { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2312:import_operation$14 [7:1] }
   end
   cell $xor $xor$dut.sv:27$20
     parameter \A_SIGNED 0
@@ -136,7 +136,7 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2311:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3387:Or$19 [7] $auto$expression.cpp:2312:import_operation$14 [7:1] }
     connect \B \c
     connect \Y \out_arith
   end
@@ -597,8 +597,8 @@ module \many_functions
   end
   connect \func_loop$func$dut.sv:142$79.i 32'x
   connect \func_arith$func$dut.sv:138$2.temp 8'x
-  connect $auto$rtlil.cc:3387:Or$19 [6:0] $auto$expression.cpp:2311:import_operation$14 [7:1]
-  connect $auto$expression.cpp:2311:import_operation$14 [0] 1'0
+  connect $auto$rtlil.cc:3387:Or$19 [6:0] $auto$expression.cpp:2312:import_operation$14 [7:1]
+  connect $auto$expression.cpp:2312:import_operation$14 [0] 1'0
   connect \func_mixed$func$dut.sv:143$86.result 8'x
   connect \func_mixed$func$dut.sv:143$86.i 32'x
   connect \out_loop { \a [0] \a [1] \a [2] \a [3] \a [4] \a [5] \a [6] \a [7] }

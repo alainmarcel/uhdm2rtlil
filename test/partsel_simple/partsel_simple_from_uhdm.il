@@ -12,9 +12,51 @@ module \partsel_simple
   attribute \src "dut.sv:1.82-1.92"
   wire width 4 output 4 \slice_down
   attribute \src "dut.sv:2.12-2.18"
-  attribute \unused_bits "2"
   wire width 6 \offset
-  connect \offset { 3'000 \idx [0] 2'00 }
-  connect \slice_down 4'0000
-  connect \slice_up 4'0000
+  wire width 64 $auto$expression.cpp:2190:import_operation$5
+  wire width 64 $auto$expression.cpp:3482:import_indexed_part_select$7
+  attribute \src "dut.sv:4.26-4.41"
+  cell $shiftx $shiftx$dut.sv:4$10
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 4
+    connect \A \data
+    connect \B $auto$expression.cpp:3482:import_indexed_part_select$7
+    connect \Y \slice_down
+  end
+  attribute \src "dut.sv:3.24-3.35"
+  cell $shiftx $shiftx$dut.sv:3$4
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 6
+    parameter \Y_WIDTH 4
+    connect \A \data
+    connect \B { 1'0 \idx 2'00 }
+    connect \Y \slice_up
+  end
+  cell $add $add$dut.sv:4$6
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 6
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A { 1'0 \idx 2'00 }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
+    connect \Y $auto$expression.cpp:2190:import_operation$5
+  end
+  attribute \src "dut.sv:4.26-4.41"
+  cell $sub $sub$dut.sv:4$8
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 64
+    connect \A $auto$expression.cpp:2190:import_operation$5
+    connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
+    connect \Y $auto$expression.cpp:3482:import_indexed_part_select$7
+  end
+  connect \offset { 1'0 \idx 2'00 }
 end
