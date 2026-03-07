@@ -14,10 +14,10 @@ module \partsel_simple
   attribute \src "dut.sv:2.12-2.18"
   wire width 6 \offset
   wire width 6 $auto$expression.cpp:2312:import_operation$1
-  wire width 4 $auto$expression.cpp:3498:import_indexed_part_select$3
+  wire width 4 $auto$expression.cpp:3554:import_indexed_part_select$3
   wire width 64 $auto$expression.cpp:2190:import_operation$5
-  wire width 64 $auto$expression.cpp:3482:import_indexed_part_select$7
-  wire width 4 $auto$expression.cpp:3498:import_indexed_part_select$9
+  wire width 64 $auto$expression.cpp:3538:import_indexed_part_select$7
+  wire width 4 $auto$expression.cpp:3554:import_indexed_part_select$9
   cell $shl $shl$dut.sv:2$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -37,7 +37,7 @@ module \partsel_simple
     parameter \Y_WIDTH 4
     connect \A \data
     connect \B \offset
-    connect \Y $auto$expression.cpp:3498:import_indexed_part_select$3
+    connect \Y $auto$expression.cpp:3554:import_indexed_part_select$3
   end
   cell $add $add$dut.sv:4$6
     parameter \A_SIGNED 0
@@ -58,7 +58,7 @@ module \partsel_simple
     parameter \Y_WIDTH 64
     connect \A $auto$expression.cpp:2190:import_operation$5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:3482:import_indexed_part_select$7
+    connect \Y $auto$expression.cpp:3538:import_indexed_part_select$7
   end
   attribute \src "dut.sv:4.26-4.41"
   cell $shiftx $shiftx$dut.sv:4$10
@@ -68,10 +68,10 @@ module \partsel_simple
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 4
     connect \A \data
-    connect \B $auto$expression.cpp:3482:import_indexed_part_select$7
-    connect \Y $auto$expression.cpp:3498:import_indexed_part_select$9
+    connect \B $auto$expression.cpp:3538:import_indexed_part_select$7
+    connect \Y $auto$expression.cpp:3554:import_indexed_part_select$9
   end
   connect \offset $auto$expression.cpp:2312:import_operation$1
-  connect \slice_up $auto$expression.cpp:3498:import_indexed_part_select$3
-  connect \slice_down $auto$expression.cpp:3498:import_indexed_part_select$9
+  connect \slice_up $auto$expression.cpp:3554:import_indexed_part_select$3
+  connect \slice_down $auto$expression.cpp:3554:import_indexed_part_select$9
 end

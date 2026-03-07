@@ -194,7 +194,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Handle bit selects like result[0] or memory[addr]
                         auto bit_sel = any_cast<const bit_select*>(lhs_expr);
                         sig.is_part_select = true;
-                        
+
                         // First try to get name from bit_select itself
                         if (!bit_sel->VpiName().empty()) {
                             sig.name = std::string(bit_sel->VpiName());
@@ -207,7 +207,25 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 sig.name = std::string(parent->VpiName());
                             }
                         }
-                        
+
+                        // Dynamic write to an expanded array (individual element wires exist,
+                        // not a $memory object) with a non-constant index is handled specially
+                        // in import_assignment_comb using per-element mux logic.
+                        // Skip it here so we don't create a temp wire for the whole array.
+                        if (!sig.name.empty()) {
+                            auto idx = bit_sel->VpiIndex();
+                            bool is_const_idx = idx && idx->VpiType() == vpiConstant;
+                            if (!is_const_idx) {
+                                RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
+                                if (!module->memories.count(mem_id) &&
+                                    module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                                    log("extract_assigned_signals: Skipping dynamic write to expanded array '%s'\n",
+                                        sig.name.c_str());
+                                    break;
+                                }
+                            }
+                        }
+
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to bit select of '%s'\n", sig.name.c_str());
                     }

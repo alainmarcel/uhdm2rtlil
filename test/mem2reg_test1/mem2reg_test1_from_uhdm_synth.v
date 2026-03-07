@@ -15,25 +15,158 @@ module mem2reg_test1(in_addr, in_data, out_addr, out_data);
   (* src = "dut.sv:1.50-1.58" *)
   output [3:0] out_data;
   wire [3:0] out_data;
-  wire [3:0] memrd_array_DATA;
-  wire [3:0] memrd_array_DATA_1;
-  wire [3:0] memrd_array_DATA_2;
-  (* unused_bits = "0 1 2 3" *)
-  wire [3:0] memrd_array_DATA_3;
-  wire [3:0] memrd_array_DATA_4;
-  wire [3:0] memrd_array_DATA_5;
-  wire [3:0] memrd_array_DATA_6;
-  (* unused_bits = "0 1 2 3" *)
-  wire [3:0] memrd_array_DATA_7;
-  wire [3:0] memrd_array_DATA_8;
-  assign memrd_array_DATA_4 = 4'h0;
-  assign memrd_array_DATA_5 = 4'h7;
-  assign memrd_array_DATA_3 = in_data;
-  assign memrd_array_DATA_6 = 4'ha;
-  assign memrd_array_DATA_2 = 4'ha;
-  assign memrd_array_DATA_7 = in_data;
-  assign memrd_array_DATA_1 = 4'h7;
-  assign memrd_array_DATA_8 = 4'hx;
-  assign memrd_array_DATA = 4'h0;
-  assign out_data = 4'hx;
+  wire _00_;
+  wire _01_;
+  wire _02_;
+  wire _03_;
+  wire _04_;
+  wire _05_;
+  wire _06_;
+  wire _07_;
+  wire _08_;
+  wire _09_;
+  wire _10_;
+  wire _11_;
+  wire _12_;
+  wire _13_;
+  wire _14_;
+  wire _15_;
+  wire _16_;
+  wire _17_;
+  wire _18_;
+  wire _19_;
+  wire _20_;
+  \$_OR_  _21_ (
+    .A(in_addr[1]),
+    .B(in_addr[0]),
+    .Y(_00_)
+  );
+  \$_ANDNOT_  _22_ (
+    .A(in_data[2]),
+    .B(_00_),
+    .Y(_01_)
+  );
+  \$_NOR_  _23_ (
+    .A(out_addr[0]),
+    .B(out_addr[1]),
+    .Y(_02_)
+  );
+  \$_ORNOT_  _24_ (
+    .A(in_addr[1]),
+    .B(in_addr[0]),
+    .Y(_03_)
+  );
+  \$_OR_  _25_ (
+    .A(_03_),
+    .B(in_data[2]),
+    .Y(_04_)
+  );
+  \$_ANDNOT_  _26_ (
+    .A(out_addr[0]),
+    .B(out_addr[1]),
+    .Y(_05_)
+  );
+  \$_ORNOT_  _27_ (
+    .A(in_addr[0]),
+    .B(in_addr[1]),
+    .Y(_06_)
+  );
+  \$_ANDNOT_  _28_ (
+    .A(in_data[2]),
+    .B(_06_),
+    .Y(_07_)
+  );
+  \$_MUX_  _29_ (
+    .A(_07_),
+    .B(_04_),
+    .S(_05_),
+    .Y(_08_)
+  );
+  \$_MUX_  _30_ (
+    .A(_08_),
+    .B(_01_),
+    .S(_02_),
+    .Y(out_data[2])
+  );
+  \$_ANDNOT_  _31_ (
+    .A(in_data[1]),
+    .B(_00_),
+    .Y(_09_)
+  );
+  \$_OR_  _32_ (
+    .A(_03_),
+    .B(in_data[1]),
+    .Y(_10_)
+  );
+  \$_OR_  _33_ (
+    .A(_06_),
+    .B(in_data[1]),
+    .Y(_11_)
+  );
+  \$_MUX_  _34_ (
+    .A(_11_),
+    .B(_10_),
+    .S(_05_),
+    .Y(_12_)
+  );
+  \$_MUX_  _35_ (
+    .A(_12_),
+    .B(_09_),
+    .S(_02_),
+    .Y(out_data[1])
+  );
+  \$_ANDNOT_  _36_ (
+    .A(in_data[0]),
+    .B(_00_),
+    .Y(_13_)
+  );
+  \$_OR_  _37_ (
+    .A(_03_),
+    .B(in_data[0]),
+    .Y(_14_)
+  );
+  \$_ANDNOT_  _38_ (
+    .A(in_data[0]),
+    .B(_06_),
+    .Y(_15_)
+  );
+  \$_MUX_  _39_ (
+    .A(_15_),
+    .B(_14_),
+    .S(_05_),
+    .Y(_16_)
+  );
+  \$_MUX_  _40_ (
+    .A(_16_),
+    .B(_13_),
+    .S(_02_),
+    .Y(out_data[0])
+  );
+  \$_ANDNOT_  _41_ (
+    .A(in_data[3]),
+    .B(_00_),
+    .Y(_17_)
+  );
+  \$_ANDNOT_  _42_ (
+    .A(in_data[3]),
+    .B(_03_),
+    .Y(_18_)
+  );
+  \$_OR_  _43_ (
+    .A(_06_),
+    .B(in_data[3]),
+    .Y(_19_)
+  );
+  \$_MUX_  _44_ (
+    .A(_19_),
+    .B(_18_),
+    .S(_05_),
+    .Y(_20_)
+  );
+  \$_MUX_  _45_ (
+    .A(_20_),
+    .B(_17_),
+    .S(_02_),
+    .Y(out_data[3])
+  );
 endmodule

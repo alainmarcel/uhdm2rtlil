@@ -45,27 +45,27 @@ module \gold
     connect \Y $auto$module.cpp:790:import_continuous_assign$8
   end
   attribute \src "dut.sv:12.13-12.19"
-  process $auto$uhdm2rtlil.cpp:1712:import_module$3
+  process $auto$uhdm2rtlil.cpp:1829:import_module$3
     sync always
       update \a 32'11111111111111111111111111111111
   end
   attribute \src "dut.sv:13.9-13.15"
-  process $auto$uhdm2rtlil.cpp:1712:import_module$4
+  process $auto$uhdm2rtlil.cpp:1829:import_module$4
     sync always
       update \b 32'11111111111111111111111111111110
   end
   attribute \src "dut.sv:14.14-14.20"
-  process $auto$uhdm2rtlil.cpp:1712:import_module$5
+  process $auto$uhdm2rtlil.cpp:1829:import_module$5
     sync always
       update \c 16'1111111111111101
   end
   attribute \src "dut.sv:15.13-15.19"
-  process $auto$uhdm2rtlil.cpp:1712:import_module$6
+  process $auto$uhdm2rtlil.cpp:1829:import_module$6
     sync always
       update \d 64'1111111111111111111111111111111111111111111111111111111111111100
   end
   attribute \src "dut.sv:16.10-16.16"
-  process $auto$uhdm2rtlil.cpp:1712:import_module$7
+  process $auto$uhdm2rtlil.cpp:1829:import_module$7
     sync always
       update \e 8'11111011
   end
