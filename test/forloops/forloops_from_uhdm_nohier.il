@@ -32,16 +32,16 @@ module \forloops
   wire width 4 $0\y
   wire $auto$rtlil.cc:3339:Not$10
   wire $auto$rtlil.cc:3339:Not$12
-  wire width 4 $auto$expression.cpp:2333:import_operation$13
+  wire width 4 $auto$expression.cpp:2334:import_operation$13
   wire $auto$rtlil.cc:3339:Not$16
   wire $auto$rtlil.cc:3339:Not$18
-  wire width 4 $auto$expression.cpp:2333:import_operation$19
+  wire width 4 $auto$expression.cpp:2334:import_operation$19
   wire $auto$rtlil.cc:3339:Not$22
   wire $auto$rtlil.cc:3339:Not$24
-  wire width 4 $auto$expression.cpp:2333:import_operation$25
+  wire width 4 $auto$expression.cpp:2334:import_operation$25
   wire $auto$rtlil.cc:3339:Not$28
   wire $auto$rtlil.cc:3339:Not$30
-  wire width 4 $auto$expression.cpp:2333:import_operation$31
+  wire width 4 $auto$expression.cpp:2334:import_operation$31
   wire width 32 $auto$expression.cpp:2216:import_operation$33
   cell $xor $xor$dut.sv:5$2
     parameter \A_SIGNED 0
@@ -95,7 +95,7 @@ module \forloops
     parameter \Y_WIDTH 4
     connect \A { $auto$rtlil.cc:3339:Not$10 $auto$rtlil.cc:3339:Not$12 \a \b }
     connect \B 2'00
-    connect \Y $auto$expression.cpp:2333:import_operation$13
+    connect \Y $auto$expression.cpp:2334:import_operation$13
   end
   cell $not $not$dut.sv:10$15
     parameter \A_SIGNED 0
@@ -119,7 +119,7 @@ module \forloops
     parameter \Y_WIDTH 4
     connect \A { $auto$rtlil.cc:3339:Not$16 $auto$rtlil.cc:3339:Not$18 \a \b }
     connect \B 2'01
-    connect \Y $auto$expression.cpp:2333:import_operation$19
+    connect \Y $auto$expression.cpp:2334:import_operation$19
   end
   cell $not $not$dut.sv:10$21
     parameter \A_SIGNED 0
@@ -143,7 +143,7 @@ module \forloops
     parameter \Y_WIDTH 4
     connect \A { $auto$rtlil.cc:3339:Not$22 $auto$rtlil.cc:3339:Not$24 \a \b }
     connect \B 2'10
-    connect \Y $auto$expression.cpp:2333:import_operation$25
+    connect \Y $auto$expression.cpp:2334:import_operation$25
   end
   cell $not $not$dut.sv:10$27
     parameter \A_SIGNED 0
@@ -167,7 +167,7 @@ module \forloops
     parameter \Y_WIDTH 4
     connect \A { $auto$rtlil.cc:3339:Not$28 $auto$rtlil.cc:3339:Not$30 \a \b }
     connect \B 2'11
-    connect \Y $auto$expression.cpp:2333:import_operation$31
+    connect \Y $auto$expression.cpp:2334:import_operation$31
   end
   cell $sub $sub$dut.sv:11$34
     parameter \A_SIGNED 0
@@ -195,10 +195,10 @@ module \forloops
   process $proc$dut.sv:8$8
     assign $0\q \q
     assign $0\y \y
-    assign $0\q [0] $auto$expression.cpp:2333:import_operation$13 [0]
-    assign $0\q [1] $auto$expression.cpp:2333:import_operation$19 [0]
-    assign $0\q [2] $auto$expression.cpp:2333:import_operation$25 [0]
-    assign $0\q [3] $auto$expression.cpp:2333:import_operation$31 [0]
+    assign $0\q [0] $auto$expression.cpp:2334:import_operation$13 [0]
+    assign $0\q [1] $auto$expression.cpp:2334:import_operation$19 [0]
+    assign $0\q [2] $auto$expression.cpp:2334:import_operation$25 [0]
+    assign $0\q [3] $auto$expression.cpp:2334:import_operation$31 [0]
     assign $0\y $auto$expression.cpp:2216:import_operation$33 [3:0]
     sync always
       update \q $0\q

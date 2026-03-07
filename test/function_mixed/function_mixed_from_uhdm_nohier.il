@@ -35,28 +35,28 @@ module \function_mixed
   wire width 8 $13\func_mixed$func$dut.sv:58$2.$result$13
   attribute \src "dut.sv:33.17-40.20"
   wire width 8 $14\func_mixed$func$dut.sv:58$2.$result$14
-  wire width 8 $auto$expression.cpp:2333:import_operation$15
-  wire width 8 $auto$expression.cpp:2311:import_operation$17
+  wire width 8 $auto$expression.cpp:2334:import_operation$15
+  wire width 8 $auto$expression.cpp:2312:import_operation$17
   attribute \src "dut.sv:41.17-50.20"
   wire width 8 $19\func_mixed$func$dut.sv:58$2.$result$19
   wire $auto$rtlil.cc:3398:Gt$21
   attribute \src "dut.sv:43.21-49.24"
   wire width 8 $22\func_mixed$func$dut.sv:58$2.$result$22
-  wire width 8 $auto$expression.cpp:2333:import_operation$23
+  wire width 8 $auto$expression.cpp:2334:import_operation$23
   wire width 8 $auto$expression.cpp:2190:import_operation$25
-  wire width 8 $auto$expression.cpp:2333:import_operation$27
+  wire width 8 $auto$expression.cpp:2334:import_operation$27
   wire width 8 $auto$expression.cpp:2190:import_operation$29
-  wire width 8 $auto$expression.cpp:2333:import_operation$31
+  wire width 8 $auto$expression.cpp:2334:import_operation$31
   wire width 8 $auto$expression.cpp:2190:import_operation$33
-  wire width 8 $auto$expression.cpp:2333:import_operation$35
+  wire width 8 $auto$expression.cpp:2334:import_operation$35
   wire width 8 $auto$expression.cpp:2190:import_operation$37
-  wire width 8 $auto$expression.cpp:2333:import_operation$39
+  wire width 8 $auto$expression.cpp:2334:import_operation$39
   wire width 8 $auto$expression.cpp:2190:import_operation$41
-  wire width 8 $auto$expression.cpp:2333:import_operation$43
+  wire width 8 $auto$expression.cpp:2334:import_operation$43
   wire width 8 $auto$expression.cpp:2190:import_operation$45
-  wire width 8 $auto$expression.cpp:2333:import_operation$47
+  wire width 8 $auto$expression.cpp:2334:import_operation$47
   wire width 8 $auto$expression.cpp:2190:import_operation$49
-  wire width 8 $auto$expression.cpp:2333:import_operation$51
+  wire width 8 $auto$expression.cpp:2334:import_operation$51
   wire width 8 $auto$expression.cpp:2190:import_operation$53
   wire width 8 $auto$rtlil.cc:3386:And$56
   attribute \nosync 1
@@ -86,7 +86,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.y$5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2333:import_operation$15
+    connect \Y $auto$expression.cpp:2334:import_operation$15
   end
   cell $shl $shl$dut.sv:38$18
     parameter \A_SIGNED 0
@@ -96,7 +96,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2311:import_operation$17
+    connect \Y $auto$expression.cpp:2312:import_operation$17
   end
   cell $gt $gt$dut.sv:43$20
     parameter \A_SIGNED 0
@@ -116,7 +116,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 0
-    connect \Y $auto$expression.cpp:2333:import_operation$23
+    connect \Y $auto$expression.cpp:2334:import_operation$23
   end
   cell $add $add$dut.sv:45$26
     parameter \A_SIGNED 0
@@ -125,7 +125,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A 8'00000000
-    connect \B $auto$expression.cpp:2333:import_operation$23
+    connect \B $auto$expression.cpp:2334:import_operation$23
     connect \Y $auto$expression.cpp:2190:import_operation$25
   end
   cell $shr $shr$dut.sv:45$28
@@ -136,7 +136,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 0
-    connect \Y $auto$expression.cpp:2333:import_operation$27
+    connect \Y $auto$expression.cpp:2334:import_operation$27
   end
   cell $add $add$dut.sv:45$30
     parameter \A_SIGNED 0
@@ -145,7 +145,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A 8'00000000
-    connect \B $auto$expression.cpp:2333:import_operation$27
+    connect \B $auto$expression.cpp:2334:import_operation$27
     connect \Y $auto$expression.cpp:2190:import_operation$29
   end
   cell $shr $shr$dut.sv:45$32
@@ -156,7 +156,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 1
-    connect \Y $auto$expression.cpp:2333:import_operation$31
+    connect \Y $auto$expression.cpp:2334:import_operation$31
   end
   cell $add $add$dut.sv:45$34
     parameter \A_SIGNED 0
@@ -165,7 +165,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$29
-    connect \B $auto$expression.cpp:2333:import_operation$31
+    connect \B $auto$expression.cpp:2334:import_operation$31
     connect \Y $auto$expression.cpp:2190:import_operation$33
   end
   cell $shr $shr$dut.sv:45$36
@@ -176,7 +176,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 1
-    connect \Y $auto$expression.cpp:2333:import_operation$35
+    connect \Y $auto$expression.cpp:2334:import_operation$35
   end
   cell $add $add$dut.sv:45$38
     parameter \A_SIGNED 0
@@ -185,7 +185,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$29
-    connect \B $auto$expression.cpp:2333:import_operation$35
+    connect \B $auto$expression.cpp:2334:import_operation$35
     connect \Y $auto$expression.cpp:2190:import_operation$37
   end
   cell $shr $shr$dut.sv:45$40
@@ -196,7 +196,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 2
-    connect \Y $auto$expression.cpp:2333:import_operation$39
+    connect \Y $auto$expression.cpp:2334:import_operation$39
   end
   cell $add $add$dut.sv:45$42
     parameter \A_SIGNED 0
@@ -205,7 +205,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$37
-    connect \B $auto$expression.cpp:2333:import_operation$39
+    connect \B $auto$expression.cpp:2334:import_operation$39
     connect \Y $auto$expression.cpp:2190:import_operation$41
   end
   cell $shr $shr$dut.sv:45$44
@@ -216,7 +216,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 2
-    connect \Y $auto$expression.cpp:2333:import_operation$43
+    connect \Y $auto$expression.cpp:2334:import_operation$43
   end
   cell $add $add$dut.sv:45$46
     parameter \A_SIGNED 0
@@ -225,7 +225,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$37
-    connect \B $auto$expression.cpp:2333:import_operation$43
+    connect \B $auto$expression.cpp:2334:import_operation$43
     connect \Y $auto$expression.cpp:2190:import_operation$45
   end
   cell $shr $shr$dut.sv:45$48
@@ -236,7 +236,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 3
-    connect \Y $auto$expression.cpp:2333:import_operation$47
+    connect \Y $auto$expression.cpp:2334:import_operation$47
   end
   cell $add $add$dut.sv:45$50
     parameter \A_SIGNED 0
@@ -245,7 +245,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$45
-    connect \B $auto$expression.cpp:2333:import_operation$47
+    connect \B $auto$expression.cpp:2334:import_operation$47
     connect \Y $auto$expression.cpp:2190:import_operation$49
   end
   cell $shr $shr$dut.sv:45$52
@@ -256,7 +256,7 @@ module \function_mixed
     parameter \Y_WIDTH 8
     connect \A $0\func_mixed$func$dut.sv:58$2.x$4
     connect \B 3
-    connect \Y $auto$expression.cpp:2333:import_operation$51
+    connect \Y $auto$expression.cpp:2334:import_operation$51
   end
   cell $add $add$dut.sv:45$54
     parameter \A_SIGNED 0
@@ -265,7 +265,7 @@ module \function_mixed
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A $auto$expression.cpp:2190:import_operation$45
-    connect \B $auto$expression.cpp:2333:import_operation$51
+    connect \B $auto$expression.cpp:2334:import_operation$51
     connect \Y $auto$expression.cpp:2190:import_operation$53
   end
   cell $and $and$dut.sv:48$55
@@ -320,11 +320,11 @@ module \function_mixed
         attribute \src "dut.sv:35.37-37.24"
           case 1'1
             assign { } { }
-            assign $1\func_mixed$func$dut.sv:58$2.$result$8 $auto$expression.cpp:2333:import_operation$15
+            assign $1\func_mixed$func$dut.sv:58$2.$result$8 $auto$expression.cpp:2334:import_operation$15
         attribute \src "dut.sv:37.30-39.24"
           case 
             assign { } { }
-            assign $1\func_mixed$func$dut.sv:58$2.$result$8 $auto$expression.cpp:2311:import_operation$17
+            assign $1\func_mixed$func$dut.sv:58$2.$result$8 $auto$expression.cpp:2312:import_operation$17
         end
     attribute \src "dut.sv:41.17-50.20"
       case 2'11

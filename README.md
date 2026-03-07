@@ -15,19 +15,18 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 152 tests covering comprehensive SystemVerilog features
-- **Success Rate**: ~97% (148/152 tests functional, 4 known pre-existing failures)
-- **Passing**: 144 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: ~98% (149/152 tests functional, 3 known pre-existing failures)
+- **Passing**: 145 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
-- **Known Failures** (4 pre-existing bugs now exposed by improved `test_equivalence.sh`):
+- **Known Failures** (3 pre-existing bugs now exposed by improved `test_equivalence.sh`):
   - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
   - `mem2reg_test1` - Combinational array with simultaneous write and read (memory in `always @*` not handled)
   - `mem2reg_test2` - Annotated 8-element array with loop-based writes/reads (memory inside `always_ff` for loop — 0 gates)
-  - `partsel_simple` - Part selection with dynamic offset (`+:` / `-:`) — part-select expression width issue (0 gates)
 - **Recent Additions**:
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
@@ -58,6 +57,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `partsel_simple` — dynamic indexed part-selects (`data[offset +: 4]`, `data[offset+3 -: 4]`) now correctly synthesized via `$shiftx` cells (28 gates, formally equivalent) ✅
+    - **Root cause**: `import_indexed_part_select` only handled constant base expressions and returned an empty `SigSpec` for dynamic ones; additionally `idx << 2` was clipped to 3 bits (the `idx` width) because `vpiLShiftOp` used the operand width instead of the context width
+    - **Fix 1**: `vpiLShiftOp` in `import_operation` now uses `expression_context_width` (the LHS wire width) as the result width when available, preventing bit loss
+    - **Fix 2**: `import_indexed_part_select` now emits a `$shiftx(A=data, B=base_lsb, Y_WIDTH=width)` cell for non-constant base. For `+:`, `base_lsb = base_expr`; for `-:`, `base_lsb` is computed via a `$sub` cell as `base_expr − (width−1)`
   - `gen_struct_access` — struct aggregate assignment and packed array of structs field access now correctly synthesized ✅
     - **`vpiAssignmentPatternOp` (op type 75)**: `'{f1: expr1, f2: expr2}` struct literals were producing empty signals. Surelog stores the field VALUE expressions directly as `Operands()` (as `hier_path` objects, not `tagged_pattern` wrappers as implied by the UHDM dump's visitor output). Fix in `import_operation`: early-return handler for `vpiAssignmentPatternOp` casts each operand as `const expr*` and concatenates values MSB-first (same order as `vpiConcatOp`)
     - **Packed array of structs field access** (`sig[i].field[hi:lo]` via `hier_path`): `import_hier_path` now detects the `[bit_select, part_select]` Path_elems pattern and computes absolute bit offsets. `packed_array_var.Typespec()` is null — instead uses `pav->Ranges()` for array dimension and `pav->Elements()[0]` (a `struct_var`) for the element struct typespec. Element offset = `(index − arr_low) × element_width`; field offset accumulated by iterating struct members in reverse (LSB first); result is a plain `extract()` on the base wire
@@ -449,7 +452,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (151 total — 143 passing equivalence, 4 UHDM-only, 4 known failures)
+### Current Test Cases (152 total — 145 passing equivalence, 5 UHDM-only, 3 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -485,7 +488,7 @@ The Yosys test runner:
 - **logic_ops** - Logical operations with bit ordering (from Yosys test suite)
 - **opt_share_add_sub** - Shared add/subtract using ternary selection (tests operator sharing)
 - **simple_assign** - Basic continuous assignments
-- **partsel_simple** - Part selection with dynamic offset using +: and -: operators
+- **partsel_simple** - Part selection with dynamic offset using `+:` and `-:` operators; `data[offset +: 4]` and `data[offset+3 -: 4]` where `offset = idx << 2`; synthesized via `$shiftx` cells (28 gates)
 - **wreduce_test0** - Signed arithmetic with width reduction
 - **wreduce_test1** - Arithmetic operations with output width reduction
 - **unbased_unsized** - SystemVerilog unbased unsized literals ('0, '1, 'x, 'z) and cast operations
@@ -641,8 +644,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 147 of 151 tests are passing or working as expected (143 equiv + 4 UHDM-only)
-- 4 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test1`, `mem2reg_test2`, `partsel_simple`)
+- 149 of 152 tests are passing or working as expected (145 equiv + 5 UHDM-only)
+- 3 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test1`, `mem2reg_test2`)
 
 ### Important Test Workflow Note
 
@@ -695,10 +698,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **151 test cases**:
+The UHDM frontend test suite includes **152 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **143 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **4 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test1`, `mem2reg_test2`, `partsel_simple`)
+- **145 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **3 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test1`, `mem2reg_test2`)
 
 ## Recent Improvements
 

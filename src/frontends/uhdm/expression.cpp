@@ -2306,8 +2306,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiLShiftOp:
             if (operands.size() == 2) {
                 // Left shift operation: a << b
-                // Result width is typically the same as the first operand
-                int result_width = operands[0].size();
+                // Result width: use context width if set (avoids clipping bits for e.g. offset = idx << 2),
+                // otherwise fall back to the operand width (self-determined Verilog semantics).
+                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed
@@ -3369,8 +3370,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
 
 // Import indexed part select (e.g., data[i*8 +: 8])
 RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_select* uhdm_indexed, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
-    log("    Importing indexed part select\n");
-    
+    if (mode_debug)
+        log("    Importing indexed part select\n");
+
     // Get the parent object - this should contain the base signal
     const any* parent = uhdm_indexed->VpiParent();
     if (!parent) {
@@ -3378,29 +3380,26 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         return RTLIL::SigSpec();
     }
     
-    log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
-    
+    if (mode_debug)
+        log("      Parent type: %s\n", UhdmName(parent->UhdmType()).c_str());
+
     // Check if the indexed part select itself has the signal name
     std::string base_signal_name;
     if (!uhdm_indexed->VpiDefName().empty()) {
         base_signal_name = std::string(uhdm_indexed->VpiDefName());
-        log("      IndexedPartSelect VpiDefName: %s\n", base_signal_name.c_str());
     } else if (!uhdm_indexed->VpiName().empty()) {
         base_signal_name = std::string(uhdm_indexed->VpiName());
-        log("      IndexedPartSelect VpiName: %s\n", base_signal_name.c_str());
     }
-    
+
     // If not found in the indexed part select, try the parent
     if (base_signal_name.empty()) {
         if (!parent->VpiDefName().empty()) {
             base_signal_name = std::string(parent->VpiDefName());
-            log("      Parent VpiDefName: %s\n", base_signal_name.c_str());
         } else if (!parent->VpiName().empty()) {
             base_signal_name = std::string(parent->VpiName());
-            log("      Parent VpiName: %s\n", base_signal_name.c_str());
         }
     }
-    
+
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
@@ -3410,42 +3409,33 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
             RTLIL::Wire* w = find_wire_in_scope(base_signal_name, "indexed part select width");
             int bw = w ? w->width : 32;
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
-            log("      IndexedPartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
         } else {
-        RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
-        if (wire) {
-            base = RTLIL::SigSpec(wire);
-        } else {
-            // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
-            RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
-            if (module->parameter_default_values.count(param_id)) {
-                base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
-                log("      Resolved '%s' as parameter for part select (width=%d)\n",
-                    base_signal_name.c_str(), base.size());
+            RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
+            if (wire) {
+                base = RTLIL::SigSpec(wire);
             } else {
-                std::string gen_scope = get_current_gen_scope();
-                log_warning("Base signal '%s' not found in module or generate scope %s\n",
-                    base_signal_name.c_str(), gen_scope.c_str());
-                return RTLIL::SigSpec();
+                // Try as a parameter (e.g., OUTPUT[15:8] where OUTPUT is a parameter)
+                RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
+                if (module->parameter_default_values.count(param_id)) {
+                    base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
+                } else {
+                    std::string gen_scope = get_current_gen_scope();
+                    log_warning("Base signal '%s' not found in module or generate scope %s\n",
+                        base_signal_name.c_str(), gen_scope.c_str());
+                    return RTLIL::SigSpec();
+                }
             }
         }
-        } // end loop_values else
     } else {
         // If we can't get the name directly, try importing the parent as an expression
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
 
-    log("      Base signal width: %d\n", base.size());
-
     // Get the base index expression
     RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr(), input_mapping);
-    log("      Base index: %s\n", base_index.is_fully_const() ? 
-        std::to_string(base_index.as_const().as_int()).c_str() : "non-const");
-    
+
     // Get the width expression
     RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr(), input_mapping);
-    log("      Width: %s\n", width_expr.is_fully_const() ? 
-        std::to_string(width_expr.as_const().as_int()).c_str() : "non-const");
     
     // Both base_index and width must be constant for RTLIL
     if (base_index.is_fully_const() && width_expr.is_fully_const()) {
@@ -3469,8 +3459,56 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         }
     }
     
-    log_warning("Indexed part select with non-constant index or widthimport_expressioncurrent not supported\n");
-    return RTLIL::SigSpec();
+    // Dynamic base index — emit $shiftx cell
+    // $shiftx: Y = A[B +: Y_WIDTH], i.e. B is the LSB start index
+    if (!width_expr.is_fully_const()) {
+        log_warning("Indexed part select with non-constant width not supported\n");
+        return RTLIL::SigSpec();
+    }
+    int width = width_expr.as_const().as_int();
+    if (width <= 0) {
+        log_warning("Indexed part select with invalid width %d\n", width);
+        return RTLIL::SigSpec();
+    }
+
+    // Compute LSB shift amount
+    RTLIL::SigSpec shift_amount;
+    if (uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed) {
+        // [base +: width] — LSB = base
+        shift_amount = base_index;
+    } else {
+        // [base -: width] — LSB = base - (width - 1)
+        int sub_val = width - 1;
+        RTLIL::Wire* lsb_wire = module->addWire(NEW_ID, base_index.size());
+        std::string sub_name = generate_cell_name(uhdm_indexed, "sub");
+        RTLIL::Cell* sub_cell = module->addCell(RTLIL::escape_id(sub_name), ID($sub));
+        sub_cell->setParam(ID::A_SIGNED, 0);
+        sub_cell->setParam(ID::B_SIGNED, 0);
+        sub_cell->setParam(ID::A_WIDTH, base_index.size());
+        sub_cell->setParam(ID::B_WIDTH, base_index.size());
+        sub_cell->setParam(ID::Y_WIDTH, base_index.size());
+        sub_cell->setPort(ID::A, base_index);
+        sub_cell->setPort(ID::B, RTLIL::SigSpec(RTLIL::Const(sub_val, base_index.size())));
+        sub_cell->setPort(ID::Y, lsb_wire);
+        add_src_attribute(sub_cell->attributes, uhdm_indexed);
+        shift_amount = RTLIL::SigSpec(lsb_wire);
+    }
+
+    // Create output wire and $shiftx cell
+    RTLIL::Wire* result_wire = module->addWire(NEW_ID, width);
+    std::string cell_name = generate_cell_name(uhdm_indexed, "shiftx");
+    RTLIL::Cell* shiftx_cell = module->addCell(RTLIL::escape_id(cell_name), ID($shiftx));
+    shiftx_cell->setParam(ID::A_SIGNED, 0);
+    shiftx_cell->setParam(ID::B_SIGNED, 0);
+    shiftx_cell->setParam(ID::A_WIDTH, base.size());
+    shiftx_cell->setParam(ID::B_WIDTH, shift_amount.size());
+    shiftx_cell->setParam(ID::Y_WIDTH, width);
+    shiftx_cell->setPort(ID::A, base);
+    shiftx_cell->setPort(ID::B, shift_amount);
+    shiftx_cell->setPort(ID::Y, result_wire);
+    add_src_attribute(shiftx_cell->attributes, uhdm_indexed);
+
+    return RTLIL::SigSpec(result_wire);
 }
 
 // Import concatenation (e.g., {a, b, c})

@@ -11,5 +11,4 @@
 gen_test3
 mem2reg_test1
 mem2reg_test2
-partsel_simple
 
