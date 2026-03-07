@@ -5705,6 +5705,66 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         return;
     }
 
+    // Check for dynamic write to an expanded array (individual element wires, not $memory).
+    // e.g. array[dyn_addr] = data  where array[0], array[1], array[2] exist as RTLIL wires.
+    // Handle by emitting a per-element mux: new_val[i] = (addr==i) ? data : cur_val[i]
+    if (auto lhs_expr_check = uhdm_assign->Lhs()) {
+        if (lhs_expr_check->VpiType() == vpiBitSelect) {
+            const bit_select* bs = any_cast<const bit_select*>(lhs_expr_check);
+            std::string bs_name = std::string(bs->VpiName());
+            RTLIL::IdString mem_id_check = RTLIL::escape_id(bs_name);
+            RTLIL::Wire* first_elem = !module->memories.count(mem_id_check)
+                ? module->wire(RTLIL::escape_id(bs_name + "[0]")) : nullptr;
+            if (first_elem && bs->VpiIndex() && bs->VpiIndex()->VpiType() != vpiConstant) {
+                // Dynamic write to expanded array
+                RTLIL::SigSpec dyn_addr = import_expression(bs->VpiIndex(),
+                    (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+
+                RTLIL::SigSpec dyn_rhs;
+                if (auto rhs_any = uhdm_assign->Rhs()) {
+                    if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                        dyn_rhs = import_expression(rhs_e,
+                            (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+                }
+
+                // Count elements
+                int num_elems = 0;
+                while (module->wire(RTLIL::escape_id(bs_name + "[" + std::to_string(num_elems) + "]")))
+                    num_elems++;
+
+                for (int i = 0; i < num_elems; i++) {
+                    std::string elem_name = bs_name + "[" + std::to_string(i) + "]";
+                    RTLIL::Wire* elem_wire = module->wire(RTLIL::escape_id(elem_name));
+                    int elem_w = elem_wire->width;
+
+                    // Current value of this element (from comb tracking or the wire itself)
+                    RTLIL::SigSpec cur_val;
+                    if (current_comb_values.count(elem_name))
+                        cur_val = current_comb_values[elem_name];
+                    else
+                        cur_val = RTLIL::SigSpec(elem_wire);
+
+                    // sel = (dyn_addr == i)
+                    RTLIL::SigSpec const_i(RTLIL::Const(i, GetSize(dyn_addr)));
+                    RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+                    module->addEq(NEW_ID, dyn_addr, const_i, sel);
+
+                    // new_val = sel ? dyn_rhs : cur_val  (Yosys mux: Y = S ? B : A)
+                    RTLIL::SigSpec rhs_sized = dyn_rhs;
+                    if (rhs_sized.size() < elem_w) rhs_sized.extend_u0(elem_w);
+                    else if (rhs_sized.size() > elem_w) rhs_sized = rhs_sized.extract(0, elem_w);
+
+                    RTLIL::Wire* new_val = module->addWire(NEW_ID, elem_w);
+                    module->addMux(NEW_ID, cur_val, rhs_sized, RTLIL::SigSpec(sel), new_val);
+
+                    // Emit the assignment to the $0\ temp wire
+                    emit_comb_assign(RTLIL::SigSpec(elem_wire), RTLIL::SigSpec(new_val), proc);
+                }
+                return;
+            }
+        }
+    }
+
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         lhs = import_expression(lhs_expr);

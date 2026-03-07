@@ -56,7 +56,7 @@ module \aes_key_expand_128
     parameter \A_WIDTH 4
     parameter \B_WIDTH 4
     parameter \Y_WIDTH 4
-    connect \A \w[0]
+    connect \A $auto$rtlil.cc:3474:Mux$3
     connect \B \w[1]
     connect \Y $auto$rtlil.cc:3388:Xor$5
   end
@@ -73,8 +73,8 @@ module \aes_key_expand_128
     parameter \A_WIDTH 4
     parameter \B_WIDTH 4
     parameter \Y_WIDTH 4
-    connect \A \w[0]
-    connect \B \w[1]
+    connect \A $auto$rtlil.cc:3474:Mux$3
+    connect \B $auto$rtlil.cc:3474:Mux$7
     connect \Y $auto$rtlil.cc:3388:Xor$9
   end
   cell $xor $xor$dut.sv:19$10
@@ -100,8 +100,8 @@ module \aes_key_expand_128
     parameter \A_WIDTH 4
     parameter \B_WIDTH 4
     parameter \Y_WIDTH 4
-    connect \A \w[0]
-    connect \B \w[1]
+    connect \A $auto$rtlil.cc:3474:Mux$3
+    connect \B $auto$rtlil.cc:3474:Mux$7
     connect \Y $auto$rtlil.cc:3388:Xor$15
   end
   cell $xor $xor$dut.sv:20$16
@@ -111,7 +111,7 @@ module \aes_key_expand_128
     parameter \B_WIDTH 4
     parameter \Y_WIDTH 4
     connect \A $auto$rtlil.cc:3388:Xor$15
-    connect \B \w[2]
+    connect \B $auto$rtlil.cc:3474:Mux$13
     connect \Y $auto$rtlil.cc:3388:Xor$17
   end
   cell $xor $xor$dut.sv:20$18

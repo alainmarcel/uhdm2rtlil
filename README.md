@@ -15,8 +15,8 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 152 tests covering comprehensive SystemVerilog features
-- **Success Rate**: ~98% (149/152 tests functional, 3 known pre-existing failures)
-- **Passing**: 145 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Success Rate**: ~99% (150/152 tests functional, 2 known pre-existing failures)
+- **Passing**: 146 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -25,7 +25,6 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Known Failures** (3 pre-existing bugs now exposed by improved `test_equivalence.sh`):
   - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
-  - `mem2reg_test1` - Combinational array with simultaneous write and read (memory in `always @*` not handled)
   - `mem2reg_test2` - Annotated 8-element array with loop-based writes/reads (memory inside `always_ff` for loop — 0 gates)
 - **Recent Additions**:
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
@@ -57,6 +56,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `mem2reg_test1` — combinational arrays (`reg [W:0] arr [N:0]`) accessed in `always @*` blocks now correctly synthesized using individual element wires and mux logic ✅
+    - **Root cause**: Arrays only used in `always @*` were still treated as `$memory` objects; dynamic reads returned X (no writes to the memory) and dynamic writes were ignored
+    - **Pre-scan**: new `comb_only_arrays` set identifies arrays accessed exclusively from combinational always blocks before module import; these are expanded to individual wires (`\array[0]`, `\array[1]`, etc.) instead of `$memory`
+    - **Dynamic writes** (`array[dyn_addr] = data`): `extract_assigned_signals` skips them (no temp wire needed); `import_assignment_comb` handles them with per-element `$eq`+`$mux` logic using `current_comb_values` for the "current" value of each element
+    - **Dynamic reads** (`out = array[dyn_addr]`): `import_bit_select` builds a mux chain over `current_comb_values` entries so reads see values written earlier in the same always block
   - `partsel_simple` — dynamic indexed part-selects (`data[offset +: 4]`, `data[offset+3 -: 4]`) now correctly synthesized via `$shiftx` cells (28 gates, formally equivalent) ✅
     - **Root cause**: `import_indexed_part_select` only handled constant base expressions and returned an empty `SigSpec` for dynamic ones; additionally `idx << 2` was clipped to 3 bits (the `idx` width) because `vpiLShiftOp` used the operand width instead of the context width
     - **Fix 1**: `vpiLShiftOp` in `import_operation` now uses `expression_context_width` (the LHS wire width) as the result width when available, preventing bit loss
@@ -452,7 +456,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (152 total — 145 passing equivalence, 5 UHDM-only, 3 known failures)
+### Current Test Cases (152 total — 146 passing equivalence, 5 UHDM-only, 2 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -557,7 +561,7 @@ The Yosys test runner:
 - **simple_memory_noreset** - Memory array without reset signal
 - **blockrom** - Memory initialization using for loops with LFSR pattern (tests loop unrolling and constant evaluation)
 - **priority_memory** - Priority-based memory access patterns
-- **mem2reg_test1** - Combinational array with write and simultaneous read
+- **mem2reg_test1** - Combinational array with dynamic write and read in `always @*`: `array[dyn_addr] = in_data; out = array[out_addr]` — correctly synthesized with individual element wires and mux chains ✅
 - **mem2reg_test2** - Annotated 8-element array with loop-based writes and reads
 - **asym_ram_sdp_read_wider** - Asymmetric RAM with read port 4x wider than write
 - **asym_ram_sdp_write_wider** - Asymmetric RAM with write port 4x wider than read
@@ -644,8 +648,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 149 of 152 tests are passing or working as expected (145 equiv + 5 UHDM-only)
-- 3 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test1`, `mem2reg_test2`)
+- 150 of 152 tests are passing or working as expected (146 equiv + 5 UHDM-only)
+- 2 tests are in the `failing_tests.txt` file (expected failures: `gen_test3`, `mem2reg_test2`)
 
 ### Important Test Workflow Note
 
@@ -700,8 +704,8 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **152 test cases**:
 - **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **145 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **3 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test1`, `mem2reg_test2`)
+- **146 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **2 known failures** - Pre-existing bugs now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking these issues (`gen_test3`, `mem2reg_test2`)
 
 ## Recent Improvements
 

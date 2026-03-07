@@ -1289,10 +1289,119 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
 
+    // Pre-scan: identify array variables used ONLY in combinational (always @*) blocks.
+    // Such arrays must NOT be created as $memory objects; instead they get individual
+    // element wires so that write-then-read semantics work correctly in the same block.
+    comb_only_arrays.clear();
+    if (uhdm_module->Process()) {
+        // Collect which array names are touched by clocked vs combinational always blocks.
+        std::set<std::string> clocked_access;
+        std::set<std::string> any_access;
+
+        // Helper: recursively collect bit_select names (= array element accesses)
+        std::function<void(const any*, std::set<std::string>&)> collect_array_accesses;
+        collect_array_accesses = [&](const any* stmt, std::set<std::string>& out) {
+            if (!stmt) return;
+            if (stmt->VpiType() == vpiBitSelect) {
+                auto bs = any_cast<const bit_select*>(stmt);
+                if (bs && !bs->VpiName().empty())
+                    out.insert(std::string(bs->VpiName()));
+                // Also recurse into index
+                if (bs) collect_array_accesses(bs->VpiIndex(), out);
+                return;
+            }
+            // Recurse into child nodes that may contain statements/expressions
+            auto recurse = [&](const any* n) { collect_array_accesses(n, out); };
+            switch (stmt->VpiType()) {
+                case vpiBegin: case vpiNamedBegin: {
+                    auto b = any_cast<const begin*>(stmt);
+                    if (b && b->Stmts()) for (auto s : *b->Stmts()) recurse(s);
+                    break;
+                }
+                case vpiAssignment: case vpiAssignStmt: {
+                    auto a = any_cast<const assignment*>(stmt);
+                    if (a) { recurse(a->Lhs()); if (auto r = dynamic_cast<const expr*>(a->Rhs())) recurse(r); }
+                    break;
+                }
+                case vpiIf: {
+                    auto i = any_cast<const if_stmt*>(stmt);
+                    if (i) { recurse(i->VpiCondition()); recurse(i->VpiStmt()); }
+                    break;
+                }
+                case vpiIfElse: {
+                    auto ie = any_cast<const if_else*>(stmt);
+                    if (ie) { if (ie->VpiCondition()) recurse(ie->VpiCondition()); recurse(ie->VpiStmt()); recurse(ie->VpiElseStmt()); }
+                    break;
+                }
+                case vpiEventControl: {
+                    auto ec = any_cast<const event_control*>(stmt);
+                    if (ec) recurse(ec->Stmt());
+                    break;
+                }
+                case vpiOperation: {
+                    auto op = any_cast<const operation*>(stmt);
+                    if (op && op->Operands()) for (auto o : *op->Operands()) recurse(o);
+                    break;
+                }
+                default: break;
+            }
+        };
+
+        for (auto proc : *uhdm_module->Process()) {
+            if (proc->VpiType() != vpiAlways) continue;
+            auto always_obj = any_cast<const always*>(proc);
+            if (!always_obj) continue;
+
+            // Determine if this always block is clocked
+            bool is_clocked = false;
+            try {
+                int at = always_obj->VpiAlwaysType();
+                if (at == 3) is_clocked = true;  // vpiAlwaysFF
+            } catch (...) {}
+
+            // Check event_control for posedge/negedge
+            auto stmt = always_obj->Stmt();
+            if (!is_clocked && stmt && stmt->VpiType() == vpiEventControl) {
+                auto ec = any_cast<const event_control*>(stmt);
+                if (ec && ec->VpiCondition()) {
+                    // Any explicit sensitivity condition indicates a clocked or mixed block
+                    auto cond = ec->VpiCondition();
+                    // posedge/negedge operations indicate clock
+                    if (cond->VpiType() == vpiOperation) {
+                        auto op = any_cast<const operation*>(cond);
+                        int ot = op->VpiOpType();
+                        if (ot == vpiPosedgeOp || ot == vpiNegedgeOp || ot == vpiEventOrOp)
+                            is_clocked = true;
+                    } else {
+                        // Single signal reference in sensitivity → treat as clocked
+                        is_clocked = true;
+                    }
+                }
+                // If VpiCondition() is null → always @* → not clocked
+            }
+
+            // Collect array accesses in this block
+            std::set<std::string> accessed;
+            collect_array_accesses(stmt, accessed);
+            for (const auto& name : accessed) {
+                any_access.insert(name);
+                if (is_clocked) clocked_access.insert(name);
+            }
+        }
+
+        // Comb-only = accessed by some process but never by a clocked one
+        for (const auto& name : any_access) {
+            if (!clocked_access.count(name)) {
+                comb_only_arrays.insert(name);
+                log("UHDM: Array '%s' used only in combinational always blocks -> expand to wires\n", name.c_str());
+            }
+        }
+    }
+
     // Import module-level variables (logic declarations)
     // We do this in two passes to handle initial values that reference other variables
     std::vector<std::pair<const UHDM::any*, RTLIL::Wire*>> vars_with_init_expr;
-    
+
     if (uhdm_module->Variables()) {
         log("UHDM: Found %d variables to import\n", (int)uhdm_module->Variables()->size());
         
@@ -1317,14 +1426,22 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     has_const_only = has_only_constant_array_accesses(array_name);
                     log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", has_const_only ? "true" : "false", array_name.c_str());
                 }
-                bool should_be_memory = is_mem && !has_const_only;
-                
+                // Arrays that are only accessed from combinational always blocks must NOT
+                // be $memory objects: they need individual element wires so that
+                // write-then-read semantics within the same always @* block work correctly.
+                bool is_comb_only = comb_only_arrays.count(array_name) > 0;
+                bool should_be_memory = is_mem && !has_const_only && !is_comb_only;
+
                 if (should_be_memory) {
                     log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array_var);
                 } else if (is_memory_array(array_var)) {
-                    // Has both packed and unpacked dimensions but only constant accesses - create individual registers
-                    log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
+                    // Has both packed and unpacked dimensions but only constant accesses,
+                    // OR is a comb-only array with dynamic access — create individual element wires.
+                    if (is_comb_only)
+                        log("UHDM: Array_var '%s' is comb-only, creating individual registers\n", array_name.c_str());
+                    else
+                        log("UHDM: Array_var '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
                     
                     // Get the array dimensions
                     auto ranges = array_var->Ranges();
@@ -1883,14 +2000,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 bool has_const_only = has_only_constant_array_accesses(array_name);
                 log("UHDM: has_only_constant_array_accesses returned %s for '%s'\n", 
                     has_const_only ? "true" : "false", array_name.c_str());
-                bool should_be_memory = !has_const_only;
-                
+                bool is_comb_only_net = comb_only_arrays.count(array_name) > 0;
+                bool should_be_memory = !has_const_only && !is_comb_only_net;
+
                 if (should_be_memory) {
                     log("UHDM: Array net '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());
                     create_memory_from_array(array);
                 } else {
-                    // Has both packed and unpacked dimensions but only constant accesses - create individual registers
-                    log("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
+                    // Has only constant accesses, OR is comb-only — create individual element wires
+                    if (is_comb_only_net)
+                        log("UHDM: Array net '%s' is comb-only, creating individual registers\n", array_name.c_str());
+                    else
+                        log("UHDM: Array net '%s' has only constant accesses, creating individual registers\n", array_name.c_str());
                     
                     // Get the array dimensions
                     int array_size = 4; // Default for cases like M[3:0]

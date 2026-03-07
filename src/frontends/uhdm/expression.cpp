@@ -3128,6 +3128,62 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         return RTLIL::SigSpec(data_wire);
     }
     
+    // Check for expanded array: individual element wires exist (not a $memory object).
+    // Handles both constant and dynamic indices.
+    if (!module->memories.count(mem_id)) {
+        RTLIL::Wire* first_elem = module->wire(RTLIL::escape_id(signal_name + "[0]"));
+        if (first_elem) {
+            int elem_w = first_elem->width;
+            // Count elements
+            int num_elems = 0;
+            while (module->wire(RTLIL::escape_id(signal_name + "[" + std::to_string(num_elems) + "]")))
+                num_elems++;
+
+            RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
+
+            if (idx.is_fully_const()) {
+                // Constant index — return current tracked value or raw wire
+                int i = idx.as_const().as_int();
+                std::string elem_name = signal_name + "[" + std::to_string(i) + "]";
+                if (current_comb_values.count(elem_name))
+                    return current_comb_values.at(elem_name);
+                RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
+                if (w) return RTLIL::SigSpec(w);
+            } else {
+                // Dynamic index — build mux chain
+                // Start with last element as out-of-range default
+                int last = num_elems - 1;
+                std::string last_name = signal_name + "[" + std::to_string(last) + "]";
+                RTLIL::SigSpec result;
+                if (current_comb_values.count(last_name))
+                    result = current_comb_values.at(last_name);
+                else {
+                    RTLIL::Wire* w = module->wire(RTLIL::escape_id(last_name));
+                    result = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
+                }
+
+                for (int i = last - 1; i >= 0; i--) {
+                    std::string ename = signal_name + "[" + std::to_string(i) + "]";
+                    RTLIL::SigSpec elem_val;
+                    if (current_comb_values.count(ename))
+                        elem_val = current_comb_values.at(ename);
+                    else {
+                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(ename));
+                        elem_val = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
+                    }
+                    // sel = (idx == i)
+                    RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+                    module->addEq(NEW_ID, idx, RTLIL::SigSpec(RTLIL::Const(i, GetSize(idx))), sel);
+                    // result = sel ? elem_val : result  (Yosys mux: Y = S ? B : A)
+                    RTLIL::Wire* mux_out = module->addWire(NEW_ID, elem_w);
+                    module->addMux(NEW_ID, result, elem_val, RTLIL::SigSpec(sel), mux_out);
+                    result = RTLIL::SigSpec(mux_out);
+                }
+                return result;
+            }
+        }
+    }
+
     // Regular bit select on a wire
     RTLIL::Wire* wire = find_wire_in_scope(signal_name, "bit select");
     

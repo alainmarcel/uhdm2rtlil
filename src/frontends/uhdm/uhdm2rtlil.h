@@ -309,6 +309,11 @@ struct UhdmImporter {
     
     // Instance counter for generating unique function instance IDs
     int function_instance_counter = 0;
+
+    // Memory arrays that are used only inside combinational (always @*) blocks.
+    // These are expanded to individual element wires rather than $memory objects
+    // so that write-then-read semantics within the same always @* block work correctly.
+    std::set<std::string> comb_only_arrays;
     
     // Get current function context for constant propagation (top of stack)
     FunctionCallContext* getCurrentFunctionContext() {
