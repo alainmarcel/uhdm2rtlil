@@ -1,0 +1,90 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -16,7 +16,6 @@
+ .B(a),
+ .Y(y)
+ );
+-(* src = "dut.sv:23.39-23.57" *)
+ \$print  #(
+ .ARGS_WIDTH(32'd3),
+ .FORMAT("{1:> 1d-u}{1:> 1d-u}{1:> 1d-u}\n"),
+@@ -31,8 +30,8 @@
+ );
+ endmodule
+ (* keep =  1  *)
+-(* top =  1  *)
+ (* src = "dut.sv:1.1-12.10" *)
++(* top =  1  *)
+ module top(clk);
+ (* src = "dut.sv:1.18-1.21" *)
+ input clk;
+@@ -45,53 +44,55 @@
+ wire _03_;
+ wire _04_;
+ (* init = 1'h0 *)
+-(* src = "dut.sv:2.9-2.10" *)
++(* \reg  = 32'd1 *)
++(* src = "dut.sv:2.9-2.14" *)
+ wire a;
+ (* init = 1'h0 *)
+-(* src = "dut.sv:3.9-3.10" *)
++(* \reg  = 32'd1 *)
++(* src = "dut.sv:3.9-3.14" *)
+ wire b;
+ (* src = "dut.sv:4.10-4.11" *)
+ (* unused_bits = "0" *)
+ wire y;
+-\$_NOR_  _05_ (
+-.A(b),
+-.B(a),
+-.Y(_02_)
+-);
+-\$_ANDNOT_  _06_ (
++\$_ANDNOT_  _05_ (
+ .A(a),
+ .B(b),
++.Y(_02_)
++);
++\$_AND_  _06_ (
++.A(b),
++.B(a),
+ .Y(_03_)
+ );
+ \$_OR_  _07_ (
+ .A(_03_),
+ .B(_02_),
+-.Y(_00_)
++.Y(_01_)
+ );
+-\$_AND_  _08_ (
++\$_NOR_  _08_ (
+ .A(b),
+ .B(a),
+ .Y(_04_)
+ );
+ \$_OR_  _09_ (
+ .A(_04_),
+-.B(_03_),
+-.Y(_01_)
++.B(_02_),
++.Y(_00_)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:8.2-11.8" *)
+ \$_DFF_P_  a_reg /* _10_ */ (
+ .C(clk),
+ .D(_00_),
+ .Q(a)
+ );
++(* \always_ff  = 32'd1 *)
+ (* src = "dut.sv:8.2-11.8" *)
+ \$_DFF_P_  b_reg /* _11_ */ (
+ .C(clk),
+ .D(_01_),
+ .Q(b)
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:6.9-6.32" *)
+ sub s (
+ .a(a),
+ .b(b),

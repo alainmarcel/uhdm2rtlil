@@ -40,7 +40,7 @@ module \top
   attribute \wor 1
   wire width 4 \wor_typename
   attribute \src "dut.sv:28.9-28.41"
-  cell $check $auto$process.cpp:51:import_immediate_assert$47
+  cell $check $auto$process.cpp:53:import_immediate_assert$47
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

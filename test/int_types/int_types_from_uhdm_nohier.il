@@ -9,113 +9,113 @@ module \top
   wire width 128 $0\test_integer.a
   attribute \src "dut.sv:10.21-10.28"
   wire $eq$dut.sv:10$2_Y
-  wire $auto$process.cpp:44:import_immediate_assert$4
+  wire $auto$process.cpp:46:import_immediate_assert$4
   attribute \src "dut.sv:11.21-11.37"
   wire $eq$dut.sv:11$6_Y
-  wire $auto$process.cpp:44:import_immediate_assert$8
+  wire $auto$process.cpp:46:import_immediate_assert$8
   wire width 32 \test_integer_unsigned.x
   wire width 128 \test_integer_unsigned.a
   attribute \src "dut.sv:19.9-22.12"
   wire width 128 $0\test_integer_unsigned.a
   attribute \src "dut.sv:21.21-21.39"
   wire $eq$dut.sv:21$11_Y
-  wire $auto$process.cpp:44:import_immediate_assert$13
+  wire $auto$process.cpp:46:import_immediate_assert$13
   wire width 32 signed \test_int.x
   wire width 128 \test_int.a
   attribute \src "dut.sv:29.9-33.12"
   wire width 128 $0\test_int.a
   attribute \src "dut.sv:31.21-31.28"
   wire $eq$dut.sv:31$16_Y
-  wire $auto$process.cpp:44:import_immediate_assert$18
+  wire $auto$process.cpp:46:import_immediate_assert$18
   attribute \src "dut.sv:32.21-32.37"
   wire $eq$dut.sv:32$20_Y
-  wire $auto$process.cpp:44:import_immediate_assert$22
+  wire $auto$process.cpp:46:import_immediate_assert$22
   wire width 32 \test_int_unsigned.x
   wire width 128 \test_int_unsigned.a
   attribute \src "dut.sv:40.9-43.12"
   wire width 128 $0\test_int_unsigned.a
   attribute \src "dut.sv:42.21-42.39"
   wire $eq$dut.sv:42$25_Y
-  wire $auto$process.cpp:44:import_immediate_assert$27
+  wire $auto$process.cpp:46:import_immediate_assert$27
   wire width 16 signed \test_shortint.x
   wire width 128 \test_shortint.a
   attribute \src "dut.sv:50.9-54.12"
   wire width 128 $0\test_shortint.a
   attribute \src "dut.sv:52.21-52.28"
   wire $eq$dut.sv:52$30_Y
-  wire $auto$process.cpp:44:import_immediate_assert$32
+  wire $auto$process.cpp:46:import_immediate_assert$32
   attribute \src "dut.sv:53.21-53.37"
   wire $eq$dut.sv:53$34_Y
-  wire $auto$process.cpp:44:import_immediate_assert$36
+  wire $auto$process.cpp:46:import_immediate_assert$36
   wire width 16 \test_shortint_unsigned.x
   wire width 128 \test_shortint_unsigned.a
   attribute \src "dut.sv:61.9-64.12"
   wire width 128 $0\test_shortint_unsigned.a
   attribute \src "dut.sv:63.21-63.35"
   wire $eq$dut.sv:63$39_Y
-  wire $auto$process.cpp:44:import_immediate_assert$41
+  wire $auto$process.cpp:46:import_immediate_assert$41
   wire width 64 signed \test_longint.x
   wire width 128 \test_longint.a
   attribute \src "dut.sv:71.9-75.12"
   wire width 128 $0\test_longint.a
   attribute \src "dut.sv:73.21-73.28"
   wire $eq$dut.sv:73$44_Y
-  wire $auto$process.cpp:44:import_immediate_assert$46
+  wire $auto$process.cpp:46:import_immediate_assert$46
   attribute \src "dut.sv:74.21-74.37"
   wire $eq$dut.sv:74$48_Y
-  wire $auto$process.cpp:44:import_immediate_assert$50
+  wire $auto$process.cpp:46:import_immediate_assert$50
   wire width 64 \test_longint_unsigned.x
   wire width 128 \test_longint_unsigned.a
   attribute \src "dut.sv:82.9-85.12"
   wire width 128 $0\test_longint_unsigned.a
   attribute \src "dut.sv:84.21-84.47"
   wire $eq$dut.sv:84$53_Y
-  wire $auto$process.cpp:44:import_immediate_assert$55
+  wire $auto$process.cpp:46:import_immediate_assert$55
   wire width 8 signed \test_byte.x
   wire width 128 \test_byte.a
   attribute \src "dut.sv:92.9-96.12"
   wire width 128 $0\test_byte.a
   attribute \src "dut.sv:94.21-94.28"
   wire $eq$dut.sv:94$58_Y
-  wire $auto$process.cpp:44:import_immediate_assert$60
+  wire $auto$process.cpp:46:import_immediate_assert$60
   attribute \src "dut.sv:95.21-95.37"
   wire $eq$dut.sv:95$62_Y
-  wire $auto$process.cpp:44:import_immediate_assert$64
+  wire $auto$process.cpp:46:import_immediate_assert$64
   wire width 8 \test_byte_unsigned.x
   wire width 128 \test_byte_unsigned.a
   attribute \src "dut.sv:103.9-106.12"
   wire width 128 $0\test_byte_unsigned.a
   attribute \src "dut.sv:105.21-105.33"
   wire $eq$dut.sv:105$67_Y
-  wire $auto$process.cpp:44:import_immediate_assert$69
+  wire $auto$process.cpp:46:import_immediate_assert$69
   wire signed \test_logic_signed.x
   wire width 128 \test_logic_signed.a
   attribute \src "dut.sv:113.9-116.12"
   wire width 128 $0\test_logic_signed.a
   attribute \src "dut.sv:115.21-115.37"
   wire $eq$dut.sv:115$72_Y
-  wire $auto$process.cpp:44:import_immediate_assert$74
+  wire $auto$process.cpp:46:import_immediate_assert$74
   wire \test_logic_unsigned.x
   wire width 128 \test_logic_unsigned.a
   attribute \src "dut.sv:123.9-126.12"
   wire width 128 $0\test_logic_unsigned.a
   attribute \src "dut.sv:125.21-125.32"
   wire $eq$dut.sv:125$77_Y
-  wire $auto$process.cpp:44:import_immediate_assert$79
+  wire $auto$process.cpp:46:import_immediate_assert$79
   wire width 8 signed \test_logic8_signed.x
   wire width 128 \test_logic8_signed.a
   attribute \src "dut.sv:133.9-136.12"
   wire width 128 $0\test_logic8_signed.a
   attribute \src "dut.sv:135.21-135.37"
   wire $eq$dut.sv:135$82_Y
-  wire $auto$process.cpp:44:import_immediate_assert$84
+  wire $auto$process.cpp:46:import_immediate_assert$84
   wire width 8 \test_logic8_unsigned.x
   wire width 128 \test_logic8_unsigned.a
   attribute \src "dut.sv:143.9-146.12"
   wire width 128 $0\test_logic8_unsigned.a
   attribute \src "dut.sv:145.21-145.33"
   wire $eq$dut.sv:145$87_Y
-  wire $auto$process.cpp:44:import_immediate_assert$89
+  wire $auto$process.cpp:46:import_immediate_assert$89
   attribute \src "dut.sv:10.21-10.28"
   cell $eq $eq$dut.sv:10$3
     parameter \A_SIGNED 0
@@ -128,7 +128,7 @@ module \top
     connect \Y $eq$dut.sv:10$2_Y
   end
   attribute \src "dut.sv:10.13-10.30"
-  cell $check $auto$process.cpp:51:import_immediate_assert$5
+  cell $check $auto$process.cpp:53:import_immediate_assert$5
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -138,7 +138,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:10$2_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$4
+    connect \EN $auto$process.cpp:46:import_immediate_assert$4
     connect \TRG { }
   end
   attribute \src "dut.sv:11.21-11.37"
@@ -153,7 +153,7 @@ module \top
     connect \Y $eq$dut.sv:11$6_Y
   end
   attribute \src "dut.sv:11.13-11.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$9
+  cell $check $auto$process.cpp:53:import_immediate_assert$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -163,7 +163,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:11$6_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$8
+    connect \EN $auto$process.cpp:46:import_immediate_assert$8
     connect \TRG { }
   end
   attribute \src "dut.sv:21.21-21.39"
@@ -178,7 +178,7 @@ module \top
     connect \Y $eq$dut.sv:21$11_Y
   end
   attribute \src "dut.sv:21.13-21.41"
-  cell $check $auto$process.cpp:51:import_immediate_assert$14
+  cell $check $auto$process.cpp:53:import_immediate_assert$14
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -188,7 +188,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:21$11_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$13
+    connect \EN $auto$process.cpp:46:import_immediate_assert$13
     connect \TRG { }
   end
   attribute \src "dut.sv:31.21-31.28"
@@ -203,7 +203,7 @@ module \top
     connect \Y $eq$dut.sv:31$16_Y
   end
   attribute \src "dut.sv:31.13-31.30"
-  cell $check $auto$process.cpp:51:import_immediate_assert$19
+  cell $check $auto$process.cpp:53:import_immediate_assert$19
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -213,7 +213,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:31$16_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$18
+    connect \EN $auto$process.cpp:46:import_immediate_assert$18
     connect \TRG { }
   end
   attribute \src "dut.sv:32.21-32.37"
@@ -228,7 +228,7 @@ module \top
     connect \Y $eq$dut.sv:32$20_Y
   end
   attribute \src "dut.sv:32.13-32.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$23
+  cell $check $auto$process.cpp:53:import_immediate_assert$23
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -238,7 +238,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:32$20_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$22
+    connect \EN $auto$process.cpp:46:import_immediate_assert$22
     connect \TRG { }
   end
   attribute \src "dut.sv:42.21-42.39"
@@ -253,7 +253,7 @@ module \top
     connect \Y $eq$dut.sv:42$25_Y
   end
   attribute \src "dut.sv:42.13-42.41"
-  cell $check $auto$process.cpp:51:import_immediate_assert$28
+  cell $check $auto$process.cpp:53:import_immediate_assert$28
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -263,7 +263,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:42$25_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$27
+    connect \EN $auto$process.cpp:46:import_immediate_assert$27
     connect \TRG { }
   end
   attribute \src "dut.sv:52.21-52.28"
@@ -278,7 +278,7 @@ module \top
     connect \Y $eq$dut.sv:52$30_Y
   end
   attribute \src "dut.sv:52.13-52.30"
-  cell $check $auto$process.cpp:51:import_immediate_assert$33
+  cell $check $auto$process.cpp:53:import_immediate_assert$33
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -288,7 +288,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:52$30_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$32
+    connect \EN $auto$process.cpp:46:import_immediate_assert$32
     connect \TRG { }
   end
   attribute \src "dut.sv:53.21-53.37"
@@ -303,7 +303,7 @@ module \top
     connect \Y $eq$dut.sv:53$34_Y
   end
   attribute \src "dut.sv:53.13-53.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$37
+  cell $check $auto$process.cpp:53:import_immediate_assert$37
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -313,7 +313,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:53$34_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$36
+    connect \EN $auto$process.cpp:46:import_immediate_assert$36
     connect \TRG { }
   end
   attribute \src "dut.sv:63.21-63.35"
@@ -328,7 +328,7 @@ module \top
     connect \Y $eq$dut.sv:63$39_Y
   end
   attribute \src "dut.sv:63.13-63.37"
-  cell $check $auto$process.cpp:51:import_immediate_assert$42
+  cell $check $auto$process.cpp:53:import_immediate_assert$42
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -338,7 +338,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:63$39_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$41
+    connect \EN $auto$process.cpp:46:import_immediate_assert$41
     connect \TRG { }
   end
   attribute \src "dut.sv:73.21-73.28"
@@ -353,7 +353,7 @@ module \top
     connect \Y $eq$dut.sv:73$44_Y
   end
   attribute \src "dut.sv:73.13-73.30"
-  cell $check $auto$process.cpp:51:import_immediate_assert$47
+  cell $check $auto$process.cpp:53:import_immediate_assert$47
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -363,7 +363,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:73$44_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$46
+    connect \EN $auto$process.cpp:46:import_immediate_assert$46
     connect \TRG { }
   end
   attribute \src "dut.sv:74.21-74.37"
@@ -378,7 +378,7 @@ module \top
     connect \Y $eq$dut.sv:74$48_Y
   end
   attribute \src "dut.sv:74.13-74.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$51
+  cell $check $auto$process.cpp:53:import_immediate_assert$51
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -388,7 +388,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:74$48_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$50
+    connect \EN $auto$process.cpp:46:import_immediate_assert$50
     connect \TRG { }
   end
   attribute \src "dut.sv:84.21-84.47"
@@ -403,7 +403,7 @@ module \top
     connect \Y $eq$dut.sv:84$53_Y
   end
   attribute \src "dut.sv:84.13-84.49"
-  cell $check $auto$process.cpp:51:import_immediate_assert$56
+  cell $check $auto$process.cpp:53:import_immediate_assert$56
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -413,7 +413,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:84$53_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$55
+    connect \EN $auto$process.cpp:46:import_immediate_assert$55
     connect \TRG { }
   end
   attribute \src "dut.sv:94.21-94.28"
@@ -428,7 +428,7 @@ module \top
     connect \Y $eq$dut.sv:94$58_Y
   end
   attribute \src "dut.sv:94.13-94.30"
-  cell $check $auto$process.cpp:51:import_immediate_assert$61
+  cell $check $auto$process.cpp:53:import_immediate_assert$61
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -438,7 +438,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:94$58_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$60
+    connect \EN $auto$process.cpp:46:import_immediate_assert$60
     connect \TRG { }
   end
   attribute \src "dut.sv:95.21-95.37"
@@ -453,7 +453,7 @@ module \top
     connect \Y $eq$dut.sv:95$62_Y
   end
   attribute \src "dut.sv:95.13-95.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$65
+  cell $check $auto$process.cpp:53:import_immediate_assert$65
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -463,7 +463,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:95$62_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$64
+    connect \EN $auto$process.cpp:46:import_immediate_assert$64
     connect \TRG { }
   end
   attribute \src "dut.sv:105.21-105.33"
@@ -478,7 +478,7 @@ module \top
     connect \Y $eq$dut.sv:105$67_Y
   end
   attribute \src "dut.sv:105.13-105.35"
-  cell $check $auto$process.cpp:51:import_immediate_assert$70
+  cell $check $auto$process.cpp:53:import_immediate_assert$70
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -488,7 +488,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:105$67_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$69
+    connect \EN $auto$process.cpp:46:import_immediate_assert$69
     connect \TRG { }
   end
   attribute \src "dut.sv:115.21-115.37"
@@ -503,7 +503,7 @@ module \top
     connect \Y $eq$dut.sv:115$72_Y
   end
   attribute \src "dut.sv:115.13-115.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$75
+  cell $check $auto$process.cpp:53:import_immediate_assert$75
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -513,7 +513,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:115$72_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$74
+    connect \EN $auto$process.cpp:46:import_immediate_assert$74
     connect \TRG { }
   end
   attribute \src "dut.sv:125.21-125.32"
@@ -528,7 +528,7 @@ module \top
     connect \Y $eq$dut.sv:125$77_Y
   end
   attribute \src "dut.sv:125.13-125.34"
-  cell $check $auto$process.cpp:51:import_immediate_assert$80
+  cell $check $auto$process.cpp:53:import_immediate_assert$80
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -538,7 +538,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:125$77_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$79
+    connect \EN $auto$process.cpp:46:import_immediate_assert$79
     connect \TRG { }
   end
   attribute \src "dut.sv:135.21-135.37"
@@ -553,7 +553,7 @@ module \top
     connect \Y $eq$dut.sv:135$82_Y
   end
   attribute \src "dut.sv:135.13-135.39"
-  cell $check $auto$process.cpp:51:import_immediate_assert$85
+  cell $check $auto$process.cpp:53:import_immediate_assert$85
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -563,7 +563,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:135$82_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$84
+    connect \EN $auto$process.cpp:46:import_immediate_assert$84
     connect \TRG { }
   end
   attribute \src "dut.sv:145.21-145.33"
@@ -578,7 +578,7 @@ module \top
     connect \Y $eq$dut.sv:145$87_Y
   end
   attribute \src "dut.sv:145.13-145.35"
-  cell $check $auto$process.cpp:51:import_immediate_assert$90
+  cell $check $auto$process.cpp:53:import_immediate_assert$90
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -588,142 +588,142 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:145$87_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:44:import_immediate_assert$89
+    connect \EN $auto$process.cpp:46:import_immediate_assert$89
     connect \TRG { }
   end
   attribute \src "dut.sv:8.9-12.12"
   process $proc$dut.sv:8$1
-    assign $auto$process.cpp:44:import_immediate_assert$4 1'0
-    assign $auto$process.cpp:44:import_immediate_assert$8 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$4 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$8 1'0
     assign $0\test_integer.a \test_integer.a
     assign $0\test_integer.a { \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x [31] \test_integer.x }
-    assign $auto$process.cpp:44:import_immediate_assert$4 1'1
-    assign $auto$process.cpp:44:import_immediate_assert$8 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$4 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$8 1'1
     sync always
       update \test_integer.a $0\test_integer.a
   end
   attribute \src "dut.sv:19.9-22.12"
   process $proc$dut.sv:19$10
-    assign $auto$process.cpp:44:import_immediate_assert$13 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$13 1'0
     assign $0\test_integer_unsigned.a \test_integer_unsigned.a
     assign $0\test_integer_unsigned.a { 96'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_integer_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$13 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$13 1'1
     sync always
       update \test_integer_unsigned.a $0\test_integer_unsigned.a
   end
   attribute \src "dut.sv:29.9-33.12"
   process $proc$dut.sv:29$15
-    assign $auto$process.cpp:44:import_immediate_assert$18 1'0
-    assign $auto$process.cpp:44:import_immediate_assert$22 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$18 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$22 1'0
     assign $0\test_int.a \test_int.a
     assign $0\test_int.a { \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x [31] \test_int.x }
-    assign $auto$process.cpp:44:import_immediate_assert$18 1'1
-    assign $auto$process.cpp:44:import_immediate_assert$22 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$18 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$22 1'1
     sync always
       update \test_int.a $0\test_int.a
   end
   attribute \src "dut.sv:40.9-43.12"
   process $proc$dut.sv:40$24
-    assign $auto$process.cpp:44:import_immediate_assert$27 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$27 1'0
     assign $0\test_int_unsigned.a \test_int_unsigned.a
     assign $0\test_int_unsigned.a { 96'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_int_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$27 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$27 1'1
     sync always
       update \test_int_unsigned.a $0\test_int_unsigned.a
   end
   attribute \src "dut.sv:50.9-54.12"
   process $proc$dut.sv:50$29
-    assign $auto$process.cpp:44:import_immediate_assert$32 1'0
-    assign $auto$process.cpp:44:import_immediate_assert$36 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$32 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$36 1'0
     assign $0\test_shortint.a \test_shortint.a
     assign $0\test_shortint.a { \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x [15] \test_shortint.x }
-    assign $auto$process.cpp:44:import_immediate_assert$32 1'1
-    assign $auto$process.cpp:44:import_immediate_assert$36 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$32 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$36 1'1
     sync always
       update \test_shortint.a $0\test_shortint.a
   end
   attribute \src "dut.sv:61.9-64.12"
   process $proc$dut.sv:61$38
-    assign $auto$process.cpp:44:import_immediate_assert$41 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$41 1'0
     assign $0\test_shortint_unsigned.a \test_shortint_unsigned.a
     assign $0\test_shortint_unsigned.a { 112'0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_shortint_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$41 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$41 1'1
     sync always
       update \test_shortint_unsigned.a $0\test_shortint_unsigned.a
   end
   attribute \src "dut.sv:71.9-75.12"
   process $proc$dut.sv:71$43
-    assign $auto$process.cpp:44:import_immediate_assert$46 1'0
-    assign $auto$process.cpp:44:import_immediate_assert$50 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$46 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$50 1'0
     assign $0\test_longint.a \test_longint.a
     assign $0\test_longint.a { \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x [63] \test_longint.x }
-    assign $auto$process.cpp:44:import_immediate_assert$46 1'1
-    assign $auto$process.cpp:44:import_immediate_assert$50 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$46 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$50 1'1
     sync always
       update \test_longint.a $0\test_longint.a
   end
   attribute \src "dut.sv:82.9-85.12"
   process $proc$dut.sv:82$52
-    assign $auto$process.cpp:44:import_immediate_assert$55 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$55 1'0
     assign $0\test_longint_unsigned.a \test_longint_unsigned.a
     assign $0\test_longint_unsigned.a { 64'0000000000000000000000000000000000000000000000000000000000000000 \test_longint_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$55 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$55 1'1
     sync always
       update \test_longint_unsigned.a $0\test_longint_unsigned.a
   end
   attribute \src "dut.sv:92.9-96.12"
   process $proc$dut.sv:92$57
-    assign $auto$process.cpp:44:import_immediate_assert$60 1'0
-    assign $auto$process.cpp:44:import_immediate_assert$64 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$60 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$64 1'0
     assign $0\test_byte.a \test_byte.a
     assign $0\test_byte.a { \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x [7] \test_byte.x }
-    assign $auto$process.cpp:44:import_immediate_assert$60 1'1
-    assign $auto$process.cpp:44:import_immediate_assert$64 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$60 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$64 1'1
     sync always
       update \test_byte.a $0\test_byte.a
   end
   attribute \src "dut.sv:103.9-106.12"
   process $proc$dut.sv:103$66
-    assign $auto$process.cpp:44:import_immediate_assert$69 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$69 1'0
     assign $0\test_byte_unsigned.a \test_byte_unsigned.a
     assign $0\test_byte_unsigned.a { 120'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_byte_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$69 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$69 1'1
     sync always
       update \test_byte_unsigned.a $0\test_byte_unsigned.a
   end
   attribute \src "dut.sv:113.9-116.12"
   process $proc$dut.sv:113$71
-    assign $auto$process.cpp:44:import_immediate_assert$74 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$74 1'0
     assign $0\test_logic_signed.a \test_logic_signed.a
     assign $0\test_logic_signed.a { \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x \test_logic_signed.x }
-    assign $auto$process.cpp:44:import_immediate_assert$74 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$74 1'1
     sync always
       update \test_logic_signed.a $0\test_logic_signed.a
   end
   attribute \src "dut.sv:123.9-126.12"
   process $proc$dut.sv:123$76
-    assign $auto$process.cpp:44:import_immediate_assert$79 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$79 1'0
     assign $0\test_logic_unsigned.a \test_logic_unsigned.a
     assign $0\test_logic_unsigned.a { 127'0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_logic_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$79 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$79 1'1
     sync always
       update \test_logic_unsigned.a $0\test_logic_unsigned.a
   end
   attribute \src "dut.sv:133.9-136.12"
   process $proc$dut.sv:133$81
-    assign $auto$process.cpp:44:import_immediate_assert$84 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$84 1'0
     assign $0\test_logic8_signed.a \test_logic8_signed.a
     assign $0\test_logic8_signed.a { \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x [7] \test_logic8_signed.x }
-    assign $auto$process.cpp:44:import_immediate_assert$84 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$84 1'1
     sync always
       update \test_logic8_signed.a $0\test_logic8_signed.a
   end
   attribute \src "dut.sv:143.9-146.12"
   process $proc$dut.sv:143$86
-    assign $auto$process.cpp:44:import_immediate_assert$89 1'0
+    assign $auto$process.cpp:46:import_immediate_assert$89 1'0
     assign $0\test_logic8_unsigned.a \test_logic8_unsigned.a
     assign $0\test_logic8_unsigned.a { 120'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \test_logic8_unsigned.x }
-    assign $auto$process.cpp:44:import_immediate_assert$89 1'1
+    assign $auto$process.cpp:46:import_immediate_assert$89 1'1
     sync always
       update \test_logic8_unsigned.a $0\test_logic8_unsigned.a
   end

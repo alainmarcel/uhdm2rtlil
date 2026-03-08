@@ -7,6 +7,8 @@
 
 #include "uhdm2rtlil.h"
 #include <uhdm/func_call.h>
+#include <uhdm/sys_func_call.h>
+#include "kernel/fmt.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -4337,6 +4339,73 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
     return sig;
 }
 
+// Create a $print cell for $display / $write system tasks.
+// proc_root_case: the process's root CaseRule (for EN=0 default).
+// active_case: the CaseRule currently being built (for EN=1 activation).
+void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
+                                       RTLIL::CaseRule* proc_root_case,
+                                       RTLIL::CaseRule* active_case)
+{
+    std::string task_name = std::string(call->VpiName()); // e.g. "$display"
+
+    // Unique cell name based on task and line
+    std::string cell_id = stringf("$print$%s$%d$%d", task_name.c_str(),
+                                  (int)call->VpiLineNo(), incr_autoidx());
+
+    // EN wire: default false in root, true in active case
+    RTLIL::Wire* en_wire = module->addWire(cell_id + "_EN", 1);
+    proc_root_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(en_wire), RTLIL::State::S0));
+    active_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(en_wire), RTLIL::State::S1));
+
+    // For combinational always @*, no clock triggers
+    RTLIL::SigSpec triggers;
+    RTLIL::Const polarity = RTLIL::Const(0, 0);
+
+    // Build the $print cell
+    RTLIL::Cell* cell = module->addCell(cell_id, ID($print));
+    cell->setParam(ID::TRG_WIDTH, 0);
+    cell->setParam(ID::TRG_ENABLE, false);
+    cell->setParam(ID::TRG_POLARITY, polarity);
+    cell->setParam(ID::PRIORITY, --last_effect_priority);
+    cell->setPort(ID::TRG, triggers);
+    cell->setPort(ID::EN, RTLIL::SigSpec(en_wire));
+
+    // Build VerilogFmtArg list from call arguments
+    std::vector<VerilogFmtArg> fmt_args;
+    if (auto args = call->Tf_call_args()) {
+        for (auto* arg_any : *args) {
+            VerilogFmtArg vfa = {};
+            vfa.filename = "";
+            vfa.first_line = (unsigned)call->VpiLineNo();
+            // Try to get a SigSpec for the argument
+            if (auto arg_expr = any_cast<const UHDM::expr*>(arg_any)) {
+                RTLIL::SigSpec sig = import_expression(arg_expr);
+                vfa.type = VerilogFmtArg::INTEGER;
+                vfa.sig = sig;
+                vfa.signed_ = false;
+            } else {
+                // Skip unknown argument types
+                continue;
+            }
+            fmt_args.push_back(vfa);
+        }
+    }
+
+    // Parse and emit the format
+    int default_base = 10;
+    RTLIL::IdString yosys_task_name(task_name);
+    RTLIL::IdString mod_name = module->name;
+    Fmt fmt;
+    fmt.parse_verilog(fmt_args, /*sformat_like=*/false, default_base, yosys_task_name, mod_name);
+    if (task_name.substr(0, 8) == "$display")
+        fmt.append_literal("\n");
+    fmt.emit_rtlil(cell);
+
+    if (mode_debug)
+        log("    Created $print cell '%s' for '%s' (EN=%s)\n",
+            cell_id.c_str(), task_name.c_str(), en_wire->name.c_str());
+}
+
 // Import statement for combinational context
 void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* proc) {
     if (!uhdm_stmt)
@@ -4386,6 +4455,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             const task_call* tc = any_cast<const task_call*>(uhdm_stmt);
             if (tc) {
                 import_task_call_comb(tc, proc);
+            }
+            break;
+        }
+        case vpiSysFuncCall: {
+            const sys_func_call* call = any_cast<const sys_func_call*>(uhdm_stmt);
+            if (call) {
+                std::string name = std::string(call->VpiName());
+                if (name.substr(0, 8) == "$display" || name.substr(0, 6) == "$write") {
+                    import_display_stmt(call, &proc->root_case, &proc->root_case);
+                } else {
+                    log_warning("Unsupported system task '%s' in comb context\n", name.c_str());
+                }
             }
             break;
         }
@@ -7056,17 +7137,34 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         
         case vpiImmediateAssert: {
             log("        Processing immediate assert in case context - converting to $check cell\n");
-            
+
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
             RTLIL::Wire* enable_wire = nullptr;
             import_immediate_assert(assert_stmt, enable_wire);
-            
+
             // In case context, add assignment to set enable wire to 1
             if (enable_wire) {
                 case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
-            
+
             log("        Immediate assert processed in case\n");
+            break;
+        }
+
+        case vpiSysFuncCall: {
+            const sys_func_call* call = any_cast<const sys_func_call*>(uhdm_stmt);
+            if (call) {
+                std::string name = std::string(call->VpiName());
+                if (name.substr(0, 8) == "$display" || name.substr(0, 6) == "$write") {
+                    // proc_root_case for default EN=0; case_rule for EN=1 activation
+                    RTLIL::CaseRule* root = current_comb_process
+                        ? &current_comb_process->root_case : case_rule;
+                    import_display_stmt(call, root, case_rule);
+                } else {
+                    if (mode_debug)
+                        log("        Unsupported system task '%s' in case context\n", name.c_str());
+                }
+            }
             break;
         }
 

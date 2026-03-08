@@ -14,16 +14,18 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 152 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (152/152 tests functional, 0 known failures)
-- **Passing**: 147 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 153 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (153/153 tests functional, 0 known failures)
+- **Passing**: 148 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
+  - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable
 - **Recent Additions**:
+  - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable: `always @* if (y & (y == (a & b))) $display(a, b, y)` generates a `$print` RTLIL cell (TRG_WIDTH=0, TRG_ENABLE=false) with EN wire defaulting to 0 and set to 1 inside the `if` true case; `reg a = 0`/`reg b = 0` net declaration initializers set `\init` attributes (not init processes); formally equivalent to the Verilog frontend output
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
   - `func_typename_ret` - Functions whose return type is a typedef (local or package-scoped): `function automatic T func1` where `T = logic[1:0]` and `function automatic P::S func2` where `P::S = logic[3:0]`; verifies correct width and sign extension of signed parameters assigned to typedef'd return variables
@@ -53,6 +55,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `fmt_always_comb` — `$display` system tasks in `always @*` blocks now generate proper `$print` RTLIL cells, and `reg a = 0` net declaration initializers correctly set `\init` wire attributes ✅
+    - **`$display` → `$print`**: UHDM represents `$display(a, b, y)` as a `sys_func_call` (VPI type 56) with args via `Tf_call_args()`; new `import_display_stmt()` creates a `$print` cell using Yosys `Fmt::parse_verilog()` for the FORMAT string; EN wire defaults to 0 in the process root case and is set to 1 in the active (conditional) case
+    - **`reg a = 0` initializer**: continuous assigns with `VpiNetDeclAssign=1` and a constant RHS now set the `\init` attribute on the wire rather than creating an init process (which was clobbering flip-flop outputs)
+    - **Without `$print`**: the `$display` logic had no output consumer, so `opt` removed everything, leaving 0 gates
   - `gen_test3` — generate `case` statement with `default:` appearing before specific labels now correctly selects the matching label ✅
     - **Root cause**: Surelog's `DesignElaboration.cpp` processed `default:` as a match immediately when it was the first case item in source order, before checking for specific labels that appeared later (e.g., `case (i) default: ...; 0: ...` with i=0 would pick `default:` instead of `0:`). This caused `y[3]` to be driven X since the `0: assign y[3]` case was never elaborated.
     - **Fix**: Save `default:` as a fallback (`defaultGenItem`) instead of immediately matching; continue searching for a specific label match; only use `default:` if no specific case matched
@@ -461,7 +467,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (152 total — 147 passing equivalence, 5 UHDM-only, 1 known failure)
+### Current Test Cases (153 total — 148 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -633,6 +639,7 @@ The Yosys test runner:
 - **constmsk_test** - OR reduction of concatenations with constant bits (tests `|{A[3], 1'b0, A[1]}` and `|{A[2], 1'b1, A[0]}`)
 - **rotate** - Barrel shift rotation (from Amber23 ARM core) with nested generate loops (5 levels x 32 bits), bit-select assignments in `always @*` blocks, and `wrap()` function for circular indexing
 - **wandwor** - `wand` and `wor` net types with multi-driver resolution via AND/OR logic, module instance port connections, and multi-bit variants
+- **fmt_always_comb** - `$display` system task in combinational `always @*` block with conditional enable (`if (y & (y == (a & b))) $display(a, b, y)`); generates `$print` RTLIL cell with TRG_WIDTH=0 (no clock triggers), EN wire controlled by the `if` condition; `reg a = 0`/`reg b = 0` net declaration initializers produce `\init` wire attributes; formally equivalent to Yosys Verilog frontend
 
 ### Test Management
 
@@ -653,8 +660,8 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 151 of 152 tests are passing or working as expected (147 equiv + 5 UHDM-only)
-- 1 test is in the `failing_tests.txt` file (expected failure: `gen_test3`)
+- 153 of 153 tests are passing or working as expected (148 equiv + 5 UHDM-only)
+- 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
 
@@ -707,10 +714,10 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **152 test cases**:
-- **4 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case)
-- **147 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **1 known failure** - Pre-existing bug now exposed by improved `test_equivalence.sh`; listed in `failing_tests.txt` so CI passes while tracking this issue (`gen_test3`)
+The UHDM frontend test suite includes **153 test cases**:
+- **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
+- **148 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
 
