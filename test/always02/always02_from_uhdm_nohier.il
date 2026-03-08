@@ -11,7 +11,7 @@ module \always02
   wire width 4 output 3 \count
   attribute \src "dut.sv:7.1-11.4"
   wire width 4 $0\count
-  wire width 64 $auto$expression.cpp:2190:import_operation$2
+  wire width 64 $auto$expression.cpp:2233:import_operation$2
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -20,13 +20,13 @@ module \always02
     parameter \Y_WIDTH 64
     connect \A \count
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2190:import_operation$2
+    connect \Y $auto$expression.cpp:2233:import_operation$2
   end
   attribute \src "dut.sv:7.1-11.4"
   attribute \always_ff 1
   process $proc$dut.sv:7$1
     assign $0\count \count
-    assign $0\count $auto$expression.cpp:2190:import_operation$2 [3:0]
+    assign $0\count $auto$expression.cpp:2233:import_operation$2 [3:0]
     attribute \src "dut.sv:9.2-10.14"
     switch \reset
     attribute \src "dut.sv:9.2-10.14"
