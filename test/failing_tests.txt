@@ -8,5 +8,4 @@
 # Tests that currently fail:
 # These are pre-existing bugs caught by the improved test_equivalence.sh,
 # not regressions from the always_ff comb-path change.
-gen_test3
 

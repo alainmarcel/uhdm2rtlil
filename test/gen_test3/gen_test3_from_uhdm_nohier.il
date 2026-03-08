@@ -56,7 +56,7 @@ module \gen_test3
     connect \S \sel
     connect \Y $auto$rtlil.cc:3474:Mux$10
   end
-  cell $mux $mux$dut.sv:18$11
+  cell $mux $mux$dut.sv:20$11
     parameter \WIDTH 1
     connect \A \b [3]
     connect \B \a [3]
@@ -82,7 +82,7 @@ module \gen_test3
   connect \y [1] $auto$rtlil.cc:3474:Mux$6
   connect \z [1] $auto$rtlil.cc:3474:Mux$8
   connect \y [2] $auto$rtlil.cc:3474:Mux$10
-  connect \z [3] $auto$rtlil.cc:3474:Mux$12
+  connect \y [3] $auto$rtlil.cc:3474:Mux$12
   connect \z [2] $auto$rtlil.cc:3474:Mux$14
   connect \z [3] $auto$rtlil.cc:3474:Mux$16
 end

@@ -52,8 +52,7 @@ module gen_test3(a, b, sel, y, z);
     .A(b[3]),
     .B(a[3]),
     .S(sel),
-    .Y(z[3])
+    .Y(y[3])
   );
-  assign z[2] = y[2];
-  assign y[3] = 1'hx;
+  assign z[3:2] = y[3:2];
 endmodule
