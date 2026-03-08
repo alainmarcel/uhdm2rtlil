@@ -290,6 +290,9 @@ struct UhdmImporter {
 
     // Current combinational process pointer (non-null during import_always_comb statement processing)
     RTLIL::Process* current_comb_process = nullptr;
+
+    // Tracks descending priority for $print/$check cells (like genrtlil.cc's last_effect_priority)
+    int last_effect_priority = 0;
     
     // Track sync assignment targets for proper if-else handling
     std::map<std::string, RTLIL::Wire*> sync_assignment_targets;
@@ -512,6 +515,13 @@ struct UhdmImporter {
 
     // Assertion handling
     void import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire);
+
+    // System task handling ($display, $write, etc.)
+    // Creates a $print cell; EN default=0 added to proc_root_case, EN=1 added to active_case.
+    // If active_case == proc_root_case, it is an unconditional display.
+    void import_display_stmt(const UHDM::sys_func_call* call,
+                             RTLIL::CaseRule* proc_root_case,
+                             RTLIL::CaseRule* active_case);
     
     // Additional expression types
     RTLIL::SigSpec import_part_select(const UHDM::part_select* uhdm_part, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);

@@ -800,48 +800,25 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     if (is_net_decl_assign) {
         // Check if the RHS is a constant expression
         bool is_constant = rhs.is_fully_const();
-        
-        if (is_constant) {
-            // This is a constant initialization, create an init process
-            // Get the source location for the process name
-            std::string assign_src = get_src_attribute(uhdm_assign);
-            std::string assign_file;
-            int line_num = uhdm_assign->VpiLineNo();
-            if (!assign_src.empty()) {
-                size_t cp = assign_src.find(':');
-                if (cp != std::string::npos)
-                    assign_file = assign_src.substr(0, cp);
-            }
-            std::string proc_name = stringf("$proc$%s:%d$%d", assign_file.c_str(), line_num, incr_autoidx());
 
-            // Create an init process for this initialization
-            RTLIL::Process *proc = module->addProcess(RTLIL::escape_id(proc_name));
-            if (!assign_src.empty())
-                proc->attributes[ID::src] = assign_src;
-            
-            // Create a temporary wire for the assignment
-            RTLIL::Wire *temp_wire = module->addWire(NEW_ID, lhs.size());
-            
-            // Add the assignment to the root case
-            proc->root_case.actions.push_back(RTLIL::SigSig(temp_wire, rhs));
-            
-            // Add sync always (empty) - this matches Verilog frontend behavior
-            RTLIL::SyncRule *sync_always = new RTLIL::SyncRule;
-            sync_always->type = RTLIL::STa; // Always sync type
-            proc->syncs.push_back(sync_always);
-            
-            // Create the init sync and add the action
-            RTLIL::SyncRule *sync_init = new RTLIL::SyncRule;
-            sync_init->type = RTLIL::STi; // Init sync type
-            sync_init->actions.push_back(RTLIL::SigSig(lhs, temp_wire));
-            proc->syncs.push_back(sync_init);
-            
-            if (mode_debug)
-                log("  Created init process %s for net declaration assignment with constant value\n", proc_name.c_str());
+        if (is_constant) {
+            // For reg/logic net declaration initializers (e.g. `reg a = 0`),
+            // set the \init attribute on the wire directly — exactly as the
+            // Verilog frontend does.  This is NOT a continuous assignment; it
+            // is only the simulation initial value.  Creating an init process
+            // here caused the proc pass to emit a continuous connection to 0,
+            // which clobbered flip-flop outputs.
+            if (lhs.is_wire()) {
+                RTLIL::Wire *w = lhs.as_wire();
+                w->attributes[ID::init] = rhs.as_const();
+                if (mode_debug)
+                    log("  Set \\init attribute on wire '%s' for net declaration assignment\n",
+                        w->name.c_str());
+            }
         } else {
             // Non-constant expression in net declaration, treat as continuous assignment
             module->connect(lhs, rhs);
-            
+
             if (mode_debug)
                 log("  Created continuous assignment for net declaration with non-constant expression\n");
         }

@@ -167,7 +167,7 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 151 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 153 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
 
 ### Signedness Handling
 
@@ -265,6 +265,21 @@ For loops inside `always` blocks are compile-time unrolled using `loop_values`:
 4. **`import_part_select` and `import_indexed_part_select` (expression.cpp)**: check `loop_values.count(base_signal_name)` **before** wire lookup; if found, return `RTLIL::Const(loop_val, width)` as the base — `k[1:0]` is a `vpiPartSelect` node (VpiName="k"), not a reference
 
 5. Always call `loop_values.clear()` at the end of `import_always_ff` and `import_always_comb`
+
+### `$display` / `$write` System Tasks in Always Blocks
+
+- UHDM represents `$display(a, b, y)` as a `sys_func_call` node (VPI type 56 = `vpiSysFuncCall`), VpiName=`$display`
+- Arguments accessed via `Tf_call_args()` (returns `VectorOfany*`; each cast to `const expr*`)
+- Implementation: `import_display_stmt(call, proc_root_case, active_case)` in `process.cpp`
+  - Creates a `$print` RTLIL cell with `TRG_WIDTH=0`, `TRG_ENABLE=false` (for `always @*`)
+  - EN wire default=0 added to `proc_root_case->actions`, EN=1 added to `active_case->actions`
+  - Uses Yosys `Fmt::parse_verilog()` to build FORMAT string from argument list
+  - `$display` appends `\n` (via `fmt.append_literal("\n")`), `$write` does not
+- Handler in `import_statement_comb(Process*)` (unconditional): passes `&proc->root_case` for both root and active
+- Handler in `import_statement_comb(CaseRule*)` (inside `if`): uses `current_comb_process->root_case` as root, `case_rule` as active
+- `UhdmImporter::last_effect_priority` (initialized to 0): decremented per `$print` cell (same as genrtlil.cc)
+- Net declaration initializers (`reg a = 0`): set `\init` attribute on wire, NOT an init process
+- Without `$print` cell, `$display` logic has no output consumer → `opt` removes all logic → 0 gates
 
 ## Code Style
 

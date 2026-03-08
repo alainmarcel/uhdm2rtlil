@@ -33,7 +33,7 @@ module \top
   wire width 8 \test_byte_unsigned.x
   wire width 64 \test_longint_unsigned.x
   attribute \src "dut.sv:84.13-84.49"
-  cell $check $auto$process.cpp:51:import_immediate_assert$56
+  cell $check $auto$process.cpp:53:import_immediate_assert$56
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -47,7 +47,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:63.13-63.37"
-  cell $check $auto$process.cpp:51:import_immediate_assert$42
+  cell $check $auto$process.cpp:53:import_immediate_assert$42
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
