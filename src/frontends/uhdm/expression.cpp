@@ -22,6 +22,7 @@
 #include <uhdm/assignment.h>
 #include <uhdm/uhdm_vpi_user.h>
 #include <uhdm/parameter.h>
+#include <uhdm/param_assign.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/range.h>
@@ -594,6 +595,48 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         lhs_sig = temp_wire;
                         input_mapping[lhs_name] = lhs_sig;
                     }
+                }
+            } else if (assign->Lhs()->UhdmType() == uhdmpart_select) {
+                // Handle part select assignment: func3[A:B] = inp[A:B]
+                const part_select* ps = any_cast<const part_select*>(assign->Lhs());
+                std::string base_name = std::string(ps->VpiName());
+
+                int left_val = -1, right_val = -1;
+                if (ps->Left_range()) {
+                    RTLIL::SigSpec s = import_expression(
+                        any_cast<const expr*>(ps->Left_range()), &input_mapping);
+                    if (s.is_fully_const()) left_val = s.as_int();
+                }
+                if (ps->Right_range()) {
+                    RTLIL::SigSpec s = import_expression(
+                        any_cast<const expr*>(ps->Right_range()), &input_mapping);
+                    if (s.is_fully_const()) right_val = s.as_int();
+                }
+
+                if (left_val >= 0 && right_val >= 0) {
+                    int width = std::abs(left_val - right_val) + 1;
+                    int offset = std::min(left_val, right_val);
+
+                    RTLIL::SigSpec base_spec;
+                    if (base_name == func_name) {
+                        base_spec = RTLIL::SigSpec(result_wire);
+                    } else {
+                        auto it = input_mapping.find(base_name);
+                        if (it != input_mapping.end())
+                            base_spec = it->second;
+                    }
+
+                    if (base_spec.size() > 0 && offset + width <= base_spec.size()) {
+                        lhs_sig = base_spec.extract(offset, width);
+                        if (mode_debug)
+                            log("  process_stmt_to_case: part-select LHS %s[%d:%d] → offset=%d width=%d\n",
+                                base_name.c_str(), left_val, right_val, offset, width);
+                    } else {
+                        log_warning("Part-select LHS %s[%d:%d] out of bounds (base_size=%d)\n",
+                                    base_name.c_str(), left_val, right_val, base_spec.size());
+                    }
+                } else {
+                    log_warning("Part-select LHS %s has non-constant range\n", base_name.c_str());
                 }
             } else if (assign->Lhs()->UhdmType() == uhdmbit_select) {
                 // Handle bit select assignment
@@ -2790,6 +2833,21 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                         RTLIL::SigSpec expr_val = import_expression(any_cast<const expr*>(param->Expr()));
                         if (expr_val.is_fully_const()) {
                             param_value = expr_val.as_const();
+                        }
+                    } else {
+                        // For function-local localparams (e.g. localparam A = 32 - 1),
+                        // Surelog stores the value expression in the parent param_assign's Rhs(),
+                        // not in the parameter's VpiValue() or Expr().
+                        const BaseClass* parent = param->VpiParent();
+                        if (parent && parent->UhdmType() == uhdmparam_assign) {
+                            const param_assign* pa = any_cast<const param_assign*>(parent);
+                            if (pa && pa->Rhs()) {
+                                RTLIL::SigSpec expr_val = import_expression(
+                                    any_cast<const expr*>(pa->Rhs()));
+                                if (expr_val.is_fully_const()) {
+                                    param_value = expr_val.as_const();
+                                }
+                            }
                         }
                     }
                 }

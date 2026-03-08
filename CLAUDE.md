@@ -167,7 +167,7 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 153 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 154 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
 
 ### Signedness Handling
 
@@ -221,6 +221,15 @@ All 153 tests are currently passing (0 failures). `test/failing_tests.txt` is em
 - `import_operation` only folds all-const operations when `!loop_values.empty() || getCurrentFunctionContext() != nullptr`
 - Generate-scope parameters (e.g., loop variable `i` in `addPartialProduct[i]`) resolve to constants via `VpiValue()` on the `parameter` object, but they do NOT set `loop_values`
 - Fix: also fold when `!gen_scope_stack.empty()` — needed for indexed part-selects like `PP[(i-1)*(i+2*M)/2 +: M+i]`
+
+### Function-Local Localparam Resolution (`localparam A = 32 - 1` inside functions)
+
+- For `localparam A = expr` inside a function, Surelog does NOT set `parameter->VpiValue()` or `parameter->Expr()`
+- Instead, the value expression is stored in `parameter->VpiParent()` → `param_assign->Rhs()`
+- Fix in `import_ref_obj` (expression.cpp): when `VpiValue()` is empty and `Expr()` is null, check `param->VpiParent()` for a `param_assign` (UhdmType = `uhdmparam_assign`), then evaluate `pa->Rhs()` via `import_expression`
+- Added `#include <uhdm/param_assign.h>` to expression.cpp
+- Part-select LHS handler in `process_stmt_to_case`: `func3[A:B] = inp[A:B]` — the `part_select` node's ranges are `ref_obj` → parameter, and this resolution path is now needed
+- `scan_for_direct_return_assignment` intentionally does NOT detect `uhdmpart_select` LHS — leaving `has_return_assignment = false` so the result wire is zero-initialized before the part-select writes its bits (correct for partial assignments)
 
 ### Equivalence Checking: Dead Wire Circular Dependencies
 

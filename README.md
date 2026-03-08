@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 153 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (153/153 tests functional, 0 known failures)
-- **Passing**: 148 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 154 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (154/154 tests functional, 0 known failures)
+- **Passing**: 149 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -25,6 +25,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
   - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable
 - **Recent Additions**:
+  - `func_block` - Functions with part-select LHS on the return variable (`func3[A:B] = inp[A:B]`) and for-loop bit-select assignments (`func1[idx] = inp[idx]`); function-local `localparam` declarations now correctly resolved via the parent `param_assign` Rhs expression; formally equivalent to the Verilog frontend
   - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable: `always @* if (y & (y == (a & b))) $display(a, b, y)` generates a `$print` RTLIL cell (TRG_WIDTH=0, TRG_ENABLE=false) with EN wire defaulting to 0 and set to 1 inside the `if` true case; `reg a = 0`/`reg b = 0` net declaration initializers set `\init` attributes (not init processes); formally equivalent to the Verilog frontend output
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
@@ -55,6 +56,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `func_block` — function-local `localparam` declarations and part-select return variable assignments now correctly synthesized ✅
+    - **Root cause**: For `localparam A = 32 - 1` inside a function, Surelog does not store the resolved value in `parameter->VpiValue()` or `parameter->Expr()`. Instead the expression `32 - 1` is kept in the parent `param_assign` object's `Rhs()`.
+    - **Fix in `import_ref_obj()`** (`expression.cpp`): added fallback that checks `param->VpiParent()` for a `param_assign` (UhdmType `uhdmparam_assign`) and evaluates its `Rhs()` expression when both `VpiValue()` and `Expr()` are empty
+    - **`uhdmpart_select` LHS handler in `process_stmt_to_case()`**: `func3[A:B] = inp[A:B]` — the part_select node's Left_range/Right_range are `ref_obj` objects pointing to the function-local parameters; with the localparam fix, they now resolve to the correct constants (A=31, B=1)
+    - Result wire is zero-initialized first (`scan_for_direct_return_assignment` intentionally does not detect `uhdmpart_select` LHS), so unassigned bits remain 0 — correct for partial bit assignments
   - `fmt_always_comb` — `$display` system tasks in `always @*` blocks now generate proper `$print` RTLIL cells, and `reg a = 0` net declaration initializers correctly set `\init` wire attributes ✅
     - **`$display` → `$print`**: UHDM represents `$display(a, b, y)` as a `sys_func_call` (VPI type 56) with args via `Tf_call_args()`; new `import_display_stmt()` creates a `$print` cell using Yosys `Fmt::parse_verilog()` for the FORMAT string; EN wire defaults to 0 in the process root case and is set to 1 in the active (conditional) case
     - **`reg a = 0` initializer**: continuous assigns with `VpiNetDeclAssign=1` and a constant RHS now set the `\init` attribute on the wire rather than creating an init process (which was clobbering flip-flop outputs)
@@ -467,7 +473,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (153 total — 148 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (154 total — 149 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -557,6 +563,7 @@ The Yosys test runner:
 - **fib_initial** - Initial block with function call evaluation
 - **func_tern_hint** - Recursive functions with ternary type/width hints and self-determined context
 - **repwhile** - Memory initialization with `while`/`repeat` loop functions (`mylog2`, `myexp2`) called from for-loop in initial block
+- **func_block** - Functions with multiple assignment patterns: `func1`/`func2` use for-loop bit-select LHS (`func1[idx] = inp[idx]`), `func3` uses part-select LHS on return variable (`func3[A:B] = inp[A:B]`) with function-local `localparam A = 32-1; parameter B = 1`; demonstrates correct localparam resolution via `param_assign->Rhs()` and `uhdmpart_select` LHS in `process_stmt_to_case`
 - **const_fold_func** - Compile-time constant function evaluation: recursive functions with bitwise ops, bit-select LHS assignments, nested function calls as arguments *(2 unproven equiv cells - known failure)*
 
 #### Scope & Variable Shadowing
@@ -660,7 +667,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 153 of 153 tests are passing or working as expected (148 equiv + 5 UHDM-only)
+- 154 of 154 tests are passing or working as expected (149 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -714,9 +721,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **153 test cases**:
+The UHDM frontend test suite includes **154 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **148 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **149 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
