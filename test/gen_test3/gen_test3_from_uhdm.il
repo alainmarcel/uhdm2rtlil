@@ -53,7 +53,7 @@ module \gen_test3
     connect \A \b [3]
     connect \B \a [3]
     connect \S \sel
-    connect \Y \z [3]
+    connect \Y \y [3]
   end
-  connect \z [2] \y [2]
+  connect \z [3:2] \y [3:2]
 end

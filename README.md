@@ -15,7 +15,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 152 tests covering comprehensive SystemVerilog features
-- **Success Rate**: ~99% (151/152 tests functional, 1 known pre-existing failure)
+- **Success Rate**: 100% (152/152 tests functional, 0 known failures)
 - **Passing**: 147 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
@@ -23,9 +23,6 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
-- **Known Failures** (3 pre-existing bugs now exposed by improved `test_equivalence.sh`):
-  - `gen_test3` - Conditional generate with multi-assign statements (generate case ordering bug — `y[3]` driven X)
-  - `mem2reg_test2` - Annotated 8-element array with `(* mem2reg *)` attribute, for-loop writes, and dynamic write/read in `always @(posedge clk)` — correctly expanded to 8 flip-flop elements ✅
 - **Recent Additions**:
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
   - `fsm2` - Finite state machine with a 4-bit counter register (`cnt`), 5 states (100/200/210/300/310), and `always @(posedge clk)` with non-blocking assignments; verifies that the UHDM frontend produces a proper RTLIL process with `switch`/`case` structure (matching the Verilog frontend) rather than mux-cell chains outside the process body
@@ -56,6 +53,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `gen_test3` — generate `case` statement with `default:` appearing before specific labels now correctly selects the matching label ✅
+    - **Root cause**: Surelog's `DesignElaboration.cpp` processed `default:` as a match immediately when it was the first case item in source order, before checking for specific labels that appeared later (e.g., `case (i) default: ...; 0: ...` with i=0 would pick `default:` instead of `0:`). This caused `y[3]` to be driven X since the `0: assign y[3]` case was never elaborated.
+    - **Fix**: Save `default:` as a fallback (`defaultGenItem`) instead of immediately matching; continue searching for a specific label match; only use `default:` if no specific case matched
   - `mem2reg_test2` — register arrays with `(* mem2reg *)` attribute in `always @(posedge clk)` blocks now correctly expanded to individual flip-flop wires ✅
     - **Root cause**: `(* mem2reg *)` attribute was not propagated by Surelog and the array was kept as a `$memory` object; the clocked always block generated broken `MemWriteAction` entries that caused a segfault during synthesis
     - **Attribute detection**: scan `array_net->Attributes()` (and inner `logic_net->Attributes()`) for `VpiName() == "mem2reg"` → force individual-wire expansion instead of `$memory`
