@@ -49,7 +49,7 @@ module \alu
   wire $0\ZF
   wire $procmux$10_CMP
   wire $procmux$9_CMP
-  wire width 8 $auto$expression.cpp:2259:import_operation$4
+  wire width 8 $auto$expression.cpp:2263:import_operation$4
   cell $sub $sub$dut.sv:52$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -58,7 +58,7 @@ module \alu
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B \B
-    connect \Y $auto$expression.cpp:2259:import_operation$4
+    connect \Y $auto$expression.cpp:2263:import_operation$4
   end
   attribute \src "dut.sv:56.9-56.22"
   cell $logic_not $eq$dut.sv:56$7
@@ -89,7 +89,7 @@ module \alu
     parameter \WIDTH 9
     parameter \S_WIDTH 2
     connect \A 9'x
-    connect \B { 1'0 \added 1'0 $auto$expression.cpp:2259:import_operation$4 }
+    connect \B { 1'0 \added 1'0 $auto$expression.cpp:2263:import_operation$4 }
     connect \S { $procmux$10_CMP $procmux$9_CMP }
     connect \Y $0\tmp
   end

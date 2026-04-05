@@ -864,10 +864,15 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
                                 log("UHDM: Function parameter %s is integer type, using width=32\n", io_name.c_str());
                             }
                         } else {
-                            // For non-integer types, still use the actual argument width
-                            width = args[arg_idx].size();
+                            // For non-integer types, compute width from the formal parameter's typespec
+                            int formal_width = get_width_from_typespec(actual_ts, current_instance);
+                            if (formal_width > 0) {
+                                width = formal_width;
+                            } else {
+                                width = args[arg_idx].size();
+                            }
                             if (mode_debug) {
-                                log("UHDM: Function parameter %s is not integer (type=%d), using arg width=%d\n", 
+                                log("UHDM: Function parameter %s is not integer (type=%d), using formal width=%d\n",
                                     io_name.c_str(), actual_ts->UhdmType(), width);
                             }
                         }
@@ -903,8 +908,19 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
 
                     arg_temp_wires.push_back(temp_wire);
 
-                    // Add assignment from actual argument to temp wire
-                    root_case->actions.push_back(RTLIL::SigSig(temp_wire, args[arg_idx]));
+                    // Add assignment from actual argument to temp wire.
+                    // Sign-extend if the argument wire is signed, zero-extend otherwise.
+                    RTLIL::SigSpec arg_val = args[arg_idx];
+                    if (arg_val.size() < width) {
+                        bool is_signed_arg = false;
+                        auto chunks_it = arg_val.chunks().begin();
+                        if (chunks_it != arg_val.chunks().end() && chunks_it->wire != nullptr)
+                            is_signed_arg = chunks_it->wire->is_signed;
+                        arg_val.extend_u0(width, is_signed_arg);
+                    } else if (arg_val.size() > width) {
+                        arg_val = arg_val.extract(0, width);
+                    }
+                    root_case->actions.push_back(RTLIL::SigSig(temp_wire, arg_val));
 
                     // Map input parameter to temp wire for use in function body
                     input_mapping[io_name] = temp_wire;
