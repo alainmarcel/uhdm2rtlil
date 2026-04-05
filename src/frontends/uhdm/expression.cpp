@@ -1412,9 +1412,13 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 // Get function return width
+                // Use current_scope (gen_scope) if available, since it has the correct
+                // local parameter values (e.g., WIDTH_A=6 inside a generate block).
+                // Fall back to current_instance for top-level functions.
                 int ret_width = 1;
                 if (func_def->Return()) {
-                    ret_width = get_width(func_def->Return(), current_instance);
+                    const UHDM::scope* width_inst = current_scope ? current_scope : current_instance;
+                    ret_width = get_width(func_def->Return(), width_inst);
                 }
 
                 // Collect arguments first

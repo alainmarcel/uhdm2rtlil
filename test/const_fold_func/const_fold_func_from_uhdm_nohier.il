@@ -96,7 +96,7 @@ module \const_fold_func_top
   attribute \src "dut.sv:58.16-58.29"
   wire width 4 $0\help_mul$func$dut.sv:58$44.$result$50
   wire width 4 \help_mul$func$dut.sv:58$44.$result
-  wire width 68 $auto$expression.cpp:2305:import_operation$51
+  wire width 68 $auto$expression.cpp:2309:import_operation$51
   attribute \nosync 1
   attribute \src "dut.sv:58.16-58.29"
   wire width 4 \help_mul$func$dut.sv:58$45.$result
@@ -118,7 +118,7 @@ module \const_fold_func_top
   attribute \src "dut.sv:59.16-59.40"
   wire width 4 $0\pow_flip_a$func$dut.sv:59$63.base$65
   attribute \src "dut.sv:59.16-59.40"
-  wire width 64 $0\pow_flip_a$func$dut.sv:59$63.exp$66
+  wire width 4 $0\pow_flip_a$func$dut.sv:59$63.exp$66
   attribute \src "dut.sv:59.16-59.40"
   wire width 4 $0\pow_flip_a$func$dut.sv:59$63.$result$67
   attribute \src "dut.sv:59.16-59.40"
@@ -145,7 +145,7 @@ module \const_fold_func_top
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$80.base$82
   attribute \src "dut.sv:42.25-42.56"
-  wire width 64 $0\pow_flip_a$func$dut.sv:42$80.exp$83
+  wire width 4 $0\pow_flip_a$func$dut.sv:42$80.exp$83
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$80.$result$84
   attribute \src "dut.sv:42.25-42.56"
@@ -172,7 +172,7 @@ module \const_fold_func_top
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$97.base$99
   attribute \src "dut.sv:42.25-42.56"
-  wire width 64 $0\pow_flip_a$func$dut.sv:42$97.exp$100
+  wire width 4 $0\pow_flip_a$func$dut.sv:42$97.exp$100
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$97.$result$101
   attribute \src "dut.sv:42.25-42.56"
@@ -199,7 +199,7 @@ module \const_fold_func_top
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$114.base$116
   attribute \src "dut.sv:42.25-42.56"
-  wire width 64 $0\pow_flip_a$func$dut.sv:42$114.exp$117
+  wire width 4 $0\pow_flip_a$func$dut.sv:42$114.exp$117
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 $0\pow_flip_a$func$dut.sv:42$114.$result$118
   attribute \src "dut.sv:42.25-42.56"
@@ -210,15 +210,15 @@ module \const_fold_func_top
   attribute \nosync 1
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 \pow_flip_a$func$dut.sv:42$114.$result
-  wire width 8 $auto$expression.cpp:2305:import_operation$121
+  wire width 8 $auto$expression.cpp:2309:import_operation$121
   attribute \nosync 1
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 \pow_flip_a$func$dut.sv:42$97.$result
-  wire width 8 $auto$expression.cpp:2305:import_operation$123
+  wire width 8 $auto$expression.cpp:2309:import_operation$123
   attribute \nosync 1
   attribute \src "dut.sv:42.25-42.56"
   wire width 4 \pow_flip_a$func$dut.sv:42$80.$result
-  wire width 8 $auto$expression.cpp:2305:import_operation$125
+  wire width 8 $auto$expression.cpp:2309:import_operation$125
   attribute \nosync 1
   attribute \src "dut.sv:59.16-59.40"
   wire width 4 \pow_flip_a$func$dut.sv:59$63.$result
@@ -258,7 +258,7 @@ module \const_fold_func_top
     parameter \Y_WIDTH 68
     connect \A $0\help_mul$func$dut.sv:58$45.inp$47
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2305:import_operation$51
+    connect \Y $auto$expression.cpp:2309:import_operation$51
   end
   cell $not $not$dut.sv:8$60
     parameter \A_SIGNED 0
@@ -296,7 +296,7 @@ module \const_fold_func_top
     parameter \Y_WIDTH 8
     connect \A $0\pow_flip_a$func$dut.sv:42$97.base$99
     connect \B $pow_flip_a$func$dut.sv:42$15_result
-    connect \Y $auto$expression.cpp:2305:import_operation$121
+    connect \Y $auto$expression.cpp:2309:import_operation$121
   end
   cell $mul $mul$dut.sv:42$124
     parameter \A_SIGNED 0
@@ -306,7 +306,7 @@ module \const_fold_func_top
     parameter \Y_WIDTH 8
     connect \A $0\pow_flip_a$func$dut.sv:42$80.base$82
     connect \B $pow_flip_a$func$dut.sv:42$12_result
-    connect \Y $auto$expression.cpp:2305:import_operation$123
+    connect \Y $auto$expression.cpp:2309:import_operation$123
   end
   cell $mul $mul$dut.sv:42$126
     parameter \A_SIGNED 0
@@ -316,7 +316,7 @@ module \const_fold_func_top
     parameter \Y_WIDTH 8
     connect \A $0\pow_flip_a$func$dut.sv:59$63.base$65
     connect \B $pow_flip_a$func$dut.sv:42$9_result
-    connect \Y $auto$expression.cpp:2305:import_operation$125
+    connect \Y $auto$expression.cpp:2309:import_operation$125
   end
   attribute \src "dut.sv:56.21-56.30"
   process $proc$dut.sv:56$3
@@ -403,7 +403,7 @@ module \const_fold_func_top
     assign $0\help_mul$func$dut.sv:58$45.inp$47 \inp
     assign $0\help_mul$func$dut.sv:58$45.$result$48 $1\help_mul$func$dut.sv:58$45.$result$49
     assign $0\help_mul$func$dut.sv:58$44.$result$50 $1\help_mul$func$dut.sv:58$45.$result$49
-    assign $1\help_mul$func$dut.sv:58$45.$result$49 $auto$expression.cpp:2305:import_operation$51 [3:0]
+    assign $1\help_mul$func$dut.sv:58$45.$result$49 $auto$expression.cpp:2309:import_operation$51 [3:0]
     sync always
       update \help_mul$func$dut.sv:58$44.$result $0\help_mul$func$dut.sv:58$44.$result$50
       update \help_mul$func$dut.sv:58$45.$result 4'x
@@ -431,7 +431,7 @@ module \const_fold_func_top
     assign { } { }
     assign { } { }
     assign $0\pow_flip_a$func$dut.sv:59$63.base$65 $flip$func$dut.sv:59$6_result
-    assign $0\pow_flip_a$func$dut.sv:59$63.exp$66 64'0000000000000000000000000000000000000000000000000000000000000011
+    assign $0\pow_flip_a$func$dut.sv:59$63.exp$66 4'0011
     assign $0\pow_flip_a$func$dut.sv:59$63.$result$67 $1\pow_flip_a$func$dut.sv:59$63.$result$68
     assign $0\pow_flip_a$func$dut.sv:59$62.$result$69 $1\pow_flip_a$func$dut.sv:59$63.$result$68
     assign $1\pow_flip_a$func$dut.sv:59$63.$result$68 4'0001
@@ -440,7 +440,7 @@ module \const_fold_func_top
     attribute \src "dut.sv:42.5-42.56"
       case 1'1
         assign { } { }
-        assign $1\pow_flip_a$func$dut.sv:59$63.$result$68 $auto$expression.cpp:2305:import_operation$125 [3:0]
+        assign $1\pow_flip_a$func$dut.sv:59$63.$result$68 $auto$expression.cpp:2309:import_operation$125 [3:0]
       case 
         assign { } { }
     end
@@ -471,7 +471,7 @@ module \const_fold_func_top
     assign { } { }
     assign { } { }
     assign $0\pow_flip_a$func$dut.sv:42$80.base$82 $flip$func$dut.sv:42$8_result
-    assign $0\pow_flip_a$func$dut.sv:42$80.exp$83 64'0000000000000000000000000000000000000000000000000000000000000010
+    assign $0\pow_flip_a$func$dut.sv:42$80.exp$83 4'0010
     assign $0\pow_flip_a$func$dut.sv:42$80.$result$84 $1\pow_flip_a$func$dut.sv:42$80.$result$85
     assign $0\pow_flip_a$func$dut.sv:42$79.$result$86 $1\pow_flip_a$func$dut.sv:42$80.$result$85
     assign $1\pow_flip_a$func$dut.sv:42$80.$result$85 4'0001
@@ -480,7 +480,7 @@ module \const_fold_func_top
     attribute \src "dut.sv:42.5-42.56"
       case 1'1
         assign { } { }
-        assign $1\pow_flip_a$func$dut.sv:42$80.$result$85 $auto$expression.cpp:2305:import_operation$123 [3:0]
+        assign $1\pow_flip_a$func$dut.sv:42$80.$result$85 $auto$expression.cpp:2309:import_operation$123 [3:0]
       case 
         assign { } { }
     end
@@ -511,7 +511,7 @@ module \const_fold_func_top
     assign { } { }
     assign { } { }
     assign $0\pow_flip_a$func$dut.sv:42$97.base$99 $flip$func$dut.sv:42$11_result
-    assign $0\pow_flip_a$func$dut.sv:42$97.exp$100 64'0000000000000000000000000000000000000000000000000000000000000001
+    assign $0\pow_flip_a$func$dut.sv:42$97.exp$100 4'0001
     assign $0\pow_flip_a$func$dut.sv:42$97.$result$101 $1\pow_flip_a$func$dut.sv:42$97.$result$102
     assign $0\pow_flip_a$func$dut.sv:42$96.$result$103 $1\pow_flip_a$func$dut.sv:42$97.$result$102
     assign $1\pow_flip_a$func$dut.sv:42$97.$result$102 4'0001
@@ -520,7 +520,7 @@ module \const_fold_func_top
     attribute \src "dut.sv:42.5-42.56"
       case 1'1
         assign { } { }
-        assign $1\pow_flip_a$func$dut.sv:42$97.$result$102 $auto$expression.cpp:2305:import_operation$121 [3:0]
+        assign $1\pow_flip_a$func$dut.sv:42$97.$result$102 $auto$expression.cpp:2309:import_operation$121 [3:0]
       case 
         assign { } { }
     end
@@ -551,7 +551,7 @@ module \const_fold_func_top
     assign { } { }
     assign { } { }
     assign $0\pow_flip_a$func$dut.sv:42$114.base$116 $flip$func$dut.sv:42$14_result
-    assign $0\pow_flip_a$func$dut.sv:42$114.exp$117 64'0000000000000000000000000000000000000000000000000000000000000000
+    assign $0\pow_flip_a$func$dut.sv:42$114.exp$117 4'0000
     assign $0\pow_flip_a$func$dut.sv:42$114.$result$118 $1\pow_flip_a$func$dut.sv:42$114.$result$119
     assign $0\pow_flip_a$func$dut.sv:42$113.$result$120 $1\pow_flip_a$func$dut.sv:42$114.$result$119
     assign $1\pow_flip_a$func$dut.sv:42$114.$result$119 4'0001

@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 154 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (154/154 tests functional, 0 known failures)
-- **Passing**: 149 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 155 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (155/155 tests functional, 0 known failures)
+- **Passing**: 150 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -25,6 +25,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
   - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable
 - **Recent Additions**:
+  - `func_width_scope` - Functions whose return width depends on a `localparam` that is shadowed by a same-named `localparam` in an enclosing generate block: `func1` at module level uses `WIDTH_A=5`, `func2` inside `begin : blk` uses `WIDTH_A=6` (shadows outer), `func3` inside `blk` uses `WIDTH_B=7`; wire widths (`xc`=31-bit, `yc`=63-bit, `zc`=127-bit) derived from compile-time function calls on zero are all correct; required two Surelog fixes: (1) `CompileStmt.cpp` — compile function return type against the component context rather than the instantiation context so the correct shadowed localparam value is used; (2) `NetlistElaboration.cpp` — prevent `getComplexValue()` from walking up to an ancestor and inheriting a same-named parameter's value, but only when a genuine shadowing conflict exists (parent has the same param name); a `localParamShadowsParent` guard avoids a regression where genvar index `i` in a generate loop was incorrectly protected
   - `func_block` - Functions with part-select LHS on the return variable (`func3[A:B] = inp[A:B]`) and for-loop bit-select assignments (`func1[idx] = inp[idx]`); function-local `localparam` declarations now correctly resolved via the parent `param_assign` Rhs expression; formally equivalent to the Verilog frontend
   - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable: `always @* if (y & (y == (a & b))) $display(a, b, y)` generates a `$print` RTLIL cell (TRG_WIDTH=0, TRG_ENABLE=false) with EN wire defaulting to 0 and set to 1 inside the `if` true case; `reg a = 0`/`reg b = 0` net declaration initializers set `\init` attributes (not init processes); formally equivalent to the Verilog frontend output
   - `gen_struct_access` - Packed array of structs with struct aggregate assignment and hierarchical field access in a generate block: `td1 [3:0] pipe_in` input port (288-bit packed array of 4 structs), struct aggregate `'{f1: pipe_in[3].f1[63:0], f2: pipe_in[3].f2[7:0]}` assignment; synthesizes to a pure buffer `out = pipe_in[287:216]` (element [3] of the array), demonstrating UHDM's superior struct support over the Yosys Verilog frontend; required two new expression handlers (see Recent Fixes)
