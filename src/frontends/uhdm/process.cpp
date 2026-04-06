@@ -1973,16 +1973,18 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     bool has_local_vars = false;
     bool has_for_decl = false;
     bool has_scalar_ctrl_loop = false;
+    bool has_task_call = false;
     if (auto stmt = uhdm_process->Stmt()) {
         use_comb_approach = statement_contains_control_flow(stmt);
         has_local_vars = block_has_local_variables(stmt);
         has_for_decl = statement_has_for_declaration(stmt);
         has_scalar_ctrl_loop = statement_has_scalar_control_for_loop(stmt);
+        has_task_call = (stmt->VpiType() == vpiTaskCall);
     }
 
     if (has_for_decl || has_local_vars || has_scalar_ctrl_loop) {
         import_initial_interpreted(uhdm_process, yosys_proc);
-    } else if (use_comb_approach) {
+    } else if (use_comb_approach || has_task_call) {
         import_initial_comb(uhdm_process, yosys_proc);
     } else {
         import_initial_sync(uhdm_process, yosys_proc);

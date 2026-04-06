@@ -167,7 +167,7 @@ When working with UHDM objects, you need to know where to find type definitions:
 5. Run workflow test to validate equivalence
 
 ### Known Failing Tests
-All 154 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
+All 156 tests are currently passing (0 failures). `test/failing_tests.txt` is empty.
 
 ### Signedness Handling
 
@@ -289,6 +289,25 @@ For loops inside `always` blocks are compile-time unrolled using `loop_values`:
 - `UhdmImporter::last_effect_priority` (initialized to 0): decremented per `$print` cell (same as genrtlil.cc)
 - Net declaration initializers (`reg a = 0`): set `\init` attribute on wire, NOT an init process
 - Without `$print` cell, `$display` logic has no output consumer → `opt` removes all logic → 0 gates
+
+### Package Parameter Resolution in Compile-Time Evaluator (`evaluate_single_operand`)
+
+- When `evaluate_single_operand` encounters a `ref_obj` not in `local_vars`, it may be a package parameter (e.g., `X` from `P::X = 3` referenced in function body `f = i * X`)
+- Fix in `functions.cpp` `evaluate_single_operand`: after failing `local_vars` lookup, check `ref->Actual_group()` — if it is a `parameter`, parse its `VpiValue()` string (`"UINT:3"`, `"HEX:..."`, `"BIN:..."`) into a `RTLIL::Const`
+- Without this fix: `i * X` evaluates to `i * 0` → function returns wrong value (0 instead of 9 for `f(3)`)
+
+### Initial Block with Task Call
+
+- `import_initial` selects the import path based on control-flow analysis; `vpiTaskCall` at the top level is not control flow, so the sync path was chosen — which has no `case vpiTaskCall` handler
+- Fix: detect `stmt->VpiType() == vpiTaskCall` and route to `import_initial_comb`; this allows `import_task_call_comb` to inline the task body and drive the output argument wire
+- Pattern: `initial P::t(a)` where task `P::t` has `output integer x; x = Y;` → `a` is driven with the constant value `Y`
+
+### Concurrent Assertions (`assert property`) in Module Scope
+
+- UHDM stores `assert property (expr)` as `assert_stmt` nodes under `module_inst->Assertions()` (type `VectorOfconcurrent_assertions*`)
+- Each `assert_stmt` has `VpiProperty()` → `property_spec` → `VpiPropertyExpr()` → the boolean expression
+- Fix in `uhdm2rtlil.cpp` `import_module`: after importing processes, iterate `Assertions()`, cast to `assert_stmt`, evaluate the property expression via `import_expression`, and create a `$check` cell with `FLAVOR="assert"`, `EN=1'h1`, `TRG_WIDTH=0`
+- Include `<uhdm/assert_stmt.h>` and `<uhdm/property_spec.h>` (added to `uhdm2rtlil.h`)
 
 ## Code Style
 

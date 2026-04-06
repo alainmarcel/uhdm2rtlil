@@ -14,17 +14,17 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 155 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (155/155 tests functional, 0 known failures)
-- **Passing**: 150 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 156 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (156/156 tests functional, 0 known failures)
+- **Passing**: 151 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
-  - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable
 - **Recent Additions**:
+  - `package_task_func` - Package tasks and functions called from module scope: `P::t(a)` (task with output parameter), `P::f(3)` (function returning `i * X`), `P::g(3)` (recursive function), `P::Z` (package localparam from recursive function); concurrent `assert property` statements; required three fixes: (1) `evaluate_single_operand` now resolves package parameters via `ref->Actual_group()` when not in `local_vars` (enabling correct compile-time evaluation of `f = i * X`), (2) initial blocks containing a `task_call` are routed to the comb import path so `import_task_call_comb` can inline the task body, (3) module-level `assert_stmt` nodes under `vpiAssertion` now generate `$check` RTLIL cells
   - `func_width_scope` - Functions whose return width depends on a `localparam` that is shadowed by a same-named `localparam` in an enclosing generate block: `func1` at module level uses `WIDTH_A=5`, `func2` inside `begin : blk` uses `WIDTH_A=6` (shadows outer), `func3` inside `blk` uses `WIDTH_B=7`; wire widths (`xc`=31-bit, `yc`=63-bit, `zc`=127-bit) derived from compile-time function calls on zero are all correct; required two Surelog fixes: (1) `CompileStmt.cpp` — compile function return type against the component context rather than the instantiation context so the correct shadowed localparam value is used; (2) `NetlistElaboration.cpp` — prevent `getComplexValue()` from walking up to an ancestor and inheriting a same-named parameter's value, but only when a genuine shadowing conflict exists (parent has the same param name); a `localParamShadowsParent` guard avoids a regression where genvar index `i` in a generate loop was incorrectly protected
   - `func_block` - Functions with part-select LHS on the return variable (`func3[A:B] = inp[A:B]`) and for-loop bit-select assignments (`func1[idx] = inp[idx]`); function-local `localparam` declarations now correctly resolved via the parent `param_assign` Rhs expression; formally equivalent to the Verilog frontend
   - `fmt_always_comb` - `$display` system task in `always @*` with conditional enable: `always @* if (y & (y == (a & b))) $display(a, b, y)` generates a `$print` RTLIL cell (TRG_WIDTH=0, TRG_ENABLE=false) with EN wire defaulting to 0 and set to 1 inside the `if` true case; `reg a = 0`/`reg b = 0` net declaration initializers set `\init` attributes (not init processes); formally equivalent to the Verilog frontend output
@@ -57,6 +57,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `package_task_func` — package tasks/functions, recursive packages functions, and concurrent assertions now correctly synthesized ✅
+    - **Package parameter resolution in compile-time evaluator**: `evaluate_single_operand` in `functions.cpp` now follows `ref->Actual_group()` when a `ref_obj` is not found in `local_vars`; if the actual object is a `parameter`, its `VpiValue()` is parsed to a constant — this enables `f = i * X` (where `X = P::X = 3`) to evaluate correctly to `9` for `P::f(3)`
+    - **Initial block with task call**: `import_initial` now detects a top-level `vpiTaskCall` statement and routes to the comb import path (`import_initial_comb`) instead of the sync path; this allows `import_task_call_comb` to inline the task body and correctly drive the output argument (`a = 2` from `P::t(a)`)
+    - **Concurrent assertions (`assert property`)**: module-level `assert_stmt` nodes under `module_inst->Assertions()` are now imported as `$check` RTLIL cells with `FLAVOR="assert"`, `EN=1'h1`, and the property expression as the `A` input
   - `func_block` — function-local `localparam` declarations and part-select return variable assignments now correctly synthesized ✅
     - **Root cause**: For `localparam A = 32 - 1` inside a function, Surelog does not store the resolved value in `parameter->VpiValue()` or `parameter->Expr()`. Instead the expression `32 - 1` is kept in the parent `param_assign` object's `Rhs()`.
     - **Fix in `import_ref_obj()`** (`expression.cpp`): added fallback that checks `param->VpiParent()` for a `param_assign` (UhdmType `uhdmparam_assign`) and evaluates its `Rhs()` expression when both `VpiValue()` and `Expr()` are empty
@@ -474,7 +478,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (154 total — 149 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (156 total — 151 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -602,6 +606,7 @@ The Yosys test runner:
 - **typedef_simple** - Multiple typedef definitions with signed/unsigned types
 - **typedef_param** - Typedef'd parameters and localparams with signed types, chained typedef aliases (`char_t` = `int8_t` = `logic signed [7:0]`), localparam visibility (only `parameter` exported, `localparam` hidden), and static assertions
 - **typedef_package** - Package-scoped typedefs, enum types with hex values, package localparam/parameter from enum constants, package-qualified assertions
+- **package_task_func** - Package tasks (`P::t`) and functions (`P::f`, `P::g`) called from module scope, including recursive functions and `localparam` resolution across package boundaries, with concurrent `assert property` statements
 - **union_simple** - Packed unions: named unions (`w_t`, `instruction_t`), anonymous unions with nested struct, unions nested within structs (`s_t`), multi-level member access through union and struct boundaries
 
 #### Generate & Parameterization
@@ -668,7 +673,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 154 of 154 tests are passing or working as expected (149 equiv + 5 UHDM-only)
+- 156 of 156 tests are passing or working as expected (151 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -722,9 +727,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **154 test cases**:
+The UHDM frontend test suite includes **156 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **149 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **151 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
