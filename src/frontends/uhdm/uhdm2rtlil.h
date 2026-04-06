@@ -30,6 +30,8 @@
 #include <uhdm/ExprEval.h>
 #include <uhdm/task_call.h>
 #include <uhdm/task.h>
+#include <uhdm/assert_stmt.h>
+#include <uhdm/property_spec.h>
 
 #include "kernel/yosys.h"
 #include "kernel/sigtools.h"

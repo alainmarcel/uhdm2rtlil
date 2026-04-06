@@ -2224,8 +2224,51 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         log("UHDM: No processes found\n");
         log_flush();
     }
-    
-    
+
+    // Import concurrent assertions (assert property (...))
+    if (uhdm_module->Assertions()) {
+        log("UHDM: Found %d assertions to import\n", (int)uhdm_module->Assertions()->size());
+        for (auto assertion : *uhdm_module->Assertions()) {
+            if (!assertion) continue;
+            // Only handle assert_stmt (not assume/cover/restrict)
+            if (assertion->UhdmType() != uhdmassert_stmt) continue;
+            const UHDM::assert_stmt* as = any_cast<const UHDM::assert_stmt*>(assertion);
+            if (!as) continue;
+            // Get the property expression
+            const UHDM::any* prop = as->VpiProperty();
+            if (!prop) continue;
+            RTLIL::SigSpec cond;
+            if (prop->UhdmType() == uhdmproperty_spec) {
+                const UHDM::property_spec* ps = any_cast<const UHDM::property_spec*>(prop);
+                if (ps && ps->VpiPropertyExpr()) {
+                    cond = import_expression(any_cast<const UHDM::expr*>(ps->VpiPropertyExpr()));
+                }
+            } else if (auto prop_expr = dynamic_cast<const UHDM::expr*>(prop)) {
+                cond = import_expression(prop_expr);
+            }
+            if (cond.empty()) continue;
+            // Reduce to 1-bit if needed
+            if (cond.size() > 1) {
+                cond = module->ReduceBool(NEW_ID, cond, false);
+            }
+            // Create $check cell (assert)
+            RTLIL::Cell* check_cell = module->addCell(NEW_ID, ID($check));
+            add_src_attribute(check_cell->attributes, as);
+            check_cell->parameters[ID(FLAVOR)] = RTLIL::Const("assert");
+            check_cell->parameters[ID(TRG_WIDTH)] = RTLIL::Const(0);
+            check_cell->parameters[ID(TRG_ENABLE)] = RTLIL::Const(0);
+            check_cell->parameters[ID(TRG_POLARITY)] = RTLIL::Const(0);
+            check_cell->parameters[ID(PRIORITY)] = RTLIL::Const(last_effect_priority--);
+            check_cell->parameters[ID(FORMAT)] = RTLIL::Const("");
+            check_cell->parameters[ID(ARGS_WIDTH)] = RTLIL::Const(0);
+            check_cell->setPort(ID(TRG), RTLIL::SigSpec());
+            check_cell->setPort(ID(EN), RTLIL::State::S1);
+            check_cell->setPort(ID(A), cond);
+            check_cell->setPort(ID(ARGS), RTLIL::SigSpec());
+            log("UHDM: Imported assert_stmt as $check cell\n");
+        }
+    }
+
     // Import primitive gates
     import_primitives(uhdm_module);
     

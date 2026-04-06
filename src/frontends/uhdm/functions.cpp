@@ -30,6 +30,7 @@
 #include <uhdm/while_stmt.h>
 #include <uhdm/repeat.h>
 #include <uhdm/range.h>
+#include <uhdm/parameter.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -410,6 +411,24 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         std::string var_name = std::string(ref->VpiName());
         if (local_vars.count(var_name)) {
             val = local_vars.at(var_name);
+        } else if (ref->Actual_group() && ref->Actual_group()->VpiType() == vpiParameter) {
+            // Package/scope parameter not in local_vars — resolve via VpiValue()
+            const parameter* param = any_cast<const parameter*>(ref->Actual_group());
+            if (param && !param->VpiValue().empty()) {
+                std::string val_str = std::string(param->VpiValue());
+                size_t colon_pos = val_str.find(':');
+                if (colon_pos != std::string::npos) {
+                    std::string type_part = val_str.substr(0, colon_pos);
+                    std::string value_part = val_str.substr(colon_pos + 1);
+                    if (type_part == "HEX") {
+                        val = RTLIL::Const::from_string(value_part);
+                    } else if (type_part == "BIN") {
+                        val = RTLIL::Const::from_string(value_part);
+                    } else {
+                        val = RTLIL::Const(std::stol(value_part), 32);
+                    }
+                }
+            }
         }
     } else if (operand->VpiType() == vpiOperation) {
         const operation* sub_op = any_cast<const operation*>(operand);
