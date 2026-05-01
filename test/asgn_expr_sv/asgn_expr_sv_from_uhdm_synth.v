@@ -199,6 +199,7 @@ module top();
   wire [31:0] y;
   (* src = "dut.sv:2.19-2.20" *)
   wire [31:0] z;
+  (* keep = 32'd1 *)
   (* src = "dut.sv:67.13-67.29" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -214,12 +215,13 @@ module top();
     .EN(1'h1),
     .TRG()
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:70.13-70.29" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967295),
+    .PRIORITY(32'd4294967294),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)

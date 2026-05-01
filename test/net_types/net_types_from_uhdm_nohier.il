@@ -38,11 +38,11 @@ module \top
   attribute \wiretype "\\typename"
   attribute \wor 1
   wire width 4 \wor_typename
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$1
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$3
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$5
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$7
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$9
+  wire width 32 $auto$module.cpp:800:import_continuous_assign$1
+  wire width 32 $auto$module.cpp:800:import_continuous_assign$3
+  wire width 32 $auto$module.cpp:800:import_continuous_assign$5
+  wire width 32 $auto$module.cpp:800:import_continuous_assign$7
+  wire width 32 $auto$module.cpp:800:import_continuous_assign$9
   attribute \src "dut.sv:19.17-19.34"
   wire $eq$dut.sv:19$12_Y
   wire $auto$process.cpp:46:import_immediate_assert$14
@@ -79,40 +79,40 @@ module \top
   attribute \src "dut.sv:32.17-32.40"
   wire $eq$dut.sv:32$56_Y
   wire $auto$process.cpp:46:import_immediate_assert$58
-  cell $pos $auto$module.cpp:791:import_continuous_assign$2
+  cell $pos $auto$module.cpp:801:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:790:import_continuous_assign$1
+    connect \Y $auto$module.cpp:800:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$4
+  cell $pos $auto$module.cpp:801:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:790:import_continuous_assign$3
+    connect \Y $auto$module.cpp:800:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$6
+  cell $pos $auto$module.cpp:801:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1010
-    connect \Y $auto$module.cpp:790:import_continuous_assign$5
+    connect \Y $auto$module.cpp:800:import_continuous_assign$5
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$8
+  cell $pos $auto$module.cpp:801:import_continuous_assign$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:790:import_continuous_assign$7
+    connect \Y $auto$module.cpp:800:import_continuous_assign$7
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$10
+  cell $pos $auto$module.cpp:801:import_continuous_assign$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1010
-    connect \Y $auto$module.cpp:790:import_continuous_assign$9
+    connect \Y $auto$module.cpp:800:import_continuous_assign$9
   end
   attribute \src "dut.sv:19.17-19.34"
   cell $eq $eq$dut.sv:19$13
@@ -126,6 +126,7 @@ module \top
     connect \Y $eq$dut.sv:19$12_Y
   end
   attribute \src "dut.sv:19.9-19.36"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$15
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
@@ -151,11 +152,12 @@ module \top
     connect \Y $eq$dut.sv:20$16_Y
   end
   attribute \src "dut.sv:20.9-20.36"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$19
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -176,11 +178,12 @@ module \top
     connect \Y $eq$dut.sv:21$20_Y
   end
   attribute \src "dut.sv:21.9-21.36"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$23
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -201,11 +204,12 @@ module \top
     connect \Y $eq$dut.sv:22$24_Y
   end
   attribute \src "dut.sv:22.9-22.36"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$27
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -226,11 +230,12 @@ module \top
     connect \Y $eq$dut.sv:23$28_Y
   end
   attribute \src "dut.sv:23.9-23.35"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$31
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -251,11 +256,12 @@ module \top
     connect \Y $eq$dut.sv:24$32_Y
   end
   attribute \src "dut.sv:24.9-24.35"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$35
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -269,18 +275,19 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 4
+    parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A \wire_integer
-    connect \B 4'1001
+    connect \B 32'11111111111111111111111111111001
     connect \Y $eq$dut.sv:26$36_Y
   end
   attribute \src "dut.sv:26.9-26.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$39
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111001
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -294,18 +301,19 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 4
+    parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A \wand_integer
-    connect \B 4'1000
+    connect \B 32'11111111111111111111111111111000
     connect \Y $eq$dut.sv:27$40_Y
   end
   attribute \src "dut.sv:27.9-27.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$43
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111000
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -319,18 +327,19 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 4
+    parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A \wor_integer
-    connect \B 4'1011
+    connect \B 32'11111111111111111111111111111011
     connect \Y $eq$dut.sv:28$44_Y
   end
   attribute \src "dut.sv:28.9-28.41"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$47
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110111
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -351,11 +360,12 @@ module \top
     connect \Y $eq$dut.sv:30$48_Y
   end
   attribute \src "dut.sv:30.9-30.43"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$51
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -376,11 +386,12 @@ module \top
     connect \Y $eq$dut.sv:31$52_Y
   end
   attribute \src "dut.sv:31.9-31.43"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$55
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -401,11 +412,12 @@ module \top
     connect \Y $eq$dut.sv:32$56_Y
   end
   attribute \src "dut.sv:32.9-32.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$59
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -452,11 +464,11 @@ module \top
   connect \wor_logic_0 1'0
   connect \wor_logic_1 1'1
   connect \wor_logic_1 1'0
-  connect \wire_integer $auto$module.cpp:790:import_continuous_assign$1
-  connect \wand_integer $auto$module.cpp:790:import_continuous_assign$3
-  connect \wand_integer $auto$module.cpp:790:import_continuous_assign$5
-  connect \wor_integer $auto$module.cpp:790:import_continuous_assign$7
-  connect \wor_integer $auto$module.cpp:790:import_continuous_assign$9
+  connect \wire_integer $auto$module.cpp:800:import_continuous_assign$1
+  connect \wand_integer $auto$module.cpp:800:import_continuous_assign$3
+  connect \wand_integer $auto$module.cpp:800:import_continuous_assign$5
+  connect \wor_integer $auto$module.cpp:800:import_continuous_assign$7
+  connect \wor_integer $auto$module.cpp:800:import_continuous_assign$9
   connect \wire_typename 4'1001
   connect \wand_typename 4'1001
   connect \wand_typename 4'1010

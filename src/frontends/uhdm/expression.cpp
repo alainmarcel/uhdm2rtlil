@@ -25,6 +25,11 @@
 #include <uhdm/param_assign.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
+#include <uhdm/int_typespec.h>
+#include <uhdm/short_int_typespec.h>
+#include <uhdm/long_int_typespec.h>
+#include <uhdm/byte_typespec.h>
+#include <uhdm/bit_typespec.h>
 #include <uhdm/range.h>
 #include <uhdm/sys_func_call.h>
 #include <uhdm/func_call.h>
@@ -1657,6 +1662,82 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             std::string int_str = value.substr(4);
             try {
                 long long int_val = std::stoll(int_str);
+                // Handle sizes larger than 64 bits (e.g. logic [127:0] b = -1).
+                // Surelog stores the constant at the destination width (e.g. 128) but with
+                // the value of the source type (e.g. -1 for a 32-bit integer or 2-bit bit).
+                // We must: (a) recover the source type width & signedness from the typespec,
+                // (b) truncate int_val to that width, (c) then extend to `size` bits.
+                if (size > 64) {
+                    bool is_signed_type = false;
+                    int type_width = 64; // fallback: treat the 64-bit C value as-is
+                    if (uhdm_const->Typespec()) {
+                        auto ts = uhdm_const->Typespec()->Actual_typespec();
+                        if (ts) {
+                            int tw = get_width_from_typespec(ts, current_instance);
+                            if (tw > 0 && tw <= 64) type_width = tw;
+                            // Determine signedness from typespec (each class has VpiSigned)
+                            switch (ts->UhdmType()) {
+                                case uhdminteger_typespec: {
+                                    auto its = any_cast<const integer_typespec*>(ts);
+                                    if (its) is_signed_type = its->VpiSigned();
+                                    break;
+                                }
+                                case uhdmint_typespec: {
+                                    auto its = any_cast<const int_typespec*>(ts);
+                                    if (its) is_signed_type = its->VpiSigned();
+                                    break;
+                                }
+                                case uhdmshort_int_typespec: {
+                                    auto its = any_cast<const short_int_typespec*>(ts);
+                                    if (its) is_signed_type = its->VpiSigned();
+                                    break;
+                                }
+                                case uhdmlong_int_typespec: {
+                                    auto its = any_cast<const long_int_typespec*>(ts);
+                                    if (its) is_signed_type = its->VpiSigned();
+                                    break;
+                                }
+                                case uhdmbyte_typespec: {
+                                    auto its = any_cast<const byte_typespec*>(ts);
+                                    if (its) is_signed_type = its->VpiSigned();
+                                    break;
+                                }
+                                case uhdmlogic_typespec: {
+                                    auto lts = any_cast<const logic_typespec*>(ts);
+                                    if (lts) is_signed_type = lts->VpiSigned();
+                                    break;
+                                }
+                                case uhdmbit_typespec: {
+                                    auto bts = any_cast<const bit_typespec*>(ts);
+                                    if (bts) is_signed_type = bts->VpiSigned();
+                                    break;
+                                }
+                                default:
+                                    is_signed_type = false;
+                                    break;
+                            }
+                        }
+                    }
+                    // Truncate int_val to type_width bits (handles 2-bit, 8-bit, 32-bit, etc.)
+                    long long type_val;
+                    if (type_width < 64) {
+                        long long mask = (1LL << type_width) - 1;
+                        type_val = int_val & mask;
+                        if (is_signed_type) {
+                            // Re-sign-extend to restore sign within type_width bits
+                            long long sign = 1LL << (type_width - 1);
+                            if (type_val & sign) type_val |= ~mask;
+                        }
+                    } else {
+                        type_val = int_val;
+                    }
+                    RTLIL::Const base(type_val, type_width);
+                    RTLIL::State fill = (is_signed_type && type_val < 0)
+                                       ? RTLIL::State::S1 : RTLIL::State::S0;
+                    auto bv = base.to_bits();
+                    bv.resize(size, fill);
+                    return RTLIL::SigSpec(RTLIL::Const(bv));
+                }
                 // Use VpiSize when available and reasonable, else default to 32
                 int width = (size > 0 && size <= 64) ? size : 32;
                 if (int_val > INT32_MAX || int_val < INT32_MIN) {
@@ -1664,7 +1745,7 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 }
                 return RTLIL::SigSpec(RTLIL::Const(int_val, width));
             } catch (const std::exception& e) {
-                log_error("Failed to parse integer constant: value='%s', substr='%s', error=%s\n", 
+                log_error("Failed to parse integer constant: value='%s', substr='%s', error=%s\n",
                          value.c_str(), int_str.c_str(), e.what());
             }
         }
@@ -2402,18 +2483,34 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiEqOp:
             if (operands.size() == 2)
-                //return module->Eq(NEW_ID, operands[0], operands[1]);
             {
+                // Size-match operands: in SV, a signed constant compared with a
+                // wider unsigned operand is sign-extended to the wider width.
+                // Example: `logic [127:0] a == -1` → -1 sign-extends to 128'hFFFF...
+                RTLIL::SigSpec lhs = operands[0];
+                RTLIL::SigSpec rhs = operands[1];
+                if (lhs.size() != rhs.size()) {
+                    if (rhs.is_fully_const() && rhs.size() < lhs.size()) {
+                        // Narrow constant on RHS compared with wider LHS wire.
+                        // Sign-extend if the constant's MSB is 1 (negative/signed value).
+                        bool rhs_msb = rhs.as_const().back() == RTLIL::State::S1;
+                        rhs.extend_u0(lhs.size(), rhs_msb);
+                    } else if (lhs.is_fully_const() && lhs.size() < rhs.size()) {
+                        bool lhs_msb = lhs.as_const().back() == RTLIL::State::S1;
+                        lhs.extend_u0(rhs.size(), lhs_msb);
+                    }
+                }
+
                 // Create output wire for the comparison with proper naming
                 std::string wire_name = generate_cell_name(uhdm_op, "eq") + "_Y";
                 RTLIL::Wire* result_wire = module->addWire(RTLIL::escape_id(wire_name), 1);
                 add_src_attribute(result_wire->attributes, uhdm_op);
-                
+
                 // Create cell with source location-based name
                 std::string cell_name = generate_cell_name(uhdm_op, "eq");
-                
-                RTLIL::Cell* eq_cell = module->addEq(RTLIL::escape_id(cell_name), 
-                    operands[0], operands[1], result_wire);
+
+                RTLIL::Cell* eq_cell = module->addEq(RTLIL::escape_id(cell_name),
+                    lhs, rhs, result_wire);
                 add_src_attribute(eq_cell->attributes, uhdm_op);
                 return result_wire;
             }
@@ -2814,7 +2911,55 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                 // Fall back to VpiValue from the UHDM parameter object
                 std::string val_str = std::string(param->VpiValue());
 
-                // Parse value from format like "UINT:0", "UINT:1", "HEX:AA", etc.
+                // Determine the parameter's actual width and signedness from its typespec.
+                // This is critical for types like shortint (16-bit), byte (8-bit), etc.
+                // Without this, INT:-1 would always produce a 32-bit constant.
+                int param_width = 32; // default
+                bool param_signed = false;
+                if (param->Typespec()) {
+                    const UHDM::typespec* actual_ts = param->Typespec()->Actual_typespec();
+                    if (actual_ts) {
+                        int tw = get_width_from_typespec(actual_ts, current_instance);
+                        if (tw > 0) param_width = tw;
+                        // Check signedness from typespec
+                        switch (actual_ts->UhdmType()) {
+                            case uhdminteger_typespec: {
+                                auto its = any_cast<const integer_typespec*>(actual_ts);
+                                if (its) { param_signed = its->VpiSigned(); } break;
+                            }
+                            case uhdmint_typespec: {
+                                auto its = any_cast<const int_typespec*>(actual_ts);
+                                if (its) { param_signed = its->VpiSigned(); } break;
+                            }
+                            case uhdmshort_int_typespec: {
+                                auto its = any_cast<const short_int_typespec*>(actual_ts);
+                                if (its) { param_signed = its->VpiSigned(); } break;
+                            }
+                            case uhdmlong_int_typespec: {
+                                auto its = any_cast<const long_int_typespec*>(actual_ts);
+                                if (its) { param_signed = its->VpiSigned(); } break;
+                            }
+                            case uhdmbyte_typespec: {
+                                auto its = any_cast<const byte_typespec*>(actual_ts);
+                                if (its) { param_signed = its->VpiSigned(); } break;
+                            }
+                            case uhdmlogic_typespec: {
+                                auto lts = any_cast<const logic_typespec*>(actual_ts);
+                                if (lts) { param_signed = lts->VpiSigned(); } break;
+                            }
+                            case uhdmbit_typespec: {
+                                auto bts = any_cast<const bit_typespec*>(actual_ts);
+                                if (bts) { param_signed = bts->VpiSigned(); } break;
+                            }
+                            default: break;
+                        }
+                    }
+                }
+                // Also fall back to param->VpiSigned() directly
+                if (!param_signed && param->VpiSigned())
+                    param_signed = true;
+
+                // Parse value from format like "UINT:0", "UINT:1", "HEX:AA", "INT:-1", etc.
                 if (!val_str.empty()) {
                     size_t colon_pos = val_str.find(':');
                     if (colon_pos != std::string::npos) {
@@ -2822,14 +2967,44 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                         std::string value_part = val_str.substr(colon_pos + 1);
 
                         if (type_part == "HEX") {
-                            param_value = RTLIL::Const::from_string(value_part);
+                            try {
+                                unsigned long long hex_val = std::stoull(value_part, nullptr, 16);
+                                param_value = RTLIL::Const(hex_val, param_width);
+                            } catch (...) {
+                                param_value = RTLIL::Const::from_string(value_part);
+                            }
                         } else if (type_part == "BIN") {
-                            param_value = RTLIL::Const::from_string(value_part);
+                            RTLIL::Const bin_const = RTLIL::Const::from_string(value_part);
+                            if (bin_const.size() != param_width) {
+                                RTLIL::SigSpec sig(bin_const);
+                                sig.extend_u0(param_width, param_signed);
+                                param_value = sig.as_const();
+                            } else {
+                                param_value = bin_const;
+                            }
+                        } else if (type_part == "UINT") {
+                            try {
+                                unsigned long long uint_val = std::stoull(value_part);
+                                param_value = RTLIL::Const(uint_val, param_width);
+                            } catch (...) {
+                                param_value = RTLIL::Const(0, param_width);
+                            }
                         } else {
-                            param_value = RTLIL::Const(std::stoi(value_part), 32);
+                            // INT: or other numeric prefix — treat as signed long long
+                            try {
+                                long long int_val = std::stoll(value_part);
+                                param_value = RTLIL::Const(int_val, param_width);
+                            } catch (...) {
+                                param_value = RTLIL::Const(0, param_width);
+                            }
                         }
                     } else {
-                        param_value = RTLIL::Const(std::stoi(val_str), 32);
+                        try {
+                            long long int_val = std::stoll(val_str);
+                            param_value = RTLIL::Const(int_val, param_width);
+                        } catch (...) {
+                            param_value = RTLIL::Const(0, param_width);
+                        }
                     }
                 } else {
                     // If no VpiValue, check if there's an expression

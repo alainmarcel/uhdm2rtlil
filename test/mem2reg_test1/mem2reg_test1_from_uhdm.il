@@ -17,27 +17,27 @@ module \mem2reg_test1
   wire width 4 \array[1]
   attribute \src "dut.sv:7.11-7.16"
   wire width 4 \array[2]
-  wire $auto$process.cpp:5896:import_assignment_comb$6
-  wire $auto$expression.cpp:3237:import_bit_select$18
-  wire width 4 $auto$expression.cpp:3240:import_bit_select$16
-  wire $auto$expression.cpp:3237:import_bit_select$14
-  wire $auto$process.cpp:5896:import_assignment_comb$2
-  wire $auto$process.cpp:5896:import_assignment_comb$10
-  cell $logic_not $auto$process.cpp:5897:import_assignment_comb$3
+  wire $auto$process.cpp:5897:import_assignment_comb$6
+  wire $auto$expression.cpp:3412:import_bit_select$18
+  wire width 4 $auto$expression.cpp:3415:import_bit_select$16
+  wire $auto$expression.cpp:3412:import_bit_select$14
+  wire $auto$process.cpp:5897:import_assignment_comb$2
+  wire $auto$process.cpp:5897:import_assignment_comb$10
+  cell $logic_not $auto$process.cpp:5898:import_assignment_comb$3
     parameter \A_SIGNED 0
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 2
     connect \A \in_addr
-    connect \Y $auto$process.cpp:5896:import_assignment_comb$2
+    connect \Y $auto$process.cpp:5897:import_assignment_comb$2
   end
-  cell $mux $auto$process.cpp:5905:import_assignment_comb$5
+  cell $mux $auto$process.cpp:5906:import_assignment_comb$5
     parameter \WIDTH 4
     connect \A 4'0000
     connect \B \in_data
-    connect \S $auto$process.cpp:5896:import_assignment_comb$2
+    connect \S $auto$process.cpp:5897:import_assignment_comb$2
     connect \Y \array[0]
   end
-  cell $eq $auto$process.cpp:5897:import_assignment_comb$7
+  cell $eq $auto$process.cpp:5898:import_assignment_comb$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -45,16 +45,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \in_addr
     connect \B 2'01
-    connect \Y $auto$process.cpp:5896:import_assignment_comb$6
+    connect \Y $auto$process.cpp:5897:import_assignment_comb$6
   end
-  cell $mux $auto$process.cpp:5905:import_assignment_comb$9
+  cell $mux $auto$process.cpp:5906:import_assignment_comb$9
     parameter \WIDTH 4
     connect \A 4'0111
     connect \B \in_data
-    connect \S $auto$process.cpp:5896:import_assignment_comb$6
+    connect \S $auto$process.cpp:5897:import_assignment_comb$6
     connect \Y \array[1]
   end
-  cell $eq $auto$process.cpp:5897:import_assignment_comb$11
+  cell $eq $auto$process.cpp:5898:import_assignment_comb$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -62,16 +62,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \in_addr
     connect \B 2'10
-    connect \Y $auto$process.cpp:5896:import_assignment_comb$10
+    connect \Y $auto$process.cpp:5897:import_assignment_comb$10
   end
-  cell $mux $auto$process.cpp:5905:import_assignment_comb$13
+  cell $mux $auto$process.cpp:5906:import_assignment_comb$13
     parameter \WIDTH 4
     connect \A 4'1010
     connect \B \in_data
-    connect \S $auto$process.cpp:5896:import_assignment_comb$10
+    connect \S $auto$process.cpp:5897:import_assignment_comb$10
     connect \Y \array[2]
   end
-  cell $eq $auto$expression.cpp:3238:import_bit_select$15
+  cell $eq $auto$expression.cpp:3413:import_bit_select$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -79,27 +79,27 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'01
-    connect \Y $auto$expression.cpp:3237:import_bit_select$14
+    connect \Y $auto$expression.cpp:3412:import_bit_select$14
   end
-  cell $mux $auto$expression.cpp:3241:import_bit_select$17
+  cell $mux $auto$expression.cpp:3416:import_bit_select$17
     parameter \WIDTH 4
     connect \A \array[2]
     connect \B \array[1]
-    connect \S $auto$expression.cpp:3237:import_bit_select$14
-    connect \Y $auto$expression.cpp:3240:import_bit_select$16
+    connect \S $auto$expression.cpp:3412:import_bit_select$14
+    connect \Y $auto$expression.cpp:3415:import_bit_select$16
   end
-  cell $logic_not $auto$expression.cpp:3238:import_bit_select$19
+  cell $logic_not $auto$expression.cpp:3413:import_bit_select$19
     parameter \A_SIGNED 0
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 2
     connect \A \out_addr
-    connect \Y $auto$expression.cpp:3237:import_bit_select$18
+    connect \Y $auto$expression.cpp:3412:import_bit_select$18
   end
-  cell $mux $auto$expression.cpp:3241:import_bit_select$21
+  cell $mux $auto$expression.cpp:3416:import_bit_select$21
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3240:import_bit_select$16
+    connect \A $auto$expression.cpp:3415:import_bit_select$16
     connect \B \array[0]
-    connect \S $auto$expression.cpp:3237:import_bit_select$18
+    connect \S $auto$expression.cpp:3412:import_bit_select$18
     connect \Y \out_data
   end
 end

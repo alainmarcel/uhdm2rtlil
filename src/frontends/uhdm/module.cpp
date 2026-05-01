@@ -13,6 +13,10 @@
 #include <uhdm/uhdm_types.h>
 #include <uhdm/union_typespec.h>
 #include <uhdm/ExprEval.h>
+#include <uhdm/func_call.h>
+#include <uhdm/function.h>
+#include <uhdm/parameter.h>
+#include <uhdm/variables.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -378,6 +382,12 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     RTLIL::IdString wire_id = RTLIL::escape_id(netname);
     if (module->wire(wire_id)) {
         log("UHDM: Wire '%s' already exists in module, skipping net import\n", wire_id.c_str());
+        // Still update signedness if the net marks it as signed
+        RTLIL::Wire* existing_w = module->wire(wire_id);
+        if (existing_w && !existing_w->is_signed && uhdm_net->VpiSigned()) {
+            log("UHDM: Net '%s' (existing wire): updating is_signed from VpiSigned\n", wire_id.c_str());
+            existing_w->is_signed = true;
+        }
         log_flush();
         return;
     }
@@ -801,19 +811,41 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         // Check if the RHS is a constant expression
         bool is_constant = rhs.is_fully_const();
 
-        if (is_constant) {
-            // For reg/logic net declaration initializers (e.g. `reg a = 0`),
-            // set the \init attribute on the wire directly — exactly as the
-            // Verilog frontend does.  This is NOT a continuous assignment; it
-            // is only the simulation initial value.  Creating an init process
-            // here caused the proc pass to emit a continuous connection to 0,
-            // which clobbered flip-flop outputs.
+        // In a generate scope, a constant net declaration assignment (e.g. `reg x = -1`)
+        // has no FF driver — the net is effectively a constant wire.  Use module->connect
+        // so that constant propagation (opt_expr) can fold it away.
+        // Outside generate scopes, use \init to avoid clobbering FF outputs (e.g. a reg
+        // driven by an always @(posedge clk) block whose initial value is set by the decl).
+        bool in_gen_scope = !gen_scope_stack.empty();
+
+        if (is_constant && in_gen_scope) {
+            // Gen-scope net decl with constant RHS — treat as a plain constant driver
+            module->connect(lhs, rhs);
+            if (mode_debug)
+                log("  Created constant driver for gen-scope net declaration '%s'\n",
+                    lhs.is_wire() ? lhs.as_wire()->name.c_str() : "?");
+        } else if (is_constant) {
+            // For reg/logic net declaration initializers (e.g. `reg x = -1`),
+            // create a `sync always` process — exactly as the Verilog frontend
+            // does for `reg x = val` with no always block.  This makes the
+            // signal continuously available with its initial value for formal
+            // verification and simulation.  We also set the \init attribute
+            // so that FF synthesis tools see the correct reset value if this
+            // net is also driven by an always @(posedge clk) block.
             if (lhs.is_wire()) {
                 RTLIL::Wire *w = lhs.as_wire();
                 w->attributes[ID::init] = rhs.as_const();
+            }
+            {
+                RTLIL::Process *proc = module->addProcess(NEW_ID);
+                add_src_attribute(proc->attributes, uhdm_assign);
+                RTLIL::SyncRule *sync_always = new RTLIL::SyncRule();
+                sync_always->type = RTLIL::SyncType::STa;
+                sync_always->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                proc->syncs.push_back(sync_always);
                 if (mode_debug)
-                    log("  Set \\init attribute on wire '%s' for net declaration assignment\n",
-                        w->name.c_str());
+                    log("  Created sync-always process for module-level net declaration '%s'\n",
+                        lhs.is_wire() ? lhs.as_wire()->name.c_str() : "?");
             }
         } else {
             // Non-constant expression in net declaration, treat as continuous assignment
@@ -1759,10 +1791,31 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 if (init_expr) {
                     RTLIL::SigSpec init_val = import_expression(init_expr);
                     if (!init_val.empty()) {
-                        if (init_val.size() < w->width)
-                            init_val.extend_u0(w->width, w->is_signed);
-                        else if (init_val.size() > w->width)
+                        if (init_val.size() < w->width) {
+                            // Determine source signedness to choose between sign- and zero-extension
+                            bool src_signed = false;
+                            if (init_val.is_wire() && init_val.as_wire()->is_signed) {
+                                src_signed = true;
+                            } else {
+                                // Check the UHDM init expression for signedness
+                                if (init_expr->UhdmType() == uhdmref_obj) {
+                                    auto ref = any_cast<const UHDM::ref_obj*>(init_expr);
+                                    if (ref && ref->Actual_group()) {
+                                        auto* tgt_var = dynamic_cast<const UHDM::variables*>(ref->Actual_group());
+                                        auto* tgt_par = dynamic_cast<const UHDM::parameter*>(ref->Actual_group());
+                                        if ((tgt_var && tgt_var->VpiSigned()) || (tgt_par && tgt_par->VpiSigned()))
+                                            src_signed = true;
+                                    }
+                                } else if (init_expr->UhdmType() == uhdmfunc_call) {
+                                    auto fc = any_cast<const UHDM::func_call*>(init_expr);
+                                    if (fc && fc->Function() && fc->Function()->Return())
+                                        src_signed = fc->Function()->Return()->VpiSigned();
+                                }
+                            }
+                            init_val.extend_u0(w->width, src_signed || w->is_signed);
+                        } else if (init_val.size() > w->width) {
                             init_val = init_val.extract(0, w->width);
+                        }
                         module->connect(RTLIL::SigSpec(w), init_val);
                         log("UHDM: Added initializer assignment for '%s'\n", hierarchical_name.c_str());
                     }

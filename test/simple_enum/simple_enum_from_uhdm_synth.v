@@ -72,80 +72,80 @@ module enum_simple(clk, rst);
     .A(rst),
     .Y(_12_)
   );
-  \$_NAND_  _23_ (
-    .A(state[0]),
-    .B(state[1]),
-    .Y(_01_)
-  );
-  \$_ANDNOT_  _24_ (
-    .A(_12_),
-    .B(_01_),
-    .Y(_07_)
-  );
-  \$_OR_  _25_ (
-    .A(_10_),
-    .B(rst),
-    .Y(_04_)
-  );
-  \$_OR_  _26_ (
+  \$_OR_  _23_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
     .Y(_00_)
   );
-  \$_NOR_  _27_ (
+  \$_NOR_  _24_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
     .Y(_13_)
   );
-  \$_OR_  _28_ (
+  \$_OR_  _25_ (
     .A(_13_),
     .B(_00_),
     .Y(_14_)
   );
-  \$_ANDNOT_  _29_ (
+  \$_ANDNOT_  _26_ (
     .A(_12_),
     .B(_14_),
     .Y(_06_)
   );
-  \$_XOR_  _30_ (
-    .A(test_enum[1]),
-    .B(test_enum[0]),
-    .Y(_08_)
+  \$_NAND_  _27_ (
+    .A(state[0]),
+    .B(state[1]),
+    .Y(_01_)
   );
-  \$_XOR_  _31_ (
+  \$_ANDNOT_  _28_ (
+    .A(_12_),
+    .B(_01_),
+    .Y(_07_)
+  );
+  \$_OR_  _29_ (
+    .A(_10_),
+    .B(rst),
+    .Y(_04_)
+  );
+  \$_XOR_  _30_ (
     .A(state[0]),
     .B(state[1]),
     .Y(_02_)
   );
-  \$_AND_  _32_ (
+  \$_XOR_  _31_ (
+    .A(test_enum[1]),
+    .B(test_enum[0]),
+    .Y(_08_)
+  );
+  \$_OR_  _32_ (
+    .A(_13_),
+    .B(rst),
+    .Y(_05_)
+  );
+  \$_AND_  _33_ (
     .A(test_enum[1]),
     .B(test_enum[0]),
     .Y(_15_)
   );
-  \$_OR_  _33_ (
+  \$_OR_  _34_ (
     .A(_15_),
     .B(_09_),
     .Y(_16_)
   );
-  \$_ANDNOT_  _34_ (
+  \$_ANDNOT_  _35_ (
     .A(test_enum[0]),
     .B(test_enum[1]),
     .Y(_17_)
   );
-  \$_OR_  _35_ (
+  \$_OR_  _36_ (
     .A(_13_),
     .B(_17_),
     .Y(_18_)
   );
-  \$_OR_  _36_ (
+  \$_OR_  _37_ (
     .A(_18_),
     .B(_16_),
     .Y(_03_)
-  );
-  \$_OR_  _37_ (
-    .A(_13_),
-    .B(rst),
-    .Y(_05_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.2-39.5" *)
@@ -183,6 +183,7 @@ module enum_simple(clk, rst);
     .Q(test_enum[1]),
     .R(rst)
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:27.5-27.18" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -198,12 +199,13 @@ module enum_simple(clk, rst);
     .EN(_06_),
     .TRG(clk)
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:37.5-37.18" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967295),
+    .PRIORITY(32'd4294967294),
     .TRG_ENABLE(32'd1),
     .TRG_POLARITY(1'h1),
     .TRG_WIDTH(32'd1)
@@ -213,12 +215,13 @@ module enum_simple(clk, rst);
     .EN(_07_),
     .TRG(clk)
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:42.3-42.25" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967295),
+    .PRIORITY(32'd4294967293),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -228,16 +231,49 @@ module enum_simple(clk, rst);
     .EN(1'h1),
     .TRG()
   );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:43.3-43.20" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967292),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _45_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:44.3-44.21" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967291),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _46_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:45.3-45.29" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967295),
+    .PRIORITY(32'd4294967290),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _45_ (
+  ) _47_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),

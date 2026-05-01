@@ -4,11 +4,10 @@ attribute \top 1
 attribute \src "dut.sv:3.1-9.10"
 module \gate
   attribute \src "dut.sv:3.13-3.14"
-  attribute \init 33'xxxxxxxxxxxxxxxxxxxxxxxxxxxx1x11x
   wire width 33 output 1 \a
   wire \genblk1[0].x
   wire width 2 \genblk1[1].x
-  connect \genblk1[1].x \a [2:1]
-  connect \genblk1[0].x \a [4]
-  connect { \a [32:5] \a [3] \a [0] } 30'000000000000000000000000000000
+  connect \genblk1[1].x 2'11
+  connect \genblk1[0].x 1'1
+  connect \a 33'000000000000000000000000000010110
 end

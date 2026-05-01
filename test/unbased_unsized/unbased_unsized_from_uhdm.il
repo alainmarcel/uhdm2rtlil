@@ -52,8 +52,9 @@ module \unbased_unsized
     connect \inp 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \out \o10
   end
-  attribute \src "dut.sv:36.9-36.38"
-  cell $check $auto$process.cpp:53:import_immediate_assert$45
+  attribute \src "dut.sv:27.9-27.38"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -61,7 +62,7 @@ module \unbased_unsized
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3395:Eqx$43
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -70,26 +71,28 @@ module \unbased_unsized
     connect \inp 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \out \o09
   end
-  attribute \src "dut.sv:35.9-35.38"
-  cell $check $auto$process.cpp:53:import_immediate_assert$41
+  attribute \src "dut.sv:28.9-28.38"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $auto$rtlil.cc:3395:Eqx$39
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
   attribute \src "dut.sv:38.9-38.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$53
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -99,11 +102,12 @@ module \unbased_unsized
     connect \TRG { }
   end
   attribute \src "dut.sv:29.9-29.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -122,22 +126,28 @@ module \unbased_unsized
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3395:Eqx$51
   end
-  cell $eqx $eqx$dut.sv:36$42
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 1
-    connect \A \o10
-    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $auto$rtlil.cc:3395:Eqx$43
+  attribute \src "dut.sv:30.9-30.38"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$21
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111100
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
   end
   attribute \src "dut.sv:37.9-37.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$49
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -146,12 +156,13 @@ module \unbased_unsized
     connect \EN 1'1
     connect \TRG { }
   end
-  attribute \src "dut.sv:34.9-34.42"
-  cell $check $auto$process.cpp:53:import_immediate_assert$37
+  attribute \src "dut.sv:31.9-31.42"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -170,6 +181,76 @@ module \unbased_unsized
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3395:Eqx$47
   end
+  attribute \src "dut.sv:32.9-32.42"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$29
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111010
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:36.9-36.38"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$45
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111110110
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A $auto$rtlil.cc:3395:Eqx$43
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:33.9-33.42"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$33
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111001
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
+  end
+  cell $eqx $eqx$dut.sv:36$42
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
+    parameter \Y_WIDTH 1
+    connect \A \o10
+    connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
+    connect \Y $auto$rtlil.cc:3395:Eqx$43
+  end
+  attribute \src "dut.sv:34.9-34.42"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$37
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111000
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
+  end
   cell $eqx $eqx$dut.sv:35$38
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -179,6 +260,21 @@ module \unbased_unsized
     connect \A \o09
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3395:Eqx$39
+  end
+  attribute \src "dut.sv:35.9-35.38"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$41
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111110111
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A $auto$rtlil.cc:3395:Eqx$39
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
   end
   connect \o08 64'0000000000000000000000000000000000000000000000000000000000000zzz
   connect \o07 64'0000000000000000000000000000000000000000000000000000000000000xxx

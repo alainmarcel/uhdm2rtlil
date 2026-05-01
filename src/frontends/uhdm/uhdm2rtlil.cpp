@@ -9,6 +9,10 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <uhdm/func_call.h>
+#include <uhdm/function.h>
+#include <uhdm/logic_typespec.h>
+#include <uhdm/integer_typespec.h>
 #include <uhdm/vpi_visitor.h>
 
 USING_YOSYS_NAMESPACE
@@ -1702,6 +1706,22 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
         
+        // Pre-pass: update wire signedness from nets before processing init expressions.
+        // Nets may declare signedness (VpiSigned) on wires that were already created
+        // (e.g. from a cont_assign RHS reference), and variable init expressions may
+        // reference those wires — so their signedness must be known before we expand them.
+        if (uhdm_module->Nets()) {
+            for (auto uhdm_net : *uhdm_module->Nets()) {
+                if (!uhdm_net->VpiSigned()) continue;
+                RTLIL::IdString wid = RTLIL::escape_id(std::string(uhdm_net->VpiName()));
+                RTLIL::Wire* w = module->wire(wid);
+                if (w && !w->is_signed) {
+                    log("UHDM: Pre-pass: setting is_signed on '%s' from net VpiSigned\n", wid.c_str());
+                    w->is_signed = true;
+                }
+            }
+        }
+
         // Second pass: Process initial expressions now that all variables exist
         log("UHDM: Processing %d deferred initial expressions\n", (int)vars_with_init_expr.size());
         for (const auto& [var, wire] : vars_with_init_expr) {
@@ -1764,48 +1784,84 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             } else if (auto logic_var = dynamic_cast<const UHDM::logic_var*>(var)) {
                 if (logic_var->Expr()) {
                     log("UHDM: Processing initial expression for variable '%s'\n", var_name.c_str());
+
+                    // Pre-check the UHDM expression's signedness before importing,
+                    // because the referenced wire may not have VpiSigned applied yet
+                    // (nets are imported after this second pass).
+                    bool uhdm_rhs_signed = false;
+                    if (auto ref = dynamic_cast<const UHDM::ref_obj*>(logic_var->Expr())) {
+                        const UHDM::any* actual = ref->Actual_group();
+                        if (actual) {
+                            if (auto net = any_cast<const UHDM::net*>(actual))
+                                uhdm_rhs_signed = net->VpiSigned();
+                            else if (auto v = any_cast<const UHDM::variables*>(actual))
+                                uhdm_rhs_signed = v->VpiSigned();
+                        }
+                    } else if (auto fc = dynamic_cast<const UHDM::func_call*>(logic_var->Expr())) {
+                        // Function call: signedness is determined by the function's return variable.
+                        // VpiSigned() on the function object itself may be 0; the return variable
+                        // (function::Return()) or its typespec carries the correct signedness.
+                        if (fc->Function()) {
+                            uhdm_rhs_signed = fc->Function()->VpiSigned();
+                            if (!uhdm_rhs_signed && fc->Function()->Return()) {
+                                const UHDM::variables* ret = fc->Function()->Return();
+                                uhdm_rhs_signed = ret->VpiSigned();
+                                // Also check the typespec (e.g., logic_typespec with VpiSigned=1)
+                                if (!uhdm_rhs_signed && ret->Typespec()) {
+                                    const UHDM::typespec* ts = ret->Typespec()->Actual_typespec();
+                                    if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ts))
+                                        uhdm_rhs_signed = lts->VpiSigned();
+                                    else if (auto its = dynamic_cast<const UHDM::integer_typespec*>(ts))
+                                        uhdm_rhs_signed = its->VpiSigned();
+                                }
+                            }
+                        }
+                    }
+
                     RTLIL::SigSpec init_value = import_expression(logic_var->Expr());
                     if (init_value.size() > 0) {
-                        // Check if this is a reference to another wire with an init value
-                        if (!init_value.is_fully_const() && init_value.is_wire()) {
-                            // Try to get the init value from the referenced wire
-                            RTLIL::Wire* ref_wire = init_value.as_wire();
-                            if (ref_wire && ref_wire->attributes.count(RTLIL::escape_id("init"))) {
-                                init_value = RTLIL::SigSpec(ref_wire->attributes.at(RTLIL::escape_id("init")));
-                                log("UHDM: Resolved initial value from referenced wire '%s'\n", ref_wire->name.c_str());
-                            }
-                        }
-                        
-                        // Resize the init_value to match the wire width
                         RTLIL::SigSpec lhs(wire);
+
+                        // Determine if the RHS source is signed (for sign extension).
+                        // Prefer the UHDM signedness pre-check over the wire's is_signed
+                        // since the wire may not have been updated from its net yet.
+                        bool rhs_signed = uhdm_rhs_signed;
+                        if (!rhs_signed && init_value.is_wire()) {
+                            rhs_signed = init_value.as_wire()->is_signed;
+                        }
+
+                        // Resize the init_value to match the wire width
                         if (init_value.size() != lhs.size()) {
                             int orig_size = init_value.size();
-                            // Check if we need sign extension
-                            if (wire->is_signed && init_value.size() < lhs.size()) {
-                                // Check if init_value is a constant that needs sign extension
-                                if (init_value.is_fully_const()) {
-                                    RTLIL::Const val = init_value.as_const();
-                                    // Sign extend: replicate the MSB
-                                    RTLIL::State sign_bit = val.back() == RTLIL::State::S1 ? RTLIL::State::S1 : RTLIL::State::S0;
-                                    val.resize(lhs.size(), sign_bit);
-                                    init_value = RTLIL::SigSpec(val);
-                                } else {
-                                    init_value.extend_u0(lhs.size(), true);
-                                }
+                            if (init_value.size() < lhs.size()) {
+                                init_value.extend_u0(lhs.size(), rhs_signed);
                             } else {
-                                // Zero extend or truncate
-                                init_value.extend_u0(lhs.size(), false);
+                                init_value = init_value.extract(0, lhs.size());
                             }
-                            log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n", 
+                            log("UHDM: Resized initial value from %d bits to %d bits for variable '%s'\n",
                                 orig_size, lhs.size(), var_name.c_str());
                         }
-                        
+
                         if (init_value.is_fully_const()) {
+                            // Set \init attribute for simulation/FF initial value
                             wire->attributes[RTLIL::escape_id("init")] = init_value.as_const();
-                            log("UHDM: Set init attribute for variable '%s' to %s\n", 
+                            log("UHDM: Set init attribute for variable '%s' to %s\n",
                                 var_name.c_str(), init_value.as_const().as_string().c_str());
+                            // Also create a sync-always process so the wire has a constant
+                            // driver for combinational contexts (formal verification, opt, etc.)
+                            // — matches what the Verilog frontend does for `logic x = val`.
+                            RTLIL::Process *proc = module->addProcess(NEW_ID);
+                            add_src_attribute(proc->attributes, logic_var);
+                            RTLIL::SyncRule *sync_always = new RTLIL::SyncRule();
+                            sync_always->type = RTLIL::SyncType::STa;
+                            sync_always->actions.push_back(RTLIL::SigSig(lhs, init_value));
+                            proc->syncs.push_back(sync_always);
+                            log("UHDM: Created sync-always process for variable '%s'\n", var_name.c_str());
                         } else {
-                            log_warning("Initial value for variable '%s' is not constant after resolution, skipping\n", var_name.c_str());
+                            // Non-constant RHS (e.g. `logic [127:0] a = x` where x is a wire).
+                            // Create a continuous connection, possibly sign-extended.
+                            module->connect(lhs, init_value);
+                            log("UHDM: Created continuous connection for variable '%s'\n", var_name.c_str());
                         }
                     }
                 }
@@ -2265,13 +2321,70 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             check_cell->setPort(ID(EN), RTLIL::State::S1);
             check_cell->setPort(ID(A), cond);
             check_cell->setPort(ID(ARGS), RTLIL::SigSpec());
+            check_cell->attributes[ID::keep] = RTLIL::Const(1);
             log("UHDM: Imported assert_stmt as $check cell\n");
         }
     }
 
+    // Post-processing: remove init-only sync-always (STa) processes for wires that
+    // are also driven by another process (comb always or FF always).
+    // Background: when a net/var has a declaration initializer (e.g. `reg foo = 0`)
+    // AND an always-block driver, we create both a STa init process AND the always
+    // process.  The STa process continuously drives the wire to a constant, which
+    // overrides the always-block output and collapses the circuit.  We detect and
+    // remove such redundant init processes here, after all processes are imported,
+    // so that we don't need any pre-scan ordering tricks.
+    //
+    // An "init-only STa process" is identified by: exactly one STa sync rule,
+    // exactly one action, and the RHS is a fully-constant SigSpec.
+    {
+        // Helper: is this process an init-only STa process?
+        auto is_init_proc = [](const RTLIL::Process* proc) -> bool {
+            if (proc->syncs.size() != 1) return false;
+            if (proc->syncs[0]->type != RTLIL::SyncType::STa) return false;
+            if (proc->syncs[0]->actions.size() != 1) return false;
+            return proc->syncs[0]->actions[0].second.is_fully_const();
+        };
+
+        // Helper: collect all wires from a SigSpec's chunks
+        auto collect_wires = [](const RTLIL::SigSpec& sig, std::set<RTLIL::Wire*>& out) {
+            for (auto chunk_it = sig.chunks().begin(); chunk_it != sig.chunks().end(); ++chunk_it)
+                if ((*chunk_it).wire) out.insert((*chunk_it).wire);
+        };
+
+        // Collect all wires driven by non-init processes (the real drivers).
+        std::set<RTLIL::Wire*> other_driven_wires;
+        for (auto& kv : module->processes) {
+            if (is_init_proc(kv.second)) continue;
+            for (auto* sync : kv.second->syncs) {
+                for (auto& action : sync->actions)
+                    collect_wires(action.first, other_driven_wires);
+            }
+        }
+
+        // Remove init-only processes whose target wire has other drivers.
+        std::vector<RTLIL::IdString> to_remove;
+        for (auto& kv : module->processes) {
+            if (!is_init_proc(kv.second)) continue;
+            const RTLIL::SigSpec& lhs = kv.second->syncs[0]->actions[0].first;
+            RTLIL::Wire* w = nullptr;
+            for (auto ci = lhs.chunks().begin(); ci != lhs.chunks().end(); ++ci) {
+                if ((*ci).wire) { w = (*ci).wire; break; }
+            }
+            if (w && other_driven_wires.count(w)) {
+                if (mode_debug)
+                    log("  Removing init-only STa process for '%s' (also driven by another process)\n",
+                        w->name.c_str());
+                to_remove.push_back(kv.first);
+            }
+        }
+        for (auto& id : to_remove)
+            module->processes.erase(id);
+    }
+
     // Import primitive gates
     import_primitives(uhdm_module);
-    
+
     // Import primitive gate arrays
     import_primitive_arrays(uhdm_module);
     

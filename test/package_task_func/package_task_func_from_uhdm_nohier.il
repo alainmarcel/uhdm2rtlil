@@ -38,7 +38,8 @@ module \top
     connect \Y $eq$dut.sv:26$7_Y
   end
   attribute \src "dut.sv:26.5-26.30"
-  cell $check $auto$uhdm2rtlil.cpp:2255:import_module$9
+  attribute \keep 1
+  cell $check $auto$uhdm2rtlil.cpp:2311:import_module$9
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -63,7 +64,8 @@ module \top
     connect \Y $eq$dut.sv:27$10_Y
   end
   attribute \src "dut.sv:27.5-27.30"
-  cell $check $auto$uhdm2rtlil.cpp:2255:import_module$12
+  attribute \keep 1
+  cell $check $auto$uhdm2rtlil.cpp:2311:import_module$12
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -88,7 +90,8 @@ module \top
     connect \Y $eq$dut.sv:28$13_Y
   end
   attribute \src "dut.sv:28.5-28.30"
-  cell $check $auto$uhdm2rtlil.cpp:2255:import_module$15
+  attribute \keep 1
+  cell $check $auto$uhdm2rtlil.cpp:2311:import_module$15
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -113,7 +116,8 @@ module \top
     connect \Y $eq$dut.sv:29$16_Y
   end
   attribute \src "dut.sv:29.5-29.31"
-  cell $check $auto$uhdm2rtlil.cpp:2255:import_module$18
+  attribute \keep 1
+  cell $check $auto$uhdm2rtlil.cpp:2311:import_module$18
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -127,17 +131,17 @@ module \top
     connect \ARGS { }
   end
   attribute \src "dut.sv:22.13-22.24"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$1
+  process $auto$uhdm2rtlil.cpp:1885:import_module$1
     sync always
       update \b 9
   end
   attribute \src "dut.sv:23.13-23.24"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$2
+  process $auto$uhdm2rtlil.cpp:1885:import_module$2
     sync always
       update \c 8
   end
   attribute \src "dut.sv:24.13-24.21"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$3
+  process $auto$uhdm2rtlil.cpp:1885:import_module$3
     sync always
       update \d 16
   end

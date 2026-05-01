@@ -4,14 +4,13 @@ attribute \top 1
 attribute \src "dut.sv:2.1-18.10"
 module \genblk_order_top
   attribute \src "dut.sv:3.14-3.18"
-  attribute \init 1'1
   wire output 1 \out1
   attribute \src "dut.sv:4.14-4.18"
   wire output 2 \out2
-  attribute \init 1'0
-  attribute \unused_bits "0"
   wire \outer.foo.x
   wire \outer.foo.foo.x
-  connect \outer.foo.foo.x \out1
-  connect \out2 \out1
+  connect \outer.foo.foo.x 1'1
+  connect \outer.foo.x 1'0
+  connect \out2 1'1
+  connect \out1 1'1
 end

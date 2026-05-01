@@ -9,164 +9,154 @@
  module top();
  (* src = "dut.sv:16.4-16.9" *)
  wire [63:0] pack1;
-@@ -11,8 +11,7 @@
- wire [23:0] s2;
+@@ -12,12 +12,12 @@
  (* src = "dut.sv:29.13-29.14" *)
  wire [7:0] t;
--(* keep = 32'd1 *)
+ (* keep = 32'd1 *)
 -(* src = "dut.sv:37.14-37.33" *)
++(* src = "dut.sv:38.14-38.35" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967294),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -28,12 +28,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:38.14-38.34" *)
++(* src = "dut.sv:39.14-39.34" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967293),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -44,12 +44,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:39.14-39.33" *)
++(* src = "dut.sv:40.14-40.33" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967292),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -60,12 +60,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:40.14-40.32" *)
 +(* src = "dut.sv:41.14-41.36" *)
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -27,152 +26,8 @@
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967291),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -76,12 +76,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:41.14-41.35" *)
++(* src = "dut.sv:42.14-42.42" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967290),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -92,12 +92,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:42.14-42.41" *)
++(* src = "dut.sv:43.14-43.39" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967289),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -108,12 +108,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:43.14-43.38" *)
++(* src = "dut.sv:44.14-44.43" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967288),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -124,12 +124,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:44.14-44.42" *)
++(* src = "dut.sv:45.14-45.39" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967287),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -140,7 +140,7 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:45.14-45.38" *)
++(* src = "dut.sv:37.14-37.34" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+@@ -156,12 +156,12 @@
+ .TRG()
+ );
+ (* keep = 32'd1 *)
+-(* src = "dut.sv:46.14-46.36" *)
++(* src = "dut.sv:46.14-46.37" *)
+ \$check  #(
+ .ARGS_WIDTH(32'd0),
+ .FLAVOR("assert"),
+ .FORMAT(),
+-.PRIORITY(32'd4294967295),
++.PRIORITY(32'd4294967286),
+ .TRG_ENABLE(32'd0),
+ .TRG_POLARITY(),
+ .TRG_WIDTH(32'd0)
+@@ -171,8 +171,8 @@
  .EN(1'h1),
  .TRG()
  );
--(* keep = 32'd1 *)
--(* src = "dut.sv:38.14-38.34" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _1_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:39.14-39.33" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _2_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:40.14-40.32" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _3_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:41.14-41.35" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _4_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:42.14-42.41" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _5_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:43.14-43.38" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _6_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:44.14-44.42" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _7_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:45.14-45.38" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _8_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
--(* keep = 32'd1 *)
--(* src = "dut.sv:46.14-46.36" *)
--\$check  #(
--.ARGS_WIDTH(32'd0),
--.FLAVOR("assert"),
--.FORMAT(),
--.PRIORITY(32'd4294967295),
--.TRG_ENABLE(32'd0),
--.TRG_POLARITY(),
--.TRG_WIDTH(32'd0)
--) _9_ (
--.A(1'h1),
--.ARGS(),
--.EN(1'h1),
--.TRG()
--);
 +assign t = 8'hff;
  assign s2 = 24'hxx42xx;
  assign pack1 = 64'h0000002aaaaaff55;

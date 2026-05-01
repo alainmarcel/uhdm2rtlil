@@ -31,7 +31,7 @@ module \func_width_scope_top
   attribute \nosync 1
   attribute \src "dut.sv:24.16-24.26"
   wire width 5 \func2$func$dut.sv:24$2.$result
-  wire width 6 $auto$module.cpp:790:import_continuous_assign$10
+  wire width 6 $auto$module.cpp:800:import_continuous_assign$10
   wire $func3$func$dut.sv:34$1_result
   attribute \src "dut.sv:34.16-34.26"
   wire width 7 $0\func3$func$dut.sv:34$13.inp$15
@@ -60,8 +60,8 @@ module \func_width_scope_top
   attribute \nosync 1
   attribute \src "dut.sv:12.14-12.24"
   wire width 5 \func1$func$dut.sv:12$22.$result
-  wire width 1024 $auto$module.cpp:790:import_continuous_assign$30
-  wire width 1024 $auto$module.cpp:790:import_continuous_assign$32
+  wire width 1024 $auto$module.cpp:800:import_continuous_assign$30
+  wire width 1024 $auto$module.cpp:800:import_continuous_assign$32
   cell $not $not$dut.sv:19$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
@@ -69,12 +69,12 @@ module \func_width_scope_top
     connect \A $0\func2$func$dut.sv:24$2.inp$4
     connect \Y $auto$rtlil.cc:3339:Not$9
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$11
+  cell $pos $auto$module.cpp:801:import_continuous_assign$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5
     parameter \Y_WIDTH 6
     connect \A $func2$func$dut.sv:24$0_result
-    connect \Y $auto$module.cpp:790:import_continuous_assign$10
+    connect \Y $auto$module.cpp:800:import_continuous_assign$10
   end
   cell $not $not$dut.sv:29$19
     parameter \A_SIGNED 0
@@ -90,19 +90,19 @@ module \func_width_scope_top
     connect \A $0\func1$func$dut.sv:12$22.inp$24
     connect \Y $auto$rtlil.cc:3339:Not$29
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$31
+  cell $pos $auto$module.cpp:801:import_continuous_assign$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 223
     parameter \Y_WIDTH 1024
     connect \A { \xc 1'0 \blk.yc 1'0 \blk.zc }
-    connect \Y $auto$module.cpp:790:import_continuous_assign$30
+    connect \Y $auto$module.cpp:800:import_continuous_assign$30
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$33
+  cell $pos $auto$module.cpp:801:import_continuous_assign$33
     parameter \A_SIGNED 0
     parameter \A_WIDTH 20
     parameter \Y_WIDTH 1024
     connect \A { \xn 1'0 \blk.yn 1'0 \blk.zn }
-    connect \Y $auto$module.cpp:790:import_continuous_assign$32
+    connect \Y $auto$module.cpp:800:import_continuous_assign$32
   end
   attribute \src "dut.sv:24.16-24.26"
   process $proc$dut.sv:24$3
@@ -151,13 +151,13 @@ module \func_width_scope_top
   end
   connect \blk.yc 63'111111111111111111111111111111111111111111111111111111111111111
   connect $func2$func$dut.sv:24$0_result \func2$func$dut.sv:24$1.$result
-  connect \blk.yn $auto$module.cpp:790:import_continuous_assign$10
+  connect \blk.yn $auto$module.cpp:800:import_continuous_assign$10
   connect \blk.zc 127'1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   connect $func3$func$dut.sv:34$1_result \func3$func$dut.sv:34$12.$result
   connect \blk.zn { 6'000000 $func3$func$dut.sv:34$1_result }
   connect \xc 31'1111111111111111111111111111111
   connect $func1$func$dut.sv:12$2_result \func1$func$dut.sv:12$21.$result
   connect \xn $func1$func$dut.sv:12$2_result
-  connect \out1 $auto$module.cpp:790:import_continuous_assign$30
-  connect \out2 $auto$module.cpp:790:import_continuous_assign$32
+  connect \out1 $auto$module.cpp:800:import_continuous_assign$30
+  connect \out2 $auto$module.cpp:800:import_continuous_assign$32
 end

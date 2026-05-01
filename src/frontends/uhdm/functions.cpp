@@ -24,6 +24,11 @@
 #include <uhdm/ref_typespec.h>
 #include <uhdm/logic_typespec.h>
 #include <uhdm/integer_typespec.h>
+#include <uhdm/int_typespec.h>
+#include <uhdm/short_int_typespec.h>
+#include <uhdm/long_int_typespec.h>
+#include <uhdm/byte_typespec.h>
+#include <uhdm/bit_typespec.h>
 #include <uhdm/case_stmt.h>
 #include <uhdm/case_item.h>
 #include <uhdm/for_stmt.h>
@@ -58,30 +63,84 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     // Create local variable map and initialize with parameters
     std::map<std::string, RTLIL::Const> local_vars;
     
-    // Map input parameters to their values
+    // Helper: extract signedness from an io_decl/variable typespec
+    auto typespec_is_signed = [](const UHDM::typespec* ts) -> bool {
+        if (!ts) return false;
+        switch (ts->UhdmType()) {
+            case uhdmlogic_typespec:
+                if (auto t = dynamic_cast<const UHDM::logic_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdmint_typespec:
+                if (auto t = dynamic_cast<const UHDM::int_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdminteger_typespec:
+                if (auto t = dynamic_cast<const UHDM::integer_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdmshort_int_typespec:
+                if (auto t = dynamic_cast<const UHDM::short_int_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdmlong_int_typespec:
+                if (auto t = dynamic_cast<const UHDM::long_int_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdmbyte_typespec:
+                if (auto t = dynamic_cast<const UHDM::byte_typespec*>(ts)) return t->VpiSigned();
+                break;
+            case uhdmbit_typespec:
+                if (auto t = dynamic_cast<const UHDM::bit_typespec*>(ts)) return t->VpiSigned();
+                break;
+            default:
+                break;
+        }
+        return false;
+    };
+
+    // Map input parameters to their values, resizing each argument to the
+    // formal parameter's declared width with sign- or zero-extension.
+    // Without this, a narrow argument (e.g. an 8-bit slice passed to a
+    // 24-bit input) would leave bitwise operations on `inp` operating at
+    // the wrong width — e.g. `~inp` would produce only 8 bits.
     int arg_idx = 0;
     if (func_def->Io_decls()) {
         for (auto io : *func_def->Io_decls()) {
             if (io->VpiDirection() == vpiInput && arg_idx < (int)const_args.size()) {
                 std::string param_name = std::string(io->VpiName());
-                local_vars[param_name] = const_args[arg_idx++];
-                log("  Setting input parameter %s = %s\n", param_name.c_str(), 
-                    const_args[arg_idx-1].as_string().c_str());
+                int formal_width = get_width(io, current_instance);
+                if (formal_width <= 0) formal_width = const_args[arg_idx].size();
+                bool formal_signed = false;
+                if (io->Typespec() && io->Typespec()->Actual_typespec())
+                    formal_signed = typespec_is_signed(io->Typespec()->Actual_typespec());
+
+                RTLIL::Const arg = const_args[arg_idx++];
+                if (arg.size() != formal_width) {
+                    RTLIL::SigSpec sig(arg);
+                    if (sig.size() < formal_width)
+                        sig.extend_u0(formal_width, formal_signed);
+                    else
+                        sig = sig.extract(0, formal_width);
+                    arg = sig.as_const();
+                }
+                local_vars[param_name] = arg;
+                log("  Setting input parameter %s = %s (formal_width=%d, signed=%d)\n",
+                    param_name.c_str(), arg.as_string().c_str(),
+                    formal_width, (int)formal_signed);
             } else if (io->VpiDirection() == vpiOutput) {
-                // Initialize output parameters
+                // Initialize output parameters with the formal width
                 std::string param_name = std::string(io->VpiName());
-                int width = 32; // Default to 32-bit for integers
-                // TODO: Get actual width from io declaration
+                int width = get_width(io, current_instance);
+                if (width <= 0) width = 32;
                 local_vars[param_name] = RTLIL::Const(0, width);
             }
         }
     }
-    
+
     // Initialize function return value with actual width from return type
     int ret_width = 32; // Default 32-bit
+    bool ret_signed = false;
     if (func_def->Return()) {
         ret_width = get_width(func_def->Return(), current_instance);
         if (ret_width <= 0) ret_width = 32;
+        if (func_def->Return()->Typespec() && func_def->Return()->Typespec()->Actual_typespec())
+            ret_signed = typespec_is_signed(func_def->Return()->Typespec()->Actual_typespec());
     }
     local_vars[func_name] = RTLIL::Const(0, ret_width);
     
@@ -108,11 +167,25 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
         }
     }
     
-    // Return the function's result
+    // Return the function's result, clamped to the declared return width.
+    // The body may assign a wider constant (e.g. 64-bit input -1 to a 32-bit
+    // return variable), so we truncate to ret_width.  When the body assigns
+    // a narrower value, sign-extend if the return type is signed.
     recursion_depth--;
     if (local_vars.count(func_name)) {
-        log("  Function result = %s\n", local_vars[func_name].as_string().c_str());
-        return local_vars[func_name];
+        RTLIL::Const result = local_vars[func_name];
+        if ((int)result.size() != ret_width) {
+            RTLIL::SigSpec sig(result);
+            if (sig.size() < ret_width)
+                sig.extend_u0(ret_width, ret_signed);
+            else
+                sig = sig.extract(0, ret_width);
+            result = sig.as_const();
+            // Preserve signedness flag for downstream sign-extension hints
+            if (ret_signed) result.flags |= RTLIL::CONST_FLAG_SIGNED;
+        }
+        log("  Function result = %s\n", result.as_string().c_str());
+        return result;
     }
 
     return RTLIL::Const(0, 32);

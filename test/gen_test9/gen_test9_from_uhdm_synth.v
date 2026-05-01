@@ -5,9 +5,11 @@
 module gen_test9();
   wire [1:0] \A.B.y ;
   wire [1:0] \A.C.z ;
+  wire [1:0] \A.x ;
   (* src = "dut.sv:10.13-10.14" *)
   wire [1:0] w;
-  assign \A.B.y  = 2'h0;
   assign \A.C.z  = 2'h1;
+  assign \A.B.y  = 2'h0;
+  assign \A.x  = 2'h2;
   assign w = 2'h3;
 endmodule

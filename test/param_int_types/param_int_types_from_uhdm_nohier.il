@@ -11,15 +11,15 @@ module \gate
   parameter \e 8'11111011
   attribute \src "dut.sv:1.13-1.16"
   wire width 1024 output 1 \out
-  wire width 1024 $auto$module.cpp:790:import_continuous_assign$1
-  cell $pos $auto$module.cpp:791:import_continuous_assign$2
+  wire width 1024 $auto$module.cpp:800:import_continuous_assign$1
+  cell $pos $auto$module.cpp:801:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 152
     parameter \Y_WIDTH 1024
     connect \A 152'11111111111111111111111111111111111111111111111111111111111111101111111111111101111111111111111111111111111111111111111111111111111111111111110011111011
-    connect \Y $auto$module.cpp:790:import_continuous_assign$1
+    connect \Y $auto$module.cpp:800:import_continuous_assign$1
   end
-  connect \out $auto$module.cpp:790:import_continuous_assign$1
+  connect \out $auto$module.cpp:800:import_continuous_assign$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:11.1-19.10"
@@ -36,38 +36,38 @@ module \gold
   wire width 64 signed \d
   attribute \src "dut.sv:16.10-16.16"
   wire width 8 signed \e
-  wire width 1024 $auto$module.cpp:790:import_continuous_assign$8
-  cell $pos $auto$module.cpp:791:import_continuous_assign$9
+  wire width 1024 $auto$module.cpp:800:import_continuous_assign$8
+  cell $pos $auto$module.cpp:801:import_continuous_assign$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 152
     parameter \Y_WIDTH 1024
     connect \A { \a \b \c \d \e }
-    connect \Y $auto$module.cpp:790:import_continuous_assign$8
+    connect \Y $auto$module.cpp:800:import_continuous_assign$8
   end
   attribute \src "dut.sv:12.13-12.19"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$3
+  process $auto$uhdm2rtlil.cpp:1885:import_module$3
     sync always
       update \a 32'11111111111111111111111111111111
   end
   attribute \src "dut.sv:13.9-13.15"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$4
+  process $auto$uhdm2rtlil.cpp:1885:import_module$4
     sync always
       update \b 32'11111111111111111111111111111110
   end
   attribute \src "dut.sv:14.14-14.20"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$5
+  process $auto$uhdm2rtlil.cpp:1885:import_module$5
     sync always
       update \c 16'1111111111111101
   end
   attribute \src "dut.sv:15.13-15.19"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$6
+  process $auto$uhdm2rtlil.cpp:1885:import_module$6
     sync always
       update \d 64'1111111111111111111111111111111111111111111111111111111111111100
   end
   attribute \src "dut.sv:16.10-16.16"
-  process $auto$uhdm2rtlil.cpp:1829:import_module$7
+  process $auto$uhdm2rtlil.cpp:1885:import_module$7
     sync always
       update \e 8'11111011
   end
-  connect \out $auto$module.cpp:790:import_continuous_assign$8
+  connect \out $auto$module.cpp:800:import_continuous_assign$8
 end

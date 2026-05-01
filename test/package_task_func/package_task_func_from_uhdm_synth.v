@@ -15,6 +15,7 @@ module top();
   wire [31:0] c;
   (* src = "dut.sv:24.13-24.21" *)
   wire [31:0] d;
+  (* keep = 32'd1 *)
   (* src = "dut.sv:27.5-27.30" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -30,6 +31,7 @@ module top();
     .EN(1'h1),
     .TRG()
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:28.5-28.30" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -45,6 +47,7 @@ module top();
     .EN(1'h1),
     .TRG()
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:29.5-29.31" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -60,6 +63,7 @@ module top();
     .EN(1'h1),
     .TRG()
   );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:26.5-26.30" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
