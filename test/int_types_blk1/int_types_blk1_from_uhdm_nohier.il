@@ -307,7 +307,7 @@ module \top
       update \c_reg 128'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   end
   attribute \src "dut.sv:27.16-27.21"
-  process $auto$module.cpp:840:import_continuous_assign$6
+  process $auto$module.cpp:847:import_continuous_assign$6
     sync always
       update \x_reg 1'1
   end

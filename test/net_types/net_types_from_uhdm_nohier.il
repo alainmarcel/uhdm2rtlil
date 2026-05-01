@@ -38,11 +38,11 @@ module \top
   attribute \wiretype "\\typename"
   attribute \wor 1
   wire width 4 \wor_typename
-  wire width 32 $auto$module.cpp:800:import_continuous_assign$1
-  wire width 32 $auto$module.cpp:800:import_continuous_assign$3
-  wire width 32 $auto$module.cpp:800:import_continuous_assign$5
-  wire width 32 $auto$module.cpp:800:import_continuous_assign$7
-  wire width 32 $auto$module.cpp:800:import_continuous_assign$9
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$1
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$3
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$5
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$7
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$9
   attribute \src "dut.sv:19.17-19.34"
   wire $eq$dut.sv:19$12_Y
   wire $auto$process.cpp:46:import_immediate_assert$14
@@ -79,40 +79,40 @@ module \top
   attribute \src "dut.sv:32.17-32.40"
   wire $eq$dut.sv:32$56_Y
   wire $auto$process.cpp:46:import_immediate_assert$58
-  cell $pos $auto$module.cpp:801:import_continuous_assign$2
+  cell $pos $auto$module.cpp:808:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:800:import_continuous_assign$1
+    connect \Y $auto$module.cpp:807:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:801:import_continuous_assign$4
+  cell $pos $auto$module.cpp:808:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:800:import_continuous_assign$3
+    connect \Y $auto$module.cpp:807:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:801:import_continuous_assign$6
+  cell $pos $auto$module.cpp:808:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1010
-    connect \Y $auto$module.cpp:800:import_continuous_assign$5
+    connect \Y $auto$module.cpp:807:import_continuous_assign$5
   end
-  cell $pos $auto$module.cpp:801:import_continuous_assign$8
+  cell $pos $auto$module.cpp:808:import_continuous_assign$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1001
-    connect \Y $auto$module.cpp:800:import_continuous_assign$7
+    connect \Y $auto$module.cpp:807:import_continuous_assign$7
   end
-  cell $pos $auto$module.cpp:801:import_continuous_assign$10
+  cell $pos $auto$module.cpp:808:import_continuous_assign$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1010
-    connect \Y $auto$module.cpp:800:import_continuous_assign$9
+    connect \Y $auto$module.cpp:807:import_continuous_assign$9
   end
   attribute \src "dut.sv:19.17-19.34"
   cell $eq $eq$dut.sv:19$13
@@ -464,11 +464,11 @@ module \top
   connect \wor_logic_0 1'0
   connect \wor_logic_1 1'1
   connect \wor_logic_1 1'0
-  connect \wire_integer $auto$module.cpp:800:import_continuous_assign$1
-  connect \wand_integer $auto$module.cpp:800:import_continuous_assign$3
-  connect \wand_integer $auto$module.cpp:800:import_continuous_assign$5
-  connect \wor_integer $auto$module.cpp:800:import_continuous_assign$7
-  connect \wor_integer $auto$module.cpp:800:import_continuous_assign$9
+  connect \wire_integer $auto$module.cpp:807:import_continuous_assign$1
+  connect \wand_integer $auto$module.cpp:807:import_continuous_assign$3
+  connect \wand_integer $auto$module.cpp:807:import_continuous_assign$5
+  connect \wor_integer $auto$module.cpp:807:import_continuous_assign$7
+  connect \wor_integer $auto$module.cpp:807:import_continuous_assign$9
   connect \wire_typename 4'1001
   connect \wand_typename 4'1001
   connect \wand_typename 4'1010

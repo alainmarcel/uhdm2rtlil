@@ -17,6 +17,13 @@
 #include <uhdm/function.h>
 #include <uhdm/parameter.h>
 #include <uhdm/variables.h>
+#include <uhdm/logic_typespec.h>
+#include <uhdm/integer_typespec.h>
+#include <uhdm/int_typespec.h>
+#include <uhdm/short_int_typespec.h>
+#include <uhdm/long_int_typespec.h>
+#include <uhdm/byte_typespec.h>
+#include <uhdm/bit_typespec.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -1329,6 +1336,38 @@ std::string UhdmImporter::get_name(const any* uhdm_obj) {
     return "unnamed";
 }
 
+// Returns true if the (already-resolved) actual_typespec is a signed integral
+// typespec. Covers logic/bit/int/integer/shortint/longint/byte.
+bool UhdmImporter::is_typespec_signed(const UHDM::any* ts) {
+    if (!ts) return false;
+    switch (ts->UhdmType()) {
+        case uhdmlogic_typespec:
+            if (auto t = dynamic_cast<const UHDM::logic_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmint_typespec:
+            if (auto t = dynamic_cast<const UHDM::int_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdminteger_typespec:
+            if (auto t = dynamic_cast<const UHDM::integer_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmshort_int_typespec:
+            if (auto t = dynamic_cast<const UHDM::short_int_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmlong_int_typespec:
+            if (auto t = dynamic_cast<const UHDM::long_int_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmbyte_typespec:
+            if (auto t = dynamic_cast<const UHDM::byte_typespec*>(ts)) return t->VpiSigned();
+            break;
+        case uhdmbit_typespec:
+            if (auto t = dynamic_cast<const UHDM::bit_typespec*>(ts)) return t->VpiSigned();
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
 // Get width from UHDM object
 int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
     if (!uhdm_obj) {
@@ -1797,19 +1836,46 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                             if (init_val.is_wire() && init_val.as_wire()->is_signed) {
                                 src_signed = true;
                             } else {
-                                // Check the UHDM init expression for signedness
+                                // Check the UHDM init expression for signedness.
+                                // For ref_obj: VpiSigned() on `variables` may be false even
+                                // when the source is `reg signed` — Surelog records the
+                                // signedness only on the typespec.  Walk to the typespec.
                                 if (init_expr->UhdmType() == uhdmref_obj) {
                                     auto ref = any_cast<const UHDM::ref_obj*>(init_expr);
                                     if (ref && ref->Actual_group()) {
                                         auto* tgt_var = dynamic_cast<const UHDM::variables*>(ref->Actual_group());
                                         auto* tgt_par = dynamic_cast<const UHDM::parameter*>(ref->Actual_group());
-                                        if ((tgt_var && tgt_var->VpiSigned()) || (tgt_par && tgt_par->VpiSigned()))
-                                            src_signed = true;
+                                        // `reg signed` lands as a logic_net (not variables) in
+                                        // the elaborated model — handle it explicitly.
+                                        auto* tgt_net = dynamic_cast<const UHDM::net*>(ref->Actual_group());
+                                        if (tgt_var) {
+                                            if (tgt_var->VpiSigned()) src_signed = true;
+                                            else if (tgt_var->Typespec() && tgt_var->Typespec()->Actual_typespec())
+                                                src_signed = is_typespec_signed(tgt_var->Typespec()->Actual_typespec());
+                                        }
+                                        if (!src_signed && tgt_par) {
+                                            if (tgt_par->VpiSigned()) src_signed = true;
+                                            else if (tgt_par->Typespec() && tgt_par->Typespec()->Actual_typespec())
+                                                src_signed = is_typespec_signed(tgt_par->Typespec()->Actual_typespec());
+                                        }
+                                        if (!src_signed && tgt_net) {
+                                            if (tgt_net->VpiSigned()) src_signed = true;
+                                            else if (tgt_net->Typespec() && tgt_net->Typespec()->Actual_typespec())
+                                                src_signed = is_typespec_signed(tgt_net->Typespec()->Actual_typespec());
+                                        }
                                     }
                                 } else if (init_expr->UhdmType() == uhdmfunc_call) {
+                                    // Function return signedness: walk Function -> Return -> Typespec.
                                     auto fc = any_cast<const UHDM::func_call*>(init_expr);
-                                    if (fc && fc->Function() && fc->Function()->Return())
-                                        src_signed = fc->Function()->Return()->VpiSigned();
+                                    if (fc && fc->Function()) {
+                                        if (fc->Function()->VpiSigned())
+                                            src_signed = true;
+                                        else if (auto ret = fc->Function()->Return()) {
+                                            if (ret->VpiSigned()) src_signed = true;
+                                            else if (ret->Typespec() && ret->Typespec()->Actual_typespec())
+                                                src_signed = is_typespec_signed(ret->Typespec()->Actual_typespec());
+                                        }
+                                    }
                                 }
                             }
                             init_val.extend_u0(w->width, src_signed || w->is_signed);

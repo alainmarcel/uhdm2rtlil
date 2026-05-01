@@ -688,7 +688,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -716,28 +584,28 @@
+@@ -716,12 +584,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -703,11 +703,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _028_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -732,12 +600,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1007,7 +1003,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1052,28 +920,28 @@
+@@ -1052,12 +920,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1022,11 +1018,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _049_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1068,12 +936,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1056,7 +1048,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1100,28 +968,28 @@
+@@ -1100,12 +968,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1071,11 +1063,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _052_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1116,12 +984,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1210,7 +1198,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1260,28 +1128,28 @@
+@@ -1260,12 +1128,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1225,11 +1213,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _062_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1276,12 +1144,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1259,7 +1243,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1308,28 +1176,28 @@
+@@ -1308,12 +1176,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1274,11 +1258,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _065_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1324,12 +1192,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1443,7 +1423,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1500,28 +1368,28 @@
+@@ -1500,12 +1368,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1458,11 +1438,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _077_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1516,12 +1384,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1642,7 +1618,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1708,28 +1576,28 @@
+@@ -1708,12 +1576,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1657,11 +1633,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _090_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1724,12 +1592,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1856,7 +1828,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -1932,28 +1800,28 @@
+@@ -1932,12 +1800,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1871,11 +1843,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _104_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -1948,12 +1816,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -2055,7 +2023,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -2140,28 +2008,28 @@
+@@ -2140,12 +2008,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -2070,11 +2038,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _117_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -2156,12 +2024,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -2408,7 +2372,7 @@
 +assign \genblk18.x  = 1'h1;
 +assign \genblk22.c  = 128'h00000000000000000000000000000001;
 +assign \genblk20.x  = 2'h3;
-+assign \genblk20.c  = 128'h00000000000000000000000000000003;
++assign \genblk20.c  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk19.c  = 128'h00000000000000000000000000000003;
 +assign \genblk29.x  = 1'h1;
 +assign \genblk29.a  = 128'hffffffffffffffffffffffffffffffff;
@@ -2417,7 +2381,7 @@
  assign \genblk8.a  = 128'hffffffffffffffffffffffffffffffff;
  assign \genblk8.x  = 16'hffff;
 +assign \genblk29.b  = 128'hffffffffffffffffffffffffffffffff;
-+assign \genblk29.c  = 128'h00000000000000000000000000000001;
++assign \genblk29.c  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk19.b  = 128'h00000000000000000000000000000003;
 +assign \genblk19.a  = 128'h00000000000000000000000000000003;
 +assign \genblk19.x  = 2'h3;
@@ -2443,9 +2407,9 @@
  assign \genblk6.a  = 128'h000000000000000000000000ffffffff;
  assign \genblk6.x  = 32'd4294967295;
 +assign \genblk21.x  = 2'h3;
-+assign \genblk17.c  = 128'h00000000000000000000000000000001;
++assign \genblk17.c  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk17.b  = 128'hffffffffffffffffffffffffffffffff;
-+assign \genblk17.a  = 128'h00000000000000000000000000000001;
++assign \genblk17.a  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk17.x  = 1'h1;
 +assign \genblk13.c  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk31.x  = 2'h3;
@@ -2472,11 +2436,11 @@
 +assign \genblk32.x  = 2'h3;
 +assign \genblk32.a  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk32.b  = 128'hffffffffffffffffffffffffffffffff;
-+assign \genblk32.c  = 128'h00000000000000000000000000000003;
++assign \genblk32.c  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk26.b  = 128'hffffffffffffffffffffffffffffffff;
-+assign \genblk26.c  = 128'h00000000000000000000000000000003;
-+assign \genblk23.c  = 128'h00000000000000000000000000000001;
-+assign \genblk12.c  = 128'h000000000000000000000000ffffffff;
++assign \genblk26.c  = 128'hffffffffffffffffffffffffffffffff;
++assign \genblk23.c  = 128'hffffffffffffffffffffffffffffffff;
++assign \genblk12.c  = 128'h0000000000000000ffffffffffffffff;
  assign \genblk3.c  = 128'h000000000000000000000000ffffffff;
  assign \genblk3.b  = 128'h000000000000000000000000ffffffff;
  assign \genblk3.a  = 128'h000000000000000000000000ffffffff;
@@ -2494,7 +2458,7 @@
  assign \genblk2.b  = 128'hffffffffffffffffffffffffffffffff;
  assign \genblk2.a  = 128'hffffffffffffffffffffffffffffffff;
  assign \genblk2.x  = 32'd4294967295;
-+assign \genblk20.a  = 128'h00000000000000000000000000000003;
++assign \genblk20.a  = 128'hffffffffffffffffffffffffffffffff;
 +assign \genblk22.x  = 1'h1;
 +assign \genblk16.c  = 128'h00000000000000000000000000000001;
 +assign \genblk16.b  = 128'h00000000000000000000000000000001;

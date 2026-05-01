@@ -32,7 +32,7 @@ module \gen_test9
     connect \Y $auto$rtlil.cc:3388:Xor$4
   end
   attribute \src "dut.sv:10.13-10.14"
-  process $auto$module.cpp:840:import_continuous_assign$5
+  process $auto$module.cpp:847:import_continuous_assign$5
     sync always
       update \w 2'11
   end

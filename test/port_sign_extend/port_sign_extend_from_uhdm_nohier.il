@@ -178,37 +178,37 @@ module \port_sign_extend
     connect \out \nay2
   end
   attribute \src "dut.sv:47.20-47.25"
-  process $auto$module.cpp:840:import_continuous_assign$1
+  process $auto$module.cpp:847:import_continuous_assign$1
     sync always
       update \tmp5a 2'11
   end
   attribute \src "dut.sv:48.20-48.25"
-  process $auto$module.cpp:840:import_continuous_assign$2
+  process $auto$module.cpp:847:import_continuous_assign$2
     sync always
       update \tmp5b 2'01
   end
   attribute \src "dut.sv:51.20-51.25"
-  process $auto$module.cpp:840:import_continuous_assign$3
+  process $auto$module.cpp:847:import_continuous_assign$3
     sync always
       update \tmp6a 3'100
   end
   attribute \src "dut.sv:52.20-52.25"
-  process $auto$module.cpp:840:import_continuous_assign$4
+  process $auto$module.cpp:847:import_continuous_assign$4
     sync always
       update \tmp6b 3'001
   end
   attribute \src "dut.sv:55.20-55.24"
-  process $auto$module.cpp:840:import_continuous_assign$5
+  process $auto$module.cpp:847:import_continuous_assign$5
     sync always
       update \tmp7 3'011
   end
   attribute \src "dut.sv:62.20-62.25"
-  process $auto$module.cpp:840:import_continuous_assign$6
+  process $auto$module.cpp:847:import_continuous_assign$6
     sync always
       update \tmp9a 3'100
   end
   attribute \src "dut.sv:63.20-63.25"
-  process $auto$module.cpp:840:import_continuous_assign$7
+  process $auto$module.cpp:847:import_continuous_assign$7
     sync always
       update \tmp9b 2'11
   end

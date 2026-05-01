@@ -119,6 +119,10 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
                         sig = sig.extract(0, formal_width);
                     arg = sig.as_const();
                 }
+                // Tag the argument's signedness via CONST_FLAG_SIGNED so it
+                // propagates through copy assignments (e.g. `f = inp`) in the
+                // body — needed for SV-style assignment widening at the end.
+                if (formal_signed) arg.flags |= RTLIL::CONST_FLAG_SIGNED;
                 local_vars[param_name] = arg;
                 log("  Setting input parameter %s = %s (formal_width=%d, signed=%d)\n",
                     param_name.c_str(), arg.as_string().c_str(),
@@ -170,18 +174,23 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     // Return the function's result, clamped to the declared return width.
     // The body may assign a wider constant (e.g. 64-bit input -1 to a 32-bit
     // return variable), so we truncate to ret_width.  When the body assigns
-    // a narrower value, sign-extend if the return type is signed.
+    // a narrower value, sign-extend if EITHER the return type is signed OR
+    // the body's last assignment came from a signed source (tracked via
+    // CONST_FLAG_SIGNED propagated from input parameters).  This matches
+    // SV's assignment-widening rule: a signed RHS sign-extends to fit a
+    // wider LHS even when the LHS itself is unsigned.
     recursion_depth--;
     if (local_vars.count(func_name)) {
         RTLIL::Const result = local_vars[func_name];
         if ((int)result.size() != ret_width) {
+            bool effective_signed = ret_signed
+                || (result.flags & RTLIL::CONST_FLAG_SIGNED);
             RTLIL::SigSpec sig(result);
             if (sig.size() < ret_width)
-                sig.extend_u0(ret_width, ret_signed);
+                sig.extend_u0(ret_width, effective_signed);
             else
                 sig = sig.extract(0, ret_width);
             result = sig.as_const();
-            // Preserve signedness flag for downstream sign-extension hints
             if (ret_signed) result.flags |= RTLIL::CONST_FLAG_SIGNED;
         }
         log("  Function result = %s\n", result.as_string().c_str());

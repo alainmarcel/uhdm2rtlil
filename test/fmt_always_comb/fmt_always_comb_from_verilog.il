@@ -134,14 +134,14 @@ module \sub
   attribute \src "dut.sv:14.42-14.43"
   wire output 3 \y
   attribute \src "dut.sv:23.39-23.57"
-  wire $display$0x559111042500:23$19_EN
+  wire $display$0x55aeb92b6500:23$19_EN
   attribute \src "dut.sv:23.19-23.37|dut.sv:23.15-23.57"
   cell $mux $procmux$20
     parameter \WIDTH 1
     connect \A 1'0
     connect \B 1'1
     connect \S \y
-    connect \Y $display$0x559111042500:23$19_EN
+    connect \Y $display$0x55aeb92b6500:23$19_EN
   end
   attribute \src "dut.sv:23.30-23.35"
   cell $and $and$dut.sv:23$16
@@ -155,7 +155,7 @@ module \sub
     connect \Y \y
   end
   attribute \src "dut.sv:23.39-23.57"
-  cell $print $display$0x559111042500:23$19
+  cell $print $display$0x55aeb92b6500:23$19
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
@@ -163,7 +163,7 @@ module \sub
     parameter \FORMAT "{1:> 1d-u}{1:> 1d-u}{1:> 1d-u}\n"
     parameter \ARGS_WIDTH 3
     connect \TRG { }
-    connect \EN $display$0x559111042500:23$19_EN
+    connect \EN $display$0x55aeb92b6500:23$19_EN
     connect \ARGS { \y \b \a }
   end
 end

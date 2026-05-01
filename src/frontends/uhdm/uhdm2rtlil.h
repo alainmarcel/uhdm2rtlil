@@ -540,6 +540,10 @@ struct UhdmImporter {
     RTLIL::IdString new_id(const std::string& name);
     std::string get_name(const UHDM::any* uhdm_obj);
     int get_width(const UHDM::any* uhdm_obj, const UHDM::scope* inst = nullptr);
+    // True iff the actual_typespec is one of the integral typespecs marked signed
+    // (logic, bit, int, integer, shortint, longint, byte). Walks no further than
+    // the typespec itself; pass an Actual_typespec result.
+    bool is_typespec_signed(const UHDM::any* actual_typespec);
     void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
