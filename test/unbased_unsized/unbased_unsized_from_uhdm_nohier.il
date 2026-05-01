@@ -44,8 +44,8 @@ module \unbased_unsized
   wire width 64 \o15
   attribute \src "dut.sv:13.24-13.27"
   wire width 64 \o16
-  wire width 64 $auto$module.cpp:790:import_continuous_assign$1
-  wire width 64 $auto$module.cpp:790:import_continuous_assign$3
+  wire width 64 $auto$module.cpp:807:import_continuous_assign$1
+  wire width 64 $auto$module.cpp:807:import_continuous_assign$3
   wire $auto$rtlil.cc:3395:Eqx$7
   wire $auto$process.cpp:46:import_immediate_assert$8
   wire $auto$rtlil.cc:3395:Eqx$11
@@ -70,19 +70,19 @@ module \unbased_unsized
   wire $auto$process.cpp:46:import_immediate_assert$48
   wire $auto$rtlil.cc:3395:Eqx$51
   wire $auto$process.cpp:46:import_immediate_assert$52
-  cell $pos $auto$module.cpp:791:import_continuous_assign$2
+  cell $pos $auto$module.cpp:808:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'x
-    connect \Y $auto$module.cpp:790:import_continuous_assign$1
+    connect \Y $auto$module.cpp:807:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$4
+  cell $pos $auto$module.cpp:808:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'zzz
-    connect \Y $auto$module.cpp:790:import_continuous_assign$3
+    connect \Y $auto$module.cpp:807:import_continuous_assign$3
   end
   cell $eqx $eqx$dut.sv:27$6
     parameter \A_SIGNED 0
@@ -95,6 +95,7 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$7
   end
   attribute \src "dut.sv:27.9-27.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
@@ -119,11 +120,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$11
   end
   attribute \src "dut.sv:28.9-28.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -143,11 +145,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$15
   end
   attribute \src "dut.sv:29.9-29.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -167,11 +170,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$19
   end
   attribute \src "dut.sv:30.9-30.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$21
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -191,11 +195,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$23
   end
   attribute \src "dut.sv:31.9-31.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -215,11 +220,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$27
   end
   attribute \src "dut.sv:32.9-32.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$29
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -239,11 +245,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$31
   end
   attribute \src "dut.sv:33.9-33.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$33
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111001
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -263,11 +270,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$35
   end
   attribute \src "dut.sv:34.9-34.42"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$37
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111000
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -287,11 +295,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$39
   end
   attribute \src "dut.sv:35.9-35.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$41
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110111
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -311,11 +320,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$43
   end
   attribute \src "dut.sv:36.9-36.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$45
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -335,11 +345,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$47
   end
   attribute \src "dut.sv:37.9-37.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$49
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -359,11 +370,12 @@ module \unbased_unsized
     connect \Y $auto$rtlil.cc:3395:Eqx$51
   end
   attribute \src "dut.sv:38.9-38.38"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$53
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -422,6 +434,6 @@ module \unbased_unsized
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
-  connect \o07 $auto$module.cpp:790:import_continuous_assign$1
-  connect \o08 $auto$module.cpp:790:import_continuous_assign$3
+  connect \o07 $auto$module.cpp:807:import_continuous_assign$1
+  connect \o08 $auto$module.cpp:807:import_continuous_assign$3
 end

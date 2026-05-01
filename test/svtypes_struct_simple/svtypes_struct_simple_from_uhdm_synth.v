@@ -12,7 +12,136 @@ module top();
   wire [23:0] s2;
   (* src = "dut.sv:29.13-29.14" *)
   wire [7:0] t;
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:38.14-38.35" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967294),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _0_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:39.14-39.34" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967293),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _1_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:40.14-40.33" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967292),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _2_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:41.14-41.36" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967291),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _3_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:42.14-42.42" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967290),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _4_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:43.14-43.39" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967289),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _5_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:44.14-44.43" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967288),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _6_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:45.14-45.39" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967287),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _7_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:37.14-37.34" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
@@ -21,7 +150,23 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _0_ (
+  ) _8_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:46.14-46.37" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967286),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _9_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),

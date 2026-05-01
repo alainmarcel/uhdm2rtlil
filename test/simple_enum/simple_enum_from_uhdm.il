@@ -115,6 +115,7 @@ module \enum_simple
     connect \Y $eq$dut.sv:24$8_Y
   end
   attribute \src "dut.sv:27.5-27.18"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$11
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
@@ -159,11 +160,12 @@ module \enum_simple
     connect \Y $eq$dut.sv:34$16_Y
   end
   attribute \src "dut.sv:37.5-37.18"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$19
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111110
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 1'1
     parameter \TRG_WIDTH 1
@@ -183,11 +185,12 @@ module \enum_simple
     connect \Y $auto$rtlil.cc:3394:Ne$22
   end
   attribute \src "dut.sv:42.3-42.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$24
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -210,26 +213,28 @@ module \enum_simple
     connect \D $procmux$45_Y [1]
     connect \Q \test_enum [1]
   end
-  attribute \src "dut.sv:12.2-39.5"
-  attribute \always_ff 1
-  cell $sdffe $auto$ff.cc:337:slice$109
-    parameter \CLK_POLARITY 1
-    parameter \EN_POLARITY 1
-    parameter \SRST_POLARITY 1
-    parameter \SRST_VALUE 1'0
-    parameter \WIDTH 1
-    connect \CLK \clk
-    connect \EN $auto$opt_dff.cc:234:make_patterns_logic$110
-    connect \SRST \rst
-    connect \D $procmux$57_Y [0]
-    connect \Q \state [0]
+  attribute \src "dut.sv:43.3-43.20"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$28
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111100
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'1
+    connect \TRG { }
   end
   attribute \src "dut.sv:44.3-44.21"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$30
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -250,11 +255,12 @@ module \enum_simple
     connect \Y $eq$dut.sv:45$31_Y
   end
   attribute \src "dut.sv:45.3-45.29"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$34
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -427,6 +433,20 @@ module \enum_simple
     connect \B 1'0
     connect \S \rst
     connect \Y $auto$process.cpp:46:import_immediate_assert$10
+  end
+  attribute \src "dut.sv:12.2-39.5"
+  attribute \always_ff 1
+  cell $sdffe $auto$ff.cc:337:slice$109
+    parameter \CLK_POLARITY 1
+    parameter \EN_POLARITY 1
+    parameter \SRST_POLARITY 1
+    parameter \SRST_VALUE 1'0
+    parameter \WIDTH 1
+    connect \CLK \clk
+    connect \EN $auto$opt_dff.cc:234:make_patterns_logic$110
+    connect \SRST \rst
+    connect \D $procmux$57_Y [0]
+    connect \Q \state [0]
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$111
     parameter \A_SIGNED 0

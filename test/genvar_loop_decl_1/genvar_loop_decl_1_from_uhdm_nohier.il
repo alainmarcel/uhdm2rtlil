@@ -5,17 +5,17 @@ attribute \src "dut.sv:3.1-9.10"
 module \gate
   attribute \src "dut.sv:3.13-3.14"
   wire width 33 output 1 \a
-  attribute \init 1'1
   wire \genblk1[0].x
-  attribute \init 2'11
   wire width 2 \genblk1[1].x
-  wire width 33 $auto$module.cpp:790:import_continuous_assign$1
-  cell $pos $auto$module.cpp:791:import_continuous_assign$2
+  wire width 33 $auto$module.cpp:807:import_continuous_assign$1
+  cell $pos $auto$module.cpp:808:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
     parameter \Y_WIDTH 33
     connect \A { 1'0 \genblk1[0].x 1'0 \genblk1[1].x 1'0 }
-    connect \Y $auto$module.cpp:790:import_continuous_assign$1
+    connect \Y $auto$module.cpp:807:import_continuous_assign$1
   end
-  connect \a $auto$module.cpp:790:import_continuous_assign$1
+  connect \genblk1[0].x 1'1
+  connect \genblk1[1].x 2'11
+  connect \a $auto$module.cpp:807:import_continuous_assign$1
 end

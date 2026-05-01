@@ -56,7 +56,7 @@ void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_
     check_cell->setParam("\\ARGS_WIDTH", 0);
     check_cell->setParam("\\FLAVOR", RTLIL::Const("assert"));
     check_cell->setParam("\\FORMAT", RTLIL::Const(""));
-    check_cell->setParam("\\PRIORITY", RTLIL::Const(0xffffffff, 32)); // Default priority
+    check_cell->setParam("\\PRIORITY", RTLIL::Const(--last_effect_priority, 32));
     
     // If we're in always_ff context, connect the clock to trigger
     if (in_always_ff_context && !current_ff_clock_sig.empty()) {
@@ -81,7 +81,8 @@ void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_
     
     // Add source location if available
     add_src_attribute(check_cell->attributes, assert_stmt);
-    
+    check_cell->attributes[ID::keep] = RTLIL::Const(1);
+
     log("        Created $check cell for assertion\n");
     log_flush();
 }

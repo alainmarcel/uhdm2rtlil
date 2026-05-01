@@ -4,22 +4,9 @@ attribute \top 1
 attribute \src "dut.sv:1.1-42.10"
 attribute \keep 1
 module \top
-  attribute \src "dut.sv:32.9-32.24"
-  cell $check $auto$process.cpp:53:import_immediate_assert$13
-    parameter \ARGS_WIDTH 0
-    parameter \FLAVOR "assert"
-    parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
-    parameter \TRG_ENABLE 0
-    parameter \TRG_POLARITY 0'x
-    parameter \TRG_WIDTH 0
-    connect \A 1'1
-    connect \ARGS { }
-    connect \EN 1'0
-    connect \TRG { }
-  end
-  attribute \src "dut.sv:30.9-30.36"
-  cell $check $auto$process.cpp:53:import_immediate_assert$9
+  attribute \src "dut.sv:27.9-27.36"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$3
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -28,6 +15,81 @@ module \top
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
     connect \A 1'0
+    connect \ARGS { }
+    connect \EN 1'0
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:28.9-28.36"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$5
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111110
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'0
+    connect \ARGS { }
+    connect \EN 1'0
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:29.9-29.36"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$7
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111101
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'0
+    connect \ARGS { }
+    connect \EN 1'0
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:30.9-30.36"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$9
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111100
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'0
+    connect \ARGS { }
+    connect \EN 1'0
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:31.9-31.24"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$11
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111011
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
+    connect \ARGS { }
+    connect \EN 1'0
+    connect \TRG { }
+  end
+  attribute \src "dut.sv:32.9-32.24"
+  attribute \keep 1
+  cell $check $auto$process.cpp:53:import_immediate_assert$13
+    parameter \ARGS_WIDTH 0
+    parameter \FLAVOR "assert"
+    parameter \FORMAT ""
+    parameter \PRIORITY 32'11111111111111111111111111111010
+    parameter \TRG_ENABLE 0
+    parameter \TRG_POLARITY 0'x
+    parameter \TRG_WIDTH 0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'0
     connect \TRG { }

@@ -29,34 +29,42 @@ module \gate
   attribute \src "dut.sv:46.18-46.35"
   wire width 32 \fib_wrap$func$dut.sv:46$84.o
   attribute \nosync 1
+  attribute \src "dut.sv:45.18-45.35"
+  wire width 32 \fib_wrap$func$dut.sv:45$75.o
+  attribute \nosync 1
   attribute \src "dut.sv:42.18-42.35"
   wire width 32 \fib_wrap$func$dut.sv:42$48.o
   attribute \nosync 1
-  attribute \src "dut.sv:39.18-39.35"
-  wire width 32 \fib_wrap$func$dut.sv:39$21.o
+  attribute \src "dut.sv:43.18-43.35"
+  wire width 32 \fib_wrap$func$dut.sv:43$57.o
   attribute \nosync 1
   attribute \src "dut.sv:44.18-44.35"
   wire width 32 \fib_wrap$func$dut.sv:44$66.o
   attribute \nosync 1
-  attribute \src "dut.sv:43.18-43.35"
-  wire width 32 \fib_wrap$func$dut.sv:43$57.o
-  attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2237:import_operation$18
-  attribute \nosync 1
-  attribute \src "dut.sv:40.18-40.35"
-  wire width 32 \fib_wrap$func$dut.sv:40$30.o
-  attribute \nosync 1
-  attribute \src "dut.sv:38.18-38.35"
-  wire width 32 \fib_wrap$func$dut.sv:38$12.o
-  attribute \nosync 1
-  attribute \src "dut.sv:37.18-37.35"
-  wire width 32 \fib_wrap$func$dut.sv:37$3.o
+  attribute \src "dut.sv:39.18-39.35"
+  wire width 32 \fib_wrap$func$dut.sv:39$21.o
   attribute \nosync 1
   attribute \src "dut.sv:41.18-41.35"
   wire width 32 \fib_wrap$func$dut.sv:41$39.o
   attribute \nosync 1
-  attribute \src "dut.sv:45.18-45.35"
-  wire width 32 \fib_wrap$func$dut.sv:45$75.o
+  attribute \src "dut.sv:40.18-40.35"
+  wire width 32 \fib_wrap$func$dut.sv:40$30.o
+  attribute \nosync 1
+  attribute \src "dut.sv:37.18-37.35"
+  wire width 32 \fib_wrap$func$dut.sv:37$3.o
+  attribute \nosync 1
+  attribute \src "dut.sv:38.18-38.35"
+  wire width 32 \fib_wrap$func$dut.sv:38$12.o
+  cell $add $add$dut.sv:21$82
+    parameter \A_SIGNED 1
+    parameter \B_SIGNED 1
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \off
+    connect \B 21
+    connect \Y \fib8
+  end
   cell $add $add$dut.sv:21$91
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -67,16 +75,6 @@ module \gate
     connect \B 34
     connect \Y \fib9
   end
-  cell $add $add$dut.sv:21$19
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A \off
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2237:import_operation$18 [63:32] \fib1 }
-  end
   cell $add $add$dut.sv:21$28
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -85,7 +83,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 1
-    connect \Y \fib2
+    connect \Y \fib1
   end
   cell $add $add$dut.sv:21$37
     parameter \A_SIGNED 1
@@ -137,27 +135,17 @@ module \gate
     connect \B 13
     connect \Y \fib7
   end
-  cell $add $add$dut.sv:21$82
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 32
-    connect \A \off
-    connect \B 21
-    connect \Y \fib8
-  end
-  connect \fib_wrap$func$dut.sv:45$75.o 32'x
-  connect \fib_wrap$func$dut.sv:41$39.o 32'x
-  connect \fib_wrap$func$dut.sv:37$3.o 32'x
   connect \fib_wrap$func$dut.sv:38$12.o 32'x
+  connect \fib_wrap$func$dut.sv:37$3.o 32'x
   connect \fib_wrap$func$dut.sv:40$30.o 32'x
-  connect $auto$expression.cpp:2237:import_operation$18 [31:0] \fib1
-  connect \fib_wrap$func$dut.sv:43$57.o 32'x
-  connect \fib_wrap$func$dut.sv:44$66.o 32'x
+  connect \fib_wrap$func$dut.sv:41$39.o 32'x
   connect \fib_wrap$func$dut.sv:39$21.o 32'x
+  connect \fib_wrap$func$dut.sv:44$66.o 32'x
+  connect \fib_wrap$func$dut.sv:43$57.o 32'x
   connect \fib_wrap$func$dut.sv:42$48.o 32'x
+  connect \fib_wrap$func$dut.sv:45$75.o 32'x
   connect \fib_wrap$func$dut.sv:46$84.o 32'x
+  connect \fib2 \fib1
   connect \fib0 \off
 end
 attribute \cells_not_processed 1

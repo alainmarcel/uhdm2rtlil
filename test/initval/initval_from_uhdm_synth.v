@@ -10,7 +10,6 @@ module initval(clk, bar, foo, asdf);
   (* src = "dut.sv:1.39-1.42" *)
   input [3:0] bar;
   wire [3:0] bar;
-  (* init = 4'b00xx *)
   (* src = "dut.sv:1.57-1.60" *)
   output [3:0] foo;
   wire [3:0] foo;
@@ -18,31 +17,33 @@ module initval(clk, bar, foo, asdf);
   (* src = "dut.sv:1.62-1.66" *)
   output [3:0] asdf;
   wire [3:0] asdf;
+  (* init = 4'b00xx *)
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:3.13-3.25" *)
   (* unused_bits = "0 1" *)
   wire [3:0] last_bar;
   (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:9.3-10.26" *)
-  \$_DFF_P_  \foo_reg[2]  /* _0_ */ (
-    .C(clk),
-    .D(bar[2]),
-    .Q(foo[2])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:9.3-10.26" *)
-  \$_DFF_P_  \foo_reg[3]  /* _1_ */ (
-    .C(clk),
-    .D(bar[3]),
-    .Q(foo[3])
-  );
-  (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:15.3-16.23" *)
-  \$_DFF_P_  \asdf_reg[3]  /* _2_ */ (
+  \$_DFF_P_  \asdf_reg[3]  /* _0_ */ (
     .C(clk),
     .D(bar[3]),
     .Q(asdf[3])
   );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.3-13.21" *)
+  \$_DFF_P_  \last_bar_reg[2]  /* _1_ */ (
+    .C(clk),
+    .D(bar[2]),
+    .Q(last_bar[2])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.3-13.21" *)
+  \$_DFF_P_  \last_bar_reg[3]  /* _2_ */ (
+    .C(clk),
+    .D(bar[3]),
+    .Q(last_bar[3])
+  );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:20.3-20.54" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -58,7 +59,6 @@ module initval(clk, bar, foo, asdf);
     .EN(1'h1),
     .TRG()
   );
-  assign last_bar[3:2] = foo[3:2];
   assign asdf[2:0] = 3'h7;
-  assign foo[1:0] = bar[1:0];
+  assign foo = { last_bar[3:2], bar[1:0] };
 endmodule

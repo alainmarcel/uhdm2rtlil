@@ -14,7 +14,168 @@ module top();
   (* src = "dut.sv:12.6-12.7" *)
   (* wiretype = "\\w_t" *)
   wire [31:0] w;
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:64.3-64.32" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967294),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _00_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:65.3-65.32" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967293),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _01_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:66.3-66.28" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967292),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _02_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:67.3-67.28" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967291),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _03_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:68.3-68.31" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967290),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _04_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:69.3-69.34" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967289),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _05_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:70.3-70.34" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967288),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _06_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:71.3-71.30" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967287),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _07_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
   (* src = "dut.sv:72.3-72.30" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967286),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _08_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:73.3-73.33" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967285),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _09_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:16.3-16.26" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
@@ -23,7 +184,39 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _0_ (
+  ) _10_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:74.3-74.31" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967284),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _11_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:85.3-85.29" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967283),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _12_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),

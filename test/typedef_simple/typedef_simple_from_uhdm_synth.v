@@ -20,7 +20,56 @@ module top();
   (* src = "dut.sv:10.20-10.24" *)
   (* wiretype = "\\int8_t" *)
   wire [7:0] int8;
+  (* keep = 32'd1 *)
   (* src = "dut.sv:15.12-15.36" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967294),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _0_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:16.12-16.40" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967293),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _1_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:17.12-17.40" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967292),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
+  ) _2_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:14.12-14.34" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
@@ -29,7 +78,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _0_ (
+  ) _3_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),

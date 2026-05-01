@@ -150,6 +150,7 @@ module \top
     connect \Y $eq$dut.sv:66$7_Y
   end
   attribute \src "dut.sv:66.9-66.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$10
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
@@ -175,11 +176,12 @@ module \top
     connect \Y $eq$dut.sv:67$11_Y
   end
   attribute \src "dut.sv:67.9-67.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$14
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -200,11 +202,12 @@ module \top
     connect \Y $eq$dut.sv:68$15_Y
   end
   attribute \src "dut.sv:68.9-68.29"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$18
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -225,11 +228,12 @@ module \top
     connect \Y $eq$dut.sv:69$19_Y
   end
   attribute \src "dut.sv:69.9-69.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$22
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -250,11 +254,12 @@ module \top
     connect \Y $eq$dut.sv:70$23_Y
   end
   attribute \src "dut.sv:70.9-70.29"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$26
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -275,11 +280,12 @@ module \top
     connect \Y $eq$dut.sv:71$27_Y
   end
   attribute \src "dut.sv:71.9-71.29"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$30
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -300,11 +306,12 @@ module \top
     connect \Y $eq$dut.sv:72$31_Y
   end
   attribute \src "dut.sv:72.9-72.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$34
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111001
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -318,18 +325,19 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 24
-    parameter \B_WIDTH 16
+    parameter \B_WIDTH 24
     parameter \Y_WIDTH 1
     connect \A \b4
-    connect \B 16'0100100001001001
+    connect \B 24'000000000100100001001001
     connect \Y $eq$dut.sv:73$35_Y
   end
   attribute \src "dut.sv:73.9-73.28"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$38
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111111000
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -350,11 +358,12 @@ module \top
     connect \Y $eq$dut.sv:74$39_Y
   end
   attribute \src "dut.sv:74.9-74.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$42
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110111
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -375,11 +384,12 @@ module \top
     connect \Y $eq$dut.sv:75$43_Y
   end
   attribute \src "dut.sv:75.9-75.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$46
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -400,11 +410,12 @@ module \top
     connect \Y $eq$dut.sv:76$47_Y
   end
   attribute \src "dut.sv:76.9-76.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$50
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110101
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -425,11 +436,12 @@ module \top
     connect \Y $eq$dut.sv:77$51_Y
   end
   attribute \src "dut.sv:77.9-77.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$54
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -450,11 +462,12 @@ module \top
     connect \Y $eq$dut.sv:78$55_Y
   end
   attribute \src "dut.sv:78.9-78.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$58
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110011
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -475,11 +488,12 @@ module \top
     connect \Y $eq$dut.sv:79$59_Y
   end
   attribute \src "dut.sv:79.9-79.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$62
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -500,11 +514,12 @@ module \top
     connect \Y $eq$dut.sv:80$63_Y
   end
   attribute \src "dut.sv:80.9-80.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$66
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110001
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -525,11 +540,12 @@ module \top
     connect \Y $eq$dut.sv:81$67_Y
   end
   attribute \src "dut.sv:81.9-81.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$70
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111110000
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -550,11 +566,12 @@ module \top
     connect \Y $eq$dut.sv:83$71_Y
   end
   attribute \src "dut.sv:83.9-83.24"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$74
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111101111
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
@@ -575,11 +592,12 @@ module \top
     connect \Y $eq$dut.sv:84$75_Y
   end
   attribute \src "dut.sv:84.9-84.25"
+  attribute \keep 1
   cell $check $auto$process.cpp:53:import_immediate_assert$78
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111111
+    parameter \PRIORITY 32'11111111111111111111111111101110
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0

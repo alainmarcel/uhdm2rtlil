@@ -1341,10 +1341,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$9
     connect \Y $auto$rtlil.cc:3386:And$11
   end
@@ -1398,10 +1398,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$22
     connect \Y $auto$rtlil.cc:3386:And$24
   end
@@ -1455,10 +1455,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$36
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$35
     connect \Y $auto$rtlil.cc:3386:And$37
   end
@@ -1512,10 +1512,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$48
     connect \Y $auto$rtlil.cc:3386:And$50
   end
@@ -1569,10 +1569,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$62
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$61
     connect \Y $auto$rtlil.cc:3386:And$63
   end
@@ -1626,10 +1626,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$75
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$74
     connect \Y $auto$rtlil.cc:3386:And$76
   end
@@ -1683,10 +1683,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$88
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$87
     connect \Y $auto$rtlil.cc:3386:And$89
   end
@@ -1740,10 +1740,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$101
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$100
     connect \Y $auto$rtlil.cc:3386:And$102
   end
@@ -1797,10 +1797,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$114
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$113
     connect \Y $auto$rtlil.cc:3386:And$115
   end
@@ -1854,10 +1854,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$127
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$126
     connect \Y $auto$rtlil.cc:3386:And$128
   end
@@ -1911,10 +1911,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$140
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$139
     connect \Y $auto$rtlil.cc:3386:And$141
   end
@@ -1968,10 +1968,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$153
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$152
     connect \Y $auto$rtlil.cc:3386:And$154
   end
@@ -2025,10 +2025,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$166
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$165
     connect \Y $auto$rtlil.cc:3386:And$167
   end
@@ -2082,10 +2082,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$179
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$178
     connect \Y $auto$rtlil.cc:3386:And$180
   end
@@ -2139,10 +2139,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$192
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$191
     connect \Y $auto$rtlil.cc:3386:And$193
   end
@@ -2196,10 +2196,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$205
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$204
     connect \Y $auto$rtlil.cc:3386:And$206
   end
@@ -2253,10 +2253,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$218
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$217
     connect \Y $auto$rtlil.cc:3386:And$219
   end
@@ -2310,10 +2310,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$231
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$230
     connect \Y $auto$rtlil.cc:3386:And$232
   end
@@ -2367,10 +2367,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$244
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$243
     connect \Y $auto$rtlil.cc:3386:And$245
   end
@@ -2424,10 +2424,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$257
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$256
     connect \Y $auto$rtlil.cc:3386:And$258
   end
@@ -2481,10 +2481,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$270
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$269
     connect \Y $auto$rtlil.cc:3386:And$271
   end
@@ -2538,10 +2538,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$283
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$282
     connect \Y $auto$rtlil.cc:3386:And$284
   end
@@ -2595,10 +2595,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$296
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$295
     connect \Y $auto$rtlil.cc:3386:And$297
   end
@@ -2652,10 +2652,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$309
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$308
     connect \Y $auto$rtlil.cc:3386:And$310
   end
@@ -2709,10 +2709,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$322
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$321
     connect \Y $auto$rtlil.cc:3386:And$323
   end
@@ -2766,10 +2766,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$335
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$334
     connect \Y $auto$rtlil.cc:3386:And$336
   end
@@ -2823,10 +2823,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$348
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$347
     connect \Y $auto$rtlil.cc:3386:And$349
   end
@@ -2880,10 +2880,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$361
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$360
     connect \Y $auto$rtlil.cc:3386:And$362
   end
@@ -2937,10 +2937,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$374
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$373
     connect \Y $auto$rtlil.cc:3386:And$375
   end
@@ -2994,10 +2994,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$387
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$386
     connect \Y $auto$rtlil.cc:3386:And$388
   end
@@ -3051,10 +3051,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$400
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$399
     connect \Y $auto$rtlil.cc:3386:And$401
   end
@@ -3108,10 +3108,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$413
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[0].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$412
     connect \Y $auto$rtlil.cc:3386:And$414
   end
@@ -3165,10 +3165,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$426
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$425
     connect \Y $auto$rtlil.cc:3386:And$427
   end
@@ -3222,10 +3222,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$439
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$438
     connect \Y $auto$rtlil.cc:3386:And$440
   end
@@ -3279,10 +3279,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$452
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$451
     connect \Y $auto$rtlil.cc:3386:And$453
   end
@@ -3336,10 +3336,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$465
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$464
     connect \Y $auto$rtlil.cc:3386:And$466
   end
@@ -3393,10 +3393,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$478
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$477
     connect \Y $auto$rtlil.cc:3386:And$479
   end
@@ -3450,10 +3450,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$491
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$490
     connect \Y $auto$rtlil.cc:3386:And$492
   end
@@ -3507,10 +3507,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$504
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$503
     connect \Y $auto$rtlil.cc:3386:And$505
   end
@@ -3564,10 +3564,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$517
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$516
     connect \Y $auto$rtlil.cc:3386:And$518
   end
@@ -3621,10 +3621,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$530
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$529
     connect \Y $auto$rtlil.cc:3386:And$531
   end
@@ -3678,10 +3678,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$543
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$542
     connect \Y $auto$rtlil.cc:3386:And$544
   end
@@ -3735,10 +3735,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$556
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$555
     connect \Y $auto$rtlil.cc:3386:And$557
   end
@@ -3792,10 +3792,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$569
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$568
     connect \Y $auto$rtlil.cc:3386:And$570
   end
@@ -3849,10 +3849,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$582
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$581
     connect \Y $auto$rtlil.cc:3386:And$583
   end
@@ -3906,10 +3906,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$595
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$594
     connect \Y $auto$rtlil.cc:3386:And$596
   end
@@ -3963,10 +3963,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$608
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$607
     connect \Y $auto$rtlil.cc:3386:And$609
   end
@@ -4020,10 +4020,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$621
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$620
     connect \Y $auto$rtlil.cc:3386:And$622
   end
@@ -4077,10 +4077,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$634
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$633
     connect \Y $auto$rtlil.cc:3386:And$635
   end
@@ -4134,10 +4134,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$647
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$646
     connect \Y $auto$rtlil.cc:3386:And$648
   end
@@ -4191,10 +4191,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$660
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$659
     connect \Y $auto$rtlil.cc:3386:And$661
   end
@@ -4248,10 +4248,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$673
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$672
     connect \Y $auto$rtlil.cc:3386:And$674
   end
@@ -4305,10 +4305,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$686
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$685
     connect \Y $auto$rtlil.cc:3386:And$687
   end
@@ -4362,10 +4362,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$699
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$698
     connect \Y $auto$rtlil.cc:3386:And$700
   end
@@ -4419,10 +4419,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$712
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$711
     connect \Y $auto$rtlil.cc:3386:And$713
   end
@@ -4476,10 +4476,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$725
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$724
     connect \Y $auto$rtlil.cc:3386:And$726
   end
@@ -4533,10 +4533,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$738
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$737
     connect \Y $auto$rtlil.cc:3386:And$739
   end
@@ -4590,10 +4590,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$751
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$750
     connect \Y $auto$rtlil.cc:3386:And$752
   end
@@ -4647,10 +4647,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$764
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$763
     connect \Y $auto$rtlil.cc:3386:And$765
   end
@@ -4704,10 +4704,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$777
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$776
     connect \Y $auto$rtlil.cc:3386:And$778
   end
@@ -4761,10 +4761,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$790
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$789
     connect \Y $auto$rtlil.cc:3386:And$791
   end
@@ -4818,10 +4818,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$803
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$802
     connect \Y $auto$rtlil.cc:3386:And$804
   end
@@ -4875,10 +4875,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$816
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$815
     connect \Y $auto$rtlil.cc:3386:And$817
   end
@@ -4932,10 +4932,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$829
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[1].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$828
     connect \Y $auto$rtlil.cc:3386:And$830
   end
@@ -4989,10 +4989,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$842
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$841
     connect \Y $auto$rtlil.cc:3386:And$843
   end
@@ -5046,10 +5046,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$855
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$854
     connect \Y $auto$rtlil.cc:3386:And$856
   end
@@ -5103,10 +5103,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$868
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$867
     connect \Y $auto$rtlil.cc:3386:And$869
   end
@@ -5160,10 +5160,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$881
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$880
     connect \Y $auto$rtlil.cc:3386:And$882
   end
@@ -5217,10 +5217,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$894
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$893
     connect \Y $auto$rtlil.cc:3386:And$895
   end
@@ -5274,10 +5274,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$907
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$906
     connect \Y $auto$rtlil.cc:3386:And$908
   end
@@ -5331,10 +5331,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$920
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$919
     connect \Y $auto$rtlil.cc:3386:And$921
   end
@@ -5388,10 +5388,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$933
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$932
     connect \Y $auto$rtlil.cc:3386:And$934
   end
@@ -5445,10 +5445,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$946
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$945
     connect \Y $auto$rtlil.cc:3386:And$947
   end
@@ -5502,10 +5502,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$959
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$958
     connect \Y $auto$rtlil.cc:3386:And$960
   end
@@ -5559,10 +5559,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$972
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$971
     connect \Y $auto$rtlil.cc:3386:And$973
   end
@@ -5616,10 +5616,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$985
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$984
     connect \Y $auto$rtlil.cc:3386:And$986
   end
@@ -5673,10 +5673,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$998
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$997
     connect \Y $auto$rtlil.cc:3386:And$999
   end
@@ -5730,10 +5730,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1011
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1010
     connect \Y $auto$rtlil.cc:3386:And$1012
   end
@@ -5787,10 +5787,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1024
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1023
     connect \Y $auto$rtlil.cc:3386:And$1025
   end
@@ -5844,10 +5844,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1037
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1036
     connect \Y $auto$rtlil.cc:3386:And$1038
   end
@@ -5901,10 +5901,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1050
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1049
     connect \Y $auto$rtlil.cc:3386:And$1051
   end
@@ -5958,10 +5958,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1063
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1062
     connect \Y $auto$rtlil.cc:3386:And$1064
   end
@@ -6015,10 +6015,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1076
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1075
     connect \Y $auto$rtlil.cc:3386:And$1077
   end
@@ -6072,10 +6072,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1089
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1088
     connect \Y $auto$rtlil.cc:3386:And$1090
   end
@@ -6129,10 +6129,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1102
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1101
     connect \Y $auto$rtlil.cc:3386:And$1103
   end
@@ -6186,10 +6186,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1115
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1114
     connect \Y $auto$rtlil.cc:3386:And$1116
   end
@@ -6243,10 +6243,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1128
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1127
     connect \Y $auto$rtlil.cc:3386:And$1129
   end
@@ -6300,10 +6300,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1141
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1140
     connect \Y $auto$rtlil.cc:3386:And$1142
   end
@@ -6357,10 +6357,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1154
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1153
     connect \Y $auto$rtlil.cc:3386:And$1155
   end
@@ -6414,10 +6414,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1167
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1166
     connect \Y $auto$rtlil.cc:3386:And$1168
   end
@@ -6471,10 +6471,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1180
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1179
     connect \Y $auto$rtlil.cc:3386:And$1181
   end
@@ -6528,10 +6528,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1193
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1192
     connect \Y $auto$rtlil.cc:3386:And$1194
   end
@@ -6585,10 +6585,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1206
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1205
     connect \Y $auto$rtlil.cc:3386:And$1207
   end
@@ -6642,10 +6642,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1219
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1218
     connect \Y $auto$rtlil.cc:3386:And$1220
   end
@@ -6699,10 +6699,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1232
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1231
     connect \Y $auto$rtlil.cc:3386:And$1233
   end
@@ -6756,10 +6756,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1245
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[2].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1244
     connect \Y $auto$rtlil.cc:3386:And$1246
   end
@@ -6813,10 +6813,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1258
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1257
     connect \Y $auto$rtlil.cc:3386:And$1259
   end
@@ -6870,10 +6870,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1271
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1270
     connect \Y $auto$rtlil.cc:3386:And$1272
   end
@@ -6927,10 +6927,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1284
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1283
     connect \Y $auto$rtlil.cc:3386:And$1285
   end
@@ -6984,10 +6984,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1297
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1296
     connect \Y $auto$rtlil.cc:3386:And$1298
   end
@@ -7041,10 +7041,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1310
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1309
     connect \Y $auto$rtlil.cc:3386:And$1311
   end
@@ -7098,10 +7098,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1323
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1322
     connect \Y $auto$rtlil.cc:3386:And$1324
   end
@@ -7155,10 +7155,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1336
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1335
     connect \Y $auto$rtlil.cc:3386:And$1337
   end
@@ -7212,10 +7212,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1349
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1348
     connect \Y $auto$rtlil.cc:3386:And$1350
   end
@@ -7269,10 +7269,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1362
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1361
     connect \Y $auto$rtlil.cc:3386:And$1363
   end
@@ -7326,10 +7326,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1375
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1374
     connect \Y $auto$rtlil.cc:3386:And$1376
   end
@@ -7383,10 +7383,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1388
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1387
     connect \Y $auto$rtlil.cc:3386:And$1389
   end
@@ -7440,10 +7440,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1401
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1400
     connect \Y $auto$rtlil.cc:3386:And$1402
   end
@@ -7497,10 +7497,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1414
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1413
     connect \Y $auto$rtlil.cc:3386:And$1415
   end
@@ -7554,10 +7554,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1427
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1426
     connect \Y $auto$rtlil.cc:3386:And$1428
   end
@@ -7611,10 +7611,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1440
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1439
     connect \Y $auto$rtlil.cc:3386:And$1441
   end
@@ -7668,10 +7668,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1453
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1452
     connect \Y $auto$rtlil.cc:3386:And$1454
   end
@@ -7725,10 +7725,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1466
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1465
     connect \Y $auto$rtlil.cc:3386:And$1467
   end
@@ -7782,10 +7782,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1479
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1478
     connect \Y $auto$rtlil.cc:3386:And$1480
   end
@@ -7839,10 +7839,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1492
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1491
     connect \Y $auto$rtlil.cc:3386:And$1493
   end
@@ -7896,10 +7896,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1505
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1504
     connect \Y $auto$rtlil.cc:3386:And$1506
   end
@@ -7953,10 +7953,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1518
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1517
     connect \Y $auto$rtlil.cc:3386:And$1519
   end
@@ -8010,10 +8010,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1531
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1530
     connect \Y $auto$rtlil.cc:3386:And$1532
   end
@@ -8067,10 +8067,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1544
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1543
     connect \Y $auto$rtlil.cc:3386:And$1545
   end
@@ -8124,10 +8124,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1557
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1556
     connect \Y $auto$rtlil.cc:3386:And$1558
   end
@@ -8181,10 +8181,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1570
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1569
     connect \Y $auto$rtlil.cc:3386:And$1571
   end
@@ -8238,10 +8238,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1583
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1582
     connect \Y $auto$rtlil.cc:3386:And$1584
   end
@@ -8295,10 +8295,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1596
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1595
     connect \Y $auto$rtlil.cc:3386:And$1597
   end
@@ -8352,10 +8352,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1609
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1608
     connect \Y $auto$rtlil.cc:3386:And$1610
   end
@@ -8409,10 +8409,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1622
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1621
     connect \Y $auto$rtlil.cc:3386:And$1623
   end
@@ -8466,10 +8466,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1635
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1634
     connect \Y $auto$rtlil.cc:3386:And$1636
   end
@@ -8523,10 +8523,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1648
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1647
     connect \Y $auto$rtlil.cc:3386:And$1649
   end
@@ -8580,10 +8580,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1661
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[3].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1660
     connect \Y $auto$rtlil.cc:3386:And$1662
   end
@@ -8637,10 +8637,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1674
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1673
     connect \Y $auto$rtlil.cc:3386:And$1675
   end
@@ -8694,10 +8694,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1687
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1686
     connect \Y $auto$rtlil.cc:3386:And$1688
   end
@@ -8751,10 +8751,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1700
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1699
     connect \Y $auto$rtlil.cc:3386:And$1701
   end
@@ -8808,10 +8808,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1713
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1712
     connect \Y $auto$rtlil.cc:3386:And$1714
   end
@@ -8865,10 +8865,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1726
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1725
     connect \Y $auto$rtlil.cc:3386:And$1727
   end
@@ -8922,10 +8922,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1739
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1738
     connect \Y $auto$rtlil.cc:3386:And$1740
   end
@@ -8979,10 +8979,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1752
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1751
     connect \Y $auto$rtlil.cc:3386:And$1753
   end
@@ -9036,10 +9036,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1765
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1764
     connect \Y $auto$rtlil.cc:3386:And$1766
   end
@@ -9093,10 +9093,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1778
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1777
     connect \Y $auto$rtlil.cc:3386:And$1779
   end
@@ -9150,10 +9150,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1791
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1790
     connect \Y $auto$rtlil.cc:3386:And$1792
   end
@@ -9207,10 +9207,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1804
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1803
     connect \Y $auto$rtlil.cc:3386:And$1805
   end
@@ -9264,10 +9264,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1817
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1816
     connect \Y $auto$rtlil.cc:3386:And$1818
   end
@@ -9321,10 +9321,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1830
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1829
     connect \Y $auto$rtlil.cc:3386:And$1831
   end
@@ -9378,10 +9378,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1843
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1842
     connect \Y $auto$rtlil.cc:3386:And$1844
   end
@@ -9435,10 +9435,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1856
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1855
     connect \Y $auto$rtlil.cc:3386:And$1857
   end
@@ -9492,10 +9492,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1869
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1868
     connect \Y $auto$rtlil.cc:3386:And$1870
   end
@@ -9549,10 +9549,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1882
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1881
     connect \Y $auto$rtlil.cc:3386:And$1883
   end
@@ -9606,10 +9606,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1895
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1894
     connect \Y $auto$rtlil.cc:3386:And$1896
   end
@@ -9663,10 +9663,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1908
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1907
     connect \Y $auto$rtlil.cc:3386:And$1909
   end
@@ -9720,10 +9720,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1921
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1920
     connect \Y $auto$rtlil.cc:3386:And$1922
   end
@@ -9777,10 +9777,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1934
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1933
     connect \Y $auto$rtlil.cc:3386:And$1935
   end
@@ -9834,10 +9834,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1947
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1946
     connect \Y $auto$rtlil.cc:3386:And$1948
   end
@@ -9891,10 +9891,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1960
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1959
     connect \Y $auto$rtlil.cc:3386:And$1961
   end
@@ -9948,10 +9948,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1973
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1972
     connect \Y $auto$rtlil.cc:3386:And$1974
   end
@@ -10005,10 +10005,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1986
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1985
     connect \Y $auto$rtlil.cc:3386:And$1987
   end
@@ -10062,10 +10062,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$1999
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$1998
     connect \Y $auto$rtlil.cc:3386:And$2000
   end
@@ -10119,10 +10119,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2012
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2011
     connect \Y $auto$rtlil.cc:3386:And$2013
   end
@@ -10176,10 +10176,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2025
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2024
     connect \Y $auto$rtlil.cc:3386:And$2026
   end
@@ -10233,10 +10233,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2038
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2037
     connect \Y $auto$rtlil.cc:3386:And$2039
   end
@@ -10290,10 +10290,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2051
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2050
     connect \Y $auto$rtlil.cc:3386:And$2052
   end
@@ -10347,10 +10347,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2064
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2063
     connect \Y $auto$rtlil.cc:3386:And$2065
   end
@@ -10404,10 +10404,10 @@ module \a23_barrel_shift_fpga_rotate
   cell $and $and$dut.sv:22$2077
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \netgen[4].in [0]
     connect \B $auto$rtlil.cc:3388:Xor$2076
     connect \Y $auto$rtlil.cc:3386:And$2078
   end

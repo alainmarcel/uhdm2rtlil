@@ -7,22 +7,22 @@ module \top
   wire width 32 output 1 \out1
   attribute \src "dut.sv:9.30-9.34"
   wire width 32 output 2 \out2
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$1
-  wire width 32 $auto$module.cpp:790:import_continuous_assign$3
-  cell $pos $auto$module.cpp:791:import_continuous_assign$2
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$1
+  wire width 32 $auto$module.cpp:807:import_continuous_assign$3
+  cell $pos $auto$module.cpp:808:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A 2'11
-    connect \Y $auto$module.cpp:790:import_continuous_assign$1
+    connect \Y $auto$module.cpp:807:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:791:import_continuous_assign$4
+  cell $pos $auto$module.cpp:808:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A 4'1111
-    connect \Y $auto$module.cpp:790:import_continuous_assign$3
+    connect \Y $auto$module.cpp:807:import_continuous_assign$3
   end
-  connect \out1 $auto$module.cpp:790:import_continuous_assign$1
-  connect \out2 $auto$module.cpp:790:import_continuous_assign$3
+  connect \out1 $auto$module.cpp:807:import_continuous_assign$1
+  connect \out2 $auto$module.cpp:807:import_continuous_assign$3
 end
