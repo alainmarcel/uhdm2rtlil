@@ -1827,9 +1827,15 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             std::string hierarchical_name = full_gen_path + "." + var_name;
             int width = get_width(var, current_instance);
             
-            // Check if we already have this wire with the hierarchical name
-            if (!name_map.count(hierarchical_name)) {
-                RTLIL::Wire* w = create_wire(hierarchical_name, width);
+            // The wire may already exist if it was referenced (created on demand)
+            // by an outer process before we got here.  In that case we still
+            // need to drive its initializer expression — otherwise the wire
+            // stays at X.  Look up the existing wire instead of skipping.
+            RTLIL::Wire* w = nullptr;
+            if (name_map.count(hierarchical_name)) {
+                w = name_map[hierarchical_name];
+            } else {
+                w = create_wire(hierarchical_name, width);
                 wire_map[var] = w;
                 // Don't map simple name to avoid conflicts between generate instances
                 name_map[hierarchical_name] = w;  // Map the full hierarchical name
@@ -1839,7 +1845,8 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
                 }
                 log("UHDM: Created wire '%s' (width=%d, signed=%d) for generate scope variable\n",
                     hierarchical_name.c_str(), width, w->is_signed ? 1 : 0);
-
+            }
+            if (w) {
                 // If the variable has an initializer expression, create a continuous
                 // assignment to drive the wire with its initial value.
                 // e.g. "integer x = -1;" → "assign \gen.x = 32'hFFFFFFFF;"
