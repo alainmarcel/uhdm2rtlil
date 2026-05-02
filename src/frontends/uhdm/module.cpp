@@ -818,6 +818,23 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         // Check if the RHS is a constant expression
         bool is_constant = rhs.is_fully_const();
 
+        // SystemVerilog port default value: `input [3:0] delta = 10`.
+        // Surelog emits this as a cont_assign with vpiNetDeclAssign:1 driving
+        // the input port's wire to a constant inside the module body.  For
+        // each instantiation that *does* connect the port, the constant must
+        // not actually drive the wire (the parent's connection should win),
+        // so we mirror what the Verilog frontend does: tag the input wire
+        // with the `\defaultvalue` attribute and skip emitting any driver.
+        // Yosys's hierarchy pass then substitutes the default at instance
+        // sites whose port is left unconnected.
+        if (is_constant && lhs.is_wire() && lhs.as_wire()->port_input) {
+            RTLIL::Wire *w = lhs.as_wire();
+            w->attributes[ID::defaultvalue] = rhs.as_const();
+            if (mode_debug)
+                log("  Set \\defaultvalue on input port '%s'\n", w->name.c_str());
+            return;
+        }
+
         // In a generate scope, a constant net declaration assignment (e.g. `reg x = -1`)
         // has no FF driver — the net is effectively a constant wire.  Use module->connect
         // so that constant propagation (opt_expr) can fold it away.
