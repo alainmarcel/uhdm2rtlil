@@ -2714,84 +2714,95 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             }
             break;
         case vpiCastOp:
-            // Cast operation like 3'('x) or 64'(value)
+            // SV size/type cast: N'(expr), byte'(expr), int'(expr),
+            // typename'(expr), etc.  Width comes from the cast's typespec;
+            // signedness for extension comes from the *operand* (per LRM,
+            // the cast type signedness sets the result type signedness, but
+            // the bit-pattern conversion sign-extends only if the source is
+            // signed; otherwise zero-extends).
             log("    Processing cast operation\n");
             if (operands.size() == 1) {
-                // Get the target width from the typespec
                 int target_width = 0;
+                bool target_signed = false;
                 if (uhdm_op->Typespec()) {
                     const ref_typespec* ref_ts = uhdm_op->Typespec();
-                    const typespec* ts = ref_ts->Actual_typespec();
-                    // For integer typespec, get the actual value
-                    if (ts->VpiType() == vpiIntegerTypespec) {
-                        const integer_typespec* its = any_cast<const integer_typespec*>(ts);
-                        // Get the actual value from VpiValue()
-                        std::string val_str = std::string(its->VpiValue());
-                        if (!val_str.empty()) {
-                            RTLIL::Const width_const = extract_const_from_value(val_str);
-                            if (width_const.size() > 0) {
-                                target_width = width_const.as_int();
+                    const typespec* ts = ref_ts ? ref_ts->Actual_typespec() : nullptr;
+                    if (ts) {
+                        // For literal-width casts (e.g. 3'(...)), Surelog stores
+                        // the width as the value of an integer_typespec.
+                        if (ts->VpiType() == vpiIntegerTypespec) {
+                            const integer_typespec* its = any_cast<const integer_typespec*>(ts);
+                            std::string val_str = std::string(its->VpiValue());
+                            if (!val_str.empty()) {
+                                RTLIL::Const width_const = extract_const_from_value(val_str);
+                                if (width_const.size() > 0)
+                                    target_width = width_const.as_int();
                             }
                         }
+                        // Otherwise compute the width from the type itself
+                        // (byte/int/short/long/typedef/struct/logic).
+                        if (target_width <= 0) {
+                            int w = get_width_from_typespec(ts, current_instance);
+                            if (w > 0) target_width = w;
+                        }
+                        target_signed = is_typespec_signed(ts);
                     }
                 }
-                
+
                 if (target_width > 0) {
-                    // Handle the cast based on operand type
                     RTLIL::SigSpec operand = operands[0];
-                    
-                    // If operand is a constant, handle it directly
+
+                    // Determine source signedness.  Walk the underlying UHDM
+                    // expression for ref/const cases; for non-trivial operands
+                    // fall back to the wire's is_signed flag.
+                    bool src_signed = false;
+                    if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
+                        if (auto src_e = any_cast<const expr*>(uhdm_op->Operands()->at(0)))
+                            src_signed = is_expr_signed(src_e);
+                    }
+                    if (!src_signed && operand.is_wire())
+                        src_signed = operand.as_wire()->is_signed;
+
                     if (operand.is_fully_const()) {
                         RTLIL::Const const_val = operand.as_const();
-                        
-                        // For small constants that are all the same value, expand to target width
-                        // This handles cases like 3'('x), 3'('z), 3'('0), 3'('1)
-                        if (const_val.size() <= target_width) {
-                            // Check if all bits are the same value
-                            bool all_x = true;
-                            bool all_z = true;
-                            bool all_0 = true;
-                            bool all_1 = true;
+                        if (const_val.size() < target_width) {
+                            // Special-case constants whose bits are all one
+                            // state — those represent fill literals (`'1`,
+                            // `'0`, `'x`, `'z`) that should self-replicate.
+                            bool all_x = true, all_z = true, all_0 = true, all_1 = true;
                             for (auto bit : const_val) {
                                 if (bit != RTLIL::State::Sx) all_x = false;
                                 if (bit != RTLIL::State::Sz) all_z = false;
                                 if (bit != RTLIL::State::S0) all_0 = false;
                                 if (bit != RTLIL::State::S1) all_1 = false;
                             }
-                            
-                            // If all bits are X, expand to full width with X
-                            if (all_x) {
-                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, target_width));
-                            }
-                            // If all bits are Z, expand to full width with Z
-                            if (all_z) {
-                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, target_width));
-                            }
-                            // If all bits are 0, expand to full width with 0
-                            if (all_0) {
-                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S0, target_width));
-                            }
-                            // If all bits are 1, expand to full width with 1
-                            if (all_1) {
-                                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::S1, target_width));
-                            }
-                        }
-                        
-                        // For other constants, resize appropriately
-                        if (const_val.size() < target_width) {
-                            // Zero-extend
-                            const_val.resize(target_width, RTLIL::State::S0);
+                            RTLIL::State fill = RTLIL::State::S0;
+                            if (all_x)      fill = RTLIL::State::Sx;
+                            else if (all_z) fill = RTLIL::State::Sz;
+                            else if (all_1) fill = RTLIL::State::S1;
+                            else if (all_0) fill = RTLIL::State::S0;
+                            else if (src_signed) fill = const_val.back();
+                            const_val.resize(target_width, fill);
                         } else if (const_val.size() > target_width) {
-                            // Truncate
                             const_val.resize(target_width, RTLIL::State::S0);
                         }
+                        // Tag the result const with the cast's signedness
+                        // so downstream consumers can pick the right
+                        // sign-extension if needed.
+                        if (target_signed) const_val.flags |= RTLIL::CONST_FLAG_SIGNED;
                         return RTLIL::SigSpec(const_val);
                     }
-                    
-                    // For non-constant operands, use $pos to cast/resize
-                    RTLIL::SigSpec result = module->addWire(NEW_ID, target_width);
-                    module->addPos(NEW_ID, operand, result);
-                    return result;
+
+                    // Non-constant operand: emit `$pos` so synthesis correctly
+                    // sign- or zero-extends.  Pass src_signed so the resulting
+                    // cell sets A_SIGNED appropriately.
+                    if (operand.size() == target_width)
+                        return operand;
+                    RTLIL::Wire* result_wire = module->addWire(NEW_ID, target_width);
+                    result_wire->is_signed = target_signed;
+                    add_src_attribute(result_wire->attributes, uhdm_op);
+                    module->addPos(NEW_ID, operand, result_wire, src_signed);
+                    return RTLIL::SigSpec(result_wire);
                 }
             }
             log_warning("Unsupported cast operation\n");

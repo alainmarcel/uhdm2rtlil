@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 162 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (162/162 tests functional, 0 known failures)
-- **Passing**: 157 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 163 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (163/163 tests functional, 0 known failures)
+- **Passing**: 158 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
+  - `size_cast` - SystemVerilog size and type casts: literal-width casts (`1'(x)`, `2'(x)`, `3'(x)`), built-in atom-type casts (`byte'(x)`, `int'(x)`), typedef-named casts (`u3bit_t'(x)`, `s2bit_t'(x)`), packed-struct casts (`s12bit_packed_struct_t'(x)`), composed with bitwise/ternary expressions and `'0`/`'1` fill literals; ported from `third_party/yosys/tests/verilog/size_cast.sv` (~600 assertions)
   - `dynslice` - Dynamic indexed-part-select on the LHS of a non-blocking assignment in `always @(posedge clk)`: `dout[ctrl*sel +: 16] <= din` writes 16 bits of the 128-bit `dout` register at a runtime-computed offset; ported from `third_party/yosys/tests/simple/dynslice.v`
   - `defvalue` - Module-port default values: `input [3:0] delta = 10` provides a constant default that is used when an instance does not connect the port. The test instantiates `cnt foo (.delta)` (connected) and `cnt bar (...)` (unconnected, defaulted to 10), so `bar` increments by 10 each clock and `foo` by the parent's delta. Ported from `third_party/yosys/tests/simple/defvalue.sv`
   - `case_expr_query` - System query functions in case expressions and labels: `$bits`, `$size`, `$high`, `$low`, `$left`, `$right` applied to a packed scalar (`logic [5:0] out`); 12 nested `case` statements all match (e.g. `case ($bits(out)) 6:`, `case (5) $high(out):`) so the body unconditionally drives `out = '1` (= `6'h3f`); ported from `third_party/yosys/tests/simple/case_expr_query.sv`
@@ -62,6 +63,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `size_cast` — SV size/type casts now handle the full set of integral/typedef/struct typespecs and sign-extend signed operands ✅
+    - **Root cause**: the `vpiCastOp` handler in `expression.cpp` only computed a target width when the cast typespec was an `integer_typespec` (the case Surelog uses for literal-width casts like `3'(x)`). Every other cast — `byte'`, `int'`, `u3bit_t'`, `s12bit_packed_struct_t'`, etc. — fell through to "Unsupported cast operation" and returned an empty `SigSpec`. Downstream that empty operand corrupted comparison expressions and triggered a segfault on this 600-assertion test
+    - **Fix**: the cast handler now (1) keeps the integer_typespec-VpiValue fast path for literal-width casts, then (2) falls back to `get_width_from_typespec(actual_ts, ...)` for every other typespec — covering `byte`/`int`/`shortint`/`longint`/`integer`/`logic`/`bit`/`struct`/typedef variants. Cast-result signedness comes from `is_typespec_signed(actual_ts)` and is propagated as `wire->is_signed` (and as `CONST_FLAG_SIGNED` for fully-constant results). Source signedness for the bit-pattern conversion is taken from the operand's UHDM expression via `is_expr_signed()` (with a fallback to the wire's `is_signed`), and `module->addPos(NEW_ID, operand, result_wire, src_signed)` now sign-extends signed operands to the target width when widening
   - `dynslice` — dynamic indexed-part-select on the LHS of a clocked non-blocking assignment now correctly drives the *full* base wire via a read-modify-write pattern instead of leaving the base undriven ✅
     - **Root cause**: in `import_always_ff`'s comb-style path, the LHS of a non-blocking assignment is imported with `import_expression`. For a dynamic indexed-part-select `dout[ctrl*sel +: 16]`, this produces a fresh 16-bit `$shiftx` output wire; `import_always_ff` then created a `$0\<that-shiftx-wire>` FF temp and wired the sync rule to it, so the actual 128-bit `dout` register was never driven. Result: `assign dout = 128'hxxx…xxx` and the always block dropped on the floor
     - **Fix**: `needs_sync_path()` (process_helper.cpp) now reports `true` when an assignment's LHS is an `vpiIndexedPartSelect` whose base expression is non-constant. The always_ff path then routes through the sync handler (`import_assignment_sync`) instead. A new branch in `import_assignment_sync` (process.cpp) detects this LHS form and emits the explicit read-modify-write: `shifted_data = (zext din) << offset`, `shifted_mask = mask_pattern << offset`, `new_base = (base & ~shifted_mask) | shifted_data`, then registers `pending_sync_assignments[full_base] = new_base` (mux-wrapped under any current_condition). `proc_dff` then materialises a single 128-bit `$dff` for `dout`
