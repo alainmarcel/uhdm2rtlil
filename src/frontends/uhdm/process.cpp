@@ -5918,9 +5918,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         lhs = import_expression(lhs_expr);
     }
 
+    // Detect unbased unsized fill-ones constant ('1) before importing so we
+    // can replicate it to the LHS width rather than zero-extend.
+    bool rhs_is_fill_ones = false;
     // Import RHS (could be an expr or other type)
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            if (rhs_expr->UhdmType() == uhdmconstant) {
+                const constant* c = any_cast<const constant*>(rhs_expr);
+                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
+                    rhs_is_fill_ones = true;
+            }
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
@@ -5951,12 +5959,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         }
         rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
+        // Compound op result is no longer a raw fill-ones constant
+        rhs_is_fill_ones = false;
     }
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
-            rhs.extend_u0(lhs.size(), rhs_is_signed);
+            if (rhs_is_fill_ones) {
+                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            } else {
+                bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
+                rhs.extend_u0(lhs.size(), rhs_is_signed);
+            }
         } else {
             rhs = rhs.extract(0, lhs.size());
         }
@@ -6117,15 +6131,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
-    
+
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         lhs = import_expression(lhs_expr);
     }
-    
-    // Import RHS (could be an expr or other type)
+
+    // Detect unbased unsized fill-ones constant ('1) before importing so we
+    // can replicate it to the LHS width rather than zero-extend (matches the
+    // sync-path handling).
+    bool rhs_is_fill_ones = false;
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+            if (rhs_expr->UhdmType() == uhdmconstant) {
+                const constant* c = any_cast<const constant*>(rhs_expr);
+                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
+                    rhs_is_fill_ones = true;
+            }
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
@@ -6157,8 +6179,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
-            rhs.extend_u0(lhs.size(), rhs_is_signed);
+            if (rhs_is_fill_ones) {
+                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            } else {
+                bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
+                rhs.extend_u0(lhs.size(), rhs_is_signed);
+            }
         } else {
             rhs = rhs.extract(0, lhs.size());
         }
@@ -6168,10 +6194,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     if (!current_signal_temp_wires.empty()) {
         auto lhs_expr = uhdm_assign->Lhs();
         if (!lhs_expr) return;
-        
+
         // Extract the base signal name from the LHS
         std::string signal_name;
-        
+
         if (lhs_expr->VpiType() == vpiRefObj) {
             const ref_obj* ref = any_cast<const ref_obj*>(lhs_expr);
             if (!ref->VpiName().empty()) {
@@ -6190,15 +6216,15 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 signal_name = std::string(ips->VpiParent()->VpiName());
             }
         }
-        
+
         // If we have a temp wire for this signal, assign to it
-        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n", 
+        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
             signal_name.c_str(), current_signal_temp_wires.size());
         if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
             log("      Found temp wire for signal '%s'\n", signal_name.c_str());
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
-            
+
             // For part selects, we should not use temp wires (causes issues with generate blocks)
             if (lhs_expr->VpiType() == vpiPartSelect || lhs_expr->VpiType() == vpiIndexedPartSelect) {
                 // Just do normal assignment for part selects
@@ -6796,6 +6822,13 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     // Cast to proper expr type
                     if (auto lhs = any_cast<const UHDM::expr*>(lhs_expr)) {
                         if (auto rhs = any_cast<const UHDM::expr*>(rhs_expr)) {
+                            // Detect '1 fill literal before importing — needs replication, not zero-extension
+                            bool rhs_is_fill_ones = false;
+                            if (rhs->UhdmType() == uhdmconstant) {
+                                const constant* c = any_cast<const constant*>(rhs);
+                                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
+                                    rhs_is_fill_ones = true;
+                            }
                             RTLIL::SigSpec lhs_sig = import_expression(lhs);
                             RTLIL::SigSpec rhs_sig = import_expression(rhs);
                             
@@ -6846,8 +6879,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // Ensure RHS matches LHS width
                             if (target_sig.size() != rhs_sig.size()) {
                                 if (rhs_sig.size() < target_sig.size()) {
-                                    // Extend RHS to match target width
-                                    rhs_sig.extend_u0(target_sig.size());
+                                    if (rhs_is_fill_ones) {
+                                        rhs_sig = RTLIL::SigSpec(RTLIL::State::S1, target_sig.size());
+                                    } else {
+                                        // Extend RHS to match target width
+                                        rhs_sig.extend_u0(target_sig.size());
+                                    }
                                 } else {
                                     // Truncate RHS to match target width
                                     rhs_sig = rhs_sig.extract(0, target_sig.size());
