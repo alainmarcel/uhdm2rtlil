@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 163 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (163/163 tests functional, 0 known failures)
-- **Passing**: 158 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 164 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (164/164 tests functional, 0 known failures)
+- **Passing**: 159 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
+  - `prefix` - Hierarchical references with assorted prefix forms (bare names, block-prefixed, top-prefixed, bit-selects on hier paths, c[j] dynamic bit-select on a hier path) over nested generate scopes; cross-scope reads of generate-block variables `a/b/c` initialised from genvars are exercised from sibling/outer always blocks; ported from `third_party/yosys/tests/verilog/prefix.sv`
   - `size_cast` - SystemVerilog size and type casts: literal-width casts (`1'(x)`, `2'(x)`, `3'(x)`), built-in atom-type casts (`byte'(x)`, `int'(x)`), typedef-named casts (`u3bit_t'(x)`, `s2bit_t'(x)`), packed-struct casts (`s12bit_packed_struct_t'(x)`), composed with bitwise/ternary expressions and `'0`/`'1` fill literals; ported from `third_party/yosys/tests/verilog/size_cast.sv` (~600 assertions)
   - `dynslice` - Dynamic indexed-part-select on the LHS of a non-blocking assignment in `always @(posedge clk)`: `dout[ctrl*sel +: 16] <= din` writes 16 bits of the 128-bit `dout` register at a runtime-computed offset; ported from `third_party/yosys/tests/simple/dynslice.v`
   - `defvalue` - Module-port default values: `input [3:0] delta = 10` provides a constant default that is used when an instance does not connect the port. The test instantiates `cnt foo (.delta)` (connected) and `cnt bar (...)` (unconnected, defaulted to 10), so `bar` increments by 10 each clock and `foo` by the parent's delta. Ported from `third_party/yosys/tests/simple/defvalue.sv`
@@ -63,6 +64,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `prefix` — generate-scope variable initialisers are now applied even when the wire was lazily created by an outer reference ✅
+    - **Root cause**: in `import_gen_scope`, the wire-creation block AND the `var->Expr()` initialiser-driver block both lived inside `if (!name_map.count(hierarchical_name))`. When an outer `always @*` referenced `blk1.blk2[0].b` via a hier_path before we visited `blk2[0]`'s gen_scope, the wire was already created on demand — so when we got to the gen_scope, `name_map.count(...)` was true and we silently skipped the initialiser. The wire stayed at X, and every assertion reading `b` (or `c`) folded to a falsified comparison
+    - **Fix**: split the two concerns. We still create the wire only when missing, but we always look up the wire (creating or finding) and *always* run the `var->Expr()` initialiser path against it. Keeps the outer-reference creation order working while making sure each generate-scope variable is driven by its declared initialiser
   - `size_cast` — SV size/type casts now handle the full set of integral/typedef/struct typespecs and sign-extend signed operands ✅
     - **Root cause**: the `vpiCastOp` handler in `expression.cpp` only computed a target width when the cast typespec was an `integer_typespec` (the case Surelog uses for literal-width casts like `3'(x)`). Every other cast — `byte'`, `int'`, `u3bit_t'`, `s12bit_packed_struct_t'`, etc. — fell through to "Unsupported cast operation" and returned an empty `SigSpec`. Downstream that empty operand corrupted comparison expressions and triggered a segfault on this 600-assertion test
     - **Fix**: the cast handler now (1) keeps the integer_typespec-VpiValue fast path for literal-width casts, then (2) falls back to `get_width_from_typespec(actual_ts, ...)` for every other typespec — covering `byte`/`int`/`shortint`/`longint`/`integer`/`logic`/`bit`/`struct`/typedef variants. Cast-result signedness comes from `is_typespec_signed(actual_ts)` and is propagated as `wire->is_signed` (and as `CONST_FLAG_SIGNED` for fully-constant results). Source signedness for the bit-pattern conversion is taken from the operand's UHDM expression via `is_expr_signed()` (with a fallback to the wire's `is_signed`), and `module->addPos(NEW_ID, operand, result_wire, src_signed)` now sign-extends signed operands to the target width when widening
