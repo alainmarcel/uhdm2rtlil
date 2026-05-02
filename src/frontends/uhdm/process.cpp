@@ -5510,12 +5510,104 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
 void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::SyncRule* sync) {
     log("            import_assignment_sync called\n");
     log_flush();
-    
+
+    // Detect a dynamic indexed-part-select LHS (e.g. `dout[ctrl*sel +: 16] <= din`).
+    // For non-constant offsets we must emit a read-modify-write on the *full*
+    // base wire, because the destination bits are not known at synthesis time.
+    // Pattern (for [+:width]):
+    //   shifted_data = (zext_to_base_width din) << offset
+    //   shifted_mask = mask_pattern << offset      (mask_pattern has `width` low bits set)
+    //   new_base     = (base & ~shifted_mask) | shifted_data
+    // Then: full_base <= new_base (under any current_condition).
+    if (auto lhs_expr = uhdm_assign->Lhs(); lhs_expr && lhs_expr->VpiType() == vpiIndexedPartSelect) {
+        const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
+        // Width must be constant; offset may be dynamic.
+        RTLIL::SigSpec width_sig = import_expression(ips->Width_expr());
+        RTLIL::SigSpec offset_sig = import_expression(ips->Base_expr());
+        if (width_sig.is_fully_const() && !offset_sig.is_fully_const()) {
+            // Resolve the base wire by name.
+            std::string base_name;
+            if (!ips->VpiDefName().empty()) base_name = std::string(ips->VpiDefName());
+            else if (!ips->VpiName().empty()) base_name = std::string(ips->VpiName());
+            RTLIL::Wire* base_wire = base_name.empty() ? nullptr
+                                     : find_wire_in_scope(base_name, "indexed part select sync LHS");
+            if (base_wire) {
+                int base_width = base_wire->width;
+                int width = width_sig.as_const().as_int();
+
+                // For [-:width], LSB offset = base_offset - (width - 1).
+                RTLIL::SigSpec lsb_offset = offset_sig;
+                if (ips->VpiIndexedPartSelectType() != vpiPosIndexed && width > 1) {
+                    RTLIL::Wire* sub_w = module->addWire(NEW_ID, offset_sig.size());
+                    module->addSub(NEW_ID, offset_sig,
+                                   RTLIL::SigSpec(RTLIL::Const(width - 1, offset_sig.size())),
+                                   sub_w);
+                    lsb_offset = RTLIL::SigSpec(sub_w);
+                }
+
+                // RHS, sized to slice width then zero-extended to base width.
+                RTLIL::SigSpec rhs;
+                if (auto rhs_any = uhdm_assign->Rhs()) {
+                    if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any))
+                        rhs = import_expression(rhs_expr);
+                }
+                if (rhs.size() < width) rhs.extend_u0(width, false);
+                else if (rhs.size() > width) rhs = rhs.extract(0, width);
+                RTLIL::SigSpec rhs_extended = rhs;
+                if (rhs_extended.size() < base_width)
+                    rhs_extended.extend_u0(base_width, false);
+
+                // shifted_data = rhs_extended << lsb_offset
+                RTLIL::Wire* shifted_data = module->addWire(NEW_ID, base_width);
+                module->addShl(NEW_ID, rhs_extended, lsb_offset, shifted_data);
+
+                // mask_pattern: base_width-bit constant with the low `width` bits set.
+                std::vector<RTLIL::State> mask_bits(base_width, RTLIL::State::S0);
+                for (int i = 0; i < width && i < base_width; i++)
+                    mask_bits[i] = RTLIL::State::S1;
+                RTLIL::Const mask_const(mask_bits);
+                RTLIL::SigSpec mask_pattern = RTLIL::SigSpec(mask_const);
+
+                // shifted_mask = mask_pattern << lsb_offset
+                RTLIL::Wire* shifted_mask = module->addWire(NEW_ID, base_width);
+                module->addShl(NEW_ID, mask_pattern, lsb_offset, shifted_mask);
+
+                RTLIL::Wire* inv_mask = module->addWire(NEW_ID, base_width);
+                module->addNot(NEW_ID, RTLIL::SigSpec(shifted_mask), inv_mask);
+
+                RTLIL::Wire* keep = module->addWire(NEW_ID, base_width);
+                module->addAnd(NEW_ID, RTLIL::SigSpec(base_wire),
+                               RTLIL::SigSpec(inv_mask), keep);
+
+                RTLIL::Wire* new_base = module->addWire(NEW_ID, base_width);
+                module->addOr(NEW_ID, RTLIL::SigSpec(keep),
+                              RTLIL::SigSpec(shifted_data), new_base);
+
+                RTLIL::SigSpec full_lhs(base_wire);
+                RTLIL::SigSpec final_rhs(new_base);
+
+                // Wrap in current_condition mux if we're inside an if branch.
+                if (!current_condition.empty()) {
+                    RTLIL::SigSpec else_val = pending_sync_assignments.count(full_lhs)
+                        ? pending_sync_assignments[full_lhs] : full_lhs;
+                    RTLIL::Wire* mux_w = module->addWire(NEW_ID, base_width);
+                    module->addMux(NEW_ID, else_val, final_rhs, current_condition, mux_w);
+                    final_rhs = RTLIL::SigSpec(mux_w);
+                }
+                pending_sync_assignments[full_lhs] = final_rhs;
+                if (mode_debug)
+                    log("    Dynamic indexed-part-select LHS: emitted read-modify-write on '%s'\n",
+                        base_wire->name.c_str());
+                return;
+            }
+        }
+    }
+
     // Check if this is a memory write (LHS is bit_select on a memory)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         log("            LHS expr type: %d\n", lhs_expr->VpiType());
         log_flush();
-        
+
         if (lhs_expr->VpiType() == vpiBitSelect) {
             log("            LHS is bit_select - checking for memory write\n");
             log_flush();
