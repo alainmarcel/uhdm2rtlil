@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 159 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (159/159 tests functional, 0 known failures)
-- **Passing**: 154 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 160 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (160/160 tests functional, 0 known failures)
+- **Passing**: 155 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
+  - `case_expr_query` - System query functions in case expressions and labels: `$bits`, `$size`, `$high`, `$low`, `$left`, `$right` applied to a packed scalar (`logic [5:0] out`); 12 nested `case` statements all match (e.g. `case ($bits(out)) 6:`, `case (5) $high(out):`) so the body unconditionally drives `out = '1` (= `6'h3f`); ported from `third_party/yosys/tests/simple/case_expr_query.sv`
   - `case_expr_non_const` - Case statements where the case expression and the case-item labels are non-constant references (signed/unsigned `reg` variables of differing widths): exercises SV LRM 12.5.1 context width and signedness rules, including signed-vs-signed comparisons that require sign-extension of the narrower label and mixed signed/unsigned comparisons that fall back to zero-extension; ported from `third_party/yosys/tests/simple/case_expr_non_const.v`
   - `case_expr_extend` - Unbased unsized fill literal `'1` assigned inside a `case` arm in an initial block: `case (1'b1 << 1) 2'b10: out = '1; default: out = '0; endcase` correctly produces `out = 6'h3f` (the all-ones fill replicated to the LHS width) rather than `6'h01` (the 1-bit `'1` zero-extended); ported from `third_party/yosys/tests/simple/case_expr_extend.sv`
   - `package_task_func` - Package tasks and functions called from module scope: `P::t(a)` (task with output parameter), `P::f(3)` (function returning `i * X`), `P::g(3)` (recursive function), `P::Z` (package localparam from recursive function); concurrent `assert property` statements; required three fixes: (1) `evaluate_single_operand` now resolves package parameters via `ref->Actual_group()` when not in `local_vars` (enabling correct compile-time evaluation of `f = i * X`), (2) initial blocks containing a `task_call` are routed to the comb import path so `import_task_call_comb` can inline the task body, (3) module-level `assert_stmt` nodes under `vpiAssertion` now generate `$check` RTLIL cells
@@ -59,6 +60,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `case_expr_query` — SV array/range query system functions (`$bits`, `$size`, `$high`, `$low`, `$left`, `$right`) now evaluate to constants instead of returning the wire itself ✅
+    - **Root cause**: `import_expression` for `vpiSysFuncCall` only special-cased `$signed`/`$unsigned`/`$floor`/`$ceil`. For any other system function (including the query family) the fallback was `return args[0]` — i.e. for `$bits(out)` we returned the wire `out`, so a `case ($bits(out)) 6:` ended up comparing `out` against `6'b000110` at runtime instead of folding to `case (6) 6:` at compile time
+    - **Fix**: added a single branch that handles all six query functions: `$bits`/`$size` → the SigSpec width of the argument as a 32-bit constant; `$left`/`$right`/`$high`/`$low` → walk the argument's `ref_obj` → `variables`/`net` → `Typespec()->Actual_typespec()` (a `logic_typespec`) → first `Range`'s `Left_expr`/`Right_expr` to recover the declared `[L:R]` indices, then return the requested bound (`$high = max(L,R)`, `$low = min(L,R)`)
   - `case_expr_non_const` — case-statement signedness detection now walks `ref_obj` references to their underlying variable/parameter/net so SV LRM 12.5.1 context-extension picks sign-extension when all operands are signed ✅
     - **Root cause**: the static `is_expr_signed()` helper in `process.cpp` only inspected `vpiConstant` operands (looking for the `'s` sigil in `VpiDecompile()`). Any reference (`ref_obj` to a `reg signed x`, etc.) returned `false`, so `all_signed` was incorrectly false whenever a signed register was used as the case expression or a case label. The narrower signed labels were then zero-extended to the context width and never matched the case expression — producing `x` for case b/c (which had no default arm) and the wrong value for case f
     - **Fix**: promoted `is_expr_signed()` to a member of `UhdmImporter` and taught it to walk `ref_obj->Actual_group()` into a `variables`/`parameter`/`net` and consult `VpiSigned()` first, falling back to `is_typespec_signed()` on the typespec. The latter is needed because `reg signed` lands as a `logic_net` (not a `variables`) in the elaborated UHDM model and because constant typespecs occasionally carry the only surviving signedness flag

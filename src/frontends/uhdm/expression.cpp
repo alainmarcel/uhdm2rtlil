@@ -1379,8 +1379,66 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 } else if (func_name == "$ceil" && args.size() == 1) {
                     // $ceil for integer arguments is identity
                     return args[0];
+                } else if ((func_name == "$bits" || func_name == "$size" ||
+                            func_name == "$high" || func_name == "$low" ||
+                            func_name == "$left" || func_name == "$right") &&
+                           !args.empty() && func_call->Tf_call_args() &&
+                           !func_call->Tf_call_args()->empty()) {
+                    // SV array/range query functions on a packed scalar.
+                    // $bits, $size: total bit width of the argument.
+                    // $left/$right/$high/$low: the [L:R] range bounds.
+                    int bits = args[0].size();
+                    if (func_name == "$bits" || func_name == "$size") {
+                        log_debug("UHDM: %s returning %d\n", func_name.c_str(), bits);
+                        return RTLIL::SigSpec(RTLIL::Const(bits, 32));
+                    }
+                    // For $high/$low/$left/$right, walk the argument's typespec
+                    // ranges to recover the declared [L:R] indices.
+                    int left = bits - 1, right = 0;
+                    bool got_range = false;
+                    auto first_arg = func_call->Tf_call_args()->at(0);
+                    auto get_range_from_typespec = [&](const UHDM::any* ts) {
+                        if (!ts) return;
+                        if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
+                            if (auto ranges = lts->Ranges()) {
+                                if (!ranges->empty()) {
+                                    auto r = (*ranges)[0];
+                                    RTLIL::SigSpec ls = import_expression(
+                                        any_cast<const UHDM::expr*>(r->Left_expr()));
+                                    RTLIL::SigSpec rs = import_expression(
+                                        any_cast<const UHDM::expr*>(r->Right_expr()));
+                                    if (ls.is_fully_const() && rs.is_fully_const()) {
+                                        left = ls.as_const().as_int();
+                                        right = rs.as_const().as_int();
+                                        got_range = true;
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    if (auto ref = dynamic_cast<const UHDM::ref_obj*>(first_arg)) {
+                        if (ref->Actual_group()) {
+                            if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
+                                if (v->Typespec() && v->Typespec()->Actual_typespec())
+                                    get_range_from_typespec(v->Typespec()->Actual_typespec());
+                            } else if (auto n = dynamic_cast<const UHDM::net*>(ref->Actual_group())) {
+                                if (n->Typespec() && n->Typespec()->Actual_typespec())
+                                    get_range_from_typespec(n->Typespec()->Actual_typespec());
+                            }
+                        }
+                    }
+                    int hi = std::max(left, right);
+                    int lo = std::min(left, right);
+                    int result;
+                    if (func_name == "$left")       result = left;
+                    else if (func_name == "$right") result = right;
+                    else if (func_name == "$high")  result = hi;
+                    else                            result = lo;  // $low
+                    log_debug("UHDM: %s returning %d (range %d:%d, got_range=%d)\n",
+                              func_name.c_str(), result, left, right, (int)got_range);
+                    return RTLIL::SigSpec(RTLIL::Const(result, 32));
                 } else {
-                    log_warning("Unhandled system function call: %s with %d arguments\n", 
+                    log_warning("Unhandled system function call: %s with %d arguments\n",
                                func_name.c_str(), (int)args.size());
                     // Return first argument if available, otherwise empty
                     return args.empty() ? RTLIL::SigSpec() : args[0];
