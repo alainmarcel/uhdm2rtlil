@@ -544,6 +544,10 @@ struct UhdmImporter {
     // (logic, bit, int, integer, shortint, longint, byte). Walks no further than
     // the typespec itself; pass an Actual_typespec result.
     bool is_typespec_signed(const UHDM::any* actual_typespec);
+    // True iff the expression e is signed for the purposes of SV LRM 12.5.1
+    // case-statement context extension. Walks ref_obj into its target (variable,
+    // parameter, or net) and inspects VpiSigned() / Typespec.
+    bool is_expr_signed(const UHDM::expr* e);
     void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);
