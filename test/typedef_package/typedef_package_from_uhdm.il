@@ -20,7 +20,7 @@ module \top
   wire $eq$dut.sv:15$8_Y
   attribute \src "dut.sv:17.14-17.50"
   attribute \keep 1
-  cell $check $auto$process.cpp:53:import_immediate_assert$17
+  cell $check $auto$process.cpp:82:import_immediate_assert$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -35,7 +35,7 @@ module \top
   end
   attribute \src "dut.sv:14.14-14.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:53:import_immediate_assert$6
+  cell $check $auto$process.cpp:82:import_immediate_assert$6
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -61,7 +61,7 @@ module \top
   end
   attribute \src "dut.sv:15.14-15.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:53:import_immediate_assert$11
+  cell $check $auto$process.cpp:82:import_immediate_assert$11
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -76,7 +76,7 @@ module \top
   end
   attribute \src "dut.sv:16.14-16.45"
   attribute \keep 1
-  cell $check $auto$process.cpp:53:import_immediate_assert$14
+  cell $check $auto$process.cpp:82:import_immediate_assert$14
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

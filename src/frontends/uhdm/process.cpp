@@ -8,6 +8,8 @@
 #include "uhdm2rtlil.h"
 #include <uhdm/func_call.h>
 #include <uhdm/sys_func_call.h>
+#include <uhdm/parameter.h>
+#include <uhdm/variables.h>
 #include "kernel/fmt.h"
 #include <algorithm>
 #include <functional>
@@ -19,12 +21,39 @@ using namespace UHDM;
 
 // Helper: determine if a UHDM expression is signed, for case-statement context extension.
 // For constants, the 's' sigil in the decompile string (e.g. "1'sb1", "2'sb11") is
-// authoritative. Other expression kinds default to unsigned.
-static bool is_expr_signed(const UHDM::expr* e) {
+// authoritative.  For references, we walk to the underlying variable/parameter/net
+// and consult VpiSigned() and the typespec.
+bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
     if (!e) return false;
     if (auto c = any_cast<const UHDM::constant*>(e)) {
         std::string_view deco = c->VpiDecompile();
-        return deco.find("'s") != std::string_view::npos;
+        if (deco.find("'s") != std::string_view::npos) return true;
+        // Const-folded results may have lost the decompile sigil but still carry
+        // signedness on the typespec.
+        if (c->Typespec() && c->Typespec()->Actual_typespec())
+            return is_typespec_signed(c->Typespec()->Actual_typespec());
+        return false;
+    }
+    if (auto r = any_cast<const UHDM::ref_obj*>(e)) {
+        if (r->Actual_group()) {
+            if (auto v = dynamic_cast<const UHDM::variables*>(r->Actual_group())) {
+                if (v->VpiSigned()) return true;
+                if (v->Typespec() && v->Typespec()->Actual_typespec())
+                    return is_typespec_signed(v->Typespec()->Actual_typespec());
+            }
+            if (auto p = dynamic_cast<const UHDM::parameter*>(r->Actual_group())) {
+                if (p->VpiSigned()) return true;
+                if (p->Typespec() && p->Typespec()->Actual_typespec())
+                    return is_typespec_signed(p->Typespec()->Actual_typespec());
+            }
+            // `reg signed` lands as a logic_net in the elaborated model.
+            if (auto n = dynamic_cast<const UHDM::net*>(r->Actual_group())) {
+                if (n->VpiSigned()) return true;
+                if (n->Typespec() && n->Typespec()->Actual_typespec())
+                    return is_typespec_signed(n->Typespec()->Actual_typespec());
+            }
+        }
+        return false;
     }
     return false;
 }
