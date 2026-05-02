@@ -787,6 +787,22 @@ bool UhdmImporter::needs_sync_path(const any* stmt, bool inside_conditional) {
     // vpiRepeat is not handled by import_statement_comb at all.
     if (type == vpiRepeat) return true;
 
+    // Dynamic indexed-part-select on the LHS of a non-blocking assignment
+    // (e.g. `dout[ctrl*sel +: 16] <= din`) requires a read-modify-write
+    // pattern over the *full* base wire — `import_statement_comb` would
+    // otherwise treat the slice wire returned by import_indexed_part_select
+    // as an FF target, leaving the real base wire undriven.  The sync path
+    // (import_assignment_sync) has the proper handler for this.
+    if (type == vpiAssignment) {
+        auto a = any_cast<const assignment*>(stmt);
+        if (a && a->Lhs() && a->Lhs()->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(a->Lhs());
+            if (ips && ips->Base_expr() &&
+                ips->Base_expr()->VpiType() != vpiConstant)
+                return true;
+        }
+    }
+
     // A for loop inside a conditional (CaseRule* context) is not handled.
     if (type == vpiFor && inside_conditional) return true;
 
