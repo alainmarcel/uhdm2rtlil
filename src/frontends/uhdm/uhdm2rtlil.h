@@ -376,10 +376,12 @@ struct UhdmImporter {
     int unnamed_block_counter = 0;
 
     // Track initial block assignments per signal to handle duplicates from generate unrolling.
-    // Maps signal name to {sync_rule, action_index, from_generate_scope}.
+    // Each entry points to the *emitted* driver — either an STa-only init
+    // process (for constant RHS) or an index into module->connections_ (for
+    // a module-level continuous assignment, used for non-constant RHS).
     struct InitAssignInfo {
-        RTLIL::SyncRule* sync;
-        int action_idx;
+        RTLIL::Process* init_proc;   // Non-null when driver is an STa-only init process
+        int connect_idx;             // >=0 when driver is a module->connect entry, else -1
         bool from_generate_scope;
     };
     std::map<std::string, InitAssignInfo> initial_signal_assignments;
