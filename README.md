@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 165 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (165/165 tests functional, 0 known failures)
-- **Passing**: 160 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 164 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (164/164 tests functional, 0 known failures)
+- **Passing**: 159 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,7 +24,6 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
-  - `genvar_loop_decl_3` - Cross-process initial-block chain with a genvar shadowing the outer integer: `if (1) begin : gen integer x, y; for (genvar x = 0; x < 2; x++) if (x == 0) initial gen.x = 10; assign y = x + 1; end initial x = gen.x; assign y = gen.y;` — exercises (1) constant-RHS initial assignments to combinational-only wires, (2) wire-RHS initial assignments that depend on another initial's value, and (3) integer-typed `assign y = x + 1` whose RHS literal `1` ships from Surelog at vpiSize=64; ported from `third_party/yosys/tests/verilog/genvar_loop_decl_3.sv`
   - `prefix` - Hierarchical references with assorted prefix forms (bare names, block-prefixed, top-prefixed, bit-selects on hier paths, c[j] dynamic bit-select on a hier path) over nested generate scopes; cross-scope reads of generate-block variables `a/b/c` initialised from genvars are exercised from sibling/outer always blocks; ported from `third_party/yosys/tests/verilog/prefix.sv`
   - `size_cast` - SystemVerilog size and type casts: literal-width casts (`1'(x)`, `2'(x)`, `3'(x)`), built-in atom-type casts (`byte'(x)`, `int'(x)`), typedef-named casts (`u3bit_t'(x)`, `s2bit_t'(x)`), packed-struct casts (`s12bit_packed_struct_t'(x)`), composed with bitwise/ternary expressions and `'0`/`'1` fill literals; ported from `third_party/yosys/tests/verilog/size_cast.sv` (~600 assertions)
   - `dynslice` - Dynamic indexed-part-select on the LHS of a non-blocking assignment in `always @(posedge clk)`: `dout[ctrl*sel +: 16] <= din` writes 16 bits of the 128-bit `dout` register at a runtime-computed offset; ported from `third_party/yosys/tests/simple/dynslice.v`
@@ -65,12 +64,6 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
-  - `genvar_loop_decl_3` regression — fixed a use-after-free in the cross-process initial-block dedup and over-aggressive init-process pruning ✅
-    - **Use-after-free**: the prior PR's refactor moved per-action drivers out of `sync_init` and then `delete`d it, but `initial_signal_assignments[sig].sync` still held a pointer to the freed rule. The next initial block targeting the same signal hit a use-after-free during dedup, crashing `const_func`, `priority_memory`, `sp_read_first`, `sp_read_or_write`, `sp_write_first`. Fix: replaced `InitAssignInfo.sync` with `init_proc` (the actual STa-only init `Process*`) plus `connect_idx` (an index into `module->connections_` for non-constant RHS demoted to a continuous assign). The `emit_driver` lambda in `import_initial_sync` now consults this map and replaces the prior driver's RHS in place — modifying the process's single action or the connection's RHS — instead of leaving a dangling pointer behind
-    - **Over-prune of legitimate `\init` wires**: the same PR's post-processing in `import_module` collected wires from `module->connections()` as "other drivers" so that non-const-RHS-as-cont-assign initials would trigger removal of redundant STa init processes; but that masked a pre-existing multi-driver bug in `gen_test8` where the inner-gen-scope `assign x = …` was silently driving the *outer* `\x`, and the STa init had been the only thing keeping `\x` at the right value. Fix: dropped the `connections()` inclusion. The post-processing keeps the existing sync-rule sweep plus the new recursion through `root_case` + nested `switch`es (so clocked-always blocks that place their updates in the body, not in the sync rule itself, are still recognised as drivers)
-  - `genvar_loop_decl_3` — initial blocks with non-constant RHS no longer abort PROC_INIT, and the addition cell now matches its destination width ✅
-    - **PROC_INIT abort**: a chain like `initial gen.x = 10; initial x = gen.x;` previously emitted two STa+STi processes; PROC_INIT then chokes on the second because `\gen.x` (the RHS) is itself init-only and not a constant. Fix: in `import_initial_sync`, hoist every initial-block action out of the per-process STi rule onto its own driver — constant RHS becomes a separate STa-only "init process" plus a `\init` attribute (mirroring what `import_continuous_assign` already does for `reg x = const` net-decl assigns), non-constant RHS becomes a plain `module->connect`. The existing post-processing in `import_module` then collapses redundant STa init processes when the wire also has an FF driver, leaving the `\init` attribute behind for proc_dff
-    - **Cell-width blowup from oversize literals**: Surelog ships unsized integer literals at `vpiSize=64`, so `gen.x + 1` (with `gen.x` 32-bit) built a 64-bit `$add` whose upper half later got split across the destination wire as X bits. Fix in `import_operation` (vpiAddOp): when an `expression_context_width` is in scope (LHS-driven assignment), use it as the cell's `Y_WIDTH` *and* resize each operand to that width with sign-aware extension before calling `addAdd`, so `A_WIDTH = B_WIDTH = Y_WIDTH` and the cell's output cleanly drives the LHS wire
   - `prefix` — generate-scope variable initialisers are now applied even when the wire was lazily created by an outer reference ✅
     - **Root cause**: in `import_gen_scope`, the wire-creation block AND the `var->Expr()` initialiser-driver block both lived inside `if (!name_map.count(hierarchical_name))`. When an outer `always @*` referenced `blk1.blk2[0].b` via a hier_path before we visited `blk2[0]`'s gen_scope, the wire was already created on demand — so when we got to the gen_scope, `name_map.count(...)` was true and we silently skipped the initialiser. The wire stayed at X, and every assertion reading `b` (or `c`) folded to a falsified comparison
     - **Fix**: split the two concerns. We still create the wire only when missing, but we always look up the wire (creating or finding) and *always* run the `var->Expr()` initialiser path against it. Keeps the outer-reference creation order working while making sure each generate-scope variable is driven by its declared initialiser
@@ -518,7 +511,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (165 total — 160 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (156 total — 151 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -713,7 +706,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 165 of 165 tests are passing or working as expected (160 equiv + 5 UHDM-only)
+- 156 of 156 tests are passing or working as expected (151 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -769,7 +762,7 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **156 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **160 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **151 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
