@@ -2031,15 +2031,13 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
 
-    // Build the "sync always" and the init sync rule.  We hold off pushing
-    // them onto the process until we know whether any actions survive — an
-    // empty STa+STi pair confuses downstream opt passes (they keep the cell
-    // outputs split into per-bit chunks instead of folding the original
-    // 32-bit cont_assign cleanly).
+    // Create the "sync always" rule
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
     sync_always->type = RTLIL::SyncType::STa;
     sync_always->signal = RTLIL::SigSpec();
+    yosys_proc->syncs.push_back(sync_always);
 
+    // Create the init sync rule
     RTLIL::SyncRule* sync_init = new RTLIL::SyncRule();
     sync_init->type = RTLIL::SyncType::STi;
     sync_init->signal = RTLIL::SigSpec();
@@ -2104,37 +2102,7 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
     }
     sync_init->actions = deduped_actions;
 
-    // Move every initial-block action out of the STi/STa pair onto its own
-    // separate "init-only STa" process (constant RHS) or a plain
-    // module->connect (non-constant RHS). Reasons:
-    //   * PROC_INIT can't fold a chain like `\x = \gen.x` when `\gen.x` is
-    //     itself init-only — it would abort the pass.  A continuous assign
-    //     lets opt_const propagate once `\gen.x` is reduced to a constant.
-    //   * Constant initial assignments to combinational-only wires need a
-    //     real driver, not just a `\init` attribute, otherwise the wire is
-    //     X at synthesis time.  We therefore use the same STa-only pattern
-    //     that `import_continuous_assign` emits for `reg x = const` net
-    //     declaration assignments — the existing post-processing in
-    //     `import_module` then removes the STa process whenever the wire
-    //     also has an FF driver, leaving just the `\init` attribute behind.
-    for (auto& action : sync_init->actions) {
-        const RTLIL::SigSpec& lhs = action.first;
-        const RTLIL::SigSpec& rhs = action.second;
-        if (rhs.is_fully_const()) {
-            if (lhs.is_wire())
-                lhs.as_wire()->attributes[ID::init] = rhs.as_const();
-            RTLIL::Process* proc = module->addProcess(NEW_ID);
-            add_src_attribute(proc->attributes, uhdm_process);
-            RTLIL::SyncRule* sync = new RTLIL::SyncRule();
-            sync->type = RTLIL::SyncType::STa;
-            sync->actions.push_back(RTLIL::SigSig(lhs, rhs));
-            proc->syncs.push_back(sync);
-        } else {
-            module->connect(lhs, rhs);
-        }
-    }
-    delete sync_always;
-    delete sync_init;
+    yosys_proc->syncs.push_back(sync_init);
 }
 
 // Import initial block using comb approach (handles complex case/if via switch rules)
