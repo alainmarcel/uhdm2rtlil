@@ -2368,17 +2368,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiAddOp:
             if (operands.size() == 2) {
-                // For addition, create an add cell.  Per Verilog semantics in
-                // an assignment context the result width is the LHS width.
-                // Use that as the cap so a stray 64-bit constant operand
-                // (Surelog emits unsized literals at width 64) doesn't blow
-                // up the cell into a 64-bit add whose upper half then
-                // pollutes the destination wire with X.
+                // For addition, create an add cell
+                // Use context width from LHS if available (Verilog context-determined sizing)
                 int result_width = std::max(operands[0].size(), operands[1].size());
-                if (expression_context_width > 0)
+                if (expression_context_width > result_width)
                     result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-
+                
                 // Check if operands are signed
                 bool is_signed = false;
                 for (const auto& operand : operands) {
@@ -2390,24 +2386,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         }
                     }
                 }
-
-                // Truncate / extend each operand to result_width so the
-                // cell's A_WIDTH/B_WIDTH match Y_WIDTH cleanly.  Preserves
-                // sign-extension for signed operands.
-                auto resize_operand = [&](RTLIL::SigSpec op) {
-                    if (op.size() == result_width) return op;
-                    if (op.size() > result_width)
-                        return op.extract(0, result_width);
-                    bool sgn = is_signed;
-                    if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
-                    op.extend_u0(result_width, sgn);
-                    return op;
-                };
-                RTLIL::SigSpec a = resize_operand(operands[0]);
-                RTLIL::SigSpec b = resize_operand(operands[1]);
-
+                
                 std::string cell_name = generate_cell_name(uhdm_op, "add");
-                module->addAdd(RTLIL::escape_id(cell_name), a, b, result, is_signed);
+                module->addAdd(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 return result;
             }
             break;
