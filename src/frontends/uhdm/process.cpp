@@ -2031,13 +2031,15 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
 
-    // Create the "sync always" rule
+    // Build the "sync always" and the init sync rule.  We hold off pushing
+    // them onto the process until we know whether any actions survive — an
+    // empty STa+STi pair confuses downstream opt passes (they keep the cell
+    // outputs split into per-bit chunks instead of folding the original
+    // 32-bit cont_assign cleanly).
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
     sync_always->type = RTLIL::SyncType::STa;
     sync_always->signal = RTLIL::SigSpec();
-    yosys_proc->syncs.push_back(sync_always);
 
-    // Create the init sync rule
     RTLIL::SyncRule* sync_init = new RTLIL::SyncRule();
     sync_init->type = RTLIL::SyncType::STi;
     sync_init->signal = RTLIL::SigSpec();
@@ -2079,30 +2081,77 @@ void UhdmImporter::import_initial_sync(const process_stmt* uhdm_process, RTLIL::
         }
     }
 
-    // Deduplicate initial assignments across processes
+    // Move every initial-block action out of the STi/STa pair onto its own
+    // separate "init-only STa" process (constant RHS) or a plain
+    // module->connect (non-constant RHS). Reasons:
+    //   * PROC_INIT can't fold a chain like `\x = \gen.x` when `\gen.x` is
+    //     itself init-only — it would abort the pass.  A continuous assign
+    //     lets opt_const propagate once `\gen.x` is reduced to a constant.
+    //   * Constant initial assignments to combinational-only wires need a
+    //     real driver, not just a `\init` attribute, otherwise the wire is
+    //     X at synthesis time.  We therefore use the same STa-only pattern
+    //     that `import_continuous_assign` emits for `reg x = const` net
+    //     declaration assignments — the existing post-processing in
+    //     `import_module` then removes the STa process whenever the wire
+    //     also has an FF driver, leaving just the \init attribute behind.
+    //
+    // Cross-process dedup: generate-loop unrolling produces multiple
+    // initial blocks targeting the same signal.  We track the previously
+    // emitted driver per-signal in `initial_signal_assignments` and
+    // overwrite the prior driver's RHS in place, so the final value comes
+    // from the last initial block that fired (Verilog ordering semantics).
     bool current_from_gen = !gen_scope_stack.empty();
-    std::vector<RTLIL::SigSig> deduped_actions;
-    for (auto& action : sync_init->actions) {
-        std::string sig_name = log_signal(action.first);
+    auto emit_driver = [&](const RTLIL::SigSpec& lhs, const RTLIL::SigSpec& rhs) {
+        std::string sig_name = log_signal(lhs);
         auto it = initial_signal_assignments.find(sig_name);
         if (it != initial_signal_assignments.end()) {
             auto& prev = it->second;
-            if (prev.from_generate_scope && !current_from_gen) {
-                continue;
-            }
-            if (prev.sync && prev.action_idx < (int)prev.sync->actions.size()) {
-                prev.sync->actions[prev.action_idx].second = action.second;
+            // A non-gen-scope driver wins over a gen-scope one — keep the
+            // earlier entry.
+            if (prev.from_generate_scope && !current_from_gen)
+                return;
+            // Replace the prior driver in place.
+            if (prev.init_proc != nullptr) {
+                // Prior is an STa-only init process — modify its action
+                // and the wire's \init attribute.
+                RTLIL::SyncRule* s = prev.init_proc->syncs[0];
+                s->actions[0].second = rhs;
+                if (rhs.is_fully_const() && lhs.is_wire())
+                    lhs.as_wire()->attributes[ID::init] = rhs.as_const();
+                else if (lhs.is_wire())
+                    lhs.as_wire()->attributes.erase(ID::init);
+            } else if (prev.connect_idx >= 0 &&
+                       prev.connect_idx < (int)module->connections_.size()) {
+                module->connections_[prev.connect_idx].second = rhs;
             }
             prev.from_generate_scope = current_from_gen;
-        } else {
-            int idx = deduped_actions.size();
-            deduped_actions.push_back(action);
-            initial_signal_assignments[sig_name] = {sync_init, idx, current_from_gen};
+            return;
         }
-    }
-    sync_init->actions = deduped_actions;
+        // First driver for this signal: create a new STa-only init process
+        // for constant RHS, or a continuous assign for non-constant RHS.
+        InitAssignInfo info{nullptr, -1, current_from_gen};
+        if (rhs.is_fully_const()) {
+            if (lhs.is_wire())
+                lhs.as_wire()->attributes[ID::init] = rhs.as_const();
+            RTLIL::Process* p = module->addProcess(NEW_ID);
+            add_src_attribute(p->attributes, uhdm_process);
+            RTLIL::SyncRule* s = new RTLIL::SyncRule();
+            s->type = RTLIL::SyncType::STa;
+            s->actions.push_back(RTLIL::SigSig(lhs, rhs));
+            p->syncs.push_back(s);
+            info.init_proc = p;
+        } else {
+            info.connect_idx = (int)module->connections_.size();
+            module->connect(lhs, rhs);
+        }
+        initial_signal_assignments[sig_name] = info;
+    };
 
-    yosys_proc->syncs.push_back(sync_init);
+    for (auto& action : sync_init->actions) {
+        emit_driver(action.first, action.second);
+    }
+    delete sync_always;
+    delete sync_init;
 }
 
 // Import initial block using comb approach (handles complex case/if via switch rules)
