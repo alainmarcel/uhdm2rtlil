@@ -1381,61 +1381,169 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return args[0];
                 } else if ((func_name == "$bits" || func_name == "$size" ||
                             func_name == "$high" || func_name == "$low" ||
-                            func_name == "$left" || func_name == "$right") &&
+                            func_name == "$left" || func_name == "$right" ||
+                            func_name == "$dimensions" || func_name == "$increment") &&
                            !args.empty() && func_call->Tf_call_args() &&
                            !func_call->Tf_call_args()->empty()) {
-                    // SV array/range query functions on a packed scalar.
-                    // $bits, $size: total bit width of the argument.
-                    // $left/$right/$high/$low: the [L:R] range bounds.
-                    int bits = args[0].size();
-                    if (func_name == "$bits" || func_name == "$size") {
-                        log_debug("UHDM: %s returning %d\n", func_name.c_str(), bits);
-                        return RTLIL::SigSpec(RTLIL::Const(bits, 32));
-                    }
-                    // For $high/$low/$left/$right, walk the argument's typespec
-                    // ranges to recover the declared [L:R] indices.
-                    int left = bits - 1, right = 0;
-                    bool got_range = false;
+                    // SV array/range query system functions.
+                    //   $bits          — total bit width of the argument.
+                    //   $size(a, d)    — size of dimension d (default 1, outermost).
+                    //   $left/$right   — declared L/R index of the dimension.
+                    //   $high/$low     — max/min of L,R for the dimension.
+                    //   $increment     — +1 if L<R (ascending), -1 if L>=R.
+                    //   $dimensions    — number of dimensions (1 for atomic types).
+                    int total_bits = args[0].size();
+
                     auto first_arg = func_call->Tf_call_args()->at(0);
-                    auto get_range_from_typespec = [&](const UHDM::any* ts) {
-                        if (!ts) return;
-                        if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
-                            if (auto ranges = lts->Ranges()) {
-                                if (!ranges->empty()) {
-                                    auto r = (*ranges)[0];
-                                    RTLIL::SigSpec ls = import_expression(
-                                        any_cast<const UHDM::expr*>(r->Left_expr()));
-                                    RTLIL::SigSpec rs = import_expression(
-                                        any_cast<const UHDM::expr*>(r->Right_expr()));
-                                    if (ls.is_fully_const() && rs.is_fully_const()) {
-                                        left = ls.as_const().as_int();
-                                        right = rs.as_const().as_int();
-                                        got_range = true;
+
+                    // Walk a typespec to extract its dimensions in outer→inner
+                    // order.  For multi-range packed types (logic [a:b][c:d])
+                    // the ranges are dim 1, dim 2, …; nested Elem_typespec
+                    // contributes additional dims.
+                    struct DimInfo { int left, right; };
+                    auto append_typespec_dims = [&](auto& self, const UHDM::any* ts,
+                                                    std::vector<DimInfo>& out) -> void {
+                        while (ts) {
+                            if (auto lts = dynamic_cast<const UHDM::logic_typespec*>(ts)) {
+                                if (auto ranges = lts->Ranges()) {
+                                    for (auto r : *ranges) {
+                                        RTLIL::SigSpec ls = import_expression(
+                                            any_cast<const UHDM::expr*>(r->Left_expr()));
+                                        RTLIL::SigSpec rs = import_expression(
+                                            any_cast<const UHDM::expr*>(r->Right_expr()));
+                                        if (ls.is_fully_const() && rs.is_fully_const()) {
+                                            out.push_back({ls.as_const().as_int(),
+                                                           rs.as_const().as_int()});
+                                        }
                                     }
                                 }
+                                if (lts->Elem_typespec() &&
+                                    lts->Elem_typespec()->Actual_typespec()) {
+                                    ts = lts->Elem_typespec()->Actual_typespec();
+                                    continue;
+                                }
                             }
+                            // struct/union/scalar: no further dims to walk.
+                            break;
                         }
                     };
-                    if (auto ref = dynamic_cast<const UHDM::ref_obj*>(first_arg)) {
-                        if (ref->Actual_group()) {
-                            if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
-                                if (v->Typespec() && v->Typespec()->Actual_typespec())
-                                    get_range_from_typespec(v->Typespec()->Actual_typespec());
-                            } else if (auto n = dynamic_cast<const UHDM::net*>(ref->Actual_group())) {
-                                if (n->Typespec() && n->Typespec()->Actual_typespec())
-                                    get_range_from_typespec(n->Typespec()->Actual_typespec());
+
+                    // Resolve the leaf typespec for a UHDM expression.  For
+                    // hier_path we follow Path_elems to the final element;
+                    // for ref_obj we use Actual_group; for bit_select we
+                    // follow the parent and remember to strip one dim.
+                    int strip_outer_dims = 0;
+                    const UHDM::any* leaf_ts = nullptr;
+
+                    std::function<void(const UHDM::any*)> resolve_leaf;
+                    resolve_leaf = [&](const UHDM::any* expr) {
+                        if (!expr) return;
+                        if (auto bs = dynamic_cast<const UHDM::bit_select*>(expr)) {
+                            ++strip_outer_dims;
+                            // Bit-selects on hier_path have the parent path
+                            // in VpiParent; on a plain ref the parent is the
+                            // base wire.
+                            if (bs->Actual_group()) {
+                                resolve_leaf(bs->Actual_group());
+                                return;
+                            }
+                            if (bs->VpiParent())
+                                resolve_leaf(bs->VpiParent());
+                            return;
+                        }
+                        if (auto hp = dynamic_cast<const UHDM::hier_path*>(expr)) {
+                            // Use the last Path_elems entry — it's the leaf
+                            // ref_obj/bit_select that names the actual member.
+                            if (hp->Path_elems() && !hp->Path_elems()->empty()) {
+                                resolve_leaf(hp->Path_elems()->back());
+                                return;
+                            }
+                        }
+                        if (auto ref = dynamic_cast<const UHDM::ref_obj*>(expr)) {
+                            if (ref->Actual_group()) {
+                                if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
+                                    if (v->Typespec() && v->Typespec()->Actual_typespec())
+                                        leaf_ts = v->Typespec()->Actual_typespec();
+                                } else if (auto n = dynamic_cast<const UHDM::net*>(ref->Actual_group())) {
+                                    if (n->Typespec() && n->Typespec()->Actual_typespec())
+                                        leaf_ts = n->Typespec()->Actual_typespec();
+                                }
+                            }
+                            return;
+                        }
+                    };
+                    resolve_leaf(first_arg);
+
+                    // Try ExprEval::decodeHierPath as a fallback for hier
+                    // paths whose Path_elems leaf doesn't carry typespec
+                    // info directly (struct/union member access).
+                    if (!leaf_ts) {
+                        if (auto hp = dynamic_cast<const UHDM::hier_path*>(first_arg)) {
+                            UHDM::ExprEval eval;
+                            bool inv = false;
+                            UHDM::any* member = eval.decodeHierPath(
+                                const_cast<UHDM::hier_path*>(hp), inv,
+                                current_instance, hp,
+                                UHDM::ExprEval::ReturnType::MEMBER, false);
+                            if (!inv && member) {
+                                const UHDM::ref_typespec* mrt = nullptr;
+                                if (auto v = dynamic_cast<const UHDM::variables*>(member))
+                                    mrt = v->Typespec();
+                                else if (auto n = dynamic_cast<const UHDM::net*>(member))
+                                    mrt = n->Typespec();
+                                if (mrt && mrt->Actual_typespec())
+                                    leaf_ts = mrt->Actual_typespec();
                             }
                         }
                     }
-                    int hi = std::max(left, right);
-                    int lo = std::min(left, right);
-                    int result;
-                    if (func_name == "$left")       result = left;
-                    else if (func_name == "$right") result = right;
-                    else if (func_name == "$high")  result = hi;
-                    else                            result = lo;  // $low
-                    log_debug("UHDM: %s returning %d (range %d:%d, got_range=%d)\n",
-                              func_name.c_str(), result, left, right, (int)got_range);
+
+                    std::vector<DimInfo> dims;
+                    if (leaf_ts) append_typespec_dims(append_typespec_dims, leaf_ts, dims);
+                    // Strip one outer dim per surrounding bit_select.
+                    while (strip_outer_dims > 0 && !dims.empty()) {
+                        dims.erase(dims.begin());
+                        --strip_outer_dims;
+                    }
+
+                    // Pick the dimension index from the optional 2nd arg.
+                    int dim_index = 1;
+                    if (args.size() >= 2 && args[1].is_fully_const())
+                        dim_index = args[1].as_const().as_int();
+
+                    auto dim_size = [](const DimInfo& d) {
+                        return std::abs(d.left - d.right) + 1;
+                    };
+
+                    int result = 0;
+                    if (func_name == "$bits") {
+                        result = total_bits;
+                    } else if (func_name == "$dimensions") {
+                        // Atomic types and structs report 1 dimension.
+                        result = dims.empty() ? 1 : (int)dims.size();
+                    } else if (dims.empty()) {
+                        // Atomic / struct: treat as a single dim covering all
+                        // bits with range [bits-1:0].
+                        DimInfo whole{total_bits ? total_bits - 1 : 0, 0};
+                        if (func_name == "$size")          result = total_bits;
+                        else if (func_name == "$left")     result = whole.left;
+                        else if (func_name == "$right")    result = whole.right;
+                        else if (func_name == "$high")     result = whole.left;
+                        else if (func_name == "$low")      result = whole.right;
+                        else if (func_name == "$increment") result = -1;
+                    } else if (dim_index >= 1 && dim_index <= (int)dims.size()) {
+                        const DimInfo& d = dims[dim_index - 1];
+                        if (func_name == "$size")          result = dim_size(d);
+                        else if (func_name == "$left")     result = d.left;
+                        else if (func_name == "$right")    result = d.right;
+                        else if (func_name == "$high")     result = std::max(d.left, d.right);
+                        else if (func_name == "$low")      result = std::min(d.left, d.right);
+                        else if (func_name == "$increment") result = (d.left < d.right) ? 1 : -1;
+                    } else {
+                        log_warning("UHDM: %s with dim=%d out of range (%d dims)\n",
+                                    func_name.c_str(), dim_index, (int)dims.size());
+                    }
+                    log_debug("UHDM: %s returning %d (dims=%d, strip=%d)\n",
+                              func_name.c_str(), result, (int)dims.size(), strip_outer_dims);
                     return RTLIL::SigSpec(RTLIL::Const(result, 32));
                 } else {
                     log_warning("Unhandled system function call: %s with %d arguments\n",
