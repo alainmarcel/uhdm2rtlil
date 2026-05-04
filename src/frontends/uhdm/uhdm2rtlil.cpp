@@ -14,6 +14,7 @@
 #include <uhdm/logic_typespec.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/vpi_visitor.h>
+#include <functional>
 
 USING_YOSYS_NAMESPACE
 
@@ -2353,13 +2354,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         };
 
         // Collect all wires driven by non-init processes (the real drivers).
+        // Walk both the sync rules AND the process body (root_case + nested
+        // switches), since clocked-always blocks typically place their
+        // updates in the body via switch/case structures, not in the sync
+        // rules themselves.
         std::set<RTLIL::Wire*> other_driven_wires;
+        std::function<void(const RTLIL::CaseRule*)> walk_case;
+        walk_case = [&](const RTLIL::CaseRule* cr) {
+            for (auto& action : cr->actions)
+                collect_wires(action.first, other_driven_wires);
+            for (auto* sw : cr->switches)
+                for (auto* child : sw->cases)
+                    walk_case(child);
+        };
         for (auto& kv : module->processes) {
             if (is_init_proc(kv.second)) continue;
             for (auto* sync : kv.second->syncs) {
                 for (auto& action : sync->actions)
                     collect_wires(action.first, other_driven_wires);
             }
+            walk_case(&kv.second->root_case);
         }
 
         // Remove init-only processes whose target wire has other drivers.

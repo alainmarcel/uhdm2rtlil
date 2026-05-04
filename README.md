@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 164 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (164/164 tests functional, 0 known failures)
-- **Passing**: 159 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 165 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (165/165 tests functional, 0 known failures)
+- **Passing**: 160 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -511,7 +511,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (156 total — 151 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (165 total — 160 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -706,7 +706,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 156 of 156 tests are passing or working as expected (151 equiv + 5 UHDM-only)
+- 165 of 165 tests are passing or working as expected (160 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -762,7 +762,7 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **156 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **151 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **160 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
