@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
+The Yosys submodule is pinned at **v0.64** (`third_party/yosys`).
+
 ## Build Commands
 
 ```bash
@@ -235,6 +237,13 @@ All 156 tests are currently passing (0 failures). `test/failing_tests.txt` is em
 
 - When UHDM and Verilog synthesize differently (e.g., `gB → PP[0]` vs `PP[0] → gB`), `equiv_make` creates circular equiv cells that `equiv_induct` cannot resolve
 - Fix in `test_equivalence.sh`: add `opt -purge` before `design -stash` for both gold and gate — removes dead wires (unused signals) that cause the circular dependency
+
+### Equivalence Checking: Public-Typed Built-In Gates After write_verilog Round-Trip (Yosys 0.64+)
+
+- `synth -auto-top; write_verilog -noexpr` escapes built-in gate cell types to public Verilog identifiers (`\$_MUX_`, `\$_AND_`, …); reading the synth output back creates cells of *public* type
+- Yosys 0.64's `equiv_induct` aborts with "No SAT model available for cell …" because satgen only models the internal `$_MUX_`/`$_AND_`/etc. (in v0.62 this was just a warning, so the test passed despite some unmodelled cells)
+- Yosys 0.64's abc default mapping prefers `$_MUX_` heavily where v0.62 used `$_ANDNOT_`/`$_ORNOT_`, so this hits any synth output containing muxes (e.g. the `rotate` test)
+- Fix in `test_equivalence.sh`: after `equiv_make` (which pairs gold/gate by structure while they still reference the simcells library stubs from `read_verilog -lib +/simcells.v`), run `chtype -map \$_AND_ $_AND_` (and friends — `NAND`, `OR`, `NOR`, `XOR`, `XNOR`, `NOT`, `ANDNOT`, `ORNOT`, `MUX`, `NMUX`) to convert the public-typed cells back to their internal counterparts so satgen has SAT models for `equiv_simple` and `equiv_induct`
 
 ### Typed Net Declarations (`wand integer`, `wor typename`, etc.)
 

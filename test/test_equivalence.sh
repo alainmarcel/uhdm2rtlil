@@ -292,6 +292,24 @@ design -copy-from gold_flat -as gold *
 design -copy-from gate_flat -as gate *
 
 equiv_make gold gate equiv
+# Yosys 0.64's write_verilog escapes built-in gate cell types
+# (`\$_MUX_`, `\$_AND_`, …), so reading the synth output back creates
+# cells of *public* type — satgen has no SAT model for those and
+# `equiv_induct` aborts.  Convert the public-typed cells back to their
+# internal counterparts after `equiv_make` (it pairs them by structure
+# while they still match the simcells library) but before the SAT-based
+# passes.
+chtype -map \$_AND_ $_AND_
+chtype -map \$_NAND_ $_NAND_
+chtype -map \$_OR_ $_OR_
+chtype -map \$_NOR_ $_NOR_
+chtype -map \$_XOR_ $_XOR_
+chtype -map \$_XNOR_ $_XNOR_
+chtype -map \$_NOT_ $_NOT_
+chtype -map \$_ANDNOT_ $_ANDNOT_
+chtype -map \$_ORNOT_ $_ORNOT_
+chtype -map \$_MUX_ $_MUX_
+chtype -map \$_NMUX_ $_NMUX_
 equiv_simple
 equiv_induct
 equiv_status -assert
