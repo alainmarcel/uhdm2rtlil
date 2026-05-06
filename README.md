@@ -65,6 +65,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - Yosys submodule bumped to **v0.64** (was v0.62-40); equiv flow updated for the new strictness ✅
+    - **What changed upstream**: yosys 0.64's `equiv_induct` treats unmodelled cells as a fatal error rather than a warning. `write_verilog` escapes built-in gate cell types (`$_MUX_`, `$_AND_`, …) to public Verilog identifiers (`\$_MUX_`, …); reading the synth output back creates cells of *public* type — satgen has no SAT model for those public types, so equiv_induct aborted. v0.64's abc mapping also prefers `$_MUX_` cells where v0.62 used `$_ANDNOT_`/`$_ORNOT_`, so this hit the `rotate` test in particular
+    - **Fix**: in `test/test_equivalence.sh`, after `equiv_make` pairs gold/gate by structure (it matches them while they still reference the simcells library stubs from `read_verilog -lib +/simcells.v`), `chtype -map \$_AND_ $_AND_` (and friends — `NAND`, `OR`, `NOR`, `XOR`, `XNOR`, `NOT`, `ANDNOT`, `ORNOT`, `MUX`, `NMUX`) converts the public-typed cells back to their internal counterparts so satgen has SAT models for the `equiv_simple` + `equiv_induct` passes
   - `struct_sizebits` — array/range query system functions now resolve hier_paths and walk the full multi-dim typespec ✅
     - **Root cause**: the existing `$bits/$size/$high/$low/$left/$right` handler in `import_expression` for `vpiSysFuncCall` only knew how to inspect a `ref_obj` argument, only recognised `logic_typespec`, and only looked at the *first* range. Anything like `$dimensions(s.sy.y)` (hier_path argument), `$size(s.sz.z, 2)` (2-arg form picking a non-outermost dim), `$bits` of a packed struct/union, or `$increment` was unhandled — fell through to "unhandled system function call: …" and returned the operand wire itself, making the assertions reference `s` (an undriven 221-bit struct) and the synth output show `s = 221'hxx…`
     - **Fix**: rewrote the handler to (1) follow hier_paths via `ExprEval::decodeHierPath(MEMBER)` to find the leaf member's typespec; (2) walk that typespec collecting *all* dimensions (multi-range `Ranges()` on `logic_typespec`, then recurse into nested `Elem_typespec`); (3) strip one outer dim per surrounding `bit_select` for cases like `s.sz.z[3][3]`; (4) honour the optional 2nd argument to pick a specific dimension index; (5) added handlers for `$dimensions` (returns `max(1, dims.size())`) and `$increment` (`+1` if `L<R`, else `-1`); (6) for atomic/struct/union types treat the whole as a single `[bits-1:0]` dim so `$size(s)` returns total bits
@@ -755,7 +758,7 @@ uhdm2rtlil/
 │   └── */                      # Individual test cases
 ├── third_party/                # External dependencies
 │   ├── Surelog/               # SystemVerilog parser (includes UHDM)
-│   └── yosys/                 # Synthesis framework
+│   └── yosys/                 # Synthesis framework (pinned at v0.64)
 ├── .github/workflows/         # CI/CD configuration
 ├── build/                     # Build artifacts
 ├── CMakeLists.txt            # CMake build configuration
