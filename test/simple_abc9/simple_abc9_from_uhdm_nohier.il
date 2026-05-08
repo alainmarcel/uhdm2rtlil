@@ -2,6 +2,8 @@
 autoidx 97
 attribute \cells_not_processed 1
 attribute \src "dut.sv:317.1-324.10"
+attribute \abc9_box 1'1
+attribute \whitebox 1'1
 module \MUXF7
   attribute \src "dut.sv:317.20-317.22"
   wire input 1 \I0
@@ -23,6 +25,7 @@ module \MUXF7
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:217.1-223.10"
+attribute \abc9_box 1'1
 attribute \blackbox 1
 module \MUXF8
   attribute \src "dut.sv:217.20-217.22"

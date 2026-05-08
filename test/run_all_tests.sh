@@ -144,20 +144,20 @@ echo
 
 # Only find local test directories if running local tests
 if [ "$RUN_LOCAL" = true ]; then
-    # Find all test directories (directories containing dut.sv)
+    # Find all test directories (directories containing dut.sv or dut.v)
     TEST_DIRS=()
     if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_YOSYS" = false ]; then
         # Check if the specific test exists
-        if [ -d "$SPECIFIC_TEST" ] && [ -f "$SPECIFIC_TEST/dut.sv" ]; then
+        if [ -d "$SPECIFIC_TEST" ] && { [ -f "$SPECIFIC_TEST/dut.sv" ] || [ -f "$SPECIFIC_TEST/dut.v" ]; }; then
             TEST_DIRS+=("$SPECIFIC_TEST")
         else
-            echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv"
+            echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv / dut.v"
             exit 1
         fi
     elif [ "$RUN_YOSYS" = false ] || [ -z "$SPECIFIC_TEST" ]; then
         # Find all test directories
         for dir in */; do
-            if [ -d "$dir" ] && [ -f "$dir/dut.sv" ]; then
+            if [ -d "$dir" ] && { [ -f "$dir/dut.sv" ] || [ -f "$dir/dut.v" ]; }; then
                 # Remove trailing slash from directory name
                 TEST_NAME="${dir%/}"
                 # Skip the run directory (used for Yosys tests)
@@ -169,7 +169,7 @@ if [ "$RUN_LOCAL" = true ]; then
     fi
 
     if [ "$RUN_YOSYS" = false ] && [ ${#TEST_DIRS[@]} -eq 0 ]; then
-        echo "No test directories found (looking for directories containing dut.sv)"
+        echo "No test directories found (looking for directories containing dut.sv or dut.v)"
         exit 1
     fi
 

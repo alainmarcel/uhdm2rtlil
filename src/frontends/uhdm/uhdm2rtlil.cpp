@@ -151,7 +151,27 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     
     // Store in class member for use during import
     this->top_level_modules = top_level_module_names;
-    
+
+    // Pre-walk every top via Modules() to record which module DEFINITIONS will
+    // be visited during the elaborated hierarchy walk.  These are the modules
+    // whose child cell instances will be created by import_module_hierarchy(),
+    // so we must NOT also create them from ref_modules during AllModules walk.
+    // Modules absent from this set (orphans without a top, like a stand-alone
+    // techmap library file) need ref_module materialisation in import_module().
+    this->hierarchy_reachable_modules.clear();
+    if (uhdm_design->TopModules()) {
+        std::function<void(const module_inst*)> walk = [&](const module_inst* m) {
+            if (!m) return;
+            std::string nm = std::string(m->VpiDefName());
+            if (nm.find("work@") == 0) nm = nm.substr(5);
+            if (!hierarchy_reachable_modules.insert(nm).second) return; // already visited
+            if (m->Modules()) {
+                for (auto child : *m->Modules()) walk(child);
+            }
+        };
+        for (auto top_mod : *uhdm_design->TopModules()) walk(top_mod);
+    }
+
     // First, import all packages (prefer TopPackages for resolved values)
     auto* packages = uhdm_design->TopPackages();
     if (!packages) packages = uhdm_design->AllPackages();
@@ -2421,8 +2441,48 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // We cannot check if a module is empty here because instances (cells) are created
     // during hierarchy traversal, which happens after module import.
     
-    // NOTE: Module instances (ref_modules) are imported through the hierarchy traversal
-    // (TopModules), not directly here. This is by design to maintain proper hierarchy.
+    // Propagate user attributes from the UHDM module declaration to the
+    // RTLIL module (e.g. `(* blackbox *)`).  Without this Yosys's
+    // hierarchy pass would try to recursively elaborate self-referential
+    // techmap-style modules.
+    bool is_blackbox = false;
+    if (uhdm_module->Attributes()) {
+        for (auto attr : *uhdm_module->Attributes()) {
+            if (!attr) continue;
+            std::string aname = std::string(attr->VpiName());
+            if (aname.empty()) continue;
+            std::string aval = std::string(attr->VpiValue());
+            // VpiValue() comes back like "INT:1" / "BIN:1" / "" — anything
+            // non-empty / "0" we treat as a boolean true flag.
+            bool is_set = aval.empty() ||
+                          aval.find(":1") != std::string::npos ||
+                          aval == "1";
+            module->attributes[RTLIL::escape_id(aname)] =
+                RTLIL::Const(is_set ? 1 : 0, 1);
+            if (aname == "blackbox" && is_set) is_blackbox = true;
+        }
+    }
+
+    // Resolved sub-module instances are imported through the hierarchy
+    // traversal (TopModules) — `Modules()` carries those.  But UHDM also
+    // exposes module references via `Ref_modules()` on the module body.
+    // For modules unreachable from any top (e.g. a stand-alone techmap
+    // library file like `recursive_map.v`, where the design has no top
+    // and the hierarchy walk doesn't run) the ref_module path is the only
+    // way to materialise child cells — including self-referential
+    // `_TECHMAP_REPLACE_` instances and forward references to undefined
+    // modules.
+    //
+    // Skip body-cell import for blackbox modules — the Verilog frontend
+    // strips the body of any `(* blackbox *)` module, and matching that
+    // is what lets Yosys's hierarchy pass treat self-referential blackbox
+    // modules (e.g. recursive techmap patterns) as opaque leaves.
+    bool will_be_walked = hierarchy_reachable_modules.count(base_modname) > 0;
+    if (!is_blackbox && !will_be_walked && uhdm_module->Ref_modules()) {
+        for (auto ref_mod : *uhdm_module->Ref_modules()) {
+            import_ref_module(ref_mod);
+        }
+    }
     
     // For ports with no direction (dir=0), default to inout before fixup_ports
     // strips them. This handles modules where UHDM doesn't provide port directions
