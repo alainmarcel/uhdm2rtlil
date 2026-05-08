@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 167 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (167/167 tests functional, 0 known failures)
-- **Passing**: 162 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 168 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (168/168 tests functional, 0 known failures)
+- **Passing**: 163 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
+  - `various_port_sign_extend` - Module-port sign extension across instantiations: 1- and 2-bit signed/unsigned producer modules feed a `PassThrough` instance whose 4-bit `input` must sign-extend signed values and zero-extend unsigned ones; also exercises signed expressions (`^`, `~`, ternary, array reads) passed through narrowing/widening port boundaries; ported from `third_party/yosys/tests/various/port_sign_extend.v` (the upstream `ref` module is renamed `refmod` here because `ref` is a reserved keyword in SystemVerilog mode)
   - `various_struct_access` - Nested packed-struct typedefs (3 levels) with `parameter` of struct type initialised from a vector literal, and a chain of `localparam`s reading struct fields off the parameter (`P.d`, `P.d.c.a`) and off other localparams (`x.c`, `y.b`, `q.c.a`); ported from `third_party/yosys/tests/various/struct_access.sv` — required a Surelog/UHDM null-deref fix in `ExprEval::decodeHierPath` so `localparam logic f = P.a;` no longer segfaults at elaboration when the hier_path's `Typespec()` is null
   - `struct_sizebits` - SV array/range query system functions on multi-dimensional packed types: `$bits`, `$size(arg, dim)`, `$high/low/left/right(arg, dim)`, `$dimensions`, `$increment` over packed structs/unions, multi-range packed `logic [a:b][c:d][e:f]`, hier_path member access (`s.sy.y`), and bit-selects on hier paths (`s.sz.z[3][3]`); ported from `third_party/yosys/tests/svtypes/struct_sizebits.sv`
   - `prefix` - Hierarchical references with assorted prefix forms (bare names, block-prefixed, top-prefixed, bit-selects on hier paths, c[j] dynamic bit-select on a hier path) over nested generate scopes; cross-scope reads of generate-block variables `a/b/c` initialised from genvars are exercised from sibling/outer always blocks; ported from `third_party/yosys/tests/verilog/prefix.sv`
@@ -522,7 +523,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (167 total — 162 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (168 total — 163 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -717,7 +718,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 167 of 167 tests are passing or working as expected (162 equiv + 5 UHDM-only)
+- 168 of 168 tests are passing or working as expected (163 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -773,7 +774,7 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **156 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **162 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **163 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
