@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 168 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (168/168 tests functional, 0 known failures)
-- **Passing**: 163 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 169 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (169/169 tests functional, 0 known failures)
+- **Passing**: 164 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -24,6 +24,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
 - **Recent Additions**:
+  - `array_assign` - Unpacked-array-to-array assignments (continuous and procedural), array-typed ternary expressions (`out = sel ? a : b` where `a`/`b`/`out` are unpacked arrays), multi-dimensional unpacked arrays, and `$bits` over unpacked arrays; ported from `third_party/yosys/tests/svtypes/array_assign.sv` — exposed a crash on a missing `var_select` element resolution that has been guarded so the test now runs cleanly
   - `various_port_sign_extend` - Module-port sign extension across instantiations: 1- and 2-bit signed/unsigned producer modules feed a `PassThrough` instance whose 4-bit `input` must sign-extend signed values and zero-extend unsigned ones; also exercises signed expressions (`^`, `~`, ternary, array reads) passed through narrowing/widening port boundaries; ported from `third_party/yosys/tests/various/port_sign_extend.v` (the upstream `ref` module is renamed `refmod` here because `ref` is a reserved keyword in SystemVerilog mode)
   - `various_struct_access` - Nested packed-struct typedefs (3 levels) with `parameter` of struct type initialised from a vector literal, and a chain of `localparam`s reading struct fields off the parameter (`P.d`, `P.d.c.a`) and off other localparams (`x.c`, `y.b`, `q.c.a`); ported from `third_party/yosys/tests/various/struct_access.sv` — required a Surelog/UHDM null-deref fix in `ExprEval::decodeHierPath` so `localparam logic f = P.a;` no longer segfaults at elaboration when the hier_path's `Typespec()` is null
   - `struct_sizebits` - SV array/range query system functions on multi-dimensional packed types: `$bits`, `$size(arg, dim)`, `$high/low/left/right(arg, dim)`, `$dimensions`, `$increment` over packed structs/unions, multi-range packed `logic [a:b][c:d][e:f]`, hier_path member access (`s.sy.y`), and bit-selects on hier paths (`s.sz.z[3][3]`); ported from `third_party/yosys/tests/svtypes/struct_sizebits.sv`
@@ -67,6 +68,9 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `svtypes_enum_simple` - Bare enums, typedef enums with `logic [1:0]`, parenthesized type declarations (`(states_t) state1;`), enum constant initialization, FSM transitions, and combinational assertions
   - `const_fold_func` - Compile-time constant function evaluation with recursive functions (`pow_flip_a`, `pow_flip_b`), bitwise AND/OR/XNOR operations, bit-select LHS assignments (`out6[exp] = flip(base)`), nested function call arguments
 - **Recent Fixes**:
+  - `array_assign` — empty-operand crash in the `vpiEqOp` handler ✅
+    - **Root cause**: `import_operation`'s `vpiEqOp` branch sign-extends a narrower constant operand by inspecting `rhs.as_const().back()` (the MSB) before extending. When an operand has size 0 — which can happen if the upstream resolver returns an empty `SigSpec`, e.g. when a `var_select` on an unpacked array element fails to find the element wire — the subsequent `back()` call dereferences past the bit-vector end and segfaults
+    - **Fix**: gate the sign-extension block on `lhs.size() > 0 && rhs.size() > 0` so a zero-bit operand is left alone. Downstream the comparison still produces a meaningful (possibly trivially-equal) result, which is what the Verilog frontend would do for the same unresolved reference
   - `various_struct_access` — UHDM `ExprEval::decodeHierPath` no longer segfaults on a localparam initialiser that does struct-field access on a struct-typed parameter ✅
     - **Root cause**: `decodeHierPath` clones `path->Typespec()` to attach to a constant clone (the substituted parameter value), then dereferences the clone result without checking. For `localparam logic f = P.a;` (where `P` is `parameter struct_t P = …`), the hier_path's `Typespec()` can be null at the point Surelog reduces the expression during elaboration; `clone_tree(nullptr)` returns null, and the subsequent `rt->VpiParent(cons)` crashes
     - **Fix**: in `third_party/Surelog/.../UHDM/.../ExprEval.cpp`, gate the typespec-cloning block on `path->Typespec() != nullptr` and additionally null-check the cloned `rt` before using it. Surelog/UHDM rebuild propagates into the bundled `libuhdm.a` linked into both `surelog` and `uhdm2rtlil.so`
@@ -523,7 +527,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (168 total — 163 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (169 total — 164 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -718,7 +722,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 168 of 168 tests are passing or working as expected (163 equiv + 5 UHDM-only)
+- 169 of 169 tests are passing or working as expected (164 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -774,7 +778,7 @@ uhdm2rtlil/
 
 The UHDM frontend test suite includes **156 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **163 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **164 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements

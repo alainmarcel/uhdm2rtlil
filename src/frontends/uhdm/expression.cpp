@@ -2674,7 +2674,11 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Example: `logic [127:0] a == -1` → -1 sign-extends to 128'hFFFF...
                 RTLIL::SigSpec lhs = operands[0];
                 RTLIL::SigSpec rhs = operands[1];
-                if (lhs.size() != rhs.size()) {
+                // Guard against zero-size operands (e.g. an unresolved
+                // var_select on an unpacked array element returns an empty
+                // SigSpec). Calling `.as_const().back()` on a zero-bit Const
+                // dereferences past the bit-vector end and crashes.
+                if (lhs.size() != rhs.size() && lhs.size() > 0 && rhs.size() > 0) {
                     if (rhs.is_fully_const() && rhs.size() < lhs.size()) {
                         // Narrow constant on RHS compared with wider LHS wire.
                         // Sign-extend if the constant's MSB is 1 (negative/signed value).
