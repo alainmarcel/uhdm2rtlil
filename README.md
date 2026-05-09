@@ -14,15 +14,30 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 170 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (170/170 tests functional, 0 known failures)
+- **Total Tests**: 185 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (185/185 tests functional, 0 known failures)
 - **Passing**: 165 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
+- **UHDM-Only Success**: 20 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
   - `unique_case` - Unique case statement support
   - `gen_struct_access` - Packed array of structs with field access in generate blocks
+  - `setundef` - `2'b0x` (X bits) passed as a parameter override; ported from `third_party/yosys/tests/various/setundef.sv`
+  - `param_no_default` - Module parameters without default values (`parameter w`, `parameter byte y`); ported from `third_party/yosys/tests/verilog/param_no_default.sv`
+  - `unbased_unsized_param` - Fill literals (`'0`/`'1`/`'x`/`'z`) passed as `set_param #('0)` parameter values plus `localparam` assignments; ported from `third_party/yosys/tests/verilog/unbased_unsized.sv`
+  - `sva_basic00` - SVA `assert property ( disable iff (reset) antecedent |=> consequent )` with non-overlapping implication; ported from `third_party/yosys/tests/sva/basic00.sv`
+  - `sva_basic01` - SVA labeled property assertions (`a_rw: assert property (...)`); ported from `third_party/yosys/tests/sva/basic01.sv`
+  - `sva_basic02` - SVA assertions placed via `bind` from a separate properties module; ported from `third_party/yosys/tests/sva/basic02.sv`
+  - `sva_basic03` - SVA `$past()` system function in implication assertions; ported from `third_party/yosys/tests/sva/basic03.sv`
+  - `sva_counter` - SVA `default clocking` / `default disable iff`, `$past`, sequence repetition `up [*2]`, parameterised property `down_n(n)`; ported from `third_party/yosys/tests/sva/counter.sv`
+  - `sva_not` - SVA `not (ping ##1 !pong [*maxdelay])` with sequence repetition; ported from `third_party/yosys/tests/sva/sva_not.sv`
+  - `sva_throughout` - SVA `throughout` operator (`a |=> b throughout (c ##1 d)`); ported from `third_party/yosys/tests/sva/sva_throughout.sv`
+  - `sva_range` - SVA `##[*]` consecutive repetition and `until`; ported from `third_party/yosys/tests/sva/sva_range.sv`
+  - `sva_value_change_changed` - SVA `$changed()` value-change function; ported from `third_party/yosys/tests/sva/sva_value_change_changed.sv`
+  - `sva_value_change_changed_wide` - SVA `$changed()` over multi-bit values, with bit-decomposition equality assertion; ported from `third_party/yosys/tests/sva/sva_value_change_changed_wide.sv`
+  - `sva_value_change_rose` - SVA `$rose()` value-change function; ported from `third_party/yosys/tests/sva/sva_value_change_rose.sv`
+  - `sva_value_change_sim` - SVA `$rose`/`$fell`/`$stable` system functions with explicit `@(posedge clk)` clocking, plus an FSM-driven assertion sequence; ported from `third_party/yosys/tests/sva/sva_value_change_sim.sv`
 - **Recent Additions**:
   - `array_assign` - Unpacked-array-to-array assignments (continuous and procedural), array-typed ternary expressions (`out = sel ? a : b` where `a`/`b`/`out` are unpacked arrays), multi-dimensional unpacked arrays, and `$bits` over unpacked arrays; ported from `third_party/yosys/tests/svtypes/array_assign.sv` — exposed a crash on a missing `var_select` element resolution that has been guarded so the test now runs cleanly
   - `various_port_sign_extend` - Module-port sign extension across instantiations: 1- and 2-bit signed/unsigned producer modules feed a `PassThrough` instance whose 4-bit `input` must sign-extend signed values and zero-extend unsigned ones; also exercises signed expressions (`^`, `~`, ternary, array reads) passed through narrowing/widening port boundaries; ported from `third_party/yosys/tests/various/port_sign_extend.v` (the upstream `ref` module is renamed `refmod` here because `ref` is a reserved keyword in SystemVerilog mode)
@@ -527,7 +542,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (170 total — 165 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (185 total — 165 passing equivalence, 20 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -723,7 +738,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 170 of 170 tests are passing or working as expected (165 equiv + 5 UHDM-only)
+- 185 of 185 tests are passing or working as expected (165 equiv + 20 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -777,8 +792,8 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **170 test cases**:
-- **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
+The UHDM frontend test suite includes **185 test cases**:
+- **20 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
 - **165 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
@@ -793,7 +808,7 @@ The UHDM frontend test suite includes **170 test cases**:
 - **Fix in `ref_module.cpp`** (`import_ref_module`): existence guard against double-creation, plus `\src` and `\module_not_derived = 1` attributes on the created cell (matching the Verilog frontend's output for unelaborated cells)
 - **Test discovery in `run_all_tests.sh`**: discover tests with `dut.v` in addition to `dut.sv` so plain-Verilog ports of upstream Yosys tests are picked up
 - Both UHDM and Verilog frontends now produce identical RTLIL for `recursive_map.v`; the test passes by comparing pre-hierarchy `_nohier.il` files (both paths fail at hierarchy with the same `\bar not part of the design` error, by design)
-- All 170 tests now pass (165 equivalence + 5 UHDM-only, 0 known failures) ✅
+- All 185 tests now pass (165 equivalence + 20 UHDM-only, 0 known failures) ✅
 
 ### Unbased Unsized Fill Constant Extension (`'1`)
 - Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)
