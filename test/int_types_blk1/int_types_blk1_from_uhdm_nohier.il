@@ -282,27 +282,27 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:10.13-10.23"
-  process $auto$uhdm2rtlil.cpp:1906:import_module$1
+  process $auto$uhdm2rtlil.cpp:2011:import_module$1
     sync always
       update \x_int 32'11111111111111111111111111111111
   end
   attribute \src "dut.sv:13.19-13.32"
-  process $auto$uhdm2rtlil.cpp:1874:import_module$2
+  process $auto$uhdm2rtlil.cpp:1979:import_module$2
     sync always
       update \b_int 128'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   end
   attribute \src "dut.sv:18.19-18.36"
-  process $auto$uhdm2rtlil.cpp:1874:import_module$3
+  process $auto$uhdm2rtlil.cpp:1979:import_module$3
     sync always
       update \c_int 128'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   end
   attribute \src "dut.sv:30.19-30.32"
-  process $auto$uhdm2rtlil.cpp:1874:import_module$4
+  process $auto$uhdm2rtlil.cpp:1979:import_module$4
     sync always
       update \b_reg 128'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   end
   attribute \src "dut.sv:35.19-35.36"
-  process $auto$uhdm2rtlil.cpp:1874:import_module$5
+  process $auto$uhdm2rtlil.cpp:1979:import_module$5
     sync always
       update \c_reg 128'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
   end
