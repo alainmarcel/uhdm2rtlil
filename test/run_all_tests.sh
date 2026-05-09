@@ -312,6 +312,19 @@ analyze_test_result() {
             return 1
         fi
     fi
+
+    # UHDM completed full synth but Verilog synth errored after read.
+    # The Verilog post-`opt` IL is written before `synth`, so $verilog_file
+    # exists but $verilog_synth (post-`synth -auto-top`) doesn't.  Treat as
+    # UHDM-only success when Verilog logged an error.
+    if [ -f "$uhdm_synth" ] && [ ! -f "$verilog_synth" ] && \
+       [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
+        echo "✅ Test $test_dir PASSED - UHDM completes synth where Verilog synth errors!"
+        echo "    Demonstrates UHDM's superior SystemVerilog support"
+        UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
+        UHDM_ONLY_TEST_NAMES+=("$test_dir")
+        return 0
+    fi
     
     # Check if RTLIL outputs are identical
     local rtlil_identical=false

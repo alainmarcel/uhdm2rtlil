@@ -869,6 +869,43 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 }
                             }
 
+                            // Width-mismatch protection.  When the actual is
+                            // a narrow wire (e.g. an implicit 1-bit `b2`)
+                            // connected to a wider OUTPUT port, Yosys'
+                            // hierarchy pass otherwise pads the connection
+                            // with `1'0` constant bits and a later pass
+                            // errors with "Output port ... is connected to
+                            // constants".  Widen via an intermediate wire so
+                            // the cell drives a real (X-valued) wire.
+                            //
+                            // If the narrow actual already has another driver
+                            // (e.g. `assign b2 = 'b0;` in the parent), don't
+                            // connect the cell's output bits back into it —
+                            // that would be a multi-driver conflict.  Just
+                            // let the cell drive the wide intermediate and
+                            // honour the explicit assignment.
+                            if (!conn.is_fully_const()) {
+                                RTLIL::Module* target_module = design->module(cell->type);
+                                if (target_module) {
+                                    RTLIL::Wire* port_wire = target_module->wire(RTLIL::escape_id(port_name));
+                                    if (port_wire && port_wire->port_output && port_wire->width > conn.size()) {
+                                        int n = conn.size();
+                                        bool has_other_driver = false;
+                                        if (auto pmod = parent_rtlil_module) {
+                                            for (auto& ca : pmod->connections())
+                                                if (ca.first == conn) { has_other_driver = true; break; }
+                                        }
+                                        RTLIL::Wire* wide = module->addWire(NEW_ID, port_wire->width);
+                                        if (!has_other_driver)
+                                            module->connect(conn, RTLIL::SigSpec(wide).extract(0, n));
+                                        conn = RTLIL::SigSpec(wide);
+                                        log("UHDM: Widened narrow output-port connection on '%s' to %d bits%s\n",
+                                            port_name.c_str(), port_wire->width,
+                                            has_other_driver ? " (skipping multi-driver back-connect)" : "");
+                                    }
+                                }
+                            }
+
                             cell->setPort(RTLIL::escape_id(port_name), conn);
                             log("UHDM: Connected port %s\n", port_name.c_str());
                         }
