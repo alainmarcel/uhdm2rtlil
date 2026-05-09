@@ -1484,6 +1484,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             for (auto proc : *uhdm_module->Process()) {
                 if (auto al = any_cast<const always*>(proc)) scan(al->Stmt());
             }
+        // Sub-instance port connections also count as whole-array access
+        // when the actual is a `ref_obj` (e.g. `inst (.b(b_internal))`).
+        if (uhdm_module->Modules())
+            for (auto sub : *uhdm_module->Modules()) {
+                if (sub->Ports())
+                    for (auto p : *sub->Ports())
+                        if (p->High_conn()) scan(p->High_conn());
+            }
+        if (uhdm_module->Ref_modules())
+            for (auto rm : *uhdm_module->Ref_modules()) {
+                if (rm->Ports())
+                    for (auto p : *rm->Ports())
+                        if (p->High_conn()) scan(p->High_conn());
+            }
     }
 
     // Import module-level variables (logic declarations)
