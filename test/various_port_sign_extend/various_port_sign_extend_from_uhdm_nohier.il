@@ -94,7 +94,7 @@ module \act
   attribute \src "dut.v:58.19-58.23"
   attribute \init 3'101
   wire width 3 signed \tmp8[0]
-  wire signed $auto$uhdm2rtlil.cpp:826:import_module_hierarchy$10
+  wire signed $auto$uhdm2rtlil.cpp:846:import_module_hierarchy$10
   wire width 2 signed $auto$rtlil.cc:3304:Xor$12
   wire $auto$rtlil.cc:3262:ReduceBool$14
   wire width 3 signed $auto$rtlil.cc:3390:Mux$16
@@ -108,7 +108,7 @@ module \act
     connect \b \o2
   end
   cell \PassThrough \pt3
-    connect \a $auto$uhdm2rtlil.cpp:826:import_module_hierarchy$10
+    connect \a $auto$uhdm2rtlil.cpp:846:import_module_hierarchy$10
     connect \b \o3
   end
   cell \PassThrough \pt4
@@ -223,7 +223,7 @@ module \act
   end
   connect \tmp2 1'1
   connect \tmp4 1'1
-  connect $auto$uhdm2rtlil.cpp:826:import_module_hierarchy$10 1'1
+  connect $auto$uhdm2rtlil.cpp:846:import_module_hierarchy$10 1'1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.v:75.1-95.10"
