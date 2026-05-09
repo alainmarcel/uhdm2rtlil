@@ -45,12 +45,13 @@
  dffsr2_sub uut (
  .clear(_1_),
  .clk(clk),
-@@ -45,22 +37,21 @@
+@@ -45,22 +37,22 @@
  .q(q)
  );
  endmodule
 -(* gentb_skip =  1  *)
  (* src = "dut.sv:92.1-103.10" *)
++(* gentb_skip =  1  *)
  module dffsr2_sub(clk, preset, clear, d, q);
 -(* src = "dut.sv:93.7-93.10" *)
 +(* src = "dut.sv:92.19-92.22" *)
@@ -73,7 +74,7 @@
  output q;
  wire q;
  wire _0_;
-@@ -69,6 +60,9 @@
+@@ -69,6 +61,9 @@
  .B(preset),
  .Y(_0_)
  );

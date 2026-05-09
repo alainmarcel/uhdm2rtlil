@@ -40,6 +40,7 @@ module dffsr2(clk, preset, clear, d, q);
 endmodule
 
 (* src = "dut.sv:92.1-103.10" *)
+(* gentb_skip =  1  *)
 module dffsr2_sub(clk, preset, clear, d, q);
   (* src = "dut.sv:92.19-92.22" *)
   input clk;

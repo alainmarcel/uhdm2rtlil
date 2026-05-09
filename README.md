@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 169 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (169/169 tests functional, 0 known failures)
-- **Passing**: 164 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 170 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (170/170 tests functional, 0 known failures)
+- **Passing**: 165 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 5 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -527,7 +527,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (169 total — 164 passing equivalence, 5 UHDM-only, 0 known failures)
+### Current Test Cases (170 total — 165 passing equivalence, 5 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -689,6 +689,7 @@ The Yosys test runner:
 - **simple_package** - SystemVerilog packages with parameters, structs, and imports *(UHDM-only)*
 - **custom_map_incomp** - Custom technology mapping with `_TECHMAP_REPLACE_` cell and string parameters
 - **arraycells** - Array cell instantiation with bit-sliced port connections (e.g., `aoi12 p [31:0] (a, b, c, y)`)
+- **recursive_map** - Verbatim port of `yosys/tests/techmap/recursive_map.v`: a single-module file with a self-referential `_TECHMAP_REPLACE_` instance and a forward reference to undefined `bar`; tests `Ref_modules()` import for orphan modules (no top, hierarchy walk doesn't run)
 
 #### Primitives & Miscellaneous
 - **verilog_primitives** - Instantiation of buf, not, and xnor primitives
@@ -722,7 +723,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 169 of 169 tests are passing or working as expected (164 equiv + 5 UHDM-only)
+- 170 of 170 tests are passing or working as expected (165 equiv + 5 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -776,12 +777,23 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **156 test cases**:
+The UHDM frontend test suite includes **170 test cases**:
 - **5 UHDM-only tests** - Demonstrate superior SystemVerilog support (nested_struct, simple_instance_array, simple_package, unique_case, gen_struct_access)
-- **164 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **165 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
+
+### `Ref_modules()` Import for Orphan Modules and User-Attribute Propagation (`recursive_map`)
+- Verbatim port of `yosys/tests/techmap/recursive_map.v`: `module sub; sub _TECHMAP_REPLACE_(); bar f0(); endmodule` — a single, top-less file with a self-referential `_TECHMAP_REPLACE_` and a forward reference to undefined `bar`
+- **Bug — empty UHDM module body**: with no top module the elaborated hierarchy walk doesn't run, and the AllModules importer only processed `module_inst::Modules()` (always empty in AllModules); both child cells were silently dropped
+- **Fix in `uhdm2rtlil.cpp`** (`import_design`): pre-walk each top via `Modules()` and record every visited `VpiDefName` in `hierarchy_reachable_modules`; this is the set of modules whose child cells are guaranteed to be created by `import_module_hierarchy`
+- **Fix in `uhdm2rtlil.cpp`** (`import_module`): for any module NOT in `hierarchy_reachable_modules` (e.g. orphan modules with no top, like a stand-alone techmap library file), iterate `Ref_modules()` and call `import_ref_module()` for each — handling self-references and forward refs that the hierarchy walk would otherwise miss
+- **Fix in `uhdm2rtlil.cpp`** (`import_module`): also propagate user attributes from `module_inst::Attributes()` (`(* blackbox *)`, `(* whitebox *)`, `(* abc9_box *)`, `(* gentb_skip *)`, etc.) to `module->attributes` — needed for any blackbox techmap libraries even when reachable from a top
+- **Fix in `ref_module.cpp`** (`import_ref_module`): existence guard against double-creation, plus `\src` and `\module_not_derived = 1` attributes on the created cell (matching the Verilog frontend's output for unelaborated cells)
+- **Test discovery in `run_all_tests.sh`**: discover tests with `dut.v` in addition to `dut.sv` so plain-Verilog ports of upstream Yosys tests are picked up
+- Both UHDM and Verilog frontends now produce identical RTLIL for `recursive_map.v`; the test passes by comparing pre-hierarchy `_nohier.il` files (both paths fail at hierarchy with the same `\bar not part of the design` error, by design)
+- All 170 tests now pass (165 equivalence + 5 UHDM-only, 0 known failures) ✅
 
 ### Unbased Unsized Fill Constant Extension (`'1`)
 - Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)

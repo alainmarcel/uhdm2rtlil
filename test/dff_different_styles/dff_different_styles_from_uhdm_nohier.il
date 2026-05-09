@@ -2,6 +2,7 @@
 autoidx 19
 attribute \cells_not_processed 1
 attribute \src "dut.sv:92.1-103.10"
+attribute \gentb_skip 1'1
 module \dffsr2_sub
   attribute \src "dut.sv:92.19-92.22"
   wire input 1 \clk

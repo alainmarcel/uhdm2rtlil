@@ -34,8 +34,8 @@ module \gold
   process $proc$dut.sv:22$4
     sync always
     sync init
-      update \gen.z 10
       update \gen.x 1920
+      update \gen.z 10
   end
   attribute \src "dut.sv:31.2-31.20"
   process $proc$dut.sv:31$5

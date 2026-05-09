@@ -63,8 +63,23 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
     
     if (mode_debug)
         log("  Importing instance: %s of %s\n", inst_name.c_str(), module_name.c_str());
-    
+
+    // The hierarchy-traversal path may have already created a cell for this
+    // instance from `module_inst::Modules()`.  Skip — adding a second cell
+    // with the same name asserts in RTLIL's add hooks.
+    if (module->cell(RTLIL::escape_id(inst_name))) {
+        if (mode_debug)
+            log("  Cell '%s' already exists, skipping ref_module import\n",
+                inst_name.c_str());
+        return;
+    }
+
     RTLIL::Cell* cell = module->addCell(new_id(inst_name), RTLIL::escape_id(module_name));
+    add_src_attribute(cell->attributes, ref_mod);
+    // Mark as not-yet-elaborated so Yosys's hierarchy pass treats this the
+    // same as the Verilog frontend's output (matches `module_not_derived`
+    // attribute on cells whose target module hasn't been derived yet).
+    cell->attributes[RTLIL::escape_id("module_not_derived")] = RTLIL::Const(1);
     
     // Import port connections from ref_module and infer parameter widths
     int inferred_width = 1; // default

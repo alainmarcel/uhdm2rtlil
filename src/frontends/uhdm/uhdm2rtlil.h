@@ -211,6 +211,12 @@ struct UhdmImporter {
 
     // Track top-level modules (those with vpiTop:1 property)
     std::set<std::string> top_level_modules;
+
+    // Track modules reachable from any top via Modules() — i.e. modules whose
+    // ref_module child cells will be created by import_module_hierarchy().
+    // For modules NOT in this set (e.g. orphan modules with no top), import_module()
+    // must materialise their Ref_modules() entries itself.
+    std::set<std::string> hierarchy_reachable_modules;
     
     // Track interface instance parameters (interface_name -> param_name -> value)
     std::map<std::string, std::map<std::string, int>> interface_parameters;
