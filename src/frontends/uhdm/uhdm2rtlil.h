@@ -325,6 +325,13 @@ struct UhdmImporter {
     // These are expanded to individual element wires rather than $memory objects
     // so that write-then-read semantics within the same always @* block work correctly.
     std::set<std::string> comb_only_arrays;
+
+    // Names of arrays that appear as a whole (not bit-selected) on either side
+    // of any assignment.  When set, the LHS/RHS handler can't currently route
+    // a per-element split, so we keep the legacy single-wire fallback.  Pure
+    // bit_select / var_select access patterns can safely flatten to per-element
+    // wires (matching the Verilog frontend).
+    std::set<std::string> whole_array_accessed_names;
     
     // Get current function context for constant propagation (top of stack)
     FunctionCallContext* getCurrentFunctionContext() {

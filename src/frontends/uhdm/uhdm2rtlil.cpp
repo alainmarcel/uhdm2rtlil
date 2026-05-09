@@ -1423,6 +1423,69 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
 
+    // Pre-scan: detect arrays referenced as a whole (not as a bit_select).
+    // Pattern: `pt_o = pt_sel ? pt_a : pt_b;` — each of `pt_o`, `pt_a`, `pt_b`
+    // appears as a `ref_obj` (vpiRefObj) at the top of an LHS/RHS expression.
+    // Per-element bit access (`pt_o[i]`) is a `bit_select` instead and does
+    // NOT flag the array.  Arrays in `whole_array_accessed_names` keep the
+    // legacy single-wire fallback so the existing array-to-array assignment
+    // path keeps working; the rest can safely flatten to per-element wires.
+    whole_array_accessed_names.clear();
+    {
+        std::function<void(const any*)> scan;
+        scan = [&](const any* node) {
+            if (!node) return;
+            int t = node->VpiType();
+            if (t == vpiRefObj) {
+                if (auto r = any_cast<const ref_obj*>(node)) {
+                    if (!r->VpiName().empty())
+                        whole_array_accessed_names.insert(std::string(r->VpiName()));
+                }
+                return;
+            }
+            // bit_select / var_select / indexed_part_select / part_select on an
+            // array name are element accesses, not whole-array; recurse into
+            // their indices but don't treat the base name as whole-array.
+            if (t == vpiBitSelect || t == vpiVarSelect || t == vpiIndexedPartSelect || t == vpiPartSelect)
+                return;
+            switch (t) {
+                case vpiOperation:
+                    if (auto op = any_cast<const operation*>(node))
+                        if (op->Operands()) for (auto o : *op->Operands()) scan(o);
+                    break;
+                case vpiBegin: case vpiNamedBegin:
+                    if (auto b = any_cast<const begin*>(node))
+                        if (b->Stmts()) for (auto s : *b->Stmts()) scan(s);
+                    break;
+                case vpiAssignment: case vpiAssignStmt:
+                    if (auto a = any_cast<const assignment*>(node)) {
+                        scan(a->Lhs());
+                        if (auto r = dynamic_cast<const expr*>(a->Rhs())) scan(r);
+                    }
+                    break;
+                case vpiIf:
+                    if (auto i = any_cast<const if_stmt*>(node)) { scan(i->VpiCondition()); scan(i->VpiStmt()); }
+                    break;
+                case vpiIfElse:
+                    if (auto ie = any_cast<const if_else*>(node)) { scan(ie->VpiCondition()); scan(ie->VpiStmt()); scan(ie->VpiElseStmt()); }
+                    break;
+                case vpiEventControl:
+                    if (auto ec = any_cast<const event_control*>(node)) scan(ec->Stmt());
+                    break;
+                default: break;
+            }
+        };
+        if (uhdm_module->Cont_assigns())
+            for (auto ca : *uhdm_module->Cont_assigns()) {
+                scan(ca->Lhs());
+                if (auto r = dynamic_cast<const expr*>(ca->Rhs())) scan(r);
+            }
+        if (uhdm_module->Process())
+            for (auto proc : *uhdm_module->Process()) {
+                if (auto al = any_cast<const always*>(proc)) scan(al->Stmt());
+            }
+    }
+
     // Import module-level variables (logic declarations)
     // We do this in two passes to handle initial values that reference other variables
     std::vector<std::pair<const UHDM::any*, RTLIL::Wire*>> vars_with_init_expr;
@@ -1510,16 +1573,58 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                 } else {
-                    // Otherwise, handle as a regular array of wires
-                    log("UHDM: Array_var '%s' does not have packed dimensions, treating as regular variable\n", array_name.c_str());
-                    // For now, just create a single wire with the array name
-                    RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
-                    if (!module->wire(wire_id)) {
-                        RTLIL::Wire* wire = module->addWire(wire_id, 1);
-                        wire_map[var] = wire;
-                        name_map[array_name] = wire;
-                        add_src_attribute(wire->attributes, var);
-                        log("UHDM: Created wire '%s' for array_var\n", wire->name.c_str());
+                    // Pure unpacked array (no packed dims).  When the array is
+                    // ONLY accessed by bit-select (`ml1[i]`, `ml1[1] = ...`),
+                    // flatten to per-element single-bit wires `\name[0]`,
+                    // `\name[1]`, ... — matches the Verilog frontend.
+                    // Otherwise (e.g. `pt_o = pt_a`, whole-array assignment),
+                    // fall back to a single 1-bit wire so the array-to-array
+                    // assignment path keeps working.
+                    auto ranges = array_var->Ranges();
+                    bool is_1d = ranges && ranges->size() == 1;
+                    bool whole_accessed = whole_array_accessed_names.count(array_name) > 0;
+                    if (is_1d && !whole_accessed) {
+                        log("UHDM: Array_var '%s' is 1D unpacked with bit-select-only access, creating individual wires\n", array_name.c_str());
+                        int array_size = 1;
+                        int array_low = 0;
+                        auto first_range = (*ranges)[0];
+                        if (first_range->Left_expr() && first_range->Right_expr() &&
+                            first_range->Left_expr()->VpiType() == vpiConstant &&
+                            first_range->Right_expr()->VpiType() == vpiConstant) {
+                            const constant* lc = any_cast<const constant*>(first_range->Left_expr());
+                            const constant* rc = any_cast<const constant*>(first_range->Right_expr());
+                            RTLIL::Const lv = extract_const_from_value(std::string(lc->VpiValue()));
+                            RTLIL::Const rv = extract_const_from_value(std::string(rc->VpiValue()));
+                            int left = lv.size() > 0 ? lv.as_int() : 0;
+                            int right = rv.size() > 0 ? rv.as_int() : 0;
+                            array_size = std::abs(left - right) + 1;
+                            array_low = std::min(left, right);
+                        }
+                        int element_width = 1;
+                        if (array_var->Variables() && !array_var->Variables()->empty()) {
+                            element_width = get_width(array_var->Variables()->at(0), uhdm_module);
+                        }
+                        for (int i = 0; i < array_size; i++) {
+                            std::string element_name = array_name + "[" + std::to_string(array_low + i) + "]";
+                            RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                            if (!module->wire(wire_id)) {
+                                RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                                add_src_attribute(wire->attributes, var);
+                                name_map[element_name] = wire;
+                                log("UHDM: Created wire '%s' (width=%d) for unpacked-array_var element\n",
+                                    wire->name.c_str(), element_width);
+                            }
+                        }
+                    } else {
+                        log("UHDM: Array_var '%s' has whole-array or multi-dim access, treating as single 1-bit wire\n", array_name.c_str());
+                        RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
+                        if (!module->wire(wire_id)) {
+                            RTLIL::Wire* wire = module->addWire(wire_id, 1);
+                            wire_map[var] = wire;
+                            name_map[array_name] = wire;
+                            add_src_attribute(wire->attributes, var);
+                            log("UHDM: Created wire '%s' for array_var\n", wire->name.c_str());
+                        }
                     }
                 }
             } else {
@@ -2165,9 +2270,58 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     }
                 }
             } else {
-                // Otherwise, handle as a regular array of wires
-                log("UHDM: Array net '%s' does not have packed dimensions, skipping memory creation\n", array_name.c_str());
-                // TODO: Import as array of individual wires if needed
+                // Pure unpacked array of wires (e.g. `wire mw1[0:1]`).  When
+                // the array is only accessed by bit-select, flatten to per-
+                // element wires `\mw1[0]`, `\mw1[1]`, ... so `import_bit_select`
+                // resolves `mw1[i]`.  When the array also appears as a whole
+                // (e.g. `assign out3 = sel3 ? a3 : b3;`), the LHS handler can't
+                // route to per-element wires, so fall back to the legacy
+                // single-1-bit-wire shape (matches the prior behaviour).
+                bool whole_accessed = whole_array_accessed_names.count(array_name) > 0;
+                if (!whole_accessed) {
+                    log("UHDM: Array net '%s' has only unpacked dimensions and bit-select-only access, creating individual wires\n", array_name.c_str());
+
+                    int array_size = 1;
+                    int array_low = 0;
+                    if (array->Ranges() && !array->Ranges()->empty()) {
+                        auto first_range = (*array->Ranges())[0];
+                        if (first_range->Left_expr() && first_range->Right_expr() &&
+                            first_range->Left_expr()->VpiType() == vpiConstant &&
+                            first_range->Right_expr()->VpiType() == vpiConstant) {
+                            const constant* lc = any_cast<const constant*>(first_range->Left_expr());
+                            const constant* rc = any_cast<const constant*>(first_range->Right_expr());
+                            RTLIL::Const lv = extract_const_from_value(std::string(lc->VpiValue()));
+                            RTLIL::Const rv = extract_const_from_value(std::string(rc->VpiValue()));
+                            int left = lv.size() > 0 ? lv.as_int() : 0;
+                            int right = rv.size() > 0 ? rv.as_int() : 0;
+                            array_size = std::abs(left - right) + 1;
+                            array_low = std::min(left, right);
+                        }
+                    }
+
+                    int element_width = 1;
+                    bool element_signed = false;
+                    if (array->Nets() && !array->Nets()->empty()) {
+                        auto net = (*array->Nets())[0];
+                        element_width = get_width(net, uhdm_module);
+                        if (net->VpiSigned()) element_signed = true;
+                    }
+
+                    for (int i = 0; i < array_size; i++) {
+                        std::string element_name = array_name + "[" + std::to_string(array_low + i) + "]";
+                        RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
+                        if (!module->wire(wire_id)) {
+                            RTLIL::Wire* wire = module->addWire(wire_id, element_width);
+                            if (element_signed) wire->is_signed = true;
+                            add_src_attribute(wire->attributes, array);
+                            name_map[element_name] = wire;
+                            log("UHDM: Created wire '%s' (width=%d) for unpacked-array element\n",
+                                wire->name.c_str(), element_width);
+                        }
+                    }
+                } else {
+                    log("UHDM: Array net '%s' has whole-array access, skipping per-element flatten\n", array_name.c_str());
+                }
             }
         }
         log("UHDM: Finished importing all array_nets\n");
