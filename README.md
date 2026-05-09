@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 186 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (186/186 tests functional, 0 known failures)
-- **Passing**: 166 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 187 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (187/187 tests functional, 0 known failures)
+- **Passing**: 167 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 20 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -542,7 +542,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (186 total — 166 passing equivalence, 20 UHDM-only, 0 known failures)
+### Current Test Cases (187 total — 167 passing equivalence, 20 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -706,6 +706,7 @@ The Yosys test runner:
 - **arraycells** - Array cell instantiation with bit-sliced port connections (e.g., `aoi12 p [31:0] (a, b, c, y)`)
 - **recursive_map** - Verbatim port of `yosys/tests/techmap/recursive_map.v`: a single-module file with a self-referential `_TECHMAP_REPLACE_` instance and a forward reference to undefined `bar`; tests `Ref_modules()` import for orphan modules (no top, hierarchy walk doesn't run)
 - **reg_wire_error** - Verbatim port of `yosys/tests/various/reg_wire_error.sv`: mixes `wire`, `reg`, and `logic` 1-D unpacked arrays (`wire mw1[0:1]`, `reg mr1[0:1]`, `logic ml1[0:1]`) with bit-select reads/writes (`mw1[1] = 1'b1`, `o_mw = mw1[i]`); covers unpacked-array-of-wires (the `array_net` case that was a TODO) and bit-select-only `array_var` flattening
+- **struct_param_dim** - Array dimension defined by a field of a struct-typed parameter: `parameter test_struct_t pt = 32'h4; logic mem[pt.t];`. The elaborated UHDM stores the right range bound as a `vpiOperation` (`pt.t - 1`) rather than a `vpiConstant`, so range-bound evaluation needs to fold the operation via `import_expression`. Regression test for the synlig/Surelog segfault on VeeR EL2
 
 #### Primitives & Miscellaneous
 - **verilog_primitives** - Instantiation of buf, not, and xnor primitives
@@ -739,7 +740,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 186 of 186 tests are passing or working as expected (166 equiv + 20 UHDM-only)
+- 187 of 187 tests are passing or working as expected (167 equiv + 20 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -793,12 +794,17 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **186 test cases**:
+The UHDM frontend test suite includes **187 test cases**:
 - **20 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
-- **166 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **167 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
+
+### Range Bounds From Struct-Field Parameters (`struct_param_dim`)
+- Synthesizable regression test for the synlig/Surelog segfault on VeeR EL2: `parameter test_struct_t pt = 32'h4; logic mem[pt.t];` — array dimension is a field of a struct-typed parameter
+- **Bug — range-bound evaluation only handled `vpiConstant`**: in elaborated UHDM the right range of `[pt.t]` is stored as a `vpiOperation` (`pt.t - 1`, where `pt.t` is itself a folded constant), not a literal `vpiConstant`. The 1-D unpacked-array-var path's range-bound code only checked `VpiType() == vpiConstant`, so size silently fell back to 1 and only `\mem[0]` was created
+- **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Variables()` loop, 1-D unpacked array_var branch): added an `eval_bound` lambda that runs `import_expression` on either left or right range bound and uses `as_const().as_int()` when the result is fully constant. Handles both `vpiConstant` and arbitrary fold-able operations like `pt.t - 1`, `WIDTH - 1`, etc.
 
 ### Unpacked Arrays of Wires + Conditional Flatten of `logic` Arrays (`reg_wire_error`)
 - Verbatim port of `yosys/tests/various/reg_wire_error.sv`: a `test` module with `wire mw1[0:1]`, `reg mr1[0:1]`, and `logic ml1[0:1]` unpacked arrays, accessed by bit-select (`mw1[1] = 1'b1`, `o_mw = mw1[i]`)
@@ -806,7 +812,7 @@ The UHDM frontend test suite includes **186 test cases**:
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Array_nets()` loop): for `array_net` with no packed dims, create per-element single-bit wires `\name[low+0]`, `\name[low+1]`, ..., using `Ranges()[0]` for the unpacked range and the inner `Nets()[0]`'s width for the element width
 - **Bug 2 — `logic ml1[0:1]` (`array_var` with no packed dims) created a single 1-bit wire**, dropping all per-element values; flattening to per-element wires unconditionally would have regressed `array_assign` (test 8 has `pt_o = pt_sel ? pt_a : pt_b` whole-array assignment, which the LHS handler can't currently route to per-element wires)
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Variables()` loop): added a pre-scan that walks `Cont_assigns()` and `Process()` collecting names of `vpiRefObj` nodes that are NOT the base of a `bit_select` / `var_select` / `indexed_part_select` / `part_select` (i.e. whole-array references). For 1-D unpacked `array_var`s NOT in this set (= bit-select-only access), flatten to per-element wires; otherwise keep the legacy single-1-bit-wire fallback so the existing array-to-array assignment path keeps working
-- All 186 tests pass (166 equivalence + 20 UHDM-only, 0 known failures) — no regressions ✅
+- All 187 tests pass (167 equivalence + 20 UHDM-only, 0 known failures) — no regressions ✅
 
 ### `Ref_modules()` Import for Orphan Modules and User-Attribute Propagation (`recursive_map`)
 - Verbatim port of `yosys/tests/techmap/recursive_map.v`: `module sub; sub _TECHMAP_REPLACE_(); bar f0(); endmodule` — a single, top-less file with a self-referential `_TECHMAP_REPLACE_` and a forward reference to undefined `bar`
@@ -817,7 +823,7 @@ The UHDM frontend test suite includes **186 test cases**:
 - **Fix in `ref_module.cpp`** (`import_ref_module`): existence guard against double-creation, plus `\src` and `\module_not_derived = 1` attributes on the created cell (matching the Verilog frontend's output for unelaborated cells)
 - **Test discovery in `run_all_tests.sh`**: discover tests with `dut.v` in addition to `dut.sv` so plain-Verilog ports of upstream Yosys tests are picked up
 - Both UHDM and Verilog frontends now produce identical RTLIL for `recursive_map.v`; the test passes by comparing pre-hierarchy `_nohier.il` files (both paths fail at hierarchy with the same `\bar not part of the design` error, by design)
-- All 186 tests now pass (166 equivalence + 20 UHDM-only, 0 known failures) ✅
+- All 187 tests now pass (167 equivalence + 20 UHDM-only, 0 known failures) ✅
 
 ### Unbased Unsized Fill Constant Extension (`'1`)
 - Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)

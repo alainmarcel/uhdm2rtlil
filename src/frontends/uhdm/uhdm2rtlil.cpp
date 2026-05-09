@@ -1588,15 +1588,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         int array_size = 1;
                         int array_low = 0;
                         auto first_range = (*ranges)[0];
-                        if (first_range->Left_expr() && first_range->Right_expr() &&
-                            first_range->Left_expr()->VpiType() == vpiConstant &&
-                            first_range->Right_expr()->VpiType() == vpiConstant) {
-                            const constant* lc = any_cast<const constant*>(first_range->Left_expr());
-                            const constant* rc = any_cast<const constant*>(first_range->Right_expr());
-                            RTLIL::Const lv = extract_const_from_value(std::string(lc->VpiValue()));
-                            RTLIL::Const rv = extract_const_from_value(std::string(rc->VpiValue()));
-                            int left = lv.size() > 0 ? lv.as_int() : 0;
-                            int right = rv.size() > 0 ? rv.as_int() : 0;
+                        // Range bounds may be `vpiConstant` (literal) or
+                        // `vpiOperation` (e.g. `pt.t - 1` with `pt` a struct
+                        // parameter); evaluate either via `import_expression`.
+                        auto eval_bound = [&](const any* node, int dflt) -> int {
+                            if (!node) return dflt;
+                            if (auto e = dynamic_cast<const expr*>(node)) {
+                                RTLIL::SigSpec s = import_expression(e);
+                                if (s.is_fully_const()) return s.as_const().as_int();
+                            }
+                            return dflt;
+                        };
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            int left = eval_bound(first_range->Left_expr(), 0);
+                            int right = eval_bound(first_range->Right_expr(), 0);
                             array_size = std::abs(left - right) + 1;
                             array_low = std::min(left, right);
                         }
