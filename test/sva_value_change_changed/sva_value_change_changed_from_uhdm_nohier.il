@@ -28,7 +28,7 @@ module \top
     connect \ARGS { }
   end
   attribute \src "dut.sv:11.7-11.8"
-  process $auto$module.cpp:864:import_continuous_assign$1
+  process $auto$module.cpp:865:import_continuous_assign$1
     sync always
       update \x 1'x
   end
