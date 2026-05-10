@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 192 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (192/192 tests functional, 0 known failures)
-- **Passing**: 170 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 193 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (193/193 tests functional, 0 known failures)
+- **Passing**: 171 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 22 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -44,6 +44,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `func_local_array` - Function with a local unpacked array (`reg [3:0] state[4]`) populated by a for-loop using bit-select (`state[i] = 2'b0`) and chained var-select (`state[i][i] = 1'b1`) writes, then returns `state[0] ^ a`. Compile-time function evaluator now handles vpiFor (init/cond/inc), vpiRefVar LHS (for-loop init), array_var width via `array_typespec.Ranges()`, and bit_select/var_select on flattened array storage
   - `typedef_packed_enum_array` - Packed-array typedef on top of an enum: `typedef enum { FALSE, TRUE } u; typedef u [0:1] crash;` (the name `crash` was reported to segfault Surelog/synlig). Implicit-base enum defaults to `int` (32 bits per LRM); `u [0:1]` should be 64 bits (2 elements x 32-bit `int`). `get_width_from_typespec` now handles `packed_array_typespec` by walking `Elem_typespec()` and multiplying by the product of `Ranges()`
   - `counter_unbased` - 4-bit synchronous counter with active-low reset and an unbased unsized hex literal increment (`out <= out + 'h1`); covers the typical "tutorial" counter idiom and confirms `'h1` extends to the LHS width without zero-padding artefacts
+  - `size_cast_param` - Parameterized size cast in arithmetic: `cnt <= cnt + WIDTH'(ena)` and `cnt <= cnt + WIDTH'(1)` from a generate-case `counter_wrap`. Adapted from [jeras/synthesis-primitives techmap_ha bugreport](https://github.com/jeras/synthesis-primitives/tree/main/bugreport/yosys/techmap_ha). Formal equivalence with the Yosys Verilog frontend passes; the `WIDTH'(...)` cast typespec is currently delivered by Surelog as `unsupported_typespec` so the adder ends up wider than the LHS (32-bit / 64-bit) — Yosys truncates the result on assign, so the synth-time semantics are correct, but a follow-up Surelog/UHDM fix should produce a proper cast typespec so the structural width matches the Verilog frontend's 16-bit adder
   - `array_assign` - Unpacked-array-to-array assignments (continuous and procedural), array-typed ternary expressions (`out = sel ? a : b` where `a`/`b`/`out` are unpacked arrays), multi-dimensional unpacked arrays, and `$bits` over unpacked arrays; ported from `third_party/yosys/tests/svtypes/array_assign.sv` — exposed a crash on a missing `var_select` element resolution that has been guarded so the test now runs cleanly
   - `various_port_sign_extend` - Module-port sign extension across instantiations: 1- and 2-bit signed/unsigned producer modules feed a `PassThrough` instance whose 4-bit `input` must sign-extend signed values and zero-extend unsigned ones; also exercises signed expressions (`^`, `~`, ternary, array reads) passed through narrowing/widening port boundaries; ported from `third_party/yosys/tests/various/port_sign_extend.v` (the upstream `ref` module is renamed `refmod` here because `ref` is a reserved keyword in SystemVerilog mode)
   - `various_struct_access` - Nested packed-struct typedefs (3 levels) with `parameter` of struct type initialised from a vector literal, and a chain of `localparam`s reading struct fields off the parameter (`P.d`, `P.d.c.a`) and off other localparams (`x.c`, `y.b`, `q.c.a`); ported from `third_party/yosys/tests/various/struct_access.sv` — required a Surelog/UHDM null-deref fix in `ExprEval::decodeHierPath` so `localparam logic f = P.a;` no longer segfaults at elaboration when the hier_path's `Typespec()` is null
@@ -547,7 +548,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (192 total — 170 passing equivalence, 22 UHDM-only, 0 known failures)
+### Current Test Cases (193 total — 171 passing equivalence, 22 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -745,7 +746,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 192 of 192 tests are passing or working as expected (170 equiv + 22 UHDM-only)
+- 193 of 193 tests are passing or working as expected (171 equiv + 22 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -799,9 +800,9 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **192 test cases**:
+The UHDM frontend test suite includes **193 test cases**:
 - **22 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
-- **170 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **171 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
@@ -871,7 +872,7 @@ The UHDM frontend test suite includes **192 test cases**:
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Array_nets()` loop): for `array_net` with no packed dims, create per-element single-bit wires `\name[low+0]`, `\name[low+1]`, ..., using `Ranges()[0]` for the unpacked range and the inner `Nets()[0]`'s width for the element width
 - **Bug 2 — `logic ml1[0:1]` (`array_var` with no packed dims) created a single 1-bit wire**, dropping all per-element values; flattening to per-element wires unconditionally would have regressed `array_assign` (test 8 has `pt_o = pt_sel ? pt_a : pt_b` whole-array assignment, which the LHS handler can't currently route to per-element wires)
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Variables()` loop): added a pre-scan that walks `Cont_assigns()` and `Process()` collecting names of `vpiRefObj` nodes that are NOT the base of a `bit_select` / `var_select` / `indexed_part_select` / `part_select` (i.e. whole-array references). For 1-D unpacked `array_var`s NOT in this set (= bit-select-only access), flatten to per-element wires; otherwise keep the legacy single-1-bit-wire fallback so the existing array-to-array assignment path keeps working
-- All 192 tests pass (170 equivalence + 22 UHDM-only, 0 known failures) — no regressions ✅
+- All 193 tests pass (171 equivalence + 22 UHDM-only, 0 known failures) — no regressions ✅
 
 ### `Ref_modules()` Import for Orphan Modules and User-Attribute Propagation (`recursive_map`)
 - Verbatim port of `yosys/tests/techmap/recursive_map.v`: `module sub; sub _TECHMAP_REPLACE_(); bar f0(); endmodule` — a single, top-less file with a self-referential `_TECHMAP_REPLACE_` and a forward reference to undefined `bar`
@@ -882,7 +883,7 @@ The UHDM frontend test suite includes **192 test cases**:
 - **Fix in `ref_module.cpp`** (`import_ref_module`): existence guard against double-creation, plus `\src` and `\module_not_derived = 1` attributes on the created cell (matching the Verilog frontend's output for unelaborated cells)
 - **Test discovery in `run_all_tests.sh`**: discover tests with `dut.v` in addition to `dut.sv` so plain-Verilog ports of upstream Yosys tests are picked up
 - Both UHDM and Verilog frontends now produce identical RTLIL for `recursive_map.v`; the test passes by comparing pre-hierarchy `_nohier.il` files (both paths fail at hierarchy with the same `\bar not part of the design` error, by design)
-- All 192 tests now pass (170 equivalence + 22 UHDM-only, 0 known failures) ✅
+- All 193 tests now pass (171 equivalence + 22 UHDM-only, 0 known failures) ✅
 
 ### Unbased Unsized Fill Constant Extension (`'1`)
 - Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)
