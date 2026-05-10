@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 189 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (189/189 tests functional, 0 known failures)
-- **Passing**: 167 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 190 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (190/190 tests functional, 0 known failures)
+- **Passing**: 168 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 22 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
@@ -41,6 +41,7 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   - `struct_pattern_loop` - Multi-dim packed-then-unpacked output port (`output bit [0:0][0:0] b [0:0]`) assigned with an unpacked-array pattern (`'{'b0}`); regression test for an upstream "ABC combinational loop" report on the same construct (which the Yosys Verilog frontend doesn't parse)
   - `hier_undriven_port` - Inner module declares a 3-bit output but doesn't drive it; outer module connects `.a1(b2)` where `b2` is an implicit 1-bit net also driven by `assign b2 = 'b0;`. Regression test for the synlig hierarchy-pass error "Output port ... is connected to constants"
 - **Recent Additions**:
+  - `func_local_array` - Function with a local unpacked array (`reg [3:0] state[4]`) populated by a for-loop using bit-select (`state[i] = 2'b0`) and chained var-select (`state[i][i] = 1'b1`) writes, then returns `state[0] ^ a`. Compile-time function evaluator now handles vpiFor (init/cond/inc), vpiRefVar LHS (for-loop init), array_var width via `array_typespec.Ranges()`, and bit_select/var_select on flattened array storage
   - `array_assign` - Unpacked-array-to-array assignments (continuous and procedural), array-typed ternary expressions (`out = sel ? a : b` where `a`/`b`/`out` are unpacked arrays), multi-dimensional unpacked arrays, and `$bits` over unpacked arrays; ported from `third_party/yosys/tests/svtypes/array_assign.sv` — exposed a crash on a missing `var_select` element resolution that has been guarded so the test now runs cleanly
   - `various_port_sign_extend` - Module-port sign extension across instantiations: 1- and 2-bit signed/unsigned producer modules feed a `PassThrough` instance whose 4-bit `input` must sign-extend signed values and zero-extend unsigned ones; also exercises signed expressions (`^`, `~`, ternary, array reads) passed through narrowing/widening port boundaries; ported from `third_party/yosys/tests/various/port_sign_extend.v` (the upstream `ref` module is renamed `refmod` here because `ref` is a reserved keyword in SystemVerilog mode)
   - `various_struct_access` - Nested packed-struct typedefs (3 levels) with `parameter` of struct type initialised from a vector literal, and a chain of `localparam`s reading struct fields off the parameter (`P.d`, `P.d.c.a`) and off other localparams (`x.c`, `y.b`, `q.c.a`); ported from `third_party/yosys/tests/various/struct_access.sv` — required a Surelog/UHDM null-deref fix in `ExprEval::decodeHierPath` so `localparam logic f = P.a;` no longer segfaults at elaboration when the hier_path's `Typespec()` is null
@@ -544,7 +545,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (189 total — 167 passing equivalence, 22 UHDM-only, 0 known failures)
+### Current Test Cases (190 total — 168 passing equivalence, 22 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -742,7 +743,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 189 of 189 tests are passing or working as expected (167 equiv + 22 UHDM-only)
+- 190 of 190 tests are passing or working as expected (168 equiv + 22 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -796,12 +797,38 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **189 test cases**:
+The UHDM frontend test suite includes **190 test cases**:
 - **22 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
-- **167 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
+- **168 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 
 ## Recent Improvements
+
+### Function-Local Unpacked Arrays in Compile-Time Evaluation (`func_local_array`)
+- Test:
+  ```sv
+  function [1:0] func1(input [1:0] a);
+    reg [3:0] state[4];
+    integer i;
+    for (i = 0; i < 4; i = i + 1) begin
+      state[i] = 2'b0;
+      state[i][i] = 1'b1;
+    end
+    func1 = state[0] ^ a;
+  endfunction
+  ```
+  Compile-time evaluation must produce `func1(2'd3) = 4'b0001 ^ 2'b11 = 2'b10` (`out = 2'h2`)
+- **Bug 1 — `evaluate_function_stmt` had no `vpiFor` case**: the for-loop was silently skipped, so `state` stayed all-zeros and `state[0] ^ 3` returned `3` instead of `2`
+- **Bug 2 — array_var width came out as element width, not total**: `array_var::Ranges()` is empty in Surelog's elaborated output; the unpacked dimensions live in `array_var::Typespec()->Actual_typespec()` (an `array_typespec`) under its `Ranges()`. Result: `state` was allocated 4 bits instead of 16 (4 elements × 4 bits)
+- **Bug 3 — bit_select/var_select access on `local_vars` had no array semantics**: `state[i]` LHS was treated as bit-write (set bit `i` of `state`) rather than element-write (write `element_width` bits at offset `i*element_width`); `state[i][j]` (vpiVarSelect) had no LHS or RHS handler at all
+- **Bug 4 — vpiRefVar LHS was unhandled**: for-loop init `i = 0` uses `vpiRefVar` (not `vpiRefObj`), so the assignment was silently dropped, the loop never advanced and hit the iteration limit
+- **Fix in `functions.cpp`** (`evaluate_function_stmt` + `evaluate_single_operand`):
+  1. Added `vpiFor` case that runs init (single + vector forms), evaluates condition each iteration, runs body then inc, with a 100k iteration cap
+  2. Added `vpiRefVar` LHS handling alongside `vpiRefObj`
+  3. Flattened storage layout for function-local `array_var`: `local_vars[name]` is a single Const of `total_elements * element_width` bits, with element widths tracked in a new `array_local_element_widths` map
+  4. New LHS handlers for bit_select and var_select on array_var: splice `element_width` bits at `idx * element_width`, or set a single bit at `i*ew + j`
+  5. New RHS handlers in `evaluate_single_operand` for bit_select and var_select on array_var, mirroring the LHS layout
+  6. Per-call save/restore of `array_local_element_widths` so recursion doesn't leak
 
 ### Narrow Output-Port Width Mismatch Protection (`hier_undriven_port`)
 - Regression test for a synlig hierarchy-pass error: `Output port b.a_inst.a1 (a) is connected to constants: { ... 1'0 }` on
@@ -832,7 +859,7 @@ The UHDM frontend test suite includes **189 test cases**:
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Array_nets()` loop): for `array_net` with no packed dims, create per-element single-bit wires `\name[low+0]`, `\name[low+1]`, ..., using `Ranges()[0]` for the unpacked range and the inner `Nets()[0]`'s width for the element width
 - **Bug 2 — `logic ml1[0:1]` (`array_var` with no packed dims) created a single 1-bit wire**, dropping all per-element values; flattening to per-element wires unconditionally would have regressed `array_assign` (test 8 has `pt_o = pt_sel ? pt_a : pt_b` whole-array assignment, which the LHS handler can't currently route to per-element wires)
 - **Fix in `uhdm2rtlil.cpp`** (`import_module`, `Variables()` loop): added a pre-scan that walks `Cont_assigns()` and `Process()` collecting names of `vpiRefObj` nodes that are NOT the base of a `bit_select` / `var_select` / `indexed_part_select` / `part_select` (i.e. whole-array references). For 1-D unpacked `array_var`s NOT in this set (= bit-select-only access), flatten to per-element wires; otherwise keep the legacy single-1-bit-wire fallback so the existing array-to-array assignment path keeps working
-- All 189 tests pass (167 equivalence + 22 UHDM-only, 0 known failures) — no regressions ✅
+- All 190 tests pass (168 equivalence + 22 UHDM-only, 0 known failures) — no regressions ✅
 
 ### `Ref_modules()` Import for Orphan Modules and User-Attribute Propagation (`recursive_map`)
 - Verbatim port of `yosys/tests/techmap/recursive_map.v`: `module sub; sub _TECHMAP_REPLACE_(); bar f0(); endmodule` — a single, top-less file with a self-referential `_TECHMAP_REPLACE_` and a forward reference to undefined `bar`
@@ -843,7 +870,7 @@ The UHDM frontend test suite includes **189 test cases**:
 - **Fix in `ref_module.cpp`** (`import_ref_module`): existence guard against double-creation, plus `\src` and `\module_not_derived = 1` attributes on the created cell (matching the Verilog frontend's output for unelaborated cells)
 - **Test discovery in `run_all_tests.sh`**: discover tests with `dut.v` in addition to `dut.sv` so plain-Verilog ports of upstream Yosys tests are picked up
 - Both UHDM and Verilog frontends now produce identical RTLIL for `recursive_map.v`; the test passes by comparing pre-hierarchy `_nohier.il` files (both paths fail at hierarchy with the same `\bar not part of the design` error, by design)
-- All 189 tests now pass (167 equivalence + 22 UHDM-only, 0 known failures) ✅
+- All 190 tests now pass (168 equivalence + 22 UHDM-only, 0 known failures) ✅
 
 ### Unbased Unsized Fill Constant Extension (`'1`)
 - Fixed `'1` fill constants assigned to multi-bit struct fields (and any multi-bit LHS in `import_assignment_sync`)
