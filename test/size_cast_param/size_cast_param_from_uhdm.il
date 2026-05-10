@@ -58,8 +58,6 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   wire width 16 output 4 \cnt
   attribute \src "dut.sv:31.13-33.48"
   wire width 16 $0\cnt
-  attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2488:import_operation$4
   attribute \src "dut.sv:31.13-33.48"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
@@ -76,14 +74,13 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   cell $add $add$dut.sv:33$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 32
-    connect \A { 16'0000000000000000 \cnt }
-    connect \B { 31'0000000000000000000000000000000 \ena }
-    connect \Y { $auto$expression.cpp:2488:import_operation$4 [31:16] $0\cnt }
+    parameter \A_WIDTH 16
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A \cnt
+    connect \B { 15'000000000000000 \ena }
+    connect \Y $0\cnt
   end
-  connect $auto$expression.cpp:2488:import_operation$4 [15:0] $0\cnt
 end
 attribute \hdlname "counter_wrap"
 attribute \src "dut.sv:55.5-56.58"

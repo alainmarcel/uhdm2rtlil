@@ -31,10 +31,10 @@ module \mem2reg_test1
   wire width 4 $auto$process.cpp:6075:import_assignment_comb$8
   wire $auto$process.cpp:6067:import_assignment_comb$10
   wire width 4 $auto$process.cpp:6075:import_assignment_comb$12
-  wire $auto$expression.cpp:3612:import_bit_select$14
-  wire width 4 $auto$expression.cpp:3615:import_bit_select$16
-  wire $auto$expression.cpp:3612:import_bit_select$18
-  wire width 4 $auto$expression.cpp:3615:import_bit_select$20
+  wire $auto$expression.cpp:3638:import_bit_select$14
+  wire width 4 $auto$expression.cpp:3641:import_bit_select$16
+  wire $auto$expression.cpp:3638:import_bit_select$18
+  wire width 4 $auto$expression.cpp:3641:import_bit_select$20
   cell $eq $auto$process.cpp:6068:import_assignment_comb$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -86,7 +86,7 @@ module \mem2reg_test1
     connect \S $auto$process.cpp:6067:import_assignment_comb$10
     connect \Y $auto$process.cpp:6075:import_assignment_comb$12
   end
-  cell $eq $auto$expression.cpp:3613:import_bit_select$15
+  cell $eq $auto$expression.cpp:3639:import_bit_select$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -94,16 +94,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'01
-    connect \Y $auto$expression.cpp:3612:import_bit_select$14
+    connect \Y $auto$expression.cpp:3638:import_bit_select$14
   end
-  cell $mux $auto$expression.cpp:3616:import_bit_select$17
+  cell $mux $auto$expression.cpp:3642:import_bit_select$17
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6075:import_assignment_comb$12
     connect \B $auto$process.cpp:6075:import_assignment_comb$8
-    connect \S $auto$expression.cpp:3612:import_bit_select$14
-    connect \Y $auto$expression.cpp:3615:import_bit_select$16
+    connect \S $auto$expression.cpp:3638:import_bit_select$14
+    connect \Y $auto$expression.cpp:3641:import_bit_select$16
   end
-  cell $eq $auto$expression.cpp:3613:import_bit_select$19
+  cell $eq $auto$expression.cpp:3639:import_bit_select$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -111,14 +111,14 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'00
-    connect \Y $auto$expression.cpp:3612:import_bit_select$18
+    connect \Y $auto$expression.cpp:3638:import_bit_select$18
   end
-  cell $mux $auto$expression.cpp:3616:import_bit_select$21
+  cell $mux $auto$expression.cpp:3642:import_bit_select$21
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3615:import_bit_select$16
+    connect \A $auto$expression.cpp:3641:import_bit_select$16
     connect \B $auto$process.cpp:6075:import_assignment_comb$4
-    connect \S $auto$expression.cpp:3612:import_bit_select$18
-    connect \Y $auto$expression.cpp:3615:import_bit_select$20
+    connect \S $auto$expression.cpp:3638:import_bit_select$18
+    connect \Y $auto$expression.cpp:3641:import_bit_select$20
   end
   attribute \src "dut.sv:9.1-15.4"
   process $proc$dut.sv:9$1
@@ -132,7 +132,7 @@ module \mem2reg_test1
     assign $0\array[0] $auto$process.cpp:6075:import_assignment_comb$4
     assign $0\array[1] $auto$process.cpp:6075:import_assignment_comb$8
     assign $0\array[2] $auto$process.cpp:6075:import_assignment_comb$12
-    assign $0\out_data $auto$expression.cpp:3615:import_bit_select$20
+    assign $0\out_data $auto$expression.cpp:3641:import_bit_select$20
     sync always
       update \array[0] $0\array[0]
       update \array[1] $0\array[1]

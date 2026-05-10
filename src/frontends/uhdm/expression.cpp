@@ -2859,8 +2859,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     const ref_typespec* ref_ts = uhdm_op->Typespec();
                     const typespec* ts = ref_ts ? ref_ts->Actual_typespec() : nullptr;
                     if (ts) {
-                        // For literal-width casts (e.g. 3'(...)), Surelog stores
-                        // the width as the value of an integer_typespec.
+                        // For literal-width casts (e.g. 3'(...)), Surelog
+                        // stores the width as the VpiValue of an
+                        // integer_typespec.  For parameterized casts (e.g.
+                        // `WIDTH'(...)` with `parameter int WIDTH = 16`),
+                        // Surelog elaborates the typespec to an int_typespec
+                        // whose VpiName is the parameter name and VpiValue
+                        // is the resolved constant ("UINT:16") — handle both.
                         if (ts->VpiType() == vpiIntegerTypespec) {
                             const integer_typespec* its = any_cast<const integer_typespec*>(ts);
                             std::string val_str = std::string(its->VpiValue());
@@ -2868,6 +2873,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                 RTLIL::Const width_const = extract_const_from_value(val_str);
                                 if (width_const.size() > 0)
                                     target_width = width_const.as_int();
+                            }
+                        } else if (ts->VpiType() == vpiIntTypespec) {
+                            // For a parameterized size cast `WIDTH'(...)`,
+                            // Surelog elaborates the typespec to an
+                            // `int_typespec` whose VpiName is the parameter
+                            // identifier and VpiValue is the resolved
+                            // constant ("UINT:16").  Only consume VpiValue
+                            // when VpiName is non-empty so we don't
+                            // accidentally reinterpret a literal LRM
+                            // `int'(...)` cast (which has empty VpiName and
+                            // means a 32-bit cast — handled by the
+                            // `get_width_from_typespec` fallthrough below).
+                            const int_typespec* its = any_cast<const int_typespec*>(ts);
+                            if (!its->VpiName().empty()) {
+                                std::string val_str = std::string(its->VpiValue());
+                                if (!val_str.empty()) {
+                                    RTLIL::Const width_const =
+                                        extract_const_from_value(val_str);
+                                    if (width_const.size() > 0)
+                                        target_width = width_const.as_int();
+                                }
                             }
                         }
                         // Otherwise compute the width from the type itself
