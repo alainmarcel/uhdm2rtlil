@@ -14,6 +14,9 @@
 #include <uhdm/constant.h>
 #include <uhdm/ref_obj.h>
 #include <uhdm/bit_select.h>
+#include <uhdm/var_select.h>
+#include <uhdm/array_var.h>
+#include <uhdm/array_typespec.h>
 #include <uhdm/if_else.h>
 #include <uhdm/if_stmt.h>
 #include <uhdm/begin.h>
@@ -59,7 +62,13 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
 
     std::string func_name = std::string(func_def->VpiName());
     log("Evaluating function %s at compile time\n", func_name.c_str());
-    
+
+    // Reset per-call state for function-local unpacked arrays.  The flat-
+    // storage layout in `local_vars` is tracked in this map; keep it scoped
+    // to a single call.
+    auto saved_array_widths = array_local_element_widths;
+    array_local_element_widths.clear();
+
     // Create local variable map and initialize with parameters
     std::map<std::string, RTLIL::Const> local_vars;
     
@@ -180,6 +189,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
     // SV's assignment-widening rule: a signed RHS sign-extends to fit a
     // wider LHS even when the LHS itself is unsigned.
     recursion_depth--;
+    array_local_element_widths = saved_array_widths;
     if (local_vars.count(func_name)) {
         RTLIL::Const result = local_vars[func_name];
         if ((int)result.size() != ret_width) {
@@ -197,6 +207,7 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
         return result;
     }
 
+    array_local_element_widths = saved_array_widths;
     return RTLIL::Const(0, 32);
 }
 
@@ -216,18 +227,58 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             std::string lhs_name;
             bool is_bit_select = false;
             int bit_index = 0;
+            // Array-aware LHS info: when the bit_select / var_select target is
+            // an unpacked array_var (e.g. function-local `reg [3:0] state[4]`),
+            // we splice element_width bits at element_offset rather than
+            // single-bit assignment.
+            bool lhs_is_array_element = false;
+            int lhs_array_offset = 0;
+            int lhs_array_element_width = 0;
+            bool lhs_is_array_bit = false;
+            int lhs_array_bit_offset = 0;
 
             if (assign->Lhs()) {
-                if (assign->Lhs()->VpiType() == vpiRefObj) {
-                    const ref_obj* ref = any_cast<const ref_obj*>(assign->Lhs());
-                    lhs_name = std::string(ref->VpiName());
-                } else if (assign->Lhs()->VpiType() == vpiBitSelect) {
+                int lhs_type = assign->Lhs()->VpiType();
+                if (lhs_type == vpiRefObj ||
+                    lhs_type == vpiRefVar) {
+                    // Both `ref_obj` (e.g. inc-stmt `i = i + 1`) and `ref_var`
+                    // (e.g. init-stmt `int i = 0`) reference a variable by name.
+                    if (auto ref = dynamic_cast<const ref_obj*>(assign->Lhs())) {
+                        lhs_name = std::string(ref->VpiName());
+                    } else {
+                        // ref_var inherits from `variables` not `ref_obj`; use
+                        // base `any` interface for the name.
+                        lhs_name = std::string(assign->Lhs()->VpiName());
+                    }
+                } else if (lhs_type == vpiBitSelect) {
                     const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                     lhs_name = std::string(bs->VpiName());
                     is_bit_select = true;
                     if (bs->VpiIndex()) {
                         RTLIL::Const idx_val = evaluate_single_operand(bs->VpiIndex(), local_vars);
                         bit_index = idx_val.as_int();
+                    }
+                    // Detect array-element write: `state[i] = <value>`.
+                    if (bs->Actual_group() &&
+                        bs->Actual_group()->UhdmType() == uhdmarray_var &&
+                        array_local_element_widths.count(lhs_name)) {
+                        lhs_is_array_element = true;
+                        lhs_array_element_width = array_local_element_widths[lhs_name];
+                        lhs_array_offset = bit_index * lhs_array_element_width;
+                    }
+                } else if (assign->Lhs()->VpiType() == vpiVarSelect) {
+                    // `state[i][j]` — element `i`, bit `j` within the element.
+                    const var_select* vs = any_cast<const var_select*>(assign->Lhs());
+                    lhs_name = std::string(vs->VpiName());
+                    if (vs->Actual_group() &&
+                        vs->Actual_group()->UhdmType() == uhdmarray_var &&
+                        array_local_element_widths.count(lhs_name) &&
+                        vs->Exprs() && vs->Exprs()->size() == 2) {
+                        RTLIL::Const i0 = evaluate_single_operand((*vs->Exprs())[0], local_vars);
+                        RTLIL::Const i1 = evaluate_single_operand((*vs->Exprs())[1], local_vars);
+                        int elem_w = array_local_element_widths[lhs_name];
+                        lhs_is_array_bit = true;
+                        lhs_array_bit_offset = i0.as_int() * elem_w + i1.as_int();
                     }
                 }
             }
@@ -253,12 +304,41 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 } else if (assign->Rhs()->VpiType() == vpiFuncCall) {
                     const func_call* fc = any_cast<const func_call*>(assign->Rhs());
                     rhs_value = evaluate_recursive_function_call(fc, local_vars);
+                } else if (assign->Rhs()->VpiType() == vpiBitSelect ||
+                           assign->Rhs()->VpiType() == vpiVarSelect) {
+                    rhs_value = evaluate_single_operand(assign->Rhs(), local_vars);
                 }
             }
 
             // Perform assignment
             if (!lhs_name.empty()) {
-                if (is_bit_select) {
+                if (lhs_is_array_element) {
+                    // `state[i] = rhs` on a flattened array: splice
+                    // `element_width` bits of rhs at `i * element_width`.
+                    if (local_vars.count(lhs_name)) {
+                        RTLIL::Const& target = local_vars[lhs_name];
+                        int ew = lhs_array_element_width;
+                        for (int b = 0; b < ew; b++) {
+                            int dst = lhs_array_offset + b;
+                            if (dst < 0 || dst >= target.size()) continue;
+                            RTLIL::State bit = (b < rhs_value.size()) ? rhs_value[b] : RTLIL::S0;
+                            target.set(dst, bit);
+                        }
+                    }
+                    log("    Assigned %s[%d] (element @bit %d, w=%d) = %s\n",
+                        lhs_name.c_str(), bit_index, lhs_array_offset, lhs_array_element_width,
+                        rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
+                } else if (lhs_is_array_bit) {
+                    // `state[i][j] = rhs[0]` on a flattened array.
+                    if (local_vars.count(lhs_name)) {
+                        RTLIL::Const& target = local_vars[lhs_name];
+                        if (lhs_array_bit_offset >= 0 && lhs_array_bit_offset < target.size())
+                            target.set(lhs_array_bit_offset,
+                                       rhs_value.is_fully_zero() ? RTLIL::S0 : RTLIL::S1);
+                    }
+                    log("    Assigned %s @bit %d = %s\n", lhs_name.c_str(), lhs_array_bit_offset,
+                        rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
+                } else if (is_bit_select) {
                     // Bit-select assignment: update specific bit of the variable
                     if (local_vars.count(lhs_name)) {
                         RTLIL::Const& target = local_vars[lhs_name];
@@ -371,14 +451,54 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             if (block_variables) {
                 for (auto var : *block_variables) {
                     std::string var_name = std::string(var->VpiName());
-                    
-                    // Use the existing get_width helper function (DRY principle)
-                    int width = get_width(var, current_instance);
-                    
+
+                    // For an unpacked array_var (e.g. `reg [3:0] state[4]`),
+                    // flatten the storage into a single wide Const where
+                    // element `i` occupies bits `[i*ew + ew - 1 : i*ew]`.
+                    // Bit-select / var-select access on the array is handled
+                    // below using the same offset arithmetic.
+                    int width = 0;
+                    if (var->UhdmType() == uhdmarray_var) {
+                        auto av = any_cast<const array_var*>(var);
+                        int elem_w = 1;
+                        if (av->Variables() && !av->Variables()->empty())
+                            elem_w = get_width(av->Variables()->at(0), current_instance);
+                        // Surelog stores the array's unpacked dimensions inside
+                        // its typespec (`array_typespec::Ranges()`), not on the
+                        // array_var directly.  Walk to the typespec.
+                        VectorOfrange* ranges = nullptr;
+                        if (av->Typespec()) {
+                            if (auto rt = av->Typespec()->Actual_typespec()) {
+                                if (rt->UhdmType() == uhdmarray_typespec) {
+                                    auto ats = any_cast<const array_typespec*>(rt);
+                                    ranges = ats->Ranges();
+                                }
+                            }
+                        }
+                        int total = 1;
+                        if (ranges) {
+                            for (auto r : *ranges) {
+                                if (r->Left_expr() && r->Right_expr()) {
+                                    RTLIL::Const lv = evaluate_single_operand(r->Left_expr(), block_vars);
+                                    RTLIL::Const rv = evaluate_single_operand(r->Right_expr(), block_vars);
+                                    int left = lv.size() > 0 ? lv.as_int() : 0;
+                                    int right = rv.size() > 0 ? rv.as_int() : 0;
+                                    total *= std::abs(left - right) + 1;
+                                }
+                            }
+                        }
+                        width = total * elem_w;
+                        array_local_element_widths[var_name] = elem_w;
+                        log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
+                            var_name.c_str(), elem_w, total, width);
+                    } else {
+                        width = get_width(var, current_instance);
+                    }
+
                     // Initialize the local variable to 0
                     block_vars[var_name] = RTLIL::Const(0, width);
                     local_only_vars.insert(var_name);
-                    log("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n", 
+                    log("    Declared local variable %s in block scope (width=%d, shadows outer scope)\n",
                         var_name.c_str(), width);
                 }
             }
@@ -403,6 +523,46 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 return last_result;
             }
             break;
+        }
+
+        case vpiFor: {
+            // for_stmt at function compile-time evaluation: run init, then
+            // loop while condition holds, executing body and increment each
+            // iteration.  Each statement re-uses the same `local_vars` so
+            // updates to the loop variable persist across iterations.
+            const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+            if (!fs) break;
+            // Surelog populates either `VpiForInitStmt()` (single) or
+            // `VpiForInitStmts()` (vector); same for inc.  Cover both.
+            auto run_init_inc = [&](const any* single, VectorOfany* vec) {
+                if (single) evaluate_function_stmt(single, local_vars, func_name);
+                else if (vec) for (auto s : *vec) evaluate_function_stmt(s, local_vars, func_name);
+            };
+            run_init_inc(fs->VpiForInitStmt(), fs->VpiForInitStmts());
+            RTLIL::Const last_result;
+            const int max_iterations = 100000;
+            int iterations = 0;
+            while (iterations < max_iterations) {
+                RTLIL::Const cond_value;
+                if (fs->VpiCondition()) {
+                    if (fs->VpiCondition()->VpiType() == vpiOperation) {
+                        const operation* op = any_cast<const operation*>(fs->VpiCondition());
+                        cond_value = evaluate_operation_const(op, local_vars);
+                    } else {
+                        cond_value = evaluate_single_operand(fs->VpiCondition(), local_vars);
+                    }
+                }
+                if (cond_value.size() == 0 || cond_value.is_fully_zero()) break;
+                if (fs->VpiStmt())
+                    last_result = evaluate_function_stmt(fs->VpiStmt(), local_vars, func_name);
+                run_init_inc(fs->VpiForIncStmt(), fs->VpiForIncStmts());
+                iterations++;
+            }
+            if (iterations >= max_iterations) {
+                log_warning("For loop iteration limit (%d) reached in compile-time evaluation of function '%s'\n",
+                            max_iterations, func_name.c_str());
+            }
+            return last_result;
         }
 
         case vpiWhile: {
@@ -518,6 +678,53 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
     } else if (operand->VpiType() == vpiFuncCall) {
         const func_call* fc = any_cast<const func_call*>(operand);
         val = evaluate_recursive_function_call(fc, local_vars);
+    } else if (operand->VpiType() == vpiBitSelect) {
+        // `state[i]` read.  When the base is a flattened function-local
+        // unpacked array_var, return the corresponding `element_width` bits.
+        const bit_select* bs = any_cast<const bit_select*>(operand);
+        std::string nm = std::string(bs->VpiName());
+        if (bs->Actual_group() &&
+            bs->Actual_group()->UhdmType() == uhdmarray_var &&
+            local_vars.count(nm) &&
+            array_local_element_widths.count(nm)) {
+            int idx = 0;
+            if (bs->VpiIndex()) {
+                RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
+                idx = idx_v.as_int();
+            }
+            int elem_w = array_local_element_widths.at(nm);
+            const RTLIL::Const& target = local_vars.at(nm);
+            std::vector<RTLIL::State> bits;
+            for (int b = 0; b < elem_w; b++) {
+                int src = idx * elem_w + b;
+                bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
+            }
+            val = RTLIL::Const(bits);
+        } else if (bs->VpiIndex() && local_vars.count(nm)) {
+            // Plain bit_select on a non-array local var.
+            RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
+            int idx = idx_v.as_int();
+            const RTLIL::Const& target = local_vars.at(nm);
+            if (idx >= 0 && idx < target.size())
+                val = RTLIL::Const(std::vector<RTLIL::State>{target[idx]});
+        }
+    } else if (operand->VpiType() == vpiVarSelect) {
+        // `state[i][j]` read on a flattened function-local array_var.
+        const var_select* vs = any_cast<const var_select*>(operand);
+        std::string nm = std::string(vs->VpiName());
+        if (vs->Actual_group() &&
+            vs->Actual_group()->UhdmType() == uhdmarray_var &&
+            local_vars.count(nm) &&
+            array_local_element_widths.count(nm) &&
+            vs->Exprs() && vs->Exprs()->size() == 2) {
+            RTLIL::Const i0 = evaluate_single_operand((*vs->Exprs())[0], local_vars);
+            RTLIL::Const i1 = evaluate_single_operand((*vs->Exprs())[1], local_vars);
+            int elem_w = array_local_element_widths.at(nm);
+            int src = i0.as_int() * elem_w + i1.as_int();
+            const RTLIL::Const& target = local_vars.at(nm);
+            if (src >= 0 && src < target.size())
+                val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+        }
     }
     return val;
 }

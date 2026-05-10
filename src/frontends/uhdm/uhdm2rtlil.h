@@ -332,6 +332,13 @@ struct UhdmImporter {
     // bit_select / var_select access patterns can safely flatten to per-element
     // wires (matching the Verilog frontend).
     std::set<std::string> whole_array_accessed_names;
+
+    // Element widths for function-local unpacked array_var instances.
+    // Key: variable name (within the function evaluation scope).  Value: width
+    // of one array element in bits.  Storage is flattened into the per-name
+    // RTLIL::Const in `local_vars` so that `state[i]` indexes element `i` and
+    // `state[i][j]` indexes bit `j` of element `i`.  Cleared per-call.
+    std::map<std::string, int> array_local_element_widths;
     
     // Get current function context for constant propagation (top of stack)
     FunctionCallContext* getCurrentFunctionContext() {
