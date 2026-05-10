@@ -12,6 +12,7 @@
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/union_typespec.h>
+#include <uhdm/packed_array_typespec.h>
 #include <uhdm/ExprEval.h>
 #include <uhdm/func_call.h>
 #include <uhdm/function.h>
@@ -1581,6 +1582,42 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         if (typespec->UhdmType() == uhdmint_typespec) return 32;
         if (typespec->UhdmType() == uhdminteger_typespec) return 32;
         if (typespec->UhdmType() == uhdmlong_int_typespec) return 64;
+
+        // Handle packed_array_typespec: width = element_width * product(ranges).
+        // ExprEval::size() returns only the range count for these typespecs,
+        // so it would report 2 for `u [0:1]` instead of `2 * sizeof(u)`.
+        if (typespec->UhdmType() == uhdmpacked_array_typespec) {
+            auto pa = dynamic_cast<const UHDM::packed_array_typespec*>(typespec);
+            if (pa) {
+                int elem_width = 1;
+                if (auto et = pa->Elem_typespec()) {
+                    if (auto a = et->Actual_typespec())
+                        elem_width = get_width_from_typespec(a, inst);
+                    else if (!et->VpiName().empty() &&
+                             package_typespec_map.count(std::string(et->VpiName())))
+                        elem_width = get_width_from_typespec(
+                            package_typespec_map.at(std::string(et->VpiName())), inst);
+                }
+                int range_total = 1;
+                if (pa->Ranges()) {
+                    for (auto r : *pa->Ranges()) {
+                        if (r->Left_expr() && r->Right_expr()) {
+                            RTLIL::SigSpec lspec = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rspec = import_expression(r->Right_expr());
+                            if (lspec.is_fully_const() && rspec.is_fully_const()) {
+                                int l = lspec.as_int();
+                                int rv = rspec.as_int();
+                                range_total *= std::abs(l - rv) + 1;
+                            }
+                        }
+                    }
+                }
+                int total = elem_width * range_total;
+                log("UHDM: packed_array_typespec: elem_w=%d, range_total=%d, total=%d\n",
+                    elem_width, range_total, total);
+                return total;
+            }
+        }
 
         // Handle union_typespec: width = width of widest member
         if (typespec->UhdmType() == uhdmunion_typespec) {
