@@ -87,6 +87,8 @@ YOSYS_FAILED=0
 YOSYS_SKIPPED=0
 YOSYS_UHDM_ONLY=0
 EQUIV_FAILED_TESTS=0
+SIM_EQUIV_WARN_TESTS=0
+SIM_EQUIV_WARN_NAMES=()
 
 FAILED_TEST_NAMES=()
 SKIPPED_TEST_NAMES=()
@@ -94,6 +96,29 @@ CRASHED_TEST_NAMES=()
 PASSED_TEST_NAMES=()
 UHDM_ONLY_TEST_NAMES=()
 EQUIV_FAILED_TEST_NAMES=()
+
+# Helper: run the Verilator simulation-equivalence check on a UHDM-only
+# test.  Always returns 0 so a failure here doesn't fail the suite —
+# it just emits a warning and counts the test in SIM_EQUIV_WARN_TESTS.
+run_sim_equivalence_softwarn() {
+    local test_dir="$1"
+    local script="$SCRIPT_DIR/test_sim_equivalence.py"
+    local plugin="$PROJECT_ROOT/build/extract_clocks_resets.so"
+    if [ ! -f "$script" ] || [ ! -f "$plugin" ]; then
+        return 0  # silently skip if the optional tooling isn't built
+    fi
+    local log="$test_dir/sim_equiv.log"
+    if "$script" "$test_dir" >"$log" 2>&1; then
+        if grep -q '^PASS:' "$log"; then
+            echo "    ✅ Verilator co-sim PASSED"
+            return 0
+        fi
+    fi
+    echo "    ⚠️  Verilator co-sim WARNING (see $(basename "$test_dir")/sim_equiv.log)"
+    SIM_EQUIV_WARN_TESTS=$((SIM_EQUIV_WARN_TESTS + 1))
+    SIM_EQUIV_WARN_NAMES+=("$(basename "$test_dir")")
+    return 0
+}
 
 # Track unexpected results
 UNEXPECTED_FAILURES=()
@@ -302,6 +327,7 @@ analyze_test_result() {
         if [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
             echo "✅ Test $test_dir PASSED - UHDM succeeds where Verilog fails!"
             echo "    Demonstrates UHDM's superior SystemVerilog support"
+            run_sim_equivalence_softwarn "$test_dir"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
             return 0
@@ -321,6 +347,7 @@ analyze_test_result() {
        [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
         echo "✅ Test $test_dir PASSED - UHDM completes synth where Verilog synth errors!"
         echo "    Demonstrates UHDM's superior SystemVerilog support"
+        run_sim_equivalence_softwarn "$test_dir"
         UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
         UHDM_ONLY_TEST_NAMES+=("$test_dir")
         return 0
@@ -701,6 +728,12 @@ echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
 echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
 echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
+if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
+    echo "  ⚠️  Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
+    for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
+        echo "      - $t"
+    done
+fi
 echo
 
 # Log the comprehensive summary to file

@@ -130,10 +130,12 @@ install(TARGETS uhdm2rtlil DESTINATION ${INSTALL_DIR}/share/yosys/plugins)
 set(EXTRACT_CR_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/extract_clocks_resets/extract_clocks_resets.cc)
 set(EXTRACT_CR_SO ${CMAKE_CURRENT_BINARY_DIR}/extract_clocks_resets.so)
+# yosys-config lives in the in-tree Yosys checkout (it's a shell script
+# that knows where its own include/lib live) — use that directly.
+set(YOSYS_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/third_party/yosys/yosys-config)
 add_custom_command(
     OUTPUT ${EXTRACT_CR_SO}
-    COMMAND ${CMAKE_BINARY_DIR}/yosys_install/bin/yosys-config
-            --build ${EXTRACT_CR_SO} ${EXTRACT_CR_SRC}
+    COMMAND ${YOSYS_CONFIG} --build ${EXTRACT_CR_SO} ${EXTRACT_CR_SRC}
     DEPENDS ${EXTRACT_CR_SRC} yosys
     COMMENT "Building extract_clocks_resets Yosys plugin"
 )

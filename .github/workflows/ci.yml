@@ -38,7 +38,8 @@ jobs:
           libfl-dev \
           libunwind-dev \
           libgoogle-perftools-dev \
-          ccache 
+          ccache \
+          verilator
     
     - name: Setup GCC-9
       shell: bash

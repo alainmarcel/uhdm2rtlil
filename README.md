@@ -453,6 +453,19 @@ SystemVerilog (.sv) → [Surelog] → UHDM (.uhdm) → [UHDM Frontend] → RTLIL
 - CMake 3.16+
 - Python 3.6+
 - Standard development tools (make, bison, flex)
+- Verilator (used by `test/test_sim_equivalence.py` to co-simulate
+  the original SV against the UHDM-derived netlist for tests where
+  the Yosys Verilog frontend can't parse the source — see
+  [Verilator-based simulation equivalence](#verilator-based-simulation-equivalence-check) below)
+
+On Debian / Ubuntu:
+```bash
+sudo apt-get install -y \
+    build-essential cmake git python3 python3-pip pkg-config \
+    libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+    libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+    libgoogle-perftools-dev ccache verilator
+```
 
 ### Build
 ```bash
@@ -541,6 +554,34 @@ cd test
 
 # Run specific Yosys test
 ./run_all_tests.sh --yosys ../third_party/yosys/tests/arch/common/add_sub.v
+```
+
+### Verilator-based Simulation Equivalence Check
+
+UHDM-only tests have no Yosys-Verilog-frontend reference netlist to formally
+equivalence-check against, so `run_all_tests.sh` invokes
+`test/test_sim_equivalence.py` on them as a soft warning.
+
+The script co-simulates two views of the same design under Verilator:
+
+  - **RTL form**  — the original `dut.sv`, simulated directly by Verilator
+  - **Netlist**   — UHDM frontend output, post-`synth -auto-top`
+
+A small SystemVerilog testbench instantiates both side by side
+(`dut_rtl` / `dut_netlist`), and a C++ driver advances clocks, holds
+reset for a few cycles, then drives random inputs for ~50–200 cycles,
+comparing every output every cycle.  Clocks and resets are extracted
+from the netlist via the `extract_clocks_resets` Yosys plugin
+(`build/extract_clocks_resets.so`).
+
+A mismatch surfaces as a `⚠️ Verilator co-sim WARNING` line in the
+test summary and does **not** flip the test to failed.  Per-test
+output is written to `<test_dir>/sim_equiv.log`.
+
+You can also run it standalone:
+```bash
+cd test
+./test_sim_equivalence.py setundef
 ```
 
 The Yosys test runner:
