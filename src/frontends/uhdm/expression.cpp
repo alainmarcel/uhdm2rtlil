@@ -4344,6 +4344,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         struct_ref_typespec = logic_var->Typespec();
                     } else if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(struct_uhdm_obj)) {
                         struct_ref_typespec = logic_net->Typespec();
+                    } else if (auto net_obj = dynamic_cast<const UHDM::net*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = net_obj->Typespec();
+                    } else if (auto port_obj = dynamic_cast<const UHDM::port*>(struct_uhdm_obj)) {
+                        struct_ref_typespec = port_obj->Typespec();
                     } else if (auto struct_var_obj = dynamic_cast<const UHDM::struct_var*>(struct_uhdm_obj)) {
                         struct_ref_typespec = struct_var_obj->Typespec();
                     } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
@@ -4681,6 +4685,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     ref_ts = logic_net->Typespec();
                 } else if (auto net_obj = dynamic_cast<const UHDM::net*>(struct_uhdm_obj)) {
                     ref_ts = net_obj->Typespec();
+                } else if (auto port_obj = dynamic_cast<const UHDM::port*>(struct_uhdm_obj)) {
+                    ref_ts = port_obj->Typespec();
                 } else if (auto struct_var_obj = dynamic_cast<const UHDM::struct_var*>(struct_uhdm_obj)) {
                     ref_ts = struct_var_obj->Typespec();
                 } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
