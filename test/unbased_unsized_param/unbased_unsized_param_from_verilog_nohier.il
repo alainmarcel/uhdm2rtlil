@@ -14,171 +14,211 @@ attribute \cells_not_processed 1
 module $abstract\set_param
   parameter \VALUE
 end
-attribute \src "dut.sv:16.1-65.10"
+attribute \src "dut.sv:16.1-84.10"
 attribute \cells_not_processed 1
 module \top
-  attribute \src "dut.sv:23.9-23.12"
+  attribute \src "dut.sv:21.25-21.30"
+  wire width 64 output 1 \o01_o
+  attribute \src "dut.sv:21.32-21.37"
+  wire width 64 output 2 \o02_o
+  attribute \src "dut.sv:21.39-21.44"
+  wire width 64 output 3 \o03_o
+  attribute \src "dut.sv:21.46-21.51"
+  wire width 64 output 4 \o04_o
+  attribute \src "dut.sv:22.25-22.30"
+  wire width 64 output 5 \o05_o
+  attribute \src "dut.sv:22.32-22.37"
+  wire width 64 output 6 \o06_o
+  attribute \src "dut.sv:22.39-22.44"
+  wire width 64 output 7 \o07_o
+  attribute \src "dut.sv:22.46-22.51"
+  wire width 64 output 8 \o08_o
+  attribute \src "dut.sv:23.25-23.30"
+  wire width 64 output 9 \o09_o
+  attribute \src "dut.sv:23.32-23.37"
+  wire width 64 output 10 \o10_o
+  attribute \src "dut.sv:23.39-23.44"
+  wire width 64 output 11 \o11_o
+  attribute \src "dut.sv:23.46-23.51"
+  wire width 64 output 12 \o12_o
+  attribute \src "dut.sv:24.25-24.30"
+  wire width 64 output 13 \o13_o
+  attribute \src "dut.sv:24.32-24.37"
+  wire width 64 output 14 \o14_o
+  attribute \src "dut.sv:24.39-24.44"
+  wire width 64 output 15 \o15_o
+  attribute \src "dut.sv:24.46-24.51"
+  wire width 64 output 16 \o16_o
+  attribute \src "dut.sv:25.25-25.30"
+  wire width 64 output 17 \l01_o
+  attribute \src "dut.sv:25.32-25.37"
+  wire width 64 output 18 \l02_o
+  attribute \src "dut.sv:25.39-25.44"
+  wire width 64 output 19 \l03_o
+  attribute \src "dut.sv:25.46-25.51"
+  wire width 64 output 20 \l04_o
+  attribute \src "dut.sv:33.9-33.12"
   wire width 64 \o01
-  attribute \src "dut.sv:23.14-23.17"
+  attribute \src "dut.sv:33.14-33.17"
   wire width 64 \o02
-  attribute \src "dut.sv:23.19-23.22"
+  attribute \src "dut.sv:33.19-33.22"
   wire width 64 \o03
-  attribute \src "dut.sv:23.24-23.27"
+  attribute \src "dut.sv:33.24-33.27"
   wire width 64 \o04
-  attribute \src "dut.sv:24.9-24.12"
+  attribute \src "dut.sv:34.9-34.12"
   wire width 64 \o05
-  attribute \src "dut.sv:24.14-24.17"
+  attribute \src "dut.sv:34.14-34.17"
   wire width 64 \o06
-  attribute \src "dut.sv:24.19-24.22"
+  attribute \src "dut.sv:34.19-34.22"
   wire width 64 \o07
-  attribute \src "dut.sv:24.24-24.27"
+  attribute \src "dut.sv:34.24-34.27"
   wire width 64 \o08
-  attribute \src "dut.sv:25.9-25.12"
+  attribute \src "dut.sv:35.9-35.12"
   wire width 64 \o09
-  attribute \src "dut.sv:25.14-25.17"
+  attribute \src "dut.sv:35.14-35.17"
   wire width 64 \o10
-  attribute \src "dut.sv:25.19-25.22"
+  attribute \src "dut.sv:35.19-35.22"
   wire width 64 \o11
-  attribute \src "dut.sv:25.24-25.27"
+  attribute \src "dut.sv:35.24-35.27"
   wire width 64 \o12
-  attribute \src "dut.sv:26.9-26.12"
+  attribute \src "dut.sv:36.9-36.12"
   wire width 64 \o13
-  attribute \src "dut.sv:26.14-26.17"
+  attribute \src "dut.sv:36.14-36.17"
   wire width 64 \o14
-  attribute \src "dut.sv:26.19-26.22"
+  attribute \src "dut.sv:36.19-36.22"
   wire width 64 \o15
-  attribute \src "dut.sv:26.24-26.27"
+  attribute \src "dut.sv:36.24-36.27"
   wire width 64 \o16
-  attribute \src "dut.sv:35.18-35.31"
-  wire width 64 $indirect$\inp$dut.sv:35$1
-  attribute \src "dut.sv:36.18-36.31"
-  wire width 64 $indirect$\inp$dut.sv:36$2
-  attribute \src "dut.sv:37.18-37.31"
-  wire width 64 $indirect$\inp$dut.sv:37$3
-  attribute \src "dut.sv:38.18-38.31"
-  wire width 64 $indirect$\inp$dut.sv:38$4
-  attribute \src "dut.sv:44.17-44.36"
-  wire $eqx$dut.sv:44$7_Y
-  attribute \src "dut.sv:44.9-44.37"
-  wire $assert$dut.sv:44$6_EN
-  attribute \src "dut.sv:45.17-45.36"
-  wire $eqx$dut.sv:45$9_Y
-  attribute \src "dut.sv:45.9-45.37"
-  wire $assert$dut.sv:45$8_EN
-  attribute \src "dut.sv:46.17-46.36"
-  wire $eqx$dut.sv:46$11_Y
-  attribute \src "dut.sv:46.9-46.37"
-  wire $assert$dut.sv:46$10_EN
-  attribute \src "dut.sv:47.17-47.36"
-  wire $eqx$dut.sv:47$13_Y
-  attribute \src "dut.sv:47.9-47.37"
-  wire $assert$dut.sv:47$12_EN
-  attribute \src "dut.sv:48.17-48.40"
-  wire $eqx$dut.sv:48$15_Y
-  attribute \src "dut.sv:48.9-48.41"
-  wire $assert$dut.sv:48$14_EN
-  attribute \src "dut.sv:49.17-49.40"
-  wire $eqx$dut.sv:49$17_Y
-  attribute \src "dut.sv:49.9-49.41"
-  wire $assert$dut.sv:49$16_EN
-  attribute \src "dut.sv:50.17-50.40"
-  wire $eqx$dut.sv:50$19_Y
-  attribute \src "dut.sv:50.9-50.41"
-  wire $assert$dut.sv:50$18_EN
-  attribute \src "dut.sv:51.17-51.40"
-  wire $eqx$dut.sv:51$21_Y
-  attribute \src "dut.sv:51.9-51.41"
-  wire $assert$dut.sv:51$20_EN
-  attribute \src "dut.sv:52.17-52.36"
-  wire $eqx$dut.sv:52$23_Y
-  attribute \src "dut.sv:52.9-52.37"
-  wire $assert$dut.sv:52$22_EN
-  attribute \src "dut.sv:53.17-53.36"
-  wire $eqx$dut.sv:53$25_Y
-  attribute \src "dut.sv:53.9-53.37"
-  wire $assert$dut.sv:53$24_EN
-  attribute \src "dut.sv:54.17-54.36"
-  wire $eqx$dut.sv:54$27_Y
-  attribute \src "dut.sv:54.9-54.37"
-  wire $assert$dut.sv:54$26_EN
-  attribute \src "dut.sv:55.17-55.36"
-  wire $eqx$dut.sv:55$29_Y
-  attribute \src "dut.sv:55.9-55.37"
-  wire $assert$dut.sv:55$28_EN
-  attribute \src "dut.sv:56.9-56.37"
-  wire $assert$dut.sv:56$30_EN
-  attribute \src "dut.sv:57.9-57.37"
-  wire $assert$dut.sv:57$31_EN
-  attribute \src "dut.sv:58.9-58.37"
-  wire $assert$dut.sv:58$32_EN
-  attribute \src "dut.sv:59.9-59.37"
-  wire $assert$dut.sv:59$33_EN
-  attribute \src "dut.sv:60.17-60.36"
-  wire $eqx$dut.sv:60$35_Y
-  attribute \src "dut.sv:60.9-60.37"
-  wire $assert$dut.sv:60$34_EN
-  attribute \src "dut.sv:61.17-61.36"
-  wire $eqx$dut.sv:61$37_Y
-  attribute \src "dut.sv:61.9-61.37"
-  wire $assert$dut.sv:61$36_EN
+  attribute \src "dut.sv:45.18-45.31"
+  wire width 64 $indirect$\inp$dut.sv:45$1
+  attribute \src "dut.sv:46.18-46.31"
+  wire width 64 $indirect$\inp$dut.sv:46$2
+  attribute \src "dut.sv:47.18-47.31"
+  wire width 64 $indirect$\inp$dut.sv:47$3
+  attribute \src "dut.sv:48.18-48.31"
+  wire width 64 $indirect$\inp$dut.sv:48$4
   attribute \src "dut.sv:62.17-62.36"
-  wire $eqx$dut.sv:62$39_Y
+  wire $eqx$dut.sv:62$7_Y
   attribute \src "dut.sv:62.9-62.37"
-  wire $assert$dut.sv:62$38_EN
+  wire $assert$dut.sv:62$6_EN
   attribute \src "dut.sv:63.17-63.36"
-  wire $eqx$dut.sv:63$41_Y
+  wire $eqx$dut.sv:63$9_Y
   attribute \src "dut.sv:63.9-63.37"
-  wire $assert$dut.sv:63$40_EN
-  attribute \src "dut.sv:35.18-35.31"
+  wire $assert$dut.sv:63$8_EN
+  attribute \src "dut.sv:64.17-64.36"
+  wire $eqx$dut.sv:64$11_Y
+  attribute \src "dut.sv:64.9-64.37"
+  wire $assert$dut.sv:64$10_EN
+  attribute \src "dut.sv:65.17-65.36"
+  wire $eqx$dut.sv:65$13_Y
+  attribute \src "dut.sv:65.9-65.37"
+  wire $assert$dut.sv:65$12_EN
+  attribute \src "dut.sv:66.17-66.40"
+  wire $eqx$dut.sv:66$15_Y
+  attribute \src "dut.sv:66.9-66.41"
+  wire $assert$dut.sv:66$14_EN
+  attribute \src "dut.sv:67.17-67.40"
+  wire $eqx$dut.sv:67$17_Y
+  attribute \src "dut.sv:67.9-67.41"
+  wire $assert$dut.sv:67$16_EN
+  attribute \src "dut.sv:68.17-68.40"
+  wire $eqx$dut.sv:68$19_Y
+  attribute \src "dut.sv:68.9-68.41"
+  wire $assert$dut.sv:68$18_EN
+  attribute \src "dut.sv:69.17-69.40"
+  wire $eqx$dut.sv:69$21_Y
+  attribute \src "dut.sv:69.9-69.41"
+  wire $assert$dut.sv:69$20_EN
+  attribute \src "dut.sv:70.17-70.36"
+  wire $eqx$dut.sv:70$23_Y
+  attribute \src "dut.sv:70.9-70.37"
+  wire $assert$dut.sv:70$22_EN
+  attribute \src "dut.sv:71.17-71.36"
+  wire $eqx$dut.sv:71$25_Y
+  attribute \src "dut.sv:71.9-71.37"
+  wire $assert$dut.sv:71$24_EN
+  attribute \src "dut.sv:72.17-72.36"
+  wire $eqx$dut.sv:72$27_Y
+  attribute \src "dut.sv:72.9-72.37"
+  wire $assert$dut.sv:72$26_EN
+  attribute \src "dut.sv:73.17-73.36"
+  wire $eqx$dut.sv:73$29_Y
+  attribute \src "dut.sv:73.9-73.37"
+  wire $assert$dut.sv:73$28_EN
+  attribute \src "dut.sv:74.9-74.37"
+  wire $assert$dut.sv:74$30_EN
+  attribute \src "dut.sv:75.9-75.37"
+  wire $assert$dut.sv:75$31_EN
+  attribute \src "dut.sv:76.9-76.37"
+  wire $assert$dut.sv:76$32_EN
+  attribute \src "dut.sv:77.9-77.37"
+  wire $assert$dut.sv:77$33_EN
+  attribute \src "dut.sv:78.17-78.36"
+  wire $eqx$dut.sv:78$35_Y
+  attribute \src "dut.sv:78.9-78.37"
+  wire $assert$dut.sv:78$34_EN
+  attribute \src "dut.sv:79.17-79.36"
+  wire $eqx$dut.sv:79$37_Y
+  attribute \src "dut.sv:79.9-79.37"
+  wire $assert$dut.sv:79$36_EN
+  attribute \src "dut.sv:80.17-80.36"
+  wire $eqx$dut.sv:80$39_Y
+  attribute \src "dut.sv:80.9-80.37"
+  wire $assert$dut.sv:80$38_EN
+  attribute \src "dut.sv:81.17-81.36"
+  wire $eqx$dut.sv:81$41_Y
+  attribute \src "dut.sv:81.9-81.37"
+  wire $assert$dut.sv:81$40_EN
+  attribute \src "dut.sv:45.18-45.31"
   attribute \module_not_derived 1
   cell \pass_through \pt09
-    connect $1 $indirect$\inp$dut.sv:35$1
+    connect $1 $indirect$\inp$dut.sv:45$1
     connect $2 \o09
   end
-  attribute \src "dut.sv:36.18-36.31"
+  attribute \src "dut.sv:46.18-46.31"
   attribute \module_not_derived 1
   cell \pass_through \pt10
-    connect $1 $indirect$\inp$dut.sv:36$2
+    connect $1 $indirect$\inp$dut.sv:46$2
     connect $2 \o10
   end
-  attribute \src "dut.sv:37.18-37.31"
+  attribute \src "dut.sv:47.18-47.31"
   attribute \module_not_derived 1
   cell \pass_through \pt11
-    connect $1 $indirect$\inp$dut.sv:37$3
+    connect $1 $indirect$\inp$dut.sv:47$3
     connect $2 \o11
   end
-  attribute \src "dut.sv:38.18-38.31"
+  attribute \src "dut.sv:48.18-48.31"
   attribute \module_not_derived 1
   cell \pass_through \pt12
-    connect $1 $indirect$\inp$dut.sv:38$4
+    connect $1 $indirect$\inp$dut.sv:48$4
     connect $2 \o12
   end
-  attribute \src "dut.sv:39.21-39.30"
+  attribute \src "dut.sv:49.21-49.30"
   attribute \module_not_derived 1
   cell \set_param \sp13
     parameter unsized $1 0
     connect $1 \o13
   end
-  attribute \src "dut.sv:40.21-40.30"
+  attribute \src "dut.sv:50.21-50.30"
   attribute \module_not_derived 1
   cell \set_param \sp14
     parameter unsized $1 1
     connect $1 \o14
   end
-  attribute \src "dut.sv:41.21-41.30"
+  attribute \src "dut.sv:51.21-51.30"
   attribute \module_not_derived 1
   cell \set_param \sp15
     parameter unsized $1 x
     connect $1 \o15
   end
-  attribute \src "dut.sv:42.21-42.30"
+  attribute \src "dut.sv:52.21-52.30"
   attribute \module_not_derived 1
   cell \set_param \sp16
     parameter unsized $1 z
     connect $1 \o16
   end
-  attribute \src "dut.sv:44.17-44.36"
-  cell $eqx $eqx$dut.sv:44$7
+  attribute \src "dut.sv:62.17-62.36"
+  cell $eqx $eqx$dut.sv:62$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -186,11 +226,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o01
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eqx$dut.sv:44$7_Y
+    connect \Y $eqx$dut.sv:62$7_Y
   end
-  attribute \src "dut.sv:44.9-44.37"
+  attribute \src "dut.sv:62.9-62.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:44$6
+  cell $check $assert$dut.sv:62$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -199,12 +239,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:44$6_EN
-    connect \A $eqx$dut.sv:44$7_Y
+    connect \EN $assert$dut.sv:62$6_EN
+    connect \A $eqx$dut.sv:62$7_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:45.17-45.36"
-  cell $eqx $eqx$dut.sv:45$9
+  attribute \src "dut.sv:63.17-63.36"
+  cell $eqx $eqx$dut.sv:63$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -212,11 +252,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o02
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $eqx$dut.sv:45$9_Y
+    connect \Y $eqx$dut.sv:63$9_Y
   end
-  attribute \src "dut.sv:45.9-45.37"
+  attribute \src "dut.sv:63.9-63.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:45$8
+  cell $check $assert$dut.sv:63$8
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -225,12 +265,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:45$8_EN
-    connect \A $eqx$dut.sv:45$9_Y
+    connect \EN $assert$dut.sv:63$8_EN
+    connect \A $eqx$dut.sv:63$9_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:46.17-46.36"
-  cell $eqx $eqx$dut.sv:46$11
+  attribute \src "dut.sv:64.17-64.36"
+  cell $eqx $eqx$dut.sv:64$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -238,11 +278,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o03
     connect \B 64'x
-    connect \Y $eqx$dut.sv:46$11_Y
+    connect \Y $eqx$dut.sv:64$11_Y
   end
-  attribute \src "dut.sv:46.9-46.37"
+  attribute \src "dut.sv:64.9-64.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:46$10
+  cell $check $assert$dut.sv:64$10
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -251,12 +291,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:46$10_EN
-    connect \A $eqx$dut.sv:46$11_Y
+    connect \EN $assert$dut.sv:64$10_EN
+    connect \A $eqx$dut.sv:64$11_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:47.17-47.36"
-  cell $eqx $eqx$dut.sv:47$13
+  attribute \src "dut.sv:65.17-65.36"
+  cell $eqx $eqx$dut.sv:65$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -264,11 +304,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o04
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $eqx$dut.sv:47$13_Y
+    connect \Y $eqx$dut.sv:65$13_Y
   end
-  attribute \src "dut.sv:47.9-47.37"
+  attribute \src "dut.sv:65.9-65.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:47$12
+  cell $check $assert$dut.sv:65$12
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -277,12 +317,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:47$12_EN
-    connect \A $eqx$dut.sv:47$13_Y
+    connect \EN $assert$dut.sv:65$12_EN
+    connect \A $eqx$dut.sv:65$13_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:48.17-48.40"
-  cell $eqx $eqx$dut.sv:48$15
+  attribute \src "dut.sv:66.17-66.40"
+  cell $eqx $eqx$dut.sv:66$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -290,11 +330,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o05
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eqx$dut.sv:48$15_Y
+    connect \Y $eqx$dut.sv:66$15_Y
   end
-  attribute \src "dut.sv:48.9-48.41"
+  attribute \src "dut.sv:66.9-66.41"
   attribute \keep 1
-  cell $check $assert$dut.sv:48$14
+  cell $check $assert$dut.sv:66$14
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -303,12 +343,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:48$14_EN
-    connect \A $eqx$dut.sv:48$15_Y
+    connect \EN $assert$dut.sv:66$14_EN
+    connect \A $eqx$dut.sv:66$15_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:49.17-49.40"
-  cell $eqx $eqx$dut.sv:49$17
+  attribute \src "dut.sv:67.17-67.40"
+  cell $eqx $eqx$dut.sv:67$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -316,11 +356,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o06
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000111
-    connect \Y $eqx$dut.sv:49$17_Y
+    connect \Y $eqx$dut.sv:67$17_Y
   end
-  attribute \src "dut.sv:49.9-49.41"
+  attribute \src "dut.sv:67.9-67.41"
   attribute \keep 1
-  cell $check $assert$dut.sv:49$16
+  cell $check $assert$dut.sv:67$16
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -329,12 +369,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:49$16_EN
-    connect \A $eqx$dut.sv:49$17_Y
+    connect \EN $assert$dut.sv:67$16_EN
+    connect \A $eqx$dut.sv:67$17_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:50.17-50.40"
-  cell $eqx $eqx$dut.sv:50$19
+  attribute \src "dut.sv:68.17-68.40"
+  cell $eqx $eqx$dut.sv:68$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -342,11 +382,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o07
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000xxx
-    connect \Y $eqx$dut.sv:50$19_Y
+    connect \Y $eqx$dut.sv:68$19_Y
   end
-  attribute \src "dut.sv:50.9-50.41"
+  attribute \src "dut.sv:68.9-68.41"
   attribute \keep 1
-  cell $check $assert$dut.sv:50$18
+  cell $check $assert$dut.sv:68$18
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -355,12 +395,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:50$18_EN
-    connect \A $eqx$dut.sv:50$19_Y
+    connect \EN $assert$dut.sv:68$18_EN
+    connect \A $eqx$dut.sv:68$19_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:51.17-51.40"
-  cell $eqx $eqx$dut.sv:51$21
+  attribute \src "dut.sv:69.17-69.40"
+  cell $eqx $eqx$dut.sv:69$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -368,11 +408,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o08
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000zzz
-    connect \Y $eqx$dut.sv:51$21_Y
+    connect \Y $eqx$dut.sv:69$21_Y
   end
-  attribute \src "dut.sv:51.9-51.41"
+  attribute \src "dut.sv:69.9-69.41"
   attribute \keep 1
-  cell $check $assert$dut.sv:51$20
+  cell $check $assert$dut.sv:69$20
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -381,12 +421,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:51$20_EN
-    connect \A $eqx$dut.sv:51$21_Y
+    connect \EN $assert$dut.sv:69$20_EN
+    connect \A $eqx$dut.sv:69$21_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:52.17-52.36"
-  cell $eqx $eqx$dut.sv:52$23
+  attribute \src "dut.sv:70.17-70.36"
+  cell $eqx $eqx$dut.sv:70$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -394,11 +434,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o09
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eqx$dut.sv:52$23_Y
+    connect \Y $eqx$dut.sv:70$23_Y
   end
-  attribute \src "dut.sv:52.9-52.37"
+  attribute \src "dut.sv:70.9-70.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:52$22
+  cell $check $assert$dut.sv:70$22
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -407,12 +447,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:52$22_EN
-    connect \A $eqx$dut.sv:52$23_Y
+    connect \EN $assert$dut.sv:70$22_EN
+    connect \A $eqx$dut.sv:70$23_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:53.17-53.36"
-  cell $eqx $eqx$dut.sv:53$25
+  attribute \src "dut.sv:71.17-71.36"
+  cell $eqx $eqx$dut.sv:71$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -420,11 +460,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o10
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $eqx$dut.sv:53$25_Y
+    connect \Y $eqx$dut.sv:71$25_Y
   end
-  attribute \src "dut.sv:53.9-53.37"
+  attribute \src "dut.sv:71.9-71.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:53$24
+  cell $check $assert$dut.sv:71$24
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -433,12 +473,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:53$24_EN
-    connect \A $eqx$dut.sv:53$25_Y
+    connect \EN $assert$dut.sv:71$24_EN
+    connect \A $eqx$dut.sv:71$25_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:54.17-54.36"
-  cell $eqx $eqx$dut.sv:54$27
+  attribute \src "dut.sv:72.17-72.36"
+  cell $eqx $eqx$dut.sv:72$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -446,11 +486,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o11
     connect \B 64'x
-    connect \Y $eqx$dut.sv:54$27_Y
+    connect \Y $eqx$dut.sv:72$27_Y
   end
-  attribute \src "dut.sv:54.9-54.37"
+  attribute \src "dut.sv:72.9-72.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:54$26
+  cell $check $assert$dut.sv:72$26
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -459,12 +499,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:54$26_EN
-    connect \A $eqx$dut.sv:54$27_Y
+    connect \EN $assert$dut.sv:72$26_EN
+    connect \A $eqx$dut.sv:72$27_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:55.17-55.36"
-  cell $eqx $eqx$dut.sv:55$29
+  attribute \src "dut.sv:73.17-73.36"
+  cell $eqx $eqx$dut.sv:73$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -472,11 +512,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o12
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $eqx$dut.sv:55$29_Y
+    connect \Y $eqx$dut.sv:73$29_Y
   end
-  attribute \src "dut.sv:55.9-55.37"
+  attribute \src "dut.sv:73.9-73.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:55$28
+  cell $check $assert$dut.sv:73$28
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -485,13 +525,13 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:55$28_EN
-    connect \A $eqx$dut.sv:55$29_Y
+    connect \EN $assert$dut.sv:73$28_EN
+    connect \A $eqx$dut.sv:73$29_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:56.9-56.37"
+  attribute \src "dut.sv:74.9-74.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:56$30
+  cell $check $assert$dut.sv:74$30
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -500,13 +540,13 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:56$30_EN
+    connect \EN $assert$dut.sv:74$30_EN
     connect \A 1'1
     connect \ARGS { }
   end
-  attribute \src "dut.sv:57.9-57.37"
+  attribute \src "dut.sv:75.9-75.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:57$31
+  cell $check $assert$dut.sv:75$31
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -515,13 +555,13 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:57$31_EN
+    connect \EN $assert$dut.sv:75$31_EN
     connect \A 1'1
     connect \ARGS { }
   end
-  attribute \src "dut.sv:58.9-58.37"
+  attribute \src "dut.sv:76.9-76.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:58$32
+  cell $check $assert$dut.sv:76$32
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -530,13 +570,13 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:58$32_EN
+    connect \EN $assert$dut.sv:76$32_EN
     connect \A 1'1
     connect \ARGS { }
   end
-  attribute \src "dut.sv:59.9-59.37"
+  attribute \src "dut.sv:77.9-77.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:59$33
+  cell $check $assert$dut.sv:77$33
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -545,12 +585,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:59$33_EN
+    connect \EN $assert$dut.sv:77$33_EN
     connect \A 1'1
     connect \ARGS { }
   end
-  attribute \src "dut.sv:60.17-60.36"
-  cell $eqx $eqx$dut.sv:60$35
+  attribute \src "dut.sv:78.17-78.36"
+  cell $eqx $eqx$dut.sv:78$35
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -558,11 +598,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o13
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eqx$dut.sv:60$35_Y
+    connect \Y $eqx$dut.sv:78$35_Y
   end
-  attribute \src "dut.sv:60.9-60.37"
+  attribute \src "dut.sv:78.9-78.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:60$34
+  cell $check $assert$dut.sv:78$34
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -571,12 +611,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:60$34_EN
-    connect \A $eqx$dut.sv:60$35_Y
+    connect \EN $assert$dut.sv:78$34_EN
+    connect \A $eqx$dut.sv:78$35_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:61.17-61.36"
-  cell $eqx $eqx$dut.sv:61$37
+  attribute \src "dut.sv:79.17-79.36"
+  cell $eqx $eqx$dut.sv:79$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -584,11 +624,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o14
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
-    connect \Y $eqx$dut.sv:61$37_Y
+    connect \Y $eqx$dut.sv:79$37_Y
   end
-  attribute \src "dut.sv:61.9-61.37"
+  attribute \src "dut.sv:79.9-79.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:61$36
+  cell $check $assert$dut.sv:79$36
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -597,12 +637,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:61$36_EN
-    connect \A $eqx$dut.sv:61$37_Y
+    connect \EN $assert$dut.sv:79$36_EN
+    connect \A $eqx$dut.sv:79$37_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:62.17-62.36"
-  cell $eqx $eqx$dut.sv:62$39
+  attribute \src "dut.sv:80.17-80.36"
+  cell $eqx $eqx$dut.sv:80$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -610,11 +650,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o15
     connect \B 64'x
-    connect \Y $eqx$dut.sv:62$39_Y
+    connect \Y $eqx$dut.sv:80$39_Y
   end
-  attribute \src "dut.sv:62.9-62.37"
+  attribute \src "dut.sv:80.9-80.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:62$38
+  cell $check $assert$dut.sv:80$38
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -623,12 +663,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:62$38_EN
-    connect \A $eqx$dut.sv:62$39_Y
+    connect \EN $assert$dut.sv:80$38_EN
+    connect \A $eqx$dut.sv:80$39_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:63.17-63.36"
-  cell $eqx $eqx$dut.sv:63$41
+  attribute \src "dut.sv:81.17-81.36"
+  cell $eqx $eqx$dut.sv:81$41
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -636,11 +676,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \o16
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-    connect \Y $eqx$dut.sv:63$41_Y
+    connect \Y $eqx$dut.sv:81$41_Y
   end
-  attribute \src "dut.sv:63.9-63.37"
+  attribute \src "dut.sv:81.9-81.37"
   attribute \keep 1
-  cell $check $assert$dut.sv:63$40
+  cell $check $assert$dut.sv:81$40
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -649,52 +689,52 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:63$40_EN
-    connect \A $eqx$dut.sv:63$41_Y
+    connect \EN $assert$dut.sv:81$40_EN
+    connect \A $eqx$dut.sv:81$41_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:43.5-64.8"
-  process $proc$dut.sv:43$5
-    assign $assert$dut.sv:44$6_EN 1'0
-    assign $assert$dut.sv:44$6_EN 1'1
-    assign $assert$dut.sv:45$8_EN 1'0
-    assign $assert$dut.sv:45$8_EN 1'1
-    assign $assert$dut.sv:46$10_EN 1'0
-    assign $assert$dut.sv:46$10_EN 1'1
-    assign $assert$dut.sv:47$12_EN 1'0
-    assign $assert$dut.sv:47$12_EN 1'1
-    assign $assert$dut.sv:48$14_EN 1'0
-    assign $assert$dut.sv:48$14_EN 1'1
-    assign $assert$dut.sv:49$16_EN 1'0
-    assign $assert$dut.sv:49$16_EN 1'1
-    assign $assert$dut.sv:50$18_EN 1'0
-    assign $assert$dut.sv:50$18_EN 1'1
-    assign $assert$dut.sv:51$20_EN 1'0
-    assign $assert$dut.sv:51$20_EN 1'1
-    assign $assert$dut.sv:52$22_EN 1'0
-    assign $assert$dut.sv:52$22_EN 1'1
-    assign $assert$dut.sv:53$24_EN 1'0
-    assign $assert$dut.sv:53$24_EN 1'1
-    assign $assert$dut.sv:54$26_EN 1'0
-    assign $assert$dut.sv:54$26_EN 1'1
-    assign $assert$dut.sv:55$28_EN 1'0
-    assign $assert$dut.sv:55$28_EN 1'1
-    assign $assert$dut.sv:56$30_EN 1'0
-    assign $assert$dut.sv:56$30_EN 1'1
-    assign $assert$dut.sv:57$31_EN 1'0
-    assign $assert$dut.sv:57$31_EN 1'1
-    assign $assert$dut.sv:58$32_EN 1'0
-    assign $assert$dut.sv:58$32_EN 1'1
-    assign $assert$dut.sv:59$33_EN 1'0
-    assign $assert$dut.sv:59$33_EN 1'1
-    assign $assert$dut.sv:60$34_EN 1'0
-    assign $assert$dut.sv:60$34_EN 1'1
-    assign $assert$dut.sv:61$36_EN 1'0
-    assign $assert$dut.sv:61$36_EN 1'1
-    assign $assert$dut.sv:62$38_EN 1'0
-    assign $assert$dut.sv:62$38_EN 1'1
-    assign $assert$dut.sv:63$40_EN 1'0
-    assign $assert$dut.sv:63$40_EN 1'1
+  attribute \src "dut.sv:61.5-82.8"
+  process $proc$dut.sv:61$5
+    assign $assert$dut.sv:62$6_EN 1'0
+    assign $assert$dut.sv:62$6_EN 1'1
+    assign $assert$dut.sv:63$8_EN 1'0
+    assign $assert$dut.sv:63$8_EN 1'1
+    assign $assert$dut.sv:64$10_EN 1'0
+    assign $assert$dut.sv:64$10_EN 1'1
+    assign $assert$dut.sv:65$12_EN 1'0
+    assign $assert$dut.sv:65$12_EN 1'1
+    assign $assert$dut.sv:66$14_EN 1'0
+    assign $assert$dut.sv:66$14_EN 1'1
+    assign $assert$dut.sv:67$16_EN 1'0
+    assign $assert$dut.sv:67$16_EN 1'1
+    assign $assert$dut.sv:68$18_EN 1'0
+    assign $assert$dut.sv:68$18_EN 1'1
+    assign $assert$dut.sv:69$20_EN 1'0
+    assign $assert$dut.sv:69$20_EN 1'1
+    assign $assert$dut.sv:70$22_EN 1'0
+    assign $assert$dut.sv:70$22_EN 1'1
+    assign $assert$dut.sv:71$24_EN 1'0
+    assign $assert$dut.sv:71$24_EN 1'1
+    assign $assert$dut.sv:72$26_EN 1'0
+    assign $assert$dut.sv:72$26_EN 1'1
+    assign $assert$dut.sv:73$28_EN 1'0
+    assign $assert$dut.sv:73$28_EN 1'1
+    assign $assert$dut.sv:74$30_EN 1'0
+    assign $assert$dut.sv:74$30_EN 1'1
+    assign $assert$dut.sv:75$31_EN 1'0
+    assign $assert$dut.sv:75$31_EN 1'1
+    assign $assert$dut.sv:76$32_EN 1'0
+    assign $assert$dut.sv:76$32_EN 1'1
+    assign $assert$dut.sv:77$33_EN 1'0
+    assign $assert$dut.sv:77$33_EN 1'1
+    assign $assert$dut.sv:78$34_EN 1'0
+    assign $assert$dut.sv:78$34_EN 1'1
+    assign $assert$dut.sv:79$36_EN 1'0
+    assign $assert$dut.sv:79$36_EN 1'1
+    assign $assert$dut.sv:80$38_EN 1'0
+    assign $assert$dut.sv:80$38_EN 1'1
+    assign $assert$dut.sv:81$40_EN 1'0
+    assign $assert$dut.sv:81$40_EN 1'1
     sync always
   end
   connect \o01 64'0000000000000000000000000000000000000000000000000000000000000000
@@ -705,8 +745,28 @@ module \top
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
   connect \o07 64'0000000000000000000000000000000000000000000000000000000000000xxx
   connect \o08 64'0000000000000000000000000000000000000000000000000000000000000zzz
-  connect $indirect$\inp$dut.sv:35$1 64'0000000000000000000000000000000000000000000000000000000000000000
-  connect $indirect$\inp$dut.sv:36$2 64'1111111111111111111111111111111111111111111111111111111111111111
-  connect $indirect$\inp$dut.sv:37$3 64'x
-  connect $indirect$\inp$dut.sv:38$4 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  connect \o01_o \o01
+  connect \o02_o \o02
+  connect \o03_o \o03
+  connect \o04_o \o04
+  connect \o05_o \o05
+  connect \o06_o \o06
+  connect \o07_o \o07
+  connect \o08_o \o08
+  connect \o09_o \o09
+  connect \o10_o \o10
+  connect \o11_o \o11
+  connect \o12_o \o12
+  connect \o13_o \o13
+  connect \o14_o \o14
+  connect \o15_o \o15
+  connect \o16_o \o16
+  connect \l01_o 64'0000000000000000000000000000000000000000000000000000000000000000
+  connect \l02_o 64'1111111111111111111111111111111111111111111111111111111111111111
+  connect \l03_o 64'x
+  connect \l04_o 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  connect $indirect$\inp$dut.sv:45$1 64'0000000000000000000000000000000000000000000000000000000000000000
+  connect $indirect$\inp$dut.sv:46$2 64'1111111111111111111111111111111111111111111111111111111111111111
+  connect $indirect$\inp$dut.sv:47$3 64'x
+  connect $indirect$\inp$dut.sv:48$4 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 end

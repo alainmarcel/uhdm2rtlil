@@ -1,9 +1,12 @@
 module top (
-	input clk,
-	input reset,
-	input ping,
-	input [1:0] cfg,
-	output reg pong
+	input  clk,
+	input  reset,
+	input  ping,
+	input  [1:0] cfg,
+	output reg pong,
+	// Expose `cnt` so the co-sim has a multi-bit observable beyond
+	// the single-bit `pong`.
+	output [2:0] cnt_o
 );
 	reg [2:0] cnt;
 	localparam integer maxdelay = 8;
@@ -19,6 +22,12 @@ module top (
 		end
 	end
 
+	assign cnt_o = cnt;
+
+`ifndef VERILATOR
+	// Verilator 5.x rejects `not (... [*N])` in sequence-expression
+	// context — ifdef the SVA out of co-sim; synth path still
+	// exercises full SVA support.
 	assert property (
 		@(posedge clk)
 		disable iff (reset)
@@ -30,5 +39,6 @@ module top (
 		@(posedge clk)
 		not (cnt && ping)
 	);
+`endif
 `endif
 endmodule

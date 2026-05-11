@@ -27,39 +27,79 @@ module \set_param
   connect \out $auto$module.cpp:918:import_continuous_assign$1
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:16.1-65.10"
+attribute \src "dut.sv:16.1-84.10"
 module \top
-  attribute \src "dut.sv:23.9-23.12"
+  attribute \src "dut.sv:21.25-21.30"
+  wire width 64 output 1 \o01_o
+  attribute \src "dut.sv:21.32-21.37"
+  wire width 64 output 2 \o02_o
+  attribute \src "dut.sv:21.39-21.44"
+  wire width 64 output 3 \o03_o
+  attribute \src "dut.sv:21.46-21.51"
+  wire width 64 output 4 \o04_o
+  attribute \src "dut.sv:22.25-22.30"
+  wire width 64 output 5 \o05_o
+  attribute \src "dut.sv:22.32-22.37"
+  wire width 64 output 6 \o06_o
+  attribute \src "dut.sv:22.39-22.44"
+  wire width 64 output 7 \o07_o
+  attribute \src "dut.sv:22.46-22.51"
+  wire width 64 output 8 \o08_o
+  attribute \src "dut.sv:23.25-23.30"
+  wire width 64 output 9 \o09_o
+  attribute \src "dut.sv:23.32-23.37"
+  wire width 64 output 10 \o10_o
+  attribute \src "dut.sv:23.39-23.44"
+  wire width 64 output 11 \o11_o
+  attribute \src "dut.sv:23.46-23.51"
+  wire width 64 output 12 \o12_o
+  attribute \src "dut.sv:24.25-24.30"
+  wire width 64 output 13 \o13_o
+  attribute \src "dut.sv:24.32-24.37"
+  wire width 64 output 14 \o14_o
+  attribute \src "dut.sv:24.39-24.44"
+  wire width 64 output 15 \o15_o
+  attribute \src "dut.sv:24.46-24.51"
+  wire width 64 output 16 \o16_o
+  attribute \src "dut.sv:25.25-25.30"
+  wire width 64 output 17 \l01_o
+  attribute \src "dut.sv:25.32-25.37"
+  wire width 64 output 18 \l02_o
+  attribute \src "dut.sv:25.39-25.44"
+  wire width 64 output 19 \l03_o
+  attribute \src "dut.sv:25.46-25.51"
+  wire width 64 output 20 \l04_o
+  attribute \src "dut.sv:33.9-33.12"
   wire width 64 \o01
-  attribute \src "dut.sv:23.14-23.17"
+  attribute \src "dut.sv:33.14-33.17"
   wire width 64 \o02
-  attribute \src "dut.sv:23.19-23.22"
+  attribute \src "dut.sv:33.19-33.22"
   wire width 64 \o03
-  attribute \src "dut.sv:23.24-23.27"
+  attribute \src "dut.sv:33.24-33.27"
   wire width 64 \o04
-  attribute \src "dut.sv:24.9-24.12"
+  attribute \src "dut.sv:34.9-34.12"
   wire width 64 \o05
-  attribute \src "dut.sv:24.14-24.17"
+  attribute \src "dut.sv:34.14-34.17"
   wire width 64 \o06
-  attribute \src "dut.sv:24.19-24.22"
+  attribute \src "dut.sv:34.19-34.22"
   wire width 64 \o07
-  attribute \src "dut.sv:24.24-24.27"
+  attribute \src "dut.sv:34.24-34.27"
   wire width 64 \o08
-  attribute \src "dut.sv:25.9-25.12"
+  attribute \src "dut.sv:35.9-35.12"
   wire width 64 \o09
-  attribute \src "dut.sv:25.14-25.17"
+  attribute \src "dut.sv:35.14-35.17"
   wire width 64 \o10
-  attribute \src "dut.sv:25.19-25.22"
+  attribute \src "dut.sv:35.19-35.22"
   wire width 64 \o11
-  attribute \src "dut.sv:25.24-25.27"
+  attribute \src "dut.sv:35.24-35.27"
   wire width 64 \o12
-  attribute \src "dut.sv:26.9-26.12"
+  attribute \src "dut.sv:36.9-36.12"
   wire width 64 \o13
-  attribute \src "dut.sv:26.14-26.17"
+  attribute \src "dut.sv:36.14-36.17"
   wire width 64 \o14
-  attribute \src "dut.sv:26.19-26.22"
+  attribute \src "dut.sv:36.19-36.22"
   wire width 64 \o15
-  attribute \src "dut.sv:26.24-26.27"
+  attribute \src "dut.sv:36.24-36.27"
   wire width 64 \o16
   wire width 64 $auto$module.cpp:918:import_continuous_assign$3
   wire width 64 $auto$module.cpp:918:import_continuous_assign$5
@@ -117,7 +157,7 @@ module \top
     connect \A 3'zzz
     connect \Y $auto$module.cpp:918:import_continuous_assign$5
   end
-  cell $eqx $eqx$dut.sv:44$8
+  cell $eqx $eqx$dut.sv:62$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -127,7 +167,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3311:Eqx$9
   end
-  attribute \src "dut.sv:44.9-44.38"
+  attribute \src "dut.sv:62.9-62.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$11
     parameter \ARGS_WIDTH 0
@@ -142,7 +182,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$10
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:45$12
+  cell $eqx $eqx$dut.sv:63$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -152,7 +192,7 @@ module \top
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3311:Eqx$13
   end
-  attribute \src "dut.sv:45.9-45.38"
+  attribute \src "dut.sv:63.9-63.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$15
     parameter \ARGS_WIDTH 0
@@ -167,7 +207,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$14
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:46$16
+  cell $eqx $eqx$dut.sv:64$16
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -177,7 +217,7 @@ module \top
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3311:Eqx$17
   end
-  attribute \src "dut.sv:46.9-46.38"
+  attribute \src "dut.sv:64.9-64.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$19
     parameter \ARGS_WIDTH 0
@@ -192,7 +232,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$18
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:47$20
+  cell $eqx $eqx$dut.sv:65$20
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -202,7 +242,7 @@ module \top
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3311:Eqx$21
   end
-  attribute \src "dut.sv:47.9-47.38"
+  attribute \src "dut.sv:65.9-65.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$23
     parameter \ARGS_WIDTH 0
@@ -217,7 +257,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$22
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:48$24
+  cell $eqx $eqx$dut.sv:66$24
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -227,7 +267,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3311:Eqx$25
   end
-  attribute \src "dut.sv:48.9-48.42"
+  attribute \src "dut.sv:66.9-66.42"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$27
     parameter \ARGS_WIDTH 0
@@ -242,7 +282,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$26
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:49$28
+  cell $eqx $eqx$dut.sv:67$28
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -252,7 +292,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000111
     connect \Y $auto$rtlil.cc:3311:Eqx$29
   end
-  attribute \src "dut.sv:49.9-49.42"
+  attribute \src "dut.sv:67.9-67.42"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$31
     parameter \ARGS_WIDTH 0
@@ -267,7 +307,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$30
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:50$32
+  cell $eqx $eqx$dut.sv:68$32
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -277,7 +317,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000xxx
     connect \Y $auto$rtlil.cc:3311:Eqx$33
   end
-  attribute \src "dut.sv:50.9-50.42"
+  attribute \src "dut.sv:68.9-68.42"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$35
     parameter \ARGS_WIDTH 0
@@ -292,7 +332,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$34
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:51$36
+  cell $eqx $eqx$dut.sv:69$36
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -302,7 +342,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000zzz
     connect \Y $auto$rtlil.cc:3311:Eqx$37
   end
-  attribute \src "dut.sv:51.9-51.42"
+  attribute \src "dut.sv:69.9-69.42"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$39
     parameter \ARGS_WIDTH 0
@@ -317,7 +357,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$38
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:52$40
+  cell $eqx $eqx$dut.sv:70$40
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -327,7 +367,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3311:Eqx$41
   end
-  attribute \src "dut.sv:52.9-52.38"
+  attribute \src "dut.sv:70.9-70.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$43
     parameter \ARGS_WIDTH 0
@@ -342,7 +382,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$42
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:53$44
+  cell $eqx $eqx$dut.sv:71$44
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -352,7 +392,7 @@ module \top
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3311:Eqx$45
   end
-  attribute \src "dut.sv:53.9-53.38"
+  attribute \src "dut.sv:71.9-71.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$47
     parameter \ARGS_WIDTH 0
@@ -367,7 +407,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$46
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:54$48
+  cell $eqx $eqx$dut.sv:72$48
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -377,7 +417,7 @@ module \top
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3311:Eqx$49
   end
-  attribute \src "dut.sv:54.9-54.38"
+  attribute \src "dut.sv:72.9-72.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$51
     parameter \ARGS_WIDTH 0
@@ -392,7 +432,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$50
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:55$52
+  cell $eqx $eqx$dut.sv:73$52
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -402,7 +442,7 @@ module \top
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3311:Eqx$53
   end
-  attribute \src "dut.sv:55.9-55.38"
+  attribute \src "dut.sv:73.9-73.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$55
     parameter \ARGS_WIDTH 0
@@ -417,7 +457,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$54
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:56$56
+  cell $eqx $eqx$dut.sv:74$56
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -427,7 +467,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3311:Eqx$57
   end
-  attribute \src "dut.sv:56.9-56.38"
+  attribute \src "dut.sv:74.9-74.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$59
     parameter \ARGS_WIDTH 0
@@ -442,7 +482,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$58
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:57$60
+  cell $eqx $eqx$dut.sv:75$60
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -452,7 +492,7 @@ module \top
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3311:Eqx$61
   end
-  attribute \src "dut.sv:57.9-57.38"
+  attribute \src "dut.sv:75.9-75.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$63
     parameter \ARGS_WIDTH 0
@@ -467,7 +507,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$62
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:58$64
+  cell $eqx $eqx$dut.sv:76$64
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -477,7 +517,7 @@ module \top
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3311:Eqx$65
   end
-  attribute \src "dut.sv:58.9-58.38"
+  attribute \src "dut.sv:76.9-76.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$67
     parameter \ARGS_WIDTH 0
@@ -492,7 +532,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$66
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:59$68
+  cell $eqx $eqx$dut.sv:77$68
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -502,7 +542,7 @@ module \top
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3311:Eqx$69
   end
-  attribute \src "dut.sv:59.9-59.38"
+  attribute \src "dut.sv:77.9-77.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$71
     parameter \ARGS_WIDTH 0
@@ -517,7 +557,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$70
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:60$72
+  cell $eqx $eqx$dut.sv:78$72
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -527,7 +567,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3311:Eqx$73
   end
-  attribute \src "dut.sv:60.9-60.38"
+  attribute \src "dut.sv:78.9-78.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$75
     parameter \ARGS_WIDTH 0
@@ -542,7 +582,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$74
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:61$76
+  cell $eqx $eqx$dut.sv:79$76
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -552,7 +592,7 @@ module \top
     connect \B 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \Y $auto$rtlil.cc:3311:Eqx$77
   end
-  attribute \src "dut.sv:61.9-61.38"
+  attribute \src "dut.sv:79.9-79.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$79
     parameter \ARGS_WIDTH 0
@@ -567,7 +607,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$78
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:62$80
+  cell $eqx $eqx$dut.sv:80$80
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -577,7 +617,7 @@ module \top
     connect \B 64'----------------------------------------------------------------
     connect \Y $auto$rtlil.cc:3311:Eqx$81
   end
-  attribute \src "dut.sv:62.9-62.38"
+  attribute \src "dut.sv:80.9-80.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$83
     parameter \ARGS_WIDTH 0
@@ -592,7 +632,7 @@ module \top
     connect \EN $auto$process.cpp:75:import_immediate_assert$82
     connect \TRG { }
   end
-  cell $eqx $eqx$dut.sv:63$84
+  cell $eqx $eqx$dut.sv:81$84
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 64
@@ -602,7 +642,7 @@ module \top
     connect \B 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     connect \Y $auto$rtlil.cc:3311:Eqx$85
   end
-  attribute \src "dut.sv:63.9-63.38"
+  attribute \src "dut.sv:81.9-81.38"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$87
     parameter \ARGS_WIDTH 0
@@ -645,8 +685,8 @@ module \top
   cell $paramod\set_param\VALUE=s32'00000000000000000000000000000000 \sp16
     connect \out \o16
   end
-  attribute \src "dut.sv:43.5-64.8"
-  process $proc$dut.sv:43$7
+  attribute \src "dut.sv:61.5-82.8"
+  process $proc$dut.sv:61$7
     assign $auto$process.cpp:75:import_immediate_assert$10 1'0
     assign $auto$process.cpp:75:import_immediate_assert$14 1'0
     assign $auto$process.cpp:75:import_immediate_assert$18 1'0
@@ -697,9 +737,29 @@ module \top
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
   connect \o07 $auto$module.cpp:918:import_continuous_assign$3
   connect \o08 $auto$module.cpp:918:import_continuous_assign$5
+  connect \o01_o \o01
+  connect \o02_o \o02
+  connect \o03_o \o03
+  connect \o04_o \o04
+  connect \o05_o \o05
+  connect \o06_o \o06
+  connect \o07_o \o07
+  connect \o08_o \o08
+  connect \o09_o \o09
+  connect \o10_o \o10
+  connect \o11_o \o11
+  connect \o12_o \o12
+  connect \o13_o \o13
+  connect \o14_o \o14
+  connect \o15_o \o15
+  connect \o16_o \o16
+  connect \l01_o 64'0000000000000000000000000000000000000000000000000000000000000000
+  connect \l02_o 64'1111111111111111111111111111111111111111111111111111111111111111
+  connect \l03_o 64'x
+  connect \l04_o 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:39.5-39.31"
+attribute \src "dut.sv:49.5-49.31"
 attribute \dynports 1
 attribute \hdlname "set_param"
 module $paramod\set_param\VALUE=s32'00000000000000000000000000000000

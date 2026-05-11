@@ -72,21 +72,56 @@ def find_top_module(dut_path: Path) -> str:
 
 
 def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
-                     uhdm: Path, out_v: Path) -> None:
+                     uhdm: Path, out_v: Path) -> str:
+    """Synth the UHDM, write the renamed netlist, and return the
+    *original* top module name (whatever Yosys auto-top selected)."""
     # `$check` cells (concurrent / immediate assertions) and `$print`
     # cells ($display) have no Verilator-compatible behavioural model,
     # and they're not the subject of the equivalence check anyway.
     # Delete them before writing the netlist.
+    out_top = out_v.with_name(out_v.stem + ".orig_top.txt")
     script = (
         f"read_uhdm {uhdm}\n"
         f"synth -auto-top\n"
         f"delete t:$check t:$print\n"
         f"flatten\n"
         f"opt_clean\n"
+        # Capture the auto-top name *before* renaming so the wrapper
+        # can instantiate the right SV module (the netlist top can
+        # differ from the last-`module`-declaration in dut.sv when
+        # the source has `bind`, multiple unrelated modules, etc.).
+        f"tee -q -o {out_top} ls A:top\n"
         f"rename -top dut_netlist\n"
         f"write_verilog -noattr -noexpr {out_v}\n"
     )
     sh([str(yosys), "-q", "-m", str(uhdm_plugin), "-p", script])
+    # Parse the `ls A:top` output.  Yosys formats it as:
+    #
+    #   1 modules:
+    #     top
+    #
+    # — the module name is the first indented line after the header.
+    # For parameterised modules it can be `$paramod\Foo\X=...`; strip
+    # the prefix back to the original SV name.
+    name = ""
+    if out_top.exists():
+        for line in out_top.read_text().splitlines():
+            s = line.strip()
+            if not s or "modules:" in s:
+                continue
+            if s.startswith("$paramod"):
+                # `$paramod\Foo\X=...` — pull the bit between the first
+                # two backslashes (the original module name).
+                parts = s.split("\\")
+                if len(parts) >= 2:
+                    name = parts[1]
+                else:
+                    name = s
+            else:
+                # Strip leading backslash if Yosys printed an escaped id.
+                name = s[1:] if s.startswith("\\") else s
+            break
+    return name
 
 
 def extract_ports(yosys: Path, cr_plugin: Path, simcells: Path,
@@ -287,6 +322,11 @@ def run_verilator(work: Path, paths: dict[str, Path], dut_path: Path) -> tuple[i
         "verilator", "--cc", "--exe", "--build", "-j", "4",
         "-Wno-fatal", "-Wno-WIDTH", "-Wno-UNUSED", "-Wno-UNOPTFLAT",
         "-Wno-CASEINCOMPLETE", "-Wno-MULTIDRIVEN",
+        # `--timing` lets Verilator parse SVA constructs (`##N`, `|=>`,
+        # `until`, ...) and event controls that are otherwise rejected
+        # with NEEDTIMINGOPT.  Required for the SV-side simulation of
+        # assertion-heavy DUTs; harmless for purely structural ones.
+        "--timing",
         "--top-module", "tb",
         # simcells.v contains the $_DFF_*/$_MUX_/... gate-level cells;
         # simlib.v has higher-level primitives (and a `tran` that older
@@ -338,12 +378,13 @@ def main() -> int:
                 f.unlink()
     work.mkdir(exist_ok=True)
 
-    orig_top = find_top_module(dut)
-    print(f"▶ original SV top: {orig_top}")
-
     print("▶ Generating synthesized netlist from UHDM")
-    synth_to_netlist(paths["yosys"], paths["uhdm_plugin"],
-                     uhdm, work / "dut_netlist.v")
+    yosys_top = synth_to_netlist(paths["yosys"], paths["uhdm_plugin"],
+                                 uhdm, work / "dut_netlist.v")
+    # Prefer the auto-top name Yosys actually selected; fall back to the
+    # last-`module`-declaration heuristic when capture failed.
+    orig_top = yosys_top or find_top_module(dut)
+    print(f"▶ original SV top: {orig_top}")
 
     print("▶ Extracting clocks/resets/ports")
     extract_ports(paths["yosys"], paths["cr_plugin"],

@@ -22,90 +22,90 @@ module \example
   connect \d 8'00000011
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:16.1-52.10"
+attribute \src "dut.sv:16.1-51.10"
 module \top
-  attribute \src "dut.sv:21.10-21.12"
-  wire width 8 signed \c1
-  attribute \src "dut.sv:21.14-21.16"
-  wire width 8 signed \d1
-  attribute \src "dut.sv:22.10-22.12"
-  wire width 8 signed \c2
-  attribute \src "dut.sv:22.14-22.16"
-  wire width 8 signed \d2
-  attribute \src "dut.sv:23.10-23.12"
-  wire width 8 signed \c3
-  attribute \src "dut.sv:23.14-23.16"
-  wire width 8 signed \d3
-  attribute \src "dut.sv:24.10-24.12"
-  wire width 8 signed \c4
-  attribute \src "dut.sv:24.14-24.16"
-  wire width 8 signed \d4
-  attribute \src "dut.sv:17.10-17.12"
-  wire \a1
-  attribute \src "dut.sv:17.14-17.16"
-  wire \b1
-  attribute \src "dut.sv:18.10-18.12"
-  wire \a2
-  attribute \src "dut.sv:18.14-18.16"
-  wire \b2
-  attribute \src "dut.sv:19.10-19.12"
-  wire \a3
-  attribute \src "dut.sv:19.14-19.16"
-  wire \b3
-  attribute \src "dut.sv:20.10-20.12"
-  wire \a4
-  attribute \src "dut.sv:20.14-20.16"
-  wire \b4
-  attribute \src "dut.sv:32.17-32.24"
-  wire $eq$dut.sv:32$2_Y
+  attribute \src "dut.sv:20.18-20.20"
+  wire output 1 \a1
+  attribute \src "dut.sv:20.22-20.24"
+  wire output 2 \b1
+  attribute \src "dut.sv:20.26-20.28"
+  wire output 3 \a2
+  attribute \src "dut.sv:20.30-20.32"
+  wire output 4 \b2
+  attribute \src "dut.sv:20.34-20.36"
+  wire output 5 \a3
+  attribute \src "dut.sv:20.38-20.40"
+  wire output 6 \b3
+  attribute \src "dut.sv:20.42-20.44"
+  wire output 7 \a4
+  attribute \src "dut.sv:20.46-20.48"
+  wire output 8 \b4
+  attribute \src "dut.sv:21.18-21.20"
+  wire width 8 output 9 signed \c1
+  attribute \src "dut.sv:21.22-21.24"
+  wire width 8 output 10 signed \d1
+  attribute \src "dut.sv:21.26-21.28"
+  wire width 8 output 11 signed \c2
+  attribute \src "dut.sv:21.30-21.32"
+  wire width 8 output 12 signed \d2
+  attribute \src "dut.sv:21.34-21.36"
+  wire width 8 output 13 signed \c3
+  attribute \src "dut.sv:21.38-21.40"
+  wire width 8 output 14 signed \d3
+  attribute \src "dut.sv:21.42-21.44"
+  wire width 8 output 15 signed \c4
+  attribute \src "dut.sv:21.46-21.48"
+  wire width 8 output 16 signed \d4
+  attribute \src "dut.sv:30.17-30.24"
+  wire $eq$dut.sv:30$2_Y
   wire $auto$process.cpp:75:import_immediate_assert$4
-  attribute \src "dut.sv:33.17-33.24"
-  wire $eq$dut.sv:33$6_Y
+  attribute \src "dut.sv:31.17-31.24"
+  wire $eq$dut.sv:31$6_Y
   wire $auto$process.cpp:75:import_immediate_assert$8
-  attribute \src "dut.sv:34.17-34.24"
-  wire $eq$dut.sv:34$10_Y
-  wire $auto$process.cpp:75:import_immediate_assert$12
-  attribute \src "dut.sv:35.17-35.24"
-  wire $eq$dut.sv:35$14_Y
-  wire $auto$process.cpp:75:import_immediate_assert$16
-  attribute \src "dut.sv:37.17-37.24"
-  wire $eq$dut.sv:37$18_Y
-  wire $auto$process.cpp:75:import_immediate_assert$20
-  attribute \src "dut.sv:38.17-38.24"
-  wire $eq$dut.sv:38$22_Y
-  wire $auto$process.cpp:75:import_immediate_assert$24
-  attribute \src "dut.sv:39.17-39.24"
-  wire $eq$dut.sv:39$26_Y
-  wire $auto$process.cpp:75:import_immediate_assert$28
-  attribute \src "dut.sv:40.17-40.24"
-  wire $eq$dut.sv:40$30_Y
-  wire $auto$process.cpp:75:import_immediate_assert$32
-  attribute \src "dut.sv:42.17-42.24"
-  wire $eq$dut.sv:42$34_Y
-  wire $auto$process.cpp:75:import_immediate_assert$36
-  attribute \src "dut.sv:43.17-43.24"
-  wire $eq$dut.sv:43$38_Y
-  wire $auto$process.cpp:75:import_immediate_assert$40
-  attribute \src "dut.sv:44.17-44.24"
-  wire $eq$dut.sv:44$42_Y
-  wire $auto$process.cpp:75:import_immediate_assert$44
-  attribute \src "dut.sv:45.17-45.24"
-  wire $eq$dut.sv:45$46_Y
-  wire $auto$process.cpp:75:import_immediate_assert$48
-  attribute \src "dut.sv:47.17-47.24"
-  wire $eq$dut.sv:47$50_Y
-  wire $auto$process.cpp:75:import_immediate_assert$52
-  attribute \src "dut.sv:48.17-48.24"
-  wire $eq$dut.sv:48$54_Y
-  wire $auto$process.cpp:75:import_immediate_assert$56
-  attribute \src "dut.sv:49.17-49.24"
-  wire $eq$dut.sv:49$58_Y
-  wire $auto$process.cpp:75:import_immediate_assert$60
-  attribute \src "dut.sv:50.17-50.25"
-  wire $eq$dut.sv:50$62_Y
-  wire $auto$process.cpp:75:import_immediate_assert$64
   attribute \src "dut.sv:32.17-32.24"
-  cell $eq $eq$dut.sv:32$3
+  wire $eq$dut.sv:32$10_Y
+  wire $auto$process.cpp:75:import_immediate_assert$12
+  attribute \src "dut.sv:33.17-33.24"
+  wire $eq$dut.sv:33$14_Y
+  wire $auto$process.cpp:75:import_immediate_assert$16
+  attribute \src "dut.sv:35.17-35.24"
+  wire $eq$dut.sv:35$18_Y
+  wire $auto$process.cpp:75:import_immediate_assert$20
+  attribute \src "dut.sv:36.17-36.24"
+  wire $eq$dut.sv:36$22_Y
+  wire $auto$process.cpp:75:import_immediate_assert$24
+  attribute \src "dut.sv:37.17-37.24"
+  wire $eq$dut.sv:37$26_Y
+  wire $auto$process.cpp:75:import_immediate_assert$28
+  attribute \src "dut.sv:38.17-38.24"
+  wire $eq$dut.sv:38$30_Y
+  wire $auto$process.cpp:75:import_immediate_assert$32
+  attribute \src "dut.sv:40.17-40.24"
+  wire $eq$dut.sv:40$34_Y
+  wire $auto$process.cpp:75:import_immediate_assert$36
+  attribute \src "dut.sv:41.17-41.24"
+  wire $eq$dut.sv:41$38_Y
+  wire $auto$process.cpp:75:import_immediate_assert$40
+  attribute \src "dut.sv:42.17-42.24"
+  wire $eq$dut.sv:42$42_Y
+  wire $auto$process.cpp:75:import_immediate_assert$44
+  attribute \src "dut.sv:43.17-43.24"
+  wire $eq$dut.sv:43$46_Y
+  wire $auto$process.cpp:75:import_immediate_assert$48
+  attribute \src "dut.sv:45.17-45.24"
+  wire $eq$dut.sv:45$50_Y
+  wire $auto$process.cpp:75:import_immediate_assert$52
+  attribute \src "dut.sv:46.17-46.24"
+  wire $eq$dut.sv:46$54_Y
+  wire $auto$process.cpp:75:import_immediate_assert$56
+  attribute \src "dut.sv:47.17-47.24"
+  wire $eq$dut.sv:47$58_Y
+  wire $auto$process.cpp:75:import_immediate_assert$60
+  attribute \src "dut.sv:48.17-48.25"
+  wire $eq$dut.sv:48$62_Y
+  wire $auto$process.cpp:75:import_immediate_assert$64
+  attribute \src "dut.sv:30.17-30.24"
+  cell $eq $eq$dut.sv:30$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -113,9 +113,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eq$dut.sv:32$2_Y
+    connect \Y $eq$dut.sv:30$2_Y
   end
-  attribute \src "dut.sv:32.9-32.26"
+  attribute \src "dut.sv:30.9-30.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$5
     parameter \ARGS_WIDTH 0
@@ -125,13 +125,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:32$2_Y
+    connect \A $eq$dut.sv:30$2_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$4
     connect \TRG { }
   end
-  attribute \src "dut.sv:33.17-33.24"
-  cell $eq $eq$dut.sv:33$7
+  attribute \src "dut.sv:31.17-31.24"
+  cell $eq $eq$dut.sv:31$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -139,9 +139,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $eq$dut.sv:33$6_Y
+    connect \Y $eq$dut.sv:31$6_Y
   end
-  attribute \src "dut.sv:33.9-33.26"
+  attribute \src "dut.sv:31.9-31.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$9
     parameter \ARGS_WIDTH 0
@@ -151,13 +151,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:33$6_Y
+    connect \A $eq$dut.sv:31$6_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$8
     connect \TRG { }
   end
-  attribute \src "dut.sv:34.17-34.24"
-  cell $eq $eq$dut.sv:34$11
+  attribute \src "dut.sv:32.17-32.24"
+  cell $eq $eq$dut.sv:32$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -165,9 +165,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $eq$dut.sv:34$10_Y
+    connect \Y $eq$dut.sv:32$10_Y
   end
-  attribute \src "dut.sv:34.9-34.26"
+  attribute \src "dut.sv:32.9-32.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$13
     parameter \ARGS_WIDTH 0
@@ -177,13 +177,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:34$10_Y
+    connect \A $eq$dut.sv:32$10_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$12
     connect \TRG { }
   end
-  attribute \src "dut.sv:35.17-35.24"
-  cell $eq $eq$dut.sv:35$15
+  attribute \src "dut.sv:33.17-33.24"
+  cell $eq $eq$dut.sv:33$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -191,9 +191,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $eq$dut.sv:35$14_Y
+    connect \Y $eq$dut.sv:33$14_Y
   end
-  attribute \src "dut.sv:35.9-35.26"
+  attribute \src "dut.sv:33.9-33.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$17
     parameter \ARGS_WIDTH 0
@@ -203,13 +203,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:35$14_Y
+    connect \A $eq$dut.sv:33$14_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$16
     connect \TRG { }
   end
-  attribute \src "dut.sv:37.17-37.24"
-  cell $eq $eq$dut.sv:37$19
+  attribute \src "dut.sv:35.17-35.24"
+  cell $eq $eq$dut.sv:35$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -217,9 +217,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $eq$dut.sv:37$18_Y
+    connect \Y $eq$dut.sv:35$18_Y
   end
-  attribute \src "dut.sv:37.9-37.26"
+  attribute \src "dut.sv:35.9-35.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$21
     parameter \ARGS_WIDTH 0
@@ -229,13 +229,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:37$18_Y
+    connect \A $eq$dut.sv:35$18_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$20
     connect \TRG { }
   end
-  attribute \src "dut.sv:38.17-38.24"
-  cell $eq $eq$dut.sv:38$23
+  attribute \src "dut.sv:36.17-36.24"
+  cell $eq $eq$dut.sv:36$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -243,9 +243,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $eq$dut.sv:38$22_Y
+    connect \Y $eq$dut.sv:36$22_Y
   end
-  attribute \src "dut.sv:38.9-38.26"
+  attribute \src "dut.sv:36.9-36.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$25
     parameter \ARGS_WIDTH 0
@@ -255,13 +255,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:38$22_Y
+    connect \A $eq$dut.sv:36$22_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$24
     connect \TRG { }
   end
-  attribute \src "dut.sv:39.17-39.24"
-  cell $eq $eq$dut.sv:39$27
+  attribute \src "dut.sv:37.17-37.24"
+  cell $eq $eq$dut.sv:37$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -269,9 +269,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $eq$dut.sv:39$26_Y
+    connect \Y $eq$dut.sv:37$26_Y
   end
-  attribute \src "dut.sv:39.9-39.26"
+  attribute \src "dut.sv:37.9-37.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$29
     parameter \ARGS_WIDTH 0
@@ -281,13 +281,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:39$26_Y
+    connect \A $eq$dut.sv:37$26_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$28
     connect \TRG { }
   end
-  attribute \src "dut.sv:40.17-40.24"
-  cell $eq $eq$dut.sv:40$31
+  attribute \src "dut.sv:38.17-38.24"
+  cell $eq $eq$dut.sv:38$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -295,9 +295,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $eq$dut.sv:40$30_Y
+    connect \Y $eq$dut.sv:38$30_Y
   end
-  attribute \src "dut.sv:40.9-40.26"
+  attribute \src "dut.sv:38.9-38.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$33
     parameter \ARGS_WIDTH 0
@@ -307,13 +307,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:40$30_Y
+    connect \A $eq$dut.sv:38$30_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$32
     connect \TRG { }
   end
-  attribute \src "dut.sv:42.17-42.24"
-  cell $eq $eq$dut.sv:42$35
+  attribute \src "dut.sv:40.17-40.24"
+  cell $eq $eq$dut.sv:40$35
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -321,9 +321,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $eq$dut.sv:42$34_Y
+    connect \Y $eq$dut.sv:40$34_Y
   end
-  attribute \src "dut.sv:42.9-42.26"
+  attribute \src "dut.sv:40.9-40.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$37
     parameter \ARGS_WIDTH 0
@@ -333,13 +333,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:42$34_Y
+    connect \A $eq$dut.sv:40$34_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$36
     connect \TRG { }
   end
-  attribute \src "dut.sv:43.17-43.24"
-  cell $eq $eq$dut.sv:43$39
+  attribute \src "dut.sv:41.17-41.24"
+  cell $eq $eq$dut.sv:41$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -347,9 +347,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eq$dut.sv:43$38_Y
+    connect \Y $eq$dut.sv:41$38_Y
   end
-  attribute \src "dut.sv:43.9-43.26"
+  attribute \src "dut.sv:41.9-41.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$41
     parameter \ARGS_WIDTH 0
@@ -359,13 +359,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:43$38_Y
+    connect \A $eq$dut.sv:41$38_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$40
     connect \TRG { }
   end
-  attribute \src "dut.sv:44.17-44.24"
-  cell $eq $eq$dut.sv:44$43
+  attribute \src "dut.sv:42.17-42.24"
+  cell $eq $eq$dut.sv:42$43
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -373,9 +373,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000101
-    connect \Y $eq$dut.sv:44$42_Y
+    connect \Y $eq$dut.sv:42$42_Y
   end
-  attribute \src "dut.sv:44.9-44.26"
+  attribute \src "dut.sv:42.9-42.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$45
     parameter \ARGS_WIDTH 0
@@ -385,13 +385,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:44$42_Y
+    connect \A $eq$dut.sv:42$42_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$44
     connect \TRG { }
   end
-  attribute \src "dut.sv:45.17-45.24"
-  cell $eq $eq$dut.sv:45$47
+  attribute \src "dut.sv:43.17-43.24"
+  cell $eq $eq$dut.sv:43$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -399,9 +399,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d3
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $eq$dut.sv:45$46_Y
+    connect \Y $eq$dut.sv:43$46_Y
   end
-  attribute \src "dut.sv:45.9-45.26"
+  attribute \src "dut.sv:43.9-43.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$49
     parameter \ARGS_WIDTH 0
@@ -411,13 +411,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:45$46_Y
+    connect \A $eq$dut.sv:43$46_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$48
     connect \TRG { }
   end
-  attribute \src "dut.sv:47.17-47.24"
-  cell $eq $eq$dut.sv:47$51
+  attribute \src "dut.sv:45.17-45.24"
+  cell $eq $eq$dut.sv:45$51
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -425,9 +425,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $eq$dut.sv:47$50_Y
+    connect \Y $eq$dut.sv:45$50_Y
   end
-  attribute \src "dut.sv:47.9-47.26"
+  attribute \src "dut.sv:45.9-45.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$53
     parameter \ARGS_WIDTH 0
@@ -437,13 +437,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:47$50_Y
+    connect \A $eq$dut.sv:45$50_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$52
     connect \TRG { }
   end
-  attribute \src "dut.sv:48.17-48.24"
-  cell $eq $eq$dut.sv:48$55
+  attribute \src "dut.sv:46.17-46.24"
+  cell $eq $eq$dut.sv:46$55
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -451,9 +451,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $eq$dut.sv:48$54_Y
+    connect \Y $eq$dut.sv:46$54_Y
   end
-  attribute \src "dut.sv:48.9-48.26"
+  attribute \src "dut.sv:46.9-46.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$57
     parameter \ARGS_WIDTH 0
@@ -463,13 +463,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:48$54_Y
+    connect \A $eq$dut.sv:46$54_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$56
     connect \TRG { }
   end
-  attribute \src "dut.sv:49.17-49.24"
-  cell $eq $eq$dut.sv:49$59
+  attribute \src "dut.sv:47.17-47.24"
+  cell $eq $eq$dut.sv:47$59
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -477,9 +477,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001001
-    connect \Y $eq$dut.sv:49$58_Y
+    connect \Y $eq$dut.sv:47$58_Y
   end
-  attribute \src "dut.sv:49.9-49.26"
+  attribute \src "dut.sv:47.9-47.26"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$61
     parameter \ARGS_WIDTH 0
@@ -489,13 +489,13 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:49$58_Y
+    connect \A $eq$dut.sv:47$58_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$60
     connect \TRG { }
   end
-  attribute \src "dut.sv:50.17-50.25"
-  cell $eq $eq$dut.sv:50$63
+  attribute \src "dut.sv:48.17-48.25"
+  cell $eq $eq$dut.sv:48$63
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
@@ -503,9 +503,9 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d4
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001010
-    connect \Y $eq$dut.sv:50$62_Y
+    connect \Y $eq$dut.sv:48$62_Y
   end
-  attribute \src "dut.sv:50.9-50.27"
+  attribute \src "dut.sv:48.9-48.27"
   attribute \keep 1
   cell $check $auto$process.cpp:82:import_immediate_assert$65
     parameter \ARGS_WIDTH 0
@@ -515,7 +515,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A $eq$dut.sv:50$62_Y
+    connect \A $eq$dut.sv:48$62_Y
     connect \ARGS { }
     connect \EN $auto$process.cpp:75:import_immediate_assert$64
     connect \TRG { }
@@ -544,8 +544,8 @@ module \top
     connect \c \c4
     connect \d \d4
   end
-  attribute \src "dut.sv:31.5-51.8"
-  process $proc$dut.sv:31$1
+  attribute \src "dut.sv:29.5-49.8"
+  process $proc$dut.sv:29$1
     assign $auto$process.cpp:75:import_immediate_assert$4 1'0
     assign $auto$process.cpp:75:import_immediate_assert$8 1'0
     assign $auto$process.cpp:75:import_immediate_assert$12 1'0
@@ -582,7 +582,7 @@ module \top
   end
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:26.5-26.43"
+attribute \src "dut.sv:23.5-23.43"
 attribute \dynports 1
 attribute \hdlname "example"
 module $paramod\example\w=s32'00000000000000000000000000000000\x=s32'00000000000000000000000000000001\y=s32'00000000000000000000000000000010\z=s32'00000000000000000000000000000011
@@ -604,7 +604,7 @@ module $paramod\example\w=s32'00000000000000000000000000000000\x=s32'00000000000
   connect \d 8'00000011
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:27.5-27.48"
+attribute \src "dut.sv:24.5-24.48"
 attribute \dynports 1
 attribute \hdlname "example"
 module $paramod\example\w=s32'00000000000000000000000000000001\x=s32'00000000000000000000000000000001\y=s32'00000000000000000000000000000100\z=s32'00000000000000000000000000000011
@@ -626,7 +626,7 @@ module $paramod\example\w=s32'00000000000000000000000000000001\x=s32'00000000000
   connect \d 8'00000011
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:28.5-28.55"
+attribute \src "dut.sv:25.5-25.55"
 attribute \dynports 1
 attribute \hdlname "example"
 module $paramod\example\w=s32'00000000000000000000000000000001\x=s32'00000000000000000000000000000000\y=s32'00000000000000000000000000000101\z=s32'00000000000000000000000000000011
@@ -648,7 +648,7 @@ module $paramod\example\w=s32'00000000000000000000000000000001\x=s32'00000000000
   connect \d 8'00000011
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:29.5-29.47"
+attribute \src "dut.sv:26.5-26.47"
 attribute \dynports 1
 attribute \hdlname "example"
 module $paramod\example\w=s32'00000000000000000000000000000001\x=s32'00000000000000000000000000000000\y=s32'00000000000000000000000000001001\z=s32'00000000000000000000000000001010
