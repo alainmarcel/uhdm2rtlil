@@ -2533,7 +2533,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             } else if (auto prop_expr = dynamic_cast<const UHDM::expr*>(prop)) {
                 cond = import_expression(prop_expr);
             }
-            if (cond.empty()) continue;
+            // When the property expression uses SVA operators we don't yet
+            // synthesise (`|->`, `|=>`, `until`, `[*]`, `throughout`, ...),
+            // import_expression returns an empty SigSpec.  Still emit a
+            // stub `$check` cell (with .A=1'b1) so the module isn't left
+            // body-less — otherwise the blackbox-detection pass below
+            // would mark it as a blackbox and `synth -auto-top` later
+            // fails with "No top module found!" for assertion-only DUTs.
+            if (cond.empty())
+                cond = RTLIL::SigSpec(RTLIL::State::S1);
             // Reduce to 1-bit if needed
             if (cond.size() > 1) {
                 cond = module->ReduceBool(NEW_ID, cond, false);
