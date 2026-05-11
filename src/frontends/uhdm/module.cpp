@@ -221,10 +221,76 @@ void UhdmImporter::import_port(const port* uhdm_port) {
         }
     }
 
+    // Surelog's elaborated parameterized variant may strip the unpacked
+    // dimension from the port's typespec (leaving just the element
+    // `logic_typespec`).  Recover it by checking the module's
+    // `Array_nets()` / `Variables()` for an `array_net`/`array_var` of
+    // the same name and using its dimensions to size the port wire.
+    int unpacked_count = 0;
+    int unpacked_elem_w = 0;
+    if (current_instance) {
+        // Walk the module instance's Array_nets() (unpacked-array nets).
+        auto module_scope =
+            dynamic_cast<const UHDM::module_inst*>(current_instance);
+        if (module_scope && module_scope->Array_nets()) {
+            for (auto an : *module_scope->Array_nets()) {
+                if (an->VpiName() == portname) {
+                    int total = 1;
+                    if (an->Ranges()) {
+                        for (auto r : *an->Ranges()) {
+                            if (r->Left_expr() && r->Right_expr()) {
+                                RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                if (ls.is_fully_const() && rs.is_fully_const())
+                                    total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                else { total = 0; break; }
+                            }
+                        }
+                    }
+                    int elem_w = 0;
+                    if (an->Nets() && !an->Nets()->empty()) {
+                        auto inner = (*an->Nets())[0];
+                        elem_w = get_width(inner, current_instance);
+                    }
+                    if (total > 0 && elem_w > 0) {
+                        unpacked_count = total;
+                        unpacked_elem_w = elem_w;
+                        width = total * elem_w;
+                        log("UHDM: Port '%s' recovered unpacked dims from "
+                            "Array_nets: %d * %d = %d bits\n",
+                            portname.c_str(), elem_w, total, width);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     RTLIL::Wire* w = create_wire(portname, width, upto, start_offset);
 
     // Add source attribute
     add_src_attribute(w->attributes, uhdm_port);
+
+    // If we recovered unpacked dims from Array_nets above, also create per-
+    // element wires `\name[0..N-1]` and connect them to slices of the flat
+    // port wire so `import_bit_select` resolves `name[i]` as a full element.
+    if (unpacked_count > 0 && unpacked_elem_w > 0) {
+        for (int i = 0; i < unpacked_count; i++) {
+            std::string ename = portname + "[" + std::to_string(i) + "]";
+            RTLIL::IdString eid = RTLIL::escape_id(ename);
+            if (!module->wire(eid)) {
+                RTLIL::Wire* ew = module->addWire(eid, unpacked_elem_w);
+                add_src_attribute(ew->attributes, uhdm_port);
+                RTLIL::SigSpec slice =
+                    RTLIL::SigSpec(w).extract(i * unpacked_elem_w, unpacked_elem_w);
+                if (direction == vpiOutput)
+                    module->connect(slice, RTLIL::SigSpec(ew));
+                else
+                    module->connect(RTLIL::SigSpec(ew), slice);
+                name_map[ename] = ew;
+            }
+        }
+    }
 
     // Store packed array metadata for use in bit_select handling
     if (uhdm_port->Typespec()) {
@@ -286,9 +352,53 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                     }
                 }
             }
+            // Unpacked-array port (e.g. `input ptab_dat_t iP [4]`).  The
+            // flat port wire is sized at `elem_w * count`; additionally
+            // create per-element wires `\name[0..N-1]` and connect each
+            // to the corresponding slice of the flat port wire so
+            // `import_bit_select` resolves `iP[i]` as a full element
+            // rather than a single-bit select.
+            if (ts->UhdmType() == uhdmarray_typespec) {
+                auto ats = any_cast<const UHDM::array_typespec*>(ts);
+                int elem_w = 0;
+                if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
+                    elem_w = get_width_from_typespec(
+                        ats->Elem_typespec()->Actual_typespec(), current_instance);
+                int total = 0;
+                if (ats->Ranges()) {
+                    total = 1;
+                    for (auto r : *ats->Ranges()) {
+                        if (r->Left_expr() && r->Right_expr()) {
+                            RTLIL::SigSpec lspec = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rspec = import_expression(r->Right_expr());
+                            if (lspec.is_fully_const() && rspec.is_fully_const())
+                                total *= std::abs(lspec.as_int() - rspec.as_int()) + 1;
+                            else { total = 0; break; }
+                        }
+                    }
+                }
+                if (elem_w > 0 && total > 0 && (long long)elem_w * total == w->width) {
+                    for (int i = 0; i < total; i++) {
+                        std::string ename = portname + "[" + std::to_string(i) + "]";
+                        RTLIL::IdString eid = RTLIL::escape_id(ename);
+                        if (!module->wire(eid)) {
+                            RTLIL::Wire* ew = module->addWire(eid, elem_w);
+                            add_src_attribute(ew->attributes, uhdm_port);
+                            RTLIL::SigSpec slice = RTLIL::SigSpec(w).extract(i * elem_w, elem_w);
+                            if (direction == vpiOutput)
+                                module->connect(slice, RTLIL::SigSpec(ew));
+                            else
+                                module->connect(RTLIL::SigSpec(ew), slice);
+                            name_map[ename] = ew;
+                        }
+                    }
+                    log("UHDM: Port '%s' unpacked array: elem_w=%d, count=%d\n",
+                        portname.c_str(), elem_w, total);
+                }
+            }
         }
     }
-    
+
     // Check if port is signed
     if (auto ref_typespec = uhdm_port->Typespec()) {
         // Check if typespec indicates signed
@@ -1582,6 +1692,40 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         if (typespec->UhdmType() == uhdmint_typespec) return 32;
         if (typespec->UhdmType() == uhdminteger_typespec) return 32;
         if (typespec->UhdmType() == uhdmlong_int_typespec) return 64;
+
+        // Handle array_typespec (unpacked-array typedef like
+        // `ptab_dat_t iP [4]`): the flat total width is
+        // `element_width * product(ranges)`.  Without this case
+        // `ExprEval::size()` returns only the element width, leaving
+        // the flat port wire too narrow.
+        if (typespec->UhdmType() == uhdmarray_typespec) {
+            auto ats = dynamic_cast<const UHDM::array_typespec*>(typespec);
+            if (ats) {
+                int elem_width = 1;
+                if (auto et = ats->Elem_typespec()) {
+                    if (auto a = et->Actual_typespec())
+                        elem_width = get_width_from_typespec(a, inst);
+                }
+                int range_total = 1;
+                if (ats->Ranges()) {
+                    for (auto r : *ats->Ranges()) {
+                        if (r->Left_expr() && r->Right_expr()) {
+                            RTLIL::SigSpec lspec = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rspec = import_expression(r->Right_expr());
+                            if (lspec.is_fully_const() && rspec.is_fully_const()) {
+                                int l = lspec.as_int();
+                                int rv = rspec.as_int();
+                                range_total *= std::abs(l - rv) + 1;
+                            }
+                        }
+                    }
+                }
+                int total = elem_width * range_total;
+                log("UHDM: array_typespec: elem_w=%d, range_total=%d, total=%d\n",
+                    elem_width, range_total, total);
+                return total;
+            }
+        }
 
         // Handle packed_array_typespec: width = element_width * product(ranges).
         // ExprEval::size() returns only the range count for these typespecs,
