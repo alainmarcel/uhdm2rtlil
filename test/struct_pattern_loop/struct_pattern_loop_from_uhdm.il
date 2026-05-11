@@ -4,6 +4,9 @@ attribute \src "dut.sv:8.1-10.10"
 module \a
   attribute \src "dut.sv:8.33-8.34"
   wire output 1 \b
+  attribute \src "dut.sv:8.33-8.34"
+  wire \b[0]
+  connect \b[0] 1'0
   connect \b 1'0
 end
 attribute \top 1

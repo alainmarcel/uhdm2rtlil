@@ -5,6 +5,9 @@ attribute \src "dut.sv:8.1-10.10"
 module \a
   attribute \src "dut.sv:8.33-8.34"
   wire output 1 \b
+  attribute \src "dut.sv:8.33-8.34"
+  wire \b[0]
+  connect \b \b[0]
   connect \b 1'0
 end
 attribute \cells_not_processed 1
@@ -14,16 +17,16 @@ module \top
   wire output 1 \out
   attribute \src "dut.sv:13.18-13.28"
   wire \b_internal
-  wire $auto$module.cpp:808:import_continuous_assign$1
-  cell $pos $auto$module.cpp:809:import_continuous_assign$2
+  wire $auto$module.cpp:918:import_continuous_assign$1
+  cell $pos $auto$module.cpp:919:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 1
     connect \A { }
-    connect \Y $auto$module.cpp:808:import_continuous_assign$1
+    connect \Y $auto$module.cpp:918:import_continuous_assign$1
   end
   cell \a \inst
     connect \b \b_internal
   end
-  connect \out $auto$module.cpp:808:import_continuous_assign$1
+  connect \out $auto$module.cpp:918:import_continuous_assign$1
 end
