@@ -464,7 +464,21 @@ sudo apt-get install -y \
     build-essential cmake git python3 python3-pip pkg-config \
     libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
     libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
-    libgoogle-perftools-dev ccache verilator
+    libgoogle-perftools-dev ccache help2man
+```
+
+`test/test_sim_equivalence.py` needs **Verilator 5.x** (5.020+) for SVA
+parsing.  Ubuntu 24.04's stock `verilator` package is recent enough;
+on older distros (22.04 ships 4.038) build from source:
+
+```bash
+git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git
+cd verilator
+autoconf
+./configure --prefix=/usr/local
+make -j$(nproc)
+sudo make install
+verilator --version  # confirm: "Verilator 5.048 ..."
 ```
 
 ### Build

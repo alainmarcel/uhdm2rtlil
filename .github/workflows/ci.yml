@@ -39,8 +39,36 @@ jobs:
           libunwind-dev \
           libgoogle-perftools-dev \
           ccache \
-          verilator
-    
+          help2man
+
+    - name: Cache Verilator build
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      # Ubuntu 24.04's stock `verilator` package is 5.020 which is fine
+      # for SVA parsing, but pin a specific newer release here so
+      # test/test_sim_equivalence.py runs against the same Verilator on
+      # CI and on developer machines (where the OS package is typically
+      # too old — 22.04 only has 4.038).
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
+    - name: Add Verilator to PATH
+      run: |
+        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
+        echo "PATH after: /opt/verilator-5.048/bin:$PATH"
+        /opt/verilator-5.048/bin/verilator --version
+
     - name: Setup GCC-9
       shell: bash
       run: |
