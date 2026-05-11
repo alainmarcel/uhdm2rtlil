@@ -233,12 +233,19 @@ def emit_wrapper_and_tb(dut_path: Path,
                 cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
         cpp.append(f"        tb.{clk} = 0; tb.eval();")
         cpp.append(f"        tb.{clk} = 1; tb.eval();")
-        for n, _w in outputs:
-            cpp.append(f"        if (tb.rtl_{n} != tb.nl_{n}) {{")
+        for n, w in outputs:
+            # Verilator C++ codegen returns sub-byte signals as uint8_t with
+            # uninitialised upper bits, so mask to the declared port width
+            # before comparing.  For >64-bit ports we'd need __VlWide
+            # handling; cap at 64 for now and skip the test if wider.
+            mask = "((1ULL << %d) - 1)" % w if w < 64 else "~0ULL"
+            cpp.append(f"        {{ unsigned long long r = (unsigned long long)tb.rtl_{n} & {mask};")
+            cpp.append(f"          unsigned long long s = (unsigned long long)tb.nl_{n}  & {mask};")
+            cpp.append(f"          if (r != s) {{")
             cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
-                       f" cycle, (unsigned long long)tb.rtl_{n}, (unsigned long long)tb.nl_{n});")
+                       f" cycle, r, s);")
             cpp.append("            mismatches++;")
-            cpp.append("        }")
+            cpp.append("          } }")
         cpp.append("    }")
     else:
         cpp.append(f"    srand({seed});")
@@ -249,12 +256,15 @@ def emit_wrapper_and_tb(dut_path: Path,
             else:
                 cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
         cpp.append("        tb.eval();")
-        for n, _w in outputs:
-            cpp.append(f"        if (tb.rtl_{n} != tb.nl_{n}) {{")
+        for n, w in outputs:
+            mask = "((1ULL << %d) - 1)" % w if w < 64 else "~0ULL"
+            cpp.append(f"        {{ unsigned long long r = (unsigned long long)tb.rtl_{n} & {mask};")
+            cpp.append(f"          unsigned long long s = (unsigned long long)tb.nl_{n}  & {mask};")
+            cpp.append(f"          if (r != s) {{")
             cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
-                       f" cycle, (unsigned long long)tb.rtl_{n}, (unsigned long long)tb.nl_{n});")
+                       f" cycle, r, s);")
             cpp.append("            mismatches++;")
-            cpp.append("        }")
+            cpp.append("          } }")
         cpp.append("    }")
     cpp += [
         f"    if (mismatches == 0)",
