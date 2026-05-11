@@ -136,7 +136,11 @@ def emit_wrapper_and_tb(dut_path: Path,
               and n not in clocks and n not in resets]
     outputs = [(n, w) for (n, w, d) in ports if d == "output"]
     if not outputs:
-        sys.exit("❌ no output ports — nothing to compare")
+        # Self-checking testbench: input-only DUT with internal asserts.
+        # Nothing for an external co-sim to compare — not a failure, just
+        # not applicable.  Exit 77 (the autotools convention for "skip").
+        print("⏭  no output ports — self-checking DUT, sim-equiv N/A")
+        sys.exit(77)
 
     # Wrapper: instantiate the original SV top under the name dut_rtl.
     port_decl = []

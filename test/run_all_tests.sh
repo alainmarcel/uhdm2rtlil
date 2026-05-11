@@ -108,11 +108,19 @@ run_sim_equivalence_softwarn() {
         return 0  # silently skip if the optional tooling isn't built
     fi
     local log="$test_dir/sim_equiv.log"
-    if "$script" "$test_dir" >"$log" 2>&1; then
-        if grep -q '^PASS:' "$log"; then
-            echo "    ✅ Verilator co-sim PASSED"
-            return 0
-        fi
+    "$script" "$test_dir" >"$log" 2>&1
+    local rc=$?
+    if [ $rc -eq 0 ] && grep -q '^PASS:' "$log"; then
+        echo "    ✅ Verilator co-sim PASSED"
+        return 0
+    fi
+    # Exit code 77 = autotools "skip" convention.  Used by the harness
+    # for self-checking testbenches that have no observable outputs
+    # (everything is asserted internally) — not a failure, just not
+    # applicable to co-simulation.
+    if [ $rc -eq 77 ]; then
+        echo "    ⏭  Verilator co-sim SKIPPED (no outputs / self-checking)"
+        return 0
     fi
     echo "    ⚠️  Verilator co-sim WARNING (see $(basename "$test_dir")/sim_equiv.log)"
     SIM_EQUIV_WARN_TESTS=$((SIM_EQUIV_WARN_TESTS + 1))
