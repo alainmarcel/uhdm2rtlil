@@ -122,6 +122,23 @@ target_link_libraries(uhdm2rtlil dl pthread)
 # Installation
 install(TARGETS uhdm2rtlil DESTINATION ${INSTALL_DIR}/share/yosys/plugins)
 
+# Auxiliary Yosys plugin: extract_clocks_resets.  Used by
+# test/test_sim_equivalence.py to drive a Verilator co-simulation
+# testbench against the synthesized netlist.  Built via `yosys-config
+# --build` so we don't have to replicate the Yosys include / link
+# flags here.
+set(EXTRACT_CR_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/extract_clocks_resets/extract_clocks_resets.cc)
+set(EXTRACT_CR_SO ${CMAKE_CURRENT_BINARY_DIR}/extract_clocks_resets.so)
+add_custom_command(
+    OUTPUT ${EXTRACT_CR_SO}
+    COMMAND ${CMAKE_BINARY_DIR}/yosys_install/bin/yosys-config
+            --build ${EXTRACT_CR_SO} ${EXTRACT_CR_SRC}
+    DEPENDS ${EXTRACT_CR_SRC} yosys
+    COMMENT "Building extract_clocks_resets Yosys plugin"
+)
+add_custom_target(extract_clocks_resets ALL DEPENDS ${EXTRACT_CR_SO})
+
 # Add test target
 add_custom_target(test
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_all_tests.sh
