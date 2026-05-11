@@ -8,106 +8,106 @@ module $abstract\example
   parameter \y
   parameter \z
 end
-attribute \src "dut.sv:16.1-52.10"
+attribute \src "dut.sv:16.1-51.10"
 attribute \cells_not_processed 1
 module \top
-  attribute \src "dut.sv:17.10-17.12"
-  wire \a1
-  attribute \src "dut.sv:17.14-17.16"
-  wire \b1
-  attribute \src "dut.sv:18.10-18.12"
-  wire \a2
-  attribute \src "dut.sv:18.14-18.16"
-  wire \b2
-  attribute \src "dut.sv:19.10-19.12"
-  wire \a3
-  attribute \src "dut.sv:19.14-19.16"
-  wire \b3
-  attribute \src "dut.sv:20.10-20.12"
-  wire \a4
-  attribute \src "dut.sv:20.14-20.16"
-  wire \b4
-  attribute \src "dut.sv:21.10-21.12"
-  wire width 8 signed \c1
-  attribute \src "dut.sv:21.14-21.16"
-  wire width 8 signed \d1
-  attribute \src "dut.sv:22.10-22.12"
-  wire width 8 signed \c2
-  attribute \src "dut.sv:22.14-22.16"
-  wire width 8 signed \d2
-  attribute \src "dut.sv:23.10-23.12"
-  wire width 8 signed \c3
-  attribute \src "dut.sv:23.14-23.16"
-  wire width 8 signed \d3
-  attribute \src "dut.sv:24.10-24.12"
-  wire width 8 signed \c4
-  attribute \src "dut.sv:24.14-24.16"
-  wire width 8 signed \d4
+  attribute \src "dut.sv:20.18-20.20"
+  wire output 1 \a1
+  attribute \src "dut.sv:20.22-20.24"
+  wire output 2 \b1
+  attribute \src "dut.sv:20.26-20.28"
+  wire output 3 \a2
+  attribute \src "dut.sv:20.30-20.32"
+  wire output 4 \b2
+  attribute \src "dut.sv:20.34-20.36"
+  wire output 5 \a3
+  attribute \src "dut.sv:20.38-20.40"
+  wire output 6 \b3
+  attribute \src "dut.sv:20.42-20.44"
+  wire output 7 \a4
+  attribute \src "dut.sv:20.46-20.48"
+  wire output 8 \b4
+  attribute \src "dut.sv:21.18-21.20"
+  wire width 8 output 9 signed \c1
+  attribute \src "dut.sv:21.22-21.24"
+  wire width 8 output 10 signed \d1
+  attribute \src "dut.sv:21.26-21.28"
+  wire width 8 output 11 signed \c2
+  attribute \src "dut.sv:21.30-21.32"
+  wire width 8 output 12 signed \d2
+  attribute \src "dut.sv:21.34-21.36"
+  wire width 8 output 13 signed \c3
+  attribute \src "dut.sv:21.38-21.40"
+  wire width 8 output 14 signed \d3
+  attribute \src "dut.sv:21.42-21.44"
+  wire width 8 output 15 signed \c4
+  attribute \src "dut.sv:21.46-21.48"
+  wire width 8 output 16 signed \d4
+  attribute \src "dut.sv:30.17-30.24"
+  wire $eq$dut.sv:30$3_Y
+  attribute \src "dut.sv:30.9-30.25"
+  wire $assert$dut.sv:30$2_EN
+  attribute \src "dut.sv:31.17-31.24"
+  wire $eq$dut.sv:31$5_Y
+  attribute \src "dut.sv:31.9-31.25"
+  wire $assert$dut.sv:31$4_EN
   attribute \src "dut.sv:32.17-32.24"
-  wire $eq$dut.sv:32$3_Y
+  wire $eq$dut.sv:32$7_Y
   attribute \src "dut.sv:32.9-32.25"
-  wire $assert$dut.sv:32$2_EN
+  wire $assert$dut.sv:32$6_EN
   attribute \src "dut.sv:33.17-33.24"
-  wire $eq$dut.sv:33$5_Y
+  wire $eq$dut.sv:33$9_Y
   attribute \src "dut.sv:33.9-33.25"
-  wire $assert$dut.sv:33$4_EN
-  attribute \src "dut.sv:34.17-34.24"
-  wire $eq$dut.sv:34$7_Y
-  attribute \src "dut.sv:34.9-34.25"
-  wire $assert$dut.sv:34$6_EN
+  wire $assert$dut.sv:33$8_EN
   attribute \src "dut.sv:35.17-35.24"
-  wire $eq$dut.sv:35$9_Y
+  wire $eq$dut.sv:35$11_Y
   attribute \src "dut.sv:35.9-35.25"
-  wire $assert$dut.sv:35$8_EN
+  wire $assert$dut.sv:35$10_EN
+  attribute \src "dut.sv:36.17-36.24"
+  wire $eq$dut.sv:36$13_Y
+  attribute \src "dut.sv:36.9-36.25"
+  wire $assert$dut.sv:36$12_EN
   attribute \src "dut.sv:37.17-37.24"
-  wire $eq$dut.sv:37$11_Y
+  wire $eq$dut.sv:37$15_Y
   attribute \src "dut.sv:37.9-37.25"
-  wire $assert$dut.sv:37$10_EN
+  wire $assert$dut.sv:37$14_EN
   attribute \src "dut.sv:38.17-38.24"
-  wire $eq$dut.sv:38$13_Y
+  wire $eq$dut.sv:38$17_Y
   attribute \src "dut.sv:38.9-38.25"
-  wire $assert$dut.sv:38$12_EN
-  attribute \src "dut.sv:39.17-39.24"
-  wire $eq$dut.sv:39$15_Y
-  attribute \src "dut.sv:39.9-39.25"
-  wire $assert$dut.sv:39$14_EN
+  wire $assert$dut.sv:38$16_EN
   attribute \src "dut.sv:40.17-40.24"
-  wire $eq$dut.sv:40$17_Y
+  wire $eq$dut.sv:40$19_Y
   attribute \src "dut.sv:40.9-40.25"
-  wire $assert$dut.sv:40$16_EN
+  wire $assert$dut.sv:40$18_EN
+  attribute \src "dut.sv:41.17-41.24"
+  wire $eq$dut.sv:41$21_Y
+  attribute \src "dut.sv:41.9-41.25"
+  wire $assert$dut.sv:41$20_EN
   attribute \src "dut.sv:42.17-42.24"
-  wire $eq$dut.sv:42$19_Y
+  wire $eq$dut.sv:42$23_Y
   attribute \src "dut.sv:42.9-42.25"
-  wire $assert$dut.sv:42$18_EN
+  wire $assert$dut.sv:42$22_EN
   attribute \src "dut.sv:43.17-43.24"
-  wire $eq$dut.sv:43$21_Y
+  wire $eq$dut.sv:43$25_Y
   attribute \src "dut.sv:43.9-43.25"
-  wire $assert$dut.sv:43$20_EN
-  attribute \src "dut.sv:44.17-44.24"
-  wire $eq$dut.sv:44$23_Y
-  attribute \src "dut.sv:44.9-44.25"
-  wire $assert$dut.sv:44$22_EN
+  wire $assert$dut.sv:43$24_EN
   attribute \src "dut.sv:45.17-45.24"
-  wire $eq$dut.sv:45$25_Y
+  wire $eq$dut.sv:45$27_Y
   attribute \src "dut.sv:45.9-45.25"
-  wire $assert$dut.sv:45$24_EN
+  wire $assert$dut.sv:45$26_EN
+  attribute \src "dut.sv:46.17-46.24"
+  wire $eq$dut.sv:46$29_Y
+  attribute \src "dut.sv:46.9-46.25"
+  wire $assert$dut.sv:46$28_EN
   attribute \src "dut.sv:47.17-47.24"
-  wire $eq$dut.sv:47$27_Y
+  wire $eq$dut.sv:47$31_Y
   attribute \src "dut.sv:47.9-47.25"
-  wire $assert$dut.sv:47$26_EN
-  attribute \src "dut.sv:48.17-48.24"
-  wire $eq$dut.sv:48$29_Y
-  attribute \src "dut.sv:48.9-48.25"
-  wire $assert$dut.sv:48$28_EN
-  attribute \src "dut.sv:49.17-49.24"
-  wire $eq$dut.sv:49$31_Y
-  attribute \src "dut.sv:49.9-49.25"
-  wire $assert$dut.sv:49$30_EN
-  attribute \src "dut.sv:50.17-50.25"
-  wire $eq$dut.sv:50$33_Y
-  attribute \src "dut.sv:50.9-50.26"
-  wire $assert$dut.sv:50$32_EN
-  attribute \src "dut.sv:26.24-26.42"
+  wire $assert$dut.sv:47$30_EN
+  attribute \src "dut.sv:48.17-48.25"
+  wire $eq$dut.sv:48$33_Y
+  attribute \src "dut.sv:48.9-48.26"
+  wire $assert$dut.sv:48$32_EN
+  attribute \src "dut.sv:23.24-23.42"
   attribute \module_not_derived 1
   cell \example \e1
     parameter signed $1 0
@@ -118,7 +118,7 @@ module \top
     connect $3 \c1
     connect $4 \d1
   end
-  attribute \src "dut.sv:27.29-27.47"
+  attribute \src "dut.sv:24.29-24.47"
   attribute \module_not_derived 1
   cell \example \e2
     parameter signed \w 1
@@ -128,7 +128,7 @@ module \top
     connect $3 \c2
     connect $4 \d2
   end
-  attribute \src "dut.sv:28.36-28.54"
+  attribute \src "dut.sv:25.36-25.54"
   attribute \module_not_derived 1
   cell \example \e3
     parameter signed \x 0
@@ -139,7 +139,7 @@ module \top
     connect $3 \c3
     connect $4 \d3
   end
-  attribute \src "dut.sv:29.28-29.46"
+  attribute \src "dut.sv:26.28-26.46"
   attribute \module_not_derived 1
   cell \example \e4
     parameter signed $1 1
@@ -151,8 +151,8 @@ module \top
     connect $3 \c4
     connect $4 \d4
   end
-  attribute \src "dut.sv:32.17-32.24"
-  cell $eq $eq$dut.sv:32$3
+  attribute \src "dut.sv:30.17-30.24"
+  cell $eq $eq$dut.sv:30$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -160,11 +160,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a1
     connect \B 0
-    connect \Y $eq$dut.sv:32$3_Y
+    connect \Y $eq$dut.sv:30$3_Y
   end
-  attribute \src "dut.sv:32.9-32.25"
+  attribute \src "dut.sv:30.9-30.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:32$2
+  cell $check $assert$dut.sv:30$2
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -173,12 +173,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:32$2_EN
-    connect \A $eq$dut.sv:32$3_Y
+    connect \EN $assert$dut.sv:30$2_EN
+    connect \A $eq$dut.sv:30$3_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:33.17-33.24"
-  cell $eq $eq$dut.sv:33$5
+  attribute \src "dut.sv:31.17-31.24"
+  cell $eq $eq$dut.sv:31$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -186,11 +186,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b1
     connect \B 1
-    connect \Y $eq$dut.sv:33$5_Y
+    connect \Y $eq$dut.sv:31$5_Y
   end
-  attribute \src "dut.sv:33.9-33.25"
+  attribute \src "dut.sv:31.9-31.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:33$4
+  cell $check $assert$dut.sv:31$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -199,12 +199,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:33$4_EN
-    connect \A $eq$dut.sv:33$5_Y
+    connect \EN $assert$dut.sv:31$4_EN
+    connect \A $eq$dut.sv:31$5_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:34.17-34.24"
-  cell $eq $eq$dut.sv:34$7
+  attribute \src "dut.sv:32.17-32.24"
+  cell $eq $eq$dut.sv:32$7
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -212,11 +212,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c1
     connect \B 2
-    connect \Y $eq$dut.sv:34$7_Y
+    connect \Y $eq$dut.sv:32$7_Y
   end
-  attribute \src "dut.sv:34.9-34.25"
+  attribute \src "dut.sv:32.9-32.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:34$6
+  cell $check $assert$dut.sv:32$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -225,12 +225,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:34$6_EN
-    connect \A $eq$dut.sv:34$7_Y
+    connect \EN $assert$dut.sv:32$6_EN
+    connect \A $eq$dut.sv:32$7_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:35.17-35.24"
-  cell $eq $eq$dut.sv:35$9
+  attribute \src "dut.sv:33.17-33.24"
+  cell $eq $eq$dut.sv:33$9
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -238,11 +238,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d1
     connect \B 3
-    connect \Y $eq$dut.sv:35$9_Y
+    connect \Y $eq$dut.sv:33$9_Y
   end
-  attribute \src "dut.sv:35.9-35.25"
+  attribute \src "dut.sv:33.9-33.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:35$8
+  cell $check $assert$dut.sv:33$8
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -251,12 +251,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:35$8_EN
-    connect \A $eq$dut.sv:35$9_Y
+    connect \EN $assert$dut.sv:33$8_EN
+    connect \A $eq$dut.sv:33$9_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:37.17-37.24"
-  cell $eq $eq$dut.sv:37$11
+  attribute \src "dut.sv:35.17-35.24"
+  cell $eq $eq$dut.sv:35$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -264,11 +264,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a2
     connect \B 1
-    connect \Y $eq$dut.sv:37$11_Y
+    connect \Y $eq$dut.sv:35$11_Y
   end
-  attribute \src "dut.sv:37.9-37.25"
+  attribute \src "dut.sv:35.9-35.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:37$10
+  cell $check $assert$dut.sv:35$10
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -277,12 +277,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:37$10_EN
-    connect \A $eq$dut.sv:37$11_Y
+    connect \EN $assert$dut.sv:35$10_EN
+    connect \A $eq$dut.sv:35$11_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:38.17-38.24"
-  cell $eq $eq$dut.sv:38$13
+  attribute \src "dut.sv:36.17-36.24"
+  cell $eq $eq$dut.sv:36$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -290,11 +290,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b2
     connect \B 1
-    connect \Y $eq$dut.sv:38$13_Y
+    connect \Y $eq$dut.sv:36$13_Y
   end
-  attribute \src "dut.sv:38.9-38.25"
+  attribute \src "dut.sv:36.9-36.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:38$12
+  cell $check $assert$dut.sv:36$12
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -303,12 +303,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:38$12_EN
-    connect \A $eq$dut.sv:38$13_Y
+    connect \EN $assert$dut.sv:36$12_EN
+    connect \A $eq$dut.sv:36$13_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:39.17-39.24"
-  cell $eq $eq$dut.sv:39$15
+  attribute \src "dut.sv:37.17-37.24"
+  cell $eq $eq$dut.sv:37$15
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -316,11 +316,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c2
     connect \B 4
-    connect \Y $eq$dut.sv:39$15_Y
+    connect \Y $eq$dut.sv:37$15_Y
   end
-  attribute \src "dut.sv:39.9-39.25"
+  attribute \src "dut.sv:37.9-37.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:39$14
+  cell $check $assert$dut.sv:37$14
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -329,12 +329,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:39$14_EN
-    connect \A $eq$dut.sv:39$15_Y
+    connect \EN $assert$dut.sv:37$14_EN
+    connect \A $eq$dut.sv:37$15_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:40.17-40.24"
-  cell $eq $eq$dut.sv:40$17
+  attribute \src "dut.sv:38.17-38.24"
+  cell $eq $eq$dut.sv:38$17
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -342,11 +342,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d3
     connect \B 3
-    connect \Y $eq$dut.sv:40$17_Y
+    connect \Y $eq$dut.sv:38$17_Y
   end
-  attribute \src "dut.sv:40.9-40.25"
+  attribute \src "dut.sv:38.9-38.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:40$16
+  cell $check $assert$dut.sv:38$16
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -355,12 +355,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:40$16_EN
-    connect \A $eq$dut.sv:40$17_Y
+    connect \EN $assert$dut.sv:38$16_EN
+    connect \A $eq$dut.sv:38$17_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:42.17-42.24"
-  cell $eq $eq$dut.sv:42$19
+  attribute \src "dut.sv:40.17-40.24"
+  cell $eq $eq$dut.sv:40$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -368,11 +368,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a3
     connect \B 1
-    connect \Y $eq$dut.sv:42$19_Y
+    connect \Y $eq$dut.sv:40$19_Y
   end
-  attribute \src "dut.sv:42.9-42.25"
+  attribute \src "dut.sv:40.9-40.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:42$18
+  cell $check $assert$dut.sv:40$18
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -381,12 +381,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:42$18_EN
-    connect \A $eq$dut.sv:42$19_Y
+    connect \EN $assert$dut.sv:40$18_EN
+    connect \A $eq$dut.sv:40$19_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:43.17-43.24"
-  cell $eq $eq$dut.sv:43$21
+  attribute \src "dut.sv:41.17-41.24"
+  cell $eq $eq$dut.sv:41$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -394,11 +394,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b3
     connect \B 0
-    connect \Y $eq$dut.sv:43$21_Y
+    connect \Y $eq$dut.sv:41$21_Y
   end
-  attribute \src "dut.sv:43.9-43.25"
+  attribute \src "dut.sv:41.9-41.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:43$20
+  cell $check $assert$dut.sv:41$20
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -407,12 +407,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:43$20_EN
-    connect \A $eq$dut.sv:43$21_Y
+    connect \EN $assert$dut.sv:41$20_EN
+    connect \A $eq$dut.sv:41$21_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:44.17-44.24"
-  cell $eq $eq$dut.sv:44$23
+  attribute \src "dut.sv:42.17-42.24"
+  cell $eq $eq$dut.sv:42$23
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -420,11 +420,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c3
     connect \B 5
-    connect \Y $eq$dut.sv:44$23_Y
+    connect \Y $eq$dut.sv:42$23_Y
   end
-  attribute \src "dut.sv:44.9-44.25"
+  attribute \src "dut.sv:42.9-42.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:44$22
+  cell $check $assert$dut.sv:42$22
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -433,12 +433,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:44$22_EN
-    connect \A $eq$dut.sv:44$23_Y
+    connect \EN $assert$dut.sv:42$22_EN
+    connect \A $eq$dut.sv:42$23_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:45.17-45.24"
-  cell $eq $eq$dut.sv:45$25
+  attribute \src "dut.sv:43.17-43.24"
+  cell $eq $eq$dut.sv:43$25
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -446,11 +446,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d3
     connect \B 3
-    connect \Y $eq$dut.sv:45$25_Y
+    connect \Y $eq$dut.sv:43$25_Y
   end
-  attribute \src "dut.sv:45.9-45.25"
+  attribute \src "dut.sv:43.9-43.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:45$24
+  cell $check $assert$dut.sv:43$24
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -459,12 +459,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:45$24_EN
-    connect \A $eq$dut.sv:45$25_Y
+    connect \EN $assert$dut.sv:43$24_EN
+    connect \A $eq$dut.sv:43$25_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:47.17-47.24"
-  cell $eq $eq$dut.sv:47$27
+  attribute \src "dut.sv:45.17-45.24"
+  cell $eq $eq$dut.sv:45$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -472,11 +472,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \a4
     connect \B 1
-    connect \Y $eq$dut.sv:47$27_Y
+    connect \Y $eq$dut.sv:45$27_Y
   end
-  attribute \src "dut.sv:47.9-47.25"
+  attribute \src "dut.sv:45.9-45.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:47$26
+  cell $check $assert$dut.sv:45$26
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -485,12 +485,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:47$26_EN
-    connect \A $eq$dut.sv:47$27_Y
+    connect \EN $assert$dut.sv:45$26_EN
+    connect \A $eq$dut.sv:45$27_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:48.17-48.24"
-  cell $eq $eq$dut.sv:48$29
+  attribute \src "dut.sv:46.17-46.24"
+  cell $eq $eq$dut.sv:46$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -498,11 +498,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \b4
     connect \B 0
-    connect \Y $eq$dut.sv:48$29_Y
+    connect \Y $eq$dut.sv:46$29_Y
   end
-  attribute \src "dut.sv:48.9-48.25"
+  attribute \src "dut.sv:46.9-46.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:48$28
+  cell $check $assert$dut.sv:46$28
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -511,12 +511,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:48$28_EN
-    connect \A $eq$dut.sv:48$29_Y
+    connect \EN $assert$dut.sv:46$28_EN
+    connect \A $eq$dut.sv:46$29_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:49.17-49.24"
-  cell $eq $eq$dut.sv:49$31
+  attribute \src "dut.sv:47.17-47.24"
+  cell $eq $eq$dut.sv:47$31
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -524,11 +524,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \c4
     connect \B 9
-    connect \Y $eq$dut.sv:49$31_Y
+    connect \Y $eq$dut.sv:47$31_Y
   end
-  attribute \src "dut.sv:49.9-49.25"
+  attribute \src "dut.sv:47.9-47.25"
   attribute \keep 1
-  cell $check $assert$dut.sv:49$30
+  cell $check $assert$dut.sv:47$30
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -537,12 +537,12 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:49$30_EN
-    connect \A $eq$dut.sv:49$31_Y
+    connect \EN $assert$dut.sv:47$30_EN
+    connect \A $eq$dut.sv:47$31_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:50.17-50.25"
-  cell $eq $eq$dut.sv:50$33
+  attribute \src "dut.sv:48.17-48.25"
+  cell $eq $eq$dut.sv:48$33
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
@@ -550,11 +550,11 @@ module \top
     parameter \Y_WIDTH 1
     connect \A \d4
     connect \B 10
-    connect \Y $eq$dut.sv:50$33_Y
+    connect \Y $eq$dut.sv:48$33_Y
   end
-  attribute \src "dut.sv:50.9-50.26"
+  attribute \src "dut.sv:48.9-48.26"
   attribute \keep 1
-  cell $check $assert$dut.sv:50$32
+  cell $check $assert$dut.sv:48$32
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -563,44 +563,44 @@ module \top
     parameter \FORMAT ""
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $assert$dut.sv:50$32_EN
-    connect \A $eq$dut.sv:50$33_Y
+    connect \EN $assert$dut.sv:48$32_EN
+    connect \A $eq$dut.sv:48$33_Y
     connect \ARGS { }
   end
-  attribute \src "dut.sv:31.5-51.8"
-  process $proc$dut.sv:31$1
-    assign $assert$dut.sv:32$2_EN 1'0
-    assign $assert$dut.sv:32$2_EN 1'1
-    assign $assert$dut.sv:33$4_EN 1'0
-    assign $assert$dut.sv:33$4_EN 1'1
-    assign $assert$dut.sv:34$6_EN 1'0
-    assign $assert$dut.sv:34$6_EN 1'1
-    assign $assert$dut.sv:35$8_EN 1'0
-    assign $assert$dut.sv:35$8_EN 1'1
-    assign $assert$dut.sv:37$10_EN 1'0
-    assign $assert$dut.sv:37$10_EN 1'1
-    assign $assert$dut.sv:38$12_EN 1'0
-    assign $assert$dut.sv:38$12_EN 1'1
-    assign $assert$dut.sv:39$14_EN 1'0
-    assign $assert$dut.sv:39$14_EN 1'1
-    assign $assert$dut.sv:40$16_EN 1'0
-    assign $assert$dut.sv:40$16_EN 1'1
-    assign $assert$dut.sv:42$18_EN 1'0
-    assign $assert$dut.sv:42$18_EN 1'1
-    assign $assert$dut.sv:43$20_EN 1'0
-    assign $assert$dut.sv:43$20_EN 1'1
-    assign $assert$dut.sv:44$22_EN 1'0
-    assign $assert$dut.sv:44$22_EN 1'1
-    assign $assert$dut.sv:45$24_EN 1'0
-    assign $assert$dut.sv:45$24_EN 1'1
-    assign $assert$dut.sv:47$26_EN 1'0
-    assign $assert$dut.sv:47$26_EN 1'1
-    assign $assert$dut.sv:48$28_EN 1'0
-    assign $assert$dut.sv:48$28_EN 1'1
-    assign $assert$dut.sv:49$30_EN 1'0
-    assign $assert$dut.sv:49$30_EN 1'1
-    assign $assert$dut.sv:50$32_EN 1'0
-    assign $assert$dut.sv:50$32_EN 1'1
+  attribute \src "dut.sv:29.5-49.8"
+  process $proc$dut.sv:29$1
+    assign $assert$dut.sv:30$2_EN 1'0
+    assign $assert$dut.sv:30$2_EN 1'1
+    assign $assert$dut.sv:31$4_EN 1'0
+    assign $assert$dut.sv:31$4_EN 1'1
+    assign $assert$dut.sv:32$6_EN 1'0
+    assign $assert$dut.sv:32$6_EN 1'1
+    assign $assert$dut.sv:33$8_EN 1'0
+    assign $assert$dut.sv:33$8_EN 1'1
+    assign $assert$dut.sv:35$10_EN 1'0
+    assign $assert$dut.sv:35$10_EN 1'1
+    assign $assert$dut.sv:36$12_EN 1'0
+    assign $assert$dut.sv:36$12_EN 1'1
+    assign $assert$dut.sv:37$14_EN 1'0
+    assign $assert$dut.sv:37$14_EN 1'1
+    assign $assert$dut.sv:38$16_EN 1'0
+    assign $assert$dut.sv:38$16_EN 1'1
+    assign $assert$dut.sv:40$18_EN 1'0
+    assign $assert$dut.sv:40$18_EN 1'1
+    assign $assert$dut.sv:41$20_EN 1'0
+    assign $assert$dut.sv:41$20_EN 1'1
+    assign $assert$dut.sv:42$22_EN 1'0
+    assign $assert$dut.sv:42$22_EN 1'1
+    assign $assert$dut.sv:43$24_EN 1'0
+    assign $assert$dut.sv:43$24_EN 1'1
+    assign $assert$dut.sv:45$26_EN 1'0
+    assign $assert$dut.sv:45$26_EN 1'1
+    assign $assert$dut.sv:46$28_EN 1'0
+    assign $assert$dut.sv:46$28_EN 1'1
+    assign $assert$dut.sv:47$30_EN 1'0
+    assign $assert$dut.sv:47$30_EN 1'1
+    assign $assert$dut.sv:48$32_EN 1'0
+    assign $assert$dut.sv:48$32_EN 1'1
     sync always
   end
 end

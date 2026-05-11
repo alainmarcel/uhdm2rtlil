@@ -13,21 +13,19 @@ module example #(
     assign d = z;
 endmodule
 
-module top;
-    wire a1, b1;
-    wire a2, b2;
-    wire a3, b3;
-    wire a4, b4;
-    byte c1, d1;
-    byte c2, d2;
-    byte c3, d3;
-    byte c4, d4;
-
+module top (
+    // Forward the four instances' outputs so an external co-sim can
+    // observe each parameter combination's effect (the original test
+    // was self-checking via `assert(...)` against expected values).
+    output       a1, b1, a2, b2, a3, b3, a4, b4,
+    output byte  c1, d1, c2, d2, c3, d3, c4, d4
+);
     example #(0, 1, 2) e1(a1, b1, c1, d1);
     example #(.w(1), .y(4)) e2(a2, b2, c2, d2);
     example #(.x(0), .w(1), .y(5)) e3(a3, b3, c3, d3);
     example #(1, 0, 9, 10) e4(a4, b4, c4, d4);
 
+`ifndef VERILATOR
     always @* begin
         assert (a1 == 0);
         assert (b1 == 1);
@@ -49,4 +47,5 @@ module top;
         assert (c4 == 9);
         assert (d4 == 10);
     end
+`endif
 endmodule

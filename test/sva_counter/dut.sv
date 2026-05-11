@@ -8,6 +8,11 @@ module top (input clk, reset, up, down, output reg [7:0] cnt);
 			cnt <= cnt - 1;
 	end
 
+`ifndef VERILATOR
+	// SVA bodies use `$past(cnt, n)` with non-constant `n` and a
+	// parameterised `property down_n(n)` — Verilator 5.x rejects the
+	// non-constant-tick form.  Ifdef out of co-sim build; the synth
+	// path still exercises full SVA support.
 	default clocking @(posedge clk); endclocking
 	default disable iff (reset);
 
@@ -27,4 +32,5 @@ module top (input clk, reset, up, down, output reg [7:0] cnt);
 
 	assert property (down_n(8'd 3));
 	assert property (down_n(8'd 5));
+`endif
 endmodule

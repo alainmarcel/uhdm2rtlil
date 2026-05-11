@@ -89,6 +89,20 @@ YOSYS_UHDM_ONLY=0
 EQUIV_FAILED_TESTS=0
 SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
+SIM_EQUIV_ANALYZED_TESTS=0
+SIM_EQUIV_ANALYZED_NAMES=()
+
+# Tests that are knowingly not made to pass sim-equiv, with a
+# documented reason in `test/sim_equiv_analyzed.txt`.  Populate the
+# set once at startup so the per-test path is just a lookup.
+declare -A SIM_EQUIV_ANALYZED_SET
+if [ -f "$SCRIPT_DIR/sim_equiv_analyzed.txt" ]; then
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^Test:[[:space:]]*([A-Za-z0-9_]+) ]]; then
+            SIM_EQUIV_ANALYZED_SET[${BASH_REMATCH[1]}]=1
+        fi
+    done < "$SCRIPT_DIR/sim_equiv_analyzed.txt"
+fi
 
 FAILED_TEST_NAMES=()
 SKIPPED_TEST_NAMES=()
@@ -122,9 +136,19 @@ run_sim_equivalence_softwarn() {
         echo "    ⏭  Verilator co-sim SKIPPED (no outputs / self-checking)"
         return 0
     fi
-    echo "    ⚠️  Verilator co-sim WARNING (see $(basename "$test_dir")/sim_equiv.log)"
+    local base; base="$(basename "$test_dir")"
+    # Tests listed in sim_equiv_analyzed.txt are knowingly not co-sim
+    # clean — surface them under a separate "analyzed" category so the
+    # warning count tracks only un-investigated failures.
+    if [ -n "${SIM_EQUIV_ANALYZED_SET[$base]:-}" ]; then
+        echo "    🔍 Verilator co-sim ANALYZED (see sim_equiv_analyzed.txt)"
+        SIM_EQUIV_ANALYZED_TESTS=$((SIM_EQUIV_ANALYZED_TESTS + 1))
+        SIM_EQUIV_ANALYZED_NAMES+=("$base")
+        return 0
+    fi
+    echo "    ⚠️  Verilator co-sim WARNING (see $base/sim_equiv.log)"
     SIM_EQUIV_WARN_TESTS=$((SIM_EQUIV_WARN_TESTS + 1))
-    SIM_EQUIV_WARN_NAMES+=("$(basename "$test_dir")")
+    SIM_EQUIV_WARN_NAMES+=("$base")
     return 0
 }
 
@@ -739,6 +763,12 @@ echo "  💥 Crashes: $CRASHED_TESTS"
 if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
     echo "  ⚠️  Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
     for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
+        echo "      - $t"
+    done
+fi
+if [ "$SIM_EQUIV_ANALYZED_TESTS" -gt 0 ]; then
+    echo "  🔍 Verilator sim-equiv analyzed (known divergence): $SIM_EQUIV_ANALYZED_TESTS"
+    for t in "${SIM_EQUIV_ANALYZED_NAMES[@]}"; do
         echo "      - $t"
     done
 fi
