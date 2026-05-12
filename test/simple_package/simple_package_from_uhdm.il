@@ -23,7 +23,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$19_Y
   attribute \unused_bits "5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2512:import_operation$17
+  wire width 64 $auto$expression.cpp:2513:import_operation$17
   attribute \src "dut.sv:77.5-97.8"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
@@ -45,7 +45,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \counter }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2512:import_operation$17 [63:5] $0\counter }
+    connect \Y { $auto$expression.cpp:2513:import_operation$17 [63:5] $0\counter }
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $logic_not $eq$dut.sv:91$20
@@ -77,7 +77,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \ARST \rst_n
     connect \CLK \clk
   end
-  connect $auto$expression.cpp:2512:import_operation$17 [4:0] $0\counter
+  connect $auto$expression.cpp:2513:import_operation$17 [4:0] $0\counter
   connect $0\data_out [49:1] \data_in [49:1]
 end
 attribute \top 1
@@ -99,7 +99,7 @@ module \simple_package
   wire width 50 \internal_bus
   wire width 32 \increment_data$func$dut.sv:47$7.$result
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2512:import_operation$14
+  wire width 64 $auto$expression.cpp:2513:import_operation$14
   attribute \src "dut.sv:38.5-49.8"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
@@ -121,7 +121,7 @@ module \simple_package
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \bus_in [49:18] }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2512:import_operation$14 [63:32] \increment_data$func$dut.sv:47$7.$result }
+    connect \Y { $auto$expression.cpp:2513:import_operation$14 [63:32] \increment_data$func$dut.sv:47$7.$result }
   end
   cell $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000 \sub_inst
     connect \clk \clk
@@ -129,5 +129,5 @@ module \simple_package
     connect \data_in \internal_bus
     connect \data_out \bus_out
   end
-  connect $auto$expression.cpp:2512:import_operation$14 [31:0] \increment_data$func$dut.sv:47$7.$result
+  connect $auto$expression.cpp:2513:import_operation$14 [31:0] \increment_data$func$dut.sv:47$7.$result
 end

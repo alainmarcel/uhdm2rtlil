@@ -217,7 +217,7 @@ module \act
   process $proc$dut.v:59$8
   end
   attribute \src "dut.v:59.2-59.27"
-  process $auto$process.cpp:2266:operator()$9
+  process $auto$process.cpp:2320:operator()$9
     sync always
       update \tmp8[0] 3'101
   end

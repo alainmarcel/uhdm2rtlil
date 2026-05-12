@@ -25,7 +25,7 @@ module \top
   wire $auto$rtlil.cc:3323:LogicOr$10
   wire $auto$rtlil.cc:3262:ReduceBool$5
   wire $auto$rtlil.cc:3323:LogicOr$8
-  cell $reduce_bool $auto$uhdm2rtlil.cpp:2547:import_module$4
+  cell $reduce_bool $auto$uhdm2rtlil.cpp:2610:import_module$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
@@ -34,7 +34,7 @@ module \top
   end
   attribute \src "dut.sv:24.2-26.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$6
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -80,7 +80,7 @@ module \top
   end
   attribute \src "dut.sv:28.5-30.7"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$13
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$13
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

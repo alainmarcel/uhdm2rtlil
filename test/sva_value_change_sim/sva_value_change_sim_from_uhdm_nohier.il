@@ -74,7 +74,7 @@ module \top
   wire width 3 $0\wide_a
   attribute \src "dut.sv:47.1-93.4"
   wire width 3 $0\wide_b
-  wire width 64 $auto$expression.cpp:2512:import_operation$7
+  wire width 64 $auto$expression.cpp:2513:import_operation$7
   cell $add $add$dut.sv:48$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -83,7 +83,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \counter }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2512:import_operation$7
+    connect \Y $auto$expression.cpp:2513:import_operation$7
   end
   attribute \src "dut.sv:47.1-93.4"
   attribute \always_ff 1
@@ -93,7 +93,7 @@ module \top
     assign $0\c \c
     assign $0\wide_a \wide_a
     assign $0\wide_b \wide_b
-    assign $0\counter $auto$expression.cpp:2512:import_operation$7 [7:0]
+    assign $0\counter $auto$expression.cpp:2513:import_operation$7 [7:0]
     attribute \src "dut.sv:50.2-92.9"
     switch { 56'00000000000000000000000000000000000000000000000000000000 \counter }
     attribute \src "dut.sv:51.3-60.12"
@@ -123,15 +123,15 @@ module \top
         assign $0\a 1'x
         assign $0\b 1'x
         assign $0\c 1'x
-        assign $0\wide_a 3'00x
-        assign $0\wide_b 3'00x
+        assign $0\wide_a 3'x
+        assign $0\wide_b 3'x
     attribute \src "dut.sv:87.3-91.12"
       case 64'0000000000000000000000000000000000000000000000000000000000000101
         assign $0\a 1'0
         assign $0\b 1'1
         assign $0\c 1'x
         assign $0\wide_a 3'10x
-        assign $0\wide_b 3'00x
+        assign $0\wide_b 3'x
         assign $0\counter 8'00000000
     end
     sync posedge \clk

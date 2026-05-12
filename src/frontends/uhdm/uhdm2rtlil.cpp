@@ -2376,7 +2376,70 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                 } else {
-                    log("UHDM: Array net '%s' has whole-array access, skipping per-element flatten\n", array_name.c_str());
+                    // Whole-array access (e.g. `dll_d = dll_q`).  Create
+                    // a flat wire of `array_size * element_width` bits so
+                    // the whole-array assignment has somewhere to write,
+                    // plus per-element wires `\name[0..N-1]` connected to
+                    // slices of the flat wire so `dll_d[i].field` accesses
+                    // resolve.  Without this the importer would fall back
+                    // to auto-creating a 1-bit `\dll_d` on the first
+                    // reference, leaving every read of `dll_d[i].tag` as
+                    // a single-bit X.
+                    int array_size = 1;
+                    int array_low = 0;
+                    if (array->Ranges() && !array->Ranges()->empty()) {
+                        auto first_range = (*array->Ranges())[0];
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            RTLIL::SigSpec ls = import_expression(first_range->Left_expr());
+                            RTLIL::SigSpec rs = import_expression(first_range->Right_expr());
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                int l = ls.as_int();
+                                int r = rs.as_int();
+                                array_size = std::abs(l - r) + 1;
+                                array_low = std::min(l, r);
+                            }
+                        }
+                    }
+                    int element_width = 1;
+                    bool element_signed = false;
+                    const net* inner_net = nullptr;
+                    if (array->Nets() && !array->Nets()->empty()) {
+                        inner_net = (*array->Nets())[0];
+                        element_width = get_width(inner_net, uhdm_module);
+                        if (inner_net->VpiSigned()) element_signed = true;
+                    }
+
+                    int total_width = array_size * element_width;
+                    log("UHDM: Array net '%s' has whole-array access — creating flat "
+                        "wire (size=%d, elem_w=%d, total=%d) + per-element slices\n",
+                        array_name.c_str(), array_size, element_width, total_width);
+
+                    RTLIL::IdString flat_id = RTLIL::escape_id(array_name);
+                    RTLIL::Wire* flat_wire = module->wire(flat_id);
+                    if (!flat_wire) {
+                        flat_wire = module->addWire(flat_id, total_width);
+                        if (element_signed) flat_wire->is_signed = true;
+                        add_src_attribute(flat_wire->attributes, array);
+                        name_map[array_name] = flat_wire;
+                        // Map the inner struct_net so import_bit_select /
+                        // hier_path lookups via Actual_group() find the
+                        // flat wire's typespec metadata.
+                        if (inner_net) wire_map[inner_net] = flat_wire;
+                    }
+                    for (int i = 0; i < array_size; i++) {
+                        std::string ename =
+                            array_name + "[" + std::to_string(array_low + i) + "]";
+                        RTLIL::IdString eid = RTLIL::escape_id(ename);
+                        if (!module->wire(eid)) {
+                            RTLIL::Wire* ew = module->addWire(eid, element_width);
+                            if (element_signed) ew->is_signed = true;
+                            add_src_attribute(ew->attributes, array);
+                            RTLIL::SigSpec slice = RTLIL::SigSpec(flat_wire)
+                                .extract(i * element_width, element_width);
+                            module->connect(RTLIL::SigSpec(ew), slice);
+                            name_map[ename] = ew;
+                        }
+                    }
                 }
             }
         }

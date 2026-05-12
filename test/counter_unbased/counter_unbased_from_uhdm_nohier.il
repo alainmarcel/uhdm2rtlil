@@ -13,7 +13,7 @@ module \counter
   wire width 4 $0\out[3:0]
   attribute \src "dut.sv:9.9-9.15"
   wire $logic_not$dut.sv:9.9-9.15$1_Y
-  wire width 32 $auto$expression.cpp:2512:import_operation$2
+  wire width 32 $auto$expression.cpp:2513:import_operation$2
   attribute \src "dut.sv:9.9-9.15"
   cell $logic_not $logic_not$dut.sv:9.9-9.15$1
     parameter \A_SIGNED 0
@@ -30,7 +30,7 @@ module \counter
     parameter \Y_WIDTH 32
     connect \A { 28'0000000000000000000000000000 \out }
     connect \B 1
-    connect \Y $auto$expression.cpp:2512:import_operation$2
+    connect \Y $auto$expression.cpp:2513:import_operation$2
   end
   attribute \src "dut.sv:8.3-13.6"
   attribute \always_ff 1
@@ -43,7 +43,7 @@ module \counter
         assign $0\out[3:0] 4'0000
     attribute \src "dut.sv:12.7-12.23"
       case 
-        assign $0\out[3:0] $auto$expression.cpp:2512:import_operation$2 [3:0]
+        assign $0\out[3:0] $auto$expression.cpp:2513:import_operation$2 [3:0]
     end
     sync posedge \clk
       update \out $0\out[3:0]
