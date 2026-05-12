@@ -7271,6 +7271,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     target_sig = RTLIL::SigSpec(current_temp_wires[lhs]);
                                     if (mode_debug)
                                         log("        Using temp wire for assignment\n");
+                                } else {
+                                    // Pointer-based lookup misses when the same signal
+                                    // is referenced from multiple UHDM ref_obj instances
+                                    // (e.g. the top-level `x = 'x` and `x = ...` inside
+                                    // a for-loop body — extract_assigned_signals dedups
+                                    // by name so only the first refobj is mapped).
+                                    // Fall back to the name-based mapping via
+                                    // map_to_temp_wire so the partial/full assignment
+                                    // routes through $0\<base> like the first one did.
+                                    target_sig = map_to_temp_wire(lhs_sig);
                                 }
                             }
                             
