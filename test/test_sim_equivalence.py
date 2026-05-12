@@ -71,6 +71,88 @@ def find_top_module(dut_path: Path) -> str:
     return last
 
 
+def detect_unpacked_array_ports(dut_path: Path,
+                                orig_top: str) -> dict[str, int]:
+    """Find input/output ports declared with an unpacked-array dimension
+    like `input logic [W:0] iP [4]` — Yosys flattens them to a single
+    flat-width wire, but Verilator still sees the original unpacked-array
+    port on the RTL side and rejects a flat connection.  Return
+    {port_name: element_count} so the wrapper can emit the appropriate
+    assignment pattern (`'{flat[E-1:0], flat[2E-1:E], …}`).
+
+    Limited to constant unpacked dims `[N]` or `[N-1:0]`; anything with a
+    parameter or non-trivial expression is left for a follow-up.
+    """
+    text = dut_path.read_text()
+    # Strip line/block comments globally before searching for the module
+    # header so commented-out parens don't confuse the bracket counter.
+    clean = re.sub(r"//[^\n]*", "", text)
+    clean = re.sub(r"/\*.*?\*/", "", clean, flags=re.DOTALL)
+
+    # Locate `module <orig_top>` and walk forward to find the port list,
+    # skipping the optional `#(...)` parameter block in between.
+    head = re.search(rf"\bmodule\s+{re.escape(orig_top)}\b", clean)
+    if not head:
+        return {}
+    i = head.end()
+    n = len(clean)
+    # Skip whitespace.
+    while i < n and clean[i].isspace():
+        i += 1
+    # Skip optional parameter block `#( ... )` (one level of nesting).
+    if i < n and clean[i] == "#":
+        i += 1
+        while i < n and clean[i].isspace():
+            i += 1
+        if i < n and clean[i] == "(":
+            depth = 1
+            i += 1
+            while i < n and depth > 0:
+                if clean[i] == "(":
+                    depth += 1
+                elif clean[i] == ")":
+                    depth -= 1
+                i += 1
+        while i < n and clean[i].isspace():
+            i += 1
+    # Now expect the port-list `( ... )` — match its body.
+    if i >= n or clean[i] != "(":
+        return {}
+    depth = 1
+    i += 1
+    start = i
+    while i < n and depth > 0:
+        if clean[i] == "(":
+            depth += 1
+        elif clean[i] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        i += 1
+    plist = clean[start:i]
+
+    result: dict[str, int] = {}
+    # `<dir> [type-or-kind...] [packed-dim...] <name> [<int>]` —
+    # `type-or-kind` is up to two whitespace-separated identifiers
+    # (e.g. `logic`, `wire integer`, `ptab_dat_t`, or even `wire logic`).
+    # The greedy match backtracks so the last identifier ends up bound
+    # to <name> rather than to the type words.
+    port_re = re.compile(
+        r"\b(input|output|inout)\b"               # direction
+        r"(?:\s+[A-Za-z_]\w*){0,2}"               # optional 0-2 type/kind words
+        r"(?:\s*\[[^\]]+\])*"                     # optional packed dims
+        r"\s+([A-Za-z_]\w*)"                      # port name
+        r"\s*\[\s*(\d+)\s*(?:-\s*1\s*:\s*0)?\s*\]"  # unpacked [N] or [N-1:0]
+    )
+    for d, name, count in port_re.findall(plist):
+        # Filter out keywords accidentally captured as a port name.
+        if name in ("input", "output", "inout", "wire", "reg",
+                    "logic", "bit", "var"):
+            continue
+        result[name] = int(count)
+    return result
+
+
 def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
                      uhdm: Path, out_v: Path) -> str:
     """Synth the UHDM, write the renamed netlist, and return the
@@ -158,7 +240,8 @@ def emit_wrapper_and_tb(dut_path: Path,
                        ports: list[tuple[str, int, str]],
                        clocks: list[str],
                        resets: dict[str, bool],
-                       out_dir: Path) -> None:
+                       out_dir: Path,
+                       unpacked: dict[str, int] | None = None) -> None:
     """Write `tb.sv` (wraps both DUTs as a non-clocking pass-through) and
     `tb_main.cpp` (drives the simulation cycle by cycle).
 
@@ -182,11 +265,33 @@ def emit_wrapper_and_tb(dut_path: Path,
     for n, w, d in ports:
         rng = f" [{w-1}:0]" if w > 1 else ""
         port_decl.append(f"  {d}{rng} {n}")
+    # For unpacked-array ports, build a per-element unpacked-array wire
+    # inside the wrapper and `assign` slices of the flat input into it.
+    # We avoid the `'{...}` assignment-pattern form in the port
+    # connection because Verilator drops the live-update of those args
+    # in some configurations.  Yosys flattens element 0 to the LSBs of
+    # the synthesized port (verified via `connect \iP[0] \iP[13:0]` in
+    # the IL), so the assigns mirror that ordering.
+    intermediates: list[str] = []
+    def conn(n: str, w: int) -> str:
+        if unpacked and n in unpacked:
+            count = unpacked[n]
+            if count > 0 and w % count == 0:
+                ew = w // count
+                intermediates.append(
+                    f"  logic [{ew-1}:0] {n}_arr [{count}];")
+                for i in range(count):
+                    intermediates.append(
+                        f"  assign {n}_arr[{i}] = {n}[{(i+1)*ew-1}:{i*ew}];")
+                return f"    .{n}({n}_arr)"
+        return f"    .{n}({n})"
+    inst_conn = [conn(n, w) for (n, w, _d) in ports]
     wrapper_lines = [
         "// Auto-generated: wraps the original SV top as `dut_rtl`.",
         f"module dut_rtl (\n" + ",\n".join(port_decl) + "\n);",
+        *intermediates,
         f"  {orig_top} u_orig (",
-        ",\n".join(f"    .{n}({n})" for (n, _w, _d) in ports),
+        ",\n".join(inst_conn),
         "  );",
         "endmodule",
         "",
@@ -289,9 +394,20 @@ def emit_wrapper_and_tb(dut_path: Path,
     else:
         cpp.append(f"    srand({seed});")
         cpp.append(f"    for (int cycle = 0; cycle < {cycles}; ++cycle) {{")
+        # Mask the stimulus to each port's declared width.  Verilator
+        # stores small ports in IData / VlWide but does NOT auto-truncate
+        # writes from the C++ side, so an unmasked `(uint32_t)rand()` can
+        # produce out-of-range values that diverge between RTL and netlist
+        # (e.g. `arr[sel]` indexes out of bounds in C++ while the synth'd
+        # mux chain handles all 32 bits — observed on
+        # typedef_unpacked_input).
         for n, w in inputs:
-            if w <= 32:
-                cpp.append(f"        tb.{n} = (uint32_t)rand();")
+            if w < 64:
+                mask = f"((1ULL << {w}) - 1)" if w > 1 else "1ULL"
+                if w <= 32:
+                    cpp.append(f"        tb.{n} = (uint32_t)(((uint64_t)rand()) & {mask});")
+                else:
+                    cpp.append(f"        tb.{n} = (((uint64_t)rand() << 32) | (uint32_t)rand()) & {mask};")
             else:
                 cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
         cpp.append("        tb.eval();")
@@ -393,8 +509,12 @@ def main() -> int:
     ports, clocks, resets = parse_ports(work / "ports.txt")
     print(f"  ports={len(ports)} clocks={clocks} resets={list(resets)}")
 
+    unpacked = detect_unpacked_array_ports(dut, orig_top)
+    if unpacked:
+        print(f"  unpacked-array ports: {unpacked}")
     print("▶ Emitting wrapper + testbench")
-    emit_wrapper_and_tb(dut, orig_top, ports, clocks, resets, work)
+    emit_wrapper_and_tb(dut, orig_top, ports, clocks, resets, work,
+                        unpacked=unpacked)
 
     print("▶ Running Verilator co-sim")
     rc, out = run_verilator(work, paths, dut)
