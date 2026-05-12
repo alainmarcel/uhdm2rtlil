@@ -16,9 +16,9 @@ module \top
   wire width 8 output 5 \cnt
   wire $auto$opt_dff.cc:234:make_patterns_logic$42
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2512:import_operation$2
+  wire width 64 $auto$expression.cpp:2513:import_operation$2
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2553:import_operation$4
+  wire width 64 $auto$expression.cpp:2554:import_operation$4
   wire width 8 $procmux$34_Y
   wire width 8 $procmux$31_Y
   cell $add $add$dut.sv:6$3
@@ -29,7 +29,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2512:import_operation$2
+    connect \Y $auto$expression.cpp:2513:import_operation$2
   end
   cell $sub $sub$dut.sv:8$5
     parameter \A_SIGNED 0
@@ -39,7 +39,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A \cnt
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2553:import_operation$4
+    connect \Y $auto$expression.cpp:2554:import_operation$4
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$43
     parameter \A_SIGNED 0
@@ -52,13 +52,13 @@ module \top
   cell $mux $procmux$31
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2553:import_operation$4 [7:0]
+    connect \B $auto$expression.cpp:2554:import_operation$4 [7:0]
     connect \S \down
     connect \Y $procmux$31_Y
   end
   attribute \src "dut.sv:19.2-19.52"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$10
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$10
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -73,7 +73,7 @@ module \top
   end
   attribute \src "dut.sv:27.2-27.54"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$28
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$28
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -91,13 +91,13 @@ module \top
   cell $mux $procmux$34
     parameter \WIDTH 8
     connect \A $procmux$31_Y
-    connect \B $auto$expression.cpp:2512:import_operation$2 [7:0]
+    connect \B $auto$expression.cpp:2513:import_operation$2 [7:0]
     connect \S \up
     connect \Y $procmux$34_Y
   end
   attribute \src "dut.sv:20.2-20.60"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$15
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$15
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -112,7 +112,7 @@ module \top
   end
   attribute \src "dut.sv:34.2-34.33"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$30
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$30
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -127,7 +127,7 @@ module \top
   end
   attribute \src "dut.sv:33.2-33.33"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$29
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$29
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -142,7 +142,7 @@ module \top
   end
   attribute \src "dut.sv:21.2-21.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$20
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$20
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -171,7 +171,7 @@ module \top
   end
   attribute \src "dut.sv:26.2-26.57"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$23
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$23
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

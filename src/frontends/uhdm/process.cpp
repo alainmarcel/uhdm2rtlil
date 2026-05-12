@@ -1990,6 +1990,60 @@ static bool statement_contains_control_flow(const any* stmt) {
     return false;
 }
 
+// Detect an unbased-unsized fill constant (`'0`, `'1`, `'x`, `'z`).
+// Returns the RTLIL::State to replicate to the LHS width, or sets
+// `is_fill = false` if the expression is not a fill literal.  Surelog
+// emits these with VpiSize=-1 and VpiValue="BIN:<digit>".  Without
+// detecting `'x` here, `read_index = 'x` for a 2-bit LHS ends up as
+// `2'b0x` (zero-extended 1-bit X) instead of the intended `2'bxx`.
+static RTLIL::State detect_fill_const_state(const UHDM::expr* rhs_expr,
+                                            bool& is_fill) {
+    is_fill = false;
+    if (!rhs_expr) return RTLIL::State::S0;
+    if (rhs_expr->UhdmType() != uhdmconstant) return RTLIL::State::S0;
+    const constant* c = any_cast<const constant*>(rhs_expr);
+    if (c->VpiSize() != -1) return RTLIL::State::S0;
+    std::string v(c->VpiValue());
+    if (v == "BIN:0") { is_fill = true; return RTLIL::State::S0; }
+    if (v == "BIN:1") { is_fill = true; return RTLIL::State::S1; }
+    if (v == "BIN:X" || v == "BIN:x") { is_fill = true; return RTLIL::State::Sx; }
+    if (v == "BIN:Z" || v == "BIN:z") { is_fill = true; return RTLIL::State::Sz; }
+    return RTLIL::State::S0;
+}
+
+// Helper: check if a statement (recursively) contains a `break` statement.
+// A for-loop body with `break` implements first-match-wins (priority encoder)
+// semantics; the static-unrolling path otherwise produces last-write-wins.
+// We use this signal to reverse the iteration order so the last write does
+// pick the first match — a quick approximation that's correct for the
+// common "if (cond) { dst = i; break; }" pattern.
+static bool body_has_break(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    // vpiBreak is the VPI tag for `break` statements; in UHDM the object's
+    // UhdmType() is uhdmbreak_stmt.
+    if (stmt->UhdmType() == uhdmbreak_stmt) return true;
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts())
+            for (auto s : *b->Stmts())
+                if (body_has_break(s)) return true;
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts())
+            for (auto s : *b->Stmts())
+                if (body_has_break(s)) return true;
+    } else if (type == vpiIf) {
+        auto s = any_cast<const if_stmt*>(stmt);
+        return s->VpiStmt() && body_has_break(s->VpiStmt());
+    } else if (type == vpiIfElse) {
+        auto s = any_cast<const if_else*>(stmt);
+        return (s->VpiStmt() && body_has_break(s->VpiStmt())) ||
+               (s->VpiElseStmt() && body_has_break(s->VpiElseStmt()));
+    }
+    return false;
+}
+
 // Helper: check if a statement (recursively) assigns to a bit_select (array element)
 // Used to distinguish memory-init loops (comb/sync handles) from scalar-init loops (interpreter)
 static bool body_assigns_to_bit_select(const any* stmt) {
@@ -4797,9 +4851,25 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
 
             if (fl_can_unroll) {
                 int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
-                for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
-                    loop_values[fl_var] = (int)i;
-                    import_statement_comb(fl_body, proc);
+                // If the body has a `break`, the SV semantics are "first
+                // iteration whose body executes wins" (priority encoder).
+                // Our static unrolling emits each iteration's writes as
+                // independent switches whose last write wins; reversing the
+                // iteration order flips that so the FIRST matching iteration's
+                // write is the one that survives.
+                bool has_break = body_has_break(fl_body);
+                if (has_break) {
+                    log("    Comb for loop body has `break` — iterating in "
+                        "reverse so first-match-wins semantics hold\n");
+                    for (int64_t i = loop_end; i >= fl_start; i -= fl_inc_val) {
+                        loop_values[fl_var] = (int)i;
+                        import_statement_comb(fl_body, proc);
+                    }
+                } else {
+                    for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                        loop_values[fl_var] = (int)i;
+                        import_statement_comb(fl_body, proc);
+                    }
                 }
                 // Keep post-loop variable value for subsequent statements in the same block
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
@@ -5962,14 +6032,11 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing so we
     // can extend them by replication rather than zero-extension.  e.g. '1 assigned to
     // a 4-bit struct field must become 4'b1111, not 4'b0001.
-    bool rhs_is_fill_ones = false;
+    bool rhs_is_fill = false;
+    RTLIL::State rhs_fill_state = RTLIL::State::S0;
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
-            if (rhs_expr->UhdmType() == uhdmconstant) {
-                const constant* c = any_cast<const constant*>(rhs_expr);
-                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
-                    rhs_is_fill_ones = true;
-            }
+            rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             log("            Importing RHS expression\n");
             log_flush();
             rhs = import_expression(rhs_expr);
@@ -5984,9 +6051,9 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         log("            Size mismatch: LHS=%d, RHS=%d\n", lhs.size(), rhs.size());
         log_flush();
         if (rhs.size() < lhs.size()) {
-            if (rhs_is_fill_ones) {
-                // '1 fill constant: replicate to fill the entire LHS width (all-ones)
-                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            if (rhs_is_fill) {
+                // Fill constant: replicate to fill the entire LHS width
+                rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
             } else {
                 // Sign-extend if RHS is a signed wire or expression result
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
@@ -6218,17 +6285,14 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         lhs = import_expression(lhs_expr);
     }
 
-    // Detect unbased unsized fill-ones constant ('1) before importing so we
-    // can replicate it to the LHS width rather than zero-extend.
-    bool rhs_is_fill_ones = false;
+    // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing
+    // so we can replicate them to the LHS width rather than zero-extend.
+    bool rhs_is_fill = false;
+    RTLIL::State rhs_fill_state = RTLIL::State::S0;
     // Import RHS (could be an expr or other type)
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
-            if (rhs_expr->UhdmType() == uhdmconstant) {
-                const constant* c = any_cast<const constant*>(rhs_expr);
-                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
-                    rhs_is_fill_ones = true;
-            }
+            rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
@@ -6259,14 +6323,14 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         }
         rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
-        // Compound op result is no longer a raw fill-ones constant
-        rhs_is_fill_ones = false;
+        // Compound op result is no longer a raw fill constant
+        rhs_is_fill = false;
     }
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            if (rhs_is_fill_ones) {
-                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            if (rhs_is_fill) {
+                rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
             } else {
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
                 rhs.extend_u0(lhs.size(), rhs_is_signed);
@@ -6472,17 +6536,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         lhs = import_expression(lhs_expr);
     }
 
-    // Detect unbased unsized fill-ones constant ('1) before importing so we
-    // can replicate it to the LHS width rather than zero-extend (matches the
-    // sync-path handling).
-    bool rhs_is_fill_ones = false;
+    // Detect unbased unsized fill constants ('0, '1, 'x, 'z) before importing
+    // so we can replicate them to the LHS width rather than zero-extend.
+    bool rhs_is_fill = false;
+    RTLIL::State rhs_fill_state = RTLIL::State::S0;
     if (auto rhs_any = uhdm_assign->Rhs()) {
         if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
-            if (rhs_expr->UhdmType() == uhdmconstant) {
-                const constant* c = any_cast<const constant*>(rhs_expr);
-                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
-                    rhs_is_fill_ones = true;
-            }
+            rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             if (mode_debug) {
                 log("    Assignment RHS is expression type %d\n", rhs_expr->VpiType());
                 if (rhs_expr->VpiType() == vpiOperation) {
@@ -6510,12 +6570,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         }
         rhs = create_compound_op_cell(op_type, lhs_current_val, rhs, uhdm_assign);
+        rhs_is_fill = false;
     }
 
     if (lhs.size() != rhs.size()) {
         if (rhs.size() < lhs.size()) {
-            if (rhs_is_fill_ones) {
-                rhs = RTLIL::SigSpec(RTLIL::State::S1, lhs.size());
+            if (rhs_is_fill) {
+                rhs = RTLIL::SigSpec(rhs_fill_state, lhs.size());
             } else {
                 bool rhs_is_signed = rhs.is_wire() && rhs.as_wire()->is_signed;
                 rhs.extend_u0(lhs.size(), rhs_is_signed);
@@ -7186,13 +7247,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     // Cast to proper expr type
                     if (auto lhs = any_cast<const UHDM::expr*>(lhs_expr)) {
                         if (auto rhs = any_cast<const UHDM::expr*>(rhs_expr)) {
-                            // Detect '1 fill literal before importing — needs replication, not zero-extension
-                            bool rhs_is_fill_ones = false;
-                            if (rhs->UhdmType() == uhdmconstant) {
-                                const constant* c = any_cast<const constant*>(rhs);
-                                if (c->VpiSize() == -1 && std::string(c->VpiValue()) == "BIN:1")
-                                    rhs_is_fill_ones = true;
-                            }
+                            // Detect unbased-unsized fill constants ('0/'1/'x/'z)
+                            // before importing — they need replication, not
+                            // zero-extension.
+                            bool rhs_is_fill = false;
+                            RTLIL::State rhs_fill_state =
+                                detect_fill_const_state(rhs, rhs_is_fill);
                             RTLIL::SigSpec lhs_sig = import_expression(lhs);
                             RTLIL::SigSpec rhs_sig = import_expression(rhs);
                             
@@ -7287,8 +7347,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // Ensure RHS matches LHS width
                             if (target_sig.size() != rhs_sig.size()) {
                                 if (rhs_sig.size() < target_sig.size()) {
-                                    if (rhs_is_fill_ones) {
-                                        rhs_sig = RTLIL::SigSpec(RTLIL::State::S1, target_sig.size());
+                                    if (rhs_is_fill) {
+                                        rhs_sig = RTLIL::SigSpec(rhs_fill_state, target_sig.size());
                                     } else {
                                         // Extend RHS to match target width
                                         rhs_sig.extend_u0(target_sig.size());

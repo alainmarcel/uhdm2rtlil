@@ -13,7 +13,7 @@ module \test_module
   wire output 3 \out
   attribute \src "dut.sv:16.9-16.12"
   wire \mem
-  wire $auto$expression.cpp:3893:import_bit_select$1
+  wire $auto$expression.cpp:3894:import_bit_select$1
   attribute \src "dut.sv:23.20-23.23"
   cell $shiftx $shiftx$dut.sv:23$2
     parameter \A_SIGNED 0
@@ -23,10 +23,10 @@ module \test_module
     parameter \Y_WIDTH 1
     connect \A \mem
     connect \B \idx
-    connect \Y $auto$expression.cpp:3893:import_bit_select$1
+    connect \Y $auto$expression.cpp:3894:import_bit_select$1
   end
   connect \mem \in [0]
-  connect \out $auto$expression.cpp:3893:import_bit_select$1
+  connect \out $auto$expression.cpp:3894:import_bit_select$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:26.1-32.10"
@@ -63,13 +63,13 @@ module $paramod\test_module\pt=s32'00000000000000000000000000000100
   wire \mem[2]
   attribute \src "dut.sv:16.9-16.12"
   wire \mem[3]
-  wire $auto$expression.cpp:3662:import_bit_select$3
-  wire $auto$expression.cpp:3665:import_bit_select$5
-  wire $auto$expression.cpp:3662:import_bit_select$7
-  wire $auto$expression.cpp:3665:import_bit_select$9
-  wire $auto$expression.cpp:3662:import_bit_select$11
-  wire $auto$expression.cpp:3665:import_bit_select$13
-  cell $eq $auto$expression.cpp:3663:import_bit_select$4
+  wire $auto$expression.cpp:3663:import_bit_select$3
+  wire $auto$expression.cpp:3666:import_bit_select$5
+  wire $auto$expression.cpp:3663:import_bit_select$7
+  wire $auto$expression.cpp:3666:import_bit_select$9
+  wire $auto$expression.cpp:3663:import_bit_select$11
+  wire $auto$expression.cpp:3666:import_bit_select$13
+  cell $eq $auto$expression.cpp:3664:import_bit_select$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -77,16 +77,16 @@ module $paramod\test_module\pt=s32'00000000000000000000000000000100
     parameter \Y_WIDTH 1
     connect \A \idx
     connect \B 2'10
-    connect \Y $auto$expression.cpp:3662:import_bit_select$3
+    connect \Y $auto$expression.cpp:3663:import_bit_select$3
   end
-  cell $mux $auto$expression.cpp:3666:import_bit_select$6
+  cell $mux $auto$expression.cpp:3667:import_bit_select$6
     parameter \WIDTH 1
     connect \A \mem[3]
     connect \B \mem[2]
-    connect \S $auto$expression.cpp:3662:import_bit_select$3
-    connect \Y $auto$expression.cpp:3665:import_bit_select$5
+    connect \S $auto$expression.cpp:3663:import_bit_select$3
+    connect \Y $auto$expression.cpp:3666:import_bit_select$5
   end
-  cell $eq $auto$expression.cpp:3663:import_bit_select$8
+  cell $eq $auto$expression.cpp:3664:import_bit_select$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -94,16 +94,16 @@ module $paramod\test_module\pt=s32'00000000000000000000000000000100
     parameter \Y_WIDTH 1
     connect \A \idx
     connect \B 2'01
-    connect \Y $auto$expression.cpp:3662:import_bit_select$7
+    connect \Y $auto$expression.cpp:3663:import_bit_select$7
   end
-  cell $mux $auto$expression.cpp:3666:import_bit_select$10
+  cell $mux $auto$expression.cpp:3667:import_bit_select$10
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3665:import_bit_select$5
+    connect \A $auto$expression.cpp:3666:import_bit_select$5
     connect \B \mem[1]
-    connect \S $auto$expression.cpp:3662:import_bit_select$7
-    connect \Y $auto$expression.cpp:3665:import_bit_select$9
+    connect \S $auto$expression.cpp:3663:import_bit_select$7
+    connect \Y $auto$expression.cpp:3666:import_bit_select$9
   end
-  cell $eq $auto$expression.cpp:3663:import_bit_select$12
+  cell $eq $auto$expression.cpp:3664:import_bit_select$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -111,18 +111,18 @@ module $paramod\test_module\pt=s32'00000000000000000000000000000100
     parameter \Y_WIDTH 1
     connect \A \idx
     connect \B 2'00
-    connect \Y $auto$expression.cpp:3662:import_bit_select$11
+    connect \Y $auto$expression.cpp:3663:import_bit_select$11
   end
-  cell $mux $auto$expression.cpp:3666:import_bit_select$14
+  cell $mux $auto$expression.cpp:3667:import_bit_select$14
     parameter \WIDTH 1
-    connect \A $auto$expression.cpp:3665:import_bit_select$9
+    connect \A $auto$expression.cpp:3666:import_bit_select$9
     connect \B \mem[0]
-    connect \S $auto$expression.cpp:3662:import_bit_select$11
-    connect \Y $auto$expression.cpp:3665:import_bit_select$13
+    connect \S $auto$expression.cpp:3663:import_bit_select$11
+    connect \Y $auto$expression.cpp:3666:import_bit_select$13
   end
   connect \mem[0] \in [0]
   connect \mem[1] \in [1]
   connect \mem[2] \in [2]
   connect \mem[3] \in [3]
-  connect \out $auto$expression.cpp:3665:import_bit_select$13
+  connect \out $auto$expression.cpp:3666:import_bit_select$13
 end

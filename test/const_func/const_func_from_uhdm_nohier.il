@@ -27,7 +27,7 @@ module \Example
   process $proc$dut.sv:24$2
   end
   attribute \src "dut.sv:24.9-24.26"
-  process $auto$process.cpp:2266:operator()$3
+  process $auto$process.cpp:2320:operator()$3
     sync always
       update \outC 1'0
   end
@@ -690,7 +690,7 @@ module $paramod\Example\OUTPUT="FOO"
   process $proc$dut.sv:27$80
   end
   attribute \src "dut.sv:27.17-27.34"
-  process $auto$process.cpp:2266:operator()$81
+  process $auto$process.cpp:2320:operator()$81
     sync always
       update \outC 1'1
   end
@@ -744,7 +744,7 @@ module $paramod\Example\OUTPUT="BAR"
   process $proc$dut.sv:24$88
   end
   attribute \src "dut.sv:24.9-24.26"
-  process $auto$process.cpp:2266:operator()$89
+  process $auto$process.cpp:2320:operator()$89
     sync always
       update \outC 1'0
   end
@@ -788,7 +788,7 @@ module $paramod\Example\OUTPUT="BAZ"
   process $proc$dut.sv:24$94
   end
   attribute \src "dut.sv:24.9-24.26"
-  process $auto$process.cpp:2266:operator()$95
+  process $auto$process.cpp:2320:operator()$95
     sync always
       update \outC 1'0
   end

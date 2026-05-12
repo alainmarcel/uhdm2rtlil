@@ -24,6 +24,7 @@
 #include <uhdm/parameter.h>
 #include <uhdm/param_assign.h>
 #include <uhdm/return_stmt.h>
+#include <uhdm/struct_net.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/int_typespec.h>
@@ -4171,6 +4172,89 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     } else {
         if (mode_debug)
             log("    hier_path has no Path_elems\n");
+    }
+
+    // Handle unpacked-/packed-array element + scalar struct field access:
+    // sig[i].field  — Path_elems pattern [bit_select(sig[i]), ref_obj(field)].
+    // Returns the bit slice of the per-element wire `\sig[i]` corresponding
+    // to `field` within the packed struct element.  Used by the
+    // ucsbece154b_victim_cache test's `dll_d[i].valid && dll_d[i].tag`
+    // priority-search loop.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pelems_rf = *uhdm_hier->Path_elems();
+        if (pelems_rf[0]->UhdmType() == uhdmbit_select &&
+            pelems_rf[1]->UhdmType() == uhdmref_obj) {
+            const bit_select* bs = any_cast<const bit_select*>(pelems_rf[0]);
+            const ref_obj*   fr = any_cast<const ref_obj*>(pelems_rf[1]);
+            if (bs && fr && bs->VpiIndex()) {
+                std::string base_name = std::string(bs->VpiName());
+                std::string field_name = std::string(fr->VpiName());
+                RTLIL::SigSpec idx_sig =
+                    import_expression(bs->VpiIndex(), input_mapping);
+                if (idx_sig.is_fully_const()) {
+                    int elem_idx = idx_sig.as_const().as_int();
+                    std::string elem_name = base_name + "[" +
+                                            std::to_string(elem_idx) + "]";
+                    RTLIL::Wire* elem_wire = nullptr;
+                    if (name_map.count(elem_name))
+                        elem_wire = name_map[elem_name];
+                    // Find the struct typespec via the inner struct_net of
+                    // the array_net (recorded in wire_map by the array_net
+                    // handler), or via any other registered UHDM object that
+                    // shares the flat base wire.
+                    const UHDM::struct_typespec* st = nullptr;
+                    RTLIL::Wire* base_flat_wire = name_map.count(base_name)
+                                                    ? name_map[base_name]
+                                                    : nullptr;
+                    if (base_flat_wire) {
+                        for (auto& kv : wire_map) {
+                            if (kv.second != base_flat_wire) continue;
+                            if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) {
+                                if (auto rts = sn->Typespec()) {
+                                    if (auto ats = rts->Actual_typespec()) {
+                                        if (ats->UhdmType() == uhdmstruct_typespec)
+                                            st = any_cast<const UHDM::struct_typespec*>(ats);
+                                    }
+                                }
+                            }
+                            if (st) break;
+                        }
+                    }
+                    if (elem_wire && st && st->Members()) {
+                        // Find field offset (from LSB) and width by walking
+                        // members in reverse (last listed = LSB).
+                        int field_offset = 0;
+                        int field_width  = 0;
+                        bool found_field = false;
+                        for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                            auto m = (*st->Members())[i];
+                            int mw = 0;
+                            if (auto mts = m->Typespec())
+                                if (auto ats = mts->Actual_typespec())
+                                    mw = get_width_from_typespec(ats, inst);
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_width = mw;
+                                found_field = true;
+                                break;
+                            }
+                            field_offset += mw;
+                        }
+                        if (found_field && field_width > 0 &&
+                            field_offset + field_width <= elem_wire->width) {
+                            if (mode_debug)
+                                log("    Array struct scalar field: %s[%d].%s -> "
+                                    "%s[%d+:%d]\n",
+                                    base_name.c_str(), elem_idx,
+                                    field_name.c_str(),
+                                    elem_wire->name.c_str(),
+                                    field_offset, field_width);
+                            return RTLIL::SigSpec(elem_wire)
+                                .extract(field_offset, field_width);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Handle packed array element + struct field access: sig[i].field[hi:lo]

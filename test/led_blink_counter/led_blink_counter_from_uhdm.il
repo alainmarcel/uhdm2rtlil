@@ -17,9 +17,9 @@ module \top
   wire width 6 \ledCounter
   wire $auto$rtlil.cc:3307:Lt$7
   attribute \unused_bits "24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2512:import_operation$8
+  wire width 32 $auto$expression.cpp:2513:import_operation$8
   attribute \unused_bits "6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2512:import_operation$10
+  wire width 32 $auto$expression.cpp:2513:import_operation$10
   cell $not $not$dut.sv:10$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
@@ -45,7 +45,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A { 8'00000000 \wait_counter }
     connect \B 1
-    connect \Y $auto$expression.cpp:2512:import_operation$8
+    connect \Y $auto$expression.cpp:2513:import_operation$8
   end
   cell $add $add$dut.sv:18$11
     parameter \A_SIGNED 0
@@ -55,7 +55,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A { 26'00000000000000000000000000 \ledCounter }
     connect \B 1
-    connect \Y $auto$expression.cpp:2512:import_operation$10
+    connect \Y $auto$expression.cpp:2513:import_operation$10
   end
   attribute \src "dut.sv:12.1-20.4"
   attribute \always_ff 1
@@ -66,7 +66,7 @@ module \top
     parameter \WIDTH 24
     connect \CLK \CLK
     connect \SRST $auto$rtlil.cc:3307:Lt$7
-    connect \D $auto$expression.cpp:2512:import_operation$8 [23:0]
+    connect \D $auto$expression.cpp:2513:import_operation$8 [23:0]
     connect \Q \wait_counter
   end
   attribute \src "dut.sv:12.1-20.4"
@@ -77,7 +77,7 @@ module \top
     parameter \WIDTH 6
     connect \CLK \CLK
     connect \EN $auto$rtlil.cc:3307:Lt$7
-    connect \D $auto$expression.cpp:2512:import_operation$10 [5:0]
+    connect \D $auto$expression.cpp:2513:import_operation$10 [5:0]
     connect \Q \ledCounter
   end
 end

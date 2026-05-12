@@ -71,6 +71,60 @@ module \top
   wire width 8 \out2[2]
   attribute \src "dut.sv:18.16-18.20"
   wire width 8 \out2[3]
+  attribute \src "dut.sv:24.9-24.11"
+  wire width 8 \a3
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[0]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[1]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[2]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[3]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[4]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[5]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[6]
+  attribute \src "dut.sv:24.9-24.11"
+  wire \a3[7]
+  attribute \src "dut.sv:25.9-25.11"
+  wire width 8 \b3
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[0]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[1]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[2]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[3]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[4]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[5]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[6]
+  attribute \src "dut.sv:25.9-25.11"
+  wire \b3[7]
+  attribute \src "dut.sv:26.10-26.14"
+  wire width 8 \out3
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[0]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[1]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[2]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[3]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[4]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[5]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[6]
+  attribute \src "dut.sv:26.10-26.14"
+  wire \out3[7]
   attribute \src "dut.sv:32.15-32.17"
   wire width 8 \a4[0]
   attribute \src "dut.sv:32.15-32.17"
@@ -135,10 +189,7 @@ module \top
   wire \a2
   wire \b2
   wire $auto$rtlil.cc:3390:Mux$4
-  wire \out3
-  wire \a3
-  wire \b3
-  wire $auto$rtlil.cc:3390:Mux$6
+  wire width 8 $auto$rtlil.cc:3390:Mux$6
   wire \out4
   wire \a4
   wire \b4
@@ -191,7 +242,7 @@ module \top
     connect \Y $auto$rtlil.cc:3390:Mux$4
   end
   cell $mux $mux$dut.sv:28$5
-    parameter \WIDTH 1
+    parameter \WIDTH 8
     connect \A \b3
     connect \B \a3
     connect \S \sel3
@@ -408,6 +459,30 @@ module \top
       update \pt_o $0\pt_o
       update \pt_sel $0\pt_sel
   end
+  connect \a3[0] \a3 [0]
+  connect \a3[1] \a3 [1]
+  connect \a3[2] \a3 [2]
+  connect \a3[3] \a3 [3]
+  connect \a3[4] \a3 [4]
+  connect \a3[5] \a3 [5]
+  connect \a3[6] \a3 [6]
+  connect \a3[7] \a3 [7]
+  connect \b3[0] \b3 [0]
+  connect \b3[1] \b3 [1]
+  connect \b3[2] \b3 [2]
+  connect \b3[3] \b3 [3]
+  connect \b3[4] \b3 [4]
+  connect \b3[5] \b3 [5]
+  connect \b3[6] \b3 [6]
+  connect \b3[7] \b3 [7]
+  connect \out3[0] \out3 [0]
+  connect \out3[1] \out3 [1]
+  connect \out3[2] \out3 [2]
+  connect \out3[3] \out3 [3]
+  connect \out3[4] \out3 [4]
+  connect \out3[5] \out3 [5]
+  connect \out3[6] \out3 [6]
+  connect \out3[7] \out3 [7]
   connect \out1 $auto$rtlil.cc:3390:Mux$2
   connect \out2 $auto$rtlil.cc:3390:Mux$4
   connect \out3 $auto$rtlil.cc:3390:Mux$6

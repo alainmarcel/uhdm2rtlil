@@ -15,7 +15,7 @@ module \top
   wire input 5 \d
   attribute \src "dut.sv:7.2-9.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$1
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$1
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

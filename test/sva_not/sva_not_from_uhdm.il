@@ -20,10 +20,10 @@ module \top
   attribute \reg 1
   wire width 3 \cnt
   attribute \unused_bits "3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2512:import_operation$8
+  wire width 64 $auto$expression.cpp:2513:import_operation$8
   wire width 3 $procmux$14_Y
   wire $auto$rtlil.cc:3259:ReduceOr$3
-  wire width 3 $auto$expression.cpp:2553:import_operation$4
+  wire width 3 $auto$expression.cpp:2554:import_operation$4
   attribute \src "dut.sv:20.12-20.20"
   wire $eq$dut.sv:20$6_Y
   cell $reduce_or $reduce_or$dut.sv:19$2
@@ -41,7 +41,7 @@ module \top
     parameter \Y_WIDTH 3
     connect \A \cnt
     connect \B $auto$rtlil.cc:3259:ReduceOr$3
-    connect \Y $auto$expression.cpp:2553:import_operation$4
+    connect \Y $auto$expression.cpp:2554:import_operation$4
   end
   attribute \src "dut.sv:20.12-20.20"
   cell $eq $eq$dut.sv:20$7
@@ -62,11 +62,11 @@ module \top
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000100
     connect \B { 62'00000000000000000000000000000000000000000000000000000000000000 \cfg }
-    connect \Y $auto$expression.cpp:2512:import_operation$8
+    connect \Y $auto$expression.cpp:2513:import_operation$8
   end
   attribute \src "dut.sv:31.2-35.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2550:import_module$10
+  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$10
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -94,8 +94,8 @@ module \top
   attribute \src "dut.sv:21.4-21.29"
   cell $mux $procmux$14
     parameter \WIDTH 3
-    connect \A $auto$expression.cpp:2553:import_operation$4
-    connect \B $auto$expression.cpp:2512:import_operation$8 [2:0]
+    connect \A $auto$expression.cpp:2554:import_operation$4
+    connect \B $auto$expression.cpp:2513:import_operation$8 [2:0]
     connect \S \ping
     connect \Y $procmux$14_Y
   end

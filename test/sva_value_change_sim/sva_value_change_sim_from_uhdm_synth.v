@@ -49,22 +49,12 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   wire _19_;
   wire _20_;
   wire _21_;
-  wire _22_;
-  wire _23_;
-  wire _24_;
-  wire _25_;
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
-  wire [7:0] _26_;
+  wire [7:0] _22_;
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
-  wire [7:0] _27_;
-  (* force_downto = 32'd1 *)
-  (* src = "dut.sv:87.3-91.12|dut.sv:50.2-92.9|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:591.28-591.35" *)
-  wire [3:0] _28_;
-  (* force_downto = 32'd1 *)
-  (* src = "dut.sv:87.3-91.12|dut.sv:50.2-92.9|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
-  wire [1:0] _29_;
+  wire [7:0] _23_;
   (* init = 1'h0 *)
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:15.5-15.10" *)
@@ -98,7 +88,6 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:13.11-13.22" *)
   wire [7:0] counter;
-  (* init = 3'b1xx *)
   (* \reg  = 32'd1 *)
   (* src = "dut.sv:18.11-18.26" *)
   wire [2:0] wide_a;
@@ -109,208 +98,158 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   wire [2:0] wide_b;
   (* src = "dut.sv:37.6-37.19" *)
   wire wide_b_stable;
-  \$_NOT_  _30_ (
+  \$_NOT_  _24_ (
     .A(counter[0]),
-    .Y(_26_[0])
+    .Y(_22_[0])
   );
-  \$_AND_  _31_ (
+  \$_NAND_  _25_ (
     .A(counter[0]),
+    .B(counter[1]),
+    .Y(_04_)
+  );
+  \$_AND_  _26_ (
+    .A(counter[2]),
     .B(counter[1]),
     .Y(_05_)
   );
-  \$_AND_  _32_ (
-    .A(counter[2]),
+  \$_AND_  _27_ (
+    .A(counter[0]),
     .B(_05_),
     .Y(_06_)
   );
-  \$_AND_  _33_ (
+  \$_XNOR_  _28_ (
+    .A(counter[2]),
+    .B(_04_),
+    .Y(_23_[2])
+  );
+  \$_AND_  _29_ (
     .A(counter[3]),
     .B(_06_),
     .Y(_07_)
   );
-  \$_AND_  _34_ (
+  \$_AND_  _30_ (
     .A(counter[4]),
     .B(_07_),
     .Y(_08_)
   );
-  \$_XOR_  _35_ (
+  \$_XOR_  _31_ (
     .A(counter[4]),
     .B(_07_),
-    .Y(_27_[4])
+    .Y(_23_[4])
   );
-  \$_XOR_  _36_ (
-    .A(counter[2]),
-    .B(_05_),
-    .Y(_27_[2])
-  );
-  \$_ANDNOT_  _37_ (
-    .A(counter[0]),
-    .B(counter[1]),
+  \$_NOR_  _32_ (
+    .A(counter[3]),
+    .B(counter[4]),
     .Y(_09_)
   );
-  \$_ANDNOT_  _38_ (
-    .A(counter[1]),
-    .B(counter[0]),
+  \$_NOR_  _33_ (
+    .A(counter[6]),
+    .B(counter[7]),
     .Y(_10_)
   );
-  \$_OR_  _39_ (
-    .A(_09_),
-    .B(_10_),
-    .Y(_27_[1])
-  );
-  \$_AND_  _40_ (
-    .A(counter[5]),
-    .B(_08_),
+  \$_ANDNOT_  _34_ (
+    .A(_10_),
+    .B(counter[5]),
     .Y(_11_)
   );
-  \$_NAND_  _41_ (
-    .A(counter[6]),
+  \$_AND_  _35_ (
+    .A(_09_),
     .B(_11_),
     .Y(_12_)
   );
-  \$_XNOR_  _42_ (
-    .A(counter[7]),
-    .B(_12_),
-    .Y(_27_[7])
-  );
-  \$_NOR_  _43_ (
-    .A(counter[5]),
-    .B(counter[4]),
+  \$_ANDNOT_  _36_ (
+    .A(_12_),
+    .B(counter[2]),
     .Y(_13_)
   );
-  \$_NOR_  _44_ (
-    .A(counter[6]),
-    .B(counter[7]),
+  \$_ANDNOT_  _37_ (
+    .A(counter[1]),
+    .B(counter[0]),
     .Y(_14_)
   );
-  \$_AND_  _45_ (
+  \$_NAND_  _38_ (
     .A(_13_),
     .B(_14_),
-    .Y(_15_)
-  );
-  \$_ANDNOT_  _46_ (
-    .A(_09_),
-    .B(counter[3]),
-    .Y(_16_)
-  );
-  \$_NAND_  _47_ (
-    .A(_15_),
-    .B(_16_),
-    .Y(_17_)
-  );
-  \$_ANDNOT_  _48_ (
-    .A(counter[2]),
-    .B(counter[3]),
-    .Y(_18_)
-  );
-  \$_ANDNOT_  _49_ (
-    .A(counter[2]),
-    .B(_17_),
-    .Y(_28_[1])
-  );
-  \$_NOR_  _50_ (
-    .A(counter[0]),
-    .B(counter[1]),
-    .Y(_19_)
-  );
-  \$_AND_  _51_ (
-    .A(_18_),
-    .B(_19_),
-    .Y(_20_)
-  );
-  \$_AND_  _52_ (
-    .A(_15_),
-    .B(_20_),
-    .Y(_21_)
-  );
-  \$_NOT_  _53_ (
-    .A(_21_),
-    .Y(_29_[1])
-  );
-  \$_NOR_  _54_ (
-    .A(_28_[1]),
-    .B(_21_),
-    .Y(_29_[0])
-  );
-  \$_XOR_  _55_ (
-    .A(counter[3]),
-    .B(_06_),
-    .Y(_27_[3])
-  );
-  \$_XOR_  _56_ (
-    .A(counter[5]),
-    .B(_08_),
-    .Y(_27_[5])
-  );
-  \$_NOR_  _57_ (
-    .A(counter[3]),
-    .B(counter[2]),
-    .Y(_22_)
-  );
-  \$_AND_  _58_ (
-    .A(_15_),
-    .B(_22_),
-    .Y(_23_)
-  );
-  \$_ORNOT_  _59_ (
-    .A(_27_[1]),
-    .B(_23_),
-    .Y(_24_)
-  );
-  \$_NAND_  _60_ (
-    .A(_17_),
-    .B(_24_),
-    .Y(_01_)
-  );
-  \$_XOR_  _61_ (
-    .A(counter[6]),
-    .B(_11_),
-    .Y(_27_[6])
-  );
-  \$_NAND_  _62_ (
-    .A(_10_),
-    .B(_23_),
     .Y(_02_)
   );
-  \$_NAND_  _63_ (
-    .A(counter[1]),
-    .B(_23_),
-    .Y(_25_)
+  \$_ANDNOT_  _39_ (
+    .A(counter[0]),
+    .B(counter[1]),
+    .Y(_15_)
   );
-  \$_AND_  _64_ (
-    .A(_17_),
-    .B(_25_),
-    .Y(_00_)
+  \$_AND_  _40_ (
+    .A(_12_),
+    .B(_15_),
+    .Y(_16_)
   );
-  \$_NAND_  _65_ (
-    .A(_17_),
-    .B(_29_[1]),
-    .Y(_04_)
+  \$_AND_  _41_ (
+    .A(counter[2]),
+    .B(_16_),
+    .Y(_21_)
   );
-  \$_ORNOT_  _66_ (
-    .A(_23_),
-    .B(_29_[0]),
+  \$_AND_  _42_ (
+    .A(counter[5]),
+    .B(_08_),
+    .Y(_17_)
+  );
+  \$_NAND_  _43_ (
+    .A(counter[6]),
+    .B(_17_),
+    .Y(_18_)
+  );
+  \$_XNOR_  _44_ (
+    .A(counter[7]),
+    .B(_18_),
+    .Y(_23_[7])
+  );
+  \$_OR_  _45_ (
+    .A(_14_),
+    .B(_15_),
+    .Y(_23_[1])
+  );
+  \$_ANDNOT_  _46_ (
+    .A(_13_),
+    .B(_23_[1]),
+    .Y(_19_)
+  );
+  \$_OR_  _47_ (
+    .A(_16_),
+    .B(_19_),
+    .Y(_01_)
+  );
+  \$_XOR_  _48_ (
+    .A(counter[6]),
+    .B(_17_),
+    .Y(_23_[6])
+  );
+  \$_XOR_  _49_ (
+    .A(counter[3]),
+    .B(_06_),
+    .Y(_23_[3])
+  );
+  \$_XOR_  _50_ (
+    .A(counter[5]),
+    .B(_08_),
+    .Y(_23_[5])
+  );
+  \$_OR_  _51_ (
+    .A(counter[0]),
+    .B(counter[1]),
+    .Y(_20_)
+  );
+  \$_ANDNOT_  _52_ (
+    .A(_12_),
+    .B(_05_),
     .Y(_03_)
   );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:47.1-93.4" *)
-  \$_DFFE_PP_  \wide_a_reg[0]  /* _67_ */ (
-    .C(clk),
-    .D(_29_[0]),
-    .E(_04_),
-    .Q(wide_a[0])
+  \$_NAND_  _53_ (
+    .A(_20_),
+    .B(_03_),
+    .Y(_00_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_DFFE_PP_  \wide_a_reg[2]  /* _68_ */ (
-    .C(clk),
-    .D(_29_[1]),
-    .E(_04_),
-    .Q(wide_a[2])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:47.1-93.4" *)
-  \$_DFFE_PP_  a_reg /* _69_ */ (
+  \$_DFFE_PP_  a_reg /* _54_ */ (
     .C(clk),
     .D(_00_),
     .E(_03_),
@@ -318,71 +257,71 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[0]  /* _70_ */ (
+  \$_SDFF_PP0_  \counter_reg[0]  /* _55_ */ (
     .C(clk),
-    .D(_26_[0]),
+    .D(_22_[0]),
     .Q(counter[0]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[1]  /* _71_ */ (
+  \$_SDFF_PP0_  \counter_reg[1]  /* _56_ */ (
     .C(clk),
-    .D(_27_[1]),
+    .D(_23_[1]),
     .Q(counter[1]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[2]  /* _72_ */ (
+  \$_SDFF_PP0_  \counter_reg[2]  /* _57_ */ (
     .C(clk),
-    .D(_27_[2]),
+    .D(_23_[2]),
     .Q(counter[2]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[3]  /* _73_ */ (
+  \$_SDFF_PP0_  \counter_reg[3]  /* _58_ */ (
     .C(clk),
-    .D(_27_[3]),
+    .D(_23_[3]),
     .Q(counter[3]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[4]  /* _74_ */ (
+  \$_SDFF_PP0_  \counter_reg[4]  /* _59_ */ (
     .C(clk),
-    .D(_27_[4]),
+    .D(_23_[4]),
     .Q(counter[4]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[5]  /* _75_ */ (
+  \$_SDFF_PP0_  \counter_reg[5]  /* _60_ */ (
     .C(clk),
-    .D(_27_[5]),
+    .D(_23_[5]),
     .Q(counter[5]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[6]  /* _76_ */ (
+  \$_SDFF_PP0_  \counter_reg[6]  /* _61_ */ (
     .C(clk),
-    .D(_27_[6]),
+    .D(_23_[6]),
     .Q(counter[6]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_SDFF_PP0_  \counter_reg[7]  /* _77_ */ (
+  \$_SDFF_PP0_  \counter_reg[7]  /* _62_ */ (
     .C(clk),
-    .D(_27_[7]),
+    .D(_23_[7]),
     .Q(counter[7]),
-    .R(_28_[1])
+    .R(_21_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_DFFE_PP_  c_reg /* _78_ */ (
+  \$_DFFE_PP_  c_reg /* _63_ */ (
     .C(clk),
     .D(_02_),
     .E(_03_),
@@ -390,17 +329,16 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:47.1-93.4" *)
-  \$_DFFE_PP_  b_reg /* _79_ */ (
+  \$_DFFE_PP_  b_reg /* _64_ */ (
     .C(clk),
     .D(_01_),
     .E(_03_),
     .Q(b)
   );
-  assign _26_[7:1] = counter[7:1];
-  assign _27_[0] = _26_[0];
-  assign { _28_[3:2], _28_[0] } = 3'h0;
+  assign _22_[7:1] = counter[7:1];
+  assign _23_[0] = _22_[0];
   assign wide_b_stable = 1'h0;
-  assign wide_a_stable = wide_a[0];
+  assign wide_a_stable = 1'h1;
   assign c_stable = c;
   assign c_rose = c;
   assign c_fell = c;
@@ -410,10 +348,10 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   assign a_stable = a;
   assign a_rose = a;
   assign a_fell = a;
-  assign wide_b = 3'h0;
-  assign wide_a[1] = 1'h0;
-  assign wide_b_o = 3'h0;
-  assign wide_a_o = { wide_a[2], 1'h0, wide_a[0] };
+  assign wide_b = 3'bxx0;
+  assign wide_a = 3'h5;
+  assign wide_b_o = 3'bxx0;
+  assign wide_a_o = 3'h5;
   assign c_o = c;
   assign b_o = b;
   assign a_o = a;
