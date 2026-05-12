@@ -112,8 +112,11 @@ UHDM_ONLY_TEST_NAMES=()
 EQUIV_FAILED_TEST_NAMES=()
 
 # Helper: run the Verilator simulation-equivalence check on a UHDM-only
-# test.  Always returns 0 so a failure here doesn't fail the suite —
-# it just emits a warning and counts the test in SIM_EQUIV_WARN_TESTS.
+# test.  Returns 0 per-test (so subsequent tests still run) but counts
+# the divergence in SIM_EQUIV_WARN_TESTS.  The suite-level exit logic
+# turns any non-zero SIM_EQUIV_WARN_TESTS into a hard failure (exit 1).
+# Document intentional divergences in `sim_equiv_analyzed.txt` to surface
+# them under the "🔍 ANALYZED" category instead of warning.
 run_sim_equivalence_softwarn() {
     local test_dir="$1"
     local script="$SCRIPT_DIR/test_sim_equivalence.py"
@@ -817,14 +820,30 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
         fi
     done
     
-    if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ]; then
+    if [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ] && [ $SIM_EQUIV_WARN_TESTS -eq 0 ]; then
         echo "🎉 EXCELLENT! All tests are functional! 🎉"
         display_timing_summary
         exit 0
+    elif [ $CRASHED_TESTS -eq 0 ] && [ $FAILED_TESTS -eq 0 ] && [ $EQUIV_FAILED_TESTS -eq 0 ] && [ $SIM_EQUIV_WARN_TESTS -gt 0 ]; then
+        # Only sim-equiv warnings — no expected-fails mechanism (use
+        # `sim_equiv_analyzed.txt` to document a divergence instead).
+        echo "❌ TEST SUITE FAILED - Verilator co-sim mismatches detected!"
+        echo
+        echo "  • sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
+        for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
+            echo "      - $t"
+        done
+        echo
+        echo "Investigate each test's sim_equiv.log and either fix the"
+        echo "underlying divergence or, if it's a documented x-propagation /"
+        echo "synth-vs-RTL mismatch, add a Test: <name> entry to"
+        echo "sim_equiv_analyzed.txt with the explanation."
+        display_timing_summary
+        exit 1
     else
         # Check if all failures are expected
         TOTAL_FAILURES=$((CRASHED_TESTS + FAILED_TESTS + EQUIV_FAILED_TESTS))
-        if [ $EXPECTED_FAILS -eq $TOTAL_FAILURES ] && [ $EXPECTED_FAILS -gt 0 ]; then
+        if [ $EXPECTED_FAILS -eq $TOTAL_FAILURES ] && [ $EXPECTED_FAILS -gt 0 ] && [ $SIM_EQUIV_WARN_TESTS -eq 0 ]; then
             echo "✅ ALL RESULTS AS EXPECTED - Test suite passes with known issues"
             echo
             echo "All failing tests are documented in failing_tests.txt:"
@@ -841,11 +860,17 @@ if [ ${#UNEXPECTED_FAILURES[@]} -eq 0 ] && [ ${#UNEXPECTED_SUCCESSES[@]} -eq 0 ]
             echo "  • Crashed tests: $CRASHED_TESTS"
             echo "  • Equivalence failures: $EQUIV_FAILED_TESTS"
             echo "  • Failed tests: $FAILED_TESTS"
+            if [ $SIM_EQUIV_WARN_TESTS -gt 0 ]; then
+                echo "  • Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
+            fi
             echo "  • Functional tests: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
             echo
             UNEXPECTED_COUNT=$((TOTAL_FAILURES - EXPECTED_FAILS))
             if [ $UNEXPECTED_COUNT -gt 0 ]; then
                 echo "❌ Found $UNEXPECTED_COUNT unexpected failures not in failing_tests.txt"
+            fi
+            if [ $SIM_EQUIV_WARN_TESTS -gt 0 ]; then
+                echo "❌ Sim-equiv warnings are now hard errors (document in sim_equiv_analyzed.txt if intentional)"
             fi
             echo
             echo "Please investigate failures or update failing_tests.txt"
