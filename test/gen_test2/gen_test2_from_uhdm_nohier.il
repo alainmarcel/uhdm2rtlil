@@ -201,9 +201,7 @@ module \gen_test2
   attribute \src "dut.sv:10.1-22.4"
   attribute \always_ff 1
   process $proc$dut.sv:10$1
-    assign $0\carry[0:0] \carry [0]
-    assign $0\y \y
-    assign $0\y[8:8] \y [8]
+    assign $0\y [8] \y [8]
     assign $0\carry[0:0] 1'0
     assign $0\y [0] $auto$rtlil.cc:3304:Xor$5
     assign $0\y [1] $auto$rtlil.cc:3304:Xor$9

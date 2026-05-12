@@ -61,7 +61,6 @@ module \dff
   attribute \src "dut.sv:5.1-6.9"
   attribute \always_ff 1
   process $proc$dut.sv:5$2
-    assign $0\q \q
     assign $0\q \d
     sync posedge \clk
       update \q $0\q

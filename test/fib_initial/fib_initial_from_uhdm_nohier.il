@@ -10,7 +10,7 @@ module \fib_initial
   process $proc$dut.sv:10$1
   end
   attribute \src "dut.sv:10.5-12.8"
-  process $auto$process.cpp:2136:operator()$2
+  process $auto$process.cpp:2266:operator()$2
     sync always
       update \out 42
   end

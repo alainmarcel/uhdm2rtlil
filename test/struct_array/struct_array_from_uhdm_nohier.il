@@ -14,11 +14,13 @@ module \struct_array
   attribute \src "dut.sv:14.14-14.20"
   attribute \wiretype "\\packet_t"
   wire width 12 \packet
+  attribute \src "dut.sv:17.5-20.8"
+  wire width 12 $0\packet
   attribute \src "dut.sv:23.5-26.8"
   wire width 8 $0\data_out
   attribute \src "dut.sv:23.5-26.8"
   wire width 4 $0\tag_out
-  wire width 8 $auto$expression.cpp:2488:import_operation$3
+  wire width 8 $auto$expression.cpp:2512:import_operation$3
   wire width 4 $auto$rtlil.cc:3304:Xor$6
   cell $add $add$dut.sv:24$4
     parameter \A_SIGNED 0
@@ -28,7 +30,7 @@ module \struct_array
     parameter \Y_WIDTH 8
     connect \A \packet [11:4]
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2488:import_operation$3
+    connect \Y $auto$expression.cpp:2512:import_operation$3
   end
   cell $xor $xor$dut.sv:25$5
     parameter \A_SIGNED 0
@@ -42,15 +44,17 @@ module \struct_array
   end
   attribute \src "dut.sv:17.5-20.8"
   process $proc$dut.sv:17$1
-    assign \packet [11:4] \data_in
-    assign \packet [3:0] \tag_in
+    assign $0\packet \packet
+    assign $0\packet [11:4] \data_in
+    assign $0\packet [3:0] \tag_in
     sync always
+      update \packet $0\packet
   end
   attribute \src "dut.sv:23.5-26.8"
   process $proc$dut.sv:23$2
     assign $0\data_out \data_out
     assign $0\tag_out \tag_out
-    assign $0\data_out $auto$expression.cpp:2488:import_operation$3
+    assign $0\data_out $auto$expression.cpp:2512:import_operation$3
     assign $0\tag_out $auto$rtlil.cc:3304:Xor$6
     sync always
       update \data_out $0\data_out

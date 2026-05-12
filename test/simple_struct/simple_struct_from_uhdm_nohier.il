@@ -98,6 +98,12 @@ module \simple_struct
   attribute \src "dut.sv:42.22-42.26"
   attribute \wiretype "\\data_bus_16bit_t"
   wire width 48 \bus3
+  attribute \src "dut.sv:45.5-57.8"
+  wire width 24 $0\bus1
+  attribute \src "dut.sv:45.5-57.8"
+  wire width 24 $0\bus2
+  attribute \src "dut.sv:45.5-57.8"
+  wire width 48 $0\bus3
   cell \submodule_8bit \inst1
     connect \bus \bus1
     connect \out \out1
@@ -112,15 +118,21 @@ module \simple_struct
   end
   attribute \src "dut.sv:45.5-57.8"
   process $proc$dut.sv:45$9
-    assign \bus1 [23:16] \a1
-    assign \bus1 [15:8] \b1
-    assign \bus1 [7:0] \c1
-    assign \bus2 [23:16] \a2
-    assign \bus2 [15:8] \b2
-    assign \bus2 [7:0] \c2
-    assign \bus3 [47:32] \a3
-    assign \bus3 [31:16] \b3
-    assign \bus3 [15:0] \c3
+    assign $0\bus1 \bus1
+    assign $0\bus2 \bus2
+    assign $0\bus3 \bus3
+    assign $0\bus1 [23:16] \a1
+    assign $0\bus1 [15:8] \b1
+    assign $0\bus1 [7:0] \c1
+    assign $0\bus2 [23:16] \a2
+    assign $0\bus2 [15:8] \b2
+    assign $0\bus2 [7:0] \c2
+    assign $0\bus3 [47:32] \a3
+    assign $0\bus3 [31:16] \b3
+    assign $0\bus3 [15:0] \c3
     sync always
+      update \bus1 $0\bus1
+      update \bus2 $0\bus2
+      update \bus3 $0\bus3
   end
 end

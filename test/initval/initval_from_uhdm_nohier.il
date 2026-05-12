@@ -58,7 +58,6 @@ module \initval
   attribute \src "dut.sv:12.3-13.21"
   attribute \always_ff 1
   process $proc$dut.sv:12$6
-    assign $0\last_bar \last_bar
     assign $0\last_bar \bar
     sync posedge \clk
       update \last_bar $0\last_bar
@@ -66,7 +65,6 @@ module \initval
   attribute \src "dut.sv:15.3-16.23"
   attribute \always_ff 1
   process $proc$dut.sv:15$7
-    assign $0\asdf[3:3] \asdf [3]
     assign $0\asdf[3:3] \bar [3]
     sync posedge \clk
       update \asdf [3] $0\asdf[3:3]
@@ -88,7 +86,6 @@ module \initval
   attribute \src "dut.sv:9.3-10.26"
   attribute \always_ff 1
   process $proc$dut.sv:9$5
-    assign $0\foo[3:2] \foo [3:2]
     assign $0\foo[3:2] \bar [3:2]
     sync posedge \clk
       update \foo [3:2] $0\foo[3:2]

@@ -923,7 +923,6 @@ module \abc9_test022
   attribute \src "dut.sv:234.5-235.59"
   attribute \always_ff 1
   process $proc$dut.sv:234$77
-    assign $0\m_eth_payload_axis_tkeep_reg \m_eth_payload_axis_tkeep_reg
     assign $0\m_eth_payload_axis_tkeep_reg $auto$rtlil.cc:3390:Mux$79
     sync posedge \clk
       update \m_eth_payload_axis_tkeep_reg $0\m_eth_payload_axis_tkeep_reg
@@ -943,8 +942,8 @@ module \abc9_test023
   attribute \src "dut.sv:246.17-246.21"
   wire width 4 \mask
   wire width 4 $auto$module.cpp:918:import_continuous_assign$80
-  wire width 2 $auto$expression.cpp:2625:import_operation$82
-  wire width 2 $auto$expression.cpp:2647:import_operation$84
+  wire width 2 $auto$expression.cpp:2649:import_operation$82
+  wire width 2 $auto$expression.cpp:2671:import_operation$84
   cell $pos $auto$module.cpp:919:import_continuous_assign$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
@@ -960,7 +959,7 @@ module \abc9_test023
     parameter \Y_WIDTH 2
     connect \A \mask
     connect \B \din [1:0]
-    connect \Y $auto$expression.cpp:2625:import_operation$82
+    connect \Y $auto$expression.cpp:2649:import_operation$82
   end
   cell $shr $shr$dut.sv:247$85
     parameter \A_SIGNED 0
@@ -968,12 +967,12 @@ module \abc9_test023
     parameter \A_WIDTH 2
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:2625:import_operation$82
+    connect \A $auto$expression.cpp:2649:import_operation$82
     connect \B 2
-    connect \Y $auto$expression.cpp:2647:import_operation$84
+    connect \Y $auto$expression.cpp:2671:import_operation$84
   end
   connect \mask $auto$module.cpp:918:import_continuous_assign$80
-  connect \dout $auto$expression.cpp:2647:import_operation$84
+  connect \dout $auto$expression.cpp:2671:import_operation$84
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:250.1-252.10"
@@ -1071,7 +1070,6 @@ module \abc9_test031
   attribute \src "dut.sv:274.1-274.32"
   attribute \always_ff 1
   process $proc$dut.sv:274$91
-    assign $0\q1 \q1
     assign $0\q1 \d
     sync posedge \clk1
       update \q1 $0\q1
@@ -1079,7 +1077,6 @@ module \abc9_test031
   attribute \src "dut.sv:275.1-275.33"
   attribute \always_ff 1
   process $proc$dut.sv:275$92
-    assign $0\q2 \q2
     assign $0\q2 \q1
     sync negedge \clk2
       update \q2 $0\q2
@@ -1169,7 +1166,6 @@ module \abc9_test034
   attribute \src "dut.sv:291.1-291.31"
   attribute \always_ff 1
   process $proc$dut.sv:291$95
-    assign $0\q1 \q1
     assign $0\q1 \d
     sync posedge \clk
       update \q1 $0\q1
@@ -1177,7 +1173,6 @@ module \abc9_test034
   attribute \src "dut.sv:292.1-292.32"
   attribute \always_ff 1
   process $proc$dut.sv:292$96
-    assign $0\q2 \q2
     assign $0\q2 \q1
     sync posedge \clk
       update \q2 $0\q2
@@ -1199,7 +1194,6 @@ module \abc9_test035
   attribute \src "dut.sv:296.1-296.33"
   attribute \always_ff 1
   process $proc$dut.sv:296$97
-    assign $0\q[0:0] \q [0]
     assign $0\q[0:0] \d
     sync posedge \clk
       update \q [0] $0\q[0:0]
@@ -1207,7 +1201,6 @@ module \abc9_test035
   attribute \src "dut.sv:297.1-297.36"
   attribute \always_ff 1
   process $proc$dut.sv:297$98
-    assign $0\q[1:1] \q [1]
     assign $0\q[1:1] \q [0]
     sync negedge \clk
       update \q [1] $0\q[1:1]

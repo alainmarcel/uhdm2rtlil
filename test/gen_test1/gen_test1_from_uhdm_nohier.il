@@ -336,7 +336,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$33
-    assign $0\y[0:0] \y [0]
     assign $0\y[0:0] $auto$rtlil.cc:3260:ReduceXor$35
     sync posedge \clk
       update \y [0] $0\y[0:0]
@@ -344,7 +343,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$36
-    assign $0\y[1:1] \y [1]
     assign $0\y[1:1] $auto$rtlil.cc:3260:ReduceXor$38
     sync posedge \clk
       update \y [1] $0\y[1:1]
@@ -352,7 +350,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$39
-    assign $0\y[2:2] \y [2]
     assign $0\y[2:2] $auto$rtlil.cc:3260:ReduceXor$41
     sync posedge \clk
       update \y [2] $0\y[2:2]
@@ -360,7 +357,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$42
-    assign $0\y[3:3] \y [3]
     assign $0\y[3:3] $auto$rtlil.cc:3260:ReduceXor$44
     sync posedge \clk
       update \y [3] $0\y[3:3]
@@ -368,7 +364,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$45
-    assign $0\y[4:4] \y [4]
     assign $0\y[4:4] $auto$rtlil.cc:3260:ReduceXor$47
     sync posedge \clk
       update \y [4] $0\y[4:4]
@@ -376,7 +371,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$48
-    assign $0\y[5:5] \y [5]
     assign $0\y[5:5] $auto$rtlil.cc:3260:ReduceXor$50
     sync posedge \clk
       update \y [5] $0\y[5:5]
@@ -384,7 +378,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$51
-    assign $0\y[6:6] \y [6]
     assign $0\y[6:6] $auto$rtlil.cc:3260:ReduceXor$53
     sync posedge \clk
       update \y [6] $0\y[6:6]
@@ -392,7 +385,6 @@ module \gen_test1
   attribute \src "dut.sv:32.3-33.18"
   attribute \always_ff 1
   process $proc$dut.sv:32$54
-    assign $0\y[7:7] \y [7]
     assign $0\y[7:7] $auto$rtlil.cc:3260:ReduceXor$56
     sync posedge \clk
       update \y [7] $0\y[7:7]

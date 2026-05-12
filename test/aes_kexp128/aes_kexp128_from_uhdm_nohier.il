@@ -134,10 +134,6 @@ module \aes_key_expand_128
   attribute \src "dut.sv:16.1-21.4"
   attribute \always_ff 1
   process $proc$dut.sv:16$1
-    assign $0\w[0] \w[0]
-    assign $0\w[1] \w[1]
-    assign $0\w[2] \w[2]
-    assign $0\w[3] \w[3]
     assign $0\w[0] $auto$rtlil.cc:3390:Mux$3
     assign $0\w[1] $auto$rtlil.cc:3390:Mux$7
     assign $0\w[2] $auto$rtlil.cc:3390:Mux$13

@@ -39,7 +39,6 @@ module \top
   attribute \src "dut.sv:14.2-14.36"
   attribute \always_ff 1
   process $proc$dut.sv:14$3
-    assign $0\b_prev \b_prev
     assign $0\b_prev \b
     sync posedge \clk
       update \b_prev $0\b_prev

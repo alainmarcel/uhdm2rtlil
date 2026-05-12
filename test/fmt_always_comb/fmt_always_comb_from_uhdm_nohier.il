@@ -215,8 +215,6 @@ module \top
   attribute \src "dut.sv:8.2-11.8"
   attribute \always_ff 1
   process $proc$dut.sv:8$13
-    assign $0\a \a
-    assign $0\b \b
     assign $0\a $auto$rtlil.cc:3323:LogicOr$19
     assign $0\b $auto$rtlil.cc:3323:LogicOr$25
     sync posedge \clk

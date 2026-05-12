@@ -45,8 +45,6 @@ module \top
   attribute \src "dut.sv:16.2-19.5"
   attribute \always_ff 1
   process $proc$dut.sv:16$3
-    assign $0\a_q \a_q
-    assign $0\b_q \b_q
     assign $0\a_q \a
     assign $0\b_q \b
     sync posedge \clk

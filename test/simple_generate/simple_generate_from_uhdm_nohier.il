@@ -70,7 +70,6 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$1
-    assign $0\y[0:0] \y [0]
     assign $0\y[0:0] \gen_loop[0].tmp
     sync posedge \clk
       update \y [0] $0\y[0:0]
@@ -78,7 +77,6 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$4
-    assign $0\y[1:1] \y [1]
     assign $0\y[1:1] \gen_loop[1].tmp
     sync posedge \clk
       update \y [1] $0\y[1:1]
@@ -86,7 +84,6 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$7
-    assign $0\y[2:2] \y [2]
     assign $0\y[2:2] \gen_loop[2].tmp
     sync posedge \clk
       update \y [2] $0\y[2:2]
@@ -94,7 +91,6 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   attribute \always_ff 1
   process $proc$dut.sv:12$10
-    assign $0\y[3:3] \y [3]
     assign $0\y[3:3] \gen_loop[3].tmp
     sync posedge \clk
       update \y [3] $0\y[3:3]
