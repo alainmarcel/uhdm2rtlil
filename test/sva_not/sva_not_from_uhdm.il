@@ -19,8 +19,7 @@ module \top
   attribute \src "dut.sv:11.12-11.15"
   attribute \reg 1
   wire width 3 \cnt
-  attribute \unused_bits "3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2513:import_operation$8
+  wire width 3 $auto$expression.cpp:2513:import_operation$8
   wire width 3 $procmux$14_Y
   wire $auto$rtlil.cc:3259:ReduceOr$3
   wire width 3 $auto$expression.cpp:2554:import_operation$4
@@ -37,10 +36,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 3
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 3
     parameter \Y_WIDTH 3
     connect \A \cnt
-    connect \B $auto$rtlil.cc:3259:ReduceOr$3
+    connect \B { 2'00 $auto$rtlil.cc:3259:ReduceOr$3 }
     connect \Y $auto$expression.cpp:2554:import_operation$4
   end
   attribute \src "dut.sv:20.12-20.20"
@@ -57,11 +56,11 @@ module \top
   cell $add $add$dut.sv:21$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \B { 62'00000000000000000000000000000000000000000000000000000000000000 \cfg }
+    parameter \A_WIDTH 3
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 3
+    connect \A 3'100
+    connect \B { 1'0 \cfg }
     connect \Y $auto$expression.cpp:2513:import_operation$8
   end
   attribute \src "dut.sv:31.2-35.4"
@@ -95,7 +94,7 @@ module \top
   cell $mux $procmux$14
     parameter \WIDTH 3
     connect \A $auto$expression.cpp:2554:import_operation$4
-    connect \B $auto$expression.cpp:2513:import_operation$8 [2:0]
+    connect \B $auto$expression.cpp:2513:import_operation$8
     connect \S \ping
     connect \Y $procmux$14_Y
   end

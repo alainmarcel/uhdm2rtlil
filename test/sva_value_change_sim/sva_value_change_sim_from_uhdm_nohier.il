@@ -74,15 +74,15 @@ module \top
   wire width 3 $0\wide_a
   attribute \src "dut.sv:47.1-93.4"
   wire width 3 $0\wide_b
-  wire width 64 $auto$expression.cpp:2513:import_operation$7
+  wire width 8 $auto$expression.cpp:2513:import_operation$7
   cell $add $add$dut.sv:48$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 56'00000000000000000000000000000000000000000000000000000000 \counter }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 8
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A \counter
+    connect \B 8'00000001
     connect \Y $auto$expression.cpp:2513:import_operation$7
   end
   attribute \src "dut.sv:47.1-93.4"
@@ -93,7 +93,7 @@ module \top
     assign $0\c \c
     assign $0\wide_a \wide_a
     assign $0\wide_b \wide_b
-    assign $0\counter $auto$expression.cpp:2513:import_operation$7 [7:0]
+    assign $0\counter $auto$expression.cpp:2513:import_operation$7
     attribute \src "dut.sv:50.2-92.9"
     switch { 56'00000000000000000000000000000000000000000000000000000000 \counter }
     attribute \src "dut.sv:51.3-60.12"

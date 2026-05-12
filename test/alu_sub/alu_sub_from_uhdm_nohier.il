@@ -56,17 +56,17 @@ module \alu
   wire $0\SF
   attribute \src "dut.sv:46.2-60.5"
   wire width 8 $0\result
-  wire width 8 $auto$expression.cpp:2554:import_operation$4
+  wire width 9 $auto$expression.cpp:2554:import_operation$4
   attribute \src "dut.sv:56.9-56.22"
   wire $eq$dut.sv:56$6_Y
   cell $sub $sub$dut.sv:52$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 8
-    parameter \B_WIDTH 8
-    parameter \Y_WIDTH 8
-    connect \A \A
-    connect \B \B
+    parameter \A_WIDTH 9
+    parameter \B_WIDTH 9
+    parameter \Y_WIDTH 9
+    connect \A { 1'0 \A }
+    connect \B { 1'0 \B }
     connect \Y $auto$expression.cpp:2554:import_operation$4
   end
   attribute \src "dut.sv:56.9-56.22"
@@ -100,7 +100,7 @@ module \alu
         assign $0\tmp { 1'0 \added }
     attribute \src "dut.sv:51.4-52.17"
       case 4'0001
-        assign $0\tmp { 1'0 $auto$expression.cpp:2554:import_operation$4 }
+        assign $0\tmp $auto$expression.cpp:2554:import_operation$4
     end
     sync posedge \clk
       update \CF $0\CF

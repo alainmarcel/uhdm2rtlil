@@ -15,7 +15,7 @@ module \top
   wire width 8 output 5 \cnt
   attribute \src "dut.sv:2.2-9.5"
   wire width 8 $0\cnt[7:0]
-  wire width 64 $auto$expression.cpp:2513:import_operation$2
+  wire width 8 $auto$expression.cpp:2513:import_operation$2
   wire width 64 $auto$expression.cpp:2554:import_operation$4
   wire width 8 $auto$expression.cpp:2513:import_operation$6
   attribute \src "dut.sv:19.26-19.50"
@@ -34,20 +34,20 @@ module \top
   cell $add $add$dut.sv:6$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 8
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A \cnt
+    connect \B 8'00000001
     connect \Y $auto$expression.cpp:2513:import_operation$2
   end
   cell $sub $sub$dut.sv:8$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 8
+    parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A \cnt
+    connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
     connect \Y $auto$expression.cpp:2554:import_operation$4
   end
@@ -266,7 +266,7 @@ module \top
         switch \up
         attribute \src "dut.sv:5.8-8.19"
           case 1'1
-            assign $0\cnt[7:0] $auto$expression.cpp:2513:import_operation$2 [7:0]
+            assign $0\cnt[7:0] $auto$expression.cpp:2513:import_operation$2
         attribute \src "dut.sv:5.8-8.19"
           case 
             attribute \src "dut.sv:7.8-8.19"

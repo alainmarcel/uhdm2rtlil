@@ -96,16 +96,15 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   wire input 3 \ena
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 4 \cnt
-  attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2513:import_operation$7
+  wire width 16 $auto$expression.cpp:2513:import_operation$7
   cell $add $add$dut.sv:39$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 48'000000000000000000000000000000000000000000000000 \cnt }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 16
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A \cnt
+    connect \B 16'0000000000000001
     connect \Y $auto$expression.cpp:2513:import_operation$7
   end
   attribute \src "dut.sv:37.13-39.51"
@@ -120,7 +119,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
     connect \CLK \clk
     connect \EN \ena
     connect \ARST \rst
-    connect \D $auto$expression.cpp:2513:import_operation$7 [15:0]
+    connect \D $auto$expression.cpp:2513:import_operation$7
     connect \Q \cnt
   end
 end

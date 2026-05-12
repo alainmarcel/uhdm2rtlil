@@ -60,14 +60,14 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   attribute \src "dut.sv:31.13-33.48"
   wire width 16 $0\cnt
   attribute \src "dut.sv:33.36-33.47"
-  wire width 16 $auto$expression.cpp:2983:import_operation$2
+  wire width 16 $auto$expression.cpp:3002:import_operation$2
   wire width 16 $auto$expression.cpp:2513:import_operation$4
-  cell $pos $auto$expression.cpp:2986:import_operation$3
+  cell $pos $auto$expression.cpp:3005:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 16
     connect \A \ena
-    connect \Y $auto$expression.cpp:2983:import_operation$2
+    connect \Y $auto$expression.cpp:3002:import_operation$2
   end
   cell $add $add$dut.sv:33$5
     parameter \A_SIGNED 0
@@ -76,7 +76,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A \cnt
-    connect \B $auto$expression.cpp:2983:import_operation$2
+    connect \B $auto$expression.cpp:3002:import_operation$2
     connect \Y $auto$expression.cpp:2513:import_operation$4
   end
   attribute \src "dut.sv:31.13-33.48"
@@ -116,15 +116,15 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   wire width 16 output 4 \cnt
   attribute \src "dut.sv:37.13-39.51"
   wire width 16 $0\cnt
-  wire width 64 $auto$expression.cpp:2513:import_operation$7
+  wire width 16 $auto$expression.cpp:2513:import_operation$7
   cell $add $add$dut.sv:39$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 48'000000000000000000000000000000000000000000000000 \cnt }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 16
+    parameter \B_WIDTH 16
+    parameter \Y_WIDTH 16
+    connect \A \cnt
+    connect \B 16'0000000000000001
     connect \Y $auto$expression.cpp:2513:import_operation$7
   end
   attribute \src "dut.sv:37.13-39.51"
@@ -143,7 +143,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
         switch \ena
         attribute \src "dut.sv:39.18-39.51"
           case 1'1
-            assign $0\cnt $auto$expression.cpp:2513:import_operation$7 [15:0]
+            assign $0\cnt $auto$expression.cpp:2513:import_operation$7
         attribute \src "dut.sv:39.18-39.51"
           case 
         end

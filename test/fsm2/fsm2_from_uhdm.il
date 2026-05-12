@@ -39,8 +39,7 @@ module \fsm_test
   wire $auto$rtlil.cc:3255:Not$93
   attribute \src "dut.sv:31.21-31.29"
   wire $eq$dut.sv:31$8_Y
-  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2513:import_operation$10
+  wire width 4 $auto$expression.cpp:2513:import_operation$10
   attribute \src "dut.sv:38.21-38.30"
   wire $eq$dut.sv:38$12_Y
   wire $auto$opt_reduce.cc:137:opt_pmux$90
@@ -159,11 +158,11 @@ module \fsm_test
   cell $add $add$dut.sv:51$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 60'000000000000000000000000000000000000000000000000000000000000 \cnt }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 4
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A \cnt
+    connect \B 4'0001
     connect \Y $auto$expression.cpp:2513:import_operation$10
   end
   attribute \src "dut.sv:52.21-52.30"
@@ -289,7 +288,7 @@ module \fsm_test
     parameter \WIDTH 4
     connect \CLK \clk
     connect \SRST $auto$opt_dff.cc:275:combine_resets$94
-    connect \D $auto$expression.cpp:2513:import_operation$10 [3:0]
+    connect \D $auto$expression.cpp:2513:import_operation$10
     connect \Q \cnt
   end
   attribute \src "dut.sv:34.13-40.16|dut.sv:20.9-55.16"

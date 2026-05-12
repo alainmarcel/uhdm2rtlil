@@ -6039,7 +6039,12 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
             rhs_fill_state = detect_fill_const_state(rhs_expr, rhs_is_fill);
             log("            Importing RHS expression\n");
             log_flush();
+            // Propagate LHS width as context so arithmetic ops widen to it
+            // (SV context-determined sizing).
+            int prev_ctx = expression_context_width;
+            expression_context_width = lhs.size();
             rhs = import_expression(rhs_expr);
+            expression_context_width = prev_ctx;
             log("            RHS imported: [signal] (size=%d)\n", rhs.size());
             log_flush();
         } else {
@@ -6300,8 +6305,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
+            // Propagate LHS width as context so arithmetic ops widen to it
+            // (SV context-determined sizing).
+            int prev_ctx = expression_context_width;
+            expression_context_width = lhs.size();
             rhs = import_expression(rhs_expr,
                 (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+            expression_context_width = prev_ctx;
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
@@ -6550,7 +6560,16 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     log("    Operation type: %d\n", op->VpiOpType());
                 }
             }
+            // Propagate the LHS width into RHS so arithmetic ops (vpiAddOp /
+            // vpiSubOp / etc.) materialise their cell with Y_WIDTH = LHS
+            // width — matching the SV context-determined sizing rule that
+            // `wide <= narrow_a + narrow_b` widens the operation to LHS
+            // width.  Without this the cell stays at the operand width and
+            // the upper bits (carry/borrow) get zero-padded.
+            int prev_ctx = expression_context_width;
+            expression_context_width = lhs.size();
             rhs = import_expression(rhs_expr);
+            expression_context_width = prev_ctx;
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
         }
@@ -7254,7 +7273,12 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             RTLIL::State rhs_fill_state =
                                 detect_fill_const_state(rhs, rhs_is_fill);
                             RTLIL::SigSpec lhs_sig = import_expression(lhs);
+                            // Propagate LHS width as context so arithmetic ops
+                            // widen to it (SV context-determined sizing).
+                            int prev_ctx = expression_context_width;
+                            expression_context_width = lhs_sig.size();
                             RTLIL::SigSpec rhs_sig = import_expression(rhs);
+                            expression_context_width = prev_ctx;
                             
                             // Check if we should assign to a temp wire instead
                             RTLIL::SigSpec target_sig = lhs_sig;

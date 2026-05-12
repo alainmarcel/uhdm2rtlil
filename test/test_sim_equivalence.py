@@ -375,12 +375,30 @@ def emit_wrapper_and_tb(dut_path: Path,
         cpp.append(f"    tb.eval();")
         cpp.append(f"    srand({seed});")
         cpp.append(f"    for (int cycle = 0; cycle < {cycles}; ++cycle) {{")
-        # Drive inputs before negedge / posedge
+        # Drive inputs before negedge / posedge.  Mask the stimulus to each
+        # port's declared width (mirrors the unclocked branch below): an
+        # unmasked `(uint32_t)rand()` written to a small port can flip bits
+        # the synth'd netlist doesn't model the same way as Verilator's RTL
+        # view, causing spurious mismatches.
         for n, w in inputs:
             if w <= 32:
-                cpp.append(f"        tb.{n} = (uint32_t)rand();")
+                mask = f"((1ULL << {w}) - 1)" if w > 1 else "1ULL"
+                cpp.append(f"        tb.{n} = (uint32_t)(((uint64_t)rand()) & {mask});")
+            elif w <= 64:
+                if w == 64:
+                    cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
+                else:
+                    mask = f"((1ULL << {w}) - 1)"
+                    cpp.append(f"        tb.{n} = (((uint64_t)rand() << 32) | (uint32_t)rand()) & {mask};")
             else:
-                cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
+                nwords = (w + 31) // 32
+                top_bits = w - 32 * (nwords - 1)
+                for i in range(nwords):
+                    if i == nwords - 1 and top_bits < 32:
+                        m = (1 << top_bits) - 1
+                        cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand() & 0x{m:x}U;")
+                    else:
+                        cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand();")
         cpp.append(f"        tb.{clk} = 0; tb.eval();")
         cpp.append(f"        tb.{clk} = 1; tb.eval();")
         for n, w in outputs:

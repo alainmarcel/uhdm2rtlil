@@ -15,7 +15,7 @@ module \counter1
   wire $auto$rtlil.cc:3258:ReduceAnd$2
   attribute \src "dut.sv:8.2-13.5"
   wire width 32 $0\count[31:0]
-  wire width 64 $auto$expression.cpp:2513:import_operation$4
+  wire width 32 $auto$expression.cpp:2513:import_operation$4
   cell $reduce_and $reduce_and$dut.sv:15$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
@@ -26,11 +26,11 @@ module \counter1
   cell $add $add$dut.sv:12$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A { 32'00000000000000000000000000000000 \count }
-    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \count
+    connect \B 1
     connect \Y $auto$expression.cpp:2513:import_operation$4
   end
   attribute \src "dut.sv:8.2-13.5"
@@ -44,7 +44,7 @@ module \counter1
         assign $0\count[31:0] 0
     attribute \src "dut.sv:12.4-12.22"
       case 
-        assign $0\count[31:0] $auto$expression.cpp:2513:import_operation$4 [31:0]
+        assign $0\count[31:0] $auto$expression.cpp:2513:import_operation$4
     end
     sync posedge \clk
       update \count $0\count[31:0]

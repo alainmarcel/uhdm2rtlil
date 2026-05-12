@@ -38,7 +38,7 @@ module \scope_task
   wire width 16 \task_01$func$dut.sv:36$2.temp
   attribute \src "dut.sv:36.9-36.26"
   wire width 16 $0\task_01$func$dut.sv:36$2.temp[15:0]$5
-  wire width 68 $auto$expression.cpp:2600:import_operation$6
+  wire width 68 $auto$expression.cpp:2619:import_operation$6
   wire width 16 $auto$expression.cpp:2513:import_operation$8
   attribute \nosync 1
   attribute \src "dut.sv:15.21-15.22"
@@ -73,7 +73,7 @@ module \scope_task
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y $auto$expression.cpp:2600:import_operation$6
+    connect \Y $auto$expression.cpp:2619:import_operation$6
   end
   cell $add $add$dut.sv:9$9
     parameter \A_SIGNED 0
@@ -82,7 +82,7 @@ module \scope_task
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
-    connect \B $auto$expression.cpp:2600:import_operation$6 [15:0]
+    connect \B $auto$expression.cpp:2619:import_operation$6 [15:0]
     connect \Y $auto$expression.cpp:2513:import_operation$8
   end
   cell $add $add$dut.sv:22$17
@@ -121,7 +121,7 @@ module \scope_task
     assign $0\x 16'0000000000111100
     assign $0\y 16'0000000000000000
     assign $0\task_01$func$dut.sv:36$2.a[3:0]$3 \k
-    assign $0\task_01$func$dut.sv:36$2.temp[15:0]$5 $auto$expression.cpp:2600:import_operation$6 [15:0]
+    assign $0\task_01$func$dut.sv:36$2.temp[15:0]$5 $auto$expression.cpp:2619:import_operation$6 [15:0]
     assign $0\task_01$func$dut.sv:36$2.result[15:0]$4 $auto$expression.cpp:2513:import_operation$8
     assign $0\temp1 $auto$expression.cpp:2513:import_operation$8
     assign $0\x $auto$expression.cpp:2513:import_operation$8
