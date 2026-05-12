@@ -2552,7 +2552,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 if (expression_context_width > result_width)
                     result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                
+
                 // Check if operands are signed
                 bool is_signed = false;
                 for (const auto& operand : operands) {
@@ -2564,9 +2564,28 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         }
                     }
                 }
-                
+
+                // Extend each operand to result_width so the cell's
+                // A_WIDTH / B_WIDTH match Y_WIDTH cleanly (matches the
+                // vpiAddOp branch).  Without this, a wider LHS would
+                // produce a sub cell with A/B at operand width and the
+                // upper bits would be silently zero-padded — losing the
+                // borrow when LHS > operand width (exposed by
+                // `add_sub_bind_if`'s `result0[8:0] <= a0[7:0] - b0[7:0]`).
+                auto resize_operand = [&](RTLIL::SigSpec op) {
+                    if (op.size() == result_width) return op;
+                    if (op.size() > result_width)
+                        return op.extract(0, result_width);
+                    bool sgn = is_signed;
+                    if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
+                    op.extend_u0(result_width, sgn);
+                    return op;
+                };
+                RTLIL::SigSpec a = resize_operand(operands[0]);
+                RTLIL::SigSpec b = resize_operand(operands[1]);
+
                 std::string cell_name = generate_cell_name(uhdm_op, "sub");
-                module->addSub(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                module->addSub(RTLIL::escape_id(cell_name), a, b, result, is_signed);
                 return result;
             }
             break;

@@ -9,8 +9,7 @@ module \counter
   wire input 2 \rstn
   attribute \src "dut.sv:3.35-3.38"
   wire width 4 output 3 \out
-  attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2513:import_operation$2
+  wire width 4 $auto$expression.cpp:2513:import_operation$2
   attribute \src "dut.sv:8.3-13.6"
   attribute \always_ff 1
   cell $sdff $auto$ff.cc:337:slice$8
@@ -20,17 +19,17 @@ module \counter
     parameter \WIDTH 4
     connect \CLK \clk
     connect \SRST \rstn
-    connect \D $auto$expression.cpp:2513:import_operation$2 [3:0]
+    connect \D $auto$expression.cpp:2513:import_operation$2
     connect \Q \out
   end
   cell $add $add$dut.sv:12$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 32
-    connect \A { 28'0000000000000000000000000000 \out }
-    connect \B 1
+    parameter \A_WIDTH 4
+    parameter \B_WIDTH 4
+    parameter \Y_WIDTH 4
+    connect \A \out
+    connect \B 4'0001
     connect \Y $auto$expression.cpp:2513:import_operation$2
   end
 end

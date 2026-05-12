@@ -26,7 +26,7 @@ module \top
   wire width 3 $auto$expression.cpp:2554:import_operation$4
   attribute \src "dut.sv:20.12-20.20"
   wire $eq$dut.sv:20$6_Y
-  wire width 64 $auto$expression.cpp:2513:import_operation$8
+  wire width 3 $auto$expression.cpp:2513:import_operation$8
   cell $reduce_or $reduce_or$dut.sv:19$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
@@ -38,10 +38,10 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 3
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 3
     parameter \Y_WIDTH 3
     connect \A \cnt
-    connect \B $auto$rtlil.cc:3259:ReduceOr$3
+    connect \B { 2'00 $auto$rtlil.cc:3259:ReduceOr$3 }
     connect \Y $auto$expression.cpp:2554:import_operation$4
   end
   attribute \src "dut.sv:20.12-20.20"
@@ -58,11 +58,11 @@ module \top
   cell $add $add$dut.sv:21$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 64
-    parameter \B_WIDTH 64
-    parameter \Y_WIDTH 64
-    connect \A 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \B { 62'00000000000000000000000000000000000000000000000000000000000000 \cfg }
+    parameter \A_WIDTH 3
+    parameter \B_WIDTH 3
+    parameter \Y_WIDTH 3
+    connect \A 3'100
+    connect \B { 1'0 \cfg }
     connect \Y $auto$expression.cpp:2513:import_operation$8
   end
   attribute \src "dut.sv:31.2-35.4"
@@ -99,7 +99,7 @@ module \top
         switch \ping
         attribute \src "dut.sv:21.4-21.29"
           case 1'1
-            assign $0\cnt[2:0] $auto$expression.cpp:2513:import_operation$8 [2:0]
+            assign $0\cnt[2:0] $auto$expression.cpp:2513:import_operation$8
         attribute \src "dut.sv:21.4-21.29"
           case 
         end
