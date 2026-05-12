@@ -353,8 +353,14 @@ def emit_wrapper_and_tb(dut_path: Path,
         cpp.append(f"    tb.{c} = 0;")
     for r, ah in resets.items():
         cpp.append(f"    tb.{r} = {1 if ah else 0};  // assert reset")
-    for n, _w in inputs:
-        cpp.append(f"    tb.{n} = 0;")
+    for n, w in inputs:
+        if w <= 64:
+            cpp.append(f"    tb.{n} = 0;")
+        else:
+            # VlWide<N> doesn't accept `= 0`; zero each word.
+            nwords = (w + 31) // 32
+            for i in range(nwords):
+                cpp.append(f"    tb.{n}[{i}] = 0;")
     cpp.append("    tb.eval();")
 
     if clocks:
@@ -402,24 +408,67 @@ def emit_wrapper_and_tb(dut_path: Path,
         # mux chain handles all 32 bits — observed on
         # typedef_unpacked_input).
         for n, w in inputs:
-            if w < 64:
+            if w <= 32:
                 mask = f"((1ULL << {w}) - 1)" if w > 1 else "1ULL"
-                if w <= 32:
-                    cpp.append(f"        tb.{n} = (uint32_t)(((uint64_t)rand()) & {mask});")
+                cpp.append(f"        tb.{n} = (uint32_t)(((uint64_t)rand()) & {mask});")
+            elif w <= 64:
+                if w == 64:
+                    cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
                 else:
+                    mask = f"((1ULL << {w}) - 1)"
                     cpp.append(f"        tb.{n} = (((uint64_t)rand() << 32) | (uint32_t)rand()) & {mask};")
             else:
-                cpp.append(f"        tb.{n} = ((uint64_t)rand() << 32) | (uint32_t)rand();")
+                # Wide port: VlWide<N> exposes operator[] returning EData
+                # (uint32_t). Fill each word with rand() and mask the top
+                # word to the leftover bits.
+                nwords = (w + 31) // 32
+                top_bits = w - 32 * (nwords - 1)
+                for i in range(nwords):
+                    if i == nwords - 1 and top_bits < 32:
+                        m = (1 << top_bits) - 1
+                        cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand() & 0x{m:x}U;")
+                    else:
+                        cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand();")
         cpp.append("        tb.eval();")
         for n, w in outputs:
-            mask = "((1ULL << %d) - 1)" % w if w < 64 else "~0ULL"
-            cpp.append(f"        {{ unsigned long long r = (unsigned long long)tb.rtl_{n} & {mask};")
-            cpp.append(f"          unsigned long long s = (unsigned long long)tb.nl_{n}  & {mask};")
-            cpp.append(f"          if (r != s) {{")
-            cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
-                       f" cycle, r, s);")
-            cpp.append("            mismatches++;")
-            cpp.append("          } }")
+            if w <= 64:
+                mask = ("((1ULL << %d) - 1)" % w) if w < 64 else "~0ULL"
+                cpp.append(f"        {{ unsigned long long r = (unsigned long long)tb.rtl_{n} & {mask};")
+                cpp.append(f"          unsigned long long s = (unsigned long long)tb.nl_{n}  & {mask};")
+                cpp.append(f"          if (r != s) {{")
+                cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
+                           f" cycle, r, s);")
+                cpp.append("            mismatches++;")
+                cpp.append("          } }")
+            else:
+                # Wide output: compare word-by-word.  Mask the top word to
+                # the leftover bits so undefined high bits in either side
+                # don't flag a false mismatch.
+                nwords = (w + 31) // 32
+                top_bits = w - 32 * (nwords - 1)
+                top_mask = ((1 << top_bits) - 1) if top_bits < 32 else 0xFFFFFFFF
+                cpp.append("        {")
+                cpp.append("          bool ne = false;")
+                for i in range(nwords):
+                    if i == nwords - 1 and top_bits < 32:
+                        cpp.append(f"          if (((uint32_t)tb.rtl_{n}[{i}] & 0x{top_mask:x}U)"
+                                   f" != ((uint32_t)tb.nl_{n}[{i}] & 0x{top_mask:x}U)) ne = true;")
+                    else:
+                        cpp.append(f"          if ((uint32_t)tb.rtl_{n}[{i}]"
+                                   f" != (uint32_t)tb.nl_{n}[{i}]) ne = true;")
+                cpp.append("          if (ne) {")
+                # Print all words for diagnostic purposes (low word last).
+                fmt = " ".join(["%08x"] * nwords)
+                rargs = ", ".join(
+                    [f"(uint32_t)tb.rtl_{n}[{i}]" for i in range(nwords - 1, -1, -1)])
+                nargs = ", ".join(
+                    [f"(uint32_t)tb.nl_{n}[{i}]" for i in range(nwords - 1, -1, -1)])
+                cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}:"
+                           f" rtl={fmt} nl={fmt}\\n\","
+                           f" cycle, {rargs}, {nargs});")
+                cpp.append("            mismatches++;")
+                cpp.append("          }")
+                cpp.append("        }")
         cpp.append("    }")
     cpp += [
         f"    if (mismatches == 0)",
