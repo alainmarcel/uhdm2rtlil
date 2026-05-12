@@ -266,6 +266,100 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
     }
 }
 
+// Split an action list so that later actions overriding earlier writes take
+// precedence at the bit level: bits of an earlier action's LHS that are also
+// written by ANY later action in the same case are dropped from the earlier
+// action.  Mirrors what the Yosys Verilog frontend does when it lowers
+// `q <= D; q[hi:lo] <= X;` into two disjoint partial writes — necessary
+// because `proc_mux` does not sequence overlapping writes to a temp wire
+// correctly (exposed by simple_package: `internal_bus <= bus_in;
+// internal_bus.data <= increment_data(bus_in.data);` left the upper struct
+// bits of the FF input tied to the reset value).
+//
+// Operates only on single-wire LHS chunks (the common case); concatenation
+// LHS is left untouched.  Applied recursively into nested switches/cases.
+static void normalize_overlapping_writes(RTLIL::CaseRule* case_rule)
+{
+    if (!case_rule) return;
+
+    auto& actions = case_rule->actions;
+    std::vector<RTLIL::SigSig> new_actions;
+    new_actions.reserve(actions.size());
+
+    for (size_t i = 0; i < actions.size(); i++) {
+        const RTLIL::SigSpec& lhs = actions[i].first;
+        const RTLIL::SigSpec& rhs = actions[i].second;
+
+        // Only split single-wire LHS chunks; anything more complex
+        // (concatenations, constants on LHS) is passed through as-is.
+        std::vector<RTLIL::SigChunk> chunks;
+        for (const auto& ch : lhs.chunks()) chunks.push_back(ch);
+        if (chunks.size() != 1 || !chunks[0].wire) {
+            new_actions.push_back(actions[i]);
+            continue;
+        }
+
+        RTLIL::Wire* w = chunks[0].wire;
+        int start = chunks[0].offset;
+        int end   = chunks[0].offset + chunks[0].width;
+
+        // Collect bit ranges of LATER actions in this case that target w.
+        std::vector<std::pair<int,int>> overrides;
+        for (size_t j = i + 1; j < actions.size(); j++) {
+            for (const auto& lch : actions[j].first.chunks()) {
+                if (lch.wire != w) continue;
+                int s = std::max(start, lch.offset);
+                int e = std::min(end,   lch.offset + lch.width);
+                if (s < e) overrides.push_back({s, e});
+            }
+        }
+
+        if (overrides.empty()) {
+            new_actions.push_back(actions[i]);
+            continue;
+        }
+
+        // Merge overlapping override ranges.
+        std::sort(overrides.begin(), overrides.end());
+        std::vector<std::pair<int,int>> merged;
+        for (const auto& r : overrides) {
+            if (!merged.empty() && r.first <= merged.back().second)
+                merged.back().second = std::max(merged.back().second, r.second);
+            else
+                merged.push_back(r);
+        }
+
+        // Emit a partial assignment for each remaining sub-range.
+        int cur = start;
+        for (const auto& r : merged) {
+            if (cur < r.first) {
+                int sub_start = cur;
+                int sub_end   = r.first;
+                int sub_width = sub_end - sub_start;
+                RTLIL::SigSpec sub_lhs = RTLIL::SigSpec(w, sub_start, sub_width);
+                RTLIL::SigSpec sub_rhs = rhs.extract(sub_start - start, sub_width);
+                new_actions.push_back(RTLIL::SigSig(sub_lhs, sub_rhs));
+            }
+            cur = std::max(cur, r.second);
+        }
+        if (cur < end) {
+            int sub_width = end - cur;
+            RTLIL::SigSpec sub_lhs = RTLIL::SigSpec(w, cur, sub_width);
+            RTLIL::SigSpec sub_rhs = rhs.extract(cur - start, sub_width);
+            new_actions.push_back(RTLIL::SigSig(sub_lhs, sub_rhs));
+        }
+    }
+
+    actions = std::move(new_actions);
+
+    // Recurse into nested switches/cases.
+    for (auto* sw : case_rule->switches) {
+        for (auto* sub_case : sw->cases) {
+            normalize_overlapping_writes(sub_case);
+        }
+    }
+}
+
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
@@ -1513,11 +1607,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             std::string temp_name = "$0\\" + dedup_key;
                             if (module->wire(temp_name))
                                 log_error("Temp wire %s already exists\n", temp_name.c_str());
-                            RTLIL::Wire* temp_wire = module->addWire(temp_name, lhs_spec.size());
+                            int tmp_width = lhs_spec.size();
+                            RTLIL::SigSpec spec_for_signal = lhs_spec;
+                            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
+                                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                                if (first_chunk.wire) {
+                                    tmp_width = first_chunk.wire->width;
+                                    spec_for_signal = RTLIL::SigSpec(first_chunk.wire);
+                                }
+                            }
+                            RTLIL::Wire* temp_wire = module->addWire(temp_name, tmp_width);
                             if (uhdm_process)
                                 add_src_attribute(temp_wire->attributes, uhdm_process);
                             signal_temp_wires[dedup_key] = temp_wire;
-                            signal_specs[dedup_key] = lhs_spec;
+                            signal_specs[dedup_key] = spec_for_signal;
                             temp_wires_map[sig.lhs_expr] = temp_wire;
                             log("    Created FF temp wire %s for signal %s (width=%d)\n",
                                 temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
@@ -1580,6 +1683,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
         }
     }
     
+    // Normalize overlapping writes so proc_mux sees disjoint slices
+    // (matches the Yosys Verilog frontend's behaviour for
+    // `q <= D; q[hi:lo] <= X;` patterns).
+    normalize_overlapping_writes(&yosys_proc->root_case);
+
     // Clear contexts at the end of import_always_ff
     in_always_ff_context = false;
     current_ff_clock_sig = RTLIL::SigSpec();
@@ -1669,7 +1777,11 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             // Reuse existing temp wire
             temp_wire = signal_temp_wires[dedup_key];
         } else {
-            // Create new temp wire with the same width as the LHS
+            // Create new temp wire.  Normally its width equals the LHS slice
+            // width, but for a hier_path field write the LHS is only a slice
+            // of the base wire while dedup_key is the bare base name — the
+            // temp wire must span the FULL base wire so subsequent slice
+            // writes (and the hold-default) can target distinct bits.
             std::string temp_name = "$0\\" + dedup_key;
 
             // Check if temp wire already exists (shouldn't happen with unique dedup keys)
@@ -1677,16 +1789,34 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 log_error("Temp wire %s already exists\n", temp_name.c_str());
             }
 
-            temp_wire = module->addWire(temp_name, lhs_spec.size());
+            int tmp_width = lhs_spec.size();
+            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
+                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                if (first_chunk.wire)
+                    tmp_width = first_chunk.wire->width;
+            }
+            temp_wire = module->addWire(temp_name, tmp_width);
             // Add source attribute from the process
             if (uhdm_process) {
                 add_src_attribute(temp_wire->attributes, uhdm_process);
             }
             signal_temp_wires[dedup_key] = temp_wire;
-            signal_specs[dedup_key] = lhs_spec;
+            // For hier_path, record the FULL base wire as the spec so the
+            // hold-default action covers all bits (otherwise only the slice
+            // bits would carry the hold-default, leaving the remaining bits
+            // of the temp wire undriven).
+            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
+                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                if (first_chunk.wire)
+                    signal_specs[dedup_key] = RTLIL::SigSpec(first_chunk.wire);
+                else
+                    signal_specs[dedup_key] = lhs_spec;
+            } else {
+                signal_specs[dedup_key] = lhs_spec;
+            }
 
             log("    Created temp wire %s for signal %s (width=%d)\n",
-                temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
+                temp_wire->name.c_str(), sig.name.c_str(), tmp_width);
         }
 
         // Map this expression to the temp wire
@@ -6171,16 +6301,51 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ips->VpiParent()->VpiName());
             }
+        } else if (lhs_expr->VpiType() == vpiHierPath) {
+            // For hier_path LHS like internal_bus.data, the base signal is the
+            // first dot-separated component of the path name.  Without this case,
+            // the partial assignment bypasses the $0\<signal> temp wire and the
+            // new value is dropped by the FF sync update (issue exposed by
+            // `simple_package`: `internal_bus.data <= increment_data(...)` left
+            // the upper struct bits stuck at zero).
+            const hier_path* hp = any_cast<const hier_path*>(lhs_expr);
+            std::string full_name = std::string(hp->VpiName());
+            size_t dot_pos = full_name.find('.');
+            if (dot_pos != std::string::npos) {
+                signal_name = full_name.substr(0, dot_pos);
+            } else if (!full_name.empty()) {
+                signal_name = full_name;
+            }
         }
-        
+
         // If we have a temp wire for this signal, assign to it
-        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n", 
+        log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
             signal_name.c_str(), current_signal_temp_wires.size());
         if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
             log("      Found temp wire for signal '%s'\n", signal_name.c_str());
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
-            
+
+            // For struct-field writes via hier_path, redirect the LHS slice
+            // from `\<signal>[hi:lo]` to `$0\<signal>[hi:lo]` so the FF sync
+            // rule (update \signal $0\signal) picks up the new value.  The
+            // import_expression() call earlier already produced a SigSpec
+            // chunk on the actual wire; we remap each chunk to the temp wire
+            // at the same offset (their widths match by construction).
+            if (lhs_expr->VpiType() == vpiHierPath) {
+                std::string actual_wire_name = "\\" + signal_name;
+                RTLIL::SigSpec mapped_lhs;
+                for (const auto& ch : lhs.chunks()) {
+                    if (ch.wire && ch.wire->name.str() == actual_wire_name) {
+                        mapped_lhs.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
+                    } else {
+                        mapped_lhs.append(ch);
+                    }
+                }
+                proc->root_case.actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
+                return;
+            }
+
             // For part selects, we should not use temp wires (causes issues with generate blocks)
             if (lhs_expr->VpiType() == vpiPartSelect || lhs_expr->VpiType() == vpiIndexedPartSelect) {
                 // Just do normal assignment for part selects
@@ -6385,6 +6550,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ips->VpiParent()->VpiName());
             }
+        } else if (lhs_expr->VpiType() == vpiHierPath) {
+            // For hier_path LHS like internal_bus.data, base signal is the
+            // first dot-separated component (see Process* overload above for
+            // the full rationale — simple_package was the exposing test).
+            const hier_path* hp = any_cast<const hier_path*>(lhs_expr);
+            std::string full_name = std::string(hp->VpiName());
+            size_t dot_pos = full_name.find('.');
+            if (dot_pos != std::string::npos) {
+                signal_name = full_name.substr(0, dot_pos);
+            } else if (!full_name.empty()) {
+                signal_name = full_name;
+            }
         }
 
         // If we have a temp wire for this signal, assign to it
@@ -6394,6 +6571,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             log("      Found temp wire for signal '%s'\n", signal_name.c_str());
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
+
+            // For struct-field hier_path writes, remap each LHS chunk on the
+            // actual wire to the equivalent slice of the $0\ temp wire so the
+            // FF sync update propagates the new value.
+            if (lhs_expr->VpiType() == vpiHierPath) {
+                std::string actual_wire_name = "\\" + signal_name;
+                RTLIL::SigSpec mapped_lhs;
+                for (const auto& ch : lhs.chunks()) {
+                    if (ch.wire && ch.wire->name.str() == actual_wire_name) {
+                        mapped_lhs.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
+                    } else {
+                        mapped_lhs.append(ch);
+                    }
+                }
+                case_rule->actions.push_back(RTLIL::SigSig(mapped_lhs, rhs));
+                return;
+            }
 
             // For part selects, we should not use temp wires (causes issues with generate blocks)
             if (lhs_expr->VpiType() == vpiPartSelect || lhs_expr->VpiType() == vpiIndexedPartSelect) {
@@ -7009,7 +7203,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             if (!current_signal_temp_wires.empty()) {
                                 // Extract the base signal name from the LHS
                                 std::string signal_name;
-                                
+                                bool is_partial = false;
+
                                 if (lhs->VpiType() == vpiRefObj) {
                                     const ref_obj* ref = any_cast<const ref_obj*>(lhs);
                                     if (!ref->VpiName().empty()) {
@@ -7020,22 +7215,55 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     // Get base signal from parent
                                     if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                                         signal_name = std::string(ps->VpiParent()->VpiName());
+                                        is_partial = true;
                                     }
                                 } else if (lhs->VpiType() == vpiIndexedPartSelect) {
                                     const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs);
                                     // Get base signal from parent
                                     if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
                                         signal_name = std::string(ips->VpiParent()->VpiName());
+                                        is_partial = true;
+                                    }
+                                } else if (lhs->VpiType() == vpiHierPath) {
+                                    // For hier_path LHS like internal_bus.data, base signal is
+                                    // the first dot-separated component.  Without this case,
+                                    // the partial write bypasses the $0\ temp wire and the FF
+                                    // sync update drops the new value (exposed by
+                                    // simple_package's internal_bus.data <= increment_data(...)).
+                                    const hier_path* hp = any_cast<const hier_path*>(lhs);
+                                    std::string full_name = std::string(hp->VpiName());
+                                    size_t dot_pos = full_name.find('.');
+                                    if (dot_pos != std::string::npos) {
+                                        signal_name = full_name.substr(0, dot_pos);
+                                        is_partial = true;
+                                    } else if (!full_name.empty()) {
+                                        signal_name = full_name;
                                     }
                                 }
-                                
+
                                 // If we have a temp wire for this signal, use it
                                 if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
                                     RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
-                                    target_sig = RTLIL::SigSpec(temp_wire);
+                                    if (is_partial) {
+                                        // Remap each LHS chunk on the actual wire to the
+                                        // equivalent slice of $0\<signal_name>, keeping
+                                        // chunks on other wires unchanged.
+                                        std::string actual_wire_name = "\\" + signal_name;
+                                        RTLIL::SigSpec mapped;
+                                        for (const auto& ch : lhs_sig.chunks()) {
+                                            if (ch.wire && ch.wire->name.str() == actual_wire_name) {
+                                                mapped.append(RTLIL::SigChunk(temp_wire, ch.offset, ch.width));
+                                            } else {
+                                                mapped.append(ch);
+                                            }
+                                        }
+                                        target_sig = mapped;
+                                    } else {
+                                        target_sig = RTLIL::SigSpec(temp_wire);
+                                    }
                                     if (mode_debug)
-                                        log("        Using temp wire %s for signal %s in async reset context\n",
-                                            temp_wire->name.c_str(), signal_name.c_str());
+                                        log("        Using temp wire %s for signal %s in async reset context (partial=%d)\n",
+                                            temp_wire->name.c_str(), signal_name.c_str(), is_partial ? 1 : 0);
                                 }
                             } else if (!current_temp_wires.empty()) {
                                 // Check if this exact LHS expression has a temp wire

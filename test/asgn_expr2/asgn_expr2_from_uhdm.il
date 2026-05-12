@@ -18,16 +18,16 @@ module \top
   attribute \src "dut.sv:5.19-5.20"
   wire width 32 signed \z
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2488:import_operation$18
+  wire width 64 $auto$expression.cpp:2512:import_operation$18
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2488:import_operation$16
+  wire width 64 $auto$expression.cpp:2512:import_operation$16
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2488:import_operation$14
-  wire width 32 $auto$expression.cpp:2013:import_operation$12
-  wire width 32 $auto$expression.cpp:2013:import_operation$10
-  wire width 32 $auto$process.cpp:4568:import_statement_comb$8
-  wire width 32 $auto$process.cpp:4568:import_statement_comb$2
-  cell $add $auto$process.cpp:4570:import_statement_comb$3
+  wire width 64 $auto$expression.cpp:2512:import_operation$14
+  wire width 32 $auto$expression.cpp:2037:import_operation$12
+  wire width 32 $auto$expression.cpp:2037:import_operation$10
+  wire width 32 $auto$process.cpp:4698:import_statement_comb$8
+  wire width 32 $auto$process.cpp:4698:import_statement_comb$2
+  cell $add $auto$process.cpp:4700:import_statement_comb$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -35,7 +35,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 1
-    connect \Y $auto$process.cpp:4568:import_statement_comb$2
+    connect \Y $auto$process.cpp:4698:import_statement_comb$2
   end
   cell $add $add$dut.sv:22$19
     parameter \A_SIGNED 0
@@ -43,9 +43,9 @@ module \top
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2488:import_operation$16 [31:0] }
+    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2512:import_operation$16 [31:0] }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2488:import_operation$18 [63:32] \ox }
+    connect \Y { $auto$expression.cpp:2512:import_operation$18 [63:32] \ox }
   end
   cell $add $add$dut.sv:22$17
     parameter \A_SIGNED 0
@@ -53,39 +53,39 @@ module \top
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2488:import_operation$14 [31:0] }
+    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2512:import_operation$14 [31:0] }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2488:import_operation$16
+    connect \Y $auto$expression.cpp:2512:import_operation$16
   end
-  cell $sub $auto$process.cpp:4572:import_statement_comb$9
+  cell $sub $auto$process.cpp:4702:import_statement_comb$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4568:import_statement_comb$2
+    connect \A $auto$process.cpp:4698:import_statement_comb$2
     connect \B 1
-    connect \Y $auto$process.cpp:4568:import_statement_comb$8
+    connect \Y $auto$process.cpp:4698:import_statement_comb$8
   end
-  cell $add $auto$expression.cpp:2016:import_operation$11
+  cell $add $auto$expression.cpp:2040:import_operation$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4568:import_statement_comb$8
+    connect \A $auto$process.cpp:4698:import_statement_comb$8
     connect \B 1
-    connect \Y $auto$expression.cpp:2013:import_operation$10
+    connect \Y $auto$expression.cpp:2037:import_operation$10
   end
-  cell $sub $auto$expression.cpp:2018:import_operation$13
+  cell $sub $auto$expression.cpp:2042:import_operation$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2013:import_operation$10
+    connect \A $auto$expression.cpp:2037:import_operation$10
     connect \B 1
-    connect \Y $auto$expression.cpp:2013:import_operation$12
+    connect \Y $auto$expression.cpp:2037:import_operation$12
   end
   cell $add $add$dut.sv:22$15
     parameter \A_SIGNED 0
@@ -93,11 +93,11 @@ module \top
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2013:import_operation$12 }
+    connect \A { 32'00000000000000000000000000000000 $auto$expression.cpp:2037:import_operation$12 }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2488:import_operation$14
+    connect \Y $auto$expression.cpp:2512:import_operation$14
   end
-  connect $auto$expression.cpp:2488:import_operation$18 [31:0] \ox
+  connect $auto$expression.cpp:2512:import_operation$18 [31:0] \ox
   connect \z \ox
   connect \y \ox
   connect \x \ox

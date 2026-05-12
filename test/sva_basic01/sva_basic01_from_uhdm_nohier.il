@@ -71,9 +71,6 @@ module \top
   attribute \src "dut.sv:10.2-14.5"
   attribute \always_ff 1
   process $proc$dut.sv:10$4
-    assign $0\read \read
-    assign $0\ready \ready
-    assign $0\write \write
     assign $0\read $logic_not$dut.sv:11.11-11.16$1_Y
     assign $0\write \ctrl
     assign $0\ready \write

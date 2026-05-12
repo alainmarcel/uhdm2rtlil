@@ -23,6 +23,7 @@
 #include <uhdm/uhdm_vpi_user.h>
 #include <uhdm/parameter.h>
 #include <uhdm/param_assign.h>
+#include <uhdm/return_stmt.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/int_typespec.h>
@@ -1064,6 +1065,29 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
         break;
     }
     
+    case uhdmreturn_stmt: {
+        // `return <expr>;` — evaluate the return expression and write it to
+        // the function's result wire.  Without this case, return statements
+        // were silently dropped, so the result wire kept its zero
+        // initialisation (the `$1\$result = 0` line in the IL) and any
+        // function reached only via `return X` returned 0 — observed in
+        // simple_package's `increment_data(bus_in.data)`.
+        const return_stmt* ret = any_cast<const return_stmt*>(stmt);
+        if (ret && ret->VpiCondition() && result_wire) {
+            RTLIL::SigSpec rhs_sig = import_expression(ret->VpiCondition(), &input_mapping);
+            RTLIL::SigSpec lhs_sig = RTLIL::SigSpec(result_wire);
+            if (rhs_sig.size() < lhs_sig.size()) {
+                rhs_sig.extend_u0(lhs_sig.size(), false);
+            } else if (rhs_sig.size() > lhs_sig.size()) {
+                rhs_sig = rhs_sig.extract(0, lhs_sig.size());
+            }
+            case_rule->actions.push_back(RTLIL::SigSig(lhs_sig, rhs_sig));
+            if (mode_debug)
+                log("UHDM: return_stmt assigned to result wire %s\n", result_wire->name.c_str());
+        }
+        break;
+    }
+
     default:
         // Other statement types - ignore for now
         break;

@@ -16,143 +16,145 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* src = "dut.sv:68.38-68.46" *)
   output [49:0] data_out;
   wire [49:0] data_out;
-  wire _00_;
+  (* src = "dut.sv:77.5-97.8" *)
+  wire [49:0] _00_;
   wire _01_;
   wire _02_;
   wire _03_;
   wire _04_;
   wire _05_;
   wire _06_;
+  wire _07_;
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
-  wire [4:0] _07_;
+  wire [4:0] _08_;
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
-  wire [4:0] _08_;
+  wire [4:0] _09_;
   (* src = "dut.sv:75.31-75.38" *)
   wire [4:0] counter;
-  \$_NOT_  _09_ (
+  \$_NOT_  _10_ (
     .A(counter[0]),
-    .Y(_07_[0])
+    .Y(_08_[0])
   );
-  \$_AND_  _10_ (
-    .A(counter[1]),
-    .B(counter[0]),
-    .Y(_00_)
-  );
-  \$_NOR_  _11_ (
+  \$_AND_  _11_ (
     .A(counter[1]),
     .B(counter[0]),
     .Y(_01_)
   );
   \$_NOR_  _12_ (
-    .A(_00_),
-    .B(_01_),
-    .Y(_08_[1])
-  );
-  \$_AND_  _13_ (
-    .A(counter[2]),
-    .B(_00_),
+    .A(counter[1]),
+    .B(counter[0]),
     .Y(_02_)
   );
-  \$_XOR_  _14_ (
-    .A(counter[2]),
-    .B(_00_),
-    .Y(_08_[2])
-  );
-  \$_NAND_  _15_ (
-    .A(counter[3]),
+  \$_NOR_  _13_ (
+    .A(_01_),
     .B(_02_),
+    .Y(_09_[1])
+  );
+  \$_AND_  _14_ (
+    .A(counter[2]),
+    .B(_01_),
     .Y(_03_)
   );
-  \$_XNOR_  _16_ (
-    .A(counter[4]),
-    .B(_03_),
-    .Y(_08_[4])
+  \$_XOR_  _15_ (
+    .A(counter[2]),
+    .B(_01_),
+    .Y(_09_[2])
   );
-  \$_NOR_  _17_ (
+  \$_NAND_  _16_ (
     .A(counter[3]),
-    .B(counter[4]),
+    .B(_03_),
     .Y(_04_)
   );
-  \$_AND_  _18_ (
-    .A(_01_),
+  \$_XNOR_  _17_ (
+    .A(counter[4]),
     .B(_04_),
+    .Y(_09_[4])
+  );
+  \$_NOR_  _18_ (
+    .A(counter[3]),
+    .B(counter[4]),
     .Y(_05_)
   );
-  \$_ANDNOT_  _19_ (
-    .A(_05_),
-    .B(counter[2]),
+  \$_AND_  _19_ (
+    .A(_02_),
+    .B(_05_),
     .Y(_06_)
   );
-  \$_OR_  _20_ (
-    .A(data_in[1]),
-    .B(_06_),
-    .Y(data_out[0])
+  \$_ANDNOT_  _20_ (
+    .A(_06_),
+    .B(counter[2]),
+    .Y(_07_)
   );
-  \$_XOR_  _21_ (
+  \$_OR_  _21_ (
+    .A(data_in[1]),
+    .B(_07_),
+    .Y(_00_[0])
+  );
+  \$_XOR_  _22_ (
     .A(counter[3]),
-    .B(_02_),
-    .Y(_08_[3])
+    .B(_03_),
+    .Y(_09_[3])
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \counter_reg[0]  /* _22_ */ (
+  \$_DFF_PN0_  \counter_reg[0]  /* _23_ */ (
     .C(clk),
-    .D(_07_[0]),
+    .D(_08_[0]),
     .Q(counter[0]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \counter_reg[1]  /* _23_ */ (
+  \$_DFF_PN0_  \counter_reg[1]  /* _24_ */ (
     .C(clk),
-    .D(_08_[1]),
+    .D(_09_[1]),
     .Q(counter[1]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \counter_reg[2]  /* _24_ */ (
+  \$_DFF_PN0_  \counter_reg[2]  /* _25_ */ (
     .C(clk),
-    .D(_08_[2]),
+    .D(_09_[2]),
     .Q(counter[2]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \counter_reg[3]  /* _25_ */ (
+  \$_DFF_PN0_  \counter_reg[3]  /* _26_ */ (
     .C(clk),
-    .D(_08_[3]),
+    .D(_09_[3]),
     .Q(counter[3]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \counter_reg[4]  /* _26_ */ (
+  \$_DFF_PN0_  \counter_reg[4]  /* _27_ */ (
     .C(clk),
-    .D(_08_[4]),
+    .D(_09_[4]),
     .Q(counter[4]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[0]  /* _27_ */ (
+  \$_DFF_PN0_  \data_out_reg[0]  /* _28_ */ (
     .C(clk),
-    .D(data_in[0]),
+    .D(_00_[0]),
     .Q(data_out[0]),
     .R(rst_n)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[1]  /* _28_ */ (
+  \$_DFF_PN0_  \data_out_reg[1]  /* _29_ */ (
     .C(clk),
     .D(data_in[1]),
     .Q(data_out[1]),
@@ -161,7 +163,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[2]  /* _29_ */ (
+  \$_DFF_PN0_  \data_out_reg[2]  /* _30_ */ (
     .C(clk),
     .D(data_in[2]),
     .Q(data_out[2]),
@@ -170,7 +172,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[3]  /* _30_ */ (
+  \$_DFF_PN0_  \data_out_reg[3]  /* _31_ */ (
     .C(clk),
     .D(data_in[3]),
     .Q(data_out[3]),
@@ -179,7 +181,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[4]  /* _31_ */ (
+  \$_DFF_PN0_  \data_out_reg[4]  /* _32_ */ (
     .C(clk),
     .D(data_in[4]),
     .Q(data_out[4]),
@@ -188,7 +190,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[5]  /* _32_ */ (
+  \$_DFF_PN0_  \data_out_reg[5]  /* _33_ */ (
     .C(clk),
     .D(data_in[5]),
     .Q(data_out[5]),
@@ -197,7 +199,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[6]  /* _33_ */ (
+  \$_DFF_PN0_  \data_out_reg[6]  /* _34_ */ (
     .C(clk),
     .D(data_in[6]),
     .Q(data_out[6]),
@@ -206,7 +208,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[7]  /* _34_ */ (
+  \$_DFF_PN0_  \data_out_reg[7]  /* _35_ */ (
     .C(clk),
     .D(data_in[7]),
     .Q(data_out[7]),
@@ -215,7 +217,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[8]  /* _35_ */ (
+  \$_DFF_PN0_  \data_out_reg[8]  /* _36_ */ (
     .C(clk),
     .D(data_in[8]),
     .Q(data_out[8]),
@@ -224,7 +226,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[9]  /* _36_ */ (
+  \$_DFF_PN0_  \data_out_reg[9]  /* _37_ */ (
     .C(clk),
     .D(data_in[9]),
     .Q(data_out[9]),
@@ -233,7 +235,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[10]  /* _37_ */ (
+  \$_DFF_PN0_  \data_out_reg[10]  /* _38_ */ (
     .C(clk),
     .D(data_in[10]),
     .Q(data_out[10]),
@@ -242,7 +244,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[11]  /* _38_ */ (
+  \$_DFF_PN0_  \data_out_reg[11]  /* _39_ */ (
     .C(clk),
     .D(data_in[11]),
     .Q(data_out[11]),
@@ -251,7 +253,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[12]  /* _39_ */ (
+  \$_DFF_PN0_  \data_out_reg[12]  /* _40_ */ (
     .C(clk),
     .D(data_in[12]),
     .Q(data_out[12]),
@@ -260,7 +262,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[13]  /* _40_ */ (
+  \$_DFF_PN0_  \data_out_reg[13]  /* _41_ */ (
     .C(clk),
     .D(data_in[13]),
     .Q(data_out[13]),
@@ -269,7 +271,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[14]  /* _41_ */ (
+  \$_DFF_PN0_  \data_out_reg[14]  /* _42_ */ (
     .C(clk),
     .D(data_in[14]),
     .Q(data_out[14]),
@@ -278,7 +280,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[15]  /* _42_ */ (
+  \$_DFF_PN0_  \data_out_reg[15]  /* _43_ */ (
     .C(clk),
     .D(data_in[15]),
     .Q(data_out[15]),
@@ -287,7 +289,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[16]  /* _43_ */ (
+  \$_DFF_PN0_  \data_out_reg[16]  /* _44_ */ (
     .C(clk),
     .D(data_in[16]),
     .Q(data_out[16]),
@@ -296,7 +298,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[17]  /* _44_ */ (
+  \$_DFF_PN0_  \data_out_reg[17]  /* _45_ */ (
     .C(clk),
     .D(data_in[17]),
     .Q(data_out[17]),
@@ -305,7 +307,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[18]  /* _45_ */ (
+  \$_DFF_PN0_  \data_out_reg[18]  /* _46_ */ (
     .C(clk),
     .D(data_in[18]),
     .Q(data_out[18]),
@@ -314,7 +316,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[19]  /* _46_ */ (
+  \$_DFF_PN0_  \data_out_reg[19]  /* _47_ */ (
     .C(clk),
     .D(data_in[19]),
     .Q(data_out[19]),
@@ -323,7 +325,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[20]  /* _47_ */ (
+  \$_DFF_PN0_  \data_out_reg[20]  /* _48_ */ (
     .C(clk),
     .D(data_in[20]),
     .Q(data_out[20]),
@@ -332,7 +334,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[21]  /* _48_ */ (
+  \$_DFF_PN0_  \data_out_reg[21]  /* _49_ */ (
     .C(clk),
     .D(data_in[21]),
     .Q(data_out[21]),
@@ -341,7 +343,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[22]  /* _49_ */ (
+  \$_DFF_PN0_  \data_out_reg[22]  /* _50_ */ (
     .C(clk),
     .D(data_in[22]),
     .Q(data_out[22]),
@@ -350,7 +352,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[23]  /* _50_ */ (
+  \$_DFF_PN0_  \data_out_reg[23]  /* _51_ */ (
     .C(clk),
     .D(data_in[23]),
     .Q(data_out[23]),
@@ -359,7 +361,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[24]  /* _51_ */ (
+  \$_DFF_PN0_  \data_out_reg[24]  /* _52_ */ (
     .C(clk),
     .D(data_in[24]),
     .Q(data_out[24]),
@@ -368,7 +370,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[25]  /* _52_ */ (
+  \$_DFF_PN0_  \data_out_reg[25]  /* _53_ */ (
     .C(clk),
     .D(data_in[25]),
     .Q(data_out[25]),
@@ -377,7 +379,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[26]  /* _53_ */ (
+  \$_DFF_PN0_  \data_out_reg[26]  /* _54_ */ (
     .C(clk),
     .D(data_in[26]),
     .Q(data_out[26]),
@@ -386,7 +388,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[27]  /* _54_ */ (
+  \$_DFF_PN0_  \data_out_reg[27]  /* _55_ */ (
     .C(clk),
     .D(data_in[27]),
     .Q(data_out[27]),
@@ -395,7 +397,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[28]  /* _55_ */ (
+  \$_DFF_PN0_  \data_out_reg[28]  /* _56_ */ (
     .C(clk),
     .D(data_in[28]),
     .Q(data_out[28]),
@@ -404,7 +406,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[29]  /* _56_ */ (
+  \$_DFF_PN0_  \data_out_reg[29]  /* _57_ */ (
     .C(clk),
     .D(data_in[29]),
     .Q(data_out[29]),
@@ -413,7 +415,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[30]  /* _57_ */ (
+  \$_DFF_PN0_  \data_out_reg[30]  /* _58_ */ (
     .C(clk),
     .D(data_in[30]),
     .Q(data_out[30]),
@@ -422,7 +424,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[31]  /* _58_ */ (
+  \$_DFF_PN0_  \data_out_reg[31]  /* _59_ */ (
     .C(clk),
     .D(data_in[31]),
     .Q(data_out[31]),
@@ -431,7 +433,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[32]  /* _59_ */ (
+  \$_DFF_PN0_  \data_out_reg[32]  /* _60_ */ (
     .C(clk),
     .D(data_in[32]),
     .Q(data_out[32]),
@@ -440,7 +442,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[33]  /* _60_ */ (
+  \$_DFF_PN0_  \data_out_reg[33]  /* _61_ */ (
     .C(clk),
     .D(data_in[33]),
     .Q(data_out[33]),
@@ -449,7 +451,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[34]  /* _61_ */ (
+  \$_DFF_PN0_  \data_out_reg[34]  /* _62_ */ (
     .C(clk),
     .D(data_in[34]),
     .Q(data_out[34]),
@@ -458,7 +460,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[35]  /* _62_ */ (
+  \$_DFF_PN0_  \data_out_reg[35]  /* _63_ */ (
     .C(clk),
     .D(data_in[35]),
     .Q(data_out[35]),
@@ -467,7 +469,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[36]  /* _63_ */ (
+  \$_DFF_PN0_  \data_out_reg[36]  /* _64_ */ (
     .C(clk),
     .D(data_in[36]),
     .Q(data_out[36]),
@@ -476,7 +478,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[37]  /* _64_ */ (
+  \$_DFF_PN0_  \data_out_reg[37]  /* _65_ */ (
     .C(clk),
     .D(data_in[37]),
     .Q(data_out[37]),
@@ -485,7 +487,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[38]  /* _65_ */ (
+  \$_DFF_PN0_  \data_out_reg[38]  /* _66_ */ (
     .C(clk),
     .D(data_in[38]),
     .Q(data_out[38]),
@@ -494,7 +496,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[39]  /* _66_ */ (
+  \$_DFF_PN0_  \data_out_reg[39]  /* _67_ */ (
     .C(clk),
     .D(data_in[39]),
     .Q(data_out[39]),
@@ -503,7 +505,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[40]  /* _67_ */ (
+  \$_DFF_PN0_  \data_out_reg[40]  /* _68_ */ (
     .C(clk),
     .D(data_in[40]),
     .Q(data_out[40]),
@@ -512,7 +514,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[41]  /* _68_ */ (
+  \$_DFF_PN0_  \data_out_reg[41]  /* _69_ */ (
     .C(clk),
     .D(data_in[41]),
     .Q(data_out[41]),
@@ -521,7 +523,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[42]  /* _69_ */ (
+  \$_DFF_PN0_  \data_out_reg[42]  /* _70_ */ (
     .C(clk),
     .D(data_in[42]),
     .Q(data_out[42]),
@@ -530,7 +532,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[43]  /* _70_ */ (
+  \$_DFF_PN0_  \data_out_reg[43]  /* _71_ */ (
     .C(clk),
     .D(data_in[43]),
     .Q(data_out[43]),
@@ -539,7 +541,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[44]  /* _71_ */ (
+  \$_DFF_PN0_  \data_out_reg[44]  /* _72_ */ (
     .C(clk),
     .D(data_in[44]),
     .Q(data_out[44]),
@@ -548,7 +550,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[45]  /* _72_ */ (
+  \$_DFF_PN0_  \data_out_reg[45]  /* _73_ */ (
     .C(clk),
     .D(data_in[45]),
     .Q(data_out[45]),
@@ -557,7 +559,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[46]  /* _73_ */ (
+  \$_DFF_PN0_  \data_out_reg[46]  /* _74_ */ (
     .C(clk),
     .D(data_in[46]),
     .Q(data_out[46]),
@@ -566,7 +568,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[47]  /* _74_ */ (
+  \$_DFF_PN0_  \data_out_reg[47]  /* _75_ */ (
     .C(clk),
     .D(data_in[47]),
     .Q(data_out[47]),
@@ -575,7 +577,7 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[48]  /* _75_ */ (
+  \$_DFF_PN0_  \data_out_reg[48]  /* _76_ */ (
     .C(clk),
     .D(data_in[48]),
     .Q(data_out[48]),
@@ -584,14 +586,15 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:77.5-97.8" *)
-  \$_DFF_PN0_  \data_out_reg[49]  /* _76_ */ (
+  \$_DFF_PN0_  \data_out_reg[49]  /* _77_ */ (
     .C(clk),
     .D(data_in[49]),
     .Q(data_out[49]),
     .R(rst_n)
   );
-  assign _08_[0] = _07_[0];
-  assign _07_[4:1] = counter[4:1];
+  assign _09_[0] = _08_[0];
+  assign _08_[4:1] = counter[4:1];
+  assign _00_[49:1] = data_in[49:1];
 endmodule
 
 (* dynports =  1  *)
@@ -610,13 +613,353 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* src = "dut.sv:31.38-31.45" *)
   output [49:0] bus_out;
   wire [49:0] bus_out;
+  wire _000_;
+  wire _001_;
+  wire _002_;
+  wire _003_;
+  wire _004_;
+  wire _005_;
+  wire _006_;
+  wire _007_;
+  wire _008_;
+  wire _009_;
+  wire _010_;
+  wire _011_;
+  wire _012_;
+  wire _013_;
+  wire _014_;
+  wire _015_;
+  wire _016_;
+  wire _017_;
+  wire _018_;
+  wire _019_;
+  wire _020_;
+  wire _021_;
+  wire _022_;
+  wire _023_;
+  wire _024_;
+  wire _025_;
+  wire _026_;
+  wire _027_;
+  wire _028_;
+  wire _029_;
+  wire [31:0] \increment_data$func$dut.sv:47$7.$result ;
   (* src = "dut.sv:35.23-35.35" *)
   (* wiretype = "\\my_pkg::bus_transaction_t" *)
   wire [49:0] internal_bus;
+  \$_NOT_  _030_ (
+    .A(bus_in[18]),
+    .Y(\increment_data$func$dut.sv:47$7.$result [0])
+  );
+  \$_AND_  _031_ (
+    .A(bus_in[19]),
+    .B(bus_in[18]),
+    .Y(_000_)
+  );
+  \$_AND_  _032_ (
+    .A(bus_in[20]),
+    .B(_000_),
+    .Y(_001_)
+  );
+  \$_AND_  _033_ (
+    .A(bus_in[21]),
+    .B(_001_),
+    .Y(_002_)
+  );
+  \$_AND_  _034_ (
+    .A(bus_in[22]),
+    .B(_002_),
+    .Y(_003_)
+  );
+  \$_AND_  _035_ (
+    .A(bus_in[23]),
+    .B(_003_),
+    .Y(_004_)
+  );
+  \$_AND_  _036_ (
+    .A(bus_in[24]),
+    .B(_004_),
+    .Y(_005_)
+  );
+  \$_AND_  _037_ (
+    .A(bus_in[25]),
+    .B(_005_),
+    .Y(_006_)
+  );
+  \$_AND_  _038_ (
+    .A(bus_in[26]),
+    .B(_006_),
+    .Y(_007_)
+  );
+  \$_AND_  _039_ (
+    .A(bus_in[27]),
+    .B(_007_),
+    .Y(_008_)
+  );
+  \$_AND_  _040_ (
+    .A(bus_in[28]),
+    .B(_008_),
+    .Y(_009_)
+  );
+  \$_AND_  _041_ (
+    .A(bus_in[29]),
+    .B(_009_),
+    .Y(_010_)
+  );
+  \$_AND_  _042_ (
+    .A(bus_in[30]),
+    .B(_010_),
+    .Y(_011_)
+  );
+  \$_AND_  _043_ (
+    .A(bus_in[31]),
+    .B(_011_),
+    .Y(_012_)
+  );
+  \$_AND_  _044_ (
+    .A(bus_in[32]),
+    .B(_012_),
+    .Y(_013_)
+  );
+  \$_AND_  _045_ (
+    .A(bus_in[33]),
+    .B(_013_),
+    .Y(_014_)
+  );
+  \$_AND_  _046_ (
+    .A(bus_in[34]),
+    .B(_014_),
+    .Y(_015_)
+  );
+  \$_AND_  _047_ (
+    .A(bus_in[35]),
+    .B(_015_),
+    .Y(_016_)
+  );
+  \$_AND_  _048_ (
+    .A(bus_in[36]),
+    .B(_016_),
+    .Y(_017_)
+  );
+  \$_AND_  _049_ (
+    .A(bus_in[37]),
+    .B(_017_),
+    .Y(_018_)
+  );
+  \$_AND_  _050_ (
+    .A(bus_in[38]),
+    .B(_018_),
+    .Y(_019_)
+  );
+  \$_AND_  _051_ (
+    .A(bus_in[39]),
+    .B(_019_),
+    .Y(_020_)
+  );
+  \$_AND_  _052_ (
+    .A(bus_in[40]),
+    .B(_020_),
+    .Y(_021_)
+  );
+  \$_AND_  _053_ (
+    .A(bus_in[41]),
+    .B(_021_),
+    .Y(_022_)
+  );
+  \$_AND_  _054_ (
+    .A(bus_in[42]),
+    .B(_022_),
+    .Y(_023_)
+  );
+  \$_AND_  _055_ (
+    .A(bus_in[43]),
+    .B(_023_),
+    .Y(_024_)
+  );
+  \$_AND_  _056_ (
+    .A(bus_in[44]),
+    .B(_024_),
+    .Y(_025_)
+  );
+  \$_AND_  _057_ (
+    .A(bus_in[45]),
+    .B(_025_),
+    .Y(_026_)
+  );
+  \$_AND_  _058_ (
+    .A(bus_in[46]),
+    .B(_026_),
+    .Y(_027_)
+  );
+  \$_AND_  _059_ (
+    .A(bus_in[47]),
+    .B(_027_),
+    .Y(_028_)
+  );
+  \$_NAND_  _060_ (
+    .A(bus_in[48]),
+    .B(_028_),
+    .Y(_029_)
+  );
+  \$_XNOR_  _061_ (
+    .A(bus_in[49]),
+    .B(_029_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [31])
+  );
+  \$_XOR_  _062_ (
+    .A(bus_in[48]),
+    .B(_028_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [30])
+  );
+  \$_XOR_  _063_ (
+    .A(bus_in[47]),
+    .B(_027_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [29])
+  );
+  \$_XOR_  _064_ (
+    .A(bus_in[46]),
+    .B(_026_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [28])
+  );
+  \$_XOR_  _065_ (
+    .A(bus_in[45]),
+    .B(_025_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [27])
+  );
+  \$_XOR_  _066_ (
+    .A(bus_in[44]),
+    .B(_024_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [26])
+  );
+  \$_XOR_  _067_ (
+    .A(bus_in[43]),
+    .B(_023_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [25])
+  );
+  \$_XOR_  _068_ (
+    .A(bus_in[42]),
+    .B(_022_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [24])
+  );
+  \$_XOR_  _069_ (
+    .A(bus_in[41]),
+    .B(_021_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [23])
+  );
+  \$_XOR_  _070_ (
+    .A(bus_in[40]),
+    .B(_020_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [22])
+  );
+  \$_XOR_  _071_ (
+    .A(bus_in[39]),
+    .B(_019_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [21])
+  );
+  \$_XOR_  _072_ (
+    .A(bus_in[38]),
+    .B(_018_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [20])
+  );
+  \$_XOR_  _073_ (
+    .A(bus_in[37]),
+    .B(_017_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [19])
+  );
+  \$_XOR_  _074_ (
+    .A(bus_in[36]),
+    .B(_016_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [18])
+  );
+  \$_XOR_  _075_ (
+    .A(bus_in[35]),
+    .B(_015_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [17])
+  );
+  \$_XOR_  _076_ (
+    .A(bus_in[34]),
+    .B(_014_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [16])
+  );
+  \$_XOR_  _077_ (
+    .A(bus_in[33]),
+    .B(_013_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [15])
+  );
+  \$_XOR_  _078_ (
+    .A(bus_in[32]),
+    .B(_012_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [14])
+  );
+  \$_XOR_  _079_ (
+    .A(bus_in[31]),
+    .B(_011_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [13])
+  );
+  \$_XOR_  _080_ (
+    .A(bus_in[30]),
+    .B(_010_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [12])
+  );
+  \$_XOR_  _081_ (
+    .A(bus_in[29]),
+    .B(_009_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [11])
+  );
+  \$_XOR_  _082_ (
+    .A(bus_in[28]),
+    .B(_008_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [10])
+  );
+  \$_XOR_  _083_ (
+    .A(bus_in[27]),
+    .B(_007_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [9])
+  );
+  \$_XOR_  _084_ (
+    .A(bus_in[26]),
+    .B(_006_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [8])
+  );
+  \$_XOR_  _085_ (
+    .A(bus_in[25]),
+    .B(_005_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [7])
+  );
+  \$_XOR_  _086_ (
+    .A(bus_in[24]),
+    .B(_004_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [6])
+  );
+  \$_XOR_  _087_ (
+    .A(bus_in[23]),
+    .B(_003_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [5])
+  );
+  \$_XOR_  _088_ (
+    .A(bus_in[22]),
+    .B(_002_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [4])
+  );
+  \$_XOR_  _089_ (
+    .A(bus_in[21]),
+    .B(_001_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [3])
+  );
+  \$_XOR_  _090_ (
+    .A(bus_in[20]),
+    .B(_000_),
+    .Y(\increment_data$func$dut.sv:47$7.$result [2])
+  );
+  \$_XOR_  _091_ (
+    .A(bus_in[19]),
+    .B(bus_in[18]),
+    .Y(\increment_data$func$dut.sv:47$7.$result [1])
+  );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[0]  /* _00_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[0]  /* _092_ */ (
     .C(clk),
     .D(bus_in[0]),
     .Q(internal_bus[0]),
@@ -625,7 +968,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[1]  /* _01_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[1]  /* _093_ */ (
     .C(clk),
     .D(bus_in[1]),
     .Q(internal_bus[1]),
@@ -634,7 +977,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[2]  /* _02_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[2]  /* _094_ */ (
     .C(clk),
     .D(bus_in[2]),
     .Q(internal_bus[2]),
@@ -643,7 +986,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[3]  /* _03_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[3]  /* _095_ */ (
     .C(clk),
     .D(bus_in[3]),
     .Q(internal_bus[3]),
@@ -652,7 +995,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[4]  /* _04_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[4]  /* _096_ */ (
     .C(clk),
     .D(bus_in[4]),
     .Q(internal_bus[4]),
@@ -661,7 +1004,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[5]  /* _05_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[5]  /* _097_ */ (
     .C(clk),
     .D(bus_in[5]),
     .Q(internal_bus[5]),
@@ -670,7 +1013,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[6]  /* _06_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[6]  /* _098_ */ (
     .C(clk),
     .D(bus_in[6]),
     .Q(internal_bus[6]),
@@ -679,7 +1022,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[7]  /* _07_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[7]  /* _099_ */ (
     .C(clk),
     .D(bus_in[7]),
     .Q(internal_bus[7]),
@@ -688,7 +1031,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[8]  /* _08_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[8]  /* _100_ */ (
     .C(clk),
     .D(bus_in[8]),
     .Q(internal_bus[8]),
@@ -697,7 +1040,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[9]  /* _09_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[9]  /* _101_ */ (
     .C(clk),
     .D(bus_in[9]),
     .Q(internal_bus[9]),
@@ -706,7 +1049,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[10]  /* _10_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[10]  /* _102_ */ (
     .C(clk),
     .D(bus_in[10]),
     .Q(internal_bus[10]),
@@ -715,7 +1058,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[11]  /* _11_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[11]  /* _103_ */ (
     .C(clk),
     .D(bus_in[11]),
     .Q(internal_bus[11]),
@@ -724,7 +1067,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[12]  /* _12_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[12]  /* _104_ */ (
     .C(clk),
     .D(bus_in[12]),
     .Q(internal_bus[12]),
@@ -733,7 +1076,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[13]  /* _13_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[13]  /* _105_ */ (
     .C(clk),
     .D(bus_in[13]),
     .Q(internal_bus[13]),
@@ -742,7 +1085,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[14]  /* _14_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[14]  /* _106_ */ (
     .C(clk),
     .D(bus_in[14]),
     .Q(internal_bus[14]),
@@ -751,7 +1094,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[15]  /* _15_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[15]  /* _107_ */ (
     .C(clk),
     .D(bus_in[15]),
     .Q(internal_bus[15]),
@@ -760,7 +1103,7 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[16]  /* _16_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[16]  /* _108_ */ (
     .C(clk),
     .D(bus_in[16]),
     .Q(internal_bus[16]),
@@ -769,17 +1112,304 @@ module simple_package(clk, rst_n, bus_in, bus_out);
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:38.5-49.8" *)
-  \$_DFF_PN0_  \internal_bus_reg[17]  /* _17_ */ (
+  \$_DFF_PN0_  \internal_bus_reg[17]  /* _109_ */ (
     .C(clk),
     .D(bus_in[17]),
     .Q(internal_bus[17]),
     .R(rst_n)
   );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[18]  /* _110_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [0]),
+    .Q(internal_bus[18]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[19]  /* _111_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [1]),
+    .Q(internal_bus[19]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[20]  /* _112_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [2]),
+    .Q(internal_bus[20]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[21]  /* _113_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [3]),
+    .Q(internal_bus[21]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[22]  /* _114_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [4]),
+    .Q(internal_bus[22]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[23]  /* _115_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [5]),
+    .Q(internal_bus[23]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[24]  /* _116_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [6]),
+    .Q(internal_bus[24]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[25]  /* _117_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [7]),
+    .Q(internal_bus[25]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[26]  /* _118_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [8]),
+    .Q(internal_bus[26]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[27]  /* _119_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [9]),
+    .Q(internal_bus[27]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[28]  /* _120_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [10]),
+    .Q(internal_bus[28]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[29]  /* _121_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [11]),
+    .Q(internal_bus[29]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[30]  /* _122_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [12]),
+    .Q(internal_bus[30]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[31]  /* _123_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [13]),
+    .Q(internal_bus[31]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[32]  /* _124_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [14]),
+    .Q(internal_bus[32]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[33]  /* _125_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [15]),
+    .Q(internal_bus[33]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[34]  /* _126_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [16]),
+    .Q(internal_bus[34]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[35]  /* _127_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [17]),
+    .Q(internal_bus[35]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[36]  /* _128_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [18]),
+    .Q(internal_bus[36]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[37]  /* _129_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [19]),
+    .Q(internal_bus[37]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[38]  /* _130_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [20]),
+    .Q(internal_bus[38]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[39]  /* _131_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [21]),
+    .Q(internal_bus[39]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[40]  /* _132_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [22]),
+    .Q(internal_bus[40]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[41]  /* _133_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [23]),
+    .Q(internal_bus[41]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[42]  /* _134_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [24]),
+    .Q(internal_bus[42]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[43]  /* _135_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [25]),
+    .Q(internal_bus[43]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[44]  /* _136_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [26]),
+    .Q(internal_bus[44]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[45]  /* _137_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [27]),
+    .Q(internal_bus[45]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[46]  /* _138_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [28]),
+    .Q(internal_bus[46]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[47]  /* _139_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [29]),
+    .Q(internal_bus[47]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[48]  /* _140_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [30]),
+    .Q(internal_bus[48]),
+    .R(rst_n)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:38.5-49.8" *)
+  \$_DFF_PN0_  \internal_bus_reg[49]  /* _141_ */ (
+    .C(clk),
+    .D(\increment_data$func$dut.sv:47$7.$result [31]),
+    .Q(internal_bus[49]),
+    .R(rst_n)
+  );
   \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000  sub_inst (
     .clk(clk),
-    .data_in({ 32'h00000000, internal_bus[17:0] }),
+    .data_in(internal_bus),
     .data_out(bus_out),
     .rst_n(rst_n)
   );
-  assign internal_bus[49:18] = 32'd0;
 endmodule

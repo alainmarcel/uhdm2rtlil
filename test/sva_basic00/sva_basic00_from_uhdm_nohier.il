@@ -39,7 +39,6 @@ module \top
   attribute \src "dut.sv:2.2-3.40"
   attribute \always_ff 1
   process $proc$dut.sv:2$1
-    assign $0\consequent \consequent
     assign $0\consequent $auto$rtlil.cc:3390:Mux$3 [0]
     sync posedge \clk
       update \consequent $0\consequent

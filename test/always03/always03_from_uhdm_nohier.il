@@ -55,10 +55,7 @@ module \always03
   attribute \src "dut.sv:7.1-20.4"
   attribute \always_ff 1
   process $proc$dut.sv:7$1
-    assign $0\out1 \out1
-    assign $0\out2 \out2
     assign $0\out3 \out3
-    assign $0\out1 \in1
     assign $0\out2 \out1
     assign $0\out1 $auto$rtlil.cc:3304:Xor$3
     attribute \src "dut.sv:9.2-10.16"

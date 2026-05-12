@@ -73,12 +73,12 @@ module \test
   wire $logic_not$dut.sv:33.17-33.23$2_Y
   attribute \src "dut.sv:35.16-35.22"
   wire $logic_not$dut.sv:35.16-35.22$3_Y
-  wire $auto$expression.cpp:3638:import_bit_select$1
-  wire $auto$expression.cpp:3641:import_bit_select$3
-  wire $auto$expression.cpp:3638:import_bit_select$5
-  wire $auto$expression.cpp:3641:import_bit_select$7
-  wire $auto$expression.cpp:3638:import_bit_select$9
-  wire $auto$expression.cpp:3641:import_bit_select$11
+  wire $auto$expression.cpp:3662:import_bit_select$1
+  wire $auto$expression.cpp:3665:import_bit_select$3
+  wire $auto$expression.cpp:3662:import_bit_select$5
+  wire $auto$expression.cpp:3665:import_bit_select$7
+  wire $auto$expression.cpp:3662:import_bit_select$9
+  wire $auto$expression.cpp:3665:import_bit_select$11
   attribute \src "dut.sv:27.1-31.4"
   wire $0\o_reg
   attribute \src "dut.sv:27.1-31.4"
@@ -123,7 +123,7 @@ module \test
     connect \A \o_reg
     connect \Y $logic_not$dut.sv:35.16-35.22$3_Y
   end
-  cell $eq $auto$expression.cpp:3639:import_bit_select$2
+  cell $eq $auto$expression.cpp:3663:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -131,16 +131,16 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3638:import_bit_select$1
+    connect \Y $auto$expression.cpp:3662:import_bit_select$1
   end
-  cell $mux $auto$expression.cpp:3642:import_bit_select$4
+  cell $mux $auto$expression.cpp:3666:import_bit_select$4
     parameter \WIDTH 1
     connect \A \mw1[1]
     connect \B \mw1[0]
-    connect \S $auto$expression.cpp:3638:import_bit_select$1
-    connect \Y $auto$expression.cpp:3641:import_bit_select$3
+    connect \S $auto$expression.cpp:3662:import_bit_select$1
+    connect \Y $auto$expression.cpp:3665:import_bit_select$3
   end
-  cell $eq $auto$expression.cpp:3639:import_bit_select$6
+  cell $eq $auto$expression.cpp:3663:import_bit_select$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -148,16 +148,16 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3638:import_bit_select$5
+    connect \Y $auto$expression.cpp:3662:import_bit_select$5
   end
-  cell $mux $auto$expression.cpp:3642:import_bit_select$8
+  cell $mux $auto$expression.cpp:3666:import_bit_select$8
     parameter \WIDTH 1
     connect \A \mr1[1]
     connect \B \mr1[0]
-    connect \S $auto$expression.cpp:3638:import_bit_select$5
-    connect \Y $auto$expression.cpp:3641:import_bit_select$7
+    connect \S $auto$expression.cpp:3662:import_bit_select$5
+    connect \Y $auto$expression.cpp:3665:import_bit_select$7
   end
-  cell $eq $auto$expression.cpp:3639:import_bit_select$10
+  cell $eq $auto$expression.cpp:3663:import_bit_select$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -165,14 +165,14 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3638:import_bit_select$9
+    connect \Y $auto$expression.cpp:3662:import_bit_select$9
   end
-  cell $mux $auto$expression.cpp:3642:import_bit_select$12
+  cell $mux $auto$expression.cpp:3666:import_bit_select$12
     parameter \WIDTH 1
     connect \A \ml1[1]
     connect \B \ml1[0]
-    connect \S $auto$expression.cpp:3638:import_bit_select$9
-    connect \Y $auto$expression.cpp:3641:import_bit_select$11
+    connect \S $auto$expression.cpp:3662:import_bit_select$9
+    connect \Y $auto$expression.cpp:3665:import_bit_select$11
   end
   attribute \src "dut.sv:29.12-29.18"
   cell $logic_not $logic_not$dut.sv:29.12-29.18$4
@@ -200,9 +200,6 @@ module \test
   attribute \src "dut.sv:66.1-71.4"
   attribute \always_ff 1
   process $proc$dut.sv:66$17
-    assign $0\ml3[0] \ml3[0]
-    assign $0\mr3[0] \mr3[0]
-    assign $0\mw3[0] \mw3[0]
     assign $0\mr3[0] 1'0
     assign $0\mw3[0] 1'0
     assign $0\ml3[0] 1'0
@@ -214,8 +211,6 @@ module \test
   attribute \src "dut.sv:27.1-31.4"
   attribute \always_ff 1
   process $proc$dut.sv:27$15
-    assign $0\l_reg \l_reg
-    assign $0\o_reg \o_reg
     assign $0\o_reg $logic_not$dut.sv:29.12-29.18$4_Y
     assign $0\l_reg $logic_not$dut.sv:30.12-30.18$5_Y
     sync posedge \i_clk
@@ -225,9 +220,6 @@ module \test
   attribute \src "dut.sv:59.1-64.4"
   attribute \always_ff 1
   process $proc$dut.sv:59$16
-    assign $0\ml2[0] \ml2[0]
-    assign $0\mr2[0] \mr2[0]
-    assign $0\mw2[0] \mw2[0]
     assign $0\mr2[0] 1'0
     assign $0\mw2[0] 1'0
     assign $0\ml2[0] 1'0
@@ -239,9 +231,9 @@ module \test
   connect \l_reg $logic_not$dut.sv:25.16-25.22$1_Y
   connect \o_wire $logic_not$dut.sv:33.17-33.23$2_Y
   connect \l_reg $logic_not$dut.sv:35.16-35.22$3_Y
-  connect \o_mw $auto$expression.cpp:3641:import_bit_select$3
-  connect \o_mr $auto$expression.cpp:3641:import_bit_select$7
-  connect \o_ml $auto$expression.cpp:3641:import_bit_select$11
+  connect \o_mw $auto$expression.cpp:3665:import_bit_select$3
+  connect \o_mr $auto$expression.cpp:3665:import_bit_select$7
+  connect \o_ml $auto$expression.cpp:3665:import_bit_select$11
   connect \mw1[1] 1'1
   connect \ml1[1] 1'1
 end
