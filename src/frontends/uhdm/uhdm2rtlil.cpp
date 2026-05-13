@@ -1672,14 +1672,30 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             }
                         }
                     } else {
-                        log("UHDM: Array_var '%s' has whole-array or multi-dim access, treating as single 1-bit wire\n", array_name.c_str());
+                        // No direct Ranges() on the array_var, OR multi-dim
+                        // unpacked.  Fall back to the var's typespec for the
+                        // flat width (e.g. `typedef bar_t foobar_t [2];
+                        // foobar_t fb` — the ranges live in the array_typespec
+                        // chain, not on the var).  When the typespec yields a
+                        // non-trivial width, create a wire of that width
+                        // instead of a degenerate 1-bit one.
+                        int width = 1;
+                        if (auto rts = array_var->Typespec()) {
+                            if (auto ats = rts->Actual_typespec()) {
+                                int w = get_width_from_typespec(ats, uhdm_module);
+                                if (w > 0) width = w;
+                            }
+                        }
+                        log("UHDM: Array_var '%s' has whole-array or multi-dim access, creating %d-bit wire (from typespec)\n",
+                            array_name.c_str(), width);
                         RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
                         if (!module->wire(wire_id)) {
-                            RTLIL::Wire* wire = module->addWire(wire_id, 1);
+                            RTLIL::Wire* wire = module->addWire(wire_id, width);
                             wire_map[var] = wire;
                             name_map[array_name] = wire;
                             add_src_attribute(wire->attributes, var);
-                            log("UHDM: Created wire '%s' for array_var\n", wire->name.c_str());
+                            log("UHDM: Created wire '%s' (width=%d) for array_var\n",
+                                wire->name.c_str(), width);
                         }
                     }
                 }

@@ -138,12 +138,12 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:8.21-8.25"
-  process $auto$uhdm2rtlil.cpp:2035:import_module$1
+  process $auto$uhdm2rtlil.cpp:2051:import_module$1
     sync always
       update \int2 2'10
   end
   attribute \src "dut.sv:9.20-9.24"
-  process $auto$uhdm2rtlil.cpp:2035:import_module$2
+  process $auto$uhdm2rtlil.cpp:2051:import_module$2
     sync always
       update \int4 4'1111
   end

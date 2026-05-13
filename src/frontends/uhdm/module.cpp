@@ -26,6 +26,7 @@
 #include <uhdm/long_int_typespec.h>
 #include <uhdm/byte_typespec.h>
 #include <uhdm/bit_typespec.h>
+#include <uhdm/struct_typespec.h>
 YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
@@ -1813,6 +1814,49 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     return max_width;
                 }
             }
+        }
+
+        // Handle struct_typespec: width = sum of member widths.  Without
+        // this case `ExprEval::size()` returns the count of members (or
+        // zero) instead of the total flattened bit width.  Recurses into
+        // each member's typespec so nested arrays/structs are accounted
+        // for (e.g. `struct { foo_t f [7]; }` is 7 * 8 = 56 bits).
+        if (typespec->UhdmType() == uhdmstruct_typespec) {
+            auto struct_ts = dynamic_cast<const UHDM::struct_typespec*>(typespec);
+            if (struct_ts && struct_ts->Members()) {
+                int total = 0;
+                for (auto member : *struct_ts->Members()) {
+                    if (auto ref_ts = member->Typespec()) {
+                        if (auto actual_ts = ref_ts->Actual_typespec()) {
+                            total += get_width_from_typespec(actual_ts, inst);
+                        }
+                    }
+                }
+                if (total > 0) {
+                    log("UHDM: struct_typespec width = %d (sum of members)\n", total);
+                    return total;
+                }
+            }
+        }
+
+        // Handle bit_typespec with Range (e.g. `bit [7:0]`): width = range size.
+        if (typespec->UhdmType() == uhdmbit_typespec) {
+            auto bit_ts = dynamic_cast<const UHDM::bit_typespec*>(typespec);
+            if (bit_ts && bit_ts->Ranges() && !bit_ts->Ranges()->empty()) {
+                int total = 1;
+                for (auto r : *bit_ts->Ranges()) {
+                    if (r->Left_expr() && r->Right_expr()) {
+                        RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                        RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                        if (ls.is_fully_const() && rs.is_fully_const())
+                            total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                    }
+                }
+                log("UHDM: bit_typespec width = %d\n", total);
+                return total;
+            }
+            // No range → single bit.
+            return 1;
         }
 
         // Handle logic_typespec with Elem_typespec (e.g., reg8_t [0:3] → array of 8-bit elements)
