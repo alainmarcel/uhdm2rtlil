@@ -3,4 +3,11 @@
 	url = https://github.com/chipsalliance/Surelog.git
 [submodule "third_party/yosys"]
 	path = third_party/yosys
-	url = https://github.com/YosysHQ/yosys.git
+	url = https://github.com/alainmarcel/yosys.git
+	# Tracking a fork branch (v0.64 + one local patch) until upstream
+	# Yosys merges the `write_verilog` signedness fix.  See:
+	#   - upstream PR (placeholder):     YosysHQ/yosys#TBD
+	#   - tracking branch on the fork:   v0.64-write-verilog-signed-port
+	#   - related downstream issue:      chipsalliance/synlig#2425
+	# When upstream merges and uhdm2rtlil bumps Yosys past v0.64,
+	# revert this to https://github.com/YosysHQ/yosys.git.

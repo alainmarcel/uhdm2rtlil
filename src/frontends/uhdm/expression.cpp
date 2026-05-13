@@ -4193,6 +4193,119 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             log("    hier_path has no Path_elems\n");
     }
 
+    // Handle multi-dim packed-array element + scalar field access:
+    // sig[i0][i1]...[iN-1].field — Path_elems pattern
+    // [bit_select × N, ref_obj].  Walks all bit_selects to compute a flat
+    // element offset against the packed_array_var's Ranges, then offsets
+    // by the struct field within the element.  Returns the slice on the
+    // flat base wire.  Drives e.g. `a[0][0].min_v` in int_port_signed.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        auto& pelems_md = *uhdm_hier->Path_elems();
+        size_t nelems = pelems_md.size();
+        // All but the last element must be bit_select; last must be ref_obj.
+        bool shape_ok = pelems_md[nelems - 1]->UhdmType() == uhdmref_obj;
+        for (size_t i = 0; shape_ok && i + 1 < nelems; i++)
+            shape_ok = (pelems_md[i]->UhdmType() == uhdmbit_select);
+        if (shape_ok && nelems >= 3) {
+            const bit_select* first_bs = any_cast<const bit_select*>(pelems_md[0]);
+            const ref_obj*    field_r  = any_cast<const ref_obj*>(pelems_md[nelems - 1]);
+            std::string base_name = std::string(first_bs->VpiName());
+            std::string field_name = std::string(field_r->VpiName());
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                                          ? name_map[base_name]
+                                          : nullptr;
+            // Resolve the packed_array_var via the first bit_select's Actual_group().
+            const UHDM::packed_array_var* pav = nullptr;
+            if (first_bs->Actual_group() &&
+                first_bs->Actual_group()->UhdmType() == uhdmpacked_array_var) {
+                pav = any_cast<const UHDM::packed_array_var*>(first_bs->Actual_group());
+            }
+            const UHDM::struct_typespec* st = nullptr;
+            int elem_width = 0;
+            std::vector<std::pair<int,int>> range_lr;  // (left, right) per dim
+            if (pav) {
+                if (pav->Ranges()) {
+                    for (auto r : *pav->Ranges()) {
+                        if (r->Left_expr() && r->Right_expr()) {
+                            RTLIL::SigSpec ls = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rs = import_expression(r->Right_expr(), input_mapping);
+                            if (ls.is_fully_const() && rs.is_fully_const())
+                                range_lr.push_back({ls.as_int(), rs.as_int()});
+                        }
+                    }
+                }
+                if (pav->Elements() && !pav->Elements()->empty()) {
+                    const any* elem0 = (*pav->Elements())[0];
+                    if (auto sv = dynamic_cast<const UHDM::struct_var*>(elem0)) {
+                        if (auto rts = sv->Typespec()) {
+                            if (auto ats = rts->Actual_typespec()) {
+                                if (ats->UhdmType() == uhdmstruct_typespec)
+                                    st = any_cast<const UHDM::struct_typespec*>(ats);
+                            }
+                        }
+                    }
+                }
+                if (st && st->Members()) {
+                    elem_width = 0;
+                    for (auto m : *st->Members())
+                        if (auto mts = m->Typespec())
+                            if (auto ats = mts->Actual_typespec())
+                                elem_width += get_width_from_typespec(ats, inst);
+                }
+            }
+            if (base_wire && st && elem_width > 0 &&
+                range_lr.size() == nelems - 1) {
+                // Compute the flat element offset using row-major layout:
+                // offset = ((((i0 - lo0) * size1) + (i1 - lo1)) * size2 + ...)
+                // For our layout the leftmost dim is the outer/slowest.
+                int64_t lin_idx = 0;
+                bool all_const = true;
+                for (size_t d = 0; d < nelems - 1; d++) {
+                    const bit_select* bs = any_cast<const bit_select*>(pelems_md[d]);
+                    RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+                    if (!idx_sig.is_fully_const()) { all_const = false; break; }
+                    int idx = idx_sig.as_const().as_int();
+                    int lo = std::min(range_lr[d].first, range_lr[d].second);
+                    int hi = std::max(range_lr[d].first, range_lr[d].second);
+                    int size = hi - lo + 1;
+                    lin_idx = lin_idx * size + (idx - lo);
+                }
+                if (all_const) {
+                    int field_offset = 0, field_width = 0;
+                    bool found_field = false;
+                    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                        auto m = (*st->Members())[i];
+                        int mw = 0;
+                        if (auto mts = m->Typespec())
+                            if (auto ats = mts->Actual_typespec())
+                                mw = get_width_from_typespec(ats, inst);
+                        if (std::string(m->VpiName()) == field_name) {
+                            field_width = mw;
+                            found_field = true;
+                            break;
+                        }
+                        field_offset += mw;
+                    }
+                    if (found_field && field_width > 0) {
+                        int abs_start = (int)lin_idx * elem_width + field_offset;
+                        if (abs_start >= 0 &&
+                            abs_start + field_width <= base_wire->width) {
+                            if (mode_debug)
+                                log("    Multi-dim array struct field: %s[lin=%lld]"
+                                    ".%s -> %s[%d+:%d]\n",
+                                    base_name.c_str(), (long long)lin_idx,
+                                    field_name.c_str(),
+                                    base_wire->name.c_str(),
+                                    abs_start, field_width);
+                            return RTLIL::SigSpec(base_wire)
+                                .extract(abs_start, field_width);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Handle unpacked-/packed-array element + scalar struct field access:
     // sig[i].field  — Path_elems pattern [bit_select(sig[i]), ref_obj(field)].
     // Returns the bit slice of the per-element wire `\sig[i]` corresponding
