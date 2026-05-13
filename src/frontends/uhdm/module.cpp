@@ -7,6 +7,7 @@
 
 #include "uhdm2rtlil.h"
 #include <uhdm/vpi_visitor.h>
+#include <uhdm/packed_array_var.h>
 #include <uhdm/gen_scope.h>
 #include <cctype>
 #include <uhdm/gen_scope_array.h>
@@ -1561,6 +1562,37 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             } else {
                 log("UHDM: Net has no typespec\n");
             }
+        }
+
+        // packed_array_var may carry its dims either as Ranges()/Elements()
+        // directly on the var (anonymous-struct form: `T [N-1:0][M-1:0] a`)
+        // OR as a packed_array_typespec via Typespec() (typedef'd form:
+        // `typedef u [0:1] yeah; yeah a;`).  Pick the direct-dims path
+        // when present, otherwise fall through to the generic typespec
+        // handler below.
+        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(uhdm_obj)) {
+            bool has_direct = (pav->Ranges() && !pav->Ranges()->empty()) &&
+                              (pav->Elements() && !pav->Elements()->empty());
+            if (has_direct) {
+                log("UHDM: Found packed_array_var with direct ranges/elements\n");
+                int range_total = 1;
+                for (auto r : *pav->Ranges()) {
+                    if (r->Left_expr() && r->Right_expr()) {
+                        RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                        RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                        if (ls.is_fully_const() && rs.is_fully_const()) {
+                            range_total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                        }
+                    }
+                }
+                const any* elem0 = (*pav->Elements())[0];
+                int elem_width = get_width(elem0, inst);
+                int total = range_total * elem_width;
+                log("UHDM: packed_array_var width = %d (ranges=%d, elem_w=%d)\n",
+                    total, range_total, elem_width);
+                return total;
+            }
+            // else: fall through to the generic `variables` Typespec path below.
         }
 
         // Check if it's a net and try to get typespec
