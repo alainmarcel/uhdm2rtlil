@@ -13,7 +13,7 @@ module \top_properties
   wire input 4 \ready
   attribute \src "dut.sv:22.2-22.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$1
+  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$1
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -28,7 +28,7 @@ module \top_properties
   end
   attribute \src "dut.sv:26.2-26.61"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2613:import_module$2
+  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$2
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

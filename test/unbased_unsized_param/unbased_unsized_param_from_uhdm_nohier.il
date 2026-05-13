@@ -16,15 +16,15 @@ module \set_param
   parameter \VALUE 0
   attribute \src "dut.sv:11.25-11.28"
   wire width 64 output 1 \out
-  wire width 64 $auto$module.cpp:919:import_continuous_assign$1
-  cell $pos $auto$module.cpp:920:import_continuous_assign$2
+  wire width 64 $auto$module.cpp:920:import_continuous_assign$1
+  cell $pos $auto$module.cpp:921:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 64
     connect \A 0
-    connect \Y $auto$module.cpp:919:import_continuous_assign$1
+    connect \Y $auto$module.cpp:920:import_continuous_assign$1
   end
-  connect \out $auto$module.cpp:919:import_continuous_assign$1
+  connect \out $auto$module.cpp:920:import_continuous_assign$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:16.1-84.10"
@@ -101,8 +101,8 @@ module \top
   wire width 64 \o15
   attribute \src "dut.sv:36.24-36.27"
   wire width 64 \o16
-  wire width 64 $auto$module.cpp:919:import_continuous_assign$3
-  wire width 64 $auto$module.cpp:919:import_continuous_assign$5
+  wire width 64 $auto$module.cpp:920:import_continuous_assign$3
+  wire width 64 $auto$module.cpp:920:import_continuous_assign$5
   wire $auto$rtlil.cc:3311:Eqx$9
   wire $auto$process.cpp:75:import_immediate_assert$10
   wire $auto$rtlil.cc:3311:Eqx$13
@@ -143,19 +143,19 @@ module \top
   wire $auto$process.cpp:75:import_immediate_assert$82
   wire $auto$rtlil.cc:3311:Eqx$85
   wire $auto$process.cpp:75:import_immediate_assert$86
-  cell $pos $auto$module.cpp:920:import_continuous_assign$4
+  cell $pos $auto$module.cpp:921:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'x
-    connect \Y $auto$module.cpp:919:import_continuous_assign$3
+    connect \Y $auto$module.cpp:920:import_continuous_assign$3
   end
-  cell $pos $auto$module.cpp:920:import_continuous_assign$6
+  cell $pos $auto$module.cpp:921:import_continuous_assign$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'zzz
-    connect \Y $auto$module.cpp:919:import_continuous_assign$5
+    connect \Y $auto$module.cpp:920:import_continuous_assign$5
   end
   cell $eqx $eqx$dut.sv:62$8
     parameter \A_SIGNED 0
@@ -735,8 +735,8 @@ module \top
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
-  connect \o07 $auto$module.cpp:919:import_continuous_assign$3
-  connect \o08 $auto$module.cpp:919:import_continuous_assign$5
+  connect \o07 $auto$module.cpp:920:import_continuous_assign$3
+  connect \o08 $auto$module.cpp:920:import_continuous_assign$5
   connect \o01_o \o01
   connect \o02_o \o02
   connect \o03_o \o03

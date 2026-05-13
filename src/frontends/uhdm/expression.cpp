@@ -4193,6 +4193,131 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             log("    hier_path has no Path_elems\n");
     }
 
+    // Handle unpacked-array-of-struct element + array-member element access:
+    // arr[i].f[j]  where `arr` is an array_var with array_typespec wrapping a
+    // struct_typespec, and the struct member `f` is itself an unpacked array.
+    // UHDM models this as Path_elems = [bit_select(arr[i]), bit_select(.f[j])]
+    // (the second bit_select's VpiName is the struct field name, not the
+    // base).  Resolves to the flat bit slice
+    //
+    //   base_wire[ (i - low0)*elem_w + field_off + (j - lowF)*elem_f_w +: elem_f_w ]
+    //
+    // Drives `fb[0].f[0]` in unpacked_struct_array_typedef.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pelems_aa = *uhdm_hier->Path_elems();
+        if (pelems_aa[0]->UhdmType() == uhdmbit_select &&
+            pelems_aa[1]->UhdmType() == uhdmbit_select) {
+            const bit_select* base_bs  = any_cast<const bit_select*>(pelems_aa[0]);
+            const bit_select* field_bs = any_cast<const bit_select*>(pelems_aa[1]);
+            std::string base_name = std::string(base_bs->VpiName());
+            std::string field_name = std::string(field_bs->VpiName());
+            if (base_name != field_name && base_bs->VpiIndex() && field_bs->VpiIndex()) {
+                RTLIL::Wire* base_wire = name_map.count(base_name)
+                                              ? name_map[base_name]
+                                              : nullptr;
+                // The first bit_select's Actual_group is the array_var; chase
+                // the typespec chain array_typespec -> struct_typespec to find
+                // the named member and its inner array_typespec.
+                const UHDM::array_var* av = nullptr;
+                if (base_bs->Actual_group() &&
+                    base_bs->Actual_group()->UhdmType() == uhdmarray_var)
+                    av = any_cast<const UHDM::array_var*>(base_bs->Actual_group());
+                const UHDM::array_typespec* outer_ats = nullptr;
+                const UHDM::struct_typespec* st = nullptr;
+                if (av && av->Typespec()) {
+                    if (auto ats = av->Typespec()->Actual_typespec()) {
+                        if (ats->UhdmType() == uhdmarray_typespec) {
+                            outer_ats = any_cast<const UHDM::array_typespec*>(ats);
+                            if (outer_ats->Elem_typespec()) {
+                                if (auto et = outer_ats->Elem_typespec()->Actual_typespec()) {
+                                    if (et->UhdmType() == uhdmstruct_typespec)
+                                        st = any_cast<const UHDM::struct_typespec*>(et);
+                                }
+                            }
+                        }
+                    }
+                }
+                RTLIL::SigSpec base_idx = import_expression(base_bs->VpiIndex(), input_mapping);
+                RTLIL::SigSpec field_idx = import_expression(field_bs->VpiIndex(), input_mapping);
+                if (base_wire && outer_ats && st && st->Members() &&
+                    base_idx.is_fully_const() && field_idx.is_fully_const()) {
+                    int i_idx = base_idx.as_const().as_int();
+                    int j_idx = field_idx.as_const().as_int();
+                    // Outer (foobar_t) bounds.
+                    int outer_low = 0;
+                    int elem_w = 0;
+                    if (outer_ats->Ranges() && !outer_ats->Ranges()->empty()) {
+                        auto r = (*outer_ats->Ranges())[0];
+                        RTLIL::SigSpec ls = import_expression(r->Left_expr(), input_mapping);
+                        RTLIL::SigSpec rs = import_expression(r->Right_expr(), input_mapping);
+                        if (ls.is_fully_const() && rs.is_fully_const())
+                            outer_low = std::min(ls.as_int(), rs.as_int());
+                    }
+                    // Element (bar_t) width = sum of struct member widths.
+                    for (auto m : *st->Members()) {
+                        if (auto mts = m->Typespec())
+                            if (auto ats = mts->Actual_typespec())
+                                elem_w += get_width_from_typespec(ats, inst);
+                    }
+                    // Walk struct members for the matching field; capture its
+                    // bit offset (from LSB of the struct, accumulating
+                    // widths in reverse — last member = LSB) and its
+                    // typespec (expected to be an inner array_typespec).
+                    int field_off = 0;
+                    const UHDM::array_typespec* inner_ats = nullptr;
+                    bool found_field = false;
+                    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                        auto m = (*st->Members())[i];
+                        int mw = 0;
+                        const UHDM::typespec* mts_actual = nullptr;
+                        if (auto mts = m->Typespec())
+                            if (auto ats = mts->Actual_typespec()) {
+                                mts_actual = ats;
+                                mw = get_width_from_typespec(ats, inst);
+                            }
+                        if (std::string(m->VpiName()) == field_name) {
+                            if (mts_actual && mts_actual->UhdmType() == uhdmarray_typespec)
+                                inner_ats = any_cast<const UHDM::array_typespec*>(mts_actual);
+                            found_field = true;
+                            break;
+                        }
+                        field_off += mw;
+                    }
+                    if (found_field && inner_ats && inner_ats->Elem_typespec()) {
+                        int inner_low = 0;
+                        if (inner_ats->Ranges() && !inner_ats->Ranges()->empty()) {
+                            auto r = (*inner_ats->Ranges())[0];
+                            RTLIL::SigSpec ls = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rs = import_expression(r->Right_expr(), input_mapping);
+                            if (ls.is_fully_const() && rs.is_fully_const())
+                                inner_low = std::min(ls.as_int(), rs.as_int());
+                        }
+                        int elem_f_w = 0;
+                        if (auto eat = inner_ats->Elem_typespec()->Actual_typespec())
+                            elem_f_w = get_width_from_typespec(eat, inst);
+                        if (elem_w > 0 && elem_f_w > 0) {
+                            int abs_start =
+                                (i_idx - outer_low) * elem_w + field_off +
+                                (j_idx - inner_low) * elem_f_w;
+                            if (abs_start >= 0 &&
+                                abs_start + elem_f_w <= base_wire->width) {
+                                if (mode_debug)
+                                    log("    Array-of-struct + array-member: "
+                                        "%s[%d].%s[%d] -> %s[%d+:%d]\n",
+                                        base_name.c_str(), i_idx,
+                                        field_name.c_str(), j_idx,
+                                        base_wire->name.c_str(),
+                                        abs_start, elem_f_w);
+                                return RTLIL::SigSpec(base_wire)
+                                    .extract(abs_start, elem_f_w);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Handle multi-dim packed-array element + scalar field access:
     // sig[i0][i1]...[iN-1].field — Path_elems pattern
     // [bit_select × N, ref_obj].  Walks all bit_selects to compute a flat
