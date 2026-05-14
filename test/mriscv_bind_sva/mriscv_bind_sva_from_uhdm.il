@@ -21,7 +21,7 @@ module \true_dpram_sclk
   attribute \src "REG_FILE.v:25.13-25.16"
   attribute \reg 1
   wire width 32 \ram
-  wire $auto$expression.cpp:3913:import_bit_select$456
+  wire $auto$expression.cpp:3945:import_bit_select$456
   wire $auto$rtlil.cc:3262:ReduceBool$463
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \unused_bits "0"
@@ -30,7 +30,7 @@ module \true_dpram_sclk
   attribute \unused_bits "0"
   wire width 32 $0\q_b
   wire $auto$rtlil.cc:3262:ReduceBool$469
-  wire $auto$expression.cpp:3913:import_bit_select$466
+  wire $auto$expression.cpp:3945:import_bit_select$466
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
   cell $sdff $auto$ff.cc:337:slice$2384
@@ -40,7 +40,7 @@ module \true_dpram_sclk
     parameter \WIDTH 1
     connect \CLK \clk
     connect \SRST $auto$rtlil.cc:3262:ReduceBool$463
-    connect \D $auto$expression.cpp:3913:import_bit_select$456
+    connect \D $auto$expression.cpp:3945:import_bit_select$456
     connect \Q \q_a [0]
   end
   attribute \src "REG_FILE.v:28.2-36.5"
@@ -52,7 +52,7 @@ module \true_dpram_sclk
     parameter \WIDTH 1
     connect \CLK \clk
     connect \SRST $auto$rtlil.cc:3262:ReduceBool$469
-    connect \D $auto$expression.cpp:3913:import_bit_select$466
+    connect \D $auto$expression.cpp:3945:import_bit_select$466
     connect \Q \q_b [0]
   end
   attribute \src "REG_FILE.v:34.21-34.27"
@@ -64,7 +64,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:3913:import_bit_select$456
+    connect \Y $auto$expression.cpp:3945:import_bit_select$456
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:34$462
     parameter \A_SIGNED 0
@@ -76,7 +76,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:34$464
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:3913:import_bit_select$456 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:3945:import_bit_select$456 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$463
     connect \Y $0\q_a
   end
@@ -89,7 +89,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:3913:import_bit_select$466
+    connect \Y $auto$expression.cpp:3945:import_bit_select$466
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:35$468
     parameter \A_SIGNED 0
@@ -101,7 +101,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:35$470
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:3913:import_bit_select$466 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:3945:import_bit_select$466 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$469
     connect \Y $0\q_b
   end
@@ -123,7 +123,7 @@ module \true_dpram_sclk
     connect \CLK \clk
     connect \EN \we_a
     connect \D \data_a [0]
-    connect \Q $auto$expression.cpp:3913:import_bit_select$456
+    connect \Q $auto$expression.cpp:3945:import_bit_select$456
   end
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
@@ -522,7 +522,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   wire $procmux$1802_CMP
   wire $procmux$1930_Y
   wire $procmux$1847_Y
-  wire width 32 $auto$expression.cpp:2513:import_operation$535
+  wire width 32 $auto$expression.cpp:2545:import_operation$535
   wire $procmux$1927_Y
   wire $procmux$1701_CMP
   attribute \src "MEMORY_INTERFACE.v:227.43-227.61"
@@ -533,7 +533,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 $auto$rtlil.cc:3390:Mux$548
   wire width 4 $auto$rtlil.cc:3390:Mux$550
-  wire width 4 $auto$expression.cpp:2669:import_operation$551
+  wire width 4 $auto$expression.cpp:2701:import_operation$551
   wire width 4 $procmux$1766_Y
   wire width 4 $procmux$1797_Y
   wire $procmux$1921_Y
@@ -600,7 +600,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   attribute \full_case 1
   cell $mux $procmux$1746
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:2513:import_operation$535
+    connect \A $auto$expression.cpp:2545:import_operation$535
     connect \B \pc
     connect \S $procmux$1653_CTRL
     connect \Y \ARdata
@@ -1076,7 +1076,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:2669:import_operation$551
+    connect \Y $auto$expression.cpp:2701:import_operation$551
   end
   cell $add $add$MEMORY_INTERFACE.v:255$554
     parameter \A_SIGNED 0
@@ -1086,7 +1086,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2513:import_operation$535
+    connect \Y $auto$expression.cpp:2545:import_operation$535
   end
   attribute \src "MEMORY_INTERFACE.v:82.25-84.68"
   attribute \full_case 1
@@ -1643,7 +1643,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \WIDTH 4
     parameter \S_WIDTH 3
     connect \A 4'0000
-    connect \B { 4'1111 $auto$rtlil.cc:3390:Mux$550 $auto$expression.cpp:2669:import_operation$551 }
+    connect \B { 4'1111 $auto$rtlil.cc:3390:Mux$550 $auto$expression.cpp:2701:import_operation$551 }
     connect \S { $procmux$1701_CMP $procmux$1687_CMP $procmux$1673_CMP }
     connect \Y $procmux$1706_Y
   end
@@ -2753,8 +2753,8 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
   wire $auto$opt_dff.cc:251:make_patterns_logic$2354
   wire $auto$opt_dff.cc:234:make_patterns_logic$2352
   wire $auto$opt_dff.cc:275:combine_resets$2348
-  wire width 18 $auto$expression.cpp:2513:import_operation$684
-  wire width 18 $auto$expression.cpp:2513:import_operation$686
+  wire width 18 $auto$expression.cpp:2545:import_operation$684
+  wire width 18 $auto$expression.cpp:2545:import_operation$686
   wire $procmux$1441_CMP
   wire width 37 $procmux$1440_Y
   wire $procmux$1442_CMP
@@ -2806,7 +2806,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \Y_WIDTH 18
     connect \A \S [36:19]
     connect \B \Q1
-    connect \Y $auto$expression.cpp:2513:import_operation$684
+    connect \Y $auto$expression.cpp:2545:import_operation$684
   end
   cell $add $add$MULT.v:84$687
     parameter \A_SIGNED 0
@@ -2816,7 +2816,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \Y_WIDTH 18
     connect \A \S [36:19]
     connect \B \NQ1
-    connect \Y $auto$expression.cpp:2513:import_operation$686
+    connect \Y $auto$expression.cpp:2545:import_operation$686
   end
   attribute \src "MULT.v:88.5-91.8|MULT.v:73.4-92.11"
   attribute \full_case 1
@@ -2917,7 +2917,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \WIDTH 18
     parameter \S_WIDTH 2
     connect \A 18'x
-    connect \B { $auto$expression.cpp:2513:import_operation$684 $auto$expression.cpp:2513:import_operation$686 }
+    connect \B { $auto$expression.cpp:2545:import_operation$684 $auto$expression.cpp:2545:import_operation$686 }
     connect \S { $procmux$1443_CMP $procmux$1442_CMP }
     connect \Y $procmux$1455_Y
   end
@@ -3075,7 +3075,7 @@ module \Count
   attribute \src "IRQ.v:103.17-103.44"
   wire $eq$IRQ.v:103$60_Y
   wire $auto$opt_dff.cc:275:combine_resets$2332
-  wire width 32 $auto$expression.cpp:2513:import_operation$62
+  wire width 32 $auto$expression.cpp:2545:import_operation$62
   wire $auto$opt_dff.cc:251:make_patterns_logic$2320
   wire $auto$opt_dff.cc:234:make_patterns_logic$2318
   wire width 32 $procmux$1386_Y
@@ -3154,7 +3154,7 @@ module \Count
     parameter \Y_WIDTH 32
     connect \A \divcounter
     connect \B 1
-    connect \Y $auto$expression.cpp:2513:import_operation$62
+    connect \Y $auto$expression.cpp:2545:import_operation$62
   end
   cell \divM \instance_name
     connect \clk_in \clk_in
@@ -3167,7 +3167,7 @@ module \Count
   attribute \full_case 1
   cell $mux $procmux$1386
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:2513:import_operation$62
+    connect \A $auto$expression.cpp:2545:import_operation$62
     connect \B 0
     connect \S $eq$IRQ.v:103$60_Y
     connect \Y $procmux$1386_Y
@@ -5491,7 +5491,7 @@ module \IRQ
   wire $procmux$970_CMP
   wire $procmux$1039_Y
   wire width 32 $procmux$951_Y
-  wire width 32 $auto$expression.cpp:2513:import_operation$193
+  wire width 32 $auto$expression.cpp:2545:import_operation$193
   wire $procmux$978_CMP
   wire $procmux$994_Y
   wire $procmux$971_CMP
@@ -5692,7 +5692,7 @@ module \IRQ
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2513:import_operation$193
+    connect \Y $auto$expression.cpp:2545:import_operation$193
   end
   attribute \src "IRQ.v:244.5-247.36"
   attribute \always_ff 1
@@ -5705,7 +5705,7 @@ module \IRQ
     connect \CLK \clk
     connect \EN \instr_sel [8]
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2513:import_operation$193
+    connect \D $auto$expression.cpp:2545:import_operation$193
     connect \Q \pc_irq_reg
   end
   attribute \src "IRQ.v:208.5-212.28"
@@ -6297,7 +6297,7 @@ module \MULT
   wire \EnableMul
   attribute \src "MULT.v:130.7-130.12"
   wire \Ready
-  wire width 32 $auto$expression.cpp:2513:import_operation$329
+  wire width 32 $auto$expression.cpp:2545:import_operation$329
   wire width 32 $auto$rtlil.cc:3255:Not$332
   attribute \src "MULT.v:201.17-201.30"
   wire $eq$MULT.v:201$296_Y
@@ -6306,22 +6306,22 @@ module \MULT
   wire $auto$rtlil.cc:3322:LogicAnd$301
   attribute \src "MULT.v:201.47-201.60"
   wire $eq$MULT.v:201$302_Y
-  wire width 32 $auto$expression.cpp:2513:import_operation$333
+  wire width 32 $auto$expression.cpp:2545:import_operation$333
   wire $auto$rtlil.cc:3304:Xor$336
   wire $auto$rtlil.cc:3323:LogicOr$378
-  wire width 5 $auto$expression.cpp:2513:import_operation$381
+  wire width 5 $auto$expression.cpp:2545:import_operation$381
   attribute \src "MULT.v:231.17-231.26"
   wire $eq$MULT.v:231$364_Y
-  wire width 36 $auto$expression.cpp:2513:import_operation$314
+  wire width 36 $auto$expression.cpp:2545:import_operation$314
   wire $auto$rtlil.cc:3323:LogicOr$367
   attribute \src "MULT.v:211.2-223.5"
   wire $0\Done[0:0]
   wire width 64 $procmux$867_Y
-  wire width 64 $auto$expression.cpp:2513:import_operation$322
+  wire width 64 $auto$expression.cpp:2545:import_operation$322
   wire $procmux$900_CMP
   wire width 64 $auto$rtlil.cc:3255:Not$347
   wire $procmux$899_CMP
-  wire width 64 $auto$expression.cpp:2513:import_operation$348
+  wire width 64 $auto$expression.cpp:2545:import_operation$348
   attribute \src "MULT.v:235.17-235.34"
   wire $eq$MULT.v:235$375_Y
   attribute \src "MULT.v:227.7-227.15"
@@ -6331,10 +6331,10 @@ module \MULT
   wire $procmux$892_CMP
   wire width 32 $procmux$889_Y
   wire $auto$rtlil.cc:3323:LogicOr$356
-  wire width 5 $auto$expression.cpp:2513:import_operation$370
+  wire width 5 $auto$expression.cpp:2545:import_operation$370
   wire $procmux$884_CMP
   wire width 32 $procmux$881_Y
-  wire width 5 $auto$expression.cpp:2513:import_operation$359
+  wire width 5 $auto$expression.cpp:2545:import_operation$359
   wire width 32 $auto$rtlil.cc:3255:Not$328
   wire $auto$opt_reduce.cc:137:opt_pmux$2390
   cell $mux $mux$MULT.v:197$292
@@ -6436,7 +6436,7 @@ module \MULT
     parameter \Y_WIDTH 36
     connect \A \Z1
     connect \B { 2'00 \NZ2 [33:0] }
-    connect \Y $auto$expression.cpp:2513:import_operation$314
+    connect \Y $auto$expression.cpp:2545:import_operation$314
   end
   cell $add $add$MULT.v:204$317
     parameter \A_SIGNED 0
@@ -6444,7 +6444,7 @@ module \MULT
     parameter \A_WIDTH 36
     parameter \B_WIDTH 36
     parameter \Y_WIDTH 36
-    connect \A $auto$expression.cpp:2513:import_operation$314
+    connect \A $auto$expression.cpp:2545:import_operation$314
     connect \B { 2'00 \NZ0 [33:0] }
     connect \Y \Z1_Z2_Z0
   end
@@ -6477,7 +6477,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A { \Z2 [31:0] 32'00000000000000000000000000000000 }
     connect \B { \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 16'0000000000000000 }
-    connect \Y $auto$expression.cpp:2513:import_operation$322
+    connect \Y $auto$expression.cpp:2545:import_operation$322
   end
   cell $add $add$MULT.v:208$325
     parameter \A_SIGNED 0
@@ -6485,7 +6485,7 @@ module \MULT
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:2513:import_operation$322
+    connect \A $auto$expression.cpp:2545:import_operation$322
     connect \B { \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 }
     connect \Y \Out
   end
@@ -6526,7 +6526,7 @@ module \MULT
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3255:Not$332
     connect \B 1
-    connect \Y $auto$expression.cpp:2513:import_operation$333
+    connect \Y $auto$expression.cpp:2545:import_operation$333
   end
   cell $xor $xor$MULT.v:151$335
     parameter \A_SIGNED 0
@@ -6553,7 +6553,7 @@ module \MULT
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3255:Not$328
     connect \B 1
-    connect \Y $auto$expression.cpp:2513:import_operation$329
+    connect \Y $auto$expression.cpp:2545:import_operation$329
   end
   cell $add $add$MULT.v:192$342
     parameter \A_SIGNED 0
@@ -6590,7 +6590,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A $auto$rtlil.cc:3255:Not$347
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2513:import_operation$348
+    connect \Y $auto$expression.cpp:2545:import_operation$348
   end
   attribute \src "MULT.v:155.4-163.7|MULT.v:144.3-187.10"
   attribute \full_case 1
@@ -6634,7 +6634,7 @@ module \MULT
     connect \CLK \clk
     connect \EN \OutFSM1 [0]
     connect \SRST $auto$rtlil.cc:3323:LogicOr$356
-    connect \D $auto$expression.cpp:2513:import_operation$359
+    connect \D $auto$expression.cpp:2545:import_operation$359
     connect \Q \cont1
   end
   cell $add $add$MULT.v:228$360
@@ -6645,7 +6645,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont1
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2513:import_operation$359
+    connect \Y $auto$expression.cpp:2545:import_operation$359
   end
   attribute \src "MULT.v:145.4-154.7|MULT.v:144.3-187.10"
   attribute \full_case 1
@@ -6691,7 +6691,7 @@ module \MULT
     connect \CLK \clk
     connect \EN \OutFSM2 [0]
     connect \SRST $auto$rtlil.cc:3323:LogicOr$367
-    connect \D $auto$expression.cpp:2513:import_operation$370
+    connect \D $auto$expression.cpp:2545:import_operation$370
     connect \Q \cont2
   end
   cell $add $add$MULT.v:232$371
@@ -6702,7 +6702,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont2
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2513:import_operation$370
+    connect \Y $auto$expression.cpp:2545:import_operation$370
   end
   attribute \src "MULT.v:235.7-235.15"
   cell $not $eq$MULT.v:235$374
@@ -6744,7 +6744,7 @@ module \MULT
     connect \CLK \clk
     connect \EN \OutFSM3 [0]
     connect \SRST $auto$rtlil.cc:3323:LogicOr$378
-    connect \D $auto$expression.cpp:2513:import_operation$381
+    connect \D $auto$expression.cpp:2545:import_operation$381
     connect \Q \cont3
   end
   cell $add $add$MULT.v:236$382
@@ -6755,7 +6755,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont3
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2513:import_operation$381
+    connect \Y $auto$expression.cpp:2545:import_operation$381
   end
   cell $paramod\FSM_Booth\COUNT_BIT=s32'00000000000000000000000000000101\BITS_BOOTH=s32'00000000000000000000000000010000 \u1
     connect \clk \clk
@@ -6813,7 +6813,7 @@ module \MULT
   cell $mux $procmux$894
     parameter \WIDTH 32
     connect \A { 1'0 \rs1 [30:0] }
-    connect \B $auto$expression.cpp:2513:import_operation$329
+    connect \B $auto$expression.cpp:2545:import_operation$329
     connect \S \rs1 [31]
     connect \Y $procmux$889_Y
   end
@@ -6871,7 +6871,7 @@ module \MULT
   cell $mux $procmux$867
     parameter \WIDTH 64
     connect \A \Out
-    connect \B $auto$expression.cpp:2513:import_operation$348
+    connect \B $auto$expression.cpp:2545:import_operation$348
     connect \S \sig
     connect \Y $procmux$867_Y
   end
@@ -6880,7 +6880,7 @@ module \MULT
   cell $mux $procmux$881
     parameter \WIDTH 32
     connect \A { 1'0 \rs2 [30:0] }
-    connect \B $auto$expression.cpp:2513:import_operation$333
+    connect \B $auto$expression.cpp:2545:import_operation$333
     connect \S \rs2 [31]
     connect \Y $procmux$881_Y
   end
@@ -7033,17 +7033,17 @@ module \UTILITY
   wire $procmux$805_CMP
   wire $auto$opt_reduce.cc:137:opt_pmux$2090
   wire $procmux$827_CMP
-  wire width 64 $auto$expression.cpp:2513:import_operation$396
+  wire width 64 $auto$expression.cpp:2545:import_operation$396
   wire $procmux$826_CMP
   wire $procmux$825_CMP
   wire $procmux$824_CMP
   attribute \src "UTILITY.v:36.25-36.34"
   wire $eq$UTILITY.v:36$401_Y
-  wire width 64 $auto$expression.cpp:2513:import_operation$403
-  wire width 32 $auto$expression.cpp:2513:import_operation$405
+  wire width 64 $auto$expression.cpp:2545:import_operation$403
+  wire width 32 $auto$expression.cpp:2545:import_operation$405
   wire $procmux$790_CMP
   wire width 32 $procmux$789_Y
-  wire width 64 $auto$expression.cpp:2513:import_operation$410
+  wire width 64 $auto$expression.cpp:2545:import_operation$410
   wire $procmux$791_CMP
   wire $procmux$792_CMP
   wire $procmux$823_CMP
@@ -7052,7 +7052,7 @@ module \UTILITY
   wire $procmux$822_CMP
   attribute \src "UTILITY.v:87.21-87.46"
   wire $eq$UTILITY.v:87$417_Y
-  wire width 32 $auto$expression.cpp:2513:import_operation$419
+  wire width 32 $auto$expression.cpp:2545:import_operation$419
   wire $procmux$801_CMP
   cell $mux $mux$UTILITY.v:78$385
     parameter \WIDTH 32
@@ -7110,7 +7110,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \N_CYCLE
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2513:import_operation$396
+    connect \Y $auto$expression.cpp:2545:import_operation$396
   end
   attribute \src "UTILITY.v:55.13-55.75|UTILITY.v:53.9-61.16"
   attribute \full_case 1
@@ -7143,7 +7143,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \REAL_TIME
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2513:import_operation$403
+    connect \Y $auto$expression.cpp:2545:import_operation$403
   end
   cell $add $add$UTILITY.v:40$406
     parameter \A_SIGNED 0
@@ -7153,7 +7153,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \TIME
     connect \B 1
-    connect \Y $auto$expression.cpp:2513:import_operation$405
+    connect \Y $auto$expression.cpp:2545:import_operation$405
   end
   attribute \src "UTILITY.v:54.13-54.76|UTILITY.v:53.9-61.16"
   attribute \full_case 1
@@ -7175,7 +7175,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \N_INSTRUC
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2513:import_operation$410
+    connect \Y $auto$expression.cpp:2545:import_operation$410
   end
   cell $add $add$UTILITY.v:72$415
     parameter \A_SIGNED 0
@@ -7206,7 +7206,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2513:import_operation$419
+    connect \Y $auto$expression.cpp:2545:import_operation$419
   end
   cell $reduce_or $auto$opt_dff.cc:277:combine_resets$2191
     parameter \A_SIGNED 0
@@ -7247,7 +7247,7 @@ module \UTILITY
     parameter \WIDTH 32
     parameter \S_WIDTH 3
     connect \A \PC_ORIG
-    connect \B { $auto$expression.cpp:2513:import_operation$419 \PC_SALTOS \irr_ret }
+    connect \B { $auto$expression.cpp:2545:import_operation$419 \PC_SALTOS \irr_ret }
     connect \S { $procmux$792_CMP $procmux$791_CMP $procmux$790_CMP }
     connect \Y $procmux$789_Y
   end
@@ -7393,7 +7393,7 @@ module \UTILITY
     connect \CLK \clk
     connect \EN \enable_pc
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2513:import_operation$410
+    connect \D $auto$expression.cpp:2545:import_operation$410
     connect \Q \N_INSTRUC
   end
   attribute \src "UTILITY.v:31.5-41.12"
@@ -7407,7 +7407,7 @@ module \UTILITY
     connect \CLK \clk
     connect \EN $eq$UTILITY.v:36$401_Y
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2513:import_operation$403
+    connect \D $auto$expression.cpp:2545:import_operation$403
     connect \Q \REAL_TIME
   end
   attribute \src "UTILITY.v:31.5-41.12"
@@ -7419,7 +7419,7 @@ module \UTILITY
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST $auto$opt_dff.cc:275:combine_resets$2190
-    connect \D $auto$expression.cpp:2513:import_operation$405
+    connect \D $auto$expression.cpp:2545:import_operation$405
     connect \Q \TIME
   end
   attribute \src "UTILITY.v:24.5-28.12"
@@ -7431,7 +7431,7 @@ module \UTILITY
     parameter \WIDTH 64
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2513:import_operation$396
+    connect \D $auto$expression.cpp:2545:import_operation$396
     connect \Q \N_CYCLE
   end
   attribute \src "UTILITY.v:73.13-73.43|UTILITY.v:68.9-75.16"
@@ -7480,10 +7480,10 @@ module \divM
   attribute \src "IRQ.v:27.23-27.30"
   wire $logic_not$IRQ.v:27.23-27.30$38_Y
   wire $auto$rtlil.cc:3323:LogicOr$426
-  wire width 64 $auto$expression.cpp:2554:import_operation$427
+  wire width 64 $auto$expression.cpp:2586:import_operation$427
   attribute \src "IRQ.v:31.22-31.44"
   wire $eq$IRQ.v:31$429_Y
-  wire width 32 $auto$expression.cpp:2513:import_operation$431
+  wire width 32 $auto$expression.cpp:2545:import_operation$431
   attribute \src "IRQ.v:27.13-27.19"
   cell $logic_not $logic_not$IRQ.v:27.13-27.19$37
     parameter \A_SIGNED 0
@@ -7518,7 +7518,7 @@ module \divM
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \freq }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2554:import_operation$427
+    connect \Y $auto$expression.cpp:2586:import_operation$427
   end
   attribute \src "IRQ.v:31.22-31.44"
   cell $eq $eq$IRQ.v:31$430
@@ -7528,7 +7528,7 @@ module \divM
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \divcounter
-    connect \B $auto$expression.cpp:2554:import_operation$427
+    connect \B $auto$expression.cpp:2586:import_operation$427
     connect \Y $eq$IRQ.v:31$429_Y
   end
   cell $add $add$IRQ.v:35$432
@@ -7539,7 +7539,7 @@ module \divM
     parameter \Y_WIDTH 32
     connect \A \divcounter
     connect \B 1
-    connect \Y $auto$expression.cpp:2513:import_operation$431
+    connect \Y $auto$expression.cpp:2545:import_operation$431
   end
   attribute \src "IRQ.v:31.18-37.12"
   attribute \full_case 1
@@ -7566,7 +7566,7 @@ module \divM
     parameter \WIDTH 32
     connect \CLK \clk_in
     connect \SRST $auto$opt_dff.cc:275:combine_resets$2179
-    connect \D $auto$expression.cpp:2513:import_operation$431
+    connect \D $auto$expression.cpp:2545:import_operation$431
     connect \Q \divcounter
   end
   attribute \src "IRQ.v:26.5-37.12"
@@ -7994,8 +7994,8 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
   wire $auto$opt_dff.cc:251:make_patterns_logic$2163
   wire $auto$opt_dff.cc:234:make_patterns_logic$2161
   wire $auto$opt_dff.cc:275:combine_resets$2157
-  wire width 17 $auto$expression.cpp:2513:import_operation$656
-  wire width 17 $auto$expression.cpp:2513:import_operation$658
+  wire width 17 $auto$expression.cpp:2545:import_operation$656
+  wire width 17 $auto$expression.cpp:2545:import_operation$658
   wire $procmux$738_CMP
   wire width 35 $procmux$737_Y
   wire $procmux$739_CMP
@@ -8047,7 +8047,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \Q1
-    connect \Y $auto$expression.cpp:2513:import_operation$656
+    connect \Y $auto$expression.cpp:2545:import_operation$656
   end
   cell $add $add$MULT.v:84$659
     parameter \A_SIGNED 0
@@ -8057,7 +8057,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \NQ1
-    connect \Y $auto$expression.cpp:2513:import_operation$658
+    connect \Y $auto$expression.cpp:2545:import_operation$658
   end
   attribute \src "MULT.v:88.5-91.8|MULT.v:73.4-92.11"
   attribute \full_case 1
@@ -8158,7 +8158,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \WIDTH 17
     parameter \S_WIDTH 2
     connect \A 17'x
-    connect \B { $auto$expression.cpp:2513:import_operation$656 $auto$expression.cpp:2513:import_operation$658 }
+    connect \B { $auto$expression.cpp:2545:import_operation$656 $auto$expression.cpp:2545:import_operation$658 }
     connect \S { $procmux$740_CMP $procmux$739_CMP }
     connect \Y $procmux$752_Y
   end

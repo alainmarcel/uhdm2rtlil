@@ -649,27 +649,58 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 // Handle bit select assignment
                 const bit_select* bs = any_cast<const bit_select*>(assign->Lhs());
                 std::string base_name = std::string(bs->VpiName());
-                
+
+                // For packed multi-dim arrays (`logic [N-1:0][M-1:0] x;`
+                // or `logic4 [N-1:0] x;`), `x[i]` refers to an
+                // element_width-bit slice, not a single bit.  Detect
+                // this by inspecting the bit_select's Actual_group.
+                int element_width = 1;
+                if (auto actual = bs->Actual_group()) {
+                    if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(actual)) {
+                        if (auto ts = pav->Typespec()) {
+                            if (auto a = ts->Actual_typespec()) {
+                                if (a->UhdmType() == uhdmlogic_typespec) {
+                                    auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
+                                    if (lt && lt->Elem_typespec() &&
+                                        lt->Elem_typespec()->Actual_typespec()) {
+                                        // Typespec encodes the full type;
+                                        // element type is Elem_typespec.
+                                        element_width = get_width_from_typespec(
+                                            lt->Elem_typespec()->Actual_typespec(),
+                                            current_instance);
+                                    } else {
+                                        // Typespec is just the element type
+                                        // (outer ranges live on pav->Ranges()).
+                                        element_width = get_width_from_typespec(
+                                            a, current_instance);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (element_width <= 0) element_width = 1;
+
                 if (base_name == func_name) {
                     // Assigning to a bit of the return value
                     RTLIL::SigSpec index_sig;
                     if (bs->VpiIndex()) {
                         index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
                         if (mode_debug) {
-                            log("      Bit select index for %s: is_const=%d, value=%s\n", 
-                                base_name.c_str(), index_sig.is_fully_const(), 
+                            log("      Bit select index for %s: is_const=%d, value=%s\n",
+                                base_name.c_str(), index_sig.is_fully_const(),
                                 index_sig.is_fully_const() ? std::to_string(index_sig.as_int()).c_str() : "non-const");
                         }
                     }
-                    
+
                     if (index_sig.is_fully_const()) {
                         int idx = index_sig.as_int();
-                        
+
                         // Use the result_wire for assignments to the function name
                         RTLIL::Wire* target_wire = result_wire;
-                        
-                        if (idx >= 0 && idx < target_wire->width) {
-                            lhs_sig = RTLIL::SigSpec(target_wire, idx, 1);
+                        int offset = idx * element_width;
+                        if (offset >= 0 && offset + element_width <= target_wire->width) {
+                            lhs_sig = RTLIL::SigSpec(target_wire, offset, element_width);
                         }
                     } else {
                         log("UHDM: Warning - non-constant bit select index in function %s\n", func_name.c_str());
@@ -682,12 +713,13 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         if (bs->VpiIndex()) {
                             index_sig = import_expression(any_cast<const expr*>(bs->VpiIndex()), &input_mapping);
                         }
-                        
+
                         if (index_sig.is_fully_const()) {
                             int idx = index_sig.as_int();
                             RTLIL::SigSpec base_sig = it->second;
-                            if (idx >= 0 && idx < base_sig.size()) {
-                                lhs_sig = base_sig.extract(idx, 1);
+                            int offset = idx * element_width;
+                            if (offset >= 0 && offset + element_width <= base_sig.size()) {
+                                lhs_sig = base_sig.extract(offset, element_width);
                             }
                         }
                     }

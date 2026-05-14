@@ -1572,6 +1572,32 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
         // when present, otherwise fall through to the generic typespec
         // handler below.
         if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(uhdm_obj)) {
+            // Function-return case: `logic4 [1:0] f(...)` produces a
+            // packed_array_var whose Typespec is a logic_typespec with
+            // Elem_typespec (encoding the full type), but whose
+            // Elements()[0] is a synthetic logic_var with no typespec of
+            // its own.  The direct path below would then compute
+            // elem_w=1 from that placeholder.  Prefer the typespec when
+            // it already encodes everything (logic_typespec with
+            // Elem_typespec, OR packed_array_typespec).
+            if (auto ts = pav->Typespec()) {
+                if (auto a = ts->Actual_typespec()) {
+                    bool typespec_has_full_info = false;
+                    if (a->UhdmType() == uhdmpacked_array_typespec) {
+                        typespec_has_full_info = true;
+                    } else if (a->UhdmType() == uhdmlogic_typespec) {
+                        auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
+                        if (lt && lt->Elem_typespec() != nullptr)
+                            typespec_has_full_info = true;
+                    }
+                    if (typespec_has_full_info) {
+                        int w = get_width_from_typespec(a, inst);
+                        log("UHDM: packed_array_var width from typespec = %d\n", w);
+                        return w;
+                    }
+                }
+            }
+
             bool has_direct = (pav->Ranges() && !pav->Ranges()->empty()) &&
                               (pav->Elements() && !pav->Elements()->empty());
             if (has_direct) {
@@ -1588,6 +1614,20 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                 }
                 const any* elem0 = (*pav->Elements())[0];
                 int elem_width = get_width(elem0, inst);
+                // Local-var case: `logic4 [1:0] x` keeps the outer
+                // range on pav->Ranges() and stores just the ELEMENT
+                // typespec (logic4) on pav->Typespec().  Elements()[0]
+                // is a synthetic logic_var with no typespec, so the
+                // recursive get_width returns 1.  Recover the real
+                // element width from pav->Typespec().
+                if (elem_width <= 1) {
+                    if (auto ts = pav->Typespec()) {
+                        if (auto a = ts->Actual_typespec()) {
+                            int w = get_width_from_typespec(a, inst);
+                            if (w > elem_width) elem_width = w;
+                        }
+                    }
+                }
                 int total = range_total * elem_width;
                 log("UHDM: packed_array_var width = %d (ranges=%d, elem_w=%d)\n",
                     total, range_total, elem_width);
