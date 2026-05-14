@@ -798,16 +798,27 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     }
                 }
                 
-                log("UHDM: Creating cell %s of type %s in parent %s\n", 
+                log("UHDM: Creating cell %s of type %s in parent %s\n",
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
-                
+
+                // If a `bind` causes the same parent module to appear twice in
+                // the elaborated hierarchy walk, we'd try to create the same
+                // child cell twice and hit `Assert count_id(cell->name) == 0`
+                // in addCell.  Skip the second creation — the cell from the
+                // first walk already has its ports wired.
+                RTLIL::IdString cell_id = RTLIL::escape_id(inst_name);
+                if (parent_rtlil_module->cell(cell_id)) {
+                    log("UHDM: Cell %s already exists in %s — skipping duplicate "
+                        "creation (likely a second hierarchy view introduced by `bind`)\n",
+                        inst_name.c_str(), parent_name.c_str());
+                } else {
                 // Save current module context and maps
                 RTLIL::Module* saved_module = this->module;
                 auto saved_name_map = this->name_map;
                 auto saved_wire_map = this->wire_map;
-                
+
                 this->module = parent_rtlil_module;
-                
+
                 // Build name_map for parent module
                 this->name_map.clear();
                 for (auto &wire_pair : parent_rtlil_module->wires_) {
@@ -815,10 +826,10 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     if (wire_name[0] == '\\') wire_name = wire_name.substr(1);
                     this->name_map[wire_name] = wire_pair.second;
                 }
-                
+
                 // Create the cell
                 RTLIL::Cell* cell = parent_rtlil_module->addCell(
-                    RTLIL::escape_id(inst_name), 
+                    cell_id,
                     RTLIL::escape_id(cell_type)
                 );
                 
@@ -916,6 +927,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 this->module = saved_module;
                 this->name_map = saved_name_map;
                 this->wire_map = saved_wire_map;
+                }  // end else (cell didn't already exist)
             }
         }
     }

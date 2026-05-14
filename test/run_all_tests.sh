@@ -206,18 +206,23 @@ echo
 if [ "$RUN_LOCAL" = true ]; then
     # Find all test directories (directories containing dut.sv or dut.v)
     TEST_DIRS=()
+    # A directory counts as a test if it has dut.sv, dut.v, or a
+    # `project.f` multi-file filelist (see project_files.sh).
+    has_test_sources() {
+        [ -f "$1/dut.sv" ] || [ -f "$1/dut.v" ] || [ -f "$1/project.f" ]
+    }
     if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_YOSYS" = false ]; then
         # Check if the specific test exists
-        if [ -d "$SPECIFIC_TEST" ] && { [ -f "$SPECIFIC_TEST/dut.sv" ] || [ -f "$SPECIFIC_TEST/dut.v" ]; }; then
+        if [ -d "$SPECIFIC_TEST" ] && has_test_sources "$SPECIFIC_TEST"; then
             TEST_DIRS+=("$SPECIFIC_TEST")
         else
-            echo "Error: Test '$SPECIFIC_TEST' not found or doesn't contain dut.sv / dut.v"
+            echo "Error: Test '$SPECIFIC_TEST' not found or has no dut.sv / dut.v / project.f"
             exit 1
         fi
     elif [ "$RUN_YOSYS" = false ] || [ -z "$SPECIFIC_TEST" ]; then
         # Find all test directories
         for dir in */; do
-            if [ -d "$dir" ] && { [ -f "$dir/dut.sv" ] || [ -f "$dir/dut.v" ]; }; then
+            if [ -d "$dir" ] && has_test_sources "${dir%/}"; then
                 # Remove trailing slash from directory name
                 TEST_NAME="${dir%/}"
                 # Skip the run directory (used for Yosys tests)

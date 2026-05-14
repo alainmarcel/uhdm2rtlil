@@ -1,0 +1,13 @@
+# Test script to read Verilog file directly in Yosys
+read_verilog -sv ./ALU/ALU.v ./DECO_INSTR/DECO_INSTR.v ./FSM/FSM.v ./IRQ/IRQ.v ./MEMORY_INTERFACE/MEMORY_INTERFACE.v ./MULT/MULT.v ./REG_FILE/REG_FILE.v ./UTILITIES/UTILITY.v ./mriscvcore.v ./rv32_opcodes.v ./jg_bind_wrapper.sv ./mriscvcore_top_s2qed.v
+# Write RTLIL immediately after reading, before hierarchy
+write_rtlil mriscv_bind_sva_from_verilog_nohier.il
+hierarchy -check -auto-top
+stat
+proc
+opt
+stat
+write_rtlil mriscv_bind_sva_from_verilog.il
+# Synthesize to gate-level netlist
+synth -auto-top
+write_verilog -noexpr mriscv_bind_sva_from_verilog_synth.v

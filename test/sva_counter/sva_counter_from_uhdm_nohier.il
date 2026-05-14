@@ -74,7 +74,7 @@ module \top
   end
   attribute \src "dut.sv:19.2-19.52"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$10
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$10
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -110,7 +110,7 @@ module \top
   end
   attribute \src "dut.sv:20.2-20.60"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$15
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$15
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -146,7 +146,7 @@ module \top
   end
   attribute \src "dut.sv:21.2-21.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$20
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$20
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -172,7 +172,7 @@ module \top
   end
   attribute \src "dut.sv:26.2-26.57"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$23
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$23
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -208,7 +208,7 @@ module \top
   end
   attribute \src "dut.sv:27.2-27.54"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$28
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$28
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -223,7 +223,7 @@ module \top
   end
   attribute \src "dut.sv:33.2-33.33"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$29
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$29
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -238,7 +238,7 @@ module \top
   end
   attribute \src "dut.sv:34.2-34.33"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2629:import_module$30
+  cell $check $auto$uhdm2rtlil.cpp:2641:import_module$30
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
