@@ -1,0 +1,15 @@
+# Reproduces chipsalliance/synlig#2246 using uhdm2rtlil (Surelog +
+# UHDM frontend) in place of `plugin -i systemverilog`.  Same file
+# list, same workflow.  Expected to fail with an "unresolved
+# hierarchical reference" error during read or hierarchy elaboration.
+
+read_uhdm slpp_all/surelog.uhdm
+
+prep -top mriscvcore_top_s2qed
+hierarchy -check
+chformal -assume -early
+memory
+flatten
+sim -clock clk -resetn rstn -n 5 -rstlen 5 -zinit -w mriscvcore_top_s2qed
+setundef -undriven -expose
+write_btor fsm.btor2

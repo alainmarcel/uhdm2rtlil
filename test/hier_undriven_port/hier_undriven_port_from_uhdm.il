@@ -14,9 +14,9 @@ module \b
   wire output 1 \b1
   wire \b2
   attribute \unused_bits "0 1 2"
-  wire width 3 $auto$uhdm2rtlil.cpp:898:import_module_hierarchy$1
+  wire width 3 $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$1
   cell \a \a_inst
-    connect \a1 $auto$uhdm2rtlil.cpp:898:import_module_hierarchy$1
+    connect \a1 $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$1
     connect \a2 \b1
   end
   connect \b2 1'0

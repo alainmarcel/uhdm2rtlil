@@ -41,41 +41,19 @@ echo
 # Set up paths (relative to test directory)
 SURELOG_BIN="../../build/third_party/Surelog/bin/surelog"
 YOSYS_BIN="../../out/current/bin/yosys"
-# Locate the source file.  In priority order:
-#   1. dut.sv  (the conventional name; some test dirs contain other .sv
-#      helper files that we must not pick up by accident)
-#   2. dut.v   (plain-Verilog tests ported from yosys/tests/)
-#   3. any other .sv or .v in the directory (skipping synth outputs)
-# Pass `-sv` to Surelog and `read_verilog -sv` only for .sv files; .v files
-# must be parsed in Verilog mode so SV-only reserved keywords (e.g. `ref`)
-# remain available as ordinary identifiers.
-SV_FILE=""
-if [ -f "dut.sv" ]; then
-    SV_FILE="dut.sv"
-elif [ -f "dut.v" ]; then
-    SV_FILE="dut.v"
-else
-    for cand in $(ls -1 *.sv 2>/dev/null; ls -1 *.v 2>/dev/null); do
-        case "$cand" in
-            *_from_uhdm*|*_from_verilog*) continue ;;
-        esac
-        SV_FILE="$cand"
-        break
-    done
-fi
-if [ -z "$SV_FILE" ]; then
-    SV_FILE="dut.sv"  # error path below will report it
-fi
-case "$SV_FILE" in
-    *.sv)
-        SURELOG_LANG_FLAG="-sv"
-        YOSYS_READ_FLAG="-sv"
-        ;;
-    *)
-        SURELOG_LANG_FLAG=""
-        YOSYS_READ_FLAG=""
-        ;;
-esac
+
+# Compose the source-file list and language flags.  Single-file tests
+# (the long-established convention: one `dut.sv` or `dut.v` per dir)
+# are auto-picked.  Multi-file projects opt in by adding a `project.f`
+# filelist; see ../project_files.sh for the format.
+source ../project_files.sh
+
+# Keep the legacy SV_FILE variable pointing at the FIRST source — used
+# downstream for naming output IL files / -sv vs -v flag detection.
+SV_FILE=$(echo "$PROJECT_SRCS" | awk '{print $1}')
+SURELOG_LANG_FLAG="$PROJECT_LANG"
+YOSYS_READ_FLAG="$PROJECT_LANG"
+
 UHDM_FILE="slpp_all/surelog.uhdm"
 
 # Check if binaries exist
@@ -106,9 +84,9 @@ if [ -f "$UHDM_FILE" ]; then
     echo "   File size: $(ls -lh $UHDM_FILE | awk '{print $5}')"
 else
     echo "   Running Surelog to generate UHDM..."
-    echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $SV_FILE"
+    echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS"
     echo "   Logging to: surelog_build.log"
-    $SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG "$SV_FILE" > surelog_build.log 2>&1
+    $SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1
     
     # Check if UHDM file was generated
     if [ ! -f "$UHDM_FILE" ]; then
@@ -149,7 +127,7 @@ echo
 echo "4. Creating Yosys script to read Verilog..."
 cat > test_verilog_read.ys << EOF
 # Test script to read Verilog file directly in Yosys
-read_verilog $YOSYS_READ_FLAG $SV_FILE
+read_verilog $YOSYS_READ_FLAG $PROJECT_SRCS
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_verilog_nohier.il
 hierarchy -check -auto-top

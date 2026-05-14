@@ -57,6 +57,42 @@ def find_paths(project_root: Path) -> dict[str, Path]:
     return paths
 
 
+def parse_project_f(test_dir: Path) -> dict:
+    """Read `project.f` if present.  Returns a dict with keys:
+        srcs: list[Path]   — source files (relative to test_dir)
+        top:  str          — top module name (or "")
+        mode: str          — "uhdm-only", "equiv", "" (default)
+    When `project.f` is absent or has no sources, falls back to
+    `dut.sv` / `dut.v`.  Mirrors the bash project_files.sh helper used
+    by the workflow / equivalence scripts so the three pipelines see
+    the same file list."""
+    out: dict = {"srcs": [], "top": "", "mode": ""}
+    pf = test_dir / "project.f"
+    if pf.exists():
+        for raw in pf.read_text().splitlines():
+            line = raw.strip()
+            if not line:
+                continue
+            if line.startswith("#"):
+                # Recognise "# key: value" directives.
+                body = line[1:].strip()
+                if ":" in body:
+                    key, _, val = body.partition(":")
+                    key = key.strip().lower()
+                    val = val.strip()
+                    if key in ("top", "mode"):
+                        out[key] = val
+                continue
+            out["srcs"].append(test_dir / line)
+    if not out["srcs"]:
+        for cand in ("dut.sv", "dut.v"):
+            p = test_dir / cand
+            if p.exists():
+                out["srcs"].append(p)
+                break
+    return out
+
+
 def find_top_module(dut_path: Path) -> str:
     """Heuristic: the SV top module is the LAST `module <name>` declaration
     that isn't `endmodule`.  In tests using inner+outer wrappers this is
@@ -500,7 +536,8 @@ def emit_wrapper_and_tb(dut_path: Path,
     (out_dir / "tb_main.cpp").write_text("\n".join(cpp))
 
 
-def run_verilator(work: Path, paths: dict[str, Path], dut_path: Path) -> tuple[int, str]:
+def run_verilator(work: Path, paths: dict[str, Path],
+                  rtl_srcs: list[Path]) -> tuple[int, str]:
     cmd = [
         "verilator", "--cc", "--exe", "--build", "-j", "4",
         "-Wno-fatal", "-Wno-WIDTH", "-Wno-UNUSED", "-Wno-UNOPTFLAT",
@@ -515,7 +552,8 @@ def run_verilator(work: Path, paths: dict[str, Path], dut_path: Path) -> tuple[i
         # simlib.v has higher-level primitives (and a `tran` that older
         # Verilator can't parse) — synth doesn't emit those, so skip.
         str(paths["simcells"]),
-        str(dut_path), "wrapper.sv", "dut_netlist.v", "tb.sv",
+        *[str(p) for p in rtl_srcs],
+        "wrapper.sv", "dut_netlist.v", "tb.sv",
         "tb_main.cpp",
     ]
     p = subprocess.run(cmd, cwd=work, text=True,
@@ -545,11 +583,15 @@ def main() -> int:
     if not uhdm.exists():
         sys.exit(f"❌ no UHDM at {uhdm} — run the standard workflow first")
 
-    dut = test_dir / "dut.sv"
-    if not dut.exists():
-        dut = test_dir / "dut.v"
-    if not dut.exists():
-        sys.exit(f"❌ no dut.sv / dut.v in {test_dir}")
+    project = parse_project_f(test_dir)
+    if not project["srcs"]:
+        sys.exit(f"❌ no dut.sv / dut.v / project.f in {test_dir}")
+    # Verilator-friendly RTL source list.  For single-file tests this is
+    # just [dut.sv]; for multi-file projects it includes every source
+    # listed in project.f.  Used both to find the original top (when no
+    # explicit `# top:` directive) and to feed Verilator's --cc.
+    rtl_srcs: list[Path] = project["srcs"]
+    dut = rtl_srcs[0]
 
     work = test_dir / "sim_equiv"
     if work.exists():
@@ -566,7 +608,12 @@ def main() -> int:
                                  uhdm, work / "dut_netlist.v")
     # Prefer the auto-top name Yosys actually selected; fall back to the
     # last-`module`-declaration heuristic when capture failed.
-    orig_top = yosys_top or find_top_module(dut)
+    # Top priority order:
+    #   1. `# top: <name>` directive in project.f (explicit, multi-file
+    #      projects need this since auto-detection can pick wrong modules)
+    #   2. Yosys's auto-top (from `synth -auto-top`)
+    #   3. Last-`module`-declaration in the first source
+    orig_top = project["top"] or yosys_top or find_top_module(dut)
     print(f"▶ original SV top: {orig_top}")
 
     print("▶ Extracting clocks/resets/ports")
@@ -584,7 +631,7 @@ def main() -> int:
                         unpacked=unpacked)
 
     print("▶ Running Verilator co-sim")
-    rc, out = run_verilator(work, paths, dut)
+    rc, out = run_verilator(work, paths, rtl_srcs)
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)
