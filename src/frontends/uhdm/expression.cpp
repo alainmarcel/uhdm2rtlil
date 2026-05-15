@@ -1422,6 +1422,66 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
                 
                 // Handle specific system functions
+                // Formal-verification sampling functions: `$past(e)`,
+                // `$stable(e)`, `$rose(e)`, `$fell(e)`, `$changed(e)`.
+                // These reach back to the previous clock cycle and must
+                // be lowered into a DFF that stores the previous value
+                // plus a tiny piece of combinational logic comparing
+                // it against the current value.  Requires a clock —
+                // taken from the enclosing always_ff (`current_ff_clock_sig`).
+                if ((func_name == "$past" || func_name == "$stable" ||
+                     func_name == "$rose" || func_name == "$fell" ||
+                     func_name == "$changed") &&
+                    args.size() == 1 && !current_ff_clock_sig.empty()) {
+                    int w = args[0].size();
+                    if (w <= 0) w = 1;
+                    // Past register: D = arg, Q = past_wire, posedge clk.
+                    std::string past_name = "$past$" +
+                        std::to_string(func_call->VpiLineNo()) + "$" +
+                        std::to_string(incr_autoidx());
+                    RTLIL::Wire* past_wire = module->addWire(
+                        RTLIL::escape_id(past_name), w);
+                    add_src_attribute(past_wire->attributes, func_call);
+                    RTLIL::Cell* dff = module->addCell(NEW_ID, ID($dff));
+                    dff->setParam(ID::WIDTH, RTLIL::Const(w));
+                    dff->setParam(ID::CLK_POLARITY, RTLIL::Const(1, 1));
+                    dff->setPort(ID::CLK, current_ff_clock_sig);
+                    dff->setPort(ID::D, args[0]);
+                    dff->setPort(ID::Q, RTLIL::SigSpec(past_wire));
+                    add_src_attribute(dff->attributes, func_call);
+
+                    if (func_name == "$past") {
+                        return RTLIL::SigSpec(past_wire);
+                    }
+
+                    // For 1-bit signals, $rose/$fell/$changed/$stable have
+                    // simple definitions; for multi-bit, fall back to the
+                    // comparison-based form.
+                    RTLIL::SigSpec curr = args[0];
+                    RTLIL::SigSpec prev(past_wire);
+                    RTLIL::Wire* y = module->addWire(NEW_ID, 1);
+                    if (func_name == "$stable") {
+                        // x == past_x
+                        module->addEq(NEW_ID, curr, prev, RTLIL::SigSpec(y));
+                    } else if (func_name == "$changed") {
+                        // x != past_x
+                        module->addNe(NEW_ID, curr, prev, RTLIL::SigSpec(y));
+                    } else if (func_name == "$rose") {
+                        // x[0] && !past_x[0]
+                        RTLIL::SigSpec nprev = module->Not(NEW_ID,
+                            prev.extract(0, 1));
+                        module->addAnd(NEW_ID, curr.extract(0, 1),
+                                       nprev, RTLIL::SigSpec(y));
+                    } else { // $fell
+                        // !x[0] && past_x[0]
+                        RTLIL::SigSpec ncurr = module->Not(NEW_ID,
+                            curr.extract(0, 1));
+                        module->addAnd(NEW_ID, ncurr,
+                                       prev.extract(0, 1), RTLIL::SigSpec(y));
+                    }
+                    return RTLIL::SigSpec(y);
+                }
+
                 if (func_name == "$signed" && args.size() == 1) {
                     // $signed just returns the argument with signed interpretation
                     // The signedness will be handled by the operation that uses it

@@ -107,7 +107,7 @@ module \top
     connect \TRG { }
   end
   attribute \src "dut.sv:11.26-11.35"
-  process $auto$uhdm2rtlil.cpp:2063:import_module$1
+  process $auto$uhdm2rtlil.cpp:2105:import_module$1
     sync always
       update \a 8'10101010
   end

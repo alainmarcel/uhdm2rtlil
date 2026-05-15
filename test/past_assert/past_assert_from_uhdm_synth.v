@@ -23,7 +23,7 @@ module mre(i_clk, i_w, o_w, o_past_valid_o);
   wire f_past_valid;
   \$_AND_  _1_ (
     .A(f_past_valid),
-    .B(i_w),
+    .B(o_w),
     .Y(_0_)
   );
   (* \always_ff  = 32'd1 *)

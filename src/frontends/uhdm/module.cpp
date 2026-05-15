@@ -680,17 +680,59 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
         w->is_signed = true;
     }
     
-    // Import attributes (e.g., (* keep *))
+    // Import attributes (e.g., (* keep *), (* anyconst *))
+    // SymbiYosys formal-verification attributes (`(* anyconst *)`,
+    // `(* anyseq *)`, `(* allconst *)`, `(* allseq *)`) on a module-level
+    // reg become attributes on the corresponding logic_net.  Lower them
+    // to the matching RTLIL cell (`$anyconst`/`$anyseq`/`$allconst`/
+    // `$allseq`) whose Y output drives the wire, matching what the
+    // Verilog frontend does for `$anyconst()` & friends.  Without this,
+    // the attribute lives only as metadata on the wire and the wire stays
+    // undriven, so `opt` constant-folds it to `x` and all downstream
+    // logic gets removed.
+    bool net_has_formal_attr = false;
     if (auto net = any_cast<const UHDM::net*>(uhdm_net)) {
         if (net->Attributes()) {
+            std::string formal_cell;
+            for (auto attr : *net->Attributes()) {
+                std::string n = std::string(attr->VpiName());
+                if (n == "anyconst" || n == "anyseq" ||
+                    n == "allconst" || n == "allseq") {
+                    formal_cell = "$" + n;
+                    net_has_formal_attr = true;
+                    break;
+                }
+            }
             for (auto attr : *net->Attributes()) {
                 std::string attr_name = std::string(attr->VpiName());
-                if (!attr_name.empty()) {
-                    // Set the attribute to 1 (standard practice for boolean attributes like keep)
-                    w->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
-                    if (mode_debug)
-                        log("UHDM: Added attribute '%s' to net '%s'\n", attr_name.c_str(), netname.c_str());
-                }
+                if (attr_name.empty()) continue;
+                if (net_has_formal_attr &&
+                    (attr_name == "anyconst" || attr_name == "anyseq" ||
+                     attr_name == "allconst" || attr_name == "allseq"))
+                    continue;
+                // Set the attribute to 1 (standard practice for boolean attributes like keep)
+                w->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                if (mode_debug)
+                    log("UHDM: Added attribute '%s' to net '%s'\n", attr_name.c_str(), netname.c_str());
+            }
+            if (!formal_cell.empty()) {
+                std::string cell_name = formal_cell + "$" +
+                                        std::to_string(autoidx++);
+                RTLIL::Cell* cell = module->addCell(
+                    RTLIL::escape_id(cell_name),
+                    RTLIL::escape_id(formal_cell));
+                cell->setParam(ID::WIDTH, RTLIL::Const(w->width));
+                cell->setPort(ID::Y, RTLIL::SigSpec(w));
+                add_src_attribute(cell->attributes, uhdm_net);
+                // Yosys's Verilog frontend tags the cell with
+                // `(* reg = "<varname>" *)` so the synthesized netlist
+                // remembers the originating register.
+                cell->attributes[RTLIL::escape_id("reg")] =
+                    RTLIL::Const(netname);
+                if (mode_debug)
+                    log("UHDM: Created %s cell '%s' driving net '%s' (WIDTH=%d)\n",
+                        formal_cell.c_str(), cell_name.c_str(),
+                        netname.c_str(), w->width);
             }
         }
     }
@@ -805,8 +847,14 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     int net_type = uhdm_net->VpiNetType();
     if (net_type == vpiReg) {
         // Don't set \reg for nets driven by module instance output ports
-        // These are continuously driven and should not be treated as registers
-        if (instance_output_driven_nets.count(netname) == 0) {
+        // These are continuously driven and should not be treated as registers.
+        // Also skip when the net carries a formal attribute lowered to a
+        // `$anyconst`/`$anyseq`/... cell — that cell drives the wire, so
+        // the wire is no longer a register-style storage element (matches
+        // Yosys's Verilog frontend, which turns the wire into a plain wire
+        // and tags the cell with `(* reg = "<name>" *)`).
+        if (instance_output_driven_nets.count(netname) == 0 &&
+            !net_has_formal_attr) {
             w->attributes[ID::reg] = RTLIL::Const(1);
         }
     } else if (net_type == vpiWand) {

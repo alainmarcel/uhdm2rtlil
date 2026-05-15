@@ -9,7 +9,7 @@ module \counter
   wire input 2 \rstn
   attribute \src "dut.sv:3.35-3.38"
   wire width 4 output 3 \out
-  wire width 4 $auto$expression.cpp:2545:import_operation$2
+  wire width 4 $auto$expression.cpp:2605:import_operation$2
   attribute \src "dut.sv:8.3-13.6"
   attribute \always_ff 1
   cell $sdff $auto$ff.cc:337:slice$8
@@ -19,7 +19,7 @@ module \counter
     parameter \WIDTH 4
     connect \CLK \clk
     connect \SRST \rstn
-    connect \D $auto$expression.cpp:2545:import_operation$2
+    connect \D $auto$expression.cpp:2605:import_operation$2
     connect \Q \out
   end
   cell $add $add$dut.sv:12$3
@@ -30,6 +30,6 @@ module \counter
     parameter \Y_WIDTH 4
     connect \A \out
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2545:import_operation$2
+    connect \Y $auto$expression.cpp:2605:import_operation$2
   end
 end
