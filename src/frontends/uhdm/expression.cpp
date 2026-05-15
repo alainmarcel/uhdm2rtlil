@@ -4199,9 +4199,37 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         path_name = std::string(full_name_view);
     }
     
-    log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n", 
+    log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
-    
+
+    // Interface-port signal access (e.g. `ha_intf.sum` where `ha_intf`
+    // is the module's interface port).  `import_port` already created
+    // `\ha_intf.sum` as a module-local wire, so the full path name
+    // resolves directly.  This must run before the generic Actual_group
+    // walk below, because Surelog's `Actual_group()` on the field
+    // ref_obj sometimes points to a module-local same-named net (e.g.
+    // `\sum`) and the walker would then return that net — turning
+    // `assign sum = ha_intf.sum;` into a `connect \sum \sum` no-op.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe2 = *uhdm_hier->Path_elems();
+        if (pe2[0]->UhdmType() == uhdmref_obj &&
+            pe2[1]->UhdmType() == uhdmref_obj) {
+            std::string base = std::string(
+                any_cast<const ref_obj*>(pe2[0])->VpiName());
+            std::string field = std::string(
+                any_cast<const ref_obj*>(pe2[1])->VpiName());
+            if (!base.empty() && !field.empty()) {
+                std::string full = base + "." + field;
+                auto it = name_map.find(full);
+                if (it != name_map.end()) {
+                    log("    hier_path: resolved %s → %s via name_map\n",
+                        full.c_str(), it->second->name.c_str());
+                    return RTLIL::SigSpec(it->second);
+                }
+            }
+        }
+    }
+
     // Check if the hier_path has path elements that resolve to a full path
     // This handles generate block references like foo.x that resolve to outer.foo.foo.x
     // In UHDM, the hier_path contains multiple ref_obj elements in Path_elems

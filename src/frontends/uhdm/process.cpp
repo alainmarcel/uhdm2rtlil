@@ -4723,6 +4723,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             }
             break;
         }
+        case vpiMethodFuncCall: {
+            // `obj.method(args);` — e.g. `ha_intf.summ2(a, b);` where
+            // `ha_intf` is an interface port and `summ2` is a function
+            // defined in the interface that writes to the interface's
+            // signals.
+            auto mfc = any_cast<const UHDM::method_func_call*>(uhdm_stmt);
+            if (mfc) {
+                import_method_func_call_comb(mfc, proc);
+            }
+            break;
+        }
         case vpiSysFuncCall: {
             const sys_func_call* call = any_cast<const sys_func_call*>(uhdm_stmt);
             if (call) {
@@ -5191,6 +5202,205 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
     }
 
     log("    import_task_call_comb: done\n");
+}
+
+// Method-function call on an interface object inlined into a
+// combinational always block.  Resolves `obj.method(args)` by:
+//   (1) finding the function definition (interface-scope),
+//   (2) mapping the function's formal IO params to the caller's actual
+//       argument SigSpecs, and
+//   (3) mapping references to the interface's own signals (e.g. `sum`,
+//       `c_out` declared at interface scope) to the calling module's
+//       per-signal wires `\<prefix>.<signal>` that `import_port` already
+//       created for the modport port.
+// The function body is then walked and each assignment is emitted as a
+// combinational action against the resolved LHS, with the RHS evaluated
+// through the same name→SigSpec map.
+void UhdmImporter::import_method_func_call_comb(const UHDM::method_func_call* mfc,
+                                                RTLIL::Process* proc) {
+    if (!mfc) return;
+
+    // Resolve the call prefix to a module-local name.  For an interface
+    // port `bus_if.master ha_intf`, the prefix `ha_intf` has the
+    // per-signal wires `\ha_intf.<sig>` created by `import_port`.
+    std::string prefix_name;
+    const UHDM::interface_inst* iface_inst = nullptr;
+    if (auto pref = mfc->Prefix()) {
+        if (auto pref_ref = dynamic_cast<const UHDM::ref_obj*>(pref)) {
+            prefix_name = std::string(pref_ref->VpiName());
+            // Surelog often leaves `mfc->Function()` null on a
+            // method_func_call across an interface port — fall back to
+            // chasing the prefix's Actual_group to the interface_inst
+            // and looking up the function by name in its Task_funcs.
+            if (auto actual = pref_ref->Actual_group()) {
+                if (actual->UhdmType() == uhdminterface_inst)
+                    iface_inst = any_cast<const UHDM::interface_inst*>(actual);
+                else if (actual->UhdmType() == uhdmmodport) {
+                    auto mp = any_cast<const UHDM::modport*>(actual);
+                    if (mp && mp->VpiParent() &&
+                        mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                        iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
+                }
+            }
+        } else if (!pref->VpiName().empty()) {
+            prefix_name = std::string(pref->VpiName());
+        }
+    }
+    if (prefix_name.empty()) {
+        log_warning("Method func call '%s' has no resolvable prefix — skipping\n",
+                    std::string(mfc->VpiName()).c_str());
+        return;
+    }
+
+    auto func_def = mfc->Function();
+
+    // Last-resort interface lookup: when we're importing the
+    // module DEFINITION (AllModules pass), the prefix port's
+    // Actual_group is not yet bound to a real `interface_inst`.  Walk
+    // up via the prefix wire → its module port → its `interface_typespec`
+    // to recover the interface name, then look it up in
+    // `Design->AllInterfaces()`.
+    if (!iface_inst && uhdm_design && uhdm_design->AllInterfaces()) {
+        std::string iface_name;
+        if (auto port_wire = module->wire(RTLIL::escape_id(prefix_name))) {
+            if (port_wire->attributes.count(RTLIL::escape_id("interface_type"))) {
+                iface_name = port_wire->attributes.at(
+                    RTLIL::escape_id("interface_type")).decode_string();
+                if (!iface_name.empty() && iface_name[0] == '\\')
+                    iface_name = iface_name.substr(1);
+            }
+        }
+        if (!iface_name.empty()) {
+            for (auto ii : *uhdm_design->AllInterfaces()) {
+                std::string n = std::string(ii->VpiDefName());
+                if (n.substr(0, 5) == "work@") n = n.substr(5);
+                if (n == iface_name ||
+                    std::string(ii->VpiName()).find(iface_name) != std::string::npos) {
+                    iface_inst = ii;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!func_def && iface_inst && iface_inst->Task_funcs()) {
+        std::string method_name = std::string(mfc->VpiName());
+        for (auto tf : *iface_inst->Task_funcs()) {
+            if (tf->UhdmType() != uhdmfunction) continue;
+            if (std::string(tf->VpiName()) == method_name) {
+                func_def = any_cast<const UHDM::function*>(tf);
+                break;
+            }
+        }
+    }
+    if (!func_def) {
+        log_warning("Method func call '%s' has no Function() — skipping\n",
+                    std::string(mfc->VpiName()).c_str());
+        return;
+    }
+
+    // Re-derive iface_inst from the function's parent if we didn't get
+    // it from the prefix (e.g. when `Prefix()` itself isn't a ref_obj).
+    if (!iface_inst) {
+        if (auto parent = func_def->VpiParent()) {
+            if (parent->UhdmType() == uhdminterface_inst)
+                iface_inst = any_cast<const UHDM::interface_inst*>(parent);
+        }
+    }
+
+    std::map<std::string, RTLIL::SigSpec> mapping;
+
+    // (1) Function formal IO parameters → caller's actual arguments.
+    auto io_decls = func_def->Io_decls();
+    auto args = mfc->Tf_call_args();
+    if (io_decls && args) {
+        size_t arg_idx = 0;
+        for (auto io_any : *io_decls) {
+            if (arg_idx >= args->size()) break;
+            auto io = any_cast<const UHDM::io_decl*>(io_any);
+            if (!io) { arg_idx++; continue; }
+            std::string param_name = std::string(io->VpiName());
+            auto arg = (*args)[arg_idx++];
+            RTLIL::SigSpec arg_val;
+            if (auto arg_expr = dynamic_cast<const UHDM::expr*>(arg))
+                arg_val = import_expression(arg_expr,
+                    current_comb_process ? &current_comb_values : nullptr);
+            if (!param_name.empty() && arg_val.size() > 0)
+                mapping[param_name] = arg_val;
+        }
+    }
+
+    // (2) Interface signals → caller's `\prefix.signal` wires.
+    auto add_iface_sig = [&](const std::string& sig_name) {
+        if (sig_name.empty()) return;
+        if (mapping.count(sig_name)) return;
+        std::string full = prefix_name + "." + sig_name;
+        auto it = name_map.find(full);
+        if (it == name_map.end()) {
+            RTLIL::IdString wid = RTLIL::escape_id(full);
+            if (auto w = module->wire(wid))
+                mapping[sig_name] = RTLIL::SigSpec(w);
+            return;
+        }
+        mapping[sig_name] = RTLIL::SigSpec(it->second);
+    };
+    if (iface_inst) {
+        if (iface_inst->Variables())
+            for (auto v : *iface_inst->Variables())
+                add_iface_sig(std::string(v->VpiName()));
+        if (iface_inst->Nets())
+            for (auto n : *iface_inst->Nets())
+                add_iface_sig(std::string(n->VpiName()));
+    }
+
+    // Walk the function body, emitting each assignment as a comb action.
+    std::function<void(const UHDM::any*)> walk = [&](const UHDM::any* stmt) {
+        if (!stmt) return;
+        switch (stmt->VpiType()) {
+            case vpiBegin:
+            case vpiNamedBegin: {
+                if (auto sc = dynamic_cast<const UHDM::scope*>(stmt)) {
+                    if (auto stmts = begin_block_stmts(sc))
+                        for (auto s : *stmts) walk(s);
+                }
+                break;
+            }
+            case vpiAssignment:
+            case vpiAssignStmt: {
+                auto a = any_cast<const UHDM::assignment*>(stmt);
+                if (!a || !a->Lhs() || !a->Rhs()) break;
+                RTLIL::SigSpec rhs;
+                if (auto re = dynamic_cast<const UHDM::expr*>(a->Rhs()))
+                    rhs = import_expression(re, &mapping);
+                RTLIL::SigSpec lhs;
+                if (a->Lhs()->VpiType() == vpiRefObj) {
+                    auto lref = any_cast<const UHDM::ref_obj*>(a->Lhs());
+                    std::string lname = std::string(lref->VpiName());
+                    auto it = mapping.find(lname);
+                    if (it != mapping.end()) lhs = it->second;
+                }
+                if (lhs.empty() || rhs.empty()) {
+                    log_warning("Method func call body: unresolved assignment "
+                                "(lhs_empty=%d rhs_empty=%d)\n",
+                                lhs.empty(), rhs.empty());
+                    break;
+                }
+                if (lhs.size() != rhs.size()) {
+                    if (rhs.size() < lhs.size())
+                        rhs.extend_u0(lhs.size());
+                    else
+                        rhs = rhs.extract(0, lhs.size());
+                }
+                proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
+                break;
+            }
+            default:
+                log_warning("Unsupported statement type %d inside method func call body\n",
+                            stmt->VpiType());
+                break;
+        }
+    };
+    walk(func_def->Stmt());
 }
 
 // Inline task body statements into a combinational process

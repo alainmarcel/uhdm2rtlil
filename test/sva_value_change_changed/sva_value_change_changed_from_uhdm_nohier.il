@@ -44,7 +44,7 @@ module \top
       update \b_prev $0\b_prev
   end
   attribute \src "dut.sv:29.7-29.8"
-  process $auto$module.cpp:1106:import_continuous_assign$2
+  process $auto$module.cpp:1109:import_continuous_assign$2
     sync always
       update \x 1'x
   end

@@ -528,6 +528,12 @@ struct UhdmImporter {
                                std::map<std::string, RTLIL::SigSpec>& task_mapping,
                                const std::string& context, const std::string& block_prefix,
                                const UHDM::any* process_src);
+    // Method-function call on an interface object inlined into the
+    // enclosing combinational always block.  The function body's
+    // assignments to interface signals become assignments to the
+    // calling module's `\prefix.signal` wires.
+    void import_method_func_call_comb(const UHDM::method_func_call* tc,
+                                      RTLIL::Process* proc);
 
     // Function inlining for combinational processes
     RTLIL::SigSpec import_func_call_comb(const UHDM::func_call* fc, RTLIL::Process* proc);
