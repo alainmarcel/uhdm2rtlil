@@ -4680,6 +4680,163 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Handle struct field access with bit_select / part_select on a field
+    // that is a packed array.  Path_elems pattern:
+    //   `s.field[i]`     → [ref_obj(s), bit_select(field, idx=i)]
+    //   `s.field[hi:lo]` → [ref_obj(s), part_select(field, [hi:lo])]
+    // where `s` is a packed struct whose `field` is `logic [N-1:0][M-1:0]`
+    // or `logic4 [N-1:0]`.  Walk the struct typespec to find `field`'s bit
+    // offset, compute the element width from the field's typespec
+    // (Elem_typespec or first range), then return the slice on the flat
+    // base wire.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe = *uhdm_hier->Path_elems();
+        bool shape_ok =
+            pe[0]->UhdmType() == uhdmref_obj &&
+            (pe[1]->UhdmType() == uhdmbit_select ||
+             pe[1]->UhdmType() == uhdmpart_select);
+        if (shape_ok) {
+            const ref_obj* base_ref = any_cast<const ref_obj*>(pe[0]);
+            std::string base_name = std::string(base_ref->VpiName());
+            std::string field_name;
+            if (pe[1]->UhdmType() == uhdmbit_select)
+                field_name = std::string(
+                    any_cast<const bit_select*>(pe[1])->VpiName());
+            else
+                field_name = std::string(
+                    any_cast<const part_select*>(pe[1])->VpiName());
+
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                                         ? name_map[base_name]
+                                         : nullptr;
+
+            // Find the base's UHDM object (must be a net/var with a
+            // struct_typespec) so we can walk its members.
+            const UHDM::struct_typespec* st = nullptr;
+            if (base_wire) {
+                for (auto& kv : wire_map) {
+                    if (kv.second != base_wire) continue;
+                    const ref_typespec* rts = nullptr;
+                    if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))
+                        rts = ln->Typespec();
+                    else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))
+                        rts = lv->Typespec();
+                    else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first))
+                        rts = sv->Typespec();
+                    else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first))
+                        rts = sn->Typespec();
+                    if (rts) {
+                        if (auto ats = rts->Actual_typespec()) {
+                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                        }
+                    }
+                    if (st) break;
+                }
+            }
+
+            if (base_wire && st && st->Members()) {
+                // Find field's offset (from LSB; last listed member = LSB)
+                // and its typespec.
+                int field_offset = 0;
+                int field_width = 0;
+                const UHDM::typespec* field_ts_actual = nullptr;
+                bool found_field = false;
+                for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                    auto m = (*st->Members())[i];
+                    int mw = 0;
+                    const UHDM::typespec* mts_actual = nullptr;
+                    if (auto mts = m->Typespec())
+                        if (auto ats = mts->Actual_typespec()) {
+                            mts_actual = ats;
+                            mw = get_width_from_typespec(ats, inst);
+                        }
+                    if (std::string(m->VpiName()) == field_name) {
+                        field_ts_actual = mts_actual;
+                        field_width = mw;
+                        found_field = true;
+                        break;
+                    }
+                    field_offset += mw;
+                }
+
+                if (found_field && field_ts_actual &&
+                    field_ts_actual->UhdmType() == uhdmlogic_typespec) {
+                    auto lt = dynamic_cast<const UHDM::logic_typespec*>(field_ts_actual);
+                    // Compute the field's element width.  For a
+                    // `logic_typespec` with `Elem_typespec`, the element
+                    // is the Elem_typespec; otherwise (multi-range form),
+                    // it's the product of all inner ranges.
+                    int elem_width = 1;
+                    int outer_low = 0, outer_high = 0;
+                    bool have_outer_range = false;
+                    if (lt && lt->Ranges() && !lt->Ranges()->empty()) {
+                        auto r0 = (*lt->Ranges())[0];
+                        if (r0->Left_expr() && r0->Right_expr()) {
+                            RTLIL::SigSpec ls = import_expression(r0->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rs = import_expression(r0->Right_expr(), input_mapping);
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                int l = ls.as_int();
+                                int rv = rs.as_int();
+                                outer_low = std::min(l, rv);
+                                outer_high = std::max(l, rv);
+                                have_outer_range = true;
+                            }
+                        }
+                    }
+                    if (lt && lt->Elem_typespec() &&
+                        lt->Elem_typespec()->Actual_typespec()) {
+                        elem_width = get_width_from_typespec(
+                            lt->Elem_typespec()->Actual_typespec(), inst);
+                    } else if (have_outer_range) {
+                        elem_width = field_width / (outer_high - outer_low + 1);
+                    }
+                    if (elem_width <= 0) elem_width = 1;
+
+                    if (pe[1]->UhdmType() == uhdmbit_select) {
+                        const bit_select* bs = any_cast<const bit_select*>(pe[1]);
+                        RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+                        if (idx_sig.is_fully_const() && have_outer_range) {
+                            int idx = idx_sig.as_const().as_int();
+                            int abs_start = field_offset + (idx - outer_low) * elem_width;
+                            if (abs_start >= 0 &&
+                                abs_start + elem_width <= base_wire->width) {
+                                if (mode_debug)
+                                    log("    Struct field bit-select: %s.%s[%d] → "
+                                        "%s[%d+:%d]\n",
+                                        base_name.c_str(), field_name.c_str(), idx,
+                                        base_wire->name.c_str(), abs_start, elem_width);
+                                return RTLIL::SigSpec(base_wire).extract(abs_start, elem_width);
+                            }
+                        }
+                    } else {
+                        const part_select* ps = any_cast<const part_select*>(pe[1]);
+                        RTLIL::SigSpec ls = import_expression(ps->Left_range(), input_mapping);
+                        RTLIL::SigSpec rs = import_expression(ps->Right_range(), input_mapping);
+                        if (ls.is_fully_const() && rs.is_fully_const() && have_outer_range) {
+                            int ps_left = ls.as_int();
+                            int ps_right = rs.as_int();
+                            int lo_idx = std::min(ps_left, ps_right);
+                            int hi_idx = std::max(ps_left, ps_right);
+                            int abs_start = field_offset + (lo_idx - outer_low) * elem_width;
+                            int abs_len = (hi_idx - lo_idx + 1) * elem_width;
+                            if (abs_start >= 0 &&
+                                abs_start + abs_len <= base_wire->width) {
+                                if (mode_debug)
+                                    log("    Struct field part-select: %s.%s[%d:%d] → "
+                                        "%s[%d+:%d]\n",
+                                        base_name.c_str(), field_name.c_str(),
+                                        ps_left, ps_right,
+                                        base_wire->name.c_str(), abs_start, abs_len);
+                                return RTLIL::SigSpec(base_wire).extract(abs_start, abs_len);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // First check if this is a generate hierarchy wire (e.g., blk[0].sub.x)
     // These are already created during generate scope import
     if (name_map.count(path_name)) {
