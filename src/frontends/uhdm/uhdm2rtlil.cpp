@@ -1725,17 +1725,59 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     name_map[var_name] = wire;
                     add_src_attribute(wire->attributes, var);
                     
-                    // Import attributes (e.g., (* keep *))
+                    // Import attributes (e.g., (* keep *), (* anyconst *))
                     if (auto variables = any_cast<const UHDM::variables*>(var)) {
                         if (variables->Attributes()) {
+                            // SymbiYosys formal-verification attributes
+                            // (`(* anyconst *)`, `(* anyseq *)`, `(* allconst *)`,
+                            // `(* allseq *)`) must be lowered to the matching
+                            // RTLIL cell whose Y output drives the wire — matching
+                            // what the Verilog frontend does for `$anyconst()` &
+                            // friends.  Without this, the attribute lives only as
+                            // metadata on the wire and the wire stays undriven, so
+                            // `opt` constant-folds it to `x` and all downstream
+                            // logic gets removed.
+                            std::string formal_cell;
+                            for (auto attr : *variables->Attributes()) {
+                                std::string n = std::string(attr->VpiName());
+                                if (n == "anyconst" || n == "anyseq" ||
+                                    n == "allconst" || n == "allseq") {
+                                    formal_cell = "$" + n;
+                                    break;
+                                }
+                            }
                             for (auto attr : *variables->Attributes()) {
                                 std::string attr_name = std::string(attr->VpiName());
-                                if (!attr_name.empty()) {
-                                    // Set the attribute to 1 (standard practice for boolean attributes like keep)
-                                    wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
-                                    if (mode_debug)
-                                        log("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
-                                }
+                                if (attr_name.empty()) continue;
+                                // The formal attribute itself goes on the cell, not
+                                // the wire — skip it here.
+                                if (!formal_cell.empty() &&
+                                    (attr_name == "anyconst" || attr_name == "anyseq" ||
+                                     attr_name == "allconst" || attr_name == "allseq"))
+                                    continue;
+                                // Set the attribute to 1 (standard practice for boolean attributes like keep)
+                                wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                                if (mode_debug)
+                                    log("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
+                            }
+                            if (!formal_cell.empty()) {
+                                std::string cell_name = formal_cell + "$" +
+                                                        std::to_string(autoidx++);
+                                RTLIL::Cell* cell = module->addCell(
+                                    RTLIL::escape_id(cell_name),
+                                    RTLIL::escape_id(formal_cell));
+                                cell->setParam(ID::WIDTH, RTLIL::Const(width));
+                                cell->setPort(ID::Y, RTLIL::SigSpec(wire));
+                                add_src_attribute(cell->attributes, var);
+                                // Yosys's Verilog frontend tags the cell with
+                                // `(* reg = "<varname>" *)` so the synthesized
+                                // netlist remembers the originating register.
+                                cell->attributes[RTLIL::escape_id("reg")] =
+                                    RTLIL::Const(var_name);
+                                if (mode_debug)
+                                    log("UHDM: Created %s cell '%s' driving wire '%s' (WIDTH=%d)\n",
+                                        formal_cell.c_str(), cell_name.c_str(),
+                                        var_name.c_str(), width);
                             }
                         }
                     }
