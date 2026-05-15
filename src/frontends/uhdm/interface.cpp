@@ -185,13 +185,18 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 for (auto var : *interface->Variables()) {
                     std::string var_name = std::string(var->VpiName());
                     std::string full_name = interface_name + "." + var_name;
-                    
-                    // Use the interface WIDTH parameter value
-                    int width = interface_width;
-                    
+
+                    // Prefer the per-signal width sampled from the
+                    // variable's own typespec (so `logic foo` → 1 bit,
+                    // `logic [7:0] bar` → 8 bits) and only fall back to
+                    // the global WIDTH parameter if the signal carries
+                    // no usable typespec.
+                    int width = get_width(var, current_instance);
+                    if (width <= 0) width = interface_width;
+
                     if (mode_debug)
                         log("UHDM: Creating interface signal from Variables: %s (width=%d)\n", full_name.c_str(), width);
-                    
+
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
@@ -202,13 +207,13 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 for (auto net : *interface->Nets()) {
                     std::string net_name = std::string(net->VpiName());
                     std::string full_name = interface_name + "." + net_name;
-                    
-                    // Use the interface WIDTH parameter value
-                    int width = interface_width;
-                    
+
+                    int width = get_width(net, current_instance);
+                    if (width <= 0) width = interface_width;
+
                     if (mode_debug)
                         log("UHDM: Creating interface signal from Nets: %s (width=%d)\n", full_name.c_str(), width);
-                    
+
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, net);
                     name_map[full_name] = wire;

@@ -8,14 +8,14 @@ attribute \interfaces_replaced_in_module 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3302:And$12
-  attribute \src "dut.sv:24.30-24.33"
-  wire width 16 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
   wire width 16 inout 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 16 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 inout 2 \bus.c
+  attribute \src "dut.sv:24.30-24.33"
+  wire width 16 output 1 \out
   wire width 16 $auto$rtlil.cc:3302:And$10
   cell $and $and$dut.sv:27$9
     parameter \A_SIGNED 0
@@ -85,22 +85,22 @@ module \simple_interface
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 \bus3.c
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst1
-    connect \out \out1
     connect \bus.a \bus1.a
     connect \bus.b \bus1.b
     connect \bus.c \bus1.c
+    connect \out \out1
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst2
-    connect \out \out2
     connect \bus.a \bus2.a
     connect \bus.b \bus2.b
     connect \bus.c \bus2.c
+    connect \out \out2
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000010000 \inst3
-    connect \out \out3
     connect \bus.a \bus3.a
     connect \bus.b \bus3.b
     connect \bus.c \bus3.c
+    connect \out \out3
   end
   connect \bus1.a \a1
   connect \bus1.b \b1
@@ -120,14 +120,14 @@ attribute \interfaces_replaced_in_module 1
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3302:And$8
-  attribute \src "dut.sv:24.30-24.33"
-  wire width 8 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
   wire width 8 inout 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 8 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 inout 2 \bus.c
+  attribute \src "dut.sv:24.30-24.33"
+  wire width 8 output 1 \out
   wire width 8 $auto$rtlil.cc:3302:And$6
   cell $and $and$dut.sv:27$5
     parameter \A_SIGNED 0
@@ -156,29 +156,35 @@ attribute \src "dut.sv:20.1-28.10"
 attribute \dynports 1
 module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
-  wire $auto$rtlil.cc:3302:And$4
+  wire width 8 $auto$rtlil.cc:3302:And$4
+  attribute \src "dut.sv:5.23-5.24"
+  wire width 8 inout 4 \bus.a
+  attribute \src "dut.sv:6.23-6.24"
+  wire width 8 inout 3 \bus.b
+  attribute \src "dut.sv:7.23-7.24"
+  wire width 8 inout 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
-  wire $auto$rtlil.cc:3302:And$2
+  wire width 8 $auto$rtlil.cc:3302:And$2
   cell $and $and$dut.sv:27$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A 1'x
-    connect \B 1'x
+    parameter \A_WIDTH 8
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A \bus.a
+    connect \B \bus.b
     connect \Y $auto$rtlil.cc:3302:And$2
   end
   cell $and $and$dut.sv:27$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
+    parameter \A_WIDTH 8
+    parameter \B_WIDTH 8
+    parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3302:And$2
-    connect \B 1'x
+    connect \B \bus.c
     connect \Y $auto$rtlil.cc:3302:And$4
   end
-  connect \out { 7'0000000 $auto$rtlil.cc:3302:And$4 }
+  connect \out $auto$rtlil.cc:3302:And$4
 end
