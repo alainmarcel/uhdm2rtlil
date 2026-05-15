@@ -7,14 +7,14 @@ attribute \hdlname "submodule"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3302:And$10
-  attribute \src "dut.sv:24.30-24.33"
-  wire width 16 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
   wire width 16 inout 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 16 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 16 inout 2 \bus.c
+  attribute \src "dut.sv:24.30-24.33"
+  wire width 16 output 1 \out
   cell $and $and$dut.sv:27$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -91,22 +91,22 @@ module \simple_interface
   attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
   wire width 16 \bus3.c
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst1
-    connect \out \out1
     connect \bus.a \a1
     connect \bus.b \b1
     connect \bus.c \c1
+    connect \out \out1
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst2
-    connect \out \out2
     connect \bus.a \a2
     connect \bus.b \b2
     connect \bus.c \c2
+    connect \out \out2
   end
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000010000 \inst3
-    connect \out \out3
     connect \bus.a \a3
     connect \bus.b \b3
     connect \bus.c \c3
+    connect \out \out3
   end
   connect \bus3.c \c3
   connect \bus3.b \b3
@@ -125,14 +125,14 @@ attribute \hdlname "submodule"
 module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3302:And$6
-  attribute \src "dut.sv:24.30-24.33"
-  wire width 8 output 1 \out
   attribute \src "dut.sv:5.23-5.24"
   wire width 8 inout 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
   wire width 8 inout 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
   wire width 8 inout 2 \bus.c
+  attribute \src "dut.sv:24.30-24.33"
+  wire width 8 output 1 \out
   cell $and $and$dut.sv:27$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

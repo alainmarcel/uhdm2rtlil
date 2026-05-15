@@ -154,12 +154,93 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                 if (!modport_name.empty()) {
                     w->attributes[RTLIL::escape_id("interface_modport")] = RTLIL::Const(modport_name);
                 }
+
+                // Create the per-signal wires inside this module (e.g.
+                // `\bus.in`, `\bus.out`) for an interface modport port.
+                // Without these, hier_path references inside the body
+                // (`assign bus.out = bus.in;`) can't resolve, and the
+                // later interface-port-expansion pass has nothing to
+                // promote to ports.  Source the signals from the
+                // modport's IODecls when possible (so direction matches
+                // the modport view); fall back to the parent interface's
+                // nets.
+                const UHDM::modport* mp = nullptr;
+                if (auto lowconn = uhdm_port->Low_conn()) {
+                    if (lowconn->UhdmType() == uhdmref_obj) {
+                        auto ref = any_cast<const ref_obj*>(lowconn);
+                        if (ref->Actual_group() &&
+                            ref->Actual_group()->UhdmType() == uhdmmodport)
+                            mp = any_cast<const UHDM::modport*>(ref->Actual_group());
+                    }
+                }
+                const UHDM::interface_inst* iface_inst = nullptr;
+                if (mp && mp->VpiParent() &&
+                    mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                    iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
+
+                auto compute_signal_width = [&](const UHDM::any* obj) -> int {
+                    int sw = get_width(const_cast<UHDM::any*>(obj), current_instance);
+                    return (sw > 0) ? sw : 1;
+                };
+
+                if (mp && mp->Io_decls() && iface_inst) {
+                    for (auto io : *mp->Io_decls()) {
+                        std::string sig_name = std::string(io->VpiName());
+                        if (sig_name.empty()) continue;
+                        std::string full_name = portname + "." + sig_name;
+                        if (name_map.count(full_name)) continue;
+                        // Find the matching net/variable in the interface
+                        // so we can sample its real width and source loc.
+                        const UHDM::any* width_obj = nullptr;
+                        if (iface_inst->Nets()) {
+                            for (auto n : *iface_inst->Nets()) {
+                                if (std::string(n->VpiName()) == sig_name) {
+                                    width_obj = n; break;
+                                }
+                            }
+                        }
+                        if (!width_obj && iface_inst->Variables()) {
+                            for (auto v : *iface_inst->Variables()) {
+                                if (std::string(v->VpiName()) == sig_name) {
+                                    width_obj = v; break;
+                                }
+                            }
+                        }
+                        int sig_w = width_obj ? compute_signal_width(width_obj) : 1;
+                        RTLIL::Wire* sw = module->addWire(
+                            RTLIL::escape_id(full_name), sig_w);
+                        if (width_obj) add_src_attribute(sw->attributes, width_obj);
+                        name_map[full_name] = sw;
+                        if (mode_debug)
+                            log("UHDM: Created modport signal wire '%s' (width=%d)\n",
+                                full_name.c_str(), sig_w);
+                    }
+                } else if (iface_inst) {
+                    // No modport — full interface port; mirror every signal
+                    // in the interface.
+                    auto add_sig = [&](const UHDM::any* obj,
+                                       const std::string& sig_name) {
+                        std::string full_name = portname + "." + sig_name;
+                        if (name_map.count(full_name)) return;
+                        int sig_w = compute_signal_width(obj);
+                        RTLIL::Wire* sw = module->addWire(
+                            RTLIL::escape_id(full_name), sig_w);
+                        add_src_attribute(sw->attributes, obj);
+                        name_map[full_name] = sw;
+                    };
+                    if (iface_inst->Nets())
+                        for (auto n : *iface_inst->Nets())
+                            add_sig(n, std::string(n->VpiName()));
+                    if (iface_inst->Variables())
+                        for (auto v : *iface_inst->Variables())
+                            add_sig(v, std::string(v->VpiName()));
+                }
             }
         }
-        
+
         // Add source attribute
         add_src_attribute(w->attributes, uhdm_port);
-        
+
         // Set port direction
         if (direction == vpiInput)
             w->port_input = true;
@@ -169,10 +250,10 @@ void UhdmImporter::import_port(const port* uhdm_port) {
             w->port_input = true;
             w->port_output = true;
         }
-        
+
         w->port_id = module->ports.size() + 1;
         module->ports.push_back(w->name);
-        
+
         // Store in maps
         wire_map[uhdm_port] = w;
         name_map[portname] = w;

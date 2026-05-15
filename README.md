@@ -14,10 +14,10 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 208 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (208/208 tests functional, 0 known failures)
+- **Total Tests**: 209 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (209/209 tests functional, 0 known failures)
 - **Passing**: 179 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 29 tests demonstrating UHDM's superior SystemVerilog support:
+- **UHDM-Only Success**: 30 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support
@@ -605,7 +605,7 @@ The Yosys test runner:
 - Reports UHDM-only successes (tests that only work with UHDM frontend)
 - Creates test results in `test/run/` directory structure
 
-### Current Test Cases (208 total — 179 passing equivalence, 29 UHDM-only, 0 known failures)
+### Current Test Cases (209 total — 179 passing equivalence, 30 UHDM-only, 0 known failures)
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)
@@ -803,7 +803,7 @@ cat test/failing_tests.txt
 - New unexpected failures will cause the test suite to fail
 
 **Current Status:**
-- 208 of 208 tests are passing or working as expected (179 equiv + 29 UHDM-only)
+- 209 of 209 tests are passing or working as expected (179 equiv + 30 UHDM-only)
 - 0 tests in `failing_tests.txt` (no known failures)
 
 ### Important Test Workflow Note
@@ -857,8 +857,8 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **208 test cases**:
-- **29 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
+The UHDM frontend test suite includes **209 test cases**:
+- **30 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
 - **179 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
 - **0 known failures** - All tests pass; `failing_tests.txt` is empty
 

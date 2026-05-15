@@ -14,7 +14,7 @@ module \ADD_SUB
   attribute \src "dut.sv:13.20-13.27"
   wire width 9 output 5 \result0
   attribute \src "dut.sv:27.13-27.16"
-  wire width 8 \add_sub_if0.clk
+  wire \add_sub_if0.clk
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
   wire width 9 $auto$expression.cpp:2605:import_operation$2
