@@ -2258,9 +2258,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     //    recursive call can track `exp==2` and terminate.
     //  - Generate-scope indexed part-selects: `PP[(i-1)*(i+2*M)/2 +: M+i]`
     //    where `i` is the generate loop parameter (a constant for each iteration).
+    //  - Module marked with `\dynports` (set when port widths reference an
+    //    interface parameter via `bus.PARAM`): we resolved the param to a
+    //    constant in `import_hier_path`, but the surrounding `range`
+    //    expression (`bus.DATA_WIDTH - 1`) still needs to fold so that
+    //    `get_width_from_typespec` can read it as a literal range.
     if (all_const && operands.size() > 0 &&
         (!loop_values.empty() || getCurrentFunctionContext() != nullptr ||
-         !gen_scope_stack.empty())) {
+         !gen_scope_stack.empty() ||
+         (module && module->attributes.count(ID::dynports)))) {
         RTLIL::Const result;
         bool can_evaluate = true;
         
@@ -4225,6 +4231,95 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     log("    hier_path: resolved %s → %s via name_map\n",
                         full.c_str(), it->second->name.c_str());
                     return RTLIL::SigSpec(it->second);
+                }
+
+                // Interface-parameter access (e.g. `bus.DATA_WIDTH` where
+                // `bus` is a `bus_if.master` modport port and DATA_WIDTH
+                // is a parameter on the interface).  Used for port widths
+                // (`input [bus.DATA_WIDTH-1:0] din`).  AllModules-pass
+                // resolution returns the interface's *default* value; the
+                // hierarchy pass then specializes the module per call
+                // site via the `(* dynports *)` attribute on the module.
+                auto base_ref = any_cast<const ref_obj*>(pe2[0]);
+                const UHDM::interface_inst* iface = nullptr;
+                if (auto a = base_ref->Actual_group()) {
+                    if (a->UhdmType() == uhdminterface_inst)
+                        iface = any_cast<const UHDM::interface_inst*>(a);
+                    else if (a->UhdmType() == uhdmmodport) {
+                        auto mp = any_cast<const UHDM::modport*>(a);
+                        if (mp && mp->VpiParent() &&
+                            mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                            iface = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
+                    }
+                }
+                if (!iface && uhdm_design && uhdm_design->AllInterfaces()) {
+                    // No Actual_group (AllModules pass) — find the port
+                    // `<base>` in the current module and use its
+                    // `\interface_type` attribute to pick the interface.
+                    std::string iface_name;
+                    if (auto port_wire = module->wire(RTLIL::escape_id(base))) {
+                        if (port_wire->attributes.count(RTLIL::escape_id("interface_type"))) {
+                            iface_name = port_wire->attributes.at(
+                                RTLIL::escape_id("interface_type")).decode_string();
+                            if (!iface_name.empty() && iface_name[0] == '\\')
+                                iface_name = iface_name.substr(1);
+                        }
+                    }
+                    if (!iface_name.empty()) {
+                        for (auto ii : *uhdm_design->AllInterfaces()) {
+                            std::string n = std::string(ii->VpiDefName());
+                            if (n.substr(0, 5) == "work@") n = n.substr(5);
+                            if (n == iface_name) { iface = ii; break; }
+                        }
+                    }
+                }
+                if (iface) {
+                    // Search Parameters() by name.
+                    if (iface->Parameters()) {
+                        for (auto p : *iface->Parameters()) {
+                            if (std::string(p->VpiName()) != field) continue;
+                            auto par = dynamic_cast<const UHDM::parameter*>(p);
+                            if (!par) break;
+                            // Prefer explicit override from Param_assigns
+                            // (the elaborated value).
+                            if (iface->Param_assigns()) {
+                                for (auto pa : *iface->Param_assigns()) {
+                                    auto lhs = pa->Lhs();
+                                    if (!lhs ||
+                                        lhs->VpiType() != par->VpiType() ||
+                                        std::string(lhs->VpiName()) != field)
+                                        continue;
+                                    if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
+                                        RTLIL::SigSpec s = import_expression(re);
+                                        if (s.is_fully_const()) {
+                                            log("    hier_path: resolved %s → param value %d via interface\n",
+                                                full.c_str(), s.as_const().as_int());
+                                            // Mark module dynports so
+                                            // the hierarchy pass re-
+                                            // specializes per call site
+                                            // (the value here is the
+                                            // *default*; each instance
+                                            // may override).
+                                            module->set_bool_attribute(ID::dynports);
+                                            return s;
+                                        }
+                                    }
+                                }
+                            }
+                            // Fall back to parameter's VpiValue (default).
+                            std::string v = std::string(par->VpiValue());
+                            if (!v.empty()) {
+                                RTLIL::Const c = extract_const_from_value(v);
+                                if (c.size() > 0) {
+                                    log("    hier_path: resolved %s → param default %d via interface\n",
+                                        full.c_str(), c.as_int());
+                                    module->set_bool_attribute(ID::dynports);
+                                    return RTLIL::SigSpec(c);
+                                }
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }

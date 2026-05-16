@@ -13,22 +13,23 @@ module func_width_scope_top(inp, out1, out2);
   output [1023:0] out2;
   wire [1023:0] out2;
   wire [62:0] \blk.yc ;
-  wire [4:0] \blk.yn ;
+  wire [5:0] \blk.yn ;
   wire [126:0] \blk.zc ;
-  wire \blk.zn ;
+  wire [6:0] \blk.zn ;
   (* src = "dut.sv:9.22-9.24" *)
   wire [30:0] xc;
   (* src = "dut.sv:11.21-11.23" *)
   wire [4:0] xn;
   \$_NOT_  _0_ (
     .A(inp),
-    .Y(\blk.zn )
+    .Y(out2[0])
   );
-  assign \blk.yn  = { \blk.zn , \blk.zn , \blk.zn , \blk.zn , \blk.zn  };
+  assign \blk.zn  = { out2[0], out2[0], out2[0], out2[0], out2[0], out2[0], out2[0] };
   assign \blk.zc  = 127'h7fffffffffffffffffffffffffffffff;
+  assign \blk.yn  = { out2[0], out2[0], out2[0], out2[0], out2[0], out2[0] };
   assign \blk.yc  = 63'h7fffffffffffffff;
-  assign xn = { \blk.zn , \blk.zn , \blk.zn , \blk.zn , \blk.zn  };
+  assign xn = { out2[0], out2[0], out2[0], out2[0], out2[0] };
   assign xc = 31'h7fffffff;
-  assign out2 = { 1004'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000, \blk.zn , \blk.zn , \blk.zn , \blk.zn , \blk.zn , 2'h0, \blk.zn , \blk.zn , \blk.zn , \blk.zn , \blk.zn , 7'h00, \blk.zn  };
+  assign out2[1023:1] = { 1004'h00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000, out2[0], out2[0], out2[0], out2[0], out2[0], 1'h0, out2[0], out2[0], out2[0], out2[0], out2[0], out2[0], 1'h0, out2[0], out2[0], out2[0], out2[0], out2[0], out2[0] };
   assign out1 = 1024'h000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007fffffff7fffffffffffffff7fffffffffffffffffffffffffffffff;
 endmodule

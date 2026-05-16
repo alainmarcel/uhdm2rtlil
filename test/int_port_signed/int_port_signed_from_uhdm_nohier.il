@@ -10,14 +10,14 @@ module \top
   attribute \src "dut.sv:20.29-20.30"
   wire width 60 \a
   attribute \src "dut.sv:22.16-22.35"
-  wire width 32 signed $auto$expression.cpp:3094:import_operation$1
-  cell $pos $auto$expression.cpp:3097:import_operation$2
+  wire width 32 signed $auto$expression.cpp:3100:import_operation$1
+  cell $pos $auto$expression.cpp:3103:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 10
     parameter \Y_WIDTH 32
     connect \A \a [9:0]
-    connect \Y $auto$expression.cpp:3094:import_operation$1
+    connect \Y $auto$expression.cpp:3100:import_operation$1
   end
   connect \a [9:0] \min_v_i
-  connect \o $auto$expression.cpp:3094:import_operation$1
+  connect \o $auto$expression.cpp:3100:import_operation$1
 end

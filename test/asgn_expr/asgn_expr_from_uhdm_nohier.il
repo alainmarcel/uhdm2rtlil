@@ -35,8 +35,8 @@ module \top
   wire width 32 $auto$process.cpp:4763:import_statement_comb$8
   wire width 32 $auto$expression.cpp:2130:import_operation$10
   wire width 32 $auto$expression.cpp:2130:import_operation$12
-  wire width 32 $auto$expression.cpp:2605:import_operation$14
-  wire width 32 $auto$expression.cpp:2605:import_operation$16
+  wire width 32 $auto$expression.cpp:2611:import_operation$14
+  wire width 32 $auto$expression.cpp:2611:import_operation$16
   cell $add $auto$process.cpp:4765:import_statement_comb$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -105,7 +105,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A 99
     connect \B 1
-    connect \Y $auto$expression.cpp:2605:import_operation$14
+    connect \Y $auto$expression.cpp:2611:import_operation$14
   end
   cell $add $add$dut.sv:22$17
     parameter \A_SIGNED 0
@@ -113,9 +113,9 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2605:import_operation$14
+    connect \A $auto$expression.cpp:2611:import_operation$14
     connect \B 1
-    connect \Y $auto$expression.cpp:2605:import_operation$16
+    connect \Y $auto$expression.cpp:2611:import_operation$16
   end
   attribute \src "dut.sv:6.5-30.8"
   process $proc$dut.sv:6$1
@@ -137,11 +137,11 @@ module \top
     assign $0\x $auto$expression.cpp:2130:import_operation$12
     assign $0\y $auto$expression.cpp:2130:import_operation$10
     assign $0\z 99
-    assign $0\y $auto$expression.cpp:2605:import_operation$14
-    assign $0\x $auto$expression.cpp:2605:import_operation$16
+    assign $0\y $auto$expression.cpp:2611:import_operation$14
+    assign $0\x $auto$expression.cpp:2611:import_operation$16
     assign $0\y 0
     assign $0\z 0
-    assign $0\ox $auto$expression.cpp:2605:import_operation$16
+    assign $0\ox $auto$expression.cpp:2611:import_operation$16
     assign $0\oy 0
     assign $0\oz 0
     sync always

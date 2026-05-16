@@ -181,8 +181,17 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                     mp->VpiParent()->UhdmType() == uhdminterface_inst)
                     iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
 
+                // When the interface signal's typespec refers to an
+                // interface parameter (e.g. `logic [DATA_WIDTH-1:0]`
+                // where DATA_WIDTH is on `bus_if`), `get_width` needs
+                // the interface_inst as its scope context so ExprEval
+                // can resolve the parameter.  Pass `iface_inst` rather
+                // than `current_instance` (the module being imported).
                 auto compute_signal_width = [&](const UHDM::any* obj) -> int {
-                    int sw = get_width(const_cast<UHDM::any*>(obj), current_instance);
+                    const UHDM::scope* ctx = iface_inst
+                        ? static_cast<const UHDM::scope*>(iface_inst)
+                        : static_cast<const UHDM::scope*>(current_instance);
+                    int sw = get_width(const_cast<UHDM::any*>(obj), ctx);
                     return (sw > 0) ? sw : 1;
                 };
 
@@ -2029,6 +2038,31 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             }
             // No range → single bit.
             return 1;
+        }
+
+        // Handle logic_typespec with a single Range and no Elem_typespec —
+        // e.g. `logic [bus.DATA_WIDTH-1:0]` where the bounds are
+        // expressions over interface parameters that `ExprEval::size()`
+        // can't resolve from the AllModules tree.  Compute the width
+        // ourselves by evaluating the Left/Right exprs (our
+        // import_expression has the interface-param hier_path resolver
+        // and folds the surrounding arithmetic when the module carries
+        // `\dynports`).
+        if (typespec->UhdmType() == uhdmlogic_typespec) {
+            auto logic_ts_simple = dynamic_cast<const UHDM::logic_typespec*>(typespec);
+            if (logic_ts_simple && logic_ts_simple->Elem_typespec() == nullptr &&
+                logic_ts_simple->Ranges() && logic_ts_simple->Ranges()->size() == 1) {
+                auto r = (*logic_ts_simple->Ranges())[0];
+                if (r->Left_expr() && r->Right_expr()) {
+                    RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                    RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                    if (ls.is_fully_const() && rs.is_fully_const()) {
+                        int range_size = std::abs(ls.as_int() - rs.as_int()) + 1;
+                        log("UHDM: logic_typespec simple range width = %d\n", range_size);
+                        return range_size;
+                    }
+                }
+            }
         }
 
         // Handle logic_typespec with Elem_typespec (e.g., reg8_t [0:3] → array of 8-bit elements)
