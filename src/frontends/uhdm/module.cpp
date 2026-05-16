@@ -222,10 +222,16 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         if (width_obj) add_src_attribute(sw->attributes, width_obj);
+                        // Remember the modport's direction for this
+                        // signal so `expand_interfaces` can promote
+                        // it to an input/output (rather than blanket
+                        // inout inherited from the interface port).
+                        sw->attributes[RTLIL::escape_id("modport_direction")] =
+                            RTLIL::Const(io->VpiDirection());
                         name_map[full_name] = sw;
                         if (mode_debug)
-                            log("UHDM: Created modport signal wire '%s' (width=%d)\n",
-                                full_name.c_str(), sig_w);
+                            log("UHDM: Created modport signal wire '%s' (width=%d, dir=%d)\n",
+                                full_name.c_str(), sig_w, io->VpiDirection());
                     }
                 } else if (iface_inst) {
                     // No modport — full interface port; mirror every signal

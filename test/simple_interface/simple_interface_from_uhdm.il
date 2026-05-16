@@ -8,11 +8,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3302:And$10
   attribute \src "dut.sv:5.23-5.24"
-  wire width 16 inout 4 \bus.a
+  wire width 16 input 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 16 inout 3 \bus.b
+  wire width 16 input 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 16 inout 2 \bus.c
+  wire width 16 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
   cell $and $and$dut.sv:27$9
@@ -64,31 +64,22 @@ module \simple_interface
   attribute \src "dut.sv:36.25-36.29"
   wire width 16 output 12 \out3
   attribute \src "dut.sv:5.23-5.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus1.a
   attribute \src "dut.sv:6.23-6.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus1.b
   attribute \src "dut.sv:7.23-7.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus1.c
   attribute \src "dut.sv:5.23-5.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus2.a
   attribute \src "dut.sv:6.23-6.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus2.b
   attribute \src "dut.sv:7.23-7.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7"
   wire width 8 \bus2.c
   attribute \src "dut.sv:5.23-5.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
   wire width 16 \bus3.a
   attribute \src "dut.sv:6.23-6.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
   wire width 16 \bus3.b
   attribute \src "dut.sv:7.23-7.24"
-  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
   wire width 16 \bus3.c
   cell $paramod\submodule\WIDTH=s32'00000000000000000000000000001000 \inst1
     connect \bus.a \a1
@@ -126,11 +117,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3302:And$6
   attribute \src "dut.sv:5.23-5.24"
-  wire width 8 inout 4 \bus.a
+  wire width 8 input 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 8 inout 3 \bus.b
+  wire width 8 input 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 8 inout 2 \bus.c
+  wire width 8 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   cell $and $and$dut.sv:27$5

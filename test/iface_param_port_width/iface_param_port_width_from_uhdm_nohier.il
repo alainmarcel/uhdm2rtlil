@@ -26,7 +26,7 @@ module \bus_master
   wire \DATA_WIDTH
   wire width 64 $auto$expression.cpp:2652:import_operation$1
   attribute \src "dut.sv:9.28-9.32"
-  wire width 16 inout 2 \bus.data
+  wire width 16 output 2 \bus.data
   cell $sub $sub$dut.sv:9$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

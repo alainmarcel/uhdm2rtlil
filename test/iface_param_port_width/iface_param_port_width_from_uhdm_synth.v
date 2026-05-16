@@ -7,7 +7,7 @@ module bus_master(din, \bus.data );
   input [15:0] din;
   wire [15:0] din;
   (* src = "dut.sv:9.28-9.32" *)
-  inout [15:0] \bus.data ;
+  output [15:0] \bus.data ;
   wire [15:0] \bus.data ;
   assign \bus.data  = din;
 endmodule
