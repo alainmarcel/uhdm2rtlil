@@ -200,6 +200,29 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
+
+                    // Net-decl-assign initializer in the elaborated
+                    // interface (`logic [W-1:0] start_addr = '1`) lives
+                    // on `variables::Expr()`.  Drive the parent's per-
+                    // signal wire with that constant so subsequent
+                    // reads see the correct value.  Without this, the
+                    // wire stays undriven and synth collapses
+                    // everything to `X`.
+                    if (auto init_expr = var->Expr()) {
+                        if (auto init = dynamic_cast<const UHDM::expr*>(init_expr)) {
+                            RTLIL::SigSpec init_sig = import_expression(init);
+                            if (init_sig.size() > 0) {
+                                if (init_sig.size() < width)
+                                    init_sig.extend_u0(width);
+                                else if (init_sig.size() > width)
+                                    init_sig = init_sig.extract(0, width);
+                                module->connect(RTLIL::SigSpec(wire), init_sig);
+                                if (mode_debug)
+                                    log("UHDM: Drove %s from net-decl init (width=%d)\n",
+                                        full_name.c_str(), width);
+                            }
+                        }
+                    }
                 }
             }
             // Then try Nets
