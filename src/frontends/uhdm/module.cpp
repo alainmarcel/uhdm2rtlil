@@ -165,15 +165,18 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                 // the modport view); fall back to the parent interface's
                 // nets.
                 const UHDM::modport* mp = nullptr;
+                const UHDM::interface_inst* iface_inst = nullptr;
                 if (auto lowconn = uhdm_port->Low_conn()) {
                     if (lowconn->UhdmType() == uhdmref_obj) {
                         auto ref = any_cast<const ref_obj*>(lowconn);
-                        if (ref->Actual_group() &&
-                            ref->Actual_group()->UhdmType() == uhdmmodport)
-                            mp = any_cast<const UHDM::modport*>(ref->Actual_group());
+                        if (auto actual = ref->Actual_group()) {
+                            if (actual->UhdmType() == uhdmmodport)
+                                mp = any_cast<const UHDM::modport*>(actual);
+                            else if (actual->UhdmType() == uhdminterface_inst)
+                                iface_inst = any_cast<const UHDM::interface_inst*>(actual);
+                        }
                     }
                 }
-                const UHDM::interface_inst* iface_inst = nullptr;
                 if (mp && mp->VpiParent() &&
                     mp->VpiParent()->UhdmType() == uhdminterface_inst)
                     iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
