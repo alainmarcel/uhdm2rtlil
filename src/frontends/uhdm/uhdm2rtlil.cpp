@@ -3262,11 +3262,34 @@ void UhdmImporter::expand_interfaces() {
                 }
                 
                 for (auto signal_wire : signal_wires) {
-                    // Make it a port
-                    signal_wire->port_input = interface_wire->port_input;
-                    signal_wire->port_output = interface_wire->port_output;
+                    // Per-signal direction comes from the modport's
+                    // `\modport_direction` attribute (set by
+                    // `import_port` when the port was a modport).
+                    // Otherwise fall back to the parent interface
+                    // port's direction (which is typically `inout`).
+                    int dir = 0;
+                    auto dir_id = RTLIL::escape_id("modport_direction");
+                    if (signal_wire->attributes.count(dir_id)) {
+                        dir = signal_wire->attributes.at(dir_id).as_int();
+                        signal_wire->attributes.erase(dir_id);
+                    }
+                    if (dir == 1) {            // vpiInput
+                        signal_wire->port_input = true;
+                        signal_wire->port_output = false;
+                    } else if (dir == 2) {     // vpiOutput
+                        signal_wire->port_input = false;
+                        signal_wire->port_output = true;
+                    } else if (dir == 3) {     // vpiInout
+                        signal_wire->port_input = true;
+                        signal_wire->port_output = true;
+                    } else {
+                        signal_wire->port_input = interface_wire->port_input;
+                        signal_wire->port_output = interface_wire->port_output;
+                    }
                     signal_wire->port_id = ++max_port_id;
-                    log("UHDM: Converted %s to port (id=%d)\n", signal_wire->name.c_str(), signal_wire->port_id);
+                    log("UHDM: Converted %s to port (id=%d, in=%d, out=%d)\n",
+                        signal_wire->name.c_str(), signal_wire->port_id,
+                        signal_wire->port_input, signal_wire->port_output);
                 }
                 
                 // Remove the interface port wire

@@ -22,8 +22,8 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:17.1-19.10"
 module \bus_master
   attribute \src "dut.sv:13.11-13.14"
-  wire inout 1 \bus.out
+  wire output 1 \bus.out
   attribute \src "dut.sv:12.11-12.13"
-  wire inout 2 \bus.in
+  wire input 2 \bus.in
   connect \bus.out \bus.in
 end

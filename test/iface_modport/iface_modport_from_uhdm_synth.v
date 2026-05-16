@@ -3,10 +3,10 @@
 (* src = "dut.sv:17.1-19.10" *)
 module bus_master(\bus.out , \bus.in );
   (* src = "dut.sv:13.11-13.14" *)
-  inout \bus.out ;
+  output \bus.out ;
   wire \bus.out ;
   (* src = "dut.sv:12.11-12.13" *)
-  inout \bus.in ;
+  input \bus.in ;
   wire \bus.in ;
   assign \bus.out  = \bus.in ;
 endmodule
@@ -21,7 +21,6 @@ module top(din, dout);
   output dout;
   wire dout;
   (* src = "dut.sv:12.11-12.13" *)
-  (* unused_bits = "0" *)
   wire \bus.in ;
   (* src = "dut.sv:13.11-13.14" *)
   wire \bus.out ;

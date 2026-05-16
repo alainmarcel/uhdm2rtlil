@@ -8,7 +8,6 @@ module \top
   attribute \src "dut.sv:23.18-23.22"
   wire output 2 \dout
   attribute \src "dut.sv:12.11-12.13"
-  attribute \unused_bits "0"
   wire \bus.in
   attribute \src "dut.sv:13.11-13.14"
   wire \bus.out
@@ -22,8 +21,8 @@ end
 attribute \src "dut.sv:17.1-19.10"
 module \bus_master
   attribute \src "dut.sv:13.11-13.14"
-  wire inout 1 \bus.out
+  wire output 1 \bus.out
   attribute \src "dut.sv:12.11-12.13"
-  wire inout 2 \bus.in
+  wire input 2 \bus.in
   connect \bus.out \bus.in
 end

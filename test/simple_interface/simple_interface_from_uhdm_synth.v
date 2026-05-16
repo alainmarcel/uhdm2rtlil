@@ -9,13 +9,13 @@ module \$paramod\submodule\WIDTH=s32'00000000000000000000000000001000 (out, \bus
   output [7:0] out;
   wire [7:0] out;
   (* src = "dut.sv:7.23-7.24" *)
-  inout [7:0] \bus.c ;
+  input [7:0] \bus.c ;
   wire [7:0] \bus.c ;
   (* src = "dut.sv:6.23-6.24" *)
-  inout [7:0] \bus.b ;
+  input [7:0] \bus.b ;
   wire [7:0] \bus.b ;
   (* src = "dut.sv:5.23-5.24" *)
-  inout [7:0] \bus.a ;
+  input [7:0] \bus.a ;
   wire [7:0] \bus.a ;
   wire _00_;
   wire _01_;
@@ -116,13 +116,13 @@ module \$paramod\submodule\WIDTH=s32'00000000000000000000000000010000 (out, \bus
   output [15:0] out;
   wire [15:0] out;
   (* src = "dut.sv:7.23-7.24" *)
-  inout [15:0] \bus.c ;
+  input [15:0] \bus.c ;
   wire [15:0] \bus.c ;
   (* src = "dut.sv:6.23-6.24" *)
-  inout [15:0] \bus.b ;
+  input [15:0] \bus.b ;
   wire [15:0] \bus.b ;
   (* src = "dut.sv:5.23-5.24" *)
-  inout [15:0] \bus.a ;
+  input [15:0] \bus.a ;
   wire [15:0] \bus.a ;
   wire _00_;
   wire _01_;
@@ -342,31 +342,22 @@ module simple_interface(a1, b1, c1, a2, b2, c2, a3, b3, c3, out1, out2, out3);
   output [15:0] out3;
   wire [15:0] out3;
   (* src = "dut.sv:5.23-5.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus1.a ;
   (* src = "dut.sv:6.23-6.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus1.b ;
   (* src = "dut.sv:7.23-7.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus1.c ;
   (* src = "dut.sv:5.23-5.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus2.a ;
   (* src = "dut.sv:6.23-6.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus2.b ;
   (* src = "dut.sv:7.23-7.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
   wire [7:0] \bus2.c ;
   (* src = "dut.sv:5.23-5.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" *)
   wire [15:0] \bus3.a ;
   (* src = "dut.sv:6.23-6.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" *)
   wire [15:0] \bus3.b ;
   (* src = "dut.sv:7.23-7.24" *)
-  (* unused_bits = "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" *)
   wire [15:0] \bus3.c ;
   \$paramod\submodule\WIDTH=s32'00000000000000000000000000001000  inst1 (
     .\bus.a (a1),

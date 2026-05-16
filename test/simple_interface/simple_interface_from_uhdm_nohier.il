@@ -9,11 +9,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   parameter \WIDTH 16
   wire width 16 $auto$rtlil.cc:3302:And$12
   attribute \src "dut.sv:5.23-5.24"
-  wire width 16 inout 4 \bus.a
+  wire width 16 input 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 16 inout 3 \bus.b
+  wire width 16 input 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 16 inout 2 \bus.c
+  wire width 16 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
   wire width 16 $auto$rtlil.cc:3302:And$10
@@ -121,11 +121,11 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   parameter \WIDTH 8
   wire width 8 $auto$rtlil.cc:3302:And$8
   attribute \src "dut.sv:5.23-5.24"
-  wire width 8 inout 4 \bus.a
+  wire width 8 input 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 8 inout 3 \bus.b
+  wire width 8 input 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 8 inout 2 \bus.c
+  wire width 8 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   wire width 8 $auto$rtlil.cc:3302:And$6
@@ -158,11 +158,11 @@ module \submodule
   parameter \WIDTH 64'0000000000000000000000000000000000000000000000000000000000001000
   wire width 8 $auto$rtlil.cc:3302:And$4
   attribute \src "dut.sv:5.23-5.24"
-  wire width 8 inout 4 \bus.a
+  wire width 8 input 4 \bus.a
   attribute \src "dut.sv:6.23-6.24"
-  wire width 8 inout 3 \bus.b
+  wire width 8 input 3 \bus.b
   attribute \src "dut.sv:7.23-7.24"
-  wire width 8 inout 2 \bus.c
+  wire width 8 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
   wire width 8 $auto$rtlil.cc:3302:And$2

@@ -23,6 +23,6 @@ module \bus_master
   attribute \src "dut.sv:14.52-14.55"
   wire width 16 input 1 \din
   attribute \src "dut.sv:9.28-9.32"
-  wire width 16 inout 2 \bus.data
+  wire width 16 output 2 \bus.data
   connect \bus.data \din
 end
