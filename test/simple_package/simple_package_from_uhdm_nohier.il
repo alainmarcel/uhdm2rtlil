@@ -22,7 +22,7 @@ module \sub_module
   wire width 50 $0\data_out
   attribute \src "dut.sv:78.13-78.19"
   wire $logic_not$dut.sv:78.13-78.19$1_Y
-  wire width 5 $auto$expression.cpp:2605:import_operation$2
+  wire width 5 $auto$expression.cpp:2611:import_operation$2
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$4_Y
   attribute \src "dut.sv:78.13-78.19"
@@ -41,7 +41,7 @@ module \sub_module
     parameter \Y_WIDTH 5
     connect \A \counter
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2605:import_operation$2
+    connect \Y $auto$expression.cpp:2611:import_operation$2
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $eq $eq$dut.sv:91$5
@@ -71,7 +71,7 @@ module \sub_module
         assign $0\data_out [0] 1'0
     attribute \src "dut.sv:84.18-96.12"
       case 
-        assign $0\counter $auto$expression.cpp:2605:import_operation$2
+        assign $0\counter $auto$expression.cpp:2611:import_operation$2
         assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $eq$dut.sv:91$4_Y
@@ -122,7 +122,7 @@ module \simple_package
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 $0\increment_data$func$dut.sv:47$7.$result$13
   wire width 32 \increment_data$func$dut.sv:47$7.$result
-  wire width 32 $auto$expression.cpp:2605:import_operation$14
+  wire width 32 $auto$expression.cpp:2611:import_operation$14
   attribute \nosync 1
   attribute \src "dut.sv:47.34-47.61"
   wire width 32 \increment_data$func$dut.sv:47$8.$result
@@ -142,7 +142,7 @@ module \simple_package
     parameter \Y_WIDTH 32
     connect \A $0\increment_data$func$dut.sv:47$8.input_data$10
     connect \B 1
-    connect \Y $auto$expression.cpp:2605:import_operation$14
+    connect \Y $auto$expression.cpp:2611:import_operation$14
   end
   cell $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_WIDTH=s32'00000000000000000000000000010000 \sub_inst
     connect \clk \clk
@@ -184,7 +184,7 @@ module \simple_package
     assign $0\increment_data$func$dut.sv:47$8.$result$11 $1\increment_data$func$dut.sv:47$8.$result$12
     assign $0\increment_data$func$dut.sv:47$7.$result$13 $1\increment_data$func$dut.sv:47$8.$result$12
     assign $1\increment_data$func$dut.sv:47$8.$result$12 0
-    assign $1\increment_data$func$dut.sv:47$8.$result$12 $auto$expression.cpp:2605:import_operation$14
+    assign $1\increment_data$func$dut.sv:47$8.$result$12 $auto$expression.cpp:2611:import_operation$14
     sync always
       update \increment_data$func$dut.sv:47$7.$result $0\increment_data$func$dut.sv:47$7.$result$13
       update \increment_data$func$dut.sv:47$8.$result 32'x
@@ -214,7 +214,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
   wire width 50 $0\data_out
   attribute \src "dut.sv:78.13-78.19"
   wire $logic_not$dut.sv:78.13-78.19$3_Y
-  wire width 5 $auto$expression.cpp:2605:import_operation$17
+  wire width 5 $auto$expression.cpp:2611:import_operation$17
   attribute \src "dut.sv:91.17-91.29"
   wire $eq$dut.sv:91$19_Y
   attribute \src "dut.sv:78.13-78.19"
@@ -233,7 +233,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     parameter \Y_WIDTH 5
     connect \A \counter
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2605:import_operation$17
+    connect \Y $auto$expression.cpp:2611:import_operation$17
   end
   attribute \src "dut.sv:91.17-91.29"
   cell $eq $eq$dut.sv:91$20
@@ -263,7 +263,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
         assign $0\data_out [0] 1'0
     attribute \src "dut.sv:84.18-96.12"
       case 
-        assign $0\counter $auto$expression.cpp:2605:import_operation$17
+        assign $0\counter $auto$expression.cpp:2611:import_operation$17
         assign $0\data_out \data_in
         attribute \src "dut.sv:91.13-95.16"
         switch $eq$dut.sv:91$19_Y

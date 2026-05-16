@@ -3139,7 +3139,33 @@ void UhdmImporter::expand_interfaces() {
                                 log_warning("UHDM: Could not find interface module %s\n", interface_cell->type.c_str());
                             }
                         } else {
-                            log_warning("UHDM: Could not find interface cell for %s\n", interface_name.c_str());
+                            // Couldn't find an interface_cell in
+                            // `interface_cells_to_remove`, but we can
+                            // still produce per-signal port connections
+                            // by walking the cell's module wires
+                            // (`\bus.foo` shape) and matching each to
+                            // a same-named wire in the parent module.
+                            // This is the path that fires for the
+                            // parameterized interface case (e.g.
+                            // `bus_if #(.DATA_WIDTH(8)) bus()`) where
+                            // the interface cell type is a paramod and
+                            // wasn't found by direct name match.
+                            if (cell_module) {
+                                std::string prefix = "\\" + interface_name + ".";
+                                for (auto cw : cell_module->wires()) {
+                                    std::string cn = cw->name.str();
+                                    if (cn.compare(0, prefix.size(), prefix) != 0) continue;
+                                    std::string sig = cn.substr(prefix.size());
+                                    std::string parent_name = interface_name + "." + sig;
+                                    if (auto pw = module->wire(RTLIL::escape_id(parent_name))) {
+                                        new_connections[cw->name] = RTLIL::SigSpec(pw);
+                                        log("UHDM: (fallback) connected %s to wire %s\n",
+                                            cw->name.c_str(), pw->name.c_str());
+                                    }
+                                }
+                            }
+                            if (new_connections.find(port_name) == new_connections.end())
+                                log_warning("UHDM: Could not find interface cell for %s\n", interface_name.c_str());
                         }
                     } else {
                         log_warning("UHDM: Could not find interface instance for wire %s\n", port_wire->name.c_str());

@@ -73,7 +73,7 @@ module \top
   attribute \src "dut.sv:47.1-93.4"
   attribute \unused_bits "0"
   wire width 3 $0\wide_b
-  wire width 8 $auto$expression.cpp:2605:import_operation$7
+  wire width 8 $auto$expression.cpp:2611:import_operation$7
   wire $procmux$10_CMP
   wire $auto$opt_dff.cc:234:make_patterns_logic$65
   wire $auto$opt_dff.cc:234:make_patterns_logic$62
@@ -96,7 +96,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \counter
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2605:import_operation$7
+    connect \Y $auto$expression.cpp:2611:import_operation$7
   end
   attribute \src "dut.sv:87.3-91.12|dut.sv:50.2-92.9"
   cell $pmux $procmux$26
@@ -153,7 +153,7 @@ module \top
     parameter \WIDTH 8
     connect \CLK \clk
     connect \SRST $procmux$10_CMP
-    connect \D $auto$expression.cpp:2605:import_operation$7
+    connect \D $auto$expression.cpp:2611:import_operation$7
     connect \Q \counter
   end
   attribute \src "dut.sv:47.1-93.4"
