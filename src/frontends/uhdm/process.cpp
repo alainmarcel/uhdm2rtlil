@@ -6985,6 +6985,14 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
 void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
     log("    import_if_else_comb: Importing if_else statement\n");
 
+    // `priority if` / `unique if`: only the OUTERMOST if_else carries the
+    // qualifier; propagate it down via `current_if_qualifier` so the
+    // nested else-if levels emit the same `\full_case` on their switches.
+    int saved_qualifier = current_if_qualifier;
+    int q = uhdm_if_else->VpiQualifier();
+    if (q == vpiUniqueQualifier || q == vpiPriorityQualifier)
+        current_if_qualifier = q;
+
     // Get the condition
     if (auto condition = uhdm_if_else->VpiCondition()) {
         RTLIL::SigSpec condition_sig = import_expression(condition);
@@ -6996,39 +7004,45 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
 
         if (mode_debug)
             log("    If_else condition: %s\n", log_signal(condition_sig));
-        
+
         // Create a switch statement for the if
         RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
         sw->signal = condition_sig;
         add_src_attribute(sw->attributes, uhdm_if_else);
-        
+        if (current_if_qualifier == vpiUniqueQualifier) {
+            sw->attributes[ID::full_case]     = RTLIL::Const(1);
+            sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+        } else if (current_if_qualifier == vpiPriorityQualifier) {
+            sw->attributes[ID::full_case] = RTLIL::Const(1);
+        }
+
         // Create case for true (then branch)
         RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
         add_src_attribute(true_case->attributes, uhdm_if_else);
-        
+
         // Import then statement
         if (auto then_stmt = uhdm_if_else->VpiStmt()) {
             if (mode_debug)
                 log("    Importing then statement\n");
             import_statement_comb(then_stmt, true_case);
         }
-        
+
         sw->cases.push_back(true_case);
-        
+
         // Create case for false (else branch) if it exists
         if (auto else_stmt = uhdm_if_else->VpiElseStmt()) {
             RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
             // Empty compare means default case
             add_src_attribute(else_case->attributes, uhdm_if_else);
-            
+
             log("    Importing else statement, type: %s (vpiType=%d)\n",
                 UhdmName(else_stmt->UhdmType()).c_str(), else_stmt->VpiType());
             log("    Else case has %d actions before import\n", (int)else_case->actions.size());
             import_statement_comb(else_stmt, else_case);
             log("    Else case has %d actions after import\n", (int)else_case->actions.size());
             log("    Else case has %d switches after import\n", (int)else_case->switches.size());
-            
+
             sw->cases.push_back(else_case);
         } else {
             // Create empty default case
@@ -7036,18 +7050,28 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             add_src_attribute(default_case->attributes, uhdm_if_else);
             sw->cases.push_back(default_case);
         }
-        
+
         // Add the switch to the current case
         proc->root_case.switches.push_back(sw);
     } else {
         log_warning("If_else statement has no condition\n");
     }
+
+    current_if_qualifier = saved_qualifier;
 }
 
 // Import if statement for comb context
 void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc) {
     // Always log for debugging
     log("    import_if_stmt_comb: Importing if statement (UhdmType=%d)\n", uhdm_if->UhdmType());
+
+    // Same qualifier-propagation logic as `import_if_else_comb`; the
+    // innermost `else if (…)` in a `priority if` chain reaches here
+    // (it has no else branch so it lands as `if_stmt`, not `if_else`).
+    int saved_qualifier = current_if_qualifier;
+    int q = uhdm_if->VpiQualifier();
+    if (q == vpiUniqueQualifier || q == vpiPriorityQualifier)
+        current_if_qualifier = q;
 
     // Get the condition
     if (auto condition = uhdm_if->VpiCondition()) {
@@ -7060,12 +7084,18 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
 
         if (mode_debug)
             log("    If condition: %s\n", log_signal(condition_sig));
-        
+
         // Create a switch statement for the if
         RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
         sw->signal = condition_sig;
         add_src_attribute(sw->attributes, uhdm_if);
-        
+        if (current_if_qualifier == vpiUniqueQualifier) {
+            sw->attributes[ID::full_case]     = RTLIL::Const(1);
+            sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+        } else if (current_if_qualifier == vpiPriorityQualifier) {
+            sw->attributes[ID::full_case] = RTLIL::Const(1);
+        }
+
         // Create case for true (then branch)
         RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
         true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
@@ -7097,6 +7127,8 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
     } else {
         log_warning("If statement has no condition\n");
     }
+
+    current_if_qualifier = saved_qualifier;
 }
 
 // Import case statement for sync context
@@ -7368,6 +7400,20 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
     sw->signal = case_sig;
     add_src_attribute(sw->attributes, uhdm_case);
+
+    // `unique case` / `priority case` SV qualifiers tell the
+    // synthesizer that every reachable case-selector value hits one of
+    // the listed items, so the synthesis pass should not infer a latch
+    // for the missing patterns.  Yosys's `proc_dlatch` reads
+    // `\full_case` (and `\parallel_case` for `unique`).  Mirroring
+    // what Yosys's own Verilog frontend emits.
+    int qualifier = uhdm_case->VpiQualifier();
+    if (qualifier == vpiUniqueQualifier) {
+        sw->attributes[ID::full_case]     = RTLIL::Const(1);
+        sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+    } else if (qualifier == vpiPriorityQualifier) {
+        sw->attributes[ID::full_case] = RTLIL::Const(1);
+    }
 
     if (!items.empty()) {
         for (auto& d : items) {
@@ -7776,6 +7822,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             // Handle simple if statement
             auto if_stmt = any_cast<const UHDM::if_stmt*>(uhdm_stmt);
 
+            // Same qualifier-propagation logic as the Process-overload
+            // path: track `priority if` / `unique if` down through every
+            // nested else-if so each emitted switch is tagged with
+            // `\full_case`.
+            int saved_qualifier = current_if_qualifier;
+            int qual = if_stmt->VpiQualifier();
+            if (qual == vpiUniqueQualifier || qual == vpiPriorityQualifier)
+                current_if_qualifier = qual;
+
             // Get the condition
             if (auto condition = if_stmt->VpiCondition()) {
                 RTLIL::SigSpec condition_sig = import_expression(condition);
@@ -7787,39 +7842,51 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
                 if (mode_debug)
                     log("        If condition in case: %s\n", log_signal(condition_sig));
-                
+
                 // Create a switch statement for the if
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
                 sw->signal = condition_sig;
                 add_src_attribute(sw->attributes, if_stmt);
-                
+                if (current_if_qualifier == vpiUniqueQualifier) {
+                    sw->attributes[ID::full_case]     = RTLIL::Const(1);
+                    sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+                } else if (current_if_qualifier == vpiPriorityQualifier) {
+                    sw->attributes[ID::full_case] = RTLIL::Const(1);
+                }
+
                 // Create case for true (then branch)
                 RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
                 true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
                 add_src_attribute(true_case->attributes, if_stmt);
-                
+
                 // Import then statement
                 if (auto then_stmt = if_stmt->VpiStmt()) {
                     if (mode_debug)
                         log("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
-                
+
                 sw->cases.push_back(true_case);
-                
+
                 // For simple if (not if_else), create empty default case
                 RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
                 add_src_attribute(default_case->attributes, if_stmt);
                 sw->cases.push_back(default_case);
-                
+
                 // Add the switch to the current case
                 case_rule->switches.push_back(sw);
             }
+            current_if_qualifier = saved_qualifier;
             break;
         }
         case vpiIfElse: {
             // Handle if_else statement which has an else branch
             auto if_else_stmt = any_cast<const UHDM::if_else*>(uhdm_stmt);
+
+            int saved_qualifier = current_if_qualifier;
+            int qual = if_else_stmt->VpiQualifier();
+            if (qual == vpiUniqueQualifier || qual == vpiPriorityQualifier)
+                current_if_qualifier = qual;
 
             // Get the condition
             if (auto condition = if_else_stmt->VpiCondition()) {
@@ -7832,37 +7899,43 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
                 if (mode_debug)
                     log("        If_else condition in case: %s\n", log_signal(condition_sig));
-                
+
                 // Create a switch statement for the if
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
                 sw->signal = condition_sig;
                 add_src_attribute(sw->attributes, if_else_stmt);
-                
+                if (current_if_qualifier == vpiUniqueQualifier) {
+                    sw->attributes[ID::full_case]     = RTLIL::Const(1);
+                    sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+                } else if (current_if_qualifier == vpiPriorityQualifier) {
+                    sw->attributes[ID::full_case] = RTLIL::Const(1);
+                }
+
                 // Create case for true (then branch)
                 RTLIL::CaseRule* true_case = new RTLIL::CaseRule;
                 true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
                 add_src_attribute(true_case->attributes, if_else_stmt);
-                
+
                 // Import then statement
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
                     if (mode_debug)
                         log("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
-                
+
                 sw->cases.push_back(true_case);
-                
+
                 // Handle else branch
                 if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
                     RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
                     // Empty compare means default case
                     add_src_attribute(else_case->attributes, if_else_stmt);
-                    
+
                     if (mode_debug)
-                        log("        Importing else statement in case (type=%s)\n", 
+                        log("        Importing else statement in case (type=%s)\n",
                             UhdmName(else_stmt->UhdmType()).c_str());
                     import_statement_comb(else_stmt, else_case);
-                    
+
                     sw->cases.push_back(else_case);
                 } else {
                     // Create empty default case
@@ -7870,10 +7943,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     add_src_attribute(default_case->attributes, if_else_stmt);
                     sw->cases.push_back(default_case);
                 }
-                
+
                 // Add the switch to the current case
                 case_rule->switches.push_back(sw);
             }
+            current_if_qualifier = saved_qualifier;
             break;
         }
         
