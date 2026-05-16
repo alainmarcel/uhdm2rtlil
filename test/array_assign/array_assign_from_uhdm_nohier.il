@@ -202,16 +202,16 @@ module \top
   wire $0\pb
   attribute \src "dut.sv:63.16-63.32"
   wire $eq$dut.sv:63$10_Y
-  wire $auto$process.cpp:75:import_immediate_assert$12
+  wire $auto$process.cpp:74:build_check_cell$12
   attribute \src "dut.sv:64.16-64.32"
   wire $eq$dut.sv:64$14_Y
-  wire $auto$process.cpp:75:import_immediate_assert$16
+  wire $auto$process.cpp:74:build_check_cell$16
   attribute \src "dut.sv:65.16-65.32"
   wire $eq$dut.sv:65$18_Y
-  wire $auto$process.cpp:75:import_immediate_assert$20
+  wire $auto$process.cpp:74:build_check_cell$20
   attribute \src "dut.sv:66.16-66.32"
   wire $eq$dut.sv:66$22_Y
-  wire $auto$process.cpp:75:import_immediate_assert$24
+  wire $auto$process.cpp:74:build_check_cell$24
   attribute \src "dut.sv:75.5-86.8"
   wire $0\pt_a
   attribute \src "dut.sv:75.5-86.8"
@@ -223,10 +223,10 @@ module \top
   wire $auto$rtlil.cc:3390:Mux$28
   attribute \src "dut.sv:84.16-84.31"
   wire $eq$dut.sv:84$29_Y
-  wire $auto$process.cpp:75:import_immediate_assert$31
+  wire $auto$process.cpp:74:build_check_cell$31
   attribute \src "dut.sv:85.16-85.31"
   wire $eq$dut.sv:85$33_Y
-  wire $auto$process.cpp:75:import_immediate_assert$35
+  wire $auto$process.cpp:74:build_check_cell$35
   cell $mux $mux$dut.sv:12$1
     parameter \WIDTH 1
     connect \A \b1
@@ -268,7 +268,7 @@ module \top
   end
   attribute \src "dut.sv:63.9-63.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$13
+  cell $check $auto$process.cpp:84:build_check_cell$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -278,7 +278,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:63$10_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$12
+    connect \EN $auto$process.cpp:74:build_check_cell$12
     connect \TRG { }
   end
   attribute \src "dut.sv:64.16-64.32"
@@ -294,7 +294,7 @@ module \top
   end
   attribute \src "dut.sv:64.9-64.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$17
+  cell $check $auto$process.cpp:84:build_check_cell$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -304,7 +304,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:64$14_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$16
+    connect \EN $auto$process.cpp:74:build_check_cell$16
     connect \TRG { }
   end
   attribute \src "dut.sv:65.16-65.32"
@@ -320,7 +320,7 @@ module \top
   end
   attribute \src "dut.sv:65.9-65.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$21
+  cell $check $auto$process.cpp:84:build_check_cell$21
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -330,7 +330,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:65$18_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$20
+    connect \EN $auto$process.cpp:74:build_check_cell$20
     connect \TRG { }
   end
   attribute \src "dut.sv:66.16-66.32"
@@ -346,7 +346,7 @@ module \top
   end
   attribute \src "dut.sv:66.9-66.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$25
+  cell $check $auto$process.cpp:84:build_check_cell$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -356,7 +356,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:66$22_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$24
+    connect \EN $auto$process.cpp:74:build_check_cell$24
     connect \TRG { }
   end
   cell $mux $mux$dut.sv:82$27
@@ -379,7 +379,7 @@ module \top
   end
   attribute \src "dut.sv:84.9-84.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$32
+  cell $check $auto$process.cpp:84:build_check_cell$32
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -389,7 +389,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:84$29_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$31
+    connect \EN $auto$process.cpp:74:build_check_cell$31
     connect \TRG { }
   end
   attribute \src "dut.sv:85.16-85.31"
@@ -405,7 +405,7 @@ module \top
   end
   attribute \src "dut.sv:85.9-85.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$36
+  cell $check $auto$process.cpp:84:build_check_cell$36
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -415,32 +415,32 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:85$33_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$35
+    connect \EN $auto$process.cpp:74:build_check_cell$35
     connect \TRG { }
   end
   attribute \src "dut.sv:55.5-67.8"
   process $proc$dut.sv:55$9
-    assign $auto$process.cpp:75:import_immediate_assert$12 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$16 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$20 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$24 1'0
+    assign $auto$process.cpp:74:build_check_cell$12 1'0
+    assign $auto$process.cpp:74:build_check_cell$16 1'0
+    assign $auto$process.cpp:74:build_check_cell$20 1'0
+    assign $auto$process.cpp:74:build_check_cell$24 1'0
     assign $0\pb \pb
     assign { } { }
     assign { } { }
     assign { } { }
     assign { } { }
     assign $0\pb \pa
-    assign $auto$process.cpp:75:import_immediate_assert$12 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$16 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$20 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$24 1'1
+    assign $auto$process.cpp:74:build_check_cell$12 1'1
+    assign $auto$process.cpp:74:build_check_cell$16 1'1
+    assign $auto$process.cpp:74:build_check_cell$20 1'1
+    assign $auto$process.cpp:74:build_check_cell$24 1'1
     sync always
       update \pb $0\pb
   end
   attribute \src "dut.sv:75.5-86.8"
   process $proc$dut.sv:75$26
-    assign $auto$process.cpp:75:import_immediate_assert$31 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$35 1'0
+    assign $auto$process.cpp:74:build_check_cell$31 1'0
+    assign $auto$process.cpp:74:build_check_cell$35 1'0
     assign $0\pt_a \pt_a
     assign $0\pt_b \pt_b
     assign $0\pt_o \pt_o
@@ -451,8 +451,8 @@ module \top
     assign 1'x 1'0
     assign $0\pt_sel 1'1
     assign $0\pt_o $auto$rtlil.cc:3390:Mux$28
-    assign $auto$process.cpp:75:import_immediate_assert$31 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$35 1'1
+    assign $auto$process.cpp:74:build_check_cell$31 1'1
+    assign $auto$process.cpp:74:build_check_cell$35 1'1
     sync always
       update \pt_a $0\pt_a
       update \pt_b $0\pt_b

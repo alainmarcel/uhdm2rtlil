@@ -15,7 +15,7 @@ module \anyseq_attr
   attribute \src "dut.sv:11.28-11.29"
   wire width 8 \x
   wire $auto$expression.cpp:1462:import_expression$8
-  wire $auto$process.cpp:75:import_immediate_assert$10
+  wire $auto$process.cpp:74:build_check_cell$10
   attribute \src "dut.sv:20.34-20.44"
   wire width 8 $past$20$6
   attribute \src "dut.sv:11.28-11.29"
@@ -44,7 +44,7 @@ module \anyseq_attr
   end
   attribute \src "dut.sv:20.27-20.46"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$11
+  cell $check $auto$process.cpp:84:build_check_cell$11
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -54,7 +54,7 @@ module \anyseq_attr
     parameter \TRG_WIDTH 1
     connect \A $auto$expression.cpp:1462:import_expression$8
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$10
+    connect \EN $auto$process.cpp:74:build_check_cell$10
     connect \TRG \clock
   end
   attribute \src "dut.sv:20.9-20.46"
@@ -63,7 +63,7 @@ module \anyseq_attr
     connect \A 1'0
     connect \B 1'1
     connect \S \f_past_valid
-    connect \Y $auto$process.cpp:75:import_immediate_assert$10
+    connect \Y $auto$process.cpp:74:build_check_cell$10
   end
   attribute \src "dut.sv:18.5-22.8"
   attribute \always_ff 1

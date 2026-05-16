@@ -60,59 +60,81 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
 
 // Generic statement type dispatcher to reduce if-else chains
 
+// Build a `$check` cell with the given FLAVOR (`"assert"` / `"cover"`)
+// from a UHDM immediate statement.  Shared by `import_immediate_assert`
+// and `import_immediate_cover`.  Returns the enable wire (caller drives
+// it from inside the surrounding case rule to gate the check).
+static RTLIL::Cell* build_check_cell(UhdmImporter* self,
+                                     const UHDM::any* stmt_obj,
+                                     const UHDM::expr* expr,
+                                     const std::string& flavor,
+                                     RTLIL::Wire*& enable_wire) {
+    RTLIL::SigSpec condition = self->import_expression(expr);
+
+    enable_wire = self->module->addWire(NEW_ID);
+    enable_wire->width = 1;
+    self->current_assert_enable_wires.push_back(enable_wire);
+
+    // Preserve the named-block name when the SV wrote one
+    // (`assert_a_eq_b : assert (…)`).  Yosys's Verilog frontend uses
+    // this as the cell name; matching that makes the synth output line
+    // up across the two frontends.
+    std::string cell_name = std::string(stmt_obj->VpiName());
+    RTLIL::IdString cell_id = cell_name.empty()
+        ? NEW_ID
+        : RTLIL::escape_id(cell_name);
+
+    RTLIL::Cell* check_cell = self->module->addCell(cell_id, ID($check));
+    check_cell->setParam(ID::ARGS_WIDTH, 0);
+    check_cell->setParam(ID::FLAVOR, RTLIL::Const(flavor));
+    check_cell->setParam(ID::FORMAT, RTLIL::Const(""));
+    check_cell->setParam(ID::PRIORITY,
+        RTLIL::Const(--self->last_effect_priority, 32));
+
+    if (self->in_always_ff_context && !self->current_ff_clock_sig.empty()) {
+        check_cell->setParam(ID::TRG_ENABLE, 1);
+        check_cell->setParam(ID::TRG_POLARITY, RTLIL::Const(1, 1));
+        check_cell->setParam(ID::TRG_WIDTH, 1);
+        check_cell->setPort(ID::A, condition);
+        check_cell->setPort(ID::ARGS, RTLIL::SigSpec());
+        check_cell->setPort(ID::EN, enable_wire);
+        check_cell->setPort(ID::TRG, self->current_ff_clock_sig);
+    } else {
+        check_cell->setParam(ID::TRG_ENABLE, 0);
+        check_cell->setParam(ID::TRG_POLARITY, RTLIL::Const(RTLIL::State::Sx, 0));
+        check_cell->setParam(ID::TRG_WIDTH, 0);
+        check_cell->setPort(ID::A, condition);
+        check_cell->setPort(ID::ARGS, RTLIL::SigSpec());
+        check_cell->setPort(ID::EN, enable_wire);
+        check_cell->setPort(ID::TRG, RTLIL::SigSpec());
+    }
+
+    self->add_src_attribute(check_cell->attributes, stmt_obj);
+    check_cell->attributes[ID::keep] = RTLIL::Const(1);
+    return check_cell;
+}
+
 // Import immediate assertion as $check cell (following DRY principle)
 void UhdmImporter::import_immediate_assert(const UHDM::immediate_assert* assert_stmt, RTLIL::Wire*& enable_wire) {
-    log("UHDM: import_immediate_assert called, in_always_ff=%d, clock_sig.empty=%d\n", 
+    log("UHDM: import_immediate_assert called, in_always_ff=%d, clock_sig.empty=%d\n",
         in_always_ff_context ? 1 : 0, current_ff_clock_sig.empty() ? 1 : 0);
     if (!assert_stmt || !assert_stmt->Expr()) {
         return;
     }
-    
-    // Get the assertion condition
-    RTLIL::SigSpec condition = import_expression(assert_stmt->Expr());
-    
-    // Create enable wire for the assertion (matching Verilog frontend)
-    enable_wire = module->addWire(NEW_ID);
-    enable_wire->width = 1;
-    
-    // Track this enable wire for initialization
-    current_assert_enable_wires.push_back(enable_wire);
-    
-    // Create a $check cell (matching Verilog frontend behavior)
-    RTLIL::Cell* check_cell = module->addCell(NEW_ID, "$check");
-    
-    // Set required parameters for $check cell
-    check_cell->setParam("\\ARGS_WIDTH", 0);
-    check_cell->setParam("\\FLAVOR", RTLIL::Const("assert"));
-    check_cell->setParam("\\FORMAT", RTLIL::Const(""));
-    check_cell->setParam("\\PRIORITY", RTLIL::Const(--last_effect_priority, 32));
-    
-    // If we're in always_ff context, connect the clock to trigger
-    if (in_always_ff_context && !current_ff_clock_sig.empty()) {
-        check_cell->setParam("\\TRG_ENABLE", 1);
-        check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(1, 1)); // Positive edge
-        check_cell->setParam("\\TRG_WIDTH", 1);
-        // Set ports
-        check_cell->setPort("\\A", condition);
-        check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
-        check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
-        check_cell->setPort("\\TRG", current_ff_clock_sig); // Connect clock signal
-    } else {
-        check_cell->setParam("\\TRG_ENABLE", 0);
-        check_cell->setParam("\\TRG_POLARITY", RTLIL::Const(RTLIL::State::Sx, 0));
-        check_cell->setParam("\\TRG_WIDTH", 0);
-        // Set ports
-        check_cell->setPort("\\A", condition);
-        check_cell->setPort("\\ARGS", RTLIL::SigSpec());  // Empty args
-        check_cell->setPort("\\EN", enable_wire);         // Connect to enable wire
-        check_cell->setPort("\\TRG", RTLIL::SigSpec());   // Empty trigger
-    }
-    
-    // Add source location if available
-    add_src_attribute(check_cell->attributes, assert_stmt);
-    check_cell->attributes[ID::keep] = RTLIL::Const(1);
-
+    build_check_cell(this, assert_stmt, assert_stmt->Expr(), "assert", enable_wire);
     log("        Created $check cell for assertion\n");
+    log_flush();
+}
+
+// Import immediate cover as $check cell (FLAVOR="cover").
+void UhdmImporter::import_immediate_cover(const UHDM::immediate_cover* cover_stmt, RTLIL::Wire*& enable_wire) {
+    log("UHDM: import_immediate_cover called, in_always_ff=%d, clock_sig.empty=%d\n",
+        in_always_ff_context ? 1 : 0, current_ff_clock_sig.empty() ? 1 : 0);
+    if (!cover_stmt || !cover_stmt->Expr()) {
+        return;
+    }
+    build_check_cell(this, cover_stmt, cover_stmt->Expr(), "cover", enable_wire);
+    log("        Created $check cell for cover\n");
     log_flush();
 }
 
@@ -3204,17 +3226,33 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
         case vpiImmediateAssert: {
             log("        Processing immediate assert - converting to $check cell\n");
             log_flush();
-            
+
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
             RTLIL::Wire* enable_wire = nullptr;
             import_immediate_assert(assert_stmt, enable_wire);
-            
+
             // In synchronous context, add assignment to set enable wire to 1
             if (enable_wire) {
                 sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
-            
+
             log("        Immediate assert processed\n");
+            log_flush();
+            break;
+        }
+        case vpiImmediateCover: {
+            log("        Processing immediate cover - converting to $check cell\n");
+            log_flush();
+
+            const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_cover(cover_stmt, enable_wire);
+
+            if (enable_wire) {
+                sync->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+
+            log("        Immediate cover processed\n");
             log_flush();
             break;
         }
@@ -4702,17 +4740,33 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
         case vpiImmediateAssert: {
             log("        Processing immediate assert in comb context - converting to $check cell\n");
             log_flush();
-            
+
             const UHDM::immediate_assert* assert_stmt = any_cast<const UHDM::immediate_assert*>(uhdm_stmt);
             RTLIL::Wire* enable_wire = nullptr;
             import_immediate_assert(assert_stmt, enable_wire);
-            
+
             // In combinational context, add assignment to set enable wire to 1
             if (enable_wire) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
             }
-            
+
             log("        Immediate assert processed\n");
+            log_flush();
+            break;
+        }
+        case vpiImmediateCover: {
+            log("        Processing immediate cover in comb context - converting to $check cell\n");
+            log_flush();
+
+            const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_cover(cover_stmt, enable_wire);
+
+            if (enable_wire) {
+                proc->root_case.actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+
+            log("        Immediate cover processed\n");
             log_flush();
             break;
         }
@@ -7964,6 +8018,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
 
             log("        Immediate assert processed in case\n");
+            break;
+        }
+        case vpiImmediateCover: {
+            log("        Processing immediate cover in case context - converting to $check cell\n");
+
+            const UHDM::immediate_cover* cover_stmt = any_cast<const UHDM::immediate_cover*>(uhdm_stmt);
+            RTLIL::Wire* enable_wire = nullptr;
+            import_immediate_cover(cover_stmt, enable_wire);
+
+            if (enable_wire) {
+                case_rule->actions.push_back(RTLIL::SigSig(enable_wire, RTLIL::State::S1));
+            }
+
+            log("        Immediate cover processed in case\n");
             break;
         }
 
