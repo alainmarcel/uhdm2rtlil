@@ -104,45 +104,45 @@ module \top
   wire width 64 $auto$module.cpp:1067:import_continuous_assign$3
   wire width 64 $auto$module.cpp:1067:import_continuous_assign$5
   wire $auto$rtlil.cc:3311:Eqx$9
-  wire $auto$process.cpp:75:import_immediate_assert$10
+  wire $auto$process.cpp:74:build_check_cell$10
   wire $auto$rtlil.cc:3311:Eqx$13
-  wire $auto$process.cpp:75:import_immediate_assert$14
+  wire $auto$process.cpp:74:build_check_cell$14
   wire $auto$rtlil.cc:3311:Eqx$17
-  wire $auto$process.cpp:75:import_immediate_assert$18
+  wire $auto$process.cpp:74:build_check_cell$18
   wire $auto$rtlil.cc:3311:Eqx$21
-  wire $auto$process.cpp:75:import_immediate_assert$22
+  wire $auto$process.cpp:74:build_check_cell$22
   wire $auto$rtlil.cc:3311:Eqx$25
-  wire $auto$process.cpp:75:import_immediate_assert$26
+  wire $auto$process.cpp:74:build_check_cell$26
   wire $auto$rtlil.cc:3311:Eqx$29
-  wire $auto$process.cpp:75:import_immediate_assert$30
+  wire $auto$process.cpp:74:build_check_cell$30
   wire $auto$rtlil.cc:3311:Eqx$33
-  wire $auto$process.cpp:75:import_immediate_assert$34
+  wire $auto$process.cpp:74:build_check_cell$34
   wire $auto$rtlil.cc:3311:Eqx$37
-  wire $auto$process.cpp:75:import_immediate_assert$38
+  wire $auto$process.cpp:74:build_check_cell$38
   wire $auto$rtlil.cc:3311:Eqx$41
-  wire $auto$process.cpp:75:import_immediate_assert$42
+  wire $auto$process.cpp:74:build_check_cell$42
   wire $auto$rtlil.cc:3311:Eqx$45
-  wire $auto$process.cpp:75:import_immediate_assert$46
+  wire $auto$process.cpp:74:build_check_cell$46
   wire $auto$rtlil.cc:3311:Eqx$49
-  wire $auto$process.cpp:75:import_immediate_assert$50
+  wire $auto$process.cpp:74:build_check_cell$50
   wire $auto$rtlil.cc:3311:Eqx$53
-  wire $auto$process.cpp:75:import_immediate_assert$54
+  wire $auto$process.cpp:74:build_check_cell$54
   wire $auto$rtlil.cc:3311:Eqx$57
-  wire $auto$process.cpp:75:import_immediate_assert$58
+  wire $auto$process.cpp:74:build_check_cell$58
   wire $auto$rtlil.cc:3311:Eqx$61
-  wire $auto$process.cpp:75:import_immediate_assert$62
+  wire $auto$process.cpp:74:build_check_cell$62
   wire $auto$rtlil.cc:3311:Eqx$65
-  wire $auto$process.cpp:75:import_immediate_assert$66
+  wire $auto$process.cpp:74:build_check_cell$66
   wire $auto$rtlil.cc:3311:Eqx$69
-  wire $auto$process.cpp:75:import_immediate_assert$70
+  wire $auto$process.cpp:74:build_check_cell$70
   wire $auto$rtlil.cc:3311:Eqx$73
-  wire $auto$process.cpp:75:import_immediate_assert$74
+  wire $auto$process.cpp:74:build_check_cell$74
   wire $auto$rtlil.cc:3311:Eqx$77
-  wire $auto$process.cpp:75:import_immediate_assert$78
+  wire $auto$process.cpp:74:build_check_cell$78
   wire $auto$rtlil.cc:3311:Eqx$81
-  wire $auto$process.cpp:75:import_immediate_assert$82
+  wire $auto$process.cpp:74:build_check_cell$82
   wire $auto$rtlil.cc:3311:Eqx$85
-  wire $auto$process.cpp:75:import_immediate_assert$86
+  wire $auto$process.cpp:74:build_check_cell$86
   cell $pos $auto$module.cpp:1068:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
@@ -169,7 +169,7 @@ module \top
   end
   attribute \src "dut.sv:62.9-62.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$11
+  cell $check $auto$process.cpp:84:build_check_cell$11
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -179,7 +179,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$9
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$10
+    connect \EN $auto$process.cpp:74:build_check_cell$10
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:63$12
@@ -194,7 +194,7 @@ module \top
   end
   attribute \src "dut.sv:63.9-63.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$15
+  cell $check $auto$process.cpp:84:build_check_cell$15
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -204,7 +204,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$13
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$14
+    connect \EN $auto$process.cpp:74:build_check_cell$14
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:64$16
@@ -219,7 +219,7 @@ module \top
   end
   attribute \src "dut.sv:64.9-64.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$19
+  cell $check $auto$process.cpp:84:build_check_cell$19
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -229,7 +229,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$17
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$18
+    connect \EN $auto$process.cpp:74:build_check_cell$18
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:65$20
@@ -244,7 +244,7 @@ module \top
   end
   attribute \src "dut.sv:65.9-65.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$23
+  cell $check $auto$process.cpp:84:build_check_cell$23
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -254,7 +254,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$21
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$22
+    connect \EN $auto$process.cpp:74:build_check_cell$22
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:66$24
@@ -269,7 +269,7 @@ module \top
   end
   attribute \src "dut.sv:66.9-66.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$27
+  cell $check $auto$process.cpp:84:build_check_cell$27
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -279,7 +279,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$25
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$26
+    connect \EN $auto$process.cpp:74:build_check_cell$26
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:67$28
@@ -294,7 +294,7 @@ module \top
   end
   attribute \src "dut.sv:67.9-67.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$31
+  cell $check $auto$process.cpp:84:build_check_cell$31
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -304,7 +304,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$29
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$30
+    connect \EN $auto$process.cpp:74:build_check_cell$30
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:68$32
@@ -319,7 +319,7 @@ module \top
   end
   attribute \src "dut.sv:68.9-68.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$35
+  cell $check $auto$process.cpp:84:build_check_cell$35
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -329,7 +329,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$33
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$34
+    connect \EN $auto$process.cpp:74:build_check_cell$34
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:69$36
@@ -344,7 +344,7 @@ module \top
   end
   attribute \src "dut.sv:69.9-69.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$39
+  cell $check $auto$process.cpp:84:build_check_cell$39
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -354,7 +354,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$37
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$38
+    connect \EN $auto$process.cpp:74:build_check_cell$38
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:70$40
@@ -369,7 +369,7 @@ module \top
   end
   attribute \src "dut.sv:70.9-70.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$43
+  cell $check $auto$process.cpp:84:build_check_cell$43
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -379,7 +379,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$41
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$42
+    connect \EN $auto$process.cpp:74:build_check_cell$42
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:71$44
@@ -394,7 +394,7 @@ module \top
   end
   attribute \src "dut.sv:71.9-71.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$47
+  cell $check $auto$process.cpp:84:build_check_cell$47
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -404,7 +404,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$45
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$46
+    connect \EN $auto$process.cpp:74:build_check_cell$46
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:72$48
@@ -419,7 +419,7 @@ module \top
   end
   attribute \src "dut.sv:72.9-72.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$51
+  cell $check $auto$process.cpp:84:build_check_cell$51
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -429,7 +429,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$49
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$50
+    connect \EN $auto$process.cpp:74:build_check_cell$50
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:73$52
@@ -444,7 +444,7 @@ module \top
   end
   attribute \src "dut.sv:73.9-73.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$55
+  cell $check $auto$process.cpp:84:build_check_cell$55
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -454,7 +454,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$53
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$54
+    connect \EN $auto$process.cpp:74:build_check_cell$54
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:74$56
@@ -469,7 +469,7 @@ module \top
   end
   attribute \src "dut.sv:74.9-74.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$59
+  cell $check $auto$process.cpp:84:build_check_cell$59
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -479,7 +479,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$57
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$58
+    connect \EN $auto$process.cpp:74:build_check_cell$58
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:75$60
@@ -494,7 +494,7 @@ module \top
   end
   attribute \src "dut.sv:75.9-75.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$63
+  cell $check $auto$process.cpp:84:build_check_cell$63
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -504,7 +504,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$61
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$62
+    connect \EN $auto$process.cpp:74:build_check_cell$62
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:76$64
@@ -519,7 +519,7 @@ module \top
   end
   attribute \src "dut.sv:76.9-76.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$67
+  cell $check $auto$process.cpp:84:build_check_cell$67
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -529,7 +529,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$65
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$66
+    connect \EN $auto$process.cpp:74:build_check_cell$66
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:77$68
@@ -544,7 +544,7 @@ module \top
   end
   attribute \src "dut.sv:77.9-77.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$71
+  cell $check $auto$process.cpp:84:build_check_cell$71
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -554,7 +554,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$69
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$70
+    connect \EN $auto$process.cpp:74:build_check_cell$70
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:78$72
@@ -569,7 +569,7 @@ module \top
   end
   attribute \src "dut.sv:78.9-78.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$75
+  cell $check $auto$process.cpp:84:build_check_cell$75
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -579,7 +579,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$73
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$74
+    connect \EN $auto$process.cpp:74:build_check_cell$74
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:79$76
@@ -594,7 +594,7 @@ module \top
   end
   attribute \src "dut.sv:79.9-79.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$79
+  cell $check $auto$process.cpp:84:build_check_cell$79
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -604,7 +604,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$77
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$78
+    connect \EN $auto$process.cpp:74:build_check_cell$78
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:80$80
@@ -619,7 +619,7 @@ module \top
   end
   attribute \src "dut.sv:80.9-80.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$83
+  cell $check $auto$process.cpp:84:build_check_cell$83
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -629,7 +629,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$81
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$82
+    connect \EN $auto$process.cpp:74:build_check_cell$82
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:81$84
@@ -644,7 +644,7 @@ module \top
   end
   attribute \src "dut.sv:81.9-81.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$87
+  cell $check $auto$process.cpp:84:build_check_cell$87
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -654,7 +654,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$85
     connect \ARGS { }
-    connect \EN $auto$process.cpp:75:import_immediate_assert$86
+    connect \EN $auto$process.cpp:74:build_check_cell$86
     connect \TRG { }
   end
   cell \pass_through \pt09
@@ -687,46 +687,46 @@ module \top
   end
   attribute \src "dut.sv:61.5-82.8"
   process $proc$dut.sv:61$7
-    assign $auto$process.cpp:75:import_immediate_assert$10 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$14 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$18 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$22 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$26 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$30 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$34 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$38 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$42 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$46 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$50 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$54 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$58 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$62 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$66 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$70 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$74 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$78 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$82 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$86 1'0
-    assign $auto$process.cpp:75:import_immediate_assert$10 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$14 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$18 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$22 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$26 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$30 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$34 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$38 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$42 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$46 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$50 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$54 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$58 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$62 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$66 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$70 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$74 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$78 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$82 1'1
-    assign $auto$process.cpp:75:import_immediate_assert$86 1'1
+    assign $auto$process.cpp:74:build_check_cell$10 1'0
+    assign $auto$process.cpp:74:build_check_cell$14 1'0
+    assign $auto$process.cpp:74:build_check_cell$18 1'0
+    assign $auto$process.cpp:74:build_check_cell$22 1'0
+    assign $auto$process.cpp:74:build_check_cell$26 1'0
+    assign $auto$process.cpp:74:build_check_cell$30 1'0
+    assign $auto$process.cpp:74:build_check_cell$34 1'0
+    assign $auto$process.cpp:74:build_check_cell$38 1'0
+    assign $auto$process.cpp:74:build_check_cell$42 1'0
+    assign $auto$process.cpp:74:build_check_cell$46 1'0
+    assign $auto$process.cpp:74:build_check_cell$50 1'0
+    assign $auto$process.cpp:74:build_check_cell$54 1'0
+    assign $auto$process.cpp:74:build_check_cell$58 1'0
+    assign $auto$process.cpp:74:build_check_cell$62 1'0
+    assign $auto$process.cpp:74:build_check_cell$66 1'0
+    assign $auto$process.cpp:74:build_check_cell$70 1'0
+    assign $auto$process.cpp:74:build_check_cell$74 1'0
+    assign $auto$process.cpp:74:build_check_cell$78 1'0
+    assign $auto$process.cpp:74:build_check_cell$82 1'0
+    assign $auto$process.cpp:74:build_check_cell$86 1'0
+    assign $auto$process.cpp:74:build_check_cell$10 1'1
+    assign $auto$process.cpp:74:build_check_cell$14 1'1
+    assign $auto$process.cpp:74:build_check_cell$18 1'1
+    assign $auto$process.cpp:74:build_check_cell$22 1'1
+    assign $auto$process.cpp:74:build_check_cell$26 1'1
+    assign $auto$process.cpp:74:build_check_cell$30 1'1
+    assign $auto$process.cpp:74:build_check_cell$34 1'1
+    assign $auto$process.cpp:74:build_check_cell$38 1'1
+    assign $auto$process.cpp:74:build_check_cell$42 1'1
+    assign $auto$process.cpp:74:build_check_cell$46 1'1
+    assign $auto$process.cpp:74:build_check_cell$50 1'1
+    assign $auto$process.cpp:74:build_check_cell$54 1'1
+    assign $auto$process.cpp:74:build_check_cell$58 1'1
+    assign $auto$process.cpp:74:build_check_cell$62 1'1
+    assign $auto$process.cpp:74:build_check_cell$66 1'1
+    assign $auto$process.cpp:74:build_check_cell$70 1'1
+    assign $auto$process.cpp:74:build_check_cell$74 1'1
+    assign $auto$process.cpp:74:build_check_cell$78 1'1
+    assign $auto$process.cpp:74:build_check_cell$82 1'1
+    assign $auto$process.cpp:74:build_check_cell$86 1'1
     sync always
   end
   connect \o01 64'0000000000000000000000000000000000000000000000000000000000000000

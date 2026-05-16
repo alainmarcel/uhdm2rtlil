@@ -14,7 +14,7 @@ module \top
   wire \pt_b
   attribute \src "dut.sv:66.9-66.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$25
+  cell $check $auto$process.cpp:84:build_check_cell$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -29,7 +29,7 @@ module \top
   end
   attribute \src "dut.sv:64.9-64.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$17
+  cell $check $auto$process.cpp:84:build_check_cell$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -44,7 +44,7 @@ module \top
   end
   attribute \src "dut.sv:84.9-84.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$32
+  cell $check $auto$process.cpp:84:build_check_cell$32
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -59,7 +59,7 @@ module \top
   end
   attribute \src "dut.sv:65.9-65.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$21
+  cell $check $auto$process.cpp:84:build_check_cell$21
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -74,7 +74,7 @@ module \top
   end
   attribute \src "dut.sv:85.9-85.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$36
+  cell $check $auto$process.cpp:84:build_check_cell$36
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -89,7 +89,7 @@ module \top
   end
   attribute \src "dut.sv:63.9-63.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:82:import_immediate_assert$13
+  cell $check $auto$process.cpp:84:build_check_cell$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
