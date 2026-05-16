@@ -314,6 +314,16 @@ struct UhdmImporter {
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
+
+    // Set when the current if-chain is inside a `priority if` / `unique if`
+    // SV statement.  The qualifier on the outermost `if_else` is the only
+    // one Surelog records; nested else-if levels need the same `\full_case`
+    // (and `\parallel_case` for unique) attribute to suppress latch
+    // inference in `proc_dlatch`.
+    //   0 = no qualifier active
+    //   vpiUniqueQualifier (1) = unique
+    //   vpiPriorityQualifier (2) = priority
+    int current_if_qualifier = 0;
     
     // Function call stack for recursive function support
     FunctionCallStack function_call_stack;
