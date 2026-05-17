@@ -4,15 +4,40 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:6.1-87.10"
 module \top
   attribute \src "dut.sv:53.11-53.13"
-  wire \pa
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 2
+  wire width 4 \pa
   attribute \src "dut.sv:54.11-54.13"
-  wire \pb
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 2
+  wire width 4 \pb
   attribute \src "dut.sv:71.11-71.15"
-  wire \pt_a
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_a
   attribute \src "dut.sv:72.11-72.15"
-  wire \pt_b
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_b
   attribute \src "dut.sv:73.11-73.15"
-  wire \pt_o
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_o
   attribute \src "dut.sv:74.11-74.17"
   wire \pt_sel
   attribute \src "dut.sv:11.10-11.14"
@@ -199,7 +224,7 @@ module \top
   wire \b6
   wire \a6
   attribute \src "dut.sv:55.5-67.8"
-  wire $0\pb
+  wire width 4 $0\pb
   attribute \src "dut.sv:63.16-63.32"
   wire $eq$dut.sv:63$10_Y
   wire $auto$process.cpp:74:build_check_cell$12
@@ -213,14 +238,18 @@ module \top
   wire $eq$dut.sv:66$22_Y
   wire $auto$process.cpp:74:build_check_cell$24
   attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_a
+  wire $0\pt_a[0:0]
   attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_b
+  wire $0\pt_a[1:1]
+  attribute \src "dut.sv:75.5-86.8"
+  wire $0\pt_b[0:0]
+  attribute \src "dut.sv:75.5-86.8"
+  wire $0\pt_b[1:1]
   attribute \src "dut.sv:75.5-86.8"
   wire $0\pt_sel
   attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_o
-  wire $auto$rtlil.cc:3390:Mux$28
+  wire width 2 $0\pt_o
+  wire width 2 $auto$rtlil.cc:3390:Mux$28
   attribute \src "dut.sv:84.16-84.31"
   wire $eq$dut.sv:84$29_Y
   wire $auto$process.cpp:74:build_check_cell$31
@@ -259,10 +288,10 @@ module \top
   cell $eq $eq$dut.sv:63$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \pb [1]
     connect \B 1'0
     connect \Y $eq$dut.sv:63$10_Y
   end
@@ -285,10 +314,10 @@ module \top
   cell $eq $eq$dut.sv:64$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \pb [0]
     connect \B 1'1
     connect \Y $eq$dut.sv:64$14_Y
   end
@@ -311,10 +340,10 @@ module \top
   cell $eq $eq$dut.sv:65$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \pb [3]
     connect \B 1'1
     connect \Y $eq$dut.sv:65$18_Y
   end
@@ -337,10 +366,10 @@ module \top
   cell $eq $eq$dut.sv:66$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 0
+    parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A { }
+    connect \A \pb [2]
     connect \B 1'1
     connect \Y $eq$dut.sv:66$22_Y
   end
@@ -360,9 +389,9 @@ module \top
     connect \TRG { }
   end
   cell $mux $mux$dut.sv:82$27
-    parameter \WIDTH 1
-    connect \A 1'1
-    connect \B 1'0
+    parameter \WIDTH 2
+    connect \A \pt_b
+    connect \B \pt_a
     connect \S 1'1
     connect \Y $auto$rtlil.cc:3390:Mux$28
   end
@@ -373,7 +402,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \pt_o
+    connect \A \pt_o [0]
     connect \B 1'0
     connect \Y $eq$dut.sv:84$29_Y
   end
@@ -399,7 +428,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A 1'x
+    connect \A \pt_o [1]
     connect \B 1'1
     connect \Y $eq$dut.sv:85$33_Y
   end
@@ -425,10 +454,10 @@ module \top
     assign $auto$process.cpp:74:build_check_cell$20 1'0
     assign $auto$process.cpp:74:build_check_cell$24 1'0
     assign $0\pb \pb
-    assign { } { }
-    assign { } { }
-    assign { } { }
-    assign { } { }
+    assign \pa [0] 1'0
+    assign \pa [1] 1'1
+    assign \pa [2] 1'1
+    assign \pa [3] 1'1
     assign $0\pb \pa
     assign $auto$process.cpp:74:build_check_cell$12 1'1
     assign $auto$process.cpp:74:build_check_cell$16 1'1
@@ -441,21 +470,25 @@ module \top
   process $proc$dut.sv:75$26
     assign $auto$process.cpp:74:build_check_cell$31 1'0
     assign $auto$process.cpp:74:build_check_cell$35 1'0
-    assign $0\pt_a \pt_a
-    assign $0\pt_b \pt_b
+    assign $0\pt_a[0:0] \pt_a [0]
+    assign $0\pt_a[1:1] \pt_a [1]
+    assign $0\pt_b[0:0] \pt_b [0]
+    assign $0\pt_b[1:1] \pt_b [1]
     assign $0\pt_o \pt_o
     assign $0\pt_sel \pt_sel
-    assign $0\pt_a 1'0
-    assign 1'x 1'1
-    assign $0\pt_b 1'1
-    assign 1'x 1'0
+    assign $0\pt_a[0:0] 1'0
+    assign $0\pt_a[1:1] 1'1
+    assign $0\pt_b[0:0] 1'1
+    assign $0\pt_b[1:1] 1'0
     assign $0\pt_sel 1'1
     assign $0\pt_o $auto$rtlil.cc:3390:Mux$28
     assign $auto$process.cpp:74:build_check_cell$31 1'1
     assign $auto$process.cpp:74:build_check_cell$35 1'1
     sync always
-      update \pt_a $0\pt_a
-      update \pt_b $0\pt_b
+      update \pt_a [0] $0\pt_a[0:0]
+      update \pt_a [1] $0\pt_a[1:1]
+      update \pt_b [0] $0\pt_b[0:0]
+      update \pt_b [1] $0\pt_b[1:1]
       update \pt_o $0\pt_o
       update \pt_sel $0\pt_sel
   end
