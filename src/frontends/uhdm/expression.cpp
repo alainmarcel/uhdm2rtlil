@@ -1581,6 +1581,34 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 if (auto v = dynamic_cast<const UHDM::variables*>(ref->Actual_group())) {
                                     if (v->Typespec() && v->Typespec()->Actual_typespec())
                                         leaf_ts = v->Typespec()->Actual_typespec();
+                                } else if (auto an = dynamic_cast<const UHDM::array_net*>(ref->Actual_group())) {
+                                    // Unpacked array net (`wire z [N]`).
+                                    // For `$bits` we need element_width ×
+                                    // N — the array's typespec is just
+                                    // the element type, so multiply
+                                    // manually here.
+                                    int elem_w = 1;
+                                    if (an->Nets() && !an->Nets()->empty()) {
+                                        if (auto en = (*an->Nets())[0]) {
+                                            if (en->Typespec() && en->Typespec()->Actual_typespec())
+                                                elem_w = get_width_from_typespec(
+                                                    en->Typespec()->Actual_typespec(), current_instance);
+                                        }
+                                    }
+                                    int count = (int)an->VpiSize();
+                                    if (count <= 0 && an->Ranges() && !an->Ranges()->empty()) {
+                                        count = 1;
+                                        for (auto r : *an->Ranges()) {
+                                            RTLIL::SigSpec ls = import_expression(
+                                                any_cast<const UHDM::expr*>(r->Left_expr()));
+                                            RTLIL::SigSpec rs = import_expression(
+                                                any_cast<const UHDM::expr*>(r->Right_expr()));
+                                            if (ls.is_fully_const() && rs.is_fully_const())
+                                                count *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                        }
+                                    }
+                                    if (count > 0 && elem_w > 0)
+                                        total_bits = count * elem_w;
                                 } else if (auto n = dynamic_cast<const UHDM::net*>(ref->Actual_group())) {
                                     if (n->Typespec() && n->Typespec()->Actual_typespec())
                                         leaf_ts = n->Typespec()->Actual_typespec();

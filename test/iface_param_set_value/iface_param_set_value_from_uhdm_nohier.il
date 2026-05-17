@@ -10,16 +10,16 @@ module \top
   attribute \src "dut.sv:22.18-22.33"
   wire width 16 \u_sim_sram_if.start_addr
   attribute \src "dut.sv:30.15-30.45"
-  wire width 32 signed $auto$expression.cpp:3100:import_operation$1
+  wire width 32 signed $auto$expression.cpp:3128:import_operation$1
   wire width 32 signed $auto$rtlil.cc:3304:Xor$4
   cell $paramod\sim_sram_if\W=s32'00000000000000000000000000010000 \u_sim_sram_if
   end
-  cell $pos $auto$expression.cpp:3103:import_operation$2
+  cell $pos $auto$expression.cpp:3131:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 32
     connect \A \u_sim_sram_if.start_addr
-    connect \Y $auto$expression.cpp:3100:import_operation$1
+    connect \Y $auto$expression.cpp:3128:import_operation$1
   end
   cell $xor $xor$dut.sv:30$3
     parameter \A_SIGNED 1
@@ -27,7 +27,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:3100:import_operation$1
+    connect \A $auto$expression.cpp:3128:import_operation$1
     connect \B { 16'0000000000000000 \in }
     connect \Y $auto$rtlil.cc:3304:Xor$4
   end
