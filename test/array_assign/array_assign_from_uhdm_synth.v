@@ -19,25 +19,10 @@ module top();
   (* unpacked_outer_size = 32'd2 *)
   wire [3:0] pb;
   (* src = "dut.sv:71.11-71.15" *)
-  (* unpacked_elem_width = 32'd1 *)
-  (* unpacked_inner_low = 32'd0 *)
-  (* unpacked_inner_size = 32'd1 *)
-  (* unpacked_outer_low = 32'd0 *)
-  (* unpacked_outer_size = 32'd2 *)
   wire [1:0] pt_a;
   (* src = "dut.sv:72.11-72.15" *)
-  (* unpacked_elem_width = 32'd1 *)
-  (* unpacked_inner_low = 32'd0 *)
-  (* unpacked_inner_size = 32'd1 *)
-  (* unpacked_outer_low = 32'd0 *)
-  (* unpacked_outer_size = 32'd2 *)
   wire [1:0] pt_b;
   (* src = "dut.sv:73.11-73.15" *)
-  (* unpacked_elem_width = 32'd1 *)
-  (* unpacked_inner_low = 32'd0 *)
-  (* unpacked_inner_size = 32'd1 *)
-  (* unpacked_outer_low = 32'd0 *)
-  (* unpacked_outer_size = 32'd2 *)
   wire [1:0] pt_o;
   (* src = "dut.sv:74.11-74.17" *)
   wire pt_sel;

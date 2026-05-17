@@ -1698,16 +1698,26 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 if (w > 0) width = w;
                             }
                         }
-                        // Surelog sometimes leaves an empty `array_typespec`
-                        // on multi-dim unpacked arrays like `int n[1:2][1:3]`
-                        // and stores the flat element count on the
-                        // `array_var` itself via `VpiSize()`.  When the
-                        // typespec returned 1 but `VpiSize() * element_width`
-                        // is larger, use that instead.
-                        if (width <= 1 && array_var->VpiSize() > 0 &&
-                            array_var->Variables() && !array_var->Variables()->empty()) {
+                        // Surelog sometimes leaves the elaborated
+                        // `array_typespec` empty on multi-dim unpacked
+                        // arrays (`int n[1:2][1:3]`) — all the dimension
+                        // info lives directly on the `array_var` via
+                        // `Ranges()` (one entry per unpacked dim, outer
+                        // first) and `Variables()[0]` (the element).
+                        // Compute the flat width from those instead.
+                        if (width <= 1 && array_var->Variables() &&
+                            !array_var->Variables()->empty() &&
+                            array_var->Ranges() && !array_var->Ranges()->empty()) {
                             int elem_w = get_width(array_var->Variables()->at(0), uhdm_module);
-                            int total  = (int)array_var->VpiSize() * std::max(elem_w, 1);
+                            int total = std::max(elem_w, 1);
+                            for (auto r : *array_var->Ranges()) {
+                                if (r->Left_expr() && r->Right_expr()) {
+                                    RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                    RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                    if (ls.is_fully_const() && rs.is_fully_const())
+                                        total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                }
+                            }
                             if (total > width) width = total;
                         }
                         log("UHDM: Array_var '%s' has whole-array or multi-dim access, creating %d-bit wire (from typespec)\n",
@@ -1724,39 +1734,36 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             // Stash multi-dim metadata on the wire so
                             // `var_select`'s constant-index resolver can
                             // compute the right flat slice for `n[i][j]`.
-                            // The outer dim comes from `array_var->Ranges()[0]`;
-                            // the inner-dim count is derived from VpiSize.
-                            // We assume the inner low bound matches the outer
-                            // low (the most common SV-source convention) —
-                            // Surelog doesn't expose the inner range on the
-                            // top-level array_var.
+                            // Surelog populates `array_var->Ranges()` with
+                            // every unpacked dimension in declaration
+                            // order (outer first), so we read both ranges
+                            // directly rather than deriving the inner size
+                            // from `VpiSize`.
                             if (array_var->Variables() && !array_var->Variables()->empty() &&
-                                array_var->Ranges() && !array_var->Ranges()->empty() &&
-                                array_var->VpiSize() > 0) {
+                                array_var->Ranges() && array_var->Ranges()->size() >= 2) {
+                                auto eval_range = [&](size_t idx, int& low, int& size) {
+                                    auto r = (*array_var->Ranges())[idx];
+                                    if (!r || !r->Left_expr() || !r->Right_expr())
+                                        return false;
+                                    RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                    RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                    if (!ls.is_fully_const() || !rs.is_fully_const())
+                                        return false;
+                                    int l = ls.as_int(), rv = rs.as_int();
+                                    low = std::min(l, rv);
+                                    size = std::abs(l - rv) + 1;
+                                    return true;
+                                };
                                 int elem_w = get_width(array_var->Variables()->at(0), uhdm_module);
-                                int outer_left = 0, outer_right = 0;
-                                if (auto r0 = (*array_var->Ranges())[0]) {
-                                    if (r0->Left_expr() && r0->Right_expr()) {
-                                        RTLIL::SigSpec ls = import_expression(r0->Left_expr());
-                                        RTLIL::SigSpec rs = import_expression(r0->Right_expr());
-                                        if (ls.is_fully_const() && rs.is_fully_const()) {
-                                            outer_left = ls.as_int();
-                                            outer_right = rs.as_int();
-                                        }
-                                    }
-                                }
-                                int outer_low = std::min(outer_left, outer_right);
-                                int outer_size = std::abs(outer_left - outer_right) + 1;
-                                if (outer_size > 0 && elem_w > 0 &&
-                                    (int)array_var->VpiSize() % outer_size == 0) {
-                                    int inner_size = (int)array_var->VpiSize() / outer_size;
+                                int outer_low = 0, outer_size = 0;
+                                int inner_low = 0, inner_size = 0;
+                                if (elem_w > 0 &&
+                                    eval_range(0, outer_low, outer_size) &&
+                                    eval_range(1, inner_low, inner_size)) {
                                     wire->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(elem_w);
                                     wire->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(outer_low);
                                     wire->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(outer_size);
-                                    // Assume inner shares the outer's low
-                                    // bound (only used when SV source
-                                    // doesn't expose the inner range).
-                                    wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(outer_low);
+                                    wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(inner_low);
                                     wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_size);
                                 }
                             }

@@ -19,25 +19,10 @@ module \top
   attribute \unpacked_inner_size 2
   wire width 4 \pb
   attribute \src "dut.sv:71.11-71.15"
-  attribute \unpacked_elem_width 1
-  attribute \unpacked_outer_low 0
-  attribute \unpacked_outer_size 2
-  attribute \unpacked_inner_low 0
-  attribute \unpacked_inner_size 1
   wire width 2 \pt_a
   attribute \src "dut.sv:72.11-72.15"
-  attribute \unpacked_elem_width 1
-  attribute \unpacked_outer_low 0
-  attribute \unpacked_outer_size 2
-  attribute \unpacked_inner_low 0
-  attribute \unpacked_inner_size 1
   wire width 2 \pt_b
   attribute \src "dut.sv:73.11-73.15"
-  attribute \unpacked_elem_width 1
-  attribute \unpacked_outer_low 0
-  attribute \unpacked_outer_size 2
-  attribute \unpacked_inner_low 0
-  attribute \unpacked_inner_size 1
   wire width 2 \pt_o
   attribute \src "dut.sv:74.11-74.17"
   wire \pt_sel
