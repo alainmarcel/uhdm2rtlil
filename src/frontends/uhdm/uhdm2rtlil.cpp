@@ -1672,6 +1672,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         if (array_var->Variables() && !array_var->Variables()->empty()) {
                             element_width = get_width(array_var->Variables()->at(0), uhdm_module);
                         }
+                        std::vector<RTLIL::Wire*> element_wires(array_size, nullptr);
                         for (int i = 0; i < array_size; i++) {
                             std::string element_name = array_name + "[" + std::to_string(array_low + i) + "]";
                             RTLIL::IdString wire_id = RTLIL::escape_id(element_name);
@@ -1679,8 +1680,51 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::Wire* wire = module->addWire(wire_id, element_width);
                                 add_src_attribute(wire->attributes, var);
                                 name_map[element_name] = wire;
+                                element_wires[i] = wire;
                                 log("UHDM: Created wire '%s' (width=%d) for unpacked-array_var element\n",
                                     wire->name.c_str(), element_width);
+                            } else {
+                                element_wires[i] = module->wire(wire_id);
+                            }
+                        }
+                        // Apply assignment-pattern initializer
+                        // (`tl_h2d_t a[1:0] = '{8'h12, 8'h34}`).
+                        // Surelog stores it on `array_var->Expr()`.
+                        // Pattern values follow SV ordering: first
+                        // operand drives the HIGH index, last operand
+                        // the LOW index (`a[1] = 8'h12`, `a[0] = 8'h34`).
+                        log("UHDM: Array_var '%s' init check: Expr=%p\n",
+                            array_name.c_str(), (void*)array_var->Expr());
+                        if (auto init_any = array_var->Expr()) {
+                            log("UHDM: Init type: %s op_type=%d\n",
+                                UhdmName(init_any->UhdmType()).c_str(),
+                                init_any->UhdmType() == uhdmoperation
+                                    ? any_cast<const UHDM::operation*>(init_any)->VpiOpType() : -1);
+                            if (auto init_op = dynamic_cast<const UHDM::operation*>(init_any)) {
+                                if (init_op->VpiOpType() == vpiAssignmentPatternOp &&
+                                    init_op->Operands() &&
+                                    (int)init_op->Operands()->size() == array_size) {
+                                    int idx = 0;
+                                    for (auto cell_any : *init_op->Operands()) {
+                                        if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
+                                            RTLIL::SigSpec cs = import_expression(ce);
+                                            // First operand → HIGH index;
+                                            // last operand → LOW index.
+                                            int wire_i = (array_size - 1) - idx;
+                                            if (wire_i >= 0 && wire_i < array_size &&
+                                                element_wires[wire_i] &&
+                                                cs.is_fully_const()) {
+                                                if (cs.size() < element_width)
+                                                    cs.extend_u0(element_width);
+                                                else if (cs.size() > element_width)
+                                                    cs = cs.extract(0, element_width);
+                                                module->connect(
+                                                    RTLIL::SigSpec(element_wires[wire_i]), cs);
+                                            }
+                                        }
+                                        idx++;
+                                    }
+                                }
                             }
                         }
                     } else {

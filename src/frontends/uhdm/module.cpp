@@ -993,18 +993,75 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     
     // Skip spurious continuous assignments from generate block wire initializations
     // These show up as assignments to module-level wires with '1 value
-    if (lhs_expr && lhs_expr->UhdmType() == uhdmlogic_net && 
+    if (lhs_expr && lhs_expr->UhdmType() == uhdmlogic_net &&
         rhs_expr && rhs_expr->UhdmType() == uhdmconstant) {
         const logic_net* net = any_cast<const logic_net*>(lhs_expr);
         const constant* konst = any_cast<const constant*>(rhs_expr);
         std::string net_name = std::string(net->VpiName());
         std::string rhs_val = std::string(konst->VpiValue());
-        
+
         // Skip if this looks like a generate block initialization ('1)
         if (net_name == "x" && (rhs_val == "BIN:1" || rhs_val == "'1")) {
-            log("  Skipping spurious assignment: %s = %s (from generate block)\n", 
+            log("  Skipping spurious assignment: %s = %s (from generate block)\n",
                 net_name.c_str(), rhs_val.c_str());
             return;
+        }
+    }
+
+    // Net-decl-assign on an unpacked array of structs with an
+    // assignment-pattern RHS:
+    //   `tl_h2d_t a[1:0] = '{8'h12, 8'h34};`
+    // Surelog emits this as a `cont_assign` whose LHS is a single
+    // `struct_net` named after the array and whose RHS is a
+    // `vpiAssignmentPatternOp` with one operand per element.  The
+    // import_expression LHS path then returns either empty or the
+    // first element wire — neither of which writes the rest of the
+    // array.  Drive each per-element wire directly here so reads of
+    // `a[i].field` resolve to the right constant.  SV pattern order:
+    // first operand drives the HIGH index, last operand the LOW.
+    if (is_net_decl_assign && lhs_expr &&
+        lhs_expr->UhdmType() == uhdmstruct_net &&
+        rhs_expr && rhs_expr->UhdmType() == uhdmoperation) {
+        auto op = any_cast<const UHDM::operation*>(rhs_expr);
+        if (op && op->VpiOpType() == vpiAssignmentPatternOp && op->Operands()) {
+            std::string nm = std::string(lhs_expr->VpiName());
+            // Find the per-element wires created earlier.
+            std::vector<RTLIL::Wire*> elems;
+            int max_count = (int)op->Operands()->size();
+            // Find contiguous `nm[i]` wires for any base index.
+            // Try indices 0..N-1, then 1..N to cover [N-1:0] and [N:1].
+            for (int base : {0, 1}) {
+                std::vector<RTLIL::Wire*> tmp;
+                for (int i = 0; i < max_count; i++) {
+                    std::string en = nm + "[" + std::to_string(base + i) + "]";
+                    if (auto w = module->wire(RTLIL::escape_id(en)))
+                        tmp.push_back(w);
+                    else
+                        break;
+                }
+                if ((int)tmp.size() == max_count) { elems = tmp; break; }
+            }
+            if ((int)elems.size() == max_count) {
+                int op_idx = 0;
+                for (auto cell_any : *op->Operands()) {
+                    if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
+                        RTLIL::SigSpec cs = import_expression(ce);
+                        if (!cs.is_fully_const()) { op_idx++; continue; }
+                        // First operand → HIGH index.
+                        int wi = (max_count - 1) - op_idx;
+                        if (wi < 0 || wi >= max_count) { op_idx++; continue; }
+                        int elem_w = elems[wi]->width;
+                        if (cs.size() < elem_w) cs.extend_u0(elem_w);
+                        else if (cs.size() > elem_w) cs = cs.extract(0, elem_w);
+                        module->connect(RTLIL::SigSpec(elems[wi]), cs);
+                        if (mode_debug)
+                            log("  Net-decl-assign array init: %s ← const\n",
+                                elems[wi]->name.c_str());
+                    }
+                    op_idx++;
+                }
+                return;
+            }
         }
     }
     

@@ -4932,6 +4932,137 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Handle unpacked-array element + struct field indexed part-select:
+    //   `a[i].field[base -: width]` (or `+:`).
+    // Path_elems pattern: [bit_select(a[i]), indexed_part_select(field …)].
+    // The unpacked array was flattened into per-element wires `\a[i]` by
+    // `import_module`'s array_var handler, so the bit_select resolves to
+    // a wire and the indexed_part_select extracts a slice of it.  Field
+    // offset within the per-element wire is computed by walking the
+    // struct typespec (members in reverse: last listed = LSB).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe_ips = *uhdm_hier->Path_elems();
+        if (pe_ips[0]->UhdmType() == uhdmbit_select &&
+            pe_ips[1]->UhdmType() == uhdmindexed_part_select) {
+            const bit_select* bs = any_cast<const bit_select*>(pe_ips[0]);
+            const indexed_part_select* ips =
+                any_cast<const indexed_part_select*>(pe_ips[1]);
+            if (bs && ips && bs->VpiIndex() && ips->Base_expr() && ips->Width_expr()) {
+                std::string base_name = std::string(bs->VpiName());
+                std::string field_name = std::string(ips->VpiName());
+
+                RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), input_mapping);
+                if (idx_sig.is_fully_const()) {
+                    int elem_idx = idx_sig.as_const().as_int();
+                    std::string elem_name =
+                        base_name + "[" + std::to_string(elem_idx) + "]";
+                    RTLIL::Wire* elem_wire =
+                        name_map.count(elem_name) ? name_map[elem_name] : nullptr;
+                    if (!elem_wire)
+                        elem_wire = module->wire(RTLIL::escape_id(elem_name));
+
+                    // Find the struct typespec via the bit_select's
+                    // Actual_group (which resolves to the array_var,
+                    // whose Variables()[0] is a struct_var with the
+                    // typespec) — needed for field offset.  When the
+                    // struct has only one field (or Actual_group is
+                    // unavailable in the AllModules pass), default to
+                    // the whole wire (offset 0, full width).
+                    int field_offset = 0;
+                    int field_width = elem_wire ? elem_wire->width : 0;
+                    bool found_field = true;  // default to whole-wire fallback
+                    if (elem_wire && bs->Actual_group()) {
+                        const UHDM::struct_typespec* st = nullptr;
+                        if (auto av = dynamic_cast<const UHDM::array_var*>(bs->Actual_group())) {
+                            if (av->Variables() && !av->Variables()->empty()) {
+                                if (auto sv = dynamic_cast<const UHDM::struct_var*>(av->Variables()->at(0))) {
+                                    if (auto rts = sv->Typespec())
+                                        if (auto ats = rts->Actual_typespec())
+                                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                                }
+                            }
+                        }
+                        if (st && st->Members() && !field_name.empty()) {
+                            int off = 0;
+                            bool match = false;
+                            for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                                auto m = (*st->Members())[i];
+                                int mw = 0;
+                                if (auto mts = m->Typespec())
+                                    if (auto ats = mts->Actual_typespec())
+                                        mw = get_width_from_typespec(ats, inst);
+                                if (std::string(m->VpiName()) == field_name) {
+                                    field_offset = off;
+                                    field_width = mw;
+                                    match = true;
+                                    break;
+                                }
+                                off += mw;
+                            }
+                            if (!match) {
+                                // Field name didn't match — refuse the
+                                // whole-wire fallback so we don't return
+                                // garbage.
+                                found_field = false;
+                            }
+                        }
+                    }
+
+                    if (elem_wire && found_field && field_width > 0) {
+                        RTLIL::SigSpec field_slice =
+                            RTLIL::SigSpec(elem_wire).extract(field_offset, field_width);
+                        RTLIL::SigSpec base_expr = import_expression(ips->Base_expr(), input_mapping);
+                        RTLIL::SigSpec width_expr = import_expression(ips->Width_expr(), input_mapping);
+                        if (width_expr.is_fully_const()) {
+                            int width = width_expr.as_const().as_int();
+                            int type = ips->VpiIndexedPartSelectType();
+                            if (base_expr.is_fully_const()) {
+                                int base_val = base_expr.as_const().as_int();
+                                int lsb = (type == vpiPosIndexed)
+                                    ? base_val : base_val - width + 1;
+                                if (lsb >= 0 && lsb + width <= field_slice.size()) {
+                                    if (mode_debug)
+                                        log("    Unpacked-array indexed-part-select: %s[%d].%s[%d%s%d] → wire[%d+:%d]\n",
+                                            base_name.c_str(), elem_idx,
+                                            field_name.c_str(), base_val,
+                                            type == vpiPosIndexed ? "+:" : "-:",
+                                            width, lsb, width);
+                                    return field_slice.extract(lsb, width);
+                                }
+                            } else {
+                                // Dynamic base — emit `$shiftx`.
+                                int A_width = field_slice.size();
+                                RTLIL::SigSpec shift_amount = base_expr;
+                                if (type == vpiNegIndexed) {
+                                    // lsb = base - (width - 1)
+                                    RTLIL::SigSpec sub = base_expr;
+                                    sub.extend_u0(32);
+                                    RTLIL::Wire* sub_w = module->addWire(NEW_ID, 32);
+                                    module->addSub(NEW_ID, sub,
+                                        RTLIL::SigSpec(RTLIL::Const(width - 1, 32)),
+                                        sub_w, true);
+                                    shift_amount = RTLIL::SigSpec(sub_w);
+                                }
+                                RTLIL::Wire* out = module->addWire(NEW_ID, width);
+                                RTLIL::Cell* sx = module->addCell(NEW_ID, ID($shiftx));
+                                sx->setParam(ID::A_SIGNED, 0);
+                                sx->setParam(ID::B_SIGNED, 1);
+                                sx->setParam(ID::A_WIDTH, A_width);
+                                sx->setParam(ID::B_WIDTH, shift_amount.size());
+                                sx->setParam(ID::Y_WIDTH, width);
+                                sx->setPort(ID::A, field_slice);
+                                sx->setPort(ID::B, shift_amount);
+                                sx->setPort(ID::Y, RTLIL::SigSpec(out));
+                                return RTLIL::SigSpec(out);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Handle struct field access with bit_select / part_select on a field
     // that is a packed array.  Path_elems pattern:
     //   `s.field[i]`     → [ref_obj(s), bit_select(field, idx=i)]
