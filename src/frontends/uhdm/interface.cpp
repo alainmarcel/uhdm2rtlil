@@ -242,7 +242,73 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     name_map[full_name] = wire;
                 }
             }
-            
+
+            // Apply the interface's cont_assign body (`assign x = X;` etc.)
+            // by rewriting each LHS `ref_obj(sig)` to drive the parent's
+            // `\<iface>.<sig>` wire.  Without this the per-signal wires
+            // we just created stay undriven, so the parent sees X (this
+            // is the synlig#1086 enum-import-in-interface failure mode
+            // and the synlig#... net-decl-assign failure mode pre-fix).
+            if (interface->Cont_assigns()) {
+                for (auto ca : *interface->Cont_assigns()) {
+                    if (!ca->Lhs() || !ca->Rhs()) continue;
+                    if (ca->Lhs()->VpiType() != vpiRefObj) continue;
+                    auto lref = any_cast<const UHDM::ref_obj*>(ca->Lhs());
+                    std::string sig = std::string(lref->VpiName());
+                    if (sig.empty()) continue;
+                    std::string full = interface_name + "." + sig;
+                    RTLIL::Wire* lw = name_map.count(full) ? name_map[full] : nullptr;
+                    if (!lw) lw = module->wire(RTLIL::escape_id(full));
+                    if (!lw) continue;
+                    RTLIL::SigSpec rhs = import_expression(ca->Rhs());
+                    if (rhs.size() == 0) continue;
+                    if (rhs.size() < lw->width)
+                        rhs.extend_u0(lw->width, lw->is_signed);
+                    else if (rhs.size() > lw->width)
+                        rhs = rhs.extract(0, lw->width);
+                    module->connect(RTLIL::SigSpec(lw), rhs);
+                    if (mode_debug)
+                        log("UHDM: Drove %s from interface cont_assign\n", full.c_str());
+                }
+            }
+
+            // Connect the interface's port HighConns to the per-signal
+            // wires.  For `sw_test_status_if u_sw(.x(t))`, the port `x`
+            // is an output: drive the parent's `\t` (HighConn) from the
+            // interface's `\<iface>.x` (LowConn).  Inputs and inouts
+            // need the opposite / both directions, but the same wire
+            // pair drives them.
+            //
+            // The LowConn `ref_obj` carries `VpiName = "x"` not
+            // `"u_sw.x"` (only `VpiFullName` has the qualified path), so
+            // `import_expression` on it would create a stray 1-bit
+            // `\x` placeholder.  Look up the per-signal wire by
+            // `<iface>.<port>` directly instead.
+            if (interface->Ports()) {
+                for (auto p : *interface->Ports()) {
+                    if (!p->High_conn()) continue;
+                    int dir = p->VpiDirection();
+                    std::string port_name = std::string(p->VpiName());
+                    if (port_name.empty()) continue;
+                    std::string full = interface_name + "." + port_name;
+                    RTLIL::Wire* lw = name_map.count(full) ? name_map[full]
+                                       : module->wire(RTLIL::escape_id(full));
+                    if (!lw) continue;
+                    RTLIL::SigSpec hi = import_expression(
+                        any_cast<const UHDM::expr*>(p->High_conn()));
+                    RTLIL::SigSpec lo(lw);
+                    if (hi.size() == 0) continue;
+                    int w = std::min(hi.size(), lo.size());
+                    if (hi.size() > w) hi = hi.extract(0, w);
+                    if (lo.size() > w) lo = lo.extract(0, w);
+                    if (dir == vpiOutput || dir == vpiInout) {
+                        module->connect(hi, lo);
+                    } else if (dir == vpiInput) {
+                        module->connect(lo, hi);
+                    }
+                }
+            }
+
             // Create interface cell
             std::string interface_type = std::string(interface->VpiDefName());
             if (interface_type.find("work@") == 0) {

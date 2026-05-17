@@ -55,4 +55,5 @@ module \ADD_SUB
     sync posedge \clk
       update \result0 $0\result0[8:0]
   end
+  connect \add_sub_if0.clk \clk
 end

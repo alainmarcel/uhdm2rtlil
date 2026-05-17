@@ -78,6 +78,8 @@ module ADD_SUB(clk, a0, b0, doAdd0, result0);
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [8:0] _054_;
+  (* src = "dut.sv:27.13-27.16" *)
+  wire \add_sub_if0.clk ;
   \$_AND_  _055_ (
     .A(b0[0]),
     .B(a0[0]),
@@ -452,4 +454,5 @@ module ADD_SUB(clk, a0, b0, doAdd0, result0);
     .Q(result0[8])
   );
   assign _054_[0] = _053_[0];
+  assign \add_sub_if0.clk  = clk;
 endmodule
