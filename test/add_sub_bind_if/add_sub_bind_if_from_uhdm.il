@@ -13,10 +13,12 @@ module \ADD_SUB
   wire input 4 \doAdd0
   attribute \src "dut.sv:13.20-13.27"
   wire width 9 output 5 \result0
-  wire width 9 $auto$expression.cpp:2721:import_operation$4
+  attribute \src "dut.sv:27.13-27.16"
+  wire \add_sub_if0.clk
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
   wire width 9 $auto$expression.cpp:2680:import_operation$2
+  wire width 9 $auto$expression.cpp:2721:import_operation$4
   cell $sub $sub$dut.sv:21$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -55,4 +57,5 @@ module \ADD_SUB
     connect \Q \result0
     connect \CLK \clk
   end
+  connect \add_sub_if0.clk \clk
 end
