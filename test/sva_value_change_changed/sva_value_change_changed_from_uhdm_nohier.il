@@ -23,7 +23,7 @@ module \top
   wire $0\b_prev
   attribute \src "dut.sv:24.2-26.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2789:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:2833:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -44,7 +44,7 @@ module \top
       update \b_prev $0\b_prev
   end
   attribute \src "dut.sv:29.7-29.8"
-  process $auto$module.cpp:1124:import_continuous_assign$2
+  process $auto$module.cpp:1181:import_continuous_assign$2
     sync always
       update \x 1'x
   end

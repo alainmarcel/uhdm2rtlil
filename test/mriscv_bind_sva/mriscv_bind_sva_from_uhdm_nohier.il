@@ -4723,9 +4723,9 @@ module \MULT
   wire $eq$MULT.v:201$302_Y
   wire $auto$rtlil.cc:3322:LogicAnd$305
   wire width 34 $auto$expression.cpp:2492:import_operation$306
-  wire width 36 $auto$module.cpp:1067:import_continuous_assign$308
+  wire width 36 $auto$module.cpp:1124:import_continuous_assign$308
   wire width 34 $auto$expression.cpp:2492:import_operation$310
-  wire width 36 $auto$module.cpp:1067:import_continuous_assign$312
+  wire width 36 $auto$module.cpp:1124:import_continuous_assign$312
   wire width 36 $auto$expression.cpp:2680:import_operation$314
   wire width 36 $auto$expression.cpp:2680:import_operation$316
   wire width 64 $auto$expression.cpp:2836:import_operation$318
@@ -4880,12 +4880,12 @@ module \MULT
     connect \A \Z2
     connect \Y $auto$expression.cpp:2492:import_operation$306
   end
-  cell $pos $auto$module.cpp:1068:import_continuous_assign$309
+  cell $pos $auto$module.cpp:1125:import_continuous_assign$309
     parameter \A_SIGNED 0
     parameter \A_WIDTH 34
     parameter \Y_WIDTH 36
     connect \A $auto$expression.cpp:2492:import_operation$306
-    connect \Y $auto$module.cpp:1067:import_continuous_assign$308
+    connect \Y $auto$module.cpp:1124:import_continuous_assign$308
   end
   cell $neg $neg$MULT.v:203$311
     parameter \A_SIGNED 1
@@ -4894,12 +4894,12 @@ module \MULT
     connect \A \Z0
     connect \Y $auto$expression.cpp:2492:import_operation$310
   end
-  cell $pos $auto$module.cpp:1068:import_continuous_assign$313
+  cell $pos $auto$module.cpp:1125:import_continuous_assign$313
     parameter \A_SIGNED 0
     parameter \A_WIDTH 34
     parameter \Y_WIDTH 36
     connect \A $auto$expression.cpp:2492:import_operation$310
-    connect \Y $auto$module.cpp:1067:import_continuous_assign$312
+    connect \Y $auto$module.cpp:1124:import_continuous_assign$312
   end
   cell $add $add$MULT.v:204$315
     parameter \A_SIGNED 0
@@ -5478,8 +5478,8 @@ module \MULT
   connect \rd $auto$rtlil.cc:3390:Mux$293
   connect \EnableMul $auto$rtlil.cc:3302:And$295
   connect \Ready $auto$rtlil.cc:3322:LogicAnd$305
-  connect \NZ2 $auto$module.cpp:1067:import_continuous_assign$308
-  connect \NZ0 $auto$module.cpp:1067:import_continuous_assign$312
+  connect \NZ2 $auto$module.cpp:1124:import_continuous_assign$308
+  connect \NZ0 $auto$module.cpp:1124:import_continuous_assign$312
   connect \Z1_Z2_Z0 $auto$expression.cpp:2680:import_operation$316
   connect \Out2 $auto$expression.cpp:2836:import_operation$318
   connect \Out1 $auto$expression.cpp:2836:import_operation$320
