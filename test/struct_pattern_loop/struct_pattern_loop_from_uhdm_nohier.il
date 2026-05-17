@@ -16,11 +16,6 @@ module \top
   attribute \src "dut.sv:12.24-12.27"
   wire output 1 \out
   attribute \src "dut.sv:13.18-13.28"
-  attribute \unpacked_elem_width 1
-  attribute \unpacked_outer_low 0
-  attribute \unpacked_outer_size 1
-  attribute \unpacked_inner_low 0
-  attribute \unpacked_inner_size 1
   wire \b_internal
   wire $auto$module.cpp:1067:import_continuous_assign$1
   cell $pos $auto$module.cpp:1068:import_continuous_assign$2

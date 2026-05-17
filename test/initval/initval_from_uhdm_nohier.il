@@ -42,7 +42,7 @@ module \initval
   end
   attribute \src "dut.sv:20.3-20.54"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2782:import_module$11
+  cell $check $auto$uhdm2rtlil.cpp:2789:import_module$11
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
