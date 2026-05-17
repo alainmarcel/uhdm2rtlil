@@ -24,7 +24,7 @@ module \mre
   wire $auto$rtlil.cc:3302:And$8
   wire $auto$process.cpp:74:build_check_cell$9
   attribute \src "dut.sv:36.24-36.34"
-  cell $dff $auto$expression.cpp:1445:import_expression$6
+  cell $dff $auto$expression.cpp:1486:import_expression$6
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
     connect \CLK \i_clk

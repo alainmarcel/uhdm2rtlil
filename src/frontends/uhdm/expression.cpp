@@ -1229,6 +1229,47 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return RTLIL::SigSpec();
                 }
 
+                // 2D unpacked array element access (`n[i][j]`).  When both
+                // indices are const and the base wire carries the
+                // `unpacked_*` metadata that `import_module` stamped on
+                // multi-dim unpacked arrays, compute the flat offset
+                // ourselves and slice the base wire — Surelog flattens
+                // these into a single var_select with two `Index` entries
+                // rather than a nested ref_obj+bit_select chain.
+                if (exprs->size() == 2 &&
+                    (*exprs)[0]->VpiType() != vpiPartSelect &&
+                    (*exprs)[1]->VpiType() != vpiPartSelect &&
+                    (*exprs)[1]->VpiType() != vpiBitSelect) {
+                    RTLIL::SigSpec i0 = import_expression((*exprs)[0], input_mapping);
+                    RTLIL::SigSpec i1 = import_expression((*exprs)[1], input_mapping);
+                    if (i0.is_fully_const() && i1.is_fully_const()) {
+                        RTLIL::IdString wire_id = RTLIL::escape_id(base_name);
+                        if (RTLIL::Wire* base_wire = module->wire(wire_id)) {
+                            auto& a = base_wire->attributes;
+                            auto have = [&](const char* k){
+                                return a.count(RTLIL::escape_id(k)) > 0;
+                            };
+                            if (have("unpacked_elem_width") &&
+                                have("unpacked_outer_low") &&
+                                have("unpacked_inner_low") &&
+                                have("unpacked_inner_size")) {
+                                int elem_w     = a.at(RTLIL::escape_id("unpacked_elem_width")).as_int();
+                                int outer_low  = a.at(RTLIL::escape_id("unpacked_outer_low")).as_int();
+                                int inner_low  = a.at(RTLIL::escape_id("unpacked_inner_low")).as_int();
+                                int inner_size = a.at(RTLIL::escape_id("unpacked_inner_size")).as_int();
+                                int oi = i0.as_int(), ii = i1.as_int();
+                                int off = ((oi - outer_low) * inner_size + (ii - inner_low)) * elem_w;
+                                if (off >= 0 && off + elem_w <= base_wire->width) {
+                                    log("  vpiVarSelect: 2D %s[%d][%d] → %s[%d+:%d]\n",
+                                        base_name.c_str(), oi, ii,
+                                        base_wire->name.c_str(), off, elem_w);
+                                    return RTLIL::SigSpec(base_wire).extract(off, elem_w);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // First expression should be the array index
                 const expr* first_idx = (*exprs)[0];
                 RTLIL::SigSpec idx_sig = import_expression(first_idx, input_mapping);

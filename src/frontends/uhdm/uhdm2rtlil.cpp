@@ -1698,6 +1698,18 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 if (w > 0) width = w;
                             }
                         }
+                        // Surelog sometimes leaves an empty `array_typespec`
+                        // on multi-dim unpacked arrays like `int n[1:2][1:3]`
+                        // and stores the flat element count on the
+                        // `array_var` itself via `VpiSize()`.  When the
+                        // typespec returned 1 but `VpiSize() * element_width`
+                        // is larger, use that instead.
+                        if (width <= 1 && array_var->VpiSize() > 0 &&
+                            array_var->Variables() && !array_var->Variables()->empty()) {
+                            int elem_w = get_width(array_var->Variables()->at(0), uhdm_module);
+                            int total  = (int)array_var->VpiSize() * std::max(elem_w, 1);
+                            if (total > width) width = total;
+                        }
                         log("UHDM: Array_var '%s' has whole-array or multi-dim access, creating %d-bit wire (from typespec)\n",
                             array_name.c_str(), width);
                         RTLIL::IdString wire_id = RTLIL::escape_id(array_name);
@@ -1708,6 +1720,93 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             add_src_attribute(wire->attributes, var);
                             log("UHDM: Created wire '%s' (width=%d) for array_var\n",
                                 wire->name.c_str(), width);
+
+                            // Stash multi-dim metadata on the wire so
+                            // `var_select`'s constant-index resolver can
+                            // compute the right flat slice for `n[i][j]`.
+                            // The outer dim comes from `array_var->Ranges()[0]`;
+                            // the inner-dim count is derived from VpiSize.
+                            // We assume the inner low bound matches the outer
+                            // low (the most common SV-source convention) —
+                            // Surelog doesn't expose the inner range on the
+                            // top-level array_var.
+                            if (array_var->Variables() && !array_var->Variables()->empty() &&
+                                array_var->Ranges() && !array_var->Ranges()->empty() &&
+                                array_var->VpiSize() > 0) {
+                                int elem_w = get_width(array_var->Variables()->at(0), uhdm_module);
+                                int outer_left = 0, outer_right = 0;
+                                if (auto r0 = (*array_var->Ranges())[0]) {
+                                    if (r0->Left_expr() && r0->Right_expr()) {
+                                        RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                        RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+                                        if (ls.is_fully_const() && rs.is_fully_const()) {
+                                            outer_left = ls.as_int();
+                                            outer_right = rs.as_int();
+                                        }
+                                    }
+                                }
+                                int outer_low = std::min(outer_left, outer_right);
+                                int outer_size = std::abs(outer_left - outer_right) + 1;
+                                if (outer_size > 0 && elem_w > 0 &&
+                                    (int)array_var->VpiSize() % outer_size == 0) {
+                                    int inner_size = (int)array_var->VpiSize() / outer_size;
+                                    wire->attributes[RTLIL::escape_id("unpacked_elem_width")] = RTLIL::Const(elem_w);
+                                    wire->attributes[RTLIL::escape_id("unpacked_outer_low")]  = RTLIL::Const(outer_low);
+                                    wire->attributes[RTLIL::escape_id("unpacked_outer_size")] = RTLIL::Const(outer_size);
+                                    // Assume inner shares the outer's low
+                                    // bound (only used when SV source
+                                    // doesn't expose the inner range).
+                                    wire->attributes[RTLIL::escape_id("unpacked_inner_low")]  = RTLIL::Const(outer_low);
+                                    wire->attributes[RTLIL::escape_id("unpacked_inner_size")] = RTLIL::Const(inner_size);
+                                }
+                            }
+
+                            // Apply the assignment-pattern initializer
+                            // (`int n[…] = '{'{0,1,2},'{4,4,4}}`).  Surelog
+                            // stores it on `variables::Expr()` as a
+                            // `vpiAssignmentPatternOp` whose operands are
+                            // themselves assignment-patterns for each row.
+                            // We flatten row-by-row, MSB-first, into the
+                            // flat wire so a later `n[i][j]` read at the
+                            // right offset yields the source value.
+                            if (auto init_any = array_var->Expr()) {
+                                if (auto init_op = dynamic_cast<const UHDM::operation*>(init_any)) {
+                                    if (init_op->VpiOpType() == vpiAssignmentPatternOp &&
+                                        wire->attributes.count(RTLIL::escape_id("unpacked_elem_width"))) {
+                                        int elem_w = wire->attributes
+                                            .at(RTLIL::escape_id("unpacked_elem_width")).as_int();
+                                        int inner_sz = wire->attributes
+                                            .at(RTLIL::escape_id("unpacked_inner_size")).as_int();
+                                        if (init_op->Operands()) {
+                                            int row_idx = 0;
+                                            for (auto row_any : *init_op->Operands()) {
+                                                auto row_op = dynamic_cast<const UHDM::operation*>(row_any);
+                                                if (!row_op || row_op->VpiOpType() != vpiAssignmentPatternOp) {
+                                                    row_idx++;
+                                                    continue;
+                                                }
+                                                if (!row_op->Operands()) { row_idx++; continue; }
+                                                int col_idx = 0;
+                                                for (auto cell_any : *row_op->Operands()) {
+                                                    if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
+                                                        RTLIL::SigSpec cs = import_expression(ce);
+                                                        if (cs.is_fully_const()) {
+                                                            int off = (row_idx * inner_sz + col_idx) * elem_w;
+                                                            if (cs.size() < elem_w) cs.extend_u0(elem_w);
+                                                            else if (cs.size() > elem_w) cs = cs.extract(0, elem_w);
+                                                            if (off + elem_w <= wire->width)
+                                                                module->connect(
+                                                                    RTLIL::SigSpec(wire).extract(off, elem_w), cs);
+                                                        }
+                                                    }
+                                                    col_idx++;
+                                                }
+                                                row_idx++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

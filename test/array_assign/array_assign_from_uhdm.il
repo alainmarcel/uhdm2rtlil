@@ -4,25 +4,54 @@ attribute \top 1
 attribute \src "dut.sv:6.1-87.10"
 attribute \keep 1
 module \top
+  attribute \src "dut.sv:53.11-53.13"
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 2
+  wire width 4 \pa
+  attribute \src "dut.sv:54.11-54.13"
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 2
+  wire width 4 \pb
+  attribute \src "dut.sv:71.11-71.15"
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_a
+  attribute \src "dut.sv:72.11-72.15"
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_b
   attribute \src "dut.sv:73.11-73.15"
-  wire \pt_o
+  attribute \unpacked_elem_width 1
+  attribute \unpacked_outer_low 0
+  attribute \unpacked_outer_size 2
+  attribute \unpacked_inner_low 0
+  attribute \unpacked_inner_size 1
+  wire width 2 \pt_o
   attribute \src "dut.sv:74.11-74.17"
   wire \pt_sel
-  attribute \src "dut.sv:71.11-71.15"
-  wire \pt_a
-  attribute \src "dut.sv:72.11-72.15"
-  wire \pt_b
-  attribute \src "dut.sv:66.9-66.34"
+  attribute \src "dut.sv:85.9-85.33"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$25
+  cell $check $auto$process.cpp:84:build_check_cell$36
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111100
+    parameter \PRIORITY 32'11111111111111111111111111111010
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -67,22 +96,22 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
-  attribute \src "dut.sv:85.9-85.33"
+  attribute \src "dut.sv:66.9-66.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$36
+  cell $check $auto$process.cpp:84:build_check_cell$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
-    parameter \PRIORITY 32'11111111111111111111111111111010
+    parameter \PRIORITY 32'11111111111111111111111111111100
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'x
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -97,13 +126,15 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
   end
-  connect \pt_b 1'1
-  connect \pt_a 1'0
   connect \pt_sel 1'1
-  connect \pt_o 1'0
+  connect \pt_o 2'10
+  connect \pt_b 2'01
+  connect \pt_a 2'10
+  connect \pb 4'1110
+  connect \pa 4'1110
 end

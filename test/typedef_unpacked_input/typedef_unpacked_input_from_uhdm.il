@@ -22,12 +22,12 @@ module \ccsds_turbo_enc_paddr_gen
   attribute \src "dut.sv:26.16-26.24"
   attribute \wiretype "\\ptab_dat_t"
   wire width 14 \observed
-  wire $auto$expression.cpp:3808:import_bit_select$1
-  wire width 14 $auto$expression.cpp:3811:import_bit_select$3
-  wire $auto$expression.cpp:3808:import_bit_select$5
-  wire width 14 $auto$expression.cpp:3811:import_bit_select$7
-  wire $auto$expression.cpp:3808:import_bit_select$9
-  cell $eq $auto$expression.cpp:3809:import_bit_select$2
+  wire $auto$expression.cpp:3849:import_bit_select$1
+  wire width 14 $auto$expression.cpp:3852:import_bit_select$3
+  wire $auto$expression.cpp:3849:import_bit_select$5
+  wire width 14 $auto$expression.cpp:3852:import_bit_select$7
+  wire $auto$expression.cpp:3849:import_bit_select$9
+  cell $eq $auto$expression.cpp:3850:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -35,16 +35,16 @@ module \ccsds_turbo_enc_paddr_gen
     parameter \Y_WIDTH 1
     connect \A \sel
     connect \B 2'10
-    connect \Y $auto$expression.cpp:3808:import_bit_select$1
+    connect \Y $auto$expression.cpp:3849:import_bit_select$1
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$4
+  cell $mux $auto$expression.cpp:3853:import_bit_select$4
     parameter \WIDTH 14
     connect \A \iP [55:42]
     connect \B \iP [41:28]
-    connect \S $auto$expression.cpp:3808:import_bit_select$1
-    connect \Y $auto$expression.cpp:3811:import_bit_select$3
+    connect \S $auto$expression.cpp:3849:import_bit_select$1
+    connect \Y $auto$expression.cpp:3852:import_bit_select$3
   end
-  cell $eq $auto$expression.cpp:3809:import_bit_select$6
+  cell $eq $auto$expression.cpp:3850:import_bit_select$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -52,27 +52,27 @@ module \ccsds_turbo_enc_paddr_gen
     parameter \Y_WIDTH 1
     connect \A \sel
     connect \B 2'01
-    connect \Y $auto$expression.cpp:3808:import_bit_select$5
+    connect \Y $auto$expression.cpp:3849:import_bit_select$5
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$8
+  cell $mux $auto$expression.cpp:3853:import_bit_select$8
     parameter \WIDTH 14
-    connect \A $auto$expression.cpp:3811:import_bit_select$3
+    connect \A $auto$expression.cpp:3852:import_bit_select$3
     connect \B \iP [27:14]
-    connect \S $auto$expression.cpp:3808:import_bit_select$5
-    connect \Y $auto$expression.cpp:3811:import_bit_select$7
+    connect \S $auto$expression.cpp:3849:import_bit_select$5
+    connect \Y $auto$expression.cpp:3852:import_bit_select$7
   end
-  cell $logic_not $auto$expression.cpp:3809:import_bit_select$10
+  cell $logic_not $auto$expression.cpp:3850:import_bit_select$10
     parameter \A_SIGNED 0
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 2
     connect \A \sel
-    connect \Y $auto$expression.cpp:3808:import_bit_select$9
+    connect \Y $auto$expression.cpp:3849:import_bit_select$9
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$12
+  cell $mux $auto$expression.cpp:3853:import_bit_select$12
     parameter \WIDTH 14
-    connect \A $auto$expression.cpp:3811:import_bit_select$7
+    connect \A $auto$expression.cpp:3852:import_bit_select$7
     connect \B \iP [13:0]
-    connect \S $auto$expression.cpp:3808:import_bit_select$9
+    connect \S $auto$expression.cpp:3849:import_bit_select$9
     connect \Y \o
   end
   connect \observed \o

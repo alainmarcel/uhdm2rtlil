@@ -4,12 +4,41 @@
 (* src = "dut.sv:6.1-87.10" *)
 (* top =  1  *)
 module top();
+  (* src = "dut.sv:53.11-53.13" *)
+  (* unpacked_elem_width = 32'd1 *)
+  (* unpacked_inner_low = 32'd0 *)
+  (* unpacked_inner_size = 32'd2 *)
+  (* unpacked_outer_low = 32'd0 *)
+  (* unpacked_outer_size = 32'd2 *)
+  wire [3:0] pa;
+  (* src = "dut.sv:54.11-54.13" *)
+  (* unpacked_elem_width = 32'd1 *)
+  (* unpacked_inner_low = 32'd0 *)
+  (* unpacked_inner_size = 32'd2 *)
+  (* unpacked_outer_low = 32'd0 *)
+  (* unpacked_outer_size = 32'd2 *)
+  wire [3:0] pb;
   (* src = "dut.sv:71.11-71.15" *)
-  wire pt_a;
+  (* unpacked_elem_width = 32'd1 *)
+  (* unpacked_inner_low = 32'd0 *)
+  (* unpacked_inner_size = 32'd1 *)
+  (* unpacked_outer_low = 32'd0 *)
+  (* unpacked_outer_size = 32'd2 *)
+  wire [1:0] pt_a;
   (* src = "dut.sv:72.11-72.15" *)
-  wire pt_b;
+  (* unpacked_elem_width = 32'd1 *)
+  (* unpacked_inner_low = 32'd0 *)
+  (* unpacked_inner_size = 32'd1 *)
+  (* unpacked_outer_low = 32'd0 *)
+  (* unpacked_outer_size = 32'd2 *)
+  wire [1:0] pt_b;
   (* src = "dut.sv:73.11-73.15" *)
-  wire pt_o;
+  (* unpacked_elem_width = 32'd1 *)
+  (* unpacked_inner_low = 32'd0 *)
+  (* unpacked_inner_size = 32'd1 *)
+  (* unpacked_outer_low = 32'd0 *)
+  (* unpacked_outer_size = 32'd2 *)
+  wire [1:0] pt_o;
   (* src = "dut.sv:74.11-74.17" *)
   wire pt_sel;
   (* keep = 32'd1 *)
@@ -23,7 +52,7 @@ module top();
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
   ) _0_ (
-    .A(1'h1),
+    .A(1'h0),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -55,7 +84,7 @@ module top();
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
   ) _2_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -71,7 +100,7 @@ module top();
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
   ) _3_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -103,13 +132,15 @@ module top();
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
   ) _5_ (
-    .A(1'hx),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
   );
-  assign pt_b = 1'h1;
-  assign pt_a = 1'h0;
   assign pt_sel = 1'h1;
-  assign pt_o = 1'h0;
+  assign pt_o = 2'h2;
+  assign pt_b = 2'h1;
+  assign pt_a = 2'h2;
+  assign pb = 4'he;
+  assign pa = 4'he;
 endmodule

@@ -31,19 +31,19 @@ module \mem2reg_test2
   wire width 4 \mem[6]
   attribute \src "dut.sv:8.11-8.14"
   wire width 4 \mem[7]
-  wire $auto$expression.cpp:3808:import_bit_select$1
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$3
-  wire $auto$expression.cpp:3808:import_bit_select$5
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$7
-  wire $auto$expression.cpp:3808:import_bit_select$9
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$11
-  wire $auto$expression.cpp:3808:import_bit_select$13
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$15
-  wire $auto$expression.cpp:3808:import_bit_select$17
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$19
-  wire $auto$expression.cpp:3808:import_bit_select$21
-  wire width 4 $auto$expression.cpp:3811:import_bit_select$23
-  wire $auto$expression.cpp:3808:import_bit_select$25
+  wire $auto$expression.cpp:3849:import_bit_select$1
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$3
+  wire $auto$expression.cpp:3849:import_bit_select$5
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$7
+  wire $auto$expression.cpp:3849:import_bit_select$9
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$11
+  wire $auto$expression.cpp:3849:import_bit_select$13
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$15
+  wire $auto$expression.cpp:3849:import_bit_select$17
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$19
+  wire $auto$expression.cpp:3849:import_bit_select$21
+  wire width 4 $auto$expression.cpp:3852:import_bit_select$23
+  wire $auto$expression.cpp:3849:import_bit_select$25
   wire $auto$process.cpp:6255:import_assignment_sync$124
   attribute \src "dut.sv:17.4-17.15"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$30
@@ -64,28 +64,28 @@ module \mem2reg_test2
   attribute \src "dut.sv:15.2-24.5"
   wire $auto$process_helper.cpp:88:create_not_cell$46
   wire $auto$rtlil.cc:3302:And$49
-  wire width 4 $auto$expression.cpp:2639:import_operation$50
+  wire width 4 $auto$expression.cpp:2680:import_operation$50
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$52
-  wire width 4 $auto$expression.cpp:2639:import_operation$54
+  wire width 4 $auto$expression.cpp:2680:import_operation$54
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$56
-  wire width 4 $auto$expression.cpp:2639:import_operation$58
+  wire width 4 $auto$expression.cpp:2680:import_operation$58
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$60
-  wire width 4 $auto$expression.cpp:2639:import_operation$62
+  wire width 4 $auto$expression.cpp:2680:import_operation$62
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$64
-  wire width 4 $auto$expression.cpp:2639:import_operation$66
+  wire width 4 $auto$expression.cpp:2680:import_operation$66
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$68
-  wire width 4 $auto$expression.cpp:2639:import_operation$70
+  wire width 4 $auto$expression.cpp:2680:import_operation$70
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$72
-  wire width 4 $auto$expression.cpp:2639:import_operation$74
+  wire width 4 $auto$expression.cpp:2680:import_operation$74
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$76
-  wire width 4 $auto$expression.cpp:2639:import_operation$78
+  wire width 4 $auto$expression.cpp:2680:import_operation$78
   attribute \src "dut.sv:21.4-21.22"
   wire width 4 $auto$process.cpp:6360:import_assignment_sync$80
   attribute \src "dut.sv:19.2-24.5"
@@ -115,12 +115,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$60
     connect \Q \mem[2]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$4
+  cell $mux $auto$expression.cpp:3853:import_bit_select$4
     parameter \WIDTH 4
     connect \A \mem[7]
     connect \B \mem[6]
-    connect \S $auto$expression.cpp:3808:import_bit_select$1
-    connect \Y $auto$expression.cpp:3811:import_bit_select$3
+    connect \S $auto$expression.cpp:3849:import_bit_select$1
+    connect \Y $auto$expression.cpp:3852:import_bit_select$3
   end
   attribute \src "dut.sv:14.1-25.4"
   attribute \always_ff 1
@@ -136,12 +136,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$64
     connect \Q \mem[3]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$8
+  cell $mux $auto$expression.cpp:3853:import_bit_select$8
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$3
+    connect \A $auto$expression.cpp:3852:import_bit_select$3
     connect \B \mem[5]
-    connect \S $auto$expression.cpp:3808:import_bit_select$5
-    connect \Y $auto$expression.cpp:3811:import_bit_select$7
+    connect \S $auto$expression.cpp:3849:import_bit_select$5
+    connect \Y $auto$expression.cpp:3852:import_bit_select$7
   end
   attribute \src "dut.sv:14.1-25.4"
   attribute \always_ff 1
@@ -157,12 +157,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$68
     connect \Q \mem[4]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$12
+  cell $mux $auto$expression.cpp:3853:import_bit_select$12
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$7
+    connect \A $auto$expression.cpp:3852:import_bit_select$7
     connect \B \mem[4]
-    connect \S $auto$expression.cpp:3808:import_bit_select$9
-    connect \Y $auto$expression.cpp:3811:import_bit_select$11
+    connect \S $auto$expression.cpp:3849:import_bit_select$9
+    connect \Y $auto$expression.cpp:3852:import_bit_select$11
   end
   attribute \src "dut.sv:14.1-25.4"
   attribute \always_ff 1
@@ -178,12 +178,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$72
     connect \Q \mem[5]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$16
+  cell $mux $auto$expression.cpp:3853:import_bit_select$16
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$11
+    connect \A $auto$expression.cpp:3852:import_bit_select$11
     connect \B \mem[3]
-    connect \S $auto$expression.cpp:3808:import_bit_select$13
-    connect \Y $auto$expression.cpp:3811:import_bit_select$15
+    connect \S $auto$expression.cpp:3849:import_bit_select$13
+    connect \Y $auto$expression.cpp:3852:import_bit_select$15
   end
   attribute \src "dut.sv:14.1-25.4"
   attribute \always_ff 1
@@ -199,12 +199,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$76
     connect \Q \mem[6]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$20
+  cell $mux $auto$expression.cpp:3853:import_bit_select$20
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$15
+    connect \A $auto$expression.cpp:3852:import_bit_select$15
     connect \B \mem[2]
-    connect \S $auto$expression.cpp:3808:import_bit_select$17
-    connect \Y $auto$expression.cpp:3811:import_bit_select$19
+    connect \S $auto$expression.cpp:3849:import_bit_select$17
+    connect \Y $auto$expression.cpp:3852:import_bit_select$19
   end
   attribute \src "dut.sv:14.1-25.4"
   attribute \always_ff 1
@@ -220,12 +220,12 @@ module \mem2reg_test2
     connect \D $auto$process.cpp:6360:import_assignment_sync$80
     connect \Q \mem[7]
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$24
+  cell $mux $auto$expression.cpp:3853:import_bit_select$24
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$19
+    connect \A $auto$expression.cpp:3852:import_bit_select$19
     connect \B \mem[1]
-    connect \S $auto$expression.cpp:3808:import_bit_select$21
-    connect \Y $auto$expression.cpp:3811:import_bit_select$23
+    connect \S $auto$expression.cpp:3849:import_bit_select$21
+    connect \Y $auto$expression.cpp:3852:import_bit_select$23
   end
   cell $eq $auto$process.cpp:6250:import_assignment_sync$123
     parameter \A_SIGNED 0
@@ -235,13 +235,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'110
-    connect \Y $auto$expression.cpp:3808:import_bit_select$1
+    connect \Y $auto$expression.cpp:3849:import_bit_select$1
   end
-  cell $mux $auto$expression.cpp:3812:import_bit_select$28
+  cell $mux $auto$expression.cpp:3853:import_bit_select$28
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:3811:import_bit_select$23
+    connect \A $auto$expression.cpp:3852:import_bit_select$23
     connect \B \mem[0]
-    connect \S $auto$expression.cpp:3808:import_bit_select$25
+    connect \S $auto$expression.cpp:3849:import_bit_select$25
     connect \Y \data
   end
   attribute \src "dut.sv:17.4-17.15"
@@ -334,13 +334,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[0]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$50
+    connect \Y $auto$expression.cpp:2680:import_operation$50
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$53
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$30
-    connect \B $auto$expression.cpp:2639:import_operation$50
+    connect \B $auto$expression.cpp:2680:import_operation$50
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$52
   end
@@ -352,13 +352,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[1]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$54
+    connect \Y $auto$expression.cpp:2680:import_operation$54
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$57
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$32
-    connect \B $auto$expression.cpp:2639:import_operation$54
+    connect \B $auto$expression.cpp:2680:import_operation$54
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$56
   end
@@ -370,13 +370,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[2]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$58
+    connect \Y $auto$expression.cpp:2680:import_operation$58
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$61
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$34
-    connect \B $auto$expression.cpp:2639:import_operation$58
+    connect \B $auto$expression.cpp:2680:import_operation$58
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$60
   end
@@ -388,13 +388,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[3]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$62
+    connect \Y $auto$expression.cpp:2680:import_operation$62
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$65
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$36
-    connect \B $auto$expression.cpp:2639:import_operation$62
+    connect \B $auto$expression.cpp:2680:import_operation$62
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$64
   end
@@ -406,13 +406,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[4]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$66
+    connect \Y $auto$expression.cpp:2680:import_operation$66
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$69
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$38
-    connect \B $auto$expression.cpp:2639:import_operation$66
+    connect \B $auto$expression.cpp:2680:import_operation$66
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$68
   end
@@ -424,13 +424,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[5]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$70
+    connect \Y $auto$expression.cpp:2680:import_operation$70
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$73
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$40
-    connect \B $auto$expression.cpp:2639:import_operation$70
+    connect \B $auto$expression.cpp:2680:import_operation$70
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$72
   end
@@ -442,13 +442,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[6]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$74
+    connect \Y $auto$expression.cpp:2680:import_operation$74
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$77
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$42
-    connect \B $auto$expression.cpp:2639:import_operation$74
+    connect \B $auto$expression.cpp:2680:import_operation$74
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$76
   end
@@ -460,13 +460,13 @@ module \mem2reg_test2
     parameter \Y_WIDTH 4
     connect \A \mem[7]
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2639:import_operation$78
+    connect \Y $auto$expression.cpp:2680:import_operation$78
   end
   attribute \src "dut.sv:21.4-21.22"
   cell $mux $auto$process.cpp:6362:import_assignment_sync$81
     parameter \WIDTH 4
     connect \A $auto$process.cpp:6360:import_assignment_sync$44
-    connect \B $auto$expression.cpp:2639:import_operation$78
+    connect \B $auto$expression.cpp:2680:import_operation$78
     connect \S $auto$rtlil.cc:3302:And$49
     connect \Y $auto$process.cpp:6360:import_assignment_sync$80
   end
@@ -494,7 +494,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 3
     connect \A \addr
-    connect \Y $auto$expression.cpp:3808:import_bit_select$25
+    connect \Y $auto$expression.cpp:3849:import_bit_select$25
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$89
     parameter \A_SIGNED 0
@@ -503,7 +503,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$25
+    connect \B $auto$expression.cpp:3849:import_bit_select$25
     connect \Y $auto$process.cpp:6255:import_assignment_sync$88
   end
   attribute \src "dut.sv:14.1-25.4"
@@ -528,7 +528,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'001
-    connect \Y $auto$expression.cpp:3808:import_bit_select$21
+    connect \Y $auto$expression.cpp:3849:import_bit_select$21
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$95
     parameter \A_SIGNED 0
@@ -537,7 +537,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$21
+    connect \B $auto$expression.cpp:3849:import_bit_select$21
     connect \Y $auto$process.cpp:6255:import_assignment_sync$94
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$125
@@ -547,7 +547,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$1
+    connect \B $auto$expression.cpp:3849:import_bit_select$1
     connect \Y $auto$process.cpp:6255:import_assignment_sync$124
   end
   cell $eq $auto$process.cpp:6250:import_assignment_sync$99
@@ -558,7 +558,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'010
-    connect \Y $auto$expression.cpp:3808:import_bit_select$17
+    connect \Y $auto$expression.cpp:3849:import_bit_select$17
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$101
     parameter \A_SIGNED 0
@@ -567,7 +567,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$17
+    connect \B $auto$expression.cpp:3849:import_bit_select$17
     connect \Y $auto$process.cpp:6255:import_assignment_sync$100
   end
   attribute \src "dut.sv:14.1-25.4"
@@ -592,7 +592,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'011
-    connect \Y $auto$expression.cpp:3808:import_bit_select$13
+    connect \Y $auto$expression.cpp:3849:import_bit_select$13
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$107
     parameter \A_SIGNED 0
@@ -601,7 +601,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$13
+    connect \B $auto$expression.cpp:3849:import_bit_select$13
     connect \Y $auto$process.cpp:6255:import_assignment_sync$106
   end
   cell $eq $auto$process.cpp:6250:import_assignment_sync$129
@@ -622,7 +622,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'100
-    connect \Y $auto$expression.cpp:3808:import_bit_select$9
+    connect \Y $auto$expression.cpp:3849:import_bit_select$9
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$113
     parameter \A_SIGNED 0
@@ -631,7 +631,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$9
+    connect \B $auto$expression.cpp:3849:import_bit_select$9
     connect \Y $auto$process.cpp:6255:import_assignment_sync$112
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$131
@@ -652,7 +652,7 @@ module \mem2reg_test2
     parameter \Y_WIDTH 1
     connect \A \addr
     connect \B 3'101
-    connect \Y $auto$expression.cpp:3808:import_bit_select$5
+    connect \Y $auto$expression.cpp:3849:import_bit_select$5
   end
   cell $and $auto$process.cpp:6256:import_assignment_sync$119
     parameter \A_SIGNED 0
@@ -661,7 +661,7 @@ module \mem2reg_test2
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$process_helper.cpp:68:create_and_cell$84
-    connect \B $auto$expression.cpp:3808:import_bit_select$5
+    connect \B $auto$expression.cpp:3849:import_bit_select$5
     connect \Y $auto$process.cpp:6255:import_assignment_sync$118
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$170
