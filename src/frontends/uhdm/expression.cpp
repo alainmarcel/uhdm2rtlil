@@ -4479,6 +4479,97 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
 
+    // Packed-union-of-structs field access: `dec.r.rd` where `dec` is
+    // a `union packed` whose `r` member is a `struct packed`.  All
+    // union members occupy the same bits, so level 2 (the union
+    // member) just picks the layout; level 3 (the struct field)
+    // extracts the actual slice.  Imported from jeras/UHDM-tests/
+    // test_union.sv (RISC-V op32_t union).
+    //
+    // Without this, Surelog's `Actual_group()` on the third path
+    // element wrongly resolves a field name like `rd` to a same-named
+    // module net (`work@test_union.rd`), producing the self-loop
+    // `connect \rd \rd`.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 3) {
+        auto& pe3 = *uhdm_hier->Path_elems();
+        if (pe3[0]->UhdmType() == uhdmref_obj &&
+            pe3[1]->UhdmType() == uhdmref_obj &&
+            pe3[2]->UhdmType() == uhdmref_obj) {
+            std::string base_name = std::string(
+                any_cast<const ref_obj*>(pe3[0])->VpiName());
+            std::string union_member = std::string(
+                any_cast<const ref_obj*>(pe3[1])->VpiName());
+            std::string field_name = std::string(
+                any_cast<const ref_obj*>(pe3[2])->VpiName());
+
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                ? name_map[base_name] : nullptr;
+
+            // Chase the base ref's typespec to the union_typespec; pick
+            // the matching member; chase that to its struct_typespec.
+            const UHDM::union_typespec* ut = nullptr;
+            if (base_wire) {
+                auto base_ref = any_cast<const ref_obj*>(pe3[0]);
+                const UHDM::ref_typespec* rts = nullptr;
+                if (auto a = base_ref->Actual_group()) {
+                    if (a->UhdmType() == uhdmlogic_net)
+                        rts = any_cast<const UHDM::logic_net*>(a)->Typespec();
+                    else if (a->UhdmType() == uhdmlogic_var)
+                        rts = any_cast<const UHDM::logic_var*>(a)->Typespec();
+                    else if (a->UhdmType() == uhdmstruct_var)
+                        rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
+                    else if (a->UhdmType() == uhdmunion_var)
+                        rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                }
+                if (rts && rts->Actual_typespec() &&
+                    rts->Actual_typespec()->UhdmType() == uhdmunion_typespec)
+                    ut = any_cast<const UHDM::union_typespec*>(rts->Actual_typespec());
+            }
+
+            const UHDM::struct_typespec* st = nullptr;
+            if (ut && ut->Members()) {
+                for (auto m : *ut->Members()) {
+                    if (std::string(m->VpiName()) != union_member) continue;
+                    if (auto mts = m->Typespec()) {
+                        if (auto ats = mts->Actual_typespec()) {
+                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (base_wire && st && st->Members()) {
+                // Find the field; LSB-first iteration accumulates the
+                // offset (struct's last member is the LSB).
+                int field_off = 0, field_w = 0;
+                bool found = false;
+                for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                    auto m = (*st->Members())[i];
+                    int mw = 0;
+                    if (auto mts = m->Typespec())
+                        if (auto ats = mts->Actual_typespec())
+                            mw = get_width_from_typespec(ats, inst);
+                    if (std::string(m->VpiName()) == field_name) {
+                        field_w = mw;
+                        found = true;
+                        break;
+                    }
+                    field_off += mw;
+                }
+                if (found && field_w > 0 &&
+                    field_off + field_w <= base_wire->width) {
+                    log("    hier_path: union+struct %s.%s.%s -> %s[%d+:%d]\n",
+                        base_name.c_str(), union_member.c_str(),
+                        field_name.c_str(), base_wire->name.c_str(),
+                        field_off, field_w);
+                    return RTLIL::SigSpec(base_wire).extract(field_off, field_w);
+                }
+            }
+        }
+    }
+
     // Interface-port signal access (e.g. `ha_intf.sum` where `ha_intf`
     // is the module's interface port).  `import_port` already created
     // `\ha_intf.sum` as a module-local wire, so the full path name
