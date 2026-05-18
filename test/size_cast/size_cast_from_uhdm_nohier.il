@@ -55,42 +55,42 @@ module \top
   wire $eq$dut.sv:37$27_Y
   wire $auto$process.cpp:74:build_check_cell$29
   attribute \src "dut.sv:38.17-38.27"
-  wire $auto$expression.cpp:3177:import_operation$31
+  wire $auto$expression.cpp:3250:import_operation$31
   attribute \src "dut.sv:38.17-38.35"
   wire $eq$dut.sv:38$33_Y
   wire $auto$process.cpp:74:build_check_cell$35
   attribute \src "dut.sv:39.17-39.27"
-  wire $auto$expression.cpp:3177:import_operation$37
+  wire $auto$expression.cpp:3250:import_operation$37
   attribute \src "dut.sv:39.17-39.35"
   wire $eq$dut.sv:39$39_Y
   wire $auto$process.cpp:74:build_check_cell$41
   attribute \src "dut.sv:40.17-40.27"
-  wire $auto$expression.cpp:3177:import_operation$43
+  wire $auto$expression.cpp:3250:import_operation$43
   attribute \src "dut.sv:40.17-40.35"
   wire $eq$dut.sv:40$45_Y
   wire $auto$process.cpp:74:build_check_cell$47
   attribute \src "dut.sv:41.17-41.27"
-  wire $auto$expression.cpp:3177:import_operation$49
+  wire $auto$expression.cpp:3250:import_operation$49
   attribute \src "dut.sv:41.17-41.35"
   wire $eq$dut.sv:41$51_Y
   wire $auto$process.cpp:74:build_check_cell$53
   attribute \src "dut.sv:42.17-42.27"
-  wire $auto$expression.cpp:3177:import_operation$55
+  wire $auto$expression.cpp:3250:import_operation$55
   attribute \src "dut.sv:42.17-42.35"
   wire $eq$dut.sv:42$57_Y
   wire $auto$process.cpp:74:build_check_cell$59
   attribute \src "dut.sv:43.17-43.27"
-  wire $auto$expression.cpp:3177:import_operation$61
+  wire $auto$expression.cpp:3250:import_operation$61
   attribute \src "dut.sv:43.17-43.35"
   wire $eq$dut.sv:43$63_Y
   wire $auto$process.cpp:74:build_check_cell$65
   attribute \src "dut.sv:44.17-44.27"
-  wire $auto$expression.cpp:3177:import_operation$67
+  wire $auto$expression.cpp:3250:import_operation$67
   attribute \src "dut.sv:44.17-44.35"
   wire $eq$dut.sv:44$69_Y
   wire $auto$process.cpp:74:build_check_cell$71
   attribute \src "dut.sv:45.17-45.27"
-  wire $auto$expression.cpp:3177:import_operation$73
+  wire $auto$expression.cpp:3250:import_operation$73
   attribute \src "dut.sv:45.17-45.35"
   wire $eq$dut.sv:45$75_Y
   wire $auto$process.cpp:74:build_check_cell$77
@@ -107,62 +107,62 @@ module \top
   wire $eq$dut.sv:50$91_Y
   wire $auto$process.cpp:74:build_check_cell$93
   attribute \src "dut.sv:51.17-51.33"
-  wire $auto$expression.cpp:3177:import_operation$95
+  wire $auto$expression.cpp:3250:import_operation$95
   attribute \src "dut.sv:51.17-51.41"
   wire $eq$dut.sv:51$97_Y
   wire $auto$process.cpp:74:build_check_cell$99
   attribute \src "dut.sv:52.17-52.33"
-  wire $auto$expression.cpp:3177:import_operation$101
+  wire $auto$expression.cpp:3250:import_operation$101
   attribute \src "dut.sv:52.17-52.41"
   wire $eq$dut.sv:52$103_Y
   wire $auto$process.cpp:74:build_check_cell$105
   attribute \src "dut.sv:53.17-53.33"
-  wire $auto$expression.cpp:3177:import_operation$107
+  wire $auto$expression.cpp:3250:import_operation$107
   attribute \src "dut.sv:53.17-53.41"
   wire $eq$dut.sv:53$109_Y
   wire $auto$process.cpp:74:build_check_cell$111
   attribute \src "dut.sv:54.17-54.33"
-  wire $auto$expression.cpp:3177:import_operation$113
+  wire $auto$expression.cpp:3250:import_operation$113
   attribute \src "dut.sv:54.17-54.41"
   wire $eq$dut.sv:54$115_Y
   wire $auto$process.cpp:74:build_check_cell$117
   attribute \src "dut.sv:55.17-55.33"
-  wire signed $auto$expression.cpp:3177:import_operation$119
+  wire signed $auto$expression.cpp:3250:import_operation$119
   attribute \src "dut.sv:55.17-55.41"
   wire $eq$dut.sv:55$121_Y
   wire $auto$process.cpp:74:build_check_cell$123
   attribute \src "dut.sv:56.17-56.33"
-  wire signed $auto$expression.cpp:3177:import_operation$125
+  wire signed $auto$expression.cpp:3250:import_operation$125
   attribute \src "dut.sv:56.17-56.41"
   wire $eq$dut.sv:56$127_Y
   wire $auto$process.cpp:74:build_check_cell$129
   attribute \src "dut.sv:57.17-57.33"
-  wire signed $auto$expression.cpp:3177:import_operation$131
+  wire signed $auto$expression.cpp:3250:import_operation$131
   attribute \src "dut.sv:57.17-57.41"
   wire $eq$dut.sv:57$133_Y
   wire $auto$process.cpp:74:build_check_cell$135
   attribute \src "dut.sv:58.17-58.33"
-  wire signed $auto$expression.cpp:3177:import_operation$137
+  wire signed $auto$expression.cpp:3250:import_operation$137
   attribute \src "dut.sv:58.17-58.41"
   wire $eq$dut.sv:58$139_Y
   wire $auto$process.cpp:74:build_check_cell$141
   attribute \src "dut.sv:60.17-60.27"
-  wire width 2 $auto$expression.cpp:3177:import_operation$143
+  wire width 2 $auto$expression.cpp:3250:import_operation$143
   attribute \src "dut.sv:60.17-60.36"
   wire $eq$dut.sv:60$145_Y
   wire $auto$process.cpp:74:build_check_cell$147
   attribute \src "dut.sv:61.17-61.27"
-  wire width 2 $auto$expression.cpp:3177:import_operation$149
+  wire width 2 $auto$expression.cpp:3250:import_operation$149
   attribute \src "dut.sv:61.17-61.36"
   wire $eq$dut.sv:61$151_Y
   wire $auto$process.cpp:74:build_check_cell$153
   attribute \src "dut.sv:62.17-62.27"
-  wire width 2 $auto$expression.cpp:3177:import_operation$155
+  wire width 2 $auto$expression.cpp:3250:import_operation$155
   attribute \src "dut.sv:62.17-62.36"
   wire $eq$dut.sv:62$157_Y
   wire $auto$process.cpp:74:build_check_cell$159
   attribute \src "dut.sv:63.17-63.27"
-  wire width 2 $auto$expression.cpp:3177:import_operation$161
+  wire width 2 $auto$expression.cpp:3250:import_operation$161
   attribute \src "dut.sv:63.17-63.36"
   wire $eq$dut.sv:63$163_Y
   wire $auto$process.cpp:74:build_check_cell$165
@@ -191,22 +191,22 @@ module \top
   wire $eq$dut.sv:71$195_Y
   wire $auto$process.cpp:74:build_check_cell$197
   attribute \src "dut.sv:73.17-73.33"
-  wire width 2 $auto$expression.cpp:3177:import_operation$199
+  wire width 2 $auto$expression.cpp:3250:import_operation$199
   attribute \src "dut.sv:73.17-73.42"
   wire $eq$dut.sv:73$201_Y
   wire $auto$process.cpp:74:build_check_cell$203
   attribute \src "dut.sv:74.17-74.33"
-  wire width 2 $auto$expression.cpp:3177:import_operation$205
+  wire width 2 $auto$expression.cpp:3250:import_operation$205
   attribute \src "dut.sv:74.17-74.42"
   wire $eq$dut.sv:74$207_Y
   wire $auto$process.cpp:74:build_check_cell$209
   attribute \src "dut.sv:75.17-75.33"
-  wire width 2 signed $auto$expression.cpp:3177:import_operation$211
+  wire width 2 signed $auto$expression.cpp:3250:import_operation$211
   attribute \src "dut.sv:75.17-75.42"
   wire $eq$dut.sv:75$213_Y
   wire $auto$process.cpp:74:build_check_cell$215
   attribute \src "dut.sv:76.17-76.33"
-  wire width 2 signed $auto$expression.cpp:3177:import_operation$217
+  wire width 2 signed $auto$expression.cpp:3250:import_operation$217
   attribute \src "dut.sv:76.17-76.42"
   wire $eq$dut.sv:76$219_Y
   wire $auto$process.cpp:74:build_check_cell$221
@@ -235,3002 +235,3002 @@ module \top
   wire $eq$dut.sv:84$251_Y
   wire $auto$process.cpp:74:build_check_cell$253
   attribute \src "dut.sv:86.17-86.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$255
+  wire width 3 $auto$expression.cpp:3250:import_operation$255
   attribute \src "dut.sv:86.17-86.37"
   wire $eq$dut.sv:86$257_Y
   wire $auto$process.cpp:74:build_check_cell$259
   attribute \src "dut.sv:87.17-87.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$261
+  wire width 3 $auto$expression.cpp:3250:import_operation$261
   attribute \src "dut.sv:87.17-87.37"
   wire $eq$dut.sv:87$263_Y
   wire $auto$process.cpp:74:build_check_cell$265
   attribute \src "dut.sv:88.17-88.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$267
+  wire width 3 $auto$expression.cpp:3250:import_operation$267
   attribute \src "dut.sv:88.17-88.37"
   wire $eq$dut.sv:88$269_Y
   wire $auto$process.cpp:74:build_check_cell$271
   attribute \src "dut.sv:89.17-89.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$273
+  wire width 3 $auto$expression.cpp:3250:import_operation$273
   attribute \src "dut.sv:89.17-89.37"
   wire $eq$dut.sv:89$275_Y
   wire $auto$process.cpp:74:build_check_cell$277
   attribute \src "dut.sv:90.17-90.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$279
+  wire width 3 $auto$expression.cpp:3250:import_operation$279
   attribute \src "dut.sv:90.17-90.37"
   wire $eq$dut.sv:90$281_Y
   wire $auto$process.cpp:74:build_check_cell$283
   attribute \src "dut.sv:91.17-91.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$285
+  wire width 3 $auto$expression.cpp:3250:import_operation$285
   attribute \src "dut.sv:91.17-91.37"
   wire $eq$dut.sv:91$287_Y
   wire $auto$process.cpp:74:build_check_cell$289
   attribute \src "dut.sv:92.17-92.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$291
+  wire width 3 $auto$expression.cpp:3250:import_operation$291
   attribute \src "dut.sv:92.17-92.37"
   wire $eq$dut.sv:92$293_Y
   wire $auto$process.cpp:74:build_check_cell$295
   attribute \src "dut.sv:93.17-93.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$297
+  wire width 3 $auto$expression.cpp:3250:import_operation$297
   attribute \src "dut.sv:93.17-93.37"
   wire $eq$dut.sv:93$299_Y
   wire $auto$process.cpp:74:build_check_cell$301
   attribute \src "dut.sv:94.17-94.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$303
+  wire width 3 $auto$expression.cpp:3250:import_operation$303
   attribute \src "dut.sv:94.17-94.37"
   wire $eq$dut.sv:94$305_Y
   wire $auto$process.cpp:74:build_check_cell$307
   attribute \src "dut.sv:95.17-95.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$309
+  wire width 3 $auto$expression.cpp:3250:import_operation$309
   attribute \src "dut.sv:95.17-95.37"
   wire $eq$dut.sv:95$311_Y
   wire $auto$process.cpp:74:build_check_cell$313
   attribute \src "dut.sv:96.17-96.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$315
+  wire width 3 $auto$expression.cpp:3250:import_operation$315
   attribute \src "dut.sv:96.17-96.37"
   wire $eq$dut.sv:96$317_Y
   wire $auto$process.cpp:74:build_check_cell$319
   attribute \src "dut.sv:97.17-97.27"
-  wire width 3 $auto$expression.cpp:3177:import_operation$321
+  wire width 3 $auto$expression.cpp:3250:import_operation$321
   attribute \src "dut.sv:97.17-97.37"
   wire $eq$dut.sv:97$323_Y
   wire $auto$process.cpp:74:build_check_cell$325
   attribute \src "dut.sv:99.17-99.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$327
+  wire width 3 $auto$expression.cpp:3250:import_operation$327
   attribute \src "dut.sv:99.17-99.43"
   wire $eq$dut.sv:99$329_Y
   wire $auto$process.cpp:74:build_check_cell$331
   attribute \src "dut.sv:100.17-100.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$333
+  wire width 3 $auto$expression.cpp:3250:import_operation$333
   attribute \src "dut.sv:100.17-100.43"
   wire $eq$dut.sv:100$335_Y
   wire $auto$process.cpp:74:build_check_cell$337
   attribute \src "dut.sv:101.17-101.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$339
+  wire width 3 $auto$expression.cpp:3250:import_operation$339
   attribute \src "dut.sv:101.17-101.43"
   wire $eq$dut.sv:101$341_Y
   wire $auto$process.cpp:74:build_check_cell$343
   attribute \src "dut.sv:102.17-102.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$345
+  wire width 3 $auto$expression.cpp:3250:import_operation$345
   attribute \src "dut.sv:102.17-102.43"
   wire $eq$dut.sv:102$347_Y
   wire $auto$process.cpp:74:build_check_cell$349
   attribute \src "dut.sv:103.17-103.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$351
+  wire width 3 $auto$expression.cpp:3250:import_operation$351
   attribute \src "dut.sv:103.17-103.43"
   wire $eq$dut.sv:103$353_Y
   wire $auto$process.cpp:74:build_check_cell$355
   attribute \src "dut.sv:104.17-104.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$357
+  wire width 3 $auto$expression.cpp:3250:import_operation$357
   attribute \src "dut.sv:104.17-104.43"
   wire $eq$dut.sv:104$359_Y
   wire $auto$process.cpp:74:build_check_cell$361
   attribute \src "dut.sv:105.17-105.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$363
+  wire width 3 $auto$expression.cpp:3250:import_operation$363
   attribute \src "dut.sv:105.17-105.43"
   wire $eq$dut.sv:105$365_Y
   wire $auto$process.cpp:74:build_check_cell$367
   attribute \src "dut.sv:106.17-106.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$369
+  wire width 3 $auto$expression.cpp:3250:import_operation$369
   attribute \src "dut.sv:106.17-106.43"
   wire $eq$dut.sv:106$371_Y
   wire $auto$process.cpp:74:build_check_cell$373
   attribute \src "dut.sv:107.17-107.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$375
+  wire width 3 $auto$expression.cpp:3250:import_operation$375
   attribute \src "dut.sv:107.17-107.43"
   wire $eq$dut.sv:107$377_Y
   wire $auto$process.cpp:74:build_check_cell$379
   attribute \src "dut.sv:108.17-108.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$381
+  wire width 3 $auto$expression.cpp:3250:import_operation$381
   attribute \src "dut.sv:108.17-108.43"
   wire $eq$dut.sv:108$383_Y
   wire $auto$process.cpp:74:build_check_cell$385
   attribute \src "dut.sv:109.17-109.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$387
+  wire width 3 $auto$expression.cpp:3250:import_operation$387
   attribute \src "dut.sv:109.17-109.43"
   wire $eq$dut.sv:109$389_Y
   wire $auto$process.cpp:74:build_check_cell$391
   attribute \src "dut.sv:110.17-110.33"
-  wire width 3 $auto$expression.cpp:3177:import_operation$393
+  wire width 3 $auto$expression.cpp:3250:import_operation$393
   attribute \src "dut.sv:110.17-110.43"
   wire $eq$dut.sv:110$395_Y
   wire $auto$process.cpp:74:build_check_cell$397
   wire $auto$rtlil.cc:3303:Or$400
   attribute \src "dut.sv:112.17-112.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$401
+  wire width 3 $auto$expression.cpp:3250:import_operation$401
   attribute \src "dut.sv:112.17-112.42"
   wire $eq$dut.sv:112$403_Y
   wire $auto$process.cpp:74:build_check_cell$405
   wire $auto$rtlil.cc:3303:Or$408
   attribute \src "dut.sv:113.17-113.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$409
+  wire width 3 $auto$expression.cpp:3250:import_operation$409
   attribute \src "dut.sv:113.17-113.42"
   wire $eq$dut.sv:113$411_Y
   wire $auto$process.cpp:74:build_check_cell$413
   wire signed $auto$rtlil.cc:3303:Or$416
   attribute \src "dut.sv:114.17-114.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$417
+  wire width 3 $auto$expression.cpp:3250:import_operation$417
   attribute \src "dut.sv:114.17-114.42"
   wire $eq$dut.sv:114$419_Y
   wire $auto$process.cpp:74:build_check_cell$421
   wire signed $auto$rtlil.cc:3303:Or$424
   attribute \src "dut.sv:115.17-115.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$425
+  wire width 3 $auto$expression.cpp:3250:import_operation$425
   attribute \src "dut.sv:115.17-115.42"
   wire $eq$dut.sv:115$427_Y
   wire $auto$process.cpp:74:build_check_cell$429
   wire width 2 $auto$rtlil.cc:3303:Or$432
   attribute \src "dut.sv:116.17-116.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$433
+  wire width 3 $auto$expression.cpp:3250:import_operation$433
   attribute \src "dut.sv:116.17-116.42"
   wire $eq$dut.sv:116$435_Y
   wire $auto$process.cpp:74:build_check_cell$437
   wire width 2 $auto$rtlil.cc:3303:Or$440
   attribute \src "dut.sv:117.17-117.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$441
+  wire width 3 $auto$expression.cpp:3250:import_operation$441
   attribute \src "dut.sv:117.17-117.42"
   wire $eq$dut.sv:117$443_Y
   wire $auto$process.cpp:74:build_check_cell$445
   wire width 2 $auto$rtlil.cc:3303:Or$448
   attribute \src "dut.sv:118.17-118.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$449
+  wire width 3 $auto$expression.cpp:3250:import_operation$449
   attribute \src "dut.sv:118.17-118.42"
   wire $eq$dut.sv:118$451_Y
   wire $auto$process.cpp:74:build_check_cell$453
   wire width 2 $auto$rtlil.cc:3303:Or$456
   attribute \src "dut.sv:119.17-119.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$457
+  wire width 3 $auto$expression.cpp:3250:import_operation$457
   attribute \src "dut.sv:119.17-119.42"
   wire $eq$dut.sv:119$459_Y
   wire $auto$process.cpp:74:build_check_cell$461
   wire width 2 signed $auto$rtlil.cc:3303:Or$464
   attribute \src "dut.sv:120.17-120.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$465
+  wire width 3 $auto$expression.cpp:3250:import_operation$465
   attribute \src "dut.sv:120.17-120.42"
   wire $eq$dut.sv:120$467_Y
   wire $auto$process.cpp:74:build_check_cell$469
   wire width 2 signed $auto$rtlil.cc:3303:Or$472
   attribute \src "dut.sv:121.17-121.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$473
+  wire width 3 $auto$expression.cpp:3250:import_operation$473
   attribute \src "dut.sv:121.17-121.42"
   wire $eq$dut.sv:121$475_Y
   wire $auto$process.cpp:74:build_check_cell$477
   wire width 2 signed $auto$rtlil.cc:3303:Or$480
   attribute \src "dut.sv:122.17-122.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$481
+  wire width 3 $auto$expression.cpp:3250:import_operation$481
   attribute \src "dut.sv:122.17-122.42"
   wire $eq$dut.sv:122$483_Y
   wire $auto$process.cpp:74:build_check_cell$485
   wire width 2 signed $auto$rtlil.cc:3303:Or$488
   attribute \src "dut.sv:123.17-123.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$489
+  wire width 3 $auto$expression.cpp:3250:import_operation$489
   attribute \src "dut.sv:123.17-123.42"
   wire $eq$dut.sv:123$491_Y
   wire $auto$process.cpp:74:build_check_cell$493
   wire $auto$rtlil.cc:3303:Or$496
   attribute \src "dut.sv:125.17-125.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$497
+  wire width 3 $auto$expression.cpp:3250:import_operation$497
   attribute \src "dut.sv:125.17-125.48"
   wire $eq$dut.sv:125$499_Y
   wire $auto$process.cpp:74:build_check_cell$501
   wire $auto$rtlil.cc:3303:Or$504
   attribute \src "dut.sv:126.17-126.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$505
+  wire width 3 $auto$expression.cpp:3250:import_operation$505
   attribute \src "dut.sv:126.17-126.48"
   wire $eq$dut.sv:126$507_Y
   wire $auto$process.cpp:74:build_check_cell$509
   wire signed $auto$rtlil.cc:3303:Or$512
   attribute \src "dut.sv:127.17-127.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$513
+  wire width 3 $auto$expression.cpp:3250:import_operation$513
   attribute \src "dut.sv:127.17-127.48"
   wire $eq$dut.sv:127$515_Y
   wire $auto$process.cpp:74:build_check_cell$517
   wire signed $auto$rtlil.cc:3303:Or$520
   attribute \src "dut.sv:128.17-128.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$521
+  wire width 3 $auto$expression.cpp:3250:import_operation$521
   attribute \src "dut.sv:128.17-128.48"
   wire $eq$dut.sv:128$523_Y
   wire $auto$process.cpp:74:build_check_cell$525
   wire width 2 $auto$rtlil.cc:3303:Or$528
   attribute \src "dut.sv:129.17-129.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$529
+  wire width 3 $auto$expression.cpp:3250:import_operation$529
   attribute \src "dut.sv:129.17-129.48"
   wire $eq$dut.sv:129$531_Y
   wire $auto$process.cpp:74:build_check_cell$533
   wire width 2 $auto$rtlil.cc:3303:Or$536
   attribute \src "dut.sv:130.17-130.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$537
+  wire width 3 $auto$expression.cpp:3250:import_operation$537
   attribute \src "dut.sv:130.17-130.48"
   wire $eq$dut.sv:130$539_Y
   wire $auto$process.cpp:74:build_check_cell$541
   wire width 2 $auto$rtlil.cc:3303:Or$544
   attribute \src "dut.sv:131.17-131.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$545
+  wire width 3 $auto$expression.cpp:3250:import_operation$545
   attribute \src "dut.sv:131.17-131.48"
   wire $eq$dut.sv:131$547_Y
   wire $auto$process.cpp:74:build_check_cell$549
   wire width 2 $auto$rtlil.cc:3303:Or$552
   attribute \src "dut.sv:132.17-132.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$553
+  wire width 3 $auto$expression.cpp:3250:import_operation$553
   attribute \src "dut.sv:132.17-132.48"
   wire $eq$dut.sv:132$555_Y
   wire $auto$process.cpp:74:build_check_cell$557
   wire width 2 signed $auto$rtlil.cc:3303:Or$560
   attribute \src "dut.sv:133.17-133.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$561
+  wire width 3 $auto$expression.cpp:3250:import_operation$561
   attribute \src "dut.sv:133.17-133.48"
   wire $eq$dut.sv:133$563_Y
   wire $auto$process.cpp:74:build_check_cell$565
   wire width 2 signed $auto$rtlil.cc:3303:Or$568
   attribute \src "dut.sv:134.17-134.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$569
+  wire width 3 $auto$expression.cpp:3250:import_operation$569
   attribute \src "dut.sv:134.17-134.48"
   wire $eq$dut.sv:134$571_Y
   wire $auto$process.cpp:74:build_check_cell$573
   wire width 2 signed $auto$rtlil.cc:3303:Or$576
   attribute \src "dut.sv:135.17-135.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$577
+  wire width 3 $auto$expression.cpp:3250:import_operation$577
   attribute \src "dut.sv:135.17-135.48"
   wire $eq$dut.sv:135$579_Y
   wire $auto$process.cpp:74:build_check_cell$581
   wire width 2 signed $auto$rtlil.cc:3303:Or$584
   attribute \src "dut.sv:136.17-136.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$585
+  wire width 3 $auto$expression.cpp:3250:import_operation$585
   attribute \src "dut.sv:136.17-136.48"
   wire $eq$dut.sv:136$587_Y
   wire $auto$process.cpp:74:build_check_cell$589
   wire $auto$rtlil.cc:3303:Or$592
   attribute \src "dut.sv:138.17-138.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$593
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$593
   attribute \src "dut.sv:138.17-138.44"
   wire $eq$dut.sv:138$595_Y
   wire $auto$process.cpp:74:build_check_cell$597
   wire $auto$rtlil.cc:3303:Or$600
   attribute \src "dut.sv:139.17-139.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$601
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$601
   attribute \src "dut.sv:139.17-139.44"
   wire $eq$dut.sv:139$603_Y
   wire $auto$process.cpp:74:build_check_cell$605
   wire signed $auto$rtlil.cc:3303:Or$608
   attribute \src "dut.sv:140.17-140.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$609
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$609
   attribute \src "dut.sv:140.17-140.44"
   wire $eq$dut.sv:140$611_Y
   wire $auto$process.cpp:74:build_check_cell$613
   wire signed $auto$rtlil.cc:3303:Or$616
   attribute \src "dut.sv:141.17-141.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$617
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$617
   attribute \src "dut.sv:141.17-141.44"
   wire $eq$dut.sv:141$619_Y
   wire $auto$process.cpp:74:build_check_cell$621
   wire width 2 $auto$rtlil.cc:3303:Or$624
   attribute \src "dut.sv:142.17-142.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$625
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$625
   attribute \src "dut.sv:142.17-142.44"
   wire $eq$dut.sv:142$627_Y
   wire $auto$process.cpp:74:build_check_cell$629
   wire width 2 $auto$rtlil.cc:3303:Or$632
   attribute \src "dut.sv:143.17-143.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$633
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$633
   attribute \src "dut.sv:143.17-143.44"
   wire $eq$dut.sv:143$635_Y
   wire $auto$process.cpp:74:build_check_cell$637
   wire width 2 $auto$rtlil.cc:3303:Or$640
   attribute \src "dut.sv:144.17-144.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$641
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$641
   attribute \src "dut.sv:144.17-144.44"
   wire $eq$dut.sv:144$643_Y
   wire $auto$process.cpp:74:build_check_cell$645
   wire width 2 $auto$rtlil.cc:3303:Or$648
   attribute \src "dut.sv:145.17-145.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$649
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$649
   attribute \src "dut.sv:145.17-145.44"
   wire $eq$dut.sv:145$651_Y
   wire $auto$process.cpp:74:build_check_cell$653
   wire width 2 signed $auto$rtlil.cc:3303:Or$656
   attribute \src "dut.sv:146.17-146.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$657
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$657
   attribute \src "dut.sv:146.17-146.44"
   wire $eq$dut.sv:146$659_Y
   wire $auto$process.cpp:74:build_check_cell$661
   wire width 2 signed $auto$rtlil.cc:3303:Or$664
   attribute \src "dut.sv:147.17-147.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$665
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$665
   attribute \src "dut.sv:147.17-147.44"
   wire $eq$dut.sv:147$667_Y
   wire $auto$process.cpp:74:build_check_cell$669
   wire width 2 signed $auto$rtlil.cc:3303:Or$672
   attribute \src "dut.sv:148.17-148.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$673
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$673
   attribute \src "dut.sv:148.17-148.44"
   wire $eq$dut.sv:148$675_Y
   wire $auto$process.cpp:74:build_check_cell$677
   wire width 2 signed $auto$rtlil.cc:3303:Or$680
   attribute \src "dut.sv:149.17-149.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$681
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$681
   attribute \src "dut.sv:149.17-149.44"
   wire $eq$dut.sv:149$683_Y
   wire $auto$process.cpp:74:build_check_cell$685
   wire $auto$rtlil.cc:3303:Or$688
   attribute \src "dut.sv:151.17-151.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$689
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$689
   attribute \src "dut.sv:151.17-151.51"
   wire $eq$dut.sv:151$691_Y
   wire $auto$process.cpp:74:build_check_cell$693
   wire $auto$rtlil.cc:3303:Or$696
   attribute \src "dut.sv:152.17-152.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$697
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$697
   attribute \src "dut.sv:152.17-152.51"
   wire $eq$dut.sv:152$699_Y
   wire $auto$process.cpp:74:build_check_cell$701
   wire signed $auto$rtlil.cc:3303:Or$704
   attribute \src "dut.sv:153.17-153.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$705
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$705
   attribute \src "dut.sv:153.17-153.51"
   wire $eq$dut.sv:153$707_Y
   wire $auto$process.cpp:74:build_check_cell$709
   wire signed $auto$rtlil.cc:3303:Or$712
   attribute \src "dut.sv:154.17-154.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$713
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$713
   attribute \src "dut.sv:154.17-154.51"
   wire $eq$dut.sv:154$715_Y
   wire $auto$process.cpp:74:build_check_cell$717
   wire width 2 $auto$rtlil.cc:3303:Or$720
   attribute \src "dut.sv:155.17-155.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$721
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$721
   attribute \src "dut.sv:155.17-155.51"
   wire $eq$dut.sv:155$723_Y
   wire $auto$process.cpp:74:build_check_cell$725
   wire width 2 $auto$rtlil.cc:3303:Or$728
   attribute \src "dut.sv:156.17-156.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$729
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$729
   attribute \src "dut.sv:156.17-156.51"
   wire $eq$dut.sv:156$731_Y
   wire $auto$process.cpp:74:build_check_cell$733
   wire width 2 $auto$rtlil.cc:3303:Or$736
   attribute \src "dut.sv:157.17-157.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$737
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$737
   attribute \src "dut.sv:157.17-157.51"
   wire $eq$dut.sv:157$739_Y
   wire $auto$process.cpp:74:build_check_cell$741
   wire width 2 $auto$rtlil.cc:3303:Or$744
   attribute \src "dut.sv:158.17-158.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$745
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$745
   attribute \src "dut.sv:158.17-158.51"
   wire $eq$dut.sv:158$747_Y
   wire $auto$process.cpp:74:build_check_cell$749
   wire width 2 signed $auto$rtlil.cc:3303:Or$752
   attribute \src "dut.sv:159.17-159.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$753
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$753
   attribute \src "dut.sv:159.17-159.51"
   wire $eq$dut.sv:159$755_Y
   wire $auto$process.cpp:74:build_check_cell$757
   wire width 2 signed $auto$rtlil.cc:3303:Or$760
   attribute \src "dut.sv:160.17-160.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$761
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$761
   attribute \src "dut.sv:160.17-160.51"
   wire $eq$dut.sv:160$763_Y
   wire $auto$process.cpp:74:build_check_cell$765
   wire width 2 signed $auto$rtlil.cc:3303:Or$768
   attribute \src "dut.sv:161.17-161.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$769
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$769
   attribute \src "dut.sv:161.17-161.51"
   wire $eq$dut.sv:161$771_Y
   wire $auto$process.cpp:74:build_check_cell$773
   wire width 2 signed $auto$rtlil.cc:3303:Or$776
   attribute \src "dut.sv:162.17-162.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$777
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$777
   attribute \src "dut.sv:162.17-162.51"
   wire $eq$dut.sv:162$779_Y
   wire $auto$process.cpp:74:build_check_cell$781
   wire $auto$rtlil.cc:3303:Or$784
   attribute \src "dut.sv:164.17-164.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$785
+  wire width 12 $auto$expression.cpp:3250:import_operation$785
   attribute \src "dut.sv:164.17-164.64"
   wire $eq$dut.sv:164$787_Y
   wire $auto$process.cpp:74:build_check_cell$789
   wire $auto$rtlil.cc:3303:Or$792
   attribute \src "dut.sv:165.17-165.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$793
+  wire width 12 $auto$expression.cpp:3250:import_operation$793
   attribute \src "dut.sv:165.17-165.64"
   wire $eq$dut.sv:165$795_Y
   wire $auto$process.cpp:74:build_check_cell$797
   wire signed $auto$rtlil.cc:3303:Or$800
   attribute \src "dut.sv:166.17-166.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$801
+  wire width 12 $auto$expression.cpp:3250:import_operation$801
   attribute \src "dut.sv:166.17-166.64"
   wire $eq$dut.sv:166$803_Y
   wire $auto$process.cpp:74:build_check_cell$805
   wire signed $auto$rtlil.cc:3303:Or$808
   attribute \src "dut.sv:167.17-167.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$809
+  wire width 12 $auto$expression.cpp:3250:import_operation$809
   attribute \src "dut.sv:167.17-167.64"
   wire $eq$dut.sv:167$811_Y
   wire $auto$process.cpp:74:build_check_cell$813
   wire width 2 $auto$rtlil.cc:3303:Or$816
   attribute \src "dut.sv:168.17-168.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$817
+  wire width 12 $auto$expression.cpp:3250:import_operation$817
   attribute \src "dut.sv:168.17-168.64"
   wire $eq$dut.sv:168$819_Y
   wire $auto$process.cpp:74:build_check_cell$821
   wire width 2 $auto$rtlil.cc:3303:Or$824
   attribute \src "dut.sv:169.17-169.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$825
+  wire width 12 $auto$expression.cpp:3250:import_operation$825
   attribute \src "dut.sv:169.17-169.64"
   wire $eq$dut.sv:169$827_Y
   wire $auto$process.cpp:74:build_check_cell$829
   wire width 2 $auto$rtlil.cc:3303:Or$832
   attribute \src "dut.sv:170.17-170.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$833
+  wire width 12 $auto$expression.cpp:3250:import_operation$833
   attribute \src "dut.sv:170.17-170.64"
   wire $eq$dut.sv:170$835_Y
   wire $auto$process.cpp:74:build_check_cell$837
   wire width 2 $auto$rtlil.cc:3303:Or$840
   attribute \src "dut.sv:171.17-171.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$841
+  wire width 12 $auto$expression.cpp:3250:import_operation$841
   attribute \src "dut.sv:171.17-171.64"
   wire $eq$dut.sv:171$843_Y
   wire $auto$process.cpp:74:build_check_cell$845
   wire width 2 signed $auto$rtlil.cc:3303:Or$848
   attribute \src "dut.sv:172.17-172.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$849
+  wire width 12 $auto$expression.cpp:3250:import_operation$849
   attribute \src "dut.sv:172.17-172.64"
   wire $eq$dut.sv:172$851_Y
   wire $auto$process.cpp:74:build_check_cell$853
   wire width 2 signed $auto$rtlil.cc:3303:Or$856
   attribute \src "dut.sv:173.17-173.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$857
+  wire width 12 $auto$expression.cpp:3250:import_operation$857
   attribute \src "dut.sv:173.17-173.64"
   wire $eq$dut.sv:173$859_Y
   wire $auto$process.cpp:74:build_check_cell$861
   wire width 2 signed $auto$rtlil.cc:3303:Or$864
   attribute \src "dut.sv:174.17-174.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$865
+  wire width 12 $auto$expression.cpp:3250:import_operation$865
   attribute \src "dut.sv:174.17-174.64"
   wire $eq$dut.sv:174$867_Y
   wire $auto$process.cpp:74:build_check_cell$869
   wire width 2 signed $auto$rtlil.cc:3303:Or$872
   attribute \src "dut.sv:175.17-175.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$873
+  wire width 12 $auto$expression.cpp:3250:import_operation$873
   attribute \src "dut.sv:175.17-175.64"
   wire $eq$dut.sv:175$875_Y
   wire $auto$process.cpp:74:build_check_cell$877
   wire $auto$rtlil.cc:3303:Or$880
   attribute \src "dut.sv:177.17-177.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$881
+  wire width 3 $auto$expression.cpp:3250:import_operation$881
   attribute \src "dut.sv:177.17-177.42"
   wire $eq$dut.sv:177$883_Y
   wire $auto$process.cpp:74:build_check_cell$885
   wire $auto$rtlil.cc:3303:Or$888
   attribute \src "dut.sv:178.17-178.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$889
+  wire width 3 $auto$expression.cpp:3250:import_operation$889
   attribute \src "dut.sv:178.17-178.42"
   wire $eq$dut.sv:178$891_Y
   wire $auto$process.cpp:74:build_check_cell$893
   wire signed $auto$rtlil.cc:3303:Or$896
   attribute \src "dut.sv:179.17-179.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$897
+  wire width 3 $auto$expression.cpp:3250:import_operation$897
   attribute \src "dut.sv:179.17-179.42"
   wire $eq$dut.sv:179$899_Y
   wire $auto$process.cpp:74:build_check_cell$901
   wire signed $auto$rtlil.cc:3303:Or$904
   attribute \src "dut.sv:180.17-180.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$905
+  wire width 3 $auto$expression.cpp:3250:import_operation$905
   attribute \src "dut.sv:180.17-180.42"
   wire $eq$dut.sv:180$907_Y
   wire $auto$process.cpp:74:build_check_cell$909
   wire width 2 $auto$rtlil.cc:3303:Or$912
   attribute \src "dut.sv:181.17-181.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$913
+  wire width 3 $auto$expression.cpp:3250:import_operation$913
   attribute \src "dut.sv:181.17-181.42"
   wire $eq$dut.sv:181$915_Y
   wire $auto$process.cpp:74:build_check_cell$917
   wire width 2 $auto$rtlil.cc:3303:Or$920
   attribute \src "dut.sv:182.17-182.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$921
+  wire width 3 $auto$expression.cpp:3250:import_operation$921
   attribute \src "dut.sv:182.17-182.42"
   wire $eq$dut.sv:182$923_Y
   wire $auto$process.cpp:74:build_check_cell$925
   wire width 2 $auto$rtlil.cc:3303:Or$928
   attribute \src "dut.sv:183.17-183.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$929
+  wire width 3 $auto$expression.cpp:3250:import_operation$929
   attribute \src "dut.sv:183.17-183.42"
   wire $eq$dut.sv:183$931_Y
   wire $auto$process.cpp:74:build_check_cell$933
   wire width 2 $auto$rtlil.cc:3303:Or$936
   attribute \src "dut.sv:184.17-184.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$937
+  wire width 3 $auto$expression.cpp:3250:import_operation$937
   attribute \src "dut.sv:184.17-184.42"
   wire $eq$dut.sv:184$939_Y
   wire $auto$process.cpp:74:build_check_cell$941
   wire width 2 signed $auto$rtlil.cc:3303:Or$944
   attribute \src "dut.sv:185.17-185.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$945
+  wire width 3 $auto$expression.cpp:3250:import_operation$945
   attribute \src "dut.sv:185.17-185.42"
   wire $eq$dut.sv:185$947_Y
   wire $auto$process.cpp:74:build_check_cell$949
   wire width 2 signed $auto$rtlil.cc:3303:Or$952
   attribute \src "dut.sv:186.17-186.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$953
+  wire width 3 $auto$expression.cpp:3250:import_operation$953
   attribute \src "dut.sv:186.17-186.42"
   wire $eq$dut.sv:186$955_Y
   wire $auto$process.cpp:74:build_check_cell$957
   wire width 2 signed $auto$rtlil.cc:3303:Or$960
   attribute \src "dut.sv:187.17-187.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$961
+  wire width 3 $auto$expression.cpp:3250:import_operation$961
   attribute \src "dut.sv:187.17-187.42"
   wire $eq$dut.sv:187$963_Y
   wire $auto$process.cpp:74:build_check_cell$965
   wire width 2 signed $auto$rtlil.cc:3303:Or$968
   attribute \src "dut.sv:188.17-188.32"
-  wire width 3 $auto$expression.cpp:3177:import_operation$969
+  wire width 3 $auto$expression.cpp:3250:import_operation$969
   attribute \src "dut.sv:188.17-188.42"
   wire $eq$dut.sv:188$971_Y
   wire $auto$process.cpp:74:build_check_cell$973
   wire $auto$rtlil.cc:3303:Or$976
   attribute \src "dut.sv:190.17-190.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$977
+  wire width 3 $auto$expression.cpp:3250:import_operation$977
   attribute \src "dut.sv:190.17-190.48"
   wire $eq$dut.sv:190$979_Y
   wire $auto$process.cpp:74:build_check_cell$981
   wire $auto$rtlil.cc:3303:Or$984
   attribute \src "dut.sv:191.17-191.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$985
+  wire width 3 $auto$expression.cpp:3250:import_operation$985
   attribute \src "dut.sv:191.17-191.48"
   wire $eq$dut.sv:191$987_Y
   wire $auto$process.cpp:74:build_check_cell$989
   wire signed $auto$rtlil.cc:3303:Or$992
   attribute \src "dut.sv:192.17-192.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$993
+  wire width 3 $auto$expression.cpp:3250:import_operation$993
   attribute \src "dut.sv:192.17-192.48"
   wire $eq$dut.sv:192$995_Y
   wire $auto$process.cpp:74:build_check_cell$997
   wire signed $auto$rtlil.cc:3303:Or$1000
   attribute \src "dut.sv:193.17-193.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1001
+  wire width 3 $auto$expression.cpp:3250:import_operation$1001
   attribute \src "dut.sv:193.17-193.48"
   wire $eq$dut.sv:193$1003_Y
   wire $auto$process.cpp:74:build_check_cell$1005
   wire width 2 $auto$rtlil.cc:3303:Or$1008
   attribute \src "dut.sv:194.17-194.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1009
+  wire width 3 $auto$expression.cpp:3250:import_operation$1009
   attribute \src "dut.sv:194.17-194.48"
   wire $eq$dut.sv:194$1011_Y
   wire $auto$process.cpp:74:build_check_cell$1013
   wire width 2 $auto$rtlil.cc:3303:Or$1016
   attribute \src "dut.sv:195.17-195.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1017
+  wire width 3 $auto$expression.cpp:3250:import_operation$1017
   attribute \src "dut.sv:195.17-195.48"
   wire $eq$dut.sv:195$1019_Y
   wire $auto$process.cpp:74:build_check_cell$1021
   wire width 2 $auto$rtlil.cc:3303:Or$1024
   attribute \src "dut.sv:196.17-196.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1025
+  wire width 3 $auto$expression.cpp:3250:import_operation$1025
   attribute \src "dut.sv:196.17-196.48"
   wire $eq$dut.sv:196$1027_Y
   wire $auto$process.cpp:74:build_check_cell$1029
   wire width 2 $auto$rtlil.cc:3303:Or$1032
   attribute \src "dut.sv:197.17-197.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1033
+  wire width 3 $auto$expression.cpp:3250:import_operation$1033
   attribute \src "dut.sv:197.17-197.48"
   wire $eq$dut.sv:197$1035_Y
   wire $auto$process.cpp:74:build_check_cell$1037
   wire width 2 signed $auto$rtlil.cc:3303:Or$1040
   attribute \src "dut.sv:198.17-198.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1041
+  wire width 3 $auto$expression.cpp:3250:import_operation$1041
   attribute \src "dut.sv:198.17-198.48"
   wire $eq$dut.sv:198$1043_Y
   wire $auto$process.cpp:74:build_check_cell$1045
   wire width 2 signed $auto$rtlil.cc:3303:Or$1048
   attribute \src "dut.sv:199.17-199.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1049
+  wire width 3 $auto$expression.cpp:3250:import_operation$1049
   attribute \src "dut.sv:199.17-199.48"
   wire $eq$dut.sv:199$1051_Y
   wire $auto$process.cpp:74:build_check_cell$1053
   wire width 2 signed $auto$rtlil.cc:3303:Or$1056
   attribute \src "dut.sv:200.17-200.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1057
+  wire width 3 $auto$expression.cpp:3250:import_operation$1057
   attribute \src "dut.sv:200.17-200.48"
   wire $eq$dut.sv:200$1059_Y
   wire $auto$process.cpp:74:build_check_cell$1061
   wire width 2 signed $auto$rtlil.cc:3303:Or$1064
   attribute \src "dut.sv:201.17-201.38"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1065
+  wire width 3 $auto$expression.cpp:3250:import_operation$1065
   attribute \src "dut.sv:201.17-201.48"
   wire $eq$dut.sv:201$1067_Y
   wire $auto$process.cpp:74:build_check_cell$1069
   wire $auto$rtlil.cc:3303:Or$1072
   attribute \src "dut.sv:203.17-203.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1073
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1073
   attribute \src "dut.sv:203.17-203.44"
   wire $eq$dut.sv:203$1075_Y
   wire $auto$process.cpp:74:build_check_cell$1077
   wire $auto$rtlil.cc:3303:Or$1080
   attribute \src "dut.sv:204.17-204.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1081
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1081
   attribute \src "dut.sv:204.17-204.44"
   wire $eq$dut.sv:204$1083_Y
   wire $auto$process.cpp:74:build_check_cell$1085
   wire signed $auto$rtlil.cc:3303:Or$1088
   attribute \src "dut.sv:205.17-205.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1089
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1089
   attribute \src "dut.sv:205.17-205.44"
   wire $eq$dut.sv:205$1091_Y
   wire $auto$process.cpp:74:build_check_cell$1093
   wire signed $auto$rtlil.cc:3303:Or$1096
   attribute \src "dut.sv:206.17-206.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1097
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1097
   attribute \src "dut.sv:206.17-206.44"
   wire $eq$dut.sv:206$1099_Y
   wire $auto$process.cpp:74:build_check_cell$1101
   wire width 2 $auto$rtlil.cc:3303:Or$1104
   attribute \src "dut.sv:207.17-207.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1105
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1105
   attribute \src "dut.sv:207.17-207.44"
   wire $eq$dut.sv:207$1107_Y
   wire $auto$process.cpp:74:build_check_cell$1109
   wire width 2 $auto$rtlil.cc:3303:Or$1112
   attribute \src "dut.sv:208.17-208.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1113
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1113
   attribute \src "dut.sv:208.17-208.44"
   wire $eq$dut.sv:208$1115_Y
   wire $auto$process.cpp:74:build_check_cell$1117
   wire width 2 $auto$rtlil.cc:3303:Or$1120
   attribute \src "dut.sv:209.17-209.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1121
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1121
   attribute \src "dut.sv:209.17-209.44"
   wire $eq$dut.sv:209$1123_Y
   wire $auto$process.cpp:74:build_check_cell$1125
   wire width 2 $auto$rtlil.cc:3303:Or$1128
   attribute \src "dut.sv:210.17-210.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1129
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1129
   attribute \src "dut.sv:210.17-210.44"
   wire $eq$dut.sv:210$1131_Y
   wire $auto$process.cpp:74:build_check_cell$1133
   wire width 2 signed $auto$rtlil.cc:3303:Or$1136
   attribute \src "dut.sv:211.17-211.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1137
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1137
   attribute \src "dut.sv:211.17-211.44"
   wire $eq$dut.sv:211$1139_Y
   wire $auto$process.cpp:74:build_check_cell$1141
   wire width 2 signed $auto$rtlil.cc:3303:Or$1144
   attribute \src "dut.sv:212.17-212.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1145
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1145
   attribute \src "dut.sv:212.17-212.44"
   wire $eq$dut.sv:212$1147_Y
   wire $auto$process.cpp:74:build_check_cell$1149
   wire width 2 signed $auto$rtlil.cc:3303:Or$1152
   attribute \src "dut.sv:213.17-213.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1153
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1153
   attribute \src "dut.sv:213.17-213.44"
   wire $eq$dut.sv:213$1155_Y
   wire $auto$process.cpp:74:build_check_cell$1157
   wire width 2 signed $auto$rtlil.cc:3303:Or$1160
   attribute \src "dut.sv:214.17-214.35"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1161
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1161
   attribute \src "dut.sv:214.17-214.44"
   wire $eq$dut.sv:214$1163_Y
   wire $auto$process.cpp:74:build_check_cell$1165
   wire $auto$rtlil.cc:3303:Or$1168
   attribute \src "dut.sv:216.17-216.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1169
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1169
   attribute \src "dut.sv:216.17-216.51"
   wire $eq$dut.sv:216$1171_Y
   wire $auto$process.cpp:74:build_check_cell$1173
   wire $auto$rtlil.cc:3303:Or$1176
   attribute \src "dut.sv:217.17-217.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1177
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1177
   attribute \src "dut.sv:217.17-217.51"
   wire $eq$dut.sv:217$1179_Y
   wire $auto$process.cpp:74:build_check_cell$1181
   wire signed $auto$rtlil.cc:3303:Or$1184
   attribute \src "dut.sv:218.17-218.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1185
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1185
   attribute \src "dut.sv:218.17-218.51"
   wire $eq$dut.sv:218$1187_Y
   wire $auto$process.cpp:74:build_check_cell$1189
   wire signed $auto$rtlil.cc:3303:Or$1192
   attribute \src "dut.sv:219.17-219.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1193
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1193
   attribute \src "dut.sv:219.17-219.51"
   wire $eq$dut.sv:219$1195_Y
   wire $auto$process.cpp:74:build_check_cell$1197
   wire width 2 $auto$rtlil.cc:3303:Or$1200
   attribute \src "dut.sv:220.17-220.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1201
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1201
   attribute \src "dut.sv:220.17-220.51"
   wire $eq$dut.sv:220$1203_Y
   wire $auto$process.cpp:74:build_check_cell$1205
   wire width 2 $auto$rtlil.cc:3303:Or$1208
   attribute \src "dut.sv:221.17-221.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1209
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1209
   attribute \src "dut.sv:221.17-221.51"
   wire $eq$dut.sv:221$1211_Y
   wire $auto$process.cpp:74:build_check_cell$1213
   wire width 2 $auto$rtlil.cc:3303:Or$1216
   attribute \src "dut.sv:222.17-222.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1217
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1217
   attribute \src "dut.sv:222.17-222.51"
   wire $eq$dut.sv:222$1219_Y
   wire $auto$process.cpp:74:build_check_cell$1221
   wire width 2 $auto$rtlil.cc:3303:Or$1224
   attribute \src "dut.sv:223.17-223.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1225
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1225
   attribute \src "dut.sv:223.17-223.51"
   wire $eq$dut.sv:223$1227_Y
   wire $auto$process.cpp:74:build_check_cell$1229
   wire width 2 signed $auto$rtlil.cc:3303:Or$1232
   attribute \src "dut.sv:224.17-224.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1233
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1233
   attribute \src "dut.sv:224.17-224.51"
   wire $eq$dut.sv:224$1235_Y
   wire $auto$process.cpp:74:build_check_cell$1237
   wire width 2 signed $auto$rtlil.cc:3303:Or$1240
   attribute \src "dut.sv:225.17-225.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1241
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1241
   attribute \src "dut.sv:225.17-225.51"
   wire $eq$dut.sv:225$1243_Y
   wire $auto$process.cpp:74:build_check_cell$1245
   wire width 2 signed $auto$rtlil.cc:3303:Or$1248
   attribute \src "dut.sv:226.17-226.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1249
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1249
   attribute \src "dut.sv:226.17-226.51"
   wire $eq$dut.sv:226$1251_Y
   wire $auto$process.cpp:74:build_check_cell$1253
   wire width 2 signed $auto$rtlil.cc:3303:Or$1256
   attribute \src "dut.sv:227.17-227.34"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1257
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1257
   attribute \src "dut.sv:227.17-227.51"
   wire $eq$dut.sv:227$1259_Y
   wire $auto$process.cpp:74:build_check_cell$1261
   wire $auto$rtlil.cc:3303:Or$1264
   attribute \src "dut.sv:229.17-229.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1265
+  wire width 12 $auto$expression.cpp:3250:import_operation$1265
   attribute \src "dut.sv:229.17-229.64"
   wire $eq$dut.sv:229$1267_Y
   wire $auto$process.cpp:74:build_check_cell$1269
   wire $auto$rtlil.cc:3303:Or$1272
   attribute \src "dut.sv:230.17-230.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1273
+  wire width 12 $auto$expression.cpp:3250:import_operation$1273
   attribute \src "dut.sv:230.17-230.64"
   wire $eq$dut.sv:230$1275_Y
   wire $auto$process.cpp:74:build_check_cell$1277
   wire signed $auto$rtlil.cc:3303:Or$1280
   attribute \src "dut.sv:231.17-231.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1281
+  wire width 12 $auto$expression.cpp:3250:import_operation$1281
   attribute \src "dut.sv:231.17-231.64"
   wire $eq$dut.sv:231$1283_Y
   wire $auto$process.cpp:74:build_check_cell$1285
   wire signed $auto$rtlil.cc:3303:Or$1288
   attribute \src "dut.sv:232.17-232.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1289
+  wire width 12 $auto$expression.cpp:3250:import_operation$1289
   attribute \src "dut.sv:232.17-232.64"
   wire $eq$dut.sv:232$1291_Y
   wire $auto$process.cpp:74:build_check_cell$1293
   wire width 2 $auto$rtlil.cc:3303:Or$1296
   attribute \src "dut.sv:233.17-233.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1297
+  wire width 12 $auto$expression.cpp:3250:import_operation$1297
   attribute \src "dut.sv:233.17-233.64"
   wire $eq$dut.sv:233$1299_Y
   wire $auto$process.cpp:74:build_check_cell$1301
   wire width 2 $auto$rtlil.cc:3303:Or$1304
   attribute \src "dut.sv:234.17-234.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1305
+  wire width 12 $auto$expression.cpp:3250:import_operation$1305
   attribute \src "dut.sv:234.17-234.64"
   wire $eq$dut.sv:234$1307_Y
   wire $auto$process.cpp:74:build_check_cell$1309
   wire width 2 $auto$rtlil.cc:3303:Or$1312
   attribute \src "dut.sv:235.17-235.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1313
+  wire width 12 $auto$expression.cpp:3250:import_operation$1313
   attribute \src "dut.sv:235.17-235.64"
   wire $eq$dut.sv:235$1315_Y
   wire $auto$process.cpp:74:build_check_cell$1317
   wire width 2 $auto$rtlil.cc:3303:Or$1320
   attribute \src "dut.sv:236.17-236.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1321
+  wire width 12 $auto$expression.cpp:3250:import_operation$1321
   attribute \src "dut.sv:236.17-236.64"
   wire $eq$dut.sv:236$1323_Y
   wire $auto$process.cpp:74:build_check_cell$1325
   wire width 2 signed $auto$rtlil.cc:3303:Or$1328
   attribute \src "dut.sv:237.17-237.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1329
+  wire width 12 $auto$expression.cpp:3250:import_operation$1329
   attribute \src "dut.sv:237.17-237.64"
   wire $eq$dut.sv:237$1331_Y
   wire $auto$process.cpp:74:build_check_cell$1333
   wire width 2 signed $auto$rtlil.cc:3303:Or$1336
   attribute \src "dut.sv:238.17-238.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1337
+  wire width 12 $auto$expression.cpp:3250:import_operation$1337
   attribute \src "dut.sv:238.17-238.64"
   wire $eq$dut.sv:238$1339_Y
   wire $auto$process.cpp:74:build_check_cell$1341
   wire width 2 signed $auto$rtlil.cc:3303:Or$1344
   attribute \src "dut.sv:239.17-239.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1345
+  wire width 12 $auto$expression.cpp:3250:import_operation$1345
   attribute \src "dut.sv:239.17-239.64"
   wire $eq$dut.sv:239$1347_Y
   wire $auto$process.cpp:74:build_check_cell$1349
   wire width 2 signed $auto$rtlil.cc:3303:Or$1352
   attribute \src "dut.sv:240.17-240.53"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1353
+  wire width 12 $auto$expression.cpp:3250:import_operation$1353
   attribute \src "dut.sv:240.17-240.64"
   wire $eq$dut.sv:240$1355_Y
   wire $auto$process.cpp:74:build_check_cell$1357
   wire $auto$rtlil.cc:3390:Mux$1360
   attribute \src "dut.sv:242.17-242.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1361
+  wire width 3 $auto$expression.cpp:3250:import_operation$1361
   attribute \src "dut.sv:242.17-242.46"
   wire $eq$dut.sv:242$1363_Y
   wire $auto$process.cpp:74:build_check_cell$1365
   wire $auto$rtlil.cc:3390:Mux$1368
   attribute \src "dut.sv:243.17-243.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1369
+  wire width 3 $auto$expression.cpp:3250:import_operation$1369
   attribute \src "dut.sv:243.17-243.46"
   wire $eq$dut.sv:243$1371_Y
   wire $auto$process.cpp:74:build_check_cell$1373
   wire signed $auto$rtlil.cc:3390:Mux$1376
   attribute \src "dut.sv:244.17-244.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1377
+  wire width 3 $auto$expression.cpp:3250:import_operation$1377
   attribute \src "dut.sv:244.17-244.46"
   wire $eq$dut.sv:244$1379_Y
   wire $auto$process.cpp:74:build_check_cell$1381
   wire signed $auto$rtlil.cc:3390:Mux$1384
   attribute \src "dut.sv:245.17-245.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1385
+  wire width 3 $auto$expression.cpp:3250:import_operation$1385
   attribute \src "dut.sv:245.17-245.46"
   wire $eq$dut.sv:245$1387_Y
   wire $auto$process.cpp:74:build_check_cell$1389
   wire width 2 $auto$rtlil.cc:3390:Mux$1392
   attribute \src "dut.sv:246.17-246.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1393
+  wire width 3 $auto$expression.cpp:3250:import_operation$1393
   attribute \src "dut.sv:246.17-246.46"
   wire $eq$dut.sv:246$1395_Y
   wire $auto$process.cpp:74:build_check_cell$1397
   wire width 2 $auto$rtlil.cc:3390:Mux$1400
   attribute \src "dut.sv:247.17-247.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1401
+  wire width 3 $auto$expression.cpp:3250:import_operation$1401
   attribute \src "dut.sv:247.17-247.46"
   wire $eq$dut.sv:247$1403_Y
   wire $auto$process.cpp:74:build_check_cell$1405
   wire width 2 $auto$rtlil.cc:3390:Mux$1408
   attribute \src "dut.sv:248.17-248.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1409
+  wire width 3 $auto$expression.cpp:3250:import_operation$1409
   attribute \src "dut.sv:248.17-248.46"
   wire $eq$dut.sv:248$1411_Y
   wire $auto$process.cpp:74:build_check_cell$1413
   wire width 2 $auto$rtlil.cc:3390:Mux$1416
   attribute \src "dut.sv:249.17-249.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1417
+  wire width 3 $auto$expression.cpp:3250:import_operation$1417
   attribute \src "dut.sv:249.17-249.46"
   wire $eq$dut.sv:249$1419_Y
   wire $auto$process.cpp:74:build_check_cell$1421
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1424
   attribute \src "dut.sv:250.17-250.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1425
+  wire width 3 $auto$expression.cpp:3250:import_operation$1425
   attribute \src "dut.sv:250.17-250.46"
   wire $eq$dut.sv:250$1427_Y
   wire $auto$process.cpp:74:build_check_cell$1429
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1432
   attribute \src "dut.sv:251.17-251.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1433
+  wire width 3 $auto$expression.cpp:3250:import_operation$1433
   attribute \src "dut.sv:251.17-251.46"
   wire $eq$dut.sv:251$1435_Y
   wire $auto$process.cpp:74:build_check_cell$1437
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1440
   attribute \src "dut.sv:252.17-252.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1441
+  wire width 3 $auto$expression.cpp:3250:import_operation$1441
   attribute \src "dut.sv:252.17-252.46"
   wire $eq$dut.sv:252$1443_Y
   wire $auto$process.cpp:74:build_check_cell$1445
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1448
   attribute \src "dut.sv:253.17-253.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1449
+  wire width 3 $auto$expression.cpp:3250:import_operation$1449
   attribute \src "dut.sv:253.17-253.46"
   wire $eq$dut.sv:253$1451_Y
   wire $auto$process.cpp:74:build_check_cell$1453
   wire $auto$rtlil.cc:3390:Mux$1456
   attribute \src "dut.sv:255.17-255.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1457
+  wire width 3 $auto$expression.cpp:3250:import_operation$1457
   attribute \src "dut.sv:255.17-255.52"
   wire $eq$dut.sv:255$1459_Y
   wire $auto$process.cpp:74:build_check_cell$1461
   wire $auto$rtlil.cc:3390:Mux$1464
   attribute \src "dut.sv:256.17-256.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1465
+  wire width 3 $auto$expression.cpp:3250:import_operation$1465
   attribute \src "dut.sv:256.17-256.52"
   wire $eq$dut.sv:256$1467_Y
   wire $auto$process.cpp:74:build_check_cell$1469
   wire signed $auto$rtlil.cc:3390:Mux$1472
   attribute \src "dut.sv:257.17-257.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1473
+  wire width 3 $auto$expression.cpp:3250:import_operation$1473
   attribute \src "dut.sv:257.17-257.52"
   wire $eq$dut.sv:257$1475_Y
   wire $auto$process.cpp:74:build_check_cell$1477
   wire signed $auto$rtlil.cc:3390:Mux$1480
   attribute \src "dut.sv:258.17-258.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1481
+  wire width 3 $auto$expression.cpp:3250:import_operation$1481
   attribute \src "dut.sv:258.17-258.52"
   wire $eq$dut.sv:258$1483_Y
   wire $auto$process.cpp:74:build_check_cell$1485
   wire width 2 $auto$rtlil.cc:3390:Mux$1488
   attribute \src "dut.sv:259.17-259.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1489
+  wire width 3 $auto$expression.cpp:3250:import_operation$1489
   attribute \src "dut.sv:259.17-259.52"
   wire $eq$dut.sv:259$1491_Y
   wire $auto$process.cpp:74:build_check_cell$1493
   wire width 2 $auto$rtlil.cc:3390:Mux$1496
   attribute \src "dut.sv:260.17-260.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1497
+  wire width 3 $auto$expression.cpp:3250:import_operation$1497
   attribute \src "dut.sv:260.17-260.52"
   wire $eq$dut.sv:260$1499_Y
   wire $auto$process.cpp:74:build_check_cell$1501
   wire width 2 $auto$rtlil.cc:3390:Mux$1504
   attribute \src "dut.sv:261.17-261.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1505
+  wire width 3 $auto$expression.cpp:3250:import_operation$1505
   attribute \src "dut.sv:261.17-261.52"
   wire $eq$dut.sv:261$1507_Y
   wire $auto$process.cpp:74:build_check_cell$1509
   wire width 2 $auto$rtlil.cc:3390:Mux$1512
   attribute \src "dut.sv:262.17-262.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1513
+  wire width 3 $auto$expression.cpp:3250:import_operation$1513
   attribute \src "dut.sv:262.17-262.52"
   wire $eq$dut.sv:262$1515_Y
   wire $auto$process.cpp:74:build_check_cell$1517
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1520
   attribute \src "dut.sv:263.17-263.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1521
+  wire width 3 $auto$expression.cpp:3250:import_operation$1521
   attribute \src "dut.sv:263.17-263.52"
   wire $eq$dut.sv:263$1523_Y
   wire $auto$process.cpp:74:build_check_cell$1525
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1528
   attribute \src "dut.sv:264.17-264.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1529
+  wire width 3 $auto$expression.cpp:3250:import_operation$1529
   attribute \src "dut.sv:264.17-264.52"
   wire $eq$dut.sv:264$1531_Y
   wire $auto$process.cpp:74:build_check_cell$1533
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1536
   attribute \src "dut.sv:265.17-265.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1537
+  wire width 3 $auto$expression.cpp:3250:import_operation$1537
   attribute \src "dut.sv:265.17-265.52"
   wire $eq$dut.sv:265$1539_Y
   wire $auto$process.cpp:74:build_check_cell$1541
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1544
   attribute \src "dut.sv:266.17-266.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1545
+  wire width 3 $auto$expression.cpp:3250:import_operation$1545
   attribute \src "dut.sv:266.17-266.52"
   wire $eq$dut.sv:266$1547_Y
   wire $auto$process.cpp:74:build_check_cell$1549
   wire $auto$rtlil.cc:3390:Mux$1552
   attribute \src "dut.sv:268.17-268.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1553
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1553
   attribute \src "dut.sv:268.17-268.48"
   wire $eq$dut.sv:268$1555_Y
   wire $auto$process.cpp:74:build_check_cell$1557
   wire $auto$rtlil.cc:3390:Mux$1560
   attribute \src "dut.sv:269.17-269.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1561
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1561
   attribute \src "dut.sv:269.17-269.48"
   wire $eq$dut.sv:269$1563_Y
   wire $auto$process.cpp:74:build_check_cell$1565
   wire signed $auto$rtlil.cc:3390:Mux$1568
   attribute \src "dut.sv:270.17-270.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1569
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1569
   attribute \src "dut.sv:270.17-270.48"
   wire $eq$dut.sv:270$1571_Y
   wire $auto$process.cpp:74:build_check_cell$1573
   wire signed $auto$rtlil.cc:3390:Mux$1576
   attribute \src "dut.sv:271.17-271.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1577
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1577
   attribute \src "dut.sv:271.17-271.48"
   wire $eq$dut.sv:271$1579_Y
   wire $auto$process.cpp:74:build_check_cell$1581
   wire width 2 $auto$rtlil.cc:3390:Mux$1584
   attribute \src "dut.sv:272.17-272.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1585
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1585
   attribute \src "dut.sv:272.17-272.48"
   wire $eq$dut.sv:272$1587_Y
   wire $auto$process.cpp:74:build_check_cell$1589
   wire width 2 $auto$rtlil.cc:3390:Mux$1592
   attribute \src "dut.sv:273.17-273.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1593
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1593
   attribute \src "dut.sv:273.17-273.48"
   wire $eq$dut.sv:273$1595_Y
   wire $auto$process.cpp:74:build_check_cell$1597
   wire width 2 $auto$rtlil.cc:3390:Mux$1600
   attribute \src "dut.sv:274.17-274.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1601
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1601
   attribute \src "dut.sv:274.17-274.48"
   wire $eq$dut.sv:274$1603_Y
   wire $auto$process.cpp:74:build_check_cell$1605
   wire width 2 $auto$rtlil.cc:3390:Mux$1608
   attribute \src "dut.sv:275.17-275.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1609
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1609
   attribute \src "dut.sv:275.17-275.48"
   wire $eq$dut.sv:275$1611_Y
   wire $auto$process.cpp:74:build_check_cell$1613
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1616
   attribute \src "dut.sv:276.17-276.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1617
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1617
   attribute \src "dut.sv:276.17-276.48"
   wire $eq$dut.sv:276$1619_Y
   wire $auto$process.cpp:74:build_check_cell$1621
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1624
   attribute \src "dut.sv:277.17-277.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1625
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1625
   attribute \src "dut.sv:277.17-277.48"
   wire $eq$dut.sv:277$1627_Y
   wire $auto$process.cpp:74:build_check_cell$1629
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1632
   attribute \src "dut.sv:278.17-278.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1633
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1633
   attribute \src "dut.sv:278.17-278.48"
   wire $eq$dut.sv:278$1635_Y
   wire $auto$process.cpp:74:build_check_cell$1637
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1640
   attribute \src "dut.sv:279.17-279.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$1641
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$1641
   attribute \src "dut.sv:279.17-279.48"
   wire $eq$dut.sv:279$1643_Y
   wire $auto$process.cpp:74:build_check_cell$1645
   wire $auto$rtlil.cc:3390:Mux$1648
   attribute \src "dut.sv:281.17-281.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1649
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1649
   attribute \src "dut.sv:281.17-281.55"
   wire $eq$dut.sv:281$1651_Y
   wire $auto$process.cpp:74:build_check_cell$1653
   wire $auto$rtlil.cc:3390:Mux$1656
   attribute \src "dut.sv:282.17-282.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1657
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1657
   attribute \src "dut.sv:282.17-282.55"
   wire $eq$dut.sv:282$1659_Y
   wire $auto$process.cpp:74:build_check_cell$1661
   wire signed $auto$rtlil.cc:3390:Mux$1664
   attribute \src "dut.sv:283.17-283.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1665
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1665
   attribute \src "dut.sv:283.17-283.55"
   wire $eq$dut.sv:283$1667_Y
   wire $auto$process.cpp:74:build_check_cell$1669
   wire signed $auto$rtlil.cc:3390:Mux$1672
   attribute \src "dut.sv:284.17-284.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1673
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1673
   attribute \src "dut.sv:284.17-284.55"
   wire $eq$dut.sv:284$1675_Y
   wire $auto$process.cpp:74:build_check_cell$1677
   wire width 2 $auto$rtlil.cc:3390:Mux$1680
   attribute \src "dut.sv:285.17-285.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1681
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1681
   attribute \src "dut.sv:285.17-285.55"
   wire $eq$dut.sv:285$1683_Y
   wire $auto$process.cpp:74:build_check_cell$1685
   wire width 2 $auto$rtlil.cc:3390:Mux$1688
   attribute \src "dut.sv:286.17-286.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1689
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1689
   attribute \src "dut.sv:286.17-286.55"
   wire $eq$dut.sv:286$1691_Y
   wire $auto$process.cpp:74:build_check_cell$1693
   wire width 2 $auto$rtlil.cc:3390:Mux$1696
   attribute \src "dut.sv:287.17-287.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1697
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1697
   attribute \src "dut.sv:287.17-287.55"
   wire $eq$dut.sv:287$1699_Y
   wire $auto$process.cpp:74:build_check_cell$1701
   wire width 2 $auto$rtlil.cc:3390:Mux$1704
   attribute \src "dut.sv:288.17-288.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1705
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1705
   attribute \src "dut.sv:288.17-288.55"
   wire $eq$dut.sv:288$1707_Y
   wire $auto$process.cpp:74:build_check_cell$1709
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1712
   attribute \src "dut.sv:289.17-289.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1713
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1713
   attribute \src "dut.sv:289.17-289.55"
   wire $eq$dut.sv:289$1715_Y
   wire $auto$process.cpp:74:build_check_cell$1717
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1720
   attribute \src "dut.sv:290.17-290.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1721
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1721
   attribute \src "dut.sv:290.17-290.55"
   wire $eq$dut.sv:290$1723_Y
   wire $auto$process.cpp:74:build_check_cell$1725
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1728
   attribute \src "dut.sv:291.17-291.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1729
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1729
   attribute \src "dut.sv:291.17-291.55"
   wire $eq$dut.sv:291$1731_Y
   wire $auto$process.cpp:74:build_check_cell$1733
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1736
   attribute \src "dut.sv:292.17-292.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$1737
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$1737
   attribute \src "dut.sv:292.17-292.55"
   wire $eq$dut.sv:292$1739_Y
   wire $auto$process.cpp:74:build_check_cell$1741
   wire $auto$rtlil.cc:3390:Mux$1744
   attribute \src "dut.sv:294.17-294.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1745
+  wire width 12 $auto$expression.cpp:3250:import_operation$1745
   attribute \src "dut.sv:294.17-294.68"
   wire $eq$dut.sv:294$1747_Y
   wire $auto$process.cpp:74:build_check_cell$1749
   wire $auto$rtlil.cc:3390:Mux$1752
   attribute \src "dut.sv:295.17-295.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1753
+  wire width 12 $auto$expression.cpp:3250:import_operation$1753
   attribute \src "dut.sv:295.17-295.68"
   wire $eq$dut.sv:295$1755_Y
   wire $auto$process.cpp:74:build_check_cell$1757
   wire signed $auto$rtlil.cc:3390:Mux$1760
   attribute \src "dut.sv:296.17-296.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1761
+  wire width 12 $auto$expression.cpp:3250:import_operation$1761
   attribute \src "dut.sv:296.17-296.68"
   wire $eq$dut.sv:296$1763_Y
   wire $auto$process.cpp:74:build_check_cell$1765
   wire signed $auto$rtlil.cc:3390:Mux$1768
   attribute \src "dut.sv:297.17-297.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1769
+  wire width 12 $auto$expression.cpp:3250:import_operation$1769
   attribute \src "dut.sv:297.17-297.68"
   wire $eq$dut.sv:297$1771_Y
   wire $auto$process.cpp:74:build_check_cell$1773
   wire width 2 $auto$rtlil.cc:3390:Mux$1776
   attribute \src "dut.sv:298.17-298.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1777
+  wire width 12 $auto$expression.cpp:3250:import_operation$1777
   attribute \src "dut.sv:298.17-298.68"
   wire $eq$dut.sv:298$1779_Y
   wire $auto$process.cpp:74:build_check_cell$1781
   wire width 2 $auto$rtlil.cc:3390:Mux$1784
   attribute \src "dut.sv:299.17-299.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1785
+  wire width 12 $auto$expression.cpp:3250:import_operation$1785
   attribute \src "dut.sv:299.17-299.68"
   wire $eq$dut.sv:299$1787_Y
   wire $auto$process.cpp:74:build_check_cell$1789
   wire width 2 $auto$rtlil.cc:3390:Mux$1792
   attribute \src "dut.sv:300.17-300.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1793
+  wire width 12 $auto$expression.cpp:3250:import_operation$1793
   attribute \src "dut.sv:300.17-300.68"
   wire $eq$dut.sv:300$1795_Y
   wire $auto$process.cpp:74:build_check_cell$1797
   wire width 2 $auto$rtlil.cc:3390:Mux$1800
   attribute \src "dut.sv:301.17-301.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1801
+  wire width 12 $auto$expression.cpp:3250:import_operation$1801
   attribute \src "dut.sv:301.17-301.68"
   wire $eq$dut.sv:301$1803_Y
   wire $auto$process.cpp:74:build_check_cell$1805
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1808
   attribute \src "dut.sv:302.17-302.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1809
+  wire width 12 $auto$expression.cpp:3250:import_operation$1809
   attribute \src "dut.sv:302.17-302.68"
   wire $eq$dut.sv:302$1811_Y
   wire $auto$process.cpp:74:build_check_cell$1813
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1816
   attribute \src "dut.sv:303.17-303.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1817
+  wire width 12 $auto$expression.cpp:3250:import_operation$1817
   attribute \src "dut.sv:303.17-303.68"
   wire $eq$dut.sv:303$1819_Y
   wire $auto$process.cpp:74:build_check_cell$1821
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1824
   attribute \src "dut.sv:304.17-304.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1825
+  wire width 12 $auto$expression.cpp:3250:import_operation$1825
   attribute \src "dut.sv:304.17-304.68"
   wire $eq$dut.sv:304$1827_Y
   wire $auto$process.cpp:74:build_check_cell$1829
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1832
   attribute \src "dut.sv:305.17-305.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$1833
+  wire width 12 $auto$expression.cpp:3250:import_operation$1833
   attribute \src "dut.sv:305.17-305.68"
   wire $eq$dut.sv:305$1835_Y
   wire $auto$process.cpp:74:build_check_cell$1837
   wire $auto$rtlil.cc:3390:Mux$1840
   attribute \src "dut.sv:307.17-307.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1841
+  wire width 3 $auto$expression.cpp:3250:import_operation$1841
   attribute \src "dut.sv:307.17-307.46"
   wire $eq$dut.sv:307$1843_Y
   wire $auto$process.cpp:74:build_check_cell$1845
   wire $auto$rtlil.cc:3390:Mux$1848
   attribute \src "dut.sv:308.17-308.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1849
+  wire width 3 $auto$expression.cpp:3250:import_operation$1849
   attribute \src "dut.sv:308.17-308.46"
   wire $eq$dut.sv:308$1851_Y
   wire $auto$process.cpp:74:build_check_cell$1853
   wire signed $auto$rtlil.cc:3390:Mux$1856
   attribute \src "dut.sv:309.17-309.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1857
+  wire width 3 $auto$expression.cpp:3250:import_operation$1857
   attribute \src "dut.sv:309.17-309.46"
   wire $eq$dut.sv:309$1859_Y
   wire $auto$process.cpp:74:build_check_cell$1861
   wire signed $auto$rtlil.cc:3390:Mux$1864
   attribute \src "dut.sv:310.17-310.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1865
+  wire width 3 $auto$expression.cpp:3250:import_operation$1865
   attribute \src "dut.sv:310.17-310.46"
   wire $eq$dut.sv:310$1867_Y
   wire $auto$process.cpp:74:build_check_cell$1869
   wire width 2 $auto$rtlil.cc:3390:Mux$1872
   attribute \src "dut.sv:311.17-311.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1873
+  wire width 3 $auto$expression.cpp:3250:import_operation$1873
   attribute \src "dut.sv:311.17-311.46"
   wire $eq$dut.sv:311$1875_Y
   wire $auto$process.cpp:74:build_check_cell$1877
   wire width 2 $auto$rtlil.cc:3390:Mux$1880
   attribute \src "dut.sv:312.17-312.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1881
+  wire width 3 $auto$expression.cpp:3250:import_operation$1881
   attribute \src "dut.sv:312.17-312.46"
   wire $eq$dut.sv:312$1883_Y
   wire $auto$process.cpp:74:build_check_cell$1885
   wire width 2 $auto$rtlil.cc:3390:Mux$1888
   attribute \src "dut.sv:313.17-313.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1889
+  wire width 3 $auto$expression.cpp:3250:import_operation$1889
   attribute \src "dut.sv:313.17-313.46"
   wire $eq$dut.sv:313$1891_Y
   wire $auto$process.cpp:74:build_check_cell$1893
   wire width 2 $auto$rtlil.cc:3390:Mux$1896
   attribute \src "dut.sv:314.17-314.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1897
+  wire width 3 $auto$expression.cpp:3250:import_operation$1897
   attribute \src "dut.sv:314.17-314.46"
   wire $eq$dut.sv:314$1899_Y
   wire $auto$process.cpp:74:build_check_cell$1901
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1904
   attribute \src "dut.sv:315.17-315.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1905
+  wire width 3 $auto$expression.cpp:3250:import_operation$1905
   attribute \src "dut.sv:315.17-315.46"
   wire $eq$dut.sv:315$1907_Y
   wire $auto$process.cpp:74:build_check_cell$1909
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1912
   attribute \src "dut.sv:316.17-316.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1913
+  wire width 3 $auto$expression.cpp:3250:import_operation$1913
   attribute \src "dut.sv:316.17-316.46"
   wire $eq$dut.sv:316$1915_Y
   wire $auto$process.cpp:74:build_check_cell$1917
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1920
   attribute \src "dut.sv:317.17-317.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1921
+  wire width 3 $auto$expression.cpp:3250:import_operation$1921
   attribute \src "dut.sv:317.17-317.46"
   wire $eq$dut.sv:317$1923_Y
   wire $auto$process.cpp:74:build_check_cell$1925
   wire width 2 signed $auto$rtlil.cc:3390:Mux$1928
   attribute \src "dut.sv:318.17-318.36"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1929
+  wire width 3 $auto$expression.cpp:3250:import_operation$1929
   attribute \src "dut.sv:318.17-318.46"
   wire $eq$dut.sv:318$1931_Y
   wire $auto$process.cpp:74:build_check_cell$1933
   wire $auto$rtlil.cc:3390:Mux$1936
   attribute \src "dut.sv:320.17-320.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1937
+  wire width 3 $auto$expression.cpp:3250:import_operation$1937
   attribute \src "dut.sv:320.17-320.52"
   wire $eq$dut.sv:320$1939_Y
   wire $auto$process.cpp:74:build_check_cell$1941
   wire $auto$rtlil.cc:3390:Mux$1944
   attribute \src "dut.sv:321.17-321.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1945
+  wire width 3 $auto$expression.cpp:3250:import_operation$1945
   attribute \src "dut.sv:321.17-321.52"
   wire $eq$dut.sv:321$1947_Y
   wire $auto$process.cpp:74:build_check_cell$1949
   wire signed $auto$rtlil.cc:3390:Mux$1952
   attribute \src "dut.sv:322.17-322.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1953
+  wire width 3 $auto$expression.cpp:3250:import_operation$1953
   attribute \src "dut.sv:322.17-322.52"
   wire $eq$dut.sv:322$1955_Y
   wire $auto$process.cpp:74:build_check_cell$1957
   wire signed $auto$rtlil.cc:3390:Mux$1960
   attribute \src "dut.sv:323.17-323.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1961
+  wire width 3 $auto$expression.cpp:3250:import_operation$1961
   attribute \src "dut.sv:323.17-323.52"
   wire $eq$dut.sv:323$1963_Y
   wire $auto$process.cpp:74:build_check_cell$1965
   wire width 2 $auto$rtlil.cc:3390:Mux$1968
   attribute \src "dut.sv:324.17-324.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1969
+  wire width 3 $auto$expression.cpp:3250:import_operation$1969
   attribute \src "dut.sv:324.17-324.52"
   wire $eq$dut.sv:324$1971_Y
   wire $auto$process.cpp:74:build_check_cell$1973
   wire width 2 $auto$rtlil.cc:3390:Mux$1976
   attribute \src "dut.sv:325.17-325.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1977
+  wire width 3 $auto$expression.cpp:3250:import_operation$1977
   attribute \src "dut.sv:325.17-325.52"
   wire $eq$dut.sv:325$1979_Y
   wire $auto$process.cpp:74:build_check_cell$1981
   wire width 2 $auto$rtlil.cc:3390:Mux$1984
   attribute \src "dut.sv:326.17-326.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1985
+  wire width 3 $auto$expression.cpp:3250:import_operation$1985
   attribute \src "dut.sv:326.17-326.52"
   wire $eq$dut.sv:326$1987_Y
   wire $auto$process.cpp:74:build_check_cell$1989
   wire width 2 $auto$rtlil.cc:3390:Mux$1992
   attribute \src "dut.sv:327.17-327.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$1993
+  wire width 3 $auto$expression.cpp:3250:import_operation$1993
   attribute \src "dut.sv:327.17-327.52"
   wire $eq$dut.sv:327$1995_Y
   wire $auto$process.cpp:74:build_check_cell$1997
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2000
   attribute \src "dut.sv:328.17-328.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2001
+  wire width 3 $auto$expression.cpp:3250:import_operation$2001
   attribute \src "dut.sv:328.17-328.52"
   wire $eq$dut.sv:328$2003_Y
   wire $auto$process.cpp:74:build_check_cell$2005
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2008
   attribute \src "dut.sv:329.17-329.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2009
+  wire width 3 $auto$expression.cpp:3250:import_operation$2009
   attribute \src "dut.sv:329.17-329.52"
   wire $eq$dut.sv:329$2011_Y
   wire $auto$process.cpp:74:build_check_cell$2013
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2016
   attribute \src "dut.sv:330.17-330.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2017
+  wire width 3 $auto$expression.cpp:3250:import_operation$2017
   attribute \src "dut.sv:330.17-330.52"
   wire $eq$dut.sv:330$2019_Y
   wire $auto$process.cpp:74:build_check_cell$2021
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2024
   attribute \src "dut.sv:331.17-331.42"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2025
+  wire width 3 $auto$expression.cpp:3250:import_operation$2025
   attribute \src "dut.sv:331.17-331.52"
   wire $eq$dut.sv:331$2027_Y
   wire $auto$process.cpp:74:build_check_cell$2029
   wire $auto$rtlil.cc:3390:Mux$2032
   attribute \src "dut.sv:333.17-333.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2033
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2033
   attribute \src "dut.sv:333.17-333.48"
   wire $eq$dut.sv:333$2035_Y
   wire $auto$process.cpp:74:build_check_cell$2037
   wire $auto$rtlil.cc:3390:Mux$2040
   attribute \src "dut.sv:334.17-334.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2041
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2041
   attribute \src "dut.sv:334.17-334.48"
   wire $eq$dut.sv:334$2043_Y
   wire $auto$process.cpp:74:build_check_cell$2045
   wire signed $auto$rtlil.cc:3390:Mux$2048
   attribute \src "dut.sv:335.17-335.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2049
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2049
   attribute \src "dut.sv:335.17-335.48"
   wire $eq$dut.sv:335$2051_Y
   wire $auto$process.cpp:74:build_check_cell$2053
   wire signed $auto$rtlil.cc:3390:Mux$2056
   attribute \src "dut.sv:336.17-336.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2057
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2057
   attribute \src "dut.sv:336.17-336.48"
   wire $eq$dut.sv:336$2059_Y
   wire $auto$process.cpp:74:build_check_cell$2061
   wire width 2 $auto$rtlil.cc:3390:Mux$2064
   attribute \src "dut.sv:337.17-337.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2065
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2065
   attribute \src "dut.sv:337.17-337.48"
   wire $eq$dut.sv:337$2067_Y
   wire $auto$process.cpp:74:build_check_cell$2069
   wire width 2 $auto$rtlil.cc:3390:Mux$2072
   attribute \src "dut.sv:338.17-338.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2073
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2073
   attribute \src "dut.sv:338.17-338.48"
   wire $eq$dut.sv:338$2075_Y
   wire $auto$process.cpp:74:build_check_cell$2077
   wire width 2 $auto$rtlil.cc:3390:Mux$2080
   attribute \src "dut.sv:339.17-339.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2081
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2081
   attribute \src "dut.sv:339.17-339.48"
   wire $eq$dut.sv:339$2083_Y
   wire $auto$process.cpp:74:build_check_cell$2085
   wire width 2 $auto$rtlil.cc:3390:Mux$2088
   attribute \src "dut.sv:340.17-340.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2089
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2089
   attribute \src "dut.sv:340.17-340.48"
   wire $eq$dut.sv:340$2091_Y
   wire $auto$process.cpp:74:build_check_cell$2093
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2096
   attribute \src "dut.sv:341.17-341.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2097
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2097
   attribute \src "dut.sv:341.17-341.48"
   wire $eq$dut.sv:341$2099_Y
   wire $auto$process.cpp:74:build_check_cell$2101
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2104
   attribute \src "dut.sv:342.17-342.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2105
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2105
   attribute \src "dut.sv:342.17-342.48"
   wire $eq$dut.sv:342$2107_Y
   wire $auto$process.cpp:74:build_check_cell$2109
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2112
   attribute \src "dut.sv:343.17-343.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2113
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2113
   attribute \src "dut.sv:343.17-343.48"
   wire $eq$dut.sv:343$2115_Y
   wire $auto$process.cpp:74:build_check_cell$2117
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2120
   attribute \src "dut.sv:344.17-344.39"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2121
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2121
   attribute \src "dut.sv:344.17-344.48"
   wire $eq$dut.sv:344$2123_Y
   wire $auto$process.cpp:74:build_check_cell$2125
   wire $auto$rtlil.cc:3390:Mux$2128
   attribute \src "dut.sv:346.17-346.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2129
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2129
   attribute \src "dut.sv:346.17-346.55"
   wire $eq$dut.sv:346$2131_Y
   wire $auto$process.cpp:74:build_check_cell$2133
   wire $auto$rtlil.cc:3390:Mux$2136
   attribute \src "dut.sv:347.17-347.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2137
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2137
   attribute \src "dut.sv:347.17-347.55"
   wire $eq$dut.sv:347$2139_Y
   wire $auto$process.cpp:74:build_check_cell$2141
   wire signed $auto$rtlil.cc:3390:Mux$2144
   attribute \src "dut.sv:348.17-348.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2145
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2145
   attribute \src "dut.sv:348.17-348.55"
   wire $eq$dut.sv:348$2147_Y
   wire $auto$process.cpp:74:build_check_cell$2149
   wire signed $auto$rtlil.cc:3390:Mux$2152
   attribute \src "dut.sv:349.17-349.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2153
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2153
   attribute \src "dut.sv:349.17-349.55"
   wire $eq$dut.sv:349$2155_Y
   wire $auto$process.cpp:74:build_check_cell$2157
   wire width 2 $auto$rtlil.cc:3390:Mux$2160
   attribute \src "dut.sv:350.17-350.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2161
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2161
   attribute \src "dut.sv:350.17-350.55"
   wire $eq$dut.sv:350$2163_Y
   wire $auto$process.cpp:74:build_check_cell$2165
   wire width 2 $auto$rtlil.cc:3390:Mux$2168
   attribute \src "dut.sv:351.17-351.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2169
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2169
   attribute \src "dut.sv:351.17-351.55"
   wire $eq$dut.sv:351$2171_Y
   wire $auto$process.cpp:74:build_check_cell$2173
   wire width 2 $auto$rtlil.cc:3390:Mux$2176
   attribute \src "dut.sv:352.17-352.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2177
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2177
   attribute \src "dut.sv:352.17-352.55"
   wire $eq$dut.sv:352$2179_Y
   wire $auto$process.cpp:74:build_check_cell$2181
   wire width 2 $auto$rtlil.cc:3390:Mux$2184
   attribute \src "dut.sv:353.17-353.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2185
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2185
   attribute \src "dut.sv:353.17-353.55"
   wire $eq$dut.sv:353$2187_Y
   wire $auto$process.cpp:74:build_check_cell$2189
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2192
   attribute \src "dut.sv:354.17-354.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2193
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2193
   attribute \src "dut.sv:354.17-354.55"
   wire $eq$dut.sv:354$2195_Y
   wire $auto$process.cpp:74:build_check_cell$2197
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2200
   attribute \src "dut.sv:355.17-355.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2201
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2201
   attribute \src "dut.sv:355.17-355.55"
   wire $eq$dut.sv:355$2203_Y
   wire $auto$process.cpp:74:build_check_cell$2205
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2208
   attribute \src "dut.sv:356.17-356.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2209
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2209
   attribute \src "dut.sv:356.17-356.55"
   wire $eq$dut.sv:356$2211_Y
   wire $auto$process.cpp:74:build_check_cell$2213
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2216
   attribute \src "dut.sv:357.17-357.38"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2217
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2217
   attribute \src "dut.sv:357.17-357.55"
   wire $eq$dut.sv:357$2219_Y
   wire $auto$process.cpp:74:build_check_cell$2221
   wire $auto$rtlil.cc:3390:Mux$2224
   attribute \src "dut.sv:359.17-359.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2225
+  wire width 12 $auto$expression.cpp:3250:import_operation$2225
   attribute \src "dut.sv:359.17-359.68"
   wire $eq$dut.sv:359$2227_Y
   wire $auto$process.cpp:74:build_check_cell$2229
   wire $auto$rtlil.cc:3390:Mux$2232
   attribute \src "dut.sv:360.17-360.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2233
+  wire width 12 $auto$expression.cpp:3250:import_operation$2233
   attribute \src "dut.sv:360.17-360.68"
   wire $eq$dut.sv:360$2235_Y
   wire $auto$process.cpp:74:build_check_cell$2237
   wire signed $auto$rtlil.cc:3390:Mux$2240
   attribute \src "dut.sv:361.17-361.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2241
+  wire width 12 $auto$expression.cpp:3250:import_operation$2241
   attribute \src "dut.sv:361.17-361.68"
   wire $eq$dut.sv:361$2243_Y
   wire $auto$process.cpp:74:build_check_cell$2245
   wire signed $auto$rtlil.cc:3390:Mux$2248
   attribute \src "dut.sv:362.17-362.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2249
+  wire width 12 $auto$expression.cpp:3250:import_operation$2249
   attribute \src "dut.sv:362.17-362.68"
   wire $eq$dut.sv:362$2251_Y
   wire $auto$process.cpp:74:build_check_cell$2253
   wire width 2 $auto$rtlil.cc:3390:Mux$2256
   attribute \src "dut.sv:363.17-363.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2257
+  wire width 12 $auto$expression.cpp:3250:import_operation$2257
   attribute \src "dut.sv:363.17-363.68"
   wire $eq$dut.sv:363$2259_Y
   wire $auto$process.cpp:74:build_check_cell$2261
   wire width 2 $auto$rtlil.cc:3390:Mux$2264
   attribute \src "dut.sv:364.17-364.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2265
+  wire width 12 $auto$expression.cpp:3250:import_operation$2265
   attribute \src "dut.sv:364.17-364.68"
   wire $eq$dut.sv:364$2267_Y
   wire $auto$process.cpp:74:build_check_cell$2269
   wire width 2 $auto$rtlil.cc:3390:Mux$2272
   attribute \src "dut.sv:365.17-365.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2273
+  wire width 12 $auto$expression.cpp:3250:import_operation$2273
   attribute \src "dut.sv:365.17-365.68"
   wire $eq$dut.sv:365$2275_Y
   wire $auto$process.cpp:74:build_check_cell$2277
   wire width 2 $auto$rtlil.cc:3390:Mux$2280
   attribute \src "dut.sv:366.17-366.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2281
+  wire width 12 $auto$expression.cpp:3250:import_operation$2281
   attribute \src "dut.sv:366.17-366.68"
   wire $eq$dut.sv:366$2283_Y
   wire $auto$process.cpp:74:build_check_cell$2285
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2288
   attribute \src "dut.sv:367.17-367.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2289
+  wire width 12 $auto$expression.cpp:3250:import_operation$2289
   attribute \src "dut.sv:367.17-367.68"
   wire $eq$dut.sv:367$2291_Y
   wire $auto$process.cpp:74:build_check_cell$2293
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2296
   attribute \src "dut.sv:368.17-368.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2297
+  wire width 12 $auto$expression.cpp:3250:import_operation$2297
   attribute \src "dut.sv:368.17-368.68"
   wire $eq$dut.sv:368$2299_Y
   wire $auto$process.cpp:74:build_check_cell$2301
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2304
   attribute \src "dut.sv:369.17-369.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2305
+  wire width 12 $auto$expression.cpp:3250:import_operation$2305
   attribute \src "dut.sv:369.17-369.68"
   wire $eq$dut.sv:369$2307_Y
   wire $auto$process.cpp:74:build_check_cell$2309
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2312
   attribute \src "dut.sv:370.17-370.57"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2313
+  wire width 12 $auto$expression.cpp:3250:import_operation$2313
   attribute \src "dut.sv:370.17-370.68"
   wire $eq$dut.sv:370$2315_Y
   wire $auto$process.cpp:74:build_check_cell$2317
   wire $auto$rtlil.cc:3390:Mux$2320
   attribute \src "dut.sv:372.17-372.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2321
+  wire width 3 $auto$expression.cpp:3250:import_operation$2321
   attribute \src "dut.sv:372.17-372.49"
   wire $eq$dut.sv:372$2323_Y
   wire $auto$process.cpp:74:build_check_cell$2325
   wire $auto$rtlil.cc:3390:Mux$2328
   attribute \src "dut.sv:373.17-373.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2329
+  wire width 3 $auto$expression.cpp:3250:import_operation$2329
   attribute \src "dut.sv:373.17-373.49"
   wire $eq$dut.sv:373$2331_Y
   wire $auto$process.cpp:74:build_check_cell$2333
   wire signed $auto$rtlil.cc:3390:Mux$2336
   attribute \src "dut.sv:374.17-374.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2337
+  wire width 3 $auto$expression.cpp:3250:import_operation$2337
   attribute \src "dut.sv:374.17-374.49"
   wire $eq$dut.sv:374$2339_Y
   wire $auto$process.cpp:74:build_check_cell$2341
   wire signed $auto$rtlil.cc:3390:Mux$2344
   attribute \src "dut.sv:375.17-375.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2345
+  wire width 3 $auto$expression.cpp:3250:import_operation$2345
   attribute \src "dut.sv:375.17-375.49"
   wire $eq$dut.sv:375$2347_Y
   wire $auto$process.cpp:74:build_check_cell$2349
   wire width 2 $auto$rtlil.cc:3390:Mux$2352
   attribute \src "dut.sv:376.17-376.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2353
+  wire width 3 $auto$expression.cpp:3250:import_operation$2353
   attribute \src "dut.sv:376.17-376.49"
   wire $eq$dut.sv:376$2355_Y
   wire $auto$process.cpp:74:build_check_cell$2357
   wire width 2 $auto$rtlil.cc:3390:Mux$2360
   attribute \src "dut.sv:377.17-377.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2361
+  wire width 3 $auto$expression.cpp:3250:import_operation$2361
   attribute \src "dut.sv:377.17-377.49"
   wire $eq$dut.sv:377$2363_Y
   wire $auto$process.cpp:74:build_check_cell$2365
   wire width 2 $auto$rtlil.cc:3390:Mux$2368
   attribute \src "dut.sv:378.17-378.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2369
+  wire width 3 $auto$expression.cpp:3250:import_operation$2369
   attribute \src "dut.sv:378.17-378.49"
   wire $eq$dut.sv:378$2371_Y
   wire $auto$process.cpp:74:build_check_cell$2373
   wire width 2 $auto$rtlil.cc:3390:Mux$2376
   attribute \src "dut.sv:379.17-379.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2377
+  wire width 3 $auto$expression.cpp:3250:import_operation$2377
   attribute \src "dut.sv:379.17-379.49"
   wire $eq$dut.sv:379$2379_Y
   wire $auto$process.cpp:74:build_check_cell$2381
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2384
   attribute \src "dut.sv:380.17-380.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2385
+  wire width 3 $auto$expression.cpp:3250:import_operation$2385
   attribute \src "dut.sv:380.17-380.49"
   wire $eq$dut.sv:380$2387_Y
   wire $auto$process.cpp:74:build_check_cell$2389
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2392
   attribute \src "dut.sv:381.17-381.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2393
+  wire width 3 $auto$expression.cpp:3250:import_operation$2393
   attribute \src "dut.sv:381.17-381.49"
   wire $eq$dut.sv:381$2395_Y
   wire $auto$process.cpp:74:build_check_cell$2397
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2400
   attribute \src "dut.sv:382.17-382.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2401
+  wire width 3 $auto$expression.cpp:3250:import_operation$2401
   attribute \src "dut.sv:382.17-382.49"
   wire $eq$dut.sv:382$2403_Y
   wire $auto$process.cpp:74:build_check_cell$2405
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2408
   attribute \src "dut.sv:383.17-383.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2409
+  wire width 3 $auto$expression.cpp:3250:import_operation$2409
   attribute \src "dut.sv:383.17-383.49"
   wire $eq$dut.sv:383$2411_Y
   wire $auto$process.cpp:74:build_check_cell$2413
   wire $auto$rtlil.cc:3390:Mux$2416
   attribute \src "dut.sv:385.17-385.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2417
+  wire width 3 $auto$expression.cpp:3250:import_operation$2417
   attribute \src "dut.sv:385.17-385.55"
   wire $eq$dut.sv:385$2419_Y
   wire $auto$process.cpp:74:build_check_cell$2421
   wire $auto$rtlil.cc:3390:Mux$2424
   attribute \src "dut.sv:386.17-386.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2425
+  wire width 3 $auto$expression.cpp:3250:import_operation$2425
   attribute \src "dut.sv:386.17-386.55"
   wire $eq$dut.sv:386$2427_Y
   wire $auto$process.cpp:74:build_check_cell$2429
   wire signed $auto$rtlil.cc:3390:Mux$2432
   attribute \src "dut.sv:387.17-387.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2433
+  wire width 3 $auto$expression.cpp:3250:import_operation$2433
   attribute \src "dut.sv:387.17-387.55"
   wire $eq$dut.sv:387$2435_Y
   wire $auto$process.cpp:74:build_check_cell$2437
   wire signed $auto$rtlil.cc:3390:Mux$2440
   attribute \src "dut.sv:388.17-388.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2441
+  wire width 3 $auto$expression.cpp:3250:import_operation$2441
   attribute \src "dut.sv:388.17-388.55"
   wire $eq$dut.sv:388$2443_Y
   wire $auto$process.cpp:74:build_check_cell$2445
   wire width 2 $auto$rtlil.cc:3390:Mux$2448
   attribute \src "dut.sv:389.17-389.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2449
+  wire width 3 $auto$expression.cpp:3250:import_operation$2449
   attribute \src "dut.sv:389.17-389.55"
   wire $eq$dut.sv:389$2451_Y
   wire $auto$process.cpp:74:build_check_cell$2453
   wire width 2 $auto$rtlil.cc:3390:Mux$2456
   attribute \src "dut.sv:390.17-390.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2457
+  wire width 3 $auto$expression.cpp:3250:import_operation$2457
   attribute \src "dut.sv:390.17-390.55"
   wire $eq$dut.sv:390$2459_Y
   wire $auto$process.cpp:74:build_check_cell$2461
   wire width 2 $auto$rtlil.cc:3390:Mux$2464
   attribute \src "dut.sv:391.17-391.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2465
+  wire width 3 $auto$expression.cpp:3250:import_operation$2465
   attribute \src "dut.sv:391.17-391.55"
   wire $eq$dut.sv:391$2467_Y
   wire $auto$process.cpp:74:build_check_cell$2469
   wire width 2 $auto$rtlil.cc:3390:Mux$2472
   attribute \src "dut.sv:392.17-392.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2473
+  wire width 3 $auto$expression.cpp:3250:import_operation$2473
   attribute \src "dut.sv:392.17-392.55"
   wire $eq$dut.sv:392$2475_Y
   wire $auto$process.cpp:74:build_check_cell$2477
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2480
   attribute \src "dut.sv:393.17-393.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2481
+  wire width 3 $auto$expression.cpp:3250:import_operation$2481
   attribute \src "dut.sv:393.17-393.55"
   wire $eq$dut.sv:393$2483_Y
   wire $auto$process.cpp:74:build_check_cell$2485
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2488
   attribute \src "dut.sv:394.17-394.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2489
+  wire width 3 $auto$expression.cpp:3250:import_operation$2489
   attribute \src "dut.sv:394.17-394.55"
   wire $eq$dut.sv:394$2491_Y
   wire $auto$process.cpp:74:build_check_cell$2493
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2496
   attribute \src "dut.sv:395.17-395.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2497
+  wire width 3 $auto$expression.cpp:3250:import_operation$2497
   attribute \src "dut.sv:395.17-395.55"
   wire $eq$dut.sv:395$2499_Y
   wire $auto$process.cpp:74:build_check_cell$2501
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2504
   attribute \src "dut.sv:396.17-396.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2505
+  wire width 3 $auto$expression.cpp:3250:import_operation$2505
   attribute \src "dut.sv:396.17-396.55"
   wire $eq$dut.sv:396$2507_Y
   wire $auto$process.cpp:74:build_check_cell$2509
   wire $auto$rtlil.cc:3390:Mux$2512
   attribute \src "dut.sv:398.17-398.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2513
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2513
   attribute \src "dut.sv:398.17-398.51"
   wire $eq$dut.sv:398$2515_Y
   wire $auto$process.cpp:74:build_check_cell$2517
   wire $auto$rtlil.cc:3390:Mux$2520
   attribute \src "dut.sv:399.17-399.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2521
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2521
   attribute \src "dut.sv:399.17-399.51"
   wire $eq$dut.sv:399$2523_Y
   wire $auto$process.cpp:74:build_check_cell$2525
   wire signed $auto$rtlil.cc:3390:Mux$2528
   attribute \src "dut.sv:400.17-400.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2529
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2529
   attribute \src "dut.sv:400.17-400.51"
   wire $eq$dut.sv:400$2531_Y
   wire $auto$process.cpp:74:build_check_cell$2533
   wire signed $auto$rtlil.cc:3390:Mux$2536
   attribute \src "dut.sv:401.17-401.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2537
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2537
   attribute \src "dut.sv:401.17-401.51"
   wire $eq$dut.sv:401$2539_Y
   wire $auto$process.cpp:74:build_check_cell$2541
   wire width 2 $auto$rtlil.cc:3390:Mux$2544
   attribute \src "dut.sv:402.17-402.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2545
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2545
   attribute \src "dut.sv:402.17-402.51"
   wire $eq$dut.sv:402$2547_Y
   wire $auto$process.cpp:74:build_check_cell$2549
   wire width 2 $auto$rtlil.cc:3390:Mux$2552
   attribute \src "dut.sv:403.17-403.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2553
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2553
   attribute \src "dut.sv:403.17-403.51"
   wire $eq$dut.sv:403$2555_Y
   wire $auto$process.cpp:74:build_check_cell$2557
   wire width 2 $auto$rtlil.cc:3390:Mux$2560
   attribute \src "dut.sv:404.17-404.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2561
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2561
   attribute \src "dut.sv:404.17-404.51"
   wire $eq$dut.sv:404$2563_Y
   wire $auto$process.cpp:74:build_check_cell$2565
   wire width 2 $auto$rtlil.cc:3390:Mux$2568
   attribute \src "dut.sv:405.17-405.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2569
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2569
   attribute \src "dut.sv:405.17-405.51"
   wire $eq$dut.sv:405$2571_Y
   wire $auto$process.cpp:74:build_check_cell$2573
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2576
   attribute \src "dut.sv:406.17-406.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2577
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2577
   attribute \src "dut.sv:406.17-406.51"
   wire $eq$dut.sv:406$2579_Y
   wire $auto$process.cpp:74:build_check_cell$2581
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2584
   attribute \src "dut.sv:407.17-407.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2585
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2585
   attribute \src "dut.sv:407.17-407.51"
   wire $eq$dut.sv:407$2587_Y
   wire $auto$process.cpp:74:build_check_cell$2589
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2592
   attribute \src "dut.sv:408.17-408.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2593
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2593
   attribute \src "dut.sv:408.17-408.51"
   wire $eq$dut.sv:408$2595_Y
   wire $auto$process.cpp:74:build_check_cell$2597
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2600
   attribute \src "dut.sv:409.17-409.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2601
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2601
   attribute \src "dut.sv:409.17-409.51"
   wire $eq$dut.sv:409$2603_Y
   wire $auto$process.cpp:74:build_check_cell$2605
   wire $auto$rtlil.cc:3390:Mux$2608
   attribute \src "dut.sv:411.17-411.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2609
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2609
   attribute \src "dut.sv:411.17-411.58"
   wire $eq$dut.sv:411$2611_Y
   wire $auto$process.cpp:74:build_check_cell$2613
   wire $auto$rtlil.cc:3390:Mux$2616
   attribute \src "dut.sv:412.17-412.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2617
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2617
   attribute \src "dut.sv:412.17-412.58"
   wire $eq$dut.sv:412$2619_Y
   wire $auto$process.cpp:74:build_check_cell$2621
   wire signed $auto$rtlil.cc:3390:Mux$2624
   attribute \src "dut.sv:413.17-413.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2625
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2625
   attribute \src "dut.sv:413.17-413.58"
   wire $eq$dut.sv:413$2627_Y
   wire $auto$process.cpp:74:build_check_cell$2629
   wire signed $auto$rtlil.cc:3390:Mux$2632
   attribute \src "dut.sv:414.17-414.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2633
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2633
   attribute \src "dut.sv:414.17-414.58"
   wire $eq$dut.sv:414$2635_Y
   wire $auto$process.cpp:74:build_check_cell$2637
   wire width 2 $auto$rtlil.cc:3390:Mux$2640
   attribute \src "dut.sv:415.17-415.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2641
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2641
   attribute \src "dut.sv:415.17-415.58"
   wire $eq$dut.sv:415$2643_Y
   wire $auto$process.cpp:74:build_check_cell$2645
   wire width 2 $auto$rtlil.cc:3390:Mux$2648
   attribute \src "dut.sv:416.17-416.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2649
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2649
   attribute \src "dut.sv:416.17-416.58"
   wire $eq$dut.sv:416$2651_Y
   wire $auto$process.cpp:74:build_check_cell$2653
   wire width 2 $auto$rtlil.cc:3390:Mux$2656
   attribute \src "dut.sv:417.17-417.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2657
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2657
   attribute \src "dut.sv:417.17-417.58"
   wire $eq$dut.sv:417$2659_Y
   wire $auto$process.cpp:74:build_check_cell$2661
   wire width 2 $auto$rtlil.cc:3390:Mux$2664
   attribute \src "dut.sv:418.17-418.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2665
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2665
   attribute \src "dut.sv:418.17-418.58"
   wire $eq$dut.sv:418$2667_Y
   wire $auto$process.cpp:74:build_check_cell$2669
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2672
   attribute \src "dut.sv:419.17-419.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2673
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2673
   attribute \src "dut.sv:419.17-419.58"
   wire $eq$dut.sv:419$2675_Y
   wire $auto$process.cpp:74:build_check_cell$2677
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2680
   attribute \src "dut.sv:420.17-420.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2681
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2681
   attribute \src "dut.sv:420.17-420.58"
   wire $eq$dut.sv:420$2683_Y
   wire $auto$process.cpp:74:build_check_cell$2685
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2688
   attribute \src "dut.sv:421.17-421.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2689
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2689
   attribute \src "dut.sv:421.17-421.58"
   wire $eq$dut.sv:421$2691_Y
   wire $auto$process.cpp:74:build_check_cell$2693
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2696
   attribute \src "dut.sv:422.17-422.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$2697
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$2697
   attribute \src "dut.sv:422.17-422.58"
   wire $eq$dut.sv:422$2699_Y
   wire $auto$process.cpp:74:build_check_cell$2701
   wire $auto$rtlil.cc:3390:Mux$2704
   attribute \src "dut.sv:424.17-424.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2705
+  wire width 12 $auto$expression.cpp:3250:import_operation$2705
   attribute \src "dut.sv:424.17-424.71"
   wire $eq$dut.sv:424$2707_Y
   wire $auto$process.cpp:74:build_check_cell$2709
   wire $auto$rtlil.cc:3390:Mux$2712
   attribute \src "dut.sv:425.17-425.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2713
+  wire width 12 $auto$expression.cpp:3250:import_operation$2713
   attribute \src "dut.sv:425.17-425.71"
   wire $eq$dut.sv:425$2715_Y
   wire $auto$process.cpp:74:build_check_cell$2717
   wire signed $auto$rtlil.cc:3390:Mux$2720
   attribute \src "dut.sv:426.17-426.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2721
+  wire width 12 $auto$expression.cpp:3250:import_operation$2721
   attribute \src "dut.sv:426.17-426.71"
   wire $eq$dut.sv:426$2723_Y
   wire $auto$process.cpp:74:build_check_cell$2725
   wire signed $auto$rtlil.cc:3390:Mux$2728
   attribute \src "dut.sv:427.17-427.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2729
+  wire width 12 $auto$expression.cpp:3250:import_operation$2729
   attribute \src "dut.sv:427.17-427.71"
   wire $eq$dut.sv:427$2731_Y
   wire $auto$process.cpp:74:build_check_cell$2733
   wire width 2 $auto$rtlil.cc:3390:Mux$2736
   attribute \src "dut.sv:428.17-428.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2737
+  wire width 12 $auto$expression.cpp:3250:import_operation$2737
   attribute \src "dut.sv:428.17-428.71"
   wire $eq$dut.sv:428$2739_Y
   wire $auto$process.cpp:74:build_check_cell$2741
   wire width 2 $auto$rtlil.cc:3390:Mux$2744
   attribute \src "dut.sv:429.17-429.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2745
+  wire width 12 $auto$expression.cpp:3250:import_operation$2745
   attribute \src "dut.sv:429.17-429.71"
   wire $eq$dut.sv:429$2747_Y
   wire $auto$process.cpp:74:build_check_cell$2749
   wire width 2 $auto$rtlil.cc:3390:Mux$2752
   attribute \src "dut.sv:430.17-430.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2753
+  wire width 12 $auto$expression.cpp:3250:import_operation$2753
   attribute \src "dut.sv:430.17-430.71"
   wire $eq$dut.sv:430$2755_Y
   wire $auto$process.cpp:74:build_check_cell$2757
   wire width 2 $auto$rtlil.cc:3390:Mux$2760
   attribute \src "dut.sv:431.17-431.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2761
+  wire width 12 $auto$expression.cpp:3250:import_operation$2761
   attribute \src "dut.sv:431.17-431.71"
   wire $eq$dut.sv:431$2763_Y
   wire $auto$process.cpp:74:build_check_cell$2765
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2768
   attribute \src "dut.sv:432.17-432.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2769
+  wire width 12 $auto$expression.cpp:3250:import_operation$2769
   attribute \src "dut.sv:432.17-432.71"
   wire $eq$dut.sv:432$2771_Y
   wire $auto$process.cpp:74:build_check_cell$2773
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2776
   attribute \src "dut.sv:433.17-433.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2777
+  wire width 12 $auto$expression.cpp:3250:import_operation$2777
   attribute \src "dut.sv:433.17-433.71"
   wire $eq$dut.sv:433$2779_Y
   wire $auto$process.cpp:74:build_check_cell$2781
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2784
   attribute \src "dut.sv:434.17-434.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2785
+  wire width 12 $auto$expression.cpp:3250:import_operation$2785
   attribute \src "dut.sv:434.17-434.71"
   wire $eq$dut.sv:434$2787_Y
   wire $auto$process.cpp:74:build_check_cell$2789
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2792
   attribute \src "dut.sv:435.17-435.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$2793
+  wire width 12 $auto$expression.cpp:3250:import_operation$2793
   attribute \src "dut.sv:435.17-435.71"
   wire $eq$dut.sv:435$2795_Y
   wire $auto$process.cpp:74:build_check_cell$2797
   wire $auto$rtlil.cc:3390:Mux$2800
   attribute \src "dut.sv:437.17-437.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2801
+  wire width 3 $auto$expression.cpp:3250:import_operation$2801
   attribute \src "dut.sv:437.17-437.55"
   wire $eq$dut.sv:437$2803_Y
   wire $auto$process.cpp:74:build_check_cell$2805
   wire $auto$rtlil.cc:3390:Mux$2808
   attribute \src "dut.sv:438.17-438.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2809
+  wire width 3 $auto$expression.cpp:3250:import_operation$2809
   attribute \src "dut.sv:438.17-438.55"
   wire $eq$dut.sv:438$2811_Y
   wire $auto$process.cpp:74:build_check_cell$2813
   wire signed $auto$rtlil.cc:3390:Mux$2816
   attribute \src "dut.sv:439.17-439.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2817
+  wire width 3 $auto$expression.cpp:3250:import_operation$2817
   attribute \src "dut.sv:439.17-439.55"
   wire $eq$dut.sv:439$2819_Y
   wire $auto$process.cpp:74:build_check_cell$2821
   wire signed $auto$rtlil.cc:3390:Mux$2824
   attribute \src "dut.sv:440.17-440.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2825
+  wire width 3 $auto$expression.cpp:3250:import_operation$2825
   attribute \src "dut.sv:440.17-440.55"
   wire $eq$dut.sv:440$2827_Y
   wire $auto$process.cpp:74:build_check_cell$2829
   wire width 2 $auto$rtlil.cc:3390:Mux$2832
   attribute \src "dut.sv:441.17-441.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2833
+  wire width 3 $auto$expression.cpp:3250:import_operation$2833
   attribute \src "dut.sv:441.17-441.55"
   wire $eq$dut.sv:441$2835_Y
   wire $auto$process.cpp:74:build_check_cell$2837
   wire width 2 $auto$rtlil.cc:3390:Mux$2840
   attribute \src "dut.sv:442.17-442.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2841
+  wire width 3 $auto$expression.cpp:3250:import_operation$2841
   attribute \src "dut.sv:442.17-442.55"
   wire $eq$dut.sv:442$2843_Y
   wire $auto$process.cpp:74:build_check_cell$2845
   wire width 2 $auto$rtlil.cc:3390:Mux$2848
   attribute \src "dut.sv:443.17-443.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2849
+  wire width 3 $auto$expression.cpp:3250:import_operation$2849
   attribute \src "dut.sv:443.17-443.55"
   wire $eq$dut.sv:443$2851_Y
   wire $auto$process.cpp:74:build_check_cell$2853
   wire width 2 $auto$rtlil.cc:3390:Mux$2856
   attribute \src "dut.sv:444.17-444.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2857
+  wire width 3 $auto$expression.cpp:3250:import_operation$2857
   attribute \src "dut.sv:444.17-444.55"
   wire $eq$dut.sv:444$2859_Y
   wire $auto$process.cpp:74:build_check_cell$2861
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2864
   attribute \src "dut.sv:445.17-445.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2865
+  wire width 3 $auto$expression.cpp:3250:import_operation$2865
   attribute \src "dut.sv:445.17-445.55"
   wire $eq$dut.sv:445$2867_Y
   wire $auto$process.cpp:74:build_check_cell$2869
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2872
   attribute \src "dut.sv:446.17-446.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2873
+  wire width 3 $auto$expression.cpp:3250:import_operation$2873
   attribute \src "dut.sv:446.17-446.55"
   wire $eq$dut.sv:446$2875_Y
   wire $auto$process.cpp:74:build_check_cell$2877
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2880
   attribute \src "dut.sv:447.17-447.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2881
+  wire width 3 $auto$expression.cpp:3250:import_operation$2881
   attribute \src "dut.sv:447.17-447.55"
   wire $eq$dut.sv:447$2883_Y
   wire $auto$process.cpp:74:build_check_cell$2885
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2888
   attribute \src "dut.sv:448.17-448.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2889
+  wire width 3 $auto$expression.cpp:3250:import_operation$2889
   attribute \src "dut.sv:448.17-448.55"
   wire $eq$dut.sv:448$2891_Y
   wire $auto$process.cpp:74:build_check_cell$2893
   wire $auto$rtlil.cc:3390:Mux$2896
   attribute \src "dut.sv:450.17-450.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2897
+  wire width 3 $auto$expression.cpp:3250:import_operation$2897
   attribute \src "dut.sv:450.17-450.61"
   wire $eq$dut.sv:450$2899_Y
   wire $auto$process.cpp:74:build_check_cell$2901
   wire $auto$rtlil.cc:3390:Mux$2904
   attribute \src "dut.sv:451.17-451.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2905
+  wire width 3 $auto$expression.cpp:3250:import_operation$2905
   attribute \src "dut.sv:451.17-451.61"
   wire $eq$dut.sv:451$2907_Y
   wire $auto$process.cpp:74:build_check_cell$2909
   wire signed $auto$rtlil.cc:3390:Mux$2912
   attribute \src "dut.sv:452.17-452.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2913
+  wire width 3 $auto$expression.cpp:3250:import_operation$2913
   attribute \src "dut.sv:452.17-452.61"
   wire $eq$dut.sv:452$2915_Y
   wire $auto$process.cpp:74:build_check_cell$2917
   wire signed $auto$rtlil.cc:3390:Mux$2920
   attribute \src "dut.sv:453.17-453.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2921
+  wire width 3 $auto$expression.cpp:3250:import_operation$2921
   attribute \src "dut.sv:453.17-453.61"
   wire $eq$dut.sv:453$2923_Y
   wire $auto$process.cpp:74:build_check_cell$2925
   wire width 2 $auto$rtlil.cc:3390:Mux$2928
   attribute \src "dut.sv:454.17-454.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2929
+  wire width 3 $auto$expression.cpp:3250:import_operation$2929
   attribute \src "dut.sv:454.17-454.61"
   wire $eq$dut.sv:454$2931_Y
   wire $auto$process.cpp:74:build_check_cell$2933
   wire width 2 $auto$rtlil.cc:3390:Mux$2936
   attribute \src "dut.sv:455.17-455.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2937
+  wire width 3 $auto$expression.cpp:3250:import_operation$2937
   attribute \src "dut.sv:455.17-455.61"
   wire $eq$dut.sv:455$2939_Y
   wire $auto$process.cpp:74:build_check_cell$2941
   wire width 2 $auto$rtlil.cc:3390:Mux$2944
   attribute \src "dut.sv:456.17-456.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2945
+  wire width 3 $auto$expression.cpp:3250:import_operation$2945
   attribute \src "dut.sv:456.17-456.61"
   wire $eq$dut.sv:456$2947_Y
   wire $auto$process.cpp:74:build_check_cell$2949
   wire width 2 $auto$rtlil.cc:3390:Mux$2952
   attribute \src "dut.sv:457.17-457.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2953
+  wire width 3 $auto$expression.cpp:3250:import_operation$2953
   attribute \src "dut.sv:457.17-457.61"
   wire $eq$dut.sv:457$2955_Y
   wire $auto$process.cpp:74:build_check_cell$2957
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2960
   attribute \src "dut.sv:458.17-458.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2961
+  wire width 3 $auto$expression.cpp:3250:import_operation$2961
   attribute \src "dut.sv:458.17-458.61"
   wire $eq$dut.sv:458$2963_Y
   wire $auto$process.cpp:74:build_check_cell$2965
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2968
   attribute \src "dut.sv:459.17-459.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2969
+  wire width 3 $auto$expression.cpp:3250:import_operation$2969
   attribute \src "dut.sv:459.17-459.61"
   wire $eq$dut.sv:459$2971_Y
   wire $auto$process.cpp:74:build_check_cell$2973
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2976
   attribute \src "dut.sv:460.17-460.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2977
+  wire width 3 $auto$expression.cpp:3250:import_operation$2977
   attribute \src "dut.sv:460.17-460.61"
   wire $eq$dut.sv:460$2979_Y
   wire $auto$process.cpp:74:build_check_cell$2981
   wire width 2 signed $auto$rtlil.cc:3390:Mux$2984
   attribute \src "dut.sv:461.17-461.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$2985
+  wire width 3 $auto$expression.cpp:3250:import_operation$2985
   attribute \src "dut.sv:461.17-461.61"
   wire $eq$dut.sv:461$2987_Y
   wire $auto$process.cpp:74:build_check_cell$2989
   wire $auto$rtlil.cc:3390:Mux$2992
   attribute \src "dut.sv:463.17-463.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$2993
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$2993
   attribute \src "dut.sv:463.17-463.57"
   wire $eq$dut.sv:463$2995_Y
   wire $auto$process.cpp:74:build_check_cell$2997
   wire $auto$rtlil.cc:3390:Mux$3000
   attribute \src "dut.sv:464.17-464.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3001
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3001
   attribute \src "dut.sv:464.17-464.57"
   wire $eq$dut.sv:464$3003_Y
   wire $auto$process.cpp:74:build_check_cell$3005
   wire signed $auto$rtlil.cc:3390:Mux$3008
   attribute \src "dut.sv:465.17-465.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3009
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3009
   attribute \src "dut.sv:465.17-465.57"
   wire $eq$dut.sv:465$3011_Y
   wire $auto$process.cpp:74:build_check_cell$3013
   wire signed $auto$rtlil.cc:3390:Mux$3016
   attribute \src "dut.sv:466.17-466.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3017
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3017
   attribute \src "dut.sv:466.17-466.57"
   wire $eq$dut.sv:466$3019_Y
   wire $auto$process.cpp:74:build_check_cell$3021
   wire width 2 $auto$rtlil.cc:3390:Mux$3024
   attribute \src "dut.sv:467.17-467.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3025
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3025
   attribute \src "dut.sv:467.17-467.57"
   wire $eq$dut.sv:467$3027_Y
   wire $auto$process.cpp:74:build_check_cell$3029
   wire width 2 $auto$rtlil.cc:3390:Mux$3032
   attribute \src "dut.sv:468.17-468.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3033
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3033
   attribute \src "dut.sv:468.17-468.57"
   wire $eq$dut.sv:468$3035_Y
   wire $auto$process.cpp:74:build_check_cell$3037
   wire width 2 $auto$rtlil.cc:3390:Mux$3040
   attribute \src "dut.sv:469.17-469.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3041
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3041
   attribute \src "dut.sv:469.17-469.57"
   wire $eq$dut.sv:469$3043_Y
   wire $auto$process.cpp:74:build_check_cell$3045
   wire width 2 $auto$rtlil.cc:3390:Mux$3048
   attribute \src "dut.sv:470.17-470.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3049
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3049
   attribute \src "dut.sv:470.17-470.57"
   wire $eq$dut.sv:470$3051_Y
   wire $auto$process.cpp:74:build_check_cell$3053
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3056
   attribute \src "dut.sv:471.17-471.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3057
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3057
   attribute \src "dut.sv:471.17-471.57"
   wire $eq$dut.sv:471$3059_Y
   wire $auto$process.cpp:74:build_check_cell$3061
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3064
   attribute \src "dut.sv:472.17-472.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3065
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3065
   attribute \src "dut.sv:472.17-472.57"
   wire $eq$dut.sv:472$3067_Y
   wire $auto$process.cpp:74:build_check_cell$3069
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3072
   attribute \src "dut.sv:473.17-473.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3073
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3073
   attribute \src "dut.sv:473.17-473.57"
   wire $eq$dut.sv:473$3075_Y
   wire $auto$process.cpp:74:build_check_cell$3077
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3080
   attribute \src "dut.sv:474.17-474.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3081
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3081
   attribute \src "dut.sv:474.17-474.57"
   wire $eq$dut.sv:474$3083_Y
   wire $auto$process.cpp:74:build_check_cell$3085
   wire $auto$rtlil.cc:3390:Mux$3088
   attribute \src "dut.sv:476.17-476.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3089
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3089
   attribute \src "dut.sv:476.17-476.64"
   wire $eq$dut.sv:476$3091_Y
   wire $auto$process.cpp:74:build_check_cell$3093
   wire $auto$rtlil.cc:3390:Mux$3096
   attribute \src "dut.sv:477.17-477.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3097
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3097
   attribute \src "dut.sv:477.17-477.64"
   wire $eq$dut.sv:477$3099_Y
   wire $auto$process.cpp:74:build_check_cell$3101
   wire signed $auto$rtlil.cc:3390:Mux$3104
   attribute \src "dut.sv:478.17-478.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3105
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3105
   attribute \src "dut.sv:478.17-478.64"
   wire $eq$dut.sv:478$3107_Y
   wire $auto$process.cpp:74:build_check_cell$3109
   wire signed $auto$rtlil.cc:3390:Mux$3112
   attribute \src "dut.sv:479.17-479.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3113
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3113
   attribute \src "dut.sv:479.17-479.64"
   wire $eq$dut.sv:479$3115_Y
   wire $auto$process.cpp:74:build_check_cell$3117
   wire width 2 $auto$rtlil.cc:3390:Mux$3120
   attribute \src "dut.sv:480.17-480.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3121
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3121
   attribute \src "dut.sv:480.17-480.64"
   wire $eq$dut.sv:480$3123_Y
   wire $auto$process.cpp:74:build_check_cell$3125
   wire width 2 $auto$rtlil.cc:3390:Mux$3128
   attribute \src "dut.sv:481.17-481.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3129
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3129
   attribute \src "dut.sv:481.17-481.64"
   wire $eq$dut.sv:481$3131_Y
   wire $auto$process.cpp:74:build_check_cell$3133
   wire width 2 $auto$rtlil.cc:3390:Mux$3136
   attribute \src "dut.sv:482.17-482.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3137
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3137
   attribute \src "dut.sv:482.17-482.64"
   wire $eq$dut.sv:482$3139_Y
   wire $auto$process.cpp:74:build_check_cell$3141
   wire width 2 $auto$rtlil.cc:3390:Mux$3144
   attribute \src "dut.sv:483.17-483.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3145
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3145
   attribute \src "dut.sv:483.17-483.64"
   wire $eq$dut.sv:483$3147_Y
   wire $auto$process.cpp:74:build_check_cell$3149
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3152
   attribute \src "dut.sv:484.17-484.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3153
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3153
   attribute \src "dut.sv:484.17-484.64"
   wire $eq$dut.sv:484$3155_Y
   wire $auto$process.cpp:74:build_check_cell$3157
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3160
   attribute \src "dut.sv:485.17-485.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3161
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3161
   attribute \src "dut.sv:485.17-485.64"
   wire $eq$dut.sv:485$3163_Y
   wire $auto$process.cpp:74:build_check_cell$3165
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3168
   attribute \src "dut.sv:486.17-486.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3169
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3169
   attribute \src "dut.sv:486.17-486.64"
   wire $eq$dut.sv:486$3171_Y
   wire $auto$process.cpp:74:build_check_cell$3173
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3176
   attribute \src "dut.sv:487.17-487.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3177
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3177
   attribute \src "dut.sv:487.17-487.64"
   wire $eq$dut.sv:487$3179_Y
   wire $auto$process.cpp:74:build_check_cell$3181
   wire $auto$rtlil.cc:3390:Mux$3184
   attribute \src "dut.sv:489.17-489.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3185
+  wire width 12 $auto$expression.cpp:3250:import_operation$3185
   attribute \src "dut.sv:489.17-489.77"
   wire $eq$dut.sv:489$3187_Y
   wire $auto$process.cpp:74:build_check_cell$3189
   wire $auto$rtlil.cc:3390:Mux$3192
   attribute \src "dut.sv:490.17-490.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3193
+  wire width 12 $auto$expression.cpp:3250:import_operation$3193
   attribute \src "dut.sv:490.17-490.77"
   wire $eq$dut.sv:490$3195_Y
   wire $auto$process.cpp:74:build_check_cell$3197
   wire signed $auto$rtlil.cc:3390:Mux$3200
   attribute \src "dut.sv:491.17-491.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3201
+  wire width 12 $auto$expression.cpp:3250:import_operation$3201
   attribute \src "dut.sv:491.17-491.77"
   wire $eq$dut.sv:491$3203_Y
   wire $auto$process.cpp:74:build_check_cell$3205
   wire signed $auto$rtlil.cc:3390:Mux$3208
   attribute \src "dut.sv:492.17-492.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3209
+  wire width 12 $auto$expression.cpp:3250:import_operation$3209
   attribute \src "dut.sv:492.17-492.77"
   wire $eq$dut.sv:492$3211_Y
   wire $auto$process.cpp:74:build_check_cell$3213
   wire width 2 $auto$rtlil.cc:3390:Mux$3216
   attribute \src "dut.sv:493.17-493.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3217
+  wire width 12 $auto$expression.cpp:3250:import_operation$3217
   attribute \src "dut.sv:493.17-493.77"
   wire $eq$dut.sv:493$3219_Y
   wire $auto$process.cpp:74:build_check_cell$3221
   wire width 2 $auto$rtlil.cc:3390:Mux$3224
   attribute \src "dut.sv:494.17-494.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3225
+  wire width 12 $auto$expression.cpp:3250:import_operation$3225
   attribute \src "dut.sv:494.17-494.77"
   wire $eq$dut.sv:494$3227_Y
   wire $auto$process.cpp:74:build_check_cell$3229
   wire width 2 $auto$rtlil.cc:3390:Mux$3232
   attribute \src "dut.sv:495.17-495.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3233
+  wire width 12 $auto$expression.cpp:3250:import_operation$3233
   attribute \src "dut.sv:495.17-495.77"
   wire $eq$dut.sv:495$3235_Y
   wire $auto$process.cpp:74:build_check_cell$3237
   wire width 2 $auto$rtlil.cc:3390:Mux$3240
   attribute \src "dut.sv:496.17-496.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3241
+  wire width 12 $auto$expression.cpp:3250:import_operation$3241
   attribute \src "dut.sv:496.17-496.77"
   wire $eq$dut.sv:496$3243_Y
   wire $auto$process.cpp:74:build_check_cell$3245
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3248
   attribute \src "dut.sv:497.17-497.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3249
+  wire width 12 $auto$expression.cpp:3250:import_operation$3249
   attribute \src "dut.sv:497.17-497.77"
   wire $eq$dut.sv:497$3251_Y
   wire $auto$process.cpp:74:build_check_cell$3253
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3256
   attribute \src "dut.sv:498.17-498.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3257
+  wire width 12 $auto$expression.cpp:3250:import_operation$3257
   attribute \src "dut.sv:498.17-498.77"
   wire $eq$dut.sv:498$3259_Y
   wire $auto$process.cpp:74:build_check_cell$3261
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3264
   attribute \src "dut.sv:499.17-499.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3265
+  wire width 12 $auto$expression.cpp:3250:import_operation$3265
   attribute \src "dut.sv:499.17-499.77"
   wire $eq$dut.sv:499$3267_Y
   wire $auto$process.cpp:74:build_check_cell$3269
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3272
   attribute \src "dut.sv:500.17-500.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3273
+  wire width 12 $auto$expression.cpp:3250:import_operation$3273
   attribute \src "dut.sv:500.17-500.77"
   wire $eq$dut.sv:500$3275_Y
   wire $auto$process.cpp:74:build_check_cell$3277
   wire $auto$rtlil.cc:3390:Mux$3280
   attribute \src "dut.sv:502.17-502.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3281
+  wire width 3 $auto$expression.cpp:3250:import_operation$3281
   attribute \src "dut.sv:502.17-502.49"
   wire $eq$dut.sv:502$3283_Y
   wire $auto$process.cpp:74:build_check_cell$3285
   wire $auto$rtlil.cc:3390:Mux$3288
   attribute \src "dut.sv:503.17-503.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3289
+  wire width 3 $auto$expression.cpp:3250:import_operation$3289
   attribute \src "dut.sv:503.17-503.49"
   wire $eq$dut.sv:503$3291_Y
   wire $auto$process.cpp:74:build_check_cell$3293
   wire signed $auto$rtlil.cc:3390:Mux$3296
   attribute \src "dut.sv:504.17-504.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3297
+  wire width 3 $auto$expression.cpp:3250:import_operation$3297
   attribute \src "dut.sv:504.17-504.49"
   wire $eq$dut.sv:504$3299_Y
   wire $auto$process.cpp:74:build_check_cell$3301
   wire signed $auto$rtlil.cc:3390:Mux$3304
   attribute \src "dut.sv:505.17-505.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3305
+  wire width 3 $auto$expression.cpp:3250:import_operation$3305
   attribute \src "dut.sv:505.17-505.49"
   wire $eq$dut.sv:505$3307_Y
   wire $auto$process.cpp:74:build_check_cell$3309
   wire width 2 $auto$rtlil.cc:3390:Mux$3312
   attribute \src "dut.sv:506.17-506.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3313
+  wire width 3 $auto$expression.cpp:3250:import_operation$3313
   attribute \src "dut.sv:506.17-506.49"
   wire $eq$dut.sv:506$3315_Y
   wire $auto$process.cpp:74:build_check_cell$3317
   wire width 2 $auto$rtlil.cc:3390:Mux$3320
   attribute \src "dut.sv:507.17-507.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3321
+  wire width 3 $auto$expression.cpp:3250:import_operation$3321
   attribute \src "dut.sv:507.17-507.49"
   wire $eq$dut.sv:507$3323_Y
   wire $auto$process.cpp:74:build_check_cell$3325
   wire width 2 $auto$rtlil.cc:3390:Mux$3328
   attribute \src "dut.sv:508.17-508.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3329
+  wire width 3 $auto$expression.cpp:3250:import_operation$3329
   attribute \src "dut.sv:508.17-508.49"
   wire $eq$dut.sv:508$3331_Y
   wire $auto$process.cpp:74:build_check_cell$3333
   wire width 2 $auto$rtlil.cc:3390:Mux$3336
   attribute \src "dut.sv:509.17-509.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3337
+  wire width 3 $auto$expression.cpp:3250:import_operation$3337
   attribute \src "dut.sv:509.17-509.49"
   wire $eq$dut.sv:509$3339_Y
   wire $auto$process.cpp:74:build_check_cell$3341
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3344
   attribute \src "dut.sv:510.17-510.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3345
+  wire width 3 $auto$expression.cpp:3250:import_operation$3345
   attribute \src "dut.sv:510.17-510.49"
   wire $eq$dut.sv:510$3347_Y
   wire $auto$process.cpp:74:build_check_cell$3349
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3352
   attribute \src "dut.sv:511.17-511.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3353
+  wire width 3 $auto$expression.cpp:3250:import_operation$3353
   attribute \src "dut.sv:511.17-511.49"
   wire $eq$dut.sv:511$3355_Y
   wire $auto$process.cpp:74:build_check_cell$3357
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3360
   attribute \src "dut.sv:512.17-512.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3361
+  wire width 3 $auto$expression.cpp:3250:import_operation$3361
   attribute \src "dut.sv:512.17-512.49"
   wire $eq$dut.sv:512$3363_Y
   wire $auto$process.cpp:74:build_check_cell$3365
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3368
   attribute \src "dut.sv:513.17-513.39"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3369
+  wire width 3 $auto$expression.cpp:3250:import_operation$3369
   attribute \src "dut.sv:513.17-513.49"
   wire $eq$dut.sv:513$3371_Y
   wire $auto$process.cpp:74:build_check_cell$3373
   wire $auto$rtlil.cc:3390:Mux$3376
   attribute \src "dut.sv:515.17-515.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3377
+  wire width 3 $auto$expression.cpp:3250:import_operation$3377
   attribute \src "dut.sv:515.17-515.55"
   wire $eq$dut.sv:515$3379_Y
   wire $auto$process.cpp:74:build_check_cell$3381
   wire $auto$rtlil.cc:3390:Mux$3384
   attribute \src "dut.sv:516.17-516.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3385
+  wire width 3 $auto$expression.cpp:3250:import_operation$3385
   attribute \src "dut.sv:516.17-516.55"
   wire $eq$dut.sv:516$3387_Y
   wire $auto$process.cpp:74:build_check_cell$3389
   wire signed $auto$rtlil.cc:3390:Mux$3392
   attribute \src "dut.sv:517.17-517.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3393
+  wire width 3 $auto$expression.cpp:3250:import_operation$3393
   attribute \src "dut.sv:517.17-517.55"
   wire $eq$dut.sv:517$3395_Y
   wire $auto$process.cpp:74:build_check_cell$3397
   wire signed $auto$rtlil.cc:3390:Mux$3400
   attribute \src "dut.sv:518.17-518.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3401
+  wire width 3 $auto$expression.cpp:3250:import_operation$3401
   attribute \src "dut.sv:518.17-518.55"
   wire $eq$dut.sv:518$3403_Y
   wire $auto$process.cpp:74:build_check_cell$3405
   wire width 2 $auto$rtlil.cc:3390:Mux$3408
   attribute \src "dut.sv:519.17-519.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3409
+  wire width 3 $auto$expression.cpp:3250:import_operation$3409
   attribute \src "dut.sv:519.17-519.55"
   wire $eq$dut.sv:519$3411_Y
   wire $auto$process.cpp:74:build_check_cell$3413
   wire width 2 $auto$rtlil.cc:3390:Mux$3416
   attribute \src "dut.sv:520.17-520.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3417
+  wire width 3 $auto$expression.cpp:3250:import_operation$3417
   attribute \src "dut.sv:520.17-520.55"
   wire $eq$dut.sv:520$3419_Y
   wire $auto$process.cpp:74:build_check_cell$3421
   wire width 2 $auto$rtlil.cc:3390:Mux$3424
   attribute \src "dut.sv:521.17-521.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3425
+  wire width 3 $auto$expression.cpp:3250:import_operation$3425
   attribute \src "dut.sv:521.17-521.55"
   wire $eq$dut.sv:521$3427_Y
   wire $auto$process.cpp:74:build_check_cell$3429
   wire width 2 $auto$rtlil.cc:3390:Mux$3432
   attribute \src "dut.sv:522.17-522.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3433
+  wire width 3 $auto$expression.cpp:3250:import_operation$3433
   attribute \src "dut.sv:522.17-522.55"
   wire $eq$dut.sv:522$3435_Y
   wire $auto$process.cpp:74:build_check_cell$3437
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3440
   attribute \src "dut.sv:523.17-523.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3441
+  wire width 3 $auto$expression.cpp:3250:import_operation$3441
   attribute \src "dut.sv:523.17-523.55"
   wire $eq$dut.sv:523$3443_Y
   wire $auto$process.cpp:74:build_check_cell$3445
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3448
   attribute \src "dut.sv:524.17-524.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3449
+  wire width 3 $auto$expression.cpp:3250:import_operation$3449
   attribute \src "dut.sv:524.17-524.55"
   wire $eq$dut.sv:524$3451_Y
   wire $auto$process.cpp:74:build_check_cell$3453
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3456
   attribute \src "dut.sv:525.17-525.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3457
+  wire width 3 $auto$expression.cpp:3250:import_operation$3457
   attribute \src "dut.sv:525.17-525.55"
   wire $eq$dut.sv:525$3459_Y
   wire $auto$process.cpp:74:build_check_cell$3461
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3464
   attribute \src "dut.sv:526.17-526.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3465
+  wire width 3 $auto$expression.cpp:3250:import_operation$3465
   attribute \src "dut.sv:526.17-526.55"
   wire $eq$dut.sv:526$3467_Y
   wire $auto$process.cpp:74:build_check_cell$3469
   wire $auto$rtlil.cc:3390:Mux$3472
   attribute \src "dut.sv:528.17-528.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3473
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3473
   attribute \src "dut.sv:528.17-528.51"
   wire $eq$dut.sv:528$3475_Y
   wire $auto$process.cpp:74:build_check_cell$3477
   wire $auto$rtlil.cc:3390:Mux$3480
   attribute \src "dut.sv:529.17-529.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3481
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3481
   attribute \src "dut.sv:529.17-529.51"
   wire $eq$dut.sv:529$3483_Y
   wire $auto$process.cpp:74:build_check_cell$3485
   wire signed $auto$rtlil.cc:3390:Mux$3488
   attribute \src "dut.sv:530.17-530.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3489
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3489
   attribute \src "dut.sv:530.17-530.51"
   wire $eq$dut.sv:530$3491_Y
   wire $auto$process.cpp:74:build_check_cell$3493
   wire signed $auto$rtlil.cc:3390:Mux$3496
   attribute \src "dut.sv:531.17-531.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3497
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3497
   attribute \src "dut.sv:531.17-531.51"
   wire $eq$dut.sv:531$3499_Y
   wire $auto$process.cpp:74:build_check_cell$3501
   wire width 2 $auto$rtlil.cc:3390:Mux$3504
   attribute \src "dut.sv:532.17-532.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3505
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3505
   attribute \src "dut.sv:532.17-532.51"
   wire $eq$dut.sv:532$3507_Y
   wire $auto$process.cpp:74:build_check_cell$3509
   wire width 2 $auto$rtlil.cc:3390:Mux$3512
   attribute \src "dut.sv:533.17-533.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3513
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3513
   attribute \src "dut.sv:533.17-533.51"
   wire $eq$dut.sv:533$3515_Y
   wire $auto$process.cpp:74:build_check_cell$3517
   wire width 2 $auto$rtlil.cc:3390:Mux$3520
   attribute \src "dut.sv:534.17-534.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3521
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3521
   attribute \src "dut.sv:534.17-534.51"
   wire $eq$dut.sv:534$3523_Y
   wire $auto$process.cpp:74:build_check_cell$3525
   wire width 2 $auto$rtlil.cc:3390:Mux$3528
   attribute \src "dut.sv:535.17-535.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3529
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3529
   attribute \src "dut.sv:535.17-535.51"
   wire $eq$dut.sv:535$3531_Y
   wire $auto$process.cpp:74:build_check_cell$3533
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3536
   attribute \src "dut.sv:536.17-536.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3537
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3537
   attribute \src "dut.sv:536.17-536.51"
   wire $eq$dut.sv:536$3539_Y
   wire $auto$process.cpp:74:build_check_cell$3541
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3544
   attribute \src "dut.sv:537.17-537.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3545
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3545
   attribute \src "dut.sv:537.17-537.51"
   wire $eq$dut.sv:537$3547_Y
   wire $auto$process.cpp:74:build_check_cell$3549
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3552
   attribute \src "dut.sv:538.17-538.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3553
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3553
   attribute \src "dut.sv:538.17-538.51"
   wire $eq$dut.sv:538$3555_Y
   wire $auto$process.cpp:74:build_check_cell$3557
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3560
   attribute \src "dut.sv:539.17-539.42"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3561
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3561
   attribute \src "dut.sv:539.17-539.51"
   wire $eq$dut.sv:539$3563_Y
   wire $auto$process.cpp:74:build_check_cell$3565
   wire $auto$rtlil.cc:3390:Mux$3568
   attribute \src "dut.sv:541.17-541.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3569
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3569
   attribute \src "dut.sv:541.17-541.58"
   wire $eq$dut.sv:541$3571_Y
   wire $auto$process.cpp:74:build_check_cell$3573
   wire $auto$rtlil.cc:3390:Mux$3576
   attribute \src "dut.sv:542.17-542.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3577
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3577
   attribute \src "dut.sv:542.17-542.58"
   wire $eq$dut.sv:542$3579_Y
   wire $auto$process.cpp:74:build_check_cell$3581
   wire signed $auto$rtlil.cc:3390:Mux$3584
   attribute \src "dut.sv:543.17-543.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3585
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3585
   attribute \src "dut.sv:543.17-543.58"
   wire $eq$dut.sv:543$3587_Y
   wire $auto$process.cpp:74:build_check_cell$3589
   wire signed $auto$rtlil.cc:3390:Mux$3592
   attribute \src "dut.sv:544.17-544.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3593
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3593
   attribute \src "dut.sv:544.17-544.58"
   wire $eq$dut.sv:544$3595_Y
   wire $auto$process.cpp:74:build_check_cell$3597
   wire width 2 $auto$rtlil.cc:3390:Mux$3600
   attribute \src "dut.sv:545.17-545.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3601
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3601
   attribute \src "dut.sv:545.17-545.58"
   wire $eq$dut.sv:545$3603_Y
   wire $auto$process.cpp:74:build_check_cell$3605
   wire width 2 $auto$rtlil.cc:3390:Mux$3608
   attribute \src "dut.sv:546.17-546.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3609
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3609
   attribute \src "dut.sv:546.17-546.58"
   wire $eq$dut.sv:546$3611_Y
   wire $auto$process.cpp:74:build_check_cell$3613
   wire width 2 $auto$rtlil.cc:3390:Mux$3616
   attribute \src "dut.sv:547.17-547.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3617
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3617
   attribute \src "dut.sv:547.17-547.58"
   wire $eq$dut.sv:547$3619_Y
   wire $auto$process.cpp:74:build_check_cell$3621
   wire width 2 $auto$rtlil.cc:3390:Mux$3624
   attribute \src "dut.sv:548.17-548.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3625
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3625
   attribute \src "dut.sv:548.17-548.58"
   wire $eq$dut.sv:548$3627_Y
   wire $auto$process.cpp:74:build_check_cell$3629
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3632
   attribute \src "dut.sv:549.17-549.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3633
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3633
   attribute \src "dut.sv:549.17-549.58"
   wire $eq$dut.sv:549$3635_Y
   wire $auto$process.cpp:74:build_check_cell$3637
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3640
   attribute \src "dut.sv:550.17-550.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3641
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3641
   attribute \src "dut.sv:550.17-550.58"
   wire $eq$dut.sv:550$3643_Y
   wire $auto$process.cpp:74:build_check_cell$3645
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3648
   attribute \src "dut.sv:551.17-551.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3649
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3649
   attribute \src "dut.sv:551.17-551.58"
   wire $eq$dut.sv:551$3651_Y
   wire $auto$process.cpp:74:build_check_cell$3653
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3656
   attribute \src "dut.sv:552.17-552.41"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$3657
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$3657
   attribute \src "dut.sv:552.17-552.58"
   wire $eq$dut.sv:552$3659_Y
   wire $auto$process.cpp:74:build_check_cell$3661
   wire $auto$rtlil.cc:3390:Mux$3664
   attribute \src "dut.sv:554.17-554.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3665
+  wire width 12 $auto$expression.cpp:3250:import_operation$3665
   attribute \src "dut.sv:554.17-554.71"
   wire $eq$dut.sv:554$3667_Y
   wire $auto$process.cpp:74:build_check_cell$3669
   wire $auto$rtlil.cc:3390:Mux$3672
   attribute \src "dut.sv:555.17-555.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3673
+  wire width 12 $auto$expression.cpp:3250:import_operation$3673
   attribute \src "dut.sv:555.17-555.71"
   wire $eq$dut.sv:555$3675_Y
   wire $auto$process.cpp:74:build_check_cell$3677
   wire signed $auto$rtlil.cc:3390:Mux$3680
   attribute \src "dut.sv:556.17-556.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3681
+  wire width 12 $auto$expression.cpp:3250:import_operation$3681
   attribute \src "dut.sv:556.17-556.71"
   wire $eq$dut.sv:556$3683_Y
   wire $auto$process.cpp:74:build_check_cell$3685
   wire signed $auto$rtlil.cc:3390:Mux$3688
   attribute \src "dut.sv:557.17-557.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3689
+  wire width 12 $auto$expression.cpp:3250:import_operation$3689
   attribute \src "dut.sv:557.17-557.71"
   wire $eq$dut.sv:557$3691_Y
   wire $auto$process.cpp:74:build_check_cell$3693
   wire width 2 $auto$rtlil.cc:3390:Mux$3696
   attribute \src "dut.sv:558.17-558.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3697
+  wire width 12 $auto$expression.cpp:3250:import_operation$3697
   attribute \src "dut.sv:558.17-558.71"
   wire $eq$dut.sv:558$3699_Y
   wire $auto$process.cpp:74:build_check_cell$3701
   wire width 2 $auto$rtlil.cc:3390:Mux$3704
   attribute \src "dut.sv:559.17-559.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3705
+  wire width 12 $auto$expression.cpp:3250:import_operation$3705
   attribute \src "dut.sv:559.17-559.71"
   wire $eq$dut.sv:559$3707_Y
   wire $auto$process.cpp:74:build_check_cell$3709
   wire width 2 $auto$rtlil.cc:3390:Mux$3712
   attribute \src "dut.sv:560.17-560.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3713
+  wire width 12 $auto$expression.cpp:3250:import_operation$3713
   attribute \src "dut.sv:560.17-560.71"
   wire $eq$dut.sv:560$3715_Y
   wire $auto$process.cpp:74:build_check_cell$3717
   wire width 2 $auto$rtlil.cc:3390:Mux$3720
   attribute \src "dut.sv:561.17-561.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3721
+  wire width 12 $auto$expression.cpp:3250:import_operation$3721
   attribute \src "dut.sv:561.17-561.71"
   wire $eq$dut.sv:561$3723_Y
   wire $auto$process.cpp:74:build_check_cell$3725
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3728
   attribute \src "dut.sv:562.17-562.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3729
+  wire width 12 $auto$expression.cpp:3250:import_operation$3729
   attribute \src "dut.sv:562.17-562.71"
   wire $eq$dut.sv:562$3731_Y
   wire $auto$process.cpp:74:build_check_cell$3733
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3736
   attribute \src "dut.sv:563.17-563.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3737
+  wire width 12 $auto$expression.cpp:3250:import_operation$3737
   attribute \src "dut.sv:563.17-563.71"
   wire $eq$dut.sv:563$3739_Y
   wire $auto$process.cpp:74:build_check_cell$3741
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3744
   attribute \src "dut.sv:564.17-564.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3745
+  wire width 12 $auto$expression.cpp:3250:import_operation$3745
   attribute \src "dut.sv:564.17-564.71"
   wire $eq$dut.sv:564$3747_Y
   wire $auto$process.cpp:74:build_check_cell$3749
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3752
   attribute \src "dut.sv:565.17-565.60"
-  wire width 12 $auto$expression.cpp:3177:import_operation$3753
+  wire width 12 $auto$expression.cpp:3250:import_operation$3753
   attribute \src "dut.sv:565.17-565.71"
   wire $eq$dut.sv:565$3755_Y
   wire $auto$process.cpp:74:build_check_cell$3757
   wire $auto$rtlil.cc:3390:Mux$3760
   attribute \src "dut.sv:567.17-567.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3761
+  wire width 3 $auto$expression.cpp:3250:import_operation$3761
   attribute \src "dut.sv:567.17-567.55"
   wire $eq$dut.sv:567$3763_Y
   wire $auto$process.cpp:74:build_check_cell$3765
   wire $auto$rtlil.cc:3390:Mux$3768
   attribute \src "dut.sv:568.17-568.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3769
+  wire width 3 $auto$expression.cpp:3250:import_operation$3769
   attribute \src "dut.sv:568.17-568.55"
   wire $eq$dut.sv:568$3771_Y
   wire $auto$process.cpp:74:build_check_cell$3773
   wire signed $auto$rtlil.cc:3390:Mux$3776
   attribute \src "dut.sv:569.17-569.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3777
+  wire width 3 $auto$expression.cpp:3250:import_operation$3777
   attribute \src "dut.sv:569.17-569.55"
   wire $eq$dut.sv:569$3779_Y
   wire $auto$process.cpp:74:build_check_cell$3781
   wire signed $auto$rtlil.cc:3390:Mux$3784
   attribute \src "dut.sv:570.17-570.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3785
+  wire width 3 $auto$expression.cpp:3250:import_operation$3785
   attribute \src "dut.sv:570.17-570.55"
   wire $eq$dut.sv:570$3787_Y
   wire $auto$process.cpp:74:build_check_cell$3789
   wire width 2 $auto$rtlil.cc:3390:Mux$3792
   attribute \src "dut.sv:571.17-571.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3793
+  wire width 3 $auto$expression.cpp:3250:import_operation$3793
   attribute \src "dut.sv:571.17-571.55"
   wire $eq$dut.sv:571$3795_Y
   wire $auto$process.cpp:74:build_check_cell$3797
   wire width 2 $auto$rtlil.cc:3390:Mux$3800
   attribute \src "dut.sv:572.17-572.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3801
+  wire width 3 $auto$expression.cpp:3250:import_operation$3801
   attribute \src "dut.sv:572.17-572.55"
   wire $eq$dut.sv:572$3803_Y
   wire $auto$process.cpp:74:build_check_cell$3805
   wire width 2 $auto$rtlil.cc:3390:Mux$3808
   attribute \src "dut.sv:573.17-573.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3809
+  wire width 3 $auto$expression.cpp:3250:import_operation$3809
   attribute \src "dut.sv:573.17-573.55"
   wire $eq$dut.sv:573$3811_Y
   wire $auto$process.cpp:74:build_check_cell$3813
   wire width 2 $auto$rtlil.cc:3390:Mux$3816
   attribute \src "dut.sv:574.17-574.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3817
+  wire width 3 $auto$expression.cpp:3250:import_operation$3817
   attribute \src "dut.sv:574.17-574.55"
   wire $eq$dut.sv:574$3819_Y
   wire $auto$process.cpp:74:build_check_cell$3821
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3824
   attribute \src "dut.sv:575.17-575.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3825
+  wire width 3 $auto$expression.cpp:3250:import_operation$3825
   attribute \src "dut.sv:575.17-575.55"
   wire $eq$dut.sv:575$3827_Y
   wire $auto$process.cpp:74:build_check_cell$3829
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3832
   attribute \src "dut.sv:576.17-576.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3833
+  wire width 3 $auto$expression.cpp:3250:import_operation$3833
   attribute \src "dut.sv:576.17-576.55"
   wire $eq$dut.sv:576$3835_Y
   wire $auto$process.cpp:74:build_check_cell$3837
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3840
   attribute \src "dut.sv:577.17-577.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3841
+  wire width 3 $auto$expression.cpp:3250:import_operation$3841
   attribute \src "dut.sv:577.17-577.55"
   wire $eq$dut.sv:577$3843_Y
   wire $auto$process.cpp:74:build_check_cell$3845
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3848
   attribute \src "dut.sv:578.17-578.45"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3849
+  wire width 3 $auto$expression.cpp:3250:import_operation$3849
   attribute \src "dut.sv:578.17-578.55"
   wire $eq$dut.sv:578$3851_Y
   wire $auto$process.cpp:74:build_check_cell$3853
   wire $auto$rtlil.cc:3390:Mux$3856
   attribute \src "dut.sv:580.17-580.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3857
+  wire width 3 $auto$expression.cpp:3250:import_operation$3857
   attribute \src "dut.sv:580.17-580.61"
   wire $eq$dut.sv:580$3859_Y
   wire $auto$process.cpp:74:build_check_cell$3861
   wire $auto$rtlil.cc:3390:Mux$3864
   attribute \src "dut.sv:581.17-581.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3865
+  wire width 3 $auto$expression.cpp:3250:import_operation$3865
   attribute \src "dut.sv:581.17-581.61"
   wire $eq$dut.sv:581$3867_Y
   wire $auto$process.cpp:74:build_check_cell$3869
   wire signed $auto$rtlil.cc:3390:Mux$3872
   attribute \src "dut.sv:582.17-582.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3873
+  wire width 3 $auto$expression.cpp:3250:import_operation$3873
   attribute \src "dut.sv:582.17-582.61"
   wire $eq$dut.sv:582$3875_Y
   wire $auto$process.cpp:74:build_check_cell$3877
   wire signed $auto$rtlil.cc:3390:Mux$3880
   attribute \src "dut.sv:583.17-583.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3881
+  wire width 3 $auto$expression.cpp:3250:import_operation$3881
   attribute \src "dut.sv:583.17-583.61"
   wire $eq$dut.sv:583$3883_Y
   wire $auto$process.cpp:74:build_check_cell$3885
   wire width 2 $auto$rtlil.cc:3390:Mux$3888
   attribute \src "dut.sv:584.17-584.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3889
+  wire width 3 $auto$expression.cpp:3250:import_operation$3889
   attribute \src "dut.sv:584.17-584.61"
   wire $eq$dut.sv:584$3891_Y
   wire $auto$process.cpp:74:build_check_cell$3893
   wire width 2 $auto$rtlil.cc:3390:Mux$3896
   attribute \src "dut.sv:585.17-585.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3897
+  wire width 3 $auto$expression.cpp:3250:import_operation$3897
   attribute \src "dut.sv:585.17-585.61"
   wire $eq$dut.sv:585$3899_Y
   wire $auto$process.cpp:74:build_check_cell$3901
   wire width 2 $auto$rtlil.cc:3390:Mux$3904
   attribute \src "dut.sv:586.17-586.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3905
+  wire width 3 $auto$expression.cpp:3250:import_operation$3905
   attribute \src "dut.sv:586.17-586.61"
   wire $eq$dut.sv:586$3907_Y
   wire $auto$process.cpp:74:build_check_cell$3909
   wire width 2 $auto$rtlil.cc:3390:Mux$3912
   attribute \src "dut.sv:587.17-587.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3913
+  wire width 3 $auto$expression.cpp:3250:import_operation$3913
   attribute \src "dut.sv:587.17-587.61"
   wire $eq$dut.sv:587$3915_Y
   wire $auto$process.cpp:74:build_check_cell$3917
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3920
   attribute \src "dut.sv:588.17-588.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3921
+  wire width 3 $auto$expression.cpp:3250:import_operation$3921
   attribute \src "dut.sv:588.17-588.61"
   wire $eq$dut.sv:588$3923_Y
   wire $auto$process.cpp:74:build_check_cell$3925
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3928
   attribute \src "dut.sv:589.17-589.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3929
+  wire width 3 $auto$expression.cpp:3250:import_operation$3929
   attribute \src "dut.sv:589.17-589.61"
   wire $eq$dut.sv:589$3931_Y
   wire $auto$process.cpp:74:build_check_cell$3933
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3936
   attribute \src "dut.sv:590.17-590.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3937
+  wire width 3 $auto$expression.cpp:3250:import_operation$3937
   attribute \src "dut.sv:590.17-590.61"
   wire $eq$dut.sv:590$3939_Y
   wire $auto$process.cpp:74:build_check_cell$3941
   wire width 2 signed $auto$rtlil.cc:3390:Mux$3944
   attribute \src "dut.sv:591.17-591.51"
-  wire width 3 $auto$expression.cpp:3177:import_operation$3945
+  wire width 3 $auto$expression.cpp:3250:import_operation$3945
   attribute \src "dut.sv:591.17-591.61"
   wire $eq$dut.sv:591$3947_Y
   wire $auto$process.cpp:74:build_check_cell$3949
   wire $auto$rtlil.cc:3390:Mux$3952
   attribute \src "dut.sv:593.17-593.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3953
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3953
   attribute \src "dut.sv:593.17-593.57"
   wire $eq$dut.sv:593$3955_Y
   wire $auto$process.cpp:74:build_check_cell$3957
   wire $auto$rtlil.cc:3390:Mux$3960
   attribute \src "dut.sv:594.17-594.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3961
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3961
   attribute \src "dut.sv:594.17-594.57"
   wire $eq$dut.sv:594$3963_Y
   wire $auto$process.cpp:74:build_check_cell$3965
   wire signed $auto$rtlil.cc:3390:Mux$3968
   attribute \src "dut.sv:595.17-595.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3969
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3969
   attribute \src "dut.sv:595.17-595.57"
   wire $eq$dut.sv:595$3971_Y
   wire $auto$process.cpp:74:build_check_cell$3973
   wire signed $auto$rtlil.cc:3390:Mux$3976
   attribute \src "dut.sv:596.17-596.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3977
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3977
   attribute \src "dut.sv:596.17-596.57"
   wire $eq$dut.sv:596$3979_Y
   wire $auto$process.cpp:74:build_check_cell$3981
   wire width 2 $auto$rtlil.cc:3390:Mux$3984
   attribute \src "dut.sv:597.17-597.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3985
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3985
   attribute \src "dut.sv:597.17-597.57"
   wire $eq$dut.sv:597$3987_Y
   wire $auto$process.cpp:74:build_check_cell$3989
   wire width 2 $auto$rtlil.cc:3390:Mux$3992
   attribute \src "dut.sv:598.17-598.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$3993
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$3993
   attribute \src "dut.sv:598.17-598.57"
   wire $eq$dut.sv:598$3995_Y
   wire $auto$process.cpp:74:build_check_cell$3997
   wire width 2 $auto$rtlil.cc:3390:Mux$4000
   attribute \src "dut.sv:599.17-599.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4001
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4001
   attribute \src "dut.sv:599.17-599.57"
   wire $eq$dut.sv:599$4003_Y
   wire $auto$process.cpp:74:build_check_cell$4005
   wire width 2 $auto$rtlil.cc:3390:Mux$4008
   attribute \src "dut.sv:600.17-600.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4009
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4009
   attribute \src "dut.sv:600.17-600.57"
   wire $eq$dut.sv:600$4011_Y
   wire $auto$process.cpp:74:build_check_cell$4013
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4016
   attribute \src "dut.sv:601.17-601.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4017
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4017
   attribute \src "dut.sv:601.17-601.57"
   wire $eq$dut.sv:601$4019_Y
   wire $auto$process.cpp:74:build_check_cell$4021
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4024
   attribute \src "dut.sv:602.17-602.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4025
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4025
   attribute \src "dut.sv:602.17-602.57"
   wire $eq$dut.sv:602$4027_Y
   wire $auto$process.cpp:74:build_check_cell$4029
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4032
   attribute \src "dut.sv:603.17-603.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4033
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4033
   attribute \src "dut.sv:603.17-603.57"
   wire $eq$dut.sv:603$4035_Y
   wire $auto$process.cpp:74:build_check_cell$4037
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4040
   attribute \src "dut.sv:604.17-604.48"
-  wire width 8 signed $auto$expression.cpp:3177:import_operation$4041
+  wire width 8 signed $auto$expression.cpp:3250:import_operation$4041
   attribute \src "dut.sv:604.17-604.57"
   wire $eq$dut.sv:604$4043_Y
   wire $auto$process.cpp:74:build_check_cell$4045
   wire $auto$rtlil.cc:3390:Mux$4048
   attribute \src "dut.sv:606.17-606.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4049
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4049
   attribute \src "dut.sv:606.17-606.64"
   wire $eq$dut.sv:606$4051_Y
   wire $auto$process.cpp:74:build_check_cell$4053
   wire $auto$rtlil.cc:3390:Mux$4056
   attribute \src "dut.sv:607.17-607.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4057
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4057
   attribute \src "dut.sv:607.17-607.64"
   wire $eq$dut.sv:607$4059_Y
   wire $auto$process.cpp:74:build_check_cell$4061
   wire signed $auto$rtlil.cc:3390:Mux$4064
   attribute \src "dut.sv:608.17-608.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4065
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4065
   attribute \src "dut.sv:608.17-608.64"
   wire $eq$dut.sv:608$4067_Y
   wire $auto$process.cpp:74:build_check_cell$4069
   wire signed $auto$rtlil.cc:3390:Mux$4072
   attribute \src "dut.sv:609.17-609.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4073
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4073
   attribute \src "dut.sv:609.17-609.64"
   wire $eq$dut.sv:609$4075_Y
   wire $auto$process.cpp:74:build_check_cell$4077
   wire width 2 $auto$rtlil.cc:3390:Mux$4080
   attribute \src "dut.sv:610.17-610.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4081
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4081
   attribute \src "dut.sv:610.17-610.64"
   wire $eq$dut.sv:610$4083_Y
   wire $auto$process.cpp:74:build_check_cell$4085
   wire width 2 $auto$rtlil.cc:3390:Mux$4088
   attribute \src "dut.sv:611.17-611.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4089
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4089
   attribute \src "dut.sv:611.17-611.64"
   wire $eq$dut.sv:611$4091_Y
   wire $auto$process.cpp:74:build_check_cell$4093
   wire width 2 $auto$rtlil.cc:3390:Mux$4096
   attribute \src "dut.sv:612.17-612.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4097
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4097
   attribute \src "dut.sv:612.17-612.64"
   wire $eq$dut.sv:612$4099_Y
   wire $auto$process.cpp:74:build_check_cell$4101
   wire width 2 $auto$rtlil.cc:3390:Mux$4104
   attribute \src "dut.sv:613.17-613.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4105
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4105
   attribute \src "dut.sv:613.17-613.64"
   wire $eq$dut.sv:613$4107_Y
   wire $auto$process.cpp:74:build_check_cell$4109
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4112
   attribute \src "dut.sv:614.17-614.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4113
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4113
   attribute \src "dut.sv:614.17-614.64"
   wire $eq$dut.sv:614$4115_Y
   wire $auto$process.cpp:74:build_check_cell$4117
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4120
   attribute \src "dut.sv:615.17-615.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4121
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4121
   attribute \src "dut.sv:615.17-615.64"
   wire $eq$dut.sv:615$4123_Y
   wire $auto$process.cpp:74:build_check_cell$4125
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4128
   attribute \src "dut.sv:616.17-616.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4129
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4129
   attribute \src "dut.sv:616.17-616.64"
   wire $eq$dut.sv:616$4131_Y
   wire $auto$process.cpp:74:build_check_cell$4133
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4136
   attribute \src "dut.sv:617.17-617.47"
-  wire width 32 signed $auto$expression.cpp:3177:import_operation$4137
+  wire width 32 signed $auto$expression.cpp:3250:import_operation$4137
   attribute \src "dut.sv:617.17-617.64"
   wire $eq$dut.sv:617$4139_Y
   wire $auto$process.cpp:74:build_check_cell$4141
   wire $auto$rtlil.cc:3390:Mux$4144
   attribute \src "dut.sv:619.17-619.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4145
+  wire width 12 $auto$expression.cpp:3250:import_operation$4145
   attribute \src "dut.sv:619.17-619.77"
   wire $eq$dut.sv:619$4147_Y
   wire $auto$process.cpp:74:build_check_cell$4149
   wire $auto$rtlil.cc:3390:Mux$4152
   attribute \src "dut.sv:620.17-620.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4153
+  wire width 12 $auto$expression.cpp:3250:import_operation$4153
   attribute \src "dut.sv:620.17-620.77"
   wire $eq$dut.sv:620$4155_Y
   wire $auto$process.cpp:74:build_check_cell$4157
   wire signed $auto$rtlil.cc:3390:Mux$4160
   attribute \src "dut.sv:621.17-621.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4161
+  wire width 12 $auto$expression.cpp:3250:import_operation$4161
   attribute \src "dut.sv:621.17-621.77"
   wire $eq$dut.sv:621$4163_Y
   wire $auto$process.cpp:74:build_check_cell$4165
   wire signed $auto$rtlil.cc:3390:Mux$4168
   attribute \src "dut.sv:622.17-622.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4169
+  wire width 12 $auto$expression.cpp:3250:import_operation$4169
   attribute \src "dut.sv:622.17-622.77"
   wire $eq$dut.sv:622$4171_Y
   wire $auto$process.cpp:74:build_check_cell$4173
   wire width 2 $auto$rtlil.cc:3390:Mux$4176
   attribute \src "dut.sv:623.17-623.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4177
+  wire width 12 $auto$expression.cpp:3250:import_operation$4177
   attribute \src "dut.sv:623.17-623.77"
   wire $eq$dut.sv:623$4179_Y
   wire $auto$process.cpp:74:build_check_cell$4181
   wire width 2 $auto$rtlil.cc:3390:Mux$4184
   attribute \src "dut.sv:624.17-624.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4185
+  wire width 12 $auto$expression.cpp:3250:import_operation$4185
   attribute \src "dut.sv:624.17-624.77"
   wire $eq$dut.sv:624$4187_Y
   wire $auto$process.cpp:74:build_check_cell$4189
   wire width 2 $auto$rtlil.cc:3390:Mux$4192
   attribute \src "dut.sv:625.17-625.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4193
+  wire width 12 $auto$expression.cpp:3250:import_operation$4193
   attribute \src "dut.sv:625.17-625.77"
   wire $eq$dut.sv:625$4195_Y
   wire $auto$process.cpp:74:build_check_cell$4197
   wire width 2 $auto$rtlil.cc:3390:Mux$4200
   attribute \src "dut.sv:626.17-626.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4201
+  wire width 12 $auto$expression.cpp:3250:import_operation$4201
   attribute \src "dut.sv:626.17-626.77"
   wire $eq$dut.sv:626$4203_Y
   wire $auto$process.cpp:74:build_check_cell$4205
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4208
   attribute \src "dut.sv:627.17-627.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4209
+  wire width 12 $auto$expression.cpp:3250:import_operation$4209
   attribute \src "dut.sv:627.17-627.77"
   wire $eq$dut.sv:627$4211_Y
   wire $auto$process.cpp:74:build_check_cell$4213
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4216
   attribute \src "dut.sv:628.17-628.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4217
+  wire width 12 $auto$expression.cpp:3250:import_operation$4217
   attribute \src "dut.sv:628.17-628.77"
   wire $eq$dut.sv:628$4219_Y
   wire $auto$process.cpp:74:build_check_cell$4221
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4224
   attribute \src "dut.sv:629.17-629.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4225
+  wire width 12 $auto$expression.cpp:3250:import_operation$4225
   attribute \src "dut.sv:629.17-629.77"
   wire $eq$dut.sv:629$4227_Y
   wire $auto$process.cpp:74:build_check_cell$4229
   wire width 2 signed $auto$rtlil.cc:3390:Mux$4232
   attribute \src "dut.sv:630.17-630.66"
-  wire width 12 $auto$expression.cpp:3177:import_operation$4233
+  wire width 12 $auto$expression.cpp:3250:import_operation$4233
   attribute \src "dut.sv:630.17-630.77"
   wire $eq$dut.sv:630$4235_Y
   wire $auto$process.cpp:74:build_check_cell$4237
@@ -3338,12 +3338,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$29
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$32
+  cell $pos $auto$expression.cpp:3253:import_operation$32
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b00
-    connect \Y $auto$expression.cpp:3177:import_operation$31
+    connect \Y $auto$expression.cpp:3250:import_operation$31
   end
   attribute \src "dut.sv:38.17-38.35"
   cell $eq $eq$dut.sv:38$34
@@ -3352,7 +3352,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$31
+    connect \A $auto$expression.cpp:3250:import_operation$31
     connect \B 1'0
     connect \Y $eq$dut.sv:38$33_Y
   end
@@ -3371,12 +3371,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$35
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$38
+  cell $pos $auto$expression.cpp:3253:import_operation$38
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b01
-    connect \Y $auto$expression.cpp:3177:import_operation$37
+    connect \Y $auto$expression.cpp:3250:import_operation$37
   end
   attribute \src "dut.sv:39.17-39.35"
   cell $eq $eq$dut.sv:39$40
@@ -3385,7 +3385,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$37
+    connect \A $auto$expression.cpp:3250:import_operation$37
     connect \B 1'1
     connect \Y $eq$dut.sv:39$39_Y
   end
@@ -3404,12 +3404,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$41
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$44
+  cell $pos $auto$expression.cpp:3253:import_operation$44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b10
-    connect \Y $auto$expression.cpp:3177:import_operation$43
+    connect \Y $auto$expression.cpp:3250:import_operation$43
   end
   attribute \src "dut.sv:40.17-40.35"
   cell $eq $eq$dut.sv:40$46
@@ -3418,7 +3418,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$43
+    connect \A $auto$expression.cpp:3250:import_operation$43
     connect \B 1'0
     connect \Y $eq$dut.sv:40$45_Y
   end
@@ -3437,12 +3437,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$47
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$50
+  cell $pos $auto$expression.cpp:3253:import_operation$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b11
-    connect \Y $auto$expression.cpp:3177:import_operation$49
+    connect \Y $auto$expression.cpp:3250:import_operation$49
   end
   attribute \src "dut.sv:41.17-41.35"
   cell $eq $eq$dut.sv:41$52
@@ -3451,7 +3451,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$49
+    connect \A $auto$expression.cpp:3250:import_operation$49
     connect \B 1'1
     connect \Y $eq$dut.sv:41$51_Y
   end
@@ -3470,12 +3470,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$53
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$56
+  cell $pos $auto$expression.cpp:3253:import_operation$56
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb00
-    connect \Y $auto$expression.cpp:3177:import_operation$55
+    connect \Y $auto$expression.cpp:3250:import_operation$55
   end
   attribute \src "dut.sv:42.17-42.35"
   cell $eq $eq$dut.sv:42$58
@@ -3484,7 +3484,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$55
+    connect \A $auto$expression.cpp:3250:import_operation$55
     connect \B 1'0
     connect \Y $eq$dut.sv:42$57_Y
   end
@@ -3503,12 +3503,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$59
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$62
+  cell $pos $auto$expression.cpp:3253:import_operation$62
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb01
-    connect \Y $auto$expression.cpp:3177:import_operation$61
+    connect \Y $auto$expression.cpp:3250:import_operation$61
   end
   attribute \src "dut.sv:43.17-43.35"
   cell $eq $eq$dut.sv:43$64
@@ -3517,7 +3517,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$61
+    connect \A $auto$expression.cpp:3250:import_operation$61
     connect \B 1'1
     connect \Y $eq$dut.sv:43$63_Y
   end
@@ -3536,12 +3536,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$65
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$68
+  cell $pos $auto$expression.cpp:3253:import_operation$68
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb10
-    connect \Y $auto$expression.cpp:3177:import_operation$67
+    connect \Y $auto$expression.cpp:3250:import_operation$67
   end
   attribute \src "dut.sv:44.17-44.35"
   cell $eq $eq$dut.sv:44$70
@@ -3550,7 +3550,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$67
+    connect \A $auto$expression.cpp:3250:import_operation$67
     connect \B 1'0
     connect \Y $eq$dut.sv:44$69_Y
   end
@@ -3569,12 +3569,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$71
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$74
+  cell $pos $auto$expression.cpp:3253:import_operation$74
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb11
-    connect \Y $auto$expression.cpp:3177:import_operation$73
+    connect \Y $auto$expression.cpp:3250:import_operation$73
   end
   attribute \src "dut.sv:45.17-45.35"
   cell $eq $eq$dut.sv:45$76
@@ -3583,7 +3583,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$73
+    connect \A $auto$expression.cpp:3250:import_operation$73
     connect \B 1'1
     connect \Y $eq$dut.sv:45$75_Y
   end
@@ -3706,12 +3706,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$93
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$96
+  cell $pos $auto$expression.cpp:3253:import_operation$96
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b00
-    connect \Y $auto$expression.cpp:3177:import_operation$95
+    connect \Y $auto$expression.cpp:3250:import_operation$95
   end
   attribute \src "dut.sv:51.17-51.41"
   cell $eq $eq$dut.sv:51$98
@@ -3720,7 +3720,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$95
+    connect \A $auto$expression.cpp:3250:import_operation$95
     connect \B 1'0
     connect \Y $eq$dut.sv:51$97_Y
   end
@@ -3739,12 +3739,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$99
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$102
+  cell $pos $auto$expression.cpp:3253:import_operation$102
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b01
-    connect \Y $auto$expression.cpp:3177:import_operation$101
+    connect \Y $auto$expression.cpp:3250:import_operation$101
   end
   attribute \src "dut.sv:52.17-52.41"
   cell $eq $eq$dut.sv:52$104
@@ -3753,7 +3753,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$101
+    connect \A $auto$expression.cpp:3250:import_operation$101
     connect \B 1'1
     connect \Y $eq$dut.sv:52$103_Y
   end
@@ -3772,12 +3772,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$105
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$108
+  cell $pos $auto$expression.cpp:3253:import_operation$108
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b10
-    connect \Y $auto$expression.cpp:3177:import_operation$107
+    connect \Y $auto$expression.cpp:3250:import_operation$107
   end
   attribute \src "dut.sv:53.17-53.41"
   cell $eq $eq$dut.sv:53$110
@@ -3786,7 +3786,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$107
+    connect \A $auto$expression.cpp:3250:import_operation$107
     connect \B 1'0
     connect \Y $eq$dut.sv:53$109_Y
   end
@@ -3805,12 +3805,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$111
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$114
+  cell $pos $auto$expression.cpp:3253:import_operation$114
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2b11
-    connect \Y $auto$expression.cpp:3177:import_operation$113
+    connect \Y $auto$expression.cpp:3250:import_operation$113
   end
   attribute \src "dut.sv:54.17-54.41"
   cell $eq $eq$dut.sv:54$116
@@ -3819,7 +3819,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$113
+    connect \A $auto$expression.cpp:3250:import_operation$113
     connect \B 1'1
     connect \Y $eq$dut.sv:54$115_Y
   end
@@ -3838,12 +3838,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$117
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$120
+  cell $pos $auto$expression.cpp:3253:import_operation$120
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb00
-    connect \Y $auto$expression.cpp:3177:import_operation$119
+    connect \Y $auto$expression.cpp:3250:import_operation$119
   end
   attribute \src "dut.sv:55.17-55.41"
   cell $eq $eq$dut.sv:55$122
@@ -3852,7 +3852,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$119
+    connect \A $auto$expression.cpp:3250:import_operation$119
     connect \B 1'0
     connect \Y $eq$dut.sv:55$121_Y
   end
@@ -3871,12 +3871,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$123
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$126
+  cell $pos $auto$expression.cpp:3253:import_operation$126
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb01
-    connect \Y $auto$expression.cpp:3177:import_operation$125
+    connect \Y $auto$expression.cpp:3250:import_operation$125
   end
   attribute \src "dut.sv:56.17-56.41"
   cell $eq $eq$dut.sv:56$128
@@ -3885,7 +3885,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$125
+    connect \A $auto$expression.cpp:3250:import_operation$125
     connect \B 1'1
     connect \Y $eq$dut.sv:56$127_Y
   end
@@ -3904,12 +3904,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$129
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$132
+  cell $pos $auto$expression.cpp:3253:import_operation$132
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb10
-    connect \Y $auto$expression.cpp:3177:import_operation$131
+    connect \Y $auto$expression.cpp:3250:import_operation$131
   end
   attribute \src "dut.sv:57.17-57.41"
   cell $eq $eq$dut.sv:57$134
@@ -3918,7 +3918,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$131
+    connect \A $auto$expression.cpp:3250:import_operation$131
     connect \B 1'0
     connect \Y $eq$dut.sv:57$133_Y
   end
@@ -3937,12 +3937,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$135
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$138
+  cell $pos $auto$expression.cpp:3253:import_operation$138
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
     connect \A \L2sb11
-    connect \Y $auto$expression.cpp:3177:import_operation$137
+    connect \Y $auto$expression.cpp:3250:import_operation$137
   end
   attribute \src "dut.sv:58.17-58.41"
   cell $eq $eq$dut.sv:58$140
@@ -3951,7 +3951,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$137
+    connect \A $auto$expression.cpp:3250:import_operation$137
     connect \B 1'1
     connect \Y $eq$dut.sv:58$139_Y
   end
@@ -3970,12 +3970,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$141
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$144
+  cell $pos $auto$expression.cpp:3253:import_operation$144
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1b0
-    connect \Y $auto$expression.cpp:3177:import_operation$143
+    connect \Y $auto$expression.cpp:3250:import_operation$143
   end
   attribute \src "dut.sv:60.17-60.36"
   cell $eq $eq$dut.sv:60$146
@@ -3984,7 +3984,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$143
+    connect \A $auto$expression.cpp:3250:import_operation$143
     connect \B 2'00
     connect \Y $eq$dut.sv:60$145_Y
   end
@@ -4003,12 +4003,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$147
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$150
+  cell $pos $auto$expression.cpp:3253:import_operation$150
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1b1
-    connect \Y $auto$expression.cpp:3177:import_operation$149
+    connect \Y $auto$expression.cpp:3250:import_operation$149
   end
   attribute \src "dut.sv:61.17-61.36"
   cell $eq $eq$dut.sv:61$152
@@ -4017,7 +4017,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$149
+    connect \A $auto$expression.cpp:3250:import_operation$149
     connect \B 2'01
     connect \Y $eq$dut.sv:61$151_Y
   end
@@ -4036,12 +4036,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$153
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$156
+  cell $pos $auto$expression.cpp:3253:import_operation$156
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1sb0
-    connect \Y $auto$expression.cpp:3177:import_operation$155
+    connect \Y $auto$expression.cpp:3250:import_operation$155
   end
   attribute \src "dut.sv:62.17-62.36"
   cell $eq $eq$dut.sv:62$158
@@ -4050,7 +4050,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$155
+    connect \A $auto$expression.cpp:3250:import_operation$155
     connect \B 2'00
     connect \Y $eq$dut.sv:62$157_Y
   end
@@ -4069,12 +4069,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$159
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$162
+  cell $pos $auto$expression.cpp:3253:import_operation$162
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1sb1
-    connect \Y $auto$expression.cpp:3177:import_operation$161
+    connect \Y $auto$expression.cpp:3250:import_operation$161
   end
   attribute \src "dut.sv:63.17-63.36"
   cell $eq $eq$dut.sv:63$164
@@ -4083,7 +4083,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$161
+    connect \A $auto$expression.cpp:3250:import_operation$161
     connect \B 2'11
     connect \Y $eq$dut.sv:63$163_Y
   end
@@ -4310,12 +4310,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$197
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$200
+  cell $pos $auto$expression.cpp:3253:import_operation$200
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1b0
-    connect \Y $auto$expression.cpp:3177:import_operation$199
+    connect \Y $auto$expression.cpp:3250:import_operation$199
   end
   attribute \src "dut.sv:73.17-73.42"
   cell $eq $eq$dut.sv:73$202
@@ -4324,7 +4324,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$199
+    connect \A $auto$expression.cpp:3250:import_operation$199
     connect \B 2'00
     connect \Y $eq$dut.sv:73$201_Y
   end
@@ -4343,12 +4343,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$203
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$206
+  cell $pos $auto$expression.cpp:3253:import_operation$206
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1b1
-    connect \Y $auto$expression.cpp:3177:import_operation$205
+    connect \Y $auto$expression.cpp:3250:import_operation$205
   end
   attribute \src "dut.sv:74.17-74.42"
   cell $eq $eq$dut.sv:74$208
@@ -4357,7 +4357,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$205
+    connect \A $auto$expression.cpp:3250:import_operation$205
     connect \B 2'01
     connect \Y $eq$dut.sv:74$207_Y
   end
@@ -4376,12 +4376,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$209
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$212
+  cell $pos $auto$expression.cpp:3253:import_operation$212
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1sb0
-    connect \Y $auto$expression.cpp:3177:import_operation$211
+    connect \Y $auto$expression.cpp:3250:import_operation$211
   end
   attribute \src "dut.sv:75.17-75.42"
   cell $eq $eq$dut.sv:75$214
@@ -4390,7 +4390,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$211
+    connect \A $auto$expression.cpp:3250:import_operation$211
     connect \B 2'00
     connect \Y $eq$dut.sv:75$213_Y
   end
@@ -4409,12 +4409,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$215
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$218
+  cell $pos $auto$expression.cpp:3253:import_operation$218
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 2
     connect \A \L1sb1
-    connect \Y $auto$expression.cpp:3177:import_operation$217
+    connect \Y $auto$expression.cpp:3250:import_operation$217
   end
   attribute \src "dut.sv:76.17-76.42"
   cell $eq $eq$dut.sv:76$220
@@ -4423,7 +4423,7 @@ module \top
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$217
+    connect \A $auto$expression.cpp:3250:import_operation$217
     connect \B 2'11
     connect \Y $eq$dut.sv:76$219_Y
   end
@@ -4650,12 +4650,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$253
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$256
+  cell $pos $auto$expression.cpp:3253:import_operation$256
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1b0
-    connect \Y $auto$expression.cpp:3177:import_operation$255
+    connect \Y $auto$expression.cpp:3250:import_operation$255
   end
   attribute \src "dut.sv:86.17-86.37"
   cell $eq $eq$dut.sv:86$258
@@ -4664,7 +4664,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$255
+    connect \A $auto$expression.cpp:3250:import_operation$255
     connect \B 3'000
     connect \Y $eq$dut.sv:86$257_Y
   end
@@ -4683,12 +4683,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$259
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$262
+  cell $pos $auto$expression.cpp:3253:import_operation$262
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1b1
-    connect \Y $auto$expression.cpp:3177:import_operation$261
+    connect \Y $auto$expression.cpp:3250:import_operation$261
   end
   attribute \src "dut.sv:87.17-87.37"
   cell $eq $eq$dut.sv:87$264
@@ -4697,7 +4697,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$261
+    connect \A $auto$expression.cpp:3250:import_operation$261
     connect \B 3'001
     connect \Y $eq$dut.sv:87$263_Y
   end
@@ -4716,12 +4716,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$265
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$268
+  cell $pos $auto$expression.cpp:3253:import_operation$268
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1sb0
-    connect \Y $auto$expression.cpp:3177:import_operation$267
+    connect \Y $auto$expression.cpp:3250:import_operation$267
   end
   attribute \src "dut.sv:88.17-88.37"
   cell $eq $eq$dut.sv:88$270
@@ -4730,7 +4730,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$267
+    connect \A $auto$expression.cpp:3250:import_operation$267
     connect \B 3'000
     connect \Y $eq$dut.sv:88$269_Y
   end
@@ -4749,12 +4749,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$271
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$274
+  cell $pos $auto$expression.cpp:3253:import_operation$274
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1sb1
-    connect \Y $auto$expression.cpp:3177:import_operation$273
+    connect \Y $auto$expression.cpp:3250:import_operation$273
   end
   attribute \src "dut.sv:89.17-89.37"
   cell $eq $eq$dut.sv:89$276
@@ -4763,7 +4763,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$273
+    connect \A $auto$expression.cpp:3250:import_operation$273
     connect \B 3'111
     connect \Y $eq$dut.sv:89$275_Y
   end
@@ -4782,12 +4782,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$277
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$280
+  cell $pos $auto$expression.cpp:3253:import_operation$280
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b00
-    connect \Y $auto$expression.cpp:3177:import_operation$279
+    connect \Y $auto$expression.cpp:3250:import_operation$279
   end
   attribute \src "dut.sv:90.17-90.37"
   cell $eq $eq$dut.sv:90$282
@@ -4796,7 +4796,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$279
+    connect \A $auto$expression.cpp:3250:import_operation$279
     connect \B 3'000
     connect \Y $eq$dut.sv:90$281_Y
   end
@@ -4815,12 +4815,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$283
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$286
+  cell $pos $auto$expression.cpp:3253:import_operation$286
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b01
-    connect \Y $auto$expression.cpp:3177:import_operation$285
+    connect \Y $auto$expression.cpp:3250:import_operation$285
   end
   attribute \src "dut.sv:91.17-91.37"
   cell $eq $eq$dut.sv:91$288
@@ -4829,7 +4829,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$285
+    connect \A $auto$expression.cpp:3250:import_operation$285
     connect \B 3'001
     connect \Y $eq$dut.sv:91$287_Y
   end
@@ -4848,12 +4848,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$289
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$292
+  cell $pos $auto$expression.cpp:3253:import_operation$292
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b10
-    connect \Y $auto$expression.cpp:3177:import_operation$291
+    connect \Y $auto$expression.cpp:3250:import_operation$291
   end
   attribute \src "dut.sv:92.17-92.37"
   cell $eq $eq$dut.sv:92$294
@@ -4862,7 +4862,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$291
+    connect \A $auto$expression.cpp:3250:import_operation$291
     connect \B 3'010
     connect \Y $eq$dut.sv:92$293_Y
   end
@@ -4881,12 +4881,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$295
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$298
+  cell $pos $auto$expression.cpp:3253:import_operation$298
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b11
-    connect \Y $auto$expression.cpp:3177:import_operation$297
+    connect \Y $auto$expression.cpp:3250:import_operation$297
   end
   attribute \src "dut.sv:93.17-93.37"
   cell $eq $eq$dut.sv:93$300
@@ -4895,7 +4895,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$297
+    connect \A $auto$expression.cpp:3250:import_operation$297
     connect \B 3'011
     connect \Y $eq$dut.sv:93$299_Y
   end
@@ -4914,12 +4914,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$301
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$304
+  cell $pos $auto$expression.cpp:3253:import_operation$304
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb00
-    connect \Y $auto$expression.cpp:3177:import_operation$303
+    connect \Y $auto$expression.cpp:3250:import_operation$303
   end
   attribute \src "dut.sv:94.17-94.37"
   cell $eq $eq$dut.sv:94$306
@@ -4928,7 +4928,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$303
+    connect \A $auto$expression.cpp:3250:import_operation$303
     connect \B 3'000
     connect \Y $eq$dut.sv:94$305_Y
   end
@@ -4947,12 +4947,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$307
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$310
+  cell $pos $auto$expression.cpp:3253:import_operation$310
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb01
-    connect \Y $auto$expression.cpp:3177:import_operation$309
+    connect \Y $auto$expression.cpp:3250:import_operation$309
   end
   attribute \src "dut.sv:95.17-95.37"
   cell $eq $eq$dut.sv:95$312
@@ -4961,7 +4961,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$309
+    connect \A $auto$expression.cpp:3250:import_operation$309
     connect \B 3'001
     connect \Y $eq$dut.sv:95$311_Y
   end
@@ -4980,12 +4980,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$313
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$316
+  cell $pos $auto$expression.cpp:3253:import_operation$316
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb10
-    connect \Y $auto$expression.cpp:3177:import_operation$315
+    connect \Y $auto$expression.cpp:3250:import_operation$315
   end
   attribute \src "dut.sv:96.17-96.37"
   cell $eq $eq$dut.sv:96$318
@@ -4994,7 +4994,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$315
+    connect \A $auto$expression.cpp:3250:import_operation$315
     connect \B 3'110
     connect \Y $eq$dut.sv:96$317_Y
   end
@@ -5013,12 +5013,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$319
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$322
+  cell $pos $auto$expression.cpp:3253:import_operation$322
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb11
-    connect \Y $auto$expression.cpp:3177:import_operation$321
+    connect \Y $auto$expression.cpp:3250:import_operation$321
   end
   attribute \src "dut.sv:97.17-97.37"
   cell $eq $eq$dut.sv:97$324
@@ -5027,7 +5027,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$321
+    connect \A $auto$expression.cpp:3250:import_operation$321
     connect \B 3'111
     connect \Y $eq$dut.sv:97$323_Y
   end
@@ -5046,12 +5046,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$325
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$328
+  cell $pos $auto$expression.cpp:3253:import_operation$328
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1b0
-    connect \Y $auto$expression.cpp:3177:import_operation$327
+    connect \Y $auto$expression.cpp:3250:import_operation$327
   end
   attribute \src "dut.sv:99.17-99.43"
   cell $eq $eq$dut.sv:99$330
@@ -5060,7 +5060,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$327
+    connect \A $auto$expression.cpp:3250:import_operation$327
     connect \B 3'000
     connect \Y $eq$dut.sv:99$329_Y
   end
@@ -5079,12 +5079,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$331
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$334
+  cell $pos $auto$expression.cpp:3253:import_operation$334
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1b1
-    connect \Y $auto$expression.cpp:3177:import_operation$333
+    connect \Y $auto$expression.cpp:3250:import_operation$333
   end
   attribute \src "dut.sv:100.17-100.43"
   cell $eq $eq$dut.sv:100$336
@@ -5093,7 +5093,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$333
+    connect \A $auto$expression.cpp:3250:import_operation$333
     connect \B 3'001
     connect \Y $eq$dut.sv:100$335_Y
   end
@@ -5112,12 +5112,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$337
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$340
+  cell $pos $auto$expression.cpp:3253:import_operation$340
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1sb0
-    connect \Y $auto$expression.cpp:3177:import_operation$339
+    connect \Y $auto$expression.cpp:3250:import_operation$339
   end
   attribute \src "dut.sv:101.17-101.43"
   cell $eq $eq$dut.sv:101$342
@@ -5126,7 +5126,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$339
+    connect \A $auto$expression.cpp:3250:import_operation$339
     connect \B 3'000
     connect \Y $eq$dut.sv:101$341_Y
   end
@@ -5145,12 +5145,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$343
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$346
+  cell $pos $auto$expression.cpp:3253:import_operation$346
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A \L1sb1
-    connect \Y $auto$expression.cpp:3177:import_operation$345
+    connect \Y $auto$expression.cpp:3250:import_operation$345
   end
   attribute \src "dut.sv:102.17-102.43"
   cell $eq $eq$dut.sv:102$348
@@ -5159,7 +5159,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$345
+    connect \A $auto$expression.cpp:3250:import_operation$345
     connect \B 3'111
     connect \Y $eq$dut.sv:102$347_Y
   end
@@ -5178,12 +5178,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$349
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$352
+  cell $pos $auto$expression.cpp:3253:import_operation$352
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b00
-    connect \Y $auto$expression.cpp:3177:import_operation$351
+    connect \Y $auto$expression.cpp:3250:import_operation$351
   end
   attribute \src "dut.sv:103.17-103.43"
   cell $eq $eq$dut.sv:103$354
@@ -5192,7 +5192,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$351
+    connect \A $auto$expression.cpp:3250:import_operation$351
     connect \B 3'000
     connect \Y $eq$dut.sv:103$353_Y
   end
@@ -5211,12 +5211,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$355
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$358
+  cell $pos $auto$expression.cpp:3253:import_operation$358
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b01
-    connect \Y $auto$expression.cpp:3177:import_operation$357
+    connect \Y $auto$expression.cpp:3250:import_operation$357
   end
   attribute \src "dut.sv:104.17-104.43"
   cell $eq $eq$dut.sv:104$360
@@ -5225,7 +5225,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$357
+    connect \A $auto$expression.cpp:3250:import_operation$357
     connect \B 3'001
     connect \Y $eq$dut.sv:104$359_Y
   end
@@ -5244,12 +5244,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$361
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$364
+  cell $pos $auto$expression.cpp:3253:import_operation$364
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b10
-    connect \Y $auto$expression.cpp:3177:import_operation$363
+    connect \Y $auto$expression.cpp:3250:import_operation$363
   end
   attribute \src "dut.sv:105.17-105.43"
   cell $eq $eq$dut.sv:105$366
@@ -5258,7 +5258,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$363
+    connect \A $auto$expression.cpp:3250:import_operation$363
     connect \B 3'010
     connect \Y $eq$dut.sv:105$365_Y
   end
@@ -5277,12 +5277,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$367
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$370
+  cell $pos $auto$expression.cpp:3253:import_operation$370
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2b11
-    connect \Y $auto$expression.cpp:3177:import_operation$369
+    connect \Y $auto$expression.cpp:3250:import_operation$369
   end
   attribute \src "dut.sv:106.17-106.43"
   cell $eq $eq$dut.sv:106$372
@@ -5291,7 +5291,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$369
+    connect \A $auto$expression.cpp:3250:import_operation$369
     connect \B 3'011
     connect \Y $eq$dut.sv:106$371_Y
   end
@@ -5310,12 +5310,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$373
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$376
+  cell $pos $auto$expression.cpp:3253:import_operation$376
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb00
-    connect \Y $auto$expression.cpp:3177:import_operation$375
+    connect \Y $auto$expression.cpp:3250:import_operation$375
   end
   attribute \src "dut.sv:107.17-107.43"
   cell $eq $eq$dut.sv:107$378
@@ -5324,7 +5324,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$375
+    connect \A $auto$expression.cpp:3250:import_operation$375
     connect \B 3'000
     connect \Y $eq$dut.sv:107$377_Y
   end
@@ -5343,12 +5343,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$379
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$382
+  cell $pos $auto$expression.cpp:3253:import_operation$382
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb01
-    connect \Y $auto$expression.cpp:3177:import_operation$381
+    connect \Y $auto$expression.cpp:3250:import_operation$381
   end
   attribute \src "dut.sv:108.17-108.43"
   cell $eq $eq$dut.sv:108$384
@@ -5357,7 +5357,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$381
+    connect \A $auto$expression.cpp:3250:import_operation$381
     connect \B 3'001
     connect \Y $eq$dut.sv:108$383_Y
   end
@@ -5376,12 +5376,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$385
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$388
+  cell $pos $auto$expression.cpp:3253:import_operation$388
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb10
-    connect \Y $auto$expression.cpp:3177:import_operation$387
+    connect \Y $auto$expression.cpp:3250:import_operation$387
   end
   attribute \src "dut.sv:109.17-109.43"
   cell $eq $eq$dut.sv:109$390
@@ -5390,7 +5390,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$387
+    connect \A $auto$expression.cpp:3250:import_operation$387
     connect \B 3'110
     connect \Y $eq$dut.sv:109$389_Y
   end
@@ -5409,12 +5409,12 @@ module \top
     connect \EN $auto$process.cpp:74:build_check_cell$391
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$394
+  cell $pos $auto$expression.cpp:3253:import_operation$394
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A \L2sb11
-    connect \Y $auto$expression.cpp:3177:import_operation$393
+    connect \Y $auto$expression.cpp:3250:import_operation$393
   end
   attribute \src "dut.sv:110.17-110.43"
   cell $eq $eq$dut.sv:110$396
@@ -5423,7 +5423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$393
+    connect \A $auto$expression.cpp:3250:import_operation$393
     connect \B 3'111
     connect \Y $eq$dut.sv:110$395_Y
   end
@@ -5452,12 +5452,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$400
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$402
+  cell $pos $auto$expression.cpp:3253:import_operation$402
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$400
-    connect \Y $auto$expression.cpp:3177:import_operation$401
+    connect \Y $auto$expression.cpp:3250:import_operation$401
   end
   attribute \src "dut.sv:112.17-112.42"
   cell $eq $eq$dut.sv:112$404
@@ -5466,7 +5466,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$401
+    connect \A $auto$expression.cpp:3250:import_operation$401
     connect \B 3'111
     connect \Y $eq$dut.sv:112$403_Y
   end
@@ -5495,12 +5495,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$408
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$410
+  cell $pos $auto$expression.cpp:3253:import_operation$410
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$408
-    connect \Y $auto$expression.cpp:3177:import_operation$409
+    connect \Y $auto$expression.cpp:3250:import_operation$409
   end
   attribute \src "dut.sv:113.17-113.42"
   cell $eq $eq$dut.sv:113$412
@@ -5509,7 +5509,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$409
+    connect \A $auto$expression.cpp:3250:import_operation$409
     connect \B 3'111
     connect \Y $eq$dut.sv:113$411_Y
   end
@@ -5538,12 +5538,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$416
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$418
+  cell $pos $auto$expression.cpp:3253:import_operation$418
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$416
-    connect \Y $auto$expression.cpp:3177:import_operation$417
+    connect \Y $auto$expression.cpp:3250:import_operation$417
   end
   attribute \src "dut.sv:114.17-114.42"
   cell $eq $eq$dut.sv:114$420
@@ -5552,7 +5552,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$417
+    connect \A $auto$expression.cpp:3250:import_operation$417
     connect \B 3'111
     connect \Y $eq$dut.sv:114$419_Y
   end
@@ -5581,12 +5581,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$424
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$426
+  cell $pos $auto$expression.cpp:3253:import_operation$426
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$424
-    connect \Y $auto$expression.cpp:3177:import_operation$425
+    connect \Y $auto$expression.cpp:3250:import_operation$425
   end
   attribute \src "dut.sv:115.17-115.42"
   cell $eq $eq$dut.sv:115$428
@@ -5595,7 +5595,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$425
+    connect \A $auto$expression.cpp:3250:import_operation$425
     connect \B 3'111
     connect \Y $eq$dut.sv:115$427_Y
   end
@@ -5624,12 +5624,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$432
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$434
+  cell $pos $auto$expression.cpp:3253:import_operation$434
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$432
-    connect \Y $auto$expression.cpp:3177:import_operation$433
+    connect \Y $auto$expression.cpp:3250:import_operation$433
   end
   attribute \src "dut.sv:116.17-116.42"
   cell $eq $eq$dut.sv:116$436
@@ -5638,7 +5638,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$433
+    connect \A $auto$expression.cpp:3250:import_operation$433
     connect \B 3'111
     connect \Y $eq$dut.sv:116$435_Y
   end
@@ -5667,12 +5667,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$440
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$442
+  cell $pos $auto$expression.cpp:3253:import_operation$442
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$440
-    connect \Y $auto$expression.cpp:3177:import_operation$441
+    connect \Y $auto$expression.cpp:3250:import_operation$441
   end
   attribute \src "dut.sv:117.17-117.42"
   cell $eq $eq$dut.sv:117$444
@@ -5681,7 +5681,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$441
+    connect \A $auto$expression.cpp:3250:import_operation$441
     connect \B 3'111
     connect \Y $eq$dut.sv:117$443_Y
   end
@@ -5710,12 +5710,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$448
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$450
+  cell $pos $auto$expression.cpp:3253:import_operation$450
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$448
-    connect \Y $auto$expression.cpp:3177:import_operation$449
+    connect \Y $auto$expression.cpp:3250:import_operation$449
   end
   attribute \src "dut.sv:118.17-118.42"
   cell $eq $eq$dut.sv:118$452
@@ -5724,7 +5724,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$449
+    connect \A $auto$expression.cpp:3250:import_operation$449
     connect \B 3'111
     connect \Y $eq$dut.sv:118$451_Y
   end
@@ -5753,12 +5753,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$456
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$458
+  cell $pos $auto$expression.cpp:3253:import_operation$458
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$456
-    connect \Y $auto$expression.cpp:3177:import_operation$457
+    connect \Y $auto$expression.cpp:3250:import_operation$457
   end
   attribute \src "dut.sv:119.17-119.42"
   cell $eq $eq$dut.sv:119$460
@@ -5767,7 +5767,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$457
+    connect \A $auto$expression.cpp:3250:import_operation$457
     connect \B 3'111
     connect \Y $eq$dut.sv:119$459_Y
   end
@@ -5796,12 +5796,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$464
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$466
+  cell $pos $auto$expression.cpp:3253:import_operation$466
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$464
-    connect \Y $auto$expression.cpp:3177:import_operation$465
+    connect \Y $auto$expression.cpp:3250:import_operation$465
   end
   attribute \src "dut.sv:120.17-120.42"
   cell $eq $eq$dut.sv:120$468
@@ -5810,7 +5810,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$465
+    connect \A $auto$expression.cpp:3250:import_operation$465
     connect \B 3'111
     connect \Y $eq$dut.sv:120$467_Y
   end
@@ -5839,12 +5839,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$472
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$474
+  cell $pos $auto$expression.cpp:3253:import_operation$474
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$472
-    connect \Y $auto$expression.cpp:3177:import_operation$473
+    connect \Y $auto$expression.cpp:3250:import_operation$473
   end
   attribute \src "dut.sv:121.17-121.42"
   cell $eq $eq$dut.sv:121$476
@@ -5853,7 +5853,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$473
+    connect \A $auto$expression.cpp:3250:import_operation$473
     connect \B 3'111
     connect \Y $eq$dut.sv:121$475_Y
   end
@@ -5882,12 +5882,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$480
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$482
+  cell $pos $auto$expression.cpp:3253:import_operation$482
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$480
-    connect \Y $auto$expression.cpp:3177:import_operation$481
+    connect \Y $auto$expression.cpp:3250:import_operation$481
   end
   attribute \src "dut.sv:122.17-122.42"
   cell $eq $eq$dut.sv:122$484
@@ -5896,7 +5896,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$481
+    connect \A $auto$expression.cpp:3250:import_operation$481
     connect \B 3'111
     connect \Y $eq$dut.sv:122$483_Y
   end
@@ -5925,12 +5925,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$488
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$490
+  cell $pos $auto$expression.cpp:3253:import_operation$490
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$488
-    connect \Y $auto$expression.cpp:3177:import_operation$489
+    connect \Y $auto$expression.cpp:3250:import_operation$489
   end
   attribute \src "dut.sv:123.17-123.42"
   cell $eq $eq$dut.sv:123$492
@@ -5939,7 +5939,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$489
+    connect \A $auto$expression.cpp:3250:import_operation$489
     connect \B 3'111
     connect \Y $eq$dut.sv:123$491_Y
   end
@@ -5968,12 +5968,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$496
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$498
+  cell $pos $auto$expression.cpp:3253:import_operation$498
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$496
-    connect \Y $auto$expression.cpp:3177:import_operation$497
+    connect \Y $auto$expression.cpp:3250:import_operation$497
   end
   attribute \src "dut.sv:125.17-125.48"
   cell $eq $eq$dut.sv:125$500
@@ -5982,7 +5982,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$497
+    connect \A $auto$expression.cpp:3250:import_operation$497
     connect \B 3'111
     connect \Y $eq$dut.sv:125$499_Y
   end
@@ -6011,12 +6011,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$504
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$506
+  cell $pos $auto$expression.cpp:3253:import_operation$506
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$504
-    connect \Y $auto$expression.cpp:3177:import_operation$505
+    connect \Y $auto$expression.cpp:3250:import_operation$505
   end
   attribute \src "dut.sv:126.17-126.48"
   cell $eq $eq$dut.sv:126$508
@@ -6025,7 +6025,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$505
+    connect \A $auto$expression.cpp:3250:import_operation$505
     connect \B 3'111
     connect \Y $eq$dut.sv:126$507_Y
   end
@@ -6054,12 +6054,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$512
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$514
+  cell $pos $auto$expression.cpp:3253:import_operation$514
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$512
-    connect \Y $auto$expression.cpp:3177:import_operation$513
+    connect \Y $auto$expression.cpp:3250:import_operation$513
   end
   attribute \src "dut.sv:127.17-127.48"
   cell $eq $eq$dut.sv:127$516
@@ -6068,7 +6068,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$513
+    connect \A $auto$expression.cpp:3250:import_operation$513
     connect \B 3'111
     connect \Y $eq$dut.sv:127$515_Y
   end
@@ -6097,12 +6097,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$520
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$522
+  cell $pos $auto$expression.cpp:3253:import_operation$522
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$520
-    connect \Y $auto$expression.cpp:3177:import_operation$521
+    connect \Y $auto$expression.cpp:3250:import_operation$521
   end
   attribute \src "dut.sv:128.17-128.48"
   cell $eq $eq$dut.sv:128$524
@@ -6111,7 +6111,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$521
+    connect \A $auto$expression.cpp:3250:import_operation$521
     connect \B 3'111
     connect \Y $eq$dut.sv:128$523_Y
   end
@@ -6140,12 +6140,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$528
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$530
+  cell $pos $auto$expression.cpp:3253:import_operation$530
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$528
-    connect \Y $auto$expression.cpp:3177:import_operation$529
+    connect \Y $auto$expression.cpp:3250:import_operation$529
   end
   attribute \src "dut.sv:129.17-129.48"
   cell $eq $eq$dut.sv:129$532
@@ -6154,7 +6154,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$529
+    connect \A $auto$expression.cpp:3250:import_operation$529
     connect \B 3'111
     connect \Y $eq$dut.sv:129$531_Y
   end
@@ -6183,12 +6183,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$536
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$538
+  cell $pos $auto$expression.cpp:3253:import_operation$538
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$536
-    connect \Y $auto$expression.cpp:3177:import_operation$537
+    connect \Y $auto$expression.cpp:3250:import_operation$537
   end
   attribute \src "dut.sv:130.17-130.48"
   cell $eq $eq$dut.sv:130$540
@@ -6197,7 +6197,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$537
+    connect \A $auto$expression.cpp:3250:import_operation$537
     connect \B 3'111
     connect \Y $eq$dut.sv:130$539_Y
   end
@@ -6226,12 +6226,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$544
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$546
+  cell $pos $auto$expression.cpp:3253:import_operation$546
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$544
-    connect \Y $auto$expression.cpp:3177:import_operation$545
+    connect \Y $auto$expression.cpp:3250:import_operation$545
   end
   attribute \src "dut.sv:131.17-131.48"
   cell $eq $eq$dut.sv:131$548
@@ -6240,7 +6240,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$545
+    connect \A $auto$expression.cpp:3250:import_operation$545
     connect \B 3'111
     connect \Y $eq$dut.sv:131$547_Y
   end
@@ -6269,12 +6269,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$552
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$554
+  cell $pos $auto$expression.cpp:3253:import_operation$554
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$552
-    connect \Y $auto$expression.cpp:3177:import_operation$553
+    connect \Y $auto$expression.cpp:3250:import_operation$553
   end
   attribute \src "dut.sv:132.17-132.48"
   cell $eq $eq$dut.sv:132$556
@@ -6283,7 +6283,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$553
+    connect \A $auto$expression.cpp:3250:import_operation$553
     connect \B 3'111
     connect \Y $eq$dut.sv:132$555_Y
   end
@@ -6312,12 +6312,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$560
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$562
+  cell $pos $auto$expression.cpp:3253:import_operation$562
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$560
-    connect \Y $auto$expression.cpp:3177:import_operation$561
+    connect \Y $auto$expression.cpp:3250:import_operation$561
   end
   attribute \src "dut.sv:133.17-133.48"
   cell $eq $eq$dut.sv:133$564
@@ -6326,7 +6326,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$561
+    connect \A $auto$expression.cpp:3250:import_operation$561
     connect \B 3'111
     connect \Y $eq$dut.sv:133$563_Y
   end
@@ -6355,12 +6355,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$568
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$570
+  cell $pos $auto$expression.cpp:3253:import_operation$570
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$568
-    connect \Y $auto$expression.cpp:3177:import_operation$569
+    connect \Y $auto$expression.cpp:3250:import_operation$569
   end
   attribute \src "dut.sv:134.17-134.48"
   cell $eq $eq$dut.sv:134$572
@@ -6369,7 +6369,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$569
+    connect \A $auto$expression.cpp:3250:import_operation$569
     connect \B 3'111
     connect \Y $eq$dut.sv:134$571_Y
   end
@@ -6398,12 +6398,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$576
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$578
+  cell $pos $auto$expression.cpp:3253:import_operation$578
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$576
-    connect \Y $auto$expression.cpp:3177:import_operation$577
+    connect \Y $auto$expression.cpp:3250:import_operation$577
   end
   attribute \src "dut.sv:135.17-135.48"
   cell $eq $eq$dut.sv:135$580
@@ -6412,7 +6412,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$577
+    connect \A $auto$expression.cpp:3250:import_operation$577
     connect \B 3'111
     connect \Y $eq$dut.sv:135$579_Y
   end
@@ -6441,12 +6441,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$584
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$586
+  cell $pos $auto$expression.cpp:3253:import_operation$586
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$584
-    connect \Y $auto$expression.cpp:3177:import_operation$585
+    connect \Y $auto$expression.cpp:3250:import_operation$585
   end
   attribute \src "dut.sv:136.17-136.48"
   cell $eq $eq$dut.sv:136$588
@@ -6455,7 +6455,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$585
+    connect \A $auto$expression.cpp:3250:import_operation$585
     connect \B 3'111
     connect \Y $eq$dut.sv:136$587_Y
   end
@@ -6484,12 +6484,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$592
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$594
+  cell $pos $auto$expression.cpp:3253:import_operation$594
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$592
-    connect \Y $auto$expression.cpp:3177:import_operation$593
+    connect \Y $auto$expression.cpp:3250:import_operation$593
   end
   attribute \src "dut.sv:138.17-138.44"
   cell $eq $eq$dut.sv:138$596
@@ -6498,7 +6498,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$593
+    connect \A $auto$expression.cpp:3250:import_operation$593
     connect \B 8'11111111
     connect \Y $eq$dut.sv:138$595_Y
   end
@@ -6527,12 +6527,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$600
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$602
+  cell $pos $auto$expression.cpp:3253:import_operation$602
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$600
-    connect \Y $auto$expression.cpp:3177:import_operation$601
+    connect \Y $auto$expression.cpp:3250:import_operation$601
   end
   attribute \src "dut.sv:139.17-139.44"
   cell $eq $eq$dut.sv:139$604
@@ -6541,7 +6541,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$601
+    connect \A $auto$expression.cpp:3250:import_operation$601
     connect \B 8'11111111
     connect \Y $eq$dut.sv:139$603_Y
   end
@@ -6570,12 +6570,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$608
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$610
+  cell $pos $auto$expression.cpp:3253:import_operation$610
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$608
-    connect \Y $auto$expression.cpp:3177:import_operation$609
+    connect \Y $auto$expression.cpp:3250:import_operation$609
   end
   attribute \src "dut.sv:140.17-140.44"
   cell $eq $eq$dut.sv:140$612
@@ -6584,7 +6584,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$609
+    connect \A $auto$expression.cpp:3250:import_operation$609
     connect \B 8'11111111
     connect \Y $eq$dut.sv:140$611_Y
   end
@@ -6613,12 +6613,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$616
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$618
+  cell $pos $auto$expression.cpp:3253:import_operation$618
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$616
-    connect \Y $auto$expression.cpp:3177:import_operation$617
+    connect \Y $auto$expression.cpp:3250:import_operation$617
   end
   attribute \src "dut.sv:141.17-141.44"
   cell $eq $eq$dut.sv:141$620
@@ -6627,7 +6627,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$617
+    connect \A $auto$expression.cpp:3250:import_operation$617
     connect \B 8'11111111
     connect \Y $eq$dut.sv:141$619_Y
   end
@@ -6656,12 +6656,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$624
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$626
+  cell $pos $auto$expression.cpp:3253:import_operation$626
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$624
-    connect \Y $auto$expression.cpp:3177:import_operation$625
+    connect \Y $auto$expression.cpp:3250:import_operation$625
   end
   attribute \src "dut.sv:142.17-142.44"
   cell $eq $eq$dut.sv:142$628
@@ -6670,7 +6670,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$625
+    connect \A $auto$expression.cpp:3250:import_operation$625
     connect \B 8'11111111
     connect \Y $eq$dut.sv:142$627_Y
   end
@@ -6699,12 +6699,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$632
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$634
+  cell $pos $auto$expression.cpp:3253:import_operation$634
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$632
-    connect \Y $auto$expression.cpp:3177:import_operation$633
+    connect \Y $auto$expression.cpp:3250:import_operation$633
   end
   attribute \src "dut.sv:143.17-143.44"
   cell $eq $eq$dut.sv:143$636
@@ -6713,7 +6713,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$633
+    connect \A $auto$expression.cpp:3250:import_operation$633
     connect \B 8'11111111
     connect \Y $eq$dut.sv:143$635_Y
   end
@@ -6742,12 +6742,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$640
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$642
+  cell $pos $auto$expression.cpp:3253:import_operation$642
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$640
-    connect \Y $auto$expression.cpp:3177:import_operation$641
+    connect \Y $auto$expression.cpp:3250:import_operation$641
   end
   attribute \src "dut.sv:144.17-144.44"
   cell $eq $eq$dut.sv:144$644
@@ -6756,7 +6756,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$641
+    connect \A $auto$expression.cpp:3250:import_operation$641
     connect \B 8'11111111
     connect \Y $eq$dut.sv:144$643_Y
   end
@@ -6785,12 +6785,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$648
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$650
+  cell $pos $auto$expression.cpp:3253:import_operation$650
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$648
-    connect \Y $auto$expression.cpp:3177:import_operation$649
+    connect \Y $auto$expression.cpp:3250:import_operation$649
   end
   attribute \src "dut.sv:145.17-145.44"
   cell $eq $eq$dut.sv:145$652
@@ -6799,7 +6799,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$649
+    connect \A $auto$expression.cpp:3250:import_operation$649
     connect \B 8'11111111
     connect \Y $eq$dut.sv:145$651_Y
   end
@@ -6828,12 +6828,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$656
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$658
+  cell $pos $auto$expression.cpp:3253:import_operation$658
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$656
-    connect \Y $auto$expression.cpp:3177:import_operation$657
+    connect \Y $auto$expression.cpp:3250:import_operation$657
   end
   attribute \src "dut.sv:146.17-146.44"
   cell $eq $eq$dut.sv:146$660
@@ -6842,7 +6842,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$657
+    connect \A $auto$expression.cpp:3250:import_operation$657
     connect \B 8'11111111
     connect \Y $eq$dut.sv:146$659_Y
   end
@@ -6871,12 +6871,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$664
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$666
+  cell $pos $auto$expression.cpp:3253:import_operation$666
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$664
-    connect \Y $auto$expression.cpp:3177:import_operation$665
+    connect \Y $auto$expression.cpp:3250:import_operation$665
   end
   attribute \src "dut.sv:147.17-147.44"
   cell $eq $eq$dut.sv:147$668
@@ -6885,7 +6885,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$665
+    connect \A $auto$expression.cpp:3250:import_operation$665
     connect \B 8'11111111
     connect \Y $eq$dut.sv:147$667_Y
   end
@@ -6914,12 +6914,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$672
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$674
+  cell $pos $auto$expression.cpp:3253:import_operation$674
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$672
-    connect \Y $auto$expression.cpp:3177:import_operation$673
+    connect \Y $auto$expression.cpp:3250:import_operation$673
   end
   attribute \src "dut.sv:148.17-148.44"
   cell $eq $eq$dut.sv:148$676
@@ -6928,7 +6928,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$673
+    connect \A $auto$expression.cpp:3250:import_operation$673
     connect \B 8'11111111
     connect \Y $eq$dut.sv:148$675_Y
   end
@@ -6957,12 +6957,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$680
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$682
+  cell $pos $auto$expression.cpp:3253:import_operation$682
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$680
-    connect \Y $auto$expression.cpp:3177:import_operation$681
+    connect \Y $auto$expression.cpp:3250:import_operation$681
   end
   attribute \src "dut.sv:149.17-149.44"
   cell $eq $eq$dut.sv:149$684
@@ -6971,7 +6971,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$681
+    connect \A $auto$expression.cpp:3250:import_operation$681
     connect \B 8'11111111
     connect \Y $eq$dut.sv:149$683_Y
   end
@@ -7000,12 +7000,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$688
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$690
+  cell $pos $auto$expression.cpp:3253:import_operation$690
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$688
-    connect \Y $auto$expression.cpp:3177:import_operation$689
+    connect \Y $auto$expression.cpp:3250:import_operation$689
   end
   attribute \src "dut.sv:151.17-151.51"
   cell $eq $eq$dut.sv:151$692
@@ -7014,7 +7014,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$689
+    connect \A $auto$expression.cpp:3250:import_operation$689
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:151$691_Y
   end
@@ -7043,12 +7043,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$696
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$698
+  cell $pos $auto$expression.cpp:3253:import_operation$698
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$696
-    connect \Y $auto$expression.cpp:3177:import_operation$697
+    connect \Y $auto$expression.cpp:3250:import_operation$697
   end
   attribute \src "dut.sv:152.17-152.51"
   cell $eq $eq$dut.sv:152$700
@@ -7057,7 +7057,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$697
+    connect \A $auto$expression.cpp:3250:import_operation$697
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:152$699_Y
   end
@@ -7086,12 +7086,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$704
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$706
+  cell $pos $auto$expression.cpp:3253:import_operation$706
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$704
-    connect \Y $auto$expression.cpp:3177:import_operation$705
+    connect \Y $auto$expression.cpp:3250:import_operation$705
   end
   attribute \src "dut.sv:153.17-153.51"
   cell $eq $eq$dut.sv:153$708
@@ -7100,7 +7100,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$705
+    connect \A $auto$expression.cpp:3250:import_operation$705
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:153$707_Y
   end
@@ -7129,12 +7129,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$712
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$714
+  cell $pos $auto$expression.cpp:3253:import_operation$714
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$712
-    connect \Y $auto$expression.cpp:3177:import_operation$713
+    connect \Y $auto$expression.cpp:3250:import_operation$713
   end
   attribute \src "dut.sv:154.17-154.51"
   cell $eq $eq$dut.sv:154$716
@@ -7143,7 +7143,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$713
+    connect \A $auto$expression.cpp:3250:import_operation$713
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:154$715_Y
   end
@@ -7172,12 +7172,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$720
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$722
+  cell $pos $auto$expression.cpp:3253:import_operation$722
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$720
-    connect \Y $auto$expression.cpp:3177:import_operation$721
+    connect \Y $auto$expression.cpp:3250:import_operation$721
   end
   attribute \src "dut.sv:155.17-155.51"
   cell $eq $eq$dut.sv:155$724
@@ -7186,7 +7186,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$721
+    connect \A $auto$expression.cpp:3250:import_operation$721
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:155$723_Y
   end
@@ -7215,12 +7215,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$728
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$730
+  cell $pos $auto$expression.cpp:3253:import_operation$730
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$728
-    connect \Y $auto$expression.cpp:3177:import_operation$729
+    connect \Y $auto$expression.cpp:3250:import_operation$729
   end
   attribute \src "dut.sv:156.17-156.51"
   cell $eq $eq$dut.sv:156$732
@@ -7229,7 +7229,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$729
+    connect \A $auto$expression.cpp:3250:import_operation$729
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:156$731_Y
   end
@@ -7258,12 +7258,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$736
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$738
+  cell $pos $auto$expression.cpp:3253:import_operation$738
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$736
-    connect \Y $auto$expression.cpp:3177:import_operation$737
+    connect \Y $auto$expression.cpp:3250:import_operation$737
   end
   attribute \src "dut.sv:157.17-157.51"
   cell $eq $eq$dut.sv:157$740
@@ -7272,7 +7272,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$737
+    connect \A $auto$expression.cpp:3250:import_operation$737
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:157$739_Y
   end
@@ -7301,12 +7301,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$744
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$746
+  cell $pos $auto$expression.cpp:3253:import_operation$746
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$744
-    connect \Y $auto$expression.cpp:3177:import_operation$745
+    connect \Y $auto$expression.cpp:3250:import_operation$745
   end
   attribute \src "dut.sv:158.17-158.51"
   cell $eq $eq$dut.sv:158$748
@@ -7315,7 +7315,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$745
+    connect \A $auto$expression.cpp:3250:import_operation$745
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:158$747_Y
   end
@@ -7344,12 +7344,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$752
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$754
+  cell $pos $auto$expression.cpp:3253:import_operation$754
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$752
-    connect \Y $auto$expression.cpp:3177:import_operation$753
+    connect \Y $auto$expression.cpp:3250:import_operation$753
   end
   attribute \src "dut.sv:159.17-159.51"
   cell $eq $eq$dut.sv:159$756
@@ -7358,7 +7358,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$753
+    connect \A $auto$expression.cpp:3250:import_operation$753
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:159$755_Y
   end
@@ -7387,12 +7387,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$760
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$762
+  cell $pos $auto$expression.cpp:3253:import_operation$762
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$760
-    connect \Y $auto$expression.cpp:3177:import_operation$761
+    connect \Y $auto$expression.cpp:3250:import_operation$761
   end
   attribute \src "dut.sv:160.17-160.51"
   cell $eq $eq$dut.sv:160$764
@@ -7401,7 +7401,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$761
+    connect \A $auto$expression.cpp:3250:import_operation$761
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:160$763_Y
   end
@@ -7430,12 +7430,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$768
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$770
+  cell $pos $auto$expression.cpp:3253:import_operation$770
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$768
-    connect \Y $auto$expression.cpp:3177:import_operation$769
+    connect \Y $auto$expression.cpp:3250:import_operation$769
   end
   attribute \src "dut.sv:161.17-161.51"
   cell $eq $eq$dut.sv:161$772
@@ -7444,7 +7444,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$769
+    connect \A $auto$expression.cpp:3250:import_operation$769
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:161$771_Y
   end
@@ -7473,12 +7473,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$776
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$778
+  cell $pos $auto$expression.cpp:3253:import_operation$778
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$776
-    connect \Y $auto$expression.cpp:3177:import_operation$777
+    connect \Y $auto$expression.cpp:3250:import_operation$777
   end
   attribute \src "dut.sv:162.17-162.51"
   cell $eq $eq$dut.sv:162$780
@@ -7487,7 +7487,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$777
+    connect \A $auto$expression.cpp:3250:import_operation$777
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:162$779_Y
   end
@@ -7516,12 +7516,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$784
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$786
+  cell $pos $auto$expression.cpp:3253:import_operation$786
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$784
-    connect \Y $auto$expression.cpp:3177:import_operation$785
+    connect \Y $auto$expression.cpp:3250:import_operation$785
   end
   attribute \src "dut.sv:164.17-164.64"
   cell $eq $eq$dut.sv:164$788
@@ -7530,7 +7530,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$785
+    connect \A $auto$expression.cpp:3250:import_operation$785
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:164$787_Y
   end
@@ -7559,12 +7559,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$792
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$794
+  cell $pos $auto$expression.cpp:3253:import_operation$794
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$792
-    connect \Y $auto$expression.cpp:3177:import_operation$793
+    connect \Y $auto$expression.cpp:3250:import_operation$793
   end
   attribute \src "dut.sv:165.17-165.64"
   cell $eq $eq$dut.sv:165$796
@@ -7573,7 +7573,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$793
+    connect \A $auto$expression.cpp:3250:import_operation$793
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:165$795_Y
   end
@@ -7602,12 +7602,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$800
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$802
+  cell $pos $auto$expression.cpp:3253:import_operation$802
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$800
-    connect \Y $auto$expression.cpp:3177:import_operation$801
+    connect \Y $auto$expression.cpp:3250:import_operation$801
   end
   attribute \src "dut.sv:166.17-166.64"
   cell $eq $eq$dut.sv:166$804
@@ -7616,7 +7616,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$801
+    connect \A $auto$expression.cpp:3250:import_operation$801
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:166$803_Y
   end
@@ -7645,12 +7645,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$808
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$810
+  cell $pos $auto$expression.cpp:3253:import_operation$810
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$808
-    connect \Y $auto$expression.cpp:3177:import_operation$809
+    connect \Y $auto$expression.cpp:3250:import_operation$809
   end
   attribute \src "dut.sv:167.17-167.64"
   cell $eq $eq$dut.sv:167$812
@@ -7659,7 +7659,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$809
+    connect \A $auto$expression.cpp:3250:import_operation$809
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:167$811_Y
   end
@@ -7688,12 +7688,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$816
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$818
+  cell $pos $auto$expression.cpp:3253:import_operation$818
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$816
-    connect \Y $auto$expression.cpp:3177:import_operation$817
+    connect \Y $auto$expression.cpp:3250:import_operation$817
   end
   attribute \src "dut.sv:168.17-168.64"
   cell $eq $eq$dut.sv:168$820
@@ -7702,7 +7702,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$817
+    connect \A $auto$expression.cpp:3250:import_operation$817
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:168$819_Y
   end
@@ -7731,12 +7731,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$824
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$826
+  cell $pos $auto$expression.cpp:3253:import_operation$826
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$824
-    connect \Y $auto$expression.cpp:3177:import_operation$825
+    connect \Y $auto$expression.cpp:3250:import_operation$825
   end
   attribute \src "dut.sv:169.17-169.64"
   cell $eq $eq$dut.sv:169$828
@@ -7745,7 +7745,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$825
+    connect \A $auto$expression.cpp:3250:import_operation$825
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:169$827_Y
   end
@@ -7774,12 +7774,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$832
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$834
+  cell $pos $auto$expression.cpp:3253:import_operation$834
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$832
-    connect \Y $auto$expression.cpp:3177:import_operation$833
+    connect \Y $auto$expression.cpp:3250:import_operation$833
   end
   attribute \src "dut.sv:170.17-170.64"
   cell $eq $eq$dut.sv:170$836
@@ -7788,7 +7788,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$833
+    connect \A $auto$expression.cpp:3250:import_operation$833
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:170$835_Y
   end
@@ -7817,12 +7817,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$840
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$842
+  cell $pos $auto$expression.cpp:3253:import_operation$842
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$840
-    connect \Y $auto$expression.cpp:3177:import_operation$841
+    connect \Y $auto$expression.cpp:3250:import_operation$841
   end
   attribute \src "dut.sv:171.17-171.64"
   cell $eq $eq$dut.sv:171$844
@@ -7831,7 +7831,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$841
+    connect \A $auto$expression.cpp:3250:import_operation$841
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:171$843_Y
   end
@@ -7860,12 +7860,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$848
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$850
+  cell $pos $auto$expression.cpp:3253:import_operation$850
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$848
-    connect \Y $auto$expression.cpp:3177:import_operation$849
+    connect \Y $auto$expression.cpp:3250:import_operation$849
   end
   attribute \src "dut.sv:172.17-172.64"
   cell $eq $eq$dut.sv:172$852
@@ -7874,7 +7874,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$849
+    connect \A $auto$expression.cpp:3250:import_operation$849
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:172$851_Y
   end
@@ -7903,12 +7903,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$856
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$858
+  cell $pos $auto$expression.cpp:3253:import_operation$858
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$856
-    connect \Y $auto$expression.cpp:3177:import_operation$857
+    connect \Y $auto$expression.cpp:3250:import_operation$857
   end
   attribute \src "dut.sv:173.17-173.64"
   cell $eq $eq$dut.sv:173$860
@@ -7917,7 +7917,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$857
+    connect \A $auto$expression.cpp:3250:import_operation$857
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:173$859_Y
   end
@@ -7946,12 +7946,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$864
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$866
+  cell $pos $auto$expression.cpp:3253:import_operation$866
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$864
-    connect \Y $auto$expression.cpp:3177:import_operation$865
+    connect \Y $auto$expression.cpp:3250:import_operation$865
   end
   attribute \src "dut.sv:174.17-174.64"
   cell $eq $eq$dut.sv:174$868
@@ -7960,7 +7960,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$865
+    connect \A $auto$expression.cpp:3250:import_operation$865
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:174$867_Y
   end
@@ -7989,12 +7989,12 @@ module \top
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3303:Or$872
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$874
+  cell $pos $auto$expression.cpp:3253:import_operation$874
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$872
-    connect \Y $auto$expression.cpp:3177:import_operation$873
+    connect \Y $auto$expression.cpp:3250:import_operation$873
   end
   attribute \src "dut.sv:175.17-175.64"
   cell $eq $eq$dut.sv:175$876
@@ -8003,7 +8003,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$873
+    connect \A $auto$expression.cpp:3250:import_operation$873
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:175$875_Y
   end
@@ -8032,12 +8032,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$880
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$882
+  cell $pos $auto$expression.cpp:3253:import_operation$882
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$880
-    connect \Y $auto$expression.cpp:3177:import_operation$881
+    connect \Y $auto$expression.cpp:3250:import_operation$881
   end
   attribute \src "dut.sv:177.17-177.42"
   cell $eq $eq$dut.sv:177$884
@@ -8046,7 +8046,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$881
+    connect \A $auto$expression.cpp:3250:import_operation$881
     connect \B 3'000
     connect \Y $eq$dut.sv:177$883_Y
   end
@@ -8075,12 +8075,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$888
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$890
+  cell $pos $auto$expression.cpp:3253:import_operation$890
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$888
-    connect \Y $auto$expression.cpp:3177:import_operation$889
+    connect \Y $auto$expression.cpp:3250:import_operation$889
   end
   attribute \src "dut.sv:178.17-178.42"
   cell $eq $eq$dut.sv:178$892
@@ -8089,7 +8089,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$889
+    connect \A $auto$expression.cpp:3250:import_operation$889
     connect \B 3'001
     connect \Y $eq$dut.sv:178$891_Y
   end
@@ -8118,12 +8118,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$896
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$898
+  cell $pos $auto$expression.cpp:3253:import_operation$898
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$896
-    connect \Y $auto$expression.cpp:3177:import_operation$897
+    connect \Y $auto$expression.cpp:3250:import_operation$897
   end
   attribute \src "dut.sv:179.17-179.42"
   cell $eq $eq$dut.sv:179$900
@@ -8132,7 +8132,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$897
+    connect \A $auto$expression.cpp:3250:import_operation$897
     connect \B 3'000
     connect \Y $eq$dut.sv:179$899_Y
   end
@@ -8161,12 +8161,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$904
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$906
+  cell $pos $auto$expression.cpp:3253:import_operation$906
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$904
-    connect \Y $auto$expression.cpp:3177:import_operation$905
+    connect \Y $auto$expression.cpp:3250:import_operation$905
   end
   attribute \src "dut.sv:180.17-180.42"
   cell $eq $eq$dut.sv:180$908
@@ -8175,7 +8175,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$905
+    connect \A $auto$expression.cpp:3250:import_operation$905
     connect \B 3'001
     connect \Y $eq$dut.sv:180$907_Y
   end
@@ -8204,12 +8204,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$912
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$914
+  cell $pos $auto$expression.cpp:3253:import_operation$914
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$912
-    connect \Y $auto$expression.cpp:3177:import_operation$913
+    connect \Y $auto$expression.cpp:3250:import_operation$913
   end
   attribute \src "dut.sv:181.17-181.42"
   cell $eq $eq$dut.sv:181$916
@@ -8218,7 +8218,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$913
+    connect \A $auto$expression.cpp:3250:import_operation$913
     connect \B 3'000
     connect \Y $eq$dut.sv:181$915_Y
   end
@@ -8247,12 +8247,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$920
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$922
+  cell $pos $auto$expression.cpp:3253:import_operation$922
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$920
-    connect \Y $auto$expression.cpp:3177:import_operation$921
+    connect \Y $auto$expression.cpp:3250:import_operation$921
   end
   attribute \src "dut.sv:182.17-182.42"
   cell $eq $eq$dut.sv:182$924
@@ -8261,7 +8261,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$921
+    connect \A $auto$expression.cpp:3250:import_operation$921
     connect \B 3'001
     connect \Y $eq$dut.sv:182$923_Y
   end
@@ -8290,12 +8290,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$928
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$930
+  cell $pos $auto$expression.cpp:3253:import_operation$930
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$928
-    connect \Y $auto$expression.cpp:3177:import_operation$929
+    connect \Y $auto$expression.cpp:3250:import_operation$929
   end
   attribute \src "dut.sv:183.17-183.42"
   cell $eq $eq$dut.sv:183$932
@@ -8304,7 +8304,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$929
+    connect \A $auto$expression.cpp:3250:import_operation$929
     connect \B 3'010
     connect \Y $eq$dut.sv:183$931_Y
   end
@@ -8333,12 +8333,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$936
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$938
+  cell $pos $auto$expression.cpp:3253:import_operation$938
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$936
-    connect \Y $auto$expression.cpp:3177:import_operation$937
+    connect \Y $auto$expression.cpp:3250:import_operation$937
   end
   attribute \src "dut.sv:184.17-184.42"
   cell $eq $eq$dut.sv:184$940
@@ -8347,7 +8347,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$937
+    connect \A $auto$expression.cpp:3250:import_operation$937
     connect \B 3'011
     connect \Y $eq$dut.sv:184$939_Y
   end
@@ -8376,12 +8376,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$944
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$946
+  cell $pos $auto$expression.cpp:3253:import_operation$946
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$944
-    connect \Y $auto$expression.cpp:3177:import_operation$945
+    connect \Y $auto$expression.cpp:3250:import_operation$945
   end
   attribute \src "dut.sv:185.17-185.42"
   cell $eq $eq$dut.sv:185$948
@@ -8390,7 +8390,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$945
+    connect \A $auto$expression.cpp:3250:import_operation$945
     connect \B 3'000
     connect \Y $eq$dut.sv:185$947_Y
   end
@@ -8419,12 +8419,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$952
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$954
+  cell $pos $auto$expression.cpp:3253:import_operation$954
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$952
-    connect \Y $auto$expression.cpp:3177:import_operation$953
+    connect \Y $auto$expression.cpp:3250:import_operation$953
   end
   attribute \src "dut.sv:186.17-186.42"
   cell $eq $eq$dut.sv:186$956
@@ -8433,7 +8433,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$953
+    connect \A $auto$expression.cpp:3250:import_operation$953
     connect \B 3'001
     connect \Y $eq$dut.sv:186$955_Y
   end
@@ -8462,12 +8462,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$960
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$962
+  cell $pos $auto$expression.cpp:3253:import_operation$962
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$960
-    connect \Y $auto$expression.cpp:3177:import_operation$961
+    connect \Y $auto$expression.cpp:3250:import_operation$961
   end
   attribute \src "dut.sv:187.17-187.42"
   cell $eq $eq$dut.sv:187$964
@@ -8476,7 +8476,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$961
+    connect \A $auto$expression.cpp:3250:import_operation$961
     connect \B 3'010
     connect \Y $eq$dut.sv:187$963_Y
   end
@@ -8505,12 +8505,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$968
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$970
+  cell $pos $auto$expression.cpp:3253:import_operation$970
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$968
-    connect \Y $auto$expression.cpp:3177:import_operation$969
+    connect \Y $auto$expression.cpp:3250:import_operation$969
   end
   attribute \src "dut.sv:188.17-188.42"
   cell $eq $eq$dut.sv:188$972
@@ -8519,7 +8519,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$969
+    connect \A $auto$expression.cpp:3250:import_operation$969
     connect \B 3'011
     connect \Y $eq$dut.sv:188$971_Y
   end
@@ -8548,12 +8548,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$976
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$978
+  cell $pos $auto$expression.cpp:3253:import_operation$978
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$976
-    connect \Y $auto$expression.cpp:3177:import_operation$977
+    connect \Y $auto$expression.cpp:3250:import_operation$977
   end
   attribute \src "dut.sv:190.17-190.48"
   cell $eq $eq$dut.sv:190$980
@@ -8562,7 +8562,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$977
+    connect \A $auto$expression.cpp:3250:import_operation$977
     connect \B 3'000
     connect \Y $eq$dut.sv:190$979_Y
   end
@@ -8591,12 +8591,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$984
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$986
+  cell $pos $auto$expression.cpp:3253:import_operation$986
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$984
-    connect \Y $auto$expression.cpp:3177:import_operation$985
+    connect \Y $auto$expression.cpp:3250:import_operation$985
   end
   attribute \src "dut.sv:191.17-191.48"
   cell $eq $eq$dut.sv:191$988
@@ -8605,7 +8605,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$985
+    connect \A $auto$expression.cpp:3250:import_operation$985
     connect \B 3'001
     connect \Y $eq$dut.sv:191$987_Y
   end
@@ -8634,12 +8634,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$992
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$994
+  cell $pos $auto$expression.cpp:3253:import_operation$994
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$992
-    connect \Y $auto$expression.cpp:3177:import_operation$993
+    connect \Y $auto$expression.cpp:3250:import_operation$993
   end
   attribute \src "dut.sv:192.17-192.48"
   cell $eq $eq$dut.sv:192$996
@@ -8648,7 +8648,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$993
+    connect \A $auto$expression.cpp:3250:import_operation$993
     connect \B 3'000
     connect \Y $eq$dut.sv:192$995_Y
   end
@@ -8677,12 +8677,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1000
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1002
+  cell $pos $auto$expression.cpp:3253:import_operation$1002
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1000
-    connect \Y $auto$expression.cpp:3177:import_operation$1001
+    connect \Y $auto$expression.cpp:3250:import_operation$1001
   end
   attribute \src "dut.sv:193.17-193.48"
   cell $eq $eq$dut.sv:193$1004
@@ -8691,7 +8691,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1001
+    connect \A $auto$expression.cpp:3250:import_operation$1001
     connect \B 3'001
     connect \Y $eq$dut.sv:193$1003_Y
   end
@@ -8720,12 +8720,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1008
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1010
+  cell $pos $auto$expression.cpp:3253:import_operation$1010
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1008
-    connect \Y $auto$expression.cpp:3177:import_operation$1009
+    connect \Y $auto$expression.cpp:3250:import_operation$1009
   end
   attribute \src "dut.sv:194.17-194.48"
   cell $eq $eq$dut.sv:194$1012
@@ -8734,7 +8734,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1009
+    connect \A $auto$expression.cpp:3250:import_operation$1009
     connect \B 3'000
     connect \Y $eq$dut.sv:194$1011_Y
   end
@@ -8763,12 +8763,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1016
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1018
+  cell $pos $auto$expression.cpp:3253:import_operation$1018
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1016
-    connect \Y $auto$expression.cpp:3177:import_operation$1017
+    connect \Y $auto$expression.cpp:3250:import_operation$1017
   end
   attribute \src "dut.sv:195.17-195.48"
   cell $eq $eq$dut.sv:195$1020
@@ -8777,7 +8777,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1017
+    connect \A $auto$expression.cpp:3250:import_operation$1017
     connect \B 3'001
     connect \Y $eq$dut.sv:195$1019_Y
   end
@@ -8806,12 +8806,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1024
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1026
+  cell $pos $auto$expression.cpp:3253:import_operation$1026
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1024
-    connect \Y $auto$expression.cpp:3177:import_operation$1025
+    connect \Y $auto$expression.cpp:3250:import_operation$1025
   end
   attribute \src "dut.sv:196.17-196.48"
   cell $eq $eq$dut.sv:196$1028
@@ -8820,7 +8820,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1025
+    connect \A $auto$expression.cpp:3250:import_operation$1025
     connect \B 3'010
     connect \Y $eq$dut.sv:196$1027_Y
   end
@@ -8849,12 +8849,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1032
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1034
+  cell $pos $auto$expression.cpp:3253:import_operation$1034
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1032
-    connect \Y $auto$expression.cpp:3177:import_operation$1033
+    connect \Y $auto$expression.cpp:3250:import_operation$1033
   end
   attribute \src "dut.sv:197.17-197.48"
   cell $eq $eq$dut.sv:197$1036
@@ -8863,7 +8863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1033
+    connect \A $auto$expression.cpp:3250:import_operation$1033
     connect \B 3'011
     connect \Y $eq$dut.sv:197$1035_Y
   end
@@ -8892,12 +8892,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1040
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1042
+  cell $pos $auto$expression.cpp:3253:import_operation$1042
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1040
-    connect \Y $auto$expression.cpp:3177:import_operation$1041
+    connect \Y $auto$expression.cpp:3250:import_operation$1041
   end
   attribute \src "dut.sv:198.17-198.48"
   cell $eq $eq$dut.sv:198$1044
@@ -8906,7 +8906,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1041
+    connect \A $auto$expression.cpp:3250:import_operation$1041
     connect \B 3'000
     connect \Y $eq$dut.sv:198$1043_Y
   end
@@ -8935,12 +8935,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1048
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1050
+  cell $pos $auto$expression.cpp:3253:import_operation$1050
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1048
-    connect \Y $auto$expression.cpp:3177:import_operation$1049
+    connect \Y $auto$expression.cpp:3250:import_operation$1049
   end
   attribute \src "dut.sv:199.17-199.48"
   cell $eq $eq$dut.sv:199$1052
@@ -8949,7 +8949,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1049
+    connect \A $auto$expression.cpp:3250:import_operation$1049
     connect \B 3'001
     connect \Y $eq$dut.sv:199$1051_Y
   end
@@ -8978,12 +8978,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1056
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1058
+  cell $pos $auto$expression.cpp:3253:import_operation$1058
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1056
-    connect \Y $auto$expression.cpp:3177:import_operation$1057
+    connect \Y $auto$expression.cpp:3250:import_operation$1057
   end
   attribute \src "dut.sv:200.17-200.48"
   cell $eq $eq$dut.sv:200$1060
@@ -8992,7 +8992,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1057
+    connect \A $auto$expression.cpp:3250:import_operation$1057
     connect \B 3'010
     connect \Y $eq$dut.sv:200$1059_Y
   end
@@ -9021,12 +9021,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1064
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1066
+  cell $pos $auto$expression.cpp:3253:import_operation$1066
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3303:Or$1064
-    connect \Y $auto$expression.cpp:3177:import_operation$1065
+    connect \Y $auto$expression.cpp:3250:import_operation$1065
   end
   attribute \src "dut.sv:201.17-201.48"
   cell $eq $eq$dut.sv:201$1068
@@ -9035,7 +9035,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1065
+    connect \A $auto$expression.cpp:3250:import_operation$1065
     connect \B 3'011
     connect \Y $eq$dut.sv:201$1067_Y
   end
@@ -9064,12 +9064,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1072
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1074
+  cell $pos $auto$expression.cpp:3253:import_operation$1074
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1072
-    connect \Y $auto$expression.cpp:3177:import_operation$1073
+    connect \Y $auto$expression.cpp:3250:import_operation$1073
   end
   attribute \src "dut.sv:203.17-203.44"
   cell $eq $eq$dut.sv:203$1076
@@ -9078,7 +9078,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1073
+    connect \A $auto$expression.cpp:3250:import_operation$1073
     connect \B 8'00000000
     connect \Y $eq$dut.sv:203$1075_Y
   end
@@ -9107,12 +9107,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1080
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1082
+  cell $pos $auto$expression.cpp:3253:import_operation$1082
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1080
-    connect \Y $auto$expression.cpp:3177:import_operation$1081
+    connect \Y $auto$expression.cpp:3250:import_operation$1081
   end
   attribute \src "dut.sv:204.17-204.44"
   cell $eq $eq$dut.sv:204$1084
@@ -9121,7 +9121,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1081
+    connect \A $auto$expression.cpp:3250:import_operation$1081
     connect \B 8'00000001
     connect \Y $eq$dut.sv:204$1083_Y
   end
@@ -9150,12 +9150,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1088
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1090
+  cell $pos $auto$expression.cpp:3253:import_operation$1090
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1088
-    connect \Y $auto$expression.cpp:3177:import_operation$1089
+    connect \Y $auto$expression.cpp:3250:import_operation$1089
   end
   attribute \src "dut.sv:205.17-205.44"
   cell $eq $eq$dut.sv:205$1092
@@ -9164,7 +9164,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1089
+    connect \A $auto$expression.cpp:3250:import_operation$1089
     connect \B 8'00000000
     connect \Y $eq$dut.sv:205$1091_Y
   end
@@ -9193,12 +9193,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1096
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1098
+  cell $pos $auto$expression.cpp:3253:import_operation$1098
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1096
-    connect \Y $auto$expression.cpp:3177:import_operation$1097
+    connect \Y $auto$expression.cpp:3250:import_operation$1097
   end
   attribute \src "dut.sv:206.17-206.44"
   cell $eq $eq$dut.sv:206$1100
@@ -9207,7 +9207,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1097
+    connect \A $auto$expression.cpp:3250:import_operation$1097
     connect \B 8'00000001
     connect \Y $eq$dut.sv:206$1099_Y
   end
@@ -9236,12 +9236,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1104
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1106
+  cell $pos $auto$expression.cpp:3253:import_operation$1106
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1104
-    connect \Y $auto$expression.cpp:3177:import_operation$1105
+    connect \Y $auto$expression.cpp:3250:import_operation$1105
   end
   attribute \src "dut.sv:207.17-207.44"
   cell $eq $eq$dut.sv:207$1108
@@ -9250,7 +9250,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1105
+    connect \A $auto$expression.cpp:3250:import_operation$1105
     connect \B 8'00000000
     connect \Y $eq$dut.sv:207$1107_Y
   end
@@ -9279,12 +9279,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1112
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1114
+  cell $pos $auto$expression.cpp:3253:import_operation$1114
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1112
-    connect \Y $auto$expression.cpp:3177:import_operation$1113
+    connect \Y $auto$expression.cpp:3250:import_operation$1113
   end
   attribute \src "dut.sv:208.17-208.44"
   cell $eq $eq$dut.sv:208$1116
@@ -9293,7 +9293,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1113
+    connect \A $auto$expression.cpp:3250:import_operation$1113
     connect \B 8'00000001
     connect \Y $eq$dut.sv:208$1115_Y
   end
@@ -9322,12 +9322,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1120
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1122
+  cell $pos $auto$expression.cpp:3253:import_operation$1122
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1120
-    connect \Y $auto$expression.cpp:3177:import_operation$1121
+    connect \Y $auto$expression.cpp:3250:import_operation$1121
   end
   attribute \src "dut.sv:209.17-209.44"
   cell $eq $eq$dut.sv:209$1124
@@ -9336,7 +9336,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1121
+    connect \A $auto$expression.cpp:3250:import_operation$1121
     connect \B 8'00000010
     connect \Y $eq$dut.sv:209$1123_Y
   end
@@ -9365,12 +9365,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1128
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1130
+  cell $pos $auto$expression.cpp:3253:import_operation$1130
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1128
-    connect \Y $auto$expression.cpp:3177:import_operation$1129
+    connect \Y $auto$expression.cpp:3250:import_operation$1129
   end
   attribute \src "dut.sv:210.17-210.44"
   cell $eq $eq$dut.sv:210$1132
@@ -9379,7 +9379,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1129
+    connect \A $auto$expression.cpp:3250:import_operation$1129
     connect \B 8'00000011
     connect \Y $eq$dut.sv:210$1131_Y
   end
@@ -9408,12 +9408,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1136
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1138
+  cell $pos $auto$expression.cpp:3253:import_operation$1138
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1136
-    connect \Y $auto$expression.cpp:3177:import_operation$1137
+    connect \Y $auto$expression.cpp:3250:import_operation$1137
   end
   attribute \src "dut.sv:211.17-211.44"
   cell $eq $eq$dut.sv:211$1140
@@ -9422,7 +9422,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1137
+    connect \A $auto$expression.cpp:3250:import_operation$1137
     connect \B 8'00000000
     connect \Y $eq$dut.sv:211$1139_Y
   end
@@ -9451,12 +9451,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1144
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1146
+  cell $pos $auto$expression.cpp:3253:import_operation$1146
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1144
-    connect \Y $auto$expression.cpp:3177:import_operation$1145
+    connect \Y $auto$expression.cpp:3250:import_operation$1145
   end
   attribute \src "dut.sv:212.17-212.44"
   cell $eq $eq$dut.sv:212$1148
@@ -9465,7 +9465,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1145
+    connect \A $auto$expression.cpp:3250:import_operation$1145
     connect \B 8'00000001
     connect \Y $eq$dut.sv:212$1147_Y
   end
@@ -9494,12 +9494,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1152
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1154
+  cell $pos $auto$expression.cpp:3253:import_operation$1154
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1152
-    connect \Y $auto$expression.cpp:3177:import_operation$1153
+    connect \Y $auto$expression.cpp:3250:import_operation$1153
   end
   attribute \src "dut.sv:213.17-213.44"
   cell $eq $eq$dut.sv:213$1156
@@ -9508,7 +9508,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1153
+    connect \A $auto$expression.cpp:3250:import_operation$1153
     connect \B 8'00000010
     connect \Y $eq$dut.sv:213$1155_Y
   end
@@ -9537,12 +9537,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1160
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1162
+  cell $pos $auto$expression.cpp:3253:import_operation$1162
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3303:Or$1160
-    connect \Y $auto$expression.cpp:3177:import_operation$1161
+    connect \Y $auto$expression.cpp:3250:import_operation$1161
   end
   attribute \src "dut.sv:214.17-214.44"
   cell $eq $eq$dut.sv:214$1164
@@ -9551,7 +9551,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1161
+    connect \A $auto$expression.cpp:3250:import_operation$1161
     connect \B 8'00000011
     connect \Y $eq$dut.sv:214$1163_Y
   end
@@ -9580,12 +9580,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1168
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1170
+  cell $pos $auto$expression.cpp:3253:import_operation$1170
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1168
-    connect \Y $auto$expression.cpp:3177:import_operation$1169
+    connect \Y $auto$expression.cpp:3250:import_operation$1169
   end
   attribute \src "dut.sv:216.17-216.51"
   cell $eq $eq$dut.sv:216$1172
@@ -9594,7 +9594,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1169
+    connect \A $auto$expression.cpp:3250:import_operation$1169
     connect \B 0
     connect \Y $eq$dut.sv:216$1171_Y
   end
@@ -9623,12 +9623,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1176
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1178
+  cell $pos $auto$expression.cpp:3253:import_operation$1178
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1176
-    connect \Y $auto$expression.cpp:3177:import_operation$1177
+    connect \Y $auto$expression.cpp:3250:import_operation$1177
   end
   attribute \src "dut.sv:217.17-217.51"
   cell $eq $eq$dut.sv:217$1180
@@ -9637,7 +9637,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1177
+    connect \A $auto$expression.cpp:3250:import_operation$1177
     connect \B 1
     connect \Y $eq$dut.sv:217$1179_Y
   end
@@ -9666,12 +9666,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1184
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1186
+  cell $pos $auto$expression.cpp:3253:import_operation$1186
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1184
-    connect \Y $auto$expression.cpp:3177:import_operation$1185
+    connect \Y $auto$expression.cpp:3250:import_operation$1185
   end
   attribute \src "dut.sv:218.17-218.51"
   cell $eq $eq$dut.sv:218$1188
@@ -9680,7 +9680,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1185
+    connect \A $auto$expression.cpp:3250:import_operation$1185
     connect \B 0
     connect \Y $eq$dut.sv:218$1187_Y
   end
@@ -9709,12 +9709,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1192
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1194
+  cell $pos $auto$expression.cpp:3253:import_operation$1194
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1192
-    connect \Y $auto$expression.cpp:3177:import_operation$1193
+    connect \Y $auto$expression.cpp:3250:import_operation$1193
   end
   attribute \src "dut.sv:219.17-219.51"
   cell $eq $eq$dut.sv:219$1196
@@ -9723,7 +9723,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1193
+    connect \A $auto$expression.cpp:3250:import_operation$1193
     connect \B 1
     connect \Y $eq$dut.sv:219$1195_Y
   end
@@ -9752,12 +9752,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1200
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1202
+  cell $pos $auto$expression.cpp:3253:import_operation$1202
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1200
-    connect \Y $auto$expression.cpp:3177:import_operation$1201
+    connect \Y $auto$expression.cpp:3250:import_operation$1201
   end
   attribute \src "dut.sv:220.17-220.51"
   cell $eq $eq$dut.sv:220$1204
@@ -9766,7 +9766,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1201
+    connect \A $auto$expression.cpp:3250:import_operation$1201
     connect \B 0
     connect \Y $eq$dut.sv:220$1203_Y
   end
@@ -9795,12 +9795,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1208
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1210
+  cell $pos $auto$expression.cpp:3253:import_operation$1210
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1208
-    connect \Y $auto$expression.cpp:3177:import_operation$1209
+    connect \Y $auto$expression.cpp:3250:import_operation$1209
   end
   attribute \src "dut.sv:221.17-221.51"
   cell $eq $eq$dut.sv:221$1212
@@ -9809,7 +9809,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1209
+    connect \A $auto$expression.cpp:3250:import_operation$1209
     connect \B 1
     connect \Y $eq$dut.sv:221$1211_Y
   end
@@ -9838,12 +9838,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1216
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1218
+  cell $pos $auto$expression.cpp:3253:import_operation$1218
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1216
-    connect \Y $auto$expression.cpp:3177:import_operation$1217
+    connect \Y $auto$expression.cpp:3250:import_operation$1217
   end
   attribute \src "dut.sv:222.17-222.51"
   cell $eq $eq$dut.sv:222$1220
@@ -9852,7 +9852,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1217
+    connect \A $auto$expression.cpp:3250:import_operation$1217
     connect \B 2
     connect \Y $eq$dut.sv:222$1219_Y
   end
@@ -9881,12 +9881,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1224
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1226
+  cell $pos $auto$expression.cpp:3253:import_operation$1226
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1224
-    connect \Y $auto$expression.cpp:3177:import_operation$1225
+    connect \Y $auto$expression.cpp:3250:import_operation$1225
   end
   attribute \src "dut.sv:223.17-223.51"
   cell $eq $eq$dut.sv:223$1228
@@ -9895,7 +9895,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1225
+    connect \A $auto$expression.cpp:3250:import_operation$1225
     connect \B 3
     connect \Y $eq$dut.sv:223$1227_Y
   end
@@ -9924,12 +9924,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1232
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1234
+  cell $pos $auto$expression.cpp:3253:import_operation$1234
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1232
-    connect \Y $auto$expression.cpp:3177:import_operation$1233
+    connect \Y $auto$expression.cpp:3250:import_operation$1233
   end
   attribute \src "dut.sv:224.17-224.51"
   cell $eq $eq$dut.sv:224$1236
@@ -9938,7 +9938,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1233
+    connect \A $auto$expression.cpp:3250:import_operation$1233
     connect \B 0
     connect \Y $eq$dut.sv:224$1235_Y
   end
@@ -9967,12 +9967,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1240
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1242
+  cell $pos $auto$expression.cpp:3253:import_operation$1242
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1240
-    connect \Y $auto$expression.cpp:3177:import_operation$1241
+    connect \Y $auto$expression.cpp:3250:import_operation$1241
   end
   attribute \src "dut.sv:225.17-225.51"
   cell $eq $eq$dut.sv:225$1244
@@ -9981,7 +9981,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1241
+    connect \A $auto$expression.cpp:3250:import_operation$1241
     connect \B 1
     connect \Y $eq$dut.sv:225$1243_Y
   end
@@ -10010,12 +10010,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1248
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1250
+  cell $pos $auto$expression.cpp:3253:import_operation$1250
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1248
-    connect \Y $auto$expression.cpp:3177:import_operation$1249
+    connect \Y $auto$expression.cpp:3250:import_operation$1249
   end
   attribute \src "dut.sv:226.17-226.51"
   cell $eq $eq$dut.sv:226$1252
@@ -10024,7 +10024,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1249
+    connect \A $auto$expression.cpp:3250:import_operation$1249
     connect \B 2
     connect \Y $eq$dut.sv:226$1251_Y
   end
@@ -10053,12 +10053,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1256
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1258
+  cell $pos $auto$expression.cpp:3253:import_operation$1258
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3303:Or$1256
-    connect \Y $auto$expression.cpp:3177:import_operation$1257
+    connect \Y $auto$expression.cpp:3250:import_operation$1257
   end
   attribute \src "dut.sv:227.17-227.51"
   cell $eq $eq$dut.sv:227$1260
@@ -10067,7 +10067,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1257
+    connect \A $auto$expression.cpp:3250:import_operation$1257
     connect \B 3
     connect \Y $eq$dut.sv:227$1259_Y
   end
@@ -10096,12 +10096,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1264
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1266
+  cell $pos $auto$expression.cpp:3253:import_operation$1266
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1264
-    connect \Y $auto$expression.cpp:3177:import_operation$1265
+    connect \Y $auto$expression.cpp:3250:import_operation$1265
   end
   attribute \src "dut.sv:229.17-229.64"
   cell $eq $eq$dut.sv:229$1268
@@ -10110,7 +10110,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1265
+    connect \A $auto$expression.cpp:3250:import_operation$1265
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:229$1267_Y
   end
@@ -10139,12 +10139,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1272
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1274
+  cell $pos $auto$expression.cpp:3253:import_operation$1274
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1272
-    connect \Y $auto$expression.cpp:3177:import_operation$1273
+    connect \Y $auto$expression.cpp:3250:import_operation$1273
   end
   attribute \src "dut.sv:230.17-230.64"
   cell $eq $eq$dut.sv:230$1276
@@ -10153,7 +10153,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1273
+    connect \A $auto$expression.cpp:3250:import_operation$1273
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:230$1275_Y
   end
@@ -10182,12 +10182,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1280
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1282
+  cell $pos $auto$expression.cpp:3253:import_operation$1282
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1280
-    connect \Y $auto$expression.cpp:3177:import_operation$1281
+    connect \Y $auto$expression.cpp:3250:import_operation$1281
   end
   attribute \src "dut.sv:231.17-231.64"
   cell $eq $eq$dut.sv:231$1284
@@ -10196,7 +10196,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1281
+    connect \A $auto$expression.cpp:3250:import_operation$1281
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:231$1283_Y
   end
@@ -10225,12 +10225,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1288
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1290
+  cell $pos $auto$expression.cpp:3253:import_operation$1290
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1288
-    connect \Y $auto$expression.cpp:3177:import_operation$1289
+    connect \Y $auto$expression.cpp:3250:import_operation$1289
   end
   attribute \src "dut.sv:232.17-232.64"
   cell $eq $eq$dut.sv:232$1292
@@ -10239,7 +10239,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1289
+    connect \A $auto$expression.cpp:3250:import_operation$1289
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:232$1291_Y
   end
@@ -10268,12 +10268,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1296
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1298
+  cell $pos $auto$expression.cpp:3253:import_operation$1298
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1296
-    connect \Y $auto$expression.cpp:3177:import_operation$1297
+    connect \Y $auto$expression.cpp:3250:import_operation$1297
   end
   attribute \src "dut.sv:233.17-233.64"
   cell $eq $eq$dut.sv:233$1300
@@ -10282,7 +10282,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1297
+    connect \A $auto$expression.cpp:3250:import_operation$1297
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:233$1299_Y
   end
@@ -10311,12 +10311,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1304
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1306
+  cell $pos $auto$expression.cpp:3253:import_operation$1306
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1304
-    connect \Y $auto$expression.cpp:3177:import_operation$1305
+    connect \Y $auto$expression.cpp:3250:import_operation$1305
   end
   attribute \src "dut.sv:234.17-234.64"
   cell $eq $eq$dut.sv:234$1308
@@ -10325,7 +10325,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1305
+    connect \A $auto$expression.cpp:3250:import_operation$1305
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:234$1307_Y
   end
@@ -10354,12 +10354,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1312
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1314
+  cell $pos $auto$expression.cpp:3253:import_operation$1314
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1312
-    connect \Y $auto$expression.cpp:3177:import_operation$1313
+    connect \Y $auto$expression.cpp:3250:import_operation$1313
   end
   attribute \src "dut.sv:235.17-235.64"
   cell $eq $eq$dut.sv:235$1316
@@ -10368,7 +10368,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1313
+    connect \A $auto$expression.cpp:3250:import_operation$1313
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:235$1315_Y
   end
@@ -10397,12 +10397,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1320
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1322
+  cell $pos $auto$expression.cpp:3253:import_operation$1322
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1320
-    connect \Y $auto$expression.cpp:3177:import_operation$1321
+    connect \Y $auto$expression.cpp:3250:import_operation$1321
   end
   attribute \src "dut.sv:236.17-236.64"
   cell $eq $eq$dut.sv:236$1324
@@ -10411,7 +10411,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1321
+    connect \A $auto$expression.cpp:3250:import_operation$1321
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:236$1323_Y
   end
@@ -10440,12 +10440,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1328
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1330
+  cell $pos $auto$expression.cpp:3253:import_operation$1330
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1328
-    connect \Y $auto$expression.cpp:3177:import_operation$1329
+    connect \Y $auto$expression.cpp:3250:import_operation$1329
   end
   attribute \src "dut.sv:237.17-237.64"
   cell $eq $eq$dut.sv:237$1332
@@ -10454,7 +10454,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1329
+    connect \A $auto$expression.cpp:3250:import_operation$1329
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:237$1331_Y
   end
@@ -10483,12 +10483,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1336
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1338
+  cell $pos $auto$expression.cpp:3253:import_operation$1338
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1336
-    connect \Y $auto$expression.cpp:3177:import_operation$1337
+    connect \Y $auto$expression.cpp:3250:import_operation$1337
   end
   attribute \src "dut.sv:238.17-238.64"
   cell $eq $eq$dut.sv:238$1340
@@ -10497,7 +10497,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1337
+    connect \A $auto$expression.cpp:3250:import_operation$1337
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:238$1339_Y
   end
@@ -10526,12 +10526,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1344
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1346
+  cell $pos $auto$expression.cpp:3253:import_operation$1346
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1344
-    connect \Y $auto$expression.cpp:3177:import_operation$1345
+    connect \Y $auto$expression.cpp:3250:import_operation$1345
   end
   attribute \src "dut.sv:239.17-239.64"
   cell $eq $eq$dut.sv:239$1348
@@ -10540,7 +10540,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1345
+    connect \A $auto$expression.cpp:3250:import_operation$1345
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:239$1347_Y
   end
@@ -10569,12 +10569,12 @@ module \top
     connect \B 1'0
     connect \Y $auto$rtlil.cc:3303:Or$1352
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1354
+  cell $pos $auto$expression.cpp:3253:import_operation$1354
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3303:Or$1352
-    connect \Y $auto$expression.cpp:3177:import_operation$1353
+    connect \Y $auto$expression.cpp:3250:import_operation$1353
   end
   attribute \src "dut.sv:240.17-240.64"
   cell $eq $eq$dut.sv:240$1356
@@ -10583,7 +10583,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1353
+    connect \A $auto$expression.cpp:3250:import_operation$1353
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:240$1355_Y
   end
@@ -10609,12 +10609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1360
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1362
+  cell $pos $auto$expression.cpp:3253:import_operation$1362
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1360
-    connect \Y $auto$expression.cpp:3177:import_operation$1361
+    connect \Y $auto$expression.cpp:3250:import_operation$1361
   end
   attribute \src "dut.sv:242.17-242.46"
   cell $eq $eq$dut.sv:242$1364
@@ -10623,7 +10623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1361
+    connect \A $auto$expression.cpp:3250:import_operation$1361
     connect \B 3'000
     connect \Y $eq$dut.sv:242$1363_Y
   end
@@ -10649,12 +10649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1368
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1370
+  cell $pos $auto$expression.cpp:3253:import_operation$1370
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1368
-    connect \Y $auto$expression.cpp:3177:import_operation$1369
+    connect \Y $auto$expression.cpp:3250:import_operation$1369
   end
   attribute \src "dut.sv:243.17-243.46"
   cell $eq $eq$dut.sv:243$1372
@@ -10663,7 +10663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1369
+    connect \A $auto$expression.cpp:3250:import_operation$1369
     connect \B 3'001
     connect \Y $eq$dut.sv:243$1371_Y
   end
@@ -10689,12 +10689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1376
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1378
+  cell $pos $auto$expression.cpp:3253:import_operation$1378
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1376
-    connect \Y $auto$expression.cpp:3177:import_operation$1377
+    connect \Y $auto$expression.cpp:3250:import_operation$1377
   end
   attribute \src "dut.sv:244.17-244.46"
   cell $eq $eq$dut.sv:244$1380
@@ -10703,7 +10703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1377
+    connect \A $auto$expression.cpp:3250:import_operation$1377
     connect \B 3'000
     connect \Y $eq$dut.sv:244$1379_Y
   end
@@ -10729,12 +10729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1384
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1386
+  cell $pos $auto$expression.cpp:3253:import_operation$1386
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1384
-    connect \Y $auto$expression.cpp:3177:import_operation$1385
+    connect \Y $auto$expression.cpp:3250:import_operation$1385
   end
   attribute \src "dut.sv:245.17-245.46"
   cell $eq $eq$dut.sv:245$1388
@@ -10743,7 +10743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1385
+    connect \A $auto$expression.cpp:3250:import_operation$1385
     connect \B 3'001
     connect \Y $eq$dut.sv:245$1387_Y
   end
@@ -10769,12 +10769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1392
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1394
+  cell $pos $auto$expression.cpp:3253:import_operation$1394
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1392
-    connect \Y $auto$expression.cpp:3177:import_operation$1393
+    connect \Y $auto$expression.cpp:3250:import_operation$1393
   end
   attribute \src "dut.sv:246.17-246.46"
   cell $eq $eq$dut.sv:246$1396
@@ -10783,7 +10783,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1393
+    connect \A $auto$expression.cpp:3250:import_operation$1393
     connect \B 3'000
     connect \Y $eq$dut.sv:246$1395_Y
   end
@@ -10809,12 +10809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1400
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1402
+  cell $pos $auto$expression.cpp:3253:import_operation$1402
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1400
-    connect \Y $auto$expression.cpp:3177:import_operation$1401
+    connect \Y $auto$expression.cpp:3250:import_operation$1401
   end
   attribute \src "dut.sv:247.17-247.46"
   cell $eq $eq$dut.sv:247$1404
@@ -10823,7 +10823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1401
+    connect \A $auto$expression.cpp:3250:import_operation$1401
     connect \B 3'001
     connect \Y $eq$dut.sv:247$1403_Y
   end
@@ -10849,12 +10849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1408
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1410
+  cell $pos $auto$expression.cpp:3253:import_operation$1410
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1408
-    connect \Y $auto$expression.cpp:3177:import_operation$1409
+    connect \Y $auto$expression.cpp:3250:import_operation$1409
   end
   attribute \src "dut.sv:248.17-248.46"
   cell $eq $eq$dut.sv:248$1412
@@ -10863,7 +10863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1409
+    connect \A $auto$expression.cpp:3250:import_operation$1409
     connect \B 3'010
     connect \Y $eq$dut.sv:248$1411_Y
   end
@@ -10889,12 +10889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1416
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1418
+  cell $pos $auto$expression.cpp:3253:import_operation$1418
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1416
-    connect \Y $auto$expression.cpp:3177:import_operation$1417
+    connect \Y $auto$expression.cpp:3250:import_operation$1417
   end
   attribute \src "dut.sv:249.17-249.46"
   cell $eq $eq$dut.sv:249$1420
@@ -10903,7 +10903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1417
+    connect \A $auto$expression.cpp:3250:import_operation$1417
     connect \B 3'011
     connect \Y $eq$dut.sv:249$1419_Y
   end
@@ -10929,12 +10929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1424
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1426
+  cell $pos $auto$expression.cpp:3253:import_operation$1426
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1424
-    connect \Y $auto$expression.cpp:3177:import_operation$1425
+    connect \Y $auto$expression.cpp:3250:import_operation$1425
   end
   attribute \src "dut.sv:250.17-250.46"
   cell $eq $eq$dut.sv:250$1428
@@ -10943,7 +10943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1425
+    connect \A $auto$expression.cpp:3250:import_operation$1425
     connect \B 3'000
     connect \Y $eq$dut.sv:250$1427_Y
   end
@@ -10969,12 +10969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1432
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1434
+  cell $pos $auto$expression.cpp:3253:import_operation$1434
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1432
-    connect \Y $auto$expression.cpp:3177:import_operation$1433
+    connect \Y $auto$expression.cpp:3250:import_operation$1433
   end
   attribute \src "dut.sv:251.17-251.46"
   cell $eq $eq$dut.sv:251$1436
@@ -10983,7 +10983,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1433
+    connect \A $auto$expression.cpp:3250:import_operation$1433
     connect \B 3'001
     connect \Y $eq$dut.sv:251$1435_Y
   end
@@ -11009,12 +11009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1440
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1442
+  cell $pos $auto$expression.cpp:3253:import_operation$1442
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1440
-    connect \Y $auto$expression.cpp:3177:import_operation$1441
+    connect \Y $auto$expression.cpp:3250:import_operation$1441
   end
   attribute \src "dut.sv:252.17-252.46"
   cell $eq $eq$dut.sv:252$1444
@@ -11023,7 +11023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1441
+    connect \A $auto$expression.cpp:3250:import_operation$1441
     connect \B 3'010
     connect \Y $eq$dut.sv:252$1443_Y
   end
@@ -11049,12 +11049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1448
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1450
+  cell $pos $auto$expression.cpp:3253:import_operation$1450
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1448
-    connect \Y $auto$expression.cpp:3177:import_operation$1449
+    connect \Y $auto$expression.cpp:3250:import_operation$1449
   end
   attribute \src "dut.sv:253.17-253.46"
   cell $eq $eq$dut.sv:253$1452
@@ -11063,7 +11063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1449
+    connect \A $auto$expression.cpp:3250:import_operation$1449
     connect \B 3'011
     connect \Y $eq$dut.sv:253$1451_Y
   end
@@ -11089,12 +11089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1456
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1458
+  cell $pos $auto$expression.cpp:3253:import_operation$1458
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1456
-    connect \Y $auto$expression.cpp:3177:import_operation$1457
+    connect \Y $auto$expression.cpp:3250:import_operation$1457
   end
   attribute \src "dut.sv:255.17-255.52"
   cell $eq $eq$dut.sv:255$1460
@@ -11103,7 +11103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1457
+    connect \A $auto$expression.cpp:3250:import_operation$1457
     connect \B 3'000
     connect \Y $eq$dut.sv:255$1459_Y
   end
@@ -11129,12 +11129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1464
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1466
+  cell $pos $auto$expression.cpp:3253:import_operation$1466
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1464
-    connect \Y $auto$expression.cpp:3177:import_operation$1465
+    connect \Y $auto$expression.cpp:3250:import_operation$1465
   end
   attribute \src "dut.sv:256.17-256.52"
   cell $eq $eq$dut.sv:256$1468
@@ -11143,7 +11143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1465
+    connect \A $auto$expression.cpp:3250:import_operation$1465
     connect \B 3'001
     connect \Y $eq$dut.sv:256$1467_Y
   end
@@ -11169,12 +11169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1472
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1474
+  cell $pos $auto$expression.cpp:3253:import_operation$1474
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1472
-    connect \Y $auto$expression.cpp:3177:import_operation$1473
+    connect \Y $auto$expression.cpp:3250:import_operation$1473
   end
   attribute \src "dut.sv:257.17-257.52"
   cell $eq $eq$dut.sv:257$1476
@@ -11183,7 +11183,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1473
+    connect \A $auto$expression.cpp:3250:import_operation$1473
     connect \B 3'000
     connect \Y $eq$dut.sv:257$1475_Y
   end
@@ -11209,12 +11209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1480
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1482
+  cell $pos $auto$expression.cpp:3253:import_operation$1482
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1480
-    connect \Y $auto$expression.cpp:3177:import_operation$1481
+    connect \Y $auto$expression.cpp:3250:import_operation$1481
   end
   attribute \src "dut.sv:258.17-258.52"
   cell $eq $eq$dut.sv:258$1484
@@ -11223,7 +11223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1481
+    connect \A $auto$expression.cpp:3250:import_operation$1481
     connect \B 3'001
     connect \Y $eq$dut.sv:258$1483_Y
   end
@@ -11249,12 +11249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1488
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1490
+  cell $pos $auto$expression.cpp:3253:import_operation$1490
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1488
-    connect \Y $auto$expression.cpp:3177:import_operation$1489
+    connect \Y $auto$expression.cpp:3250:import_operation$1489
   end
   attribute \src "dut.sv:259.17-259.52"
   cell $eq $eq$dut.sv:259$1492
@@ -11263,7 +11263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1489
+    connect \A $auto$expression.cpp:3250:import_operation$1489
     connect \B 3'000
     connect \Y $eq$dut.sv:259$1491_Y
   end
@@ -11289,12 +11289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1496
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1498
+  cell $pos $auto$expression.cpp:3253:import_operation$1498
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1496
-    connect \Y $auto$expression.cpp:3177:import_operation$1497
+    connect \Y $auto$expression.cpp:3250:import_operation$1497
   end
   attribute \src "dut.sv:260.17-260.52"
   cell $eq $eq$dut.sv:260$1500
@@ -11303,7 +11303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1497
+    connect \A $auto$expression.cpp:3250:import_operation$1497
     connect \B 3'001
     connect \Y $eq$dut.sv:260$1499_Y
   end
@@ -11329,12 +11329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1504
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1506
+  cell $pos $auto$expression.cpp:3253:import_operation$1506
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1504
-    connect \Y $auto$expression.cpp:3177:import_operation$1505
+    connect \Y $auto$expression.cpp:3250:import_operation$1505
   end
   attribute \src "dut.sv:261.17-261.52"
   cell $eq $eq$dut.sv:261$1508
@@ -11343,7 +11343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1505
+    connect \A $auto$expression.cpp:3250:import_operation$1505
     connect \B 3'010
     connect \Y $eq$dut.sv:261$1507_Y
   end
@@ -11369,12 +11369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1512
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1514
+  cell $pos $auto$expression.cpp:3253:import_operation$1514
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1512
-    connect \Y $auto$expression.cpp:3177:import_operation$1513
+    connect \Y $auto$expression.cpp:3250:import_operation$1513
   end
   attribute \src "dut.sv:262.17-262.52"
   cell $eq $eq$dut.sv:262$1516
@@ -11383,7 +11383,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1513
+    connect \A $auto$expression.cpp:3250:import_operation$1513
     connect \B 3'011
     connect \Y $eq$dut.sv:262$1515_Y
   end
@@ -11409,12 +11409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1520
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1522
+  cell $pos $auto$expression.cpp:3253:import_operation$1522
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1520
-    connect \Y $auto$expression.cpp:3177:import_operation$1521
+    connect \Y $auto$expression.cpp:3250:import_operation$1521
   end
   attribute \src "dut.sv:263.17-263.52"
   cell $eq $eq$dut.sv:263$1524
@@ -11423,7 +11423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1521
+    connect \A $auto$expression.cpp:3250:import_operation$1521
     connect \B 3'000
     connect \Y $eq$dut.sv:263$1523_Y
   end
@@ -11449,12 +11449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1528
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1530
+  cell $pos $auto$expression.cpp:3253:import_operation$1530
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1528
-    connect \Y $auto$expression.cpp:3177:import_operation$1529
+    connect \Y $auto$expression.cpp:3250:import_operation$1529
   end
   attribute \src "dut.sv:264.17-264.52"
   cell $eq $eq$dut.sv:264$1532
@@ -11463,7 +11463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1529
+    connect \A $auto$expression.cpp:3250:import_operation$1529
     connect \B 3'001
     connect \Y $eq$dut.sv:264$1531_Y
   end
@@ -11489,12 +11489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1536
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1538
+  cell $pos $auto$expression.cpp:3253:import_operation$1538
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1536
-    connect \Y $auto$expression.cpp:3177:import_operation$1537
+    connect \Y $auto$expression.cpp:3250:import_operation$1537
   end
   attribute \src "dut.sv:265.17-265.52"
   cell $eq $eq$dut.sv:265$1540
@@ -11503,7 +11503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1537
+    connect \A $auto$expression.cpp:3250:import_operation$1537
     connect \B 3'010
     connect \Y $eq$dut.sv:265$1539_Y
   end
@@ -11529,12 +11529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1544
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1546
+  cell $pos $auto$expression.cpp:3253:import_operation$1546
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1544
-    connect \Y $auto$expression.cpp:3177:import_operation$1545
+    connect \Y $auto$expression.cpp:3250:import_operation$1545
   end
   attribute \src "dut.sv:266.17-266.52"
   cell $eq $eq$dut.sv:266$1548
@@ -11543,7 +11543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1545
+    connect \A $auto$expression.cpp:3250:import_operation$1545
     connect \B 3'011
     connect \Y $eq$dut.sv:266$1547_Y
   end
@@ -11569,12 +11569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1552
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1554
+  cell $pos $auto$expression.cpp:3253:import_operation$1554
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1552
-    connect \Y $auto$expression.cpp:3177:import_operation$1553
+    connect \Y $auto$expression.cpp:3250:import_operation$1553
   end
   attribute \src "dut.sv:268.17-268.48"
   cell $eq $eq$dut.sv:268$1556
@@ -11583,7 +11583,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1553
+    connect \A $auto$expression.cpp:3250:import_operation$1553
     connect \B 8'00000000
     connect \Y $eq$dut.sv:268$1555_Y
   end
@@ -11609,12 +11609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1560
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1562
+  cell $pos $auto$expression.cpp:3253:import_operation$1562
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1560
-    connect \Y $auto$expression.cpp:3177:import_operation$1561
+    connect \Y $auto$expression.cpp:3250:import_operation$1561
   end
   attribute \src "dut.sv:269.17-269.48"
   cell $eq $eq$dut.sv:269$1564
@@ -11623,7 +11623,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1561
+    connect \A $auto$expression.cpp:3250:import_operation$1561
     connect \B 8'00000001
     connect \Y $eq$dut.sv:269$1563_Y
   end
@@ -11649,12 +11649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1568
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1570
+  cell $pos $auto$expression.cpp:3253:import_operation$1570
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1568
-    connect \Y $auto$expression.cpp:3177:import_operation$1569
+    connect \Y $auto$expression.cpp:3250:import_operation$1569
   end
   attribute \src "dut.sv:270.17-270.48"
   cell $eq $eq$dut.sv:270$1572
@@ -11663,7 +11663,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1569
+    connect \A $auto$expression.cpp:3250:import_operation$1569
     connect \B 8'00000000
     connect \Y $eq$dut.sv:270$1571_Y
   end
@@ -11689,12 +11689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1576
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1578
+  cell $pos $auto$expression.cpp:3253:import_operation$1578
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1576
-    connect \Y $auto$expression.cpp:3177:import_operation$1577
+    connect \Y $auto$expression.cpp:3250:import_operation$1577
   end
   attribute \src "dut.sv:271.17-271.48"
   cell $eq $eq$dut.sv:271$1580
@@ -11703,7 +11703,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1577
+    connect \A $auto$expression.cpp:3250:import_operation$1577
     connect \B 8'00000001
     connect \Y $eq$dut.sv:271$1579_Y
   end
@@ -11729,12 +11729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1584
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1586
+  cell $pos $auto$expression.cpp:3253:import_operation$1586
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1584
-    connect \Y $auto$expression.cpp:3177:import_operation$1585
+    connect \Y $auto$expression.cpp:3250:import_operation$1585
   end
   attribute \src "dut.sv:272.17-272.48"
   cell $eq $eq$dut.sv:272$1588
@@ -11743,7 +11743,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1585
+    connect \A $auto$expression.cpp:3250:import_operation$1585
     connect \B 8'00000000
     connect \Y $eq$dut.sv:272$1587_Y
   end
@@ -11769,12 +11769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1592
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1594
+  cell $pos $auto$expression.cpp:3253:import_operation$1594
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1592
-    connect \Y $auto$expression.cpp:3177:import_operation$1593
+    connect \Y $auto$expression.cpp:3250:import_operation$1593
   end
   attribute \src "dut.sv:273.17-273.48"
   cell $eq $eq$dut.sv:273$1596
@@ -11783,7 +11783,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1593
+    connect \A $auto$expression.cpp:3250:import_operation$1593
     connect \B 8'00000001
     connect \Y $eq$dut.sv:273$1595_Y
   end
@@ -11809,12 +11809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1600
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1602
+  cell $pos $auto$expression.cpp:3253:import_operation$1602
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1600
-    connect \Y $auto$expression.cpp:3177:import_operation$1601
+    connect \Y $auto$expression.cpp:3250:import_operation$1601
   end
   attribute \src "dut.sv:274.17-274.48"
   cell $eq $eq$dut.sv:274$1604
@@ -11823,7 +11823,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1601
+    connect \A $auto$expression.cpp:3250:import_operation$1601
     connect \B 8'00000010
     connect \Y $eq$dut.sv:274$1603_Y
   end
@@ -11849,12 +11849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1608
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1610
+  cell $pos $auto$expression.cpp:3253:import_operation$1610
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1608
-    connect \Y $auto$expression.cpp:3177:import_operation$1609
+    connect \Y $auto$expression.cpp:3250:import_operation$1609
   end
   attribute \src "dut.sv:275.17-275.48"
   cell $eq $eq$dut.sv:275$1612
@@ -11863,7 +11863,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1609
+    connect \A $auto$expression.cpp:3250:import_operation$1609
     connect \B 8'00000011
     connect \Y $eq$dut.sv:275$1611_Y
   end
@@ -11889,12 +11889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1616
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1618
+  cell $pos $auto$expression.cpp:3253:import_operation$1618
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1616
-    connect \Y $auto$expression.cpp:3177:import_operation$1617
+    connect \Y $auto$expression.cpp:3250:import_operation$1617
   end
   attribute \src "dut.sv:276.17-276.48"
   cell $eq $eq$dut.sv:276$1620
@@ -11903,7 +11903,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1617
+    connect \A $auto$expression.cpp:3250:import_operation$1617
     connect \B 8'00000000
     connect \Y $eq$dut.sv:276$1619_Y
   end
@@ -11929,12 +11929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1624
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1626
+  cell $pos $auto$expression.cpp:3253:import_operation$1626
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1624
-    connect \Y $auto$expression.cpp:3177:import_operation$1625
+    connect \Y $auto$expression.cpp:3250:import_operation$1625
   end
   attribute \src "dut.sv:277.17-277.48"
   cell $eq $eq$dut.sv:277$1628
@@ -11943,7 +11943,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1625
+    connect \A $auto$expression.cpp:3250:import_operation$1625
     connect \B 8'00000001
     connect \Y $eq$dut.sv:277$1627_Y
   end
@@ -11969,12 +11969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1632
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1634
+  cell $pos $auto$expression.cpp:3253:import_operation$1634
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1632
-    connect \Y $auto$expression.cpp:3177:import_operation$1633
+    connect \Y $auto$expression.cpp:3250:import_operation$1633
   end
   attribute \src "dut.sv:278.17-278.48"
   cell $eq $eq$dut.sv:278$1636
@@ -11983,7 +11983,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1633
+    connect \A $auto$expression.cpp:3250:import_operation$1633
     connect \B 8'00000010
     connect \Y $eq$dut.sv:278$1635_Y
   end
@@ -12009,12 +12009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1640
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1642
+  cell $pos $auto$expression.cpp:3253:import_operation$1642
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$1640
-    connect \Y $auto$expression.cpp:3177:import_operation$1641
+    connect \Y $auto$expression.cpp:3250:import_operation$1641
   end
   attribute \src "dut.sv:279.17-279.48"
   cell $eq $eq$dut.sv:279$1644
@@ -12023,7 +12023,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1641
+    connect \A $auto$expression.cpp:3250:import_operation$1641
     connect \B 8'00000011
     connect \Y $eq$dut.sv:279$1643_Y
   end
@@ -12049,12 +12049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1648
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1650
+  cell $pos $auto$expression.cpp:3253:import_operation$1650
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1648
-    connect \Y $auto$expression.cpp:3177:import_operation$1649
+    connect \Y $auto$expression.cpp:3250:import_operation$1649
   end
   attribute \src "dut.sv:281.17-281.55"
   cell $eq $eq$dut.sv:281$1652
@@ -12063,7 +12063,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1649
+    connect \A $auto$expression.cpp:3250:import_operation$1649
     connect \B 0
     connect \Y $eq$dut.sv:281$1651_Y
   end
@@ -12089,12 +12089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1656
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1658
+  cell $pos $auto$expression.cpp:3253:import_operation$1658
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1656
-    connect \Y $auto$expression.cpp:3177:import_operation$1657
+    connect \Y $auto$expression.cpp:3250:import_operation$1657
   end
   attribute \src "dut.sv:282.17-282.55"
   cell $eq $eq$dut.sv:282$1660
@@ -12103,7 +12103,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1657
+    connect \A $auto$expression.cpp:3250:import_operation$1657
     connect \B 1
     connect \Y $eq$dut.sv:282$1659_Y
   end
@@ -12129,12 +12129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1664
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1666
+  cell $pos $auto$expression.cpp:3253:import_operation$1666
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1664
-    connect \Y $auto$expression.cpp:3177:import_operation$1665
+    connect \Y $auto$expression.cpp:3250:import_operation$1665
   end
   attribute \src "dut.sv:283.17-283.55"
   cell $eq $eq$dut.sv:283$1668
@@ -12143,7 +12143,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1665
+    connect \A $auto$expression.cpp:3250:import_operation$1665
     connect \B 0
     connect \Y $eq$dut.sv:283$1667_Y
   end
@@ -12169,12 +12169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1672
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1674
+  cell $pos $auto$expression.cpp:3253:import_operation$1674
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1672
-    connect \Y $auto$expression.cpp:3177:import_operation$1673
+    connect \Y $auto$expression.cpp:3250:import_operation$1673
   end
   attribute \src "dut.sv:284.17-284.55"
   cell $eq $eq$dut.sv:284$1676
@@ -12183,7 +12183,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1673
+    connect \A $auto$expression.cpp:3250:import_operation$1673
     connect \B 1
     connect \Y $eq$dut.sv:284$1675_Y
   end
@@ -12209,12 +12209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1680
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1682
+  cell $pos $auto$expression.cpp:3253:import_operation$1682
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1680
-    connect \Y $auto$expression.cpp:3177:import_operation$1681
+    connect \Y $auto$expression.cpp:3250:import_operation$1681
   end
   attribute \src "dut.sv:285.17-285.55"
   cell $eq $eq$dut.sv:285$1684
@@ -12223,7 +12223,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1681
+    connect \A $auto$expression.cpp:3250:import_operation$1681
     connect \B 0
     connect \Y $eq$dut.sv:285$1683_Y
   end
@@ -12249,12 +12249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1688
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1690
+  cell $pos $auto$expression.cpp:3253:import_operation$1690
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1688
-    connect \Y $auto$expression.cpp:3177:import_operation$1689
+    connect \Y $auto$expression.cpp:3250:import_operation$1689
   end
   attribute \src "dut.sv:286.17-286.55"
   cell $eq $eq$dut.sv:286$1692
@@ -12263,7 +12263,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1689
+    connect \A $auto$expression.cpp:3250:import_operation$1689
     connect \B 1
     connect \Y $eq$dut.sv:286$1691_Y
   end
@@ -12289,12 +12289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1696
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1698
+  cell $pos $auto$expression.cpp:3253:import_operation$1698
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1696
-    connect \Y $auto$expression.cpp:3177:import_operation$1697
+    connect \Y $auto$expression.cpp:3250:import_operation$1697
   end
   attribute \src "dut.sv:287.17-287.55"
   cell $eq $eq$dut.sv:287$1700
@@ -12303,7 +12303,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1697
+    connect \A $auto$expression.cpp:3250:import_operation$1697
     connect \B 2
     connect \Y $eq$dut.sv:287$1699_Y
   end
@@ -12329,12 +12329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1704
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1706
+  cell $pos $auto$expression.cpp:3253:import_operation$1706
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1704
-    connect \Y $auto$expression.cpp:3177:import_operation$1705
+    connect \Y $auto$expression.cpp:3250:import_operation$1705
   end
   attribute \src "dut.sv:288.17-288.55"
   cell $eq $eq$dut.sv:288$1708
@@ -12343,7 +12343,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1705
+    connect \A $auto$expression.cpp:3250:import_operation$1705
     connect \B 3
     connect \Y $eq$dut.sv:288$1707_Y
   end
@@ -12369,12 +12369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1712
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1714
+  cell $pos $auto$expression.cpp:3253:import_operation$1714
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1712
-    connect \Y $auto$expression.cpp:3177:import_operation$1713
+    connect \Y $auto$expression.cpp:3250:import_operation$1713
   end
   attribute \src "dut.sv:289.17-289.55"
   cell $eq $eq$dut.sv:289$1716
@@ -12383,7 +12383,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1713
+    connect \A $auto$expression.cpp:3250:import_operation$1713
     connect \B 0
     connect \Y $eq$dut.sv:289$1715_Y
   end
@@ -12409,12 +12409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1720
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1722
+  cell $pos $auto$expression.cpp:3253:import_operation$1722
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1720
-    connect \Y $auto$expression.cpp:3177:import_operation$1721
+    connect \Y $auto$expression.cpp:3250:import_operation$1721
   end
   attribute \src "dut.sv:290.17-290.55"
   cell $eq $eq$dut.sv:290$1724
@@ -12423,7 +12423,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1721
+    connect \A $auto$expression.cpp:3250:import_operation$1721
     connect \B 1
     connect \Y $eq$dut.sv:290$1723_Y
   end
@@ -12449,12 +12449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1728
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1730
+  cell $pos $auto$expression.cpp:3253:import_operation$1730
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1728
-    connect \Y $auto$expression.cpp:3177:import_operation$1729
+    connect \Y $auto$expression.cpp:3250:import_operation$1729
   end
   attribute \src "dut.sv:291.17-291.55"
   cell $eq $eq$dut.sv:291$1732
@@ -12463,7 +12463,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1729
+    connect \A $auto$expression.cpp:3250:import_operation$1729
     connect \B 2
     connect \Y $eq$dut.sv:291$1731_Y
   end
@@ -12489,12 +12489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1736
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1738
+  cell $pos $auto$expression.cpp:3253:import_operation$1738
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$1736
-    connect \Y $auto$expression.cpp:3177:import_operation$1737
+    connect \Y $auto$expression.cpp:3250:import_operation$1737
   end
   attribute \src "dut.sv:292.17-292.55"
   cell $eq $eq$dut.sv:292$1740
@@ -12503,7 +12503,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1737
+    connect \A $auto$expression.cpp:3250:import_operation$1737
     connect \B 3
     connect \Y $eq$dut.sv:292$1739_Y
   end
@@ -12529,12 +12529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1744
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1746
+  cell $pos $auto$expression.cpp:3253:import_operation$1746
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1744
-    connect \Y $auto$expression.cpp:3177:import_operation$1745
+    connect \Y $auto$expression.cpp:3250:import_operation$1745
   end
   attribute \src "dut.sv:294.17-294.68"
   cell $eq $eq$dut.sv:294$1748
@@ -12543,7 +12543,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1745
+    connect \A $auto$expression.cpp:3250:import_operation$1745
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:294$1747_Y
   end
@@ -12569,12 +12569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1752
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1754
+  cell $pos $auto$expression.cpp:3253:import_operation$1754
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1752
-    connect \Y $auto$expression.cpp:3177:import_operation$1753
+    connect \Y $auto$expression.cpp:3250:import_operation$1753
   end
   attribute \src "dut.sv:295.17-295.68"
   cell $eq $eq$dut.sv:295$1756
@@ -12583,7 +12583,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1753
+    connect \A $auto$expression.cpp:3250:import_operation$1753
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:295$1755_Y
   end
@@ -12609,12 +12609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1760
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1762
+  cell $pos $auto$expression.cpp:3253:import_operation$1762
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1760
-    connect \Y $auto$expression.cpp:3177:import_operation$1761
+    connect \Y $auto$expression.cpp:3250:import_operation$1761
   end
   attribute \src "dut.sv:296.17-296.68"
   cell $eq $eq$dut.sv:296$1764
@@ -12623,7 +12623,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1761
+    connect \A $auto$expression.cpp:3250:import_operation$1761
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:296$1763_Y
   end
@@ -12649,12 +12649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1768
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1770
+  cell $pos $auto$expression.cpp:3253:import_operation$1770
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1768
-    connect \Y $auto$expression.cpp:3177:import_operation$1769
+    connect \Y $auto$expression.cpp:3250:import_operation$1769
   end
   attribute \src "dut.sv:297.17-297.68"
   cell $eq $eq$dut.sv:297$1772
@@ -12663,7 +12663,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1769
+    connect \A $auto$expression.cpp:3250:import_operation$1769
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:297$1771_Y
   end
@@ -12689,12 +12689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1776
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1778
+  cell $pos $auto$expression.cpp:3253:import_operation$1778
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1776
-    connect \Y $auto$expression.cpp:3177:import_operation$1777
+    connect \Y $auto$expression.cpp:3250:import_operation$1777
   end
   attribute \src "dut.sv:298.17-298.68"
   cell $eq $eq$dut.sv:298$1780
@@ -12703,7 +12703,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1777
+    connect \A $auto$expression.cpp:3250:import_operation$1777
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:298$1779_Y
   end
@@ -12729,12 +12729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1784
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1786
+  cell $pos $auto$expression.cpp:3253:import_operation$1786
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1784
-    connect \Y $auto$expression.cpp:3177:import_operation$1785
+    connect \Y $auto$expression.cpp:3250:import_operation$1785
   end
   attribute \src "dut.sv:299.17-299.68"
   cell $eq $eq$dut.sv:299$1788
@@ -12743,7 +12743,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1785
+    connect \A $auto$expression.cpp:3250:import_operation$1785
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:299$1787_Y
   end
@@ -12769,12 +12769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1792
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1794
+  cell $pos $auto$expression.cpp:3253:import_operation$1794
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1792
-    connect \Y $auto$expression.cpp:3177:import_operation$1793
+    connect \Y $auto$expression.cpp:3250:import_operation$1793
   end
   attribute \src "dut.sv:300.17-300.68"
   cell $eq $eq$dut.sv:300$1796
@@ -12783,7 +12783,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1793
+    connect \A $auto$expression.cpp:3250:import_operation$1793
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:300$1795_Y
   end
@@ -12809,12 +12809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1800
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1802
+  cell $pos $auto$expression.cpp:3253:import_operation$1802
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1800
-    connect \Y $auto$expression.cpp:3177:import_operation$1801
+    connect \Y $auto$expression.cpp:3250:import_operation$1801
   end
   attribute \src "dut.sv:301.17-301.68"
   cell $eq $eq$dut.sv:301$1804
@@ -12823,7 +12823,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1801
+    connect \A $auto$expression.cpp:3250:import_operation$1801
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:301$1803_Y
   end
@@ -12849,12 +12849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1808
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1810
+  cell $pos $auto$expression.cpp:3253:import_operation$1810
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1808
-    connect \Y $auto$expression.cpp:3177:import_operation$1809
+    connect \Y $auto$expression.cpp:3250:import_operation$1809
   end
   attribute \src "dut.sv:302.17-302.68"
   cell $eq $eq$dut.sv:302$1812
@@ -12863,7 +12863,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1809
+    connect \A $auto$expression.cpp:3250:import_operation$1809
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:302$1811_Y
   end
@@ -12889,12 +12889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1816
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1818
+  cell $pos $auto$expression.cpp:3253:import_operation$1818
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1816
-    connect \Y $auto$expression.cpp:3177:import_operation$1817
+    connect \Y $auto$expression.cpp:3250:import_operation$1817
   end
   attribute \src "dut.sv:303.17-303.68"
   cell $eq $eq$dut.sv:303$1820
@@ -12903,7 +12903,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1817
+    connect \A $auto$expression.cpp:3250:import_operation$1817
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:303$1819_Y
   end
@@ -12929,12 +12929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1824
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1826
+  cell $pos $auto$expression.cpp:3253:import_operation$1826
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1824
-    connect \Y $auto$expression.cpp:3177:import_operation$1825
+    connect \Y $auto$expression.cpp:3250:import_operation$1825
   end
   attribute \src "dut.sv:304.17-304.68"
   cell $eq $eq$dut.sv:304$1828
@@ -12943,7 +12943,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1825
+    connect \A $auto$expression.cpp:3250:import_operation$1825
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:304$1827_Y
   end
@@ -12969,12 +12969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1832
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1834
+  cell $pos $auto$expression.cpp:3253:import_operation$1834
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$1832
-    connect \Y $auto$expression.cpp:3177:import_operation$1833
+    connect \Y $auto$expression.cpp:3250:import_operation$1833
   end
   attribute \src "dut.sv:305.17-305.68"
   cell $eq $eq$dut.sv:305$1836
@@ -12983,7 +12983,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1833
+    connect \A $auto$expression.cpp:3250:import_operation$1833
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:305$1835_Y
   end
@@ -13009,12 +13009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1840
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1842
+  cell $pos $auto$expression.cpp:3253:import_operation$1842
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1840
-    connect \Y $auto$expression.cpp:3177:import_operation$1841
+    connect \Y $auto$expression.cpp:3250:import_operation$1841
   end
   attribute \src "dut.sv:307.17-307.46"
   cell $eq $eq$dut.sv:307$1844
@@ -13023,7 +13023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1841
+    connect \A $auto$expression.cpp:3250:import_operation$1841
     connect \B 3'000
     connect \Y $eq$dut.sv:307$1843_Y
   end
@@ -13049,12 +13049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1848
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1850
+  cell $pos $auto$expression.cpp:3253:import_operation$1850
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1848
-    connect \Y $auto$expression.cpp:3177:import_operation$1849
+    connect \Y $auto$expression.cpp:3250:import_operation$1849
   end
   attribute \src "dut.sv:308.17-308.46"
   cell $eq $eq$dut.sv:308$1852
@@ -13063,7 +13063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1849
+    connect \A $auto$expression.cpp:3250:import_operation$1849
     connect \B 3'001
     connect \Y $eq$dut.sv:308$1851_Y
   end
@@ -13089,12 +13089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1856
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1858
+  cell $pos $auto$expression.cpp:3253:import_operation$1858
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1856
-    connect \Y $auto$expression.cpp:3177:import_operation$1857
+    connect \Y $auto$expression.cpp:3250:import_operation$1857
   end
   attribute \src "dut.sv:309.17-309.46"
   cell $eq $eq$dut.sv:309$1860
@@ -13103,7 +13103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1857
+    connect \A $auto$expression.cpp:3250:import_operation$1857
     connect \B 3'000
     connect \Y $eq$dut.sv:309$1859_Y
   end
@@ -13129,12 +13129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1864
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1866
+  cell $pos $auto$expression.cpp:3253:import_operation$1866
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1864
-    connect \Y $auto$expression.cpp:3177:import_operation$1865
+    connect \Y $auto$expression.cpp:3250:import_operation$1865
   end
   attribute \src "dut.sv:310.17-310.46"
   cell $eq $eq$dut.sv:310$1868
@@ -13143,7 +13143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1865
+    connect \A $auto$expression.cpp:3250:import_operation$1865
     connect \B 3'001
     connect \Y $eq$dut.sv:310$1867_Y
   end
@@ -13169,12 +13169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1872
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1874
+  cell $pos $auto$expression.cpp:3253:import_operation$1874
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1872
-    connect \Y $auto$expression.cpp:3177:import_operation$1873
+    connect \Y $auto$expression.cpp:3250:import_operation$1873
   end
   attribute \src "dut.sv:311.17-311.46"
   cell $eq $eq$dut.sv:311$1876
@@ -13183,7 +13183,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1873
+    connect \A $auto$expression.cpp:3250:import_operation$1873
     connect \B 3'000
     connect \Y $eq$dut.sv:311$1875_Y
   end
@@ -13209,12 +13209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1880
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1882
+  cell $pos $auto$expression.cpp:3253:import_operation$1882
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1880
-    connect \Y $auto$expression.cpp:3177:import_operation$1881
+    connect \Y $auto$expression.cpp:3250:import_operation$1881
   end
   attribute \src "dut.sv:312.17-312.46"
   cell $eq $eq$dut.sv:312$1884
@@ -13223,7 +13223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1881
+    connect \A $auto$expression.cpp:3250:import_operation$1881
     connect \B 3'001
     connect \Y $eq$dut.sv:312$1883_Y
   end
@@ -13249,12 +13249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1888
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1890
+  cell $pos $auto$expression.cpp:3253:import_operation$1890
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1888
-    connect \Y $auto$expression.cpp:3177:import_operation$1889
+    connect \Y $auto$expression.cpp:3250:import_operation$1889
   end
   attribute \src "dut.sv:313.17-313.46"
   cell $eq $eq$dut.sv:313$1892
@@ -13263,7 +13263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1889
+    connect \A $auto$expression.cpp:3250:import_operation$1889
     connect \B 3'010
     connect \Y $eq$dut.sv:313$1891_Y
   end
@@ -13289,12 +13289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1896
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1898
+  cell $pos $auto$expression.cpp:3253:import_operation$1898
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1896
-    connect \Y $auto$expression.cpp:3177:import_operation$1897
+    connect \Y $auto$expression.cpp:3250:import_operation$1897
   end
   attribute \src "dut.sv:314.17-314.46"
   cell $eq $eq$dut.sv:314$1900
@@ -13303,7 +13303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1897
+    connect \A $auto$expression.cpp:3250:import_operation$1897
     connect \B 3'011
     connect \Y $eq$dut.sv:314$1899_Y
   end
@@ -13329,12 +13329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1904
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1906
+  cell $pos $auto$expression.cpp:3253:import_operation$1906
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1904
-    connect \Y $auto$expression.cpp:3177:import_operation$1905
+    connect \Y $auto$expression.cpp:3250:import_operation$1905
   end
   attribute \src "dut.sv:315.17-315.46"
   cell $eq $eq$dut.sv:315$1908
@@ -13343,7 +13343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1905
+    connect \A $auto$expression.cpp:3250:import_operation$1905
     connect \B 3'000
     connect \Y $eq$dut.sv:315$1907_Y
   end
@@ -13369,12 +13369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1912
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1914
+  cell $pos $auto$expression.cpp:3253:import_operation$1914
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1912
-    connect \Y $auto$expression.cpp:3177:import_operation$1913
+    connect \Y $auto$expression.cpp:3250:import_operation$1913
   end
   attribute \src "dut.sv:316.17-316.46"
   cell $eq $eq$dut.sv:316$1916
@@ -13383,7 +13383,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1913
+    connect \A $auto$expression.cpp:3250:import_operation$1913
     connect \B 3'001
     connect \Y $eq$dut.sv:316$1915_Y
   end
@@ -13409,12 +13409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1920
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1922
+  cell $pos $auto$expression.cpp:3253:import_operation$1922
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1920
-    connect \Y $auto$expression.cpp:3177:import_operation$1921
+    connect \Y $auto$expression.cpp:3250:import_operation$1921
   end
   attribute \src "dut.sv:317.17-317.46"
   cell $eq $eq$dut.sv:317$1924
@@ -13423,7 +13423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1921
+    connect \A $auto$expression.cpp:3250:import_operation$1921
     connect \B 3'010
     connect \Y $eq$dut.sv:317$1923_Y
   end
@@ -13449,12 +13449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1928
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1930
+  cell $pos $auto$expression.cpp:3253:import_operation$1930
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1928
-    connect \Y $auto$expression.cpp:3177:import_operation$1929
+    connect \Y $auto$expression.cpp:3250:import_operation$1929
   end
   attribute \src "dut.sv:318.17-318.46"
   cell $eq $eq$dut.sv:318$1932
@@ -13463,7 +13463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1929
+    connect \A $auto$expression.cpp:3250:import_operation$1929
     connect \B 3'011
     connect \Y $eq$dut.sv:318$1931_Y
   end
@@ -13489,12 +13489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1936
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1938
+  cell $pos $auto$expression.cpp:3253:import_operation$1938
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1936
-    connect \Y $auto$expression.cpp:3177:import_operation$1937
+    connect \Y $auto$expression.cpp:3250:import_operation$1937
   end
   attribute \src "dut.sv:320.17-320.52"
   cell $eq $eq$dut.sv:320$1940
@@ -13503,7 +13503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1937
+    connect \A $auto$expression.cpp:3250:import_operation$1937
     connect \B 3'000
     connect \Y $eq$dut.sv:320$1939_Y
   end
@@ -13529,12 +13529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1944
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1946
+  cell $pos $auto$expression.cpp:3253:import_operation$1946
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1944
-    connect \Y $auto$expression.cpp:3177:import_operation$1945
+    connect \Y $auto$expression.cpp:3250:import_operation$1945
   end
   attribute \src "dut.sv:321.17-321.52"
   cell $eq $eq$dut.sv:321$1948
@@ -13543,7 +13543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1945
+    connect \A $auto$expression.cpp:3250:import_operation$1945
     connect \B 3'001
     connect \Y $eq$dut.sv:321$1947_Y
   end
@@ -13569,12 +13569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1952
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1954
+  cell $pos $auto$expression.cpp:3253:import_operation$1954
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1952
-    connect \Y $auto$expression.cpp:3177:import_operation$1953
+    connect \Y $auto$expression.cpp:3250:import_operation$1953
   end
   attribute \src "dut.sv:322.17-322.52"
   cell $eq $eq$dut.sv:322$1956
@@ -13583,7 +13583,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1953
+    connect \A $auto$expression.cpp:3250:import_operation$1953
     connect \B 3'000
     connect \Y $eq$dut.sv:322$1955_Y
   end
@@ -13609,12 +13609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1960
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1962
+  cell $pos $auto$expression.cpp:3253:import_operation$1962
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1960
-    connect \Y $auto$expression.cpp:3177:import_operation$1961
+    connect \Y $auto$expression.cpp:3250:import_operation$1961
   end
   attribute \src "dut.sv:323.17-323.52"
   cell $eq $eq$dut.sv:323$1964
@@ -13623,7 +13623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1961
+    connect \A $auto$expression.cpp:3250:import_operation$1961
     connect \B 3'001
     connect \Y $eq$dut.sv:323$1963_Y
   end
@@ -13649,12 +13649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1968
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1970
+  cell $pos $auto$expression.cpp:3253:import_operation$1970
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1968
-    connect \Y $auto$expression.cpp:3177:import_operation$1969
+    connect \Y $auto$expression.cpp:3250:import_operation$1969
   end
   attribute \src "dut.sv:324.17-324.52"
   cell $eq $eq$dut.sv:324$1972
@@ -13663,7 +13663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1969
+    connect \A $auto$expression.cpp:3250:import_operation$1969
     connect \B 3'000
     connect \Y $eq$dut.sv:324$1971_Y
   end
@@ -13689,12 +13689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1976
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1978
+  cell $pos $auto$expression.cpp:3253:import_operation$1978
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1976
-    connect \Y $auto$expression.cpp:3177:import_operation$1977
+    connect \Y $auto$expression.cpp:3250:import_operation$1977
   end
   attribute \src "dut.sv:325.17-325.52"
   cell $eq $eq$dut.sv:325$1980
@@ -13703,7 +13703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1977
+    connect \A $auto$expression.cpp:3250:import_operation$1977
     connect \B 3'001
     connect \Y $eq$dut.sv:325$1979_Y
   end
@@ -13729,12 +13729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1984
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1986
+  cell $pos $auto$expression.cpp:3253:import_operation$1986
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1984
-    connect \Y $auto$expression.cpp:3177:import_operation$1985
+    connect \Y $auto$expression.cpp:3250:import_operation$1985
   end
   attribute \src "dut.sv:326.17-326.52"
   cell $eq $eq$dut.sv:326$1988
@@ -13743,7 +13743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1985
+    connect \A $auto$expression.cpp:3250:import_operation$1985
     connect \B 3'010
     connect \Y $eq$dut.sv:326$1987_Y
   end
@@ -13769,12 +13769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$1992
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$1994
+  cell $pos $auto$expression.cpp:3253:import_operation$1994
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$1992
-    connect \Y $auto$expression.cpp:3177:import_operation$1993
+    connect \Y $auto$expression.cpp:3250:import_operation$1993
   end
   attribute \src "dut.sv:327.17-327.52"
   cell $eq $eq$dut.sv:327$1996
@@ -13783,7 +13783,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$1993
+    connect \A $auto$expression.cpp:3250:import_operation$1993
     connect \B 3'011
     connect \Y $eq$dut.sv:327$1995_Y
   end
@@ -13809,12 +13809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2000
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2002
+  cell $pos $auto$expression.cpp:3253:import_operation$2002
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2000
-    connect \Y $auto$expression.cpp:3177:import_operation$2001
+    connect \Y $auto$expression.cpp:3250:import_operation$2001
   end
   attribute \src "dut.sv:328.17-328.52"
   cell $eq $eq$dut.sv:328$2004
@@ -13823,7 +13823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2001
+    connect \A $auto$expression.cpp:3250:import_operation$2001
     connect \B 3'000
     connect \Y $eq$dut.sv:328$2003_Y
   end
@@ -13849,12 +13849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2008
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2010
+  cell $pos $auto$expression.cpp:3253:import_operation$2010
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2008
-    connect \Y $auto$expression.cpp:3177:import_operation$2009
+    connect \Y $auto$expression.cpp:3250:import_operation$2009
   end
   attribute \src "dut.sv:329.17-329.52"
   cell $eq $eq$dut.sv:329$2012
@@ -13863,7 +13863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2009
+    connect \A $auto$expression.cpp:3250:import_operation$2009
     connect \B 3'001
     connect \Y $eq$dut.sv:329$2011_Y
   end
@@ -13889,12 +13889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2016
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2018
+  cell $pos $auto$expression.cpp:3253:import_operation$2018
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2016
-    connect \Y $auto$expression.cpp:3177:import_operation$2017
+    connect \Y $auto$expression.cpp:3250:import_operation$2017
   end
   attribute \src "dut.sv:330.17-330.52"
   cell $eq $eq$dut.sv:330$2020
@@ -13903,7 +13903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2017
+    connect \A $auto$expression.cpp:3250:import_operation$2017
     connect \B 3'010
     connect \Y $eq$dut.sv:330$2019_Y
   end
@@ -13929,12 +13929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2024
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2026
+  cell $pos $auto$expression.cpp:3253:import_operation$2026
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2024
-    connect \Y $auto$expression.cpp:3177:import_operation$2025
+    connect \Y $auto$expression.cpp:3250:import_operation$2025
   end
   attribute \src "dut.sv:331.17-331.52"
   cell $eq $eq$dut.sv:331$2028
@@ -13943,7 +13943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2025
+    connect \A $auto$expression.cpp:3250:import_operation$2025
     connect \B 3'011
     connect \Y $eq$dut.sv:331$2027_Y
   end
@@ -13969,12 +13969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2032
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2034
+  cell $pos $auto$expression.cpp:3253:import_operation$2034
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2032
-    connect \Y $auto$expression.cpp:3177:import_operation$2033
+    connect \Y $auto$expression.cpp:3250:import_operation$2033
   end
   attribute \src "dut.sv:333.17-333.48"
   cell $eq $eq$dut.sv:333$2036
@@ -13983,7 +13983,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2033
+    connect \A $auto$expression.cpp:3250:import_operation$2033
     connect \B 8'00000000
     connect \Y $eq$dut.sv:333$2035_Y
   end
@@ -14009,12 +14009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2040
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2042
+  cell $pos $auto$expression.cpp:3253:import_operation$2042
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2040
-    connect \Y $auto$expression.cpp:3177:import_operation$2041
+    connect \Y $auto$expression.cpp:3250:import_operation$2041
   end
   attribute \src "dut.sv:334.17-334.48"
   cell $eq $eq$dut.sv:334$2044
@@ -14023,7 +14023,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2041
+    connect \A $auto$expression.cpp:3250:import_operation$2041
     connect \B 8'00000001
     connect \Y $eq$dut.sv:334$2043_Y
   end
@@ -14049,12 +14049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2048
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2050
+  cell $pos $auto$expression.cpp:3253:import_operation$2050
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2048
-    connect \Y $auto$expression.cpp:3177:import_operation$2049
+    connect \Y $auto$expression.cpp:3250:import_operation$2049
   end
   attribute \src "dut.sv:335.17-335.48"
   cell $eq $eq$dut.sv:335$2052
@@ -14063,7 +14063,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2049
+    connect \A $auto$expression.cpp:3250:import_operation$2049
     connect \B 8'00000000
     connect \Y $eq$dut.sv:335$2051_Y
   end
@@ -14089,12 +14089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2056
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2058
+  cell $pos $auto$expression.cpp:3253:import_operation$2058
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2056
-    connect \Y $auto$expression.cpp:3177:import_operation$2057
+    connect \Y $auto$expression.cpp:3250:import_operation$2057
   end
   attribute \src "dut.sv:336.17-336.48"
   cell $eq $eq$dut.sv:336$2060
@@ -14103,7 +14103,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2057
+    connect \A $auto$expression.cpp:3250:import_operation$2057
     connect \B 8'00000001
     connect \Y $eq$dut.sv:336$2059_Y
   end
@@ -14129,12 +14129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2064
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2066
+  cell $pos $auto$expression.cpp:3253:import_operation$2066
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2064
-    connect \Y $auto$expression.cpp:3177:import_operation$2065
+    connect \Y $auto$expression.cpp:3250:import_operation$2065
   end
   attribute \src "dut.sv:337.17-337.48"
   cell $eq $eq$dut.sv:337$2068
@@ -14143,7 +14143,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2065
+    connect \A $auto$expression.cpp:3250:import_operation$2065
     connect \B 8'00000000
     connect \Y $eq$dut.sv:337$2067_Y
   end
@@ -14169,12 +14169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2072
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2074
+  cell $pos $auto$expression.cpp:3253:import_operation$2074
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2072
-    connect \Y $auto$expression.cpp:3177:import_operation$2073
+    connect \Y $auto$expression.cpp:3250:import_operation$2073
   end
   attribute \src "dut.sv:338.17-338.48"
   cell $eq $eq$dut.sv:338$2076
@@ -14183,7 +14183,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2073
+    connect \A $auto$expression.cpp:3250:import_operation$2073
     connect \B 8'00000001
     connect \Y $eq$dut.sv:338$2075_Y
   end
@@ -14209,12 +14209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2080
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2082
+  cell $pos $auto$expression.cpp:3253:import_operation$2082
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2080
-    connect \Y $auto$expression.cpp:3177:import_operation$2081
+    connect \Y $auto$expression.cpp:3250:import_operation$2081
   end
   attribute \src "dut.sv:339.17-339.48"
   cell $eq $eq$dut.sv:339$2084
@@ -14223,7 +14223,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2081
+    connect \A $auto$expression.cpp:3250:import_operation$2081
     connect \B 8'00000010
     connect \Y $eq$dut.sv:339$2083_Y
   end
@@ -14249,12 +14249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2088
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2090
+  cell $pos $auto$expression.cpp:3253:import_operation$2090
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2088
-    connect \Y $auto$expression.cpp:3177:import_operation$2089
+    connect \Y $auto$expression.cpp:3250:import_operation$2089
   end
   attribute \src "dut.sv:340.17-340.48"
   cell $eq $eq$dut.sv:340$2092
@@ -14263,7 +14263,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2089
+    connect \A $auto$expression.cpp:3250:import_operation$2089
     connect \B 8'00000011
     connect \Y $eq$dut.sv:340$2091_Y
   end
@@ -14289,12 +14289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2096
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2098
+  cell $pos $auto$expression.cpp:3253:import_operation$2098
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2096
-    connect \Y $auto$expression.cpp:3177:import_operation$2097
+    connect \Y $auto$expression.cpp:3250:import_operation$2097
   end
   attribute \src "dut.sv:341.17-341.48"
   cell $eq $eq$dut.sv:341$2100
@@ -14303,7 +14303,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2097
+    connect \A $auto$expression.cpp:3250:import_operation$2097
     connect \B 8'00000000
     connect \Y $eq$dut.sv:341$2099_Y
   end
@@ -14329,12 +14329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2104
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2106
+  cell $pos $auto$expression.cpp:3253:import_operation$2106
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2104
-    connect \Y $auto$expression.cpp:3177:import_operation$2105
+    connect \Y $auto$expression.cpp:3250:import_operation$2105
   end
   attribute \src "dut.sv:342.17-342.48"
   cell $eq $eq$dut.sv:342$2108
@@ -14343,7 +14343,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2105
+    connect \A $auto$expression.cpp:3250:import_operation$2105
     connect \B 8'00000001
     connect \Y $eq$dut.sv:342$2107_Y
   end
@@ -14369,12 +14369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2112
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2114
+  cell $pos $auto$expression.cpp:3253:import_operation$2114
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2112
-    connect \Y $auto$expression.cpp:3177:import_operation$2113
+    connect \Y $auto$expression.cpp:3250:import_operation$2113
   end
   attribute \src "dut.sv:343.17-343.48"
   cell $eq $eq$dut.sv:343$2116
@@ -14383,7 +14383,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2113
+    connect \A $auto$expression.cpp:3250:import_operation$2113
     connect \B 8'00000010
     connect \Y $eq$dut.sv:343$2115_Y
   end
@@ -14409,12 +14409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2120
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2122
+  cell $pos $auto$expression.cpp:3253:import_operation$2122
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2120
-    connect \Y $auto$expression.cpp:3177:import_operation$2121
+    connect \Y $auto$expression.cpp:3250:import_operation$2121
   end
   attribute \src "dut.sv:344.17-344.48"
   cell $eq $eq$dut.sv:344$2124
@@ -14423,7 +14423,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2121
+    connect \A $auto$expression.cpp:3250:import_operation$2121
     connect \B 8'00000011
     connect \Y $eq$dut.sv:344$2123_Y
   end
@@ -14449,12 +14449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2128
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2130
+  cell $pos $auto$expression.cpp:3253:import_operation$2130
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2128
-    connect \Y $auto$expression.cpp:3177:import_operation$2129
+    connect \Y $auto$expression.cpp:3250:import_operation$2129
   end
   attribute \src "dut.sv:346.17-346.55"
   cell $eq $eq$dut.sv:346$2132
@@ -14463,7 +14463,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2129
+    connect \A $auto$expression.cpp:3250:import_operation$2129
     connect \B 0
     connect \Y $eq$dut.sv:346$2131_Y
   end
@@ -14489,12 +14489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2136
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2138
+  cell $pos $auto$expression.cpp:3253:import_operation$2138
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2136
-    connect \Y $auto$expression.cpp:3177:import_operation$2137
+    connect \Y $auto$expression.cpp:3250:import_operation$2137
   end
   attribute \src "dut.sv:347.17-347.55"
   cell $eq $eq$dut.sv:347$2140
@@ -14503,7 +14503,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2137
+    connect \A $auto$expression.cpp:3250:import_operation$2137
     connect \B 1
     connect \Y $eq$dut.sv:347$2139_Y
   end
@@ -14529,12 +14529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2144
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2146
+  cell $pos $auto$expression.cpp:3253:import_operation$2146
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2144
-    connect \Y $auto$expression.cpp:3177:import_operation$2145
+    connect \Y $auto$expression.cpp:3250:import_operation$2145
   end
   attribute \src "dut.sv:348.17-348.55"
   cell $eq $eq$dut.sv:348$2148
@@ -14543,7 +14543,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2145
+    connect \A $auto$expression.cpp:3250:import_operation$2145
     connect \B 0
     connect \Y $eq$dut.sv:348$2147_Y
   end
@@ -14569,12 +14569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2152
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2154
+  cell $pos $auto$expression.cpp:3253:import_operation$2154
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2152
-    connect \Y $auto$expression.cpp:3177:import_operation$2153
+    connect \Y $auto$expression.cpp:3250:import_operation$2153
   end
   attribute \src "dut.sv:349.17-349.55"
   cell $eq $eq$dut.sv:349$2156
@@ -14583,7 +14583,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2153
+    connect \A $auto$expression.cpp:3250:import_operation$2153
     connect \B 1
     connect \Y $eq$dut.sv:349$2155_Y
   end
@@ -14609,12 +14609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2160
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2162
+  cell $pos $auto$expression.cpp:3253:import_operation$2162
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2160
-    connect \Y $auto$expression.cpp:3177:import_operation$2161
+    connect \Y $auto$expression.cpp:3250:import_operation$2161
   end
   attribute \src "dut.sv:350.17-350.55"
   cell $eq $eq$dut.sv:350$2164
@@ -14623,7 +14623,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2161
+    connect \A $auto$expression.cpp:3250:import_operation$2161
     connect \B 0
     connect \Y $eq$dut.sv:350$2163_Y
   end
@@ -14649,12 +14649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2168
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2170
+  cell $pos $auto$expression.cpp:3253:import_operation$2170
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2168
-    connect \Y $auto$expression.cpp:3177:import_operation$2169
+    connect \Y $auto$expression.cpp:3250:import_operation$2169
   end
   attribute \src "dut.sv:351.17-351.55"
   cell $eq $eq$dut.sv:351$2172
@@ -14663,7 +14663,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2169
+    connect \A $auto$expression.cpp:3250:import_operation$2169
     connect \B 1
     connect \Y $eq$dut.sv:351$2171_Y
   end
@@ -14689,12 +14689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2176
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2178
+  cell $pos $auto$expression.cpp:3253:import_operation$2178
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2176
-    connect \Y $auto$expression.cpp:3177:import_operation$2177
+    connect \Y $auto$expression.cpp:3250:import_operation$2177
   end
   attribute \src "dut.sv:352.17-352.55"
   cell $eq $eq$dut.sv:352$2180
@@ -14703,7 +14703,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2177
+    connect \A $auto$expression.cpp:3250:import_operation$2177
     connect \B 2
     connect \Y $eq$dut.sv:352$2179_Y
   end
@@ -14729,12 +14729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2184
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2186
+  cell $pos $auto$expression.cpp:3253:import_operation$2186
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2184
-    connect \Y $auto$expression.cpp:3177:import_operation$2185
+    connect \Y $auto$expression.cpp:3250:import_operation$2185
   end
   attribute \src "dut.sv:353.17-353.55"
   cell $eq $eq$dut.sv:353$2188
@@ -14743,7 +14743,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2185
+    connect \A $auto$expression.cpp:3250:import_operation$2185
     connect \B 3
     connect \Y $eq$dut.sv:353$2187_Y
   end
@@ -14769,12 +14769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2192
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2194
+  cell $pos $auto$expression.cpp:3253:import_operation$2194
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2192
-    connect \Y $auto$expression.cpp:3177:import_operation$2193
+    connect \Y $auto$expression.cpp:3250:import_operation$2193
   end
   attribute \src "dut.sv:354.17-354.55"
   cell $eq $eq$dut.sv:354$2196
@@ -14783,7 +14783,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2193
+    connect \A $auto$expression.cpp:3250:import_operation$2193
     connect \B 0
     connect \Y $eq$dut.sv:354$2195_Y
   end
@@ -14809,12 +14809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2200
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2202
+  cell $pos $auto$expression.cpp:3253:import_operation$2202
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2200
-    connect \Y $auto$expression.cpp:3177:import_operation$2201
+    connect \Y $auto$expression.cpp:3250:import_operation$2201
   end
   attribute \src "dut.sv:355.17-355.55"
   cell $eq $eq$dut.sv:355$2204
@@ -14823,7 +14823,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2201
+    connect \A $auto$expression.cpp:3250:import_operation$2201
     connect \B 1
     connect \Y $eq$dut.sv:355$2203_Y
   end
@@ -14849,12 +14849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2208
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2210
+  cell $pos $auto$expression.cpp:3253:import_operation$2210
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2208
-    connect \Y $auto$expression.cpp:3177:import_operation$2209
+    connect \Y $auto$expression.cpp:3250:import_operation$2209
   end
   attribute \src "dut.sv:356.17-356.55"
   cell $eq $eq$dut.sv:356$2212
@@ -14863,7 +14863,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2209
+    connect \A $auto$expression.cpp:3250:import_operation$2209
     connect \B 2
     connect \Y $eq$dut.sv:356$2211_Y
   end
@@ -14889,12 +14889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2216
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2218
+  cell $pos $auto$expression.cpp:3253:import_operation$2218
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2216
-    connect \Y $auto$expression.cpp:3177:import_operation$2217
+    connect \Y $auto$expression.cpp:3250:import_operation$2217
   end
   attribute \src "dut.sv:357.17-357.55"
   cell $eq $eq$dut.sv:357$2220
@@ -14903,7 +14903,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2217
+    connect \A $auto$expression.cpp:3250:import_operation$2217
     connect \B 3
     connect \Y $eq$dut.sv:357$2219_Y
   end
@@ -14929,12 +14929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2224
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2226
+  cell $pos $auto$expression.cpp:3253:import_operation$2226
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2224
-    connect \Y $auto$expression.cpp:3177:import_operation$2225
+    connect \Y $auto$expression.cpp:3250:import_operation$2225
   end
   attribute \src "dut.sv:359.17-359.68"
   cell $eq $eq$dut.sv:359$2228
@@ -14943,7 +14943,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2225
+    connect \A $auto$expression.cpp:3250:import_operation$2225
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:359$2227_Y
   end
@@ -14969,12 +14969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2232
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2234
+  cell $pos $auto$expression.cpp:3253:import_operation$2234
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2232
-    connect \Y $auto$expression.cpp:3177:import_operation$2233
+    connect \Y $auto$expression.cpp:3250:import_operation$2233
   end
   attribute \src "dut.sv:360.17-360.68"
   cell $eq $eq$dut.sv:360$2236
@@ -14983,7 +14983,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2233
+    connect \A $auto$expression.cpp:3250:import_operation$2233
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:360$2235_Y
   end
@@ -15009,12 +15009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2240
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2242
+  cell $pos $auto$expression.cpp:3253:import_operation$2242
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2240
-    connect \Y $auto$expression.cpp:3177:import_operation$2241
+    connect \Y $auto$expression.cpp:3250:import_operation$2241
   end
   attribute \src "dut.sv:361.17-361.68"
   cell $eq $eq$dut.sv:361$2244
@@ -15023,7 +15023,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2241
+    connect \A $auto$expression.cpp:3250:import_operation$2241
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:361$2243_Y
   end
@@ -15049,12 +15049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2248
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2250
+  cell $pos $auto$expression.cpp:3253:import_operation$2250
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2248
-    connect \Y $auto$expression.cpp:3177:import_operation$2249
+    connect \Y $auto$expression.cpp:3250:import_operation$2249
   end
   attribute \src "dut.sv:362.17-362.68"
   cell $eq $eq$dut.sv:362$2252
@@ -15063,7 +15063,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2249
+    connect \A $auto$expression.cpp:3250:import_operation$2249
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:362$2251_Y
   end
@@ -15089,12 +15089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2256
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2258
+  cell $pos $auto$expression.cpp:3253:import_operation$2258
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2256
-    connect \Y $auto$expression.cpp:3177:import_operation$2257
+    connect \Y $auto$expression.cpp:3250:import_operation$2257
   end
   attribute \src "dut.sv:363.17-363.68"
   cell $eq $eq$dut.sv:363$2260
@@ -15103,7 +15103,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2257
+    connect \A $auto$expression.cpp:3250:import_operation$2257
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:363$2259_Y
   end
@@ -15129,12 +15129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2264
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2266
+  cell $pos $auto$expression.cpp:3253:import_operation$2266
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2264
-    connect \Y $auto$expression.cpp:3177:import_operation$2265
+    connect \Y $auto$expression.cpp:3250:import_operation$2265
   end
   attribute \src "dut.sv:364.17-364.68"
   cell $eq $eq$dut.sv:364$2268
@@ -15143,7 +15143,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2265
+    connect \A $auto$expression.cpp:3250:import_operation$2265
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:364$2267_Y
   end
@@ -15169,12 +15169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2272
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2274
+  cell $pos $auto$expression.cpp:3253:import_operation$2274
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2272
-    connect \Y $auto$expression.cpp:3177:import_operation$2273
+    connect \Y $auto$expression.cpp:3250:import_operation$2273
   end
   attribute \src "dut.sv:365.17-365.68"
   cell $eq $eq$dut.sv:365$2276
@@ -15183,7 +15183,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2273
+    connect \A $auto$expression.cpp:3250:import_operation$2273
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:365$2275_Y
   end
@@ -15209,12 +15209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2280
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2282
+  cell $pos $auto$expression.cpp:3253:import_operation$2282
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2280
-    connect \Y $auto$expression.cpp:3177:import_operation$2281
+    connect \Y $auto$expression.cpp:3250:import_operation$2281
   end
   attribute \src "dut.sv:366.17-366.68"
   cell $eq $eq$dut.sv:366$2284
@@ -15223,7 +15223,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2281
+    connect \A $auto$expression.cpp:3250:import_operation$2281
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:366$2283_Y
   end
@@ -15249,12 +15249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2288
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2290
+  cell $pos $auto$expression.cpp:3253:import_operation$2290
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2288
-    connect \Y $auto$expression.cpp:3177:import_operation$2289
+    connect \Y $auto$expression.cpp:3250:import_operation$2289
   end
   attribute \src "dut.sv:367.17-367.68"
   cell $eq $eq$dut.sv:367$2292
@@ -15263,7 +15263,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2289
+    connect \A $auto$expression.cpp:3250:import_operation$2289
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:367$2291_Y
   end
@@ -15289,12 +15289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2296
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2298
+  cell $pos $auto$expression.cpp:3253:import_operation$2298
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2296
-    connect \Y $auto$expression.cpp:3177:import_operation$2297
+    connect \Y $auto$expression.cpp:3250:import_operation$2297
   end
   attribute \src "dut.sv:368.17-368.68"
   cell $eq $eq$dut.sv:368$2300
@@ -15303,7 +15303,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2297
+    connect \A $auto$expression.cpp:3250:import_operation$2297
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:368$2299_Y
   end
@@ -15329,12 +15329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2304
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2306
+  cell $pos $auto$expression.cpp:3253:import_operation$2306
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2304
-    connect \Y $auto$expression.cpp:3177:import_operation$2305
+    connect \Y $auto$expression.cpp:3250:import_operation$2305
   end
   attribute \src "dut.sv:369.17-369.68"
   cell $eq $eq$dut.sv:369$2308
@@ -15343,7 +15343,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2305
+    connect \A $auto$expression.cpp:3250:import_operation$2305
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:369$2307_Y
   end
@@ -15369,12 +15369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2312
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2314
+  cell $pos $auto$expression.cpp:3253:import_operation$2314
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2312
-    connect \Y $auto$expression.cpp:3177:import_operation$2313
+    connect \Y $auto$expression.cpp:3250:import_operation$2313
   end
   attribute \src "dut.sv:370.17-370.68"
   cell $eq $eq$dut.sv:370$2316
@@ -15383,7 +15383,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2313
+    connect \A $auto$expression.cpp:3250:import_operation$2313
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:370$2315_Y
   end
@@ -15409,12 +15409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2320
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2322
+  cell $pos $auto$expression.cpp:3253:import_operation$2322
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2320
-    connect \Y $auto$expression.cpp:3177:import_operation$2321
+    connect \Y $auto$expression.cpp:3250:import_operation$2321
   end
   attribute \src "dut.sv:372.17-372.49"
   cell $eq $eq$dut.sv:372$2324
@@ -15423,7 +15423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2321
+    connect \A $auto$expression.cpp:3250:import_operation$2321
     connect \B 3'000
     connect \Y $eq$dut.sv:372$2323_Y
   end
@@ -15449,12 +15449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2328
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2330
+  cell $pos $auto$expression.cpp:3253:import_operation$2330
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2328
-    connect \Y $auto$expression.cpp:3177:import_operation$2329
+    connect \Y $auto$expression.cpp:3250:import_operation$2329
   end
   attribute \src "dut.sv:373.17-373.49"
   cell $eq $eq$dut.sv:373$2332
@@ -15463,7 +15463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2329
+    connect \A $auto$expression.cpp:3250:import_operation$2329
     connect \B 3'001
     connect \Y $eq$dut.sv:373$2331_Y
   end
@@ -15489,12 +15489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2336
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2338
+  cell $pos $auto$expression.cpp:3253:import_operation$2338
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2336
-    connect \Y $auto$expression.cpp:3177:import_operation$2337
+    connect \Y $auto$expression.cpp:3250:import_operation$2337
   end
   attribute \src "dut.sv:374.17-374.49"
   cell $eq $eq$dut.sv:374$2340
@@ -15503,7 +15503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2337
+    connect \A $auto$expression.cpp:3250:import_operation$2337
     connect \B 3'000
     connect \Y $eq$dut.sv:374$2339_Y
   end
@@ -15529,12 +15529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2344
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2346
+  cell $pos $auto$expression.cpp:3253:import_operation$2346
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2344
-    connect \Y $auto$expression.cpp:3177:import_operation$2345
+    connect \Y $auto$expression.cpp:3250:import_operation$2345
   end
   attribute \src "dut.sv:375.17-375.49"
   cell $eq $eq$dut.sv:375$2348
@@ -15543,7 +15543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2345
+    connect \A $auto$expression.cpp:3250:import_operation$2345
     connect \B 3'111
     connect \Y $eq$dut.sv:375$2347_Y
   end
@@ -15569,12 +15569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2352
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2354
+  cell $pos $auto$expression.cpp:3253:import_operation$2354
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2352
-    connect \Y $auto$expression.cpp:3177:import_operation$2353
+    connect \Y $auto$expression.cpp:3250:import_operation$2353
   end
   attribute \src "dut.sv:376.17-376.49"
   cell $eq $eq$dut.sv:376$2356
@@ -15583,7 +15583,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2353
+    connect \A $auto$expression.cpp:3250:import_operation$2353
     connect \B 3'000
     connect \Y $eq$dut.sv:376$2355_Y
   end
@@ -15609,12 +15609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2360
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2362
+  cell $pos $auto$expression.cpp:3253:import_operation$2362
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2360
-    connect \Y $auto$expression.cpp:3177:import_operation$2361
+    connect \Y $auto$expression.cpp:3250:import_operation$2361
   end
   attribute \src "dut.sv:377.17-377.49"
   cell $eq $eq$dut.sv:377$2364
@@ -15623,7 +15623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2361
+    connect \A $auto$expression.cpp:3250:import_operation$2361
     connect \B 3'001
     connect \Y $eq$dut.sv:377$2363_Y
   end
@@ -15649,12 +15649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2368
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2370
+  cell $pos $auto$expression.cpp:3253:import_operation$2370
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2368
-    connect \Y $auto$expression.cpp:3177:import_operation$2369
+    connect \Y $auto$expression.cpp:3250:import_operation$2369
   end
   attribute \src "dut.sv:378.17-378.49"
   cell $eq $eq$dut.sv:378$2372
@@ -15663,7 +15663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2369
+    connect \A $auto$expression.cpp:3250:import_operation$2369
     connect \B 3'010
     connect \Y $eq$dut.sv:378$2371_Y
   end
@@ -15689,12 +15689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2376
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2378
+  cell $pos $auto$expression.cpp:3253:import_operation$2378
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2376
-    connect \Y $auto$expression.cpp:3177:import_operation$2377
+    connect \Y $auto$expression.cpp:3250:import_operation$2377
   end
   attribute \src "dut.sv:379.17-379.49"
   cell $eq $eq$dut.sv:379$2380
@@ -15703,7 +15703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2377
+    connect \A $auto$expression.cpp:3250:import_operation$2377
     connect \B 3'011
     connect \Y $eq$dut.sv:379$2379_Y
   end
@@ -15729,12 +15729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2384
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2386
+  cell $pos $auto$expression.cpp:3253:import_operation$2386
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2384
-    connect \Y $auto$expression.cpp:3177:import_operation$2385
+    connect \Y $auto$expression.cpp:3250:import_operation$2385
   end
   attribute \src "dut.sv:380.17-380.49"
   cell $eq $eq$dut.sv:380$2388
@@ -15743,7 +15743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2385
+    connect \A $auto$expression.cpp:3250:import_operation$2385
     connect \B 3'000
     connect \Y $eq$dut.sv:380$2387_Y
   end
@@ -15769,12 +15769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2392
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2394
+  cell $pos $auto$expression.cpp:3253:import_operation$2394
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2392
-    connect \Y $auto$expression.cpp:3177:import_operation$2393
+    connect \Y $auto$expression.cpp:3250:import_operation$2393
   end
   attribute \src "dut.sv:381.17-381.49"
   cell $eq $eq$dut.sv:381$2396
@@ -15783,7 +15783,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2393
+    connect \A $auto$expression.cpp:3250:import_operation$2393
     connect \B 3'001
     connect \Y $eq$dut.sv:381$2395_Y
   end
@@ -15809,12 +15809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2400
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2402
+  cell $pos $auto$expression.cpp:3253:import_operation$2402
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2400
-    connect \Y $auto$expression.cpp:3177:import_operation$2401
+    connect \Y $auto$expression.cpp:3250:import_operation$2401
   end
   attribute \src "dut.sv:382.17-382.49"
   cell $eq $eq$dut.sv:382$2404
@@ -15823,7 +15823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2401
+    connect \A $auto$expression.cpp:3250:import_operation$2401
     connect \B 3'110
     connect \Y $eq$dut.sv:382$2403_Y
   end
@@ -15849,12 +15849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2408
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2410
+  cell $pos $auto$expression.cpp:3253:import_operation$2410
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2408
-    connect \Y $auto$expression.cpp:3177:import_operation$2409
+    connect \Y $auto$expression.cpp:3250:import_operation$2409
   end
   attribute \src "dut.sv:383.17-383.49"
   cell $eq $eq$dut.sv:383$2412
@@ -15863,7 +15863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2409
+    connect \A $auto$expression.cpp:3250:import_operation$2409
     connect \B 3'111
     connect \Y $eq$dut.sv:383$2411_Y
   end
@@ -15889,12 +15889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2416
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2418
+  cell $pos $auto$expression.cpp:3253:import_operation$2418
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2416
-    connect \Y $auto$expression.cpp:3177:import_operation$2417
+    connect \Y $auto$expression.cpp:3250:import_operation$2417
   end
   attribute \src "dut.sv:385.17-385.55"
   cell $eq $eq$dut.sv:385$2420
@@ -15903,7 +15903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2417
+    connect \A $auto$expression.cpp:3250:import_operation$2417
     connect \B 3'000
     connect \Y $eq$dut.sv:385$2419_Y
   end
@@ -15929,12 +15929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2424
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2426
+  cell $pos $auto$expression.cpp:3253:import_operation$2426
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2424
-    connect \Y $auto$expression.cpp:3177:import_operation$2425
+    connect \Y $auto$expression.cpp:3250:import_operation$2425
   end
   attribute \src "dut.sv:386.17-386.55"
   cell $eq $eq$dut.sv:386$2428
@@ -15943,7 +15943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2425
+    connect \A $auto$expression.cpp:3250:import_operation$2425
     connect \B 3'001
     connect \Y $eq$dut.sv:386$2427_Y
   end
@@ -15969,12 +15969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2432
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2434
+  cell $pos $auto$expression.cpp:3253:import_operation$2434
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2432
-    connect \Y $auto$expression.cpp:3177:import_operation$2433
+    connect \Y $auto$expression.cpp:3250:import_operation$2433
   end
   attribute \src "dut.sv:387.17-387.55"
   cell $eq $eq$dut.sv:387$2436
@@ -15983,7 +15983,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2433
+    connect \A $auto$expression.cpp:3250:import_operation$2433
     connect \B 3'000
     connect \Y $eq$dut.sv:387$2435_Y
   end
@@ -16009,12 +16009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2440
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2442
+  cell $pos $auto$expression.cpp:3253:import_operation$2442
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2440
-    connect \Y $auto$expression.cpp:3177:import_operation$2441
+    connect \Y $auto$expression.cpp:3250:import_operation$2441
   end
   attribute \src "dut.sv:388.17-388.55"
   cell $eq $eq$dut.sv:388$2444
@@ -16023,7 +16023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2441
+    connect \A $auto$expression.cpp:3250:import_operation$2441
     connect \B 3'111
     connect \Y $eq$dut.sv:388$2443_Y
   end
@@ -16049,12 +16049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2448
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2450
+  cell $pos $auto$expression.cpp:3253:import_operation$2450
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2448
-    connect \Y $auto$expression.cpp:3177:import_operation$2449
+    connect \Y $auto$expression.cpp:3250:import_operation$2449
   end
   attribute \src "dut.sv:389.17-389.55"
   cell $eq $eq$dut.sv:389$2452
@@ -16063,7 +16063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2449
+    connect \A $auto$expression.cpp:3250:import_operation$2449
     connect \B 3'000
     connect \Y $eq$dut.sv:389$2451_Y
   end
@@ -16089,12 +16089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2456
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2458
+  cell $pos $auto$expression.cpp:3253:import_operation$2458
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2456
-    connect \Y $auto$expression.cpp:3177:import_operation$2457
+    connect \Y $auto$expression.cpp:3250:import_operation$2457
   end
   attribute \src "dut.sv:390.17-390.55"
   cell $eq $eq$dut.sv:390$2460
@@ -16103,7 +16103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2457
+    connect \A $auto$expression.cpp:3250:import_operation$2457
     connect \B 3'001
     connect \Y $eq$dut.sv:390$2459_Y
   end
@@ -16129,12 +16129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2464
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2466
+  cell $pos $auto$expression.cpp:3253:import_operation$2466
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2464
-    connect \Y $auto$expression.cpp:3177:import_operation$2465
+    connect \Y $auto$expression.cpp:3250:import_operation$2465
   end
   attribute \src "dut.sv:391.17-391.55"
   cell $eq $eq$dut.sv:391$2468
@@ -16143,7 +16143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2465
+    connect \A $auto$expression.cpp:3250:import_operation$2465
     connect \B 3'010
     connect \Y $eq$dut.sv:391$2467_Y
   end
@@ -16169,12 +16169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2472
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2474
+  cell $pos $auto$expression.cpp:3253:import_operation$2474
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2472
-    connect \Y $auto$expression.cpp:3177:import_operation$2473
+    connect \Y $auto$expression.cpp:3250:import_operation$2473
   end
   attribute \src "dut.sv:392.17-392.55"
   cell $eq $eq$dut.sv:392$2476
@@ -16183,7 +16183,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2473
+    connect \A $auto$expression.cpp:3250:import_operation$2473
     connect \B 3'011
     connect \Y $eq$dut.sv:392$2475_Y
   end
@@ -16209,12 +16209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2480
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2482
+  cell $pos $auto$expression.cpp:3253:import_operation$2482
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2480
-    connect \Y $auto$expression.cpp:3177:import_operation$2481
+    connect \Y $auto$expression.cpp:3250:import_operation$2481
   end
   attribute \src "dut.sv:393.17-393.55"
   cell $eq $eq$dut.sv:393$2484
@@ -16223,7 +16223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2481
+    connect \A $auto$expression.cpp:3250:import_operation$2481
     connect \B 3'000
     connect \Y $eq$dut.sv:393$2483_Y
   end
@@ -16249,12 +16249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2488
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2490
+  cell $pos $auto$expression.cpp:3253:import_operation$2490
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2488
-    connect \Y $auto$expression.cpp:3177:import_operation$2489
+    connect \Y $auto$expression.cpp:3250:import_operation$2489
   end
   attribute \src "dut.sv:394.17-394.55"
   cell $eq $eq$dut.sv:394$2492
@@ -16263,7 +16263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2489
+    connect \A $auto$expression.cpp:3250:import_operation$2489
     connect \B 3'001
     connect \Y $eq$dut.sv:394$2491_Y
   end
@@ -16289,12 +16289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2496
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2498
+  cell $pos $auto$expression.cpp:3253:import_operation$2498
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2496
-    connect \Y $auto$expression.cpp:3177:import_operation$2497
+    connect \Y $auto$expression.cpp:3250:import_operation$2497
   end
   attribute \src "dut.sv:395.17-395.55"
   cell $eq $eq$dut.sv:395$2500
@@ -16303,7 +16303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2497
+    connect \A $auto$expression.cpp:3250:import_operation$2497
     connect \B 3'110
     connect \Y $eq$dut.sv:395$2499_Y
   end
@@ -16329,12 +16329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2504
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2506
+  cell $pos $auto$expression.cpp:3253:import_operation$2506
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2504
-    connect \Y $auto$expression.cpp:3177:import_operation$2505
+    connect \Y $auto$expression.cpp:3250:import_operation$2505
   end
   attribute \src "dut.sv:396.17-396.55"
   cell $eq $eq$dut.sv:396$2508
@@ -16343,7 +16343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2505
+    connect \A $auto$expression.cpp:3250:import_operation$2505
     connect \B 3'111
     connect \Y $eq$dut.sv:396$2507_Y
   end
@@ -16369,12 +16369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2512
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2514
+  cell $pos $auto$expression.cpp:3253:import_operation$2514
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2512
-    connect \Y $auto$expression.cpp:3177:import_operation$2513
+    connect \Y $auto$expression.cpp:3250:import_operation$2513
   end
   attribute \src "dut.sv:398.17-398.51"
   cell $eq $eq$dut.sv:398$2516
@@ -16383,7 +16383,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2513
+    connect \A $auto$expression.cpp:3250:import_operation$2513
     connect \B 8'00000000
     connect \Y $eq$dut.sv:398$2515_Y
   end
@@ -16409,12 +16409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2520
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2522
+  cell $pos $auto$expression.cpp:3253:import_operation$2522
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2520
-    connect \Y $auto$expression.cpp:3177:import_operation$2521
+    connect \Y $auto$expression.cpp:3250:import_operation$2521
   end
   attribute \src "dut.sv:399.17-399.51"
   cell $eq $eq$dut.sv:399$2524
@@ -16423,7 +16423,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2521
+    connect \A $auto$expression.cpp:3250:import_operation$2521
     connect \B 8'00000001
     connect \Y $eq$dut.sv:399$2523_Y
   end
@@ -16449,12 +16449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2528
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2530
+  cell $pos $auto$expression.cpp:3253:import_operation$2530
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2528
-    connect \Y $auto$expression.cpp:3177:import_operation$2529
+    connect \Y $auto$expression.cpp:3250:import_operation$2529
   end
   attribute \src "dut.sv:400.17-400.51"
   cell $eq $eq$dut.sv:400$2532
@@ -16463,7 +16463,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2529
+    connect \A $auto$expression.cpp:3250:import_operation$2529
     connect \B 8'00000000
     connect \Y $eq$dut.sv:400$2531_Y
   end
@@ -16489,12 +16489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2536
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2538
+  cell $pos $auto$expression.cpp:3253:import_operation$2538
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2536
-    connect \Y $auto$expression.cpp:3177:import_operation$2537
+    connect \Y $auto$expression.cpp:3250:import_operation$2537
   end
   attribute \src "dut.sv:401.17-401.51"
   cell $eq $eq$dut.sv:401$2540
@@ -16503,7 +16503,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2537
+    connect \A $auto$expression.cpp:3250:import_operation$2537
     connect \B 8'11111111
     connect \Y $eq$dut.sv:401$2539_Y
   end
@@ -16529,12 +16529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2544
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2546
+  cell $pos $auto$expression.cpp:3253:import_operation$2546
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2544
-    connect \Y $auto$expression.cpp:3177:import_operation$2545
+    connect \Y $auto$expression.cpp:3250:import_operation$2545
   end
   attribute \src "dut.sv:402.17-402.51"
   cell $eq $eq$dut.sv:402$2548
@@ -16543,7 +16543,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2545
+    connect \A $auto$expression.cpp:3250:import_operation$2545
     connect \B 8'00000000
     connect \Y $eq$dut.sv:402$2547_Y
   end
@@ -16569,12 +16569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2552
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2554
+  cell $pos $auto$expression.cpp:3253:import_operation$2554
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2552
-    connect \Y $auto$expression.cpp:3177:import_operation$2553
+    connect \Y $auto$expression.cpp:3250:import_operation$2553
   end
   attribute \src "dut.sv:403.17-403.51"
   cell $eq $eq$dut.sv:403$2556
@@ -16583,7 +16583,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2553
+    connect \A $auto$expression.cpp:3250:import_operation$2553
     connect \B 8'00000001
     connect \Y $eq$dut.sv:403$2555_Y
   end
@@ -16609,12 +16609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2560
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2562
+  cell $pos $auto$expression.cpp:3253:import_operation$2562
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2560
-    connect \Y $auto$expression.cpp:3177:import_operation$2561
+    connect \Y $auto$expression.cpp:3250:import_operation$2561
   end
   attribute \src "dut.sv:404.17-404.51"
   cell $eq $eq$dut.sv:404$2564
@@ -16623,7 +16623,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2561
+    connect \A $auto$expression.cpp:3250:import_operation$2561
     connect \B 8'00000010
     connect \Y $eq$dut.sv:404$2563_Y
   end
@@ -16649,12 +16649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2568
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2570
+  cell $pos $auto$expression.cpp:3253:import_operation$2570
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2568
-    connect \Y $auto$expression.cpp:3177:import_operation$2569
+    connect \Y $auto$expression.cpp:3250:import_operation$2569
   end
   attribute \src "dut.sv:405.17-405.51"
   cell $eq $eq$dut.sv:405$2572
@@ -16663,7 +16663,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2569
+    connect \A $auto$expression.cpp:3250:import_operation$2569
     connect \B 8'00000011
     connect \Y $eq$dut.sv:405$2571_Y
   end
@@ -16689,12 +16689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2576
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2578
+  cell $pos $auto$expression.cpp:3253:import_operation$2578
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2576
-    connect \Y $auto$expression.cpp:3177:import_operation$2577
+    connect \Y $auto$expression.cpp:3250:import_operation$2577
   end
   attribute \src "dut.sv:406.17-406.51"
   cell $eq $eq$dut.sv:406$2580
@@ -16703,7 +16703,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2577
+    connect \A $auto$expression.cpp:3250:import_operation$2577
     connect \B 8'00000000
     connect \Y $eq$dut.sv:406$2579_Y
   end
@@ -16729,12 +16729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2584
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2586
+  cell $pos $auto$expression.cpp:3253:import_operation$2586
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2584
-    connect \Y $auto$expression.cpp:3177:import_operation$2585
+    connect \Y $auto$expression.cpp:3250:import_operation$2585
   end
   attribute \src "dut.sv:407.17-407.51"
   cell $eq $eq$dut.sv:407$2588
@@ -16743,7 +16743,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2585
+    connect \A $auto$expression.cpp:3250:import_operation$2585
     connect \B 8'00000001
     connect \Y $eq$dut.sv:407$2587_Y
   end
@@ -16769,12 +16769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2592
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2594
+  cell $pos $auto$expression.cpp:3253:import_operation$2594
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2592
-    connect \Y $auto$expression.cpp:3177:import_operation$2593
+    connect \Y $auto$expression.cpp:3250:import_operation$2593
   end
   attribute \src "dut.sv:408.17-408.51"
   cell $eq $eq$dut.sv:408$2596
@@ -16783,7 +16783,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2593
+    connect \A $auto$expression.cpp:3250:import_operation$2593
     connect \B 8'11111110
     connect \Y $eq$dut.sv:408$2595_Y
   end
@@ -16809,12 +16809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2600
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2602
+  cell $pos $auto$expression.cpp:3253:import_operation$2602
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2600
-    connect \Y $auto$expression.cpp:3177:import_operation$2601
+    connect \Y $auto$expression.cpp:3250:import_operation$2601
   end
   attribute \src "dut.sv:409.17-409.51"
   cell $eq $eq$dut.sv:409$2604
@@ -16823,7 +16823,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2601
+    connect \A $auto$expression.cpp:3250:import_operation$2601
     connect \B 8'11111111
     connect \Y $eq$dut.sv:409$2603_Y
   end
@@ -16849,12 +16849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2608
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2610
+  cell $pos $auto$expression.cpp:3253:import_operation$2610
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2608
-    connect \Y $auto$expression.cpp:3177:import_operation$2609
+    connect \Y $auto$expression.cpp:3250:import_operation$2609
   end
   attribute \src "dut.sv:411.17-411.58"
   cell $eq $eq$dut.sv:411$2612
@@ -16863,7 +16863,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2609
+    connect \A $auto$expression.cpp:3250:import_operation$2609
     connect \B 0
     connect \Y $eq$dut.sv:411$2611_Y
   end
@@ -16889,12 +16889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2616
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2618
+  cell $pos $auto$expression.cpp:3253:import_operation$2618
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2616
-    connect \Y $auto$expression.cpp:3177:import_operation$2617
+    connect \Y $auto$expression.cpp:3250:import_operation$2617
   end
   attribute \src "dut.sv:412.17-412.58"
   cell $eq $eq$dut.sv:412$2620
@@ -16903,7 +16903,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2617
+    connect \A $auto$expression.cpp:3250:import_operation$2617
     connect \B 1
     connect \Y $eq$dut.sv:412$2619_Y
   end
@@ -16929,12 +16929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2624
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2626
+  cell $pos $auto$expression.cpp:3253:import_operation$2626
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2624
-    connect \Y $auto$expression.cpp:3177:import_operation$2625
+    connect \Y $auto$expression.cpp:3250:import_operation$2625
   end
   attribute \src "dut.sv:413.17-413.58"
   cell $eq $eq$dut.sv:413$2628
@@ -16943,7 +16943,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2625
+    connect \A $auto$expression.cpp:3250:import_operation$2625
     connect \B 0
     connect \Y $eq$dut.sv:413$2627_Y
   end
@@ -16969,12 +16969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2632
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2634
+  cell $pos $auto$expression.cpp:3253:import_operation$2634
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2632
-    connect \Y $auto$expression.cpp:3177:import_operation$2633
+    connect \Y $auto$expression.cpp:3250:import_operation$2633
   end
   attribute \src "dut.sv:414.17-414.58"
   cell $eq $eq$dut.sv:414$2636
@@ -16983,7 +16983,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2633
+    connect \A $auto$expression.cpp:3250:import_operation$2633
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:414$2635_Y
   end
@@ -17009,12 +17009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2640
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2642
+  cell $pos $auto$expression.cpp:3253:import_operation$2642
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2640
-    connect \Y $auto$expression.cpp:3177:import_operation$2641
+    connect \Y $auto$expression.cpp:3250:import_operation$2641
   end
   attribute \src "dut.sv:415.17-415.58"
   cell $eq $eq$dut.sv:415$2644
@@ -17023,7 +17023,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2641
+    connect \A $auto$expression.cpp:3250:import_operation$2641
     connect \B 0
     connect \Y $eq$dut.sv:415$2643_Y
   end
@@ -17049,12 +17049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2648
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2650
+  cell $pos $auto$expression.cpp:3253:import_operation$2650
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2648
-    connect \Y $auto$expression.cpp:3177:import_operation$2649
+    connect \Y $auto$expression.cpp:3250:import_operation$2649
   end
   attribute \src "dut.sv:416.17-416.58"
   cell $eq $eq$dut.sv:416$2652
@@ -17063,7 +17063,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2649
+    connect \A $auto$expression.cpp:3250:import_operation$2649
     connect \B 1
     connect \Y $eq$dut.sv:416$2651_Y
   end
@@ -17089,12 +17089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2656
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2658
+  cell $pos $auto$expression.cpp:3253:import_operation$2658
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2656
-    connect \Y $auto$expression.cpp:3177:import_operation$2657
+    connect \Y $auto$expression.cpp:3250:import_operation$2657
   end
   attribute \src "dut.sv:417.17-417.58"
   cell $eq $eq$dut.sv:417$2660
@@ -17103,7 +17103,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2657
+    connect \A $auto$expression.cpp:3250:import_operation$2657
     connect \B 2
     connect \Y $eq$dut.sv:417$2659_Y
   end
@@ -17129,12 +17129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2664
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2666
+  cell $pos $auto$expression.cpp:3253:import_operation$2666
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2664
-    connect \Y $auto$expression.cpp:3177:import_operation$2665
+    connect \Y $auto$expression.cpp:3250:import_operation$2665
   end
   attribute \src "dut.sv:418.17-418.58"
   cell $eq $eq$dut.sv:418$2668
@@ -17143,7 +17143,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2665
+    connect \A $auto$expression.cpp:3250:import_operation$2665
     connect \B 3
     connect \Y $eq$dut.sv:418$2667_Y
   end
@@ -17169,12 +17169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2672
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2674
+  cell $pos $auto$expression.cpp:3253:import_operation$2674
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2672
-    connect \Y $auto$expression.cpp:3177:import_operation$2673
+    connect \Y $auto$expression.cpp:3250:import_operation$2673
   end
   attribute \src "dut.sv:419.17-419.58"
   cell $eq $eq$dut.sv:419$2676
@@ -17183,7 +17183,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2673
+    connect \A $auto$expression.cpp:3250:import_operation$2673
     connect \B 0
     connect \Y $eq$dut.sv:419$2675_Y
   end
@@ -17209,12 +17209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2680
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2682
+  cell $pos $auto$expression.cpp:3253:import_operation$2682
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2680
-    connect \Y $auto$expression.cpp:3177:import_operation$2681
+    connect \Y $auto$expression.cpp:3250:import_operation$2681
   end
   attribute \src "dut.sv:420.17-420.58"
   cell $eq $eq$dut.sv:420$2684
@@ -17223,7 +17223,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2681
+    connect \A $auto$expression.cpp:3250:import_operation$2681
     connect \B 1
     connect \Y $eq$dut.sv:420$2683_Y
   end
@@ -17249,12 +17249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2688
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2690
+  cell $pos $auto$expression.cpp:3253:import_operation$2690
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2688
-    connect \Y $auto$expression.cpp:3177:import_operation$2689
+    connect \Y $auto$expression.cpp:3250:import_operation$2689
   end
   attribute \src "dut.sv:421.17-421.58"
   cell $eq $eq$dut.sv:421$2692
@@ -17263,7 +17263,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2689
+    connect \A $auto$expression.cpp:3250:import_operation$2689
     connect \B 32'11111111111111111111111111111110
     connect \Y $eq$dut.sv:421$2691_Y
   end
@@ -17289,12 +17289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2696
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2698
+  cell $pos $auto$expression.cpp:3253:import_operation$2698
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$2696
-    connect \Y $auto$expression.cpp:3177:import_operation$2697
+    connect \Y $auto$expression.cpp:3250:import_operation$2697
   end
   attribute \src "dut.sv:422.17-422.58"
   cell $eq $eq$dut.sv:422$2700
@@ -17303,7 +17303,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2697
+    connect \A $auto$expression.cpp:3250:import_operation$2697
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:422$2699_Y
   end
@@ -17329,12 +17329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2704
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2706
+  cell $pos $auto$expression.cpp:3253:import_operation$2706
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2704
-    connect \Y $auto$expression.cpp:3177:import_operation$2705
+    connect \Y $auto$expression.cpp:3250:import_operation$2705
   end
   attribute \src "dut.sv:424.17-424.71"
   cell $eq $eq$dut.sv:424$2708
@@ -17343,7 +17343,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2705
+    connect \A $auto$expression.cpp:3250:import_operation$2705
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:424$2707_Y
   end
@@ -17369,12 +17369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2712
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2714
+  cell $pos $auto$expression.cpp:3253:import_operation$2714
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2712
-    connect \Y $auto$expression.cpp:3177:import_operation$2713
+    connect \Y $auto$expression.cpp:3250:import_operation$2713
   end
   attribute \src "dut.sv:425.17-425.71"
   cell $eq $eq$dut.sv:425$2716
@@ -17383,7 +17383,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2713
+    connect \A $auto$expression.cpp:3250:import_operation$2713
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:425$2715_Y
   end
@@ -17409,12 +17409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2720
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2722
+  cell $pos $auto$expression.cpp:3253:import_operation$2722
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2720
-    connect \Y $auto$expression.cpp:3177:import_operation$2721
+    connect \Y $auto$expression.cpp:3250:import_operation$2721
   end
   attribute \src "dut.sv:426.17-426.71"
   cell $eq $eq$dut.sv:426$2724
@@ -17423,7 +17423,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2721
+    connect \A $auto$expression.cpp:3250:import_operation$2721
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:426$2723_Y
   end
@@ -17449,12 +17449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2728
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2730
+  cell $pos $auto$expression.cpp:3253:import_operation$2730
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2728
-    connect \Y $auto$expression.cpp:3177:import_operation$2729
+    connect \Y $auto$expression.cpp:3250:import_operation$2729
   end
   attribute \src "dut.sv:427.17-427.71"
   cell $eq $eq$dut.sv:427$2732
@@ -17463,7 +17463,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2729
+    connect \A $auto$expression.cpp:3250:import_operation$2729
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:427$2731_Y
   end
@@ -17489,12 +17489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2736
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2738
+  cell $pos $auto$expression.cpp:3253:import_operation$2738
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2736
-    connect \Y $auto$expression.cpp:3177:import_operation$2737
+    connect \Y $auto$expression.cpp:3250:import_operation$2737
   end
   attribute \src "dut.sv:428.17-428.71"
   cell $eq $eq$dut.sv:428$2740
@@ -17503,7 +17503,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2737
+    connect \A $auto$expression.cpp:3250:import_operation$2737
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:428$2739_Y
   end
@@ -17529,12 +17529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2744
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2746
+  cell $pos $auto$expression.cpp:3253:import_operation$2746
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2744
-    connect \Y $auto$expression.cpp:3177:import_operation$2745
+    connect \Y $auto$expression.cpp:3250:import_operation$2745
   end
   attribute \src "dut.sv:429.17-429.71"
   cell $eq $eq$dut.sv:429$2748
@@ -17543,7 +17543,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2745
+    connect \A $auto$expression.cpp:3250:import_operation$2745
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:429$2747_Y
   end
@@ -17569,12 +17569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2752
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2754
+  cell $pos $auto$expression.cpp:3253:import_operation$2754
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2752
-    connect \Y $auto$expression.cpp:3177:import_operation$2753
+    connect \Y $auto$expression.cpp:3250:import_operation$2753
   end
   attribute \src "dut.sv:430.17-430.71"
   cell $eq $eq$dut.sv:430$2756
@@ -17583,7 +17583,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2753
+    connect \A $auto$expression.cpp:3250:import_operation$2753
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:430$2755_Y
   end
@@ -17609,12 +17609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2760
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2762
+  cell $pos $auto$expression.cpp:3253:import_operation$2762
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2760
-    connect \Y $auto$expression.cpp:3177:import_operation$2761
+    connect \Y $auto$expression.cpp:3250:import_operation$2761
   end
   attribute \src "dut.sv:431.17-431.71"
   cell $eq $eq$dut.sv:431$2764
@@ -17623,7 +17623,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2761
+    connect \A $auto$expression.cpp:3250:import_operation$2761
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:431$2763_Y
   end
@@ -17649,12 +17649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2768
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2770
+  cell $pos $auto$expression.cpp:3253:import_operation$2770
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2768
-    connect \Y $auto$expression.cpp:3177:import_operation$2769
+    connect \Y $auto$expression.cpp:3250:import_operation$2769
   end
   attribute \src "dut.sv:432.17-432.71"
   cell $eq $eq$dut.sv:432$2772
@@ -17663,7 +17663,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2769
+    connect \A $auto$expression.cpp:3250:import_operation$2769
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:432$2771_Y
   end
@@ -17689,12 +17689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2776
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2778
+  cell $pos $auto$expression.cpp:3253:import_operation$2778
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2776
-    connect \Y $auto$expression.cpp:3177:import_operation$2777
+    connect \Y $auto$expression.cpp:3250:import_operation$2777
   end
   attribute \src "dut.sv:433.17-433.71"
   cell $eq $eq$dut.sv:433$2780
@@ -17703,7 +17703,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2777
+    connect \A $auto$expression.cpp:3250:import_operation$2777
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:433$2779_Y
   end
@@ -17729,12 +17729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2784
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2786
+  cell $pos $auto$expression.cpp:3253:import_operation$2786
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2784
-    connect \Y $auto$expression.cpp:3177:import_operation$2785
+    connect \Y $auto$expression.cpp:3250:import_operation$2785
   end
   attribute \src "dut.sv:434.17-434.71"
   cell $eq $eq$dut.sv:434$2788
@@ -17743,7 +17743,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2785
+    connect \A $auto$expression.cpp:3250:import_operation$2785
     connect \B 12'111111111110
     connect \Y $eq$dut.sv:434$2787_Y
   end
@@ -17769,12 +17769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2792
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2794
+  cell $pos $auto$expression.cpp:3253:import_operation$2794
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$2792
-    connect \Y $auto$expression.cpp:3177:import_operation$2793
+    connect \Y $auto$expression.cpp:3250:import_operation$2793
   end
   attribute \src "dut.sv:435.17-435.71"
   cell $eq $eq$dut.sv:435$2796
@@ -17783,7 +17783,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2793
+    connect \A $auto$expression.cpp:3250:import_operation$2793
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:435$2795_Y
   end
@@ -17809,12 +17809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2800
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2802
+  cell $pos $auto$expression.cpp:3253:import_operation$2802
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2800
-    connect \Y $auto$expression.cpp:3177:import_operation$2801
+    connect \Y $auto$expression.cpp:3250:import_operation$2801
   end
   attribute \src "dut.sv:437.17-437.55"
   cell $eq $eq$dut.sv:437$2804
@@ -17823,7 +17823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2801
+    connect \A $auto$expression.cpp:3250:import_operation$2801
     connect \B 3'000
     connect \Y $eq$dut.sv:437$2803_Y
   end
@@ -17849,12 +17849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2808
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2810
+  cell $pos $auto$expression.cpp:3253:import_operation$2810
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2808
-    connect \Y $auto$expression.cpp:3177:import_operation$2809
+    connect \Y $auto$expression.cpp:3250:import_operation$2809
   end
   attribute \src "dut.sv:438.17-438.55"
   cell $eq $eq$dut.sv:438$2812
@@ -17863,7 +17863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2809
+    connect \A $auto$expression.cpp:3250:import_operation$2809
     connect \B 3'001
     connect \Y $eq$dut.sv:438$2811_Y
   end
@@ -17889,12 +17889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2816
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2818
+  cell $pos $auto$expression.cpp:3253:import_operation$2818
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2816
-    connect \Y $auto$expression.cpp:3177:import_operation$2817
+    connect \Y $auto$expression.cpp:3250:import_operation$2817
   end
   attribute \src "dut.sv:439.17-439.55"
   cell $eq $eq$dut.sv:439$2820
@@ -17903,7 +17903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2817
+    connect \A $auto$expression.cpp:3250:import_operation$2817
     connect \B 3'000
     connect \Y $eq$dut.sv:439$2819_Y
   end
@@ -17929,12 +17929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2824
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2826
+  cell $pos $auto$expression.cpp:3253:import_operation$2826
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2824
-    connect \Y $auto$expression.cpp:3177:import_operation$2825
+    connect \Y $auto$expression.cpp:3250:import_operation$2825
   end
   attribute \src "dut.sv:440.17-440.55"
   cell $eq $eq$dut.sv:440$2828
@@ -17943,7 +17943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2825
+    connect \A $auto$expression.cpp:3250:import_operation$2825
     connect \B 3'111
     connect \Y $eq$dut.sv:440$2827_Y
   end
@@ -17969,12 +17969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2832
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2834
+  cell $pos $auto$expression.cpp:3253:import_operation$2834
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2832
-    connect \Y $auto$expression.cpp:3177:import_operation$2833
+    connect \Y $auto$expression.cpp:3250:import_operation$2833
   end
   attribute \src "dut.sv:441.17-441.55"
   cell $eq $eq$dut.sv:441$2836
@@ -17983,7 +17983,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2833
+    connect \A $auto$expression.cpp:3250:import_operation$2833
     connect \B 3'000
     connect \Y $eq$dut.sv:441$2835_Y
   end
@@ -18009,12 +18009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2840
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2842
+  cell $pos $auto$expression.cpp:3253:import_operation$2842
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2840
-    connect \Y $auto$expression.cpp:3177:import_operation$2841
+    connect \Y $auto$expression.cpp:3250:import_operation$2841
   end
   attribute \src "dut.sv:442.17-442.55"
   cell $eq $eq$dut.sv:442$2844
@@ -18023,7 +18023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2841
+    connect \A $auto$expression.cpp:3250:import_operation$2841
     connect \B 3'001
     connect \Y $eq$dut.sv:442$2843_Y
   end
@@ -18049,12 +18049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2848
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2850
+  cell $pos $auto$expression.cpp:3253:import_operation$2850
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2848
-    connect \Y $auto$expression.cpp:3177:import_operation$2849
+    connect \Y $auto$expression.cpp:3250:import_operation$2849
   end
   attribute \src "dut.sv:443.17-443.55"
   cell $eq $eq$dut.sv:443$2852
@@ -18063,7 +18063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2849
+    connect \A $auto$expression.cpp:3250:import_operation$2849
     connect \B 3'010
     connect \Y $eq$dut.sv:443$2851_Y
   end
@@ -18089,12 +18089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2856
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2858
+  cell $pos $auto$expression.cpp:3253:import_operation$2858
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2856
-    connect \Y $auto$expression.cpp:3177:import_operation$2857
+    connect \Y $auto$expression.cpp:3250:import_operation$2857
   end
   attribute \src "dut.sv:444.17-444.55"
   cell $eq $eq$dut.sv:444$2860
@@ -18103,7 +18103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2857
+    connect \A $auto$expression.cpp:3250:import_operation$2857
     connect \B 3'011
     connect \Y $eq$dut.sv:444$2859_Y
   end
@@ -18129,12 +18129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2864
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2866
+  cell $pos $auto$expression.cpp:3253:import_operation$2866
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2864
-    connect \Y $auto$expression.cpp:3177:import_operation$2865
+    connect \Y $auto$expression.cpp:3250:import_operation$2865
   end
   attribute \src "dut.sv:445.17-445.55"
   cell $eq $eq$dut.sv:445$2868
@@ -18143,7 +18143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2865
+    connect \A $auto$expression.cpp:3250:import_operation$2865
     connect \B 3'000
     connect \Y $eq$dut.sv:445$2867_Y
   end
@@ -18169,12 +18169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2872
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2874
+  cell $pos $auto$expression.cpp:3253:import_operation$2874
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2872
-    connect \Y $auto$expression.cpp:3177:import_operation$2873
+    connect \Y $auto$expression.cpp:3250:import_operation$2873
   end
   attribute \src "dut.sv:446.17-446.55"
   cell $eq $eq$dut.sv:446$2876
@@ -18183,7 +18183,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2873
+    connect \A $auto$expression.cpp:3250:import_operation$2873
     connect \B 3'001
     connect \Y $eq$dut.sv:446$2875_Y
   end
@@ -18209,12 +18209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2880
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2882
+  cell $pos $auto$expression.cpp:3253:import_operation$2882
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2880
-    connect \Y $auto$expression.cpp:3177:import_operation$2881
+    connect \Y $auto$expression.cpp:3250:import_operation$2881
   end
   attribute \src "dut.sv:447.17-447.55"
   cell $eq $eq$dut.sv:447$2884
@@ -18223,7 +18223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2881
+    connect \A $auto$expression.cpp:3250:import_operation$2881
     connect \B 3'110
     connect \Y $eq$dut.sv:447$2883_Y
   end
@@ -18249,12 +18249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2888
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2890
+  cell $pos $auto$expression.cpp:3253:import_operation$2890
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2888
-    connect \Y $auto$expression.cpp:3177:import_operation$2889
+    connect \Y $auto$expression.cpp:3250:import_operation$2889
   end
   attribute \src "dut.sv:448.17-448.55"
   cell $eq $eq$dut.sv:448$2892
@@ -18263,7 +18263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2889
+    connect \A $auto$expression.cpp:3250:import_operation$2889
     connect \B 3'111
     connect \Y $eq$dut.sv:448$2891_Y
   end
@@ -18289,12 +18289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2896
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2898
+  cell $pos $auto$expression.cpp:3253:import_operation$2898
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2896
-    connect \Y $auto$expression.cpp:3177:import_operation$2897
+    connect \Y $auto$expression.cpp:3250:import_operation$2897
   end
   attribute \src "dut.sv:450.17-450.61"
   cell $eq $eq$dut.sv:450$2900
@@ -18303,7 +18303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2897
+    connect \A $auto$expression.cpp:3250:import_operation$2897
     connect \B 3'000
     connect \Y $eq$dut.sv:450$2899_Y
   end
@@ -18329,12 +18329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2904
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2906
+  cell $pos $auto$expression.cpp:3253:import_operation$2906
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2904
-    connect \Y $auto$expression.cpp:3177:import_operation$2905
+    connect \Y $auto$expression.cpp:3250:import_operation$2905
   end
   attribute \src "dut.sv:451.17-451.61"
   cell $eq $eq$dut.sv:451$2908
@@ -18343,7 +18343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2905
+    connect \A $auto$expression.cpp:3250:import_operation$2905
     connect \B 3'001
     connect \Y $eq$dut.sv:451$2907_Y
   end
@@ -18369,12 +18369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2912
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2914
+  cell $pos $auto$expression.cpp:3253:import_operation$2914
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2912
-    connect \Y $auto$expression.cpp:3177:import_operation$2913
+    connect \Y $auto$expression.cpp:3250:import_operation$2913
   end
   attribute \src "dut.sv:452.17-452.61"
   cell $eq $eq$dut.sv:452$2916
@@ -18383,7 +18383,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2913
+    connect \A $auto$expression.cpp:3250:import_operation$2913
     connect \B 3'000
     connect \Y $eq$dut.sv:452$2915_Y
   end
@@ -18409,12 +18409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2920
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2922
+  cell $pos $auto$expression.cpp:3253:import_operation$2922
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2920
-    connect \Y $auto$expression.cpp:3177:import_operation$2921
+    connect \Y $auto$expression.cpp:3250:import_operation$2921
   end
   attribute \src "dut.sv:453.17-453.61"
   cell $eq $eq$dut.sv:453$2924
@@ -18423,7 +18423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2921
+    connect \A $auto$expression.cpp:3250:import_operation$2921
     connect \B 3'111
     connect \Y $eq$dut.sv:453$2923_Y
   end
@@ -18449,12 +18449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2928
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2930
+  cell $pos $auto$expression.cpp:3253:import_operation$2930
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2928
-    connect \Y $auto$expression.cpp:3177:import_operation$2929
+    connect \Y $auto$expression.cpp:3250:import_operation$2929
   end
   attribute \src "dut.sv:454.17-454.61"
   cell $eq $eq$dut.sv:454$2932
@@ -18463,7 +18463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2929
+    connect \A $auto$expression.cpp:3250:import_operation$2929
     connect \B 3'000
     connect \Y $eq$dut.sv:454$2931_Y
   end
@@ -18489,12 +18489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2936
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2938
+  cell $pos $auto$expression.cpp:3253:import_operation$2938
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2936
-    connect \Y $auto$expression.cpp:3177:import_operation$2937
+    connect \Y $auto$expression.cpp:3250:import_operation$2937
   end
   attribute \src "dut.sv:455.17-455.61"
   cell $eq $eq$dut.sv:455$2940
@@ -18503,7 +18503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2937
+    connect \A $auto$expression.cpp:3250:import_operation$2937
     connect \B 3'001
     connect \Y $eq$dut.sv:455$2939_Y
   end
@@ -18529,12 +18529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2944
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2946
+  cell $pos $auto$expression.cpp:3253:import_operation$2946
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2944
-    connect \Y $auto$expression.cpp:3177:import_operation$2945
+    connect \Y $auto$expression.cpp:3250:import_operation$2945
   end
   attribute \src "dut.sv:456.17-456.61"
   cell $eq $eq$dut.sv:456$2948
@@ -18543,7 +18543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2945
+    connect \A $auto$expression.cpp:3250:import_operation$2945
     connect \B 3'010
     connect \Y $eq$dut.sv:456$2947_Y
   end
@@ -18569,12 +18569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2952
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2954
+  cell $pos $auto$expression.cpp:3253:import_operation$2954
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2952
-    connect \Y $auto$expression.cpp:3177:import_operation$2953
+    connect \Y $auto$expression.cpp:3250:import_operation$2953
   end
   attribute \src "dut.sv:457.17-457.61"
   cell $eq $eq$dut.sv:457$2956
@@ -18583,7 +18583,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2953
+    connect \A $auto$expression.cpp:3250:import_operation$2953
     connect \B 3'011
     connect \Y $eq$dut.sv:457$2955_Y
   end
@@ -18609,12 +18609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2960
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2962
+  cell $pos $auto$expression.cpp:3253:import_operation$2962
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2960
-    connect \Y $auto$expression.cpp:3177:import_operation$2961
+    connect \Y $auto$expression.cpp:3250:import_operation$2961
   end
   attribute \src "dut.sv:458.17-458.61"
   cell $eq $eq$dut.sv:458$2964
@@ -18623,7 +18623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2961
+    connect \A $auto$expression.cpp:3250:import_operation$2961
     connect \B 3'000
     connect \Y $eq$dut.sv:458$2963_Y
   end
@@ -18649,12 +18649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2968
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2970
+  cell $pos $auto$expression.cpp:3253:import_operation$2970
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2968
-    connect \Y $auto$expression.cpp:3177:import_operation$2969
+    connect \Y $auto$expression.cpp:3250:import_operation$2969
   end
   attribute \src "dut.sv:459.17-459.61"
   cell $eq $eq$dut.sv:459$2972
@@ -18663,7 +18663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2969
+    connect \A $auto$expression.cpp:3250:import_operation$2969
     connect \B 3'001
     connect \Y $eq$dut.sv:459$2971_Y
   end
@@ -18689,12 +18689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2976
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2978
+  cell $pos $auto$expression.cpp:3253:import_operation$2978
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2976
-    connect \Y $auto$expression.cpp:3177:import_operation$2977
+    connect \Y $auto$expression.cpp:3250:import_operation$2977
   end
   attribute \src "dut.sv:460.17-460.61"
   cell $eq $eq$dut.sv:460$2980
@@ -18703,7 +18703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2977
+    connect \A $auto$expression.cpp:3250:import_operation$2977
     connect \B 3'110
     connect \Y $eq$dut.sv:460$2979_Y
   end
@@ -18729,12 +18729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2984
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2986
+  cell $pos $auto$expression.cpp:3253:import_operation$2986
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$2984
-    connect \Y $auto$expression.cpp:3177:import_operation$2985
+    connect \Y $auto$expression.cpp:3250:import_operation$2985
   end
   attribute \src "dut.sv:461.17-461.61"
   cell $eq $eq$dut.sv:461$2988
@@ -18743,7 +18743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2985
+    connect \A $auto$expression.cpp:3250:import_operation$2985
     connect \B 3'111
     connect \Y $eq$dut.sv:461$2987_Y
   end
@@ -18769,12 +18769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$2992
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$2994
+  cell $pos $auto$expression.cpp:3253:import_operation$2994
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$2992
-    connect \Y $auto$expression.cpp:3177:import_operation$2993
+    connect \Y $auto$expression.cpp:3250:import_operation$2993
   end
   attribute \src "dut.sv:463.17-463.57"
   cell $eq $eq$dut.sv:463$2996
@@ -18783,7 +18783,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$2993
+    connect \A $auto$expression.cpp:3250:import_operation$2993
     connect \B 8'00000000
     connect \Y $eq$dut.sv:463$2995_Y
   end
@@ -18809,12 +18809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3000
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3002
+  cell $pos $auto$expression.cpp:3253:import_operation$3002
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3000
-    connect \Y $auto$expression.cpp:3177:import_operation$3001
+    connect \Y $auto$expression.cpp:3250:import_operation$3001
   end
   attribute \src "dut.sv:464.17-464.57"
   cell $eq $eq$dut.sv:464$3004
@@ -18823,7 +18823,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3001
+    connect \A $auto$expression.cpp:3250:import_operation$3001
     connect \B 8'00000001
     connect \Y $eq$dut.sv:464$3003_Y
   end
@@ -18849,12 +18849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3008
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3010
+  cell $pos $auto$expression.cpp:3253:import_operation$3010
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3008
-    connect \Y $auto$expression.cpp:3177:import_operation$3009
+    connect \Y $auto$expression.cpp:3250:import_operation$3009
   end
   attribute \src "dut.sv:465.17-465.57"
   cell $eq $eq$dut.sv:465$3012
@@ -18863,7 +18863,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3009
+    connect \A $auto$expression.cpp:3250:import_operation$3009
     connect \B 8'00000000
     connect \Y $eq$dut.sv:465$3011_Y
   end
@@ -18889,12 +18889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3016
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3018
+  cell $pos $auto$expression.cpp:3253:import_operation$3018
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3016
-    connect \Y $auto$expression.cpp:3177:import_operation$3017
+    connect \Y $auto$expression.cpp:3250:import_operation$3017
   end
   attribute \src "dut.sv:466.17-466.57"
   cell $eq $eq$dut.sv:466$3020
@@ -18903,7 +18903,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3017
+    connect \A $auto$expression.cpp:3250:import_operation$3017
     connect \B 8'11111111
     connect \Y $eq$dut.sv:466$3019_Y
   end
@@ -18929,12 +18929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3024
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3026
+  cell $pos $auto$expression.cpp:3253:import_operation$3026
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3024
-    connect \Y $auto$expression.cpp:3177:import_operation$3025
+    connect \Y $auto$expression.cpp:3250:import_operation$3025
   end
   attribute \src "dut.sv:467.17-467.57"
   cell $eq $eq$dut.sv:467$3028
@@ -18943,7 +18943,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3025
+    connect \A $auto$expression.cpp:3250:import_operation$3025
     connect \B 8'00000000
     connect \Y $eq$dut.sv:467$3027_Y
   end
@@ -18969,12 +18969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3032
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3034
+  cell $pos $auto$expression.cpp:3253:import_operation$3034
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3032
-    connect \Y $auto$expression.cpp:3177:import_operation$3033
+    connect \Y $auto$expression.cpp:3250:import_operation$3033
   end
   attribute \src "dut.sv:468.17-468.57"
   cell $eq $eq$dut.sv:468$3036
@@ -18983,7 +18983,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3033
+    connect \A $auto$expression.cpp:3250:import_operation$3033
     connect \B 8'00000001
     connect \Y $eq$dut.sv:468$3035_Y
   end
@@ -19009,12 +19009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3040
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3042
+  cell $pos $auto$expression.cpp:3253:import_operation$3042
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3040
-    connect \Y $auto$expression.cpp:3177:import_operation$3041
+    connect \Y $auto$expression.cpp:3250:import_operation$3041
   end
   attribute \src "dut.sv:469.17-469.57"
   cell $eq $eq$dut.sv:469$3044
@@ -19023,7 +19023,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3041
+    connect \A $auto$expression.cpp:3250:import_operation$3041
     connect \B 8'00000010
     connect \Y $eq$dut.sv:469$3043_Y
   end
@@ -19049,12 +19049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3048
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3050
+  cell $pos $auto$expression.cpp:3253:import_operation$3050
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3048
-    connect \Y $auto$expression.cpp:3177:import_operation$3049
+    connect \Y $auto$expression.cpp:3250:import_operation$3049
   end
   attribute \src "dut.sv:470.17-470.57"
   cell $eq $eq$dut.sv:470$3052
@@ -19063,7 +19063,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3049
+    connect \A $auto$expression.cpp:3250:import_operation$3049
     connect \B 8'00000011
     connect \Y $eq$dut.sv:470$3051_Y
   end
@@ -19089,12 +19089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3056
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3058
+  cell $pos $auto$expression.cpp:3253:import_operation$3058
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3056
-    connect \Y $auto$expression.cpp:3177:import_operation$3057
+    connect \Y $auto$expression.cpp:3250:import_operation$3057
   end
   attribute \src "dut.sv:471.17-471.57"
   cell $eq $eq$dut.sv:471$3060
@@ -19103,7 +19103,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3057
+    connect \A $auto$expression.cpp:3250:import_operation$3057
     connect \B 8'00000000
     connect \Y $eq$dut.sv:471$3059_Y
   end
@@ -19129,12 +19129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3064
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3066
+  cell $pos $auto$expression.cpp:3253:import_operation$3066
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3064
-    connect \Y $auto$expression.cpp:3177:import_operation$3065
+    connect \Y $auto$expression.cpp:3250:import_operation$3065
   end
   attribute \src "dut.sv:472.17-472.57"
   cell $eq $eq$dut.sv:472$3068
@@ -19143,7 +19143,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3065
+    connect \A $auto$expression.cpp:3250:import_operation$3065
     connect \B 8'00000001
     connect \Y $eq$dut.sv:472$3067_Y
   end
@@ -19169,12 +19169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3072
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3074
+  cell $pos $auto$expression.cpp:3253:import_operation$3074
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3072
-    connect \Y $auto$expression.cpp:3177:import_operation$3073
+    connect \Y $auto$expression.cpp:3250:import_operation$3073
   end
   attribute \src "dut.sv:473.17-473.57"
   cell $eq $eq$dut.sv:473$3076
@@ -19183,7 +19183,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3073
+    connect \A $auto$expression.cpp:3250:import_operation$3073
     connect \B 8'11111110
     connect \Y $eq$dut.sv:473$3075_Y
   end
@@ -19209,12 +19209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3080
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3082
+  cell $pos $auto$expression.cpp:3253:import_operation$3082
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3080
-    connect \Y $auto$expression.cpp:3177:import_operation$3081
+    connect \Y $auto$expression.cpp:3250:import_operation$3081
   end
   attribute \src "dut.sv:474.17-474.57"
   cell $eq $eq$dut.sv:474$3084
@@ -19223,7 +19223,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3081
+    connect \A $auto$expression.cpp:3250:import_operation$3081
     connect \B 8'11111111
     connect \Y $eq$dut.sv:474$3083_Y
   end
@@ -19249,12 +19249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3088
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3090
+  cell $pos $auto$expression.cpp:3253:import_operation$3090
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3088
-    connect \Y $auto$expression.cpp:3177:import_operation$3089
+    connect \Y $auto$expression.cpp:3250:import_operation$3089
   end
   attribute \src "dut.sv:476.17-476.64"
   cell $eq $eq$dut.sv:476$3092
@@ -19263,7 +19263,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3089
+    connect \A $auto$expression.cpp:3250:import_operation$3089
     connect \B 0
     connect \Y $eq$dut.sv:476$3091_Y
   end
@@ -19289,12 +19289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3096
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3098
+  cell $pos $auto$expression.cpp:3253:import_operation$3098
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3096
-    connect \Y $auto$expression.cpp:3177:import_operation$3097
+    connect \Y $auto$expression.cpp:3250:import_operation$3097
   end
   attribute \src "dut.sv:477.17-477.64"
   cell $eq $eq$dut.sv:477$3100
@@ -19303,7 +19303,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3097
+    connect \A $auto$expression.cpp:3250:import_operation$3097
     connect \B 1
     connect \Y $eq$dut.sv:477$3099_Y
   end
@@ -19329,12 +19329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3104
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3106
+  cell $pos $auto$expression.cpp:3253:import_operation$3106
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3104
-    connect \Y $auto$expression.cpp:3177:import_operation$3105
+    connect \Y $auto$expression.cpp:3250:import_operation$3105
   end
   attribute \src "dut.sv:478.17-478.64"
   cell $eq $eq$dut.sv:478$3108
@@ -19343,7 +19343,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3105
+    connect \A $auto$expression.cpp:3250:import_operation$3105
     connect \B 0
     connect \Y $eq$dut.sv:478$3107_Y
   end
@@ -19369,12 +19369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3112
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3114
+  cell $pos $auto$expression.cpp:3253:import_operation$3114
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3112
-    connect \Y $auto$expression.cpp:3177:import_operation$3113
+    connect \Y $auto$expression.cpp:3250:import_operation$3113
   end
   attribute \src "dut.sv:479.17-479.64"
   cell $eq $eq$dut.sv:479$3116
@@ -19383,7 +19383,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3113
+    connect \A $auto$expression.cpp:3250:import_operation$3113
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:479$3115_Y
   end
@@ -19409,12 +19409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3120
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3122
+  cell $pos $auto$expression.cpp:3253:import_operation$3122
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3120
-    connect \Y $auto$expression.cpp:3177:import_operation$3121
+    connect \Y $auto$expression.cpp:3250:import_operation$3121
   end
   attribute \src "dut.sv:480.17-480.64"
   cell $eq $eq$dut.sv:480$3124
@@ -19423,7 +19423,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3121
+    connect \A $auto$expression.cpp:3250:import_operation$3121
     connect \B 0
     connect \Y $eq$dut.sv:480$3123_Y
   end
@@ -19449,12 +19449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3128
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3130
+  cell $pos $auto$expression.cpp:3253:import_operation$3130
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3128
-    connect \Y $auto$expression.cpp:3177:import_operation$3129
+    connect \Y $auto$expression.cpp:3250:import_operation$3129
   end
   attribute \src "dut.sv:481.17-481.64"
   cell $eq $eq$dut.sv:481$3132
@@ -19463,7 +19463,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3129
+    connect \A $auto$expression.cpp:3250:import_operation$3129
     connect \B 1
     connect \Y $eq$dut.sv:481$3131_Y
   end
@@ -19489,12 +19489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3136
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3138
+  cell $pos $auto$expression.cpp:3253:import_operation$3138
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3136
-    connect \Y $auto$expression.cpp:3177:import_operation$3137
+    connect \Y $auto$expression.cpp:3250:import_operation$3137
   end
   attribute \src "dut.sv:482.17-482.64"
   cell $eq $eq$dut.sv:482$3140
@@ -19503,7 +19503,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3137
+    connect \A $auto$expression.cpp:3250:import_operation$3137
     connect \B 2
     connect \Y $eq$dut.sv:482$3139_Y
   end
@@ -19529,12 +19529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3144
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3146
+  cell $pos $auto$expression.cpp:3253:import_operation$3146
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3144
-    connect \Y $auto$expression.cpp:3177:import_operation$3145
+    connect \Y $auto$expression.cpp:3250:import_operation$3145
   end
   attribute \src "dut.sv:483.17-483.64"
   cell $eq $eq$dut.sv:483$3148
@@ -19543,7 +19543,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3145
+    connect \A $auto$expression.cpp:3250:import_operation$3145
     connect \B 3
     connect \Y $eq$dut.sv:483$3147_Y
   end
@@ -19569,12 +19569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3152
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3154
+  cell $pos $auto$expression.cpp:3253:import_operation$3154
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3152
-    connect \Y $auto$expression.cpp:3177:import_operation$3153
+    connect \Y $auto$expression.cpp:3250:import_operation$3153
   end
   attribute \src "dut.sv:484.17-484.64"
   cell $eq $eq$dut.sv:484$3156
@@ -19583,7 +19583,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3153
+    connect \A $auto$expression.cpp:3250:import_operation$3153
     connect \B 0
     connect \Y $eq$dut.sv:484$3155_Y
   end
@@ -19609,12 +19609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3160
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3162
+  cell $pos $auto$expression.cpp:3253:import_operation$3162
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3160
-    connect \Y $auto$expression.cpp:3177:import_operation$3161
+    connect \Y $auto$expression.cpp:3250:import_operation$3161
   end
   attribute \src "dut.sv:485.17-485.64"
   cell $eq $eq$dut.sv:485$3164
@@ -19623,7 +19623,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3161
+    connect \A $auto$expression.cpp:3250:import_operation$3161
     connect \B 1
     connect \Y $eq$dut.sv:485$3163_Y
   end
@@ -19649,12 +19649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3168
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3170
+  cell $pos $auto$expression.cpp:3253:import_operation$3170
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3168
-    connect \Y $auto$expression.cpp:3177:import_operation$3169
+    connect \Y $auto$expression.cpp:3250:import_operation$3169
   end
   attribute \src "dut.sv:486.17-486.64"
   cell $eq $eq$dut.sv:486$3172
@@ -19663,7 +19663,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3169
+    connect \A $auto$expression.cpp:3250:import_operation$3169
     connect \B 32'11111111111111111111111111111110
     connect \Y $eq$dut.sv:486$3171_Y
   end
@@ -19689,12 +19689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3176
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3178
+  cell $pos $auto$expression.cpp:3253:import_operation$3178
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3176
-    connect \Y $auto$expression.cpp:3177:import_operation$3177
+    connect \Y $auto$expression.cpp:3250:import_operation$3177
   end
   attribute \src "dut.sv:487.17-487.64"
   cell $eq $eq$dut.sv:487$3180
@@ -19703,7 +19703,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3177
+    connect \A $auto$expression.cpp:3250:import_operation$3177
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:487$3179_Y
   end
@@ -19729,12 +19729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3184
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3186
+  cell $pos $auto$expression.cpp:3253:import_operation$3186
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3184
-    connect \Y $auto$expression.cpp:3177:import_operation$3185
+    connect \Y $auto$expression.cpp:3250:import_operation$3185
   end
   attribute \src "dut.sv:489.17-489.77"
   cell $eq $eq$dut.sv:489$3188
@@ -19743,7 +19743,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3185
+    connect \A $auto$expression.cpp:3250:import_operation$3185
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:489$3187_Y
   end
@@ -19769,12 +19769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3192
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3194
+  cell $pos $auto$expression.cpp:3253:import_operation$3194
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3192
-    connect \Y $auto$expression.cpp:3177:import_operation$3193
+    connect \Y $auto$expression.cpp:3250:import_operation$3193
   end
   attribute \src "dut.sv:490.17-490.77"
   cell $eq $eq$dut.sv:490$3196
@@ -19783,7 +19783,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3193
+    connect \A $auto$expression.cpp:3250:import_operation$3193
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:490$3195_Y
   end
@@ -19809,12 +19809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3200
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3202
+  cell $pos $auto$expression.cpp:3253:import_operation$3202
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3200
-    connect \Y $auto$expression.cpp:3177:import_operation$3201
+    connect \Y $auto$expression.cpp:3250:import_operation$3201
   end
   attribute \src "dut.sv:491.17-491.77"
   cell $eq $eq$dut.sv:491$3204
@@ -19823,7 +19823,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3201
+    connect \A $auto$expression.cpp:3250:import_operation$3201
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:491$3203_Y
   end
@@ -19849,12 +19849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3208
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3210
+  cell $pos $auto$expression.cpp:3253:import_operation$3210
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3208
-    connect \Y $auto$expression.cpp:3177:import_operation$3209
+    connect \Y $auto$expression.cpp:3250:import_operation$3209
   end
   attribute \src "dut.sv:492.17-492.77"
   cell $eq $eq$dut.sv:492$3212
@@ -19863,7 +19863,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3209
+    connect \A $auto$expression.cpp:3250:import_operation$3209
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:492$3211_Y
   end
@@ -19889,12 +19889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3216
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3218
+  cell $pos $auto$expression.cpp:3253:import_operation$3218
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3216
-    connect \Y $auto$expression.cpp:3177:import_operation$3217
+    connect \Y $auto$expression.cpp:3250:import_operation$3217
   end
   attribute \src "dut.sv:493.17-493.77"
   cell $eq $eq$dut.sv:493$3220
@@ -19903,7 +19903,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3217
+    connect \A $auto$expression.cpp:3250:import_operation$3217
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:493$3219_Y
   end
@@ -19929,12 +19929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3224
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3226
+  cell $pos $auto$expression.cpp:3253:import_operation$3226
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3224
-    connect \Y $auto$expression.cpp:3177:import_operation$3225
+    connect \Y $auto$expression.cpp:3250:import_operation$3225
   end
   attribute \src "dut.sv:494.17-494.77"
   cell $eq $eq$dut.sv:494$3228
@@ -19943,7 +19943,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3225
+    connect \A $auto$expression.cpp:3250:import_operation$3225
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:494$3227_Y
   end
@@ -19969,12 +19969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3232
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3234
+  cell $pos $auto$expression.cpp:3253:import_operation$3234
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3232
-    connect \Y $auto$expression.cpp:3177:import_operation$3233
+    connect \Y $auto$expression.cpp:3250:import_operation$3233
   end
   attribute \src "dut.sv:495.17-495.77"
   cell $eq $eq$dut.sv:495$3236
@@ -19983,7 +19983,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3233
+    connect \A $auto$expression.cpp:3250:import_operation$3233
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:495$3235_Y
   end
@@ -20009,12 +20009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3240
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3242
+  cell $pos $auto$expression.cpp:3253:import_operation$3242
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3240
-    connect \Y $auto$expression.cpp:3177:import_operation$3241
+    connect \Y $auto$expression.cpp:3250:import_operation$3241
   end
   attribute \src "dut.sv:496.17-496.77"
   cell $eq $eq$dut.sv:496$3244
@@ -20023,7 +20023,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3241
+    connect \A $auto$expression.cpp:3250:import_operation$3241
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:496$3243_Y
   end
@@ -20049,12 +20049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3248
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3250
+  cell $pos $auto$expression.cpp:3253:import_operation$3250
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3248
-    connect \Y $auto$expression.cpp:3177:import_operation$3249
+    connect \Y $auto$expression.cpp:3250:import_operation$3249
   end
   attribute \src "dut.sv:497.17-497.77"
   cell $eq $eq$dut.sv:497$3252
@@ -20063,7 +20063,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3249
+    connect \A $auto$expression.cpp:3250:import_operation$3249
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:497$3251_Y
   end
@@ -20089,12 +20089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3256
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3258
+  cell $pos $auto$expression.cpp:3253:import_operation$3258
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3256
-    connect \Y $auto$expression.cpp:3177:import_operation$3257
+    connect \Y $auto$expression.cpp:3250:import_operation$3257
   end
   attribute \src "dut.sv:498.17-498.77"
   cell $eq $eq$dut.sv:498$3260
@@ -20103,7 +20103,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3257
+    connect \A $auto$expression.cpp:3250:import_operation$3257
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:498$3259_Y
   end
@@ -20129,12 +20129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3264
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3266
+  cell $pos $auto$expression.cpp:3253:import_operation$3266
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3264
-    connect \Y $auto$expression.cpp:3177:import_operation$3265
+    connect \Y $auto$expression.cpp:3250:import_operation$3265
   end
   attribute \src "dut.sv:499.17-499.77"
   cell $eq $eq$dut.sv:499$3268
@@ -20143,7 +20143,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3265
+    connect \A $auto$expression.cpp:3250:import_operation$3265
     connect \B 12'111111111110
     connect \Y $eq$dut.sv:499$3267_Y
   end
@@ -20169,12 +20169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3272
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3274
+  cell $pos $auto$expression.cpp:3253:import_operation$3274
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3272
-    connect \Y $auto$expression.cpp:3177:import_operation$3273
+    connect \Y $auto$expression.cpp:3250:import_operation$3273
   end
   attribute \src "dut.sv:500.17-500.77"
   cell $eq $eq$dut.sv:500$3276
@@ -20183,7 +20183,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3273
+    connect \A $auto$expression.cpp:3250:import_operation$3273
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:500$3275_Y
   end
@@ -20209,12 +20209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3280
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3282
+  cell $pos $auto$expression.cpp:3253:import_operation$3282
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3280
-    connect \Y $auto$expression.cpp:3177:import_operation$3281
+    connect \Y $auto$expression.cpp:3250:import_operation$3281
   end
   attribute \src "dut.sv:502.17-502.49"
   cell $eq $eq$dut.sv:502$3284
@@ -20223,7 +20223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3281
+    connect \A $auto$expression.cpp:3250:import_operation$3281
     connect \B 3'000
     connect \Y $eq$dut.sv:502$3283_Y
   end
@@ -20249,12 +20249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3288
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3290
+  cell $pos $auto$expression.cpp:3253:import_operation$3290
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3288
-    connect \Y $auto$expression.cpp:3177:import_operation$3289
+    connect \Y $auto$expression.cpp:3250:import_operation$3289
   end
   attribute \src "dut.sv:503.17-503.49"
   cell $eq $eq$dut.sv:503$3292
@@ -20263,7 +20263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3289
+    connect \A $auto$expression.cpp:3250:import_operation$3289
     connect \B 3'001
     connect \Y $eq$dut.sv:503$3291_Y
   end
@@ -20289,12 +20289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3296
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3298
+  cell $pos $auto$expression.cpp:3253:import_operation$3298
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3296
-    connect \Y $auto$expression.cpp:3177:import_operation$3297
+    connect \Y $auto$expression.cpp:3250:import_operation$3297
   end
   attribute \src "dut.sv:504.17-504.49"
   cell $eq $eq$dut.sv:504$3300
@@ -20303,7 +20303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3297
+    connect \A $auto$expression.cpp:3250:import_operation$3297
     connect \B 3'000
     connect \Y $eq$dut.sv:504$3299_Y
   end
@@ -20329,12 +20329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3304
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3306
+  cell $pos $auto$expression.cpp:3253:import_operation$3306
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3304
-    connect \Y $auto$expression.cpp:3177:import_operation$3305
+    connect \Y $auto$expression.cpp:3250:import_operation$3305
   end
   attribute \src "dut.sv:505.17-505.49"
   cell $eq $eq$dut.sv:505$3308
@@ -20343,7 +20343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3305
+    connect \A $auto$expression.cpp:3250:import_operation$3305
     connect \B 3'111
     connect \Y $eq$dut.sv:505$3307_Y
   end
@@ -20369,12 +20369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3312
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3314
+  cell $pos $auto$expression.cpp:3253:import_operation$3314
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3312
-    connect \Y $auto$expression.cpp:3177:import_operation$3313
+    connect \Y $auto$expression.cpp:3250:import_operation$3313
   end
   attribute \src "dut.sv:506.17-506.49"
   cell $eq $eq$dut.sv:506$3316
@@ -20383,7 +20383,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3313
+    connect \A $auto$expression.cpp:3250:import_operation$3313
     connect \B 3'000
     connect \Y $eq$dut.sv:506$3315_Y
   end
@@ -20409,12 +20409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3320
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3322
+  cell $pos $auto$expression.cpp:3253:import_operation$3322
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3320
-    connect \Y $auto$expression.cpp:3177:import_operation$3321
+    connect \Y $auto$expression.cpp:3250:import_operation$3321
   end
   attribute \src "dut.sv:507.17-507.49"
   cell $eq $eq$dut.sv:507$3324
@@ -20423,7 +20423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3321
+    connect \A $auto$expression.cpp:3250:import_operation$3321
     connect \B 3'001
     connect \Y $eq$dut.sv:507$3323_Y
   end
@@ -20449,12 +20449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3328
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3330
+  cell $pos $auto$expression.cpp:3253:import_operation$3330
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3328
-    connect \Y $auto$expression.cpp:3177:import_operation$3329
+    connect \Y $auto$expression.cpp:3250:import_operation$3329
   end
   attribute \src "dut.sv:508.17-508.49"
   cell $eq $eq$dut.sv:508$3332
@@ -20463,7 +20463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3329
+    connect \A $auto$expression.cpp:3250:import_operation$3329
     connect \B 3'010
     connect \Y $eq$dut.sv:508$3331_Y
   end
@@ -20489,12 +20489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3336
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3338
+  cell $pos $auto$expression.cpp:3253:import_operation$3338
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3336
-    connect \Y $auto$expression.cpp:3177:import_operation$3337
+    connect \Y $auto$expression.cpp:3250:import_operation$3337
   end
   attribute \src "dut.sv:509.17-509.49"
   cell $eq $eq$dut.sv:509$3340
@@ -20503,7 +20503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3337
+    connect \A $auto$expression.cpp:3250:import_operation$3337
     connect \B 3'011
     connect \Y $eq$dut.sv:509$3339_Y
   end
@@ -20529,12 +20529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3344
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3346
+  cell $pos $auto$expression.cpp:3253:import_operation$3346
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3344
-    connect \Y $auto$expression.cpp:3177:import_operation$3345
+    connect \Y $auto$expression.cpp:3250:import_operation$3345
   end
   attribute \src "dut.sv:510.17-510.49"
   cell $eq $eq$dut.sv:510$3348
@@ -20543,7 +20543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3345
+    connect \A $auto$expression.cpp:3250:import_operation$3345
     connect \B 3'000
     connect \Y $eq$dut.sv:510$3347_Y
   end
@@ -20569,12 +20569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3352
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3354
+  cell $pos $auto$expression.cpp:3253:import_operation$3354
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3352
-    connect \Y $auto$expression.cpp:3177:import_operation$3353
+    connect \Y $auto$expression.cpp:3250:import_operation$3353
   end
   attribute \src "dut.sv:511.17-511.49"
   cell $eq $eq$dut.sv:511$3356
@@ -20583,7 +20583,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3353
+    connect \A $auto$expression.cpp:3250:import_operation$3353
     connect \B 3'001
     connect \Y $eq$dut.sv:511$3355_Y
   end
@@ -20609,12 +20609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3360
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3362
+  cell $pos $auto$expression.cpp:3253:import_operation$3362
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3360
-    connect \Y $auto$expression.cpp:3177:import_operation$3361
+    connect \Y $auto$expression.cpp:3250:import_operation$3361
   end
   attribute \src "dut.sv:512.17-512.49"
   cell $eq $eq$dut.sv:512$3364
@@ -20623,7 +20623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3361
+    connect \A $auto$expression.cpp:3250:import_operation$3361
     connect \B 3'110
     connect \Y $eq$dut.sv:512$3363_Y
   end
@@ -20649,12 +20649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3368
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3370
+  cell $pos $auto$expression.cpp:3253:import_operation$3370
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3368
-    connect \Y $auto$expression.cpp:3177:import_operation$3369
+    connect \Y $auto$expression.cpp:3250:import_operation$3369
   end
   attribute \src "dut.sv:513.17-513.49"
   cell $eq $eq$dut.sv:513$3372
@@ -20663,7 +20663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3369
+    connect \A $auto$expression.cpp:3250:import_operation$3369
     connect \B 3'111
     connect \Y $eq$dut.sv:513$3371_Y
   end
@@ -20689,12 +20689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3376
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3378
+  cell $pos $auto$expression.cpp:3253:import_operation$3378
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3376
-    connect \Y $auto$expression.cpp:3177:import_operation$3377
+    connect \Y $auto$expression.cpp:3250:import_operation$3377
   end
   attribute \src "dut.sv:515.17-515.55"
   cell $eq $eq$dut.sv:515$3380
@@ -20703,7 +20703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3377
+    connect \A $auto$expression.cpp:3250:import_operation$3377
     connect \B 3'000
     connect \Y $eq$dut.sv:515$3379_Y
   end
@@ -20729,12 +20729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3384
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3386
+  cell $pos $auto$expression.cpp:3253:import_operation$3386
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3384
-    connect \Y $auto$expression.cpp:3177:import_operation$3385
+    connect \Y $auto$expression.cpp:3250:import_operation$3385
   end
   attribute \src "dut.sv:516.17-516.55"
   cell $eq $eq$dut.sv:516$3388
@@ -20743,7 +20743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3385
+    connect \A $auto$expression.cpp:3250:import_operation$3385
     connect \B 3'001
     connect \Y $eq$dut.sv:516$3387_Y
   end
@@ -20769,12 +20769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3392
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3394
+  cell $pos $auto$expression.cpp:3253:import_operation$3394
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3392
-    connect \Y $auto$expression.cpp:3177:import_operation$3393
+    connect \Y $auto$expression.cpp:3250:import_operation$3393
   end
   attribute \src "dut.sv:517.17-517.55"
   cell $eq $eq$dut.sv:517$3396
@@ -20783,7 +20783,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3393
+    connect \A $auto$expression.cpp:3250:import_operation$3393
     connect \B 3'000
     connect \Y $eq$dut.sv:517$3395_Y
   end
@@ -20809,12 +20809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3400
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3402
+  cell $pos $auto$expression.cpp:3253:import_operation$3402
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3400
-    connect \Y $auto$expression.cpp:3177:import_operation$3401
+    connect \Y $auto$expression.cpp:3250:import_operation$3401
   end
   attribute \src "dut.sv:518.17-518.55"
   cell $eq $eq$dut.sv:518$3404
@@ -20823,7 +20823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3401
+    connect \A $auto$expression.cpp:3250:import_operation$3401
     connect \B 3'111
     connect \Y $eq$dut.sv:518$3403_Y
   end
@@ -20849,12 +20849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3408
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3410
+  cell $pos $auto$expression.cpp:3253:import_operation$3410
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3408
-    connect \Y $auto$expression.cpp:3177:import_operation$3409
+    connect \Y $auto$expression.cpp:3250:import_operation$3409
   end
   attribute \src "dut.sv:519.17-519.55"
   cell $eq $eq$dut.sv:519$3412
@@ -20863,7 +20863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3409
+    connect \A $auto$expression.cpp:3250:import_operation$3409
     connect \B 3'000
     connect \Y $eq$dut.sv:519$3411_Y
   end
@@ -20889,12 +20889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3416
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3418
+  cell $pos $auto$expression.cpp:3253:import_operation$3418
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3416
-    connect \Y $auto$expression.cpp:3177:import_operation$3417
+    connect \Y $auto$expression.cpp:3250:import_operation$3417
   end
   attribute \src "dut.sv:520.17-520.55"
   cell $eq $eq$dut.sv:520$3420
@@ -20903,7 +20903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3417
+    connect \A $auto$expression.cpp:3250:import_operation$3417
     connect \B 3'001
     connect \Y $eq$dut.sv:520$3419_Y
   end
@@ -20929,12 +20929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3424
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3426
+  cell $pos $auto$expression.cpp:3253:import_operation$3426
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3424
-    connect \Y $auto$expression.cpp:3177:import_operation$3425
+    connect \Y $auto$expression.cpp:3250:import_operation$3425
   end
   attribute \src "dut.sv:521.17-521.55"
   cell $eq $eq$dut.sv:521$3428
@@ -20943,7 +20943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3425
+    connect \A $auto$expression.cpp:3250:import_operation$3425
     connect \B 3'010
     connect \Y $eq$dut.sv:521$3427_Y
   end
@@ -20969,12 +20969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3432
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3434
+  cell $pos $auto$expression.cpp:3253:import_operation$3434
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3432
-    connect \Y $auto$expression.cpp:3177:import_operation$3433
+    connect \Y $auto$expression.cpp:3250:import_operation$3433
   end
   attribute \src "dut.sv:522.17-522.55"
   cell $eq $eq$dut.sv:522$3436
@@ -20983,7 +20983,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3433
+    connect \A $auto$expression.cpp:3250:import_operation$3433
     connect \B 3'011
     connect \Y $eq$dut.sv:522$3435_Y
   end
@@ -21009,12 +21009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3440
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3442
+  cell $pos $auto$expression.cpp:3253:import_operation$3442
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3440
-    connect \Y $auto$expression.cpp:3177:import_operation$3441
+    connect \Y $auto$expression.cpp:3250:import_operation$3441
   end
   attribute \src "dut.sv:523.17-523.55"
   cell $eq $eq$dut.sv:523$3444
@@ -21023,7 +21023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3441
+    connect \A $auto$expression.cpp:3250:import_operation$3441
     connect \B 3'000
     connect \Y $eq$dut.sv:523$3443_Y
   end
@@ -21049,12 +21049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3448
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3450
+  cell $pos $auto$expression.cpp:3253:import_operation$3450
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3448
-    connect \Y $auto$expression.cpp:3177:import_operation$3449
+    connect \Y $auto$expression.cpp:3250:import_operation$3449
   end
   attribute \src "dut.sv:524.17-524.55"
   cell $eq $eq$dut.sv:524$3452
@@ -21063,7 +21063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3449
+    connect \A $auto$expression.cpp:3250:import_operation$3449
     connect \B 3'001
     connect \Y $eq$dut.sv:524$3451_Y
   end
@@ -21089,12 +21089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3456
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3458
+  cell $pos $auto$expression.cpp:3253:import_operation$3458
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3456
-    connect \Y $auto$expression.cpp:3177:import_operation$3457
+    connect \Y $auto$expression.cpp:3250:import_operation$3457
   end
   attribute \src "dut.sv:525.17-525.55"
   cell $eq $eq$dut.sv:525$3460
@@ -21103,7 +21103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3457
+    connect \A $auto$expression.cpp:3250:import_operation$3457
     connect \B 3'110
     connect \Y $eq$dut.sv:525$3459_Y
   end
@@ -21129,12 +21129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3464
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3466
+  cell $pos $auto$expression.cpp:3253:import_operation$3466
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3464
-    connect \Y $auto$expression.cpp:3177:import_operation$3465
+    connect \Y $auto$expression.cpp:3250:import_operation$3465
   end
   attribute \src "dut.sv:526.17-526.55"
   cell $eq $eq$dut.sv:526$3468
@@ -21143,7 +21143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3465
+    connect \A $auto$expression.cpp:3250:import_operation$3465
     connect \B 3'111
     connect \Y $eq$dut.sv:526$3467_Y
   end
@@ -21169,12 +21169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3472
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3474
+  cell $pos $auto$expression.cpp:3253:import_operation$3474
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3472
-    connect \Y $auto$expression.cpp:3177:import_operation$3473
+    connect \Y $auto$expression.cpp:3250:import_operation$3473
   end
   attribute \src "dut.sv:528.17-528.51"
   cell $eq $eq$dut.sv:528$3476
@@ -21183,7 +21183,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3473
+    connect \A $auto$expression.cpp:3250:import_operation$3473
     connect \B 8'00000000
     connect \Y $eq$dut.sv:528$3475_Y
   end
@@ -21209,12 +21209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3480
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3482
+  cell $pos $auto$expression.cpp:3253:import_operation$3482
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3480
-    connect \Y $auto$expression.cpp:3177:import_operation$3481
+    connect \Y $auto$expression.cpp:3250:import_operation$3481
   end
   attribute \src "dut.sv:529.17-529.51"
   cell $eq $eq$dut.sv:529$3484
@@ -21223,7 +21223,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3481
+    connect \A $auto$expression.cpp:3250:import_operation$3481
     connect \B 8'00000001
     connect \Y $eq$dut.sv:529$3483_Y
   end
@@ -21249,12 +21249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3488
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3490
+  cell $pos $auto$expression.cpp:3253:import_operation$3490
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3488
-    connect \Y $auto$expression.cpp:3177:import_operation$3489
+    connect \Y $auto$expression.cpp:3250:import_operation$3489
   end
   attribute \src "dut.sv:530.17-530.51"
   cell $eq $eq$dut.sv:530$3492
@@ -21263,7 +21263,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3489
+    connect \A $auto$expression.cpp:3250:import_operation$3489
     connect \B 8'00000000
     connect \Y $eq$dut.sv:530$3491_Y
   end
@@ -21289,12 +21289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3496
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3498
+  cell $pos $auto$expression.cpp:3253:import_operation$3498
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3496
-    connect \Y $auto$expression.cpp:3177:import_operation$3497
+    connect \Y $auto$expression.cpp:3250:import_operation$3497
   end
   attribute \src "dut.sv:531.17-531.51"
   cell $eq $eq$dut.sv:531$3500
@@ -21303,7 +21303,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3497
+    connect \A $auto$expression.cpp:3250:import_operation$3497
     connect \B 8'11111111
     connect \Y $eq$dut.sv:531$3499_Y
   end
@@ -21329,12 +21329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3504
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3506
+  cell $pos $auto$expression.cpp:3253:import_operation$3506
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3504
-    connect \Y $auto$expression.cpp:3177:import_operation$3505
+    connect \Y $auto$expression.cpp:3250:import_operation$3505
   end
   attribute \src "dut.sv:532.17-532.51"
   cell $eq $eq$dut.sv:532$3508
@@ -21343,7 +21343,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3505
+    connect \A $auto$expression.cpp:3250:import_operation$3505
     connect \B 8'00000000
     connect \Y $eq$dut.sv:532$3507_Y
   end
@@ -21369,12 +21369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3512
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3514
+  cell $pos $auto$expression.cpp:3253:import_operation$3514
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3512
-    connect \Y $auto$expression.cpp:3177:import_operation$3513
+    connect \Y $auto$expression.cpp:3250:import_operation$3513
   end
   attribute \src "dut.sv:533.17-533.51"
   cell $eq $eq$dut.sv:533$3516
@@ -21383,7 +21383,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3513
+    connect \A $auto$expression.cpp:3250:import_operation$3513
     connect \B 8'00000001
     connect \Y $eq$dut.sv:533$3515_Y
   end
@@ -21409,12 +21409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3520
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3522
+  cell $pos $auto$expression.cpp:3253:import_operation$3522
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3520
-    connect \Y $auto$expression.cpp:3177:import_operation$3521
+    connect \Y $auto$expression.cpp:3250:import_operation$3521
   end
   attribute \src "dut.sv:534.17-534.51"
   cell $eq $eq$dut.sv:534$3524
@@ -21423,7 +21423,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3521
+    connect \A $auto$expression.cpp:3250:import_operation$3521
     connect \B 8'00000010
     connect \Y $eq$dut.sv:534$3523_Y
   end
@@ -21449,12 +21449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3528
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3530
+  cell $pos $auto$expression.cpp:3253:import_operation$3530
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3528
-    connect \Y $auto$expression.cpp:3177:import_operation$3529
+    connect \Y $auto$expression.cpp:3250:import_operation$3529
   end
   attribute \src "dut.sv:535.17-535.51"
   cell $eq $eq$dut.sv:535$3532
@@ -21463,7 +21463,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3529
+    connect \A $auto$expression.cpp:3250:import_operation$3529
     connect \B 8'00000011
     connect \Y $eq$dut.sv:535$3531_Y
   end
@@ -21489,12 +21489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3536
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3538
+  cell $pos $auto$expression.cpp:3253:import_operation$3538
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3536
-    connect \Y $auto$expression.cpp:3177:import_operation$3537
+    connect \Y $auto$expression.cpp:3250:import_operation$3537
   end
   attribute \src "dut.sv:536.17-536.51"
   cell $eq $eq$dut.sv:536$3540
@@ -21503,7 +21503,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3537
+    connect \A $auto$expression.cpp:3250:import_operation$3537
     connect \B 8'00000000
     connect \Y $eq$dut.sv:536$3539_Y
   end
@@ -21529,12 +21529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3544
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3546
+  cell $pos $auto$expression.cpp:3253:import_operation$3546
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3544
-    connect \Y $auto$expression.cpp:3177:import_operation$3545
+    connect \Y $auto$expression.cpp:3250:import_operation$3545
   end
   attribute \src "dut.sv:537.17-537.51"
   cell $eq $eq$dut.sv:537$3548
@@ -21543,7 +21543,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3545
+    connect \A $auto$expression.cpp:3250:import_operation$3545
     connect \B 8'00000001
     connect \Y $eq$dut.sv:537$3547_Y
   end
@@ -21569,12 +21569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3552
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3554
+  cell $pos $auto$expression.cpp:3253:import_operation$3554
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3552
-    connect \Y $auto$expression.cpp:3177:import_operation$3553
+    connect \Y $auto$expression.cpp:3250:import_operation$3553
   end
   attribute \src "dut.sv:538.17-538.51"
   cell $eq $eq$dut.sv:538$3556
@@ -21583,7 +21583,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3553
+    connect \A $auto$expression.cpp:3250:import_operation$3553
     connect \B 8'11111110
     connect \Y $eq$dut.sv:538$3555_Y
   end
@@ -21609,12 +21609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3560
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3562
+  cell $pos $auto$expression.cpp:3253:import_operation$3562
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3560
-    connect \Y $auto$expression.cpp:3177:import_operation$3561
+    connect \Y $auto$expression.cpp:3250:import_operation$3561
   end
   attribute \src "dut.sv:539.17-539.51"
   cell $eq $eq$dut.sv:539$3564
@@ -21623,7 +21623,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3561
+    connect \A $auto$expression.cpp:3250:import_operation$3561
     connect \B 8'11111111
     connect \Y $eq$dut.sv:539$3563_Y
   end
@@ -21649,12 +21649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3568
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3570
+  cell $pos $auto$expression.cpp:3253:import_operation$3570
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3568
-    connect \Y $auto$expression.cpp:3177:import_operation$3569
+    connect \Y $auto$expression.cpp:3250:import_operation$3569
   end
   attribute \src "dut.sv:541.17-541.58"
   cell $eq $eq$dut.sv:541$3572
@@ -21663,7 +21663,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3569
+    connect \A $auto$expression.cpp:3250:import_operation$3569
     connect \B 0
     connect \Y $eq$dut.sv:541$3571_Y
   end
@@ -21689,12 +21689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3576
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3578
+  cell $pos $auto$expression.cpp:3253:import_operation$3578
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3576
-    connect \Y $auto$expression.cpp:3177:import_operation$3577
+    connect \Y $auto$expression.cpp:3250:import_operation$3577
   end
   attribute \src "dut.sv:542.17-542.58"
   cell $eq $eq$dut.sv:542$3580
@@ -21703,7 +21703,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3577
+    connect \A $auto$expression.cpp:3250:import_operation$3577
     connect \B 1
     connect \Y $eq$dut.sv:542$3579_Y
   end
@@ -21729,12 +21729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3584
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3586
+  cell $pos $auto$expression.cpp:3253:import_operation$3586
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3584
-    connect \Y $auto$expression.cpp:3177:import_operation$3585
+    connect \Y $auto$expression.cpp:3250:import_operation$3585
   end
   attribute \src "dut.sv:543.17-543.58"
   cell $eq $eq$dut.sv:543$3588
@@ -21743,7 +21743,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3585
+    connect \A $auto$expression.cpp:3250:import_operation$3585
     connect \B 0
     connect \Y $eq$dut.sv:543$3587_Y
   end
@@ -21769,12 +21769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3592
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3594
+  cell $pos $auto$expression.cpp:3253:import_operation$3594
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3592
-    connect \Y $auto$expression.cpp:3177:import_operation$3593
+    connect \Y $auto$expression.cpp:3250:import_operation$3593
   end
   attribute \src "dut.sv:544.17-544.58"
   cell $eq $eq$dut.sv:544$3596
@@ -21783,7 +21783,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3593
+    connect \A $auto$expression.cpp:3250:import_operation$3593
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:544$3595_Y
   end
@@ -21809,12 +21809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3600
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3602
+  cell $pos $auto$expression.cpp:3253:import_operation$3602
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3600
-    connect \Y $auto$expression.cpp:3177:import_operation$3601
+    connect \Y $auto$expression.cpp:3250:import_operation$3601
   end
   attribute \src "dut.sv:545.17-545.58"
   cell $eq $eq$dut.sv:545$3604
@@ -21823,7 +21823,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3601
+    connect \A $auto$expression.cpp:3250:import_operation$3601
     connect \B 0
     connect \Y $eq$dut.sv:545$3603_Y
   end
@@ -21849,12 +21849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3608
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3610
+  cell $pos $auto$expression.cpp:3253:import_operation$3610
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3608
-    connect \Y $auto$expression.cpp:3177:import_operation$3609
+    connect \Y $auto$expression.cpp:3250:import_operation$3609
   end
   attribute \src "dut.sv:546.17-546.58"
   cell $eq $eq$dut.sv:546$3612
@@ -21863,7 +21863,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3609
+    connect \A $auto$expression.cpp:3250:import_operation$3609
     connect \B 1
     connect \Y $eq$dut.sv:546$3611_Y
   end
@@ -21889,12 +21889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3616
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3618
+  cell $pos $auto$expression.cpp:3253:import_operation$3618
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3616
-    connect \Y $auto$expression.cpp:3177:import_operation$3617
+    connect \Y $auto$expression.cpp:3250:import_operation$3617
   end
   attribute \src "dut.sv:547.17-547.58"
   cell $eq $eq$dut.sv:547$3620
@@ -21903,7 +21903,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3617
+    connect \A $auto$expression.cpp:3250:import_operation$3617
     connect \B 2
     connect \Y $eq$dut.sv:547$3619_Y
   end
@@ -21929,12 +21929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3624
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3626
+  cell $pos $auto$expression.cpp:3253:import_operation$3626
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3624
-    connect \Y $auto$expression.cpp:3177:import_operation$3625
+    connect \Y $auto$expression.cpp:3250:import_operation$3625
   end
   attribute \src "dut.sv:548.17-548.58"
   cell $eq $eq$dut.sv:548$3628
@@ -21943,7 +21943,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3625
+    connect \A $auto$expression.cpp:3250:import_operation$3625
     connect \B 3
     connect \Y $eq$dut.sv:548$3627_Y
   end
@@ -21969,12 +21969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3632
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3634
+  cell $pos $auto$expression.cpp:3253:import_operation$3634
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3632
-    connect \Y $auto$expression.cpp:3177:import_operation$3633
+    connect \Y $auto$expression.cpp:3250:import_operation$3633
   end
   attribute \src "dut.sv:549.17-549.58"
   cell $eq $eq$dut.sv:549$3636
@@ -21983,7 +21983,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3633
+    connect \A $auto$expression.cpp:3250:import_operation$3633
     connect \B 0
     connect \Y $eq$dut.sv:549$3635_Y
   end
@@ -22009,12 +22009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3640
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3642
+  cell $pos $auto$expression.cpp:3253:import_operation$3642
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3640
-    connect \Y $auto$expression.cpp:3177:import_operation$3641
+    connect \Y $auto$expression.cpp:3250:import_operation$3641
   end
   attribute \src "dut.sv:550.17-550.58"
   cell $eq $eq$dut.sv:550$3644
@@ -22023,7 +22023,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3641
+    connect \A $auto$expression.cpp:3250:import_operation$3641
     connect \B 1
     connect \Y $eq$dut.sv:550$3643_Y
   end
@@ -22049,12 +22049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3648
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3650
+  cell $pos $auto$expression.cpp:3253:import_operation$3650
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3648
-    connect \Y $auto$expression.cpp:3177:import_operation$3649
+    connect \Y $auto$expression.cpp:3250:import_operation$3649
   end
   attribute \src "dut.sv:551.17-551.58"
   cell $eq $eq$dut.sv:551$3652
@@ -22063,7 +22063,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3649
+    connect \A $auto$expression.cpp:3250:import_operation$3649
     connect \B 32'11111111111111111111111111111110
     connect \Y $eq$dut.sv:551$3651_Y
   end
@@ -22089,12 +22089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3656
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3658
+  cell $pos $auto$expression.cpp:3253:import_operation$3658
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$3656
-    connect \Y $auto$expression.cpp:3177:import_operation$3657
+    connect \Y $auto$expression.cpp:3250:import_operation$3657
   end
   attribute \src "dut.sv:552.17-552.58"
   cell $eq $eq$dut.sv:552$3660
@@ -22103,7 +22103,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3657
+    connect \A $auto$expression.cpp:3250:import_operation$3657
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:552$3659_Y
   end
@@ -22129,12 +22129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3664
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3666
+  cell $pos $auto$expression.cpp:3253:import_operation$3666
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3664
-    connect \Y $auto$expression.cpp:3177:import_operation$3665
+    connect \Y $auto$expression.cpp:3250:import_operation$3665
   end
   attribute \src "dut.sv:554.17-554.71"
   cell $eq $eq$dut.sv:554$3668
@@ -22143,7 +22143,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3665
+    connect \A $auto$expression.cpp:3250:import_operation$3665
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:554$3667_Y
   end
@@ -22169,12 +22169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3672
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3674
+  cell $pos $auto$expression.cpp:3253:import_operation$3674
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3672
-    connect \Y $auto$expression.cpp:3177:import_operation$3673
+    connect \Y $auto$expression.cpp:3250:import_operation$3673
   end
   attribute \src "dut.sv:555.17-555.71"
   cell $eq $eq$dut.sv:555$3676
@@ -22183,7 +22183,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3673
+    connect \A $auto$expression.cpp:3250:import_operation$3673
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:555$3675_Y
   end
@@ -22209,12 +22209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3680
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3682
+  cell $pos $auto$expression.cpp:3253:import_operation$3682
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3680
-    connect \Y $auto$expression.cpp:3177:import_operation$3681
+    connect \Y $auto$expression.cpp:3250:import_operation$3681
   end
   attribute \src "dut.sv:556.17-556.71"
   cell $eq $eq$dut.sv:556$3684
@@ -22223,7 +22223,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3681
+    connect \A $auto$expression.cpp:3250:import_operation$3681
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:556$3683_Y
   end
@@ -22249,12 +22249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3688
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3690
+  cell $pos $auto$expression.cpp:3253:import_operation$3690
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3688
-    connect \Y $auto$expression.cpp:3177:import_operation$3689
+    connect \Y $auto$expression.cpp:3250:import_operation$3689
   end
   attribute \src "dut.sv:557.17-557.71"
   cell $eq $eq$dut.sv:557$3692
@@ -22263,7 +22263,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3689
+    connect \A $auto$expression.cpp:3250:import_operation$3689
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:557$3691_Y
   end
@@ -22289,12 +22289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3696
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3698
+  cell $pos $auto$expression.cpp:3253:import_operation$3698
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3696
-    connect \Y $auto$expression.cpp:3177:import_operation$3697
+    connect \Y $auto$expression.cpp:3250:import_operation$3697
   end
   attribute \src "dut.sv:558.17-558.71"
   cell $eq $eq$dut.sv:558$3700
@@ -22303,7 +22303,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3697
+    connect \A $auto$expression.cpp:3250:import_operation$3697
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:558$3699_Y
   end
@@ -22329,12 +22329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3704
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3706
+  cell $pos $auto$expression.cpp:3253:import_operation$3706
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3704
-    connect \Y $auto$expression.cpp:3177:import_operation$3705
+    connect \Y $auto$expression.cpp:3250:import_operation$3705
   end
   attribute \src "dut.sv:559.17-559.71"
   cell $eq $eq$dut.sv:559$3708
@@ -22343,7 +22343,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3705
+    connect \A $auto$expression.cpp:3250:import_operation$3705
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:559$3707_Y
   end
@@ -22369,12 +22369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3712
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3714
+  cell $pos $auto$expression.cpp:3253:import_operation$3714
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3712
-    connect \Y $auto$expression.cpp:3177:import_operation$3713
+    connect \Y $auto$expression.cpp:3250:import_operation$3713
   end
   attribute \src "dut.sv:560.17-560.71"
   cell $eq $eq$dut.sv:560$3716
@@ -22383,7 +22383,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3713
+    connect \A $auto$expression.cpp:3250:import_operation$3713
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:560$3715_Y
   end
@@ -22409,12 +22409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3720
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3722
+  cell $pos $auto$expression.cpp:3253:import_operation$3722
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3720
-    connect \Y $auto$expression.cpp:3177:import_operation$3721
+    connect \Y $auto$expression.cpp:3250:import_operation$3721
   end
   attribute \src "dut.sv:561.17-561.71"
   cell $eq $eq$dut.sv:561$3724
@@ -22423,7 +22423,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3721
+    connect \A $auto$expression.cpp:3250:import_operation$3721
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:561$3723_Y
   end
@@ -22449,12 +22449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3728
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3730
+  cell $pos $auto$expression.cpp:3253:import_operation$3730
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3728
-    connect \Y $auto$expression.cpp:3177:import_operation$3729
+    connect \Y $auto$expression.cpp:3250:import_operation$3729
   end
   attribute \src "dut.sv:562.17-562.71"
   cell $eq $eq$dut.sv:562$3732
@@ -22463,7 +22463,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3729
+    connect \A $auto$expression.cpp:3250:import_operation$3729
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:562$3731_Y
   end
@@ -22489,12 +22489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3736
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3738
+  cell $pos $auto$expression.cpp:3253:import_operation$3738
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3736
-    connect \Y $auto$expression.cpp:3177:import_operation$3737
+    connect \Y $auto$expression.cpp:3250:import_operation$3737
   end
   attribute \src "dut.sv:563.17-563.71"
   cell $eq $eq$dut.sv:563$3740
@@ -22503,7 +22503,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3737
+    connect \A $auto$expression.cpp:3250:import_operation$3737
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:563$3739_Y
   end
@@ -22529,12 +22529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3744
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3746
+  cell $pos $auto$expression.cpp:3253:import_operation$3746
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3744
-    connect \Y $auto$expression.cpp:3177:import_operation$3745
+    connect \Y $auto$expression.cpp:3250:import_operation$3745
   end
   attribute \src "dut.sv:564.17-564.71"
   cell $eq $eq$dut.sv:564$3748
@@ -22543,7 +22543,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3745
+    connect \A $auto$expression.cpp:3250:import_operation$3745
     connect \B 12'111111111110
     connect \Y $eq$dut.sv:564$3747_Y
   end
@@ -22569,12 +22569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3752
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3754
+  cell $pos $auto$expression.cpp:3253:import_operation$3754
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$3752
-    connect \Y $auto$expression.cpp:3177:import_operation$3753
+    connect \Y $auto$expression.cpp:3250:import_operation$3753
   end
   attribute \src "dut.sv:565.17-565.71"
   cell $eq $eq$dut.sv:565$3756
@@ -22583,7 +22583,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3753
+    connect \A $auto$expression.cpp:3250:import_operation$3753
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:565$3755_Y
   end
@@ -22609,12 +22609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3760
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3762
+  cell $pos $auto$expression.cpp:3253:import_operation$3762
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3760
-    connect \Y $auto$expression.cpp:3177:import_operation$3761
+    connect \Y $auto$expression.cpp:3250:import_operation$3761
   end
   attribute \src "dut.sv:567.17-567.55"
   cell $eq $eq$dut.sv:567$3764
@@ -22623,7 +22623,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3761
+    connect \A $auto$expression.cpp:3250:import_operation$3761
     connect \B 3'000
     connect \Y $eq$dut.sv:567$3763_Y
   end
@@ -22649,12 +22649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3768
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3770
+  cell $pos $auto$expression.cpp:3253:import_operation$3770
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3768
-    connect \Y $auto$expression.cpp:3177:import_operation$3769
+    connect \Y $auto$expression.cpp:3250:import_operation$3769
   end
   attribute \src "dut.sv:568.17-568.55"
   cell $eq $eq$dut.sv:568$3772
@@ -22663,7 +22663,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3769
+    connect \A $auto$expression.cpp:3250:import_operation$3769
     connect \B 3'001
     connect \Y $eq$dut.sv:568$3771_Y
   end
@@ -22689,12 +22689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3776
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3778
+  cell $pos $auto$expression.cpp:3253:import_operation$3778
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3776
-    connect \Y $auto$expression.cpp:3177:import_operation$3777
+    connect \Y $auto$expression.cpp:3250:import_operation$3777
   end
   attribute \src "dut.sv:569.17-569.55"
   cell $eq $eq$dut.sv:569$3780
@@ -22703,7 +22703,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3777
+    connect \A $auto$expression.cpp:3250:import_operation$3777
     connect \B 3'000
     connect \Y $eq$dut.sv:569$3779_Y
   end
@@ -22729,12 +22729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3784
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3786
+  cell $pos $auto$expression.cpp:3253:import_operation$3786
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3784
-    connect \Y $auto$expression.cpp:3177:import_operation$3785
+    connect \Y $auto$expression.cpp:3250:import_operation$3785
   end
   attribute \src "dut.sv:570.17-570.55"
   cell $eq $eq$dut.sv:570$3788
@@ -22743,7 +22743,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3785
+    connect \A $auto$expression.cpp:3250:import_operation$3785
     connect \B 3'111
     connect \Y $eq$dut.sv:570$3787_Y
   end
@@ -22769,12 +22769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3792
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3794
+  cell $pos $auto$expression.cpp:3253:import_operation$3794
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3792
-    connect \Y $auto$expression.cpp:3177:import_operation$3793
+    connect \Y $auto$expression.cpp:3250:import_operation$3793
   end
   attribute \src "dut.sv:571.17-571.55"
   cell $eq $eq$dut.sv:571$3796
@@ -22783,7 +22783,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3793
+    connect \A $auto$expression.cpp:3250:import_operation$3793
     connect \B 3'000
     connect \Y $eq$dut.sv:571$3795_Y
   end
@@ -22809,12 +22809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3800
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3802
+  cell $pos $auto$expression.cpp:3253:import_operation$3802
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3800
-    connect \Y $auto$expression.cpp:3177:import_operation$3801
+    connect \Y $auto$expression.cpp:3250:import_operation$3801
   end
   attribute \src "dut.sv:572.17-572.55"
   cell $eq $eq$dut.sv:572$3804
@@ -22823,7 +22823,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3801
+    connect \A $auto$expression.cpp:3250:import_operation$3801
     connect \B 3'001
     connect \Y $eq$dut.sv:572$3803_Y
   end
@@ -22849,12 +22849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3808
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3810
+  cell $pos $auto$expression.cpp:3253:import_operation$3810
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3808
-    connect \Y $auto$expression.cpp:3177:import_operation$3809
+    connect \Y $auto$expression.cpp:3250:import_operation$3809
   end
   attribute \src "dut.sv:573.17-573.55"
   cell $eq $eq$dut.sv:573$3812
@@ -22863,7 +22863,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3809
+    connect \A $auto$expression.cpp:3250:import_operation$3809
     connect \B 3'010
     connect \Y $eq$dut.sv:573$3811_Y
   end
@@ -22889,12 +22889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3816
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3818
+  cell $pos $auto$expression.cpp:3253:import_operation$3818
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3816
-    connect \Y $auto$expression.cpp:3177:import_operation$3817
+    connect \Y $auto$expression.cpp:3250:import_operation$3817
   end
   attribute \src "dut.sv:574.17-574.55"
   cell $eq $eq$dut.sv:574$3820
@@ -22903,7 +22903,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3817
+    connect \A $auto$expression.cpp:3250:import_operation$3817
     connect \B 3'011
     connect \Y $eq$dut.sv:574$3819_Y
   end
@@ -22929,12 +22929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3824
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3826
+  cell $pos $auto$expression.cpp:3253:import_operation$3826
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3824
-    connect \Y $auto$expression.cpp:3177:import_operation$3825
+    connect \Y $auto$expression.cpp:3250:import_operation$3825
   end
   attribute \src "dut.sv:575.17-575.55"
   cell $eq $eq$dut.sv:575$3828
@@ -22943,7 +22943,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3825
+    connect \A $auto$expression.cpp:3250:import_operation$3825
     connect \B 3'000
     connect \Y $eq$dut.sv:575$3827_Y
   end
@@ -22969,12 +22969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3832
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3834
+  cell $pos $auto$expression.cpp:3253:import_operation$3834
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3832
-    connect \Y $auto$expression.cpp:3177:import_operation$3833
+    connect \Y $auto$expression.cpp:3250:import_operation$3833
   end
   attribute \src "dut.sv:576.17-576.55"
   cell $eq $eq$dut.sv:576$3836
@@ -22983,7 +22983,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3833
+    connect \A $auto$expression.cpp:3250:import_operation$3833
     connect \B 3'001
     connect \Y $eq$dut.sv:576$3835_Y
   end
@@ -23009,12 +23009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3840
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3842
+  cell $pos $auto$expression.cpp:3253:import_operation$3842
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3840
-    connect \Y $auto$expression.cpp:3177:import_operation$3841
+    connect \Y $auto$expression.cpp:3250:import_operation$3841
   end
   attribute \src "dut.sv:577.17-577.55"
   cell $eq $eq$dut.sv:577$3844
@@ -23023,7 +23023,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3841
+    connect \A $auto$expression.cpp:3250:import_operation$3841
     connect \B 3'110
     connect \Y $eq$dut.sv:577$3843_Y
   end
@@ -23049,12 +23049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3848
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3850
+  cell $pos $auto$expression.cpp:3253:import_operation$3850
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3848
-    connect \Y $auto$expression.cpp:3177:import_operation$3849
+    connect \Y $auto$expression.cpp:3250:import_operation$3849
   end
   attribute \src "dut.sv:578.17-578.55"
   cell $eq $eq$dut.sv:578$3852
@@ -23063,7 +23063,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3849
+    connect \A $auto$expression.cpp:3250:import_operation$3849
     connect \B 3'111
     connect \Y $eq$dut.sv:578$3851_Y
   end
@@ -23089,12 +23089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3856
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3858
+  cell $pos $auto$expression.cpp:3253:import_operation$3858
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3856
-    connect \Y $auto$expression.cpp:3177:import_operation$3857
+    connect \Y $auto$expression.cpp:3250:import_operation$3857
   end
   attribute \src "dut.sv:580.17-580.61"
   cell $eq $eq$dut.sv:580$3860
@@ -23103,7 +23103,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3857
+    connect \A $auto$expression.cpp:3250:import_operation$3857
     connect \B 3'000
     connect \Y $eq$dut.sv:580$3859_Y
   end
@@ -23129,12 +23129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3864
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3866
+  cell $pos $auto$expression.cpp:3253:import_operation$3866
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3864
-    connect \Y $auto$expression.cpp:3177:import_operation$3865
+    connect \Y $auto$expression.cpp:3250:import_operation$3865
   end
   attribute \src "dut.sv:581.17-581.61"
   cell $eq $eq$dut.sv:581$3868
@@ -23143,7 +23143,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3865
+    connect \A $auto$expression.cpp:3250:import_operation$3865
     connect \B 3'001
     connect \Y $eq$dut.sv:581$3867_Y
   end
@@ -23169,12 +23169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3872
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3874
+  cell $pos $auto$expression.cpp:3253:import_operation$3874
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3872
-    connect \Y $auto$expression.cpp:3177:import_operation$3873
+    connect \Y $auto$expression.cpp:3250:import_operation$3873
   end
   attribute \src "dut.sv:582.17-582.61"
   cell $eq $eq$dut.sv:582$3876
@@ -23183,7 +23183,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3873
+    connect \A $auto$expression.cpp:3250:import_operation$3873
     connect \B 3'000
     connect \Y $eq$dut.sv:582$3875_Y
   end
@@ -23209,12 +23209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3880
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3882
+  cell $pos $auto$expression.cpp:3253:import_operation$3882
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3880
-    connect \Y $auto$expression.cpp:3177:import_operation$3881
+    connect \Y $auto$expression.cpp:3250:import_operation$3881
   end
   attribute \src "dut.sv:583.17-583.61"
   cell $eq $eq$dut.sv:583$3884
@@ -23223,7 +23223,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3881
+    connect \A $auto$expression.cpp:3250:import_operation$3881
     connect \B 3'111
     connect \Y $eq$dut.sv:583$3883_Y
   end
@@ -23249,12 +23249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3888
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3890
+  cell $pos $auto$expression.cpp:3253:import_operation$3890
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3888
-    connect \Y $auto$expression.cpp:3177:import_operation$3889
+    connect \Y $auto$expression.cpp:3250:import_operation$3889
   end
   attribute \src "dut.sv:584.17-584.61"
   cell $eq $eq$dut.sv:584$3892
@@ -23263,7 +23263,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3889
+    connect \A $auto$expression.cpp:3250:import_operation$3889
     connect \B 3'000
     connect \Y $eq$dut.sv:584$3891_Y
   end
@@ -23289,12 +23289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3896
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3898
+  cell $pos $auto$expression.cpp:3253:import_operation$3898
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3896
-    connect \Y $auto$expression.cpp:3177:import_operation$3897
+    connect \Y $auto$expression.cpp:3250:import_operation$3897
   end
   attribute \src "dut.sv:585.17-585.61"
   cell $eq $eq$dut.sv:585$3900
@@ -23303,7 +23303,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3897
+    connect \A $auto$expression.cpp:3250:import_operation$3897
     connect \B 3'001
     connect \Y $eq$dut.sv:585$3899_Y
   end
@@ -23329,12 +23329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3904
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3906
+  cell $pos $auto$expression.cpp:3253:import_operation$3906
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3904
-    connect \Y $auto$expression.cpp:3177:import_operation$3905
+    connect \Y $auto$expression.cpp:3250:import_operation$3905
   end
   attribute \src "dut.sv:586.17-586.61"
   cell $eq $eq$dut.sv:586$3908
@@ -23343,7 +23343,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3905
+    connect \A $auto$expression.cpp:3250:import_operation$3905
     connect \B 3'010
     connect \Y $eq$dut.sv:586$3907_Y
   end
@@ -23369,12 +23369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3912
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3914
+  cell $pos $auto$expression.cpp:3253:import_operation$3914
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3912
-    connect \Y $auto$expression.cpp:3177:import_operation$3913
+    connect \Y $auto$expression.cpp:3250:import_operation$3913
   end
   attribute \src "dut.sv:587.17-587.61"
   cell $eq $eq$dut.sv:587$3916
@@ -23383,7 +23383,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3913
+    connect \A $auto$expression.cpp:3250:import_operation$3913
     connect \B 3'011
     connect \Y $eq$dut.sv:587$3915_Y
   end
@@ -23409,12 +23409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3920
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3922
+  cell $pos $auto$expression.cpp:3253:import_operation$3922
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3920
-    connect \Y $auto$expression.cpp:3177:import_operation$3921
+    connect \Y $auto$expression.cpp:3250:import_operation$3921
   end
   attribute \src "dut.sv:588.17-588.61"
   cell $eq $eq$dut.sv:588$3924
@@ -23423,7 +23423,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3921
+    connect \A $auto$expression.cpp:3250:import_operation$3921
     connect \B 3'000
     connect \Y $eq$dut.sv:588$3923_Y
   end
@@ -23449,12 +23449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3928
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3930
+  cell $pos $auto$expression.cpp:3253:import_operation$3930
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3928
-    connect \Y $auto$expression.cpp:3177:import_operation$3929
+    connect \Y $auto$expression.cpp:3250:import_operation$3929
   end
   attribute \src "dut.sv:589.17-589.61"
   cell $eq $eq$dut.sv:589$3932
@@ -23463,7 +23463,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3929
+    connect \A $auto$expression.cpp:3250:import_operation$3929
     connect \B 3'001
     connect \Y $eq$dut.sv:589$3931_Y
   end
@@ -23489,12 +23489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3936
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3938
+  cell $pos $auto$expression.cpp:3253:import_operation$3938
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3936
-    connect \Y $auto$expression.cpp:3177:import_operation$3937
+    connect \Y $auto$expression.cpp:3250:import_operation$3937
   end
   attribute \src "dut.sv:590.17-590.61"
   cell $eq $eq$dut.sv:590$3940
@@ -23503,7 +23503,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3937
+    connect \A $auto$expression.cpp:3250:import_operation$3937
     connect \B 3'110
     connect \Y $eq$dut.sv:590$3939_Y
   end
@@ -23529,12 +23529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3944
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3946
+  cell $pos $auto$expression.cpp:3253:import_operation$3946
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 3
     connect \A $auto$rtlil.cc:3390:Mux$3944
-    connect \Y $auto$expression.cpp:3177:import_operation$3945
+    connect \Y $auto$expression.cpp:3250:import_operation$3945
   end
   attribute \src "dut.sv:591.17-591.61"
   cell $eq $eq$dut.sv:591$3948
@@ -23543,7 +23543,7 @@ module \top
     parameter \A_WIDTH 3
     parameter \B_WIDTH 3
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3945
+    connect \A $auto$expression.cpp:3250:import_operation$3945
     connect \B 3'111
     connect \Y $eq$dut.sv:591$3947_Y
   end
@@ -23569,12 +23569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3952
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3954
+  cell $pos $auto$expression.cpp:3253:import_operation$3954
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3952
-    connect \Y $auto$expression.cpp:3177:import_operation$3953
+    connect \Y $auto$expression.cpp:3250:import_operation$3953
   end
   attribute \src "dut.sv:593.17-593.57"
   cell $eq $eq$dut.sv:593$3956
@@ -23583,7 +23583,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3953
+    connect \A $auto$expression.cpp:3250:import_operation$3953
     connect \B 8'00000000
     connect \Y $eq$dut.sv:593$3955_Y
   end
@@ -23609,12 +23609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3960
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3962
+  cell $pos $auto$expression.cpp:3253:import_operation$3962
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3960
-    connect \Y $auto$expression.cpp:3177:import_operation$3961
+    connect \Y $auto$expression.cpp:3250:import_operation$3961
   end
   attribute \src "dut.sv:594.17-594.57"
   cell $eq $eq$dut.sv:594$3964
@@ -23623,7 +23623,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3961
+    connect \A $auto$expression.cpp:3250:import_operation$3961
     connect \B 8'00000001
     connect \Y $eq$dut.sv:594$3963_Y
   end
@@ -23649,12 +23649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3968
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3970
+  cell $pos $auto$expression.cpp:3253:import_operation$3970
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3968
-    connect \Y $auto$expression.cpp:3177:import_operation$3969
+    connect \Y $auto$expression.cpp:3250:import_operation$3969
   end
   attribute \src "dut.sv:595.17-595.57"
   cell $eq $eq$dut.sv:595$3972
@@ -23663,7 +23663,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3969
+    connect \A $auto$expression.cpp:3250:import_operation$3969
     connect \B 8'00000000
     connect \Y $eq$dut.sv:595$3971_Y
   end
@@ -23689,12 +23689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3976
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3978
+  cell $pos $auto$expression.cpp:3253:import_operation$3978
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3976
-    connect \Y $auto$expression.cpp:3177:import_operation$3977
+    connect \Y $auto$expression.cpp:3250:import_operation$3977
   end
   attribute \src "dut.sv:596.17-596.57"
   cell $eq $eq$dut.sv:596$3980
@@ -23703,7 +23703,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3977
+    connect \A $auto$expression.cpp:3250:import_operation$3977
     connect \B 8'11111111
     connect \Y $eq$dut.sv:596$3979_Y
   end
@@ -23729,12 +23729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3984
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3986
+  cell $pos $auto$expression.cpp:3253:import_operation$3986
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3984
-    connect \Y $auto$expression.cpp:3177:import_operation$3985
+    connect \Y $auto$expression.cpp:3250:import_operation$3985
   end
   attribute \src "dut.sv:597.17-597.57"
   cell $eq $eq$dut.sv:597$3988
@@ -23743,7 +23743,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3985
+    connect \A $auto$expression.cpp:3250:import_operation$3985
     connect \B 8'00000000
     connect \Y $eq$dut.sv:597$3987_Y
   end
@@ -23769,12 +23769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$3992
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$3994
+  cell $pos $auto$expression.cpp:3253:import_operation$3994
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$3992
-    connect \Y $auto$expression.cpp:3177:import_operation$3993
+    connect \Y $auto$expression.cpp:3250:import_operation$3993
   end
   attribute \src "dut.sv:598.17-598.57"
   cell $eq $eq$dut.sv:598$3996
@@ -23783,7 +23783,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$3993
+    connect \A $auto$expression.cpp:3250:import_operation$3993
     connect \B 8'00000001
     connect \Y $eq$dut.sv:598$3995_Y
   end
@@ -23809,12 +23809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4000
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4002
+  cell $pos $auto$expression.cpp:3253:import_operation$4002
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4000
-    connect \Y $auto$expression.cpp:3177:import_operation$4001
+    connect \Y $auto$expression.cpp:3250:import_operation$4001
   end
   attribute \src "dut.sv:599.17-599.57"
   cell $eq $eq$dut.sv:599$4004
@@ -23823,7 +23823,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4001
+    connect \A $auto$expression.cpp:3250:import_operation$4001
     connect \B 8'00000010
     connect \Y $eq$dut.sv:599$4003_Y
   end
@@ -23849,12 +23849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4008
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4010
+  cell $pos $auto$expression.cpp:3253:import_operation$4010
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4008
-    connect \Y $auto$expression.cpp:3177:import_operation$4009
+    connect \Y $auto$expression.cpp:3250:import_operation$4009
   end
   attribute \src "dut.sv:600.17-600.57"
   cell $eq $eq$dut.sv:600$4012
@@ -23863,7 +23863,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4009
+    connect \A $auto$expression.cpp:3250:import_operation$4009
     connect \B 8'00000011
     connect \Y $eq$dut.sv:600$4011_Y
   end
@@ -23889,12 +23889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4016
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4018
+  cell $pos $auto$expression.cpp:3253:import_operation$4018
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4016
-    connect \Y $auto$expression.cpp:3177:import_operation$4017
+    connect \Y $auto$expression.cpp:3250:import_operation$4017
   end
   attribute \src "dut.sv:601.17-601.57"
   cell $eq $eq$dut.sv:601$4020
@@ -23903,7 +23903,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4017
+    connect \A $auto$expression.cpp:3250:import_operation$4017
     connect \B 8'00000000
     connect \Y $eq$dut.sv:601$4019_Y
   end
@@ -23929,12 +23929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4024
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4026
+  cell $pos $auto$expression.cpp:3253:import_operation$4026
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4024
-    connect \Y $auto$expression.cpp:3177:import_operation$4025
+    connect \Y $auto$expression.cpp:3250:import_operation$4025
   end
   attribute \src "dut.sv:602.17-602.57"
   cell $eq $eq$dut.sv:602$4028
@@ -23943,7 +23943,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4025
+    connect \A $auto$expression.cpp:3250:import_operation$4025
     connect \B 8'00000001
     connect \Y $eq$dut.sv:602$4027_Y
   end
@@ -23969,12 +23969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4032
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4034
+  cell $pos $auto$expression.cpp:3253:import_operation$4034
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4032
-    connect \Y $auto$expression.cpp:3177:import_operation$4033
+    connect \Y $auto$expression.cpp:3250:import_operation$4033
   end
   attribute \src "dut.sv:603.17-603.57"
   cell $eq $eq$dut.sv:603$4036
@@ -23983,7 +23983,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4033
+    connect \A $auto$expression.cpp:3250:import_operation$4033
     connect \B 8'11111110
     connect \Y $eq$dut.sv:603$4035_Y
   end
@@ -24009,12 +24009,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4040
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4042
+  cell $pos $auto$expression.cpp:3253:import_operation$4042
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 8
     connect \A $auto$rtlil.cc:3390:Mux$4040
-    connect \Y $auto$expression.cpp:3177:import_operation$4041
+    connect \Y $auto$expression.cpp:3250:import_operation$4041
   end
   attribute \src "dut.sv:604.17-604.57"
   cell $eq $eq$dut.sv:604$4044
@@ -24023,7 +24023,7 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4041
+    connect \A $auto$expression.cpp:3250:import_operation$4041
     connect \B 8'11111111
     connect \Y $eq$dut.sv:604$4043_Y
   end
@@ -24049,12 +24049,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4048
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4050
+  cell $pos $auto$expression.cpp:3253:import_operation$4050
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4048
-    connect \Y $auto$expression.cpp:3177:import_operation$4049
+    connect \Y $auto$expression.cpp:3250:import_operation$4049
   end
   attribute \src "dut.sv:606.17-606.64"
   cell $eq $eq$dut.sv:606$4052
@@ -24063,7 +24063,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4049
+    connect \A $auto$expression.cpp:3250:import_operation$4049
     connect \B 0
     connect \Y $eq$dut.sv:606$4051_Y
   end
@@ -24089,12 +24089,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4056
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4058
+  cell $pos $auto$expression.cpp:3253:import_operation$4058
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4056
-    connect \Y $auto$expression.cpp:3177:import_operation$4057
+    connect \Y $auto$expression.cpp:3250:import_operation$4057
   end
   attribute \src "dut.sv:607.17-607.64"
   cell $eq $eq$dut.sv:607$4060
@@ -24103,7 +24103,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4057
+    connect \A $auto$expression.cpp:3250:import_operation$4057
     connect \B 1
     connect \Y $eq$dut.sv:607$4059_Y
   end
@@ -24129,12 +24129,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4064
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4066
+  cell $pos $auto$expression.cpp:3253:import_operation$4066
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4064
-    connect \Y $auto$expression.cpp:3177:import_operation$4065
+    connect \Y $auto$expression.cpp:3250:import_operation$4065
   end
   attribute \src "dut.sv:608.17-608.64"
   cell $eq $eq$dut.sv:608$4068
@@ -24143,7 +24143,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4065
+    connect \A $auto$expression.cpp:3250:import_operation$4065
     connect \B 0
     connect \Y $eq$dut.sv:608$4067_Y
   end
@@ -24169,12 +24169,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4072
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4074
+  cell $pos $auto$expression.cpp:3253:import_operation$4074
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4072
-    connect \Y $auto$expression.cpp:3177:import_operation$4073
+    connect \Y $auto$expression.cpp:3250:import_operation$4073
   end
   attribute \src "dut.sv:609.17-609.64"
   cell $eq $eq$dut.sv:609$4076
@@ -24183,7 +24183,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4073
+    connect \A $auto$expression.cpp:3250:import_operation$4073
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:609$4075_Y
   end
@@ -24209,12 +24209,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4080
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4082
+  cell $pos $auto$expression.cpp:3253:import_operation$4082
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4080
-    connect \Y $auto$expression.cpp:3177:import_operation$4081
+    connect \Y $auto$expression.cpp:3250:import_operation$4081
   end
   attribute \src "dut.sv:610.17-610.64"
   cell $eq $eq$dut.sv:610$4084
@@ -24223,7 +24223,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4081
+    connect \A $auto$expression.cpp:3250:import_operation$4081
     connect \B 0
     connect \Y $eq$dut.sv:610$4083_Y
   end
@@ -24249,12 +24249,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4088
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4090
+  cell $pos $auto$expression.cpp:3253:import_operation$4090
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4088
-    connect \Y $auto$expression.cpp:3177:import_operation$4089
+    connect \Y $auto$expression.cpp:3250:import_operation$4089
   end
   attribute \src "dut.sv:611.17-611.64"
   cell $eq $eq$dut.sv:611$4092
@@ -24263,7 +24263,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4089
+    connect \A $auto$expression.cpp:3250:import_operation$4089
     connect \B 1
     connect \Y $eq$dut.sv:611$4091_Y
   end
@@ -24289,12 +24289,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4096
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4098
+  cell $pos $auto$expression.cpp:3253:import_operation$4098
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4096
-    connect \Y $auto$expression.cpp:3177:import_operation$4097
+    connect \Y $auto$expression.cpp:3250:import_operation$4097
   end
   attribute \src "dut.sv:612.17-612.64"
   cell $eq $eq$dut.sv:612$4100
@@ -24303,7 +24303,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4097
+    connect \A $auto$expression.cpp:3250:import_operation$4097
     connect \B 2
     connect \Y $eq$dut.sv:612$4099_Y
   end
@@ -24329,12 +24329,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4104
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4106
+  cell $pos $auto$expression.cpp:3253:import_operation$4106
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4104
-    connect \Y $auto$expression.cpp:3177:import_operation$4105
+    connect \Y $auto$expression.cpp:3250:import_operation$4105
   end
   attribute \src "dut.sv:613.17-613.64"
   cell $eq $eq$dut.sv:613$4108
@@ -24343,7 +24343,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4105
+    connect \A $auto$expression.cpp:3250:import_operation$4105
     connect \B 3
     connect \Y $eq$dut.sv:613$4107_Y
   end
@@ -24369,12 +24369,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4112
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4114
+  cell $pos $auto$expression.cpp:3253:import_operation$4114
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4112
-    connect \Y $auto$expression.cpp:3177:import_operation$4113
+    connect \Y $auto$expression.cpp:3250:import_operation$4113
   end
   attribute \src "dut.sv:614.17-614.64"
   cell $eq $eq$dut.sv:614$4116
@@ -24383,7 +24383,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4113
+    connect \A $auto$expression.cpp:3250:import_operation$4113
     connect \B 0
     connect \Y $eq$dut.sv:614$4115_Y
   end
@@ -24409,12 +24409,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4120
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4122
+  cell $pos $auto$expression.cpp:3253:import_operation$4122
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4120
-    connect \Y $auto$expression.cpp:3177:import_operation$4121
+    connect \Y $auto$expression.cpp:3250:import_operation$4121
   end
   attribute \src "dut.sv:615.17-615.64"
   cell $eq $eq$dut.sv:615$4124
@@ -24423,7 +24423,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4121
+    connect \A $auto$expression.cpp:3250:import_operation$4121
     connect \B 1
     connect \Y $eq$dut.sv:615$4123_Y
   end
@@ -24449,12 +24449,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4128
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4130
+  cell $pos $auto$expression.cpp:3253:import_operation$4130
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4128
-    connect \Y $auto$expression.cpp:3177:import_operation$4129
+    connect \Y $auto$expression.cpp:3250:import_operation$4129
   end
   attribute \src "dut.sv:616.17-616.64"
   cell $eq $eq$dut.sv:616$4132
@@ -24463,7 +24463,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4129
+    connect \A $auto$expression.cpp:3250:import_operation$4129
     connect \B 32'11111111111111111111111111111110
     connect \Y $eq$dut.sv:616$4131_Y
   end
@@ -24489,12 +24489,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4136
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4138
+  cell $pos $auto$expression.cpp:3253:import_operation$4138
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3390:Mux$4136
-    connect \Y $auto$expression.cpp:3177:import_operation$4137
+    connect \Y $auto$expression.cpp:3250:import_operation$4137
   end
   attribute \src "dut.sv:617.17-617.64"
   cell $eq $eq$dut.sv:617$4140
@@ -24503,7 +24503,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4137
+    connect \A $auto$expression.cpp:3250:import_operation$4137
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:617$4139_Y
   end
@@ -24529,12 +24529,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4144
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4146
+  cell $pos $auto$expression.cpp:3253:import_operation$4146
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4144
-    connect \Y $auto$expression.cpp:3177:import_operation$4145
+    connect \Y $auto$expression.cpp:3250:import_operation$4145
   end
   attribute \src "dut.sv:619.17-619.77"
   cell $eq $eq$dut.sv:619$4148
@@ -24543,7 +24543,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4145
+    connect \A $auto$expression.cpp:3250:import_operation$4145
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:619$4147_Y
   end
@@ -24569,12 +24569,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4152
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4154
+  cell $pos $auto$expression.cpp:3253:import_operation$4154
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4152
-    connect \Y $auto$expression.cpp:3177:import_operation$4153
+    connect \Y $auto$expression.cpp:3250:import_operation$4153
   end
   attribute \src "dut.sv:620.17-620.77"
   cell $eq $eq$dut.sv:620$4156
@@ -24583,7 +24583,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4153
+    connect \A $auto$expression.cpp:3250:import_operation$4153
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:620$4155_Y
   end
@@ -24609,12 +24609,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4160
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4162
+  cell $pos $auto$expression.cpp:3253:import_operation$4162
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4160
-    connect \Y $auto$expression.cpp:3177:import_operation$4161
+    connect \Y $auto$expression.cpp:3250:import_operation$4161
   end
   attribute \src "dut.sv:621.17-621.77"
   cell $eq $eq$dut.sv:621$4164
@@ -24623,7 +24623,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4161
+    connect \A $auto$expression.cpp:3250:import_operation$4161
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:621$4163_Y
   end
@@ -24649,12 +24649,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4168
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4170
+  cell $pos $auto$expression.cpp:3253:import_operation$4170
     parameter \A_SIGNED 1
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4168
-    connect \Y $auto$expression.cpp:3177:import_operation$4169
+    connect \Y $auto$expression.cpp:3250:import_operation$4169
   end
   attribute \src "dut.sv:622.17-622.77"
   cell $eq $eq$dut.sv:622$4172
@@ -24663,7 +24663,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4169
+    connect \A $auto$expression.cpp:3250:import_operation$4169
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:622$4171_Y
   end
@@ -24689,12 +24689,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4176
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4178
+  cell $pos $auto$expression.cpp:3253:import_operation$4178
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4176
-    connect \Y $auto$expression.cpp:3177:import_operation$4177
+    connect \Y $auto$expression.cpp:3250:import_operation$4177
   end
   attribute \src "dut.sv:623.17-623.77"
   cell $eq $eq$dut.sv:623$4180
@@ -24703,7 +24703,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4177
+    connect \A $auto$expression.cpp:3250:import_operation$4177
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:623$4179_Y
   end
@@ -24729,12 +24729,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4184
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4186
+  cell $pos $auto$expression.cpp:3253:import_operation$4186
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4184
-    connect \Y $auto$expression.cpp:3177:import_operation$4185
+    connect \Y $auto$expression.cpp:3250:import_operation$4185
   end
   attribute \src "dut.sv:624.17-624.77"
   cell $eq $eq$dut.sv:624$4188
@@ -24743,7 +24743,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4185
+    connect \A $auto$expression.cpp:3250:import_operation$4185
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:624$4187_Y
   end
@@ -24769,12 +24769,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4192
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4194
+  cell $pos $auto$expression.cpp:3253:import_operation$4194
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4192
-    connect \Y $auto$expression.cpp:3177:import_operation$4193
+    connect \Y $auto$expression.cpp:3250:import_operation$4193
   end
   attribute \src "dut.sv:625.17-625.77"
   cell $eq $eq$dut.sv:625$4196
@@ -24783,7 +24783,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4193
+    connect \A $auto$expression.cpp:3250:import_operation$4193
     connect \B 12'000000000010
     connect \Y $eq$dut.sv:625$4195_Y
   end
@@ -24809,12 +24809,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4200
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4202
+  cell $pos $auto$expression.cpp:3253:import_operation$4202
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4200
-    connect \Y $auto$expression.cpp:3177:import_operation$4201
+    connect \Y $auto$expression.cpp:3250:import_operation$4201
   end
   attribute \src "dut.sv:626.17-626.77"
   cell $eq $eq$dut.sv:626$4204
@@ -24823,7 +24823,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4201
+    connect \A $auto$expression.cpp:3250:import_operation$4201
     connect \B 12'000000000011
     connect \Y $eq$dut.sv:626$4203_Y
   end
@@ -24849,12 +24849,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4208
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4210
+  cell $pos $auto$expression.cpp:3253:import_operation$4210
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4208
-    connect \Y $auto$expression.cpp:3177:import_operation$4209
+    connect \Y $auto$expression.cpp:3250:import_operation$4209
   end
   attribute \src "dut.sv:627.17-627.77"
   cell $eq $eq$dut.sv:627$4212
@@ -24863,7 +24863,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4209
+    connect \A $auto$expression.cpp:3250:import_operation$4209
     connect \B 12'000000000000
     connect \Y $eq$dut.sv:627$4211_Y
   end
@@ -24889,12 +24889,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4216
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4218
+  cell $pos $auto$expression.cpp:3253:import_operation$4218
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4216
-    connect \Y $auto$expression.cpp:3177:import_operation$4217
+    connect \Y $auto$expression.cpp:3250:import_operation$4217
   end
   attribute \src "dut.sv:628.17-628.77"
   cell $eq $eq$dut.sv:628$4220
@@ -24903,7 +24903,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4217
+    connect \A $auto$expression.cpp:3250:import_operation$4217
     connect \B 12'000000000001
     connect \Y $eq$dut.sv:628$4219_Y
   end
@@ -24929,12 +24929,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4224
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4226
+  cell $pos $auto$expression.cpp:3253:import_operation$4226
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4224
-    connect \Y $auto$expression.cpp:3177:import_operation$4225
+    connect \Y $auto$expression.cpp:3250:import_operation$4225
   end
   attribute \src "dut.sv:629.17-629.77"
   cell $eq $eq$dut.sv:629$4228
@@ -24943,7 +24943,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4225
+    connect \A $auto$expression.cpp:3250:import_operation$4225
     connect \B 12'111111111110
     connect \Y $eq$dut.sv:629$4227_Y
   end
@@ -24969,12 +24969,12 @@ module \top
     connect \S \y
     connect \Y $auto$rtlil.cc:3390:Mux$4232
   end
-  cell $pos $auto$expression.cpp:3180:import_operation$4234
+  cell $pos $auto$expression.cpp:3253:import_operation$4234
     parameter \A_SIGNED 1
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 12
     connect \A $auto$rtlil.cc:3390:Mux$4232
-    connect \Y $auto$expression.cpp:3177:import_operation$4233
+    connect \Y $auto$expression.cpp:3250:import_operation$4233
   end
   attribute \src "dut.sv:630.17-630.77"
   cell $eq $eq$dut.sv:630$4236
@@ -24983,7 +24983,7 @@ module \top
     parameter \A_WIDTH 12
     parameter \B_WIDTH 12
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3177:import_operation$4233
+    connect \A $auto$expression.cpp:3250:import_operation$4233
     connect \B 12'111111111111
     connect \Y $eq$dut.sv:630$4235_Y
   end

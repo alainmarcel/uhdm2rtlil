@@ -60,14 +60,14 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   attribute \src "dut.sv:31.13-33.48"
   wire width 16 $0\cnt
   attribute \src "dut.sv:33.36-33.47"
-  wire width 16 $auto$expression.cpp:3177:import_operation$2
+  wire width 16 $auto$expression.cpp:3250:import_operation$2
   wire width 16 $auto$expression.cpp:2688:import_operation$4
-  cell $pos $auto$expression.cpp:3180:import_operation$3
+  cell $pos $auto$expression.cpp:3253:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 16
     connect \A \ena
-    connect \Y $auto$expression.cpp:3177:import_operation$2
+    connect \Y $auto$expression.cpp:3250:import_operation$2
   end
   cell $add $add$dut.sv:33$5
     parameter \A_SIGNED 0
@@ -76,7 +76,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A \cnt
-    connect \B $auto$expression.cpp:3177:import_operation$2
+    connect \B $auto$expression.cpp:3250:import_operation$2
     connect \Y $auto$expression.cpp:2688:import_operation$4
   end
   attribute \src "dut.sv:31.13-33.48"
