@@ -13,9 +13,9 @@ module \top
   wire width 8 \a[0]
   attribute \src "dut.sv:31.13-31.14"
   wire width 8 \a[1]
-  wire width 32 $auto$expression.cpp:5149:import_hier_path$1
-  wire width 2 $auto$expression.cpp:5155:import_hier_path$3
-  cell $sub $auto$expression.cpp:5150:import_hier_path$2
+  wire width 32 $auto$expression.cpp:5170:import_hier_path$1
+  wire width 2 $auto$expression.cpp:5176:import_hier_path$3
+  cell $sub $auto$expression.cpp:5171:import_hier_path$2
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -23,20 +23,20 @@ module \top
     parameter \Y_WIDTH 32
     connect \A { 29'00000000000000000000000000000 \base }
     connect \B 1
-    connect \Y $auto$expression.cpp:5149:import_hier_path$1
+    connect \Y $auto$expression.cpp:5170:import_hier_path$1
   end
-  cell $shiftx $auto$expression.cpp:5156:import_hier_path$4
+  cell $shiftx $auto$expression.cpp:5177:import_hier_path$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 8
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 2
     connect \A \a[0]
-    connect \B $auto$expression.cpp:5149:import_hier_path$1
-    connect \Y $auto$expression.cpp:5155:import_hier_path$3
+    connect \B $auto$expression.cpp:5170:import_hier_path$1
+    connect \Y $auto$expression.cpp:5176:import_hier_path$3
   end
   connect \a[1] 8'00010010
   connect \a[0] 8'00110100
   connect \o \a[0] [6:5]
-  connect \o2 $auto$expression.cpp:5155:import_hier_path$3
+  connect \o2 $auto$expression.cpp:5176:import_hier_path$3
 end

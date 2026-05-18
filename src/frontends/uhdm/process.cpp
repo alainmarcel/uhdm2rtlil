@@ -4868,23 +4868,46 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             bool fl_inclusive = false;
 
             // Extract init: k = 0
+            // The LHS can be:
+            //   * `vpiRefObj` — module-level `integer k;` referenced from the
+            //     loop init (path used by existing always-comb tests).
+            //   * `vpiRefVar` — older / generate-scope form.
+            //   * `vpiIntVar` / `vpiLogicVar` / `vpiByteVar` / `vpiIntegerVar`
+            //     — a locally-declared loop var (`for (int i = 0; ...)`) sits
+            //     directly under the assignment without a `ref_obj` wrapper.
             if (fl_init->VpiType() == vpiAssignment) {
                 const assignment* ia = any_cast<const assignment*>(fl_init);
-                if (ia->Lhs() &&
-                    (ia->Lhs()->VpiType() == vpiRefVar || ia->Lhs()->VpiType() == vpiRefObj)) {
-                    if (ia->Lhs()->VpiType() == vpiRefVar)
+                if (ia->Lhs()) {
+                    int lhs_t = ia->Lhs()->VpiType();
+                    if (lhs_t == vpiRefVar)
                         fl_var = std::string(any_cast<const ref_var*>(ia->Lhs())->VpiName());
-                    else
+                    else if (lhs_t == vpiRefObj)
                         fl_var = std::string(any_cast<const ref_obj*>(ia->Lhs())->VpiName());
+                    else if (!ia->Lhs()->VpiName().empty())
+                        // Locally-declared loop var — variable nodes
+                        // (`int_var`, `integer_var`, `logic_var`, …) all
+                        // inherit `VpiName()` from `BaseClass`.
+                        fl_var = std::string(ia->Lhs()->VpiName());
 
-                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant) {
+                    if (!fl_var.empty() && ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant) {
                         RTLIL::SigSpec s = import_constant(any_cast<const constant*>(ia->Rhs()));
                         if (s.is_fully_const()) { fl_start = s.as_const().as_int(); fl_can_unroll = true; }
                     }
                 }
             }
 
-            // Extract condition: k < N or k <= N
+            // Extract condition: k < N or k <= N.  When N is a constant we
+            // unroll the loop statically.  When N is a *runtime* signal
+            // (synlig#581 — orv64's `for (int i = 0; i < rff_lvl; i++)`),
+            // Yosys's stock Verilog frontend errors out with
+            //   "2nd expression of procedural for-loop is not constant!"
+            // We instead unroll up to a static max derived from the bound
+            // signal's bit width and wrap each iteration's body in a
+            // `(i < bound)` guard so iterations past the runtime bound are
+            // suppressed by `proc`.
+            bool fl_dynamic_bound = false;
+            RTLIL::SigSpec fl_bound_sig;
+            int fl_bound_width = 0;
             if (fl_can_unroll && fl_cond->VpiType() == vpiOperation) {
                 const operation* co = any_cast<const operation*>(fl_cond);
                 if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
@@ -4897,6 +4920,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         RTLIL::SigSpec s = import_constant(any_cast<const constant*>(rhs));
                         if (s.is_fully_const()) fl_end = s.as_const().as_int();
                         else fl_can_unroll = false;
+                    } else if (auto rhs_e = dynamic_cast<const expr*>(rhs)) {
+                        // Dynamic bound — evaluate now (yields a SigSpec on
+                        // module-level signals) and remember its width so the
+                        // unroller below can cap iterations.
+                        RTLIL::SigSpec s = import_expression(rhs_e);
+                        if (!s.empty() && !s.is_fully_const()) {
+                            fl_bound_sig = s;
+                            fl_bound_width = s.size();
+                            fl_dynamic_bound = true;
+                            // Set fl_end to a sentinel; the unrolling path
+                            // below uses fl_bound_width instead.
+                            fl_end = 0;
+                        } else if (s.is_fully_const()) {
+                            fl_end = s.as_const().as_int();
+                        } else {
+                            fl_can_unroll = false;
+                        }
                     } else {
                         fl_can_unroll = false;
                     }
@@ -4926,7 +4966,64 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 }
             }
 
-            if (fl_can_unroll) {
+            if (fl_can_unroll && fl_dynamic_bound) {
+                // Dynamic bound (synlig#581).  The loop is `for (i = start;
+                // i < bound_sig; i += inc)` where `bound_sig` is a runtime
+                // signal of width `fl_bound_width`.  We unroll up to the
+                // maximum value the bound can take (2**bound_width, capped
+                // at 256 for sanity) and wrap each iteration's body in a
+                // `(i < bound_sig)` runtime guard — implemented as a
+                // SwitchRule with one case for 1'b1.  proc lowers that to
+                // the standard "if guard then body" mux pattern.
+                int cap = 256;
+                int64_t max_iters;
+                if (fl_bound_width >= 31)
+                    max_iters = cap;
+                else
+                    max_iters = std::min<int64_t>((int64_t)1 << fl_bound_width, cap);
+                // For `i < bound` over a B-bit unsigned bound, max bound is
+                // 2**B - 1 so the loop can iterate at most 2**B - 1 times
+                // when the body executes (i = 0 .. 2**B - 2).  Iterating to
+                // 2**B - 1 lets `<=` cover its max-bound case too; the
+                // guard suppresses out-of-range iterations.
+                int64_t loop_end = max_iters - 1;
+                for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    loop_values[fl_var] = (int)i;
+                    // Build the runtime guard `(i < bound_sig)` (or `<=`).
+                    // Both operands are widened to max(iter_w, bound_w);
+                    // the iteration value is materialised as a 32-bit Const
+                    // for the comparison.
+                    int cmp_w = std::max(32, fl_bound_width);
+                    RTLIL::SigSpec lhs_const(RTLIL::Const((int)i, cmp_w));
+                    RTLIL::SigSpec rhs_bound = fl_bound_sig;
+                    if (rhs_bound.size() < cmp_w)
+                        rhs_bound.extend_u0(cmp_w);
+                    RTLIL::Wire* guard = module->addWire(NEW_ID, 1);
+                    if (fl_inclusive)
+                        module->addLe(NEW_ID, lhs_const, rhs_bound, guard);
+                    else
+                        module->addLt(NEW_ID, lhs_const, rhs_bound, guard);
+
+                    RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                    sw->signal = RTLIL::SigSpec(guard);
+                    add_src_attribute(sw->attributes, for_loop);
+                    RTLIL::CaseRule* cr = new RTLIL::CaseRule;
+                    cr->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
+                    add_src_attribute(cr->attributes, for_loop);
+                    import_statement_comb(fl_body, cr);
+                    sw->cases.push_back(cr);
+                    proc->root_case.switches.push_back(sw);
+                }
+                // Post-loop value of the iter var is whatever it would be
+                // after running through `max_iters` iterations; downstream
+                // statements rarely reference it after a dynamic-bound
+                // loop, so leaving it at the last iterated value is fine.
+                loop_values[fl_var] = (int)loop_end;
+                log("    Comb for loop unrolled with dynamic bound: %s "
+                    "max_iters=%lld guard=(i %s bound[%d])\n",
+                    fl_var.c_str(), (long long)max_iters,
+                    fl_inclusive ? "<=" : "<", fl_bound_width);
+            } else if (fl_can_unroll) {
                 int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
                 // If the body has a `break`, the SV semantics are "first
                 // iteration whose body executes wins" (priority encoder).
