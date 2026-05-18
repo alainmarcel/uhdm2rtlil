@@ -13,7 +13,7 @@ module \test_module
   wire output 3 \out
   attribute \src "dut.sv:16.9-16.12"
   wire \mem
-  wire $auto$expression.cpp:4188:import_bit_select$1
+  wire $auto$expression.cpp:4209:import_bit_select$1
   attribute \src "dut.sv:23.20-23.23"
   cell $shiftx $shiftx$dut.sv:23$2
     parameter \A_SIGNED 0
@@ -23,10 +23,10 @@ module \test_module
     parameter \Y_WIDTH 1
     connect \A \mem
     connect \B \idx
-    connect \Y $auto$expression.cpp:4188:import_bit_select$1
+    connect \Y $auto$expression.cpp:4209:import_bit_select$1
   end
   connect \mem \in [0]
-  connect \out $auto$expression.cpp:4188:import_bit_select$1
+  connect \out $auto$expression.cpp:4209:import_bit_select$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:26.1-32.10"

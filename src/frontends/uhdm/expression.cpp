@@ -4016,11 +4016,39 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         return RTLIL::SigSpec();
     }
     
+    // Detect packed-multidim-array element access — the wire was tagged
+    // with `packed_elem_width` / `packed_outer_left` / `packed_outer_right`
+    // during `import_port` / `import_net`.  This metadata is needed for
+    // BOTH constant- and dynamic-index paths: `parts[i]` on
+    // `logic [NUM-1:0][W-1:0] parts` must extract a W-bit slot, not a
+    // single bit (synlig#581's orv64 PTW reproducer reads `parts[i]`
+    // with constant `i` inside a static-unrolled loop).
+    int packed_elem_w = 1;
+    int packed_outer_l = -1, packed_outer_r = -1;
+    if (wire && wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+        packed_elem_w = wire->attributes.at(RTLIL::escape_id("packed_elem_width")).as_int();
+        packed_outer_l = wire->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int();
+        packed_outer_r = wire->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int();
+    }
+
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
         if (mode_debug)
             log("    Bit select index: %d\n", idx);
-        
+
+        if (packed_elem_w > 1) {
+            int outer_lo = std::min(packed_outer_l, packed_outer_r);
+            int slot = idx - outer_lo;
+            int off = slot * packed_elem_w;
+            if (off < 0 || off + packed_elem_w > base.size()) {
+                log_warning("Packed array element index %d is out of range "
+                            "for wire '%s' (elem_w=%d, total=%d)\n",
+                            idx, signal_name.c_str(), packed_elem_w, base.size());
+                return RTLIL::SigSpec(RTLIL::State::Sx, packed_elem_w);
+            }
+            return base.extract(off, packed_elem_w);
+        }
+
         // Check if the wire has reversed bit ordering
         if (wire && (wire->upto || wire->start_offset != 0)) {
             // Convert from HDL index to RTLIL index
@@ -4029,12 +4057,12 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 log_error("Bit select index %d is out of range for wire '%s'\n", idx, signal_name.c_str());
             }
             if (mode_debug)
-                log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n", 
+                log("    Converted HDL index %d to RTLIL index %d (upto=%d, start_offset=%d)\n",
                     idx, rtlil_idx, wire->upto ? 1 : 0, wire->start_offset);
-            
+
             // Check bounds before extracting
             if (rtlil_idx < 0 || rtlil_idx >= base.size()) {
-                log_warning("Bit select index %d (RTLIL index %d) is out of range for wire '%s' (width=%d), returning undefined\n", 
+                log_warning("Bit select index %d (RTLIL index %d) is out of range for wire '%s' (width=%d), returning undefined\n",
                     idx, rtlil_idx, signal_name.c_str(), base.size());
                 return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
@@ -4043,24 +4071,17 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             // Standard bit ordering
             // Check bounds before extracting
             if (idx < 0 || idx >= base.size()) {
-                log_warning("Bit select index %d is out of range for wire '%s' (width=%d), returning undefined\n", 
+                log_warning("Bit select index %d is out of range for wire '%s' (width=%d), returning undefined\n",
                     idx, signal_name.c_str(), base.size());
                 return RTLIL::SigSpec(RTLIL::State::Sx, 1);
             }
             return base.extract(idx, 1);
         }
     }
-    
-    // Dynamic bit select - check for packed multidimensional array element access
-    int element_width = 1;
-    int outer_left = -1, outer_right = -1;
 
-    // First check wire attributes set during port/net import
-    if (wire && wire->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
-        element_width = wire->attributes.at(RTLIL::escape_id("packed_elem_width")).as_int();
-        outer_left = wire->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int();
-        outer_right = wire->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int();
-    }
+    // Dynamic bit select - check for packed multidimensional array element access
+    int element_width = packed_elem_w;
+    int outer_left = packed_outer_l, outer_right = packed_outer_r;
 
     // Fall back to UHDM typespec detection if no wire attributes
     if (element_width <= 1) {
