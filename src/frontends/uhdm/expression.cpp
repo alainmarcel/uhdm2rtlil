@@ -2249,7 +2249,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // Struct/array aggregate: '{field: val, field: val, ...}
         // Surelog stores the value expressions directly as operands (hier_path, ref_obj, etc.),
         // in struct field definition order (first field = MSB for packed structs).
-        // Same concatenation order as vpiConcatOp: first operand at MSB.
+        // Same concatenation order as vpiConcatOp: first operand at MSB —
+        // UNLESS the operation has `vpiReordered:1` set, which means
+        // Surelog already reordered the operands into LSB-first order
+        // (post-substitution path in the elaborated TopModules).
         if (uhdm_op->Operands()) {
             std::vector<RTLIL::SigSpec> field_sigs;
             for (auto operand : *uhdm_op->Operands()) {
@@ -2260,10 +2263,15 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
                 field_sigs.push_back(val);
             }
-            // Concatenate: first field at MSB (iterate in reverse and append, like vpiConcatOp)
             RTLIL::SigSpec result;
-            for (int i = (int)field_sigs.size() - 1; i >= 0; i--)
-                result.append(field_sigs[i]);
+            if (uhdm_op->VpiReordered()) {
+                // Already LSB-first — append in source order.
+                for (auto& s : field_sigs) result.append(s);
+            } else {
+                // First field at MSB — iterate in reverse and append.
+                for (int i = (int)field_sigs.size() - 1; i >= 0; i--)
+                    result.append(field_sigs[i]);
+            }
             return result;
         }
         return RTLIL::SigSpec();
@@ -3858,9 +3866,109 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         }
     }
 
+    // Bit-select on a *parameter* whose typespec is a packed array
+    // (`parameter logic [0:0][3:0] P = '{'{1'b1, 1'b0, 1'b0, 1'b0}}`)
+    // — evaluate the parameter at compile time and extract the right
+    // slice, since there is no module-level wire for a parameter.
+    // Surelog's elaborated TopModules sets the bit_select's
+    // `Actual_group()` to the parameter; AllModules leaves it null,
+    // so we also fall back to looking the parameter up by name in the
+    // current module.
+    {
+        const UHDM::parameter* param = nullptr;
+        if (auto a = uhdm_bit->Actual_group()) {
+            if (a->UhdmType() == uhdmparameter)
+                param = any_cast<const UHDM::parameter*>(a);
+        }
+        if (!param && current_instance) {
+            if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                if (m->Parameters()) {
+                    for (auto p : *m->Parameters()) {
+                        if (std::string(p->VpiName()) == signal_name) {
+                            param = dynamic_cast<const UHDM::parameter*>(p);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (param) {
+            // Pull the elaborated value from `Param_assigns()->Rhs()`
+            // (post-substitution), with a fallback to the parameter's
+            // own `VpiValue()`.
+            RTLIL::Const param_value;
+            bool got = false;
+            const UHDM::module_inst* pmod =
+                dynamic_cast<const UHDM::module_inst*>(current_instance);
+            if (pmod && pmod->Param_assigns()) {
+                for (auto pa : *pmod->Param_assigns()) {
+                    if (!pa->Lhs() || std::string(pa->Lhs()->VpiName()) != signal_name)
+                        continue;
+                    if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
+                        RTLIL::SigSpec rs = import_expression(re);
+                        if (rs.is_fully_const()) {
+                            param_value = rs.as_const();
+                            got = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!got && !std::string(param->VpiValue()).empty()) {
+                std::string v = std::string(param->VpiValue());
+                RTLIL::Const c = extract_const_from_value(v);
+                if (c.size() > 0) { param_value = c; got = true; }
+            }
+            if (got) {
+                int total = param_value.size();
+                RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
+                if (index.is_fully_const()) {
+                    int idx = index.as_const().as_int();
+                    // Compute the element width from the parameter's
+                    // typespec ranges.  For a logic_typespec the OUTER
+                    // range count divides the total width; the
+                    // remainder is the element width that `P[i]`
+                    // extracts.
+                    int elem_w = 1;
+                    int outer_size = 1;
+                    int outer_low = 0;
+                    if (auto rts = param->Typespec()) {
+                        if (auto ats = rts->Actual_typespec()) {
+                            if (ats->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats);
+                                if (lt && lt->Ranges() && !lt->Ranges()->empty()) {
+                                    auto r0 = (*lt->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        outer_size = std::abs(l - r) + 1;
+                                        outer_low = std::min(l, r);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (outer_size > 0 && total % outer_size == 0)
+                        elem_w = total / outer_size;
+                    int slot = idx - outer_low;
+                    int off = slot * elem_w;
+                    if (off >= 0 && off + elem_w <= total) {
+                        RTLIL::SigSpec full(param_value);
+                        RTLIL::SigSpec slice = full.extract(off, elem_w);
+                        if (mode_debug)
+                            log("    Bit-select on parameter %s[%d]: extracted %d bits @off %d\n",
+                                signal_name.c_str(), idx, elem_w, off);
+                        return slice;
+                    }
+                }
+            }
+        }
+    }
+
     // Regular bit select on a wire
     RTLIL::Wire* wire = find_wire_in_scope(signal_name, "bit select");
-    
+
     // If wire not found, check if this is a shift register array element
     if (!wire) {
         // Get the index

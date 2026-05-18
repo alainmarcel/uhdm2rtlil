@@ -18,8 +18,8 @@ module \top
   attribute \src "dut.sv:5.19-5.20"
   wire width 32 signed \z
   wire width 32 $auto$process.cpp:4817:import_statement_comb$2
-  wire width 32 $auto$expression.cpp:2680:import_operation$16
-  wire width 32 $auto$expression.cpp:2680:import_operation$14
+  wire width 32 $auto$expression.cpp:2688:import_operation$16
+  wire width 32 $auto$expression.cpp:2688:import_operation$14
   wire width 32 $auto$expression.cpp:2199:import_operation$12
   wire width 32 $auto$expression.cpp:2199:import_operation$10
   wire width 32 $auto$process.cpp:4817:import_statement_comb$8
@@ -39,7 +39,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2680:import_operation$16
+    connect \A $auto$expression.cpp:2688:import_operation$16
     connect \B 1
     connect \Y \ox
   end
@@ -49,9 +49,9 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2680:import_operation$14
+    connect \A $auto$expression.cpp:2688:import_operation$14
     connect \B 1
-    connect \Y $auto$expression.cpp:2680:import_operation$16
+    connect \Y $auto$expression.cpp:2688:import_operation$16
   end
   cell $sub $auto$process.cpp:4821:import_statement_comb$9
     parameter \A_SIGNED 0
@@ -91,7 +91,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A $auto$expression.cpp:2199:import_operation$12
     connect \B 1
-    connect \Y $auto$expression.cpp:2680:import_operation$14
+    connect \Y $auto$expression.cpp:2688:import_operation$14
   end
   connect \z \ox
   connect \y \ox

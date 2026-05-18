@@ -10,7 +10,7 @@ module \gate
   attribute \init 10
   wire width 32 signed \gen.x
   wire width 32 signed \gen.y
-  wire width 32 $auto$expression.cpp:2680:import_operation$3
+  wire width 32 $auto$expression.cpp:2688:import_operation$3
   cell $add $add$dut.sv:10$4
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -19,7 +19,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \gen.x
     connect \B 1
-    connect \Y $auto$expression.cpp:2680:import_operation$3
+    connect \Y $auto$expression.cpp:2688:import_operation$3
   end
   attribute \src "dut.sv:9.17-9.36"
   process $proc$dut.sv:9$1
@@ -32,7 +32,7 @@ module \gate
   attribute \src "dut.sv:12.5-12.23"
   process $proc$dut.sv:12$5
   end
-  connect \gen.y $auto$expression.cpp:2680:import_operation$3
+  connect \gen.y $auto$expression.cpp:2688:import_operation$3
   connect \y \gen.y [15:0]
   connect \x \gen.x [15:0]
 end
@@ -46,7 +46,7 @@ module \gold
   attribute \init 10
   wire width 32 signed \gen.x
   wire width 32 signed \gen.y
-  wire width 32 $auto$expression.cpp:2680:import_operation$8
+  wire width 32 $auto$expression.cpp:2688:import_operation$8
   cell $add $add$dut.sv:24$9
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -55,7 +55,7 @@ module \gold
     parameter \Y_WIDTH 32
     connect \A \gen.x
     connect \B 1
-    connect \Y $auto$expression.cpp:2680:import_operation$8
+    connect \Y $auto$expression.cpp:2688:import_operation$8
   end
   attribute \src "dut.sv:23.17-23.32"
   process $proc$dut.sv:23$6
@@ -68,7 +68,7 @@ module \gold
   attribute \src "dut.sv:26.5-26.23"
   process $proc$dut.sv:26$10
   end
-  connect \gen.y $auto$expression.cpp:2680:import_operation$8
+  connect \gen.y $auto$expression.cpp:2688:import_operation$8
   connect \y \gen.y [15:0]
   connect \x \gen.x [15:0]
 end
