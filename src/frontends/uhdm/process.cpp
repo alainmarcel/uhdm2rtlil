@@ -4777,6 +4777,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             }
             break;
         }
+        case vpiFuncCall: {
+            // `void function`s used procedurally (synlig#554).  The
+            // SV body modifies its `output` formals (and may reference
+            // dynamic bit-selects in the LHS), so we reuse the same
+            // inliner as `vpiTaskCall` rather than the
+            // function-as-RHS expression evaluator.
+            auto fc = any_cast<const UHDM::func_call*>(uhdm_stmt);
+            if (fc) {
+                import_tf_call_comb(fc, fc->Function(), proc);
+            }
+            break;
+        }
         case vpiMethodFuncCall: {
             // `obj.method(args);` — e.g. `ha_intf.summ2(a, b);` where
             // `ha_intf` is an interface port and `summ2` is a function
@@ -5103,9 +5115,22 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
 
 // Import task call in combinational context by inlining the task body
 void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* proc) {
-    auto task_def = tc->Task();
-    if (!task_def) {
+    if (auto task_def = tc->Task())
+        import_tf_call_comb(tc, task_def, proc);
+    else
         log_warning("Task call has no task definition\n");
+}
+
+// Shared implementation for `vpiTaskCall` and `vpiFuncCall`-as-statement
+// (a `void function` used procedurally — see chipsalliance/synlig#554).
+// The two callers differ only in which accessor returns the callee
+// definition; everything past that point reads from the common
+// `task_func` base.
+void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
+                                       const UHDM::task_func* task_def,
+                                       RTLIL::Process* proc) {
+    if (!task_def) {
+        log_warning("Tf-call has no callee definition\n");
         return;
     }
 
@@ -5121,7 +5146,7 @@ void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* pr
     int ctx_idx = incr_autoidx();
     std::string context = stringf("%s$func$%s:%d$%d", task_name.c_str(), call_file.c_str(), call_line, ctx_idx);
 
-    log("    import_task_call_comb: %s (context: %s)\n", task_name.c_str(), context.c_str());
+    log("    import_tf_call_comb: %s (context: %s)\n", task_name.c_str(), context.c_str());
 
     // Build task_mapping: maps task variable names to SigSpecs
     std::map<std::string, RTLIL::SigSpec> task_mapping;
@@ -5556,36 +5581,130 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                 }
             }
 
+            // Helper: lookup task-local temp wire (the `$0\<context>.<name>` wire)
+            // that `import_tf_call_comb` mapped for a task output param or local
+            // variable.  Returns nullptr if `base_name` is not a task-local.
+            auto get_task_temp_sig = [&](const std::string& base_name)
+                -> RTLIL::SigSpec {
+                auto it = task_mapping.find(base_name);
+                if (it == task_mapping.end()) return RTLIL::SigSpec();
+                if (!it->second.is_wire()) return RTLIL::SigSpec();
+                RTLIL::Wire* w = it->second.as_wire();
+                if (w->name.str().substr(0, 3) != "$0\\") return RTLIL::SigSpec();
+                return it->second;
+            };
+
             // Resolve LHS
             RTLIL::SigSpec lhs;
             std::string lhs_name;
+            // True when the LHS is a dynamic-bit-select on a task output —
+            // we emit a SwitchRule instead of a single SigSig and skip the
+            // normal width-match/temp-wire path below.
+            bool dyn_bit_select_handled = false;
             if (auto lhs_expr = assign->Lhs()) {
-                if (lhs_expr->VpiType() == vpiRefObj) {
+                int lhs_type = lhs_expr->VpiType();
+                if (lhs_type == vpiRefObj) {
                     const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
                     lhs_name = std::string(lhs_ref->VpiName());
 
                     // Check task_mapping, but only use it if it maps to a task-local temp wire
                     // (names starting with "$0\"). Values from current_comb_values (constants,
                     // cell outputs) should NOT be used as LHS targets.
-                    auto it = task_mapping.find(lhs_name);
-                    bool use_task_mapping = false;
-                    if (it != task_mapping.end() && it->second.is_wire()) {
-                        RTLIL::Wire* w = it->second.as_wire();
-                        if (w->name.str().substr(0, 3) == "$0\\") {
-                            use_task_mapping = true;
-                        }
-                    }
-                    if (use_task_mapping) {
-                        lhs = it->second;
+                    RTLIL::SigSpec task_temp = get_task_temp_sig(lhs_name);
+                    if (!task_temp.empty()) {
+                        lhs = task_temp;
                     } else {
                         // Module signal or unmapped - import normally
                         lhs = import_expression(lhs_expr);
+                    }
+                } else if (lhs_type == vpiBitSelect) {
+                    // `<task_output>[idx] = rhs` — must write to a slice of
+                    // the task's `$0\` temp wire, not to the caller's wire
+                    // directly (synlig#554).  Falling through to the generic
+                    // `import_expression` returns a slice of the caller's
+                    // wire (resolved via `find_wire_in_scope`), so a later
+                    // full-wire `caller = task_temp` mapping would clobber
+                    // this partial write.
+                    const bit_select* bs = any_cast<const bit_select*>(lhs_expr);
+                    std::string base = std::string(bs->VpiName());
+                    RTLIL::SigSpec task_temp = get_task_temp_sig(base);
+                    if (!task_temp.empty()) {
+                        RTLIL::SigSpec idx_sig = import_expression(
+                            bs->VpiIndex(), &task_mapping);
+                        if (idx_sig.is_fully_const()) {
+                            int idx = idx_sig.as_const().as_int();
+                            if (idx >= 0 && idx < task_temp.size())
+                                lhs = task_temp.extract(idx, 1);
+                        } else if (!rhs.empty()) {
+                            // Dynamic index: emit a switch on `idx_sig` with
+                            // one case per valid bit position, each writing
+                            // the 1-bit slice of the task temp wire.  proc
+                            // converts this to the standard scatter pattern.
+                            int n = task_temp.size();
+                            int idx_w = idx_sig.size();
+                            // Cap by both task_temp width and the addressable
+                            // range of the index (2**idx_w).  Bit positions
+                            // outside that range stay at whatever value the
+                            // earlier actions left them.
+                            int max_cases = n;
+                            if (idx_w > 0 && idx_w < 31)
+                                max_cases = std::min(n, 1 << idx_w);
+                            RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
+                            sw->signal = idx_sig;
+                            add_src_attribute(sw->attributes, assign);
+                            RTLIL::SigSpec rhs_bit = rhs;
+                            if (rhs_bit.size() < 1) {
+                                rhs_bit = RTLIL::SigSpec(RTLIL::State::S0, 1);
+                            } else if (rhs_bit.size() > 1) {
+                                rhs_bit = rhs_bit.extract(0, 1);
+                            }
+                            for (int i = 0; i < max_cases; i++) {
+                                RTLIL::CaseRule* cr = new RTLIL::CaseRule;
+                                cr->compare.push_back(
+                                    RTLIL::SigSpec(RTLIL::Const(i, idx_w)));
+                                cr->actions.push_back(RTLIL::SigSig(
+                                    task_temp.extract(i, 1), rhs_bit));
+                                sw->cases.push_back(cr);
+                            }
+                            proc->root_case.switches.push_back(sw);
+                            dyn_bit_select_handled = true;
+                        }
+                    }
+                    if (lhs.empty() && !dyn_bit_select_handled) {
+                        // Not a task output, or width mismatch — fall back.
+                        lhs = import_expression(lhs_expr, &task_mapping);
+                    }
+                } else if (lhs_type == vpiPartSelect) {
+                    // `<task_output>[hi:lo] = rhs` — same redirection as for
+                    // bit_select.
+                    const part_select* ps = any_cast<const part_select*>(lhs_expr);
+                    std::string base;
+                    if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty())
+                        base = std::string(ps->VpiParent()->VpiName());
+                    RTLIL::SigSpec task_temp = get_task_temp_sig(base);
+                    if (!task_temp.empty() && ps->Left_range() && ps->Right_range()) {
+                        RTLIL::SigSpec lr = import_expression(ps->Left_range(),
+                                                              &task_mapping);
+                        RTLIL::SigSpec rr = import_expression(ps->Right_range(),
+                                                              &task_mapping);
+                        if (lr.is_fully_const() && rr.is_fully_const()) {
+                            int l = lr.as_const().as_int();
+                            int r = rr.as_const().as_int();
+                            int lo = std::min(l, r);
+                            int w = std::abs(l - r) + 1;
+                            if (lo >= 0 && lo + w <= task_temp.size())
+                                lhs = task_temp.extract(lo, w);
+                        }
+                    }
+                    if (lhs.empty()) {
+                        lhs = import_expression(lhs_expr, &task_mapping);
                     }
                 } else {
                     lhs = import_expression(lhs_expr, &task_mapping);
                 }
             }
 
+            if (dyn_bit_select_handled) break;
             if (lhs.empty() || rhs.empty()) break;
 
             // Width matching
@@ -5616,7 +5735,16 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             if (!assigned_to_temp) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
                 if (!lhs_name.empty()) {
-                    task_mapping[lhs_name] = rhs;
+                    // Don't clobber a `$0\` task-temp mapping with `rhs` —
+                    // subsequent partial writes in the same body
+                    // (`out[6] = ...`) still need to find the temp wire to
+                    // write into.  See `get_task_temp_sig` above.
+                    auto existing = task_mapping.find(lhs_name);
+                    bool is_task_temp = (existing != task_mapping.end()) &&
+                                        existing->second.is_wire() &&
+                                        existing->second.as_wire()->name.str().substr(0, 3) == "$0\\";
+                    if (!is_task_temp)
+                        task_mapping[lhs_name] = rhs;
                 }
             }
             break;

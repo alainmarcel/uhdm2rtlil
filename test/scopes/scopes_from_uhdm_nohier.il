@@ -109,7 +109,7 @@ module \scopes_test_01
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
-    connect \B $auto$expression.cpp:2794:import_operation$5 [15:0]
+    connect \B $0\task_01$func$dut.sv:52$2.y[15:0]$4
     connect \Y $auto$expression.cpp:2688:import_operation$7
   end
   cell $add $add$dut.sv:42$15
@@ -126,7 +126,7 @@ module \scopes_test_01
     parameter \A_SIGNED 1
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:2688:import_operation$14 [15:0]
+    connect \A $0\task_02$func$dut.sv:53$9.foo.bar.x[15:0]$13
     connect \Y $auto$expression.cpp:2500:import_operation$16
   end
   cell $xor $xor$dut.sv:45$18
@@ -135,8 +135,8 @@ module \scopes_test_01
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A 16'1111111111110101
-    connect \B $auto$expression.cpp:2500:import_operation$16
+    connect \A $0\task_02$func$dut.sv:53$9.foo.x[15:0]$11
+    connect \B $0\task_02$func$dut.sv:53$9.foo.z[15:0]$12
     connect \Y $auto$rtlil.cc:3304:Xor$19
   end
   cell $add $add$dut.sv:57$21

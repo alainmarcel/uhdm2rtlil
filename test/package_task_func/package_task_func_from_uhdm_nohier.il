@@ -149,7 +149,7 @@ module \top
   process $proc$dut.sv:21$4
     assign $0\a \a
     assign $0\P::t$func$dut.sv:21$5.x[31:0]$6 2
-    assign $0\a 2
+    assign $0\a $0\P::t$func$dut.sv:21$5.x[31:0]$6
     sync always
       update \a $0\a
       update \P::t$func$dut.sv:21$5.x 32'x
