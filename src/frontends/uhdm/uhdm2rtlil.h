@@ -534,6 +534,12 @@ struct UhdmImporter {
 
     // Task inlining for combinational processes
     void import_task_call_comb(const UHDM::task_call* tc, RTLIL::Process* proc);
+    // Shared task/function-as-statement inliner — called from
+    // `import_task_call_comb` and from the `vpiFuncCall` dispatch in
+    // `import_statement_comb` (a `void function` used procedurally).
+    void import_tf_call_comb(const UHDM::tf_call* tc,
+                             const UHDM::task_func* task_def,
+                             RTLIL::Process* proc);
     void inline_task_body_comb(const UHDM::any* stmt, RTLIL::Process* proc,
                                std::map<std::string, RTLIL::SigSpec>& task_mapping,
                                const std::string& context, const std::string& block_prefix,
