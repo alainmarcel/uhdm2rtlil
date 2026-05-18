@@ -6771,18 +6771,18 @@ module \true_dpram_sclk
   attribute \src "REG_FILE.v:25.13-25.16"
   attribute \reg 1
   wire width 32 \ram
-  wire $auto$expression.cpp:4209:import_bit_select$456
+  wire $auto$expression.cpp:4282:import_bit_select$456
   attribute \src "REG_FILE.v:28.2-36.5"
-  wire $0\$auto$expression.cpp:4209:import_bit_select$456
+  wire $0\$auto$expression.cpp:4282:import_bit_select$456
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_a
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_b
-  wire $auto$expression.cpp:4209:import_bit_select$458
-  wire $auto$expression.cpp:4209:import_bit_select$460
+  wire $auto$expression.cpp:4282:import_bit_select$458
+  wire $auto$expression.cpp:4282:import_bit_select$460
   wire $auto$rtlil.cc:3262:ReduceBool$463
   wire width 32 $auto$rtlil.cc:3390:Mux$465
-  wire $auto$expression.cpp:4209:import_bit_select$466
+  wire $auto$expression.cpp:4282:import_bit_select$466
   wire $auto$rtlil.cc:3262:ReduceBool$469
   wire width 32 $auto$rtlil.cc:3390:Mux$471
   attribute \src "REG_FILE.v:32.4-32.15"
@@ -6794,7 +6794,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4209:import_bit_select$456
+    connect \Y $auto$expression.cpp:4282:import_bit_select$456
   end
   attribute \src "REG_FILE.v:32.4-32.15"
   cell $shiftx $shiftx$REG_FILE.v:32$459
@@ -6805,7 +6805,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4209:import_bit_select$458
+    connect \Y $auto$expression.cpp:4282:import_bit_select$458
   end
   attribute \src "REG_FILE.v:34.21-34.27"
   cell $shiftx $shiftx$REG_FILE.v:34$461
@@ -6816,7 +6816,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4209:import_bit_select$460
+    connect \Y $auto$expression.cpp:4282:import_bit_select$460
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:34$462
     parameter \A_SIGNED 0
@@ -6828,7 +6828,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:34$464
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4209:import_bit_select$460 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$460 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$463
     connect \Y $auto$rtlil.cc:3390:Mux$465
   end
@@ -6841,7 +6841,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:4209:import_bit_select$466
+    connect \Y $auto$expression.cpp:4282:import_bit_select$466
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:35$468
     parameter \A_SIGNED 0
@@ -6853,26 +6853,26 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:35$470
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4209:import_bit_select$466 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$466 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$469
     connect \Y $auto$rtlil.cc:3390:Mux$471
   end
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
   process $proc$REG_FILE.v:28$455
-    assign $0\$auto$expression.cpp:4209:import_bit_select$456 $auto$expression.cpp:4209:import_bit_select$456
+    assign $0\$auto$expression.cpp:4282:import_bit_select$456 $auto$expression.cpp:4282:import_bit_select$456
     assign $0\q_a $auto$rtlil.cc:3390:Mux$465
     assign $0\q_b $auto$rtlil.cc:3390:Mux$471
     attribute \src "REG_FILE.v:30.3-33.6"
     switch \we_a
     attribute \src "REG_FILE.v:30.3-33.6"
       case 1'1
-        assign $0\$auto$expression.cpp:4209:import_bit_select$456 \data_a [0]
+        assign $0\$auto$expression.cpp:4282:import_bit_select$456 \data_a [0]
     attribute \src "REG_FILE.v:30.3-33.6"
       case 
     end
     sync posedge \clk
-      update $auto$expression.cpp:4209:import_bit_select$456 $0\$auto$expression.cpp:4209:import_bit_select$456
+      update $auto$expression.cpp:4282:import_bit_select$456 $0\$auto$expression.cpp:4282:import_bit_select$456
       update \q_a $0\q_a
       update \q_b $0\q_b
   end

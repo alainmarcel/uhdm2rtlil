@@ -3063,6 +3063,79 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return RTLIL::SigSpec();
             }
             break;
+        case vpiStreamRLOp:
+        case vpiStreamLROp:
+            // Stream operators `{<<{...}}` (right-to-left) and
+            // `{>>{...}}` (left-to-right).  Surelog represents the
+            // streamed value as a single `vpiConcatOp` operand
+            // (`{<<{val}}` → streamRL(concat(val))); on the LHS of an
+            // assignment these can also unpack into multiple targets,
+            // but that's not what jeras/UHDM-tests' `test_reverse.sv`
+            // uses, so we only handle the RHS / value form here.
+            //
+            // Slice size (e.g. `{<<8{val}}`) lives in `uhdm_op->Typespec()`
+            // when set; an absent slice size means "1 bit".
+            {
+                if (operands.empty()) {
+                    log_warning("Stream op with no operand\n");
+                    return RTLIL::SigSpec();
+                }
+                // The single operand is already the flattened source
+                // value (the inner concat collapses to one SigSpec).
+                RTLIL::SigSpec src = operands[0];
+                int n = src.size();
+                int slice_w = 1;
+                if (uhdm_op->Typespec()) {
+                    if (auto ats = uhdm_op->Typespec()->Actual_typespec())
+                        slice_w = std::max(1, get_width_from_typespec(ats, inst));
+                }
+                // `{>>{val}}` with no slice size is a no-op identity;
+                // with a slice size it groups into `slice_w` chunks
+                // (still in source order — see LRM §11.4.14.2).
+                if (op_type == vpiStreamLROp && slice_w == 1)
+                    return src;
+                // Build the result from `slice_w`-wide chunks of `src`,
+                // emitted in reverse chunk order for `<<` (and in
+                // source order for `>>` with slice_w > 1).  Any leftover
+                // bits at the high end of `src` keep their position
+                // (LRM: "Source bits that are not part of any slice are
+                // ignored" — actually they are *appended unchanged* at
+                // the top of the result; replicate that).
+                int num_full = n / slice_w;
+                int leftover = n - num_full * slice_w;
+                RTLIL::SigSpec result;
+                if (op_type == vpiStreamRLOp) {
+                    // Reverse-order chunks: chunk[0] becomes the HIGHEST chunk.
+                    // SigSpec.append appends at the MSB-end by convention here
+                    // (see vpiConcatOp above which iterates in reverse to put
+                    // the first operand at the top).  We want chunk[0]
+                    // (low-order in source) to end up at the top.
+                    // Iterate i from 0..num_full-1 and prepend.
+                    for (int i = 0; i < num_full; i++) {
+                        RTLIL::SigSpec chunk = src.extract(i * slice_w, slice_w);
+                        // Build incrementally — earlier chunks land at
+                        // higher positions, so append to the LSB side.
+                        RTLIL::SigSpec next;
+                        next.append(chunk);
+                        next.append(result);
+                        result = next;
+                    }
+                    // Leftover bits stay at their source MSB position.
+                    if (leftover > 0)
+                        result.append(src.extract(num_full * slice_w, leftover));
+                } else {
+                    // Source-order chunks (only matters when slice_w > 1).
+                    for (int i = 0; i < num_full; i++)
+                        result.append(src.extract(i * slice_w, slice_w));
+                    if (leftover > 0)
+                        result.append(src.extract(num_full * slice_w, leftover));
+                }
+                if (mode_debug)
+                    log("    Stream op type=%d slice_w=%d n=%d "
+                        "result_size=%d\n", op_type, slice_w, n, result.size());
+                return result;
+            }
+            break;
         case vpiCastOp:
             // SV size/type cast: N'(expr), byte'(expr), int'(expr),
             // typename'(expr), etc.  Width comes from the cast's typespec;
