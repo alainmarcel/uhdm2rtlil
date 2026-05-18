@@ -5869,6 +5869,37 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             }
             break;
         }
+        case vpiFor: {
+            // For loops inside task / `void function` bodies (synlig#686 —
+            // orv64's `pygmy_func::lru8_get_replace_way_id` runs the
+            // "find empty way" loop, with `break`, inside a `function
+            // automatic void`).  Delegate to the comb for-loop unroller
+            // so static unrolling + `body_has_break` reverse iteration
+            // both kick in.  Bridge `task_mapping` into
+            // `current_comb_values` first so the body's references to
+            // task params (`way_valid`, `way_enable`) and outputs
+            // (`has_empty_way`, `replace_way_id`) resolve to the
+            // caller-side SigSpecs the standard `import_assignment_comb`
+            // path expects.
+            std::map<std::string, RTLIL::SigSpec> saved;
+            for (auto& [name, sig] : task_mapping) {
+                auto it = current_comb_values.find(name);
+                if (it != current_comb_values.end())
+                    saved[name] = it->second;
+                current_comb_values[name] = sig;
+            }
+            import_statement_comb(stmt, proc);
+            // Restore previous comb-value bindings; anything newly
+            // introduced via task_mapping is dropped on exit.
+            for (auto& [name, sig] : task_mapping) {
+                auto sit = saved.find(name);
+                if (sit != saved.end())
+                    current_comb_values[name] = sit->second;
+                else
+                    current_comb_values.erase(name);
+            }
+            break;
+        }
         default:
             log_warning("Unsupported statement type %d in task body\n", stmt->VpiType());
             break;
