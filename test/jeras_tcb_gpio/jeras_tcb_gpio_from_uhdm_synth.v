@@ -2059,6 +2059,8 @@ module tcb_gpio_wrap(clk, rst, gpio_o, gpio_e, gpio_i, bus_vld, bus_wen, bus_adr
   wire [14:0] \bus.adr ;
   (* src = "tcb_if.sv:36.18-36.21" *)
   wire [3:0] \bus.ben ;
+  (* src = "tcb_if.sv:28.16-28.19" *)
+  wire \bus.clk ;
   (* src = "tcb_if.sv:39.18-39.21" *)
   wire \bus.err ;
   (* src = "tcb_if.sv:44.18-44.21" *)
@@ -2069,6 +2071,8 @@ module tcb_gpio_wrap(clk, rst, gpio_o, gpio_e, gpio_i, bus_vld, bus_wen, bus_adr
   wire \bus.rdy ;
   (* src = "tcb_if.sv:45.18-45.21" *)
   wire \bus.rsp ;
+  (* src = "tcb_if.sv:29.16-29.19" *)
+  wire \bus.rst ;
   (* src = "tcb_if.sv:43.18-43.21" *)
   wire \bus.trn ;
   (* src = "tcb_if.sv:33.18-33.21" *)
@@ -2077,18 +2081,27 @@ module tcb_gpio_wrap(clk, rst, gpio_o, gpio_e, gpio_i, bus_vld, bus_wen, bus_adr
   wire [31:0] \bus.wdt ;
   (* src = "tcb_if.sv:34.18-34.21" *)
   wire \bus.wen ;
-  wire rdy;
-  wire trn;
-  wire vld;
+  \$_AND_  _0_ (
+    .A(bus_vld),
+    .B(\bus.rdy ),
+    .Y(\bus.trn )
+  );
+  \$_ORNOT_  _1_ (
+    .A(\bus.rdy ),
+    .B(bus_vld),
+    .Y(\bus.idl )
+  );
   \$paramod\tcb_gpio\GW=s32'00000000000000000000000000100000  gpio (
     .\bus.adr (bus_adr),
     .\bus.ben (bus_ben),
+    .\bus.clk (clk),
     .\bus.err (\bus.err ),
-    .\bus.idl (1'hx),
+    .\bus.idl (\bus.idl ),
     .\bus.rdt (\bus.rdt ),
     .\bus.rdy (\bus.rdy ),
     .\bus.rsp (1'hx),
-    .\bus.trn (1'hx),
+    .\bus.rst (rst),
+    .\bus.trn (\bus.trn ),
     .\bus.vld (bus_vld),
     .\bus.wdt (bus_wdt),
     .\bus.wen (bus_wen),
@@ -2096,12 +2109,9 @@ module tcb_gpio_wrap(clk, rst, gpio_o, gpio_e, gpio_i, bus_vld, bus_wen, bus_adr
     .gpio_i(gpio_i),
     .gpio_o(gpio_o)
   );
-  assign trn = 1'hx;
-  assign rdy = 1'hx;
-  assign vld = 1'hx;
+  assign \bus.clk  = clk;
+  assign \bus.rst  = rst;
   assign \bus.rsp  = 1'hx;
-  assign \bus.idl  = 1'hx;
-  assign \bus.trn  = 1'hx;
   assign \bus.wdt  = bus_wdt;
   assign \bus.ben  = bus_ben;
   assign \bus.adr  = bus_adr;

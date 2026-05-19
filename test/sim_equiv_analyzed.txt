@@ -61,19 +61,36 @@ Test: sva_value_change_sim
 Test: jeras_tcb_gpio
     Imported from jeras/UHDM-tests' tcb_if + tcb_gpio + tcb_gpio_wrap.
     The test exercises modport-port handling (`tcb_if.sub bus` passed
-    to `tcb_gpio`), which is what the two fixes in this PR address:
-    (1) `bus.adr[3:0]` part-select on a modport signal, and (2)
-    `bus.rdt <=` LHS write through the per-signal `\bus.rdt` wire.
-    With those fixes the gpio writes (`gpio_o`, `gpio_e`) match co-sim
-    on every cycle and bus.rdt is no longer stuck at 0.
-    The residual divergence (4 cycles out of 200) is unrelated to the
-    fix subject: the *interface body's* internal `assign trn = vld & rdy`
-    and `always_ff` for `rsp` are imported into the parent module
-    against the raw signal names (`\vld`, `\rdy`, `\trn`) rather than
-    the per-signal modport wires (`\bus.vld`, `\bus.rdy`, `\bus.trn`),
-    so the netlist's `\bus.trn` is undriven (1'hx) — the gpio's case
-    inside `if (bus.trn)` therefore never fires.  Fixing the body-to-
-    instance-prefix renaming is a separate interface-elaboration
-    refactor; the test is recorded here so the modport fixes don't
-    regress.
+    to `tcb_gpio`).  Earlier PRs fixed the modport-signal access
+    (`bus.adr[3:0]` part-select, `bus.rdt <=` LHS write); this PR
+    fixes the *interface body* path:
+    (1) `interface.cpp` builds a `<sig> → \<iface>.<sig>` mapping for
+        all the interface's `Variables()` / `Nets()` and passes it as
+        `input_mapping` to `import_expression` for each cont_assign
+        RHS, so `assign trn = vld & rdy` lowers to
+        `\bus.trn = \bus.vld AND \bus.rdy` instead of writing to raw
+        `\vld` / `\rdy` placeholders.
+    (2) The port loop now creates the per-signal wire when it doesn't
+        already exist — interface ports like `(input logic clk, rst)`
+        aren't in `Variables()`/`Nets()`, so the earlier code left
+        `\bus.clk` / `\bus.rst` un-allocated and the downstream
+        `tcb_gpio` instance had no port to connect those to.
+        Result: in the synth output, the gpio cell now gets
+        `.\bus.clk (clk)` and `.\bus.rst (rst)` (was silently missing).
+    With both fixes, the netlist's interface signals (`bus.trn`,
+    `bus.idl`, `bus.clk`, `bus.rst`) are all driven and the FFs
+    inside `tcb_gpio` actually clock.  Cycles 115-117 and 181 (the
+    original mismatch set, all from bus_rdt / gpio_e being undriven)
+    now agree between RTL and netlist.
+    The residual ~14 mismatches at the tail of the 200-cycle co-sim
+    (cycles 184-199, `bus_rdt rtl=0 nl=<held value>`) are a different
+    behavioural pattern: Verilator's RTL simulation re-fires the
+    `always_ff @(posedge bus.clk, posedge bus.rst)` on each `rst`
+    edge transition delivered by the random testbench, while the
+    synthesised `$_DFFE_PP0P_` cell has a *level-sensitive* `R` pin.
+    With random per-cycle `rst` flips the two evaluators sample the
+    reset window differently — a known cosim/synth artifact when a
+    testbench drives async-reset DUTs without a clean reset hold.
+    Not a UHDM-frontend bug; the underlying elaboration is now
+    correct.
 

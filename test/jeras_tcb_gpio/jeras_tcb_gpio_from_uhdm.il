@@ -219,25 +219,26 @@ module \tcb_gpio_wrap
   wire \bus.idl
   attribute \src "tcb_if.sv:45.18-45.21"
   wire \bus.rsp
-  wire \vld
-  wire \rdy
-  wire \trn
+  attribute \src "tcb_if.sv:29.16-29.19"
+  wire \bus.rst
   wire $auto$rtlil.cc:3255:Not$16
+  attribute \src "tcb_if.sv:28.16-28.19"
+  wire \bus.clk
   cell $and $and$tcb_if.sv:48$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \vld
-    connect \B \rdy
+    connect \A \bus_vld
+    connect \B \bus.rdy
     connect \Y \bus.trn
   end
   cell $not $not$tcb_if.sv:50$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \vld
+    connect \A \bus_vld
     connect \Y $auto$rtlil.cc:3255:Not$16
   end
   cell $or $or$tcb_if.sv:50$17
@@ -247,13 +248,15 @@ module \tcb_gpio_wrap
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3255:Not$16
-    connect \B \trn
+    connect \B \bus.trn
     connect \Y \bus.idl
   end
   cell $paramod\tcb_gpio\GW=s32'00000000000000000000000000100000 \gpio
     connect \gpio_o \gpio_o
     connect \gpio_e \gpio_e
     connect \gpio_i \gpio_i
+    connect \bus.clk \clk
+    connect \bus.rst \rst
     connect \bus.vld \bus_vld
     connect \bus.wen \bus_wen
     connect \bus.adr \bus_adr
@@ -266,6 +269,8 @@ module \tcb_gpio_wrap
     connect \bus.idl \bus.idl
     connect \bus.rsp \bus.rsp
   end
+  connect \bus.clk \clk
+  connect \bus.rst \rst
   connect \bus.wdt \bus_wdt
   connect \bus.ben \bus_ben
   connect \bus.adr \bus_adr
