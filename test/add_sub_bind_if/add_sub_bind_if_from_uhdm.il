@@ -15,6 +15,14 @@ module \ADD_SUB
   wire width 9 output 5 \result0
   attribute \src "dut.sv:27.13-27.16"
   wire \add_sub_if0.clk
+  attribute \src "dut.sv:28.15-28.16"
+  wire width 8 \add_sub_if0.a
+  attribute \src "dut.sv:29.15-29.16"
+  wire width 8 \add_sub_if0.b
+  attribute \src "dut.sv:30.15-30.20"
+  wire \add_sub_if0.doAdd
+  attribute \src "dut.sv:31.15-31.21"
+  wire width 9 \add_sub_if0.result
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
   wire width 9 $auto$expression.cpp:2688:import_operation$2
@@ -57,5 +65,9 @@ module \ADD_SUB
     connect \Q \result0
     connect \CLK \clk
   end
+  connect \add_sub_if0.result \result0
+  connect \add_sub_if0.doAdd \doAdd0
+  connect \add_sub_if0.b \b0
+  connect \add_sub_if0.a \a0
   connect \add_sub_if0.clk \clk
 end

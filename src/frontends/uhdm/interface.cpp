@@ -243,6 +243,33 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
 
+            // Build a mapping from the interface's raw signal names
+            // (`vld`, `rdy`, `trn`, ...) to their per-instance wires
+            // (`\<iface>.vld`, etc.).  Used as `input_mapping` for
+            // import_expression below so the interface body's
+            // cont_assigns / processes resolve their RHS refs to the
+            // parent's per-signal wires rather than auto-creating raw
+            // `\vld` / `\rdy` placeholders.
+            //
+            // Imported from jeras/UHDM-tests/tcb_if.sv: the interface
+            // computes `assign trn = vld & rdy;` and an `always_ff`
+            // for `rsp`; without the rename `bus.trn` stays undriven
+            // (1'hx) and the gpio's `if (bus.trn)` never fires.
+            std::map<std::string, RTLIL::SigSpec> iface_sig_map;
+            auto add_iface_sig = [&](const std::string& sig_name) {
+                if (sig_name.empty() || iface_sig_map.count(sig_name)) return;
+                std::string full = interface_name + "." + sig_name;
+                RTLIL::Wire* w = name_map.count(full) ? name_map[full] : nullptr;
+                if (!w) w = module->wire(RTLIL::escape_id(full));
+                if (w) iface_sig_map[sig_name] = RTLIL::SigSpec(w);
+            };
+            if (interface->Variables())
+                for (auto v : *interface->Variables())
+                    add_iface_sig(std::string(v->VpiName()));
+            if (interface->Nets())
+                for (auto n : *interface->Nets())
+                    add_iface_sig(std::string(n->VpiName()));
+
             // Apply the interface's cont_assign body (`assign x = X;` etc.)
             // by rewriting each LHS `ref_obj(sig)` to drive the parent's
             // `\<iface>.<sig>` wire.  Without this the per-signal wires
@@ -260,7 +287,8 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full] : nullptr;
                     if (!lw) lw = module->wire(RTLIL::escape_id(full));
                     if (!lw) continue;
-                    RTLIL::SigSpec rhs = import_expression(ca->Rhs());
+                    RTLIL::SigSpec rhs = import_expression(ca->Rhs(),
+                                                          &iface_sig_map);
                     if (rhs.size() == 0) continue;
                     if (rhs.size() < lw->width)
                         rhs.extend_u0(lw->width, lw->is_signed);
@@ -284,6 +312,16 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             // `import_expression` on it would create a stray 1-bit
             // `\x` placeholder.  Look up the per-signal wire by
             // `<iface>.<port>` directly instead.
+            //
+            // When the per-signal wire doesn't exist yet (interface
+            // *port* signals like `clk`/`rst` that aren't in
+            // `Variables()` or `Nets()`), create it on the fly so the
+            // downstream `tcb_gpio` instance can connect to `bus.clk`
+            // and `bus.rst`.  Without this the gpio's FFs end up
+            // unclocked (`\bus.clk` floating) and `bus.rdt` stays at
+            // its initial value across the whole simulation —
+            // imported from jeras/UHDM-tests/tcb_if.sv where the
+            // interface declares `(input logic clk, input logic rst)`.
             if (interface->Ports()) {
                 for (auto p : *interface->Ports()) {
                     if (!p->High_conn()) continue;
@@ -293,11 +331,26 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     std::string full = interface_name + "." + port_name;
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full]
                                        : module->wire(RTLIL::escape_id(full));
-                    if (!lw) continue;
                     RTLIL::SigSpec hi = import_expression(
                         any_cast<const UHDM::expr*>(p->High_conn()));
-                    RTLIL::SigSpec lo(lw);
                     if (hi.size() == 0) continue;
+                    if (!lw) {
+                        // Create the per-signal wire for this port,
+                        // sized to match the HighConn.  `\<iface>.clk`
+                        // / `\<iface>.rst` aren't declared as
+                        // `Variables()` / `Nets()` of the interface
+                        // body so the earlier loops skipped them.
+                        lw = create_wire(full, hi.size());
+                        if (lw) {
+                            add_src_attribute(lw->attributes, p);
+                            name_map[full] = lw;
+                            if (mode_debug)
+                                log("UHDM: Created interface port wire %s "
+                                    "(width=%d)\n", full.c_str(), hi.size());
+                        }
+                    }
+                    if (!lw) continue;
+                    RTLIL::SigSpec lo(lw);
                     int w = std::min(hi.size(), lo.size());
                     if (hi.size() > w) hi = hi.extract(0, w);
                     if (lo.size() > w) lo = lo.extract(0, w);
