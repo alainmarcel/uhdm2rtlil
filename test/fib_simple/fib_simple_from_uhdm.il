@@ -11,8 +11,8 @@ module \gate
   attribute \src "dut.sv:28.18-28.35"
   wire width 32 \fib_wrap$func$dut.sv:28$3.o
   cell $add $add$dut.sv:21$10
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

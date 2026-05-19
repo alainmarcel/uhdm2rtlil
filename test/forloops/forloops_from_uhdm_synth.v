@@ -72,7 +72,7 @@ module forloops(clk, a, b, p, q, x, y);
     .D(q[3]),
     .Q(x[1])
   );
-  assign k = 32'd2;
+  assign k = 32'd4;
   assign { y[3], y[0] } = { 1'h0, b };
   assign { x[3:2], x[0] } = { 1'h0, p[1:0] };
   assign q[1:0] = { a, b };

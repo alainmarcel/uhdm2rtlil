@@ -26,7 +26,7 @@ module \ADD_SUB
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
   wire width 9 $auto$expression.cpp:2688:import_operation$2
-  wire width 9 $auto$expression.cpp:2729:import_operation$4
+  wire width 9 $auto$expression.cpp:2742:import_operation$4
   cell $sub $sub$dut.sv:21$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \ADD_SUB
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a0 }
     connect \B { 1'0 \b0 }
-    connect \Y $auto$expression.cpp:2729:import_operation$4
+    connect \Y $auto$expression.cpp:2742:import_operation$4
   end
   cell $add $add$dut.sv:19$3
     parameter \A_SIGNED 0
@@ -58,7 +58,7 @@ module \ADD_SUB
         assign $0\result0[8:0] $auto$expression.cpp:2688:import_operation$2
     attribute \src "dut.sv:21.9-21.27"
       case 
-        assign $0\result0[8:0] $auto$expression.cpp:2729:import_operation$4
+        assign $0\result0[8:0] $auto$expression.cpp:2742:import_operation$4
     end
     sync posedge \clk
       update \result0 $0\result0[8:0]

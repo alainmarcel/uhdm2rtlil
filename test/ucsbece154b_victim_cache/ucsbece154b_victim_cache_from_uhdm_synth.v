@@ -54,6 +54,12 @@ module ucsbece154b_victim_cache(raddr_i, dll_q_flat_i, lru_q_i, mru_q_i, read_in
   wire [5:0] \dll_q[2] ;
   (* src = "dut.sv:44.13-44.18" *)
   wire [5:0] \dll_q[3] ;
+  (* src = "dut.sv:31.9-31.10" *)
+  wire signed [31:0] i;
+  (* src = "dut.sv:32.9-32.10" *)
+  wire signed [31:0] j;
+  (* src = "dut.sv:33.9-33.10" *)
+  wire signed [31:0] k;
   (* src = "dut.sv:46.13-46.18" *)
   (* wiretype = "\\way_index_t" *)
   wire [1:0] lru_d;
@@ -131,6 +137,9 @@ module ucsbece154b_victim_cache(raddr_i, dll_q_flat_i, lru_q_i, mru_q_i, read_in
   assign mru_d = mru_q_i;
   assign lru_q = lru_q_i;
   assign lru_d = lru_q_i;
+  assign k = 32'd4;
+  assign j = 32'd4;
+  assign i = 32'd4;
   assign rtag = raddr_i[1];
   assign dll_d_flat_o = dll_q_flat_i;
   assign mru_d_o = mru_q_i;

@@ -56,6 +56,8 @@ module gen_test2(clk, a, b, y);
   (* src = "dut.sv:8.11-8.16" *)
   (* unused_bits = "1 2 3 4 5 6 7" *)
   wire [8:0] carry;
+  (* src = "dut.sv:7.9-7.10" *)
+  wire signed [31:0] i;
   \$_NAND_  _36_ (
     .A(b[7]),
     .B(a[7]),
@@ -341,4 +343,5 @@ module gen_test2(clk, a, b, y);
   );
   assign _00_[8] = y[8];
   assign carry[0] = 1'h0;
+  assign i = 32'd8;
 endmodule

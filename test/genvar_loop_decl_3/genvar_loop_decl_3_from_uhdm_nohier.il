@@ -12,8 +12,8 @@ module \gate
   wire width 32 signed \gen.y
   wire width 32 $auto$expression.cpp:2688:import_operation$3
   cell $add $add$dut.sv:10$4
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -48,8 +48,8 @@ module \gold
   wire width 32 signed \gen.y
   wire width 32 $auto$expression.cpp:2688:import_operation$8
   cell $add $add$dut.sv:24$9
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

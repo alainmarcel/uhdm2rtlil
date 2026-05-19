@@ -25,7 +25,7 @@ module \scopes_test_01
   attribute \src "dut.sv:52.3-52.13"
   wire width 16 $0\task_01$func$dut.sv:52$2.y[15:0]$4
   attribute \unused_bits "16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67"
-  wire width 68 $auto$expression.cpp:2794:import_operation$5
+  wire width 68 $auto$expression.cpp:2807:import_operation$5
   wire width 16 $auto$expression.cpp:2688:import_operation$7
   attribute \nosync 1
   attribute \src "dut.sv:36.15-36.16"
@@ -61,7 +61,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y { $auto$expression.cpp:2794:import_operation$5 [67:16] $0\task_01$func$dut.sv:52$2.y[15:0]$4 }
+    connect \Y { $auto$expression.cpp:2807:import_operation$5 [67:16] $0\task_01$func$dut.sv:52$2.y[15:0]$4 }
   end
   cell $add $add$dut.sv:31$8
     parameter \A_SIGNED 0
@@ -154,7 +154,7 @@ module \scopes_test_01
   connect \task_02$func$dut.sv:53$9.foo.x 16'1111111111110101
   connect \func_01$func$dut.sv:60$22.x 16'x
   connect \task_02$func$dut.sv:53$9.a 4'x
-  connect $auto$expression.cpp:2794:import_operation$5 [15:0] $0\task_01$func$dut.sv:52$2.y[15:0]$4
+  connect $auto$expression.cpp:2807:import_operation$5 [15:0] $0\task_01$func$dut.sv:52$2.y[15:0]$4
   connect \task_01$func$dut.sv:52$2.y 16'x
   connect \func_02$func$dut.sv:61$33.blk.func_02 16'0000000000000000
   connect \task_01$func$dut.sv:52$2.a 4'x

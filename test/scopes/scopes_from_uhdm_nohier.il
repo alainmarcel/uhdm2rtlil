@@ -23,7 +23,7 @@ module \scopes_test_01
   wire width 16 \task_01$func$dut.sv:52$2.y
   attribute \src "dut.sv:52.3-52.13"
   wire width 16 $0\task_01$func$dut.sv:52$2.y[15:0]$4
-  wire width 68 $auto$expression.cpp:2794:import_operation$5
+  wire width 68 $auto$expression.cpp:2807:import_operation$5
   wire width 16 $auto$expression.cpp:2688:import_operation$7
   attribute \nosync 1
   attribute \src "dut.sv:36.15-36.16"
@@ -87,7 +87,7 @@ module \scopes_test_01
   wire width 16 \func_02$func$dut.sv:61$33.$result
   attribute \src "dut.sv:61.7-61.20"
   wire width 16 $0\func_02$func$dut.sv:61$33.$result[15:0]$36
-  wire width 16 $auto$expression.cpp:2729:import_operation$37
+  wire width 16 $auto$expression.cpp:2742:import_operation$37
   attribute \src "dut.sv:20.16-20.23"
   wire width 16 \func_02$func$dut.sv:61$33.blk.func_02
   attribute \src "dut.sv:61.7-61.20"
@@ -100,7 +100,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y $auto$expression.cpp:2794:import_operation$5
+    connect \Y $auto$expression.cpp:2807:import_operation$5
   end
   cell $add $add$dut.sv:31$8
     parameter \A_SIGNED 0
@@ -187,7 +187,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 16
     connect \A $auto$rtlil.cc:3304:Xor$19
     connect \B $auto$rtlil.cc:3304:Xor$32
-    connect \Y $auto$expression.cpp:2729:import_operation$37
+    connect \Y $auto$expression.cpp:2742:import_operation$37
   end
   attribute \src "dut.sv:49.2-62.5"
   process $proc$dut.sv:49$1
@@ -196,7 +196,7 @@ module \scopes_test_01
     assign $0\x 16'0000000000111100
     assign $0\y 16'1111111111110101
     assign $0\task_01$func$dut.sv:52$2.a[3:0]$3 \k
-    assign $0\task_01$func$dut.sv:52$2.y[15:0]$4 $auto$expression.cpp:2794:import_operation$5 [15:0]
+    assign $0\task_01$func$dut.sv:52$2.y[15:0]$4 $auto$expression.cpp:2807:import_operation$5 [15:0]
     assign $0\x $auto$expression.cpp:2688:import_operation$7
     assign $0\task_02$func$dut.sv:53$9.a[3:0]$10 \k
     assign $0\task_02$func$dut.sv:53$9.foo.x[15:0]$11 16'1111111111110101
@@ -215,8 +215,8 @@ module \scopes_test_01
     assign $0\func_02$func$dut.sv:61$33.x[15:0]$34 $auto$rtlil.cc:3304:Xor$19
     assign $0\func_02$func$dut.sv:61$33.y[15:0]$35 $auto$rtlil.cc:3304:Xor$32
     assign $0\func_02$func$dut.sv:61$33.blk.func_02[15:0]$39 16'0000000000000000
-    assign $0\func_02$func$dut.sv:61$33.$result[15:0]$36 $auto$expression.cpp:2729:import_operation$37
-    assign $0\y $auto$expression.cpp:2729:import_operation$37
+    assign $0\func_02$func$dut.sv:61$33.$result[15:0]$36 $auto$expression.cpp:2742:import_operation$37
+    assign $0\y $auto$expression.cpp:2742:import_operation$37
     sync always
       update \x $0\x
       update \y $0\y

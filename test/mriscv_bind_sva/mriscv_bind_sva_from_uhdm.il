@@ -21,7 +21,7 @@ module \true_dpram_sclk
   attribute \src "REG_FILE.v:25.13-25.16"
   attribute \reg 1
   wire width 32 \ram
-  wire $auto$expression.cpp:4282:import_bit_select$456
+  wire $auto$expression.cpp:4295:import_bit_select$456
   wire $auto$rtlil.cc:3262:ReduceBool$463
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \unused_bits "0"
@@ -30,7 +30,7 @@ module \true_dpram_sclk
   attribute \unused_bits "0"
   wire width 32 $0\q_b
   wire $auto$rtlil.cc:3262:ReduceBool$469
-  wire $auto$expression.cpp:4282:import_bit_select$466
+  wire $auto$expression.cpp:4295:import_bit_select$466
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
   cell $sdff $auto$ff.cc:337:slice$2384
@@ -40,7 +40,7 @@ module \true_dpram_sclk
     parameter \WIDTH 1
     connect \CLK \clk
     connect \SRST $auto$rtlil.cc:3262:ReduceBool$463
-    connect \D $auto$expression.cpp:4282:import_bit_select$456
+    connect \D $auto$expression.cpp:4295:import_bit_select$456
     connect \Q \q_a [0]
   end
   attribute \src "REG_FILE.v:28.2-36.5"
@@ -52,7 +52,7 @@ module \true_dpram_sclk
     parameter \WIDTH 1
     connect \CLK \clk
     connect \SRST $auto$rtlil.cc:3262:ReduceBool$469
-    connect \D $auto$expression.cpp:4282:import_bit_select$466
+    connect \D $auto$expression.cpp:4295:import_bit_select$466
     connect \Q \q_b [0]
   end
   attribute \src "REG_FILE.v:34.21-34.27"
@@ -64,7 +64,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4282:import_bit_select$456
+    connect \Y $auto$expression.cpp:4295:import_bit_select$456
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:34$462
     parameter \A_SIGNED 0
@@ -76,7 +76,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:34$464
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$456 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4295:import_bit_select$456 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$463
     connect \Y $0\q_a
   end
@@ -89,7 +89,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:4282:import_bit_select$466
+    connect \Y $auto$expression.cpp:4295:import_bit_select$466
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:35$468
     parameter \A_SIGNED 0
@@ -101,7 +101,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:35$470
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$466 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4295:import_bit_select$466 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$469
     connect \Y $0\q_b
   end
@@ -123,7 +123,7 @@ module \true_dpram_sclk
     connect \CLK \clk
     connect \EN \we_a
     connect \D \data_a [0]
-    connect \Q $auto$expression.cpp:4282:import_bit_select$456
+    connect \Q $auto$expression.cpp:4295:import_bit_select$456
   end
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
@@ -533,7 +533,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 $auto$rtlil.cc:3390:Mux$548
   wire width 4 $auto$rtlil.cc:3390:Mux$550
-  wire width 4 $auto$expression.cpp:2844:import_operation$551
+  wire width 4 $auto$expression.cpp:2857:import_operation$551
   wire width 4 $procmux$1766_Y
   wire width 4 $procmux$1797_Y
   wire $procmux$1921_Y
@@ -1076,7 +1076,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:2844:import_operation$551
+    connect \Y $auto$expression.cpp:2857:import_operation$551
   end
   cell $add $add$MEMORY_INTERFACE.v:255$554
     parameter \A_SIGNED 0
@@ -1643,7 +1643,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \WIDTH 4
     parameter \S_WIDTH 3
     connect \A 4'0000
-    connect \B { 4'1111 $auto$rtlil.cc:3390:Mux$550 $auto$expression.cpp:2844:import_operation$551 }
+    connect \B { 4'1111 $auto$rtlil.cc:3390:Mux$550 $auto$expression.cpp:2857:import_operation$551 }
     connect \S { $procmux$1701_CMP $procmux$1687_CMP $procmux$1673_CMP }
     connect \Y $procmux$1706_Y
   end
@@ -7480,7 +7480,7 @@ module \divM
   attribute \src "IRQ.v:27.23-27.30"
   wire $logic_not$IRQ.v:27.23-27.30$38_Y
   wire $auto$rtlil.cc:3323:LogicOr$426
-  wire width 64 $auto$expression.cpp:2729:import_operation$427
+  wire width 64 $auto$expression.cpp:2742:import_operation$427
   attribute \src "IRQ.v:31.22-31.44"
   wire $eq$IRQ.v:31$429_Y
   wire width 32 $auto$expression.cpp:2688:import_operation$431
@@ -7518,7 +7518,7 @@ module \divM
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \freq }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2729:import_operation$427
+    connect \Y $auto$expression.cpp:2742:import_operation$427
   end
   attribute \src "IRQ.v:31.22-31.44"
   cell $eq $eq$IRQ.v:31$430
@@ -7528,7 +7528,7 @@ module \divM
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \divcounter
-    connect \B $auto$expression.cpp:2729:import_operation$427
+    connect \B $auto$expression.cpp:2742:import_operation$427
     connect \Y $eq$IRQ.v:31$429_Y
   end
   cell $add $add$IRQ.v:35$432

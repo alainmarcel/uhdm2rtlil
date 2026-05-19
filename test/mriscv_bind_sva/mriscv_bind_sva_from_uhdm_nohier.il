@@ -744,13 +744,13 @@ module \ALU_sXXx
   attribute \src "ALU.v:622.21-622.31"
   wire $eq$ALU.v:622$22_Y
   wire $auto$rtlil.cc:3313:Ge$25
-  wire width 32 $auto$expression.cpp:2866:import_operation$26
-  wire width 32 $auto$expression.cpp:2844:import_operation$28
-  wire width 64 $auto$expression.cpp:2729:import_operation$30
+  wire width 32 $auto$expression.cpp:2879:import_operation$26
+  wire width 32 $auto$expression.cpp:2857:import_operation$28
+  wire width 64 $auto$expression.cpp:2742:import_operation$30
   wire $auto$rtlil.cc:3310:Ne$33
-  wire width 32 $auto$expression.cpp:2866:import_operation$34
-  wire width 32 $auto$expression.cpp:2844:import_operation$36
-  wire width 64 $auto$expression.cpp:2729:import_operation$38
+  wire width 32 $auto$expression.cpp:2879:import_operation$34
+  wire width 32 $auto$expression.cpp:2857:import_operation$36
+  wire width 64 $auto$expression.cpp:2742:import_operation$38
   attribute \src "ALU.v:634.26-634.35"
   wire $eq$ALU.v:634$40_Y
   attribute \src "ALU.v:616.13-616.19"
@@ -790,7 +790,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2866:import_operation$26
+    connect \Y $auto$expression.cpp:2879:import_operation$26
   end
   cell $shl $shl$ALU.v:625$29
     parameter \A_SIGNED 0
@@ -800,7 +800,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2844:import_operation$28
+    connect \Y $auto$expression.cpp:2857:import_operation$28
   end
   cell $sub $sub$ALU.v:628$31
     parameter \A_SIGNED 0
@@ -810,7 +810,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2729:import_operation$30
+    connect \Y $auto$expression.cpp:2742:import_operation$30
   end
   cell $ne $ne$ALU.v:629$32
     parameter \A_SIGNED 0
@@ -830,7 +830,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2866:import_operation$34
+    connect \Y $auto$expression.cpp:2879:import_operation$34
   end
   cell $shl $shl$ALU.v:631$37
     parameter \A_SIGNED 0
@@ -840,7 +840,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2844:import_operation$36
+    connect \Y $auto$expression.cpp:2857:import_operation$36
   end
   cell $sub $sub$ALU.v:633$39
     parameter \A_SIGNED 0
@@ -850,7 +850,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2729:import_operation$38
+    connect \Y $auto$expression.cpp:2742:import_operation$38
   end
   attribute \src "ALU.v:634.26-634.35"
   cell $eq $eq$ALU.v:634$41
@@ -890,20 +890,20 @@ module \ALU_sXXx
             switch $auto$rtlil.cc:3313:Ge$25
             attribute \src "ALU.v:623.13-636.16"
               case 1'1
-                assign $0\SRL_Alu[31:0] $auto$expression.cpp:2866:import_operation$26
-                assign $0\SLL_Alu[31:0] $auto$expression.cpp:2844:import_operation$28
+                assign $0\SRL_Alu[31:0] $auto$expression.cpp:2879:import_operation$26
+                assign $0\SLL_Alu[31:0] $auto$expression.cpp:2857:import_operation$28
                 assign $0\SRA_Alu[31:0] 0
-                assign $0\count[4:0] $auto$expression.cpp:2729:import_operation$30 [4:0]
+                assign $0\count[4:0] $auto$expression.cpp:2742:import_operation$30 [4:0]
             attribute \src "ALU.v:623.13-636.16"
               case 
                 attribute \src "ALU.v:629.22-636.16"
                 switch $auto$rtlil.cc:3310:Ne$33
                 attribute \src "ALU.v:629.22-636.16"
                   case 1'1
-                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:2866:import_operation$34
-                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:2844:import_operation$36
+                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:2879:import_operation$34
+                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:2857:import_operation$36
                     assign $0\SRA_Alu[31:0] 0
-                    assign $0\count[4:0] $auto$expression.cpp:2729:import_operation$38 [4:0]
+                    assign $0\count[4:0] $auto$expression.cpp:2742:import_operation$38 [4:0]
                 attribute \src "ALU.v:629.22-636.16"
                   case 
                     attribute \src "ALU.v:634.22-636.16"
@@ -3508,7 +3508,7 @@ module \MEMORY_INTERFACE
   wire $eq$MEMORY_INTERFACE.v:232$271_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$274
   wire width 4 $auto$rtlil.cc:3390:Mux$276
-  wire width 4 $auto$expression.cpp:2844:import_operation$277
+  wire width 4 $auto$expression.cpp:2857:import_operation$277
   wire width 32 $auto$expression.cpp:2688:import_operation$279
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   wire $eq$MEMORY_INTERFACE.v:258$281_Y
@@ -4016,7 +4016,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:2844:import_operation$277
+    connect \Y $auto$expression.cpp:2857:import_operation$277
   end
   cell $add $add$MEMORY_INTERFACE.v:255$280
     parameter \A_SIGNED 0
@@ -4421,7 +4421,7 @@ module \MEMORY_INTERFACE
         attribute \src "MEMORY_INTERFACE.v:236.21-240.24"
           case 2'00
             assign $0\align 1'1
-            assign $0\Wstrbq $auto$expression.cpp:2844:import_operation$277
+            assign $0\Wstrbq $auto$expression.cpp:2857:import_operation$277
             assign $0\Wdataq { \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] }
         end
     attribute \src "MEMORY_INTERFACE.v:244.13-249.16"
@@ -4728,8 +4728,8 @@ module \MULT
   wire width 36 $auto$module.cpp:1124:import_continuous_assign$312
   wire width 36 $auto$expression.cpp:2688:import_operation$314
   wire width 36 $auto$expression.cpp:2688:import_operation$316
-  wire width 64 $auto$expression.cpp:2844:import_operation$318
-  wire width 64 $auto$expression.cpp:2844:import_operation$320
+  wire width 64 $auto$expression.cpp:2857:import_operation$318
+  wire width 64 $auto$expression.cpp:2857:import_operation$320
   wire width 64 $auto$expression.cpp:2688:import_operation$322
   wire width 64 $auto$expression.cpp:2688:import_operation$324
   attribute \src "MULT.v:143.2-196.5"
@@ -4929,7 +4929,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A \Z2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000100000
-    connect \Y $auto$expression.cpp:2844:import_operation$318
+    connect \Y $auto$expression.cpp:2857:import_operation$318
   end
   cell $shl $shl$MULT.v:206$321
     parameter \A_SIGNED 0
@@ -4939,7 +4939,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A { \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010000
-    connect \Y $auto$expression.cpp:2844:import_operation$320
+    connect \Y $auto$expression.cpp:2857:import_operation$320
   end
   cell $add $add$MULT.v:208$323
     parameter \A_SIGNED 0
@@ -5481,8 +5481,8 @@ module \MULT
   connect \NZ2 $auto$module.cpp:1124:import_continuous_assign$308
   connect \NZ0 $auto$module.cpp:1124:import_continuous_assign$312
   connect \Z1_Z2_Z0 $auto$expression.cpp:2688:import_operation$316
-  connect \Out2 $auto$expression.cpp:2844:import_operation$318
-  connect \Out1 $auto$expression.cpp:2844:import_operation$320
+  connect \Out2 $auto$expression.cpp:2857:import_operation$318
+  connect \Out1 $auto$expression.cpp:2857:import_operation$320
   connect \Out0 { \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 }
   connect \Out $auto$expression.cpp:2688:import_operation$324
 end
@@ -6030,7 +6030,7 @@ module \divM
   attribute \src "IRQ.v:27.23-27.30"
   wire $logic_not$IRQ.v:27.23-27.30$38_Y
   wire $auto$rtlil.cc:3323:LogicOr$426
-  wire width 64 $auto$expression.cpp:2729:import_operation$427
+  wire width 64 $auto$expression.cpp:2742:import_operation$427
   attribute \src "IRQ.v:31.22-31.44"
   wire $eq$IRQ.v:31$429_Y
   wire width 32 $auto$expression.cpp:2688:import_operation$431
@@ -6068,7 +6068,7 @@ module \divM
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \freq }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2729:import_operation$427
+    connect \Y $auto$expression.cpp:2742:import_operation$427
   end
   attribute \src "IRQ.v:31.22-31.44"
   cell $eq $eq$IRQ.v:31$430
@@ -6078,7 +6078,7 @@ module \divM
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \divcounter
-    connect \B $auto$expression.cpp:2729:import_operation$427
+    connect \B $auto$expression.cpp:2742:import_operation$427
     connect \Y $eq$IRQ.v:31$429_Y
   end
   cell $add $add$IRQ.v:35$432
@@ -6771,18 +6771,18 @@ module \true_dpram_sclk
   attribute \src "REG_FILE.v:25.13-25.16"
   attribute \reg 1
   wire width 32 \ram
-  wire $auto$expression.cpp:4282:import_bit_select$456
+  wire $auto$expression.cpp:4295:import_bit_select$456
   attribute \src "REG_FILE.v:28.2-36.5"
-  wire $0\$auto$expression.cpp:4282:import_bit_select$456
+  wire $0\$auto$expression.cpp:4295:import_bit_select$456
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_a
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_b
-  wire $auto$expression.cpp:4282:import_bit_select$458
-  wire $auto$expression.cpp:4282:import_bit_select$460
+  wire $auto$expression.cpp:4295:import_bit_select$458
+  wire $auto$expression.cpp:4295:import_bit_select$460
   wire $auto$rtlil.cc:3262:ReduceBool$463
   wire width 32 $auto$rtlil.cc:3390:Mux$465
-  wire $auto$expression.cpp:4282:import_bit_select$466
+  wire $auto$expression.cpp:4295:import_bit_select$466
   wire $auto$rtlil.cc:3262:ReduceBool$469
   wire width 32 $auto$rtlil.cc:3390:Mux$471
   attribute \src "REG_FILE.v:32.4-32.15"
@@ -6794,7 +6794,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4282:import_bit_select$456
+    connect \Y $auto$expression.cpp:4295:import_bit_select$456
   end
   attribute \src "REG_FILE.v:32.4-32.15"
   cell $shiftx $shiftx$REG_FILE.v:32$459
@@ -6805,7 +6805,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4282:import_bit_select$458
+    connect \Y $auto$expression.cpp:4295:import_bit_select$458
   end
   attribute \src "REG_FILE.v:34.21-34.27"
   cell $shiftx $shiftx$REG_FILE.v:34$461
@@ -6816,7 +6816,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4282:import_bit_select$460
+    connect \Y $auto$expression.cpp:4295:import_bit_select$460
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:34$462
     parameter \A_SIGNED 0
@@ -6828,7 +6828,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:34$464
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$460 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4295:import_bit_select$460 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$463
     connect \Y $auto$rtlil.cc:3390:Mux$465
   end
@@ -6841,7 +6841,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:4282:import_bit_select$466
+    connect \Y $auto$expression.cpp:4295:import_bit_select$466
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:35$468
     parameter \A_SIGNED 0
@@ -6853,26 +6853,26 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:35$470
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4282:import_bit_select$466 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4295:import_bit_select$466 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$469
     connect \Y $auto$rtlil.cc:3390:Mux$471
   end
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
   process $proc$REG_FILE.v:28$455
-    assign $0\$auto$expression.cpp:4282:import_bit_select$456 $auto$expression.cpp:4282:import_bit_select$456
+    assign $0\$auto$expression.cpp:4295:import_bit_select$456 $auto$expression.cpp:4295:import_bit_select$456
     assign $0\q_a $auto$rtlil.cc:3390:Mux$465
     assign $0\q_b $auto$rtlil.cc:3390:Mux$471
     attribute \src "REG_FILE.v:30.3-33.6"
     switch \we_a
     attribute \src "REG_FILE.v:30.3-33.6"
       case 1'1
-        assign $0\$auto$expression.cpp:4282:import_bit_select$456 \data_a [0]
+        assign $0\$auto$expression.cpp:4295:import_bit_select$456 \data_a [0]
     attribute \src "REG_FILE.v:30.3-33.6"
       case 
     end
     sync posedge \clk
-      update $auto$expression.cpp:4282:import_bit_select$456 $0\$auto$expression.cpp:4282:import_bit_select$456
+      update $auto$expression.cpp:4295:import_bit_select$456 $0\$auto$expression.cpp:4295:import_bit_select$456
       update \q_a $0\q_a
       update \q_b $0\q_b
   end
@@ -7288,7 +7288,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   wire $eq$MEMORY_INTERFACE.v:232$545_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$548
   wire width 4 $auto$rtlil.cc:3390:Mux$550
-  wire width 4 $auto$expression.cpp:2844:import_operation$551
+  wire width 4 $auto$expression.cpp:2857:import_operation$551
   wire width 32 $auto$expression.cpp:2688:import_operation$553
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   wire $eq$MEMORY_INTERFACE.v:258$555_Y
@@ -7796,7 +7796,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:2844:import_operation$551
+    connect \Y $auto$expression.cpp:2857:import_operation$551
   end
   cell $add $add$MEMORY_INTERFACE.v:255$554
     parameter \A_SIGNED 0
@@ -8201,7 +8201,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
         attribute \src "MEMORY_INTERFACE.v:236.21-240.24"
           case 2'00
             assign $0\align 1'1
-            assign $0\Wstrbq $auto$expression.cpp:2844:import_operation$551
+            assign $0\Wstrbq $auto$expression.cpp:2857:import_operation$551
             assign $0\Wdataq { \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] }
         end
     attribute \src "MEMORY_INTERFACE.v:244.13-249.16"
@@ -9036,7 +9036,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
   wire width 32 $0\SUB_Alu[31:0]
   attribute \src "ALU.v:436.21-436.27"
   wire $logic_not$ALU.v:436.21-436.27$genblk1$59_Y
-  wire width 32 $auto$expression.cpp:2729:import_operation$591
+  wire width 32 $auto$expression.cpp:2742:import_operation$591
   attribute \src "ALU.v:436.21-436.27"
   cell $logic_not $logic_not$ALU.v:436.21-436.27$genblk1$59
     parameter \A_SIGNED 0
@@ -9053,7 +9053,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \oper2
-    connect \Y $auto$expression.cpp:2729:import_operation$591
+    connect \Y $auto$expression.cpp:2742:import_operation$591
   end
   attribute \src "ALU.v:435.13-441.16"
   attribute \always_ff 1
@@ -9066,7 +9066,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
         assign $0\SUB_Alu[31:0] 0
     attribute \src "ALU.v:438.26-440.20"
       case 
-        assign $0\SUB_Alu[31:0] $auto$expression.cpp:2729:import_operation$591
+        assign $0\SUB_Alu[31:0] $auto$expression.cpp:2742:import_operation$591
     end
     sync posedge \clk
       update \SUB_Alu $0\SUB_Alu[31:0]
@@ -9402,13 +9402,13 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
   attribute \src "ALU.v:622.21-622.31"
   wire $eq$ALU.v:622$612_Y
   wire $auto$rtlil.cc:3313:Ge$615
-  wire width 32 $auto$expression.cpp:2866:import_operation$616
-  wire width 32 $auto$expression.cpp:2844:import_operation$618
-  wire width 64 $auto$expression.cpp:2729:import_operation$620
+  wire width 32 $auto$expression.cpp:2879:import_operation$616
+  wire width 32 $auto$expression.cpp:2857:import_operation$618
+  wire width 64 $auto$expression.cpp:2742:import_operation$620
   wire $auto$rtlil.cc:3310:Ne$623
-  wire width 32 $auto$expression.cpp:2866:import_operation$624
-  wire width 32 $auto$expression.cpp:2844:import_operation$626
-  wire width 64 $auto$expression.cpp:2729:import_operation$628
+  wire width 32 $auto$expression.cpp:2879:import_operation$624
+  wire width 32 $auto$expression.cpp:2857:import_operation$626
+  wire width 64 $auto$expression.cpp:2742:import_operation$628
   attribute \src "ALU.v:634.26-634.35"
   wire $eq$ALU.v:634$630_Y
   attribute \src "ALU.v:616.13-616.19"
@@ -9448,7 +9448,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2866:import_operation$616
+    connect \Y $auto$expression.cpp:2879:import_operation$616
   end
   cell $shl $shl$ALU.v:625$619
     parameter \A_SIGNED 0
@@ -9458,7 +9458,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2844:import_operation$618
+    connect \Y $auto$expression.cpp:2857:import_operation$618
   end
   cell $sub $sub$ALU.v:628$621
     parameter \A_SIGNED 0
@@ -9468,7 +9468,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2729:import_operation$620
+    connect \Y $auto$expression.cpp:2742:import_operation$620
   end
   cell $ne $ne$ALU.v:629$622
     parameter \A_SIGNED 0
@@ -9488,7 +9488,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2866:import_operation$624
+    connect \Y $auto$expression.cpp:2879:import_operation$624
   end
   cell $shl $shl$ALU.v:631$627
     parameter \A_SIGNED 0
@@ -9498,7 +9498,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2844:import_operation$626
+    connect \Y $auto$expression.cpp:2857:import_operation$626
   end
   cell $sub $sub$ALU.v:633$629
     parameter \A_SIGNED 0
@@ -9508,7 +9508,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2729:import_operation$628
+    connect \Y $auto$expression.cpp:2742:import_operation$628
   end
   attribute \src "ALU.v:634.26-634.35"
   cell $eq $eq$ALU.v:634$631
@@ -9548,20 +9548,20 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
             switch $auto$rtlil.cc:3313:Ge$615
             attribute \src "ALU.v:623.13-636.16"
               case 1'1
-                assign $0\SRL_Alu[31:0] $auto$expression.cpp:2866:import_operation$616
-                assign $0\SLL_Alu[31:0] $auto$expression.cpp:2844:import_operation$618
+                assign $0\SRL_Alu[31:0] $auto$expression.cpp:2879:import_operation$616
+                assign $0\SLL_Alu[31:0] $auto$expression.cpp:2857:import_operation$618
                 assign $0\SRA_Alu[31:0] 0
-                assign $0\count[4:0] $auto$expression.cpp:2729:import_operation$620 [4:0]
+                assign $0\count[4:0] $auto$expression.cpp:2742:import_operation$620 [4:0]
             attribute \src "ALU.v:623.13-636.16"
               case 
                 attribute \src "ALU.v:629.22-636.16"
                 switch $auto$rtlil.cc:3310:Ne$623
                 attribute \src "ALU.v:629.22-636.16"
                   case 1'1
-                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:2866:import_operation$624
-                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:2844:import_operation$626
+                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:2879:import_operation$624
+                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:2857:import_operation$626
                     assign $0\SRA_Alu[31:0] 0
-                    assign $0\count[4:0] $auto$expression.cpp:2729:import_operation$628 [4:0]
+                    assign $0\count[4:0] $auto$expression.cpp:2742:import_operation$628 [4:0]
                 attribute \src "ALU.v:629.22-636.16"
                   case 
                     attribute \src "ALU.v:634.22-636.16"

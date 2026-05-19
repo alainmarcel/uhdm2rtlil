@@ -16,7 +16,7 @@ module \top
   attribute \src "dut.sv:2.2-9.5"
   wire width 8 $0\cnt[7:0]
   wire width 8 $auto$expression.cpp:2688:import_operation$2
-  wire width 64 $auto$expression.cpp:2729:import_operation$4
+  wire width 64 $auto$expression.cpp:2742:import_operation$4
   wire width 8 $auto$expression.cpp:2688:import_operation$6
   attribute \src "dut.sv:19.26-19.50"
   wire $eq$dut.sv:19$8_Y
@@ -28,7 +28,7 @@ module \top
   wire $eq$dut.sv:21$18_Y
   attribute \src "dut.sv:26.35-26.55"
   wire $eq$dut.sv:26$21_Y
-  wire width 8 $auto$expression.cpp:2729:import_operation$24
+  wire width 8 $auto$expression.cpp:2742:import_operation$24
   attribute \src "dut.sv:27.28-27.52"
   wire $eq$dut.sv:27$26_Y
   cell $add $add$dut.sv:6$3
@@ -49,7 +49,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2729:import_operation$4
+    connect \Y $auto$expression.cpp:2742:import_operation$4
   end
   cell $add $add$dut.sv:19$7
     parameter \A_SIGNED 0
@@ -193,7 +193,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2729:import_operation$24
+    connect \Y $auto$expression.cpp:2742:import_operation$24
   end
   attribute \src "dut.sv:27.28-27.52"
   cell $eq $eq$dut.sv:27$27
@@ -203,7 +203,7 @@ module \top
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A \cnt
-    connect \B $auto$expression.cpp:2729:import_operation$24
+    connect \B $auto$expression.cpp:2742:import_operation$24
     connect \Y $eq$dut.sv:27$26_Y
   end
   attribute \src "dut.sv:27.2-27.54"
@@ -273,7 +273,7 @@ module \top
             switch \down
             attribute \src "dut.sv:7.8-8.19"
               case 1'1
-                assign $0\cnt[7:0] $auto$expression.cpp:2729:import_operation$4 [7:0]
+                assign $0\cnt[7:0] $auto$expression.cpp:2742:import_operation$4 [7:0]
             attribute \src "dut.sv:7.8-8.19"
               case 
             end

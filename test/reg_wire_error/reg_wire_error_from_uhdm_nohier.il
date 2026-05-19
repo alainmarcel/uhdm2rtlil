@@ -73,12 +73,12 @@ module \test
   wire $logic_not$dut.sv:33.17-33.23$2_Y
   attribute \src "dut.sv:35.16-35.22"
   wire $logic_not$dut.sv:35.16-35.22$3_Y
-  wire $auto$expression.cpp:3930:import_bit_select$1
-  wire $auto$expression.cpp:3933:import_bit_select$3
-  wire $auto$expression.cpp:3930:import_bit_select$5
-  wire $auto$expression.cpp:3933:import_bit_select$7
-  wire $auto$expression.cpp:3930:import_bit_select$9
-  wire $auto$expression.cpp:3933:import_bit_select$11
+  wire $auto$expression.cpp:3943:import_bit_select$1
+  wire $auto$expression.cpp:3946:import_bit_select$3
+  wire $auto$expression.cpp:3943:import_bit_select$5
+  wire $auto$expression.cpp:3946:import_bit_select$7
+  wire $auto$expression.cpp:3943:import_bit_select$9
+  wire $auto$expression.cpp:3946:import_bit_select$11
   attribute \src "dut.sv:27.1-31.4"
   wire $0\o_reg
   attribute \src "dut.sv:27.1-31.4"
@@ -123,7 +123,7 @@ module \test
     connect \A \o_reg
     connect \Y $logic_not$dut.sv:35.16-35.22$3_Y
   end
-  cell $eq $auto$expression.cpp:3931:import_bit_select$2
+  cell $eq $auto$expression.cpp:3944:import_bit_select$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -131,16 +131,16 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3930:import_bit_select$1
+    connect \Y $auto$expression.cpp:3943:import_bit_select$1
   end
-  cell $mux $auto$expression.cpp:3934:import_bit_select$4
+  cell $mux $auto$expression.cpp:3947:import_bit_select$4
     parameter \WIDTH 1
     connect \A \mw1[1]
     connect \B \mw1[0]
-    connect \S $auto$expression.cpp:3930:import_bit_select$1
-    connect \Y $auto$expression.cpp:3933:import_bit_select$3
+    connect \S $auto$expression.cpp:3943:import_bit_select$1
+    connect \Y $auto$expression.cpp:3946:import_bit_select$3
   end
-  cell $eq $auto$expression.cpp:3931:import_bit_select$6
+  cell $eq $auto$expression.cpp:3944:import_bit_select$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -148,16 +148,16 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3930:import_bit_select$5
+    connect \Y $auto$expression.cpp:3943:import_bit_select$5
   end
-  cell $mux $auto$expression.cpp:3934:import_bit_select$8
+  cell $mux $auto$expression.cpp:3947:import_bit_select$8
     parameter \WIDTH 1
     connect \A \mr1[1]
     connect \B \mr1[0]
-    connect \S $auto$expression.cpp:3930:import_bit_select$5
-    connect \Y $auto$expression.cpp:3933:import_bit_select$7
+    connect \S $auto$expression.cpp:3943:import_bit_select$5
+    connect \Y $auto$expression.cpp:3946:import_bit_select$7
   end
-  cell $eq $auto$expression.cpp:3931:import_bit_select$10
+  cell $eq $auto$expression.cpp:3944:import_bit_select$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -165,14 +165,14 @@ module \test
     parameter \Y_WIDTH 1
     connect \A \i
     connect \B 1'0
-    connect \Y $auto$expression.cpp:3930:import_bit_select$9
+    connect \Y $auto$expression.cpp:3943:import_bit_select$9
   end
-  cell $mux $auto$expression.cpp:3934:import_bit_select$12
+  cell $mux $auto$expression.cpp:3947:import_bit_select$12
     parameter \WIDTH 1
     connect \A \ml1[1]
     connect \B \ml1[0]
-    connect \S $auto$expression.cpp:3930:import_bit_select$9
-    connect \Y $auto$expression.cpp:3933:import_bit_select$11
+    connect \S $auto$expression.cpp:3943:import_bit_select$9
+    connect \Y $auto$expression.cpp:3946:import_bit_select$11
   end
   attribute \src "dut.sv:29.12-29.18"
   cell $logic_not $logic_not$dut.sv:29.12-29.18$4
@@ -231,9 +231,9 @@ module \test
   connect \l_reg $logic_not$dut.sv:25.16-25.22$1_Y
   connect \o_wire $logic_not$dut.sv:33.17-33.23$2_Y
   connect \l_reg $logic_not$dut.sv:35.16-35.22$3_Y
-  connect \o_mw $auto$expression.cpp:3933:import_bit_select$3
-  connect \o_mr $auto$expression.cpp:3933:import_bit_select$7
-  connect \o_ml $auto$expression.cpp:3933:import_bit_select$11
+  connect \o_mw $auto$expression.cpp:3946:import_bit_select$3
+  connect \o_mr $auto$expression.cpp:3946:import_bit_select$7
+  connect \o_ml $auto$expression.cpp:3946:import_bit_select$11
   connect \mw1[1] 1'1
   connect \ml1[1] 1'1
 end
