@@ -7,3 +7,15 @@
 
 # Yosys tests that are skipped due to runtime issues
 arch/xilinx/priority_memory.v  # Skipped due to excessive runtime
+
+# Yosys tests using `$__`-prefixed module names (Yosys-internal
+# `$__SHREG_DFF_P_` / `$__XILINX_SHREG_` techmap targets).  These
+# are Yosys-specific identifiers — the `$` prefix is not part of
+# the SystemVerilog grammar.  Surelog rejects the declaration with
+# "mismatched input 'always' expecting <EOF>", so we can't take
+# them through our UHDM path.  Yosys's own Verilog frontend
+# accepts them because it auto-escapes any leading `$` in
+# identifiers, but that's not standards-conformant.  Analyzed and
+# skipped — not bugs in the UHDM frontend.
+arch/xilinx/xilinx_srl.v  # `module $__XILINX_SHREG_`
+various/shregmap.v        # `module $__SHREG_DFF_P_` and `module $__XILINX_SHREG_`
