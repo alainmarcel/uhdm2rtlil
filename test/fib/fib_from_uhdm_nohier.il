@@ -196,8 +196,8 @@ module \gate
   attribute \src "dut.sv:46.18-46.35"
   wire width 32 \fib_wrap$func$dut.sv:46$84.o
   cell $add $add$dut.sv:21$10
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -206,8 +206,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$9
   end
   cell $add $add$dut.sv:21$19
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -216,8 +216,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$18
   end
   cell $add $add$dut.sv:21$28
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -226,8 +226,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$27
   end
   cell $add $add$dut.sv:21$37
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -236,8 +236,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$36
   end
   cell $add $add$dut.sv:21$46
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -246,8 +246,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$45
   end
   cell $add $add$dut.sv:21$55
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -256,8 +256,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$54
   end
   cell $add $add$dut.sv:21$64
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -266,8 +266,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$63
   end
   cell $add $add$dut.sv:21$73
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -276,8 +276,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$72
   end
   cell $add $add$dut.sv:21$82
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -286,8 +286,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$81
   end
   cell $add $add$dut.sv:21$91
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

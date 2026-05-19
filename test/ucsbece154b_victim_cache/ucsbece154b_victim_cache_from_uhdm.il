@@ -21,10 +21,12 @@ module \ucsbece154b_victim_cache
   wire width 24 output 8 \dll_d_flat_o
   attribute \src "dut.sv:28.22-28.26"
   wire \rtag
-  attribute \src "dut.sv:75.32-75.50"
-  wire $eq$dut.sv:75$79_Y
-  wire $auto$rtlil.cc:3322:LogicAnd$78
-  wire width 2 $procmux$87_Y
+  attribute \src "dut.sv:31.9-31.10"
+  wire width 32 signed \i
+  attribute \src "dut.sv:32.9-32.10"
+  wire width 32 signed \j
+  attribute \src "dut.sv:33.9-33.10"
+  wire width 32 signed \k
   attribute \src "dut.sv:46.13-46.18"
   attribute \wiretype "\\way_index_t"
   wire width 2 \lru_d
@@ -60,6 +62,10 @@ module \ucsbece154b_victim_cache
   wire width 6 \dll_q[2]
   attribute \src "dut.sv:44.13-44.18"
   wire width 6 \dll_q[3]
+  attribute \src "dut.sv:75.32-75.50"
+  wire $eq$dut.sv:75$79_Y
+  wire $auto$rtlil.cc:3322:LogicAnd$78
+  wire width 2 $procmux$87_Y
   attribute \src "dut.sv:75.32-75.50"
   wire $eq$dut.sv:75$75_Y
   wire width 2 $procmux$85_Y
@@ -169,6 +175,9 @@ module \ucsbece154b_victim_cache
   connect \mru_d \mru_q_i
   connect \lru_q \lru_q_i
   connect \lru_d \lru_q_i
+  connect \k 4
+  connect \j 4
+  connect \i 4
   connect \rtag \raddr_i [1]
   connect \dll_d_flat_o \dll_q_flat_i
   connect \mru_d_o \mru_q_i

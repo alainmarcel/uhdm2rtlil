@@ -56,8 +56,8 @@ module \gate
   attribute \src "dut.sv:38.18-38.35"
   wire width 32 \fib_wrap$func$dut.sv:38$12.o
   cell $add $add$dut.sv:21$82
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -66,8 +66,8 @@ module \gate
     connect \Y \fib8
   end
   cell $add $add$dut.sv:21$91
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -76,8 +76,8 @@ module \gate
     connect \Y \fib9
   end
   cell $add $add$dut.sv:21$28
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -86,8 +86,8 @@ module \gate
     connect \Y \fib1
   end
   cell $add $add$dut.sv:21$37
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -96,8 +96,8 @@ module \gate
     connect \Y \fib3
   end
   cell $add $add$dut.sv:21$46
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -106,8 +106,8 @@ module \gate
     connect \Y \fib4
   end
   cell $add $add$dut.sv:21$55
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -116,8 +116,8 @@ module \gate
     connect \Y \fib5
   end
   cell $add $add$dut.sv:21$64
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -126,8 +126,8 @@ module \gate
     connect \Y \fib6
   end
   cell $add $add$dut.sv:21$73
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

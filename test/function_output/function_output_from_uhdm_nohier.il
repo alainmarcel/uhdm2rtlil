@@ -44,8 +44,8 @@ module \gate
   attribute \src "dut.sv:26.18-26.35"
   wire width 32 \fib_wrap$func$dut.sv:26$12.o
   cell $add $add$dut.sv:16$10
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
@@ -54,8 +54,8 @@ module \gate
     connect \Y $auto$expression.cpp:2688:import_operation$9
   end
   cell $add $add$dut.sv:16$19
-    parameter \A_SIGNED 1
-    parameter \B_SIGNED 1
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32

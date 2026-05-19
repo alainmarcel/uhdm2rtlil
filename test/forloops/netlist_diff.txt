@@ -8,7 +8,7 @@
  module forloops(clk, a, b, p, q, x, y);
  (* src = "dut.sv:1.24-1.27" *)
  input clk;
-@@ -26,48 +26,52 @@
+@@ -26,41 +26,45 @@
  (* src = "dut.sv:2.10-2.11" *)
  wire signed [31:0] k;
  \$_NOT_  _0_ (
@@ -62,11 +62,3 @@
  (* src = "dut.sv:3.2-7.5" *)
  \$_DFF_P_  \x_reg[1]  /* _7_ */ (
  .C(clk),
- .D(q[3]),
- .Q(x[1])
- );
--assign k = 32'd4;
-+assign k = 32'd2;
- assign { y[3], y[0] } = { 1'h0, b };
- assign { x[3:2], x[0] } = { 1'h0, p[1:0] };
- assign q[1:0] = { a, b };

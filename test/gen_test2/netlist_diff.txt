@@ -31,7 +31,7 @@
  wire _02_;
  wire _03_;
  wire _04_;
-@@ -53,287 +51,293 @@
+@@ -53,287 +51,296 @@
  wire _33_;
  wire _34_;
  wire _35_;
@@ -40,8 +40,8 @@
  (* src = "dut.sv:8.11-8.16" *)
 +(* unused_bits = "1 2 3 4 5 6 7" *)
  wire [8:0] carry;
--(* src = "dut.sv:7.9-7.10" *)
--wire signed [31:0] i;
+ (* src = "dut.sv:7.9-7.10" *)
+ wire signed [31:0] i;
 -\$_NAND_  _37_ (
 +\$_NAND_  _36_ (
  .A(b[7]),
@@ -439,7 +439,7 @@
 -assign _00_[0] = 1'h0;
 -assign _01_[8] = _00_[8];
 -assign carry = 9'bxxxxxxxx0;
--assign i = 32'd8;
 +assign _00_[8] = y[8];
 +assign carry[0] = 1'h0;
+ assign i = 32'd8;
  endmodule

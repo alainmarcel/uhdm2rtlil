@@ -2687,16 +2687,29 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
 
-                // Check if operands are signed
-                bool is_signed = false;
+                // SV LRM §11.8.1: when ANY operand is unsigned, the
+                // entire expression — and therefore every operand's
+                // extension — is unsigned.  The previous "any signed
+                // wire → signed" rule was the opposite of the spec
+                // and broke `signed_int + unsigned_concat` (e.g.
+                // yosys/tests/simple/forloops.v `x = k + {a,b}`):
+                // k was sign-extended to 4 bits but `{a,b}` (concat
+                // — always unsigned per LRM) was also sign-extended,
+                // turning the high bit `a` into the carry.
+                // Now: signed only when EVERY operand is signed.
+                // Non-wire operands (concats, slices, derived
+                // SigSpecs) are unsigned unless they were tagged as
+                // fully-const-signed.
+                bool is_signed = true;
                 for (const auto& operand : operands) {
+                    bool op_signed = false;
                     if (operand.is_wire()) {
-                        RTLIL::Wire* wire = operand.as_wire();
-                        if (wire && wire->is_signed) {
-                            is_signed = true;
-                            break;
-                        }
+                        op_signed = operand.as_wire()->is_signed;
+                    } else if (operand.is_fully_const()) {
+                        op_signed = (operand.as_const().flags &
+                                     RTLIL::CONST_FLAG_SIGNED) != 0;
                     }
+                    if (!op_signed) { is_signed = false; break; }
                 }
 
                 // Truncate / extend each operand to result_width so the

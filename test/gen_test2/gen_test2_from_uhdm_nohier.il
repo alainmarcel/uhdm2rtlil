@@ -19,6 +19,8 @@ module \gen_test2
   attribute \src "dut.sv:10.1-22.4"
   wire $0\carry[0:0]
   attribute \src "dut.sv:10.1-22.4"
+  wire width 32 $0\i
+  attribute \src "dut.sv:10.1-22.4"
   wire width 9 $0\y
   attribute \src "dut.sv:10.1-22.4"
   wire $0\y[8:8]
@@ -211,6 +213,7 @@ module \gen_test2
     assign $0\y [5] $auto$rtlil.cc:3304:Xor$25
     assign $0\y [6] $auto$rtlil.cc:3304:Xor$29
     assign $0\y [7] $auto$rtlil.cc:3304:Xor$33
+    assign $0\i 8
     assign $0\y[8:8] \carry [8]
     attribute \src "dut.sv:13.3-18.10"
     switch { \a [0] \b [0] \carry [0] }
@@ -286,6 +289,7 @@ module \gen_test2
     end
     sync posedge \clk
       update \carry [0] $0\carry[0:0]
+      update \i $0\i
       update \y $0\y
       update \y [8] $0\y[8:8]
   end

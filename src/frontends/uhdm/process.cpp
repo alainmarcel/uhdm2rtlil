@@ -5049,6 +5049,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 // (e.g. y = k - {a,b} should see k = final value after loop exits)
                 int64_t final_val = fl_inclusive ? fl_end + fl_inc_val : fl_end;
                 loop_values[fl_var] = (int)final_val;
+                // Also drive the actual `\<fl_var>` wire with that final
+                // value via the standard comb temp-wire path.  Without
+                // this the post-loop wire stays undriven, so when ANOTHER
+                // always block (e.g. the sync `always @(posedge clk)` in
+                // yosys/tests/simple/forloops.v) ALSO writes the same
+                // variable, that block's value is the only one visible —
+                // the comb loop's post-loop `k = N` is lost.  Only emit
+                // if the variable corresponds to a module wire (skip
+                // locally-declared `for (int i = ...)` loop vars, which
+                // are loop_values-only).
+                if (RTLIL::Wire* var_wire = name_map.count(fl_var)
+                        ? name_map[fl_var] : nullptr) {
+                    int w = var_wire->width;
+                    emit_comb_assign(RTLIL::SigSpec(var_wire),
+                                     RTLIL::Const((int)final_val, w),
+                                     proc);
+                }
                 log("    Comb for loop unrolled: %s final=%lld\n", fl_var.c_str(), (long long)final_val);
             } else {
                 log_warning("Cannot unroll for loop in comb context (complex bounds)\n");

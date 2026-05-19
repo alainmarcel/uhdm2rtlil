@@ -942,8 +942,8 @@ module \abc9_test023
   attribute \src "dut.sv:246.17-246.21"
   wire width 4 \mask
   wire width 4 $auto$module.cpp:1124:import_continuous_assign$80
-  wire width 2 $auto$expression.cpp:2844:import_operation$82
-  wire width 2 $auto$expression.cpp:2866:import_operation$84
+  wire width 2 $auto$expression.cpp:2857:import_operation$82
+  wire width 2 $auto$expression.cpp:2879:import_operation$84
   cell $pos $auto$module.cpp:1125:import_continuous_assign$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
@@ -959,7 +959,7 @@ module \abc9_test023
     parameter \Y_WIDTH 2
     connect \A \mask
     connect \B \din [1:0]
-    connect \Y $auto$expression.cpp:2844:import_operation$82
+    connect \Y $auto$expression.cpp:2857:import_operation$82
   end
   cell $shr $shr$dut.sv:247$85
     parameter \A_SIGNED 0
@@ -967,12 +967,12 @@ module \abc9_test023
     parameter \A_WIDTH 2
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:2844:import_operation$82
+    connect \A $auto$expression.cpp:2857:import_operation$82
     connect \B 2
-    connect \Y $auto$expression.cpp:2866:import_operation$84
+    connect \Y $auto$expression.cpp:2879:import_operation$84
   end
   connect \mask $auto$module.cpp:1124:import_continuous_assign$80
-  connect \dout $auto$expression.cpp:2866:import_operation$84
+  connect \dout $auto$expression.cpp:2879:import_operation$84
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:250.1-252.10"

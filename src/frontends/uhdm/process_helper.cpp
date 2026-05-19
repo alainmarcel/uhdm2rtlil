@@ -389,21 +389,42 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             // returning is_part_select=false and lhs_expr=nullptr.  The caller will
             // create a full-width temp wire for the signal.
             const for_stmt* for_loop = any_cast<const for_stmt*>(stmt);
+            // Helper: dedup-add an AssignedSignal to `signals` (by name).
+            auto dedup_add = [&](AssignedSignal sig) {
+                if (sig.is_part_select) {
+                    sig.is_part_select = false;
+                    sig.lhs_expr = nullptr;
+                }
+                for (const auto& existing : signals)
+                    if (existing.name == sig.name) return;
+                signals.push_back(sig);
+            };
+            // Also scan the init and increment statements — for a
+            // module-scope `integer k` used as the loop var
+            // (`for (k=0; k<N; k=k+1)`), `k` is written by the init
+            // `k=0` and the increment `k=k+1`.  Without this scan, no
+            // `$0\k` temp wire is created and the post-loop value of
+            // `k` (substituted into expressions like `y = k - ...`)
+            // never gets driven onto the actual wire — yosys/tests/
+            // simple/forloops.v depends on this.
+            if (for_loop->VpiForInitStmts()) {
+                for (auto s : *for_loop->VpiForInitStmts()) {
+                    std::vector<AssignedSignal> init_signals;
+                    extract_assigned_signals(s, init_signals);
+                    for (auto& sig : init_signals) dedup_add(sig);
+                }
+            }
+            if (for_loop->VpiForIncStmts()) {
+                for (auto s : *for_loop->VpiForIncStmts()) {
+                    std::vector<AssignedSignal> inc_signals;
+                    extract_assigned_signals(s, inc_signals);
+                    for (auto& sig : inc_signals) dedup_add(sig);
+                }
+            }
             if (auto body = for_loop->VpiStmt()) {
                 std::vector<AssignedSignal> body_signals;
                 extract_assigned_signals(body, body_signals);
-                for (auto& sig : body_signals) {
-                    if (sig.is_part_select) {
-                        sig.is_part_select = false;
-                        sig.lhs_expr = nullptr; // full-width temp wire needed
-                    }
-                    // Deduplicate by name
-                    bool found = false;
-                    for (const auto& existing : signals) {
-                        if (existing.name == sig.name) { found = true; break; }
-                    }
-                    if (!found) signals.push_back(sig);
-                }
+                for (auto& sig : body_signals) dedup_add(sig);
             }
             break;
         }

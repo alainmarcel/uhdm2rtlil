@@ -49,7 +49,7 @@ module \macc2
   attribute \init 1'0
   wire \overflow_reg
   wire $auto$rtlil.cc:3313:Ge$20
-  wire width 32 $auto$expression.cpp:2794:import_operation$26
+  wire width 32 $auto$expression.cpp:2807:import_operation$26
   attribute \unused_bits "40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 signed $auto$rtlil.cc:3390:Mux$24
   wire width 41 $auto$expression.cpp:2688:import_operation$28
@@ -88,7 +88,7 @@ module \macc2
     parameter \Y_WIDTH 32
     connect \A \a_reg2
     connect \B \b_reg2
-    connect \Y $auto$expression.cpp:2794:import_operation$26
+    connect \Y $auto$expression.cpp:2807:import_operation$26
   end
   cell $add $add$dut.sv:66$29
     parameter \A_SIGNED 1
@@ -121,7 +121,7 @@ module \macc2
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2794:import_operation$26
+    connect \D $auto$expression.cpp:2807:import_operation$26
     connect \Q \mult_reg
   end
   attribute \src "dut.sv:57.1-78.4"
