@@ -4570,6 +4570,72 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Interface-port signal bit/part-select access (e.g. `bus.adr[3:0]`
+    // where `bus` is a `tcb_if.sub` modport port and `adr` is one of the
+    // interface's signals).  Path_elems = [ref_obj(bus),
+    // bit_select|part_select(adr[...])].  `import_port` already created
+    // `\bus.adr` as a module-local wire of the right width; just apply
+    // the bit/part-select on top of that.  Imported from
+    // jeras/UHDM-tests/tcb_gpio.sv (`case (bus.adr[2+2-1:0])`).
+    //
+    // Without this, the path falls through to the generic walker which
+    // can't find the slice and returns a constant (effectively
+    // `4'xxxx`), and `bus.rdt` never gets driven.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe_bp = *uhdm_hier->Path_elems();
+        bool is_part_or_bit =
+            pe_bp[0]->UhdmType() == uhdmref_obj &&
+            (pe_bp[1]->UhdmType() == uhdmbit_select ||
+             pe_bp[1]->UhdmType() == uhdmpart_select);
+        if (is_part_or_bit) {
+            std::string base_name = std::string(
+                any_cast<const ref_obj*>(pe_bp[0])->VpiName());
+            std::string field_name;
+            if (pe_bp[1]->UhdmType() == uhdmbit_select)
+                field_name = std::string(
+                    any_cast<const bit_select*>(pe_bp[1])->VpiName());
+            else
+                field_name = std::string(
+                    any_cast<const part_select*>(pe_bp[1])->VpiName());
+
+            std::string full = base_name + "." + field_name;
+            auto it = name_map.find(full);
+            if (it != name_map.end() && it->second) {
+                RTLIL::Wire* sig_wire = it->second;
+                if (pe_bp[1]->UhdmType() == uhdmbit_select) {
+                    const bit_select* bs = any_cast<const bit_select*>(pe_bp[1]);
+                    RTLIL::SigSpec idx_sig = import_expression(
+                        bs->VpiIndex(), input_mapping);
+                    if (idx_sig.is_fully_const()) {
+                        int idx = idx_sig.as_const().as_int();
+                        if (idx >= 0 && idx < sig_wire->width) {
+                            log("    hier_path: %s[%d] → \\%s[%d]\n",
+                                full.c_str(), idx, full.c_str(), idx);
+                            return RTLIL::SigSpec(sig_wire).extract(idx, 1);
+                        }
+                    }
+                } else {
+                    const part_select* ps = any_cast<const part_select*>(pe_bp[1]);
+                    RTLIL::SigSpec ls = import_expression(
+                        ps->Left_range(), input_mapping);
+                    RTLIL::SigSpec rs = import_expression(
+                        ps->Right_range(), input_mapping);
+                    if (ls.is_fully_const() && rs.is_fully_const()) {
+                        int l = ls.as_int();
+                        int r = rs.as_int();
+                        int lo = std::min(l, r);
+                        int w  = std::abs(l - r) + 1;
+                        if (lo >= 0 && lo + w <= sig_wire->width) {
+                            log("    hier_path: %s[%d:%d] → \\%s[%d+:%d]\n",
+                                full.c_str(), l, r, full.c_str(), lo, w);
+                            return RTLIL::SigSpec(sig_wire).extract(lo, w);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Interface-port signal access (e.g. `ha_intf.sum` where `ha_intf`
     // is the module's interface port).  `import_port` already created
     // `\ha_intf.sum` as a module-local wire, so the full path name

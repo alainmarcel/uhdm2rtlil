@@ -229,25 +229,55 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to bit select of '%s'\n", sig.name.c_str());
                     } else if (lhs_expr->VpiType() == vpiHierPath) {
-                        // Handle hier_path LHS like internal_bus.field (struct field
-                        // write).  Report the BASE wire so the always_ff/comb temp-wire
-                        // setup creates a single $0\<base> temp covering all fields;
-                        // the partial bit-slice gets remapped to a slice of that temp
-                        // wire later (see import_assignment_comb).  Do NOT mark as
-                        // part-select: that would cause import_always_comb's dedup
-                        // logic to allocate a separate temp wire per field slice
-                        // (broke simple_nested_struct_nopack).
+                        // Two distinct shapes share this VPI type:
+                        //   1. Struct-field write — `internal_bus.field`
+                        //      where `internal_bus` is a wire of struct
+                        //      type.  Report the BASE wire so the
+                        //      always_ff/comb temp-wire setup creates a
+                        //      single `$0\<base>` covering all fields;
+                        //      the partial bit-slice gets remapped to a
+                        //      slice of that temp wire later (see
+                        //      import_assignment_comb).
+                        //   2. Interface-port signal write —
+                        //      `bus.rdt` where `bus` is a `.sub` modport
+                        //      port.  `\bus` itself is NOT a wire;
+                        //      `import_port` created `\bus.rdt` as a
+                        //      module-local per-signal wire.  Report the
+                        //      *full* hier_path so the temp-wire setup
+                        //      allocates `$0\bus.rdt` and the sync rule
+                        //      updates that wire (jeras/UHDM-tests/
+                        //      tcb_gpio.sv).
+                        // Distinguish by checking whether the base wire
+                        // exists; if not, prefer the full path.
                         auto hp = any_cast<const hier_path*>(lhs_expr);
                         sig.is_part_select = false;
                         std::string full_name = std::string(hp->VpiName());
+                        std::string base;
                         size_t dot_pos = full_name.find('.');
-                        if (dot_pos != std::string::npos) {
-                            sig.name = full_name.substr(0, dot_pos);
-                        } else if (!full_name.empty()) {
+                        if (dot_pos != std::string::npos)
+                            base = full_name.substr(0, dot_pos);
+                        else
+                            base = full_name;
+
+                        // Interface ports have a 1-bit `\<port>`
+                        // placeholder wire (set in `import_port` with
+                        // the `is_interface` attribute) — that is NOT
+                        // the real signal storage.  Skip it when
+                        // deciding whether the base is a usable wire.
+                        RTLIL::Wire* base_w = base.empty() ? nullptr :
+                            module->wire(RTLIL::escape_id(base));
+                        bool base_is_wire = base_w != nullptr &&
+                            !base_w->attributes.count(
+                                RTLIL::escape_id("is_interface"));
+                        bool full_is_wire = !full_name.empty() &&
+                            module->wire(RTLIL::escape_id(full_name)) != nullptr;
+                        if (full_is_wire && !base_is_wire)
                             sig.name = full_name;
-                        }
+                        else
+                            sig.name = base;
+
                         signals.push_back(sig);
-                        log("extract_assigned_signals: Found assignment to hier_path of '%s' (base '%s')\n",
+                        log("extract_assigned_signals: Found assignment to hier_path of '%s' (using '%s')\n",
                             full_name.c_str(), sig.name.c_str());
                     }
                 }

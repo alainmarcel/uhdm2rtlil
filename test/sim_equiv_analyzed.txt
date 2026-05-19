@@ -58,3 +58,22 @@ Test: sva_value_change_sim
     a UHDM-frontend bug; the test's intent is to exercise SVA over
     `'x` values, which co-sim is the wrong tool to validate.
 
+Test: jeras_tcb_gpio
+    Imported from jeras/UHDM-tests' tcb_if + tcb_gpio + tcb_gpio_wrap.
+    The test exercises modport-port handling (`tcb_if.sub bus` passed
+    to `tcb_gpio`), which is what the two fixes in this PR address:
+    (1) `bus.adr[3:0]` part-select on a modport signal, and (2)
+    `bus.rdt <=` LHS write through the per-signal `\bus.rdt` wire.
+    With those fixes the gpio writes (`gpio_o`, `gpio_e`) match co-sim
+    on every cycle and bus.rdt is no longer stuck at 0.
+    The residual divergence (4 cycles out of 200) is unrelated to the
+    fix subject: the *interface body's* internal `assign trn = vld & rdy`
+    and `always_ff` for `rsp` are imported into the parent module
+    against the raw signal names (`\vld`, `\rdy`, `\trn`) rather than
+    the per-signal modport wires (`\bus.vld`, `\bus.rdy`, `\bus.trn`),
+    so the netlist's `\bus.trn` is undriven (1'hx) — the gpio's case
+    inside `if (bus.trn)` therefore never fires.  Fixing the body-to-
+    instance-prefix renaming is a separate interface-elaboration
+    refactor; the test is recorded here so the modport fixes don't
+    regress.
+

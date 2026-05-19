@@ -7875,16 +7875,41 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         is_partial = true;
                                     }
                                 } else if (lhs->VpiType() == vpiHierPath) {
-                                    // For hier_path LHS like internal_bus.data, base signal is
-                                    // the first dot-separated component.  Without this case,
-                                    // the partial write bypasses the $0\ temp wire and the FF
-                                    // sync update drops the new value (exposed by
-                                    // simple_package's internal_bus.data <= increment_data(...)).
+                                    // hier_path LHS — two shapes:
+                                    //   * struct-field: `internal_bus.data`
+                                    //     where the base is a wire.  Strip
+                                    //     to base; the partial slice is
+                                    //     remapped to a slice of $0\<base>
+                                    //     below.
+                                    //   * interface-port signal:
+                                    //     `bus.rdt` — base is a 1-bit
+                                    //     `is_interface` placeholder, so
+                                    //     use the FULL path; the temp
+                                    //     wire `$0\bus.rdt` was created
+                                    //     for that full name (see
+                                    //     extract_assigned_signals
+                                    //     vpiHierPath case).
                                     const hier_path* hp = any_cast<const hier_path*>(lhs);
                                     std::string full_name = std::string(hp->VpiName());
+                                    std::string base_str;
                                     size_t dot_pos = full_name.find('.');
-                                    if (dot_pos != std::string::npos) {
-                                        signal_name = full_name.substr(0, dot_pos);
+                                    if (dot_pos != std::string::npos)
+                                        base_str = full_name.substr(0, dot_pos);
+                                    else
+                                        base_str = full_name;
+
+                                    RTLIL::Wire* base_w = base_str.empty() ? nullptr :
+                                        module->wire(RTLIL::escape_id(base_str));
+                                    bool base_is_real = base_w != nullptr &&
+                                        !base_w->attributes.count(
+                                            RTLIL::escape_id("is_interface"));
+
+                                    if (!base_is_real && !full_name.empty() &&
+                                        current_signal_temp_wires.count(full_name)) {
+                                        signal_name = full_name;
+                                        is_partial = false;
+                                    } else if (dot_pos != std::string::npos) {
+                                        signal_name = base_str;
                                         is_partial = true;
                                     } else if (!full_name.empty()) {
                                         signal_name = full_name;
