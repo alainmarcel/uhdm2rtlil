@@ -763,7 +763,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -660,108 +660,108 @@
+@@ -660,92 +660,92 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -873,11 +873,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _46_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -756,44 +756,44 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -892,7 +888,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -772,12 +772,12 @@
+ ) _47_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -907,7 +907,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -788,76 +788,76 @@
+ ) _48_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -922,11 +926,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _49_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -804,12 +804,12 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -941,11 +941,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _50_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -820,28 +820,28 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -979,11 +975,7 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
- ) _52_ (
--.A(1'h1),
-+.A(1'h0),
- .ARGS(),
- .EN(1'h1),
+@@ -852,108 +852,108 @@
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -998,7 +990,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -868,12 +868,12 @@
+ ) _53_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1013,7 +1009,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -884,12 +884,12 @@
+ ) _54_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1028,7 +1028,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -900,12 +900,12 @@
+ ) _55_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1043,7 +1047,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -916,12 +916,12 @@
+ ) _56_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)
@@ -1058,7 +1066,11 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(),
  .TRG_WIDTH(32'd0)
-@@ -932,28 +932,28 @@
+ ) _57_ (
+-.A(1'h1),
++.A(1'h0),
+ .ARGS(),
+ .EN(1'h1),
  .TRG()
  );
  (* keep = 32'd1 *)

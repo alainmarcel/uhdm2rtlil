@@ -15,20 +15,20 @@ module \top
   wire width 8 output 5 \cnt
   attribute \src "dut.sv:2.2-9.5"
   wire width 8 $0\cnt[7:0]
-  wire width 8 $auto$expression.cpp:2688:import_operation$2
-  wire width 64 $auto$expression.cpp:2742:import_operation$4
-  wire width 8 $auto$expression.cpp:2688:import_operation$6
+  wire width 8 $auto$expression.cpp:2859:import_operation$2
+  wire width 64 $auto$expression.cpp:2913:import_operation$4
+  wire width 8 $auto$expression.cpp:2859:import_operation$6
   attribute \src "dut.sv:19.26-19.50"
   wire $eq$dut.sv:19$8_Y
-  wire width 8 $auto$expression.cpp:2688:import_operation$11
+  wire width 8 $auto$expression.cpp:2859:import_operation$11
   attribute \src "dut.sv:20.31-20.58"
   wire $eq$dut.sv:20$13_Y
-  wire width 8 $auto$expression.cpp:2688:import_operation$16
+  wire width 8 $auto$expression.cpp:2859:import_operation$16
   attribute \src "dut.sv:21.33-21.60"
   wire $eq$dut.sv:21$18_Y
   attribute \src "dut.sv:26.35-26.55"
   wire $eq$dut.sv:26$21_Y
-  wire width 8 $auto$expression.cpp:2742:import_operation$24
+  wire width 8 $auto$expression.cpp:2913:import_operation$24
   attribute \src "dut.sv:27.28-27.52"
   wire $eq$dut.sv:27$26_Y
   cell $add $add$dut.sv:6$3
@@ -39,7 +39,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2688:import_operation$2
+    connect \Y $auto$expression.cpp:2859:import_operation$2
   end
   cell $sub $sub$dut.sv:8$5
     parameter \A_SIGNED 0
@@ -49,7 +49,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2742:import_operation$4
+    connect \Y $auto$expression.cpp:2913:import_operation$4
   end
   cell $add $add$dut.sv:19$7
     parameter \A_SIGNED 0
@@ -59,7 +59,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2688:import_operation$6
+    connect \Y $auto$expression.cpp:2859:import_operation$6
   end
   attribute \src "dut.sv:19.26-19.50"
   cell $eq $eq$dut.sv:19$9
@@ -69,7 +69,7 @@ module \top
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A \cnt
-    connect \B $auto$expression.cpp:2688:import_operation$6
+    connect \B $auto$expression.cpp:2859:import_operation$6
     connect \Y $eq$dut.sv:19$8_Y
   end
   attribute \src "dut.sv:19.2-19.52"
@@ -95,7 +95,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000010
-    connect \Y $auto$expression.cpp:2688:import_operation$11
+    connect \Y $auto$expression.cpp:2859:import_operation$11
   end
   attribute \src "dut.sv:20.31-20.58"
   cell $eq $eq$dut.sv:20$14
@@ -105,7 +105,7 @@ module \top
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A \cnt
-    connect \B $auto$expression.cpp:2688:import_operation$11
+    connect \B $auto$expression.cpp:2859:import_operation$11
     connect \Y $eq$dut.sv:20$13_Y
   end
   attribute \src "dut.sv:20.2-20.60"
@@ -131,7 +131,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000010
-    connect \Y $auto$expression.cpp:2688:import_operation$16
+    connect \Y $auto$expression.cpp:2859:import_operation$16
   end
   attribute \src "dut.sv:21.33-21.60"
   cell $eq $eq$dut.sv:21$19
@@ -141,7 +141,7 @@ module \top
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A \cnt
-    connect \B $auto$expression.cpp:2688:import_operation$16
+    connect \B $auto$expression.cpp:2859:import_operation$16
     connect \Y $eq$dut.sv:21$18_Y
   end
   attribute \src "dut.sv:21.2-21.62"
@@ -193,7 +193,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2742:import_operation$24
+    connect \Y $auto$expression.cpp:2913:import_operation$24
   end
   attribute \src "dut.sv:27.28-27.52"
   cell $eq $eq$dut.sv:27$27
@@ -203,7 +203,7 @@ module \top
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 1
     connect \A \cnt
-    connect \B $auto$expression.cpp:2742:import_operation$24
+    connect \B $auto$expression.cpp:2913:import_operation$24
     connect \Y $eq$dut.sv:27$26_Y
   end
   attribute \src "dut.sv:27.2-27.54"
@@ -266,14 +266,14 @@ module \top
         switch \up
         attribute \src "dut.sv:5.8-8.19"
           case 1'1
-            assign $0\cnt[7:0] $auto$expression.cpp:2688:import_operation$2
+            assign $0\cnt[7:0] $auto$expression.cpp:2859:import_operation$2
         attribute \src "dut.sv:5.8-8.19"
           case 
             attribute \src "dut.sv:7.8-8.19"
             switch \down
             attribute \src "dut.sv:7.8-8.19"
               case 1'1
-                assign $0\cnt[7:0] $auto$expression.cpp:2742:import_operation$4 [7:0]
+                assign $0\cnt[7:0] $auto$expression.cpp:2913:import_operation$4 [7:0]
             attribute \src "dut.sv:7.8-8.19"
               case 
             end
