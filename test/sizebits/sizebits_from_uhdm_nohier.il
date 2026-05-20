@@ -683,7 +683,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:37.1-37.39"
@@ -698,7 +698,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:41.1-41.33"
@@ -713,7 +713,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:42.1-42.36"
@@ -728,7 +728,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:43.1-43.36"
@@ -758,7 +758,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:45.1-45.39"
@@ -788,7 +788,7 @@ module \functions01
     parameter \ARGS_WIDTH 0
     connect \TRG { }
     connect \EN 1'1
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
   end
   attribute \src "dut.sv:55.1-55.33"

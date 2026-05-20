@@ -1007,7 +1007,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _62_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -1023,7 +1023,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _63_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -1039,7 +1039,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _64_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -1055,7 +1055,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _65_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -1103,7 +1103,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _68_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
@@ -1135,7 +1135,7 @@ module functions01();
     .TRG_POLARITY(32'd0),
     .TRG_WIDTH(32'd0)
   ) _70_ (
-    .A(1'h0),
+    .A(1'h1),
     .ARGS(),
     .EN(1'h1),
     .TRG()
