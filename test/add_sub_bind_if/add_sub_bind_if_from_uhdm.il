@@ -25,8 +25,8 @@ module \ADD_SUB
   wire width 9 \add_sub_if0.result
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
-  wire width 9 $auto$expression.cpp:2688:import_operation$2
-  wire width 9 $auto$expression.cpp:2742:import_operation$4
+  wire width 9 $auto$expression.cpp:2859:import_operation$2
+  wire width 9 $auto$expression.cpp:2913:import_operation$4
   cell $sub $sub$dut.sv:21$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \ADD_SUB
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a0 }
     connect \B { 1'0 \b0 }
-    connect \Y $auto$expression.cpp:2742:import_operation$4
+    connect \Y $auto$expression.cpp:2913:import_operation$4
   end
   cell $add $add$dut.sv:19$3
     parameter \A_SIGNED 0
@@ -45,14 +45,14 @@ module \ADD_SUB
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a0 }
     connect \B { 1'0 \b0 }
-    connect \Y $auto$expression.cpp:2688:import_operation$2
+    connect \Y $auto$expression.cpp:2859:import_operation$2
   end
   attribute \src "dut.sv:19.9-19.27|dut.sv:18.7-21.28"
   attribute \full_case 1
   cell $mux $procmux$7
     parameter \WIDTH 9
-    connect \A $auto$expression.cpp:2742:import_operation$4
-    connect \B $auto$expression.cpp:2688:import_operation$2
+    connect \A $auto$expression.cpp:2913:import_operation$4
+    connect \B $auto$expression.cpp:2859:import_operation$2
     connect \S \doAdd0
     connect \Y $0\result0[8:0]
   end

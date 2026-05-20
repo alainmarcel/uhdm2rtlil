@@ -1540,7 +1540,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 } else if ((func_name == "$bits" || func_name == "$size" ||
                             func_name == "$high" || func_name == "$low" ||
                             func_name == "$left" || func_name == "$right" ||
-                            func_name == "$dimensions" || func_name == "$increment") &&
+                            func_name == "$dimensions" ||
+                            func_name == "$unpacked_dimensions" ||
+                            func_name == "$increment") &&
                            !args.empty() && func_call->Tf_call_args() &&
                            !func_call->Tf_call_args()->empty()) {
                     // SV array/range query system functions.
@@ -1550,7 +1552,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     //   $high/$low     — max/min of L,R for the dimension.
                     //   $increment     — +1 if L<R (ascending), -1 if L>=R.
                     //   $dimensions    — number of dimensions (1 for atomic types).
+                    //   $unpacked_dimensions — same, but only the unpacked
+                    //                          (outermost) dims.
                     int total_bits = args[0].size();
+                    int unpacked_dim_count = 0;  // populated for array_net path
 
                     auto first_arg = func_call->Tf_call_args()->at(0);
 
@@ -1586,27 +1591,138 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                     };
 
+                    // Append the array_net's *unpacked* dimensions (outer,
+                    // declaration order) to `out`.  Used for the
+                    // `wire [3:0] z[7:2][2:9]` form: SV LRM says the array
+                    // dims come BEFORE the packed dims in the dim numbering
+                    // (`$size(z, 1)` is the outermost unpacked dim).
+                    auto append_array_net_dims = [&](const UHDM::array_net* an,
+                                                     std::vector<DimInfo>& out) -> int {
+                        int n = 0;
+                        if (!an->Ranges()) return 0;
+                        for (auto r : *an->Ranges()) {
+                            if (!r->Left_expr() || !r->Right_expr()) continue;
+                            RTLIL::SigSpec ls = import_expression(
+                                any_cast<const UHDM::expr*>(r->Left_expr()));
+                            RTLIL::SigSpec rs = import_expression(
+                                any_cast<const UHDM::expr*>(r->Right_expr()));
+                            if (ls.is_fully_const() && rs.is_fully_const()) {
+                                out.push_back({ls.as_const().as_int(),
+                                               rs.as_const().as_int()});
+                                n++;
+                            }
+                        }
+                        return n;
+                    };
+
                     // Resolve the leaf typespec for a UHDM expression.  For
                     // hier_path we follow Path_elems to the final element;
                     // for ref_obj we use Actual_group; for bit_select we
                     // follow the parent and remember to strip one dim.
                     int strip_outer_dims = 0;
                     const UHDM::any* leaf_ts = nullptr;
+                    std::vector<DimInfo> dims;  // declared early so the
+                    // array_net branch below can populate the *unpacked*
+                    // dims directly; packed dims are added later from the
+                    // leaf typespec.
+
+                    // Helper: resolve a bare name (e.g. "z") to its
+                    // array_net or net in the current module instance.
+                    auto find_array_net_by_name =
+                        [&](const std::string& name) -> const UHDM::any* {
+                        if (!current_instance) return nullptr;
+                        if (auto m = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                            if (m->Array_nets()) {
+                                for (auto an : *m->Array_nets()) {
+                                    if (std::string(an->VpiName()) == name)
+                                        return an;
+                                }
+                            }
+                            if (m->Nets()) {
+                                for (auto n : *m->Nets()) {
+                                    if (std::string(n->VpiName()) == name)
+                                        return n;
+                                }
+                            }
+                        }
+                        return nullptr;
+                    };
 
                     std::function<void(const UHDM::any*)> resolve_leaf;
                     resolve_leaf = [&](const UHDM::any* expr) {
                         if (!expr) return;
+                        // `z[3][3]` is a single `var_select` with two
+                        // indices in its `Exprs()` list — each index
+                        // strips one outer dim.  We treat it as N nested
+                        // bit_selects on the named array_net.
+                        if (auto vs = dynamic_cast<const UHDM::var_select*>(expr)) {
+                            int n_idx = vs->Exprs() ? (int)vs->Exprs()->size() : 0;
+                            strip_outer_dims += n_idx;
+                            std::string bname = std::string(vs->VpiName());
+                            if (!bname.empty()) {
+                                if (auto an = find_array_net_by_name(bname)) {
+                                    resolve_leaf(an);
+                                    return;
+                                }
+                            }
+                            if (vs->Actual_group()) {
+                                resolve_leaf(vs->Actual_group());
+                                return;
+                            }
+                            return;
+                        }
                         if (auto bs = dynamic_cast<const UHDM::bit_select*>(expr)) {
                             ++strip_outer_dims;
                             // Bit-selects on hier_path have the parent path
                             // in VpiParent; on a plain ref the parent is the
-                            // base wire.
+                            // base wire.  When neither is available (a bare
+                            // `z[3]` argument to a sys_func_call), look the
+                            // base name up directly in the module's
+                            // Array_nets / Nets.
                             if (bs->Actual_group()) {
                                 resolve_leaf(bs->Actual_group());
                                 return;
                             }
+                            std::string bname = std::string(bs->VpiName());
+                            if (!bname.empty()) {
+                                if (auto an = find_array_net_by_name(bname)) {
+                                    resolve_leaf(an);
+                                    return;
+                                }
+                            }
                             if (bs->VpiParent())
                                 resolve_leaf(bs->VpiParent());
+                            return;
+                        }
+                        // array_net argument (already-resolved): handle
+                        // directly without going through ref_obj.
+                        if (auto an = dynamic_cast<const UHDM::array_net*>(expr)) {
+                            int elem_w = 1;
+                            if (an->Nets() && !an->Nets()->empty()) {
+                                if (auto en = (*an->Nets())[0]) {
+                                    if (en->Typespec() && en->Typespec()->Actual_typespec()) {
+                                        leaf_ts = en->Typespec()->Actual_typespec();
+                                        elem_w = get_width_from_typespec(
+                                            leaf_ts, current_instance);
+                                    }
+                                }
+                            }
+                            int count = 1;
+                            if (an->Ranges() && !an->Ranges()->empty()) {
+                                for (auto r : *an->Ranges()) {
+                                    RTLIL::SigSpec ls = import_expression(
+                                        any_cast<const UHDM::expr*>(r->Left_expr()));
+                                    RTLIL::SigSpec rs = import_expression(
+                                        any_cast<const UHDM::expr*>(r->Right_expr()));
+                                    if (ls.is_fully_const() && rs.is_fully_const())
+                                        count *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                }
+                            } else {
+                                count = (int)an->VpiSize();
+                            }
+                            if (count > 0 && elem_w > 0)
+                                total_bits = count * elem_w;
+                            unpacked_dim_count = append_array_net_dims(an, dims);
                             return;
                         }
                         if (auto hp = dynamic_cast<const UHDM::hier_path*>(expr)) {
@@ -1623,22 +1739,28 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                     if (v->Typespec() && v->Typespec()->Actual_typespec())
                                         leaf_ts = v->Typespec()->Actual_typespec();
                                 } else if (auto an = dynamic_cast<const UHDM::array_net*>(ref->Actual_group())) {
-                                    // Unpacked array net (`wire z [N]`).
-                                    // For `$bits` we need element_width ×
-                                    // N — the array's typespec is just
-                                    // the element type, so multiply
-                                    // manually here.
+                                    // Unpacked array net (`wire [3:0] z [N1][N2]`).
+                                    // `array_net->Ranges()` carries the
+                                    // unpacked dims (outer → inner), and
+                                    // `array_net->Nets()[0]->Typespec()` is
+                                    // the element typespec (packed dims).
+                                    // Populate `dims` with unpacked dims
+                                    // first, then defer the packed-dim walk
+                                    // to the leaf typespec below.
+                                    // Also compute `total_bits = product *
+                                    // elem_w` for `$bits`.
                                     int elem_w = 1;
                                     if (an->Nets() && !an->Nets()->empty()) {
                                         if (auto en = (*an->Nets())[0]) {
-                                            if (en->Typespec() && en->Typespec()->Actual_typespec())
+                                            if (en->Typespec() && en->Typespec()->Actual_typespec()) {
+                                                leaf_ts = en->Typespec()->Actual_typespec();
                                                 elem_w = get_width_from_typespec(
-                                                    en->Typespec()->Actual_typespec(), current_instance);
+                                                    leaf_ts, current_instance);
+                                            }
                                         }
                                     }
-                                    int count = (int)an->VpiSize();
-                                    if (count <= 0 && an->Ranges() && !an->Ranges()->empty()) {
-                                        count = 1;
+                                    int count = 1;
+                                    if (an->Ranges() && !an->Ranges()->empty()) {
                                         for (auto r : *an->Ranges()) {
                                             RTLIL::SigSpec ls = import_expression(
                                                 any_cast<const UHDM::expr*>(r->Left_expr()));
@@ -1647,9 +1769,19 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                             if (ls.is_fully_const() && rs.is_fully_const())
                                                 count *= std::abs(ls.as_int() - rs.as_int()) + 1;
                                         }
+                                    } else {
+                                        count = (int)an->VpiSize();
                                     }
                                     if (count > 0 && elem_w > 0)
                                         total_bits = count * elem_w;
+                                    // Defer dims population until after
+                                    // resolve_leaf returns — we'll grab
+                                    // `an` from a side variable.  Easiest:
+                                    // populate `dims` here, set a flag so
+                                    // the post-resolve_leaf code skips the
+                                    // typespec walk for the unpacked part.
+                                    unpacked_dim_count = append_array_net_dims(an, dims);
+                                    return;
                                 } else if (auto n = dynamic_cast<const UHDM::net*>(ref->Actual_group())) {
                                     if (n->Typespec() && n->Typespec()->Actual_typespec())
                                         leaf_ts = n->Typespec()->Actual_typespec();
@@ -1683,18 +1815,44 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         }
                     }
 
-                    std::vector<DimInfo> dims;
                     if (leaf_ts) append_typespec_dims(append_typespec_dims, leaf_ts, dims);
-                    // Strip one outer dim per surrounding bit_select.
+                    // Strip one outer dim per surrounding bit_select.  For
+                    // a 2-D unpacked array (e.g. `z[7:2][2:9]`) accessed
+                    // via `z[3]`, the bit_select strips the outermost
+                    // unpacked dim (leaving 1 unpacked + 1 packed).
                     while (strip_outer_dims > 0 && !dims.empty()) {
                         dims.erase(dims.begin());
+                        if (unpacked_dim_count > 0) --unpacked_dim_count;
                         --strip_outer_dims;
                     }
 
                     // Pick the dimension index from the optional 2nd arg.
+                    // The arg can be a constant expression like `(1+1)`
+                    // which `import_expression` doesn't fold at module
+                    // scope (folding is gated on loop/function/genscope
+                    // contexts).  Fall back to `ExprEval::reduceExpr` on
+                    // the raw UHDM expr to evaluate such literals.
                     int dim_index = 1;
-                    if (args.size() >= 2 && args[1].is_fully_const())
-                        dim_index = args[1].as_const().as_int();
+                    if (args.size() >= 2) {
+                        if (args[1].is_fully_const()) {
+                            dim_index = args[1].as_const().as_int();
+                        } else if (func_call->Tf_call_args()->size() >= 2) {
+                            auto dim_arg = (*func_call->Tf_call_args())[1];
+                            if (auto e = dynamic_cast<const UHDM::expr*>(dim_arg)) {
+                                UHDM::ExprEval ev;
+                                bool inv = false;
+                                UHDM::expr* res = ev.reduceExpr(
+                                    const_cast<UHDM::expr*>(e), inv,
+                                    current_instance, e->VpiParent(), true);
+                                if (res && res->UhdmType() == uhdmconstant) {
+                                    auto c = dynamic_cast<const UHDM::constant*>(res);
+                                    RTLIL::SigSpec s = import_constant(c);
+                                    if (s.is_fully_const())
+                                        dim_index = s.as_const().as_int();
+                                }
+                            }
+                        }
+                    }
 
                     auto dim_size = [](const DimInfo& d) {
                         return std::abs(d.left - d.right) + 1;
@@ -1706,16 +1864,25 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     } else if (func_name == "$dimensions") {
                         // Atomic types and structs report 1 dimension.
                         result = dims.empty() ? 1 : (int)dims.size();
+                    } else if (func_name == "$unpacked_dimensions") {
+                        // SV LRM: only the unpacked (outermost) dims.
+                        result = unpacked_dim_count;
                     } else if (dims.empty()) {
                         // Atomic / struct: treat as a single dim covering all
-                        // bits with range [bits-1:0].
+                        // bits with range [bits-1:0] (descending).
                         DimInfo whole{total_bits ? total_bits - 1 : 0, 0};
                         if (func_name == "$size")          result = total_bits;
                         else if (func_name == "$left")     result = whole.left;
                         else if (func_name == "$right")    result = whole.right;
                         else if (func_name == "$high")     result = whole.left;
                         else if (func_name == "$low")      result = whole.right;
-                        else if (func_name == "$increment") result = -1;
+                        // SV LRM §20.7: $increment is +1 if the dim is
+                        // descending (left > right) OR scalar (left == right);
+                        // -1 if ascending.  An atomic / struct's implicit
+                        // range is [bits-1:0] — descending or scalar — so
+                        // +1.  The previous code returned -1 here, which
+                        // contradicts yosys/tests/sat/sizebits.sv line 119.
+                        else if (func_name == "$increment") result = 1;
                     } else if (dim_index >= 1 && dim_index <= (int)dims.size()) {
                         const DimInfo& d = dims[dim_index - 1];
                         if (func_name == "$size")          result = dim_size(d);
@@ -1723,7 +1890,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         else if (func_name == "$right")    result = d.right;
                         else if (func_name == "$high")     result = std::max(d.left, d.right);
                         else if (func_name == "$low")      result = std::min(d.left, d.right);
-                        else if (func_name == "$increment") result = (d.left < d.right) ? 1 : -1;
+                        // SV LRM §20.7: descending (left > right) → +1;
+                        // ascending (left < right) → -1; equal → +1.
+                        // The original `(left < right) ? 1 : -1` had the
+                        // mapping inverted.
+                        else if (func_name == "$increment") result = (d.left < d.right) ? -1 : 1;
                     } else {
                         log_warning("UHDM: %s with dim=%d out of range (%d dims)\n",
                                     func_name.c_str(), dim_index, (int)dims.size());

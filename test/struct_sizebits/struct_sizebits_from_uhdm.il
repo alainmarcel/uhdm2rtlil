@@ -14,7 +14,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -74,7 +74,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -134,7 +134,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -194,7 +194,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -254,7 +254,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -434,7 +434,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -494,7 +494,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -554,7 +554,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -659,7 +659,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -719,7 +719,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'1
+    connect \A 1'0
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }
@@ -779,7 +779,7 @@ module \top
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
     parameter \TRG_WIDTH 0
-    connect \A 1'0
+    connect \A 1'1
     connect \ARGS { }
     connect \EN 1'1
     connect \TRG { }

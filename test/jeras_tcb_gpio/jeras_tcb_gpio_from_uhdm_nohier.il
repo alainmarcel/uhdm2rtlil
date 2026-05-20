@@ -170,18 +170,18 @@ module \tcb_gpio
   attribute \src "tcb_if.sv:34.18-34.21"
   wire input 13 \bus.wen
   wire \AW
-  wire width 64 $auto$expression.cpp:2742:import_operation$1
+  wire width 64 $auto$expression.cpp:2913:import_operation$1
   attribute \src "tcb_if.sv:35.18-35.21"
   wire width 32 input 12 \bus.adr
   wire \BW
-  wire width 64 $auto$expression.cpp:2742:import_operation$3
+  wire width 64 $auto$expression.cpp:2913:import_operation$3
   attribute \src "tcb_if.sv:36.18-36.21"
   wire width 4 input 11 \bus.ben
   wire \DW
-  wire width 64 $auto$expression.cpp:2742:import_operation$5
+  wire width 64 $auto$expression.cpp:2913:import_operation$5
   attribute \src "tcb_if.sv:37.18-37.21"
   wire width 32 input 10 \bus.wdt
-  wire width 64 $auto$expression.cpp:2742:import_operation$7
+  wire width 64 $auto$expression.cpp:2913:import_operation$7
   attribute \src "tcb_if.sv:38.18-38.21"
   wire width 32 output 9 \bus.rdt
   attribute \src "tcb_if.sv:39.18-39.21"
@@ -207,7 +207,7 @@ module \tcb_gpio
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \AW }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2742:import_operation$1
+    connect \Y $auto$expression.cpp:2913:import_operation$1
   end
   cell $sub $sub$tcb_if.sv:36$4
     parameter \A_SIGNED 0
@@ -217,7 +217,7 @@ module \tcb_gpio
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \BW }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2742:import_operation$3
+    connect \Y $auto$expression.cpp:2913:import_operation$3
   end
   cell $sub $sub$tcb_if.sv:37$6
     parameter \A_SIGNED 0
@@ -227,7 +227,7 @@ module \tcb_gpio
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \DW }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2742:import_operation$5
+    connect \Y $auto$expression.cpp:2913:import_operation$5
   end
   cell $sub $sub$tcb_if.sv:38$8
     parameter \A_SIGNED 0
@@ -237,7 +237,7 @@ module \tcb_gpio
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \DW }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2742:import_operation$7
+    connect \Y $auto$expression.cpp:2913:import_operation$7
   end
   cell $not $not$tcb_gpio.sv:58$10
     parameter \A_SIGNED 0
