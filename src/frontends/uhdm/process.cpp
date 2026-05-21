@@ -1747,6 +1747,17 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     std::map<std::string, RTLIL::SigSpec> signal_specs;    // Map signal name to signal spec
     
     for (const auto& sig : assigned_signals) {
+        // Skip memory writes — they don't need `$0\` temp wires (they go
+        // through the EN/ADDR/DATA infrastructure set up below). Without
+        // this, import_expression() on a `mem[idx]` LHS would create a
+        // stray `$memrd` cell during temp-wire setup.
+        if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiBitSelect) {
+            auto bs = any_cast<const bit_select*>(sig.lhs_expr);
+            if (bs && !bs->VpiName().empty()) {
+                RTLIL::IdString mem_id = RTLIL::escape_id(std::string(bs->VpiName()));
+                if (module->memories.count(mem_id)) continue;
+            }
+        }
         // Import the LHS expression to get its SigSpec
         RTLIL::SigSpec lhs_spec;
         if (sig.lhs_expr) {
@@ -1884,6 +1895,73 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // Set current_comb_process so expression handlers can detect comb context
     current_comb_process = yosys_proc;
 
+    // Set up comb-mode memory write infrastructure: each memory written from
+    // this `always @*` block gets per-write addr/data/en temp wires plus a
+    // companion `$memwr` cell (CLK_ENABLE=0). Inside the body, statements
+    // assign to these temp wires (see is_memory_write path in
+    // import_assignment_comb / import_statement_comb). After `proc`, the
+    // mux logic that drives the temp wires settles, and Yosys's `mem2reg`
+    // can collapse small arrays to registers (subbytes.v depends on this).
+    std::set<std::string> comb_mem_names;
+    if (auto stmt = uhdm_process->Stmt()) {
+        const any* scan_stmt = stmt;
+        if (stmt->VpiType() == vpiEventControl) {
+            if (auto ec = any_cast<const event_control*>(stmt); ec && ec->Stmt())
+                scan_stmt = ec->Stmt();
+        }
+        scan_for_memory_writes(scan_stmt, comb_mem_names, module);
+    }
+    current_memory_writes.clear();
+    std::vector<RTLIL::Cell*> comb_memwr_cells;
+    for (const auto& mem_name : comb_mem_names) {
+        RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+        if (!module->memories.count(mem_id)) continue;
+        RTLIL::Memory* mem = module->memories.at(mem_id);
+        int addr_w = 1;
+        while ((1 << addr_w) < mem->size) addr_w++;
+
+        std::string idx = std::to_string(incr_autoidx());
+        std::string addr_name = "$memwr$\\" + mem_name + "$addr$" + idx;
+        std::string data_name = "$memwr$\\" + mem_name + "$data$" + idx;
+        std::string en_name   = "$memwr$\\" + mem_name + "$en$"   + idx;
+        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_name), addr_w);
+        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_name), mem->width);
+        RTLIL::Wire* en_wire   = module->addWire(RTLIL::escape_id(en_name),   1);
+
+        MemoryWriteInfo info;
+        info.mem_id    = mem_id;
+        info.addr_wire = addr_wire;
+        info.data_wire = data_wire;
+        info.en_wire   = en_wire;
+        info.width     = mem->width;
+        current_memory_writes[mem_name] = info;
+
+        // Default EN=0 at process entry; body assigns EN=1 in active cases.
+        yosys_proc->root_case.actions.push_back(
+            RTLIL::SigSig(RTLIL::SigSpec(en_wire),
+                          RTLIL::SigSpec(RTLIL::State::S0)));
+
+        // Companion $memwr cell — CLK_ENABLE=0 because this is a comb write
+        // (matches Yosys's pattern for `always @*` memory writes; mem2reg
+        // can then promote the memory to per-element registers).
+        std::string cell_name = "$memwr$\\" + mem_name + "$" + idx;
+        RTLIL::Cell* memwr = module->addCell(RTLIL::escape_id(cell_name), ID($memwr));
+        memwr->setParam(ID::MEMID,        RTLIL::Const(mem_id.str()));
+        memwr->setParam(ID::ABITS,        RTLIL::Const(addr_w));
+        memwr->setParam(ID::WIDTH,        RTLIL::Const(mem->width));
+        memwr->setParam(ID::CLK_ENABLE,   RTLIL::Const(0));
+        memwr->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+        memwr->setParam(ID::PRIORITY,     RTLIL::Const(incr_autoidx()));
+        memwr->setPort(ID::CLK,  RTLIL::SigSpec(RTLIL::State::Sx));
+        memwr->setPort(ID::ADDR, RTLIL::SigSpec(addr_wire));
+        memwr->setPort(ID::DATA, RTLIL::SigSpec(data_wire));
+        RTLIL::SigSpec en_wide;
+        for (int i = 0; i < mem->width; i++) en_wide.append(RTLIL::SigSpec(en_wire));
+        memwr->setPort(ID::EN, en_wide);
+        add_src_attribute(memwr->attributes, uhdm_process);
+        comb_memwr_cells.push_back(memwr);
+    }
+
     // Import the statements
     if (auto stmt = uhdm_process->Stmt()) {
         // For combinational blocks, unwrap event_control if present
@@ -1905,6 +1983,7 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     current_comb_values.clear();
     comb_value_aliases.clear();
     loop_values.clear();
+    current_memory_writes.clear();
 }
 
 // Import always block
@@ -6852,6 +6931,47 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (emit_dynamic_indexed_part_select_write(
                     ips, uhdm_assign->Rhs(), proc, nullptr))
                 return;
+        }
+    }
+
+    // Memory write via bit-select LHS — route to the EN/ADDR/DATA temp wires
+    // set up by `import_always_comb`. Without this, import_expression() on
+    // the LHS bit_select would create a stray `$memrd` cell and the write
+    // would never reach the memory (subbytes.v exposes this).
+    if (!current_memory_writes.empty()) {
+        if (auto lhs_e = uhdm_assign->Lhs()) {
+            if (lhs_e->VpiType() == vpiBitSelect) {
+                auto bs = any_cast<const bit_select*>(lhs_e);
+                std::string mem_name = std::string(bs->VpiName());
+                auto it = current_memory_writes.find(mem_name);
+                if (it != current_memory_writes.end()) {
+                    const MemoryWriteInfo& info = it->second;
+                    RTLIL::SigSpec addr = import_expression(bs->VpiIndex());
+                    if (addr.size() != info.addr_wire->width) {
+                        if (addr.size() < info.addr_wire->width)
+                            addr.extend_u0(info.addr_wire->width);
+                        else
+                            addr = addr.extract(0, info.addr_wire->width);
+                    }
+                    RTLIL::SigSpec data;
+                    if (auto rhs_any = uhdm_assign->Rhs()) {
+                        if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                            data = import_expression(rhs_e);
+                    }
+                    if (data.size() != info.width) {
+                        if (data.size() < info.width) data.extend_u0(info.width);
+                        else data = data.extract(0, info.width);
+                    }
+                    proc->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(info.addr_wire), addr));
+                    proc->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(info.data_wire), data));
+                    proc->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(info.en_wire),
+                                      RTLIL::SigSpec(RTLIL::State::S1)));
+                    return;
+                }
+            }
         }
     }
 

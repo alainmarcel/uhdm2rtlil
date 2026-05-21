@@ -29,7 +29,7 @@ module \top
   wire $0\b_q
   attribute \src "dut.sv:25.2-27.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:2855:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
