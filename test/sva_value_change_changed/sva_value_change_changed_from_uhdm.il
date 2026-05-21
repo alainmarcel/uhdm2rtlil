@@ -21,7 +21,7 @@ module \top
   wire \x
   attribute \src "dut.sv:24.2-26.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:2855:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

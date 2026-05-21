@@ -1448,24 +1448,31 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (at == 3) is_clocked = true;  // vpiAlwaysFF
             } catch (...) {}
 
-            // Check event_control for posedge/negedge
+            // Check event_control for posedge/negedge.  A multi-signal
+            // sensitivity list `@(a or b or ...)` shows up as vpiEventOrOp
+            // wrapping the individual signals — that alone does NOT make
+            // the block clocked; we must recurse and find an actual
+            // posedge/negedge.  Without recursing, a level-sensitive
+            // always was misclassified as clocked, defeating the
+            // comb_only_arrays expansion (subbytes.v).
+            std::function<bool(const any*)> has_edge = [&](const any* n) -> bool {
+                if (!n) return false;
+                if (n->VpiType() != vpiOperation) return false;
+                auto op = any_cast<const operation*>(n);
+                if (!op) return false;
+                int ot = op->VpiOpType();
+                if (ot == vpiPosedgeOp || ot == vpiNegedgeOp) return true;
+                if (ot == vpiEventOrOp && op->Operands()) {
+                    for (auto opnd : *op->Operands())
+                        if (has_edge(opnd)) return true;
+                }
+                return false;
+            };
             auto stmt = always_obj->Stmt();
             if (!is_clocked && stmt && stmt->VpiType() == vpiEventControl) {
                 auto ec = any_cast<const event_control*>(stmt);
-                if (ec && ec->VpiCondition()) {
-                    // Any explicit sensitivity condition indicates a clocked or mixed block
-                    auto cond = ec->VpiCondition();
-                    // posedge/negedge operations indicate clock
-                    if (cond->VpiType() == vpiOperation) {
-                        auto op = any_cast<const operation*>(cond);
-                        int ot = op->VpiOpType();
-                        if (ot == vpiPosedgeOp || ot == vpiNegedgeOp || ot == vpiEventOrOp)
-                            is_clocked = true;
-                    } else {
-                        // Single signal reference in sensitivity → treat as clocked
-                        is_clocked = true;
-                    }
-                }
+                if (ec && ec->VpiCondition())
+                    is_clocked = has_edge(ec->VpiCondition());
                 // If VpiCondition() is null → always @* → not clocked
             }
 
