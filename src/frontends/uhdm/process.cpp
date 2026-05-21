@@ -6727,8 +6727,134 @@ RTLIL::SigSpec UhdmImporter::create_compound_op_cell(int vpi_op_type, RTLIL::Sig
     return result;
 }
 
+// Handle `base[offset +: width] = rhs` / `base[offset -: width] = rhs` where
+// `offset` is dynamic. RTLIL has no LHS form that captures a runtime-indexed
+// slice, so we synthesise the read-modify-write pattern that Yosys's Verilog
+// frontend emits (matching simple/sign_part_assign.v):
+//   mask   = (1 << width) - 1
+//   shamt  = offset  (for +:)        or  offset - (width - 1)  (for -:)
+//   new    = (cur & ~(mask << shamt)) | ((rhs_ext & mask) << shamt)
+//   $0\base = new
+// `rhs_ext` is the RHS extended to the part-select width with sign-aware
+// padding so that `data_o[i +: 4] = 1'sb1` widens to 4'b1111 (LRM §10.7).
+// Returns true if the helper handled the write (caller must early-return).
+bool UhdmImporter::emit_dynamic_indexed_part_select_write(
+        const UHDM::indexed_part_select* ips,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!ips) return false;
+
+    // Base width / wire
+    std::string base_name;
+    if (!ips->VpiDefName().empty()) base_name = std::string(ips->VpiDefName());
+    else if (!ips->VpiName().empty()) base_name = std::string(ips->VpiName());
+    if (base_name.empty()) return false;
+    RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
+    if (!base_wire) return false;
+    int base_w = base_wire->width;
+
+    // Part-select width must be constant
+    auto width_expr = ips->Width_expr();
+    if (!width_expr) return false;
+    RTLIL::SigSpec width_spec = import_expression(width_expr);
+    if (!width_spec.is_fully_const()) return false;
+    int part_w = width_spec.as_const().as_int();
+    if (part_w <= 0 || part_w > base_w) return false;
+
+    // Base/offset expression — bail to the static path when it's a constant
+    auto base_idx_expr = ips->Base_expr();
+    if (!base_idx_expr) return false;
+    RTLIL::SigSpec offset = import_expression(base_idx_expr);
+    if (offset.is_fully_const()) return false;
+
+    // For [offset -: width] the LSB lives at offset - (width - 1)
+    bool indexed_up = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
+    RTLIL::SigSpec shamt = offset;
+    if (!indexed_up && part_w > 1) {
+        RTLIL::Wire* sub_w = module->addWire(NEW_ID, offset.size());
+        module->addSub(NEW_ID, offset,
+                       RTLIL::SigSpec(RTLIL::Const(part_w - 1, offset.size())),
+                       sub_w);
+        shamt = RTLIL::SigSpec(sub_w);
+    }
+
+    // RHS sized/signed to part_w
+    if (!rhs_any) return false;
+    auto rhs_expr_obj = dynamic_cast<const UHDM::expr*>(rhs_any);
+    if (!rhs_expr_obj) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = part_w;
+    RTLIL::SigSpec rhs = import_expression(rhs_expr_obj);
+    expression_context_width = prev_ctx;
+    bool rhs_signed = is_expr_signed(rhs_expr_obj);
+    if (rhs.size() < part_w) rhs.extend_u0(part_w, rhs_signed);
+    else if (rhs.size() > part_w) rhs = rhs.extract(0, part_w);
+
+    // Build base-width mask (low part_w bits set) and zero-extended RHS
+    std::vector<RTLIL::State> mask_bits(base_w, RTLIL::State::S0);
+    for (int i = 0; i < part_w; i++) mask_bits[i] = RTLIL::State::S1;
+    RTLIL::Const mask_const_val(mask_bits);
+    RTLIL::SigSpec mask_const_sig = RTLIL::SigSpec(mask_const_val);
+    RTLIL::SigSpec rhs_full = rhs;
+    rhs_full.extend_u0(base_w, false);
+
+    // mask_shifted = mask_const << shamt
+    RTLIL::Wire* mask_shifted = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, mask_const_sig, shamt, mask_shifted, false);
+    // val_shifted = rhs_full << shamt
+    RTLIL::Wire* val_shifted = module->addWire(NEW_ID, base_w);
+    module->addShl(NEW_ID, rhs_full, shamt, val_shifted, false);
+    // inv_mask = ~mask_shifted
+    RTLIL::Wire* inv_mask = module->addWire(NEW_ID, base_w);
+    module->addNot(NEW_ID, RTLIL::SigSpec(mask_shifted), inv_mask);
+
+    // cur_val = currently-tracked combinational value, else the wire itself
+    RTLIL::SigSpec cur_val;
+    if (current_comb_values.count(base_name))
+        cur_val = current_comb_values[base_name];
+    else
+        cur_val = RTLIL::SigSpec(base_wire);
+
+    // cleared = cur_val & inv_mask;   new_val = cleared | val_shifted
+    RTLIL::Wire* cleared = module->addWire(NEW_ID, base_w);
+    module->addAnd(NEW_ID, cur_val, RTLIL::SigSpec(inv_mask), cleared);
+    RTLIL::Wire* new_val = module->addWire(NEW_ID, base_w);
+    module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
+                  RTLIL::SigSpec(val_shifted), new_val);
+
+    // Drive $0\base via the standard temp-wire path, mirroring full-wire writes
+    if (proc) {
+        emit_comb_assign(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_val), proc);
+    } else if (case_rule) {
+        std::string temp_name = "$0\\" + base_name;
+        if (RTLIL::Wire* temp_wire = module->wire(temp_name)) {
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(new_val)));
+        } else {
+            case_rule->actions.push_back(
+                RTLIL::SigSig(RTLIL::SigSpec(base_wire), RTLIL::SigSpec(new_val)));
+        }
+    }
+    if (!in_always_ff_body_mode)
+        current_comb_values[base_name] = RTLIL::SigSpec(new_val);
+    return true;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
+    // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
+    // captures a runtime-indexed slice, so synthesise the mask/shift/or write
+    // (matches Yosys's Verilog frontend; covers simple/sign_part_assign.v).
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(lhs_e);
+            if (emit_dynamic_indexed_part_select_write(
+                    ips, uhdm_assign->Rhs(), proc, nullptr))
+                return;
+        }
+    }
+
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
 
@@ -7075,6 +7201,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
 
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
+    // Dynamic indexed_part_select LHS — synthesise mask/shift/or write
+    // (see Process* overload above for the full rationale).
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(lhs_e);
+            if (emit_dynamic_indexed_part_select_write(
+                    ips, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
+        }
+    }
+
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
 
