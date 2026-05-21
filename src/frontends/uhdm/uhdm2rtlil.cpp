@@ -301,6 +301,15 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                 log("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
                 continue;
             }
+            // Skip modules that contain source-level generate statements
+            // (vpiGenStmt). The AllModules form has the un-elaborated gen_region,
+            // so cont_assigns like `assign bar[0].a = A;` reference generate-scope
+            // wires that don't exist yet. Defer to the elaborated walk, where
+            // each gen_scope_array is materialized with its iteration index.
+            if (module_def->Gen_stmts() && !module_def->Gen_stmts()->empty()) {
+                log("UHDM: Skipping %s from AllModules (has gen_stmts; will import from elaborated form)\n", mod_name.c_str());
+                continue;
+            }
             import_module(module_def);
         }
     }
@@ -603,11 +612,16 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         auto saved_wire_map = wire_map;
         auto saved_name_map = name_map;
         auto saved_net_map = net_map;
+        auto saved_gen_scope_stack = gen_scope_stack;
 
-        // Clear maps before importing new module to avoid cross-module wire references
+        // Clear maps before importing new module to avoid cross-module wire references.
+        // gen_scope_stack must also be cleared so that gen_scope_arrays inside this
+        // module aren't prefixed with the parent's generate-scope path
+        // (e.g., when mod_a is reached via hierdefparam_top.foo, foo must not leak in).
         wire_map.clear();
         name_map.clear();
         net_map.clear();
+        gen_scope_stack.clear();
 
         import_module(uhdm_module);
 
@@ -617,6 +631,7 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
         wire_map = saved_wire_map;
         name_map = saved_name_map;
         net_map = saved_net_map;
+        gen_scope_stack = saved_gen_scope_stack;
 
         // Look up the newly created module so cell creation code can find it
         RTLIL::Module* new_mod = design->module(RTLIL::escape_id(module_name));

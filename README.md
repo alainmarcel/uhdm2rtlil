@@ -14,9 +14,9 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 232 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 100% (232/232 tests functional, 0 known failures)
-- **Passing**: 187 tests with formal equivalence verified between UHDM and Verilog frontends
+- **Total Tests**: 233 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 100% (233/233 tests functional, 0 known failures)
+- **Passing**: 188 tests with formal equivalence verified between UHDM and Verilog frontends
 - **UHDM-Only Success**: 45 tests demonstrating UHDM's superior SystemVerilog support:
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
