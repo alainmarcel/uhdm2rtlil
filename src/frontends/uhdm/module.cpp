@@ -1413,6 +1413,15 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         auto saved_gen_scope_stack = gen_scope_stack;
         auto saved_initial_signal_assignments = initial_signal_assignments;
 
+        // Clear maps/state before importing child module body — the child
+        // module is its own scope, so the parent's gen_scope_stack must not
+        // leak in (otherwise inner wires would be named with the parent's
+        // generate-scope prefix, e.g., \foo.bar[0].a instead of \bar[0].a).
+        wire_map.clear();
+        name_map.clear();
+        net_map.clear();
+        gen_scope_stack.clear();
+
         // Import the elaborated instance as a module
         // import_module() will build the correct parameterized name,
         // import ports with resolved widths, and import generate scopes
@@ -1444,6 +1453,11 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         auto saved_net_map2 = net_map;
                         auto saved_gen_scope_stack2 = gen_scope_stack;
                         auto saved_initial2 = initial_signal_assignments;
+
+                        wire_map.clear();
+                        name_map.clear();
+                        net_map.clear();
+                        gen_scope_stack.clear();
 
                         import_module(mod_def);
 

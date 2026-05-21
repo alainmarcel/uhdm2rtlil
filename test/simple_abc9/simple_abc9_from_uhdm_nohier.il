@@ -866,8 +866,8 @@ module \abc9_test021
   wire \grant_encoded
   attribute \src "dut.sv:200.18-200.29"
   wire \grant_valid
-  wire width 4 $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$74
-  wire width 2 $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$75
+  wire width 4 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74
+  wire width 2 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75
   attribute \src "dut.sv:179.7-182.4"
   cell $_NOT_ \u0
     connect \Y \a
@@ -890,12 +890,12 @@ module \abc9_test021
     connect \rst \rst
     connect \request \request
     connect \acknowledge \acknowledge
-    connect \grant $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$74
+    connect \grant $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74
     connect \grant_valid \grant_valid
-    connect \grant_encoded $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$75
+    connect \grant_encoded $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75
   end
-  connect \grant $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$74 [0]
-  connect \grant_encoded $auto$uhdm2rtlil.cpp:909:import_module_hierarchy$75 [0]
+  connect \grant $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74 [0]
+  connect \grant_encoded $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75 [0]
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:226.1-236.10"

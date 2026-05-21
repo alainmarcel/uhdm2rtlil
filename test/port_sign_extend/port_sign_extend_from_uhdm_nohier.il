@@ -94,7 +94,7 @@ module \port_sign_extend
   attribute \src "dut.sv:58.19-58.23"
   attribute \init 3'101
   wire width 3 signed \tmp8[0]
-  wire signed $auto$uhdm2rtlil.cpp:857:import_module_hierarchy$10
+  wire signed $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$10
   wire width 2 signed $auto$rtlil.cc:3304:Xor$12
   wire $auto$rtlil.cc:3262:ReduceBool$14
   wire width 3 signed $auto$rtlil.cc:3390:Mux$16
@@ -108,7 +108,7 @@ module \port_sign_extend
     connect \b \o2
   end
   cell \PassThrough \pt3
-    connect \a $auto$uhdm2rtlil.cpp:857:import_module_hierarchy$10
+    connect \a $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$10
     connect \b \o3
   end
   cell \PassThrough \pt4
@@ -223,5 +223,5 @@ module \port_sign_extend
   end
   connect \tmp2 1'1
   connect \tmp4 1'1
-  connect $auto$uhdm2rtlil.cpp:857:import_module_hierarchy$10 1'1
+  connect $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$10 1'1
 end

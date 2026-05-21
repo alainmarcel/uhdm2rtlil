@@ -38,26 +38,6 @@ module \FullAdder
   connect { \Cout \S } $auto$expression.cpp:2859:import_operation$3
 end
 attribute \cells_not_processed 1
-attribute \src "dut.sv:109.1-128.10"
-attribute \dynports 1
-module \RippleCarryAdder
-  parameter \N 64'0000000000000000000000000000000000000000000000000000000000000100
-  attribute \src "dut.sv:109.43-109.44"
-  wire width 4 input 1 \A
-  attribute \src "dut.sv:109.45-109.46"
-  wire width 4 input 2 \B
-  attribute \src "dut.sv:109.47-109.50"
-  wire input 3 \Cin
-  attribute \src "dut.sv:109.51-109.52"
-  wire width 4 output 4 \S
-  attribute \src "dut.sv:109.53-109.57"
-  wire output 5 \Cout
-  attribute \src "dut.sv:116.12-116.14"
-  wire width 5 \CC
-  connect \CC [0] \Cin
-  connect \Cout \CC [4]
-end
-attribute \cells_not_processed 1
 attribute \src "dut.sv:10.1-75.10"
 attribute \dynports 1
 module \Multiplier_flat
@@ -223,6 +203,26 @@ module $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101
   end
   connect \CC [0] \Cin
   connect \Cout \CC [5]
+end
+attribute \cells_not_processed 1
+attribute \src "dut.sv:109.1-128.10"
+attribute \dynports 1
+module \RippleCarryAdder
+  parameter \N 64'0000000000000000000000000000000000000000000000000000000000000100
+  attribute \src "dut.sv:109.43-109.44"
+  wire width 4 input 1 \A
+  attribute \src "dut.sv:109.45-109.46"
+  wire width 4 input 2 \B
+  attribute \src "dut.sv:109.47-109.50"
+  wire input 3 \Cin
+  attribute \src "dut.sv:109.51-109.52"
+  wire width 4 output 4 \S
+  attribute \src "dut.sv:109.53-109.57"
+  wire output 5 \Cout
+  attribute \src "dut.sv:116.12-116.14"
+  wire width 5 \CC
+  connect \CC [0] \Cin
+  connect \Cout \CC [4]
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:65.5-65.86"

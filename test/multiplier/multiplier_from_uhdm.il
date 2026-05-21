@@ -109,6 +109,65 @@ module $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000111
   end
   connect { \CC [7] \CC [0] } { \Cout \Cin }
 end
+attribute \hdlname "RippleCarryAdder"
+attribute \src "dut.sv:65.5-65.86"
+attribute \dynports 1
+module $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101
+  parameter \N 5
+  attribute \src "dut.sv:109.43-109.44"
+  wire width 5 input 1 \A
+  attribute \src "dut.sv:109.45-109.46"
+  wire width 5 input 2 \B
+  attribute \src "dut.sv:109.47-109.50"
+  wire input 3 \Cin
+  attribute \src "dut.sv:109.51-109.52"
+  wire width 5 output 4 \S
+  attribute \src "dut.sv:109.53-109.57"
+  wire output 5 \Cout
+  attribute \src "dut.sv:116.12-116.14"
+  wire width 6 \CC
+  attribute \src "dut.sv:124.5-124.50"
+  cell \FullAdder \addbit[0].unit
+    connect \A \A [0]
+    connect \B \B [0]
+    connect \Cin \Cin
+    connect \S \S [0]
+    connect \Cout \CC [1]
+  end
+  attribute \src "dut.sv:124.5-124.50"
+  cell \FullAdder \addbit[1].unit
+    connect \A \A [1]
+    connect \B \B [1]
+    connect \Cin \CC [1]
+    connect \S \S [1]
+    connect \Cout \CC [2]
+  end
+  attribute \src "dut.sv:124.5-124.50"
+  cell \FullAdder \addbit[2].unit
+    connect \A \A [2]
+    connect \B \B [2]
+    connect \Cin \CC [2]
+    connect \S \S [2]
+    connect \Cout \CC [3]
+  end
+  attribute \src "dut.sv:124.5-124.50"
+  cell \FullAdder \addbit[3].unit
+    connect \A \A [3]
+    connect \B \B [3]
+    connect \Cin \CC [3]
+    connect \S \S [3]
+    connect \Cout \CC [4]
+  end
+  attribute \src "dut.sv:124.5-124.50"
+  cell \FullAdder \addbit[4].unit
+    connect \A \A [4]
+    connect \B \B [4]
+    connect \Cin \CC [4]
+    connect \S \S [4]
+    connect \Cout \Cout
+  end
+  connect { \CC [5] \CC [0] } { \Cout \Cin }
+end
 attribute \top 1
 attribute \src "dut.sv:77.1-107.10"
 attribute \dynports 1
@@ -216,65 +275,6 @@ module \Multiplier_2D
   connect \PP[1] { 2'00 \addPartialProduct[1].Cout \addPartialProduct[1].gS }
   connect \PP[0] { 4'0000 \addPartialProduct[1].gB [3:0] }
   connect \P { \addPartialProduct[3].Cout \addPartialProduct[3].gS }
-end
-attribute \hdlname "RippleCarryAdder"
-attribute \src "dut.sv:65.5-65.86"
-attribute \dynports 1
-module $paramod\RippleCarryAdder\N=s32'00000000000000000000000000000101
-  parameter \N 5
-  attribute \src "dut.sv:109.43-109.44"
-  wire width 5 input 1 \A
-  attribute \src "dut.sv:109.45-109.46"
-  wire width 5 input 2 \B
-  attribute \src "dut.sv:109.47-109.50"
-  wire input 3 \Cin
-  attribute \src "dut.sv:109.51-109.52"
-  wire width 5 output 4 \S
-  attribute \src "dut.sv:109.53-109.57"
-  wire output 5 \Cout
-  attribute \src "dut.sv:116.12-116.14"
-  wire width 6 \CC
-  attribute \src "dut.sv:124.5-124.50"
-  cell \FullAdder \addbit[0].unit
-    connect \A \A [0]
-    connect \B \B [0]
-    connect \Cin \Cin
-    connect \S \S [0]
-    connect \Cout \CC [1]
-  end
-  attribute \src "dut.sv:124.5-124.50"
-  cell \FullAdder \addbit[1].unit
-    connect \A \A [1]
-    connect \B \B [1]
-    connect \Cin \CC [1]
-    connect \S \S [1]
-    connect \Cout \CC [2]
-  end
-  attribute \src "dut.sv:124.5-124.50"
-  cell \FullAdder \addbit[2].unit
-    connect \A \A [2]
-    connect \B \B [2]
-    connect \Cin \CC [2]
-    connect \S \S [2]
-    connect \Cout \CC [3]
-  end
-  attribute \src "dut.sv:124.5-124.50"
-  cell \FullAdder \addbit[3].unit
-    connect \A \A [3]
-    connect \B \B [3]
-    connect \Cin \CC [3]
-    connect \S \S [3]
-    connect \Cout \CC [4]
-  end
-  attribute \src "dut.sv:124.5-124.50"
-  cell \FullAdder \addbit[4].unit
-    connect \A \A [4]
-    connect \B \B [4]
-    connect \Cin \CC [4]
-    connect \S \S [4]
-    connect \Cout \Cout
-  end
-  connect { \CC [5] \CC [0] } { \Cout \Cin }
 end
 attribute \hdlname "RippleCarryAdder"
 attribute \src "dut.sv:65.5-65.86"

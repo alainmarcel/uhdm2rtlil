@@ -17,7 +17,7 @@ module \top
   wire width 32 \P::t$func$dut.sv:21$5.x
   attribute \src "dut.sv:29.5-29.31"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2833:import_module$18
+  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$18
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -32,7 +32,7 @@ module \top
   end
   attribute \src "dut.sv:26.5-26.30"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2833:import_module$9
+  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$9
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -47,7 +47,7 @@ module \top
   end
   attribute \src "dut.sv:28.5-28.30"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2833:import_module$15
+  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$15
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -62,7 +62,7 @@ module \top
   end
   attribute \src "dut.sv:27.5-27.30"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2833:import_module$12
+  cell $check $auto$uhdm2rtlil.cpp:2848:import_module$12
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
