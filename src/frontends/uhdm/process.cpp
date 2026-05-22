@@ -55,6 +55,43 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
         }
         return false;
     }
+    // `signed'(x)` / `unsigned'(x)` are emitted by Surelog as
+    // sys_func_call $signed / $unsigned; the cast type determines the
+    // expression's signedness (LRM §6.24.1). Without this, a nested cast
+    // like `9'(signed'(u0))` would treat the operand as unsigned and
+    // zero-extend instead of sign-extending (static_cast_simple).
+    if (auto sfc = any_cast<const UHDM::sys_func_call*>(e)) {
+        std::string_view nm = sfc->VpiName();
+        if (nm == "$signed") return true;
+        if (nm == "$unsigned") return false;
+    }
+    // For a vpiCastOp, the cast itself determines signedness — size cast
+    // preserves operand signedness, type cast takes the type signedness.
+    if (auto op = any_cast<const UHDM::operation*>(e)) {
+        if (op->VpiOpType() == vpiCastOp) {
+            const UHDM::typespec* ts = nullptr;
+            if (op->Typespec() && op->Typespec()->Actual_typespec())
+                ts = op->Typespec()->Actual_typespec();
+            // Detect size cast: integer_typespec with a VpiValue, or
+            // int_typespec with non-empty VpiName.
+            bool is_size_cast = false;
+            if (ts) {
+                if (ts->VpiType() == vpiIntegerTypespec) {
+                    auto its = any_cast<const UHDM::integer_typespec*>(ts);
+                    if (its && !its->VpiValue().empty()) is_size_cast = true;
+                } else if (ts->VpiType() == vpiIntTypespec) {
+                    auto its = any_cast<const UHDM::int_typespec*>(ts);
+                    if (its && !its->VpiName().empty()) is_size_cast = true;
+                }
+            }
+            if (is_size_cast && op->Operands() && !op->Operands()->empty()) {
+                if (auto src_e = any_cast<const UHDM::expr*>(op->Operands()->at(0)))
+                    return is_expr_signed(src_e);
+                return false;
+            }
+            if (ts) return is_typespec_signed(ts);
+        }
+    }
     return false;
 }
 
@@ -6515,10 +6552,16 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     addr = import_expression(bit_sel->VpiIndex());
                 }
                 
-                // Get data - check if it needs variable substitution
+                // Get data - check if it needs variable substitution.
+                // Propagate memory width as context so arithmetic RHS
+                // (e.g. `M[0] <= rA * rB`) widens to the destination
+                // (LRM context-determined width) — mul_unsigned needs
+                // the 15-bit product, not the 9-bit max-operand width.
                 RTLIL::SigSpec data;
                 if (auto rhs_any = uhdm_assign->Rhs()) {
                     if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                        int prev_ctx = expression_context_width;
+                        expression_context_width = memory->width;
                         // Check if it's an indexed part select that needs substitution
                         if (rhs_expr->VpiType() == vpiIndexedPartSelect && !current_loop_substitutions.empty()) {
                             const indexed_part_select* ips = any_cast<const indexed_part_select*>(rhs_expr);
@@ -6526,9 +6569,10 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                         } else {
                             data = import_expression(rhs_expr);
                         }
+                        expression_context_width = prev_ctx;
                     }
                 }
-                
+
                 // Resize data if needed
                 if (data.size() != memory->width) {
                     if (data.size() < memory->width) {
@@ -8061,18 +8105,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         
                         if (current_memory_writes.count(mem_name)) {
                             const MemoryWriteInfo& info = current_memory_writes[mem_name];
-                            
+
                             // Get address
                             RTLIL::SigSpec addr = import_expression(bit_sel->VpiIndex());
-                            
-                            // Get data
+
+                            // Get data; propagate memory width as context
+                            // so arithmetic RHS widens to it (LRM context-
+                            // determined sizing) — fixes `M[0] <= rA*rB`
+                            // truncating to max(L,R) instead of 15-bit.
                             RTLIL::SigSpec data;
                             if (auto rhs_any = assign->Rhs()) {
                                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                                    int prev_ctx = expression_context_width;
+                                    expression_context_width = info.width;
                                     data = import_expression(rhs_expr);
+                                    expression_context_width = prev_ctx;
                                 }
                             }
-                            
+
                             // Resize data if needed
                             if (data.size() != info.width) {
                                 if (data.size() < info.width) {

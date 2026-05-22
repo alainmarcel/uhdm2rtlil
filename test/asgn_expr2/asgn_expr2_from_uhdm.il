@@ -17,13 +17,13 @@ module \top
   wire width 32 signed \y
   attribute \src "dut.sv:5.19-5.20"
   wire width 32 signed \z
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$2
-  wire width 32 $auto$expression.cpp:2859:import_operation$16
-  wire width 32 $auto$expression.cpp:2859:import_operation$14
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$2
+  wire width 32 $auto$expression.cpp:2866:import_operation$16
+  wire width 32 $auto$expression.cpp:2866:import_operation$14
   wire width 32 $auto$expression.cpp:2370:import_operation$12
   wire width 32 $auto$expression.cpp:2370:import_operation$10
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$8
-  cell $add $auto$process.cpp:4910:import_statement_comb$3
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$8
+  cell $add $auto$process.cpp:4947:import_statement_comb$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -31,7 +31,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$2
+    connect \Y $auto$process.cpp:4945:import_statement_comb$2
   end
   cell $add $add$dut.sv:22$19
     parameter \A_SIGNED 0
@@ -39,7 +39,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2859:import_operation$16
+    connect \A $auto$expression.cpp:2866:import_operation$16
     connect \B 1
     connect \Y \ox
   end
@@ -49,19 +49,19 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2859:import_operation$14
+    connect \A $auto$expression.cpp:2866:import_operation$14
     connect \B 1
-    connect \Y $auto$expression.cpp:2859:import_operation$16
+    connect \Y $auto$expression.cpp:2866:import_operation$16
   end
-  cell $sub $auto$process.cpp:4912:import_statement_comb$9
+  cell $sub $auto$process.cpp:4949:import_statement_comb$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4908:import_statement_comb$2
+    connect \A $auto$process.cpp:4945:import_statement_comb$2
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$8
+    connect \Y $auto$process.cpp:4945:import_statement_comb$8
   end
   cell $add $auto$expression.cpp:2373:import_operation$11
     parameter \A_SIGNED 0
@@ -69,7 +69,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4908:import_statement_comb$8
+    connect \A $auto$process.cpp:4945:import_statement_comb$8
     connect \B 1
     connect \Y $auto$expression.cpp:2370:import_operation$10
   end
@@ -91,7 +91,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A $auto$expression.cpp:2370:import_operation$12
     connect \B 1
-    connect \Y $auto$expression.cpp:2859:import_operation$14
+    connect \Y $auto$expression.cpp:2866:import_operation$14
   end
   connect \z \ox
   connect \y \ox

@@ -2448,12 +2448,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         return RTLIL::SigSpec();
     }
 
-    // Try to reduce it first (for non-side-effect operations)
-    ExprEval eval;
-    bool invalidValue = false;
-    expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
-    if (res && res->UhdmType() == uhdmconstant) {
-        return import_constant(dynamic_cast<const UHDM::constant*>(res));
+    // Try to reduce it first (for non-side-effect operations). We skip
+    // `vpiCastOp` here: Surelog's reduceExpr folds `8'(4'(signed'(...)))`
+    // into a single constant but applies plain zero-extension at the
+    // final widen — losing the explicit `signed'`/`unsigned'` cast and
+    // producing the wrong bits (static_cast_simple).  Our own cast
+    // handler below tracks signedness through the chain correctly.
+    if (op_type != vpiCastOp) {
+        ExprEval eval;
+        bool invalidValue = false;
+        expr* res = eval.reduceExpr(uhdm_op, invalidValue, inst, uhdm_op->VpiParent(), true);
+        if (res && res->UhdmType() == uhdmconstant) {
+            return import_constant(dynamic_cast<const UHDM::constant*>(res));
+        }
     }
     
     if (mode_debug)
@@ -2973,8 +2980,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiMultOp:
             if (operands.size() == 2) {
-                // For multiplication, the result width should be the sum of operand widths
-                int result_width = operands[0].size() + operands[1].size();
+                // SV §11.6.1: arithmetic result width = max(L, R, context).
+                // Use the LHS context when known (cont_assign / sync mem
+                // write propagate it); otherwise fall back to the sum of
+                // operand widths to preserve full precision — needed when
+                // the LHS is wider than max(L,R) but the context didn't
+                // reach this path (e.g., M[0]<=rA*rB before mem-write
+                // context propagation, or non-assignment expressions).
+                int result_width;
+                if (expression_context_width > 0) {
+                    result_width = std::max(operands[0].size(), operands[1].size());
+                    if (expression_context_width > result_width)
+                        result_width = expression_context_width;
+                } else {
+                    result_width = operands[0].size() + operands[1].size();
+                }
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
                 // Check if operands are signed by checking if they come from signed wires
@@ -3342,13 +3362,21 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                         // Surelog elaborates the typespec to an int_typespec
                         // whose VpiName is the parameter name and VpiValue
                         // is the resolved constant ("UINT:16") — handle both.
+                        // Track whether this is a size cast (`N'(...)`,
+                        // `WIDTH'(...)`) vs a type cast (`byte'(...)`,
+                        // `int'(...)`, etc.). Per SV LRM §6.24.1, size
+                        // casts preserve the OPERAND's signedness; type
+                        // casts take the cast TYPE's signedness.
+                        bool is_size_cast = false;
                         if (ts->VpiType() == vpiIntegerTypespec) {
                             const integer_typespec* its = any_cast<const integer_typespec*>(ts);
                             std::string val_str = std::string(its->VpiValue());
                             if (!val_str.empty()) {
                                 RTLIL::Const width_const = extract_const_from_value(val_str);
-                                if (width_const.size() > 0)
+                                if (width_const.size() > 0) {
                                     target_width = width_const.as_int();
+                                    is_size_cast = true;
+                                }
                             }
                         } else if (ts->VpiType() == vpiIntTypespec) {
                             // For a parameterized size cast `WIDTH'(...)`,
@@ -3367,8 +3395,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                                 if (!val_str.empty()) {
                                     RTLIL::Const width_const =
                                         extract_const_from_value(val_str);
-                                    if (width_const.size() > 0)
+                                    if (width_const.size() > 0) {
                                         target_width = width_const.as_int();
+                                        is_size_cast = true;
+                                    }
                                 }
                             }
                         }
@@ -3379,21 +3409,49 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                             if (w > 0) target_width = w;
                         }
                         target_signed = is_typespec_signed(ts);
+                        // Size casts: preserve OPERAND signedness (LRM
+                        // §6.24.1). The cast typespec for `N'(...)` is an
+                        // unsigned integer_typespec describing only the
+                        // width, so reading is_typespec_signed on it would
+                        // give the wrong answer for `4'(signed_expr)`.
+                        if (is_size_cast && uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
+                            if (auto src_e = any_cast<const expr*>(uhdm_op->Operands()->at(0)))
+                                target_signed = is_expr_signed(src_e);
+                        }
                     }
                 }
 
                 if (target_width > 0) {
                     RTLIL::SigSpec operand = operands[0];
 
-                    // Determine source signedness.  Walk the underlying UHDM
-                    // expression for ref/const cases; for non-trivial operands
-                    // fall back to the wire's is_signed flag.
+                    // Determine source signedness from the UHDM expression
+                    // (handles ref/const/$signed/$unsigned/nested-cast cases).
+                    // We deliberately don't fall back to the operand wire's
+                    // is_signed flag here, because that would override an
+                    // explicit `unsigned'(signed_wire)` cast — the wire is
+                    // still signed but the value should be treated as
+                    // unsigned for extension (static_cast_simple).
                     bool src_signed = false;
+                    bool src_signed_known = false;
                     if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
-                        if (auto src_e = any_cast<const expr*>(uhdm_op->Operands()->at(0)))
+                        if (auto src_e = any_cast<const expr*>(uhdm_op->Operands()->at(0))) {
                             src_signed = is_expr_signed(src_e);
+                            // We always trust is_expr_signed when the operand
+                            // is a $signed/$unsigned/cast (those carry an
+                            // explicit signedness override).
+                            if (src_e->VpiType() == vpiSysFuncCall) {
+                                auto sfc = any_cast<const sys_func_call*>(src_e);
+                                if (sfc && (sfc->VpiName() == "$signed" ||
+                                            sfc->VpiName() == "$unsigned"))
+                                    src_signed_known = true;
+                            } else if (src_e->VpiType() == vpiOperation) {
+                                auto op = any_cast<const operation*>(src_e);
+                                if (op && op->VpiOpType() == vpiCastOp)
+                                    src_signed_known = true;
+                            }
+                        }
                     }
-                    if (!src_signed && operand.is_wire())
+                    if (!src_signed_known && !src_signed && operand.is_wire())
                         src_signed = operand.as_wire()->is_signed;
 
                     if (operand.is_fully_const()) {
