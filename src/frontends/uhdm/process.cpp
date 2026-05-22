@@ -2128,6 +2128,42 @@ static bool statement_contains_control_flow(const any* stmt) {
     return false;
 }
 
+// Helper: does the initial block contain a partial-write LHS (hier_path
+// into a struct field, bit_select, part_select, indexed_part_select)?
+// The sync-init driver path emits one STa-process per *full SigSpec*, so
+// two writes to different slices of the same wire (`s = '0; s.a = 8'h42`)
+// end up as two competing drivers and the second one is dropped.  The
+// comb path uses a single `$0\s` temp wire and sequences the slice
+// writes correctly — route any initial block with partial writes to it.
+static bool statement_has_partial_write(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiAssignment || type == vpiAssignStmt) {
+        auto a = any_cast<const UHDM::assignment*>(stmt);
+        if (a && a->Lhs()) {
+            int lt = a->Lhs()->VpiType();
+            if (lt == vpiHierPath || lt == vpiBitSelect ||
+                lt == vpiPartSelect || lt == vpiIndexedPartSelect)
+                return true;
+        }
+        return false;
+    }
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (statement_has_partial_write(child)) return true;
+        }
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts()) {
+            for (auto child : *b->Stmts())
+                if (statement_has_partial_write(child)) return true;
+        }
+    }
+    return false;
+}
+
 // Detect an unbased-unsized fill constant (`'0`, `'1`, `'x`, `'z`).
 // Returns the RTLIL::State to replicate to the LHS width, or sets
 // `is_fill = false` if the expression is not a fill literal.  Surelog
@@ -2326,17 +2362,19 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
     bool has_for_decl = false;
     bool has_scalar_ctrl_loop = false;
     bool has_task_call = false;
+    bool has_partial_write = false;
     if (auto stmt = uhdm_process->Stmt()) {
         use_comb_approach = statement_contains_control_flow(stmt);
         has_local_vars = block_has_local_variables(stmt);
         has_for_decl = statement_has_for_declaration(stmt);
         has_scalar_ctrl_loop = statement_has_scalar_control_for_loop(stmt);
         has_task_call = (stmt->VpiType() == vpiTaskCall);
+        has_partial_write = statement_has_partial_write(stmt);
     }
 
     if (has_for_decl || has_local_vars || has_scalar_ctrl_loop) {
         import_initial_interpreted(uhdm_process, yosys_proc);
-    } else if (use_comb_approach || has_task_call) {
+    } else if (use_comb_approach || has_task_call || has_partial_write) {
         import_initial_comb(uhdm_process, yosys_proc);
     } else {
         import_initial_sync(uhdm_process, yosys_proc);
@@ -2501,16 +2539,48 @@ void UhdmImporter::import_initial_comb(const process_stmt* uhdm_process, RTLIL::
             temp_wire = signal_temp_wires[sig.name];
         } else {
             std::string temp_name = "$0\\" + sig.name;
+            // For partial-write LHS (hier_path field, bit/part select),
+            // size the temp wire to the FULL base wire so multiple
+            // writes to different slices fit (matches import_always_comb).
+            int tmp_width = lhs_spec.size();
+            if (sig.lhs_expr) {
+                int lt = sig.lhs_expr->VpiType();
+                if (lt == vpiHierPath || lt == vpiBitSelect ||
+                    lt == vpiPartSelect || lt == vpiIndexedPartSelect) {
+                    if (!lhs_spec.empty()) {
+                        RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                        if (first_chunk.wire)
+                            tmp_width = first_chunk.wire->width;
+                    }
+                }
+            }
             if (module->wire(temp_name)) {
                 temp_wire = module->wire(temp_name);
             } else {
-                temp_wire = module->addWire(temp_name, lhs_spec.size());
+                temp_wire = module->addWire(temp_name, tmp_width);
                 if (uhdm_process) {
                     add_src_attribute(temp_wire->attributes, uhdm_process);
                 }
             }
             signal_temp_wires[sig.name] = temp_wire;
-            signal_specs[sig.name] = lhs_spec;
+            // Record the FULL base wire as the spec for partial writes so
+            // the hold-default and sync update cover all bits.
+            if (sig.lhs_expr) {
+                int lt = sig.lhs_expr->VpiType();
+                if ((lt == vpiHierPath || lt == vpiBitSelect ||
+                     lt == vpiPartSelect || lt == vpiIndexedPartSelect)
+                    && !lhs_spec.empty()) {
+                    RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                    if (first_chunk.wire)
+                        signal_specs[sig.name] = RTLIL::SigSpec(first_chunk.wire);
+                    else
+                        signal_specs[sig.name] = lhs_spec;
+                } else {
+                    signal_specs[sig.name] = lhs_spec;
+                }
+            } else {
+                signal_specs[sig.name] = lhs_spec;
+            }
         }
         temp_wires[sig.lhs_expr] = temp_wire;
     }
