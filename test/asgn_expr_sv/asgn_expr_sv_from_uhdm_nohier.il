@@ -33,7 +33,7 @@ module \top
   wire width 32 \check$func$dut.sv:11$2.c
   attribute \src "dut.sv:11.9-11.23"
   wire width 32 $0\check$func$dut.sv:11$2.c[31:0]$5
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$6
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$6
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:15$8.a
@@ -64,7 +64,7 @@ module \top
   wire width 32 \check$func$dut.sv:17$12.c
   attribute \src "dut.sv:17.9-17.23"
   wire width 32 $0\check$func$dut.sv:17$12.c[31:0]$15
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$16
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$16
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:19$18.a
@@ -95,7 +95,7 @@ module \top
   wire width 32 \check$func$dut.sv:21$22.c
   attribute \src "dut.sv:21.9-21.24"
   wire width 32 $0\check$func$dut.sv:21$22.c[31:0]$25
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$26
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$26
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:25$28.a
@@ -126,7 +126,7 @@ module \top
   wire width 32 \check$func$dut.sv:27$32.c
   attribute \src "dut.sv:27.9-27.23"
   wire width 32 $0\check$func$dut.sv:27$32.c[31:0]$35
-  wire width 32 $auto$process.cpp:4908:import_statement_comb$36
+  wire width 32 $auto$process.cpp:4945:import_statement_comb$36
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:29$38.a
@@ -251,8 +251,8 @@ module \top
   wire width 32 \check$func$dut.sv:48$74.c
   attribute \src "dut.sv:48.9-48.23"
   wire width 32 $0\check$func$dut.sv:48$74.c[31:0]$77
-  wire width 32 $auto$expression.cpp:2859:import_operation$78
-  wire width 32 $auto$expression.cpp:2859:import_operation$80
+  wire width 32 $auto$expression.cpp:2866:import_operation$78
+  wire width 32 $auto$expression.cpp:2866:import_operation$80
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:52$82.a
@@ -283,7 +283,7 @@ module \top
   wire width 32 \check$func$dut.sv:54$86.c
   attribute \src "dut.sv:54.9-54.28"
   wire width 32 $0\check$func$dut.sv:54$86.c[31:0]$89
-  wire width 96 $auto$expression.cpp:2978:import_operation$90
+  wire width 64 $auto$expression.cpp:2998:import_operation$90
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:56$92.a
@@ -299,7 +299,7 @@ module \top
   wire width 32 \check$func$dut.sv:56$92.c
   attribute \src "dut.sv:56.9-56.27"
   wire width 32 $0\check$func$dut.sv:56$92.c[31:0]$95
-  wire width 96 $auto$expression.cpp:2978:import_operation$96
+  wire width 64 $auto$expression.cpp:2998:import_operation$96
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
   wire width 32 \check$func$dut.sv:58$98.a
@@ -337,7 +337,7 @@ module \top
   wire width 32 $0\check$func$dut.sv:66$104.c[31:0]$107
   attribute \src "dut.sv:67.21-67.27"
   wire $eq$dut.sv:67$108_Y
-  wire $auto$process.cpp:74:build_check_cell$110
+  wire $auto$process.cpp:111:build_check_cell$110
   wire width 8 $auto$expression.cpp:2370:import_operation$112
   attribute \nosync 1
   attribute \src "dut.sv:4.23-4.24"
@@ -356,8 +356,8 @@ module \top
   wire width 32 $0\check$func$dut.sv:69$114.c[31:0]$117
   attribute \src "dut.sv:70.21-70.27"
   wire $eq$dut.sv:70$118_Y
-  wire $auto$process.cpp:74:build_check_cell$120
-  cell $add $auto$process.cpp:4910:import_statement_comb$7
+  wire $auto$process.cpp:111:build_check_cell$120
+  cell $add $auto$process.cpp:4947:import_statement_comb$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -365,9 +365,9 @@ module \top
     parameter \Y_WIDTH 32
     connect \A 0
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$6
+    connect \Y $auto$process.cpp:4945:import_statement_comb$6
   end
-  cell $sub $auto$process.cpp:4912:import_statement_comb$17
+  cell $sub $auto$process.cpp:4949:import_statement_comb$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -375,27 +375,27 @@ module \top
     parameter \Y_WIDTH 32
     connect \A 0
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$16
+    connect \Y $auto$process.cpp:4945:import_statement_comb$16
   end
-  cell $add $auto$process.cpp:4910:import_statement_comb$27
+  cell $add $auto$process.cpp:4947:import_statement_comb$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4908:import_statement_comb$16
+    connect \A $auto$process.cpp:4945:import_statement_comb$16
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$26
+    connect \Y $auto$process.cpp:4945:import_statement_comb$26
   end
-  cell $sub $auto$process.cpp:4912:import_statement_comb$37
+  cell $sub $auto$process.cpp:4949:import_statement_comb$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4908:import_statement_comb$6
+    connect \A $auto$process.cpp:4945:import_statement_comb$6
     connect \B 1
-    connect \Y $auto$process.cpp:4908:import_statement_comb$36
+    connect \Y $auto$process.cpp:4945:import_statement_comb$36
   end
   cell $add $auto$expression.cpp:2373:import_operation$47
     parameter \A_SIGNED 0
@@ -403,7 +403,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:4908:import_statement_comb$36
+    connect \A $auto$process.cpp:4945:import_statement_comb$36
     connect \B 1
     connect \Y $auto$expression.cpp:2370:import_operation$46
   end
@@ -445,7 +445,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A 99
     connect \B 1
-    connect \Y $auto$expression.cpp:2859:import_operation$78
+    connect \Y $auto$expression.cpp:2866:import_operation$78
   end
   cell $add $add$dut.sv:51$81
     parameter \A_SIGNED 0
@@ -453,29 +453,29 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2859:import_operation$78
+    connect \A $auto$expression.cpp:2866:import_operation$78
     connect \B 1
-    connect \Y $auto$expression.cpp:2859:import_operation$80
+    connect \Y $auto$expression.cpp:2866:import_operation$80
   end
   cell $mul $mul$dut.sv:55$91
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 96
+    parameter \Y_WIDTH 64
     connect \A 2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2978:import_operation$90
+    connect \Y $auto$expression.cpp:2998:import_operation$90
   end
   cell $mul $mul$dut.sv:57$97
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
-    parameter \Y_WIDTH 96
+    parameter \Y_WIDTH 64
     connect \A 1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2978:import_operation$96
+    connect \Y $auto$expression.cpp:2998:import_operation$96
   end
   cell $add $auto$expression.cpp:2373:import_operation$103
     parameter \A_SIGNED 0
@@ -500,7 +500,7 @@ module \top
   end
   attribute \src "dut.sv:67.13-67.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$111
+  cell $check $auto$process.cpp:121:build_check_cell$111
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -510,7 +510,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:67$108_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$110
+    connect \EN $auto$process.cpp:111:build_check_cell$110
     connect \TRG { }
   end
   cell $add $auto$expression.cpp:2373:import_operation$113
@@ -536,7 +536,7 @@ module \top
   end
   attribute \src "dut.sv:70.13-70.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$121
+  cell $check $auto$process.cpp:121:build_check_cell$121
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -546,13 +546,13 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:70$118_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$120
+    connect \EN $auto$process.cpp:111:build_check_cell$120
     connect \TRG { }
   end
   attribute \src "dut.sv:9.5-72.8"
   process $proc$dut.sv:9$1
-    assign $auto$process.cpp:74:build_check_cell$110 1'0
-    assign $auto$process.cpp:74:build_check_cell$120 1'0
+    assign $auto$process.cpp:111:build_check_cell$110 1'0
+    assign $auto$process.cpp:111:build_check_cell$120 1'0
     assign $0\w \w
     assign $0\x \x
     assign $0\y \y
@@ -563,28 +563,28 @@ module \top
     assign $0\check$func$dut.sv:11$2.a[31:0]$3 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:11$2.b[31:0]$4 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:11$2.c[31:0]$5 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $0\x $auto$process.cpp:4908:import_statement_comb$6
+    assign $0\x $auto$process.cpp:4945:import_statement_comb$6
     assign $0\check$func$dut.sv:15$8.a[31:0]$9 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:15$8.b[31:0]$10 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:15$8.c[31:0]$11 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:17$12.a[31:0]$13 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:17$12.b[31:0]$14 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:17$12.c[31:0]$15 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $0\z $auto$process.cpp:4908:import_statement_comb$16
+    assign $0\z $auto$process.cpp:4945:import_statement_comb$16
     assign $0\check$func$dut.sv:19$18.a[31:0]$19 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:19$18.b[31:0]$20 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:19$18.c[31:0]$21 64'1111111111111111111111111111111111111111111111111111111111111111
     assign $0\check$func$dut.sv:21$22.a[31:0]$23 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:21$22.b[31:0]$24 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:21$22.c[31:0]$25 64'1111111111111111111111111111111111111111111111111111111111111110
-    assign $0\z $auto$process.cpp:4908:import_statement_comb$26
+    assign $0\z $auto$process.cpp:4945:import_statement_comb$26
     assign $0\check$func$dut.sv:25$28.a[31:0]$29 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:25$28.b[31:0]$30 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:25$28.c[31:0]$31 64'1111111111111111111111111111111111111111111111111111111111111111
     assign $0\check$func$dut.sv:27$32.a[31:0]$33 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:27$32.b[31:0]$34 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:27$32.c[31:0]$35 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $0\x $auto$process.cpp:4908:import_statement_comb$36
+    assign $0\x $auto$process.cpp:4945:import_statement_comb$36
     assign $0\check$func$dut.sv:29$38.a[31:0]$39 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:29$38.b[31:0]$40 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:29$38.c[31:0]$41 64'0000000000000000000000000000000000000000000000000000000000000000
@@ -592,7 +592,7 @@ module \top
     assign $0\check$func$dut.sv:31$42.b[31:0]$44 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:31$42.c[31:0]$45 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\x $auto$expression.cpp:2370:import_operation$46
-    assign $0\z $auto$process.cpp:4908:import_statement_comb$36
+    assign $0\z $auto$process.cpp:4945:import_statement_comb$36
     assign $0\check$func$dut.sv:35$48.a[31:0]$49 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:35$48.b[31:0]$50 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:35$48.c[31:0]$51 64'0000000000000000000000000000000000000000000000000000000000000001
@@ -620,8 +620,8 @@ module \top
     assign $0\check$func$dut.sv:48$74.b[31:0]$76 64'0000000000000000000000000000000000000000000000000000000000000001
     assign $0\check$func$dut.sv:48$74.c[31:0]$77 64'0000000000000000000000000000000000000000000000000000000000000010
     assign $0\z 99
-    assign $0\y $auto$expression.cpp:2859:import_operation$78
-    assign $0\x $auto$expression.cpp:2859:import_operation$80
+    assign $0\y $auto$expression.cpp:2866:import_operation$78
+    assign $0\x $auto$expression.cpp:2866:import_operation$80
     assign $0\check$func$dut.sv:52$82.a[31:0]$83 64'0000000000000000000000000000000000000000000000000000000001100101
     assign $0\check$func$dut.sv:52$82.b[31:0]$84 64'0000000000000000000000000000000000000000000000000000000001100100
     assign $0\check$func$dut.sv:52$82.c[31:0]$85 64'0000000000000000000000000000000000000000000000000000000001100011
@@ -631,12 +631,12 @@ module \top
     assign $0\check$func$dut.sv:54$86.b[31:0]$88 64'0000000000000000000000000000000000000000000000000000000011001000
     assign $0\check$func$dut.sv:54$86.c[31:0]$89 64'0000000000000000000000000000000000000000000000000000000001100011
     assign $0\z 2
-    assign $0\x $auto$expression.cpp:2978:import_operation$90 [31:0]
+    assign $0\x $auto$expression.cpp:2998:import_operation$90 [31:0]
     assign $0\check$func$dut.sv:56$92.a[31:0]$93 64'0000000000000000000000000000000000000000000000000000000001100000
     assign $0\check$func$dut.sv:56$92.b[31:0]$94 64'0000000000000000000000000000000000000000000000000000000011001000
     assign $0\check$func$dut.sv:56$92.c[31:0]$95 64'0000000000000000000000000000000000000000000000000000000000011000
     assign $0\z 1
-    assign $0\y $auto$expression.cpp:2978:import_operation$96 [31:0]
+    assign $0\y $auto$expression.cpp:2998:import_operation$96 [31:0]
     assign $0\check$func$dut.sv:58$98.a[31:0]$99 64'0000000000000000000000000000000000000000000000000000000001100000
     assign $0\check$func$dut.sv:58$98.b[31:0]$100 64'0000000000000000000000000000000000000000000000000000000000011000
     assign $0\check$func$dut.sv:58$98.c[31:0]$101 64'0000000000000000000000000000000000000000000000000000000000001100
@@ -649,13 +649,13 @@ module \top
     assign $0\check$func$dut.sv:66$104.a[31:0]$105 64'0000000000000000000000000000000000000000000000000000000100000001
     assign $0\check$func$dut.sv:66$104.b[31:0]$106 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:66$104.c[31:0]$107 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $auto$process.cpp:74:build_check_cell$110 1'1
+    assign $auto$process.cpp:111:build_check_cell$110 1'1
     assign $0\$unnamed_block$1.w $auto$expression.cpp:2370:import_operation$112
     assign $0\x { 24'000000000000000000000010 $auto$expression.cpp:2370:import_operation$102 }
     assign $0\check$func$dut.sv:69$114.a[31:0]$115 64'0000000000000000000000000000000000000000000000000000001000000001
     assign $0\check$func$dut.sv:69$114.b[31:0]$116 64'0000000000000000000000000000000000000000000000000000000000000000
     assign $0\check$func$dut.sv:69$114.c[31:0]$117 64'0000000000000000000000000000000000000000000000000000000000000000
-    assign $auto$process.cpp:74:build_check_cell$120 1'1
+    assign $auto$process.cpp:111:build_check_cell$120 1'1
     sync always
       update \w $0\w
       update \x $0\x

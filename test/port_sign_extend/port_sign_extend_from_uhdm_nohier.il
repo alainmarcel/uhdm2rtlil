@@ -217,7 +217,7 @@ module \port_sign_extend
   process $proc$dut.sv:59$8
   end
   attribute \src "dut.sv:59.2-59.27"
-  process $auto$process.cpp:2421:operator()$9
+  process $auto$process.cpp:2458:operator()$9
     sync always
       update \tmp8[0] 3'101
   end

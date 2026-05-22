@@ -24,7 +24,7 @@ module \bus_master
   attribute \src "dut.sv:14.52-14.55"
   wire width 16 input 1 \din
   wire \DATA_WIDTH
-  wire width 64 $auto$expression.cpp:2913:import_operation$1
+  wire width 64 $auto$expression.cpp:2920:import_operation$1
   attribute \src "dut.sv:9.28-9.32"
   wire width 16 output 2 \bus.data
   cell $sub $sub$dut.sv:9$2
@@ -35,7 +35,7 @@ module \bus_master
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \DATA_WIDTH }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2913:import_operation$1
+    connect \Y $auto$expression.cpp:2920:import_operation$1
   end
   connect \bus.data \din
 end

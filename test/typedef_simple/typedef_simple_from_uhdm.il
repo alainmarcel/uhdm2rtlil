@@ -22,7 +22,7 @@ module \top
   wire width 8 signed \ch
   attribute \src "dut.sv:17.12-17.40"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$22
+  cell $check $auto$process.cpp:121:build_check_cell$22
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -37,7 +37,7 @@ module \top
   end
   attribute \src "dut.sv:14.12-14.34"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$7
+  cell $check $auto$process.cpp:121:build_check_cell$7
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -52,7 +52,7 @@ module \top
   end
   attribute \src "dut.sv:16.12-16.40"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$17
+  cell $check $auto$process.cpp:121:build_check_cell$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -67,7 +67,7 @@ module \top
   end
   attribute \src "dut.sv:15.12-15.36"
   attribute \keep 1
-  cell $check $auto$process.cpp:84:build_check_cell$12
+  cell $check $auto$process.cpp:121:build_check_cell$12
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

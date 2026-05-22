@@ -44,14 +44,14 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   attribute \src "dut.sv:31.13-33.48"
   wire width 16 $0\cnt
   attribute \src "dut.sv:33.36-33.47"
-  wire width 16 $auto$expression.cpp:3434:import_operation$2
-  wire width 16 $auto$expression.cpp:2859:import_operation$4
-  cell $pos $auto$expression.cpp:3437:import_operation$3
+  wire width 16 $auto$expression.cpp:3492:import_operation$2
+  wire width 16 $auto$expression.cpp:2866:import_operation$4
+  cell $pos $auto$expression.cpp:3495:import_operation$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 16
     connect \A \ena
-    connect \Y $auto$expression.cpp:3434:import_operation$2
+    connect \Y $auto$expression.cpp:3492:import_operation$2
   end
   cell $add $add$dut.sv:33$5
     parameter \A_SIGNED 0
@@ -60,8 +60,8 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A \cnt
-    connect \B $auto$expression.cpp:3434:import_operation$2
-    connect \Y $auto$expression.cpp:2859:import_operation$4
+    connect \B $auto$expression.cpp:3492:import_operation$2
+    connect \Y $auto$expression.cpp:2866:import_operation$4
   end
   attribute \src "dut.sv:31.13-33.48"
   attribute \always_ff 1
@@ -75,7 +75,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
         assign $0\cnt 16'0000000000000000
     attribute \src "dut.sv:33.23-33.47"
       case 
-        assign $0\cnt $auto$expression.cpp:2859:import_operation$4
+        assign $0\cnt $auto$expression.cpp:2866:import_operation$4
     end
     sync posedge \clk
       update \cnt $0\cnt
@@ -100,7 +100,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
   wire width 16 output 4 \cnt
   attribute \src "dut.sv:37.13-39.51"
   wire width 16 $0\cnt
-  wire width 16 $auto$expression.cpp:2859:import_operation$7
+  wire width 16 $auto$expression.cpp:2866:import_operation$7
   cell $add $add$dut.sv:39$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -109,7 +109,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
     parameter \Y_WIDTH 16
     connect \A \cnt
     connect \B 16'0000000000000001
-    connect \Y $auto$expression.cpp:2859:import_operation$7
+    connect \Y $auto$expression.cpp:2866:import_operation$7
   end
   attribute \src "dut.sv:37.13-39.51"
   attribute \always_ff 1
@@ -127,7 +127,7 @@ module $paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEMEN
         switch \ena
         attribute \src "dut.sv:39.18-39.51"
           case 1'1
-            assign $0\cnt $auto$expression.cpp:2859:import_operation$7
+            assign $0\cnt $auto$expression.cpp:2866:import_operation$7
         attribute \src "dut.sv:39.18-39.51"
           case 
         end

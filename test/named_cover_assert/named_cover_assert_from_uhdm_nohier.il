@@ -11,14 +11,14 @@ module \named_cover_assert
   wire output 3 \q
   attribute \src "dut.sv:14.44-14.50"
   wire $eq$dut.sv:14$2_Y
-  wire $auto$process.cpp:74:build_check_cell$4
+  wire $auto$process.cpp:111:build_check_cell$4
   wire $auto$rtlil.cc:3310:Ne$7
-  wire $auto$process.cpp:74:build_check_cell$8
+  wire $auto$process.cpp:111:build_check_cell$8
   attribute \src "dut.sv:16.44-16.50"
   wire $eq$dut.sv:16$10_Y
-  wire $auto$process.cpp:74:build_check_cell$12
+  wire $auto$process.cpp:111:build_check_cell$12
   wire $auto$rtlil.cc:3310:Ne$15
-  wire $auto$process.cpp:74:build_check_cell$16
+  wire $auto$process.cpp:111:build_check_cell$16
   attribute \src "dut.sv:14.44-14.50"
   cell $eq $eq$dut.sv:14$3
     parameter \A_SIGNED 0
@@ -42,7 +42,7 @@ module \named_cover_assert
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:14$2_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$4
+    connect \EN $auto$process.cpp:111:build_check_cell$4
     connect \TRG { }
   end
   cell $ne $ne$dut.sv:15$6
@@ -67,7 +67,7 @@ module \named_cover_assert
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3310:Ne$7
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$8
+    connect \EN $auto$process.cpp:111:build_check_cell$8
     connect \TRG { }
   end
   attribute \src "dut.sv:16.44-16.50"
@@ -93,7 +93,7 @@ module \named_cover_assert
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:16$10_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$12
+    connect \EN $auto$process.cpp:111:build_check_cell$12
     connect \TRG { }
   end
   cell $ne $ne$dut.sv:17$14
@@ -118,31 +118,31 @@ module \named_cover_assert
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3310:Ne$15
     connect \ARGS { }
-    connect \EN $auto$process.cpp:74:build_check_cell$16
+    connect \EN $auto$process.cpp:111:build_check_cell$16
     connect \TRG { }
   end
   attribute \src "dut.sv:14.5-14.52"
   process $proc$dut.sv:14$1
-    assign $auto$process.cpp:74:build_check_cell$4 1'0
-    assign $auto$process.cpp:74:build_check_cell$4 1'1
+    assign $auto$process.cpp:111:build_check_cell$4 1'0
+    assign $auto$process.cpp:111:build_check_cell$4 1'1
     sync always
   end
   attribute \src "dut.sv:15.5-15.52"
   process $proc$dut.sv:15$5
-    assign $auto$process.cpp:74:build_check_cell$8 1'0
-    assign $auto$process.cpp:74:build_check_cell$8 1'1
+    assign $auto$process.cpp:111:build_check_cell$8 1'0
+    assign $auto$process.cpp:111:build_check_cell$8 1'1
     sync always
   end
   attribute \src "dut.sv:16.5-16.52"
   process $proc$dut.sv:16$9
-    assign $auto$process.cpp:74:build_check_cell$12 1'0
-    assign $auto$process.cpp:74:build_check_cell$12 1'1
+    assign $auto$process.cpp:111:build_check_cell$12 1'0
+    assign $auto$process.cpp:111:build_check_cell$12 1'1
     sync always
   end
   attribute \src "dut.sv:17.5-17.52"
   process $proc$dut.sv:17$13
-    assign $auto$process.cpp:74:build_check_cell$16 1'0
-    assign $auto$process.cpp:74:build_check_cell$16 1'1
+    assign $auto$process.cpp:111:build_check_cell$16 1'0
+    assign $auto$process.cpp:111:build_check_cell$16 1'1
     sync always
   end
   connect \q \b
