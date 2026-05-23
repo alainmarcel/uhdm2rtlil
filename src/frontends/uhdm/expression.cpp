@@ -5761,6 +5761,13 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         field_elem_rts = lt->Elem_typespec();
                     } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(field_ts_actual)) {
                         field_ranges = bt->Ranges();
+                    } else if (auto at = dynamic_cast<const UHDM::array_typespec*>(field_ts_actual)) {
+                        // Unpacked array nested in a packed struct (Yosys
+                        // extension): array_typespec carries the unpacked
+                        // dimension(s) in Ranges() and the per-element
+                        // typespec (e.g., bit [7:0]) in Elem_typespec.
+                        field_ranges = at->Ranges();
+                        field_elem_rts = at->Elem_typespec();
                     }
                 }
                 if (field_ranges) {
