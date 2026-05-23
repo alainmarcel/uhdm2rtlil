@@ -5678,7 +5678,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         bool shape_ok =
             pe[0]->UhdmType() == uhdmref_obj &&
             (pe[1]->UhdmType() == uhdmbit_select ||
-             pe[1]->UhdmType() == uhdmpart_select);
+             pe[1]->UhdmType() == uhdmpart_select ||
+             pe[1]->UhdmType() == uhdmvar_select);
         if (shape_ok) {
             const ref_obj* base_ref = any_cast<const ref_obj*>(pe[0]);
             std::string base_name = std::string(base_ref->VpiName());
@@ -5686,6 +5687,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             if (pe[1]->UhdmType() == uhdmbit_select)
                 field_name = std::string(
                     any_cast<const bit_select*>(pe[1])->VpiName());
+            else if (pe[1]->UhdmType() == uhdmvar_select)
+                field_name = std::string(
+                    any_cast<const var_select*>(pe[1])->VpiName());
             else
                 field_name = std::string(
                     any_cast<const part_select*>(pe[1])->VpiName());
@@ -5810,6 +5814,48 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         base_name.c_str(), field_name.c_str(), idx,
                                         base_wire->name.c_str(), abs_start, elem_width);
                                 return RTLIL::SigSpec(base_wire).extract(abs_start, elem_width);
+                            }
+                        }
+                    } else if (pe[1]->UhdmType() == uhdmvar_select) {
+                        // `s.field[i0][i1]...[iK-1]` — chained bit-selects
+                        // on a multi-dim packed array field.  Walk Ranges()
+                        // dimension by dimension, applying pos_of for each
+                        // index and shrinking the slice width.
+                        const var_select* vs = any_cast<const var_select*>(pe[1]);
+                        if (vs->Exprs() && field_ranges &&
+                            vs->Exprs()->size() <= field_ranges->size()) {
+                            int abs_start = field_offset;
+                            int slice_width = field_width;
+                            bool ok = true;
+                            for (size_t d = 0; d < vs->Exprs()->size() && ok; d++) {
+                                auto rd = (*field_ranges)[d];
+                                if (!rd->Left_expr() || !rd->Right_expr()) { ok = false; break; }
+                                RTLIL::SigSpec lls = import_expression(rd->Left_expr(), input_mapping);
+                                RTLIL::SigSpec rrs = import_expression(rd->Right_expr(), input_mapping);
+                                if (!lls.is_fully_const() || !rrs.is_fully_const()) { ok = false; break; }
+                                int rl = lls.as_int();
+                                int rr = rrs.as_int();
+                                int rlow = std::min(rl, rr);
+                                int rhigh = std::max(rl, rr);
+                                int rsize = rhigh - rlow + 1;
+                                bool rasc = rl < rr;
+                                RTLIL::SigSpec idx_sig =
+                                    import_expression((*vs->Exprs())[d], input_mapping);
+                                if (!idx_sig.is_fully_const()) { ok = false; break; }
+                                int idx = idx_sig.as_const().as_int();
+                                int pos = rasc ? (rr - idx) : (idx - rr);
+                                int sub_width = slice_width / rsize;
+                                abs_start += pos * sub_width;
+                                slice_width = sub_width;
+                            }
+                            if (ok && abs_start >= 0 &&
+                                abs_start + slice_width <= base_wire->width) {
+                                if (mode_debug)
+                                    log("    Struct field var-select: %s.%s[...] → "
+                                        "%s[%d+:%d]\n",
+                                        base_name.c_str(), field_name.c_str(),
+                                        base_wire->name.c_str(), abs_start, slice_width);
+                                return RTLIL::SigSpec(base_wire).extract(abs_start, slice_width);
                             }
                         }
                     } else {
