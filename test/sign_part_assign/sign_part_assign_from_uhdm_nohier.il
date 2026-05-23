@@ -19,16 +19,16 @@ module \test
   wire width 4 $auto$expression.cpp:4672:import_indexed_part_select$4
   attribute \src "dut.sv:10.1-18.4"
   wire width 4 $0\$auto$expression.cpp:4672:import_indexed_part_select$4
-  wire width 16 $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$6
-  wire width 16 $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$8
-  wire width 16 $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$10
-  wire width 16 $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$12
-  wire width 16 $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$14
-  wire width 16 $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$16
-  wire width 16 $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$18
-  wire width 16 $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$20
-  wire width 16 $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$22
-  wire width 16 $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$24
+  wire width 16 $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$6
+  wire width 16 $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$8
+  wire width 16 $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$10
+  wire width 16 $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$12
+  wire width 16 $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$14
+  wire width 16 $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$16
+  wire width 16 $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$18
+  wire width 16 $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$20
+  wire width 16 $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$22
+  wire width 16 $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$24
   attribute \src "dut.sv:16.2-16.25"
   cell $shiftx $shiftx$dut.sv:16$3
     parameter \A_SIGNED 0
@@ -51,7 +51,7 @@ module \test
     connect \B \offset_i
     connect \Y $auto$expression.cpp:4672:import_indexed_part_select$4
   end
-  cell $shl $auto$process.cpp:6965:emit_dynamic_indexed_part_select_write$7
+  cell $shl $auto$process.cpp:6997:emit_dynamic_indexed_part_select_write$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
@@ -59,9 +59,9 @@ module \test
     parameter \Y_WIDTH 16
     connect \A 16'0000000000001111
     connect \B \offset_i
-    connect \Y $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$6
+    connect \Y $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$6
   end
-  cell $shl $auto$process.cpp:6968:emit_dynamic_indexed_part_select_write$9
+  cell $shl $auto$process.cpp:7000:emit_dynamic_indexed_part_select_write$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
@@ -69,36 +69,36 @@ module \test
     parameter \Y_WIDTH 16
     connect \A 16'0000000000001111
     connect \B \offset_i
-    connect \Y $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$8
+    connect \Y $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$8
   end
-  cell $not $auto$process.cpp:6971:emit_dynamic_indexed_part_select_write$11
+  cell $not $auto$process.cpp:7003:emit_dynamic_indexed_part_select_write$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$6
-    connect \Y $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$10
+    connect \A $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$6
+    connect \Y $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$10
   end
-  cell $and $auto$process.cpp:6982:emit_dynamic_indexed_part_select_write$13
+  cell $and $auto$process.cpp:7014:emit_dynamic_indexed_part_select_write$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000000000
-    connect \B $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$10
-    connect \Y $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$12
+    connect \B $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$10
+    connect \Y $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$12
   end
-  cell $or $auto$process.cpp:6984:emit_dynamic_indexed_part_select_write$15
+  cell $or $auto$process.cpp:7016:emit_dynamic_indexed_part_select_write$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$12
-    connect \B $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$8
-    connect \Y $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$14
+    connect \A $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$12
+    connect \B $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$8
+    connect \Y $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$14
   end
-  cell $shl $auto$process.cpp:6965:emit_dynamic_indexed_part_select_write$17
+  cell $shl $auto$process.cpp:6997:emit_dynamic_indexed_part_select_write$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
@@ -106,9 +106,9 @@ module \test
     parameter \Y_WIDTH 16
     connect \A 16'0000000000001111
     connect \B \offset_i
-    connect \Y $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$16
+    connect \Y $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$16
   end
-  cell $shl $auto$process.cpp:6968:emit_dynamic_indexed_part_select_write$19
+  cell $shl $auto$process.cpp:7000:emit_dynamic_indexed_part_select_write$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
@@ -116,34 +116,34 @@ module \test
     parameter \Y_WIDTH 16
     connect \A 16'0000000000001111
     connect \B \offset_i
-    connect \Y $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$18
+    connect \Y $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$18
   end
-  cell $not $auto$process.cpp:6971:emit_dynamic_indexed_part_select_write$21
+  cell $not $auto$process.cpp:7003:emit_dynamic_indexed_part_select_write$21
     parameter \A_SIGNED 0
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$process.cpp:6964:emit_dynamic_indexed_part_select_write$16
-    connect \Y $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$20
+    connect \A $auto$process.cpp:6996:emit_dynamic_indexed_part_select_write$16
+    connect \Y $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$20
   end
-  cell $and $auto$process.cpp:6982:emit_dynamic_indexed_part_select_write$23
+  cell $and $auto$process.cpp:7014:emit_dynamic_indexed_part_select_write$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A 16'0000000000000000
-    connect \B $auto$process.cpp:6970:emit_dynamic_indexed_part_select_write$20
-    connect \Y $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$22
+    connect \B $auto$process.cpp:7002:emit_dynamic_indexed_part_select_write$20
+    connect \Y $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$22
   end
-  cell $or $auto$process.cpp:6984:emit_dynamic_indexed_part_select_write$25
+  cell $or $auto$process.cpp:7016:emit_dynamic_indexed_part_select_write$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$process.cpp:6981:emit_dynamic_indexed_part_select_write$22
-    connect \B $auto$process.cpp:6967:emit_dynamic_indexed_part_select_write$18
-    connect \Y $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$24
+    connect \A $auto$process.cpp:7013:emit_dynamic_indexed_part_select_write$22
+    connect \B $auto$process.cpp:6999:emit_dynamic_indexed_part_select_write$18
+    connect \Y $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$24
   end
   attribute \src "dut.sv:10.1-18.4"
   process $proc$dut.sv:10$1
@@ -153,8 +153,8 @@ module \test
     assign $0\data_ref_o \data_ref_o
     assign $0\data_o 16'0000000000000000
     assign $0\data_ref_o 16'0000000000000000
-    assign $0\data_ref_o $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$14
-    assign $0\data_o $auto$process.cpp:6983:emit_dynamic_indexed_part_select_write$24
+    assign $0\data_ref_o $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$14
+    assign $0\data_o $auto$process.cpp:7015:emit_dynamic_indexed_part_select_write$24
     sync always
       update $auto$expression.cpp:4672:import_indexed_part_select$2 $0\$auto$expression.cpp:4672:import_indexed_part_select$2
       update $auto$expression.cpp:4672:import_indexed_part_select$4 $0\$auto$expression.cpp:4672:import_indexed_part_select$4

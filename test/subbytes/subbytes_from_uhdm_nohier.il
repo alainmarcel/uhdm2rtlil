@@ -179,7 +179,7 @@ module \subbytes_00
     connect \S $auto$expression.cpp:4172:import_bit_select$11
     connect \Y $auto$expression.cpp:4175:import_bit_select$13
   end
-  cell $reduce_bool $auto$process.cpp:7668:import_if_else_comb$15
+  cell $reduce_bool $auto$process.cpp:7700:import_if_else_comb$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
