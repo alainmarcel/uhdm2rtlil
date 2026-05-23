@@ -5743,19 +5743,28 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                     field_offset += mw;
                 }
-
-                if (found_field && field_ts_actual &&
-                    field_ts_actual->UhdmType() == uhdmlogic_typespec) {
-                    auto lt = dynamic_cast<const UHDM::logic_typespec*>(field_ts_actual);
-                    // Compute the field's element width.  For a
-                    // `logic_typespec` with `Elem_typespec`, the element
-                    // is the Elem_typespec; otherwise (multi-range form),
-                    // it's the product of all inner ranges.
+                // The field's typespec may be `logic_typespec` (logic / reg
+                // declarations) or `bit_typespec` (bit / byte declarations
+                // — Surelog routes `bit [N:0]` through a separate node that
+                // exposes `Ranges()` but no `Elem_typespec()`).  Both share
+                // the same outer-range layout, so collect Ranges + (optional)
+                // Elem_typespec once and reuse the slice arithmetic.
+                const UHDM::VectorOfrange* field_ranges = nullptr;
+                const UHDM::ref_typespec* field_elem_rts = nullptr;
+                if (found_field && field_ts_actual) {
+                    if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(field_ts_actual)) {
+                        field_ranges = lt->Ranges();
+                        field_elem_rts = lt->Elem_typespec();
+                    } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(field_ts_actual)) {
+                        field_ranges = bt->Ranges();
+                    }
+                }
+                if (field_ranges) {
                     int elem_width = 1;
                     int outer_low = 0, outer_high = 0;
                     bool have_outer_range = false;
-                    if (lt && lt->Ranges() && !lt->Ranges()->empty()) {
-                        auto r0 = (*lt->Ranges())[0];
+                    if (!field_ranges->empty()) {
+                        auto r0 = (*field_ranges)[0];
                         if (r0->Left_expr() && r0->Right_expr()) {
                             RTLIL::SigSpec ls = import_expression(r0->Left_expr(), input_mapping);
                             RTLIL::SigSpec rs = import_expression(r0->Right_expr(), input_mapping);
@@ -5768,10 +5777,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
                         }
                     }
-                    if (lt && lt->Elem_typespec() &&
-                        lt->Elem_typespec()->Actual_typespec()) {
+                    if (field_elem_rts && field_elem_rts->Actual_typespec()) {
                         elem_width = get_width_from_typespec(
-                            lt->Elem_typespec()->Actual_typespec(), inst);
+                            field_elem_rts->Actual_typespec(), inst);
                     } else if (have_outer_range) {
                         elem_width = field_width / (outer_high - outer_low + 1);
                     }
