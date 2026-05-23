@@ -19,3 +19,12 @@ arch/xilinx/priority_memory.v  # Skipped due to excessive runtime
 # skipped — not bugs in the UHDM frontend.
 arch/xilinx/xilinx_srl.v  # `module $__XILINX_SHREG_`
 various/shregmap.v        # `module $__SHREG_DFF_P_` and `module $__XILINX_SHREG_`
+
+# Yosys-permissive `rand` modifier on module-scope variable declarations
+# (e.g., `rand const reg rx;`).  Per IEEE 1800-2017 §18.4 the `rand` /
+# `randc` keywords are only allowed on class members; Surelog rejects
+# them at module scope.  Yosys' Verilog reader accepts them as a no-op
+# extension.  The upstream `.ys` is parse-only, so there's nothing
+# functional to verify — we cover the LRM-legal subset (`const`-only)
+# via test/rand_const/dut.sv.
+various/rand_const.sv     # `rand` modifier at module scope (non-LRM)
