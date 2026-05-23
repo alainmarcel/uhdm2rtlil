@@ -5761,7 +5761,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
                 if (field_ranges) {
                     int elem_width = 1;
-                    int outer_low = 0, outer_high = 0;
+                    int range_left = 0, range_right = 0;
                     bool have_outer_range = false;
                     if (!field_ranges->empty()) {
                         auto r0 = (*field_ranges)[0];
@@ -5769,14 +5769,15 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             RTLIL::SigSpec ls = import_expression(r0->Left_expr(), input_mapping);
                             RTLIL::SigSpec rs = import_expression(r0->Right_expr(), input_mapping);
                             if (ls.is_fully_const() && rs.is_fully_const()) {
-                                int l = ls.as_int();
-                                int rv = rs.as_int();
-                                outer_low = std::min(l, rv);
-                                outer_high = std::max(l, rv);
+                                range_left = ls.as_int();
+                                range_right = rs.as_int();
                                 have_outer_range = true;
                             }
                         }
                     }
+                    int outer_low = std::min(range_left, range_right);
+                    int outer_high = std::max(range_left, range_right);
+                    bool ascending = range_left < range_right;  // [0:7]-style
                     if (field_elem_rts && field_elem_rts->Actual_typespec()) {
                         elem_width = get_width_from_typespec(
                             field_elem_rts->Actual_typespec(), inst);
@@ -5785,12 +5786,22 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                     if (elem_width <= 0) elem_width = 1;
 
+                    // Position-from-LSB of element index `i` in the field.
+                    // The leftmost-declared element occupies the high bits
+                    // and the rightmost-declared occupies the low bits, so
+                    // - descending [L:R] (L>=R): pos(i) = i - R
+                    // - ascending  [L:R] (L<R):  pos(i) = R - i
+                    auto pos_of = [&](int i) {
+                        return ascending ? (range_right - i)
+                                         : (i - range_right);
+                    };
+
                     if (pe[1]->UhdmType() == uhdmbit_select) {
                         const bit_select* bs = any_cast<const bit_select*>(pe[1]);
                         RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(), input_mapping);
                         if (idx_sig.is_fully_const() && have_outer_range) {
                             int idx = idx_sig.as_const().as_int();
-                            int abs_start = field_offset + (idx - outer_low) * elem_width;
+                            int abs_start = field_offset + pos_of(idx) * elem_width;
                             if (abs_start >= 0 &&
                                 abs_start + elem_width <= base_wire->width) {
                                 if (mode_debug)
@@ -5808,10 +5819,12 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (ls.is_fully_const() && rs.is_fully_const() && have_outer_range) {
                             int ps_left = ls.as_int();
                             int ps_right = rs.as_int();
-                            int lo_idx = std::min(ps_left, ps_right);
-                            int hi_idx = std::max(ps_left, ps_right);
-                            int abs_start = field_offset + (lo_idx - outer_low) * elem_width;
-                            int abs_len = (hi_idx - lo_idx + 1) * elem_width;
+                            int pos_l = pos_of(ps_left);
+                            int pos_r = pos_of(ps_right);
+                            int lsb_pos = std::min(pos_l, pos_r);
+                            int abs_start = field_offset + lsb_pos * elem_width;
+                            int abs_len =
+                                (std::abs(ps_left - ps_right) + 1) * elem_width;
                             if (abs_start >= 0 &&
                                 abs_start + abs_len <= base_wire->width) {
                                 if (mode_debug)
