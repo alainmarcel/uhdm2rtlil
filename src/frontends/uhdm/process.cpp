@@ -2368,7 +2368,8 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
         has_local_vars = block_has_local_variables(stmt);
         has_for_decl = statement_has_for_declaration(stmt);
         has_scalar_ctrl_loop = statement_has_scalar_control_for_loop(stmt);
-        has_task_call = (stmt->VpiType() == vpiTaskCall);
+        has_task_call = (stmt->VpiType() == vpiTaskCall ||
+                         stmt->VpiType() == vpiMethodTaskCall);
         has_partial_write = statement_has_partial_write(stmt);
     }
 
@@ -4986,6 +4987,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             }
             break;
         }
+        case vpiMethodTaskCall: {
+            // `obj.task(args);` — hierarchical task call (e.g.
+            // `module_scope_func_top.send(out3);`).  Surelog binds the
+            // task in `Task()`; reuse the shared tf-call inliner so the
+            // task's output formals end up driving the caller's args.
+            auto mtc = any_cast<const UHDM::method_task_call*>(uhdm_stmt);
+            if (mtc) {
+                import_tf_call_comb(mtc, mtc->Task(), proc);
+            }
+            break;
+        }
         case vpiSysFuncCall: {
             const sys_func_call* call = any_cast<const sys_func_call*>(uhdm_stmt);
             if (call) {
@@ -5415,7 +5427,27 @@ void UhdmImporter::import_begin_block_comb(const UHDM::scope* uhdm_begin, RTLIL:
 
 // Import task call in combinational context by inlining the task body
 void UhdmImporter::import_task_call_comb(const task_call* tc, RTLIL::Process* proc) {
-    if (auto task_def = tc->Task())
+    // Prefer a same-named task in the current gen_scope over the
+    // Surelog-bound `Task()` pointer — Surelog doesn't always honour
+    // local-shadowing rules for tasks declared inside generate blocks
+    // (e.g. `if (1) begin : blk; task send; ... endtask; send(...); end`
+    // resolves `send` to the parent-module task instead of `blk.send`).
+    const UHDM::task* task_def = nullptr;
+    std::string name = std::string(tc->VpiName());
+    if (current_scope && current_scope->UhdmType() == uhdmgen_scope) {
+        auto gs = any_cast<const UHDM::gen_scope*>(current_scope);
+        if (gs->Task_funcs()) {
+            for (auto tf : *gs->Task_funcs()) {
+                if (tf->UhdmType() == uhdmtask &&
+                    std::string(tf->VpiName()) == name) {
+                    task_def = any_cast<const UHDM::task*>(tf);
+                    break;
+                }
+            }
+        }
+    }
+    if (!task_def) task_def = tc->Task();
+    if (task_def)
         import_tf_call_comb(tc, task_def, proc);
     else
         log_warning("Task call has no task definition\n");

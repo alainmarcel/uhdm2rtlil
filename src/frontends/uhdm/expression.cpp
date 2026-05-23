@@ -35,6 +35,7 @@
 #include <uhdm/range.h>
 #include <uhdm/sys_func_call.h>
 #include <uhdm/func_call.h>
+#include <uhdm/method_func_call.h>
 #include <uhdm/function.h>
 #include <uhdm/case_stmt.h>
 #include <uhdm/case_item.h>
@@ -1922,8 +1923,27 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 std::string func_name = std::string(fc->VpiName());
                 log("UHDM: Processing function call: %s\n", func_name.c_str());
 
-                // Get the function definition
-                const function* func_def = fc->Function();
+                // Get the function definition.  Surelog binds the
+                // `Function()` pointer at parse time and doesn't always
+                // honour the local shadowing rules for generate-block
+                // functions, so when we're inside a gen_scope first
+                // check its own `Task_funcs()` for a same-named callee
+                // and prefer that over the parent-module binding.
+                const function* func_def = nullptr;
+                if (current_scope &&
+                    current_scope->UhdmType() == uhdmgen_scope) {
+                    auto gs = any_cast<const UHDM::gen_scope*>(current_scope);
+                    if (gs->Task_funcs()) {
+                        for (auto tf : *gs->Task_funcs()) {
+                            if (tf->UhdmType() == uhdmfunction &&
+                                std::string(tf->VpiName()) == func_name) {
+                                func_def = any_cast<const function*>(tf);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!func_def) func_def = fc->Function();
                 log("UHDM: func_def pointer: %p\n", (void*)func_def);
                 if (!func_def) {
                     log_warning("Function definition not found for %s\n", func_name.c_str());
@@ -4720,6 +4740,87 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+
+    // Hierarchical function call: `module_scope_func_top.incr(10)`.
+    // Surelog represents this as a hier_path whose last Path_elem is a
+    // `method_func_call`.  Resolve the function (use the bound
+    // Function() pointer or look it up by name in the current module's
+    // Task_funcs) and either compile-time-evaluate it (when all
+    // arguments are constants — covers `localparam = top.func(...)`)
+    // or inline it into the surrounding combinational/initial context.
+    if (uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
+        auto last_elem = uhdm_hier->Path_elems()->back();
+        if (last_elem->UhdmType() == uhdmmethod_func_call) {
+            auto mfc = any_cast<const UHDM::method_func_call*>(last_elem);
+            std::string func_name = std::string(mfc->VpiName());
+            const UHDM::function* fdef = mfc->Function();
+            // Fall back: walk the current module's Task_funcs by name.
+            if (!fdef && current_instance) {
+                if (auto mod = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+                    if (mod->Task_funcs()) {
+                        for (auto tf : *mod->Task_funcs()) {
+                            if (tf->UhdmType() == uhdmfunction &&
+                                std::string(tf->VpiName()) == func_name) {
+                                fdef = any_cast<const UHDM::function*>(tf);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (fdef) {
+                // Collect arguments.
+                std::vector<RTLIL::SigSpec> args;
+                if (mfc->Tf_call_args()) {
+                    for (auto a : *mfc->Tf_call_args()) {
+                        args.push_back(import_expression(
+                            any_cast<const UHDM::expr*>(a), input_mapping));
+                    }
+                }
+                bool all_const = true;
+                std::vector<RTLIL::Const> const_args;
+                for (const auto& arg : args) {
+                    if (arg.is_fully_const()) {
+                        const_args.push_back(arg.as_const());
+                    } else {
+                        all_const = false;
+                        break;
+                    }
+                }
+                if (all_const) {
+                    const_eval_module_writes.clear();
+                    std::map<std::string, RTLIL::Const> output_params;
+                    RTLIL::Const result =
+                        evaluate_function_call(fdef, const_args, output_params);
+                    const_eval_module_writes.clear();
+                    if (mode_debug)
+                        log("    hier_path func call %s → compile-time const\n",
+                            func_name.c_str());
+                    return RTLIL::SigSpec(result);
+                }
+                UHDM::Serializer* s = uhdm_design->GetSerializer();
+                UHDM::func_call* tmp = s->MakeFunc_call();
+                tmp->VpiName(func_name);
+                tmp->Function(const_cast<UHDM::function*>(fdef));
+                if (mfc->Tf_call_args()) {
+                    UHDM::VectorOfany* args_vec = s->MakeAnyVec();
+                    for (auto a : *mfc->Tf_call_args()) args_vec->push_back(a);
+                    tmp->Tf_call_args(args_vec);
+                }
+                if (current_comb_process) {
+                    // Inline into the current combinational process via
+                    // the synthesised func_call.
+                    return import_func_call_comb(tmp, current_comb_process);
+                }
+                // Continuous-assign context: route through the existing
+                // function-call pipeline.
+                return process_function_with_context(fdef, args, tmp, nullptr);
+            }
+            log_warning("UHDM: hier_path function '%s' — no Function() and "
+                        "no match in current module's Task_funcs\n",
+                        func_name.c_str());
+        }
+    }
 
     // Packed-union-of-structs field access: `dec.r.rd` where `dec` is
     // a `union packed` whose `r` member is a `struct packed`.  All
