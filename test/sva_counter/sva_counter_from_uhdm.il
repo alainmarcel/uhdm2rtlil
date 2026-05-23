@@ -15,9 +15,9 @@ module \top
   attribute \src "dut.sv:1.58-1.61"
   wire width 8 output 5 \cnt
   wire $auto$opt_dff.cc:234:make_patterns_logic$42
-  wire width 8 $auto$expression.cpp:2866:import_operation$2
+  wire width 8 $auto$expression.cpp:2886:import_operation$2
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2920:import_operation$4
+  wire width 64 $auto$expression.cpp:2940:import_operation$4
   wire width 8 $procmux$34_Y
   wire width 8 $procmux$31_Y
   attribute \src "dut.sv:5.8-8.19"
@@ -25,7 +25,7 @@ module \top
   cell $mux $procmux$34
     parameter \WIDTH 8
     connect \A $procmux$31_Y
-    connect \B $auto$expression.cpp:2866:import_operation$2
+    connect \B $auto$expression.cpp:2886:import_operation$2
     connect \S \up
     connect \Y $procmux$34_Y
   end
@@ -37,7 +37,7 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \cnt }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2920:import_operation$4
+    connect \Y $auto$expression.cpp:2940:import_operation$4
   end
   cell $add $add$dut.sv:19$7
     parameter \A_SIGNED 0
@@ -47,7 +47,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2866:import_operation$2
+    connect \Y $auto$expression.cpp:2886:import_operation$2
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$43
     parameter \A_SIGNED 0
@@ -90,7 +90,7 @@ module \top
   cell $mux $procmux$31
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2920:import_operation$4 [7:0]
+    connect \B $auto$expression.cpp:2940:import_operation$4 [7:0]
     connect \S \down
     connect \Y $procmux$31_Y
   end

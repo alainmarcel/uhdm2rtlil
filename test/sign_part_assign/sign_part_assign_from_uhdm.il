@@ -9,7 +9,7 @@ module \test
   wire width 16 output 2 \data_o
   attribute \src "dut.sv:4.2-4.12"
   wire width 16 output 3 \data_ref_o
-  cell $shl $auto$process.cpp:6997:emit_dynamic_indexed_part_select_write$17
+  cell $shl $auto$process.cpp:7029:emit_dynamic_indexed_part_select_write$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 16

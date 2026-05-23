@@ -25,8 +25,8 @@ module \ADD_SUB
   wire width 9 \add_sub_if0.result
   attribute \src "dut.sv:16.3-22.8"
   wire width 9 $0\result0[8:0]
-  wire width 9 $auto$expression.cpp:2866:import_operation$2
-  wire width 9 $auto$expression.cpp:2920:import_operation$4
+  wire width 9 $auto$expression.cpp:2886:import_operation$2
+  wire width 9 $auto$expression.cpp:2940:import_operation$4
   cell $sub $sub$dut.sv:21$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -35,7 +35,7 @@ module \ADD_SUB
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a0 }
     connect \B { 1'0 \b0 }
-    connect \Y $auto$expression.cpp:2920:import_operation$4
+    connect \Y $auto$expression.cpp:2940:import_operation$4
   end
   cell $add $add$dut.sv:19$3
     parameter \A_SIGNED 0
@@ -45,7 +45,7 @@ module \ADD_SUB
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a0 }
     connect \B { 1'0 \b0 }
-    connect \Y $auto$expression.cpp:2866:import_operation$2
+    connect \Y $auto$expression.cpp:2886:import_operation$2
   end
   attribute \src "dut.sv:16.3-22.8"
   attribute \always_ff 1
@@ -55,10 +55,10 @@ module \ADD_SUB
     switch \doAdd0
     attribute \src "dut.sv:19.9-19.27"
       case 1'1
-        assign $0\result0[8:0] $auto$expression.cpp:2866:import_operation$2
+        assign $0\result0[8:0] $auto$expression.cpp:2886:import_operation$2
     attribute \src "dut.sv:21.9-21.27"
       case 
-        assign $0\result0[8:0] $auto$expression.cpp:2920:import_operation$4
+        assign $0\result0[8:0] $auto$expression.cpp:2940:import_operation$4
     end
     sync posedge \clk
       update \result0 $0\result0[8:0]

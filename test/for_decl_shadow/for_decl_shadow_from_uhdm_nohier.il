@@ -17,7 +17,7 @@ module \gate
   process $proc$dut.sv:14$2
   end
   attribute \src "dut.sv:14.2-14.20"
-  process $auto$process.cpp:2496:operator()$3
+  process $auto$process.cpp:2497:operator()$3
     sync always
       update \x 16'0000011110000000
   end
@@ -41,7 +41,7 @@ module \gold
   process $proc$dut.sv:31$5
   end
   attribute \src "dut.sv:31.2-31.20"
-  process $auto$process.cpp:2496:operator()$6
+  process $auto$process.cpp:2497:operator()$6
     sync always
       update \x 16'0000011110000000
   end
