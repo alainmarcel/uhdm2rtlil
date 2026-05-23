@@ -5768,6 +5768,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         // typespec (e.g., bit [7:0]) in Elem_typespec.
                         field_ranges = at->Ranges();
                         field_elem_rts = at->Elem_typespec();
+                    } else if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(field_ts_actual)) {
+                        // Typedef'd packed array field (e.g., `bit8_t [5:0] a`
+                        // where `typedef bit [7:0] bit8_t`).  PR 5's Surelog
+                        // fix wraps the typedef in a packed_array_typespec
+                        // exposing Ranges() for the outer dim and
+                        // Elem_typespec() for the typedef'd element.
+                        field_ranges = pat->Ranges();
+                        field_elem_rts = pat->Elem_typespec();
                     }
                 }
                 if (field_ranges) {
@@ -5789,7 +5797,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     int outer_low = std::min(range_left, range_right);
                     int outer_high = std::max(range_left, range_right);
                     bool ascending = range_left < range_right;  // [0:7]-style
-                    if (field_elem_rts && field_elem_rts->Actual_typespec()) {
+                    // For a multi-range typespec (e.g.,
+                    // `packed_array_typespec` with Ranges = [[0:7], [1:0]]),
+                    // Elem_typespec is the LEAF after consuming every
+                    // dimension, not the element after one dimension —
+                    // using it would give the leaf width and ignore the
+                    // inner array dims.  Prefer `field_width / outer_size`
+                    // unless this is genuinely a single-dim field, where
+                    // Elem_typespec is more reliable than the divide.
+                    if (have_outer_range && field_ranges->size() > 1) {
+                        elem_width = field_width / (outer_high - outer_low + 1);
+                    } else if (field_elem_rts && field_elem_rts->Actual_typespec()) {
                         elem_width = get_width_from_typespec(
                             field_elem_rts->Actual_typespec(), inst);
                     } else if (have_outer_range) {
@@ -5888,6 +5906,202 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                         base_wire->name.c_str(), abs_start, abs_len);
                                 return RTLIL::SigSpec(base_wire).extract(abs_start, abs_len);
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle chained `s.field[idx0]...[idxK-1][hi:lo]` (bit/var-select
+    // on a packed-array struct field, then part-select on the resulting
+    // element).  This is the umbrella-test pattern (e.g. `s2.a[7][1:0]`
+    // and `s3_lbl.a[0][0][2:3]`).  The bit/var_select narrows the field
+    // through one or more outer dimensions; the part_select then carves
+    // a slice out of the remaining element using its own range.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 3) {
+        auto& pe3p = *uhdm_hier->Path_elems();
+        if (pe3p[0]->UhdmType() == uhdmref_obj &&
+            (pe3p[1]->UhdmType() == uhdmbit_select ||
+             pe3p[1]->UhdmType() == uhdmvar_select) &&
+            pe3p[2]->UhdmType() == uhdmpart_select) {
+            const ref_obj* base_ref = any_cast<const ref_obj*>(pe3p[0]);
+            const part_select* ps   = any_cast<const part_select*>(pe3p[2]);
+            std::string base_name  = std::string(base_ref->VpiName());
+            // Collect index expressions from bit_select or var_select.
+            std::vector<const UHDM::expr*> idx_exprs;
+            std::string field_name;
+            if (pe3p[1]->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const bit_select*>(pe3p[1]);
+                field_name = std::string(bs->VpiName());
+                if (bs->VpiIndex()) idx_exprs.push_back(bs->VpiIndex());
+            } else {
+                auto vs = any_cast<const var_select*>(pe3p[1]);
+                field_name = std::string(vs->VpiName());
+                if (vs->Exprs()) {
+                    for (auto e : *vs->Exprs()) idx_exprs.push_back(e);
+                }
+            }
+
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                                         ? name_map[base_name] : nullptr;
+
+            const UHDM::struct_typespec* st = nullptr;
+            if (base_wire) {
+                for (auto& kv : wire_map) {
+                    if (kv.second != base_wire) continue;
+                    const ref_typespec* rts = nullptr;
+                    if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))    rts = ln->Typespec();
+                    else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))   rts = lv->Typespec();
+                    else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first))  rts = sv->Typespec();
+                    else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first))  rts = sn->Typespec();
+                    if (rts) {
+                        if (auto ats = rts->Actual_typespec()) {
+                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                        }
+                    }
+                    if (st) break;
+                }
+            }
+
+            if (base_wire && st && st->Members() && !idx_exprs.empty() &&
+                ps->Left_range() && ps->Right_range()) {
+                // Walk struct members to find field offset and typespec.
+                int field_offset = 0;
+                int field_width = 0;
+                const UHDM::typespec* field_ts = nullptr;
+                bool found = false;
+                for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                    auto m = (*st->Members())[i];
+                    int mw = 0;
+                    const UHDM::typespec* mts = nullptr;
+                    if (auto mref = m->Typespec())
+                        if (auto ats = mref->Actual_typespec()) {
+                            mts = ats;
+                            mw = get_width_from_typespec(ats, inst);
+                        }
+                    if (std::string(m->VpiName()) == field_name) {
+                        field_ts = mts;
+                        field_width = mw;
+                        found = true;
+                        break;
+                    }
+                    field_offset += mw;
+                }
+
+                // Flatten the field's dimension list across nested
+                // packed_array_typespec / typedef chains so that
+                // `bit3l_t [0:7][1:0]` (where `typedef bit [0:3] bit3l_t`)
+                // exposes all three dimensions at once.
+                std::vector<const UHDM::range*> flat_ranges;
+                const UHDM::ref_typespec* field_elem_rts = nullptr;
+                {
+                    const UHDM::typespec* cur = field_ts;
+                    while (cur) {
+                        const UHDM::VectorOfrange* r = nullptr;
+                        const UHDM::ref_typespec* next_rts = nullptr;
+                        if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(cur)) {
+                            r = lt->Ranges();
+                            next_rts = lt->Elem_typespec();
+                        } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(cur)) {
+                            r = bt->Ranges();
+                        } else if (auto at = dynamic_cast<const UHDM::array_typespec*>(cur)) {
+                            r = at->Ranges();
+                            next_rts = at->Elem_typespec();
+                        } else if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(cur)) {
+                            r = pat->Ranges();
+                            next_rts = pat->Elem_typespec();
+                        }
+                        if (r) for (auto rg : *r) flat_ranges.push_back(rg);
+                        // Stop the descent if we used Ranges() but have no
+                        // child typespec (logic_typespec multi-range form):
+                        // each range is its own dimension and the leaf is
+                        // 1-bit, so there's nothing further to flatten.
+                        if (!next_rts) {
+                            // Keep field_elem_rts for the part-select element
+                            // range fallback even when there is no chain.
+                            if (cur == field_ts) {
+                                if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(cur))
+                                    field_elem_rts = lt->Elem_typespec();
+                            }
+                            break;
+                        }
+                        field_elem_rts = next_rts;
+                        cur = next_rts->Actual_typespec();
+                    }
+                }
+                const std::vector<const UHDM::range*>* field_ranges = &flat_ranges;
+
+                if (found && !flat_ranges.empty() &&
+                    flat_ranges.size() >= idx_exprs.size() && field_width > 0) {
+                    // Walk dimensions one at a time using the index list.
+                    int sub_offset = field_offset;
+                    int sub_width = field_width;
+                    bool ok = true;
+                    for (size_t d = 0; d < idx_exprs.size() && ok; d++) {
+                        auto rd = (*field_ranges)[d];
+                        if (!rd->Left_expr() || !rd->Right_expr()) { ok = false; break; }
+                        RTLIL::SigSpec ls = import_expression(rd->Left_expr(), input_mapping);
+                        RTLIL::SigSpec rs = import_expression(rd->Right_expr(), input_mapping);
+                        RTLIL::SigSpec idx = import_expression(idx_exprs[d], input_mapping);
+                        if (!ls.is_fully_const() || !rs.is_fully_const() ||
+                            !idx.is_fully_const()) { ok = false; break; }
+                        int rl = ls.as_int();
+                        int rr = rs.as_int();
+                        int idx_v = idx.as_const().as_int();
+                        int range_size = std::abs(rl - rr) + 1;
+                        bool asc = rl < rr;
+                        int pos = asc ? (rr - idx_v) : (idx_v - rr);
+                        int slice_w = sub_width / range_size;
+                        sub_offset += pos * slice_w;
+                        sub_width = slice_w;
+                    }
+                    RTLIL::SigSpec pls = import_expression(ps->Left_range(), input_mapping);
+                    RTLIL::SigSpec prs = import_expression(ps->Right_range(), input_mapping);
+                    if (ok && pls.is_fully_const() && prs.is_fully_const()) {
+                        // Element's range governs the part-select arithmetic.
+                        // Source order of preference: Elem_typespec's first
+                        // range; otherwise field_ranges[idx_exprs.size()]
+                        // (the dimension just past the consumed ones).
+                        int elem_rl = sub_width - 1, elem_rr = 0;
+                        const UHDM::range* elem_range = nullptr;
+                        if (idx_exprs.size() == 1 && field_elem_rts &&
+                            field_elem_rts->Actual_typespec()) {
+                            auto et = field_elem_rts->Actual_typespec();
+                            const UHDM::VectorOfrange* erngs = nullptr;
+                            if (auto elt = dynamic_cast<const UHDM::logic_typespec*>(et)) erngs = elt->Ranges();
+                            else if (auto ebt = dynamic_cast<const UHDM::bit_typespec*>(et)) erngs = ebt->Ranges();
+                            if (erngs && !erngs->empty()) elem_range = (*erngs)[0];
+                        }
+                        if (!elem_range && field_ranges->size() > idx_exprs.size()) {
+                            elem_range = (*field_ranges)[idx_exprs.size()];
+                        }
+                        if (elem_range && elem_range->Left_expr() && elem_range->Right_expr()) {
+                            RTLIL::SigSpec els = import_expression(elem_range->Left_expr(), input_mapping);
+                            RTLIL::SigSpec ers = import_expression(elem_range->Right_expr(), input_mapping);
+                            if (els.is_fully_const() && ers.is_fully_const()) {
+                                elem_rl = els.as_int();
+                                elem_rr = ers.as_int();
+                            }
+                        }
+                        bool elem_asc = elem_rl < elem_rr;
+                        int ps_left  = pls.as_int();
+                        int ps_right = prs.as_int();
+                        int p_l = elem_asc ? (elem_rr - ps_left)  : (ps_left  - elem_rr);
+                        int p_r = elem_asc ? (elem_rr - ps_right) : (ps_right - elem_rr);
+                        int lsb_pos = std::min(p_l, p_r);
+                        int abs_start = sub_offset + lsb_pos;
+                        int abs_len   = std::abs(ps_left - ps_right) + 1;
+                        if (abs_start >= 0 &&
+                            abs_start + abs_len <= base_wire->width) {
+                            if (mode_debug)
+                                log("    Struct field chained select: %s.%s[...][%d:%d] → "
+                                    "%s[%d+:%d]\n",
+                                    base_name.c_str(), field_name.c_str(),
+                                    ps_left, ps_right,
+                                    base_wire->name.c_str(), abs_start, abs_len);
+                            return RTLIL::SigSpec(base_wire).extract(abs_start, abs_len);
                         }
                     }
                 }
