@@ -2762,13 +2762,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         log("UHDM: Found %d continuous assignments to import\n", (int)uhdm_module->Cont_assigns()->size());
         int assign_idx = 0;
         for (auto cont_assign : *uhdm_module->Cont_assigns()) {
-            log("UHDM: About to import continuous assignment %d (line:%d-%d)\n", 
+            log("UHDM: About to import continuous assignment %d (line:%d-%d)\n",
                 assign_idx++, cont_assign->VpiLineNo(), cont_assign->VpiEndLineNo());
-            
+
             // Debug: Check what the LHS is
             if (cont_assign->Lhs()) {
                 const expr* lhs = cont_assign->Lhs();
-                log("UHDM:   LHS type: %s (VpiType=%d)\n", 
+                log("UHDM:   LHS type: %s (VpiType=%d)\n",
                     UHDM::UhdmName(lhs->UhdmType()).c_str(), lhs->VpiType());
                 if (lhs->VpiType() == vpiHierPath) {
                     const hier_path* hp = any_cast<const hier_path*>(lhs);
@@ -2781,7 +2781,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     log("UHDM:   LHS is ref_obj: %s\n", std::string(ref->VpiName()).c_str());
                 }
             }
-            
+
             try {
                 import_continuous_assign(cont_assign);
                 log("UHDM: Successfully imported continuous assignment\n");
@@ -2792,6 +2792,73 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         }
     }
+
+    // Output-port inline initialisers without any other driver
+    // (e.g. `output integer w = bar(4);`).  Surelog stores the
+    // initialiser in the port's `High_conn`.  When the port wire is a
+    // FF-like register driven by an always block, the same initialiser
+    // also comes through `Variables()->Expr()` and is lowered to an
+    // `\init` attribute earlier — those wires already have `\init` set
+    // here, and we MUST NOT add a conflicting continuous assign.
+    //
+    // Skip submodules whose ports' `High_conn` carries the PARENT
+    // INSTANTIATION's wires/constants — that's a port wiring artefact,
+    // not an initialiser declared inside the callee's body.  Both
+    // top-level and submodule entries hang off the design in UHDM, so
+    // distinguish by membership in `design->TopModules()`.
+    bool is_top_module = false;
+    if (uhdm_design && uhdm_design->TopModules()) {
+        for (auto tm : *uhdm_design->TopModules()) {
+            if (tm == uhdm_module ||
+                std::string(tm->VpiDefName()) ==
+                    std::string(uhdm_module->VpiDefName())) {
+                is_top_module = true;
+                break;
+            }
+        }
+    }
+    if (is_top_module && uhdm_module->Ports()) {
+        for (auto port : *uhdm_module->Ports()) {
+            const any* hc = port->High_conn();
+            if (!hc) continue;
+            if (port->VpiDirection() != vpiOutput) continue;
+            // Skip interface/ref_obj wiring already handled elsewhere
+            // (interface ports, generate-block port hookups, default
+            // input/inout passthroughs).
+            if (hc->UhdmType() == uhdmref_obj) {
+                auto ref = any_cast<const ref_obj*>(hc);
+                if (ref->Actual_group() &&
+                    (ref->Actual_group()->UhdmType() == uhdminterface_inst ||
+                     ref->Actual_group()->UhdmType() == uhdmmodport))
+                    continue;
+                if (std::string(ref->VpiName()) == std::string(port->VpiName()))
+                    continue;
+            }
+            std::string port_name = std::string(port->VpiName());
+            RTLIL::Wire* port_wire = module->wire(RTLIL::escape_id(port_name));
+            if (!port_wire) continue;
+            // Register-style ports (output logic / reg with an always
+            // block) already carry the init value as a wire `\init`
+            // attribute — leave them alone.
+            if (port_wire->attributes.count(ID::init)) continue;
+            try {
+                RTLIL::SigSpec rhs =
+                    import_expression(any_cast<const expr*>(hc));
+                if (rhs.size() == 0) continue;
+                if (rhs.size() < port_wire->width)
+                    rhs.extend_u0(port_wire->width, port_wire->is_signed);
+                else if (rhs.size() > port_wire->width)
+                    rhs = rhs.extract(0, port_wire->width);
+                module->connect(RTLIL::SigSpec(port_wire), rhs);
+                log("UHDM: Lowered port-initialiser '%s = <expr>' to "
+                    "continuous assign\n", port_name.c_str());
+            } catch (...) {
+                log_warning("UHDM: Failed to lower port-initialiser for '%s'\n",
+                            port_name.c_str());
+            }
+        }
+    }
+
 
     // Import processes (always blocks) - re-enabled with debugging
     log("UHDM: Checking for processes...\n");
