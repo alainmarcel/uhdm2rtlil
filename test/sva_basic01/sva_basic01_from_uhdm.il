@@ -35,7 +35,7 @@ module \top
   end
   attribute \src "dut.sv:20.2-20.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2855:import_module$5
+  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$5
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -50,7 +50,7 @@ module \top
   end
   attribute \src "dut.sv:24.2-24.61"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2855:import_module$6
+  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
