@@ -10,7 +10,7 @@
  module \simple_assign
    attribute \src "dut.sv:2.16-2.17"
    wire input 1 \a
-@@ -21,29 +21,17 @@
+@@ -21,28 +21,17 @@
    wire output 8 \out_not
    attribute \src "dut.sv:10.17-10.28"
    wire output 9 \out_complex
@@ -36,7 +36,6 @@
 -  wire $and$dut.sv:17$10_Y
 -  attribute \src "dut.sv:17.26-17.47"
 -  wire $or$dut.sv:17$11_Y
--  attribute \src "dut.sv:14.22-14.27"
 +  wire $auto$rtlil.cc:3302:And$2
 +  wire $auto$rtlil.cc:3302:And$4
 +  wire $auto$rtlil.cc:3303:Or$6
@@ -48,17 +47,17 @@
 +  wire $auto$rtlil.cc:3302:And$18
 +  wire $auto$rtlil.cc:3302:And$20
 +  wire $auto$rtlil.cc:3303:Or$22
+   attribute \src "dut.sv:14.22-14.27"
    cell $and $and$dut.sv:14$1
      parameter \A_SIGNED 0
-     parameter \B_SIGNED 0
-@@ -52,21 +40,19 @@
+@@ -52,21 +41,21 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
 -    connect \Y $and$dut.sv:14$1_Y
 +    connect \Y $auto$rtlil.cc:3302:And$2
    end
--  attribute \src "dut.sv:14.22-14.31"
+   attribute \src "dut.sv:14.22-14.31"
 -  cell $and $and$dut.sv:14$2
 +  cell $and $and$dut.sv:14$3
      parameter \A_SIGNED 0
@@ -72,20 +71,20 @@
 -    connect \Y $and$dut.sv:14$2_Y
 +    connect \Y $auto$rtlil.cc:3302:And$4
    end
--  attribute \src "dut.sv:15.21-15.26"
+   attribute \src "dut.sv:15.21-15.26"
 -  cell $or $or$dut.sv:15$3
 +  cell $or $or$dut.sv:15$5
      parameter \A_SIGNED 0
      parameter \B_SIGNED 0
      parameter \A_WIDTH 1
-@@ -74,32 +60,29 @@
+@@ -74,32 +63,32 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
 -    connect \Y $or$dut.sv:15$3_Y
 +    connect \Y $auto$rtlil.cc:3303:Or$6
    end
--  attribute \src "dut.sv:15.21-15.30"
+   attribute \src "dut.sv:15.21-15.30"
 -  cell $or $or$dut.sv:15$4
 +  cell $or $or$dut.sv:15$7
      parameter \A_SIGNED 0
@@ -99,7 +98,7 @@
 -    connect \Y $or$dut.sv:15$4_Y
 +    connect \Y $auto$rtlil.cc:3303:Or$8
    end
--  attribute \src "dut.sv:15.21-15.34"
+   attribute \src "dut.sv:15.21-15.34"
 -  cell $or $or$dut.sv:15$5
 +  cell $or $or$dut.sv:15$9
      parameter \A_SIGNED 0
@@ -113,20 +112,20 @@
 -    connect \Y $or$dut.sv:15$5_Y
 +    connect \Y $auto$rtlil.cc:3303:Or$10
    end
--  attribute \src "dut.sv:16.24-16.29"
+   attribute \src "dut.sv:16.24-16.29"
 -  cell $and $and$dut.sv:16$6
 +  cell $and $and$dut.sv:16$11
      parameter \A_SIGNED 0
      parameter \B_SIGNED 0
      parameter \A_WIDTH 1
-@@ -107,18 +90,16 @@
+@@ -107,18 +96,18 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
 -    connect \Y $and$dut.sv:16$6_Y
 +    connect \Y $auto$rtlil.cc:3302:And$12
    end
--  attribute \src "dut.sv:16.22-16.30"
+   attribute \src "dut.sv:16.22-16.30"
 -  cell $not $not$dut.sv:16$7
 +  cell $not $not$dut.sv:16$13
      parameter \A_SIGNED 0
@@ -137,33 +136,33 @@
 +    connect \A $auto$rtlil.cc:3302:And$12
 +    connect \Y $auto$rtlil.cc:3255:Not$14
    end
--  attribute \src "dut.sv:17.27-17.32"
+   attribute \src "dut.sv:17.27-17.32"
 -  cell $and $and$dut.sv:17$8
 +  cell $and $and$dut.sv:17$15
      parameter \A_SIGNED 0
      parameter \B_SIGNED 0
      parameter \A_WIDTH 1
-@@ -126,10 +107,9 @@
+@@ -126,10 +115,10 @@
      parameter \Y_WIDTH 1
      connect \A \a
      connect \B \b
 -    connect \Y $and$dut.sv:17$8_Y
 +    connect \Y $auto$rtlil.cc:3302:And$16
    end
--  attribute \src "dut.sv:17.37-17.42"
+   attribute \src "dut.sv:17.37-17.42"
 -  cell $and $and$dut.sv:17$9
 +  cell $and $and$dut.sv:17$17
      parameter \A_SIGNED 0
      parameter \B_SIGNED 0
      parameter \A_WIDTH 1
-@@ -137,32 +117,30 @@
+@@ -137,32 +126,32 @@
      parameter \Y_WIDTH 1
      connect \A \c
      connect \B \d
 -    connect \Y $and$dut.sv:17$9_Y
 +    connect \Y $auto$rtlil.cc:3302:And$18
    end
--  attribute \src "dut.sv:17.37-17.46"
+   attribute \src "dut.sv:17.37-17.46"
 -  cell $and $and$dut.sv:17$10
 +  cell $and $and$dut.sv:17$19
      parameter \A_SIGNED 0
@@ -177,7 +176,7 @@
 -    connect \Y $and$dut.sv:17$10_Y
 +    connect \Y $auto$rtlil.cc:3302:And$20
    end
--  attribute \src "dut.sv:17.26-17.47"
+   attribute \src "dut.sv:17.26-17.47"
 -  cell $or $or$dut.sv:17$11
 +  cell $or $or$dut.sv:17$21
      parameter \A_SIGNED 0

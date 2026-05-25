@@ -69,10 +69,10 @@ module fsm_test(clk, reset, button_a, button_b, red_a, green_a, red_b, green_b);
   wire _039_;
   wire _040_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:51.24-51.31|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [3:0] _041_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:51.24-51.31|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [3:0] _042_;
   (* force_downto = 32'd1 *)
   (* src = "dut.sv:48.13-54.16|dut.sv:20.9-55.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)

@@ -72,11 +72,11 @@ module ADD_SUB(clk, a0, b0, doAdd0, result0);
   wire _051_;
   wire _052_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:19.20-19.27|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   (* unused_bits = "1 2 3 4 5 6 7 8" *)
   wire [8:0] _053_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:19.20-19.27|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [8:0] _054_;
   (* src = "dut.sv:28.15-28.16" *)
   wire [7:0] \add_sub_if0.a ;

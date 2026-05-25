@@ -15,11 +15,12 @@ module \simple_nested_struct_nopack
   wire width 62 \out_struct
   attribute \src "dut.sv:30.5-41.8"
   wire width 62 $0\out_struct
-  wire width 8 $auto$expression.cpp:2886:import_operation$2
+  wire width 8 $auto$expression.cpp:2897:import_operation$2
   wire width 32 $auto$rtlil.cc:3304:Xor$5
   wire $auto$rtlil.cc:3302:And$7
-  wire width 16 $auto$expression.cpp:2886:import_operation$8
+  wire width 16 $auto$expression.cpp:2897:import_operation$8
   wire width 4 $auto$rtlil.cc:3303:Or$11
+  attribute \src "dut.sv:35.32-35.58"
   cell $add $add$dut.sv:35$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -28,8 +29,9 @@ module \simple_nested_struct_nopack
     parameter \Y_WIDTH 8
     connect \A \in_struct [61:54]
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2886:import_operation$2
+    connect \Y $auto$expression.cpp:2897:import_operation$2
   end
+  attribute \src "dut.sv:36.32-36.66"
   cell $xor $xor$dut.sv:36$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -40,6 +42,7 @@ module \simple_nested_struct_nopack
     connect \B 32'11011110101011011011111011101111
     connect \Y $auto$rtlil.cc:3304:Xor$5
   end
+  attribute \src "dut.sv:37.33-37.71"
   cell $and $and$dut.sv:37$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -50,6 +53,7 @@ module \simple_nested_struct_nopack
     connect \B \in_struct [0]
     connect \Y $auto$rtlil.cc:3302:And$7
   end
+  attribute \src "dut.sv:38.25-38.47"
   cell $add $add$dut.sv:38$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -58,8 +62,9 @@ module \simple_nested_struct_nopack
     parameter \Y_WIDTH 16
     connect \A \in_struct [20:5]
     connect \B 16'0000000001100100
-    connect \Y $auto$expression.cpp:2886:import_operation$8
+    connect \Y $auto$expression.cpp:2897:import_operation$8
   end
+  attribute \src "dut.sv:39.26-39.49"
   cell $or $or$dut.sv:39$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -74,10 +79,10 @@ module \simple_nested_struct_nopack
   process $proc$dut.sv:30$1
     assign $0\out_struct \out_struct
     assign $0\out_struct \in_struct
-    assign $0\out_struct [61:54] $auto$expression.cpp:2886:import_operation$2
+    assign $0\out_struct [61:54] $auto$expression.cpp:2897:import_operation$2
     assign $0\out_struct [53:22] $auto$rtlil.cc:3304:Xor$5
     assign $0\out_struct [21] $auto$rtlil.cc:3302:And$7
-    assign $0\out_struct [20:5] $auto$expression.cpp:2886:import_operation$8
+    assign $0\out_struct [20:5] $auto$expression.cpp:2897:import_operation$8
     assign $0\out_struct [4:1] $auto$rtlil.cc:3303:Or$11
     assign $0\out_struct [0] \in_struct [21]
     sync always

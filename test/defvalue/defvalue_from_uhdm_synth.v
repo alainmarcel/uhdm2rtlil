@@ -25,11 +25,11 @@ module \$paramod\cnt\initval=s32'00000000000000000000000000000001 (clock, cnt, d
   wire _08_;
   wire _09_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:21.10-21.21|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   (* unused_bits = "1 2 3" *)
   wire [3:0] _10_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:21.10-21.21|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [3:0] _11_;
   \$_NAND_  _12_ (
     .A(cnt[2]),
@@ -157,11 +157,11 @@ module \$paramod\cnt\initval=s32'00000000000000000000000000000010 (clock, cnt, d
   wire _08_;
   wire _09_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:21.10-21.21|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   (* unused_bits = "1 2 3" *)
   wire [3:0] _10_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:21.10-21.21|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [3:0] _11_;
   \$_NAND_  _12_ (
     .A(cnt[2]),

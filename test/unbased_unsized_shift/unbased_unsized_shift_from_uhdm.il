@@ -13,6 +13,7 @@ module \unbased_unsized_shift
   wire width 64 output 4 \s0d
   attribute \src "dut.sv:7.24-7.27"
   wire width 64 output 5 \s1d
+  attribute \src "dut.sv:12.18-12.25"
   cell $shl $shl$dut.sv:12$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -23,6 +24,7 @@ module \unbased_unsized_shift
     connect \B \d
     connect \Y \s1d
   end
+  attribute \src "dut.sv:11.18-11.25"
   cell $shl $shl$dut.sv:11$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

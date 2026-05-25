@@ -36,6 +36,21 @@ UHDM_SYNTH="${TEST_DIR}/${BASE_NAME}_from_uhdm_synth.v"
 UHDM_RTLIL="${TEST_DIR}/${BASE_NAME}_from_uhdm_nohier.il"
 VERILOG_RTLIL="${TEST_DIR}/${BASE_NAME}_from_verilog_nohier.il"
 
+# Pick up `formal: 1` from the test's project.f.  In formal mode the
+# upstream Yosys script runs `async2sync` and `chformal -lower` so
+# async-reset FFs and verification cells (`$check`/`$assume`/`$cover`)
+# can be SAT-modelled.  Mirror that here for tests that opt in.
+PROJECT_FORMAL=""
+if [ -f "$TEST_DIR/project.f" ]; then
+    while IFS= read -r raw; do
+        line="${raw%$'\r'}"
+        if [[ "$line" =~ ^[[:space:]]*#[[:space:]]*formal[[:space:]]*:[[:space:]]*(.*)$ ]]; then
+            PROJECT_FORMAL="${BASH_REMATCH[1]}"
+            break
+        fi
+    done < "$TEST_DIR/project.f"
+fi
+
 if [ ! -f "$VERILOG_SYNTH" ] || [ ! -f "$UHDM_SYNTH" ]; then
     echo "❌ Missing synthesized netlists for $TEST_NAME"
     exit 1
@@ -310,6 +325,22 @@ chtype -map \$_ANDNOT_ $_ANDNOT_
 chtype -map \$_ORNOT_ $_ORNOT_
 chtype -map \$_MUX_ $_MUX_
 chtype -map \$_NMUX_ $_NMUX_
+chtype -map \$_DFF_P_ $_DFF_P_
+chtype -map \$_DFF_N_ $_DFF_N_
+chtype -map \$_DFF_PP0_ $_DFF_PP0_
+chtype -map \$_DFF_PP1_ $_DFF_PP1_
+chtype -map \$_DFF_PN0_ $_DFF_PN0_
+chtype -map \$_DFF_PN1_ $_DFF_PN1_
+chtype -map \$_DFF_NP0_ $_DFF_NP0_
+chtype -map \$_DFF_NP1_ $_DFF_NP1_
+chtype -map \$_DFF_NN0_ $_DFF_NN0_
+chtype -map \$_DFF_NN1_ $_DFF_NN1_
+chtype -map \$_DFFE_PP_ $_DFFE_PP_
+chtype -map \$_DFFE_PN_ $_DFFE_PN_
+chtype -map \$_DFFE_NP_ $_DFFE_NP_
+chtype -map \$_DFFE_NN_ $_DFFE_NN_
+FORMAL_DFFE_ASYNC_PLACEHOLDER
+FORMAL_PREP_PLACEHOLDER
 equiv_simple
 equiv_induct
 equiv_status -assert
@@ -318,6 +349,49 @@ EOF
 # Replace placeholders in the script
 sed -i "s|VERILOG_SYNTH_FILE|$VERILOG_SYNTH|g" "$EQUIV_SCRIPT"
 sed -i "s|UHDM_SYNTH_FILE|$UHDM_SYNTH|g" "$EQUIV_SCRIPT"
+
+# Formal-mode tests opt in via `formal: 1` in project.f.  Lower
+# async-reset FFs and strip verification cells before the SAT passes,
+# and add chtype maps for the async DFFE variants ($_DFFE_PP0P_,
+# $_DFFE_PP1P_, …) that synth retains under formal mode.  These DFFE
+# remappings break non-formal tests like subbytes (where the
+# public-typed cells are paired by structure in equiv_make), so they
+# only fire here under formal mode.
+if [ "$PROJECT_FORMAL" = "1" ]; then
+    python3 - <<PYEOF
+script = open('$EQUIV_SCRIPT').read()
+dffe_async = '\n'.join(
+    f'chtype -map \\\\\$_DFFE_{pol}{rst}{val}{en}_ \$_DFFE_{pol}{rst}{val}{en}_'
+    for pol in ('PP','PN','NP','NN')
+    for rst in ('',)
+    for val in ('',)
+    for en in ('',))
+dffe_async = '\n'.join(
+    f'chtype -map \\\\\$_DFFE_{pol}{rst}{val}{en}_ \$_DFFE_{pol}{rst}{val}{en}_'
+    for pol in ('PP','PN','NP','NN')
+    for rst in ('0','1')
+    for val in ('',)
+    for en in ('P','N'))
+# Build the proper list of async-reset DFFE variants:
+#   \$_DFFE_<clkpol><rstpol><rstval><enpol>_
+# pol_pairs: PP, PN, NP, NN (clk, reset polarity)
+# rstval:    0, 1
+# enpol:     P, N
+lines = []
+for pol in ('PP','PN','NP','NN'):
+    for rv in ('0','1'):
+        for ep in ('P','N'):
+            t = f'\$_DFFE_{pol}{rv}{ep}_'
+            lines.append(f'chtype -map \\\\{t} {t}')
+script = script.replace('FORMAL_DFFE_ASYNC_PLACEHOLDER', '\n'.join(lines))
+script = script.replace('FORMAL_PREP_PLACEHOLDER',
+    'async2sync\nchformal -lower\ndelete t:\$check\ndelete t:\$print\nopt_clean')
+open('$EQUIV_SCRIPT', 'w').write(script)
+PYEOF
+else
+    sed -i '/FORMAL_DFFE_ASYNC_PLACEHOLDER/d' "$EQUIV_SCRIPT"
+    sed -i '/FORMAL_PREP_PLACEHOLDER/d' "$EQUIV_SCRIPT"
+fi
 
 # Get path to yosys using the same approach as run_yosys_tests.sh
 YOSYS_BIN="$PROJECT_ROOT/out/current/bin/yosys"

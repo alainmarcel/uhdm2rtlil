@@ -17,6 +17,7 @@ module \scope_func
   wire width 16 \func_01$func$dut.sv:22$4.x
   attribute \src "dut.sv:22.13-22.30"
   wire width 16 $0\func_01$func$dut.sv:22$4.x[15:0]$7
+  attribute \src "dut.sv:6.23-6.28"
   cell $add $add$dut.sv:6$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -27,6 +28,7 @@ module \scope_func
     connect \B 16'0000000000000001
     connect \Y \y
   end
+  attribute \src "dut.sv:22.21-22.26"
   cell $add $add$dut.sv:22$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -19,6 +19,7 @@ module \simple_function
   wire \d
   wire \and_or_tree$func$dut.sv:22$1.$result
   wire $auto$rtlil.cc:3302:And$11
+  attribute \src "dut.sv:16.28-16.33"
   cell $and $and$dut.sv:16$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -29,6 +30,7 @@ module \simple_function
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$11
   end
+  attribute \src "dut.sv:16.27-16.38"
   cell $or $or$dut.sv:16$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

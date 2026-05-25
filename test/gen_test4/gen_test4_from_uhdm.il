@@ -10,6 +10,7 @@ module \gen_test4
   wire \foo[0].temp
   wire \foo[1].temp
   wire \foo[2].temp
+  attribute \src "dut.sv:14.18-14.39"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -20,6 +21,7 @@ module \gen_test4
     connect \B \a [1]
     connect \Y \foo[1].temp
   end
+  attribute \src "dut.sv:14.18-14.39"
   cell $and $and$dut.sv:14$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

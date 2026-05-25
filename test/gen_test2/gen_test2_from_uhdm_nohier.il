@@ -40,6 +40,7 @@ module \gen_test2
   wire $auto$rtlil.cc:3304:Xor$29
   wire $auto$rtlil.cc:3304:Xor$31
   wire $auto$rtlil.cc:3304:Xor$33
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -50,6 +51,7 @@ module \gen_test2
     connect \B \b [0]
     connect \Y $auto$rtlil.cc:3304:Xor$3
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -60,6 +62,7 @@ module \gen_test2
     connect \B \carry [0]
     connect \Y $auto$rtlil.cc:3304:Xor$5
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -70,6 +73,7 @@ module \gen_test2
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3304:Xor$7
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -80,6 +84,7 @@ module \gen_test2
     connect \B \carry [1]
     connect \Y $auto$rtlil.cc:3304:Xor$9
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -90,6 +95,7 @@ module \gen_test2
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3304:Xor$11
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -100,6 +106,7 @@ module \gen_test2
     connect \B \carry [2]
     connect \Y $auto$rtlil.cc:3304:Xor$13
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$14
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -110,6 +117,7 @@ module \gen_test2
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3304:Xor$15
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$16
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -120,6 +128,7 @@ module \gen_test2
     connect \B \carry [3]
     connect \Y $auto$rtlil.cc:3304:Xor$17
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -130,6 +139,7 @@ module \gen_test2
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3304:Xor$19
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$20
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -140,6 +150,7 @@ module \gen_test2
     connect \B \carry [4]
     connect \Y $auto$rtlil.cc:3304:Xor$21
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$22
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -150,6 +161,7 @@ module \gen_test2
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3304:Xor$23
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$24
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -160,6 +172,7 @@ module \gen_test2
     connect \B \carry [5]
     connect \Y $auto$rtlil.cc:3304:Xor$25
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$26
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -170,6 +183,7 @@ module \gen_test2
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3304:Xor$27
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$28
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -180,6 +194,7 @@ module \gen_test2
     connect \B \carry [6]
     connect \Y $auto$rtlil.cc:3304:Xor$29
   end
+  attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$30
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -190,6 +205,7 @@ module \gen_test2
     connect \B \b [7]
     connect \Y $auto$rtlil.cc:3304:Xor$31
   end
+  attribute \src "dut.sv:19.10-19.32"
   cell $xor $xor$dut.sv:19$32
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

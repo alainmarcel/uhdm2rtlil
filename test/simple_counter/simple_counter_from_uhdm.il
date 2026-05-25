@@ -24,6 +24,7 @@ module \simple_counter
     connect \ARST \rst_n
     connect \CLK \clk
   end
+  attribute \src "dut.sv:12.22-12.34"
   cell $add $add$dut.sv:12$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

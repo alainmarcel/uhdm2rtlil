@@ -20,6 +20,7 @@ module \const_fold_func_top
   wire width 4 \flip$func$dut.sv:42$87.$result
   wire width 4 \pow_flip_a$func$dut.sv:42$79.$result
   wire width 4 \flip$func$dut.sv:56$1.$result
+  attribute \src "dut.sv:8.10-8.14"
   cell $not $not$dut.sv:8$60
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -27,6 +28,7 @@ module \const_fold_func_top
     connect \A \inp
     connect \Y \flip$func$dut.sv:56$1.$result
   end
+  attribute \src "dut.sv:8.10-8.14"
   cell $not $not$dut.sv:8$77
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -34,6 +36,7 @@ module \const_fold_func_top
     connect \A \flip$func$dut.sv:56$1.$result
     connect \Y \out1
   end
+  attribute \src "dut.sv:42.18-42.56"
   cell $mul $mul$dut.sv:42$124
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -44,6 +47,7 @@ module \const_fold_func_top
     connect \B \flip$func$dut.sv:42$87.$result
     connect \Y \pow_flip_a$func$dut.sv:42$79.$result
   end
+  attribute \src "dut.sv:8.10-8.14"
   cell $not $not$dut.sv:8$94
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -51,6 +55,7 @@ module \const_fold_func_top
     connect \A \out1
     connect \Y \flip$func$dut.sv:42$87.$result
   end
+  attribute \src "dut.sv:42.18-42.56"
   cell $mul $mul$dut.sv:42$126
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

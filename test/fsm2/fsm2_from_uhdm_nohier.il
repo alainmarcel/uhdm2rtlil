@@ -42,16 +42,16 @@ module \fsm_test
   attribute \src "dut.sv:24.21-24.30"
   wire $logic_not$dut.sv:24.21-24.30$2_Y
   wire $auto$rtlil.cc:3322:LogicAnd$5
-  wire width 4 $auto$expression.cpp:2886:import_operation$6
+  wire width 4 $auto$expression.cpp:2897:import_operation$6
   attribute \src "dut.sv:31.21-31.29"
   wire $eq$dut.sv:31$8_Y
-  wire width 4 $auto$expression.cpp:2886:import_operation$10
+  wire width 4 $auto$expression.cpp:2897:import_operation$10
   attribute \src "dut.sv:38.21-38.30"
   wire $eq$dut.sv:38$12_Y
-  wire width 4 $auto$expression.cpp:2886:import_operation$14
+  wire width 4 $auto$expression.cpp:2897:import_operation$14
   attribute \src "dut.sv:45.21-45.29"
   wire $eq$dut.sv:45$16_Y
-  wire width 4 $auto$expression.cpp:2886:import_operation$18
+  wire width 4 $auto$expression.cpp:2897:import_operation$18
   attribute \src "dut.sv:52.21-52.30"
   wire $eq$dut.sv:52$20_Y
   attribute \src "dut.sv:22.33-22.42"
@@ -90,6 +90,7 @@ module \fsm_test
     connect \B \button_b
     connect \Y $auto$rtlil.cc:3322:LogicAnd$5
   end
+  attribute \src "dut.sv:30.24-30.31"
   cell $add $add$dut.sv:30$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -98,7 +99,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2886:import_operation$6
+    connect \Y $auto$expression.cpp:2897:import_operation$6
   end
   attribute \src "dut.sv:31.21-31.29"
   cell $eq $eq$dut.sv:31$9
@@ -111,6 +112,7 @@ module \fsm_test
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000101
     connect \Y $eq$dut.sv:31$8_Y
   end
+  attribute \src "dut.sv:37.24-37.31"
   cell $add $add$dut.sv:37$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -119,7 +121,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2886:import_operation$10
+    connect \Y $auto$expression.cpp:2897:import_operation$10
   end
   attribute \src "dut.sv:38.21-38.30"
   cell $eq $eq$dut.sv:38$13
@@ -132,6 +134,7 @@ module \fsm_test
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001010
     connect \Y $eq$dut.sv:38$12_Y
   end
+  attribute \src "dut.sv:44.24-44.31"
   cell $add $add$dut.sv:44$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -140,7 +143,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2886:import_operation$14
+    connect \Y $auto$expression.cpp:2897:import_operation$14
   end
   attribute \src "dut.sv:45.21-45.29"
   cell $eq $eq$dut.sv:45$17
@@ -153,6 +156,7 @@ module \fsm_test
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000101
     connect \Y $eq$dut.sv:45$16_Y
   end
+  attribute \src "dut.sv:51.24-51.31"
   cell $add $add$dut.sv:51$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -161,7 +165,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2886:import_operation$18
+    connect \Y $auto$expression.cpp:2897:import_operation$18
   end
   attribute \src "dut.sv:52.21-52.30"
   cell $eq $eq$dut.sv:52$21
@@ -214,7 +218,7 @@ module \fsm_test
           case 64'0000000000000000000000000000000000000000000000000000000011001000
             assign $0\red_a 1'0
             assign $0\green_a 1'1
-            assign $0\cnt $auto$expression.cpp:2886:import_operation$6
+            assign $0\cnt $auto$expression.cpp:2897:import_operation$6
             attribute \src "dut.sv:31.17-32.34"
             switch $eq$dut.sv:31$8_Y
             attribute \src "dut.sv:31.17-32.34"
@@ -227,7 +231,7 @@ module \fsm_test
           case 64'0000000000000000000000000000000000000000000000000000000011010010
             assign $0\red_a 1'0
             assign $0\green_a \cnt [0]
-            assign $0\cnt $auto$expression.cpp:2886:import_operation$10
+            assign $0\cnt $auto$expression.cpp:2897:import_operation$10
             attribute \src "dut.sv:38.17-39.34"
             switch $eq$dut.sv:38$12_Y
             attribute \src "dut.sv:38.17-39.34"
@@ -240,7 +244,7 @@ module \fsm_test
           case 64'0000000000000000000000000000000000000000000000000000000100101100
             assign $0\red_b 1'0
             assign $0\green_b 1'1
-            assign $0\cnt $auto$expression.cpp:2886:import_operation$14
+            assign $0\cnt $auto$expression.cpp:2897:import_operation$14
             attribute \src "dut.sv:45.17-46.34"
             switch $eq$dut.sv:45$16_Y
             attribute \src "dut.sv:45.17-46.34"
@@ -253,7 +257,7 @@ module \fsm_test
           case 64'0000000000000000000000000000000000000000000000000000000100110110
             assign $0\red_b 1'0
             assign $0\green_b \cnt [0]
-            assign $0\cnt $auto$expression.cpp:2886:import_operation$18
+            assign $0\cnt $auto$expression.cpp:2897:import_operation$18
             attribute \src "dut.sv:52.17-53.34"
             switch $eq$dut.sv:52$20_Y
             attribute \src "dut.sv:52.17-53.34"

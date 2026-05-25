@@ -79,6 +79,7 @@ module \logic_ops
     connect \A \B2
     connect \Y \B4
   end
+  attribute \src "dut.sv:10.18-10.31"
   cell $xor $xor$dut.sv:10$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -89,6 +90,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B5
   end
+  attribute \src "dut.sv:11.18-11.32"
   cell $xnor $xnor$dut.sv:11$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -99,6 +101,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y \B6
   end
+  attribute \src "dut.sv:12.18-12.24"
   cell $not $not$dut.sv:12$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1

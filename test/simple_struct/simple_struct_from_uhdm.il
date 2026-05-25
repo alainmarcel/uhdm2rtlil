@@ -7,6 +7,7 @@ module \submodule_16bit
   attribute \src "dut.sv:24.25-24.28"
   wire width 16 output 2 \out
   wire width 16 $auto$rtlil.cc:3302:And$2
+  attribute \src "dut.sv:27.18-27.31"
   cell $and $and$dut.sv:27$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -17,6 +18,7 @@ module \submodule_16bit
     connect \B \bus [31:16]
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:27.18-27.39"
   cell $and $and$dut.sv:27$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -35,6 +37,7 @@ module \submodule_8bit
   attribute \src "dut.sv:16.24-16.27"
   wire width 8 output 2 \out
   wire width 8 $auto$rtlil.cc:3302:And$6
+  attribute \src "dut.sv:19.18-19.31"
   cell $and $and$dut.sv:19$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -45,6 +48,7 @@ module \submodule_8bit
     connect \B \bus [15:8]
     connect \Y $auto$rtlil.cc:3302:And$6
   end
+  attribute \src "dut.sv:19.18-19.39"
   cell $and $and$dut.sv:19$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

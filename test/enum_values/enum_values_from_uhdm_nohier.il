@@ -57,6 +57,7 @@ module \top
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \Y $eq$dut.sv:35$3_Y
   end
+  attribute \src "dut.sv:35.16-35.49"
   cell $xor $xor$dut.sv:35$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

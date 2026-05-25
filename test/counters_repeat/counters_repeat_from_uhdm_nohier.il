@@ -15,7 +15,7 @@ module \counter1
   wire $auto$rtlil.cc:3258:ReduceAnd$2
   attribute \src "dut.sv:8.2-13.5"
   wire width 32 $0\count[31:0]
-  wire width 32 $auto$expression.cpp:2886:import_operation$4
+  wire width 32 $auto$expression.cpp:2897:import_operation$4
   cell $reduce_and $reduce_and$dut.sv:15$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
@@ -23,6 +23,7 @@ module \counter1
     connect \A \count
     connect \Y $auto$rtlil.cc:3258:ReduceAnd$2
   end
+  attribute \src "dut.sv:12.13-12.22"
   cell $add $add$dut.sv:12$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -31,7 +32,7 @@ module \counter1
     parameter \Y_WIDTH 32
     connect \A \count
     connect \B 1
-    connect \Y $auto$expression.cpp:2886:import_operation$4
+    connect \Y $auto$expression.cpp:2897:import_operation$4
   end
   attribute \src "dut.sv:8.2-13.5"
   attribute \always_ff 1
@@ -44,7 +45,7 @@ module \counter1
         assign $0\count[31:0] 0
     attribute \src "dut.sv:12.4-12.22"
       case 
-        assign $0\count[31:0] $auto$expression.cpp:2886:import_operation$4
+        assign $0\count[31:0] $auto$expression.cpp:2897:import_operation$4
     end
     sync posedge \clk
       update \count $0\count[31:0]
@@ -244,6 +245,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$1_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -254,6 +256,7 @@ module \counter2
     connect \B 1'1
     connect \Y $auto$rtlil.cc:3304:Xor$10
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -264,6 +267,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$10
     connect \Y $auto$rtlil.cc:3302:And$12
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -282,6 +286,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$2_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -292,6 +297,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$14
     connect \Y $auto$rtlil.cc:3304:Xor$16
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -302,6 +308,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$16
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -320,6 +327,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$3_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -330,6 +338,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$20
     connect \Y $auto$rtlil.cc:3304:Xor$22
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -340,6 +349,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$22
     connect \Y $auto$rtlil.cc:3302:And$24
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -358,6 +368,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$4_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -368,6 +379,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$26
     connect \Y $auto$rtlil.cc:3304:Xor$28
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -378,6 +390,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$28
     connect \Y $auto$rtlil.cc:3302:And$30
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -396,6 +409,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$5_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$33
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -406,6 +420,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$32
     connect \Y $auto$rtlil.cc:3304:Xor$34
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$35
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -416,6 +431,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$34
     connect \Y $auto$rtlil.cc:3302:And$36
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -434,6 +450,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$6_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -444,6 +461,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$38
     connect \Y $auto$rtlil.cc:3304:Xor$40
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$41
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -454,6 +472,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$40
     connect \Y $auto$rtlil.cc:3302:And$42
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$43
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -472,6 +491,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$7_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$45
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -482,6 +502,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$44
     connect \Y $auto$rtlil.cc:3304:Xor$46
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -492,6 +513,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$46
     connect \Y $auto$rtlil.cc:3302:And$48
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -510,6 +532,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$8_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$51
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -520,6 +543,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$50
     connect \Y $auto$rtlil.cc:3304:Xor$52
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$53
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -530,6 +554,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$52
     connect \Y $auto$rtlil.cc:3302:And$54
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$55
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -548,6 +573,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$9_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$57
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -558,6 +584,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$56
     connect \Y $auto$rtlil.cc:3304:Xor$58
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$59
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -568,6 +595,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$58
     connect \Y $auto$rtlil.cc:3302:And$60
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$61
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -586,6 +614,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$10_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$63
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -596,6 +625,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$62
     connect \Y $auto$rtlil.cc:3304:Xor$64
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$65
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -606,6 +636,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$64
     connect \Y $auto$rtlil.cc:3302:And$66
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$67
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -624,6 +655,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$11_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$69
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -634,6 +666,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$68
     connect \Y $auto$rtlil.cc:3304:Xor$70
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$71
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -644,6 +677,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$70
     connect \Y $auto$rtlil.cc:3302:And$72
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$73
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -662,6 +696,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$12_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$75
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -672,6 +707,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$74
     connect \Y $auto$rtlil.cc:3304:Xor$76
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$77
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -682,6 +718,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$76
     connect \Y $auto$rtlil.cc:3302:And$78
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$79
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -700,6 +737,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$13_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$81
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -710,6 +748,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$80
     connect \Y $auto$rtlil.cc:3304:Xor$82
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$83
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -720,6 +759,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$82
     connect \Y $auto$rtlil.cc:3302:And$84
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$85
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -738,6 +778,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$14_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$87
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -748,6 +789,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$86
     connect \Y $auto$rtlil.cc:3304:Xor$88
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$89
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -758,6 +800,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$88
     connect \Y $auto$rtlil.cc:3302:And$90
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$91
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -776,6 +819,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$15_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$93
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -786,6 +830,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$92
     connect \Y $auto$rtlil.cc:3304:Xor$94
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$95
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -796,6 +841,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$94
     connect \Y $auto$rtlil.cc:3302:And$96
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$97
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -814,6 +860,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$16_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$99
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -824,6 +871,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$98
     connect \Y $auto$rtlil.cc:3304:Xor$100
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$101
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -834,6 +882,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$100
     connect \Y $auto$rtlil.cc:3302:And$102
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$103
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -852,6 +901,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$17_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$105
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -862,6 +912,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$104
     connect \Y $auto$rtlil.cc:3304:Xor$106
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$107
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -872,6 +923,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$106
     connect \Y $auto$rtlil.cc:3302:And$108
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$109
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -890,6 +942,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$18_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$111
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -900,6 +953,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$110
     connect \Y $auto$rtlil.cc:3304:Xor$112
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$113
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -910,6 +964,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$112
     connect \Y $auto$rtlil.cc:3302:And$114
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$115
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -928,6 +983,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$19_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$117
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -938,6 +994,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$116
     connect \Y $auto$rtlil.cc:3304:Xor$118
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$119
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -948,6 +1005,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$118
     connect \Y $auto$rtlil.cc:3302:And$120
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$121
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -966,6 +1024,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$20_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$123
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -976,6 +1035,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$122
     connect \Y $auto$rtlil.cc:3304:Xor$124
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$125
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -986,6 +1046,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$124
     connect \Y $auto$rtlil.cc:3302:And$126
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$127
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1004,6 +1065,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$21_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$129
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1014,6 +1076,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$128
     connect \Y $auto$rtlil.cc:3304:Xor$130
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$131
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1024,6 +1087,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$130
     connect \Y $auto$rtlil.cc:3302:And$132
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$133
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1042,6 +1106,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$22_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$135
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1052,6 +1117,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$134
     connect \Y $auto$rtlil.cc:3304:Xor$136
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$137
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1062,6 +1128,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$136
     connect \Y $auto$rtlil.cc:3302:And$138
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$139
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1080,6 +1147,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$23_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$141
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1090,6 +1158,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$140
     connect \Y $auto$rtlil.cc:3304:Xor$142
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$143
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1100,6 +1169,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$142
     connect \Y $auto$rtlil.cc:3302:And$144
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$145
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1118,6 +1188,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$24_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$147
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1128,6 +1199,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$146
     connect \Y $auto$rtlil.cc:3304:Xor$148
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$149
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1138,6 +1210,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$148
     connect \Y $auto$rtlil.cc:3302:And$150
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$151
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1156,6 +1229,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$25_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$153
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1166,6 +1240,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$152
     connect \Y $auto$rtlil.cc:3304:Xor$154
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$155
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1176,6 +1251,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$154
     connect \Y $auto$rtlil.cc:3302:And$156
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$157
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1194,6 +1270,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$26_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$159
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1204,6 +1281,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$158
     connect \Y $auto$rtlil.cc:3304:Xor$160
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$161
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1214,6 +1292,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$160
     connect \Y $auto$rtlil.cc:3302:And$162
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$163
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1232,6 +1311,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$27_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$165
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1242,6 +1322,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$164
     connect \Y $auto$rtlil.cc:3304:Xor$166
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$167
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1252,6 +1333,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$166
     connect \Y $auto$rtlil.cc:3302:And$168
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$169
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1270,6 +1352,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$28_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$171
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1280,6 +1363,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$170
     connect \Y $auto$rtlil.cc:3304:Xor$172
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$173
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1290,6 +1374,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$172
     connect \Y $auto$rtlil.cc:3302:And$174
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$175
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1308,6 +1393,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$29_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$177
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1318,6 +1404,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$176
     connect \Y $auto$rtlil.cc:3304:Xor$178
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$179
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1328,6 +1415,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$178
     connect \Y $auto$rtlil.cc:3302:And$180
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$181
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1346,6 +1434,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$30_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$183
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1356,6 +1445,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$182
     connect \Y $auto$rtlil.cc:3304:Xor$184
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$185
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1366,6 +1456,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$184
     connect \Y $auto$rtlil.cc:3302:And$186
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$187
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1384,6 +1475,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$31_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$189
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1394,6 +1486,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$188
     connect \Y $auto$rtlil.cc:3304:Xor$190
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$191
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1404,6 +1497,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$190
     connect \Y $auto$rtlil.cc:3302:And$192
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$193
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1422,6 +1516,7 @@ module \counter2
     connect \A \rst
     connect \Y $logic_not$dut.sv:30.16-30.20$32_Y
   end
+  attribute \src "dut.sv:30.24-30.40"
   cell $xor $xor$dut.sv:30$195
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1432,6 +1527,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3302:And$194
     connect \Y $auto$rtlil.cc:3304:Xor$196
   end
+  attribute \src "dut.sv:30.16-30.41"
   cell $and $and$dut.sv:30$197
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1442,6 +1538,7 @@ module \counter2
     connect \B $auto$rtlil.cc:3304:Xor$196
     connect \Y $auto$rtlil.cc:3302:And$198
   end
+  attribute \src "dut.sv:31.12-31.28"
   cell $and $and$dut.sv:31$199
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

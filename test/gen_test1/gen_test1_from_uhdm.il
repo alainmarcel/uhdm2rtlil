@@ -93,6 +93,7 @@ module \gen_test1
   wire \gen3[4].gen4[2].tmpbuf
   wire \gen3[4].gen4[3].tmpbuf
   wire \gen3[4].gen4[4].tmpbuf
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -103,6 +104,7 @@ module \gen_test1
     connect \B \b [0]
     connect \Y \gen1[0].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -113,6 +115,7 @@ module \gen_test1
     connect \B \b [0]
     connect \Y \gen1[0].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -123,6 +126,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y \gen1[1].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -133,6 +137,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y \gen1[1].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -143,6 +148,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y \gen1[2].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -153,6 +159,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y \gen1[2].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -163,6 +170,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y \gen1[3].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -173,6 +181,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y \gen1[3].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -183,6 +192,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y \gen1[4].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -193,6 +203,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y \gen1[4].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -203,6 +214,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y \gen1[5].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -213,6 +225,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y \gen1[5].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -223,6 +236,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y \gen1[6].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -233,6 +247,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y \gen1[6].or_wire
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -243,6 +258,7 @@ module \gen_test1
     connect \B \b [7]
     connect \Y \gen1[7].and_wire
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

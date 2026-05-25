@@ -27,6 +27,7 @@ module \simple_generate
   attribute \src "dut.sv:12.9-13.25"
   wire $0\y[3:3]
   wire $auto$rtlil.cc:3302:And$12
+  attribute \src "dut.sv:11.22-11.33"
   cell $and $and$dut.sv:11$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -37,6 +38,7 @@ module \simple_generate
     connect \B \b [0]
     connect \Y $auto$rtlil.cc:3302:And$3
   end
+  attribute \src "dut.sv:11.22-11.33"
   cell $and $and$dut.sv:11$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -47,6 +49,7 @@ module \simple_generate
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3302:And$6
   end
+  attribute \src "dut.sv:11.22-11.33"
   cell $and $and$dut.sv:11$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -57,6 +60,7 @@ module \simple_generate
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3302:And$9
   end
+  attribute \src "dut.sv:11.22-11.33"
   cell $and $and$dut.sv:11$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

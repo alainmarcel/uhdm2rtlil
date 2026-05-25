@@ -52,6 +52,7 @@ module \ha_itf
   wire output 2 \cout
   attribute \src "ha_mod.sv:4.55-4.56"
   wire input 3 \a
+  attribute \src "intfce.sv:5.17-5.22"
   cell $xor $xor$intfce.sv:5$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -62,6 +63,7 @@ module \ha_itf
     connect \B \b
     connect \Y \ha_intf.sum
   end
+  attribute \src "intfce.sv:6.17-6.22"
   cell $and $and$intfce.sv:6$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

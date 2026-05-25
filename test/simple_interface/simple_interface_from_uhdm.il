@@ -15,6 +15,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
   wire width 16 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 16 output 1 \out
+  attribute \src "dut.sv:27.18-27.31"
   cell $and $and$dut.sv:27$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -25,6 +26,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000010000
     connect \B \bus.b
     connect \Y $auto$rtlil.cc:3302:And$10
   end
+  attribute \src "dut.sv:27.18-27.39"
   cell $and $and$dut.sv:27$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -124,6 +126,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \bus.c
   attribute \src "dut.sv:24.30-24.33"
   wire width 8 output 1 \out
+  attribute \src "dut.sv:27.18-27.31"
   cell $and $and$dut.sv:27$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -134,6 +137,7 @@ module $paramod\submodule\WIDTH=s32'00000000000000000000000000001000
     connect \B \bus.b
     connect \Y $auto$rtlil.cc:3302:And$6
   end
+  attribute \src "dut.sv:27.18-27.39"
   cell $and $and$dut.sv:27$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

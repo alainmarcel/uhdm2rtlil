@@ -50,10 +50,10 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   wire _20_;
   wire _21_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:48.13-48.24|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [7:0] _22_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:48.13-48.24|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [7:0] _23_;
   (* init = 1'h0 *)
   (* \reg  = 32'd1 *)

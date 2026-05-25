@@ -2701,7 +2701,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 bool is_signed = true;  // Default to signed for unary minus
                 
                 std::string cell_name = generate_cell_name(uhdm_op, "neg");
-                module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
+                auto c = module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -2768,6 +2769,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "and");
                     RTLIL::SigSpec result = module->And(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (auto c = module->cell(RTLIL::escape_id(cell_name)))
+                        add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);
                     return result;
                 }
@@ -2778,6 +2781,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "or");
                     RTLIL::SigSpec result = module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (auto c = module->cell(RTLIL::escape_id(cell_name)))
+                        add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);
                     return result;
                 }
@@ -2788,6 +2793,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "xor");
                     RTLIL::SigSpec result = module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (auto c = module->cell(RTLIL::escape_id(cell_name)))
+                        add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);
                     return result;
                 }
@@ -2798,6 +2805,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "not");
                     RTLIL::SigSpec result = module->Not(RTLIL::escape_id(cell_name), operands[0], is_signed);
+                    if (auto c = module->cell(RTLIL::escape_id(cell_name)))
+                        add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);
                     return result;
                 }
@@ -2808,6 +2817,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     bool is_signed = check_operands_signed(operands);
                     std::string cell_name = generate_cell_name(uhdm_op, "xnor");
                     RTLIL::SigSpec result = module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
+                    if (auto c = module->cell(RTLIL::escape_id(cell_name)))
+                        add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);
                     return result;
                 }
@@ -2926,7 +2937,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 RTLIL::SigSpec b = resize_operand(operands[1]);
 
                 std::string cell_name = generate_cell_name(uhdm_op, "add");
-                module->addAdd(RTLIL::escape_id(cell_name), a, b, result, is_signed);
+                auto c = module->addAdd(RTLIL::escape_id(cell_name), a, b, result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -2971,7 +2983,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 RTLIL::SigSpec b = resize_operand(operands[1]);
 
                 std::string cell_name = generate_cell_name(uhdm_op, "sub");
-                module->addSub(RTLIL::escape_id(cell_name), a, b, result, is_signed);
+                auto c = module->addSub(RTLIL::escape_id(cell_name), a, b, result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -2994,7 +3007,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 std::string cell_name = generate_cell_name(uhdm_op, "div");
-                module->addDiv(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                auto c = module->addDiv(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -3033,7 +3047,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 
                 std::string cell_name = generate_cell_name(uhdm_op, "mul");
-                module->addMul(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                auto c = module->addMul(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -3055,7 +3070,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 
                 // Use Pow cell for power operation
                 std::string cell_name = generate_cell_name(uhdm_op, "pow");
-                module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                auto c = module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -3078,7 +3094,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 
                 // Use Shl cell for left shift operation
                 std::string cell_name = generate_cell_name(uhdm_op, "shl");
-                module->addShl(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                auto c = module->addShl(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
             break;
@@ -3101,10 +3118,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Use Shr cell for right shift operation (or Sshr for signed)
                 if (is_signed) {
                     std::string cell_name = generate_cell_name(uhdm_op, "sshr");
-                    module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                    auto c = module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                    add_src_attribute(c->attributes, uhdm_op);
                 } else {
                     std::string cell_name = generate_cell_name(uhdm_op, "shr");
-                    module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, false);
+                    auto c = module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, false);
+                    add_src_attribute(c->attributes, uhdm_op);
                 }
                 return result;
             }

@@ -53,6 +53,7 @@ module \function_bool
     connect \B 2'01
     connect \Y $eq$dut.sv:18$15_Y
   end
+  attribute \src "dut.sv:19.29-19.34"
   cell $or $or$dut.sv:19$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -74,6 +75,7 @@ module \function_bool
     connect \B 2'10
     connect \Y $eq$dut.sv:20$20_Y
   end
+  attribute \src "dut.sv:21.29-21.34"
   cell $xor $xor$dut.sv:21$22
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -84,6 +86,7 @@ module \function_bool
     connect \B \b
     connect \Y $auto$rtlil.cc:3304:Xor$23
   end
+  attribute \src "dut.sv:23.31-23.36"
   cell $and $and$dut.sv:23$24
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -94,6 +97,7 @@ module \function_bool
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$13
   end
+  attribute \src "dut.sv:23.29-23.37"
   cell $not $not$dut.sv:23$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8

@@ -120,6 +120,7 @@ module \act
     connect \a $auto$rtlil.cc:3304:Xor$11
     connect \b \o5
   end
+  attribute \src "dut.v:49.18-49.31"
   cell $xor $xor$dut.v:49$10
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -152,6 +153,7 @@ module \act
     connect \a $auto$rtlil.cc:3255:Not$17
     connect \b \o7
   end
+  attribute \src "dut.v:56.18-56.23"
   cell $not $not$dut.v:56$16
     parameter \A_SIGNED 1
     parameter \A_WIDTH 3

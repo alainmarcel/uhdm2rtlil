@@ -15,6 +15,7 @@ module \gate
   attribute \nosync 1
   attribute \src "dut.sv:25.18-25.35"
   wire width 32 \fib_wrap$func$dut.sv:25$3.o
+  attribute \src "dut.sv:16.13-16.25"
   cell $add $add$dut.sv:16$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

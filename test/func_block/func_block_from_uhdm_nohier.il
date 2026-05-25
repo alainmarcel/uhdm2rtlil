@@ -120,6 +120,7 @@ module \func_block_top
   attribute \nosync 1
   attribute \src "dut.sv:32.16-32.26"
   wire width 32 \func3$func$dut.sv:32$144.$result
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -130,6 +131,7 @@ module \func_block_top
     connect \B \inp [0]
     connect \Y $auto$rtlil.cc:3304:Xor$9
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -140,6 +142,7 @@ module \func_block_top
     connect \B \inp [1]
     connect \Y $auto$rtlil.cc:3304:Xor$11
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -150,6 +153,7 @@ module \func_block_top
     connect \B \inp [2]
     connect \Y $auto$rtlil.cc:3304:Xor$13
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$14
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -160,6 +164,7 @@ module \func_block_top
     connect \B \inp [3]
     connect \Y $auto$rtlil.cc:3304:Xor$15
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$16
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -170,6 +175,7 @@ module \func_block_top
     connect \B \inp [4]
     connect \Y $auto$rtlil.cc:3304:Xor$17
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -180,6 +186,7 @@ module \func_block_top
     connect \B \inp [5]
     connect \Y $auto$rtlil.cc:3304:Xor$19
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$20
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -190,6 +197,7 @@ module \func_block_top
     connect \B \inp [6]
     connect \Y $auto$rtlil.cc:3304:Xor$21
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$22
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -200,6 +208,7 @@ module \func_block_top
     connect \B \inp [7]
     connect \Y $auto$rtlil.cc:3304:Xor$23
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$24
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -210,6 +219,7 @@ module \func_block_top
     connect \B \inp [8]
     connect \Y $auto$rtlil.cc:3304:Xor$25
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$26
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -220,6 +230,7 @@ module \func_block_top
     connect \B \inp [9]
     connect \Y $auto$rtlil.cc:3304:Xor$27
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$28
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -230,6 +241,7 @@ module \func_block_top
     connect \B \inp [10]
     connect \Y $auto$rtlil.cc:3304:Xor$29
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$30
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -240,6 +252,7 @@ module \func_block_top
     connect \B \inp [11]
     connect \Y $auto$rtlil.cc:3304:Xor$31
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$32
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -250,6 +263,7 @@ module \func_block_top
     connect \B \inp [12]
     connect \Y $auto$rtlil.cc:3304:Xor$33
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$34
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -260,6 +274,7 @@ module \func_block_top
     connect \B \inp [13]
     connect \Y $auto$rtlil.cc:3304:Xor$35
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$36
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -270,6 +285,7 @@ module \func_block_top
     connect \B \inp [14]
     connect \Y $auto$rtlil.cc:3304:Xor$37
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$38
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -280,6 +296,7 @@ module \func_block_top
     connect \B \inp [15]
     connect \Y $auto$rtlil.cc:3304:Xor$39
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$40
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -290,6 +307,7 @@ module \func_block_top
     connect \B \inp [16]
     connect \Y $auto$rtlil.cc:3304:Xor$41
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$42
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -300,6 +318,7 @@ module \func_block_top
     connect \B \inp [17]
     connect \Y $auto$rtlil.cc:3304:Xor$43
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$44
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -310,6 +329,7 @@ module \func_block_top
     connect \B \inp [18]
     connect \Y $auto$rtlil.cc:3304:Xor$45
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$46
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -320,6 +340,7 @@ module \func_block_top
     connect \B \inp [19]
     connect \Y $auto$rtlil.cc:3304:Xor$47
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$48
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -330,6 +351,7 @@ module \func_block_top
     connect \B \inp [20]
     connect \Y $auto$rtlil.cc:3304:Xor$49
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$50
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -340,6 +362,7 @@ module \func_block_top
     connect \B \inp [21]
     connect \Y $auto$rtlil.cc:3304:Xor$51
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$52
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -350,6 +373,7 @@ module \func_block_top
     connect \B \inp [22]
     connect \Y $auto$rtlil.cc:3304:Xor$53
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$54
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -360,6 +384,7 @@ module \func_block_top
     connect \B \inp [23]
     connect \Y $auto$rtlil.cc:3304:Xor$55
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$56
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -370,6 +395,7 @@ module \func_block_top
     connect \B \inp [24]
     connect \Y $auto$rtlil.cc:3304:Xor$57
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$58
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -380,6 +406,7 @@ module \func_block_top
     connect \B \inp [25]
     connect \Y $auto$rtlil.cc:3304:Xor$59
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$60
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -390,6 +417,7 @@ module \func_block_top
     connect \B \inp [26]
     connect \Y $auto$rtlil.cc:3304:Xor$61
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$62
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -400,6 +428,7 @@ module \func_block_top
     connect \B \inp [27]
     connect \Y $auto$rtlil.cc:3304:Xor$63
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$64
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -410,6 +439,7 @@ module \func_block_top
     connect \B \inp [28]
     connect \Y $auto$rtlil.cc:3304:Xor$65
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$66
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -420,6 +450,7 @@ module \func_block_top
     connect \B \inp [29]
     connect \Y $auto$rtlil.cc:3304:Xor$67
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$68
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -430,6 +461,7 @@ module \func_block_top
     connect \B \inp [30]
     connect \Y $auto$rtlil.cc:3304:Xor$69
   end
+  attribute \src "dut.sv:10.17-10.40"
   cell $xor $xor$dut.sv:10$70
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -440,6 +472,7 @@ module \func_block_top
     connect \B \inp [31]
     connect \Y $auto$rtlil.cc:3304:Xor$71
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$79
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -450,6 +483,7 @@ module \func_block_top
     connect \B \inp [0]
     connect \Y $auto$rtlil.cc:3304:Xor$80
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$81
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -460,6 +494,7 @@ module \func_block_top
     connect \B \inp [1]
     connect \Y $auto$rtlil.cc:3304:Xor$82
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$83
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -470,6 +505,7 @@ module \func_block_top
     connect \B \inp [2]
     connect \Y $auto$rtlil.cc:3304:Xor$84
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$85
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -480,6 +516,7 @@ module \func_block_top
     connect \B \inp [3]
     connect \Y $auto$rtlil.cc:3304:Xor$86
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$87
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -490,6 +527,7 @@ module \func_block_top
     connect \B \inp [4]
     connect \Y $auto$rtlil.cc:3304:Xor$88
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$89
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -500,6 +538,7 @@ module \func_block_top
     connect \B \inp [5]
     connect \Y $auto$rtlil.cc:3304:Xor$90
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$91
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -510,6 +549,7 @@ module \func_block_top
     connect \B \inp [6]
     connect \Y $auto$rtlil.cc:3304:Xor$92
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$93
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -520,6 +560,7 @@ module \func_block_top
     connect \B \inp [7]
     connect \Y $auto$rtlil.cc:3304:Xor$94
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$95
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -530,6 +571,7 @@ module \func_block_top
     connect \B \inp [8]
     connect \Y $auto$rtlil.cc:3304:Xor$96
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$97
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -540,6 +582,7 @@ module \func_block_top
     connect \B \inp [9]
     connect \Y $auto$rtlil.cc:3304:Xor$98
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$99
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -550,6 +593,7 @@ module \func_block_top
     connect \B \inp [10]
     connect \Y $auto$rtlil.cc:3304:Xor$100
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$101
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -560,6 +604,7 @@ module \func_block_top
     connect \B \inp [11]
     connect \Y $auto$rtlil.cc:3304:Xor$102
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$103
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -570,6 +615,7 @@ module \func_block_top
     connect \B \inp [12]
     connect \Y $auto$rtlil.cc:3304:Xor$104
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$105
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -580,6 +626,7 @@ module \func_block_top
     connect \B \inp [13]
     connect \Y $auto$rtlil.cc:3304:Xor$106
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$107
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -590,6 +637,7 @@ module \func_block_top
     connect \B \inp [14]
     connect \Y $auto$rtlil.cc:3304:Xor$108
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$109
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -600,6 +648,7 @@ module \func_block_top
     connect \B \inp [15]
     connect \Y $auto$rtlil.cc:3304:Xor$110
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$111
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -610,6 +659,7 @@ module \func_block_top
     connect \B \inp [16]
     connect \Y $auto$rtlil.cc:3304:Xor$112
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$113
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -620,6 +670,7 @@ module \func_block_top
     connect \B \inp [17]
     connect \Y $auto$rtlil.cc:3304:Xor$114
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$115
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -630,6 +681,7 @@ module \func_block_top
     connect \B \inp [18]
     connect \Y $auto$rtlil.cc:3304:Xor$116
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$117
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -640,6 +692,7 @@ module \func_block_top
     connect \B \inp [19]
     connect \Y $auto$rtlil.cc:3304:Xor$118
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$119
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -650,6 +703,7 @@ module \func_block_top
     connect \B \inp [20]
     connect \Y $auto$rtlil.cc:3304:Xor$120
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$121
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -660,6 +714,7 @@ module \func_block_top
     connect \B \inp [21]
     connect \Y $auto$rtlil.cc:3304:Xor$122
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$123
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -670,6 +725,7 @@ module \func_block_top
     connect \B \inp [22]
     connect \Y $auto$rtlil.cc:3304:Xor$124
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$125
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -680,6 +736,7 @@ module \func_block_top
     connect \B \inp [23]
     connect \Y $auto$rtlil.cc:3304:Xor$126
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$127
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -690,6 +747,7 @@ module \func_block_top
     connect \B \inp [24]
     connect \Y $auto$rtlil.cc:3304:Xor$128
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$129
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -700,6 +758,7 @@ module \func_block_top
     connect \B \inp [25]
     connect \Y $auto$rtlil.cc:3304:Xor$130
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$131
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -710,6 +769,7 @@ module \func_block_top
     connect \B \inp [26]
     connect \Y $auto$rtlil.cc:3304:Xor$132
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$133
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -720,6 +780,7 @@ module \func_block_top
     connect \B \inp [27]
     connect \Y $auto$rtlil.cc:3304:Xor$134
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$135
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -730,6 +791,7 @@ module \func_block_top
     connect \B \inp [28]
     connect \Y $auto$rtlil.cc:3304:Xor$136
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$137
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -740,6 +802,7 @@ module \func_block_top
     connect \B \inp [29]
     connect \Y $auto$rtlil.cc:3304:Xor$138
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$139
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -750,6 +813,7 @@ module \func_block_top
     connect \B \inp [30]
     connect \Y $auto$rtlil.cc:3304:Xor$140
   end
+  attribute \src "dut.sv:18.17-18.40"
   cell $xor $xor$dut.sv:18$141
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

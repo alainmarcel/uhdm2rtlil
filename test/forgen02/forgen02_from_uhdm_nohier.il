@@ -86,6 +86,7 @@ module \uut_forgen02
     connect \A \adder[0].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$6
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -96,6 +97,7 @@ module \uut_forgen02
     connect \B \adder[0].D [2]
     connect \Y $auto$rtlil.cc:3302:And$8
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -127,6 +129,7 @@ module \uut_forgen02
     connect \A \adder[1].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$16
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -137,6 +140,7 @@ module \uut_forgen02
     connect \B \adder[1].D [2]
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -168,6 +172,7 @@ module \uut_forgen02
     connect \A \adder[2].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$26
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -178,6 +183,7 @@ module \uut_forgen02
     connect \B \adder[2].D [2]
     connect \Y $auto$rtlil.cc:3302:And$28
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -209,6 +215,7 @@ module \uut_forgen02
     connect \A \adder[3].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$36
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -219,6 +226,7 @@ module \uut_forgen02
     connect \B \adder[3].D [2]
     connect \Y $auto$rtlil.cc:3302:And$38
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -250,6 +258,7 @@ module \uut_forgen02
     connect \A \adder[4].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$46
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -260,6 +269,7 @@ module \uut_forgen02
     connect \B \adder[4].D [2]
     connect \Y $auto$rtlil.cc:3302:And$48
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -291,6 +301,7 @@ module \uut_forgen02
     connect \A \adder[5].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$56
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$57
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -301,6 +312,7 @@ module \uut_forgen02
     connect \B \adder[5].D [2]
     connect \Y $auto$rtlil.cc:3302:And$58
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$59
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -332,6 +344,7 @@ module \uut_forgen02
     connect \A \adder[6].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$66
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$67
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -342,6 +355,7 @@ module \uut_forgen02
     connect \B \adder[6].D [2]
     connect \Y $auto$rtlil.cc:3302:And$68
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$69
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -373,6 +387,7 @@ module \uut_forgen02
     connect \A \adder[7].D [1:0]
     connect \Y $auto$rtlil.cc:3260:ReduceXor$76
   end
+  attribute \src "dut.sv:24.32-24.46"
   cell $and $and$dut.sv:24$77
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -383,6 +398,7 @@ module \uut_forgen02
     connect \B \adder[7].D [2]
     connect \Y $auto$rtlil.cc:3302:And$78
   end
+  attribute \src "dut.sv:24.21-24.47"
   cell $or $or$dut.sv:24$79
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -8,7 +8,7 @@
  module top(CLK, LED);
  (* src = "dut.sv:3.9-3.12" *)
  input CLK;
-@@ -55,23 +55,25 @@
+@@ -55,7 +55,7 @@
  wire _044_;
  wire _045_;
  (* force_downto = 32'd1 *)
@@ -17,16 +17,8 @@
  (* unused_bits = "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17" *)
  wire [18:0] _046_;
  (* force_downto = 32'd1 *)
--(* src = "dut.sv:18.19-18.35|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
- wire [5:0] _047_;
- (* force_downto = 32'd1 *)
--(* src = "dut.sv:14.21-14.39|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
- wire [23:0] _048_;
- (* force_downto = 32'd1 *)
--(* src = "dut.sv:14.21-14.39|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+@@ -68,10 +68,12 @@
+ (* src = "dut.sv:14.21-14.39|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
  wire [23:0] _049_;
  (* init = 6'h00 *)
 -(* src = "dut.sv:8.11-8.21" *)

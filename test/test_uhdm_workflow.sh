@@ -105,10 +105,17 @@ echo
 
 # Step 2: Create Yosys script to read UHDM file
 echo "3. Creating Yosys script to read UHDM..."
+UHDM_READ_FLAG=""
+VERILOG_READ_FLAG_FORMAL=""
+if [ "$PROJECT_FORMAL" = "1" ]; then
+    UHDM_READ_FLAG="-formal"
+    VERILOG_READ_FLAG_FORMAL="-formal"
+fi
+
 cat > test_uhdm_read.ys << EOF
 # Test script to read UHDM file in Yosys
 plugin -i ../../build/uhdm2rtlil.so
-read_uhdm slpp_all/surelog.uhdm
+read_uhdm $UHDM_READ_FLAG slpp_all/surelog.uhdm
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_uhdm_nohier.il
 hierarchy -check -auto-top
@@ -129,7 +136,7 @@ echo
 echo "4. Creating Yosys script to read Verilog..."
 cat > test_verilog_read.ys << EOF
 # Test script to read Verilog file directly in Yosys
-read_verilog $YOSYS_READ_FLAG $PROJECT_SRCS
+read_verilog $YOSYS_READ_FLAG $VERILOG_READ_FLAG_FORMAL $PROJECT_SRCS
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil ${MODULE_NAME}_from_verilog_nohier.il
 hierarchy -check -auto-top

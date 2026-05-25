@@ -13,6 +13,7 @@ module \mul_unsigned_sync_simple
   wire width 9 output 4 \p
   attribute \src "dut.sv:7.5-10.8"
   wire width 9 $0\p
+  attribute \src "dut.sv:9.14-9.19"
   cell $mul $mul$dut.sv:9$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

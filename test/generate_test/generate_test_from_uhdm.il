@@ -11,6 +11,7 @@ module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
+  attribute \src "dut.sv:11.18-11.23"
   cell $add $add$dut.sv:11$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -33,6 +34,7 @@ module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
+  attribute \src "dut.sv:22.19-22.24"
   cell $sub $sub$dut.sv:22$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

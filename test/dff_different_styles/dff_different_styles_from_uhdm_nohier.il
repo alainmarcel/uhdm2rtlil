@@ -113,6 +113,7 @@ module \dffa1
   attribute \src "dut.sv:23.1-28.4"
   wire $0\q
   wire $auto$rtlil.cc:3255:Not$6
+  attribute \src "dut.sv:24.6-24.11"
   cell $not $not$dut.sv:24$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -207,6 +208,7 @@ module \dffa3
     connect \A \arst
     connect \Y $logic_not$dut.sv:46.8-46.13$2_Y
   end
+  attribute \src "dut.sv:46.6-46.14"
   cell $not $not$dut.sv:46$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -316,6 +318,7 @@ module \dffsr1
   attribute \src "dut.sv:75.1-80.4"
   wire $0\q
   wire $auto$rtlil.cc:3304:Xor$14
+  attribute \src "dut.sv:77.8-77.11"
   cell $xor $xor$dut.sv:77$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

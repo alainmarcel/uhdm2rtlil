@@ -53,6 +53,7 @@ module \r5p_gpr
     connect \A \a_rd
     connect \Y $auto$rtlil.cc:3259:ReduceOr$2
   end
+  attribute \src "dut.sv:49.22-49.33"
   cell $or $or$dut.sv:49$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -63,6 +64,7 @@ module \r5p_gpr
     connect \B \en0
     connect \Y $auto$rtlil.cc:3303:Or$4
   end
+  attribute \src "dut.sv:49.14-49.34"
   cell $and $and$dut.sv:49$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

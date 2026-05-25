@@ -13,8 +13,9 @@ module \FullAdder
   wire output 4 \S
   attribute \src "dut.sv:130.47-130.51"
   wire output 5 \Cout
-  wire width 2 $auto$expression.cpp:2886:import_operation$1
-  wire width 2 $auto$expression.cpp:2886:import_operation$3
+  wire width 2 $auto$expression.cpp:2897:import_operation$1
+  wire width 2 $auto$expression.cpp:2897:import_operation$3
+  attribute \src "dut.sv:131.19-131.22"
   cell $add $add$dut.sv:131$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -23,19 +24,20 @@ module \FullAdder
     parameter \Y_WIDTH 2
     connect \A { 1'0 \A }
     connect \B { 1'0 \B }
-    connect \Y $auto$expression.cpp:2886:import_operation$1
+    connect \Y $auto$expression.cpp:2897:import_operation$1
   end
+  attribute \src "dut.sv:131.19-131.26"
   cell $add $add$dut.sv:131$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_WIDTH 2
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:2886:import_operation$1
+    connect \A $auto$expression.cpp:2897:import_operation$1
     connect \B { 1'0 \Cin }
-    connect \Y $auto$expression.cpp:2886:import_operation$3
+    connect \Y $auto$expression.cpp:2897:import_operation$3
   end
-  connect { \Cout \S } $auto$expression.cpp:2886:import_operation$3
+  connect { \Cout \S } $auto$expression.cpp:2897:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:10.1-75.10"
@@ -75,6 +77,7 @@ module \Multiplier_flat
     connect \S \addPartialProduct[1].gS
     connect \Cout \addPartialProduct[1].Cout
   end
+  attribute \src "dut.sv:51.19-51.32"
   cell $and $and$dut.sv:51$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -93,6 +96,7 @@ module \Multiplier_flat
     connect \S \addPartialProduct[2].gS
     connect \Cout \addPartialProduct[2].Cout
   end
+  attribute \src "dut.sv:51.19-51.32"
   cell $and $and$dut.sv:51$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -111,6 +115,7 @@ module \Multiplier_flat
     connect \S \addPartialProduct[3].gS
     connect \Cout \addPartialProduct[3].Cout
   end
+  attribute \src "dut.sv:51.19-51.32"
   cell $and $and$dut.sv:51$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -121,6 +126,7 @@ module \Multiplier_flat
     connect \B { \B [3] \B [3] \B [3] \B [3] }
     connect \Y $auto$rtlil.cc:3302:And$10
   end
+  attribute \src "dut.sv:29.56-29.69"
   cell $and $and$dut.sv:29$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -414,6 +420,7 @@ module \Multiplier_2D
     connect \S \addPartialProduct[1].gS
     connect \Cout \addPartialProduct[1].Cout
   end
+  attribute \src "dut.sv:95.19-95.32"
   cell $and $and$dut.sv:95$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -432,6 +439,7 @@ module \Multiplier_2D
     connect \S \addPartialProduct[2].gS
     connect \Cout \addPartialProduct[2].Cout
   end
+  attribute \src "dut.sv:95.19-95.32"
   cell $and $and$dut.sv:95$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -450,6 +458,7 @@ module \Multiplier_2D
     connect \S \addPartialProduct[3].gS
     connect \Cout \addPartialProduct[3].Cout
   end
+  attribute \src "dut.sv:95.19-95.32"
   cell $and $and$dut.sv:95$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -460,6 +469,7 @@ module \Multiplier_2D
     connect \B { \B [3] \B [3] \B [3] \B [3] }
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:87.32-87.45"
   cell $and $and$dut.sv:87$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

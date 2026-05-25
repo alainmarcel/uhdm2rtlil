@@ -26,10 +26,10 @@ module \$paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR
   wire _06_;
   wire _07_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:85.24-85.35|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [4:0] _08_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:85.24-85.35|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [4:0] _09_;
   (* src = "dut.sv:75.31-75.38" *)
   wire [4:0] counter;

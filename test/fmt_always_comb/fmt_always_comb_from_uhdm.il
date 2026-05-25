@@ -18,6 +18,7 @@ module \sub
     connect \S \y
     connect \Y $print$$display$23$10_EN
   end
+  attribute \src "dut.sv:23.30-23.35"
   cell $and $and$dut.sv:23$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

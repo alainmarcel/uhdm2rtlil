@@ -18,7 +18,8 @@ module \forloops02
   attribute \src "dut.v:16.10-16.11"
   wire width 32 signed \k
   attribute \unused_bits "4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:2940:import_operation$35
+  wire width 32 $auto$expression.cpp:2952:import_operation$35
+  attribute \src "dut.v:24.13-24.23"
   cell $sub $sub$dut.v:24$36
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -27,8 +28,9 @@ module \forloops02
     parameter \Y_WIDTH 32
     connect \A 4
     connect \B { \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \a \b }
-    connect \Y { $auto$expression.cpp:2940:import_operation$35 [31:4] \y }
+    connect \Y { $auto$expression.cpp:2952:import_operation$35 [31:4] \y }
   end
+  attribute \src "dut.v:19.16-19.18"
   cell $not $not$dut.v:19$58
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -36,6 +38,7 @@ module \forloops02
     connect \A \b
     connect \Y \q [2]
   end
+  attribute \src "dut.v:19.12-19.14"
   cell $not $not$dut.v:19$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -43,6 +46,7 @@ module \forloops02
     connect \A \a
     connect \Y \q [3]
   end
+  attribute \src "dut.v:22.7-22.17"
   cell $add $add$dut.v:22$64
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -53,7 +57,7 @@ module \forloops02
     connect \B { 2'00 \a \b }
     connect \Y \x
   end
-  connect $auto$expression.cpp:2940:import_operation$35 [3:0] \y
+  connect $auto$expression.cpp:2952:import_operation$35 [3:0] \y
   connect \k 4
   connect \q [1:0] { \a \b }
 end

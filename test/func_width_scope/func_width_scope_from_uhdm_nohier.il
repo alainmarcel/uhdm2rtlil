@@ -61,6 +61,7 @@ module \func_width_scope_top
   wire width 5 \func1$func$dut.sv:12$20.$result
   wire width 1024 $auto$module.cpp:1124:import_continuous_assign$28
   wire width 1024 $auto$module.cpp:1124:import_continuous_assign$30
+  attribute \src "dut.sv:19.13-19.17"
   cell $not $not$dut.sv:19$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
@@ -68,6 +69,7 @@ module \func_width_scope_top
     connect \A $0\func2$func$dut.sv:24$2.inp$4
     connect \Y $auto$rtlil.cc:3255:Not$9
   end
+  attribute \src "dut.sv:29.13-29.17"
   cell $not $not$dut.sv:29$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 7
@@ -75,6 +77,7 @@ module \func_width_scope_top
     connect \A $0\func3$func$dut.sv:34$11.inp$13
     connect \Y $auto$rtlil.cc:3255:Not$18
   end
+  attribute \src "dut.sv:7.11-7.15"
   cell $not $not$dut.sv:7$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5

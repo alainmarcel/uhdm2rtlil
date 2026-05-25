@@ -18,6 +18,7 @@ module \func_width_scope_top
   wire width 127 \blk.zc
   wire width 7 \blk.zn
   wire width 5 \func1$func$dut.sv:12$19.$result
+  attribute \src "dut.sv:19.13-19.17"
   cell $not $not$dut.sv:19$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 6
@@ -25,6 +26,7 @@ module \func_width_scope_top
     connect \A { \inp \inp \inp \inp \inp \inp }
     connect \Y \blk.yn
   end
+  attribute \src "dut.sv:29.13-29.17"
   cell $not $not$dut.sv:29$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 7
@@ -32,6 +34,7 @@ module \func_width_scope_top
     connect \A { \inp \inp \inp \inp \inp \inp \inp }
     connect \Y \blk.zn
   end
+  attribute \src "dut.sv:7.11-7.15"
   cell $not $not$dut.sv:7$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 5

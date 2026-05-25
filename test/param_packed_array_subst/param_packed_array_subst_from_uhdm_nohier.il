@@ -10,6 +10,7 @@ module \top
   attribute \src "dut.sv:19.24-19.25"
   wire width 4 output 2 \a
   wire width 4 $auto$rtlil.cc:3304:Xor$2
+  attribute \src "dut.sv:23.15-23.24"
   cell $xor $xor$dut.sv:23$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

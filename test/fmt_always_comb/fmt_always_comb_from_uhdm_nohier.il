@@ -15,6 +15,7 @@ module \sub
   wire $eq$dut.sv:23$6_Y
   wire $auto$rtlil.cc:3302:And$9
   wire $print$$display$23$10_EN
+  attribute \src "dut.sv:15.16-15.21"
   cell $and $and$dut.sv:15$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -25,6 +26,7 @@ module \sub
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:23.30-23.35"
   cell $and $and$dut.sv:23$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -46,6 +48,7 @@ module \sub
     connect \B $auto$rtlil.cc:3302:And$5
     connect \Y $eq$dut.sv:23$6_Y
   end
+  attribute \src "dut.sv:23.19-23.37"
   cell $and $and$dut.sv:23$8
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

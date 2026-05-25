@@ -32,10 +32,10 @@ module \$paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEME
   wire _13_;
   wire _14_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [15:0] _15_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [15:0] _16_;
   \$_AND_  _17_ (
     .A(ena),
@@ -371,10 +371,10 @@ module \$paramod\counter_wrap\WIDTH=s32'00000000000000000000000000010000\IMPLEME
   wire _12_;
   wire _13_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:39.35-39.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [15:0] _14_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:39.35-39.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [15:0] _15_;
   \$_NOT_  _16_ (
     .A(cnt[0]),

@@ -40,6 +40,12 @@ PROJECT_TOP=""
 PROJECT_MODE=""
 PROJECT_SURELOG_FLAGS=""
 PROJECT_LANG=""
+# When set to "1", the test uses formal-verification constructs
+# (assertions/assumes/covers).  Both `read_uhdm` and `read_verilog`
+# need their `-formal` flag, and the equivalence flow needs an
+# `async2sync` pass so `equiv_induct` can model the async-reset FFs
+# that get kept under formal mode.
+PROJECT_FORMAL=""
 
 if [ -f "project.f" ]; then
     # Read filelist line-by-line.  Strip CRLF, skip blank/comment lines,
@@ -58,6 +64,7 @@ if [ -f "project.f" ]; then
                 mode)    PROJECT_MODE="$val" ;;
                 surelog) PROJECT_SURELOG_FLAGS="$val" ;;
                 lang)    PROJECT_LANG="$val" ;;
+                formal)  PROJECT_FORMAL="$val" ;;
             esac
             continue
         fi

@@ -224,6 +224,7 @@ module \tcb_gpio_wrap
   wire $auto$rtlil.cc:3255:Not$4
   attribute \src "tcb_if.sv:28.16-28.19"
   wire \bus.clk
+  attribute \src "tcb_if.sv:48.16-48.25"
   cell $and $and$tcb_if.sv:48$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -234,6 +235,7 @@ module \tcb_gpio_wrap
     connect \B \bus.rdy
     connect \Y \bus.trn
   end
+  attribute \src "tcb_if.sv:50.16-50.20"
   cell $not $not$tcb_if.sv:50$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -241,6 +243,7 @@ module \tcb_gpio_wrap
     connect \A \bus_vld
     connect \Y $auto$rtlil.cc:3255:Not$4
   end
+  attribute \src "tcb_if.sv:50.16-50.26"
   cell $or $or$tcb_if.sv:50$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -13,12 +13,13 @@ module \dynslice
   wire width 4 input 4 \sel
   attribute \src "dut.sv:6.24-6.28"
   wire width 128 output 5 \dout
-  wire width 14 $auto$expression.cpp:3018:import_operation$2
+  wire width 14 $auto$expression.cpp:3032:import_operation$2
   wire width 128 $auto$process.cpp:6565:import_assignment_sync$4
   wire width 128 $auto$process.cpp:6576:import_assignment_sync$6
   wire width 128 $auto$process.cpp:6579:import_assignment_sync$8
   wire width 128 $auto$process.cpp:6582:import_assignment_sync$10
   wire width 128 $auto$process.cpp:6586:import_assignment_sync$12
+  attribute \src "dut.sv:10.10-10.18"
   cell $mul $mul$dut.sv:10$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -27,7 +28,7 @@ module \dynslice
     parameter \Y_WIDTH 14
     connect \A \ctrl
     connect \B \sel
-    connect \Y $auto$expression.cpp:3018:import_operation$2
+    connect \Y $auto$expression.cpp:3032:import_operation$2
   end
   cell $shl $auto$process.cpp:6566:import_assignment_sync$5
     parameter \A_SIGNED 0
@@ -36,7 +37,7 @@ module \dynslice
     parameter \B_WIDTH 14
     parameter \Y_WIDTH 128
     connect \A { 112'0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \din }
-    connect \B $auto$expression.cpp:3018:import_operation$2
+    connect \B $auto$expression.cpp:3032:import_operation$2
     connect \Y $auto$process.cpp:6565:import_assignment_sync$4
   end
   cell $shl $auto$process.cpp:6577:import_assignment_sync$7
@@ -46,7 +47,7 @@ module \dynslice
     parameter \B_WIDTH 14
     parameter \Y_WIDTH 128
     connect \A 128'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111
-    connect \B $auto$expression.cpp:3018:import_operation$2
+    connect \B $auto$expression.cpp:3032:import_operation$2
     connect \Y $auto$process.cpp:6576:import_assignment_sync$6
   end
   cell $not $auto$process.cpp:6580:import_assignment_sync$9

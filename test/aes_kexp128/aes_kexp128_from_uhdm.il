@@ -45,6 +45,7 @@ module \aes_key_expand_128
     connect \S \kld
     connect \Y $0\w[0]
   end
+  attribute \src "dut.sv:18.29-18.38"
   cell $xor $xor$dut.sv:18$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -71,6 +72,7 @@ module \aes_key_expand_128
     connect \Q \w[3]
     connect \CLK \clk
   end
+  attribute \src "dut.sv:19.29-19.43"
   cell $xor $xor$dut.sv:19$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -88,6 +90,7 @@ module \aes_key_expand_128
     connect \S \kld
     connect \Y $0\w[2]
   end
+  attribute \src "dut.sv:20.29-20.38"
   cell $xor $xor$dut.sv:20$14
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -98,6 +101,7 @@ module \aes_key_expand_128
     connect \B $0\w[1]
     connect \Y $auto$rtlil.cc:3304:Xor$15
   end
+  attribute \src "dut.sv:20.29-20.43"
   cell $xor $xor$dut.sv:20$16
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -108,6 +112,7 @@ module \aes_key_expand_128
     connect \B $0\w[2]
     connect \Y $auto$rtlil.cc:3304:Xor$17
   end
+  attribute \src "dut.sv:20.29-20.48"
   cell $xor $xor$dut.sv:20$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

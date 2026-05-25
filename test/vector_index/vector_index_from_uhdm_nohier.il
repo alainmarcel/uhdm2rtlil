@@ -48,6 +48,7 @@ module \vector_index
   wire $auto$rtlil.cc:3322:LogicAnd$54
   wire $auto$rtlil.cc:3322:LogicAnd$56
   wire $auto$rtlil.cc:3322:LogicAnd$58
+  attribute \src "dut.sv:19.20-19.29"
   cell $or $or$dut.sv:19$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -58,6 +59,7 @@ module \vector_index
     connect \B \Wht
     connect \Y $auto$rtlil.cc:3303:Or$2
   end
+  attribute \src "dut.sv:19.18-19.30"
   cell $not $not$dut.sv:19$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 9
@@ -65,6 +67,7 @@ module \vector_index
     connect \A $auto$rtlil.cc:3303:Or$2
     connect \Y $auto$rtlil.cc:3255:Not$4
   end
+  attribute \src "dut.sv:28.20-28.35"
   cell $or $or$dut.sv:28$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -75,6 +78,7 @@ module \vector_index
     connect \B \Move_E
     connect \Y $auto$rtlil.cc:3303:Or$6
   end
+  attribute \src "dut.sv:28.20-28.44"
   cell $or $or$dut.sv:28$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -85,6 +89,7 @@ module \vector_index
     connect \B \Move_W
     connect \Y $auto$rtlil.cc:3303:Or$8
   end
+  attribute \src "dut.sv:28.20-28.53"
   cell $or $or$dut.sv:28$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -34,6 +34,7 @@ module \counter
     connect \D \count_next
     connect \Q \count
   end
+  attribute \src "dut.sv:23.22-23.34"
   cell $add $add$dut.sv:23$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -35,6 +35,7 @@ module $paramod\sub_module\DATA_WIDTH=s32'00000000000000000000000000100000\ADDR_
     connect \ARST \rst_n
     connect \CLK \clk
   end
+  attribute \src "dut.sv:85.24-85.35"
   cell $add $add$dut.sv:85$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -108,6 +109,7 @@ module \simple_package
     connect \ARST \rst_n
     connect \CLK \clk
   end
+  attribute \src "dut.sv:19.16-19.30"
   cell $add $add$dut.sv:19$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

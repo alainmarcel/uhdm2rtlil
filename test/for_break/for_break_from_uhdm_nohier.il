@@ -47,6 +47,7 @@ module \for_break
   wire $auto$rtlil.cc:3302:And$34
   wire $auto$rtlil.cc:3255:Not$36
   wire $auto$rtlil.cc:3302:And$38
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$7
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -54,6 +55,7 @@ module \for_break
     connect \A \way_valid [7]
     connect \Y $auto$rtlil.cc:3255:Not$8
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -64,6 +66,7 @@ module \for_break
     connect \B \way_enable [7]
     connect \Y $auto$rtlil.cc:3302:And$10
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$11
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -71,6 +74,7 @@ module \for_break
     connect \A \way_valid [6]
     connect \Y $auto$rtlil.cc:3255:Not$12
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -81,6 +85,7 @@ module \for_break
     connect \B \way_enable [6]
     connect \Y $auto$rtlil.cc:3302:And$14
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -88,6 +93,7 @@ module \for_break
     connect \A \way_valid [5]
     connect \Y $auto$rtlil.cc:3255:Not$16
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -98,6 +104,7 @@ module \for_break
     connect \B \way_enable [5]
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$19
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -105,6 +112,7 @@ module \for_break
     connect \A \way_valid [4]
     connect \Y $auto$rtlil.cc:3255:Not$20
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -115,6 +123,7 @@ module \for_break
     connect \B \way_enable [4]
     connect \Y $auto$rtlil.cc:3302:And$22
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$23
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -122,6 +131,7 @@ module \for_break
     connect \A \way_valid [3]
     connect \Y $auto$rtlil.cc:3255:Not$24
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -132,6 +142,7 @@ module \for_break
     connect \B \way_enable [3]
     connect \Y $auto$rtlil.cc:3302:And$26
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$27
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -139,6 +150,7 @@ module \for_break
     connect \A \way_valid [2]
     connect \Y $auto$rtlil.cc:3255:Not$28
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -149,6 +161,7 @@ module \for_break
     connect \B \way_enable [2]
     connect \Y $auto$rtlil.cc:3302:And$30
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -156,6 +169,7 @@ module \for_break
     connect \A \way_valid [1]
     connect \Y $auto$rtlil.cc:3255:Not$32
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$33
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -166,6 +180,7 @@ module \for_break
     connect \B \way_enable [1]
     connect \Y $auto$rtlil.cc:3302:And$34
   end
+  attribute \src "dut.sv:33.11-33.24"
   cell $not $not$dut.sv:33$35
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -173,6 +188,7 @@ module \for_break
     connect \A \way_valid [0]
     connect \Y $auto$rtlil.cc:3255:Not$36
   end
+  attribute \src "dut.sv:33.11-33.40"
   cell $and $and$dut.sv:33$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

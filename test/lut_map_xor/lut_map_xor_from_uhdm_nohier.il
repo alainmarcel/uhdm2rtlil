@@ -10,6 +10,7 @@ module \lut_map_xor
   attribute \src "dut.sv:3.12-3.13"
   wire output 3 \y
   wire $auto$rtlil.cc:3304:Xor$2
+  attribute \src "dut.sv:5.16-5.21"
   cell $xor $xor$dut.sv:5$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
