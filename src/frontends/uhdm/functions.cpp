@@ -220,6 +220,26 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
     int stmt_type = stmt->VpiType();
 
     switch (stmt_type) {
+        case vpiParamAssign: {
+            // Block-scoped `localparam` (e.g. `localparam other_mult = 2;`
+            // inside `begin : op_j`).  Surelog emits these as
+            // statements with the param's LHS + RHS, so evaluate the
+            // RHS at compile time and stash it in `local_vars` so any
+            // subsequent reference resolves to the constant value.
+            const param_assign* pa = any_cast<const param_assign*>(stmt);
+            if (pa && pa->Lhs() && pa->Rhs()) {
+                std::string pname = std::string(pa->Lhs()->VpiName());
+                if (!pname.empty()) {
+                    RTLIL::Const pval =
+                        evaluate_single_operand(pa->Rhs(), local_vars);
+                    local_vars[pname] = pval;
+                    log("    Declared local param %s = %s\n",
+                        pname.c_str(),
+                        pval.size() <= 32 ? std::to_string(pval.as_int()).c_str() : "<wide>");
+                }
+            }
+            return RTLIL::Const();
+        }
         case vpiAssignment: {
             const assignment* assign = any_cast<const assignment*>(stmt);
 
