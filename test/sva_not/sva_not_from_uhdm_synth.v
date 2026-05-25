@@ -35,7 +35,6 @@ module top(clk, reset, ping, cfg, pong, cnt_o);
   wire _09_;
   wire _10_;
   wire _11_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:11.12-11.15" *)
   wire [2:0] cnt;
   \$_NOR_  _12_ (

@@ -18,7 +18,6 @@ module initval(clk, bar, foo, asdf);
   output [3:0] asdf;
   wire [3:0] asdf;
   (* init = 4'b00xx *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:3.13-3.25" *)
   (* unused_bits = "0 1" *)
   wire [3:0] last_bar;

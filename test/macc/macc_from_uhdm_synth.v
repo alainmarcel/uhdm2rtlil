@@ -1980,31 +1980,24 @@ module macc2(clk, ce, rst, a, b, accum_out, overflow);
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [31:0] _1934_;
   (* init = 16'h0000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:53.25-53.34" *)
   wire signed [15:0] a_reg;
   (* init = 16'h0000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:53.47-53.57" *)
   wire signed [15:0] a_reg2;
   (* init = 41'h00000000000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:55.24-55.37" *)
   wire signed [40:0] adder_out;
   (* init = 16'h0000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:53.36-53.45" *)
   wire signed [15:0] b_reg;
   (* init = 16'h0000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:53.59-53.69" *)
   wire signed [15:0] b_reg2;
   (* init = 32'd0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:54.27-54.39" *)
   wire signed [31:0] mult_reg;
   (* init = 1'h0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:56.5-56.21" *)
   wire overflow_reg;
   \$_NOT_  _1935_ (

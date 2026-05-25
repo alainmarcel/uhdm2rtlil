@@ -296,10 +296,8 @@ module mul_unsigned(clk, A, B, RES);
   wire [14:0] \M[2] ;
   (* src = "/home/alain/uhdm2rtlil/test/mul_unsigned/dut.sv:19.25-19.26" *)
   wire [14:0] \M[3] ;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:17.18-17.20" *)
   wire [5:0] rA;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:18.18-18.20" *)
   wire [8:0] rB;
   \$_XOR_  _258_ (

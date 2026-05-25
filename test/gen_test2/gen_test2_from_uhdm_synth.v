@@ -52,7 +52,6 @@ module gen_test2(clk, a, b, y);
   wire _33_;
   wire _34_;
   wire _35_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:8.11-8.16" *)
   (* unused_bits = "1 2 3 4 5 6 7" *)
   wire [8:0] carry;

@@ -101,10 +101,8 @@ module mul_unsigned_sync(clk, rst, en, a, b, p);
   (* force_downto = 32'd1 *)
   (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [8:0] _064_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:11.17-11.22" *)
   wire [5:0] a_reg;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:12.17-12.22" *)
   wire [2:0] b_reg;
   \$_NAND_  _065_ (

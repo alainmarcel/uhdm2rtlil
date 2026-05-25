@@ -39,7 +39,7 @@
  output green_b;
  wire green_b;
  wire _000_;
-@@ -74,14 +74,15 @@
+@@ -74,13 +74,13 @@
  (* src = "dut.sv:51.24-51.31|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
  wire [3:0] _042_;
  (* force_downto = 32'd1 *)
@@ -54,11 +54,9 @@
 -(* src = "dut.sv:47.16-47.16|dut.sv:20.9-55.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
 +(* src = "dut.sv:48.13-54.16|dut.sv:20.9-55.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
  wire [5:0] _045_;
-+(* \reg  = 32'd1 *)
  (* src = "dut.sv:7.11-7.14" *)
  wire [3:0] cnt;
- (* src = "dut.sv:6.9-6.14" *)
-@@ -273,82 +274,83 @@
+@@ -273,82 +273,83 @@
  .A(_045_[4]),
  .Y(_045_[1])
  );
@@ -161,7 +159,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP0P_  \state_reg[3]  /* _099_ */ (
  .C(clk),
-@@ -357,6 +359,7 @@
+@@ -357,6 +358,7 @@
  .Q(state[3]),
  .R(reset)
  );
@@ -169,7 +167,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP0P_  \state_reg[4]  /* _100_ */ (
  .C(clk),
-@@ -365,6 +368,7 @@
+@@ -365,6 +367,7 @@
  .Q(state[4]),
  .R(reset)
  );
@@ -177,7 +175,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP1P_  \state_reg[5]  /* _101_ */ (
  .C(clk),
-@@ -373,6 +377,7 @@
+@@ -373,6 +376,7 @@
  .Q(state[5]),
  .R(reset)
  );
@@ -185,7 +183,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP1P_  \state_reg[6]  /* _102_ */ (
  .C(clk),
-@@ -381,6 +386,7 @@
+@@ -381,6 +385,7 @@
  .Q(state[6]),
  .R(reset)
  );
@@ -193,7 +191,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP0P_  \state_reg[7]  /* _103_ */ (
  .C(clk),
-@@ -389,6 +395,7 @@
+@@ -389,6 +394,7 @@
  .Q(state[7]),
  .R(reset)
  );
@@ -201,7 +199,7 @@
  (* src = "dut.sv:9.1-56.4" *)
  \$_SDFFE_PP0P_  \state_reg[8]  /* _104_ */ (
  .C(clk),
-@@ -397,61 +404,69 @@
+@@ -397,61 +403,69 @@
  .Q(state[8]),
  .R(reset)
  );

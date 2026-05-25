@@ -292,7 +292,6 @@ module alu(clk, A, B, operation, result, CF, ZF, SF);
   wire [8:0] _048_;
   (* src = "dut.sv:42.12-42.17" *)
   wire [7:0] added;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:41.12-41.15" *)
   wire [8:0] tmp;
   \$_ORNOT_  _049_ (

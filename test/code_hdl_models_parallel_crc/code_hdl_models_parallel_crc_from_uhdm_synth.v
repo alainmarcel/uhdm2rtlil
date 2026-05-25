@@ -59,7 +59,6 @@ module code_hdl_models_parallel_crc(clk, reset, enable, init, data_in, crc_out);
   wire _35_;
   wire _36_;
   wire _37_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:24.14-24.21" *)
   wire [15:0] crc_reg;
   (* src = "dut.sv:25.14-25.22" *)

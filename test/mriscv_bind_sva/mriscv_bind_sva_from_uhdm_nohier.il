@@ -138,7 +138,6 @@ module \ALU_sXXx
   attribute \src "ALU.v:612.16-612.21"
   wire output 9 \sl_ok
   attribute \src "ALU.v:614.16-614.21"
-  attribute \reg 1
   wire width 5 \count
   attribute \src "ALU.v:615.5-644.8"
   wire width 32 $0\SLL_Alu[31:0]
@@ -155,13 +154,13 @@ module \ALU_sXXx
   attribute \src "ALU.v:622.21-622.31"
   wire $eq$ALU.v:622$11_Y
   wire $auto$rtlil.cc:3313:Ge$14
-  wire width 32 $auto$expression.cpp:3107:import_operation$15
-  wire width 32 $auto$expression.cpp:3084:import_operation$17
-  wire width 64 $auto$expression.cpp:2952:import_operation$19
+  wire width 32 $auto$expression.cpp:3121:import_operation$15
+  wire width 32 $auto$expression.cpp:3098:import_operation$17
+  wire width 64 $auto$expression.cpp:2966:import_operation$19
   wire $auto$rtlil.cc:3310:Ne$22
-  wire width 32 $auto$expression.cpp:3107:import_operation$23
-  wire width 32 $auto$expression.cpp:3084:import_operation$25
-  wire width 64 $auto$expression.cpp:2952:import_operation$27
+  wire width 32 $auto$expression.cpp:3121:import_operation$23
+  wire width 32 $auto$expression.cpp:3098:import_operation$25
+  wire width 64 $auto$expression.cpp:2966:import_operation$27
   attribute \src "ALU.v:634.26-634.35"
   wire $eq$ALU.v:634$29_Y
   attribute \src "ALU.v:616.13-616.19"
@@ -202,7 +201,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3107:import_operation$15
+    connect \Y $auto$expression.cpp:3121:import_operation$15
   end
   attribute \src "ALU.v:625.28-625.40"
   cell $shl $shl$ALU.v:625$18
@@ -213,7 +212,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3084:import_operation$17
+    connect \Y $auto$expression.cpp:3098:import_operation$17
   end
   attribute \src "ALU.v:628.26-628.35"
   cell $sub $sub$ALU.v:628$20
@@ -224,7 +223,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2952:import_operation$19
+    connect \Y $auto$expression.cpp:2966:import_operation$19
   end
   cell $ne $ne$ALU.v:629$21
     parameter \A_SIGNED 0
@@ -245,7 +244,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3107:import_operation$23
+    connect \Y $auto$expression.cpp:3121:import_operation$23
   end
   attribute \src "ALU.v:631.28-631.40"
   cell $shl $shl$ALU.v:631$26
@@ -256,7 +255,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3084:import_operation$25
+    connect \Y $auto$expression.cpp:3098:import_operation$25
   end
   attribute \src "ALU.v:633.26-633.35"
   cell $sub $sub$ALU.v:633$28
@@ -267,7 +266,7 @@ module \ALU_sXXx
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2952:import_operation$27
+    connect \Y $auto$expression.cpp:2966:import_operation$27
   end
   attribute \src "ALU.v:634.26-634.35"
   cell $eq $eq$ALU.v:634$30
@@ -307,20 +306,20 @@ module \ALU_sXXx
             switch $auto$rtlil.cc:3313:Ge$14
             attribute \src "ALU.v:623.13-636.16"
               case 1'1
-                assign $0\SRL_Alu[31:0] $auto$expression.cpp:3107:import_operation$15
-                assign $0\SLL_Alu[31:0] $auto$expression.cpp:3084:import_operation$17
+                assign $0\SRL_Alu[31:0] $auto$expression.cpp:3121:import_operation$15
+                assign $0\SLL_Alu[31:0] $auto$expression.cpp:3098:import_operation$17
                 assign $0\SRA_Alu[31:0] 0
-                assign $0\count[4:0] $auto$expression.cpp:2952:import_operation$19 [4:0]
+                assign $0\count[4:0] $auto$expression.cpp:2966:import_operation$19 [4:0]
             attribute \src "ALU.v:623.13-636.16"
               case 
                 attribute \src "ALU.v:629.22-636.16"
                 switch $auto$rtlil.cc:3310:Ne$22
                 attribute \src "ALU.v:629.22-636.16"
                   case 1'1
-                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:3107:import_operation$23
-                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:3084:import_operation$25
+                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:3121:import_operation$23
+                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:3098:import_operation$25
                     assign $0\SRA_Alu[31:0] 0
-                    assign $0\count[4:0] $auto$expression.cpp:2952:import_operation$27 [4:0]
+                    assign $0\count[4:0] $auto$expression.cpp:2966:import_operation$27 [4:0]
                 attribute \src "ALU.v:629.22-636.16"
                   case 
                     attribute \src "ALU.v:634.22-636.16"
@@ -372,24 +371,19 @@ module \Alg_Booth
   attribute \src "MULT.v:53.22-53.23"
   wire width 34 output 8 \Z
   attribute \src "MULT.v:58.17-58.19"
-  attribute \reg 1
   wire width 17 \Q1
   attribute \src "MULT.v:58.20-58.23"
-  attribute \reg 1
   wire width 17 \aux
   attribute \src "MULT.v:59.17-59.18"
-  attribute \reg 1
   wire width 35 \S
   attribute \src "MULT.v:59.19-59.27"
-  attribute \reg 1
   wire width 35 \address2
   attribute \src "MULT.v:59.28-59.35"
-  attribute \reg 1
   wire width 35 \subres2
   attribute \src "MULT.v:60.18-60.21"
   wire width 17 \NQ1
   wire width 17 $auto$rtlil.cc:3255:Not$32
-  wire width 17 $auto$expression.cpp:2897:import_operation$33
+  wire width 17 $auto$expression.cpp:2911:import_operation$33
   wire width 64 $auto$rtlil.cc:3390:Mux$36
   attribute \src "MULT.v:64.2-97.5"
   wire width 17 $0\Q1
@@ -399,8 +393,8 @@ module \Alg_Booth
   wire width 17 $0\aux
   attribute \src "MULT.v:66.6-66.12"
   wire $logic_not$MULT.v:66.6-66.12$2_Y
-  wire width 17 $auto$expression.cpp:2897:import_operation$38
-  wire width 17 $auto$expression.cpp:2897:import_operation$40
+  wire width 17 $auto$expression.cpp:2911:import_operation$38
+  wire width 17 $auto$expression.cpp:2911:import_operation$40
   attribute \src "MULT.v:62.15-62.18"
   cell $not $not$MULT.v:62$31
     parameter \A_SIGNED 0
@@ -418,7 +412,7 @@ module \Alg_Booth
     parameter \Y_WIDTH 17
     connect \A $auto$rtlil.cc:3255:Not$32
     connect \B 17'00000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$33
+    connect \Y $auto$expression.cpp:2911:import_operation$33
   end
   cell $mux $mux$MULT.v:100$35
     parameter \WIDTH 64
@@ -444,7 +438,7 @@ module \Alg_Booth
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \Q1
-    connect \Y $auto$expression.cpp:2897:import_operation$38
+    connect \Y $auto$expression.cpp:2911:import_operation$38
   end
   attribute \src "MULT.v:84.12-84.34"
   cell $add $add$MULT.v:84$41
@@ -455,7 +449,7 @@ module \Alg_Booth
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \NQ1
-    connect \Y $auto$expression.cpp:2897:import_operation$40
+    connect \Y $auto$expression.cpp:2911:import_operation$40
   end
   attribute \src "MULT.v:64.2-97.5"
   attribute \always_ff 1
@@ -490,11 +484,11 @@ module \Alg_Booth
                     assign $0\S { \S [34] \S [34:1] }
                 attribute \src "MULT.v:78.5-82.8"
                   case 2'01
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$38
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$38
                     assign $0\S { \aux [16] \aux \S [17:1] }
                 attribute \src "MULT.v:83.5-87.8"
                   case 2'10
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$40
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$40
                     assign $0\S { \aux [16] \aux \S [17:1] }
                 attribute \src "MULT.v:88.5-91.8"
                   case 2'11
@@ -512,7 +506,7 @@ module \Alg_Booth
       update \S $0\S
       update \aux $0\aux
   end
-  connect \NQ1 $auto$expression.cpp:2897:import_operation$33
+  connect \NQ1 $auto$expression.cpp:2911:import_operation$33
   connect \Z $auto$rtlil.cc:3390:Mux$36 [33:0]
 end
 attribute \cells_not_processed 1
@@ -535,24 +529,18 @@ module \Count
   attribute \src "IRQ.v:50.10-50.13"
   wire \clk
   attribute \src "IRQ.v:51.16-51.29"
-  attribute \reg 1
   wire width 32 \Max_count_int
   attribute \src "IRQ.v:51.31-51.39"
-  attribute \reg 1
   wire width 32 \freq_int
   attribute \src "IRQ.v:52.9-52.19"
-  attribute \reg 1
   wire \enable_int
   attribute \src "IRQ.v:52.20-52.35"
-  attribute \reg 1
   wire \Ready_count_int
   attribute \src "IRQ.v:63.9-63.10"
-  attribute \reg 1
   wire \b
   attribute \src "IRQ.v:63.16-63.17"
   wire \c
   attribute \src "IRQ.v:95.17-95.27"
-  attribute \reg 1
   wire width 32 \divcounter
   wire $auto$rtlil.cc:3390:Mux$43
   attribute \src "IRQ.v:64.5-78.12"
@@ -578,7 +566,7 @@ module \Count
   wire $auto$rtlil.cc:3322:LogicAnd$48
   attribute \src "IRQ.v:103.17-103.44"
   wire $eq$IRQ.v:103$49_Y
-  wire width 32 $auto$expression.cpp:2897:import_operation$51
+  wire width 32 $auto$expression.cpp:2911:import_operation$51
   cell $mux $mux$IRQ.v:80$42
     parameter \WIDTH 1
     connect \A 1'0
@@ -640,7 +628,7 @@ module \Count
     parameter \Y_WIDTH 32
     connect \A \divcounter
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$51
+    connect \Y $auto$expression.cpp:2911:import_operation$51
   end
   cell \divM \instance_name
     connect \clk_in \clk_in
@@ -744,7 +732,7 @@ module \Count
                 assign $0\Ready_count_int[0:0] 1'1
             attribute \src "IRQ.v:103.13-109.16"
               case 
-                assign $0\divcounter[31:0] $auto$expression.cpp:2897:import_operation$51
+                assign $0\divcounter[31:0] $auto$expression.cpp:2911:import_operation$51
                 assign $0\Ready_count_int[0:0] 1'0
             end
         attribute \src "IRQ.v:102.18-110.12"
@@ -778,7 +766,6 @@ module \DECO_INSTR
   attribute \src "DECO_INSTR.v:12.23-12.28"
   wire width 12 output 8 \codif
   attribute \src "DECO_INSTR.v:15.16-15.20"
-  attribute \reg 1
   wire width 32 \immr
   attribute \src "DECO_INSTR.v:17.5-20.8"
   wire width 32 $0\imm
@@ -1270,15 +1257,12 @@ module \FSM
   attribute \src "FSM.v:32.10-32.19"
   wire \is_illisn
   attribute \src "FSM.v:40.9-40.22"
-  attribute \reg 1
   wire \enable_pc_aux
   attribute \src "FSM.v:40.24-40.37"
-  attribute \reg 1
   wire \enable_pc_fsm
   attribute \src "FSM.v:50.10-50.13"
   wire \err
   attribute \src "FSM.v:54.22-54.27"
-  attribute \reg 1
   wire width 4 \state
   wire $auto$rtlil.cc:3255:Not$98
   attribute \src "FSM.v:34.21-34.45"
@@ -1737,10 +1721,8 @@ module \FSM_Booth
   attribute \src "MULT.v:10.19-10.25"
   wire width 3 output 5 \OutFSM
   attribute \src "MULT.v:13.11-13.16"
-  attribute \reg 1
   wire width 2 \state
   attribute \src "MULT.v:13.17-13.26"
-  attribute \reg 1
   wire width 2 \nextState
   attribute \src "MULT.v:17.2-31.9"
   wire width 2 $0\nextState
@@ -1968,16 +1950,12 @@ module \IRQ
   attribute \src "IRQ.v:119.12-119.16"
   wire output 16 \flag
   attribute \src "IRQ.v:122.9-122.15"
-  attribute \reg 1
   wire \flag_q
   attribute \src "IRQ.v:122.16-122.26"
-  attribute \reg 1
   wire \irr_tisirr
   attribute \src "IRQ.v:122.27-122.33"
-  attribute \reg 1
   wire \enable
   attribute \src "IRQ.v:122.34-122.44"
-  attribute \reg 1
   wire \irr_ebreak
   attribute \src "IRQ.v:123.10-123.19"
   wire \any_inirr
@@ -2004,49 +1982,34 @@ module \IRQ
   attribute \src "IRQ.v:124.50-124.61"
   wire width 32 \irr_toerase
   attribute \src "IRQ.v:125.16-125.22"
-  attribute \reg 1
   wire width 32 \regirr
   attribute \src "IRQ.v:125.23-125.29"
-  attribute \reg 1
   wire width 32 \pc_c_q
   attribute \src "IRQ.v:125.30-125.37"
-  attribute \reg 1
   wire width 32 \addrm_q
   attribute \src "IRQ.v:125.38-125.51"
-  attribute \reg 1
   wire width 32 \true_irrstate
   attribute \src "IRQ.v:125.52-125.54"
-  attribute \reg 1
   wire width 32 \m6
   attribute \src "IRQ.v:125.55-125.59"
-  attribute \reg 1
   wire width 32 \rs1t
   attribute \src "IRQ.v:125.60-125.64"
-  attribute \reg 1
   wire width 32 \immt
   attribute \src "IRQ.v:125.65-125.76"
-  attribute \reg 1
   wire width 32 \timer_count
   attribute \src "IRQ.v:125.77-125.92"
-  attribute \reg 1
   wire width 32 \timer_max_count
   attribute \src "IRQ.v:125.93-125.101"
-  attribute \reg 1
   wire width 32 \div_freq
   attribute \src "IRQ.v:125.102-125.103"
-  attribute \reg 1
   wire width 32 \q
   attribute \src "IRQ.v:125.104-125.115"
-  attribute \reg 1
   wire width 32 \irrstate_rd
   attribute \src "IRQ.v:125.116-125.126"
-  attribute \reg 1
   wire width 32 \pc_irq_reg
   attribute \src "IRQ.v:125.127-125.130"
-  attribute \reg 1
   wire width 32 \rd1
   attribute \src "IRQ.v:126.15-126.24"
-  attribute \reg 1
   wire width 9 \instr_sel
   attribute \src "IRQ.v:128.10-128.19"
   wire \is_ebreak
@@ -2118,7 +2081,7 @@ module \IRQ
   wire width 32 $0\pc_irq_reg[31:0]
   attribute \src "IRQ.v:245.12-245.16"
   wire $logic_not$IRQ.v:245.12-245.16$16_Y
-  wire width 32 $auto$expression.cpp:2897:import_operation$182
+  wire width 32 $auto$expression.cpp:2911:import_operation$182
   attribute \src "IRQ.v:250.5-253.38"
   wire width 32 $0\irrstate_rd[31:0]
   attribute \src "IRQ.v:251.13-251.17"
@@ -2301,7 +2264,7 @@ module \IRQ
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$182
+    connect \Y $auto$expression.cpp:2911:import_operation$182
   end
   attribute \src "IRQ.v:251.13-251.17"
   cell $logic_not $logic_not$IRQ.v:251.13-251.17$17
@@ -2566,7 +2529,7 @@ module \IRQ
         switch \is_addpcirq
         attribute \src "IRQ.v:246.14-247.36"
           case 1'1
-            assign $0\pc_irq_reg[31:0] $auto$expression.cpp:2897:import_operation$182
+            assign $0\pc_irq_reg[31:0] $auto$expression.cpp:2911:import_operation$182
         attribute \src "IRQ.v:246.14-247.36"
           case 
             assign $0\pc_irq_reg[31:0] \pc_irq_reg
@@ -2758,34 +2721,24 @@ module \MEMORY_INTERFACE
   attribute \src "MEMORY_INTERFACE.v:37.16-37.21"
   wire output 33 \rd_en
   attribute \src "MEMORY_INTERFACE.v:42.16-42.25"
-  attribute \reg 1
   wire width 16 \relleno16
   attribute \src "MEMORY_INTERFACE.v:43.16-43.25"
-  attribute \reg 1
   wire width 24 \relleno24
   attribute \src "MEMORY_INTERFACE.v:44.16-44.22"
-  attribute \reg 1
   wire width 32 \Rdataq
   attribute \src "MEMORY_INTERFACE.v:44.23-44.29"
-  attribute \reg 1
   wire width 32 \Wdataq
   attribute \src "MEMORY_INTERFACE.v:45.15-45.21"
-  attribute \reg 1
   wire width 4 \Wstrbq
   attribute \src "MEMORY_INTERFACE.v:46.16-46.19"
-  attribute \reg 1
   wire width 32 \rdu
   attribute \src "MEMORY_INTERFACE.v:47.9-47.17"
-  attribute \reg 1
   wire \en_instr
   attribute \src "MEMORY_INTERFACE.v:48.9-48.16"
-  attribute \reg 1
   wire \en_read
   attribute \src "MEMORY_INTERFACE.v:53.15-53.20"
-  attribute \reg 1
   wire width 4 \state
   attribute \src "MEMORY_INTERFACE.v:53.21-53.29"
-  attribute \reg 1
   wire width 4 \nexstate
   wire width 32 $auto$rtlil.cc:3390:Mux$188
   attribute \src "MEMORY_INTERFACE.v:66.5-194.8"
@@ -2894,9 +2847,9 @@ module \MEMORY_INTERFACE
   wire width 16 $0\relleno16
   attribute \src "MEMORY_INTERFACE.v:205.5-318.8"
   wire width 24 $0\relleno24
-  wire width 32 $auto$expression.cpp:2897:import_operation$250
-  wire width 32 $auto$expression.cpp:2897:import_operation$252
-  wire width 32 $auto$expression.cpp:2897:import_operation$254
+  wire width 32 $auto$expression.cpp:2911:import_operation$250
+  wire width 32 $auto$expression.cpp:2911:import_operation$252
+  wire width 32 $auto$expression.cpp:2911:import_operation$254
   attribute \src "MEMORY_INTERFACE.v:227.43-227.61"
   wire $eq$MEMORY_INTERFACE.v:227$256_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$259
@@ -2904,8 +2857,8 @@ module \MEMORY_INTERFACE
   wire $eq$MEMORY_INTERFACE.v:232$260_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$263
   wire width 4 $auto$rtlil.cc:3390:Mux$265
-  wire width 4 $auto$expression.cpp:3084:import_operation$266
-  wire width 32 $auto$expression.cpp:2897:import_operation$268
+  wire width 4 $auto$expression.cpp:3098:import_operation$266
+  wire width 32 $auto$expression.cpp:2911:import_operation$268
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   wire $eq$MEMORY_INTERFACE.v:258$270_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$273
@@ -3340,7 +3293,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$250
+    connect \Y $auto$expression.cpp:2911:import_operation$250
   end
   attribute \src "MEMORY_INTERFACE.v:212.24-212.31"
   cell $add $add$MEMORY_INTERFACE.v:212$253
@@ -3351,7 +3304,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$252
+    connect \Y $auto$expression.cpp:2911:import_operation$252
   end
   attribute \src "MEMORY_INTERFACE.v:224.26-224.33"
   cell $add $add$MEMORY_INTERFACE.v:224$255
@@ -3362,7 +3315,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$254
+    connect \Y $auto$expression.cpp:2911:import_operation$254
   end
   attribute \src "MEMORY_INTERFACE.v:227.43-227.61"
   cell $eq $eq$MEMORY_INTERFACE.v:227$257
@@ -3416,7 +3369,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:3084:import_operation$266
+    connect \Y $auto$expression.cpp:3098:import_operation$266
   end
   attribute \src "MEMORY_INTERFACE.v:255.25-255.32"
   cell $add $add$MEMORY_INTERFACE.v:255$269
@@ -3427,7 +3380,7 @@ module \MEMORY_INTERFACE
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$268
+    connect \Y $auto$expression.cpp:2911:import_operation$268
   end
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   cell $eq $eq$MEMORY_INTERFACE.v:258$271
@@ -3777,9 +3730,9 @@ module \MEMORY_INTERFACE
     assign $0\en_instr 1'0
     assign $0\rd_en 1'0
     assign $0\awprot 3'000
-    assign $0\AWdata $auto$expression.cpp:2897:import_operation$250
+    assign $0\AWdata $auto$expression.cpp:2911:import_operation$250
     assign $0\arprot 3'000
-    assign $0\ARdata $auto$expression.cpp:2897:import_operation$252
+    assign $0\ARdata $auto$expression.cpp:2911:import_operation$252
     assign $0\align 1'1
     assign $0\Wdataq 0
     assign $0\Wstrbq 4'0000
@@ -3792,7 +3745,7 @@ module \MEMORY_INTERFACE
       case 2'00
         assign $0\en_instr 1'0
         assign $0\awprot 3'000
-        assign $0\AWdata $auto$expression.cpp:2897:import_operation$254
+        assign $0\AWdata $auto$expression.cpp:2911:import_operation$254
         attribute \src "MEMORY_INTERFACE.v:225.17-241.24"
         switch \wordsize
         attribute \src "MEMORY_INTERFACE.v:226.21-230.24"
@@ -3822,7 +3775,7 @@ module \MEMORY_INTERFACE
         attribute \src "MEMORY_INTERFACE.v:236.21-240.24"
           case 2'00
             assign $0\align 1'1
-            assign $0\Wstrbq $auto$expression.cpp:3084:import_operation$266
+            assign $0\Wstrbq $auto$expression.cpp:3098:import_operation$266
             assign $0\Wdataq { \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] }
         end
     attribute \src "MEMORY_INTERFACE.v:244.13-249.16"
@@ -3835,7 +3788,7 @@ module \MEMORY_INTERFACE
       case 2'01
         assign $0\arprot 3'000
         assign $0\en_instr 1'0
-        assign $0\ARdata $auto$expression.cpp:2897:import_operation$268
+        assign $0\ARdata $auto$expression.cpp:2911:import_operation$268
         attribute \src "MEMORY_INTERFACE.v:252.17-252.37"
         switch \en_read
         attribute \src "MEMORY_INTERFACE.v:252.17-252.37"
@@ -4030,13 +3983,10 @@ module \MULT
   attribute \src "MULT.v:110.13-110.17"
   wire output 9 \Done
   attribute \src "MULT.v:116.21-116.26"
-  attribute \reg 1
   wire width 5 \cont1
   attribute \src "MULT.v:116.27-116.32"
-  attribute \reg 1
   wire width 5 \cont2
   attribute \src "MULT.v:116.33-116.38"
-  attribute \reg 1
   wire width 5 \cont3
   attribute \src "MULT.v:117.13-117.17"
   wire width 64 \Out1
@@ -4053,22 +4003,16 @@ module \MULT
   attribute \src "MULT.v:118.29-118.36"
   wire width 3 \OutFSM3
   attribute \src "MULT.v:119.12-119.14"
-  attribute \reg 1
   wire width 17 \X1
   attribute \src "MULT.v:119.15-119.17"
-  attribute \reg 1
   wire width 17 \X0
   attribute \src "MULT.v:119.18-119.20"
-  attribute \reg 1
   wire width 17 \Y1
   attribute \src "MULT.v:119.21-119.23"
-  attribute \reg 1
   wire width 17 \Y0
   attribute \src "MULT.v:120.12-120.14"
-  attribute \reg 1
   wire width 18 \M1
   attribute \src "MULT.v:120.15-120.17"
-  attribute \reg 1
   wire width 18 \M2
   attribute \src "MULT.v:121.14-121.16"
   wire width 34 \Z0
@@ -4083,31 +4027,22 @@ module \MULT
   attribute \src "MULT.v:122.30-122.33"
   wire width 36 \NZ0
   attribute \src "MULT.v:123.13-123.16"
-  attribute \reg 1
   wire width 32 \ss1
   attribute \src "MULT.v:123.17-123.20"
-  attribute \reg 1
   wire width 32 \ss2
   attribute \src "MULT.v:123.21-123.24"
-  attribute \reg 1
   wire width 32 \srd
   attribute \src "MULT.v:124.13-124.20"
-  attribute \reg 1
   wire width 17 \ss1_ss1
   attribute \src "MULT.v:125.13-125.20"
-  attribute \reg 1
   wire width 17 \ss2_ss2
   attribute \src "MULT.v:126.13-126.16"
-  attribute \reg 1
   wire width 64 \rdu
   attribute \src "MULT.v:127.6-127.9"
-  attribute \reg 1
   wire \sig
   attribute \src "MULT.v:127.10-127.15"
-  attribute \reg 1
   wire \signo
   attribute \src "MULT.v:128.13-128.15"
-  attribute \reg 1
   wire width 12 \Op
   attribute \src "MULT.v:129.7-129.16"
   wire \EnableMul
@@ -4127,12 +4062,12 @@ module \MULT
   wire width 36 $auto$module.cpp:1124:import_continuous_assign$297
   wire width 34 $auto$expression.cpp:2698:import_operation$299
   wire width 36 $auto$module.cpp:1124:import_continuous_assign$301
-  wire width 36 $auto$expression.cpp:2897:import_operation$303
-  wire width 36 $auto$expression.cpp:2897:import_operation$305
-  wire width 64 $auto$expression.cpp:3084:import_operation$307
-  wire width 64 $auto$expression.cpp:3084:import_operation$309
-  wire width 64 $auto$expression.cpp:2897:import_operation$311
-  wire width 64 $auto$expression.cpp:2897:import_operation$313
+  wire width 36 $auto$expression.cpp:2911:import_operation$303
+  wire width 36 $auto$expression.cpp:2911:import_operation$305
+  wire width 64 $auto$expression.cpp:3098:import_operation$307
+  wire width 64 $auto$expression.cpp:3098:import_operation$309
+  wire width 64 $auto$expression.cpp:2911:import_operation$311
+  wire width 64 $auto$expression.cpp:2911:import_operation$313
   attribute \src "MULT.v:143.2-196.5"
   wire width 32 $0\ss1
   attribute \src "MULT.v:143.2-196.5"
@@ -4160,20 +4095,20 @@ module \MULT
   attribute \src "MULT.v:143.2-196.5"
   wire width 18 $0\M2
   wire width 32 $auto$rtlil.cc:3255:Not$317
-  wire width 32 $auto$expression.cpp:2897:import_operation$318
+  wire width 32 $auto$expression.cpp:2911:import_operation$318
   wire width 32 $auto$rtlil.cc:3255:Not$321
-  wire width 32 $auto$expression.cpp:2897:import_operation$322
+  wire width 32 $auto$expression.cpp:2911:import_operation$322
   wire $auto$rtlil.cc:3304:Xor$325
   wire width 32 $auto$rtlil.cc:3255:Not$327
-  wire width 32 $auto$expression.cpp:2897:import_operation$328
-  wire width 17 $auto$expression.cpp:2897:import_operation$330
-  wire width 17 $auto$expression.cpp:2897:import_operation$332
+  wire width 32 $auto$expression.cpp:2911:import_operation$328
+  wire width 17 $auto$expression.cpp:2911:import_operation$330
+  wire width 17 $auto$expression.cpp:2911:import_operation$332
   attribute \src "MULT.v:211.2-223.5"
   wire $0\Done[0:0]
   attribute \src "MULT.v:211.2-223.5"
   wire width 64 $0\rdu[63:0]
   wire width 64 $auto$rtlil.cc:3255:Not$336
-  wire width 64 $auto$expression.cpp:2897:import_operation$337
+  wire width 64 $auto$expression.cpp:2911:import_operation$337
   attribute \src "MULT.v:226.2-228.45"
   wire width 5 $0\cont1[4:0]
   attribute \src "MULT.v:227.7-227.15"
@@ -4183,7 +4118,7 @@ module \MULT
   wire $auto$rtlil.cc:3323:LogicOr$345
   attribute \src "MULT.v:228.12-228.25"
   wire $eq$MULT.v:228$346_Y
-  wire width 5 $auto$expression.cpp:2897:import_operation$348
+  wire width 5 $auto$expression.cpp:2911:import_operation$348
   attribute \src "MULT.v:230.2-232.45"
   wire width 5 $0\cont2[4:0]
   attribute \src "MULT.v:231.7-231.15"
@@ -4193,7 +4128,7 @@ module \MULT
   wire $auto$rtlil.cc:3323:LogicOr$356
   attribute \src "MULT.v:232.12-232.25"
   wire $eq$MULT.v:232$357_Y
-  wire width 5 $auto$expression.cpp:2897:import_operation$359
+  wire width 5 $auto$expression.cpp:2911:import_operation$359
   attribute \src "MULT.v:234.2-236.45"
   wire width 5 $0\cont3[4:0]
   attribute \src "MULT.v:235.7-235.15"
@@ -4203,7 +4138,7 @@ module \MULT
   wire $auto$rtlil.cc:3323:LogicOr$367
   attribute \src "MULT.v:236.12-236.25"
   wire $eq$MULT.v:236$368_Y
-  wire width 5 $auto$expression.cpp:2897:import_operation$370
+  wire width 5 $auto$expression.cpp:2911:import_operation$370
   cell $mux $mux$MULT.v:197$281
     parameter \WIDTH 32
     connect \A 32'0000000000000000000000--zzzzzzzz
@@ -4314,7 +4249,7 @@ module \MULT
     parameter \Y_WIDTH 36
     connect \A \Z1
     connect \B \NZ2
-    connect \Y $auto$expression.cpp:2897:import_operation$303
+    connect \Y $auto$expression.cpp:2911:import_operation$303
   end
   attribute \src "MULT.v:204.21-204.31"
   cell $add $add$MULT.v:204$306
@@ -4323,9 +4258,9 @@ module \MULT
     parameter \A_WIDTH 36
     parameter \B_WIDTH 36
     parameter \Y_WIDTH 36
-    connect \A $auto$expression.cpp:2897:import_operation$303
+    connect \A $auto$expression.cpp:2911:import_operation$303
     connect \B \NZ0
-    connect \Y $auto$expression.cpp:2897:import_operation$305
+    connect \Y $auto$expression.cpp:2911:import_operation$305
   end
   attribute \src "MULT.v:205.16-205.22"
   cell $shl $shl$MULT.v:205$308
@@ -4336,7 +4271,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A \Z2
     connect \B 64'0000000000000000000000000000000000000000000000000000000000100000
-    connect \Y $auto$expression.cpp:3084:import_operation$307
+    connect \Y $auto$expression.cpp:3098:import_operation$307
   end
   attribute \src "MULT.v:206.16-206.50"
   cell $shl $shl$MULT.v:206$310
@@ -4347,7 +4282,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A { \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 [33] \Z1_Z2_Z0 }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010000
-    connect \Y $auto$expression.cpp:3084:import_operation$309
+    connect \Y $auto$expression.cpp:3098:import_operation$309
   end
   attribute \src "MULT.v:208.15-208.24"
   cell $add $add$MULT.v:208$312
@@ -4358,7 +4293,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A \Out2
     connect \B \Out1
-    connect \Y $auto$expression.cpp:2897:import_operation$311
+    connect \Y $auto$expression.cpp:2911:import_operation$311
   end
   attribute \src "MULT.v:208.15-208.29"
   cell $add $add$MULT.v:208$314
@@ -4367,9 +4302,9 @@ module \MULT
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A $auto$expression.cpp:2897:import_operation$311
+    connect \A $auto$expression.cpp:2911:import_operation$311
     connect \B \Out0
-    connect \Y $auto$expression.cpp:2897:import_operation$313
+    connect \Y $auto$expression.cpp:2911:import_operation$313
   end
   attribute \src "MULT.v:147.24-147.28"
   cell $not $not$MULT.v:147$316
@@ -4388,7 +4323,7 @@ module \MULT
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3255:Not$317
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$318
+    connect \Y $auto$expression.cpp:2911:import_operation$318
   end
   attribute \src "MULT.v:149.24-149.28"
   cell $not $not$MULT.v:149$320
@@ -4407,7 +4342,7 @@ module \MULT
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3255:Not$321
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$322
+    connect \Y $auto$expression.cpp:2911:import_operation$322
   end
   attribute \src "MULT.v:151.11-151.28"
   cell $xor $xor$MULT.v:151$324
@@ -4437,7 +4372,7 @@ module \MULT
     parameter \Y_WIDTH 32
     connect \A $auto$rtlil.cc:3255:Not$327
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$328
+    connect \Y $auto$expression.cpp:2911:import_operation$328
   end
   attribute \src "MULT.v:192.13-192.35"
   cell $add $add$MULT.v:192$331
@@ -4448,7 +4383,7 @@ module \MULT
     parameter \Y_WIDTH 17
     connect \A { 1'0 \ss1 [31:16] }
     connect \B { 1'0 \ss1 [15:0] }
-    connect \Y $auto$expression.cpp:2897:import_operation$330
+    connect \Y $auto$expression.cpp:2911:import_operation$330
   end
   attribute \src "MULT.v:194.13-194.35"
   cell $add $add$MULT.v:194$333
@@ -4459,7 +4394,7 @@ module \MULT
     parameter \Y_WIDTH 17
     connect \A { 1'0 \ss2 [31:16] }
     connect \B { 1'0 \ss2 [15:0] }
-    connect \Y $auto$expression.cpp:2897:import_operation$332
+    connect \Y $auto$expression.cpp:2911:import_operation$332
   end
   attribute \src "MULT.v:213.18-213.22"
   cell $not $not$MULT.v:213$335
@@ -4478,7 +4413,7 @@ module \MULT
     parameter \Y_WIDTH 64
     connect \A $auto$rtlil.cc:3255:Not$336
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$337
+    connect \Y $auto$expression.cpp:2911:import_operation$337
   end
   attribute \src "MULT.v:227.7-227.15"
   cell $eq $eq$MULT.v:227$341
@@ -4532,7 +4467,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont1
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2897:import_operation$348
+    connect \Y $auto$expression.cpp:2911:import_operation$348
   end
   attribute \src "MULT.v:231.7-231.15"
   cell $eq $eq$MULT.v:231$352
@@ -4586,7 +4521,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont2
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2897:import_operation$359
+    connect \Y $auto$expression.cpp:2911:import_operation$359
   end
   attribute \src "MULT.v:235.7-235.15"
   cell $eq $eq$MULT.v:235$363
@@ -4640,7 +4575,7 @@ module \MULT
     parameter \Y_WIDTH 5
     connect \A \cont3
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2897:import_operation$370
+    connect \Y $auto$expression.cpp:2911:import_operation$370
   end
   cell $paramod\FSM_Booth\COUNT_BIT=s32'00000000000000000000000000000101\BITS_BOOTH=s32'00000000000000000000000000010000 \u1
     connect \clk \clk
@@ -4712,10 +4647,10 @@ module \MULT
     assign $0\X0 { 1'0 \ss1 [15:0] }
     assign $0\Y1 { 1'0 \ss2 [31:16] }
     assign $0\Y0 { 1'0 \ss2 [15:0] }
-    assign $0\ss1_ss1 $auto$expression.cpp:2897:import_operation$330
-    assign $0\M1 { 1'0 $auto$expression.cpp:2897:import_operation$330 }
-    assign $0\ss2_ss2 $auto$expression.cpp:2897:import_operation$332
-    assign $0\M2 { 1'0 $auto$expression.cpp:2897:import_operation$332 }
+    assign $0\ss1_ss1 $auto$expression.cpp:2911:import_operation$330
+    assign $0\M1 { 1'0 $auto$expression.cpp:2911:import_operation$330 }
+    assign $0\ss2_ss2 $auto$expression.cpp:2911:import_operation$332
+    assign $0\M2 { 1'0 $auto$expression.cpp:2911:import_operation$332 }
     attribute \src "MULT.v:144.3-187.10"
     switch \codif
     attribute \src "MULT.v:145.4-154.7"
@@ -4727,7 +4662,7 @@ module \MULT
         switch \rs1 [31]
         attribute \src "MULT.v:147.5-148.20"
           case 1'1
-            assign $0\ss1 $auto$expression.cpp:2897:import_operation$318
+            assign $0\ss1 $auto$expression.cpp:2911:import_operation$318
         attribute \src "MULT.v:147.5-148.20"
           case 
             assign $0\ss1 \rs1
@@ -4736,7 +4671,7 @@ module \MULT
         switch \rs2 [31]
         attribute \src "MULT.v:149.5-150.20"
           case 1'1
-            assign $0\ss2 $auto$expression.cpp:2897:import_operation$322
+            assign $0\ss2 $auto$expression.cpp:2911:import_operation$322
         attribute \src "MULT.v:149.5-150.20"
           case 
             assign $0\ss2 \rs2
@@ -4751,7 +4686,7 @@ module \MULT
         switch \rs1 [31]
         attribute \src "MULT.v:157.5-158.20"
           case 1'1
-            assign $0\ss1 $auto$expression.cpp:2897:import_operation$328
+            assign $0\ss1 $auto$expression.cpp:2911:import_operation$328
         attribute \src "MULT.v:157.5-158.20"
           case 
             assign $0\ss1 \rs1
@@ -4807,7 +4742,7 @@ module \MULT
         switch \sig
         attribute \src "MULT.v:213.4-214.19"
           case 1'1
-            assign $0\rdu[63:0] $auto$expression.cpp:2897:import_operation$337
+            assign $0\rdu[63:0] $auto$expression.cpp:2911:import_operation$337
         attribute \src "MULT.v:213.4-214.19"
           case 
             assign $0\rdu[63:0] \Out
@@ -4845,7 +4780,7 @@ module \MULT
         switch $eq$MULT.v:228$346_Y
         attribute \src "MULT.v:228.8-228.45"
           case 1'1
-            assign $0\cont1[4:0] $auto$expression.cpp:2897:import_operation$348
+            assign $0\cont1[4:0] $auto$expression.cpp:2911:import_operation$348
         attribute \src "MULT.v:228.8-228.45"
           case 
         end
@@ -4868,7 +4803,7 @@ module \MULT
         switch $eq$MULT.v:232$357_Y
         attribute \src "MULT.v:232.8-232.45"
           case 1'1
-            assign $0\cont2[4:0] $auto$expression.cpp:2897:import_operation$359
+            assign $0\cont2[4:0] $auto$expression.cpp:2911:import_operation$359
         attribute \src "MULT.v:232.8-232.45"
           case 
         end
@@ -4891,7 +4826,7 @@ module \MULT
         switch $eq$MULT.v:236$368_Y
         attribute \src "MULT.v:236.8-236.45"
           case 1'1
-            assign $0\cont3[4:0] $auto$expression.cpp:2897:import_operation$370
+            assign $0\cont3[4:0] $auto$expression.cpp:2911:import_operation$370
         attribute \src "MULT.v:236.8-236.45"
           case 
         end
@@ -4904,11 +4839,11 @@ module \MULT
   connect \Ready $auto$rtlil.cc:3322:LogicAnd$294
   connect \NZ2 $auto$module.cpp:1124:import_continuous_assign$297
   connect \NZ0 $auto$module.cpp:1124:import_continuous_assign$301
-  connect \Z1_Z2_Z0 $auto$expression.cpp:2897:import_operation$305
-  connect \Out2 $auto$expression.cpp:3084:import_operation$307
-  connect \Out1 $auto$expression.cpp:3084:import_operation$309
+  connect \Z1_Z2_Z0 $auto$expression.cpp:2911:import_operation$305
+  connect \Out2 $auto$expression.cpp:3098:import_operation$307
+  connect \Out1 $auto$expression.cpp:3098:import_operation$309
   connect \Out0 { \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 [33] \Z0 }
-  connect \Out $auto$expression.cpp:2897:import_operation$313
+  connect \Out $auto$expression.cpp:2911:import_operation$313
 end
 attribute \cells_not_processed 1
 attribute \src "REG_FILE.v:40.1-73.10"
@@ -5000,28 +4935,20 @@ module \UTILITY
   attribute \src "UTILITY.v:17.19-17.26"
   wire output 14 \is_inst
   attribute \src "UTILITY.v:19.16-19.23"
-  attribute \reg 1
   wire width 64 \N_CYCLE
   attribute \src "UTILITY.v:19.26-19.35"
-  attribute \reg 1
   wire width 64 \N_INSTRUC
   attribute \src "UTILITY.v:19.38-19.47"
-  attribute \reg 1
   wire width 64 \REAL_TIME
   attribute \src "UTILITY.v:20.16-20.20"
-  attribute \reg 1
   wire width 32 \TIME
   attribute \src "UTILITY.v:20.23-20.27"
-  attribute \reg 1
   wire width 32 \rd_n
   attribute \src "UTILITY.v:20.30-20.34"
-  attribute \reg 1
   wire width 32 \PC_N
   attribute \src "UTILITY.v:20.37-20.42"
-  attribute \reg 1
   wire width 32 \PC_N2
   attribute \src "UTILITY.v:20.45-20.52"
-  attribute \reg 1
   wire width 32 \RD_DATA
   attribute \src "UTILITY.v:21.17-21.26"
   wire width 32 \PC_BRANCH
@@ -5030,14 +4957,14 @@ module \UTILITY
   attribute \src "UTILITY.v:21.39-21.46"
   wire width 32 \PC_ORIG
   wire width 32 $auto$rtlil.cc:3390:Mux$375
-  wire width 32 $auto$expression.cpp:2897:import_operation$376
-  wire width 32 $auto$expression.cpp:2897:import_operation$378
+  wire width 32 $auto$expression.cpp:2911:import_operation$376
+  wire width 32 $auto$expression.cpp:2911:import_operation$378
   wire width 32 $auto$rtlil.cc:3390:Mux$381
   attribute \src "UTILITY.v:24.5-28.12"
   wire width 64 $0\N_CYCLE[63:0]
   attribute \src "UTILITY.v:26.17-26.28"
   wire $eq$UTILITY.v:26$383_Y
-  wire width 64 $auto$expression.cpp:2897:import_operation$385
+  wire width 64 $auto$expression.cpp:2911:import_operation$385
   attribute \src "UTILITY.v:31.5-41.12"
   wire width 64 $0\REAL_TIME[63:0]
   attribute \src "UTILITY.v:31.5-41.12"
@@ -5046,13 +4973,13 @@ module \UTILITY
   wire $eq$UTILITY.v:33$388_Y
   attribute \src "UTILITY.v:36.25-36.34"
   wire $eq$UTILITY.v:36$390_Y
-  wire width 64 $auto$expression.cpp:2897:import_operation$392
-  wire width 32 $auto$expression.cpp:2897:import_operation$394
+  wire width 64 $auto$expression.cpp:2911:import_operation$392
+  wire width 32 $auto$expression.cpp:2911:import_operation$394
   attribute \src "UTILITY.v:44.5-48.12"
   wire width 64 $0\N_INSTRUC[63:0]
   attribute \src "UTILITY.v:46.17-46.28"
   wire $eq$UTILITY.v:46$397_Y
-  wire width 64 $auto$expression.cpp:2897:import_operation$399
+  wire width 64 $auto$expression.cpp:2911:import_operation$399
   attribute \src "UTILITY.v:52.5-61.16"
   wire width 32 $0\RD_DATA
   attribute \src "UTILITY.v:64.5-76.8"
@@ -5061,12 +4988,12 @@ module \UTILITY
   wire $0\is_inst
   attribute \src "UTILITY.v:64.5-76.8"
   wire width 32 $0\rd_n
-  wire width 32 $auto$expression.cpp:2897:import_operation$403
+  wire width 32 $auto$expression.cpp:2911:import_operation$403
   attribute \src "UTILITY.v:84.5-97.8"
   wire width 32 $0\PC_N
   attribute \src "UTILITY.v:87.21-87.46"
   wire $eq$UTILITY.v:87$406_Y
-  wire width 32 $auto$expression.cpp:2897:import_operation$408
+  wire width 32 $auto$expression.cpp:2911:import_operation$408
   attribute \src "UTILITY.v:100.5-104.12"
   wire width 32 $0\PC_N2[31:0]
   attribute \src "UTILITY.v:102.17-102.28"
@@ -5087,7 +5014,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \PC_N2
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$376
+    connect \Y $auto$expression.cpp:2911:import_operation$376
   end
   attribute \src "UTILITY.v:82.22-82.31"
   cell $add $add$UTILITY.v:82$379
@@ -5098,7 +5025,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \PC_N2
     connect \B 4
-    connect \Y $auto$expression.cpp:2897:import_operation$378
+    connect \Y $auto$expression.cpp:2911:import_operation$378
   end
   cell $mux $mux$UTILITY.v:83$380
     parameter \WIDTH 32
@@ -5127,7 +5054,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \N_CYCLE
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$385
+    connect \Y $auto$expression.cpp:2911:import_operation$385
   end
   attribute \src "UTILITY.v:33.17-33.28"
   cell $eq $eq$UTILITY.v:33$389
@@ -5160,7 +5087,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \REAL_TIME
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$392
+    connect \Y $auto$expression.cpp:2911:import_operation$392
   end
   attribute \src "UTILITY.v:40.25-40.33"
   cell $add $add$UTILITY.v:40$395
@@ -5171,7 +5098,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \TIME
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$394
+    connect \Y $auto$expression.cpp:2911:import_operation$394
   end
   attribute \src "UTILITY.v:46.17-46.28"
   cell $eq $eq$UTILITY.v:46$398
@@ -5193,7 +5120,7 @@ module \UTILITY
     parameter \Y_WIDTH 64
     connect \A \N_INSTRUC
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$399
+    connect \Y $auto$expression.cpp:2911:import_operation$399
   end
   attribute \src "UTILITY.v:72.39-72.48"
   cell $add $add$UTILITY.v:72$404
@@ -5204,7 +5131,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \PC_N2
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$403
+    connect \Y $auto$expression.cpp:2911:import_operation$403
   end
   attribute \src "UTILITY.v:87.21-87.46"
   cell $eq $eq$UTILITY.v:87$407
@@ -5226,7 +5153,7 @@ module \UTILITY
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$408
+    connect \Y $auto$expression.cpp:2911:import_operation$408
   end
   attribute \src "UTILITY.v:102.17-102.28"
   cell $eq $eq$UTILITY.v:102$412
@@ -5250,7 +5177,7 @@ module \UTILITY
         assign $0\N_CYCLE[63:0] 64'0000000000000000000000000000000000000000000000000000000000000000
     attribute \src "UTILITY.v:27.19-27.41"
       case 
-        assign $0\N_CYCLE[63:0] $auto$expression.cpp:2897:import_operation$385
+        assign $0\N_CYCLE[63:0] $auto$expression.cpp:2911:import_operation$385
     end
     sync posedge \clk
       update \N_CYCLE $0\N_CYCLE[63:0]
@@ -5273,10 +5200,10 @@ module \UTILITY
         attribute \src "UTILITY.v:36.22-40.34"
           case 1'1
             assign $0\TIME[31:0] 0
-            assign $0\REAL_TIME[63:0] $auto$expression.cpp:2897:import_operation$392
+            assign $0\REAL_TIME[63:0] $auto$expression.cpp:2911:import_operation$392
         attribute \src "UTILITY.v:36.22-40.34"
           case 
-            assign $0\TIME[31:0] $auto$expression.cpp:2897:import_operation$394
+            assign $0\TIME[31:0] $auto$expression.cpp:2911:import_operation$394
         end
     end
     sync posedge \clk
@@ -5298,7 +5225,7 @@ module \UTILITY
         switch \enable_pc
         attribute \src "UTILITY.v:47.18-47.61"
           case 1'1
-            assign $0\N_INSTRUC[63:0] $auto$expression.cpp:2897:import_operation$399
+            assign $0\N_INSTRUC[63:0] $auto$expression.cpp:2911:import_operation$399
         attribute \src "UTILITY.v:47.18-47.61"
           case 
         end
@@ -5357,7 +5284,7 @@ module \UTILITY
         assign $0\rd_n \PC_ORIG
     attribute \src "UTILITY.v:72.13-72.49"
       case 12'000000010111
-        assign $0\rd_n $auto$expression.cpp:2897:import_operation$403
+        assign $0\rd_n $auto$expression.cpp:2911:import_operation$403
     attribute \src "UTILITY.v:73.13-73.43"
       case 12'000000110111
         assign $0\rd_n \imm
@@ -5392,7 +5319,7 @@ module \UTILITY
             switch \opcode
             attribute \src "UTILITY.v:91.17-91.50"
               case 12'000001100111
-                assign $0\PC_N $auto$expression.cpp:2897:import_operation$408
+                assign $0\PC_N $auto$expression.cpp:2911:import_operation$408
             attribute \src "UTILITY.v:92.17-92.52"
               case 12'000001101111
                 assign $0\PC_N \PC_SALTOS
@@ -5432,8 +5359,8 @@ module \UTILITY
       update \PC_N2 $0\PC_N2[31:0]
   end
   connect \rd $auto$rtlil.cc:3390:Mux$375
-  connect \PC_SALTOS $auto$expression.cpp:2897:import_operation$376
-  connect \PC_ORIG $auto$expression.cpp:2897:import_operation$378
+  connect \PC_SALTOS $auto$expression.cpp:2911:import_operation$376
+  connect \PC_ORIG $auto$expression.cpp:2911:import_operation$378
   connect \PC_BRANCH $auto$rtlil.cc:3390:Mux$381
   connect \pc \PC_N2
 end
@@ -5451,7 +5378,6 @@ module \divM
   attribute \src "IRQ.v:7.16-7.23"
   wire output 5 \clk_out
   attribute \src "IRQ.v:23.17-23.27"
-  attribute \reg 1
   wire width 32 \divcounter
   attribute \src "IRQ.v:26.5-37.12"
   wire $0\clk_out[0:0]
@@ -5462,10 +5388,10 @@ module \divM
   attribute \src "IRQ.v:27.23-27.30"
   wire $logic_not$IRQ.v:27.23-27.30$35_Y
   wire $auto$rtlil.cc:3323:LogicOr$415
-  wire width 64 $auto$expression.cpp:2952:import_operation$416
+  wire width 64 $auto$expression.cpp:2966:import_operation$416
   attribute \src "IRQ.v:31.22-31.44"
   wire $eq$IRQ.v:31$418_Y
-  wire width 32 $auto$expression.cpp:2897:import_operation$420
+  wire width 32 $auto$expression.cpp:2911:import_operation$420
   attribute \src "IRQ.v:27.13-27.19"
   cell $logic_not $logic_not$IRQ.v:27.13-27.19$34
     parameter \A_SIGNED 0
@@ -5501,7 +5427,7 @@ module \divM
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \freq }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2952:import_operation$416
+    connect \Y $auto$expression.cpp:2966:import_operation$416
   end
   attribute \src "IRQ.v:31.22-31.44"
   cell $eq $eq$IRQ.v:31$419
@@ -5511,7 +5437,7 @@ module \divM
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
     connect \A \divcounter
-    connect \B $auto$expression.cpp:2952:import_operation$416
+    connect \B $auto$expression.cpp:2966:import_operation$416
     connect \Y $eq$IRQ.v:31$418_Y
   end
   attribute \src "IRQ.v:35.26-35.40"
@@ -5523,7 +5449,7 @@ module \divM
     parameter \Y_WIDTH 32
     connect \A \divcounter
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$420
+    connect \Y $auto$expression.cpp:2911:import_operation$420
   end
   attribute \src "IRQ.v:26.5-37.12"
   attribute \always_ff 1
@@ -5546,7 +5472,7 @@ module \divM
             assign $0\clk_out[0:0] 1'1
         attribute \src "IRQ.v:31.18-37.12"
           case 
-            assign $0\divcounter[31:0] $auto$expression.cpp:2897:import_operation$420
+            assign $0\divcounter[31:0] $auto$expression.cpp:2911:import_operation$420
             assign $0\clk_out[0:0] 1'0
         end
     end
@@ -5961,20 +5887,19 @@ module \true_dpram_sclk
   attribute \src "REG_FILE.v:22.25-22.28"
   wire width 32 output 8 \q_b
   attribute \src "REG_FILE.v:25.13-25.16"
-  attribute \reg 1
   wire width 32 \ram
-  wire $auto$expression.cpp:4563:import_bit_select$445
+  wire $auto$expression.cpp:4577:import_bit_select$445
   attribute \src "REG_FILE.v:28.2-36.5"
-  wire $0\$auto$expression.cpp:4563:import_bit_select$445
+  wire $0\$auto$expression.cpp:4577:import_bit_select$445
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_a
   attribute \src "REG_FILE.v:28.2-36.5"
   wire width 32 $0\q_b
-  wire $auto$expression.cpp:4563:import_bit_select$447
-  wire $auto$expression.cpp:4563:import_bit_select$449
+  wire $auto$expression.cpp:4577:import_bit_select$447
+  wire $auto$expression.cpp:4577:import_bit_select$449
   wire $auto$rtlil.cc:3262:ReduceBool$452
   wire width 32 $auto$rtlil.cc:3390:Mux$454
-  wire $auto$expression.cpp:4563:import_bit_select$455
+  wire $auto$expression.cpp:4577:import_bit_select$455
   wire $auto$rtlil.cc:3262:ReduceBool$458
   wire width 32 $auto$rtlil.cc:3390:Mux$460
   attribute \src "REG_FILE.v:32.4-32.15"
@@ -5986,7 +5911,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4563:import_bit_select$445
+    connect \Y $auto$expression.cpp:4577:import_bit_select$445
   end
   attribute \src "REG_FILE.v:32.4-32.15"
   cell $shiftx $shiftx$REG_FILE.v:32$448
@@ -5997,7 +5922,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4563:import_bit_select$447
+    connect \Y $auto$expression.cpp:4577:import_bit_select$447
   end
   attribute \src "REG_FILE.v:34.21-34.27"
   cell $shiftx $shiftx$REG_FILE.v:34$450
@@ -6008,7 +5933,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_a
-    connect \Y $auto$expression.cpp:4563:import_bit_select$449
+    connect \Y $auto$expression.cpp:4577:import_bit_select$449
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:34$451
     parameter \A_SIGNED 0
@@ -6020,7 +5945,7 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:34$453
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4563:import_bit_select$449 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4577:import_bit_select$449 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$452
     connect \Y $auto$rtlil.cc:3390:Mux$454
   end
@@ -6033,7 +5958,7 @@ module \true_dpram_sclk
     parameter \Y_WIDTH 1
     connect \A \ram
     connect \B \addr_b
-    connect \Y $auto$expression.cpp:4563:import_bit_select$455
+    connect \Y $auto$expression.cpp:4577:import_bit_select$455
   end
   cell $reduce_bool $reduce_bool$REG_FILE.v:35$457
     parameter \A_SIGNED 0
@@ -6045,26 +5970,26 @@ module \true_dpram_sclk
   cell $mux $mux$REG_FILE.v:35$459
     parameter \WIDTH 32
     connect \A 0
-    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4563:import_bit_select$455 }
+    connect \B { 31'0000000000000000000000000000000 $auto$expression.cpp:4577:import_bit_select$455 }
     connect \S $auto$rtlil.cc:3262:ReduceBool$458
     connect \Y $auto$rtlil.cc:3390:Mux$460
   end
   attribute \src "REG_FILE.v:28.2-36.5"
   attribute \always_ff 1
   process $proc$REG_FILE.v:28$444
-    assign $0\$auto$expression.cpp:4563:import_bit_select$445 $auto$expression.cpp:4563:import_bit_select$445
+    assign $0\$auto$expression.cpp:4577:import_bit_select$445 $auto$expression.cpp:4577:import_bit_select$445
     assign $0\q_a $auto$rtlil.cc:3390:Mux$454
     assign $0\q_b $auto$rtlil.cc:3390:Mux$460
     attribute \src "REG_FILE.v:30.3-33.6"
     switch \we_a
     attribute \src "REG_FILE.v:30.3-33.6"
       case 1'1
-        assign $0\$auto$expression.cpp:4563:import_bit_select$445 \data_a [0]
+        assign $0\$auto$expression.cpp:4577:import_bit_select$445 \data_a [0]
     attribute \src "REG_FILE.v:30.3-33.6"
       case 
     end
     sync posedge \clk
-      update $auto$expression.cpp:4563:import_bit_select$445 $0\$auto$expression.cpp:4563:import_bit_select$445
+      update $auto$expression.cpp:4577:import_bit_select$445 $0\$auto$expression.cpp:4577:import_bit_select$445
       update \q_a $0\q_a
       update \q_b $0\q_b
   end
@@ -6334,34 +6259,24 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   attribute \src "MEMORY_INTERFACE.v:37.16-37.21"
   wire output 33 \rd_en
   attribute \src "MEMORY_INTERFACE.v:42.16-42.25"
-  attribute \reg 1
   wire width 16 \relleno16
   attribute \src "MEMORY_INTERFACE.v:43.16-43.25"
-  attribute \reg 1
   wire width 24 \relleno24
   attribute \src "MEMORY_INTERFACE.v:44.16-44.22"
-  attribute \reg 1
   wire width 32 \Rdataq
   attribute \src "MEMORY_INTERFACE.v:44.23-44.29"
-  attribute \reg 1
   wire width 32 \Wdataq
   attribute \src "MEMORY_INTERFACE.v:45.15-45.21"
-  attribute \reg 1
   wire width 4 \Wstrbq
   attribute \src "MEMORY_INTERFACE.v:46.16-46.19"
-  attribute \reg 1
   wire width 32 \rdu
   attribute \src "MEMORY_INTERFACE.v:47.9-47.17"
-  attribute \reg 1
   wire \en_instr
   attribute \src "MEMORY_INTERFACE.v:48.9-48.16"
-  attribute \reg 1
   wire \en_read
   attribute \src "MEMORY_INTERFACE.v:53.15-53.20"
-  attribute \reg 1
   wire width 4 \state
   attribute \src "MEMORY_INTERFACE.v:53.21-53.29"
-  attribute \reg 1
   wire width 4 \nexstate
   wire width 32 $auto$rtlil.cc:3390:Mux$462
   attribute \src "MEMORY_INTERFACE.v:66.5-194.8"
@@ -6470,9 +6385,9 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   wire width 16 $0\relleno16
   attribute \src "MEMORY_INTERFACE.v:205.5-318.8"
   wire width 24 $0\relleno24
-  wire width 32 $auto$expression.cpp:2897:import_operation$524
-  wire width 32 $auto$expression.cpp:2897:import_operation$526
-  wire width 32 $auto$expression.cpp:2897:import_operation$528
+  wire width 32 $auto$expression.cpp:2911:import_operation$524
+  wire width 32 $auto$expression.cpp:2911:import_operation$526
+  wire width 32 $auto$expression.cpp:2911:import_operation$528
   attribute \src "MEMORY_INTERFACE.v:227.43-227.61"
   wire $eq$MEMORY_INTERFACE.v:227$530_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$533
@@ -6480,8 +6395,8 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
   wire $eq$MEMORY_INTERFACE.v:232$534_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$537
   wire width 4 $auto$rtlil.cc:3390:Mux$539
-  wire width 4 $auto$expression.cpp:3084:import_operation$540
-  wire width 32 $auto$expression.cpp:2897:import_operation$542
+  wire width 4 $auto$expression.cpp:3098:import_operation$540
+  wire width 32 $auto$expression.cpp:2911:import_operation$542
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   wire $eq$MEMORY_INTERFACE.v:258$544_Y
   wire width 64 $auto$rtlil.cc:3390:Mux$547
@@ -6916,7 +6831,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$524
+    connect \Y $auto$expression.cpp:2911:import_operation$524
   end
   attribute \src "MEMORY_INTERFACE.v:212.24-212.31"
   cell $add $add$MEMORY_INTERFACE.v:212$527
@@ -6927,7 +6842,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$526
+    connect \Y $auto$expression.cpp:2911:import_operation$526
   end
   attribute \src "MEMORY_INTERFACE.v:224.26-224.33"
   cell $add $add$MEMORY_INTERFACE.v:224$529
@@ -6938,7 +6853,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$528
+    connect \Y $auto$expression.cpp:2911:import_operation$528
   end
   attribute \src "MEMORY_INTERFACE.v:227.43-227.61"
   cell $eq $eq$MEMORY_INTERFACE.v:227$531
@@ -6992,7 +6907,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 4
     connect \A 4'0001
     connect \B \ARdata [1:0]
-    connect \Y $auto$expression.cpp:3084:import_operation$540
+    connect \Y $auto$expression.cpp:3098:import_operation$540
   end
   attribute \src "MEMORY_INTERFACE.v:255.25-255.32"
   cell $add $add$MEMORY_INTERFACE.v:255$543
@@ -7003,7 +6918,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \imm
-    connect \Y $auto$expression.cpp:2897:import_operation$542
+    connect \Y $auto$expression.cpp:2911:import_operation$542
   end
   attribute \src "MEMORY_INTERFACE.v:258.43-258.57"
   cell $eq $eq$MEMORY_INTERFACE.v:258$545
@@ -7353,9 +7268,9 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
     assign $0\en_instr 1'0
     assign $0\rd_en 1'0
     assign $0\awprot 3'000
-    assign $0\AWdata $auto$expression.cpp:2897:import_operation$524
+    assign $0\AWdata $auto$expression.cpp:2911:import_operation$524
     assign $0\arprot 3'000
-    assign $0\ARdata $auto$expression.cpp:2897:import_operation$526
+    assign $0\ARdata $auto$expression.cpp:2911:import_operation$526
     assign $0\align 1'1
     assign $0\Wdataq 0
     assign $0\Wstrbq 4'0000
@@ -7368,7 +7283,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
       case 2'00
         assign $0\en_instr 1'0
         assign $0\awprot 3'000
-        assign $0\AWdata $auto$expression.cpp:2897:import_operation$528
+        assign $0\AWdata $auto$expression.cpp:2911:import_operation$528
         attribute \src "MEMORY_INTERFACE.v:225.17-241.24"
         switch \wordsize
         attribute \src "MEMORY_INTERFACE.v:226.21-230.24"
@@ -7398,7 +7313,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
         attribute \src "MEMORY_INTERFACE.v:236.21-240.24"
           case 2'00
             assign $0\align 1'1
-            assign $0\Wstrbq $auto$expression.cpp:3084:import_operation$540
+            assign $0\Wstrbq $auto$expression.cpp:3098:import_operation$540
             assign $0\Wdataq { \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] \rs2 [7:0] }
         end
     attribute \src "MEMORY_INTERFACE.v:244.13-249.16"
@@ -7411,7 +7326,7 @@ module $paramod\MEMORY_INTERFACE\reposo=s32'00000000000000000000000000000000\ini
       case 2'01
         assign $0\arprot 3'000
         assign $0\en_instr 1'0
-        assign $0\ARdata $auto$expression.cpp:2897:import_operation$542
+        assign $0\ARdata $auto$expression.cpp:2911:import_operation$542
         attribute \src "MEMORY_INTERFACE.v:252.17-252.37"
         switch \en_read
         attribute \src "MEMORY_INTERFACE.v:252.17-252.37"
@@ -7616,13 +7531,10 @@ module $paramod\ALU\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32'000
   attribute \src "ALU.v:22.12-22.19"
   wire output 12 \is_inst
   attribute \src "ALU.v:24.16-24.21"
-  attribute \reg 1
   wire width 32 \oper2
   attribute \src "ALU.v:25.16-25.26"
-  attribute \reg 1
   wire width 32 \OUT_Alu_rd
   attribute \src "ALU.v:27.16-27.23"
-  attribute \reg 1
   wire width 32 \OUT_Alu
   attribute \src "ALU.v:28.17-28.24"
   wire width 33 \ADD_Alu
@@ -7635,10 +7547,8 @@ module $paramod\ALU\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32'000
   attribute \src "ALU.v:32.17-32.23"
   wire width 32 \OR_Alu
   attribute \src "ALU.v:33.16-33.23"
-  attribute \reg 1
   wire width 32 \SLT_Alu
   attribute \src "ALU.v:34.16-34.24"
-  attribute \reg 1
   wire width 32 \SLTU_Alu
   attribute \src "ALU.v:35.11-35.18"
   wire \BEQ_Alu
@@ -7661,19 +7571,14 @@ module $paramod\ALU\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32'000
   attribute \src "ALU.v:44.17-44.24"
   wire width 32 \SRA_Alu
   attribute \src "ALU.v:46.15-46.24"
-  attribute \reg 1
   wire width 2 \is_rd_reg
   attribute \src "ALU.v:47.15-47.26"
-  attribute \reg 1
   wire width 2 \is_inst_reg
   attribute \src "ALU.v:48.9-48.15"
-  attribute \reg 1
   wire \en_reg
   attribute \src "ALU.v:49.9-49.17"
-  attribute \reg 1
   wire \is_rd_nr
   attribute \src "ALU.v:49.19-49.29"
-  attribute \reg 1
   wire \is_inst_nr
   wire $auto$rtlil.cc:3258:ReduceAnd$556
   wire $auto$rtlil.cc:3302:And$558
@@ -8178,7 +8083,7 @@ module $paramod\ALU_add\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
   wire width 33 $0\ADD_Alu[32:0]
   attribute \src "ALU.v:404.21-404.27"
   wire $logic_not$ALU.v:404.21-404.27$genblk1$55_Y
-  wire width 33 $auto$expression.cpp:2897:import_operation$577
+  wire width 33 $auto$expression.cpp:2911:import_operation$577
   attribute \src "ALU.v:404.21-404.27"
   cell $logic_not $logic_not$ALU.v:404.21-404.27$genblk1$55
     parameter \A_SIGNED 0
@@ -8196,7 +8101,7 @@ module $paramod\ALU_add\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
     parameter \Y_WIDTH 33
     connect \A { 1'0 \rs1 }
     connect \B { 1'0 \oper2 }
-    connect \Y $auto$expression.cpp:2897:import_operation$577
+    connect \Y $auto$expression.cpp:2911:import_operation$577
   end
   attribute \src "ALU.v:403.13-409.16"
   attribute \always_ff 1
@@ -8209,7 +8114,7 @@ module $paramod\ALU_add\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
         assign $0\ADD_Alu[32:0] 33'000000000000000000000000000000000
     attribute \src "ALU.v:406.26-408.20"
       case 
-        assign $0\ADD_Alu[32:0] $auto$expression.cpp:2897:import_operation$577
+        assign $0\ADD_Alu[32:0] $auto$expression.cpp:2911:import_operation$577
     end
     sync posedge \clk
       update \ADD_Alu $0\ADD_Alu[32:0]
@@ -8236,7 +8141,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
   wire width 32 $0\SUB_Alu[31:0]
   attribute \src "ALU.v:436.21-436.27"
   wire $logic_not$ALU.v:436.21-436.27$genblk1$56_Y
-  wire width 32 $auto$expression.cpp:2952:import_operation$580
+  wire width 32 $auto$expression.cpp:2966:import_operation$580
   attribute \src "ALU.v:436.21-436.27"
   cell $logic_not $logic_not$ALU.v:436.21-436.27$genblk1$56
     parameter \A_SIGNED 0
@@ -8254,7 +8159,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
     parameter \Y_WIDTH 32
     connect \A \rs1
     connect \B \oper2
-    connect \Y $auto$expression.cpp:2952:import_operation$580
+    connect \Y $auto$expression.cpp:2966:import_operation$580
   end
   attribute \src "ALU.v:435.13-441.16"
   attribute \always_ff 1
@@ -8267,7 +8172,7 @@ module $paramod\ALU_sub\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s32
         assign $0\SUB_Alu[31:0] 0
     attribute \src "ALU.v:438.26-440.20"
       case 
-        assign $0\SUB_Alu[31:0] $auto$expression.cpp:2952:import_operation$580
+        assign $0\SUB_Alu[31:0] $auto$expression.cpp:2966:import_operation$580
     end
     sync posedge \clk
       update \SUB_Alu $0\SUB_Alu[31:0]
@@ -8589,7 +8494,6 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
   attribute \src "ALU.v:612.16-612.21"
   wire output 9 \sl_ok
   attribute \src "ALU.v:614.16-614.21"
-  attribute \reg 1
   wire width 5 \count
   attribute \src "ALU.v:615.5-644.8"
   wire width 32 $0\SLL_Alu[31:0]
@@ -8606,13 +8510,13 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
   attribute \src "ALU.v:622.21-622.31"
   wire $eq$ALU.v:622$601_Y
   wire $auto$rtlil.cc:3313:Ge$604
-  wire width 32 $auto$expression.cpp:3107:import_operation$605
-  wire width 32 $auto$expression.cpp:3084:import_operation$607
-  wire width 64 $auto$expression.cpp:2952:import_operation$609
+  wire width 32 $auto$expression.cpp:3121:import_operation$605
+  wire width 32 $auto$expression.cpp:3098:import_operation$607
+  wire width 64 $auto$expression.cpp:2966:import_operation$609
   wire $auto$rtlil.cc:3310:Ne$612
-  wire width 32 $auto$expression.cpp:3107:import_operation$613
-  wire width 32 $auto$expression.cpp:3084:import_operation$615
-  wire width 64 $auto$expression.cpp:2952:import_operation$617
+  wire width 32 $auto$expression.cpp:3121:import_operation$613
+  wire width 32 $auto$expression.cpp:3098:import_operation$615
+  wire width 64 $auto$expression.cpp:2966:import_operation$617
   attribute \src "ALU.v:634.26-634.35"
   wire $eq$ALU.v:634$619_Y
   attribute \src "ALU.v:616.13-616.19"
@@ -8653,7 +8557,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3107:import_operation$605
+    connect \Y $auto$expression.cpp:3121:import_operation$605
   end
   attribute \src "ALU.v:625.28-625.40"
   cell $shl $shl$ALU.v:625$608
@@ -8664,7 +8568,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3084:import_operation$607
+    connect \Y $auto$expression.cpp:3098:import_operation$607
   end
   attribute \src "ALU.v:628.26-628.35"
   cell $sub $sub$ALU.v:628$610
@@ -8675,7 +8579,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:2952:import_operation$609
+    connect \Y $auto$expression.cpp:2966:import_operation$609
   end
   cell $ne $ne$ALU.v:629$611
     parameter \A_SIGNED 0
@@ -8696,7 +8600,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SRL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3107:import_operation$613
+    connect \Y $auto$expression.cpp:3121:import_operation$613
   end
   attribute \src "ALU.v:631.28-631.40"
   cell $shl $shl$ALU.v:631$616
@@ -8707,7 +8611,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 32
     connect \A \SLL_Alu
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3084:import_operation$615
+    connect \Y $auto$expression.cpp:3098:import_operation$615
   end
   attribute \src "ALU.v:633.26-633.35"
   cell $sub $sub$ALU.v:633$618
@@ -8718,7 +8622,7 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
     parameter \Y_WIDTH 64
     connect \A { 59'00000000000000000000000000000000000000000000000000000000000 \count }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2952:import_operation$617
+    connect \Y $auto$expression.cpp:2966:import_operation$617
   end
   attribute \src "ALU.v:634.26-634.35"
   cell $eq $eq$ALU.v:634$620
@@ -8758,20 +8662,20 @@ module $paramod\ALU_sXXx\REG_ALU=s32'00000000000000000000000000000001\REG_OUT=s3
             switch $auto$rtlil.cc:3313:Ge$604
             attribute \src "ALU.v:623.13-636.16"
               case 1'1
-                assign $0\SRL_Alu[31:0] $auto$expression.cpp:3107:import_operation$605
-                assign $0\SLL_Alu[31:0] $auto$expression.cpp:3084:import_operation$607
+                assign $0\SRL_Alu[31:0] $auto$expression.cpp:3121:import_operation$605
+                assign $0\SLL_Alu[31:0] $auto$expression.cpp:3098:import_operation$607
                 assign $0\SRA_Alu[31:0] 0
-                assign $0\count[4:0] $auto$expression.cpp:2952:import_operation$609 [4:0]
+                assign $0\count[4:0] $auto$expression.cpp:2966:import_operation$609 [4:0]
             attribute \src "ALU.v:623.13-636.16"
               case 
                 attribute \src "ALU.v:629.22-636.16"
                 switch $auto$rtlil.cc:3310:Ne$612
                 attribute \src "ALU.v:629.22-636.16"
                   case 1'1
-                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:3107:import_operation$613
-                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:3084:import_operation$615
+                    assign $0\SRL_Alu[31:0] $auto$expression.cpp:3121:import_operation$613
+                    assign $0\SLL_Alu[31:0] $auto$expression.cpp:3098:import_operation$615
                     assign $0\SRA_Alu[31:0] 0
-                    assign $0\count[4:0] $auto$expression.cpp:2952:import_operation$617 [4:0]
+                    assign $0\count[4:0] $auto$expression.cpp:2966:import_operation$617 [4:0]
                 attribute \src "ALU.v:629.22-636.16"
                   case 
                     attribute \src "ALU.v:634.22-636.16"
@@ -8819,10 +8723,8 @@ module $paramod\FSM_Booth\COUNT_BIT=s32'00000000000000000000000000000101\BITS_BO
   attribute \src "MULT.v:10.19-10.25"
   wire width 3 output 5 \OutFSM
   attribute \src "MULT.v:13.11-13.16"
-  attribute \reg 1
   wire width 2 \state
   attribute \src "MULT.v:13.17-13.26"
-  attribute \reg 1
   wire width 2 \nextState
   attribute \src "MULT.v:17.2-31.9"
   wire width 2 $0\nextState
@@ -9037,24 +8939,19 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
   attribute \src "MULT.v:53.22-53.23"
   wire width 34 output 8 \Z
   attribute \src "MULT.v:58.17-58.19"
-  attribute \reg 1
   wire width 17 \Q1
   attribute \src "MULT.v:58.20-58.23"
-  attribute \reg 1
   wire width 17 \aux
   attribute \src "MULT.v:59.17-59.18"
-  attribute \reg 1
   wire width 35 \S
   attribute \src "MULT.v:59.19-59.27"
-  attribute \reg 1
   wire width 35 \address2
   attribute \src "MULT.v:59.28-59.35"
-  attribute \reg 1
   wire width 35 \subres2
   attribute \src "MULT.v:60.18-60.21"
   wire width 17 \NQ1
   wire width 17 $auto$rtlil.cc:3255:Not$639
-  wire width 17 $auto$expression.cpp:2897:import_operation$640
+  wire width 17 $auto$expression.cpp:2911:import_operation$640
   wire width 64 $auto$rtlil.cc:3390:Mux$643
   attribute \src "MULT.v:64.2-97.5"
   wire width 17 $0\Q1
@@ -9064,8 +8961,8 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
   wire width 17 $0\aux
   attribute \src "MULT.v:66.6-66.12"
   wire $logic_not$MULT.v:66.6-66.12$61_Y
-  wire width 17 $auto$expression.cpp:2897:import_operation$645
-  wire width 17 $auto$expression.cpp:2897:import_operation$647
+  wire width 17 $auto$expression.cpp:2911:import_operation$645
+  wire width 17 $auto$expression.cpp:2911:import_operation$647
   attribute \src "MULT.v:62.15-62.18"
   cell $not $not$MULT.v:62$638
     parameter \A_SIGNED 0
@@ -9083,7 +8980,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \Y_WIDTH 17
     connect \A $auto$rtlil.cc:3255:Not$639
     connect \B 17'00000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$640
+    connect \Y $auto$expression.cpp:2911:import_operation$640
   end
   cell $mux $mux$MULT.v:100$642
     parameter \WIDTH 64
@@ -9109,7 +9006,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \Q1
-    connect \Y $auto$expression.cpp:2897:import_operation$645
+    connect \Y $auto$expression.cpp:2911:import_operation$645
   end
   attribute \src "MULT.v:84.12-84.34"
   cell $add $add$MULT.v:84$648
@@ -9120,7 +9017,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
     parameter \Y_WIDTH 17
     connect \A \S [34:18]
     connect \B \NQ1
-    connect \Y $auto$expression.cpp:2897:import_operation$647
+    connect \Y $auto$expression.cpp:2911:import_operation$647
   end
   attribute \src "MULT.v:64.2-97.5"
   attribute \always_ff 1
@@ -9155,11 +9052,11 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
                     assign $0\S { \S [34] \S [34:1] }
                 attribute \src "MULT.v:78.5-82.8"
                   case 2'01
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$645
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$645
                     assign $0\S { \aux [16] \aux \S [17:1] }
                 attribute \src "MULT.v:83.5-87.8"
                   case 2'10
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$647
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$647
                     assign $0\S { \aux [16] \aux \S [17:1] }
                 attribute \src "MULT.v:88.5-91.8"
                   case 2'11
@@ -9177,7 +9074,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010001
       update \S $0\S
       update \aux $0\aux
   end
-  connect \NQ1 $auto$expression.cpp:2897:import_operation$640
+  connect \NQ1 $auto$expression.cpp:2911:import_operation$640
   connect \Z $auto$rtlil.cc:3390:Mux$643 [33:0]
 end
 attribute \cells_not_processed 1
@@ -9198,10 +9095,8 @@ module $paramod\FSM_Booth\COUNT_BIT=s32'00000000000000000000000000000101\BITS_BO
   attribute \src "MULT.v:10.19-10.25"
   wire width 3 output 5 \OutFSM
   attribute \src "MULT.v:13.11-13.16"
-  attribute \reg 1
   wire width 2 \state
   attribute \src "MULT.v:13.17-13.26"
-  attribute \reg 1
   wire width 2 \nextState
   attribute \src "MULT.v:17.2-31.9"
   wire width 2 $0\nextState
@@ -9416,24 +9311,19 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
   attribute \src "MULT.v:53.22-53.23"
   wire width 36 output 8 \Z
   attribute \src "MULT.v:58.17-58.19"
-  attribute \reg 1
   wire width 18 \Q1
   attribute \src "MULT.v:58.20-58.23"
-  attribute \reg 1
   wire width 18 \aux
   attribute \src "MULT.v:59.17-59.18"
-  attribute \reg 1
   wire width 37 \S
   attribute \src "MULT.v:59.19-59.27"
-  attribute \reg 1
   wire width 37 \address2
   attribute \src "MULT.v:59.28-59.35"
-  attribute \reg 1
   wire width 37 \subres2
   attribute \src "MULT.v:60.18-60.21"
   wire width 18 \NQ1
   wire width 18 $auto$rtlil.cc:3255:Not$667
-  wire width 18 $auto$expression.cpp:2897:import_operation$668
+  wire width 18 $auto$expression.cpp:2911:import_operation$668
   wire width 64 $auto$rtlil.cc:3390:Mux$671
   attribute \src "MULT.v:64.2-97.5"
   wire width 18 $0\Q1
@@ -9443,8 +9333,8 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
   wire width 18 $0\aux
   attribute \src "MULT.v:66.6-66.12"
   wire $logic_not$MULT.v:66.6-66.12$62_Y
-  wire width 18 $auto$expression.cpp:2897:import_operation$673
-  wire width 18 $auto$expression.cpp:2897:import_operation$675
+  wire width 18 $auto$expression.cpp:2911:import_operation$673
+  wire width 18 $auto$expression.cpp:2911:import_operation$675
   attribute \src "MULT.v:62.15-62.18"
   cell $not $not$MULT.v:62$666
     parameter \A_SIGNED 0
@@ -9462,7 +9352,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \Y_WIDTH 18
     connect \A $auto$rtlil.cc:3255:Not$667
     connect \B 18'000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$668
+    connect \Y $auto$expression.cpp:2911:import_operation$668
   end
   cell $mux $mux$MULT.v:100$670
     parameter \WIDTH 64
@@ -9488,7 +9378,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \Y_WIDTH 18
     connect \A \S [36:19]
     connect \B \Q1
-    connect \Y $auto$expression.cpp:2897:import_operation$673
+    connect \Y $auto$expression.cpp:2911:import_operation$673
   end
   attribute \src "MULT.v:84.12-84.34"
   cell $add $add$MULT.v:84$676
@@ -9499,7 +9389,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
     parameter \Y_WIDTH 18
     connect \A \S [36:19]
     connect \B \NQ1
-    connect \Y $auto$expression.cpp:2897:import_operation$675
+    connect \Y $auto$expression.cpp:2911:import_operation$675
   end
   attribute \src "MULT.v:64.2-97.5"
   attribute \always_ff 1
@@ -9534,11 +9424,11 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
                     assign $0\S { \S [36] \S [36:1] }
                 attribute \src "MULT.v:78.5-82.8"
                   case 2'01
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$673
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$673
                     assign $0\S { \aux [17] \aux \S [18:1] }
                 attribute \src "MULT.v:83.5-87.8"
                   case 2'10
-                    assign $0\aux $auto$expression.cpp:2897:import_operation$675
+                    assign $0\aux $auto$expression.cpp:2911:import_operation$675
                     assign $0\S { \aux [17] \aux \S [18:1] }
                 attribute \src "MULT.v:88.5-91.8"
                   case 2'11
@@ -9556,7 +9446,7 @@ module $paramod\Alg_Booth\SWORD=s32'00000000000000000000000000010010
       update \S $0\S
       update \aux $0\aux
   end
-  connect \NQ1 $auto$expression.cpp:2897:import_operation$668
+  connect \NQ1 $auto$expression.cpp:2911:import_operation$668
   connect \Z $auto$rtlil.cc:3390:Mux$671 [35:0]
 end
 attribute \cells_not_processed 1
@@ -9610,15 +9500,12 @@ module $paramod\FSM\S0_fetch=s32'00000000000000000000000000000000\S1_decode=s32'
   attribute \src "FSM.v:32.10-32.19"
   wire \is_illisn
   attribute \src "FSM.v:40.9-40.22"
-  attribute \reg 1
   wire \enable_pc_aux
   attribute \src "FSM.v:40.24-40.37"
-  attribute \reg 1
   wire \enable_pc_fsm
   attribute \src "FSM.v:50.10-50.13"
   wire \err
   attribute \src "FSM.v:54.22-54.27"
-  attribute \reg 1
   wire width 4 \state
   wire $auto$rtlil.cc:3255:Not$678
   attribute \src "FSM.v:34.21-34.45"

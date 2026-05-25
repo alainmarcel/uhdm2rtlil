@@ -27,31 +27,22 @@ module case_expr_non_const_top(a, b, c, d, e, f, g, h);
   (* src = "dut.sv:5.37-5.38" *)
   output h;
   wire h;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:7.9-7.21" *)
   wire x_1b0;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:8.9-8.21" *)
   wire x_1b1;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:9.16-9.30" *)
   wire signed x_1sb0;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:10.16-10.30" *)
   wire signed x_1sb1;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:11.15-11.27" *)
   wire [1:0] x_2b0;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:12.15-12.29" *)
   wire [1:0] x_2b11;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:13.22-13.38" *)
   wire signed [1:0] x_2sb01;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:14.22-14.38" *)
   wire signed [1:0] x_2sb11;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:15.15-15.27" *)
   wire [2:0] x_3b0;
   assign x_3b0 = 3'h0;

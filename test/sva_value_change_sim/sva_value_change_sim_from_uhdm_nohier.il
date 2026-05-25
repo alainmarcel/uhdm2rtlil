@@ -18,26 +18,20 @@ module \top
   attribute \src "dut.sv:10.15-10.23"
   wire width 3 output 7 \wide_b_o
   attribute \src "dut.sv:13.11-13.22"
-  attribute \reg 1
   attribute \init 8'00000000
   wire width 8 \counter
   attribute \src "dut.sv:15.5-15.10"
-  attribute \reg 1
   attribute \init 1'0
   wire \a
   attribute \src "dut.sv:16.5-16.10"
-  attribute \reg 1
   attribute \init 1'1
   wire \b
   attribute \src "dut.sv:17.5-17.6"
-  attribute \reg 1
   wire \c
   attribute \src "dut.sv:18.11-18.26"
-  attribute \reg 1
   attribute \init 3'10x
   wire width 3 \wide_a
   attribute \src "dut.sv:19.11-19.22"
-  attribute \reg 1
   attribute \init 3'x
   wire width 3 \wide_b
   attribute \src "dut.sv:24.6-24.12"
@@ -74,7 +68,7 @@ module \top
   wire width 3 $0\wide_a
   attribute \src "dut.sv:47.1-93.4"
   wire width 3 $0\wide_b
-  wire width 8 $auto$expression.cpp:2897:import_operation$7
+  wire width 8 $auto$expression.cpp:2911:import_operation$7
   attribute \src "dut.sv:48.13-48.24"
   cell $add $add$dut.sv:48$8
     parameter \A_SIGNED 0
@@ -84,7 +78,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \counter
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2897:import_operation$7
+    connect \Y $auto$expression.cpp:2911:import_operation$7
   end
   attribute \src "dut.sv:47.1-93.4"
   attribute \always_ff 1
@@ -94,7 +88,7 @@ module \top
     assign $0\c \c
     assign $0\wide_a \wide_a
     assign $0\wide_b \wide_b
-    assign $0\counter $auto$expression.cpp:2897:import_operation$7
+    assign $0\counter $auto$expression.cpp:2911:import_operation$7
     attribute \src "dut.sv:50.2-92.9"
     switch { 56'00000000000000000000000000000000000000000000000000000000 \counter }
     attribute \src "dut.sv:51.3-60.12"

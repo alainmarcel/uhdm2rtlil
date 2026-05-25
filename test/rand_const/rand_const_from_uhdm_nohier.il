@@ -14,6 +14,5 @@ module \top
   attribute \src "dut.sv:15.10-15.12"
   wire width 32 signed \iz
   attribute \src "dut.sv:12.6-12.8"
-  attribute \reg 1
   wire \rz
 end

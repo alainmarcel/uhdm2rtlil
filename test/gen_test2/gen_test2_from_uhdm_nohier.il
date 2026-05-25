@@ -14,7 +14,6 @@ module \gen_test2
   attribute \src "dut.sv:7.9-7.10"
   wire width 32 signed \i
   attribute \src "dut.sv:8.11-8.16"
-  attribute \reg 1
   wire width 9 \carry
   attribute \src "dut.sv:10.1-22.4"
   wire $0\carry[0:0]

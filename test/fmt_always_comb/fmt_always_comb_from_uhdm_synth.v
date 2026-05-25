@@ -41,11 +41,9 @@ module top(clk);
   (* src = "dut.sv:8.2-11.8" *)
   wire _0_;
   (* init = 1'h0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:2.9-2.14" *)
   wire a;
   (* init = 1'h0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:3.9-3.14" *)
   wire b;
   (* src = "dut.sv:4.10-4.11" *)

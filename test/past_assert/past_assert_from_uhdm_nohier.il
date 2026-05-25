@@ -12,7 +12,6 @@ module \mre
   attribute \src "dut.sv:19.5-19.19"
   wire output 4 \o_past_valid_o
   attribute \src "dut.sv:25.9-25.21"
-  attribute \reg 1
   attribute \init 1'0
   wire \f_past_valid
   attribute \src "dut.sv:28.5-31.8"

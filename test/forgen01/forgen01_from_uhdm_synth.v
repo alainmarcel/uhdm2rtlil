@@ -21,7 +21,6 @@ module uut_forgen01(a, y);
   wire _09_;
   wire _10_;
   wire _11_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:9.12-9.15" *)
   wire [31:0] lut;
   \$_AND_  _12_ (

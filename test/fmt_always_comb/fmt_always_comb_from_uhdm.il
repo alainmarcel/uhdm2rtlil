@@ -48,11 +48,9 @@ module \top
   attribute \src "dut.sv:1.18-1.21"
   wire input 1 \clk
   attribute \src "dut.sv:2.9-2.14"
-  attribute \reg 1
   attribute \init 1'0
   wire \a
   attribute \src "dut.sv:3.9-3.14"
-  attribute \reg 1
   attribute \init 1'0
   wire \b
   attribute \src "dut.sv:4.10-4.11"

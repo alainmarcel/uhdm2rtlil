@@ -10,12 +10,11 @@ module \counter1
   attribute \src "dut.sv:3.27-3.31"
   wire output 3 \ping
   attribute \src "dut.sv:6.13-6.18"
-  attribute \reg 1
   wire width 32 \count
   wire $auto$rtlil.cc:3258:ReduceAnd$2
   attribute \src "dut.sv:8.2-13.5"
   wire width 32 $0\count[31:0]
-  wire width 32 $auto$expression.cpp:2897:import_operation$4
+  wire width 32 $auto$expression.cpp:2911:import_operation$4
   cell $reduce_and $reduce_and$dut.sv:15$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
@@ -32,7 +31,7 @@ module \counter1
     parameter \Y_WIDTH 32
     connect \A \count
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$4
+    connect \Y $auto$expression.cpp:2911:import_operation$4
   end
   attribute \src "dut.sv:8.2-13.5"
   attribute \always_ff 1
@@ -45,7 +44,7 @@ module \counter1
         assign $0\count[31:0] 0
     attribute \src "dut.sv:12.4-12.22"
       case 
-        assign $0\count[31:0] $auto$expression.cpp:2897:import_operation$4
+        assign $0\count[31:0] $auto$expression.cpp:2911:import_operation$4
     end
     sync posedge \clk
       update \count $0\count[31:0]
@@ -64,10 +63,8 @@ module \counter2
   attribute \src "dut.sv:23.10-23.11"
   wire width 32 signed \i
   attribute \src "dut.sv:21.13-21.18"
-  attribute \reg 1
   wire width 32 \count
   attribute \src "dut.sv:24.6-24.11"
-  attribute \reg 1
   wire \carry
   wire $auto$rtlil.cc:3258:ReduceAnd$7
   attribute \src "dut.sv:30.16-30.20"

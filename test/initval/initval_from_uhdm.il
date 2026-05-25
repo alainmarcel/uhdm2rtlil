@@ -15,7 +15,6 @@ module \initval
   attribute \init 4'1xxx
   wire width 4 output 4 \asdf
   attribute \src "dut.sv:3.13-3.25"
-  attribute \reg 1
   attribute \unused_bits "0 1"
   attribute \init 4'0000
   wire width 4 \last_bar

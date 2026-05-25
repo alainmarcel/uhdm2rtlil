@@ -18,22 +18,20 @@
  module top(clk);
  (* src = "dut.sv:1.18-1.21" *)
  input clk;
-@@ -40,10 +39,12 @@
+@@ -40,10 +39,10 @@
  (* src = "dut.sv:8.2-11.8" *)
  wire _0_;
  (* init = 1'h0 *)
 -(* src = "dut.sv:2.9-2.10" *)
-+(* \reg  = 32'd1 *)
 +(* src = "dut.sv:2.9-2.14" *)
  wire a;
  (* init = 1'h0 *)
 -(* src = "dut.sv:3.9-3.10" *)
-+(* \reg  = 32'd1 *)
 +(* src = "dut.sv:3.9-3.14" *)
  wire b;
  (* src = "dut.sv:4.10-4.11" *)
  (* unused_bits = "0" *)
-@@ -52,20 +53,20 @@
+@@ -52,20 +51,20 @@
  .A(b),
  .Y(_0_)
  );

@@ -54,7 +54,6 @@ module fsm(clock, reset, req_0, req_1, gnt_0, gnt_1);
   (* force_downto = 32'd1 *)
   (* src = "dut.sv:44.15-47.26|dut.sv:24.13-49.20|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
   wire [0:0] _27_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:13.20-13.25" *)
   wire [2:0] state;
   \$_ORNOT_  _28_ (

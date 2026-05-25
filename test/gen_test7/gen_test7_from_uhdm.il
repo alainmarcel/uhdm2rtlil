@@ -4,12 +4,10 @@ attribute \top 1
 attribute \src "dut.sv:1.1-39.10"
 module \gen_test7
   attribute \src "dut.sv:2.12-2.16"
-  attribute \reg 1
   attribute \unused_bits "0 1 2"
   attribute \init 3'100
   wire width 3 \out1
   attribute \src "dut.sv:3.12-3.16"
-  attribute \reg 1
   wire width 3 \out2
   attribute \src "dut.sv:4.13-4.17"
   wire width 3 \out3

@@ -13,7 +13,6 @@ module \mre
   attribute \src "dut.sv:19.5-19.19"
   wire output 4 \o_past_valid_o
   attribute \src "dut.sv:25.9-25.21"
-  attribute \reg 1
   attribute \init 1'0
   wire \f_past_valid
   wire $auto$process.cpp:111:build_check_cell$9

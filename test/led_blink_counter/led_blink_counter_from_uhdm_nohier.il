@@ -8,11 +8,9 @@ module \top
   attribute \src "dut.sv:4.16-4.19"
   wire width 6 output 2 \LED
   attribute \src "dut.sv:7.12-7.30"
-  attribute \reg 1
   attribute \init 24'000000000000000000000000
   wire width 24 \wait_counter
   attribute \src "dut.sv:8.11-8.25"
-  attribute \reg 1
   attribute \init 6'000000
   wire width 6 \ledCounter
   wire width 6 $auto$rtlil.cc:3255:Not$4
@@ -21,8 +19,8 @@ module \top
   attribute \src "dut.sv:12.1-20.4"
   wire width 6 $0\ledCounter
   wire $auto$rtlil.cc:3307:Lt$7
-  wire width 24 $auto$expression.cpp:2897:import_operation$8
-  wire width 6 $auto$expression.cpp:2897:import_operation$10
+  wire width 24 $auto$expression.cpp:2911:import_operation$8
+  wire width 6 $auto$expression.cpp:2911:import_operation$10
   attribute \src "dut.sv:10.14-10.25"
   cell $not $not$dut.sv:10$3
     parameter \A_SIGNED 0
@@ -50,7 +48,7 @@ module \top
     parameter \Y_WIDTH 24
     connect \A \wait_counter
     connect \B 24'000000000000000000000001
-    connect \Y $auto$expression.cpp:2897:import_operation$8
+    connect \Y $auto$expression.cpp:2911:import_operation$8
   end
   attribute \src "dut.sv:18.19-18.35"
   cell $add $add$dut.sv:18$11
@@ -61,7 +59,7 @@ module \top
     parameter \Y_WIDTH 6
     connect \A \ledCounter
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2897:import_operation$10
+    connect \Y $auto$expression.cpp:2911:import_operation$10
   end
   attribute \src "dut.sv:12.1-20.4"
   attribute \always_ff 1
@@ -72,11 +70,11 @@ module \top
     switch $auto$rtlil.cc:3307:Lt$7
     attribute \src "dut.sv:13.3-19.6"
       case 1'1
-        assign $0\wait_counter $auto$expression.cpp:2897:import_operation$8
+        assign $0\wait_counter $auto$expression.cpp:2911:import_operation$8
     attribute \src "dut.sv:13.3-19.6"
       case 
         assign $0\wait_counter 24'000000000000000000000000
-        assign $0\ledCounter $auto$expression.cpp:2897:import_operation$10
+        assign $0\ledCounter $auto$expression.cpp:2911:import_operation$10
     end
     sync posedge \CLK
       update \ledCounter $0\ledCounter

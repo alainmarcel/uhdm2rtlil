@@ -60,13 +60,10 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   wire [7:0] \data_array[2] ;
   (* src = "dut.sv:42.11-42.21" *)
   wire [7:0] \data_array[3] ;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:41.12-41.22" *)
   wire [31:0] data_i_var;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:24.12-24.20" *)
   wire [31:0] data_reg;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:41.24-41.36" *)
   wire [31:0] data_reg_128;
   (* src = "dut.sv:43.11-43.23" *)
@@ -77,13 +74,10 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   wire [7:0] \data_reg_var[2] ;
   (* src = "dut.sv:43.11-43.23" *)
   wire [7:0] \data_reg_var[3] ;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:26.5-26.17" *)
   wire next_ready_o;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:23.11-23.21" *)
   wire [1:0] next_state;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:22.11-22.16" *)
   wire [1:0] state;
   \$_ORNOT_  _019_ (

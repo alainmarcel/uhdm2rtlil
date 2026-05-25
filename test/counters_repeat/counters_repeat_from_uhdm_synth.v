@@ -151,7 +151,6 @@ module counter2(clk, rst, ping);
   wire _136_;
   wire _137_;
   wire _138_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:21.13-21.18" *)
   wire [31:0] count;
   (* src = "dut.sv:23.10-23.11" *)

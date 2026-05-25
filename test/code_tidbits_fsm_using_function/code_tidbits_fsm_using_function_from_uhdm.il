@@ -21,7 +21,6 @@ module \fsm_using_function
   attribute \src "dut.sv:12.1-12.6"
   wire output 6 \gnt_1
   attribute \src "dut.sv:26.27-26.32"
-  attribute \reg 1
   wire width 3 \state
   attribute \src "dut.sv:27.27-27.37"
   wire width 3 \next_state

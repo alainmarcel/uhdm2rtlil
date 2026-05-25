@@ -6,10 +6,8 @@ module gen_test7();
   wire [2:0] \cond.sub_out1 ;
   wire [2:0] \cond.sub_out2 ;
   wire [2:0] \cond.sub_out3 ;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:2.12-2.16" *)
   wire [2:0] out1;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:3.12-3.16" *)
   wire [2:0] out2;
   (* src = "dut.sv:4.13-4.17" *)

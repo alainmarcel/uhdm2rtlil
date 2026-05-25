@@ -42,7 +42,6 @@ module fsm_using_function(clock, reset, req_0, req_1, gnt_0, gnt_1);
   wire [2:0] \fsm_function$func$dut.sv:29$1.$result ;
   (* src = "dut.sv:27.27-27.37" *)
   wire [2:0] next_state;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:26.27-26.32" *)
   wire [2:0] state;
   \$_ORNOT_  _14_ (

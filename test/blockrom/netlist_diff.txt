@@ -9,14 +9,13 @@
  module blockrom(clk, address_in, data_out);
  (* src = "dut.sv:3.37-3.40" *)
  input clk;
-@@ -22,138 +22,119 @@
+@@ -22,138 +22,118 @@
  wire _06_;
  wire _07_;
  wire _08_;
 -wire _09_;
 -wire _10_;
 -wire _11_;
-+(* \reg  = 32'd1 *)
  (* src = "dut.sv:10.15-10.25" *)
  wire [7:0] data_out_r;
 -(* src = "dut.sv:13.10-13.11" *)

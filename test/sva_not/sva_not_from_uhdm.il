@@ -17,12 +17,11 @@ module \top
   attribute \src "dut.sv:9.15-9.20"
   wire width 3 output 6 \cnt_o
   attribute \src "dut.sv:11.12-11.15"
-  attribute \reg 1
   wire width 3 \cnt
-  wire width 3 $auto$expression.cpp:2897:import_operation$8
+  wire width 3 $auto$expression.cpp:2911:import_operation$8
   wire width 3 $procmux$14_Y
   wire $auto$rtlil.cc:3259:ReduceOr$3
-  wire width 3 $auto$expression.cpp:2952:import_operation$4
+  wire width 3 $auto$expression.cpp:2966:import_operation$4
   attribute \src "dut.sv:20.12-20.20"
   wire $eq$dut.sv:20$6_Y
   cell $reduce_or $reduce_or$dut.sv:19$2
@@ -41,7 +40,7 @@ module \top
     parameter \Y_WIDTH 3
     connect \A \cnt
     connect \B { 2'00 $auto$rtlil.cc:3259:ReduceOr$3 }
-    connect \Y $auto$expression.cpp:2952:import_operation$4
+    connect \Y $auto$expression.cpp:2966:import_operation$4
   end
   attribute \src "dut.sv:20.12-20.20"
   cell $eq $eq$dut.sv:20$7
@@ -63,7 +62,7 @@ module \top
     parameter \Y_WIDTH 3
     connect \A 3'100
     connect \B { 1'0 \cfg }
-    connect \Y $auto$expression.cpp:2897:import_operation$8
+    connect \Y $auto$expression.cpp:2911:import_operation$8
   end
   attribute \src "dut.sv:31.2-35.4"
   attribute \keep 1
@@ -95,8 +94,8 @@ module \top
   attribute \src "dut.sv:21.4-21.29"
   cell $mux $procmux$14
     parameter \WIDTH 3
-    connect \A $auto$expression.cpp:2952:import_operation$4
-    connect \B $auto$expression.cpp:2897:import_operation$8
+    connect \A $auto$expression.cpp:2966:import_operation$4
+    connect \B $auto$expression.cpp:2911:import_operation$8
     connect \S \ping
     connect \Y $procmux$14_Y
   end

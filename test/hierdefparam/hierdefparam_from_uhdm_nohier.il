@@ -9,7 +9,7 @@ module \hierdefparam_b
   wire width 8 input 1 \A
   attribute \src "dut.sv:22.61-22.62"
   wire width 8 output 2 \Y
-  wire width 8 $auto$expression.cpp:2897:import_operation$1
+  wire width 8 $auto$expression.cpp:2911:import_operation$1
   attribute \src "dut.sv:24.14-24.26"
   cell $add $add$dut.sv:24$2
     parameter \A_SIGNED 0
@@ -19,9 +19,9 @@ module \hierdefparam_b
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B 8'00101100
-    connect \Y $auto$expression.cpp:2897:import_operation$1
+    connect \Y $auto$expression.cpp:2911:import_operation$1
   end
-  connect \Y $auto$expression.cpp:2897:import_operation$1
+  connect \Y $auto$expression.cpp:2911:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:3.1-9.10"
@@ -71,7 +71,7 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101010
   wire width 8 input 1 \A
   attribute \src "dut.sv:22.61-22.62"
   wire width 8 output 2 \Y
-  wire width 8 $auto$expression.cpp:2897:import_operation$3
+  wire width 8 $auto$expression.cpp:2911:import_operation$3
   attribute \src "dut.sv:24.14-24.26"
   cell $add $add$dut.sv:24$4
     parameter \A_SIGNED 0
@@ -81,9 +81,9 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101010
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B 8'00101010
-    connect \Y $auto$expression.cpp:2897:import_operation$3
+    connect \Y $auto$expression.cpp:2911:import_operation$3
   end
-  connect \Y $auto$expression.cpp:2897:import_operation$3
+  connect \Y $auto$expression.cpp:2911:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:16.7-16.42"
@@ -95,7 +95,7 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101011
   wire width 8 input 1 \A
   attribute \src "dut.sv:22.61-22.62"
   wire width 8 output 2 \Y
-  wire width 8 $auto$expression.cpp:2897:import_operation$5
+  wire width 8 $auto$expression.cpp:2911:import_operation$5
   attribute \src "dut.sv:24.14-24.26"
   cell $add $add$dut.sv:24$6
     parameter \A_SIGNED 0
@@ -105,7 +105,7 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101011
     parameter \Y_WIDTH 8
     connect \A \A
     connect \B 8'00101011
-    connect \Y $auto$expression.cpp:2897:import_operation$5
+    connect \Y $auto$expression.cpp:2911:import_operation$5
   end
-  connect \Y $auto$expression.cpp:2897:import_operation$5
+  connect \Y $auto$expression.cpp:2911:import_operation$5
 end

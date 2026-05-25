@@ -12,7 +12,6 @@ module \counter2
   attribute \src "dut.sv:23.10-23.11"
   wire width 32 signed \i
   attribute \src "dut.sv:21.13-21.18"
-  attribute \reg 1
   wire width 32 \count
   wire $auto$rtlil.cc:3255:Not$236
   wire $auto$rtlil.cc:3304:Xor$148
