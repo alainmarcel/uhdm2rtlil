@@ -42,6 +42,7 @@ module \always03
     connect \A \out1
     connect \Y $logic_not$dut.sv:10.10-10.15$1_Y
   end
+  attribute \src "dut.sv:19.9-19.20"
   cell $xor $xor$dut.sv:19$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

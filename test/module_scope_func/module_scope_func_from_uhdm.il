@@ -32,6 +32,7 @@ module \module_scope_func_top
   attribute \nosync 1
   attribute \src "dut.sv:14.24-14.27"
   wire width 32 \send$func$dut.sv:21$35.out
+  attribute \src "dut.sv:11.16-11.25"
   cell $add $add$dut.sv:11$33
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

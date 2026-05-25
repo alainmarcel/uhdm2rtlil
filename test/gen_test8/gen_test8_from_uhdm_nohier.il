@@ -11,6 +11,7 @@ module \gen_test8
   wire width 2 \A.C.x
   wire width 2 $auto$rtlil.cc:3304:Xor$2
   wire width 2 $auto$rtlil.cc:3304:Xor$4
+  attribute \src "dut.sv:36.15-36.26"
   cell $xor $xor$dut.sv:36$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -21,6 +22,7 @@ module \gen_test8
     connect \B 2'11
     connect \Y $auto$rtlil.cc:3304:Xor$2
   end
+  attribute \src "dut.sv:36.15-36.32"
   cell $xor $xor$dut.sv:36$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -54,6 +54,7 @@ module \abc9_test008_sub
   attribute \src "dut.sv:46.41-46.42"
   wire output 2 \b
   wire $auto$rtlil.cc:3255:Not$4
+  attribute \src "dut.sv:47.12-47.14"
   cell $not $not$dut.sv:47$3
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -84,6 +85,7 @@ module \abc9_test012_sub
   wire width 4 $0\latch[7:4]
   attribute \src "dut.sv:100.9-100.12"
   wire $logic_not$dut.sv:100.9-100.12$2_Y
+  attribute \src "dut.sv:104.23-104.34"
   cell $not $not$dut.sv:104$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -231,6 +233,7 @@ module \abc9_test005
     connect \A \a
     connect \Y $auto$rtlil.cc:3260:ReduceXor$15
   end
+  attribute \src "dut.sv:19.12-19.14"
   cell $not $not$dut.sv:19$16
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -257,6 +260,7 @@ module \abc9_test006
     connect \A \a
     connect \Y $auto$rtlil.cc:3260:ReduceXor$19
   end
+  attribute \src "dut.sv:24.15-24.20"
   cell $not $not$dut.sv:24$20
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -280,6 +284,7 @@ module \abc9_test007
   attribute \src "dut.sv:29.9-29.10"
   wire \c
   wire $auto$rtlil.cc:3255:Not$23
+  attribute \src "dut.sv:30.12-30.14"
   cell $not $not$dut.sv:30$22
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -306,6 +311,7 @@ module \abc9_test008
   attribute \src "dut.sv:40.9-40.10"
   wire \c
   wire $auto$rtlil.cc:3255:Not$25
+  attribute \src "dut.sv:41.12-41.14"
   cell $not $not$dut.sv:41$24
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -336,6 +342,7 @@ module \abc9_test009
   wire $0\latch
   attribute \src "dut.sv:53.9-53.12"
   wire $logic_not$dut.sv:53.9-53.12$3_Y
+  attribute \src "dut.sv:55.18-55.24"
   cell $not $not$dut.sv:55$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -390,6 +397,7 @@ module \abc9_test010
   wire width 8 $0\latch
   attribute \src "dut.sv:61.9-61.12"
   wire $logic_not$dut.sv:61.9-61.12$4_Y
+  attribute \src "dut.sv:63.18-63.24"
   cell $not $not$dut.sv:63$31
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
@@ -477,6 +485,7 @@ module \abc9_test012
   wire \latch
   wire $auto$rtlil.cc:3255:Not$38
   wire width 8 $auto$rtlil.cc:3390:Mux$40
+  attribute \src "dut.sv:79.18-79.24"
   cell $not $not$dut.sv:79$37
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -512,6 +521,7 @@ module \abc9_test013
   wire width 4 $0\latch
   attribute \src "dut.sv:85.9-85.12"
   wire $logic_not$dut.sv:85.9-85.12$7_Y
+  attribute \src "dut.sv:89.23-89.34"
   cell $not $not$dut.sv:89$41
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -592,6 +602,7 @@ module \abc9_test015
   wire \d
   wire $auto$rtlil.cc:3255:Not$49
   wire $auto$rtlil.cc:3255:Not$51
+  attribute \src "dut.sv:109.12-109.14"
   cell $not $not$dut.sv:109$48
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -599,6 +610,7 @@ module \abc9_test015
     connect \A \a
     connect \Y $auto$rtlil.cc:3255:Not$49
   end
+  attribute \src "dut.sv:111.12-111.14"
   cell $not $not$dut.sv:111$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -624,6 +636,7 @@ module \abc9_test016
   attribute \src "dut.sv:117.1-117.19"
   wire $0\c
   wire $auto$rtlil.cc:3255:Not$56
+  attribute \src "dut.sv:115.12-115.14"
   cell $not $not$dut.sv:115$52
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -631,6 +644,7 @@ module \abc9_test016
     connect \A \a
     connect \Y $auto$rtlil.cc:3255:Not$53
   end
+  attribute \src "dut.sv:117.16-117.18"
   cell $not $not$dut.sv:117$55
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -661,6 +675,7 @@ module \abc9_test017
   wire $auto$rtlil.cc:3255:Not$58
   attribute \src "dut.sv:123.1-123.17"
   wire $0\c
+  attribute \src "dut.sv:121.12-121.14"
   cell $not $not$dut.sv:121$57
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -691,6 +706,7 @@ module \abc9_test018
   wire width 2 \d
   wire $auto$rtlil.cc:3255:Not$61
   wire $auto$rtlil.cc:3258:ReduceAnd$63
+  attribute \src "dut.sv:127.12-127.14"
   cell $not $not$dut.sv:127$60
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -726,6 +742,7 @@ module \abc9_test019
   attribute \src "dut.sv:136.1-136.19"
   wire $0\d
   wire $auto$rtlil.cc:3258:ReduceAnd$68
+  attribute \src "dut.sv:133.12-133.14"
   cell $not $not$dut.sv:133$64
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -768,6 +785,7 @@ module \abc9_test020
   attribute \src "dut.sv:143.1-143.19"
   wire $0\d
   wire $auto$rtlil.cc:3258:ReduceAnd$73
+  attribute \src "dut.sv:140.12-140.14"
   cell $not $not$dut.sv:140$69
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -942,8 +960,8 @@ module \abc9_test023
   attribute \src "dut.sv:246.17-246.21"
   wire width 4 \mask
   wire width 4 $auto$module.cpp:1124:import_continuous_assign$80
-  wire width 2 $auto$expression.cpp:3068:import_operation$82
-  wire width 2 $auto$expression.cpp:3090:import_operation$84
+  wire width 2 $auto$expression.cpp:3084:import_operation$82
+  wire width 2 $auto$expression.cpp:3107:import_operation$84
   cell $pos $auto$module.cpp:1125:import_continuous_assign$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
@@ -951,6 +969,7 @@ module \abc9_test023
     connect \A 2'11
     connect \Y $auto$module.cpp:1124:import_continuous_assign$80
   end
+  attribute \src "dut.sv:247.17-247.35"
   cell $shl $shl$dut.sv:247$83
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -959,20 +978,21 @@ module \abc9_test023
     parameter \Y_WIDTH 2
     connect \A \mask
     connect \B \din [1:0]
-    connect \Y $auto$expression.cpp:3068:import_operation$82
+    connect \Y $auto$expression.cpp:3084:import_operation$82
   end
+  attribute \src "dut.sv:247.16-247.41"
   cell $shr $shr$dut.sv:247$85
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:3068:import_operation$82
+    connect \A $auto$expression.cpp:3084:import_operation$82
     connect \B 2
-    connect \Y $auto$expression.cpp:3090:import_operation$84
+    connect \Y $auto$expression.cpp:3107:import_operation$84
   end
   connect \mask $auto$module.cpp:1124:import_continuous_assign$80
-  connect \dout $auto$expression.cpp:3090:import_operation$84
+  connect \dout $auto$expression.cpp:3107:import_operation$84
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:250.1-252.10"

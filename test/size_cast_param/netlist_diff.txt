@@ -21,14 +21,14 @@
 -wire [15:0] _14_;
 -(* force_downto = 32'd1 *)
 -(* src = "dut.sv:39.35-39.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
++(* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
  wire [15:0] _15_;
 -\$_NOT_  _16_ (
 -.A(cnt[0]),
 -.Y(_14_[0])
 -);
 +(* force_downto = 32'd1 *)
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
++(* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
 +wire [15:0] _16_;
  \$_AND_  _17_ (
 -.A(cnt[0]),
@@ -476,12 +476,12 @@
  (* force_downto = 32'd1 *)
 -(* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
 -wire [15:0] _15_;
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
++(* src = "dut.sv:39.35-39.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
 +wire [15:0] _14_;
  (* force_downto = 32'd1 *)
 -(* src = "dut.sv:33.30-33.47|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
 -wire [15:0] _16_;
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
++(* src = "dut.sv:39.35-39.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
 +wire [15:0] _15_;
 +\$_NOT_  _16_ (
 +.A(cnt[0]),

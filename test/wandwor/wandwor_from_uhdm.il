@@ -8,6 +8,7 @@ module \wandwor_bar
   wire width 8 input 2 \I1
   attribute \src "dut.sv:34.53-34.54"
   wire width 8 output 3 \O
+  attribute \src "dut.sv:35.13-35.20"
   cell $add $add$dut.sv:35$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

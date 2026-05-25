@@ -21,6 +21,7 @@ module \nested_struct_nopack
   attribute \src "dut.sv:25.21-25.35"
   attribute \wiretype "\\nested_struct_t"
   wire width 62 \processed_data
+  attribute \src "dut.sv:44.36-44.62"
   cell $add $add$dut.sv:44$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -38,6 +39,7 @@ module \nested_struct_nopack
     connect \A { \in_data [53:52] \in_data [50:47] \in_data [45] \in_data [43] \in_data [41:40] \in_data [38:37] \in_data [35:31] \in_data [29:27] \in_data [25:22] }
     connect \Y { \processed_data [53:52] \processed_data [50:47] \processed_data [45] \processed_data [43] \processed_data [41:40] \processed_data [38:37] \processed_data [35:31] \processed_data [29:27] \processed_data [25:22] }
   end
+  attribute \src "dut.sv:46.37-46.75"
   cell $and $and$dut.sv:46$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -48,6 +50,7 @@ module \nested_struct_nopack
     connect \B \in_data [0]
     connect \Y \processed_data [21]
   end
+  attribute \src "dut.sv:49.29-49.51"
   cell $add $add$dut.sv:49$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

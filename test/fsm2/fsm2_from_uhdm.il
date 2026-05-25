@@ -39,7 +39,7 @@ module \fsm_test
   wire $auto$rtlil.cc:3255:Not$93
   attribute \src "dut.sv:31.21-31.29"
   wire $eq$dut.sv:31$8_Y
-  wire width 4 $auto$expression.cpp:2886:import_operation$10
+  wire width 4 $auto$expression.cpp:2897:import_operation$10
   attribute \src "dut.sv:38.21-38.30"
   wire $eq$dut.sv:38$12_Y
   wire $auto$opt_reduce.cc:137:opt_pmux$90
@@ -155,6 +155,7 @@ module \fsm_test
     connect \B 4'0101
     connect \Y $eq$dut.sv:31$8_Y
   end
+  attribute \src "dut.sv:51.24-51.31"
   cell $add $add$dut.sv:51$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -163,7 +164,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2886:import_operation$10
+    connect \Y $auto$expression.cpp:2897:import_operation$10
   end
   attribute \src "dut.sv:52.21-52.30"
   cell $eq $eq$dut.sv:52$21
@@ -288,7 +289,7 @@ module \fsm_test
     parameter \WIDTH 4
     connect \CLK \clk
     connect \SRST $auto$opt_dff.cc:275:combine_resets$94
-    connect \D $auto$expression.cpp:2886:import_operation$10
+    connect \D $auto$expression.cpp:2897:import_operation$10
     connect \Q \cnt
   end
   attribute \src "dut.sv:34.13-40.16|dut.sv:20.9-55.16"

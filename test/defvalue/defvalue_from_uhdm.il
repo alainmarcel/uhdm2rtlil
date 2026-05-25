@@ -14,6 +14,7 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000010
   wire width 4 input 3 \delta
   attribute \src "dut.sv:20.2-21.22"
   wire width 4 $0\cnt
+  attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -70,6 +71,7 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000001
   wire width 4 input 3 \delta
   attribute \src "dut.sv:20.2-21.22"
   wire width 4 $0\cnt
+  attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

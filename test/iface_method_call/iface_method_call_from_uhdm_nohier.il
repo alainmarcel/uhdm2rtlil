@@ -51,6 +51,7 @@ module \ha_itf
   attribute \src "ha_mod.sv:4.58-4.59"
   wire input 4 \b
   wire $auto$rtlil.cc:3304:Xor$3
+  attribute \src "intfce.sv:5.17-5.22"
   cell $xor $xor$intfce.sv:5$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -61,6 +62,7 @@ module \ha_itf
     connect \B \b
     connect \Y $auto$rtlil.cc:3304:Xor$3
   end
+  attribute \src "intfce.sv:6.17-6.22"
   cell $and $and$intfce.sv:6$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

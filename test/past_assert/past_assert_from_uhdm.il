@@ -27,6 +27,7 @@ module \mre
     connect \Q \o_w
     connect \CLK \i_clk
   end
+  attribute \src "dut.sv:36.9-36.34"
   cell $and $and$dut.sv:36$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

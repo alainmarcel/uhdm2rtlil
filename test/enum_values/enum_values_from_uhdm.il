@@ -56,6 +56,7 @@ module \top
     connect \Q \wide_state
     connect \CLK \clk
   end
+  attribute \src "dut.sv:35.16-35.49"
   cell $xor $xor$dut.sv:35$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

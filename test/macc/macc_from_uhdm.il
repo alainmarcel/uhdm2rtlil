@@ -49,10 +49,10 @@ module \macc2
   attribute \init 1'0
   wire \overflow_reg
   wire $auto$rtlil.cc:3313:Ge$20
-  wire width 32 $auto$expression.cpp:3018:import_operation$26
+  wire width 32 $auto$expression.cpp:3032:import_operation$26
   attribute \unused_bits "40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
   wire width 64 signed $auto$rtlil.cc:3390:Mux$24
-  wire width 41 $auto$expression.cpp:2886:import_operation$28
+  wire width 41 $auto$expression.cpp:2897:import_operation$28
   cell $ge $ge$dut.sv:79$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -63,6 +63,7 @@ module \macc2
     connect \B 64'0000000000000000000000001000000000000000000000000000000000000000
     connect \Y $auto$rtlil.cc:3313:Ge$20
   end
+  attribute \src "dut.sv:79.19-79.63"
   cell $or $or$dut.sv:79$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -80,6 +81,7 @@ module \macc2
     connect \S \overflow
     connect \Y { $auto$rtlil.cc:3390:Mux$24 [63:40] \accum_out }
   end
+  attribute \src "dut.sv:64.15-64.30"
   cell $mul $mul$dut.sv:64$27
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -88,8 +90,9 @@ module \macc2
     parameter \Y_WIDTH 32
     connect \A \a_reg2
     connect \B \b_reg2
-    connect \Y $auto$expression.cpp:3018:import_operation$26
+    connect \Y $auto$expression.cpp:3032:import_operation$26
   end
+  attribute \src "dut.sv:66.16-66.36"
   cell $add $add$dut.sv:66$29
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
@@ -98,7 +101,7 @@ module \macc2
     parameter \Y_WIDTH 41
     connect \A \adder_out
     connect \B { \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg [31] \mult_reg }
-    connect \Y $auto$expression.cpp:2886:import_operation$28
+    connect \Y $auto$expression.cpp:2897:import_operation$28
   end
   attribute \src "dut.sv:57.1-78.4"
   attribute \always_ff 1
@@ -121,7 +124,7 @@ module \macc2
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:3018:import_operation$26
+    connect \D $auto$expression.cpp:3032:import_operation$26
     connect \Q \mult_reg
   end
   attribute \src "dut.sv:57.1-78.4"
@@ -157,7 +160,7 @@ module \macc2
     parameter \WIDTH 41
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2886:import_operation$28
+    connect \D $auto$expression.cpp:2897:import_operation$28
     connect \Q \adder_out
   end
   attribute \src "dut.sv:57.1-78.4"

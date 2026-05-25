@@ -15,10 +15,10 @@ module counter(clk, rstn, out);
   wire _00_;
   wire _01_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:12.14-12.23|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   wire [3:0] _02_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:12.14-12.23|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [3:0] _03_;
   \$_NOT_  _04_ (
     .A(out[0]),

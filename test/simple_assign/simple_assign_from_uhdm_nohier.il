@@ -32,6 +32,7 @@ module \simple_assign
   wire $auto$rtlil.cc:3302:And$18
   wire $auto$rtlil.cc:3302:And$20
   wire $auto$rtlil.cc:3303:Or$22
+  attribute \src "dut.sv:14.22-14.27"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -42,6 +43,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:14.22-14.31"
   cell $and $and$dut.sv:14$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -52,6 +54,7 @@ module \simple_assign
     connect \B \c
     connect \Y $auto$rtlil.cc:3302:And$4
   end
+  attribute \src "dut.sv:15.21-15.26"
   cell $or $or$dut.sv:15$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -62,6 +65,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3303:Or$6
   end
+  attribute \src "dut.sv:15.21-15.30"
   cell $or $or$dut.sv:15$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -72,6 +76,7 @@ module \simple_assign
     connect \B \c
     connect \Y $auto$rtlil.cc:3303:Or$8
   end
+  attribute \src "dut.sv:15.21-15.34"
   cell $or $or$dut.sv:15$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -82,6 +87,7 @@ module \simple_assign
     connect \B \d
     connect \Y $auto$rtlil.cc:3303:Or$10
   end
+  attribute \src "dut.sv:16.24-16.29"
   cell $and $and$dut.sv:16$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -92,6 +98,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$12
   end
+  attribute \src "dut.sv:16.22-16.30"
   cell $not $not$dut.sv:16$13
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -99,6 +106,7 @@ module \simple_assign
     connect \A $auto$rtlil.cc:3302:And$12
     connect \Y $auto$rtlil.cc:3255:Not$14
   end
+  attribute \src "dut.sv:17.27-17.32"
   cell $and $and$dut.sv:17$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -109,6 +117,7 @@ module \simple_assign
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$16
   end
+  attribute \src "dut.sv:17.37-17.42"
   cell $and $and$dut.sv:17$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -119,6 +128,7 @@ module \simple_assign
     connect \B \d
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:17.37-17.46"
   cell $and $and$dut.sv:17$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -129,6 +139,7 @@ module \simple_assign
     connect \B \e
     connect \Y $auto$rtlil.cc:3302:And$20
   end
+  attribute \src "dut.sv:17.26-17.47"
   cell $or $or$dut.sv:17$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

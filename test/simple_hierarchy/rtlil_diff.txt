@@ -14,7 +14,7 @@
    attribute \src "dut.sv:4.29-4.30"
    wire width 8 input 1 \a
    attribute \src "dut.sv:5.29-5.30"
-@@ -13,11 +13,8 @@
+@@ -13,10 +13,8 @@
    wire width 8 input 3 \c
    attribute \src "dut.sv:7.29-7.32"
    wire width 8 output 4 \out
@@ -22,20 +22,19 @@
 -  wire width 8 $and$dut.sv:11$1_Y
 -  attribute \src "dut.sv:11.18-11.27"
 -  wire width 8 $and$dut.sv:11$2_Y
--  attribute \src "dut.sv:11.18-11.23"
 +  wire width 8 $auto$rtlil.cc:3302:And$2
 +  wire width 8 $auto$rtlil.cc:3302:And$4
+   attribute \src "dut.sv:11.18-11.23"
    cell $and $and$dut.sv:11$1
      parameter \A_SIGNED 0
-     parameter \B_SIGNED 0
-@@ -26,23 +23,22 @@
+@@ -26,23 +24,23 @@
      parameter \Y_WIDTH 8
      connect \A \a
      connect \B \b
 -    connect \Y $and$dut.sv:11$1_Y
 +    connect \Y $auto$rtlil.cc:3302:And$2
    end
--  attribute \src "dut.sv:11.18-11.27"
+   attribute \src "dut.sv:11.18-11.27"
 -  cell $and $and$dut.sv:11$2
 +  cell $and $and$dut.sv:11$3
      parameter \A_SIGNED 0
@@ -58,7 +57,7 @@
  module \simple_hierarchy
    attribute \src "dut.sv:16.24-16.26"
    wire width 8 input 1 \a1
-@@ -68,31 +64,98 @@
+@@ -68,31 +66,102 @@
    wire width 8 output 11 \out2
    attribute \src "dut.sv:21.24-21.28"
    wire width 16 output 12 \out3
@@ -109,6 +108,7 @@
 +  wire width 8 output 4 \out
 +  wire width 8 $auto$rtlil.cc:3302:And$6
 +  wire width 8 $auto$rtlil.cc:3302:And$8
++  attribute \src "dut.sv:11.18-11.23"
 +  cell $and $and$dut.sv:11$5
 +    parameter \A_SIGNED 0
 +    parameter \B_SIGNED 0
@@ -119,6 +119,7 @@
 +    connect \B \b
 +    connect \Y $auto$rtlil.cc:3302:And$6
 +  end
++  attribute \src "dut.sv:11.18-11.27"
 +  cell $and $and$dut.sv:11$7
 +    parameter \A_SIGNED 0
 +    parameter \B_SIGNED 0
@@ -147,6 +148,7 @@
 +  wire width 16 output 4 \out
 +  wire width 16 $auto$rtlil.cc:3302:And$10
 +  wire width 16 $auto$rtlil.cc:3302:And$12
++  attribute \src "dut.sv:11.18-11.23"
 +  cell $and $and$dut.sv:11$9
 +    parameter \A_SIGNED 0
 +    parameter \B_SIGNED 0
@@ -157,6 +159,7 @@
 +    connect \B \b
 +    connect \Y $auto$rtlil.cc:3302:And$10
 +  end
++  attribute \src "dut.sv:11.18-11.27"
 +  cell $and $and$dut.sv:11$11
 +    parameter \A_SIGNED 0
 +    parameter \B_SIGNED 0

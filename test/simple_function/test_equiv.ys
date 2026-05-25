@@ -89,6 +89,20 @@ chtype -map \$_ANDNOT_ $_ANDNOT_
 chtype -map \$_ORNOT_ $_ORNOT_
 chtype -map \$_MUX_ $_MUX_
 chtype -map \$_NMUX_ $_NMUX_
+chtype -map \$_DFF_P_ $_DFF_P_
+chtype -map \$_DFF_N_ $_DFF_N_
+chtype -map \$_DFF_PP0_ $_DFF_PP0_
+chtype -map \$_DFF_PP1_ $_DFF_PP1_
+chtype -map \$_DFF_PN0_ $_DFF_PN0_
+chtype -map \$_DFF_PN1_ $_DFF_PN1_
+chtype -map \$_DFF_NP0_ $_DFF_NP0_
+chtype -map \$_DFF_NP1_ $_DFF_NP1_
+chtype -map \$_DFF_NN0_ $_DFF_NN0_
+chtype -map \$_DFF_NN1_ $_DFF_NN1_
+chtype -map \$_DFFE_PP_ $_DFFE_PP_
+chtype -map \$_DFFE_PN_ $_DFFE_PN_
+chtype -map \$_DFFE_NP_ $_DFFE_NP_
+chtype -map \$_DFFE_NN_ $_DFFE_NN_
 equiv_simple
 equiv_induct
 equiv_status -assert

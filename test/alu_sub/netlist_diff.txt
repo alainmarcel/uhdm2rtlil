@@ -56,7 +56,7 @@
  (* force_downto = 32'd1 *)
 -(* src = "dut.sv:50.17-50.17|dut.sv:48.3-53.10|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
 -wire [8:0] _086_;
-+(* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
++(* src = "dut.sv:52.11-52.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
 +(* unused_bits = "0 1 2 3 4 5 6 7" *)
 +wire [8:0] _048_;
  (* src = "dut.sv:42.12-42.17" *)

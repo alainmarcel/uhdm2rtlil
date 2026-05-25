@@ -12,6 +12,7 @@ module \gen_test4
   wire $auto$rtlil.cc:3302:And$2
   wire \foo[2].temp
   wire $auto$rtlil.cc:3302:And$4
+  attribute \src "dut.sv:14.18-14.39"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -22,6 +23,7 @@ module \gen_test4
     connect \B \a [1]
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:14.18-14.39"
   cell $and $and$dut.sv:14$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

@@ -67,6 +67,7 @@ module \carryadd
   wire $auto$rtlil.cc:3302:And$70
   wire $auto$rtlil.cc:3304:Xor$62
   wire $auto$rtlil.cc:3304:Xor$74
+  attribute \src "dut.sv:14.15-14.24"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -77,6 +78,7 @@ module \carryadd
     connect \B \b [0]
     connect \Y \STAGE[0].C
   end
+  attribute \src "dut.sv:14.30-14.39"
   cell $xor $xor$dut.sv:14$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -87,6 +89,7 @@ module \carryadd
     connect \B \b [0]
     connect \Y \STAGE[0].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -97,6 +100,7 @@ module \carryadd
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3302:And$6
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -107,6 +111,7 @@ module \carryadd
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3303:Or$8
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -117,6 +122,7 @@ module \carryadd
     connect \B \STAGE[0].C
     connect \Y $auto$rtlil.cc:3302:And$10
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -127,6 +133,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$10
     connect \Y \STAGE[1].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -137,6 +144,7 @@ module \carryadd
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3304:Xor$14
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -147,6 +155,7 @@ module \carryadd
     connect \B \STAGE[0].C
     connect \Y \STAGE[1].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -157,6 +166,7 @@ module \carryadd
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -167,6 +177,7 @@ module \carryadd
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3303:Or$20
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -177,6 +188,7 @@ module \carryadd
     connect \B \STAGE[1].C
     connect \Y $auto$rtlil.cc:3302:And$22
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -187,6 +199,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$22
     connect \Y \STAGE[2].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -197,6 +210,7 @@ module \carryadd
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3304:Xor$26
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -207,6 +221,7 @@ module \carryadd
     connect \B \STAGE[1].C
     connect \Y \STAGE[2].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -217,6 +232,7 @@ module \carryadd
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3302:And$30
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -227,6 +243,7 @@ module \carryadd
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3303:Or$32
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$33
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -237,6 +254,7 @@ module \carryadd
     connect \B \STAGE[2].C
     connect \Y $auto$rtlil.cc:3302:And$34
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$35
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -247,6 +265,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$34
     connect \Y \STAGE[3].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -257,6 +276,7 @@ module \carryadd
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3304:Xor$38
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -267,6 +287,7 @@ module \carryadd
     connect \B \STAGE[2].C
     connect \Y \STAGE[3].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$41
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -277,6 +298,7 @@ module \carryadd
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3302:And$42
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$43
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -287,6 +309,7 @@ module \carryadd
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3303:Or$44
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$45
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -297,6 +320,7 @@ module \carryadd
     connect \B \STAGE[3].C
     connect \Y $auto$rtlil.cc:3302:And$46
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -307,6 +331,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$46
     connect \Y \STAGE[4].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -317,6 +342,7 @@ module \carryadd
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3304:Xor$50
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$51
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -327,6 +353,7 @@ module \carryadd
     connect \B \STAGE[3].C
     connect \Y \STAGE[4].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$53
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -337,6 +364,7 @@ module \carryadd
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3302:And$54
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$55
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -347,6 +375,7 @@ module \carryadd
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3303:Or$56
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$57
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -357,6 +386,7 @@ module \carryadd
     connect \B \STAGE[4].C
     connect \Y $auto$rtlil.cc:3302:And$58
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$59
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -367,6 +397,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$58
     connect \Y \STAGE[5].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$61
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -377,6 +408,7 @@ module \carryadd
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3304:Xor$62
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$63
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -387,6 +419,7 @@ module \carryadd
     connect \B \STAGE[4].C
     connect \Y \STAGE[5].Y
   end
+  attribute \src "dut.sv:16.16-16.25"
   cell $and $and$dut.sv:16$65
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -397,6 +430,7 @@ module \carryadd
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3302:And$66
   end
+  attribute \src "dut.sv:16.31-16.40"
   cell $or $or$dut.sv:16$67
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -407,6 +441,7 @@ module \carryadd
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3303:Or$68
   end
+  attribute \src "dut.sv:16.30-16.56"
   cell $and $and$dut.sv:16$69
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -417,6 +452,7 @@ module \carryadd
     connect \B \STAGE[5].C
     connect \Y $auto$rtlil.cc:3302:And$70
   end
+  attribute \src "dut.sv:16.15-16.57"
   cell $or $or$dut.sv:16$71
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -427,6 +463,7 @@ module \carryadd
     connect \B $auto$rtlil.cc:3302:And$70
     connect \Y \STAGE[6].C
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$73
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -437,6 +474,7 @@ module \carryadd
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3304:Xor$74
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$75
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -447,6 +485,7 @@ module \carryadd
     connect \B \STAGE[5].C
     connect \Y \STAGE[6].Y
   end
+  attribute \src "dut.sv:17.15-17.39"
   cell $xor $xor$dut.sv:17$87
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -457,6 +496,7 @@ module \carryadd
     connect \B \STAGE[6].C
     connect \Y \STAGE[7].Y
   end
+  attribute \src "dut.sv:17.15-17.24"
   cell $xor $xor$dut.sv:17$85
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

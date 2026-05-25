@@ -12,6 +12,7 @@ module \mul_plain
   wire width 6 input 2 \b
   attribute \src "dut.sv:1.24-1.25"
   wire width 12 output 3 \p
+  attribute \src "dut.sv:10.16-10.21"
   cell $mul $mul$dut.sv:10$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

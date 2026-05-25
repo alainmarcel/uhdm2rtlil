@@ -49,11 +49,11 @@ module top(clk, reset, up, down, cnt);
   wire _27_;
   wire _28_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
+  (* src = "dut.sv:19.33-19.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:287.21-287.22" *)
   (* unused_bits = "1 2 3 4 5 6 7" *)
   wire [7:0] _29_;
   (* force_downto = 32'd1 *)
-  (* src = "/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
+  (* src = "dut.sv:19.33-19.50|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [7:0] _30_;
   \$_NOT_  _31_ (
     .A(cnt[0]),

@@ -36,6 +36,7 @@ module \logic_ops
   wire $auto$rtlil.cc:3255:Not$18
   wire $auto$rtlil.cc:3322:LogicAnd$20
   wire $auto$rtlil.cc:3323:LogicOr$22
+  attribute \src "dut.sv:6.18-6.31"
   cell $and $and$dut.sv:6$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -46,6 +47,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:7.18-7.31"
   cell $or $or$dut.sv:7$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -90,6 +92,7 @@ module \logic_ops
     connect \A $auto$rtlil.cc:3303:Or$10
     connect \Y $auto$rtlil.cc:3255:Not$12
   end
+  attribute \src "dut.sv:10.18-10.31"
   cell $xor $xor$dut.sv:10$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -100,6 +103,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3304:Xor$14
   end
+  attribute \src "dut.sv:11.18-11.32"
   cell $xnor $xnor$dut.sv:11$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -110,6 +114,7 @@ module \logic_ops
     connect \B \in [6]
     connect \Y $auto$rtlil.cc:3305:Xnor$16
   end
+  attribute \src "dut.sv:12.18-12.24"
   cell $not $not$dut.sv:12$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1

@@ -8,6 +8,7 @@ module \lut_map_not
   attribute \src "dut.sv:3.12-3.13"
   wire output 2 \y
   wire $auto$rtlil.cc:3255:Not$2
+  attribute \src "dut.sv:5.16-5.18"
   cell $not $not$dut.sv:5$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1

@@ -12,6 +12,7 @@ module \aoi12
   wire output 4 \y
   wire $auto$rtlil.cc:3302:And$2
   wire $auto$rtlil.cc:3303:Or$4
+  attribute \src "dut.sv:12.16-12.21"
   cell $and $and$dut.sv:12$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -22,6 +23,7 @@ module \aoi12
     connect \B \b
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:12.15-12.26"
   cell $or $or$dut.sv:12$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -32,6 +34,7 @@ module \aoi12
     connect \B \c
     connect \Y $auto$rtlil.cc:3303:Or$4
   end
+  attribute \src "dut.sv:12.13-12.27"
   cell $not $not$dut.sv:12$5
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1

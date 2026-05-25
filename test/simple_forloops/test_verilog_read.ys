@@ -1,5 +1,5 @@
 # Test script to read Verilog file directly in Yosys
-read_verilog  dut.v
+read_verilog   dut.v
 # Write RTLIL immediately after reading, before hierarchy
 write_rtlil simple_forloops_from_verilog_nohier.il
 hierarchy -check -auto-top

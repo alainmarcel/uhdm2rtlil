@@ -14,6 +14,7 @@ module \struct_array
   attribute \src "dut.sv:14.14-14.20"
   attribute \wiretype "\\packet_t"
   wire width 12 \packet
+  attribute \src "dut.sv:24.20-24.38"
   cell $add $add$dut.sv:24$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

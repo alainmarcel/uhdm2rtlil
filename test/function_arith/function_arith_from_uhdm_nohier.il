@@ -27,10 +27,10 @@ module \function_arith
   attribute \src "dut.sv:25.18-25.37"
   wire width 8 $0\func_arith$func$dut.sv:25$1.$result$9
   wire width 8 \func_arith$func$dut.sv:25$1.$result
-  wire width 8 $auto$expression.cpp:2886:import_operation$10
+  wire width 8 $auto$expression.cpp:2897:import_operation$10
   wire width 8 $func_arith$func$dut.sv:25$2$local_temp
-  wire width 8 $auto$expression.cpp:2940:import_operation$12
-  wire width 8 $auto$expression.cpp:3068:import_operation$14
+  wire width 8 $auto$expression.cpp:2952:import_operation$12
+  wire width 8 $auto$expression.cpp:3084:import_operation$14
   wire width 8 $auto$rtlil.cc:3302:And$17
   wire width 8 $auto$rtlil.cc:3303:Or$19
   wire width 8 $auto$rtlil.cc:3304:Xor$21
@@ -40,6 +40,7 @@ module \function_arith
   attribute \nosync 1
   attribute \src "dut.sv:25.18-25.37"
   wire width 8 \func_arith$func$dut.sv:25$2.temp
+  attribute \src "dut.sv:16.20-16.25"
   cell $add $add$dut.sv:16$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -48,8 +49,9 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $0\func_arith$func$dut.sv:25$2.x$4
     connect \B $0\func_arith$func$dut.sv:25$2.y$5
-    connect \Y $auto$expression.cpp:2886:import_operation$10
+    connect \Y $auto$expression.cpp:2897:import_operation$10
   end
+  attribute \src "dut.sv:17.20-17.28"
   cell $sub $sub$dut.sv:17$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -58,8 +60,9 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B $0\func_arith$func$dut.sv:25$2.z$6
-    connect \Y $auto$expression.cpp:2940:import_operation$12
+    connect \Y $auto$expression.cpp:2952:import_operation$12
   end
+  attribute \src "dut.sv:18.20-18.29"
   cell $shl $shl$dut.sv:18$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -68,8 +71,9 @@ module \function_arith
     parameter \Y_WIDTH 8
     connect \A $func_arith$func$dut.sv:25$2$local_temp
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3068:import_operation$14
+    connect \Y $auto$expression.cpp:3084:import_operation$14
   end
+  attribute \src "dut.sv:19.28-19.33"
   cell $and $and$dut.sv:19$16
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -80,6 +84,7 @@ module \function_arith
     connect \B $0\func_arith$func$dut.sv:25$2.y$5
     connect \Y $auto$rtlil.cc:3302:And$17
   end
+  attribute \src "dut.sv:19.20-19.34"
   cell $or $or$dut.sv:19$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -90,6 +95,7 @@ module \function_arith
     connect \B $auto$rtlil.cc:3302:And$17
     connect \Y $auto$rtlil.cc:3303:Or$19
   end
+  attribute \src "dut.sv:20.26-20.34"
   cell $xor $xor$dut.sv:20$20
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -112,9 +118,9 @@ module \function_arith
     assign $0\func_arith$func$dut.sv:25$2.z$6 \c
     assign $0\func_arith$func$dut.sv:25$2.$result$7 $1\func_arith$func$dut.sv:25$2.$result$8
     assign $0\func_arith$func$dut.sv:25$1.$result$9 $1\func_arith$func$dut.sv:25$2.$result$8
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2886:import_operation$10
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2940:import_operation$12
-    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:3068:import_operation$14
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2897:import_operation$10
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:2952:import_operation$12
+    assign $func_arith$func$dut.sv:25$2$local_temp $auto$expression.cpp:3084:import_operation$14
     assign $func_arith$func$dut.sv:25$2$local_temp $auto$rtlil.cc:3303:Or$19
     assign $1\func_arith$func$dut.sv:25$2.$result$8 $auto$rtlil.cc:3304:Xor$21
     sync always

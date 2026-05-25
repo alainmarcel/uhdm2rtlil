@@ -13,6 +13,7 @@ module \wreduce_test0
   wire width 16 output 4 \y
   attribute \src "dut.sv:1.60-1.61"
   wire width 16 output 5 \z
+  attribute \src "dut.sv:2.14-2.33"
   cell $neg $neg$dut.sv:2$2
     parameter \A_SIGNED 1
     parameter \A_WIDTH 9
@@ -20,6 +21,7 @@ module \wreduce_test0
     connect \A { 1'0 \a }
     connect \Y \x [8:0]
   end
+  attribute \src "dut.sv:4.14-4.19"
   cell $xor $xor$dut.sv:4$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -30,6 +32,7 @@ module \wreduce_test0
     connect \B \y
     connect \Y \z
   end
+  attribute \src "dut.sv:3.14-3.53"
   cell $add $add$dut.sv:3$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

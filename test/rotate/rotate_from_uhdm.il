@@ -201,6 +201,7 @@ module \a23_barrel_shift_fpga_rotate
   wire $auto$rtlil.cc:3302:And$345
   wire $auto$rtlil.cc:3302:And$1450
   wire $auto$rtlil.cc:3302:And$1164
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1410
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -211,6 +212,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1411
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1098
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -221,6 +223,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1099
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -231,6 +234,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$7
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2014
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -241,6 +245,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [26]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$740
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -251,6 +256,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [24]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$12
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -261,6 +267,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [0]
   end
+  attribute \src "dut.sv:21.51-21.67"
   cell $not $not$dut.sv:21$1653
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -268,6 +275,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [3]
     connect \Y $auto$rtlil.cc:3255:Not$1251
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1767
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -278,6 +286,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [7]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -288,6 +297,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$20
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1416
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -298,6 +308,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [12]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$747
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -308,6 +319,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$748
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -318,6 +330,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [1]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1865
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -328,6 +341,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1866
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1104
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -338,6 +352,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [20]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$32
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -348,6 +363,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$33
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$753
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -358,6 +374,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [25]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1657
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -368,6 +385,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1658
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$38
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -378,6 +396,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [2]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1423
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -388,6 +407,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1424
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1982
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -398,6 +418,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1983
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$45
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -408,6 +429,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$46
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1871
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -418,6 +440,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [15]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$760
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -428,6 +451,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$761
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$51
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -438,6 +462,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [3]
   end
+  attribute \src "dut.sv:22.60-22.87"
   cell $xor $xor$dut.sv:22$1659
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -448,6 +473,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1257
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1273
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -458,6 +484,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [1]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$58
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -468,6 +495,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$59
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1429
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -478,6 +506,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [13]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$766
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -488,6 +517,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [26]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$64
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -498,6 +528,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [4]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1111
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -508,6 +539,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1112
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1351
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -518,6 +550,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [7]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$71
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -528,6 +561,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$72
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$773
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -538,6 +572,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$774
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1663
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -548,6 +583,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [31]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$77
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -558,6 +594,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [5]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1436
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -568,6 +605,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1437
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2008
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -578,6 +616,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2009
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$84
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -588,6 +627,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$85
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$779
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -598,6 +638,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [27]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1117
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -608,6 +649,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [21]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$90
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -618,6 +660,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [6]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1774
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -628,6 +671,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1775
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$786
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -638,6 +682,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$787
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$97
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -648,6 +693,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$98
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1442
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -658,6 +704,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [14]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1280
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -668,6 +715,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1281
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$103
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -678,6 +726,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [7]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1878
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -688,6 +737,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1879
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1124
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -698,6 +748,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1125
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$110
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -708,6 +759,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$111
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$792
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -718,6 +770,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [28]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1670
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -728,6 +781,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1671
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$116
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -738,6 +792,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [8]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1449
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -748,6 +803,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1450
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2053
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -758,6 +814,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [29]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$123
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -768,6 +825,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$124
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$799
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -778,6 +836,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$800
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1949
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -788,6 +847,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [21]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$129
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -798,6 +858,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [9]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1390
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -808,6 +869,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [10]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$805
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -818,6 +880,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [29]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$136
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -828,6 +891,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$137
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1455
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -838,6 +902,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [15]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1130
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -848,6 +913,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [22]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$142
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -858,6 +924,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [10]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1358
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -868,6 +935,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1359
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$812
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -878,6 +946,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$813
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$149
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -888,6 +957,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$150
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1676
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -898,6 +968,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [0]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1286
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -908,6 +979,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [2]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$155
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -918,6 +990,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [11]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1462
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -928,6 +1001,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1463
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$818
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -938,6 +1012,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [30]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$162
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -948,6 +1023,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$163
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1884
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -958,6 +1034,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [16]
   end
+  attribute \src "dut.sv:21.51-21.67"
   cell $not $not$dut.sv:21$821
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -965,6 +1042,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [1]
     connect \Y $auto$rtlil.cc:3255:Not$419
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$168
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -975,6 +1053,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [12]
   end
+  attribute \src "dut.sv:21.51-21.79"
   cell $xor $xor$dut.sv:21$823
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -985,6 +1064,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$421
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$825
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -995,6 +1075,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$826
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$175
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1005,6 +1086,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$176
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1468
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1015,6 +1097,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [16]
   end
+  attribute \src "dut.sv:22.60-22.87"
   cell $xor $xor$dut.sv:22$827
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1025,6 +1108,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$425
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$181
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1035,6 +1119,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [13]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2021
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1045,6 +1130,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2022
   end
+  attribute \src "dut.sv:22.42-22.88"
   cell $and $and$dut.sv:22$829
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1055,6 +1141,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$425
     connect \Y $auto$rtlil.cc:3302:And$427
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$188
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1065,6 +1152,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$189
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$831
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1075,6 +1163,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [31]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2073
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1085,6 +1174,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2074
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$194
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1095,6 +1185,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [14]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1475
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1105,6 +1196,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1476
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1137
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1115,6 +1207,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1138
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$201
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1125,6 +1218,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$202
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$838
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1135,6 +1229,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$839
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1780
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1145,6 +1240,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [8]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$207
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1155,6 +1251,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [15]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1826
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1165,6 +1262,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1827
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$844
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1175,6 +1273,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [0]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$214
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1185,6 +1284,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$215
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1481
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1195,6 +1295,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [17]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1683
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1205,6 +1306,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1684
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$220
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1215,6 +1317,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [16]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1891
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1225,6 +1328,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1892
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1143
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1235,6 +1339,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [23]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$227
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1245,6 +1350,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$228
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$851
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1255,6 +1361,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$852
   end
+  attribute \src "dut.sv:22.42-22.88"
   cell $and $and$dut.sv:22$2012
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1265,6 +1372,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1673
     connect \Y $auto$rtlil.cc:3302:And$1675
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$233
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1275,6 +1383,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [17]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1488
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1285,6 +1394,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1489
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1293
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1295,6 +1405,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1294
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$240
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1305,6 +1416,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$241
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2066
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1315,6 +1427,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [30]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$857
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1325,6 +1438,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [1]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$246
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1335,6 +1449,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [18]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1150
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1345,6 +1460,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1151
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2001
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1355,6 +1471,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [25]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$253
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1365,6 +1482,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$254
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1494
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1375,6 +1493,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [18]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$864
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1385,6 +1504,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$865
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$259
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1395,6 +1515,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [19]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1689
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1405,6 +1526,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [1]
   end
+  attribute \src "dut.sv:21.51-21.79"
   cell $xor $xor$dut.sv:21$1408
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1415,6 +1537,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1253
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$266
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1425,6 +1548,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$267
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$870
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1435,6 +1559,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [2]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1956
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1445,6 +1570,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1957
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$272
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1455,6 +1581,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [20]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1501
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1465,6 +1592,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1502
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1156
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1475,6 +1603,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [24]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$279
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1485,6 +1614,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$280
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1897
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1495,6 +1625,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [17]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$877
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1505,6 +1636,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$878
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$285
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1515,6 +1647,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [21]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1787
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1525,6 +1658,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1788
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1299
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1535,6 +1669,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [3]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$292
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1545,6 +1680,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$293
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1507
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1555,6 +1691,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [19]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$883
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1565,6 +1702,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [3]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$298
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1575,6 +1713,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [22]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1696
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1585,6 +1724,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1697
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1163
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1595,6 +1735,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1164
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$305
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1605,6 +1746,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$306
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$890
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1615,6 +1757,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$891
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1988
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1625,6 +1768,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [24]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$311
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1635,6 +1779,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [23]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1514
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1645,6 +1790,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1515
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1364
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1655,6 +1801,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [8]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$318
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1665,6 +1812,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$319
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$896
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1675,6 +1823,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [4]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1169
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1685,6 +1834,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [25]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$324
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1695,6 +1845,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [24]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1852
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1705,6 +1856,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1853
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$903
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1715,6 +1867,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$904
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$331
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1725,6 +1878,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$332
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1520
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1735,6 +1889,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [20]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1702
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1745,6 +1900,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [2]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$337
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1755,6 +1911,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [25]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1904
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1765,6 +1922,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1905
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1306
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1775,6 +1933,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1307
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$344
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1785,6 +1944,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$345
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$909
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1795,6 +1955,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [5]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1176
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1805,6 +1966,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1177
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$350
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1815,6 +1977,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [26]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1527
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1825,6 +1988,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1528
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1793
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1835,6 +1999,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [9]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$357
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1845,6 +2010,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$358
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2027
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1855,6 +2021,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [27]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$916
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1865,6 +2032,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$917
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$363
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1875,6 +2043,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [27]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1832
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1885,6 +2054,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [12]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1182
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1895,6 +2065,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [26]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$370
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1905,6 +2076,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$371
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1533
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1915,6 +2087,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [21]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$922
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1925,6 +2098,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [6]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$376
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1935,6 +2109,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [28]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1709
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1945,6 +2120,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1710
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1397
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1955,6 +2131,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1398
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$383
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1965,6 +2142,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$384
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$929
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1975,6 +2153,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$930
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1962
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1985,6 +2164,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [22]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$389
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -1995,6 +2175,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [29]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1540
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2005,6 +2186,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1541
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1312
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2015,6 +2197,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [4]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$396
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2025,6 +2208,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$397
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1910
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2035,6 +2219,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [18]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$935
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2045,6 +2230,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [7]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$402
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2055,6 +2241,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [30]
   end
+  attribute \src "dut.sv:21.51-21.67"
   cell $not $not$dut.sv:21$405
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2062,6 +2249,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [0]
     connect \Y $auto$rtlil.cc:3255:Not$107
   end
+  attribute \src "dut.sv:21.51-21.79"
   cell $xor $xor$dut.sv:21$407
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2072,6 +2260,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$109
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$409
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2082,6 +2271,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$410
   end
+  attribute \src "dut.sv:22.60-22.87"
   cell $xor $xor$dut.sv:22$411
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2092,6 +2282,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$100
   end
+  attribute \src "dut.sv:22.42-22.88"
   cell $and $and$dut.sv:22$413
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2102,6 +2293,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$100
     connect \Y $auto$rtlil.cc:3302:And$102
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$415
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2112,6 +2304,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$102
     connect \Y \rot_prod [31]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1189
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2122,6 +2315,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1190
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2060
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2132,6 +2326,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2061
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$422
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2142,6 +2337,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$423
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1546
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2152,6 +2348,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [22]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$942
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2162,6 +2359,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$943
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$428
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2172,6 +2370,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [0]
   end
+  attribute \src "dut.sv:21.51-21.67"
   cell $not $not$dut.sv:21$2069
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2179,6 +2378,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [4]
     connect \Y $auto$rtlil.cc:3255:Not$1667
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1715
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2189,6 +2389,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [3]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$435
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2199,6 +2400,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$436
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1371
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2209,6 +2411,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1372
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$948
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2219,6 +2422,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [8]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$441
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2229,6 +2433,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [1]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1553
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2239,6 +2444,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1554
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2047
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2249,6 +2455,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2048
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$448
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2259,6 +2466,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$449
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1195
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2269,6 +2477,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [27]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$955
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2279,6 +2488,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$956
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$454
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2289,6 +2499,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [2]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1800
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2299,6 +2510,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1801
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1319
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2309,6 +2521,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1320
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$461
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2319,6 +2532,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$462
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1559
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2329,6 +2543,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [23]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$961
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2339,6 +2554,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [9]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$467
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2349,6 +2565,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [3]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1917
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2359,6 +2576,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1918
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1722
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2369,6 +2587,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1723
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$474
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2379,6 +2598,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$475
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1202
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2389,6 +2609,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1203
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$968
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2399,6 +2620,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$969
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$480
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2409,6 +2631,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [4]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1566
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2419,6 +2642,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1567
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2079
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2429,6 +2653,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [31]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$487
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2439,6 +2664,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$488
   end
+  attribute \src "dut.sv:21.51-21.79"
   cell $xor $xor$dut.sv:21$1863
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2449,6 +2675,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1669
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$974
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2459,6 +2686,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [10]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$493
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2469,6 +2697,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [5]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1208
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2479,6 +2708,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [28]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1325
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2489,6 +2719,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [5]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$500
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2499,6 +2730,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$501
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1572
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2509,6 +2741,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [24]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$981
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2519,6 +2752,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$982
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$506
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2529,6 +2763,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [6]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1728
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2539,6 +2774,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [4]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1839
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2549,6 +2785,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1840
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$513
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2559,6 +2796,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$514
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$987
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2569,6 +2807,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [11]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1969
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2579,6 +2818,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1970
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$519
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2589,6 +2829,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [7]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1579
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2599,6 +2840,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1580
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1215
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2609,6 +2851,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1216
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$526
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2619,6 +2862,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$527
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1923
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2629,6 +2873,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [19]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$994
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2639,6 +2884,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$995
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$532
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2649,6 +2895,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [8]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1806
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2659,6 +2906,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [10]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1377
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2669,6 +2917,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [9]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$539
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2679,6 +2928,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$540
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1585
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2689,6 +2939,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [25]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1000
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2699,6 +2950,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [12]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$545
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2709,6 +2961,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [9]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$2034
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2719,6 +2972,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2035
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1735
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2729,6 +2983,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1736
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$552
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2739,6 +2994,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$553
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1221
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2749,6 +3005,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [29]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1007
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2759,6 +3016,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1008
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$558
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2769,6 +3027,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [10]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1592
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2779,6 +3038,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1593
   end
+  attribute \src "dut.sv:22.60-22.87"
   cell $xor $xor$dut.sv:22$2075
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2789,6 +3049,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1673
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$565
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2799,6 +3060,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$566
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1995
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2809,6 +3071,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1996
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1013
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2819,6 +3082,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [13]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$571
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2829,6 +3093,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [11]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1332
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2839,6 +3104,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1333
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1228
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2849,6 +3115,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1229
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$578
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2859,6 +3126,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$579
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1598
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2869,6 +3137,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [26]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1020
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2879,6 +3148,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1021
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$584
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2889,6 +3159,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [12]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1930
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2899,6 +3170,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1931
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1741
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2909,6 +3181,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [5]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$591
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2919,6 +3192,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$592
   end
+  attribute \src "dut.sv:22.42-22.88"
   cell $and $and$dut.sv:22$1401
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2929,6 +3203,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1257
     connect \Y $auto$rtlil.cc:3302:And$1259
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1026
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2939,6 +3214,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [14]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$597
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2949,6 +3225,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [13]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1605
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2959,6 +3236,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1606
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1403
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2969,6 +3247,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [11]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$604
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2979,6 +3258,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$605
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1234
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2989,6 +3269,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [30]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1033
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -2999,6 +3280,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1034
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$610
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3009,6 +3291,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [14]
   end
+  attribute \src "dut.sv:21.51-21.67"
   cell $not $not$dut.sv:21$1237
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -3016,6 +3299,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [2]
     connect \Y $auto$rtlil.cc:3255:Not$1004
   end
+  attribute \src "dut.sv:21.51-21.79"
   cell $xor $xor$dut.sv:21$1239
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3026,6 +3310,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1006
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$617
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3036,6 +3321,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$618
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1611
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3046,6 +3332,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [27]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1039
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3056,6 +3343,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [15]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$623
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3066,6 +3354,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [15]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1748
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3076,6 +3365,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1749
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1241
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3086,6 +3376,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1242
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$630
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3096,6 +3387,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$631
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1046
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3106,6 +3398,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1047
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1975
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3116,6 +3409,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [23]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$636
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3126,6 +3420,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [16]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1618
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3136,6 +3431,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1619
   end
+  attribute \src "dut.sv:22.60-22.87"
   cell $xor $xor$dut.sv:22$1243
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3146,6 +3442,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B \direction
     connect \Y $auto$rtlil.cc:3304:Xor$1010
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$643
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3156,6 +3453,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$644
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1936
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3166,6 +3464,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [20]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1052
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3176,6 +3475,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [16]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$649
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3186,6 +3486,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [17]
   end
+  attribute \src "dut.sv:22.42-22.88"
   cell $and $and$dut.sv:22$1245
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3196,6 +3497,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1010
     connect \Y $auto$rtlil.cc:3302:And$1012
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1247
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3206,6 +3508,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [31]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$656
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3216,6 +3519,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$657
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1624
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3226,6 +3530,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [28]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1059
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3236,6 +3541,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1060
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$662
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3246,6 +3552,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [18]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1754
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3256,6 +3563,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [6]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1813
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3266,6 +3574,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1814
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$669
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3276,6 +3585,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$670
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1065
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3286,6 +3596,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [17]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1338
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3296,6 +3607,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [6]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$675
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3306,6 +3618,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [19]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1631
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3316,6 +3629,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1632
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1254
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3326,6 +3640,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1255
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$682
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3336,6 +3651,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$683
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1072
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3346,6 +3662,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1073
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1384
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3356,6 +3673,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1385
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$688
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3366,6 +3684,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [20]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1858
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3376,6 +3695,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [14]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1078
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3386,6 +3706,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [18]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$695
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3396,6 +3717,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$696
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1637
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3406,6 +3728,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [29]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1761
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3416,6 +3739,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1762
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$701
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3426,6 +3750,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [21]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1943
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3436,6 +3761,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1944
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1260
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3446,6 +3772,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1259
     connect \Y \netgen[2].in [0]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$708
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3456,6 +3783,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$709
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1085
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3466,6 +3794,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1006
     connect \Y $auto$rtlil.cc:3302:And$1086
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1345
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3476,6 +3805,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1346
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$714
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3486,6 +3816,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [22]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1644
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3496,6 +3827,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1645
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1845
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3506,6 +3838,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [13]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$721
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3516,6 +3849,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$722
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$2040
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3526,6 +3860,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [28]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1091
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3536,6 +3871,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1012
     connect \Y \netgen[1].in [19]
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$727
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3546,6 +3882,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$427
     connect \Y \netgen[0].in [23]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1267
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3556,6 +3893,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1268
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1819
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3566,6 +3904,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3302:And$1675
     connect \Y \netgen[3].in [11]
   end
+  attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$734
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -3576,6 +3915,7 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$735
   end
+  attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$1650
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

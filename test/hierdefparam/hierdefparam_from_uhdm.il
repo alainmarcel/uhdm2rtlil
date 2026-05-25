@@ -9,6 +9,7 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101011
   wire width 8 input 1 \A
   attribute \src "dut.sv:22.61-22.62"
   wire width 8 output 2 \Y
+  attribute \src "dut.sv:24.14-24.26"
   cell $add $add$dut.sv:24$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -66,6 +67,7 @@ module $paramod\hierdefparam_b\addvalue=s32'00000000000000000000000000101010
   wire width 8 input 1 \A
   attribute \src "dut.sv:22.61-22.62"
   wire width 8 output 2 \Y
+  attribute \src "dut.sv:24.14-24.26"
   cell $add $add$dut.sv:24$4
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

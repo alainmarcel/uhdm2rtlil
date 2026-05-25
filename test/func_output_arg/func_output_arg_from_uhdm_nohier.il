@@ -27,8 +27,9 @@ module \func_output_arg
   wire $auto$rtlil.cc:3255:Not$7
   wire $auto$rtlil.cc:3255:Not$9
   wire $auto$rtlil.cc:3255:Not$11
-  wire $auto$expression.cpp:4544:import_bit_select$12
+  wire $auto$expression.cpp:4563:import_bit_select$12
   wire $auto$rtlil.cc:3255:Not$15
+  attribute \src "dut.sv:23.22-23.33"
   cell $not $not$dut.sv:23$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -36,6 +37,7 @@ module \func_output_arg
     connect \A \old_lru [6]
     connect \Y $auto$rtlil.cc:3255:Not$7
   end
+  attribute \src "dut.sv:25.26-25.37"
   cell $not $not$dut.sv:25$8
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -43,6 +45,7 @@ module \func_output_arg
     connect \A \old_lru [5]
     connect \Y $auto$rtlil.cc:3255:Not$9
   end
+  attribute \src "dut.sv:27.26-27.37"
   cell $not $not$dut.sv:27$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -59,13 +62,14 @@ module \func_output_arg
     parameter \Y_WIDTH 1
     connect \A \old_lru
     connect \B \way_id [2:1]
-    connect \Y $auto$expression.cpp:4544:import_bit_select$12
+    connect \Y $auto$expression.cpp:4563:import_bit_select$12
   end
+  attribute \src "dut.sv:28.32-28.53"
   cell $not $not$dut.sv:28$14
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:4544:import_bit_select$12
+    connect \A $auto$expression.cpp:4563:import_bit_select$12
     connect \Y $auto$rtlil.cc:3255:Not$15
   end
   attribute \src "dut.sv:31.5-32.51"

@@ -35,6 +35,7 @@ module \code_hdl_models_parallel_crc
   wire $auto$rtlil.cc:3304:Xor$26
   wire $auto$rtlil.cc:3304:Xor$28
   wire $auto$rtlil.cc:3304:Xor$42
+  attribute \src "dut.sv:40.22-40.45"
   cell $xor $xor$dut.sv:40$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -45,6 +46,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [0]
     connect \Y $auto$rtlil.cc:3304:Xor$2
   end
+  attribute \src "dut.sv:40.22-40.58"
   cell $xor $xor$dut.sv:40$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -55,6 +57,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [4]
     connect \Y $auto$rtlil.cc:3304:Xor$4
   end
+  attribute \src "dut.sv:40.22-40.72"
   cell $xor $xor$dut.sv:40$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -65,6 +68,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y \next_crc [0]
   end
+  attribute \src "dut.sv:41.22-41.45"
   cell $xor $xor$dut.sv:41$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -75,6 +79,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [5]
     connect \Y \next_crc [1]
   end
+  attribute \src "dut.sv:42.22-42.45"
   cell $xor $xor$dut.sv:42$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -85,6 +90,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [6]
     connect \Y \next_crc [2]
   end
+  attribute \src "dut.sv:43.22-43.45"
   cell $xor $xor$dut.sv:43$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -95,6 +101,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [7]
     connect \Y \next_crc [3]
   end
+  attribute \src "dut.sv:44.22-44.45"
   cell $xor $xor$dut.sv:44$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -105,6 +112,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [8]
     connect \Y \next_crc [4]
   end
+  attribute \src "dut.sv:45.22-45.45"
   cell $xor $xor$dut.sv:45$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -115,6 +123,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [5]
     connect \Y $auto$rtlil.cc:3304:Xor$16
   end
+  attribute \src "dut.sv:45.22-45.58"
   cell $xor $xor$dut.sv:45$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -125,6 +134,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [0]
     connect \Y $auto$rtlil.cc:3304:Xor$18
   end
+  attribute \src "dut.sv:45.22-45.71"
   cell $xor $xor$dut.sv:45$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -135,6 +145,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [4]
     connect \Y $auto$rtlil.cc:3304:Xor$20
   end
+  attribute \src "dut.sv:45.22-45.84"
   cell $xor $xor$dut.sv:45$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -145,6 +156,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [9]
     connect \Y $auto$rtlil.cc:3304:Xor$22
   end
+  attribute \src "dut.sv:45.22-45.98"
   cell $xor $xor$dut.sv:45$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -155,6 +167,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y \next_crc [5]
   end
+  attribute \src "dut.sv:46.22-46.45"
   cell $xor $xor$dut.sv:46$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -165,6 +178,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [1]
     connect \Y $auto$rtlil.cc:3304:Xor$26
   end
+  attribute \src "dut.sv:46.22-46.58"
   cell $xor $xor$dut.sv:46$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -175,6 +189,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [5]
     connect \Y $auto$rtlil.cc:3304:Xor$28
   end
+  attribute \src "dut.sv:46.22-46.72"
   cell $xor $xor$dut.sv:46$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -185,6 +200,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [10]
     connect \Y \next_crc [6]
   end
+  attribute \src "dut.sv:47.22-47.45"
   cell $xor $xor$dut.sv:47$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -195,6 +211,7 @@ module \code_hdl_models_parallel_crc
     connect \B \data_in [2]
     connect \Y $auto$rtlil.cc:3304:Xor$32
   end
+  attribute \src "dut.sv:47.22-47.58"
   cell $xor $xor$dut.sv:47$33
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -205,6 +222,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [6]
     connect \Y $auto$rtlil.cc:3304:Xor$34
   end
+  attribute \src "dut.sv:47.22-47.72"
   cell $xor $xor$dut.sv:47$35
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -215,6 +233,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [11]
     connect \Y \next_crc [7]
   end
+  attribute \src "dut.sv:48.22-48.45"
   cell $xor $xor$dut.sv:48$37
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -225,6 +244,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [0]
     connect \Y $auto$rtlil.cc:3304:Xor$38
   end
+  attribute \src "dut.sv:48.22-48.58"
   cell $xor $xor$dut.sv:48$39
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -235,6 +255,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [7]
     connect \Y \next_crc [8]
   end
+  attribute \src "dut.sv:49.22-49.45"
   cell $xor $xor$dut.sv:49$41
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -245,6 +266,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [1]
     connect \Y $auto$rtlil.cc:3304:Xor$42
   end
+  attribute \src "dut.sv:49.22-49.58"
   cell $xor $xor$dut.sv:49$43
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -255,6 +277,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [8]
     connect \Y \next_crc [9]
   end
+  attribute \src "dut.sv:50.23-50.46"
   cell $xor $xor$dut.sv:50$45
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -265,6 +288,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [2]
     connect \Y $auto$rtlil.cc:3304:Xor$46
   end
+  attribute \src "dut.sv:50.23-50.59"
   cell $xor $xor$dut.sv:50$47
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -275,6 +299,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [9]
     connect \Y \next_crc [10]
   end
+  attribute \src "dut.sv:51.23-51.46"
   cell $xor $xor$dut.sv:51$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -285,6 +310,7 @@ module \code_hdl_models_parallel_crc
     connect \B \crc_reg [3]
     connect \Y $auto$rtlil.cc:3304:Xor$50
   end
+  attribute \src "dut.sv:51.23-51.60"
   cell $xor $xor$dut.sv:51$51
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

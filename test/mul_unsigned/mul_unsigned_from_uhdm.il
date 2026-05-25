@@ -30,6 +30,7 @@ module \mul_unsigned
   wire width 15 \M[2]
   attribute \src "/home/alain/uhdm2rtlil/test/mul_unsigned/dut.sv:19.25-19.26"
   wire width 15 \M[3]
+  attribute \src "dut.sv:25.10-25.17"
   cell $mul $mul$dut.sv:25$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0

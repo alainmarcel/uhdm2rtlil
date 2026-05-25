@@ -117,6 +117,7 @@ module \gen_test1
   wire \gen3[7].gen4[2].tmpbuf
   wire \gen3[7].gen4[3].tmpbuf
   wire \gen3[7].gen4[4].tmpbuf
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -127,6 +128,7 @@ module \gen_test1
     connect \B \b [0]
     connect \Y $auto$rtlil.cc:3302:And$2
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -137,6 +139,7 @@ module \gen_test1
     connect \B \b [0]
     connect \Y $auto$rtlil.cc:3303:Or$4
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -147,6 +150,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3302:And$6
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -157,6 +161,7 @@ module \gen_test1
     connect \B \b [1]
     connect \Y $auto$rtlil.cc:3303:Or$8
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$9
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -167,6 +172,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3302:And$10
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -177,6 +183,7 @@ module \gen_test1
     connect \B \b [2]
     connect \Y $auto$rtlil.cc:3303:Or$12
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -187,6 +194,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3302:And$14
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -197,6 +205,7 @@ module \gen_test1
     connect \B \b [3]
     connect \Y $auto$rtlil.cc:3303:Or$16
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$17
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -207,6 +216,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3302:And$18
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -217,6 +227,7 @@ module \gen_test1
     connect \B \b [4]
     connect \Y $auto$rtlil.cc:3303:Or$20
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -227,6 +238,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3302:And$22
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -237,6 +249,7 @@ module \gen_test1
     connect \B \b [5]
     connect \Y $auto$rtlil.cc:3303:Or$24
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$25
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -247,6 +260,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3302:And$26
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -257,6 +271,7 @@ module \gen_test1
     connect \B \b [6]
     connect \Y $auto$rtlil.cc:3303:Or$28
   end
+  attribute \src "dut.sv:14.21-14.32"
   cell $and $and$dut.sv:14$29
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -267,6 +282,7 @@ module \gen_test1
     connect \B \b [7]
     connect \Y $auto$rtlil.cc:3302:And$30
   end
+  attribute \src "dut.sv:15.20-15.31"
   cell $or $or$dut.sv:15$31
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
