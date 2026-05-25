@@ -22,7 +22,6 @@ module \fsm
   attribute \src "dut.sv:1.50-1.55"
   wire output 6 \gnt_1
   attribute \src "dut.sv:13.20-13.25"
-  attribute \reg 1
   wire width 3 \state
   wire $auto$opt_dff.cc:251:make_patterns_logic$102
   wire $auto$opt_dff.cc:234:make_patterns_logic$100

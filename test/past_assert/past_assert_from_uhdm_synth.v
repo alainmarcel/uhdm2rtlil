@@ -18,7 +18,6 @@ module mre(i_clk, i_w, o_w, o_past_valid_o);
   wire o_past_valid_o;
   wire _0_;
   (* init = 1'h0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:25.9-25.21" *)
   wire f_past_valid;
   \$_AND_  _1_ (

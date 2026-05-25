@@ -17,13 +17,12 @@
  (* src = "dut.sv:1.57-1.60" *)
  output [3:0] foo;
  wire [3:0] foo;
-@@ -17,10 +16,34 @@
+@@ -17,10 +16,33 @@
  (* src = "dut.sv:1.62-1.66" *)
  output [3:0] asdf;
  wire [3:0] asdf;
 -(* src = "dut.sv:3.13-3.21" *)
 +(* init = 4'b00xx *)
-+(* \reg  = 32'd1 *)
 +(* src = "dut.sv:3.13-3.25" *)
  (* unused_bits = "0 1" *)
  wire [3:0] last_bar;
@@ -54,7 +53,7 @@
  \$check  #(
  .ARGS_WIDTH(32'd0),
  .FLAVOR("assert"),
-@@ -29,31 +52,12 @@
+@@ -29,31 +51,12 @@
  .TRG_ENABLE(32'd0),
  .TRG_POLARITY(32'd0),
  .TRG_WIDTH(32'd0)

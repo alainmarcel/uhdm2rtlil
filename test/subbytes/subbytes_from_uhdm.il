@@ -24,23 +24,17 @@ module \subbytes_00
   attribute \src "dut.sv:4.103-4.117"
   wire output 10 \sbox_decrypt_o
   attribute \src "dut.sv:22.11-22.16"
-  attribute \reg 1
   wire width 2 \state
   attribute \src "dut.sv:23.11-23.21"
-  attribute \reg 1
   wire width 2 \next_state
   attribute \src "dut.sv:24.12-24.20"
-  attribute \reg 1
   wire width 32 \data_reg
   wire $auto$opt_dff.cc:234:make_patterns_logic$79
   attribute \src "dut.sv:26.5-26.17"
-  attribute \reg 1
   wire \next_ready_o
   attribute \src "dut.sv:41.12-41.22"
-  attribute \reg 1
   wire width 32 \data_i_var
   attribute \src "dut.sv:41.24-41.36"
-  attribute \reg 1
   wire width 32 \data_reg_128
   attribute \src "dut.sv:42.11-42.21"
   wire width 8 \data_array[0]
@@ -58,13 +52,13 @@ module \subbytes_00
   wire width 8 \data_reg_var[2]
   attribute \src "dut.sv:43.11-43.23"
   wire width 8 \data_reg_var[3]
-  wire $auto$expression.cpp:4211:import_bit_select$21
-  wire width 2 $auto$expression.cpp:2897:import_operation$29
-  wire width 8 $auto$expression.cpp:4214:import_bit_select$5
-  wire $auto$expression.cpp:4211:import_bit_select$17
-  wire width 8 $auto$expression.cpp:4214:import_bit_select$9
+  wire $auto$expression.cpp:4225:import_bit_select$21
+  wire width 2 $auto$expression.cpp:2911:import_operation$29
+  wire width 8 $auto$expression.cpp:4228:import_bit_select$5
+  wire $auto$expression.cpp:4225:import_bit_select$17
+  wire width 8 $auto$expression.cpp:4228:import_bit_select$9
   wire width 2 $procmux$38_Y
-  wire $auto$expression.cpp:4211:import_bit_select$11
+  wire $auto$expression.cpp:4225:import_bit_select$11
   wire $auto$rtlil.cc:3259:ReduceOr$59
   attribute \src "dut.sv:78.16-78.25"
   cell $add $add$dut.sv:78$30
@@ -75,7 +69,7 @@ module \subbytes_00
     parameter \Y_WIDTH 2
     connect \A \state
     connect \B 2'01
-    connect \Y $auto$expression.cpp:2897:import_operation$29
+    connect \Y $auto$expression.cpp:2911:import_operation$29
   end
   attribute \src "dut.sv:45.1-80.4"
   cell $dlatch $auto$proc_dlatch.cc:432:proc_dlatch$62
@@ -85,12 +79,12 @@ module \subbytes_00
     connect \D \data_reg
     connect \Q \data_reg_128
   end
-  cell $mux $auto$expression.cpp:4215:import_bit_select$6
+  cell $mux $auto$expression.cpp:4229:import_bit_select$6
     parameter \WIDTH 8
     connect \A \data_i [7:0]
     connect \B \data_i [15:8]
-    connect \S $auto$expression.cpp:4211:import_bit_select$17
-    connect \Y $auto$expression.cpp:4214:import_bit_select$5
+    connect \S $auto$expression.cpp:4225:import_bit_select$17
+    connect \Y $auto$expression.cpp:4228:import_bit_select$5
   end
   cell $ne $auto$opt_dff.cc:235:make_patterns_logic$80
     parameter \A_SIGNED 0
@@ -102,12 +96,12 @@ module \subbytes_00
     connect \B 2'01
     connect \Y $auto$opt_dff.cc:234:make_patterns_logic$79
   end
-  cell $mux $auto$expression.cpp:4215:import_bit_select$10
+  cell $mux $auto$expression.cpp:4229:import_bit_select$10
     parameter \WIDTH 8
-    connect \A $auto$expression.cpp:4214:import_bit_select$5
+    connect \A $auto$expression.cpp:4228:import_bit_select$5
     connect \B \data_i [23:16]
-    connect \S $auto$expression.cpp:4211:import_bit_select$21
-    connect \Y $auto$expression.cpp:4214:import_bit_select$9
+    connect \S $auto$expression.cpp:4225:import_bit_select$21
+    connect \Y $auto$expression.cpp:4228:import_bit_select$9
   end
   attribute \src "dut.sv:28.1-39.4"
   attribute \always_ff 1
@@ -124,11 +118,11 @@ module \subbytes_00
     connect \D \next_state
     connect \Q \state
   end
-  cell $mux $auto$expression.cpp:4215:import_bit_select$14
+  cell $mux $auto$expression.cpp:4229:import_bit_select$14
     parameter \WIDTH 8
-    connect \A $auto$expression.cpp:4214:import_bit_select$9
+    connect \A $auto$expression.cpp:4228:import_bit_select$9
     connect \B \data_i [31:24]
-    connect \S $auto$expression.cpp:4211:import_bit_select$11
+    connect \S $auto$expression.cpp:4225:import_bit_select$11
     connect \Y \sbox_data_o
   end
   cell $reduce_bool $auto$process.cpp:7732:import_if_else_comb$15
@@ -138,7 +132,7 @@ module \subbytes_00
     connect \A \state
     connect \Y $auto$rtlil.cc:3259:ReduceOr$59
   end
-  cell $eq $auto$expression.cpp:4212:import_bit_select$18
+  cell $eq $auto$expression.cpp:4226:import_bit_select$18
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -146,18 +140,18 @@ module \subbytes_00
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'10
-    connect \Y $auto$expression.cpp:4211:import_bit_select$17
+    connect \Y $auto$expression.cpp:4225:import_bit_select$17
   end
   attribute \src "dut.sv:67.2-79.5"
   attribute \full_case 1
   cell $mux $procmux$40
     parameter \WIDTH 2
-    connect \A $auto$expression.cpp:2897:import_operation$29
+    connect \A $auto$expression.cpp:2911:import_operation$29
     connect \B $procmux$38_Y
     connect \S $auto$rtlil.cc:3259:ReduceOr$59
     connect \Y \next_state
   end
-  cell $eq $auto$expression.cpp:4212:import_bit_select$22
+  cell $eq $auto$expression.cpp:4226:import_bit_select$22
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -165,7 +159,7 @@ module \subbytes_00
     parameter \Y_WIDTH 1
     connect \A \state
     connect \B 2'01
-    connect \Y $auto$expression.cpp:4211:import_bit_select$21
+    connect \Y $auto$expression.cpp:4225:import_bit_select$21
   end
   attribute \src "dut.sv:28.1-39.4"
   attribute \always_ff 1
@@ -182,12 +176,12 @@ module \subbytes_00
     connect \D \data_reg_128
     connect \Q \data_reg
   end
-  cell $logic_not $auto$expression.cpp:4212:import_bit_select$26
+  cell $logic_not $auto$expression.cpp:4226:import_bit_select$26
     parameter \A_SIGNED 0
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 2
     connect \A \state
-    connect \Y $auto$expression.cpp:4211:import_bit_select$11
+    connect \Y $auto$expression.cpp:4225:import_bit_select$11
   end
   attribute \src "dut.sv:68.3-70.6"
   cell $mux $procmux$38

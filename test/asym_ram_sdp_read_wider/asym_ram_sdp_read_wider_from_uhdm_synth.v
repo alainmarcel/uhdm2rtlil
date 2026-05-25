@@ -10754,7 +10754,6 @@ module asym_ram_sdp_read_wider(clkA, clkB, enaA, weA, enaB, addrA, addrB, diA, d
   wire [3:0] \RAM[999] ;
   wire [3:0] \RAM[99] ;
   wire [3:0] \RAM[9] ;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:50.19-50.24" *)
   wire [15:0] readB;
   \$_NOT_  _09699_ (

@@ -14,7 +14,6 @@ module \gen_test2
   attribute \src "dut.sv:7.9-7.10"
   wire width 32 signed \i
   attribute \src "dut.sv:8.11-8.16"
-  attribute \reg 1
   wire width 9 \carry
   wire width 3 $procmux$45_CMP
   wire $procmux$39_CTRL

@@ -16,7 +16,6 @@ module \simple_fsm
   attribute \src "dut.sv:8.23-8.28"
   wire width 2 output 6 \state
   attribute \src "dut.sv:17.11-17.21"
-  attribute \reg 1
   wire width 2 \next_state
   attribute \src "dut.sv:20.1-25.4"
   wire width 2 $0\state

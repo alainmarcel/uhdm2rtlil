@@ -27,10 +27,8 @@ module \top
   attribute \src "dut.sv:17.25-17.32"
   wire width 8 \cone1_2
   attribute \src "dut.sv:21.16-21.20"
-  attribute \reg 1
   wire width 8 \reg1
   attribute \src "dut.sv:21.22-21.26"
-  attribute \reg 1
   wire width 8 \reg2
   attribute \src "dut.sv:32.16-32.23"
   wire width 8 \cone1_3
@@ -39,7 +37,6 @@ module \top
   attribute \src "dut.sv:36.25-36.32"
   wire width 8 \cone2_2
   attribute \src "dut.sv:40.16-40.20"
-  attribute \reg 1
   wire width 8 \reg3
   attribute \src "dut.sv:48.16-48.23"
   wire width 8 \cone2_3
@@ -47,13 +44,13 @@ module \top
   wire width 4 $auto$rtlil.cc:3255:Not$64
   wire width 8 $auto$rtlil.cc:3302:And$6
   wire width 8 $auto$rtlil.cc:3304:Xor$42
-  wire $auto$rtlil.cc:3255:Not$10
+  wire width 8 $auto$rtlil.cc:3255:Not$10
   attribute \src "dut.sv:41.5-46.8"
   wire width 8 $0\reg3
-  wire width 8 $auto$expression.cpp:2952:import_operation$38
+  wire width 8 $auto$expression.cpp:2966:import_operation$38
   attribute \src "dut.sv:56.17-56.30"
   wire $eq$dut.sv:56$46_Y
-  wire width 8 $auto$expression.cpp:2897:import_operation$36
+  wire width 8 $auto$expression.cpp:2911:import_operation$36
   attribute \unused_bits "0 2 4 6 8 9 10 11"
   wire width 12 $auto$rtlil.cc:3304:Xor$20
   attribute \src "dut.sv:14.21-14.26"
@@ -103,9 +100,9 @@ module \top
   attribute \src "dut.sv:33.29-33.34"
   cell $not $not$dut.sv:33$9
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \a [0]
+    parameter \A_WIDTH 8
+    parameter \Y_WIDTH 8
+    connect \A { 7'0000000 \a [0] }
     connect \Y $auto$rtlil.cc:3255:Not$10
   end
   attribute \src "dut.sv:33.22-33.34"
@@ -113,7 +110,7 @@ module \top
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 8
-    parameter \B_WIDTH 1
+    parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
     connect \A \reg1
     connect \B $auto$rtlil.cc:3255:Not$10
@@ -131,7 +128,7 @@ module \top
     connect \CLK \clk
     connect \EN \en
     connect \ARST \rst
-    connect \D $auto$expression.cpp:2952:import_operation$38
+    connect \D $auto$expression.cpp:2966:import_operation$38
     connect \Q \reg2
   end
   attribute \src "dut.sv:41.5-46.8"
@@ -181,7 +178,7 @@ module \top
     connect \CLK \clk
     connect \EN \en
     connect \ARST \rst
-    connect \D $auto$expression.cpp:2897:import_operation$36
+    connect \D $auto$expression.cpp:2911:import_operation$36
     connect \Q \reg1
   end
   cell $not $auto$opt_expr.cc:702:replace_const_cells$63
@@ -255,7 +252,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_1
     connect \B \cone1_2
-    connect \Y $auto$expression.cpp:2897:import_operation$36
+    connect \Y $auto$expression.cpp:2911:import_operation$36
   end
   attribute \src "dut.sv:28.21-28.38"
   cell $sub $sub$dut.sv:28$39
@@ -266,7 +263,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_2
     connect \B \cone1_1
-    connect \Y $auto$expression.cpp:2952:import_operation$38
+    connect \Y $auto$expression.cpp:2966:import_operation$38
   end
   attribute \src "dut.sv:45.21-45.38"
   cell $xor $xor$dut.sv:45$41

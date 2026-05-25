@@ -18,7 +18,6 @@ module \blockrom
   attribute \init 32'10100111100011000101001011100000
   wire width 32 signed \j
   attribute \src "dut.sv:10.15-10.25"
-  attribute \reg 1
   wire width 8 \data_out_r
   attribute \src "dut.sv:29.2-31.5"
   wire width 8 $0\data_out_r

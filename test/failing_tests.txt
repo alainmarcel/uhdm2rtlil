@@ -5,19 +5,4 @@
 # Tests listed here will be marked as expected failures in CI
 # The test runner will pass if all failures are listed here
 
-# Yosys `tests/various/lcov.v` is a formal-mode coverage test.  The
-# upstream `lcov.ys` uses `read_verilog -formal`, then `linecoverage
-# -lcov` to produce a gcov-style report; matching the gold report is
-# the actual verification.  Our standard formal-equiv flow can't
-# prove this test for an orthogonal reason: SV LRM §11.8
-# context-determined sizing applies to `cone1_3 = reg1 & ~a[0]` —
-# the Verilog frontend extends `a[0]` to 8 bits BEFORE negating, so
-# `~a[0]` is `8'b1111_111X`, masking out only bit 0 of reg1.  Our
-# UHDM frontend's `import_operation` applies `~` at the operand's
-# natural 1-bit width, then extends after the AND, masking all but
-# bit 0.  Fixing this requires propagating the enclosing
-# context-width into operand evaluation — a larger import_operation
-# refactor than this PR.  The actual `linecoverage -lcov` output
-# does match `lcov.gold` thanks to the `\src` attribute fix on op
-# cells in this PR.
-lcov
+# (no known failures)

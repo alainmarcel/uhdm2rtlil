@@ -56,7 +56,6 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   (* src = "dut.sv:48.13-48.24|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [7:0] _23_;
   (* init = 1'h0 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:15.5-15.10" *)
   wire a;
   (* src = "dut.sv:24.6-24.12" *)
@@ -66,7 +65,6 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   (* src = "dut.sv:26.6-26.14" *)
   wire a_stable;
   (* init = 1'h1 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:16.5-16.10" *)
   wire b;
   (* src = "dut.sv:28.6-28.12" *)
@@ -75,7 +73,6 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   wire b_rose;
   (* src = "dut.sv:30.6-30.14" *)
   wire b_stable;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:17.5-17.6" *)
   wire c;
   (* src = "dut.sv:32.6-32.12" *)
@@ -85,15 +82,12 @@ module top(clk, counter_o, a_o, b_o, c_o, wide_a_o, wide_b_o);
   (* src = "dut.sv:34.6-34.14" *)
   wire c_stable;
   (* init = 8'h00 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:13.11-13.22" *)
   wire [7:0] counter;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:18.11-18.26" *)
   wire [2:0] wide_a;
   (* src = "dut.sv:36.6-36.19" *)
   wire wide_a_stable;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:19.11-19.22" *)
   wire [2:0] wide_b;
   (* src = "dut.sv:37.6-37.19" *)

@@ -69,11 +69,9 @@ module top(CLK, LED);
   (* src = "dut.sv:14.21-14.39|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
   wire [23:0] _049_;
   (* init = 6'h00 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:8.11-8.25" *)
   wire [5:0] ledCounter;
   (* init = 24'h000000 *)
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:7.12-7.30" *)
   wire [23:0] wait_counter;
   \$_NOT_  _050_ (

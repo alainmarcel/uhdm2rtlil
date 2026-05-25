@@ -26,21 +26,21 @@ module \gold
   attribute \src "dut.sv:51.64-51.68"
   wire width 32 output 11 signed \fib9
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$110
+  wire width 64 $auto$expression.cpp:2911:import_operation$110
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$94
+  wire width 64 $auto$expression.cpp:2911:import_operation$94
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$108
+  wire width 64 $auto$expression.cpp:2911:import_operation$108
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$98
+  wire width 64 $auto$expression.cpp:2911:import_operation$98
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$100
+  wire width 64 $auto$expression.cpp:2911:import_operation$100
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$102
+  wire width 64 $auto$expression.cpp:2911:import_operation$102
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$104
+  wire width 64 $auto$expression.cpp:2911:import_operation$104
   attribute \unused_bits "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2897:import_operation$106
+  wire width 64 $auto$expression.cpp:2911:import_operation$106
   attribute \src "dut.sv:63.27-63.35"
   cell $add $add$dut.sv:63$109
     parameter \A_SIGNED 0
@@ -50,7 +50,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010101
-    connect \Y { $auto$expression.cpp:2897:import_operation$108 [63:32] \fib8 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$108 [63:32] \fib8 }
   end
   attribute \src "dut.sv:64.27-64.35"
   cell $add $add$dut.sv:64$111
@@ -61,7 +61,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000100010
-    connect \Y { $auto$expression.cpp:2897:import_operation$110 [63:32] \fib9 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$110 [63:32] \fib9 }
   end
   attribute \src "dut.sv:57.27-57.34"
   cell $add $add$dut.sv:57$97
@@ -72,7 +72,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2897:import_operation$94 [63:32] \fib1 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$94 [63:32] \fib1 }
   end
   attribute \src "dut.sv:58.27-58.34"
   cell $add $add$dut.sv:58$99
@@ -83,7 +83,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y { $auto$expression.cpp:2897:import_operation$98 [63:32] \fib3 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$98 [63:32] \fib3 }
   end
   attribute \src "dut.sv:59.27-59.34"
   cell $add $add$dut.sv:59$101
@@ -94,7 +94,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y { $auto$expression.cpp:2897:import_operation$100 [63:32] \fib4 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$100 [63:32] \fib4 }
   end
   attribute \src "dut.sv:60.27-60.34"
   cell $add $add$dut.sv:60$103
@@ -105,7 +105,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000101
-    connect \Y { $auto$expression.cpp:2897:import_operation$102 [63:32] \fib5 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$102 [63:32] \fib5 }
   end
   attribute \src "dut.sv:61.27-61.34"
   cell $add $add$dut.sv:61$105
@@ -116,7 +116,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y { $auto$expression.cpp:2897:import_operation$104 [63:32] \fib6 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$104 [63:32] \fib6 }
   end
   attribute \src "dut.sv:62.27-62.35"
   cell $add $add$dut.sv:62$107
@@ -127,16 +127,16 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001101
-    connect \Y { $auto$expression.cpp:2897:import_operation$106 [63:32] \fib7 }
+    connect \Y { $auto$expression.cpp:2911:import_operation$106 [63:32] \fib7 }
   end
-  connect $auto$expression.cpp:2897:import_operation$106 [31:0] \fib7
-  connect $auto$expression.cpp:2897:import_operation$104 [31:0] \fib6
-  connect $auto$expression.cpp:2897:import_operation$102 [31:0] \fib5
-  connect $auto$expression.cpp:2897:import_operation$100 [31:0] \fib4
-  connect $auto$expression.cpp:2897:import_operation$98 [31:0] \fib3
-  connect $auto$expression.cpp:2897:import_operation$108 [31:0] \fib8
-  connect $auto$expression.cpp:2897:import_operation$94 [31:0] \fib1
-  connect $auto$expression.cpp:2897:import_operation$110 [31:0] \fib9
+  connect $auto$expression.cpp:2911:import_operation$106 [31:0] \fib7
+  connect $auto$expression.cpp:2911:import_operation$104 [31:0] \fib6
+  connect $auto$expression.cpp:2911:import_operation$102 [31:0] \fib5
+  connect $auto$expression.cpp:2911:import_operation$100 [31:0] \fib4
+  connect $auto$expression.cpp:2911:import_operation$98 [31:0] \fib3
+  connect $auto$expression.cpp:2911:import_operation$108 [31:0] \fib8
+  connect $auto$expression.cpp:2911:import_operation$94 [31:0] \fib1
+  connect $auto$expression.cpp:2911:import_operation$110 [31:0] \fib9
   connect \fib2 \fib1
   connect \fib0 \off
 end

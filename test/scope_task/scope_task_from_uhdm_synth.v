@@ -58,10 +58,7 @@ module scope_task(k, x, y);
   (* nosync = 32'd1 *)
   (* src = "dut.sv:16.23-16.29" *)
   wire [15:0] \task_02$func$dut.sv:39$10.result ;
-  (* \reg  = 32'd1 *)
-  (* src = "dut.sv:29.16-29.21" *)
-  wire [15:0] temp1;
-  (* \reg  = 32'd1 *)
+  wire [9:0] temp1;
   (* src = "dut.sv:29.23-29.28" *)
   wire [15:0] temp2;
   \$_NOT_  _27_ (
@@ -267,7 +264,7 @@ module scope_task(k, x, y);
   assign \task_02$func$dut.sv:39$10.a  = 4'hx;
   assign \task_02$func$dut.sv:39$10.foo.z  = { 11'h7fd, y[4:3], k[2], y[1:0] };
   assign temp2 = { 11'h7fd, y[4:3], k[2], y[1:0] };
-  assign temp1 = { 7'h00, x[8:1], k[0] };
+  assign temp1 = { 1'h0, x[8:1], k[0] };
   assign { y[15:5], y[2] } = { 11'h7fd, k[2] };
   assign { x[15:9], x[0] } = { 7'h00, k[0] };
 endmodule

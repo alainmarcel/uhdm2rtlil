@@ -17,10 +17,8 @@ module \mul_unsigned
   attribute \src "dut.sv:20.9-20.10"
   wire width 32 signed \i
   attribute \src "dut.sv:17.18-17.20"
-  attribute \reg 1
   wire width 6 \rA
   attribute \src "dut.sv:18.18-18.20"
-  attribute \reg 1
   wire width 9 \rB
   attribute \src "/home/alain/uhdm2rtlil/test/mul_unsigned/dut.sv:19.25-19.26"
   wire width 15 \M[0]
@@ -42,7 +40,7 @@ module \mul_unsigned
   wire width 15 $0\M[1][14:0]
   attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[0][14:0]
-  wire width 15 $auto$expression.cpp:3032:import_operation$2
+  wire width 15 $auto$expression.cpp:3046:import_operation$2
   attribute \src "dut.sv:25.10-25.17"
   cell $mul $mul$dut.sv:25$3
     parameter \A_SIGNED 0
@@ -52,7 +50,7 @@ module \mul_unsigned
     parameter \Y_WIDTH 15
     connect \A \rA
     connect \B \rB
-    connect \Y $auto$expression.cpp:3032:import_operation$2
+    connect \Y $auto$expression.cpp:3046:import_operation$2
   end
   attribute \src "dut.sv:21.1-28.5"
   attribute \always_ff 1
@@ -65,7 +63,7 @@ module \mul_unsigned
     assign $0\rB[8:0] \rB
     assign $0\rA[5:0] \A
     assign $0\rB[8:0] \B
-    assign $0\M[0][14:0] $auto$expression.cpp:3032:import_operation$2
+    assign $0\M[0][14:0] $auto$expression.cpp:3046:import_operation$2
     assign $0\M[1][14:0] $0\M[0][14:0]
     assign $0\M[2][14:0] $0\M[1][14:0]
     assign $0\M[3][14:0] $0\M[2][14:0]

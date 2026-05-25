@@ -13,7 +13,7 @@ module \cnt
   wire width 4 input 3 \delta
   attribute \src "dut.sv:20.2-21.22"
   wire width 4 $0\cnt
-  wire width 4 $auto$expression.cpp:2897:import_operation$2
+  wire width 4 $auto$expression.cpp:2911:import_operation$2
   attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$3
     parameter \A_SIGNED 0
@@ -23,12 +23,12 @@ module \cnt
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B \delta
-    connect \Y $auto$expression.cpp:2897:import_operation$2
+    connect \Y $auto$expression.cpp:2911:import_operation$2
   end
   attribute \src "dut.sv:20.2-21.22"
   attribute \always_ff 1
   process $proc$dut.sv:20$1
-    assign $0\cnt $auto$expression.cpp:2897:import_operation$2
+    assign $0\cnt $auto$expression.cpp:2911:import_operation$2
     sync posedge \clock
       update \cnt $0\cnt
   end
@@ -70,7 +70,7 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000001
   wire width 4 input 3 \delta
   attribute \src "dut.sv:20.2-21.22"
   wire width 4 $0\cnt
-  wire width 4 $auto$expression.cpp:2897:import_operation$5
+  wire width 4 $auto$expression.cpp:2911:import_operation$5
   attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$6
     parameter \A_SIGNED 0
@@ -80,12 +80,12 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000001
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B \delta
-    connect \Y $auto$expression.cpp:2897:import_operation$5
+    connect \Y $auto$expression.cpp:2911:import_operation$5
   end
   attribute \src "dut.sv:20.2-21.22"
   attribute \always_ff 1
   process $proc$dut.sv:20$4
-    assign $0\cnt $auto$expression.cpp:2897:import_operation$5
+    assign $0\cnt $auto$expression.cpp:2911:import_operation$5
     sync posedge \clock
       update \cnt $0\cnt
   end
@@ -105,7 +105,7 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000010
   wire width 4 input 3 \delta
   attribute \src "dut.sv:20.2-21.22"
   wire width 4 $0\cnt
-  wire width 4 $auto$expression.cpp:2897:import_operation$8
+  wire width 4 $auto$expression.cpp:2911:import_operation$8
   attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$9
     parameter \A_SIGNED 0
@@ -115,12 +115,12 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000010
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B \delta
-    connect \Y $auto$expression.cpp:2897:import_operation$8
+    connect \Y $auto$expression.cpp:2911:import_operation$8
   end
   attribute \src "dut.sv:20.2-21.22"
   attribute \always_ff 1
   process $proc$dut.sv:20$7
-    assign $0\cnt $auto$expression.cpp:2897:import_operation$8
+    assign $0\cnt $auto$expression.cpp:2911:import_operation$8
     sync posedge \clock
       update \cnt $0\cnt
   end

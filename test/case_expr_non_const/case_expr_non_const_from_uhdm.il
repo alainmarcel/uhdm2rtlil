@@ -20,31 +20,22 @@ module \case_expr_non_const_top
   attribute \src "dut.sv:5.37-5.38"
   wire output 8 \h
   attribute \src "dut.sv:7.9-7.21"
-  attribute \reg 1
   wire \x_1b0
   attribute \src "dut.sv:8.9-8.21"
-  attribute \reg 1
   wire \x_1b1
   attribute \src "dut.sv:9.16-9.30"
-  attribute \reg 1
   wire signed \x_1sb0
   attribute \src "dut.sv:10.16-10.30"
-  attribute \reg 1
   wire signed \x_1sb1
   attribute \src "dut.sv:11.15-11.27"
-  attribute \reg 1
   wire width 2 \x_2b0
   attribute \src "dut.sv:12.15-12.29"
-  attribute \reg 1
   wire width 2 \x_2b11
   attribute \src "dut.sv:13.22-13.38"
-  attribute \reg 1
   wire width 2 signed \x_2sb01
   attribute \src "dut.sv:14.22-14.38"
-  attribute \reg 1
   wire width 2 signed \x_2sb11
   attribute \src "dut.sv:15.15-15.27"
-  attribute \reg 1
   wire width 3 \x_3b0
   connect \x_3b0 3'000
   connect \x_2sb11 2'11

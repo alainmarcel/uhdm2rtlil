@@ -8,15 +8,7 @@
  module simple_fsm(clk, reset, start, done, busy, state);
  (* src = "dut.sv:3.17-3.20" *)
  input clk;
-@@ -22,6 +22,7 @@
- wire [1:0] state;
- wire _0_;
- wire _1_;
-+(* \reg  = 32'd1 *)
- (* src = "dut.sv:17.11-17.21" *)
- wire [1:0] next_state;
- \$_NOT_  _2_ (
-@@ -44,6 +45,7 @@
+@@ -44,6 +44,7 @@
  .B(_0_),
  .Y(next_state[0])
  );
@@ -24,7 +16,7 @@
  (* \always_ff  = 32'd1 *)
  (* src = "dut.sv:20.1-25.4" *)
  \$_DFF_PP0_  \state_reg[0]  /* _6_ */ (
-@@ -52,6 +54,7 @@
+@@ -52,6 +53,7 @@
  .Q(state[0]),
  .R(reset)
  );

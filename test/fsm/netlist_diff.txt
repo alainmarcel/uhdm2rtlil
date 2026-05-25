@@ -32,7 +32,7 @@
  output gnt_1;
  wire gnt_1;
  wire _00_;
-@@ -48,11 +48,12 @@
+@@ -48,10 +48,10 @@
  wire _24_;
  wire _25_;
  (* force_downto = 32'd1 *)
@@ -43,11 +43,9 @@
 -(* src = "dut.sv:43.26-43.26|dut.sv:24.13-49.20|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
 +(* src = "dut.sv:44.15-47.26|dut.sv:24.13-49.20|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
  wire [0:0] _27_;
-+(* \reg  = 32'd1 *)
  (* src = "dut.sv:13.20-13.25" *)
  wire [2:0] state;
- \$_ORNOT_  _28_ (
-@@ -121,7 +122,7 @@
+@@ -121,7 +121,7 @@
  \$_AND_  _41_ (
  .A(_12_),
  .B(_13_),
@@ -56,7 +54,7 @@
  );
  \$_OR_  _42_ (
  .A(state[2]),
-@@ -147,7 +148,7 @@
+@@ -147,7 +147,7 @@
  \$_AND_  _46_ (
  .A(_15_),
  .B(_17_),
@@ -65,7 +63,7 @@
  );
  \$_NOR_  _47_ (
  .A(req_0),
-@@ -195,52 +196,57 @@
+@@ -195,52 +195,57 @@
  .Y(_24_)
  );
  \$_AND_  _56_ (

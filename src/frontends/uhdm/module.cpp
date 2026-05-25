@@ -945,17 +945,17 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     // Handle net type
     int net_type = uhdm_net->VpiNetType();
     if (net_type == vpiReg) {
-        // Don't set \reg for nets driven by module instance output ports
-        // These are continuously driven and should not be treated as registers.
-        // Also skip when the net carries a formal attribute lowered to a
-        // `$anyconst`/`$anyseq`/... cell — that cell drives the wire, so
-        // the wire is no longer a register-style storage element (matches
-        // Yosys's Verilog frontend, which turns the wire into a plain wire
-        // and tags the cell with `(* reg = "<name>" *)`).
-        if (instance_output_driven_nets.count(netname) == 0 &&
-            !net_has_formal_attr) {
-            w->attributes[ID::reg] = RTLIL::Const(1);
-        }
+        // Yosys's Verilog frontend doesn't set `\reg` on register-typed
+        // wires (it tags the driving cell with `(* reg = "<name>" *)`
+        // instead).  Carrying a `\reg 1` attribute here makes some
+        // downstream passes (notably `async2sync`) treat the wire
+        // differently from gold, producing divergent equivalence
+        // checks.  We retain the bookkeeping for instance-output-
+        // driven and formal-attribute nets (where the original logic
+        // explicitly opted out) but no longer add the attribute for
+        // ordinary regs.
+        (void)instance_output_driven_nets;
+        (void)net_has_formal_attr;
     } else if (net_type == vpiWand) {
         w->set_bool_attribute(ID::wand);
     } else if (net_type == vpiWor) {

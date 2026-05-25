@@ -41,7 +41,7 @@ module \module_scope_func_top
   wire width 32 $1\incr$func$:1$8.$result$12
   wire width 32 $0\incr$func$:1$7.$result$13
   wire width 32 \incr$func$:1$7.$result
-  wire width 32 $auto$expression.cpp:2897:import_operation$14
+  wire width 32 $auto$expression.cpp:2911:import_operation$14
   attribute \nosync 1
   wire width 32 \incr$func$:1$8.$result
   wire width 32 $incr$func$dut.sv:40$1_result
@@ -54,7 +54,7 @@ module \module_scope_func_top
   attribute \src "dut.sv:40.23-40.32"
   wire width 32 $0\incr$func$dut.sv:40$16.$result$22
   wire width 32 \incr$func$dut.sv:40$16.$result
-  wire width 64 $auto$expression.cpp:3032:import_operation$23
+  wire width 64 $auto$expression.cpp:3046:import_operation$23
   attribute \nosync 1
   attribute \src "dut.sv:40.23-40.32"
   wire width 32 \incr$func$dut.sv:40$17.$result
@@ -64,7 +64,7 @@ module \module_scope_func_top
   wire width 32 $1\incr$func$:1$26.$result$30
   wire width 32 $0\incr$func$:1$25.$result$31
   wire width 32 \incr$func$:1$25.$result
-  wire width 32 $auto$expression.cpp:2897:import_operation$32
+  wire width 32 $auto$expression.cpp:2911:import_operation$32
   attribute \nosync 1
   wire width 32 \incr$func$:1$26.$result
   attribute \nosync 1
@@ -81,7 +81,7 @@ module \module_scope_func_top
     parameter \Y_WIDTH 32
     connect \A $0\incr$func$:1$8.value$10
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$14
+    connect \Y $auto$expression.cpp:2911:import_operation$14
   end
   attribute \src "dut.sv:27.20-27.29"
   cell $mul $mul$dut.sv:27$24
@@ -92,7 +92,7 @@ module \module_scope_func_top
     parameter \Y_WIDTH 64
     connect \A $0\incr$func$dut.sv:40$17.value$19
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:3032:import_operation$23
+    connect \Y $auto$expression.cpp:3046:import_operation$23
   end
   attribute \src "dut.sv:11.16-11.25"
   cell $add $add$dut.sv:11$33
@@ -103,7 +103,7 @@ module \module_scope_func_top
     parameter \Y_WIDTH 32
     connect \A $0\incr$func$:1$26.value$28
     connect \B 1
-    connect \Y $auto$expression.cpp:2897:import_operation$32
+    connect \Y $auto$expression.cpp:2911:import_operation$32
   end
   attribute \src "dut.sv:38.9-38.50"
   process $proc$dut.sv:38$1
@@ -130,7 +130,7 @@ module \module_scope_func_top
     assign $0\incr$func$:1$8.value$10 { 31'0000000000000000000000000000000 \inp }
     assign $0\incr$func$:1$8.$result$11 $1\incr$func$:1$8.$result$12
     assign $0\incr$func$:1$7.$result$13 $1\incr$func$:1$8.$result$12
-    assign $1\incr$func$:1$8.$result$12 $auto$expression.cpp:2897:import_operation$14
+    assign $1\incr$func$:1$8.$result$12 $auto$expression.cpp:2911:import_operation$14
     sync always
       update \incr$func$:1$7.$result $0\incr$func$:1$7.$result$13
       update \incr$func$:1$8.$result 32'x
@@ -145,7 +145,7 @@ module \module_scope_func_top
     assign $0\incr$func$dut.sv:40$17.value$19 { 31'0000000000000000000000000000000 \inp }
     assign $0\incr$func$dut.sv:40$17.$result$20 $1\incr$func$dut.sv:40$17.$result$21
     assign $0\incr$func$dut.sv:40$16.$result$22 $1\incr$func$dut.sv:40$17.$result$21
-    assign $1\incr$func$dut.sv:40$17.$result$21 $auto$expression.cpp:3032:import_operation$23 [31:0]
+    assign $1\incr$func$dut.sv:40$17.$result$21 $auto$expression.cpp:3046:import_operation$23 [31:0]
     sync always
       update \incr$func$dut.sv:40$16.$result $0\incr$func$dut.sv:40$16.$result$22
       update \incr$func$dut.sv:40$17.$result 32'x
@@ -159,7 +159,7 @@ module \module_scope_func_top
     assign $0\incr$func$:1$26.value$28 { 31'0000000000000000000000000000000 \inp }
     assign $0\incr$func$:1$26.$result$29 $1\incr$func$:1$26.$result$30
     assign $0\incr$func$:1$25.$result$31 $1\incr$func$:1$26.$result$30
-    assign $1\incr$func$:1$26.$result$30 $auto$expression.cpp:2897:import_operation$32
+    assign $1\incr$func$:1$26.$result$30 $auto$expression.cpp:2911:import_operation$32
     sync always
       update \incr$func$:1$25.$result $0\incr$func$:1$25.$result$31
       update \incr$func$:1$26.$result 32'x

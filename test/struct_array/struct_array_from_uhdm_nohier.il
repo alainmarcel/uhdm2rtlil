@@ -20,7 +20,7 @@ module \struct_array
   wire width 8 $0\data_out
   attribute \src "dut.sv:23.5-26.8"
   wire width 4 $0\tag_out
-  wire width 8 $auto$expression.cpp:2897:import_operation$3
+  wire width 8 $auto$expression.cpp:2911:import_operation$3
   wire width 4 $auto$rtlil.cc:3304:Xor$6
   attribute \src "dut.sv:24.20-24.38"
   cell $add $add$dut.sv:24$4
@@ -31,7 +31,7 @@ module \struct_array
     parameter \Y_WIDTH 8
     connect \A \packet [11:4]
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2897:import_operation$3
+    connect \Y $auto$expression.cpp:2911:import_operation$3
   end
   attribute \src "dut.sv:25.19-25.39"
   cell $xor $xor$dut.sv:25$5
@@ -56,7 +56,7 @@ module \struct_array
   process $proc$dut.sv:23$2
     assign $0\data_out \data_out
     assign $0\tag_out \tag_out
-    assign $0\data_out $auto$expression.cpp:2897:import_operation$3
+    assign $0\data_out $auto$expression.cpp:2911:import_operation$3
     assign $0\tag_out $auto$rtlil.cc:3304:Xor$6
     sync always
       update \data_out $0\data_out

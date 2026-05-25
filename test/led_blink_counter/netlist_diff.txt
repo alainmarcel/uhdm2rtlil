@@ -17,22 +17,20 @@
  (* unused_bits = "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17" *)
  wire [18:0] _046_;
  (* force_downto = 32'd1 *)
-@@ -68,10 +68,12 @@
+@@ -68,10 +68,10 @@
  (* src = "dut.sv:14.21-14.39|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:270.26-270.27" *)
  wire [23:0] _049_;
  (* init = 6'h00 *)
 -(* src = "dut.sv:8.11-8.21" *)
-+(* \reg  = 32'd1 *)
 +(* src = "dut.sv:8.11-8.25" *)
  wire [5:0] ledCounter;
  (* init = 24'h000000 *)
 -(* src = "dut.sv:7.12-7.24" *)
-+(* \reg  = 32'd1 *)
 +(* src = "dut.sv:7.12-7.30" *)
  wire [23:0] wait_counter;
  \$_NOT_  _050_ (
  .A(ledCounter[4]),
-@@ -476,216 +478,246 @@
+@@ -476,216 +476,246 @@
  .B(_024_),
  .Y(_046_[18])
  );

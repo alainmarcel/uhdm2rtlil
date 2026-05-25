@@ -16,7 +16,6 @@ module \blockrom
   attribute \src "dut.sv:13.12-13.13"
   wire width 32 signed \j
   attribute \src "dut.sv:10.15-10.25"
-  attribute \reg 1
   wire width 8 \data_out_r
   attribute \src "dut.sv:11.15-11.21"
   memory width 8 size 8 \memory

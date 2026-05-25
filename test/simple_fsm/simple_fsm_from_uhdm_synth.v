@@ -23,7 +23,6 @@ module simple_fsm(clk, reset, start, done, busy, state);
   wire [1:0] state;
   wire _0_;
   wire _1_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:17.11-17.21" *)
   wire [1:0] next_state;
   \$_NOT_  _2_ (

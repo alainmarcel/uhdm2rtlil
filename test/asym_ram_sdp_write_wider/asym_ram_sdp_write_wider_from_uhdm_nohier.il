@@ -29,7 +29,6 @@ module \asym_ram_sdp_write_wider
   attribute \src "dut.sv:4.82-4.85"
   wire width 4 output 9 \doB
   attribute \src "dut.sv:50.19-50.24"
-  attribute \reg 1
   wire width 4 \readB
   attribute \src "dut.sv:52.2-56.5"
   wire width 4 $0\readB[3:0]

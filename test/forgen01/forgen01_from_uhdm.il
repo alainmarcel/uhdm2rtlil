@@ -8,7 +8,6 @@ module \uut_forgen01
   attribute \src "dut.sv:3.24-3.25"
   wire output 2 \y
   attribute \src "dut.sv:9.12-9.15"
-  attribute \reg 1
   wire width 32 \lut
   attribute \src "dut.sv:20.16-20.17"
   cell $shiftx $shiftx$dut.sv:20$2

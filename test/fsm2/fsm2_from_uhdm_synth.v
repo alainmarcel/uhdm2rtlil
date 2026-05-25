@@ -83,7 +83,6 @@ module fsm_test(clk, reset, button_a, button_b, red_a, green_a, red_b, green_b);
   (* force_downto = 32'd1 *)
   (* src = "dut.sv:48.13-54.16|dut.sv:20.9-55.16|/home/alain/uhdm2rtlil/out/current/bin/../share/yosys/techmap.v:583.21-583.22" *)
   wire [5:0] _045_;
-  (* \reg  = 32'd1 *)
   (* src = "dut.sv:7.11-7.14" *)
   wire [3:0] cnt;
   (* src = "dut.sv:6.9-6.14" *)

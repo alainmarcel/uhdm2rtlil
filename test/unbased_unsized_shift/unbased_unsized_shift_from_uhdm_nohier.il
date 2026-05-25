@@ -13,10 +13,10 @@ module \unbased_unsized_shift
   wire width 64 output 4 \s0d
   attribute \src "dut.sv:7.24-7.27"
   wire width 64 output 5 \s1d
-  wire width 64 $auto$expression.cpp:3084:import_operation$1
-  wire width 64 $auto$expression.cpp:3084:import_operation$3
-  wire width 64 $auto$expression.cpp:3084:import_operation$5
-  wire width 64 $auto$expression.cpp:3084:import_operation$7
+  wire width 64 $auto$expression.cpp:3098:import_operation$1
+  wire width 64 $auto$expression.cpp:3098:import_operation$3
+  wire width 64 $auto$expression.cpp:3098:import_operation$5
+  wire width 64 $auto$expression.cpp:3098:import_operation$7
   attribute \src "dut.sv:9.18-9.25"
   cell $shl $shl$dut.sv:9$2
     parameter \A_SIGNED 0
@@ -26,7 +26,7 @@ module \unbased_unsized_shift
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:3084:import_operation$1
+    connect \Y $auto$expression.cpp:3098:import_operation$1
   end
   attribute \src "dut.sv:10.18-10.25"
   cell $shl $shl$dut.sv:10$4
@@ -37,7 +37,7 @@ module \unbased_unsized_shift
     parameter \Y_WIDTH 64
     connect \A 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:3084:import_operation$3
+    connect \Y $auto$expression.cpp:3098:import_operation$3
   end
   attribute \src "dut.sv:11.18-11.25"
   cell $shl $shl$dut.sv:11$6
@@ -48,7 +48,7 @@ module \unbased_unsized_shift
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
     connect \B \d
-    connect \Y $auto$expression.cpp:3084:import_operation$5
+    connect \Y $auto$expression.cpp:3098:import_operation$5
   end
   attribute \src "dut.sv:12.18-12.25"
   cell $shl $shl$dut.sv:12$8
@@ -59,10 +59,10 @@ module \unbased_unsized_shift
     parameter \Y_WIDTH 64
     connect \A 64'1111111111111111111111111111111111111111111111111111111111111111
     connect \B \d
-    connect \Y $auto$expression.cpp:3084:import_operation$7
+    connect \Y $auto$expression.cpp:3098:import_operation$7
   end
-  connect \s0c $auto$expression.cpp:3084:import_operation$1
-  connect \s1c $auto$expression.cpp:3084:import_operation$3
-  connect \s0d $auto$expression.cpp:3084:import_operation$5
-  connect \s1d $auto$expression.cpp:3084:import_operation$7
+  connect \s0c $auto$expression.cpp:3098:import_operation$1
+  connect \s1c $auto$expression.cpp:3098:import_operation$3
+  connect \s0d $auto$expression.cpp:3098:import_operation$5
+  connect \s1d $auto$expression.cpp:3098:import_operation$7
 end

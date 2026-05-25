@@ -17,10 +17,8 @@ module \mul_unsigned
   attribute \src "dut.sv:21.1-28.5"
   wire width 15 $0\M[0][14:0]
   attribute \src "dut.sv:17.18-17.20"
-  attribute \reg 1
   wire width 6 \rA
   attribute \src "dut.sv:18.18-18.20"
-  attribute \reg 1
   wire width 9 \rB
   attribute \src "/home/alain/uhdm2rtlil/test/mul_unsigned/dut.sv:19.25-19.26"
   wire width 15 \M[0]

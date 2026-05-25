@@ -29,7 +29,6 @@ module \asym_ram_sdp_read_wider
   attribute \src "dut.sv:4.81-4.84"
   wire width 16 output 9 \doB
   attribute \src "dut.sv:50.19-50.24"
-  attribute \reg 1
   wire width 16 \readB
   wire width 10 $memwr$\RAM$addr
   wire width 4 $memwr$\RAM$data

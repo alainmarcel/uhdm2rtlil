@@ -16,7 +16,6 @@ module \code_hdl_models_parallel_crc
   attribute \src "dut.sv:13.1-13.8"
   wire width 16 output 6 \crc_out
   attribute \src "dut.sv:24.14-24.21"
-  attribute \reg 1
   wire width 16 \crc_reg
   attribute \src "dut.sv:25.14-25.22"
   wire width 16 \next_crc

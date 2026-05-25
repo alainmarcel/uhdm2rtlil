@@ -2802,9 +2802,23 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitNegOp:
             if (operands.size() == 1)
                 {
+                    // SV LRM §11.8 context-determined sizing: a bitwise
+                    // unary `~` inherits its width from the enclosing
+                    // context, so its operand must be extended to that
+                    // context width BEFORE the NOT is applied.  Without
+                    // this, `reg1 & ~a[0]` (reg1=8b, a[0]=1b) yielded a
+                    // 1-bit `$not` whose result was zero-extended for
+                    // the AND — masking everything but bit 0.  The
+                    // Yosys Verilog frontend extends a[0] to 8 bits
+                    // inside the NOT so `~a[0]` is `8'b1111_111X̄`,
+                    // masking only bit 0.
                     bool is_signed = check_operands_signed(operands);
+                    RTLIL::SigSpec op = operands[0];
+                    if (expression_context_width > op.size()) {
+                        op.extend_u0(expression_context_width, is_signed);
+                    }
                     std::string cell_name = generate_cell_name(uhdm_op, "not");
-                    RTLIL::SigSpec result = module->Not(RTLIL::escape_id(cell_name), operands[0], is_signed);
+                    RTLIL::SigSpec result = module->Not(RTLIL::escape_id(cell_name), op, is_signed);
                     if (auto c = module->cell(RTLIL::escape_id(cell_name)))
                         add_src_attribute(c->attributes, uhdm_op);
                     if (is_signed) mark_result_signed(result);

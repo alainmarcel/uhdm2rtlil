@@ -22,10 +22,8 @@ module \fsm
   attribute \src "dut.sv:1.50-1.55"
   wire output 6 \gnt_1
   attribute \src "dut.sv:13.20-13.25"
-  attribute \reg 1
   wire width 3 \state
   attribute \src "dut.sv:14.20-14.30"
-  attribute \reg 1
   wire width 3 \next_state
   attribute \src "dut.sv:16.5-50.12"
   wire $0\gnt_0[0:0]

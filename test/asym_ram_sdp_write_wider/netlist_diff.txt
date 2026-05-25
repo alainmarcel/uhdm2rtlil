@@ -135,7 +135,7 @@
  wire [3:0] \RAM[0] ;
  wire [3:0] \RAM[1000] ;
  wire [3:0] \RAM[1001] ;
-@@ -9946,70933 +10030,71419 @@
+@@ -9946,70933 +10030,71418 @@
  wire [3:0] \RAM[999] ;
  wire [3:0] \RAM[99] ;
  wire [3:0] \RAM[9] ;
@@ -143,7 +143,6 @@
 -wire signed [31:0] \ramwrite.i ;
 -(* src = "dut.sv:62.23-62.30" *)
 -wire [1:0] \ramwrite.lsbaddr ;
-+(* \reg  = 32'd1 *)
  (* src = "dut.sv:50.19-50.24" *)
  wire [3:0] readB;
 -\$_NOT_  _08892_ (

@@ -52,50 +52,50 @@ module \top
   wire width 9 \n8
   attribute \src "dut.sv:23.49-23.51"
   wire width 9 \n9
-  wire width 8 $auto$expression.cpp:3032:import_operation$1
-  wire width 8 $auto$expression.cpp:3107:import_operation$3
+  wire width 8 $auto$expression.cpp:3046:import_operation$1
+  wire width 8 $auto$expression.cpp:3121:import_operation$3
   attribute \src "dut.sv:6.14-6.20"
-  wire width 16 $auto$expression.cpp:3531:import_operation$5
-  wire width 16 $auto$expression.cpp:3032:import_operation$7
-  wire width 16 $auto$expression.cpp:3107:import_operation$9
+  wire width 16 $auto$expression.cpp:3545:import_operation$5
+  wire width 16 $auto$expression.cpp:3046:import_operation$7
+  wire width 16 $auto$expression.cpp:3121:import_operation$9
   attribute \src "dut.sv:13.14-13.20"
-  wire width 4 signed $auto$expression.cpp:3531:import_operation$11
+  wire width 4 signed $auto$expression.cpp:3545:import_operation$11
   wire width 8 $auto$module.cpp:1124:import_continuous_assign$13
   attribute \src "dut.sv:14.14-14.31"
-  wire width 4 $auto$expression.cpp:3531:import_operation$15
+  wire width 4 $auto$expression.cpp:3545:import_operation$15
   wire width 8 $auto$module.cpp:1124:import_continuous_assign$17
   attribute \src "dut.sv:16.14-16.20"
-  wire width 4 $auto$expression.cpp:3531:import_operation$19
+  wire width 4 $auto$expression.cpp:3545:import_operation$19
   wire width 8 $auto$module.cpp:1124:import_continuous_assign$21
   attribute \src "dut.sv:17.14-17.29"
-  wire width 4 signed $auto$expression.cpp:3531:import_operation$23
+  wire width 4 signed $auto$expression.cpp:3545:import_operation$23
   wire width 8 $auto$module.cpp:1124:import_continuous_assign$25
   attribute \src "dut.sv:18.17-18.23"
-  wire width 4 signed $auto$expression.cpp:3531:import_operation$27
+  wire width 4 signed $auto$expression.cpp:3545:import_operation$27
   attribute \src "dut.sv:18.14-18.24"
-  wire width 8 signed $auto$expression.cpp:3531:import_operation$29
+  wire width 8 signed $auto$expression.cpp:3545:import_operation$29
   attribute \src "dut.sv:19.17-19.23"
-  wire width 4 $auto$expression.cpp:3531:import_operation$31
+  wire width 4 $auto$expression.cpp:3545:import_operation$31
   attribute \src "dut.sv:19.14-19.24"
-  wire width 8 $auto$expression.cpp:3531:import_operation$33
+  wire width 8 $auto$expression.cpp:3545:import_operation$33
   wire width 9 $auto$module.cpp:1124:import_continuous_assign$35
   wire width 9 $auto$module.cpp:1124:import_continuous_assign$37
   attribute \src "dut.sv:26.14-26.20"
-  wire width 9 signed $auto$expression.cpp:3531:import_operation$39
+  wire width 9 signed $auto$expression.cpp:3545:import_operation$39
   attribute \src "dut.sv:27.14-27.20"
-  wire width 9 signed $auto$expression.cpp:3531:import_operation$41
+  wire width 9 signed $auto$expression.cpp:3545:import_operation$41
   attribute \src "dut.sv:28.14-28.31"
-  wire width 9 $auto$expression.cpp:3531:import_operation$43
+  wire width 9 $auto$expression.cpp:3545:import_operation$43
   attribute \src "dut.sv:29.14-29.31"
-  wire width 9 $auto$expression.cpp:3531:import_operation$45
+  wire width 9 $auto$expression.cpp:3545:import_operation$45
   attribute \src "dut.sv:30.14-30.20"
-  wire width 9 $auto$expression.cpp:3531:import_operation$47
+  wire width 9 $auto$expression.cpp:3545:import_operation$47
   attribute \src "dut.sv:31.14-31.20"
-  wire width 9 $auto$expression.cpp:3531:import_operation$49
+  wire width 9 $auto$expression.cpp:3545:import_operation$49
   attribute \src "dut.sv:32.14-32.29"
-  wire width 9 signed $auto$expression.cpp:3531:import_operation$51
+  wire width 9 signed $auto$expression.cpp:3545:import_operation$51
   attribute \src "dut.sv:33.14-33.29"
-  wire width 9 signed $auto$expression.cpp:3531:import_operation$53
+  wire width 9 signed $auto$expression.cpp:3545:import_operation$53
   attribute \src "dut.sv:36.10-36.27"
   wire $eq$dut.sv:36$56_Y
   wire $auto$process.cpp:111:build_check_cell$58
@@ -103,13 +103,13 @@ module \top
   wire $eq$dut.sv:37$60_Y
   wire $auto$process.cpp:111:build_check_cell$62
   attribute \src "dut.sv:39.10-39.21"
-  wire width 32 $auto$expression.cpp:3531:import_operation$64
+  wire width 32 $auto$expression.cpp:3545:import_operation$64
   attribute \src "dut.sv:39.10-39.50"
   wire $eq$dut.sv:39$66_Y
   wire $auto$process.cpp:111:build_check_cell$68
-  wire width 64 $auto$expression.cpp:2952:import_operation$70
+  wire width 64 $auto$expression.cpp:2966:import_operation$70
   attribute \src "dut.sv:40.10-40.25"
-  wire width 32 $auto$expression.cpp:3531:import_operation$72
+  wire width 32 $auto$expression.cpp:3545:import_operation$72
   attribute \src "dut.sv:40.10-40.54"
   wire $eq$dut.sv:40$74_Y
   wire $auto$process.cpp:111:build_check_cell$76
@@ -182,7 +182,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:3032:import_operation$1
+    connect \Y $auto$expression.cpp:3046:import_operation$1
   end
   attribute \src "dut.sv:5.13-5.25"
   cell $shr $shr$dut.sv:5$4
@@ -191,16 +191,16 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3032:import_operation$1
+    connect \A $auto$expression.cpp:3046:import_operation$1
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:3107:import_operation$3
+    connect \Y $auto$expression.cpp:3121:import_operation$3
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$6
+  cell $pos $auto$expression.cpp:3548:import_operation$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 16
     connect \A \a
-    connect \Y $auto$expression.cpp:3531:import_operation$5
+    connect \Y $auto$expression.cpp:3545:import_operation$5
   end
   attribute \src "dut.sv:6.14-6.24"
   cell $mul $mul$dut.sv:6$8
@@ -209,9 +209,9 @@ module \top
     parameter \A_WIDTH 16
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:3531:import_operation$5
+    connect \A $auto$expression.cpp:3545:import_operation$5
     connect \B \b
-    connect \Y $auto$expression.cpp:3032:import_operation$7
+    connect \Y $auto$expression.cpp:3046:import_operation$7
   end
   attribute \src "dut.sv:6.13-6.30"
   cell $shr $shr$dut.sv:6$10
@@ -220,93 +220,93 @@ module \top
     parameter \A_WIDTH 16
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:3032:import_operation$7
+    connect \A $auto$expression.cpp:3046:import_operation$7
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:3107:import_operation$9
+    connect \Y $auto$expression.cpp:3121:import_operation$9
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$12
+  cell $pos $auto$expression.cpp:3548:import_operation$12
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \s0
-    connect \Y $auto$expression.cpp:3531:import_operation$11
+    connect \Y $auto$expression.cpp:3545:import_operation$11
   end
   cell $pos $auto$module.cpp:1125:import_continuous_assign$14
     parameter \A_SIGNED 1
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$11
+    connect \A $auto$expression.cpp:3545:import_operation$11
     connect \Y $auto$module.cpp:1124:import_continuous_assign$13
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$16
+  cell $pos $auto$expression.cpp:3548:import_operation$16
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \s0
-    connect \Y $auto$expression.cpp:3531:import_operation$15
+    connect \Y $auto$expression.cpp:3545:import_operation$15
   end
   cell $pos $auto$module.cpp:1125:import_continuous_assign$18
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$15
+    connect \A $auto$expression.cpp:3545:import_operation$15
     connect \Y $auto$module.cpp:1124:import_continuous_assign$17
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$20
+  cell $pos $auto$expression.cpp:3548:import_operation$20
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \u0
-    connect \Y $auto$expression.cpp:3531:import_operation$19
+    connect \Y $auto$expression.cpp:3545:import_operation$19
   end
   cell $pos $auto$module.cpp:1125:import_continuous_assign$22
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$19
+    connect \A $auto$expression.cpp:3545:import_operation$19
     connect \Y $auto$module.cpp:1124:import_continuous_assign$21
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$24
+  cell $pos $auto$expression.cpp:3548:import_operation$24
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \u0
-    connect \Y $auto$expression.cpp:3531:import_operation$23
+    connect \Y $auto$expression.cpp:3545:import_operation$23
   end
   cell $pos $auto$module.cpp:1125:import_continuous_assign$26
     parameter \A_SIGNED 1
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$23
+    connect \A $auto$expression.cpp:3545:import_operation$23
     connect \Y $auto$module.cpp:1124:import_continuous_assign$25
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$28
+  cell $pos $auto$expression.cpp:3548:import_operation$28
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \s0
-    connect \Y $auto$expression.cpp:3531:import_operation$27
+    connect \Y $auto$expression.cpp:3545:import_operation$27
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$30
+  cell $pos $auto$expression.cpp:3548:import_operation$30
     parameter \A_SIGNED 1
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$27
-    connect \Y $auto$expression.cpp:3531:import_operation$29
+    connect \A $auto$expression.cpp:3545:import_operation$27
+    connect \Y $auto$expression.cpp:3545:import_operation$29
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$32
+  cell $pos $auto$expression.cpp:3548:import_operation$32
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 4
     connect \A \u0
-    connect \Y $auto$expression.cpp:3531:import_operation$31
+    connect \Y $auto$expression.cpp:3545:import_operation$31
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$34
+  cell $pos $auto$expression.cpp:3548:import_operation$34
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3531:import_operation$31
-    connect \Y $auto$expression.cpp:3531:import_operation$33
+    connect \A $auto$expression.cpp:3545:import_operation$31
+    connect \Y $auto$expression.cpp:3545:import_operation$33
   end
   cell $pos $auto$module.cpp:1125:import_continuous_assign$36
     parameter \A_SIGNED 1
@@ -322,61 +322,61 @@ module \top
     connect \A \s2
     connect \Y $auto$module.cpp:1124:import_continuous_assign$37
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$40
+  cell $pos $auto$expression.cpp:3548:import_operation$40
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \s1
-    connect \Y $auto$expression.cpp:3531:import_operation$39
+    connect \Y $auto$expression.cpp:3545:import_operation$39
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$42
+  cell $pos $auto$expression.cpp:3548:import_operation$42
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \s2
-    connect \Y $auto$expression.cpp:3531:import_operation$41
+    connect \Y $auto$expression.cpp:3545:import_operation$41
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$44
+  cell $pos $auto$expression.cpp:3548:import_operation$44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \s1
-    connect \Y $auto$expression.cpp:3531:import_operation$43
+    connect \Y $auto$expression.cpp:3545:import_operation$43
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$46
+  cell $pos $auto$expression.cpp:3548:import_operation$46
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \s2
-    connect \Y $auto$expression.cpp:3531:import_operation$45
+    connect \Y $auto$expression.cpp:3545:import_operation$45
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$48
+  cell $pos $auto$expression.cpp:3548:import_operation$48
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \u0
-    connect \Y $auto$expression.cpp:3531:import_operation$47
+    connect \Y $auto$expression.cpp:3545:import_operation$47
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$50
+  cell $pos $auto$expression.cpp:3548:import_operation$50
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \u1
-    connect \Y $auto$expression.cpp:3531:import_operation$49
+    connect \Y $auto$expression.cpp:3545:import_operation$49
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$52
+  cell $pos $auto$expression.cpp:3548:import_operation$52
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \u0
-    connect \Y $auto$expression.cpp:3531:import_operation$51
+    connect \Y $auto$expression.cpp:3545:import_operation$51
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$54
+  cell $pos $auto$expression.cpp:3548:import_operation$54
     parameter \A_SIGNED 1
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 9
     connect \A \u1
-    connect \Y $auto$expression.cpp:3531:import_operation$53
+    connect \Y $auto$expression.cpp:3545:import_operation$53
   end
   attribute \src "dut.sv:36.10-36.27"
   cell $eq $eq$dut.sv:36$57
@@ -430,12 +430,12 @@ module \top
     connect \EN $auto$process.cpp:111:build_check_cell$62
     connect \TRG { }
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$65
+  cell $pos $auto$expression.cpp:3548:import_operation$65
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 32
     connect \A \a
-    connect \Y $auto$expression.cpp:3531:import_operation$64
+    connect \Y $auto$expression.cpp:3545:import_operation$64
   end
   attribute \src "dut.sv:39.10-39.50"
   cell $eq $eq$dut.sv:39$67
@@ -444,7 +444,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3531:import_operation$64
+    connect \A $auto$expression.cpp:3545:import_operation$64
     connect \B 16
     connect \Y $eq$dut.sv:39$66_Y
   end
@@ -472,14 +472,14 @@ module \top
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \d }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2952:import_operation$70
+    connect \Y $auto$expression.cpp:2966:import_operation$70
   end
-  cell $pos $auto$expression.cpp:3534:import_operation$73
+  cell $pos $auto$expression.cpp:3548:import_operation$73
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2952:import_operation$70
-    connect \Y $auto$expression.cpp:3531:import_operation$72
+    connect \A $auto$expression.cpp:2966:import_operation$70
+    connect \Y $auto$expression.cpp:3545:import_operation$72
   end
   attribute \src "dut.sv:40.10-40.54"
   cell $eq $eq$dut.sv:40$75
@@ -488,7 +488,7 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:3531:import_operation$72
+    connect \A $auto$expression.cpp:3545:import_operation$72
     connect \B 32'11111111111111111111111111111111
     connect \Y $eq$dut.sv:40$74_Y
   end
@@ -1081,26 +1081,26 @@ module \top
   end
   connect \a 8'00010000
   connect \b 8'00010000
-  connect \c $auto$expression.cpp:3107:import_operation$3
-  connect \d $auto$expression.cpp:3107:import_operation$9 [7:0]
+  connect \c $auto$expression.cpp:3121:import_operation$3
+  connect \d $auto$expression.cpp:3121:import_operation$9 [7:0]
   connect \s0 8'11111111
   connect \s1 $auto$module.cpp:1124:import_continuous_assign$13
   connect \s2 $auto$module.cpp:1124:import_continuous_assign$17
   connect \u0 8'11111111
   connect \u1 $auto$module.cpp:1124:import_continuous_assign$21
   connect \u2 $auto$module.cpp:1124:import_continuous_assign$25
-  connect \u3 $auto$expression.cpp:3531:import_operation$29
-  connect \u4 $auto$expression.cpp:3531:import_operation$33
+  connect \u3 $auto$expression.cpp:3545:import_operation$29
+  connect \u4 $auto$expression.cpp:3545:import_operation$33
   connect \u5 8'11111111
   connect \u6 8'00001111
   connect \n0 $auto$module.cpp:1124:import_continuous_assign$35
   connect \n1 $auto$module.cpp:1124:import_continuous_assign$37
-  connect \n2 $auto$expression.cpp:3531:import_operation$39
-  connect \n3 $auto$expression.cpp:3531:import_operation$41
-  connect \n4 $auto$expression.cpp:3531:import_operation$43
-  connect \n5 $auto$expression.cpp:3531:import_operation$45
-  connect \n6 $auto$expression.cpp:3531:import_operation$47
-  connect \n7 $auto$expression.cpp:3531:import_operation$49
-  connect \n8 $auto$expression.cpp:3531:import_operation$51
-  connect \n9 $auto$expression.cpp:3531:import_operation$53
+  connect \n2 $auto$expression.cpp:3545:import_operation$39
+  connect \n3 $auto$expression.cpp:3545:import_operation$41
+  connect \n4 $auto$expression.cpp:3545:import_operation$43
+  connect \n5 $auto$expression.cpp:3545:import_operation$45
+  connect \n6 $auto$expression.cpp:3545:import_operation$47
+  connect \n7 $auto$expression.cpp:3545:import_operation$49
+  connect \n8 $auto$expression.cpp:3545:import_operation$51
+  connect \n9 $auto$expression.cpp:3545:import_operation$53
 end
