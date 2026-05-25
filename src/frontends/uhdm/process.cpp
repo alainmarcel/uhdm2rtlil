@@ -8196,7 +8196,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
         case vpiAssignment:
         case vpiAssignStmt: {
             auto assign = any_cast<const assignment*>(uhdm_stmt);
-            
+
+            // Dynamic indexed_part_select LHS (e.g. `dword[8*sel +:8] =
+            // vect`) — when the index expression isn't constant we
+            // can't materialise a static slice; route through the
+            // mask/shift/or rewrite so the surrounding switch sees
+            // a write to the full base wire.  Matches the Process*
+            // overload (line ~7077) and `import_assignment_comb`
+            // (line ~7475).
+            if (auto lhs_e = assign->Lhs()) {
+                if (lhs_e->VpiType() == vpiIndexedPartSelect) {
+                    auto ips = any_cast<const indexed_part_select*>(lhs_e);
+                    if (emit_dynamic_indexed_part_select_write(
+                            ips, assign->Rhs(), nullptr, case_rule))
+                        return;
+                }
+            }
+
             // Check if this is a memory write first
             if (is_memory_write(assign, module) && !current_memory_writes.empty()) {
                 // This is a memory write and we have temp wires for it
