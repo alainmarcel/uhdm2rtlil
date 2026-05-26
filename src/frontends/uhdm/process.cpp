@@ -1624,6 +1624,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     std::map<std::string, RTLIL::Wire*> signal_temp_wires;
                     std::map<std::string, RTLIL::SigSpec> signal_specs;
 
+                    // Same multi-slice detection as in the always_comb
+                    // path: if this process writes several slices of the
+                    // same base wire they need to share one full-width
+                    // temp; single-slice writes keep per-slice temps.
+                    std::map<std::string, int> base_slice_count_ff;
+                    for (const auto& sig : assigned_signals)
+                        base_slice_count_ff[sig.name]++;
+
                     for (const auto& sig : assigned_signals) {
                         RTLIL::SigSpec lhs_spec;
                         if (sig.lhs_expr) {
@@ -1638,7 +1646,19 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             lhs_spec = RTLIL::SigSpec(wire);
                         }
 
-                        // Compute dedup key (same logic as import_always_comb)
+                        // Multi-slice writes to the same base wire share
+                        // a full-width temp; single-slice writes keep
+                        // their per-slice dedup key.  Treat any
+                        // non-full-wire LHS as a slice (covers
+                        // hier_path field writes where
+                        // `is_part_select` is false).
+                        bool lhs_is_slice =
+                            !lhs_spec.is_wire() && lhs_spec.size() > 0 &&
+                            lhs_spec.chunks().begin()->wire != nullptr &&
+                            lhs_spec.size() <
+                                lhs_spec.chunks().begin()->wire->width;
+                        bool collapse_to_base =
+                            lhs_is_slice && base_slice_count_ff[sig.name] > 1;
                         std::string dedup_key;
                         if (lhs_spec.size() > 0) {
                             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
@@ -1646,10 +1666,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 std::string wire_name = first_chunk.wire->name.str();
                                 if (wire_name[0] == '\\')
                                     wire_name = wire_name.substr(1);
-                                if (sig.is_part_select && !lhs_spec.is_wire()) {
+                                if (lhs_is_slice && !collapse_to_base) {
                                     int offset = first_chunk.offset;
                                     int width = lhs_spec.size();
-                                    dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                                    dedup_key = wire_name + "[" +
+                                                std::to_string(offset + width - 1) + ":" +
+                                                std::to_string(offset) + "]";
                                 } else {
                                     dedup_key = wire_name;
                                 }
@@ -1666,14 +1688,22 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             std::string temp_name = "$0\\" + dedup_key;
                             if (module->wire(temp_name))
                                 log_error("Temp wire %s already exists\n", temp_name.c_str());
+                            RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
+                            // Size to full base only when collapsing
+                            // multiple slice writes; otherwise slice
+                            // width (legacy behaviour).
                             int tmp_width = lhs_spec.size();
                             RTLIL::SigSpec spec_for_signal = lhs_spec;
-                            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
-                                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
-                                if (first_chunk.wire) {
-                                    tmp_width = first_chunk.wire->width;
-                                    spec_for_signal = RTLIL::SigSpec(first_chunk.wire);
-                                }
+                            if (collapse_to_base && first_chunk.wire) {
+                                tmp_width = first_chunk.wire->width;
+                                spec_for_signal = RTLIL::SigSpec(first_chunk.wire);
+                            } else if (sig.lhs_expr &&
+                                       sig.lhs_expr->VpiType() == vpiHierPath &&
+                                       first_chunk.wire) {
+                                // hier_path field write: keep full-wire
+                                // spec for hold-default coverage (legacy).
+                                tmp_width = first_chunk.wire->width;
+                                spec_for_signal = RTLIL::SigSpec(first_chunk.wire);
                             }
                             RTLIL::Wire* temp_wire = module->addWire(temp_name, tmp_width);
                             if (uhdm_process)
@@ -1682,7 +1712,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             signal_specs[dedup_key] = spec_for_signal;
                             temp_wires_map[sig.lhs_expr] = temp_wire;
                             log("    Created FF temp wire %s for signal %s (width=%d)\n",
-                                temp_wire->name.c_str(), sig.name.c_str(), lhs_spec.size());
+                                temp_wire->name.c_str(), sig.name.c_str(), tmp_width);
                         }
                     }
 
@@ -1783,6 +1813,19 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     std::map<std::string, RTLIL::Wire*> signal_temp_wires; // Map signal name to temp wire
     std::map<std::string, RTLIL::SigSpec> signal_specs;    // Map signal name to signal spec
     
+    // Detect whether this process writes the same base wire via
+    // multiple slices.  When it does, every slice must share ONE
+    // full-width `$0\<base>` temp wire so case-branch slice writes
+    // map onto chunks of the same temp (otherwise the resulting
+    // per-slice sync rules conflict at synth time — see
+    // `tests/various/dynamic_part_select/multiple_blocking_gate.v`).
+    // When only a single slice is written, fall back to a per-slice
+    // dedup key so per-bit generate-block writes don't collide
+    // across processes (see `simple/gen_test1.v`).
+    std::map<std::string, int> base_slice_count;
+    for (const auto& sig : assigned_signals)
+        base_slice_count[sig.name]++;
+
     for (const auto& sig : assigned_signals) {
         // Skip memory writes — they don't need `$0\` temp wires (they go
         // through the EN/ADDR/DATA infrastructure set up below). Without
@@ -1817,6 +1860,21 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
         // to ensure uniqueness across generate scopes (e.g. rotate test).
         // For full-wire assignments, use the bare signal name to avoid conflicts
         // with block-local variable handling (e.g. gen_test7).
+        // Use base wire name as dedup key only when this process
+        // writes multiple slices of the same base — that's the case
+        // where they must share a full-width temp.  Single-slice
+        // writes (the common gen_test1-style per-bit always-block
+        // pattern) keep their per-slice key so per-bit temps don't
+        // collide across processes.  `is_part_select` is set for
+        // bit/part-selects but not for hier_path field writes; treat
+        // any non-full-wire LHS as a slice for the purposes of this
+        // check.
+        bool lhs_is_slice =
+            !lhs_spec.is_wire() && lhs_spec.size() > 0 &&
+            lhs_spec.chunks().begin()->wire != nullptr &&
+            lhs_spec.size() < lhs_spec.chunks().begin()->wire->width;
+        bool collapse_to_base =
+            lhs_is_slice && base_slice_count[sig.name] > 1;
         std::string dedup_key;
         if (lhs_spec.size() > 0) {
             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
@@ -1824,14 +1882,13 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 std::string wire_name = first_chunk.wire->name.str();
                 if (wire_name[0] == '\\')
                     wire_name = wire_name.substr(1);
-                if (sig.is_part_select && !lhs_spec.is_wire()) {
+                if (lhs_is_slice && !collapse_to_base) {
                     int offset = first_chunk.offset;
                     int width = lhs_spec.size();
-                    dedup_key = wire_name + "[" + std::to_string(offset + width - 1) + ":" + std::to_string(offset) + "]";
+                    dedup_key = wire_name + "[" +
+                                std::to_string(offset + width - 1) + ":" +
+                                std::to_string(offset) + "]";
                 } else {
-                    // For full-wire assignments, use the actual wire name (which includes
-                    // generate scope prefix) to ensure uniqueness across generate scopes
-                    // with same-named local variables (e.g. 'a' in test_integer vs test_integer_unsigned).
                     dedup_key = wire_name;
                 }
             } else {
@@ -1843,48 +1900,31 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
 
         // Check if we already have a temp wire for this signal
         RTLIL::Wire* temp_wire = nullptr;
+        RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
         if (signal_temp_wires.count(dedup_key)) {
-            // Reuse existing temp wire
             temp_wire = signal_temp_wires[dedup_key];
         } else {
-            // Create new temp wire.  Normally its width equals the LHS slice
-            // width, but for a hier_path field write the LHS is only a slice
-            // of the base wire while dedup_key is the bare base name — the
-            // temp wire must span the FULL base wire so subsequent slice
-            // writes (and the hold-default) can target distinct bits.
             std::string temp_name = "$0\\" + dedup_key;
-
-            // Check if temp wire already exists (shouldn't happen with unique dedup keys)
-            if (module->wire(temp_name)) {
+            if (module->wire(temp_name))
                 log_error("Temp wire %s already exists\n", temp_name.c_str());
-            }
-
+            // Size the temp wire to the FULL base wire when we're
+            // collapsing multiple slice writes (so chunks share it);
+            // otherwise to the slice width (matches the original
+            // per-slice behaviour).
             int tmp_width = lhs_spec.size();
-            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
-                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
-                if (first_chunk.wire)
-                    tmp_width = first_chunk.wire->width;
-            }
+            if (collapse_to_base && first_chunk.wire)
+                tmp_width = first_chunk.wire->width;
             temp_wire = module->addWire(temp_name, tmp_width);
-            // Add source attribute from the process
-            if (uhdm_process) {
+            if (uhdm_process)
                 add_src_attribute(temp_wire->attributes, uhdm_process);
-            }
             signal_temp_wires[dedup_key] = temp_wire;
-            // For hier_path, record the FULL base wire as the spec so the
-            // hold-default action covers all bits (otherwise only the slice
-            // bits would carry the hold-default, leaving the remaining bits
-            // of the temp wire undriven).
-            if (sig.lhs_expr && sig.lhs_expr->VpiType() == vpiHierPath) {
-                RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
-                if (first_chunk.wire)
-                    signal_specs[dedup_key] = RTLIL::SigSpec(first_chunk.wire);
-                else
-                    signal_specs[dedup_key] = lhs_spec;
-            } else {
+            // When collapsing, the init/hold-default needs to mirror
+            // the full base wire so widths match.  Otherwise mirror
+            // only the slice (legacy behaviour).
+            if (collapse_to_base && first_chunk.wire)
+                signal_specs[dedup_key] = RTLIL::SigSpec(first_chunk.wire);
+            else
                 signal_specs[dedup_key] = lhs_spec;
-            }
-
             log("    Created temp wire %s for signal %s (width=%d)\n",
                 temp_wire->name.c_str(), sig.name.c_str(), tmp_width);
         }
@@ -4815,7 +4855,9 @@ void UhdmImporter::emit_comb_assign(RTLIL::SigSpec lhs, RTLIL::SigSpec rhs, RTLI
 
 // Map a signal to its $0\ temp wire if one exists (for comb process assignments)
 RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
-    if (!current_temp_wires.empty() && sig.is_wire()) {
+    if (current_temp_wires.empty()) return sig;
+    // Full-wire LHS: swap `\foo` for `$0\foo` outright.
+    if (sig.is_wire()) {
         RTLIL::Wire* target_wire = sig.as_wire();
         std::string signal_name = target_wire->name.str();
         if (signal_name[0] == '\\')
@@ -4825,8 +4867,33 @@ RTLIL::SigSpec UhdmImporter::map_to_temp_wire(RTLIL::SigSpec sig) {
         RTLIL::Wire* temp_wire = module->wire(temp_name);
         if (temp_wire)
             return RTLIL::SigSpec(temp_wire);
+        return sig;
     }
-    return sig;
+    // Part-select / chunked LHS (e.g. `\dout[31:11]`): rewrite each
+    // chunk whose underlying wire has a `$0\` peer so multiple
+    // case-branch slice writes share ONE full-width temp wire instead
+    // of each branch spawning its own (which made the sync rule emit
+    // per-slice `update`s, and synth then dropped bits driven only by
+    // some branches — exposed by `tests/various/dynamic_part_select/
+    // multiple_blocking_gate.v`).
+    RTLIL::SigSpec out;
+    bool changed = false;
+    for (const auto& chunk : sig.chunks()) {
+        if (chunk.wire) {
+            std::string name = chunk.wire->name.str();
+            if (!name.empty() && name[0] == '\\') name = name.substr(1);
+            std::string temp_name = "$0\\" + name;
+            if (RTLIL::Wire* tw = module->wire(temp_name)) {
+                if (tw->width >= chunk.offset + chunk.width) {
+                    out.append(RTLIL::SigChunk(tw, chunk.offset, chunk.width));
+                    changed = true;
+                    continue;
+                }
+            }
+        }
+        out.append(chunk);
+    }
+    return changed ? out : sig;
 }
 
 // Create a $print cell for $display / $write system tasks.

@@ -21,8 +21,6 @@ module \gen_test2
   wire width 32 $0\i
   attribute \src "dut.sv:10.1-22.4"
   wire width 9 $0\y
-  attribute \src "dut.sv:10.1-22.4"
-  wire $0\y[8:8]
   wire $auto$rtlil.cc:3304:Xor$3
   wire $auto$rtlil.cc:3304:Xor$5
   wire $auto$rtlil.cc:3304:Xor$7
@@ -218,7 +216,6 @@ module \gen_test2
   attribute \src "dut.sv:10.1-22.4"
   attribute \always_ff 1
   process $proc$dut.sv:10$1
-    assign $0\y [8] \y [8]
     assign $0\carry[0:0] 1'0
     assign $0\y [0] $auto$rtlil.cc:3304:Xor$5
     assign $0\y [1] $auto$rtlil.cc:3304:Xor$9
@@ -229,7 +226,7 @@ module \gen_test2
     assign $0\y [6] $auto$rtlil.cc:3304:Xor$29
     assign $0\y [7] $auto$rtlil.cc:3304:Xor$33
     assign $0\i 8
-    assign $0\y[8:8] \carry [8]
+    assign $0\y [8] \carry [8]
     attribute \src "dut.sv:13.3-18.10"
     switch { \a [0] \b [0] \carry [0] }
     attribute \src "dut.sv:14.4-15.20"
@@ -306,6 +303,5 @@ module \gen_test2
       update \carry [0] $0\carry[0:0]
       update \i $0\i
       update \y $0\y
-      update \y [8] $0\y[8:8]
   end
 end

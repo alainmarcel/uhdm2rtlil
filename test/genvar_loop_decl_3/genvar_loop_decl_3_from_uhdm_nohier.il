@@ -63,7 +63,7 @@ module \gold
   process $proc$dut.sv:23$5
   end
   attribute \src "dut.sv:23.17-23.32"
-  process $auto$process.cpp:2497:operator()$6
+  process $auto$process.cpp:2537:operator()$6
     sync always
       update \gen.x 10
   end

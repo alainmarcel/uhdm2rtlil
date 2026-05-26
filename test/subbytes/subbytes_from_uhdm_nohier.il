@@ -92,13 +92,7 @@ module \subbytes_00
   attribute \src "dut.sv:45.1-80.4"
   wire width 32 $0\data_o
   attribute \src "dut.sv:45.1-80.4"
-  wire width 8 $0\data_reg_128[31:24]
-  attribute \src "dut.sv:45.1-80.4"
-  wire width 8 $0\data_reg_128[23:16]
-  attribute \src "dut.sv:45.1-80.4"
-  wire width 8 $0\data_reg_128[15:8]
-  attribute \src "dut.sv:45.1-80.4"
-  wire width 8 $0\data_reg_128[7:0]
+  wire width 32 $0\data_reg_128
   wire $auto$expression.cpp:4225:import_bit_select$3
   wire width 8 $auto$expression.cpp:4228:import_bit_select$5
   wire $auto$expression.cpp:4225:import_bit_select$7
@@ -172,7 +166,7 @@ module \subbytes_00
     connect \S $auto$expression.cpp:4225:import_bit_select$11
     connect \Y $auto$expression.cpp:4228:import_bit_select$13
   end
-  cell $reduce_bool $auto$process.cpp:7732:import_if_else_comb$15
+  cell $reduce_bool $auto$process.cpp:7799:import_if_else_comb$15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 1
@@ -278,10 +272,7 @@ module \subbytes_00
     assign $0\data_array[3] \data_array[3]
     assign $0\data_i_var \data_i_var
     assign $0\data_o \data_o
-    assign $0\data_reg_128[15:8] \data_reg_128 [15:8]
-    assign $0\data_reg_128[23:16] \data_reg_128 [23:16]
-    assign $0\data_reg_128[31:24] \data_reg_128 [31:24]
-    assign $0\data_reg_128[7:0] \data_reg_128 [7:0]
+    assign $0\data_reg_128 \data_reg_128
     assign $0\data_reg_var[0] \data_reg_var[0]
     assign $0\data_reg_var[1] \data_reg_var[1]
     assign $0\data_reg_var[2] \data_reg_var[2]
@@ -321,10 +312,10 @@ module \subbytes_00
     attribute \src "dut.sv:67.2-79.5"
       case 
         assign $auto$expression.cpp:4228:import_bit_select$27 \sbox_data_i
-        assign $0\data_reg_128[31:24] \data_reg [31:24]
-        assign $0\data_reg_128[23:16] \data_reg [23:16]
-        assign $0\data_reg_128[15:8] \data_reg [15:8]
-        assign $0\data_reg_128[7:0] \data_reg [7:0]
+        assign $0\data_reg_128 { 24'000000000000000000000000 \data_reg [31:24] }
+        assign $0\data_reg_128 { 24'000000000000000000000000 \data_reg [23:16] }
+        assign $0\data_reg_128 { 24'000000000000000000000000 \data_reg [15:8] }
+        assign $0\data_reg_128 { 24'000000000000000000000000 \data_reg [7:0] }
         assign $0\next_data_reg \data_reg_128
         assign $0\next_state $auto$expression.cpp:2911:import_operation$29
     end
@@ -335,10 +326,7 @@ module \subbytes_00
       update \data_array[3] $0\data_array[3]
       update \data_i_var $0\data_i_var
       update \data_o $0\data_o
-      update \data_reg_128 [15:8] $0\data_reg_128[15:8]
-      update \data_reg_128 [23:16] $0\data_reg_128[23:16]
-      update \data_reg_128 [31:24] $0\data_reg_128[31:24]
-      update \data_reg_128 [7:0] $0\data_reg_128[7:0]
+      update \data_reg_128 $0\data_reg_128
       update \data_reg_var[0] $0\data_reg_var[0]
       update \data_reg_var[1] $0\data_reg_var[1]
       update \data_reg_var[2] $0\data_reg_var[2]
