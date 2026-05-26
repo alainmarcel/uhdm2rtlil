@@ -27,7 +27,7 @@ module \many_functions
   attribute \src "dut.sv:15.30-15.39"
   wire width 8 output 10 \out_mixed
   wire $procmux$233_Y
-  wire width 8 $auto$expression.cpp:2911:import_operation$117
+  wire width 8 $auto$expression.cpp:2926:import_operation$117
   wire width 8 $procmux$273_Y
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
@@ -38,10 +38,10 @@ module \many_functions
   attribute \nosync 1
   attribute \src "dut.sv:143.24-143.45"
   wire width 8 \func_mixed$func$dut.sv:143$86.result
-  wire width 8 $auto$expression.cpp:2911:import_operation$10
+  wire width 8 $auto$expression.cpp:2926:import_operation$10
   wire width 8 $procmux$153_Y
-  wire width 8 $auto$expression.cpp:2911:import_operation$125
-  wire width 8 $auto$expression.cpp:3098:import_operation$14
+  wire width 8 $auto$expression.cpp:2926:import_operation$125
+  wire width 8 $auto$expression.cpp:3113:import_operation$14
   wire width 8 $auto$rtlil.cc:3302:And$17
   wire width 8 $auto$rtlil.cc:3303:Or$19
   wire width 8 $procmux$223_Y
@@ -59,7 +59,7 @@ module \many_functions
   wire width 8 $procmux$250_Y
   attribute \src "dut.sv:36.17-36.30"
   wire $eq$dut.sv:36$31_Y
-  wire width 8 $auto$expression.cpp:2911:import_operation$133
+  wire width 8 $auto$expression.cpp:2926:import_operation$133
   wire $auto$rtlil.cc:3314:Gt$105
   attribute \src "dut.sv:38.22-38.35"
   wire $eq$dut.sv:38$36_Y
@@ -116,7 +116,7 @@ module \many_functions
   cell $mux $procmux$212
     parameter \WIDTH 1
     connect \A \b [6]
-    connect \B $auto$expression.cpp:2911:import_operation$133 [6]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [6]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$212_Y
   end
@@ -127,9 +127,9 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3098:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3113:import_operation$14 [7:1] }
     connect \B $auto$rtlil.cc:3302:And$17
-    connect \Y { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3098:import_operation$14 [7:1] }
+    connect \Y { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3113:import_operation$14 [7:1] }
   end
   attribute \src "dut.sv:27.26-27.34"
   cell $xor $xor$dut.sv:27$20
@@ -138,7 +138,7 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3098:import_operation$14 [7:1] }
+    connect \A { $auto$rtlil.cc:3303:Or$19 [7] $auto$expression.cpp:3113:import_operation$14 [7:1] }
     connect \B \c
     connect \Y \out_arith
   end
@@ -160,7 +160,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [6] \a [3] $procmux$217_Y $procmux$212_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [6] \a [3] $procmux$217_Y $procmux$212_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [6]
   end
@@ -169,7 +169,7 @@ module \many_functions
   cell $mux $procmux$179
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2911:import_operation$133 [2]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [2]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$179_Y
   end
@@ -247,7 +247,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [5] \b [2] $procmux$173_Y $procmux$168_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [5] \b [2] $procmux$173_Y $procmux$168_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [5]
   end
@@ -257,7 +257,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [2] \a [1] $procmux$184_Y $procmux$179_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [2] \a [1] $procmux$184_Y $procmux$179_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [2]
   end
@@ -290,14 +290,14 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2911:import_operation$10
+    connect \Y $auto$expression.cpp:2926:import_operation$10
   end
   attribute \src "dut.sv:123.32-127.24|dut.sv:123.21-129.24"
   attribute \full_case 1
   cell $mux $procmux$168
     parameter \WIDTH 1
     connect \A \b [5]
-    connect \B $auto$expression.cpp:2911:import_operation$133 [5]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [5]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$168_Y
   end
@@ -334,7 +334,7 @@ module \many_functions
   cell $mux $procmux$239
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2911:import_operation$133 [3]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [3]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$239_Y
   end
@@ -374,7 +374,7 @@ module \many_functions
   cell $mux $procmux$190
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2911:import_operation$133 [1]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [1]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$190_Y
   end
@@ -383,7 +383,7 @@ module \many_functions
   cell $mux $procmux$223
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2911:import_operation$133
+    connect \B $auto$expression.cpp:2926:import_operation$133
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$223_Y
   end
@@ -396,7 +396,7 @@ module \many_functions
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B { 1'0 \a [7:1] }
-    connect \Y $auto$expression.cpp:2911:import_operation$117
+    connect \Y $auto$expression.cpp:2926:import_operation$117
   end
   attribute \src "dut.sv:66.24-71.16|dut.sv:66.13-76.16"
   attribute \full_case 1
@@ -413,7 +413,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [1] \b [0] $procmux$195_Y $procmux$190_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [1] \b [0] $procmux$195_Y $procmux$190_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [1]
   end
@@ -433,9 +433,9 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:2911:import_operation$117
+    connect \A $auto$expression.cpp:2926:import_operation$117
     connect \B { 2'00 \a [7:2] }
-    connect \Y $auto$expression.cpp:2911:import_operation$125
+    connect \Y $auto$expression.cpp:2926:import_operation$125
   end
   attribute \src "dut.sv:73.21-73.36|dut.sv:72.17-75.37"
   attribute \full_case 1
@@ -461,7 +461,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [3] \b [1] $procmux$244_Y $procmux$239_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [3] \b [1] $procmux$244_Y $procmux$239_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [3]
   end
@@ -472,9 +472,9 @@ module \many_functions
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:2911:import_operation$125
+    connect \A $auto$expression.cpp:2926:import_operation$125
     connect \B { 3'000 \a [7:3] }
-    connect \Y $auto$expression.cpp:2911:import_operation$133
+    connect \Y $auto$expression.cpp:2926:import_operation$133
   end
   attribute \src "dut.sv:121.17-130.20|dut.sv:101.13-131.20"
   attribute \full_case 1
@@ -483,14 +483,14 @@ module \many_functions
     connect \A 8'x
     connect \B $procmux$223_Y
     connect \S $procmux$145_CMP
-    connect \Y $auto$expression.cpp:2911:import_operation$125
+    connect \Y $auto$expression.cpp:2926:import_operation$125
   end
   attribute \src "dut.sv:123.32-127.24|dut.sv:123.21-129.24"
   attribute \full_case 1
   cell $mux $procmux$142
     parameter \WIDTH 1
     connect \A \b [7]
-    connect \B $auto$expression.cpp:2911:import_operation$133 [7]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [7]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$142_Y
   end
@@ -499,7 +499,7 @@ module \many_functions
   cell $mux $procmux$228
     parameter \WIDTH 1
     connect \A \b [4]
-    connect \B $auto$expression.cpp:2911:import_operation$133 [4]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [4]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$228_Y
   end
@@ -509,7 +509,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [7] \b [3] $procmux$147_Y $procmux$142_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [7] \b [3] $procmux$147_Y $procmux$142_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [7]
   end
@@ -527,7 +527,7 @@ module \many_functions
   cell $mux $procmux$201
     parameter \WIDTH 1
     connect \A 1'0
-    connect \B $auto$expression.cpp:2911:import_operation$133 [0]
+    connect \B $auto$expression.cpp:2926:import_operation$133 [0]
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$201_Y
   end
@@ -546,7 +546,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [0] \a [0] $procmux$206_Y $procmux$201_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [0] \a [0] $procmux$206_Y $procmux$201_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [0]
   end
@@ -555,7 +555,7 @@ module \many_functions
   cell $mux $procmux$153
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2911:import_operation$125
+    connect \B $auto$expression.cpp:2926:import_operation$125
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$153_Y
   end
@@ -575,14 +575,14 @@ module \many_functions
     connect \A 8'x
     connect \B $procmux$153_Y
     connect \S $procmux$145_CMP
-    connect \Y $auto$expression.cpp:2911:import_operation$117
+    connect \Y $auto$expression.cpp:2926:import_operation$117
   end
   attribute \src "dut.sv:123.32-127.24|dut.sv:123.21-129.24"
   attribute \full_case 1
   cell $mux $procmux$158
     parameter \WIDTH 8
     connect \A 8'x
-    connect \B $auto$expression.cpp:2911:import_operation$117
+    connect \B $auto$expression.cpp:2926:import_operation$117
     connect \S $auto$rtlil.cc:3314:Gt$105
     connect \Y $procmux$158_Y
   end
@@ -592,7 +592,7 @@ module \many_functions
     parameter \WIDTH 1
     parameter \S_WIDTH 4
     connect \A 1'x
-    connect \B { $auto$expression.cpp:2911:import_operation$10 [4] \a [2] $procmux$233_Y $procmux$228_Y }
+    connect \B { $auto$expression.cpp:2926:import_operation$10 [4] \a [2] $procmux$233_Y $procmux$228_Y }
     connect \S { $eq$dut.sv:36$31_Y $eq$dut.sv:38$36_Y $eq$dut.sv:40$41_Y $procmux$145_CMP }
     connect \Y \out_mixed [4]
   end
@@ -607,8 +607,8 @@ module \many_functions
   end
   connect \func_loop$func$dut.sv:142$79.i 32'x
   connect \func_arith$func$dut.sv:138$2.temp 8'x
-  connect $auto$rtlil.cc:3303:Or$19 [6:0] $auto$expression.cpp:3098:import_operation$14 [7:1]
-  connect $auto$expression.cpp:3098:import_operation$14 [0] 1'0
+  connect $auto$rtlil.cc:3303:Or$19 [6:0] $auto$expression.cpp:3113:import_operation$14 [7:1]
+  connect $auto$expression.cpp:3113:import_operation$14 [0] 1'0
   connect \func_mixed$func$dut.sv:143$86.result 8'x
   connect \func_mixed$func$dut.sv:143$86.i 32'x
   connect \out_loop { \a [0] \a [1] \a [2] \a [3] \a [4] \a [5] \a [6] \a [7] }

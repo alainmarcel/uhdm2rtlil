@@ -16,11 +16,11 @@ module \range_case
   wire width 48 \s
   attribute \src "dut.sv:34.5-38.8"
   wire width 48 $0\s
-  wire width 32 $auto$expression.cpp:5998:import_hier_path$2
-  wire width 32 $auto$expression.cpp:6008:import_hier_path$4
-  wire width 8 $auto$expression.cpp:6012:import_hier_path$6
+  wire width 32 $auto$expression.cpp:6013:import_hier_path$2
+  wire width 32 $auto$expression.cpp:6023:import_hier_path$4
+  wire width 8 $auto$expression.cpp:6027:import_hier_path$6
   attribute \src "dut.sv:34.5-38.8"
-  wire width 8 $0\$auto$expression.cpp:6012:import_hier_path$6
+  wire width 8 $0\$auto$expression.cpp:6027:import_hier_path$6
   attribute \src "dut.sv:34.5-38.8"
   wire width 8 $0\data_o
   wire width 32 $auto$process.cpp:7258:emit_dynamic_struct_field_bit_write$8
@@ -30,10 +30,10 @@ module \range_case
   wire width 32 $auto$process.cpp:7302:emit_dynamic_struct_field_bit_write$16
   wire width 32 $auto$process.cpp:7314:emit_dynamic_struct_field_bit_write$18
   wire width 32 $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$20
-  wire width 32 $auto$expression.cpp:5998:import_hier_path$22
-  wire width 32 $auto$expression.cpp:6008:import_hier_path$24
-  wire width 8 $auto$expression.cpp:6012:import_hier_path$26
-  cell $sub $auto$expression.cpp:6001:import_hier_path$3
+  wire width 32 $auto$expression.cpp:6013:import_hier_path$22
+  wire width 32 $auto$expression.cpp:6023:import_hier_path$24
+  wire width 8 $auto$expression.cpp:6027:import_hier_path$26
+  cell $sub $auto$expression.cpp:6016:import_hier_path$3
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -41,27 +41,27 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$expression.cpp:5998:import_hier_path$2
+    connect \Y $auto$expression.cpp:6013:import_hier_path$2
   end
-  cell $mul $auto$expression.cpp:6009:import_hier_path$5
+  cell $mul $auto$expression.cpp:6024:import_hier_path$5
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:5998:import_hier_path$2
+    connect \A $auto$expression.cpp:6013:import_hier_path$2
     connect \B 8
-    connect \Y $auto$expression.cpp:6008:import_hier_path$4
+    connect \Y $auto$expression.cpp:6023:import_hier_path$4
   end
-  cell $shiftx $auto$expression.cpp:6013:import_hier_path$7
+  cell $shiftx $auto$expression.cpp:6028:import_hier_path$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \s [39:8]
-    connect \B $auto$expression.cpp:6008:import_hier_path$4
-    connect \Y $auto$expression.cpp:6012:import_hier_path$6
+    connect \B $auto$expression.cpp:6023:import_hier_path$4
+    connect \Y $auto$expression.cpp:6027:import_hier_path$6
   end
   cell $sub $auto$process.cpp:7261:emit_dynamic_struct_field_bit_write$9
     parameter \A_SIGNED 1
@@ -130,7 +130,7 @@ module \range_case
     connect \B $auto$process.cpp:7299:emit_dynamic_struct_field_bit_write$14
     connect \Y $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$20
   end
-  cell $sub $auto$expression.cpp:6001:import_hier_path$23
+  cell $sub $auto$expression.cpp:6016:import_hier_path$23
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -138,38 +138,38 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_o }
-    connect \Y $auto$expression.cpp:5998:import_hier_path$22
+    connect \Y $auto$expression.cpp:6013:import_hier_path$22
   end
-  cell $mul $auto$expression.cpp:6009:import_hier_path$25
+  cell $mul $auto$expression.cpp:6024:import_hier_path$25
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:5998:import_hier_path$22
+    connect \A $auto$expression.cpp:6013:import_hier_path$22
     connect \B 8
-    connect \Y $auto$expression.cpp:6008:import_hier_path$24
+    connect \Y $auto$expression.cpp:6023:import_hier_path$24
   end
-  cell $shiftx $auto$expression.cpp:6013:import_hier_path$27
+  cell $shiftx $auto$expression.cpp:6028:import_hier_path$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$20
-    connect \B $auto$expression.cpp:6008:import_hier_path$24
-    connect \Y $auto$expression.cpp:6012:import_hier_path$26
+    connect \B $auto$expression.cpp:6023:import_hier_path$24
+    connect \Y $auto$expression.cpp:6027:import_hier_path$26
   end
   attribute \src "dut.sv:34.5-38.8"
   process $proc$dut.sv:34$1
-    assign $0\$auto$expression.cpp:6012:import_hier_path$6 $auto$expression.cpp:6012:import_hier_path$6
+    assign $0\$auto$expression.cpp:6027:import_hier_path$6 $auto$expression.cpp:6027:import_hier_path$6
     assign $0\data_o \data_o
     assign $0\s \s
     assign $0\s 48'111111111111111111111111111111111111111111111111
     assign $0\s [39:8] $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$20
-    assign $0\data_o $auto$expression.cpp:6012:import_hier_path$26
+    assign $0\data_o $auto$expression.cpp:6027:import_hier_path$26
     sync always
-      update $auto$expression.cpp:6012:import_hier_path$6 $0\$auto$expression.cpp:6012:import_hier_path$6
+      update $auto$expression.cpp:6027:import_hier_path$6 $0\$auto$expression.cpp:6027:import_hier_path$6
       update \data_o $0\data_o
       update \s $0\s
   end
@@ -190,11 +190,11 @@ module \range_shift_mask
   wire width 48 \s
   attribute \src "dut.sv:14.5-18.8"
   wire width 48 $0\s
-  wire width 32 $auto$expression.cpp:5998:import_hier_path$29
-  wire width 32 $auto$expression.cpp:6008:import_hier_path$31
-  wire width 8 $auto$expression.cpp:6012:import_hier_path$33
+  wire width 32 $auto$expression.cpp:6013:import_hier_path$29
+  wire width 32 $auto$expression.cpp:6023:import_hier_path$31
+  wire width 8 $auto$expression.cpp:6027:import_hier_path$33
   attribute \src "dut.sv:14.5-18.8"
-  wire width 8 $0\$auto$expression.cpp:6012:import_hier_path$33
+  wire width 8 $0\$auto$expression.cpp:6027:import_hier_path$33
   attribute \src "dut.sv:14.5-18.8"
   wire width 8 $0\data_o
   wire width 32 $auto$process.cpp:7258:emit_dynamic_struct_field_bit_write$35
@@ -204,10 +204,10 @@ module \range_shift_mask
   wire width 32 $auto$process.cpp:7302:emit_dynamic_struct_field_bit_write$43
   wire width 32 $auto$process.cpp:7314:emit_dynamic_struct_field_bit_write$45
   wire width 32 $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$47
-  wire width 32 $auto$expression.cpp:5998:import_hier_path$49
-  wire width 32 $auto$expression.cpp:6008:import_hier_path$51
-  wire width 8 $auto$expression.cpp:6012:import_hier_path$53
-  cell $sub $auto$expression.cpp:6001:import_hier_path$30
+  wire width 32 $auto$expression.cpp:6013:import_hier_path$49
+  wire width 32 $auto$expression.cpp:6023:import_hier_path$51
+  wire width 8 $auto$expression.cpp:6027:import_hier_path$53
+  cell $sub $auto$expression.cpp:6016:import_hier_path$30
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -215,27 +215,27 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$expression.cpp:5998:import_hier_path$29
+    connect \Y $auto$expression.cpp:6013:import_hier_path$29
   end
-  cell $mul $auto$expression.cpp:6009:import_hier_path$32
+  cell $mul $auto$expression.cpp:6024:import_hier_path$32
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:5998:import_hier_path$29
+    connect \A $auto$expression.cpp:6013:import_hier_path$29
     connect \B 8
-    connect \Y $auto$expression.cpp:6008:import_hier_path$31
+    connect \Y $auto$expression.cpp:6023:import_hier_path$31
   end
-  cell $shiftx $auto$expression.cpp:6013:import_hier_path$34
+  cell $shiftx $auto$expression.cpp:6028:import_hier_path$34
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \s [39:8]
-    connect \B $auto$expression.cpp:6008:import_hier_path$31
-    connect \Y $auto$expression.cpp:6012:import_hier_path$33
+    connect \B $auto$expression.cpp:6023:import_hier_path$31
+    connect \Y $auto$expression.cpp:6027:import_hier_path$33
   end
   cell $sub $auto$process.cpp:7261:emit_dynamic_struct_field_bit_write$36
     parameter \A_SIGNED 1
@@ -304,7 +304,7 @@ module \range_shift_mask
     connect \B $auto$process.cpp:7299:emit_dynamic_struct_field_bit_write$41
     connect \Y $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$47
   end
-  cell $sub $auto$expression.cpp:6001:import_hier_path$50
+  cell $sub $auto$expression.cpp:6016:import_hier_path$50
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -312,38 +312,38 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_o }
-    connect \Y $auto$expression.cpp:5998:import_hier_path$49
+    connect \Y $auto$expression.cpp:6013:import_hier_path$49
   end
-  cell $mul $auto$expression.cpp:6009:import_hier_path$52
+  cell $mul $auto$expression.cpp:6024:import_hier_path$52
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:5998:import_hier_path$49
+    connect \A $auto$expression.cpp:6013:import_hier_path$49
     connect \B 8
-    connect \Y $auto$expression.cpp:6008:import_hier_path$51
+    connect \Y $auto$expression.cpp:6023:import_hier_path$51
   end
-  cell $shiftx $auto$expression.cpp:6013:import_hier_path$54
+  cell $shiftx $auto$expression.cpp:6028:import_hier_path$54
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$47
-    connect \B $auto$expression.cpp:6008:import_hier_path$51
-    connect \Y $auto$expression.cpp:6012:import_hier_path$53
+    connect \B $auto$expression.cpp:6023:import_hier_path$51
+    connect \Y $auto$expression.cpp:6027:import_hier_path$53
   end
   attribute \src "dut.sv:14.5-18.8"
   process $proc$dut.sv:14$28
-    assign $0\$auto$expression.cpp:6012:import_hier_path$33 $auto$expression.cpp:6012:import_hier_path$33
+    assign $0\$auto$expression.cpp:6027:import_hier_path$33 $auto$expression.cpp:6027:import_hier_path$33
     assign $0\data_o \data_o
     assign $0\s \s
     assign $0\s 48'111111111111111111111111111111111111111111111111
     assign $0\s [39:8] $auto$process.cpp:7316:emit_dynamic_struct_field_bit_write$47
-    assign $0\data_o $auto$expression.cpp:6012:import_hier_path$53
+    assign $0\data_o $auto$expression.cpp:6027:import_hier_path$53
     sync always
-      update $auto$expression.cpp:6012:import_hier_path$33 $0\$auto$expression.cpp:6012:import_hier_path$33
+      update $auto$expression.cpp:6027:import_hier_path$33 $0\$auto$expression.cpp:6027:import_hier_path$33
       update \data_o $0\data_o
       update \s $0\s
   end

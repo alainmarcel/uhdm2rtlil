@@ -9,7 +9,7 @@ module \always01
   wire input 2 \reset
   attribute \src "dut.sv:1.31-1.36"
   wire width 4 output 3 \count
-  wire width 4 $auto$expression.cpp:2911:import_operation$2
+  wire width 4 $auto$expression.cpp:2926:import_operation$2
   attribute \src "dut.sv:8.24-8.33"
   cell $add $add$dut.sv:8$3
     parameter \A_SIGNED 0
@@ -19,7 +19,7 @@ module \always01
     parameter \Y_WIDTH 4
     connect \A \count
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2911:import_operation$2
+    connect \Y $auto$expression.cpp:2926:import_operation$2
   end
   attribute \src "dut.sv:7.1-8.34"
   attribute \always_ff 1
@@ -30,7 +30,7 @@ module \always01
     parameter \WIDTH 4
     connect \CLK \clock
     connect \SRST \reset
-    connect \D $auto$expression.cpp:2911:import_operation$2
+    connect \D $auto$expression.cpp:2926:import_operation$2
     connect \Q \count
   end
 end

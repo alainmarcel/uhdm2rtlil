@@ -22,7 +22,7 @@ module \mul_unsigned_sync
   wire width 6 \a_reg
   attribute \src "dut.sv:12.17-12.22"
   wire width 3 \b_reg
-  wire width 9 $auto$expression.cpp:3046:import_operation$2
+  wire width 9 $auto$expression.cpp:3061:import_operation$2
   attribute \src "dut.sv:28.18-28.31"
   cell $mul $mul$dut.sv:28$3
     parameter \A_SIGNED 0
@@ -32,7 +32,7 @@ module \mul_unsigned_sync
     parameter \Y_WIDTH 9
     connect \A \a_reg
     connect \B \b_reg
-    connect \Y $auto$expression.cpp:3046:import_operation$2
+    connect \Y $auto$expression.cpp:3061:import_operation$2
   end
   attribute \src "dut.sv:18.5-30.8"
   attribute \always_ff 1
@@ -45,7 +45,7 @@ module \mul_unsigned_sync
     connect \CLK \clk
     connect \EN \en
     connect \SRST \rst
-    connect \D $auto$expression.cpp:3046:import_operation$2
+    connect \D $auto$expression.cpp:3061:import_operation$2
     connect \Q \p
   end
   attribute \src "dut.sv:18.5-30.8"

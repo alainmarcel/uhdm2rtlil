@@ -13,12 +13,12 @@ module \test
   wire width 16 $0\data_o
   attribute \src "dut.sv:10.1-18.4"
   wire width 16 $0\data_ref_o
-  wire width 4 $auto$expression.cpp:4725:import_indexed_part_select$2
+  wire width 4 $auto$expression.cpp:4740:import_indexed_part_select$2
   attribute \src "dut.sv:10.1-18.4"
-  wire width 4 $0\$auto$expression.cpp:4725:import_indexed_part_select$2
-  wire width 4 $auto$expression.cpp:4725:import_indexed_part_select$4
+  wire width 4 $0\$auto$expression.cpp:4740:import_indexed_part_select$2
+  wire width 4 $auto$expression.cpp:4740:import_indexed_part_select$4
   attribute \src "dut.sv:10.1-18.4"
-  wire width 4 $0\$auto$expression.cpp:4725:import_indexed_part_select$4
+  wire width 4 $0\$auto$expression.cpp:4740:import_indexed_part_select$4
   wire width 16 $auto$process.cpp:7095:emit_dynamic_indexed_part_select_write$6
   wire width 16 $auto$process.cpp:7098:emit_dynamic_indexed_part_select_write$8
   wire width 16 $auto$process.cpp:7101:emit_dynamic_indexed_part_select_write$10
@@ -38,7 +38,7 @@ module \test
     parameter \Y_WIDTH 4
     connect \A \data_ref_o
     connect \B \offset_i
-    connect \Y $auto$expression.cpp:4725:import_indexed_part_select$2
+    connect \Y $auto$expression.cpp:4740:import_indexed_part_select$2
   end
   attribute \src "dut.sv:17.2-17.21"
   cell $shiftx $shiftx$dut.sv:17$5
@@ -49,7 +49,7 @@ module \test
     parameter \Y_WIDTH 4
     connect \A \data_o
     connect \B \offset_i
-    connect \Y $auto$expression.cpp:4725:import_indexed_part_select$4
+    connect \Y $auto$expression.cpp:4740:import_indexed_part_select$4
   end
   cell $shl $auto$process.cpp:7096:emit_dynamic_indexed_part_select_write$7
     parameter \A_SIGNED 0
@@ -147,8 +147,8 @@ module \test
   end
   attribute \src "dut.sv:10.1-18.4"
   process $proc$dut.sv:10$1
-    assign $0\$auto$expression.cpp:4725:import_indexed_part_select$2 $auto$expression.cpp:4725:import_indexed_part_select$2
-    assign $0\$auto$expression.cpp:4725:import_indexed_part_select$4 $auto$expression.cpp:4725:import_indexed_part_select$4
+    assign $0\$auto$expression.cpp:4740:import_indexed_part_select$2 $auto$expression.cpp:4740:import_indexed_part_select$2
+    assign $0\$auto$expression.cpp:4740:import_indexed_part_select$4 $auto$expression.cpp:4740:import_indexed_part_select$4
     assign $0\data_o \data_o
     assign $0\data_ref_o \data_ref_o
     assign $0\data_o 16'0000000000000000
@@ -156,8 +156,8 @@ module \test
     assign $0\data_ref_o $auto$process.cpp:7114:emit_dynamic_indexed_part_select_write$14
     assign $0\data_o $auto$process.cpp:7114:emit_dynamic_indexed_part_select_write$24
     sync always
-      update $auto$expression.cpp:4725:import_indexed_part_select$2 $0\$auto$expression.cpp:4725:import_indexed_part_select$2
-      update $auto$expression.cpp:4725:import_indexed_part_select$4 $0\$auto$expression.cpp:4725:import_indexed_part_select$4
+      update $auto$expression.cpp:4740:import_indexed_part_select$2 $0\$auto$expression.cpp:4740:import_indexed_part_select$2
+      update $auto$expression.cpp:4740:import_indexed_part_select$4 $0\$auto$expression.cpp:4740:import_indexed_part_select$4
       update \data_o $0\data_o
       update \data_ref_o $0\data_ref_o
   end

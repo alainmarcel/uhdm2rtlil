@@ -39,14 +39,14 @@ module \top
   wire width 8 \reg3
   attribute \src "dut.sv:48.16-48.23"
   wire width 8 \cone2_3
-  wire width 8 $auto$expression.cpp:2911:import_operation$1
+  wire width 8 $auto$expression.cpp:2926:import_operation$1
   wire width 8 $auto$rtlil.cc:3304:Xor$4
   wire width 8 $auto$rtlil.cc:3302:And$6
   wire width 8 $auto$rtlil.cc:3303:Or$8
   wire width 8 $auto$rtlil.cc:3255:Not$10
   wire width 8 $auto$rtlil.cc:3302:And$12
-  wire width 8 $auto$expression.cpp:3098:import_operation$13
-  wire width 8 $auto$expression.cpp:3121:import_operation$15
+  wire width 8 $auto$expression.cpp:3113:import_operation$13
+  wire width 8 $auto$expression.cpp:3136:import_operation$15
   wire width 8 $auto$rtlil.cc:3303:Or$18
   wire width 12 $auto$rtlil.cc:3304:Xor$20
   wire width 12 $auto$rtlil.cc:3302:And$22
@@ -60,8 +60,8 @@ module \top
   wire width 8 $0\reg1
   attribute \src "dut.sv:22.5-30.8"
   wire width 8 $0\reg2
-  wire width 8 $auto$expression.cpp:2911:import_operation$36
-  wire width 8 $auto$expression.cpp:2966:import_operation$38
+  wire width 8 $auto$expression.cpp:2926:import_operation$36
+  wire width 8 $auto$expression.cpp:2981:import_operation$38
   attribute \src "dut.sv:41.5-46.8"
   wire width 8 $0\reg3
   wire width 8 $auto$rtlil.cc:3304:Xor$42
@@ -78,7 +78,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2911:import_operation$1
+    connect \Y $auto$expression.cpp:2926:import_operation$1
   end
   attribute \src "dut.sv:18.22-18.42"
   cell $xor $xor$dut.sv:18$3
@@ -141,7 +141,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \ab_sum
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3098:import_operation$13
+    connect \Y $auto$expression.cpp:3113:import_operation$13
   end
   attribute \src "dut.sv:37.39-37.45"
   cell $shr $shr$dut.sv:37$16
@@ -152,7 +152,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:3121:import_operation$15
+    connect \Y $auto$expression.cpp:3136:import_operation$15
   end
   attribute \src "dut.sv:37.22-37.46"
   cell $or $or$dut.sv:37$17
@@ -161,8 +161,8 @@ module \top
     parameter \A_WIDTH 8
     parameter \B_WIDTH 8
     parameter \Y_WIDTH 8
-    connect \A $auto$expression.cpp:3098:import_operation$13
-    connect \B $auto$expression.cpp:3121:import_operation$15
+    connect \A $auto$expression.cpp:3113:import_operation$13
+    connect \B $auto$expression.cpp:3136:import_operation$15
     connect \Y $auto$rtlil.cc:3303:Or$18
   end
   attribute \src "dut.sv:38.23-38.38"
@@ -262,7 +262,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_1
     connect \B \cone1_2
-    connect \Y $auto$expression.cpp:2911:import_operation$36
+    connect \Y $auto$expression.cpp:2926:import_operation$36
   end
   attribute \src "dut.sv:28.21-28.38"
   cell $sub $sub$dut.sv:28$39
@@ -273,7 +273,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_2
     connect \B \cone1_1
-    connect \Y $auto$expression.cpp:2966:import_operation$38
+    connect \Y $auto$expression.cpp:2981:import_operation$38
   end
   attribute \src "dut.sv:45.21-45.38"
   cell $xor $xor$dut.sv:45$41
@@ -341,8 +341,8 @@ module \top
         switch \en
         attribute \src "dut.sv:26.18-29.12"
           case 1'1
-            assign $0\reg1 $auto$expression.cpp:2911:import_operation$36
-            assign $0\reg2 $auto$expression.cpp:2966:import_operation$38
+            assign $0\reg1 $auto$expression.cpp:2926:import_operation$36
+            assign $0\reg2 $auto$expression.cpp:2981:import_operation$38
         attribute \src "dut.sv:26.18-29.12"
           case 
         end
@@ -380,7 +380,7 @@ module \top
     assign $auto$process.cpp:111:build_check_cell$48 1'1
     sync posedge \clk
   end
-  connect \ab_sum $auto$expression.cpp:2911:import_operation$1
+  connect \ab_sum $auto$expression.cpp:2926:import_operation$1
   connect \cone1_1 $auto$rtlil.cc:3304:Xor$4
   connect \cone1_2 $auto$rtlil.cc:3303:Or$8
   connect \cone1_3 $auto$rtlil.cc:3302:And$12
