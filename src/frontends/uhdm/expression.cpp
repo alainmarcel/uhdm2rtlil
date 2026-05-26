@@ -5975,6 +5975,52 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 return RTLIL::SigSpec(base_wire).extract(abs_start, elem_width);
                             }
                         }
+                        // Dynamic index: emit $shiftx reading the field slice.
+                        // shift = pos_of(idx) * elem_width (signed); out-of-range
+                        // indices produce X via $shiftx with signed B.
+                        if (!idx_sig.is_fully_const() && have_outer_range &&
+                            field_offset + field_width <= base_wire->width) {
+                            // Use the currently-tracked combinational value of
+                            // the base if available, so reads see prior writes
+                            // within the same always_comb block.
+                            RTLIL::SigSpec base_sig(base_wire);
+                            if (input_mapping) {
+                                auto it = input_mapping->find(base_name);
+                                if (it != input_mapping->end() &&
+                                    it->second.size() == base_wire->width)
+                                    base_sig = it->second;
+                            }
+                            RTLIL::SigSpec field_slice =
+                                base_sig.extract(field_offset, field_width);
+                            int shamt_w = std::max(idx_sig.size() + 4, 32);
+                            RTLIL::SigSpec idx_ext = idx_sig;
+                            idx_ext.extend_u0(shamt_w, false);
+                            RTLIL::Wire* pos_w = module->addWire(NEW_ID, shamt_w);
+                            if (ascending) {
+                                RTLIL::SigSpec rr_sig(RTLIL::Const(range_right, shamt_w));
+                                module->addSub(NEW_ID, rr_sig, idx_ext,
+                                               pos_w, true);
+                            } else {
+                                RTLIL::SigSpec rr_sig(RTLIL::Const(range_right, shamt_w));
+                                module->addSub(NEW_ID, idx_ext, rr_sig,
+                                               pos_w, true);
+                            }
+                            RTLIL::Wire* shift_w = module->addWire(NEW_ID, shamt_w);
+                            module->addMul(NEW_ID, RTLIL::SigSpec(pos_w),
+                                           RTLIL::SigSpec(RTLIL::Const(elem_width, shamt_w)),
+                                           shift_w, true);
+                            RTLIL::Wire* result_w = module->addWire(NEW_ID, elem_width);
+                            module->addShiftx(NEW_ID, field_slice,
+                                              RTLIL::SigSpec(shift_w),
+                                              RTLIL::SigSpec(result_w), true);
+                            if (mode_debug)
+                                log("    Struct field dynamic bit-select: %s.%s[<dyn>] → "
+                                    "$shiftx(%s[%d+:%d])\n",
+                                    base_name.c_str(), field_name.c_str(),
+                                    base_wire->name.c_str(),
+                                    field_offset, field_width);
+                            return RTLIL::SigSpec(result_w);
+                        }
                     } else if (pe[1]->UhdmType() == uhdmvar_select) {
                         // `s.field[i0][i1]...[iK-1]` — chained bit-selects
                         // on a multi-dim packed array field.  Walk Ranges()
