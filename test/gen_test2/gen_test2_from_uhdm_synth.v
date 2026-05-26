@@ -340,7 +340,7 @@ module gen_test2(clk, a, b, y);
     .D(carry[8]),
     .Q(y[8])
   );
-  assign _00_[8] = y[8];
+  assign _00_[8] = carry[8];
   assign carry[0] = 1'h0;
   assign i = 32'd8;
 endmodule

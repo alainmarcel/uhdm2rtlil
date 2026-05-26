@@ -79,9 +79,7 @@ module \abc9_test012_sub
   wire $logic_not$dut.sv:105.18-105.21$1_Y
   wire width 6 $auto$rtlil.cc:3390:Mux$10
   attribute \src "dut.sv:99.1-103.26"
-  wire width 4 $0\latch[3:0]
-  attribute \src "dut.sv:99.1-103.26"
-  wire width 4 $0\latch[7:4]
+  wire width 8 $0\latch
   attribute \src "dut.sv:100.9-100.12"
   wire $logic_not$dut.sv:100.9-100.12$2_Y
   attribute \src "dut.sv:104.23-104.34"
@@ -124,20 +122,18 @@ module \abc9_test012_sub
   end
   attribute \src "dut.sv:99.1-103.26"
   process $proc$dut.sv:99$11
-    assign $0\latch[3:0] \latch [3:0]
-    assign $0\latch[7:4] \latch [7:4]
+    assign $0\latch \latch
     attribute \src "dut.sv:100.5-103.26"
     switch $logic_not$dut.sv:100.9-100.12$2_Y
     attribute \src "dut.sv:100.5-103.26"
       case 1'1
-        assign $0\latch[3:0] \io [3:0]
+        assign $0\latch \io
     attribute \src "dut.sv:100.5-103.26"
       case 
-        assign $0\latch[7:4] \io [3:0]
+        assign $0\latch \io
     end
     sync always
-      update \latch [3:0] $0\latch[3:0]
-      update \latch [7:4] $0\latch[7:4]
+      update \latch $0\latch
   end
   connect \io [3:0] $auto$rtlil.cc:3390:Mux$8
   connect \io [7:4] $auto$rtlil.cc:3390:Mux$10 [3:0]

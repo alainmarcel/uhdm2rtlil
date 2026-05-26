@@ -223,13 +223,9 @@ module \top
   wire $eq$dut.sv:66$22_Y
   wire $auto$process.cpp:111:build_check_cell$24
   attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_a[0:0]
+  wire width 2 $0\pt_a
   attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_a[1:1]
-  attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_b[0:0]
-  attribute \src "dut.sv:75.5-86.8"
-  wire $0\pt_b[1:1]
+  wire width 2 $0\pt_b
   attribute \src "dut.sv:75.5-86.8"
   wire $0\pt_sel
   attribute \src "dut.sv:75.5-86.8"
@@ -455,25 +451,21 @@ module \top
   process $proc$dut.sv:75$26
     assign $auto$process.cpp:111:build_check_cell$31 1'0
     assign $auto$process.cpp:111:build_check_cell$35 1'0
-    assign $0\pt_a[0:0] \pt_a [0]
-    assign $0\pt_a[1:1] \pt_a [1]
-    assign $0\pt_b[0:0] \pt_b [0]
-    assign $0\pt_b[1:1] \pt_b [1]
+    assign $0\pt_a \pt_a
+    assign $0\pt_b \pt_b
     assign $0\pt_o \pt_o
     assign $0\pt_sel \pt_sel
-    assign $0\pt_a[0:0] 1'0
-    assign $0\pt_a[1:1] 1'1
-    assign $0\pt_b[0:0] 1'1
-    assign $0\pt_b[1:1] 1'0
+    assign $0\pt_a [0] 1'0
+    assign $0\pt_a [1] 1'1
+    assign $0\pt_b [0] 1'1
+    assign $0\pt_b [1] 1'0
     assign $0\pt_sel 1'1
     assign $0\pt_o $auto$rtlil.cc:3390:Mux$28
     assign $auto$process.cpp:111:build_check_cell$31 1'1
     assign $auto$process.cpp:111:build_check_cell$35 1'1
     sync always
-      update \pt_a [0] $0\pt_a[0:0]
-      update \pt_a [1] $0\pt_a[1:1]
-      update \pt_b [0] $0\pt_b[0:0]
-      update \pt_b [1] $0\pt_b[1:1]
+      update \pt_a $0\pt_a
+      update \pt_b $0\pt_b
       update \pt_o $0\pt_o
       update \pt_sel $0\pt_sel
   end

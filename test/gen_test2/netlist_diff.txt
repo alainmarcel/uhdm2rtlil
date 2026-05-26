@@ -438,7 +438,7 @@
 -assign _00_[0] = 1'h0;
 -assign _01_[8] = _00_[8];
 -assign carry = 9'bxxxxxxxx0;
-+assign _00_[8] = y[8];
++assign _00_[8] = carry[8];
 +assign carry[0] = 1'h0;
  assign i = 32'd8;
  endmodule

@@ -15,30 +15,30 @@ module \gen_test2
   wire width 32 signed \i
   attribute \src "dut.sv:8.11-8.16"
   wire width 9 \carry
-  wire width 3 $procmux$45_CMP
-  wire $procmux$39_CTRL
+  wire width 3 $procmux$42_CMP
+  wire width 3 $procmux$48_CMP
   attribute \src "dut.sv:10.1-22.4"
   wire width 9 $0\y
+  wire $procmux$39_CTRL
   wire width 3 $procmux$57_CMP
-  wire width 3 $procmux$39_CMP
-  wire width 3 $procmux$42_CMP
   wire $auto$rtlil.cc:3304:Xor$7
-  wire $procmux$54_CTRL
-  wire $auto$rtlil.cc:3304:Xor$11
-  wire width 3 $procmux$54_CMP
-  wire $auto$rtlil.cc:3304:Xor$15
   wire $procmux$42_CTRL
+  wire $auto$rtlil.cc:3304:Xor$11
+  wire $procmux$54_CTRL
+  wire $auto$rtlil.cc:3304:Xor$15
+  wire width 3 $procmux$54_CMP
   wire $auto$rtlil.cc:3304:Xor$19
-  wire $procmux$51_CTRL
-  wire $auto$rtlil.cc:3304:Xor$23
-  wire width 3 $procmux$51_CMP
-  wire $auto$rtlil.cc:3304:Xor$27
   wire $procmux$45_CTRL
+  wire $auto$rtlil.cc:3304:Xor$23
+  wire $procmux$51_CTRL
+  wire $auto$rtlil.cc:3304:Xor$27
+  wire width 3 $procmux$51_CMP
   wire $auto$rtlil.cc:3304:Xor$31
-  wire $procmux$48_CTRL
+  wire width 3 $procmux$45_CMP
   wire width 3 $procmux$36_CMP
   wire $procmux$36_CTRL
-  wire width 3 $procmux$48_CMP
+  wire $procmux$48_CTRL
+  wire width 3 $procmux$39_CMP
   attribute \src "dut.sv:19.10-19.21"
   cell $xor $xor$dut.sv:19$2
     parameter \A_SIGNED 0
@@ -613,7 +613,7 @@ module \gen_test2
     connect \Y $procmux$57_CMP [2]
   end
   connect $procmux$57_CMP [1:0] 2'00
-  connect $0\y [8] \y [8]
+  connect $0\y [8] \carry [8]
   connect \carry [0] 1'0
   connect \i 8
 end
