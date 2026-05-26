@@ -531,6 +531,11 @@ struct UhdmImporter {
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
         RTLIL::CaseRule* case_rule);
+    bool emit_dynamic_struct_field_bit_write(
+        const UHDM::hier_path* hp,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule);
     RTLIL::SigSpec create_compound_op_cell(int vpi_op_type, RTLIL::SigSpec lhs_val, RTLIL::SigSpec rhs_val, const UHDM::assignment* uhdm_assign);
     void import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::SyncRule* sync, bool is_reset);
     void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);

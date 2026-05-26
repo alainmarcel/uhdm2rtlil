@@ -7133,6 +7133,218 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     return true;
 }
 
+// Write to a struct field's dynamic bit-select: `s.field[idx] = rhs` where
+// `field` is a packed array (e.g., `logic [0:3][7:0] data`) and `idx` is
+// non-constant.  Walks the struct typespec to find the field's offset
+// within the base struct wire, then emits a mask/shift/or rewrite of the
+// base wire.  Mirrors `emit_dynamic_indexed_part_select_write` but
+// parameterised by the field's offset and per-element width.
+bool UhdmImporter::emit_dynamic_struct_field_bit_write(
+        const UHDM::hier_path* hp,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() != 2) return false;
+    auto& pe = *hp->Path_elems();
+    if (pe[0]->UhdmType() != uhdmref_obj) return false;
+    if (pe[1]->UhdmType() != uhdmbit_select) return false;
+    const ref_obj*   base_ref = any_cast<const ref_obj*>(pe[0]);
+    const bit_select* bs      = any_cast<const bit_select*>(pe[1]);
+    if (!base_ref || !bs || !bs->VpiIndex()) return false;
+
+    std::string base_name  = std::string(base_ref->VpiName());
+    std::string field_name = std::string(bs->VpiName());
+    if (base_name.empty() || field_name.empty()) return false;
+
+    RTLIL::Wire* base_wire = name_map.count(base_name)
+                                 ? name_map[base_name] : nullptr;
+    if (!base_wire) base_wire = module->wire(RTLIL::escape_id(base_name));
+    if (!base_wire) return false;
+    int base_w = base_wire->width;
+
+    // Find struct typespec on the base.
+    const UHDM::struct_typespec* st = nullptr;
+    for (auto& kv : wire_map) {
+        if (kv.second != base_wire) continue;
+        const ref_typespec* rts = nullptr;
+        if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first)) rts = ln->Typespec();
+        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first)) rts = lv->Typespec();
+        else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
+        else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+        if (rts) {
+            if (auto ats = rts->Actual_typespec()) {
+                if (ats->UhdmType() == uhdmstruct_typespec)
+                    st = any_cast<const UHDM::struct_typespec*>(ats);
+            }
+        }
+        if (st) break;
+    }
+    if (!st || !st->Members()) return false;
+
+    // Find field offset (from LSB; last listed member = LSB) and typespec.
+    int field_offset = 0;
+    int field_width = 0;
+    const UHDM::typespec* field_ts_actual = nullptr;
+    bool found_field = false;
+    for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+        auto m = (*st->Members())[i];
+        int mw = 0;
+        const UHDM::typespec* mts_actual = nullptr;
+        if (auto mts = m->Typespec())
+            if (auto ats = mts->Actual_typespec()) {
+                mts_actual = ats;
+                mw = get_width_from_typespec(ats, current_instance);
+            }
+        if (std::string(m->VpiName()) == field_name) {
+            field_ts_actual = mts_actual;
+            field_width = mw;
+            found_field = true;
+            break;
+        }
+        field_offset += mw;
+    }
+    if (!found_field || field_width <= 0) return false;
+    if (field_offset + field_width > base_w) return false;
+
+    // Extract field's outer range + Elem_typespec.
+    const UHDM::VectorOfrange* field_ranges = nullptr;
+    const UHDM::ref_typespec* field_elem_rts = nullptr;
+    if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(field_ts_actual)) {
+        field_ranges = lt->Ranges();
+        field_elem_rts = lt->Elem_typespec();
+    } else if (auto bt = dynamic_cast<const UHDM::bit_typespec*>(field_ts_actual)) {
+        field_ranges = bt->Ranges();
+    } else if (auto pat = dynamic_cast<const UHDM::packed_array_typespec*>(field_ts_actual)) {
+        field_ranges = pat->Ranges();
+        field_elem_rts = pat->Elem_typespec();
+    }
+    if (!field_ranges || field_ranges->empty()) return false;
+
+    int range_left = 0, range_right = 0;
+    {
+        auto r0 = (*field_ranges)[0];
+        if (!r0->Left_expr() || !r0->Right_expr()) return false;
+        RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+        RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+        if (!ls.is_fully_const() || !rs.is_fully_const()) return false;
+        range_left = ls.as_int();
+        range_right = rs.as_int();
+    }
+    int outer_low = std::min(range_left, range_right);
+    int outer_high = std::max(range_left, range_right);
+    bool ascending = range_left < range_right;
+    int outer_size = outer_high - outer_low + 1;
+
+    int elem_width = 1;
+    if (field_ranges->size() > 1) {
+        elem_width = field_width / outer_size;
+    } else if (field_elem_rts && field_elem_rts->Actual_typespec()) {
+        elem_width = get_width_from_typespec(
+            field_elem_rts->Actual_typespec(), current_instance);
+    } else {
+        elem_width = field_width / outer_size;
+    }
+    if (elem_width <= 0) return false;
+
+    // Confirm idx is dynamic (constant case has its own static path).
+    RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(),
+        (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+    if (idx_sig.is_fully_const()) return false;
+
+    // Compute pos = ascending ? (range_right - idx) : (idx - range_right)
+    int shamt_w = std::max(idx_sig.size() + 4, 32);
+    RTLIL::SigSpec idx_ext = idx_sig;
+    idx_ext.extend_u0(shamt_w, false);
+    RTLIL::Wire* pos_w = module->addWire(NEW_ID, shamt_w);
+    RTLIL::SigSpec rr_sig(RTLIL::Const(range_right, shamt_w));
+    if (ascending)
+        module->addSub(NEW_ID, rr_sig, idx_ext, pos_w, true);
+    else
+        module->addSub(NEW_ID, idx_ext, rr_sig, pos_w, true);
+
+    // shift_in_field = pos * elem_width (the shift amount within the field)
+    RTLIL::Wire* shift_field_w = module->addWire(NEW_ID, shamt_w);
+    module->addMul(NEW_ID, RTLIL::SigSpec(pos_w),
+                   RTLIL::SigSpec(RTLIL::Const(elem_width, shamt_w)),
+                   shift_field_w, true);
+
+    // RHS sized to elem_width
+    if (!rhs_any) return false;
+    auto rhs_expr_obj = dynamic_cast<const UHDM::expr*>(rhs_any);
+    if (!rhs_expr_obj) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = elem_width;
+    RTLIL::SigSpec rhs = import_expression(rhs_expr_obj,
+        (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+    expression_context_width = prev_ctx;
+    bool rhs_signed = is_expr_signed(rhs_expr_obj);
+    if (rhs.size() < elem_width) rhs.extend_u0(elem_width, rhs_signed);
+    else if (rhs.size() > elem_width) rhs = rhs.extract(0, elem_width);
+
+    // Operate at field_width — only the field slice gets a new value, leaving
+    // surrounding bits of `\s` driven by their prior (constant) assignments.
+    // Without this, mask/shift/or on the full base width would AND in the
+    // constants and `opt` then folds the AND, losing the constant
+    // `s[other_field] = 1` bits.
+    std::vector<RTLIL::State> mask_bits(field_width, RTLIL::State::S0);
+    for (int i = 0; i < elem_width; i++) mask_bits[i] = RTLIL::State::S1;
+    RTLIL::Const mask_const_val(mask_bits);
+    RTLIL::SigSpec mask_const_sig = RTLIL::SigSpec(mask_const_val);
+    RTLIL::SigSpec rhs_field = rhs;
+    rhs_field.extend_u0(field_width, false);
+
+    RTLIL::Wire* mask_shifted = module->addWire(NEW_ID, field_width);
+    module->addShl(NEW_ID, mask_const_sig,
+                   RTLIL::SigSpec(shift_field_w), mask_shifted, false);
+    RTLIL::Wire* val_shifted = module->addWire(NEW_ID, field_width);
+    module->addShl(NEW_ID, rhs_field,
+                   RTLIL::SigSpec(shift_field_w), val_shifted, false);
+    RTLIL::Wire* inv_mask = module->addWire(NEW_ID, field_width);
+    module->addNot(NEW_ID, RTLIL::SigSpec(mask_shifted), inv_mask);
+
+    // cur_val for the FIELD SLICE only (current_comb_values gives the
+    // already-tracked value of the full struct wire).
+    RTLIL::SigSpec cur_full;
+    if (current_comb_values.count(base_name))
+        cur_full = current_comb_values[base_name];
+    else
+        cur_full = RTLIL::SigSpec(base_wire);
+    RTLIL::SigSpec cur_field = cur_full.extract(field_offset, field_width);
+
+    RTLIL::Wire* cleared = module->addWire(NEW_ID, field_width);
+    module->addAnd(NEW_ID, cur_field, RTLIL::SigSpec(inv_mask), cleared);
+    RTLIL::Wire* new_field = module->addWire(NEW_ID, field_width);
+    module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
+                  RTLIL::SigSpec(val_shifted), new_field);
+
+    // Drive the field slice of `\s` (or its $0\ temp) — leaves the
+    // other struct fields untouched by this assignment.
+    RTLIL::SigSpec lhs_slice = RTLIL::SigSpec(base_wire)
+                                   .extract(field_offset, field_width);
+    if (proc) {
+        emit_comb_assign(lhs_slice, RTLIL::SigSpec(new_field), proc);
+    } else if (case_rule) {
+        std::string temp_name = "$0\\" + base_name;
+        if (RTLIL::Wire* temp_wire = module->wire(temp_name)) {
+            RTLIL::SigSpec temp_slice =
+                RTLIL::SigSpec(temp_wire).extract(field_offset, field_width);
+            case_rule->actions.push_back(
+                RTLIL::SigSig(temp_slice, RTLIL::SigSpec(new_field)));
+        } else {
+            case_rule->actions.push_back(
+                RTLIL::SigSig(lhs_slice, RTLIL::SigSpec(new_field)));
+        }
+    }
+    if (!in_always_ff_body_mode) {
+        // Update current_comb_values[base_name] with the field slice
+        // replaced — keeps subsequent reads consistent.
+        RTLIL::SigSpec updated = cur_full;
+        updated.replace(field_offset, RTLIL::SigSpec(new_field));
+        current_comb_values[base_name] = updated;
+    }
+    return true;
+}
+
 // Import assignment for comb context (Process* variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::Process* proc) {
     // `base[offset +: width] = rhs` with dynamic `offset` — no RTLIL LHS form
@@ -7143,6 +7355,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             auto ips = any_cast<const indexed_part_select*>(lhs_e);
             if (emit_dynamic_indexed_part_select_write(
                     ips, uhdm_assign->Rhs(), proc, nullptr))
+                return;
+        }
+    }
+
+    // `s.field[idx] = rhs` with dynamic `idx` on a packed struct's
+    // packed-array field — synthesise mask/shift/or write into `\s`.
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiHierPath) {
+            auto hp = any_cast<const hier_path*>(lhs_e);
+            if (emit_dynamic_struct_field_bit_write(
+                    hp, uhdm_assign->Rhs(), proc, nullptr))
                 return;
         }
     }
@@ -7541,6 +7764,15 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             auto ips = any_cast<const indexed_part_select*>(lhs_e);
             if (emit_dynamic_indexed_part_select_write(
                     ips, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
+        }
+    }
+
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiHierPath) {
+            auto hp = any_cast<const hier_path*>(lhs_e);
+            if (emit_dynamic_struct_field_bit_write(
+                    hp, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
         }
     }
