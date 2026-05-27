@@ -5,4 +5,9 @@
 # Tests listed here will be marked as expected failures in CI
 # The test runner will pass if all failures are listed here
 
-# (no known failures)
+# Yosys upstream test uses `module ref (...)` — `ref` is a reserved
+# keyword in IEEE 1800-2017 (function-arg direction).  Surelog
+# correctly rejects it; Yosys's verilog frontend doesn't tokenize
+# `ref` as a keyword so it accepts the file.  Covered locally by
+# test/load_and_derive/ with `ref` renamed to `ref_mod`.
+svinterfaces/load_and_derive.sv
