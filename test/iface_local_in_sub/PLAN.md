@@ -23,27 +23,29 @@ def with a non-empty `Interfaces()`, and use that as the source.
 
 **Repro**: this directory (`test/iface_local_in_sub/`).
 
-## Issue 2: Cell-side connections to interface-typed ports — PENDING
+## Issue 2: Cell-side connections to interface-typed ports — ✅ DONE
 
 **Symptom**: For `Sub u_sub(.iface_port(local_iface))`, the cell
 emits `connect \iface_port \local_iface` (single bare wires) but the
 target module has flattened ports `\iface_port.field`. Yosys hierarchy
 fails: "does not have a port named 'iface_port'".
 
-**Root cause**: `import_instance` (module.cpp) only takes the
-per-field expansion branch when `high_conn->Actual_group()` is
-`interface_inst`. When the source is an AllModules `logic_net`
-placeholder (typical case for nested submodules), the bare-name
-fallback branch runs.
+**Root cause**: `import_module_hierarchy`'s cell-creation path
+(uhdm2rtlil.cpp ~line 852) imports `high_conn` as a plain expression.
+For a `ref_obj` that references an interface (port or local), the
+referenced wire doesn't exist as a bare `\<name>` — only as
+`\<name>.<field>` flattened wires.  `import_expression` returns
+empty, `cell->setPort(port_name, empty)` drops the connection, and
+the cell ends up with no port connections at all.
 
-**Fix plan**: detect interface-typed instance ports by checking the
-target module for `<port_name>.<field>` wires (the flattened ports we
-created on the def side) and route to per-field connections regardless
-of what `high_conn->Actual_group()` returns.
+**Fix**: detect interface-typed instance ports by checking the
+target module for `<port_name>.<field>` wires, then iterate fields
+and pair each `<port_name>.<field>` ↔ `<src_name>.<field>` (source
+name from the high_conn ref_obj's `VpiName`).
 
-**Repro to write**: `test/iface_passthrough/dut.sv` — a top module
-with one interface instance passed via port to a sub that just reads
-the fields back out.
+**Repro**: `test/iface_passthrough/` — `top → mid → leaf` where
+`mid` forwards its received `bus` interface port into `leaf` (the
+"inherited interface" pattern svinterface1 uses).
 
 ## Issue 3: Multi-WIDTH `$paramod` variants — PENDING
 
@@ -89,8 +91,8 @@ top-level output.
 
 | PR | Issue | Status |
 |----|-------|--------|
-| 1 | Local interface instances in non-top modules | merged via this branch |
-| 2 | Cell-side per-field connections | pending |
+| 1 | Local interface instances in non-top modules | merged |
+| 2 | Cell-side per-field connections | this PR (`iface_passthrough`) |
 | 3 | Multi-WIDTH paramod variants | pending |
 | 4 | hier_path LHS on interface fields | pending |
 

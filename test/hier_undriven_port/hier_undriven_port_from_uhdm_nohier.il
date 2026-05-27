@@ -15,9 +15,9 @@ module \b
   attribute \src "dut.sv:16.24-16.26"
   wire output 1 \b1
   wire \b2
-  wire width 3 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$1
+  wire width 3 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$1
   cell \a \a_inst
-    connect \a1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$1
+    connect \a1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$1
     connect \a2 \b1
   end
   connect \b2 1'0

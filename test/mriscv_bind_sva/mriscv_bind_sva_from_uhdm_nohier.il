@@ -6079,18 +6079,18 @@ module \mriscvcore_top_s2qed
   wire \mem_axi_rdata1
   attribute \src "mriscvcore_top_s2qed.v:92.13-92.17"
   wire \irq1
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$713
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$714
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$715
-  wire width 3 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$716
-  wire width 3 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$717
-  wire width 4 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$718
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$719
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$720
-  wire width 32 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$721
-  wire width 3 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$722
-  wire width 3 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$723
-  wire width 4 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$724
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$713
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$714
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$715
+  wire width 3 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$716
+  wire width 3 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$717
+  wire width 4 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$718
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$719
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$720
+  wire width 32 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$721
+  wire width 3 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$722
+  wire width 3 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$723
+  wire width 4 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$724
   wire width 32 \mriscvcore_inst0.MEMORY_INTERFACE_inst.inst
   wire width 32 \mriscvcore_inst1.MEMORY_INTERFACE_inst.inst
   wire width 4 \mriscvcore_inst0.FSM_inst.state
@@ -6106,17 +6106,17 @@ module \mriscvcore_top_s2qed
     connect \AWready \mem_axi_awready0
     connect \Wready \mem_axi_wready0
     connect \Bvalid \mem_axi_bvalid0
-    connect \AWdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$713
-    connect \ARdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$714
-    connect \Wdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$715
+    connect \AWdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$713
+    connect \ARdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$714
+    connect \Wdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$715
     connect \ARvalid \mem_axi_arvalid0
     connect \RReady \mem_axi_rready0
     connect \AWvalid \mem_axi_awvalid0
     connect \Wvalid \mem_axi_wvalid0
-    connect \ARprot $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$716
-    connect \AWprot $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$717
+    connect \ARprot $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$716
+    connect \AWprot $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$717
     connect \Bready \mem_axi_bready0
-    connect \Wstrb $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$718
+    connect \Wstrb $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$718
     connect \inirr \irq0
     connect \trap \trap
   end
@@ -6129,17 +6129,17 @@ module \mriscvcore_top_s2qed
     connect \AWready \mem_axi_awready1
     connect \Wready \mem_axi_wready1
     connect \Bvalid \mem_axi_bvalid1
-    connect \AWdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$719
-    connect \ARdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$720
-    connect \Wdata $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$721
+    connect \AWdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$719
+    connect \ARdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$720
+    connect \Wdata $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$721
     connect \ARvalid \mem_axi_arvalid1
     connect \RReady \mem_axi_rready1
     connect \AWvalid \mem_axi_awvalid1
     connect \Wvalid \mem_axi_wvalid1
-    connect \ARprot $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$722
-    connect \AWprot $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$723
+    connect \ARprot $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$722
+    connect \AWprot $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$723
     connect \Bready \mem_axi_bready1
-    connect \Wstrb $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$724
+    connect \Wstrb $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$724
     connect \inirr \irq1
     connect \trap \trap
   end
@@ -6165,18 +6165,18 @@ module \mriscvcore_top_s2qed
     connect \cpu0_codif 1'x
     connect \cpu1_codif 1'x
   end
-  connect \mem_axi_awaddr0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$713 [0]
-  connect \mem_axi_araddr0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$714 [0]
-  connect \mem_axi_wdata0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$715 [0]
-  connect \mem_axi_arprot0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$716 [0]
-  connect \mem_axi_awprot0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$717 [0]
-  connect \mem_axi_wstrb0 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$718 [0]
-  connect \mem_axi_awaddr1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$719 [0]
-  connect \mem_axi_araddr1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$720 [0]
-  connect \mem_axi_wdata1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$721 [0]
-  connect \mem_axi_arprot1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$722 [0]
-  connect \mem_axi_awprot1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$723 [0]
-  connect \mem_axi_wstrb1 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$724 [0]
+  connect \mem_axi_awaddr0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$713 [0]
+  connect \mem_axi_araddr0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$714 [0]
+  connect \mem_axi_wdata0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$715 [0]
+  connect \mem_axi_arprot0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$716 [0]
+  connect \mem_axi_awprot0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$717 [0]
+  connect \mem_axi_wstrb0 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$718 [0]
+  connect \mem_axi_awaddr1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$719 [0]
+  connect \mem_axi_araddr1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$720 [0]
+  connect \mem_axi_wdata1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$721 [0]
+  connect \mem_axi_arprot1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$722 [0]
+  connect \mem_axi_awprot1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$723 [0]
+  connect \mem_axi_wstrb1 $auto$uhdm2rtlil.cpp:965:import_module_hierarchy$724 [0]
 end
 attribute \cells_not_processed 1
 attribute \src "mriscvcore.v:71.1-109.7"
