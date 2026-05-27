@@ -6,6 +6,7 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <functional>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -141,11 +142,41 @@ void UhdmImporter::import_interface(const interface_inst* uhdm_interface) {
 void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_module) {
     if (mode_debug)
         log("UHDM: Starting import_interface_instances\n");
-    
+
+    // AllModules entries for non-top modules typically store local interface
+    // instances as plain `logic_net` placeholders — the `Interfaces()` list
+    // is empty.  Only the elaborated form (a `TopModules` descendant of the
+    // same def) carries the real `interface_inst` with its variables/nets.
+    // Search the elaborated hierarchy for a matching instance and use that
+    // as the source for `Interfaces()` when AllModules' list is empty.
+    const UHDM::module_inst* source = uhdm_module;
+    if ((!uhdm_module->Interfaces() || uhdm_module->Interfaces()->empty()) &&
+        uhdm_design && uhdm_design->TopModules()) {
+        std::string def = std::string(uhdm_module->VpiDefName());
+        std::function<const UHDM::module_inst*(const UHDM::module_inst*)> find =
+            [&](const UHDM::module_inst* m) -> const UHDM::module_inst* {
+            if (!m) return nullptr;
+            if (std::string(m->VpiDefName()) == def &&
+                m->Interfaces() && !m->Interfaces()->empty())
+                return m;
+            if (m->Modules())
+                for (auto c : *m->Modules())
+                    if (auto r = find(c)) return r;
+            return nullptr;
+        };
+        for (auto t : *uhdm_design->TopModules()) {
+            if (auto r = find(t)) { source = r; break; }
+        }
+        if (source != uhdm_module) {
+            log("UHDM: Augmenting interface instances for %s from elaborated %s\n",
+                def.c_str(), std::string(source->VpiFullName()).c_str());
+        }
+    }
+
     // Import interface instances
-    if (uhdm_module->Interfaces()) {
-        log("UHDM: Module has %d interfaces\n", (int)uhdm_module->Interfaces()->size());
-        for (auto interface : *uhdm_module->Interfaces()) {
+    if (source->Interfaces()) {
+        log("UHDM: Module has %d interfaces\n", (int)source->Interfaces()->size());
+        for (auto interface : *source->Interfaces()) {
             std::string interface_name = std::string(interface->VpiName());
             log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
             log_flush();      
