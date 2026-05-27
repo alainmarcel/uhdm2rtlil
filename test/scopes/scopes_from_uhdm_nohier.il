@@ -23,8 +23,8 @@ module \scopes_test_01
   wire width 16 \task_01$func$dut.sv:52$2.y
   attribute \src "dut.sv:52.3-52.13"
   wire width 16 $0\task_01$func$dut.sv:52$2.y[15:0]$4
-  wire width 68 $auto$expression.cpp:3046:import_operation$5
-  wire width 16 $auto$expression.cpp:2911:import_operation$7
+  wire width 68 $auto$expression.cpp:3061:import_operation$5
+  wire width 16 $auto$expression.cpp:2926:import_operation$7
   attribute \nosync 1
   attribute \src "dut.sv:36.15-36.16"
   wire width 4 \task_02$func$dut.sv:53$9.a
@@ -42,14 +42,14 @@ module \scopes_test_01
   wire width 16 \task_02$func$dut.sv:53$9.foo.bar.x
   attribute \src "dut.sv:53.3-53.13"
   wire width 16 $0\task_02$func$dut.sv:53$9.foo.bar.x[15:0]$13
-  wire width 64 $auto$expression.cpp:2911:import_operation$14
-  wire width 16 $auto$expression.cpp:2698:import_operation$16
+  wire width 64 $auto$expression.cpp:2926:import_operation$14
+  wire width 16 $auto$expression.cpp:2713:import_operation$16
   wire width 16 $auto$rtlil.cc:3304:Xor$19
   attribute \src "dut.sv:55.15-55.16"
   wire width 16 \foo.y
   attribute \src "dut.sv:54.9-54.12"
   wire width 16 $0\foo.y
-  wire width 16 $auto$expression.cpp:2911:import_operation$20
+  wire width 16 $auto$expression.cpp:2926:import_operation$20
   attribute \nosync 1
   attribute \src "dut.sv:3.16-3.17"
   wire width 16 \func_01$func$dut.sv:60$22.x
@@ -65,7 +65,7 @@ module \scopes_test_01
   wire width 16 \func_01$func$dut.sv:60$22.$result
   attribute \src "dut.sv:60.7-60.20"
   wire width 16 $0\func_01$func$dut.sv:60$22.$result[15:0]$25
-  wire width 16 $auto$expression.cpp:2911:import_operation$26
+  wire width 16 $auto$expression.cpp:2926:import_operation$26
   attribute \src "dut.sv:7.16-7.17"
   wire width 16 \func_01$func$dut.sv:60$22.blk.x
   attribute \src "dut.sv:60.7-60.20"
@@ -87,7 +87,7 @@ module \scopes_test_01
   wire width 16 \func_02$func$dut.sv:61$33.$result
   attribute \src "dut.sv:61.7-61.20"
   wire width 16 $0\func_02$func$dut.sv:61$33.$result[15:0]$36
-  wire width 16 $auto$expression.cpp:2966:import_operation$37
+  wire width 16 $auto$expression.cpp:2981:import_operation$37
   attribute \src "dut.sv:20.16-20.23"
   wire width 16 \func_02$func$dut.sv:61$33.blk.func_02
   attribute \src "dut.sv:61.7-61.20"
@@ -101,7 +101,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 68
     connect \A \k
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010111
-    connect \Y $auto$expression.cpp:3046:import_operation$5
+    connect \Y $auto$expression.cpp:3061:import_operation$5
   end
   attribute \src "dut.sv:31.8-31.13"
   cell $add $add$dut.sv:31$8
@@ -112,7 +112,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 16
     connect \A 16'0000000000111100
     connect \B $0\task_01$func$dut.sv:52$2.y[15:0]$4
-    connect \Y $auto$expression.cpp:2911:import_operation$7
+    connect \Y $auto$expression.cpp:2926:import_operation$7
   end
   attribute \src "dut.sv:42.9-42.15"
   cell $add $add$dut.sv:42$15
@@ -123,7 +123,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000001001101
     connect \B { 60'000000000000000000000000000000000000000000000000000000000000 \k }
-    connect \Y $auto$expression.cpp:2911:import_operation$14
+    connect \Y $auto$expression.cpp:2926:import_operation$14
   end
   attribute \src "dut.sv:43.9-43.11"
   cell $neg $neg$dut.sv:43$17
@@ -131,7 +131,7 @@ module \scopes_test_01
     parameter \A_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A $0\task_02$func$dut.sv:53$9.foo.bar.x[15:0]$13
-    connect \Y $auto$expression.cpp:2698:import_operation$16
+    connect \Y $auto$expression.cpp:2713:import_operation$16
   end
   attribute \src "dut.sv:45.8-45.13"
   cell $xor $xor$dut.sv:45$18
@@ -151,9 +151,9 @@ module \scopes_test_01
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:2911:import_operation$7
+    connect \A $auto$expression.cpp:2926:import_operation$7
     connect \B { 12'000000000000 \k }
-    connect \Y $auto$expression.cpp:2911:import_operation$20
+    connect \Y $auto$expression.cpp:2926:import_operation$20
   end
   attribute \src "dut.sv:5.14-5.19"
   cell $add $add$dut.sv:5$27
@@ -163,8 +163,8 @@ module \scopes_test_01
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
     connect \A $auto$rtlil.cc:3304:Xor$19
-    connect \B $auto$expression.cpp:2911:import_operation$20
-    connect \Y $auto$expression.cpp:2911:import_operation$26
+    connect \B $auto$expression.cpp:2926:import_operation$20
+    connect \Y $auto$expression.cpp:2926:import_operation$26
   end
   attribute \src "dut.sv:9.15-9.26"
   cell $xor $xor$dut.sv:9$29
@@ -173,8 +173,8 @@ module \scopes_test_01
     parameter \A_WIDTH 16
     parameter \B_WIDTH 16
     parameter \Y_WIDTH 16
-    connect \A $auto$expression.cpp:2911:import_operation$26
-    connect \B $auto$expression.cpp:2911:import_operation$20
+    connect \A $auto$expression.cpp:2926:import_operation$26
+    connect \B $auto$expression.cpp:2926:import_operation$20
     connect \Y $auto$rtlil.cc:3304:Xor$30
   end
   attribute \src "dut.sv:11.14-11.25"
@@ -197,7 +197,7 @@ module \scopes_test_01
     parameter \Y_WIDTH 16
     connect \A $auto$rtlil.cc:3304:Xor$19
     connect \B $auto$rtlil.cc:3304:Xor$32
-    connect \Y $auto$expression.cpp:2966:import_operation$37
+    connect \Y $auto$expression.cpp:2981:import_operation$37
   end
   attribute \src "dut.sv:49.2-62.5"
   process $proc$dut.sv:49$1
@@ -206,27 +206,27 @@ module \scopes_test_01
     assign $0\x 16'0000000000111100
     assign $0\y 16'1111111111110101
     assign $0\task_01$func$dut.sv:52$2.a[3:0]$3 \k
-    assign $0\task_01$func$dut.sv:52$2.y[15:0]$4 $auto$expression.cpp:3046:import_operation$5 [15:0]
-    assign $0\x $auto$expression.cpp:2911:import_operation$7
+    assign $0\task_01$func$dut.sv:52$2.y[15:0]$4 $auto$expression.cpp:3061:import_operation$5 [15:0]
+    assign $0\x $auto$expression.cpp:2926:import_operation$7
     assign $0\task_02$func$dut.sv:53$9.a[3:0]$10 \k
     assign $0\task_02$func$dut.sv:53$9.foo.x[15:0]$11 16'1111111111110101
-    assign $0\task_02$func$dut.sv:53$9.foo.bar.x[15:0]$13 $auto$expression.cpp:2911:import_operation$14 [15:0]
-    assign $0\task_02$func$dut.sv:53$9.foo.z[15:0]$12 $auto$expression.cpp:2698:import_operation$16
+    assign $0\task_02$func$dut.sv:53$9.foo.bar.x[15:0]$13 $auto$expression.cpp:2926:import_operation$14 [15:0]
+    assign $0\task_02$func$dut.sv:53$9.foo.z[15:0]$12 $auto$expression.cpp:2713:import_operation$16
     assign $0\y $auto$rtlil.cc:3304:Xor$19
     assign $0\foo.y \foo.y
-    assign $0\foo.y $auto$expression.cpp:2911:import_operation$7
-    assign $0\foo.y $auto$expression.cpp:2911:import_operation$20
-    assign $0\x $auto$expression.cpp:2911:import_operation$20
+    assign $0\foo.y $auto$expression.cpp:2926:import_operation$7
+    assign $0\foo.y $auto$expression.cpp:2926:import_operation$20
+    assign $0\x $auto$expression.cpp:2926:import_operation$20
     assign $0\func_01$func$dut.sv:60$22.x[15:0]$23 $auto$rtlil.cc:3304:Xor$19
-    assign $0\func_01$func$dut.sv:60$22.y[15:0]$24 $auto$expression.cpp:2911:import_operation$20
-    assign $0\func_01$func$dut.sv:60$22.blk.x[15:0]$28 $auto$expression.cpp:2911:import_operation$20
+    assign $0\func_01$func$dut.sv:60$22.y[15:0]$24 $auto$expression.cpp:2926:import_operation$20
+    assign $0\func_01$func$dut.sv:60$22.blk.x[15:0]$28 $auto$expression.cpp:2926:import_operation$20
     assign $0\func_01$func$dut.sv:60$22.$result[15:0]$25 $auto$rtlil.cc:3304:Xor$32
     assign $0\x $auto$rtlil.cc:3304:Xor$32
     assign $0\func_02$func$dut.sv:61$33.x[15:0]$34 $auto$rtlil.cc:3304:Xor$19
     assign $0\func_02$func$dut.sv:61$33.y[15:0]$35 $auto$rtlil.cc:3304:Xor$32
     assign $0\func_02$func$dut.sv:61$33.blk.func_02[15:0]$39 16'0000000000000000
-    assign $0\func_02$func$dut.sv:61$33.$result[15:0]$36 $auto$expression.cpp:2966:import_operation$37
-    assign $0\y $auto$expression.cpp:2966:import_operation$37
+    assign $0\func_02$func$dut.sv:61$33.$result[15:0]$36 $auto$expression.cpp:2981:import_operation$37
+    assign $0\y $auto$expression.cpp:2981:import_operation$37
     sync always
       update \x $0\x
       update \y $0\y

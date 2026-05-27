@@ -30,11 +30,11 @@ module \multiple_blocking_gate
   wire width 32 $0\dout
   wire $auto$opt_reduce.cc:137:opt_pmux$52
   attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2966:import_operation$4
+  wire width 64 $auto$expression.cpp:2981:import_operation$4
   wire $procmux$46_CMP
-  wire width 32 $auto$expression.cpp:2911:import_operation$8
+  wire width 32 $auto$expression.cpp:2926:import_operation$8
   wire $procmux$45_CMP
-  wire width 64 $auto$expression.cpp:2911:import_operation$12
+  wire width 64 $auto$expression.cpp:2926:import_operation$12
   wire $procmux$15_CMP
   wire $procmux$44_CMP
   wire $procmux$16_CMP
@@ -85,7 +85,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \sel }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y { $auto$expression.cpp:2966:import_operation$4 [63:1] $0\b }
+    connect \Y { $auto$expression.cpp:2981:import_operation$4 [63:1] $0\b }
   end
   attribute \src "dut.sv:15.13-15.19"
   cell $not $not$dut.sv:15$6
@@ -104,7 +104,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 32
     connect \A \dout
     connect \B 1
-    connect \Y $auto$expression.cpp:2911:import_operation$8
+    connect \Y $auto$expression.cpp:2926:import_operation$8
   end
   attribute \src "dut.sv:17.17-17.24"
   cell $mul $mul$dut.sv:17$11
@@ -115,7 +115,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 7
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \Y $auto$expression.cpp:2926:import_operation$12 [6:0]
   end
   attribute \src "dut.sv:11.4-83.9"
   attribute \always_ff 1
@@ -133,14 +133,14 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011111
     connect \Y $procmux$15_CMP
   end
   attribute \src "dut.sv:80.11-81.29|dut.sv:17.9-82.16"
   cell $mux $procmux$14
     parameter \WIDTH 32
-    connect \A $auto$expression.cpp:2911:import_operation$8
+    connect \A $auto$expression.cpp:2926:import_operation$8
     connect \B { 29'00000000000000000000000000000 \c }
     connect \S $auto$opt_reduce.cc:137:opt_pmux$52
     connect \Y $0\dout
@@ -152,7 +152,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011110
     connect \Y $procmux$16_CMP
   end
@@ -163,7 +163,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011101
     connect \Y $procmux$17_CMP
   end
@@ -174,7 +174,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011100
     connect \Y $procmux$18_CMP
   end
@@ -185,7 +185,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011011
     connect \Y $procmux$19_CMP
   end
@@ -196,7 +196,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011010
     connect \Y $procmux$20_CMP
   end
@@ -207,7 +207,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011001
     connect \Y $procmux$21_CMP
   end
@@ -218,7 +218,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0011000
     connect \Y $procmux$22_CMP
   end
@@ -229,7 +229,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010111
     connect \Y $procmux$23_CMP
   end
@@ -240,7 +240,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010110
     connect \Y $procmux$24_CMP
   end
@@ -251,7 +251,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010101
     connect \Y $procmux$25_CMP
   end
@@ -262,7 +262,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010100
     connect \Y $procmux$26_CMP
   end
@@ -273,7 +273,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010011
     connect \Y $procmux$27_CMP
   end
@@ -284,7 +284,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010010
     connect \Y $procmux$28_CMP
   end
@@ -295,7 +295,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010001
     connect \Y $procmux$29_CMP
   end
@@ -306,7 +306,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0010000
     connect \Y $procmux$30_CMP
   end
@@ -317,7 +317,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001111
     connect \Y $procmux$31_CMP
   end
@@ -328,7 +328,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001110
     connect \Y $procmux$32_CMP
   end
@@ -339,7 +339,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001101
     connect \Y $procmux$33_CMP
   end
@@ -350,7 +350,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001100
     connect \Y $procmux$34_CMP
   end
@@ -361,7 +361,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001011
     connect \Y $procmux$35_CMP
   end
@@ -372,7 +372,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001010
     connect \Y $procmux$36_CMP
   end
@@ -383,7 +383,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001001
     connect \Y $procmux$37_CMP
   end
@@ -394,7 +394,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0001000
     connect \Y $procmux$38_CMP
   end
@@ -405,7 +405,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000111
     connect \Y $procmux$39_CMP
   end
@@ -416,7 +416,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000110
     connect \Y $procmux$40_CMP
   end
@@ -427,7 +427,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000101
     connect \Y $procmux$41_CMP
   end
@@ -438,7 +438,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000100
     connect \Y $procmux$42_CMP
   end
@@ -449,7 +449,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000011
     connect \Y $procmux$43_CMP
   end
@@ -460,7 +460,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000010
     connect \Y $procmux$44_CMP
   end
@@ -471,7 +471,7 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 7
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:2911:import_operation$12 [6:0]
+    connect \A $auto$expression.cpp:2926:import_operation$12 [6:0]
     connect \B 7'0000001
     connect \Y $procmux$45_CMP
   end
@@ -480,7 +480,7 @@ module \multiple_blocking_gate
     parameter \A_SIGNED 0
     parameter \Y_WIDTH 1
     parameter \A_WIDTH 64
-    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:2911:import_operation$12 [6:0] }
+    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:2926:import_operation$12 [6:0] }
     connect \Y $procmux$46_CMP
   end
   attribute \src "dut.sv:11.4-83.9"
@@ -519,7 +519,7 @@ module \multiple_blocking_gate
     parameter \WIDTH 29
     connect \CLK \clk
     connect \SRST $auto$opt_reduce.cc:137:opt_pmux$52
-    connect \D $auto$expression.cpp:2911:import_operation$8 [31:3]
+    connect \D $auto$expression.cpp:2926:import_operation$8 [31:3]
     connect \Q \dout [31:3]
   end
   cell $reduce_or $auto$opt_reduce.cc:131:opt_pmux$51
@@ -529,6 +529,6 @@ module \multiple_blocking_gate
     connect \A { $procmux$46_CMP $procmux$45_CMP $procmux$44_CMP $procmux$43_CMP $procmux$42_CMP $procmux$41_CMP $procmux$40_CMP $procmux$39_CMP $procmux$38_CMP $procmux$37_CMP $procmux$36_CMP $procmux$35_CMP $procmux$34_CMP $procmux$33_CMP $procmux$32_CMP $procmux$31_CMP $procmux$30_CMP $procmux$29_CMP $procmux$28_CMP $procmux$27_CMP $procmux$26_CMP $procmux$25_CMP $procmux$24_CMP $procmux$23_CMP $procmux$22_CMP $procmux$21_CMP $procmux$20_CMP $procmux$19_CMP $procmux$18_CMP $procmux$17_CMP $procmux$16_CMP $procmux$15_CMP }
     connect \Y $auto$opt_reduce.cc:137:opt_pmux$52
   end
-  connect $auto$expression.cpp:2911:import_operation$12 [63:7] 57'000000000000000000000000000000000000000000000000000000000
-  connect $auto$expression.cpp:2966:import_operation$4 [0] $0\b
+  connect $auto$expression.cpp:2926:import_operation$12 [63:7] 57'000000000000000000000000000000000000000000000000000000000
+  connect $auto$expression.cpp:2981:import_operation$4 [0] $0\b
 end

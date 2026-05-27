@@ -24,12 +24,12 @@ module \multiple_blocking
   wire \b
   attribute \src "dut.sv:12.21-12.22"
   wire width 3 \c
-  wire width 6 $auto$expression.cpp:2911:import_operation$2
+  wire width 6 $auto$expression.cpp:2926:import_operation$2
   attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:2966:import_operation$4
+  wire width 64 $auto$expression.cpp:2981:import_operation$4
   wire width 3 $auto$rtlil.cc:3255:Not$7
   wire width 32 $auto$process.cpp:6653:import_assignment_sync$20
-  wire width 7 $auto$expression.cpp:3046:import_operation$10
+  wire width 7 $auto$expression.cpp:3061:import_operation$10
   wire width 32 $auto$process.cpp:6632:import_assignment_sync$12
   wire width 32 $auto$process.cpp:6643:import_assignment_sync$14
   wire width 32 $auto$process.cpp:6646:import_assignment_sync$16
@@ -43,7 +43,7 @@ module \multiple_blocking
     parameter \Y_WIDTH 6
     connect \A { 1'0 \ctrl }
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2911:import_operation$2
+    connect \Y $auto$expression.cpp:2926:import_operation$2
   end
   attribute \src "dut.sv:15.11-15.18"
   cell $sub $sub$dut.sv:15$5
@@ -54,7 +54,7 @@ module \multiple_blocking
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \sel }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2966:import_operation$4
+    connect \Y $auto$expression.cpp:2981:import_operation$4
   end
   attribute \src "dut.sv:16.11-16.15"
   cell $not $not$dut.sv:16$6
@@ -82,7 +82,7 @@ module \multiple_blocking
     parameter \Y_WIDTH 7
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:3046:import_operation$10
+    connect \Y $auto$expression.cpp:3061:import_operation$10
   end
   cell $shl $auto$process.cpp:6633:import_assignment_sync$13
     parameter \A_SIGNED 0
@@ -91,7 +91,7 @@ module \multiple_blocking
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 32
     connect \A { 29'00000000000000000000000000000 \c }
-    connect \B $auto$expression.cpp:3046:import_operation$10
+    connect \B $auto$expression.cpp:3061:import_operation$10
     connect \Y $auto$process.cpp:6632:import_assignment_sync$12
   end
   cell $shl $auto$process.cpp:6644:import_assignment_sync$15
@@ -101,7 +101,7 @@ module \multiple_blocking
     parameter \B_WIDTH 7
     parameter \Y_WIDTH 32
     connect \A 32'11111111111111111111111111111111
-    connect \B $auto$expression.cpp:3046:import_operation$10
+    connect \B $auto$expression.cpp:3061:import_operation$10
     connect \Y $auto$process.cpp:6643:import_assignment_sync$14
   end
   cell $not $auto$process.cpp:6647:import_assignment_sync$17
@@ -136,7 +136,7 @@ module \multiple_blocking
   cell $dff $procdff$22
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2966:import_operation$4 [0]
+    connect \D $auto$expression.cpp:2981:import_operation$4 [0]
     connect \Q \b
     connect \CLK \clk
   end
@@ -154,7 +154,7 @@ module \multiple_blocking
   cell $dff $procdff$24
     parameter \WIDTH 6
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2911:import_operation$2
+    connect \D $auto$expression.cpp:2926:import_operation$2
     connect \Q \a
     connect \CLK \clk
   end

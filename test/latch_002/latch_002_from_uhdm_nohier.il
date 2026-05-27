@@ -11,11 +11,11 @@ module \latch_002
   wire input 3 \st
   attribute \src "dut.sv:3.20-3.24"
   wire width 8 input 4 \vect
-  wire width 72 $auto$expression.cpp:3046:import_operation$2
-  wire width 8 $auto$expression.cpp:4725:import_indexed_part_select$4
+  wire width 72 $auto$expression.cpp:3061:import_operation$2
+  wire width 8 $auto$expression.cpp:4740:import_indexed_part_select$4
   attribute \src "dut.sv:9.4-12.7"
-  wire width 8 $0\$auto$expression.cpp:4725:import_indexed_part_select$4
-  wire width 72 $auto$expression.cpp:3046:import_operation$6
+  wire width 8 $0\$auto$expression.cpp:4740:import_indexed_part_select$4
+  wire width 72 $auto$expression.cpp:3061:import_operation$6
   wire width 64 $auto$process.cpp:7095:emit_dynamic_indexed_part_select_write$8
   wire width 64 $auto$process.cpp:7098:emit_dynamic_indexed_part_select_write$10
   wire width 64 $auto$process.cpp:7101:emit_dynamic_indexed_part_select_write$12
@@ -30,7 +30,7 @@ module \latch_002
     parameter \Y_WIDTH 72
     connect \A 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \B \sel
-    connect \Y $auto$expression.cpp:3046:import_operation$2
+    connect \Y $auto$expression.cpp:3061:import_operation$2
   end
   attribute \src "dut.sv:11.2-11.18"
   cell $shiftx $shiftx$dut.sv:11$5
@@ -40,8 +40,8 @@ module \latch_002
     parameter \B_WIDTH 72
     parameter \Y_WIDTH 8
     connect \A \dword
-    connect \B $auto$expression.cpp:3046:import_operation$2
-    connect \Y $auto$expression.cpp:4725:import_indexed_part_select$4
+    connect \B $auto$expression.cpp:3061:import_operation$2
+    connect \Y $auto$expression.cpp:4740:import_indexed_part_select$4
   end
   attribute \src "dut.sv:11.8-11.13"
   cell $mul $mul$dut.sv:11$7
@@ -52,7 +52,7 @@ module \latch_002
     parameter \Y_WIDTH 72
     connect \A 64'0000000000000000000000000000000000000000000000000000000000001000
     connect \B \sel
-    connect \Y $auto$expression.cpp:3046:import_operation$6
+    connect \Y $auto$expression.cpp:3061:import_operation$6
   end
   cell $shl $auto$process.cpp:7096:emit_dynamic_indexed_part_select_write$9
     parameter \A_SIGNED 0
@@ -61,7 +61,7 @@ module \latch_002
     parameter \B_WIDTH 72
     parameter \Y_WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000011111111
-    connect \B $auto$expression.cpp:3046:import_operation$6
+    connect \B $auto$expression.cpp:3061:import_operation$6
     connect \Y $auto$process.cpp:7095:emit_dynamic_indexed_part_select_write$8
   end
   cell $shl $auto$process.cpp:7099:emit_dynamic_indexed_part_select_write$11
@@ -71,7 +71,7 @@ module \latch_002
     parameter \B_WIDTH 72
     parameter \Y_WIDTH 64
     connect \A { 56'00000000000000000000000000000000000000000000000000000000 \vect }
-    connect \B $auto$expression.cpp:3046:import_operation$6
+    connect \B $auto$expression.cpp:3061:import_operation$6
     connect \Y $auto$process.cpp:7098:emit_dynamic_indexed_part_select_write$10
   end
   cell $not $auto$process.cpp:7102:emit_dynamic_indexed_part_select_write$13
@@ -103,7 +103,7 @@ module \latch_002
   end
   attribute \src "dut.sv:9.4-12.7"
   process $proc$dut.sv:9$1
-    assign $0\$auto$expression.cpp:4725:import_indexed_part_select$4 $auto$expression.cpp:4725:import_indexed_part_select$4
+    assign $0\$auto$expression.cpp:4740:import_indexed_part_select$4 $auto$expression.cpp:4740:import_indexed_part_select$4
     attribute \src "dut.sv:10.7-11.32"
     switch \st
     attribute \src "dut.sv:10.7-11.32"
@@ -113,6 +113,6 @@ module \latch_002
       case 
     end
     sync always
-      update $auto$expression.cpp:4725:import_indexed_part_select$4 $0\$auto$expression.cpp:4725:import_indexed_part_select$4
+      update $auto$expression.cpp:4740:import_indexed_part_select$4 $0\$auto$expression.cpp:4740:import_indexed_part_select$4
   end
 end

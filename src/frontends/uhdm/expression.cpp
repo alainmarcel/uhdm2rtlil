@@ -2312,6 +2312,21 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                 return RTLIL::SigSpec(RTLIL::State::Sx);
             }
         }
+        case vpiRealConst: {
+            // Real-valued constant — convert to integer per LRM real-to-int rules
+            // (round to nearest, ties away from zero) at the context width.
+            std::string real_str;
+            if (value.substr(0, 5) == "REAL:") real_str = value.substr(5);
+            else real_str = value;
+            double d = 0.0;
+            try { d = std::stod(real_str); }
+            catch (const std::exception&) { return RTLIL::SigSpec(RTLIL::State::Sx); }
+            int width = (expression_context_width > 0) ? expression_context_width : 32;
+            // round-half-away-from-zero
+            double rounded = (d >= 0.0) ? std::floor(d + 0.5) : std::ceil(d - 0.5);
+            long long ival = (long long)rounded;
+            return RTLIL::SigSpec(RTLIL::Const(ival, width));
+        }
         case vpiStringConst: {
             // Handle string constants like "FOO" (format: "STRING:FOO")
             std::string str_val;

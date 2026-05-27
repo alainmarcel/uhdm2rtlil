@@ -32,9 +32,9 @@ module \top
   attribute \src "dut.sv:38.10-38.40"
   wire $eq$dut.sv:38$34_Y
   wire $auto$process.cpp:111:build_check_cell$36
-  wire width 32 $auto$expression.cpp:2911:import_operation$38
-  wire width 32 $auto$expression.cpp:2911:import_operation$40
-  wire width 32 $auto$expression.cpp:2911:import_operation$42
+  wire width 32 $auto$expression.cpp:2926:import_operation$38
+  wire width 32 $auto$expression.cpp:2926:import_operation$40
+  wire width 32 $auto$expression.cpp:2926:import_operation$42
   attribute \src "dut.sv:40.10-40.73"
   wire $eq$dut.sv:40$44_Y
   wire $auto$process.cpp:111:build_check_cell$46
@@ -492,7 +492,7 @@ module \top
     parameter \Y_WIDTH 32
     connect \A 1
     connect \B 4
-    connect \Y $auto$expression.cpp:2911:import_operation$38
+    connect \Y $auto$expression.cpp:2926:import_operation$38
   end
   attribute \src "dut.sv:40.22-40.59"
   cell $add $add$dut.sv:40$41
@@ -501,9 +501,9 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2911:import_operation$38
+    connect \A $auto$expression.cpp:2926:import_operation$38
     connect \B 24
-    connect \Y $auto$expression.cpp:2911:import_operation$40
+    connect \Y $auto$expression.cpp:2926:import_operation$40
   end
   attribute \src "dut.sv:40.22-40.73"
   cell $add $add$dut.sv:40$43
@@ -512,9 +512,9 @@ module \top
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:2911:import_operation$40
+    connect \A $auto$expression.cpp:2926:import_operation$40
     connect \B 192
-    connect \Y $auto$expression.cpp:2911:import_operation$42
+    connect \Y $auto$expression.cpp:2926:import_operation$42
   end
   attribute \src "dut.sv:40.10-40.73"
   cell $eq $eq$dut.sv:40$45
@@ -524,7 +524,7 @@ module \top
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
     connect \A 221
-    connect \B $auto$expression.cpp:2911:import_operation$42
+    connect \B $auto$expression.cpp:2926:import_operation$42
     connect \Y $eq$dut.sv:40$44_Y
   end
   attribute \src "dut.sv:40.2-40.75"

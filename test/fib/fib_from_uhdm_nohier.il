@@ -35,7 +35,7 @@ module \gate
   attribute \src "dut.sv:37.18-37.35"
   wire width 32 $0\fib_wrap$func$dut.sv:37$2.$result$8
   wire width 32 \fib_wrap$func$dut.sv:37$2.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$9
+  wire width 32 $auto$expression.cpp:2926:import_operation$9
   attribute \nosync 1
   attribute \src "dut.sv:37.18-37.35"
   wire width 32 \fib_wrap$func$dut.sv:37$3.$result
@@ -52,7 +52,7 @@ module \gate
   attribute \src "dut.sv:38.18-38.35"
   wire width 32 $0\fib_wrap$func$dut.sv:38$11.$result$17
   wire width 32 \fib_wrap$func$dut.sv:38$11.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$18
+  wire width 32 $auto$expression.cpp:2926:import_operation$18
   attribute \nosync 1
   attribute \src "dut.sv:38.18-38.35"
   wire width 32 \fib_wrap$func$dut.sv:38$12.$result
@@ -69,7 +69,7 @@ module \gate
   attribute \src "dut.sv:39.18-39.35"
   wire width 32 $0\fib_wrap$func$dut.sv:39$20.$result$26
   wire width 32 \fib_wrap$func$dut.sv:39$20.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$27
+  wire width 32 $auto$expression.cpp:2926:import_operation$27
   attribute \nosync 1
   attribute \src "dut.sv:39.18-39.35"
   wire width 32 \fib_wrap$func$dut.sv:39$21.$result
@@ -86,7 +86,7 @@ module \gate
   attribute \src "dut.sv:40.18-40.35"
   wire width 32 $0\fib_wrap$func$dut.sv:40$29.$result$35
   wire width 32 \fib_wrap$func$dut.sv:40$29.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$36
+  wire width 32 $auto$expression.cpp:2926:import_operation$36
   attribute \nosync 1
   attribute \src "dut.sv:40.18-40.35"
   wire width 32 \fib_wrap$func$dut.sv:40$30.$result
@@ -103,7 +103,7 @@ module \gate
   attribute \src "dut.sv:41.18-41.35"
   wire width 32 $0\fib_wrap$func$dut.sv:41$38.$result$44
   wire width 32 \fib_wrap$func$dut.sv:41$38.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$45
+  wire width 32 $auto$expression.cpp:2926:import_operation$45
   attribute \nosync 1
   attribute \src "dut.sv:41.18-41.35"
   wire width 32 \fib_wrap$func$dut.sv:41$39.$result
@@ -120,7 +120,7 @@ module \gate
   attribute \src "dut.sv:42.18-42.35"
   wire width 32 $0\fib_wrap$func$dut.sv:42$47.$result$53
   wire width 32 \fib_wrap$func$dut.sv:42$47.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$54
+  wire width 32 $auto$expression.cpp:2926:import_operation$54
   attribute \nosync 1
   attribute \src "dut.sv:42.18-42.35"
   wire width 32 \fib_wrap$func$dut.sv:42$48.$result
@@ -137,7 +137,7 @@ module \gate
   attribute \src "dut.sv:43.18-43.35"
   wire width 32 $0\fib_wrap$func$dut.sv:43$56.$result$62
   wire width 32 \fib_wrap$func$dut.sv:43$56.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$63
+  wire width 32 $auto$expression.cpp:2926:import_operation$63
   attribute \nosync 1
   attribute \src "dut.sv:43.18-43.35"
   wire width 32 \fib_wrap$func$dut.sv:43$57.$result
@@ -154,7 +154,7 @@ module \gate
   attribute \src "dut.sv:44.18-44.35"
   wire width 32 $0\fib_wrap$func$dut.sv:44$65.$result$71
   wire width 32 \fib_wrap$func$dut.sv:44$65.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$72
+  wire width 32 $auto$expression.cpp:2926:import_operation$72
   attribute \nosync 1
   attribute \src "dut.sv:44.18-44.35"
   wire width 32 \fib_wrap$func$dut.sv:44$66.$result
@@ -171,7 +171,7 @@ module \gate
   attribute \src "dut.sv:45.18-45.35"
   wire width 32 $0\fib_wrap$func$dut.sv:45$74.$result$80
   wire width 32 \fib_wrap$func$dut.sv:45$74.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$81
+  wire width 32 $auto$expression.cpp:2926:import_operation$81
   attribute \nosync 1
   attribute \src "dut.sv:45.18-45.35"
   wire width 32 \fib_wrap$func$dut.sv:45$75.$result
@@ -188,7 +188,7 @@ module \gate
   attribute \src "dut.sv:46.18-46.35"
   wire width 32 $0\fib_wrap$func$dut.sv:46$83.$result$89
   wire width 32 \fib_wrap$func$dut.sv:46$83.$result
-  wire width 32 $auto$expression.cpp:2911:import_operation$90
+  wire width 32 $auto$expression.cpp:2926:import_operation$90
   attribute \nosync 1
   attribute \src "dut.sv:46.18-46.35"
   wire width 32 \fib_wrap$func$dut.sv:46$84.$result
@@ -204,7 +204,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 0
-    connect \Y $auto$expression.cpp:2911:import_operation$9
+    connect \Y $auto$expression.cpp:2926:import_operation$9
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$19
@@ -215,7 +215,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 1
-    connect \Y $auto$expression.cpp:2911:import_operation$18
+    connect \Y $auto$expression.cpp:2926:import_operation$18
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$28
@@ -226,7 +226,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 1
-    connect \Y $auto$expression.cpp:2911:import_operation$27
+    connect \Y $auto$expression.cpp:2926:import_operation$27
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$37
@@ -237,7 +237,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 2
-    connect \Y $auto$expression.cpp:2911:import_operation$36
+    connect \Y $auto$expression.cpp:2926:import_operation$36
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$46
@@ -248,7 +248,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 3
-    connect \Y $auto$expression.cpp:2911:import_operation$45
+    connect \Y $auto$expression.cpp:2926:import_operation$45
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$55
@@ -259,7 +259,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 5
-    connect \Y $auto$expression.cpp:2911:import_operation$54
+    connect \Y $auto$expression.cpp:2926:import_operation$54
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$64
@@ -270,7 +270,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 8
-    connect \Y $auto$expression.cpp:2911:import_operation$63
+    connect \Y $auto$expression.cpp:2926:import_operation$63
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$73
@@ -281,7 +281,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 13
-    connect \Y $auto$expression.cpp:2911:import_operation$72
+    connect \Y $auto$expression.cpp:2926:import_operation$72
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$82
@@ -292,7 +292,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 21
-    connect \Y $auto$expression.cpp:2911:import_operation$81
+    connect \Y $auto$expression.cpp:2926:import_operation$81
   end
   attribute \src "dut.sv:21.13-21.25"
   cell $add $add$dut.sv:21$91
@@ -303,7 +303,7 @@ module \gate
     parameter \Y_WIDTH 32
     connect \A \off
     connect \B 34
-    connect \Y $auto$expression.cpp:2911:import_operation$90
+    connect \Y $auto$expression.cpp:2926:import_operation$90
   end
   attribute \src "dut.sv:35.5-47.8"
   process $proc$dut.sv:35$1
@@ -321,7 +321,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:37$3.$result$6 $1\fib_wrap$func$dut.sv:37$3.$result$7
     assign $0\fib_wrap$func$dut.sv:37$2.$result$8 $1\fib_wrap$func$dut.sv:37$3.$result$7
     assign $1\fib_wrap$func$dut.sv:37$3.$result$7 0
-    assign \fib0 $auto$expression.cpp:2911:import_operation$9
+    assign \fib0 $auto$expression.cpp:2926:import_operation$9
     sync always
       update \fib_wrap$func$dut.sv:37$2.$result $0\fib_wrap$func$dut.sv:37$2.$result$8
       update \fib_wrap$func$dut.sv:37$3.$result 32'x
@@ -338,7 +338,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:38$12.$result$15 $1\fib_wrap$func$dut.sv:38$12.$result$16
     assign $0\fib_wrap$func$dut.sv:38$11.$result$17 $1\fib_wrap$func$dut.sv:38$12.$result$16
     assign $1\fib_wrap$func$dut.sv:38$12.$result$16 0
-    assign \fib1 $auto$expression.cpp:2911:import_operation$18
+    assign \fib1 $auto$expression.cpp:2926:import_operation$18
     sync always
       update \fib_wrap$func$dut.sv:38$11.$result $0\fib_wrap$func$dut.sv:38$11.$result$17
       update \fib_wrap$func$dut.sv:38$12.$result 32'x
@@ -355,7 +355,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:39$21.$result$24 $1\fib_wrap$func$dut.sv:39$21.$result$25
     assign $0\fib_wrap$func$dut.sv:39$20.$result$26 $1\fib_wrap$func$dut.sv:39$21.$result$25
     assign $1\fib_wrap$func$dut.sv:39$21.$result$25 0
-    assign \fib2 $auto$expression.cpp:2911:import_operation$27
+    assign \fib2 $auto$expression.cpp:2926:import_operation$27
     sync always
       update \fib_wrap$func$dut.sv:39$20.$result $0\fib_wrap$func$dut.sv:39$20.$result$26
       update \fib_wrap$func$dut.sv:39$21.$result 32'x
@@ -372,7 +372,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:40$30.$result$33 $1\fib_wrap$func$dut.sv:40$30.$result$34
     assign $0\fib_wrap$func$dut.sv:40$29.$result$35 $1\fib_wrap$func$dut.sv:40$30.$result$34
     assign $1\fib_wrap$func$dut.sv:40$30.$result$34 0
-    assign \fib3 $auto$expression.cpp:2911:import_operation$36
+    assign \fib3 $auto$expression.cpp:2926:import_operation$36
     sync always
       update \fib_wrap$func$dut.sv:40$29.$result $0\fib_wrap$func$dut.sv:40$29.$result$35
       update \fib_wrap$func$dut.sv:40$30.$result 32'x
@@ -389,7 +389,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:41$39.$result$42 $1\fib_wrap$func$dut.sv:41$39.$result$43
     assign $0\fib_wrap$func$dut.sv:41$38.$result$44 $1\fib_wrap$func$dut.sv:41$39.$result$43
     assign $1\fib_wrap$func$dut.sv:41$39.$result$43 0
-    assign \fib4 $auto$expression.cpp:2911:import_operation$45
+    assign \fib4 $auto$expression.cpp:2926:import_operation$45
     sync always
       update \fib_wrap$func$dut.sv:41$38.$result $0\fib_wrap$func$dut.sv:41$38.$result$44
       update \fib_wrap$func$dut.sv:41$39.$result 32'x
@@ -406,7 +406,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:42$48.$result$51 $1\fib_wrap$func$dut.sv:42$48.$result$52
     assign $0\fib_wrap$func$dut.sv:42$47.$result$53 $1\fib_wrap$func$dut.sv:42$48.$result$52
     assign $1\fib_wrap$func$dut.sv:42$48.$result$52 0
-    assign \fib5 $auto$expression.cpp:2911:import_operation$54
+    assign \fib5 $auto$expression.cpp:2926:import_operation$54
     sync always
       update \fib_wrap$func$dut.sv:42$47.$result $0\fib_wrap$func$dut.sv:42$47.$result$53
       update \fib_wrap$func$dut.sv:42$48.$result 32'x
@@ -423,7 +423,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:43$57.$result$60 $1\fib_wrap$func$dut.sv:43$57.$result$61
     assign $0\fib_wrap$func$dut.sv:43$56.$result$62 $1\fib_wrap$func$dut.sv:43$57.$result$61
     assign $1\fib_wrap$func$dut.sv:43$57.$result$61 0
-    assign \fib6 $auto$expression.cpp:2911:import_operation$63
+    assign \fib6 $auto$expression.cpp:2926:import_operation$63
     sync always
       update \fib_wrap$func$dut.sv:43$56.$result $0\fib_wrap$func$dut.sv:43$56.$result$62
       update \fib_wrap$func$dut.sv:43$57.$result 32'x
@@ -440,7 +440,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:44$66.$result$69 $1\fib_wrap$func$dut.sv:44$66.$result$70
     assign $0\fib_wrap$func$dut.sv:44$65.$result$71 $1\fib_wrap$func$dut.sv:44$66.$result$70
     assign $1\fib_wrap$func$dut.sv:44$66.$result$70 0
-    assign \fib7 $auto$expression.cpp:2911:import_operation$72
+    assign \fib7 $auto$expression.cpp:2926:import_operation$72
     sync always
       update \fib_wrap$func$dut.sv:44$65.$result $0\fib_wrap$func$dut.sv:44$65.$result$71
       update \fib_wrap$func$dut.sv:44$66.$result 32'x
@@ -457,7 +457,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:45$75.$result$78 $1\fib_wrap$func$dut.sv:45$75.$result$79
     assign $0\fib_wrap$func$dut.sv:45$74.$result$80 $1\fib_wrap$func$dut.sv:45$75.$result$79
     assign $1\fib_wrap$func$dut.sv:45$75.$result$79 0
-    assign \fib8 $auto$expression.cpp:2911:import_operation$81
+    assign \fib8 $auto$expression.cpp:2926:import_operation$81
     sync always
       update \fib_wrap$func$dut.sv:45$74.$result $0\fib_wrap$func$dut.sv:45$74.$result$80
       update \fib_wrap$func$dut.sv:45$75.$result 32'x
@@ -474,7 +474,7 @@ module \gate
     assign $0\fib_wrap$func$dut.sv:46$84.$result$87 $1\fib_wrap$func$dut.sv:46$84.$result$88
     assign $0\fib_wrap$func$dut.sv:46$83.$result$89 $1\fib_wrap$func$dut.sv:46$84.$result$88
     assign $1\fib_wrap$func$dut.sv:46$84.$result$88 0
-    assign \fib9 $auto$expression.cpp:2911:import_operation$90
+    assign \fib9 $auto$expression.cpp:2926:import_operation$90
     sync always
       update \fib_wrap$func$dut.sv:46$83.$result $0\fib_wrap$func$dut.sv:46$83.$result$89
       update \fib_wrap$func$dut.sv:46$84.$result 32'x
@@ -516,16 +516,16 @@ module \gold
   wire width 32 output 10 signed \fib8
   attribute \src "dut.sv:51.64-51.68"
   wire width 32 output 11 signed \fib9
-  wire width 64 $auto$expression.cpp:2911:import_operation$92
-  wire width 64 $auto$expression.cpp:2911:import_operation$94
-  wire width 64 $auto$expression.cpp:2911:import_operation$96
-  wire width 64 $auto$expression.cpp:2911:import_operation$98
-  wire width 64 $auto$expression.cpp:2911:import_operation$100
-  wire width 64 $auto$expression.cpp:2911:import_operation$102
-  wire width 64 $auto$expression.cpp:2911:import_operation$104
-  wire width 64 $auto$expression.cpp:2911:import_operation$106
-  wire width 64 $auto$expression.cpp:2911:import_operation$108
-  wire width 64 $auto$expression.cpp:2911:import_operation$110
+  wire width 64 $auto$expression.cpp:2926:import_operation$92
+  wire width 64 $auto$expression.cpp:2926:import_operation$94
+  wire width 64 $auto$expression.cpp:2926:import_operation$96
+  wire width 64 $auto$expression.cpp:2926:import_operation$98
+  wire width 64 $auto$expression.cpp:2926:import_operation$100
+  wire width 64 $auto$expression.cpp:2926:import_operation$102
+  wire width 64 $auto$expression.cpp:2926:import_operation$104
+  wire width 64 $auto$expression.cpp:2926:import_operation$106
+  wire width 64 $auto$expression.cpp:2926:import_operation$108
+  wire width 64 $auto$expression.cpp:2926:import_operation$110
   attribute \src "dut.sv:55.27-55.34"
   cell $add $add$dut.sv:55$93
     parameter \A_SIGNED 0
@@ -535,7 +535,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$expression.cpp:2911:import_operation$92
+    connect \Y $auto$expression.cpp:2926:import_operation$92
   end
   attribute \src "dut.sv:56.27-56.34"
   cell $add $add$dut.sv:56$95
@@ -546,7 +546,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2911:import_operation$94
+    connect \Y $auto$expression.cpp:2926:import_operation$94
   end
   attribute \src "dut.sv:57.27-57.34"
   cell $add $add$dut.sv:57$97
@@ -557,7 +557,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:2911:import_operation$96
+    connect \Y $auto$expression.cpp:2926:import_operation$96
   end
   attribute \src "dut.sv:58.27-58.34"
   cell $add $add$dut.sv:58$99
@@ -568,7 +568,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000010
-    connect \Y $auto$expression.cpp:2911:import_operation$98
+    connect \Y $auto$expression.cpp:2926:import_operation$98
   end
   attribute \src "dut.sv:59.27-59.34"
   cell $add $add$dut.sv:59$101
@@ -579,7 +579,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000011
-    connect \Y $auto$expression.cpp:2911:import_operation$100
+    connect \Y $auto$expression.cpp:2926:import_operation$100
   end
   attribute \src "dut.sv:60.27-60.34"
   cell $add $add$dut.sv:60$103
@@ -590,7 +590,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000101
-    connect \Y $auto$expression.cpp:2911:import_operation$102
+    connect \Y $auto$expression.cpp:2926:import_operation$102
   end
   attribute \src "dut.sv:61.27-61.34"
   cell $add $add$dut.sv:61$105
@@ -601,7 +601,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001000
-    connect \Y $auto$expression.cpp:2911:import_operation$104
+    connect \Y $auto$expression.cpp:2926:import_operation$104
   end
   attribute \src "dut.sv:62.27-62.35"
   cell $add $add$dut.sv:62$107
@@ -612,7 +612,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001101
-    connect \Y $auto$expression.cpp:2911:import_operation$106
+    connect \Y $auto$expression.cpp:2926:import_operation$106
   end
   attribute \src "dut.sv:63.27-63.35"
   cell $add $add$dut.sv:63$109
@@ -623,7 +623,7 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000010101
-    connect \Y $auto$expression.cpp:2911:import_operation$108
+    connect \Y $auto$expression.cpp:2926:import_operation$108
   end
   attribute \src "dut.sv:64.27-64.35"
   cell $add $add$dut.sv:64$111
@@ -634,16 +634,16 @@ module \gold
     parameter \Y_WIDTH 64
     connect \A { 32'00000000000000000000000000000000 \off }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000100010
-    connect \Y $auto$expression.cpp:2911:import_operation$110
+    connect \Y $auto$expression.cpp:2926:import_operation$110
   end
-  connect \fib0 $auto$expression.cpp:2911:import_operation$92 [31:0]
-  connect \fib1 $auto$expression.cpp:2911:import_operation$94 [31:0]
-  connect \fib2 $auto$expression.cpp:2911:import_operation$96 [31:0]
-  connect \fib3 $auto$expression.cpp:2911:import_operation$98 [31:0]
-  connect \fib4 $auto$expression.cpp:2911:import_operation$100 [31:0]
-  connect \fib5 $auto$expression.cpp:2911:import_operation$102 [31:0]
-  connect \fib6 $auto$expression.cpp:2911:import_operation$104 [31:0]
-  connect \fib7 $auto$expression.cpp:2911:import_operation$106 [31:0]
-  connect \fib8 $auto$expression.cpp:2911:import_operation$108 [31:0]
-  connect \fib9 $auto$expression.cpp:2911:import_operation$110 [31:0]
+  connect \fib0 $auto$expression.cpp:2926:import_operation$92 [31:0]
+  connect \fib1 $auto$expression.cpp:2926:import_operation$94 [31:0]
+  connect \fib2 $auto$expression.cpp:2926:import_operation$96 [31:0]
+  connect \fib3 $auto$expression.cpp:2926:import_operation$98 [31:0]
+  connect \fib4 $auto$expression.cpp:2926:import_operation$100 [31:0]
+  connect \fib5 $auto$expression.cpp:2926:import_operation$102 [31:0]
+  connect \fib6 $auto$expression.cpp:2926:import_operation$104 [31:0]
+  connect \fib7 $auto$expression.cpp:2926:import_operation$106 [31:0]
+  connect \fib8 $auto$expression.cpp:2926:import_operation$108 [31:0]
+  connect \fib9 $auto$expression.cpp:2926:import_operation$110 [31:0]
 end
