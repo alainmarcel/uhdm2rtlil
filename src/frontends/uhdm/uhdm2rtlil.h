@@ -501,6 +501,8 @@ struct UhdmImporter {
     RTLIL::SigSpec import_indexed_part_select_with_substitution(const UHDM::indexed_part_select* ips,
                                                                 const std::map<std::string, int64_t>& var_substitutions);
     
+    void create_block_local_wires(const UHDM::any* stmt);
+
     // Process-specific import functions
     void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_always_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
