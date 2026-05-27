@@ -78,24 +78,31 @@ svinterface1.sv has single instances so this suffices for now.
 `sub` passing `my_iface #(.W(22)) bus()`; without the fix
 `sub`'s `bus.data` is width 3 (default `W`) instead of 22.
 
-## Issue 4: hier_path LHS on interface fields with part-selects — PENDING
+## Issue 4: Modport direction inversion in `import_port` swap — ✅ DONE
 
-**Symptom**: `intf.field[hi:lo] = expr` inside `always_comb` lowers
-to `assign $0\intf 1'0` — drops the field name AND the part-select,
-producing a degenerate 1-bit write to the wrong wire.
+**Symptom**: With issues 1–3 fixed, `svinterface1.sv` synth output
+still had `assign \u_MyInterfaceInSub2.mysig_out = 2'hx` —
+SubModule2's `mysig_out` port direction came out as OUTPUT instead
+of INPUT, so its driver from SubModule1 didn't connect.
 
-**Root cause**: the LHS hier_path resolution path in process.cpp /
-expression.cpp doesn't handle the
-`[ref_obj(intf), <field>, part_select]` pattern when `intf` is an
-interface-typed port wire.
+**Root cause**: PR3 (`iface_param_width_per_inst`) replaced BOTH
+`mp` and `iface_inst` with the elaborated High_conn's modport /
+interface_inst.  But High_conn carries the *outer* modport view —
+e.g. SubModule1's `submodule1` modport (output `mysig_out`) — not
+the submodule's own `submodule2` modport (input `mysig_out`).  The
+per-field direction (`modport_direction` attribute) then came from
+the wrong modport.
 
-**Fix plan**: extend the hier_path LHS handler to follow `intf` →
-flattened field wire `\intf.field` → apply the part-select to that
-field wire.
+**Fix**: drop the `mp = emp` swap.  Keep `mp` from Low_conn (the
+submodule's own modport, which dictates direction).  Only swap
+`iface_inst` to the elaborated form (which carries parameter
+widths).  This was the original intent of PR3 — the `mp` swap was
+incidental.
 
-**Repro to write**: `test/iface_field_partsel_lhs/dut.sv` — write to
-`intf.array_field[idx:0]` inside an `always_comb`, read back via a
-top-level output.
+**Repro**: `test/iface_modport_passthrough/` — `mid` receives an
+interface port with the `drv` modport, forwards to `consumer` whose
+port uses the opposite `rcv` modport.  Without the fix, `consumer`'s
+field directions inherit from `drv` (wrong).
 
 ## Status
 
@@ -103,10 +110,9 @@ top-level output.
 |----|-------|--------|
 | 1 | Local interface instances in non-top modules | merged |
 | 2 | Cell-side per-field connections | merged |
-| 3 | Per-instance parameterised interface widths | this PR (`iface_param_width_per_inst`) |
-| 4 | hier_path LHS on interface fields | pending |
+| 3 | Per-instance parameterised interface widths | merged |
+| 4 | Modport direction inversion in port-swap | this PR (`iface_undriven_passthrough`) |
 
-Once all four land, copy
-`third_party/yosys/tests/svinterfaces/svinterface1.sv` into
-`test/svinterface1/` and confirm formal equivalence passes
-end-to-end.
+All four issues fixed.  `test/svinterface1/` (added in this PR)
+imports the upstream `svinterfaces/svinterface1.sv` verbatim and
+passes formal equivalence end-to-end.
