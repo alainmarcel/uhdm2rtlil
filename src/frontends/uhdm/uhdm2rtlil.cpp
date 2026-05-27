@@ -853,6 +853,47 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                     for (auto port : *uhdm_module->Ports()) {
                         std::string port_name = std::string(port->VpiName());
                         if (port->High_conn()) {
+                            // Interface ports: the cell's module has the port
+                            // flattened into per-field wires (`\<port>.<field>`).
+                            // Pair each `<port>.<field>` with the source side's
+                            // `<src>.<field>` wire in the parent.  The source
+                            // name lives on the high_conn ref_obj's VpiName.
+                            // Without this, `import_expression(high_conn)`
+                            // looks up a bare `\<src>` wire that doesn't exist
+                            // (we flatten interface refs to per-field wires)
+                            // and `cell->setPort(port_name, empty)` drops the
+                            // connection entirely.
+                            RTLIL::Module* tgt_mod = design->module(cell->type);
+                            if (tgt_mod && port->High_conn()->UhdmType() == uhdmref_obj) {
+                                const ref_obj* href = any_cast<const ref_obj*>(port->High_conn());
+                                std::string src_name = std::string(href->VpiName());
+                                std::string tgt_prefix = "\\" + port_name + ".";
+                                std::vector<std::string> field_names;
+                                for (auto& w : tgt_mod->wires_) {
+                                    std::string wn = w.first.str();
+                                    if (wn.compare(0, tgt_prefix.size(), tgt_prefix) == 0)
+                                        field_names.push_back(wn.substr(tgt_prefix.size()));
+                                }
+                                if (!field_names.empty() && !src_name.empty()) {
+                                    for (const auto& f : field_names) {
+                                        std::string src_full = src_name + "." + f;
+                                        std::string dst_port = port_name + "." + f;
+                                        RTLIL::Wire* src_w = nullptr;
+                                        if (name_map.count(src_full))
+                                            src_w = name_map[src_full];
+                                        if (!src_w)
+                                            src_w = parent_rtlil_module->wire(
+                                                RTLIL::escape_id(src_full));
+                                        if (src_w) {
+                                            cell->setPort(RTLIL::escape_id(dst_port),
+                                                          RTLIL::SigSpec(src_w));
+                                            log("UHDM: Connected interface port %s to wire %s\n",
+                                                dst_port.c_str(), src_full.c_str());
+                                        }
+                                    }
+                                    continue;
+                                }
+                            }
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
                             RTLIL::SigSpec conn = import_expression(high_conn);
 
