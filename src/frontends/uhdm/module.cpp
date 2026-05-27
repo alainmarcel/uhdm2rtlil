@@ -10,6 +10,7 @@
 #include <uhdm/packed_array_var.h>
 #include <uhdm/gen_scope.h>
 #include <cctype>
+#include <functional>
 #include <uhdm/gen_scope_array.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/union_typespec.h>
@@ -180,6 +181,60 @@ void UhdmImporter::import_port(const port* uhdm_port) {
                 if (mp && mp->VpiParent() &&
                     mp->VpiParent()->UhdmType() == uhdminterface_inst)
                     iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
+
+                // AllModules has the unelaborated interface_inst (default
+                // parameter values).  Swap in the elaborated form's port
+                // iface_inst so per-signal widths reflect the parent's
+                // `#(.W(N))` override.  Without this, a `bus` port whose
+                // declared field is `logic [W-1:0] data` always materialises
+                // as the default `W` width, even when the parent
+                // instantiated the interface with a wider `W`.
+                if (uhdm_design && uhdm_design->TopModules() && current_instance) {
+                    std::string def = std::string(current_instance->VpiDefName());
+                    std::function<const UHDM::module_inst*(const UHDM::module_inst*)> find =
+                        [&](const UHDM::module_inst* m) -> const UHDM::module_inst* {
+                        if (!m) return nullptr;
+                        if (std::string(m->VpiDefName()) == def &&
+                            m != current_instance && m->Ports())
+                            return m;
+                        if (m->Modules())
+                            for (auto c : *m->Modules())
+                                if (auto r = find(c)) return r;
+                        return nullptr;
+                    };
+                    const UHDM::module_inst* elab = nullptr;
+                    for (auto t : *uhdm_design->TopModules()) {
+                        if (auto r = find(t)) { elab = r; break; }
+                    }
+                    if (elab && elab->Ports()) {
+                        for (auto ep : *elab->Ports()) {
+                            if (std::string(ep->VpiName()) != portname) continue;
+                            const UHDM::modport* emp = nullptr;
+                            const UHDM::interface_inst* eii = nullptr;
+                            // Prefer High_conn — that points to the parent's
+                            // local interface_inst (which carries the
+                            // overridden parameter).  Low_conn points to
+                            // the submodule's local view (no override).
+                            if (auto hc = ep->High_conn()) {
+                                if (hc->UhdmType() == uhdmref_obj) {
+                                    auto r2 = any_cast<const ref_obj*>(hc);
+                                    if (auto ag = r2->Actual_group()) {
+                                        if (ag->UhdmType() == uhdmmodport)
+                                            emp = any_cast<const UHDM::modport*>(ag);
+                                        else if (ag->UhdmType() == uhdminterface_inst)
+                                            eii = any_cast<const UHDM::interface_inst*>(ag);
+                                    }
+                                }
+                            }
+                            if (emp && emp->VpiParent() &&
+                                emp->VpiParent()->UhdmType() == uhdminterface_inst)
+                                eii = any_cast<const UHDM::interface_inst*>(emp->VpiParent());
+                            if (emp) mp = emp;
+                            if (eii) iface_inst = eii;
+                            break;
+                        }
+                    }
+                }
 
                 // When the interface signal's typespec refers to an
                 // interface parameter (e.g. `logic [DATA_WIDTH-1:0]`

@@ -47,26 +47,36 @@ name from the high_conn ref_obj's `VpiName`).
 `mid` forwards its received `bus` interface port into `leaf` (the
 "inherited interface" pattern svinterface1 uses).
 
-## Issue 3: Multi-WIDTH `$paramod` variants — PENDING
+## Issue 3: Per-instance parameterised interface widths — ✅ DONE
 
-**Symptom**: A module receives two interface ports whose source
-instances were created with different `WIDTH` parameter values
-(e.g. `WIDTH=4` and `WIDTH=22`). Our flattening uses a single set of
-field widths per module def — both ports end up with the same width.
+**Symptom**: A submodule receives a parameterised interface port
+whose `WIDTH` was overridden at the parent (e.g. `bus_if #(.W(22))`).
+The submodule's `\bus.field` wire still has the *default* width from
+the interface declaration, so the hierarchy pass sees a width
+mismatch and the design breaks.
 
-**Root cause**: `import_interface_instances` reads
-`module->parameter_default_values["WIDTH"]` as a single value per
-module, not per-interface-instance.
+**Root cause**: `import_port` reads the modport / interface_inst via
+the AllModules port's `Low_conn->Actual_group()` — that's the
+unelaborated interface with default parameter values.  When
+`compute_signal_width` runs ExprEval against this scope, `W` resolves
+to the default.
 
-**Fix plan**: either (a) generate a separate `$paramod` variant of
-the submodule per (WIDTH₁, WIDTH₂) combination, mirroring Yosys's
-approach, or (b) switch to Yosys's `is_interface` placeholder pattern
-and let the `hierarchy` pass do the per-instance expansion. Option
-(b) is the long-term refactor.
+**Fix**: when processing an interface port, find a matching
+elaborated instance of the current module via the `TopModules`
+walk; look up the same-named port on it; replace `mp` / `iface_inst`
+with the elaborated port's `High_conn` modport / interface_inst.
+`High_conn` (not `Low_conn`) carries the *parent's* local interface
+instance — which is where the parameter override (`param_assign`
+with `vpiOverriden:1`) lives.
 
-**Repro to write**: `test/iface_two_widths/dut.sv` — a sub that
-takes two interface ports of the same type, parent passes interface
-instances with different WIDTH values.
+**Limitation**: this picks the first elaborated instance found.
+Modules instantiated multiple times with different parameter
+overrides would need real `$paramod` variants (Yosys's approach);
+svinterface1.sv has single instances so this suffices for now.
+
+**Repro**: `test/iface_param_width_per_inst/` — `top` instantiates
+`sub` passing `my_iface #(.W(22)) bus()`; without the fix
+`sub`'s `bus.data` is width 3 (default `W`) instead of 22.
 
 ## Issue 4: hier_path LHS on interface fields with part-selects — PENDING
 
@@ -92,8 +102,8 @@ top-level output.
 | PR | Issue | Status |
 |----|-------|--------|
 | 1 | Local interface instances in non-top modules | merged |
-| 2 | Cell-side per-field connections | this PR (`iface_passthrough`) |
-| 3 | Multi-WIDTH paramod variants | pending |
+| 2 | Cell-side per-field connections | merged |
+| 3 | Per-instance parameterised interface widths | this PR (`iface_param_width_per_inst`) |
 | 4 | hier_path LHS on interface fields | pending |
 
 Once all four land, copy
