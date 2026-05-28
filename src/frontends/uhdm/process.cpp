@@ -687,7 +687,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             std::vector<AssignedSignal> assigned_signals;
             std::map<std::string, RTLIL::Wire*> temp_wires;  // Map from signal name to temp wire
             std::map<std::string, RTLIL::SigSpec> signal_specs; // Map from signal name to full signal SigSpec
-            
+
+            // Promote begin-block-local variables to module wires before the
+            // assigned-signal scan tries to resolve them (Verilog frontend
+            // does the same — block-locals in always_ff retain their value).
+            if (stmt) {
+                create_block_local_wires(stmt);
+            }
+
             // Extract assigned signals from the statement
             if (stmt) {
                 extract_assigned_signals(stmt, assigned_signals);
@@ -2381,6 +2388,57 @@ static bool block_has_local_variables(const any* stmt) {
         }
     }
     return false;
+}
+
+// Walk an always-block statement tree and create module-level wires for any
+// variables declared inside named/unnamed begin blocks (e.g.
+// `always @(posedge clk) begin: NAME reg [4:0] i; ...`).  These vars are
+// block-scoped in the source but persist across invocations in
+// always_ff/always_comb, so Yosys's verilog frontend promotes them to
+// module wires.  We do the same.
+void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
+    if (!stmt) return;
+    int type = stmt->VpiType();
+    const UHDM::VectorOfvariables* vars = nullptr;
+    const UHDM::VectorOfany* stmts = nullptr;
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        vars = b->Variables();
+        stmts = b->Stmts();
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        vars = b->Variables();
+        stmts = b->Stmts();
+    }
+    if (vars) {
+        for (auto v : *vars) {
+            std::string vname = std::string(v->VpiName());
+            if (vname.empty()) continue;
+            RTLIL::IdString wname = RTLIL::escape_id(vname);
+            if (module->wire(wname)) continue;
+            int w = get_width(v, current_instance);
+            if (w <= 0) w = 1;
+            RTLIL::Wire* wire = module->addWire(wname, w);
+            // Carry signedness from the variable's logic_typespec if any.
+            if (auto rts = v->Typespec()) {
+                if (auto ats = rts->Actual_typespec()) {
+                    if (auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats))
+                        wire->is_signed = lt->VpiSigned();
+                    else if (auto it = dynamic_cast<const UHDM::int_typespec*>(ats))
+                        wire->is_signed = it->VpiSigned();
+                }
+            }
+            add_src_attribute(wire->attributes, v);
+            name_map[vname] = wire;
+            if (mode_debug)
+                log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
+                    vname.c_str(), w, wire->is_signed);
+        }
+    }
+    if (stmts) {
+        for (auto s : *stmts)
+            create_block_local_wires(s);
+    }
 }
 
 void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
