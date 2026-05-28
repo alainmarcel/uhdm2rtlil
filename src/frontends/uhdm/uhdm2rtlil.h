@@ -360,7 +360,13 @@ struct UhdmImporter {
     // Key = unescaped signal name, value = per-bit integer (0/1, -1 = unset).
     std::map<std::string, std::vector<int>> const_eval_module_writes;
     RTLIL::SigSpec current_ff_clock_sig;
-    
+    // For multi-edge always blocks (`always @(posedge a, negedge b)`):
+    // all edge triggers, one entry per `(signal, posedge?)` pair.
+    // Used by `$print` / `$check` emission to build multi-bit `TRG`
+    // and per-bit `TRG_POLARITY`.  Empty otherwise; populated alongside
+    // `current_ff_clock_sig` during always_ff sensitivity-list parsing.
+    std::vector<std::pair<RTLIL::SigSpec, bool>> current_ff_edges;
+
     // Temporary wires for combinational processes
     std::map<const UHDM::expr*, RTLIL::Wire*> current_temp_wires;
     std::map<const UHDM::expr*, RTLIL::SigSpec> current_lhs_specs;
