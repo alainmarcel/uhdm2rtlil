@@ -13,3 +13,14 @@
 # to `ref_mod`.
 svinterfaces/load_and_derive.sv
 svinterfaces/resolve_types.sv
+
+# const_arg_loop's operation2 has a function-local `inp[0] = inp[0] ^ 1`
+# bit-select self-assignment followed by `operation2 = num * inp`.
+# Yosys's verilog frontend splits the partial write into per-bit-range
+# connects (bit 0 = xor result, bits [4:1] = original constant), but
+# our UHDM frontend emits the actions as sequential proc actions and
+# the multiplication ends up reading the original constant value of
+# `inp` — giving x2 = 6 instead of 4.  The other four outputs (x1,
+# x1b, x3, x4) pass via the loop-chain init / concat-width fixes.
+# Tracked as a deeper sequential-update-in-function-body bug.
+const_arg_loop

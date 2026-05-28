@@ -523,7 +523,7 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
             }
             RTLIL::SigSpec lhs_sig;
             RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
-            
+
             // For accumulative assignments in loops, we need special handling
             // The issue is that result = result + expr creates conflicting assignments
             // when unrolled. We need to skip creating individual assignments and
@@ -978,12 +978,29 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
                             if (lhs_ref) {
                                 accumulator_var = std::string(lhs_ref->VpiName());
-                                // Check if this variable is in input_mapping (could be result or function name)
+                                // Detect any `var = f(var, ...)` pattern (not just
+                                // `var = var + x`): for the loop body to chain
+                                // across iterations, the RHS must read the LHS.
+                                // Walk the RHS recursively looking for a ref_obj
+                                // whose name matches accumulator_var.
                                 auto it = input_mapping.find(accumulator_var);
-                                if (it != input_mapping.end() && assign->Rhs() && 
-                                    assign->Rhs()->UhdmType() == uhdmoperation) {
-                                    const operation* op = any_cast<const operation*>(assign->Rhs());
-                                    if (op && op->VpiOpType() == vpiAddOp) {
+                                if (it != input_mapping.end() && assign->Rhs()) {
+                                    std::function<bool(const UHDM::any*)> reads_var =
+                                        [&](const UHDM::any* e) -> bool {
+                                        if (!e) return false;
+                                        if (e->UhdmType() == uhdmref_obj) {
+                                            auto r = any_cast<const ref_obj*>(e);
+                                            return std::string(r->VpiName()) == accumulator_var;
+                                        }
+                                        if (e->UhdmType() == uhdmoperation) {
+                                            auto op = any_cast<const operation*>(e);
+                                            if (op->Operands())
+                                                for (auto o : *op->Operands())
+                                                    if (reads_var(o)) return true;
+                                        }
+                                        return false;
+                                    };
+                                    if (reads_var(assign->Rhs())) {
                                         is_accumulative = true;
                                         log("UHDM: Detected accumulative loop for variable '%s'\n", accumulator_var.c_str());
                                     }
@@ -991,16 +1008,38 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             }
                         }
                     }
-                    
+
                     // Track the current accumulated value for chaining
                     RTLIL::SigSpec current_accumulator;
                     if (is_accumulative) {
-                        // Initialize with the current value of the accumulator variable
+                        // Initialise the chain with the LATEST value already
+                        // assigned to the accumulator wire in this case_rule —
+                        // i.e. the source of the most recent
+                        // `$0\<var> = <rhs>` action above this loop.  Using
+                        // the wire itself (`input_mapping[var]`) would create
+                        // a combinational loop: each iter's mul reads $0\num
+                        // and writes it, and the loop pass collapses the
+                        // unconditional assigns to the last one — which then
+                        // depends on $0\num through the chain.
+                        //
+                        // The prior code used `SigSpec(S0, ...)` which only
+                        // worked when the var was pre-initialised to 0 just
+                        // above the loop (the textbook `accum=0; for ... accum+=x` pattern).
+                        // For `num = input_arg; for ... num = num*2;` we need
+                        // the actual prior RHS (the input wire `\a`), not
+                        // zero and not the wire being assigned.
                         auto it = input_mapping.find(accumulator_var);
                         if (it != input_mapping.end()) {
-                            // Start with zero for the accumulator
-                            current_accumulator = RTLIL::SigSpec(RTLIL::State::S0, it->second.size());
-                            // Store in loop_accumulators so import_expression can use it
+                            RTLIL::SigSpec target = it->second;
+                            RTLIL::SigSpec latest;
+                            for (const auto& act : case_rule->actions) {
+                                if (act.first == target) latest = act.second;
+                            }
+                            if (latest.size() > 0)
+                                current_accumulator = latest;
+                            else
+                                current_accumulator =
+                                    RTLIL::SigSpec(RTLIL::State::S0, target.size());
                             loop_accumulators[accumulator_var] = current_accumulator;
                         }
                     }
@@ -3648,7 +3687,20 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             FunctionCallContext* ctx = getCurrentFunctionContext();
             if (ctx && ctx->const_wire_values.count(ref_name)) {
                 RTLIL::Const const_val = ctx->const_wire_values[ref_name];
-                log("UHDM: Function parameter %s has constant value %s\n", 
+                // Size the constant to the parameter's declared width.
+                // Surelog stores integer literals at the platform default
+                // (e.g. 64 bits) — using them raw inside a `{a, b}` concat
+                // pollutes the result with phantom upper bits (operation4 in
+                // various/const_arg_loop.sv passed `0` as a 1-bit `b` and
+                // got 64 zero bits in front of `a`).
+                int param_width = it->second.size();
+                if (param_width > 0 &&
+                    (int)const_val.size() != param_width) {
+                    RTLIL::Const sized = const_val;
+                    sized.resize(param_width, RTLIL::State::S0);
+                    const_val = sized;
+                }
+                log("UHDM: Function parameter %s has constant value %s\n",
                     ref_name.c_str(), const_val.as_string().c_str());
                 return RTLIL::SigSpec(const_val);
             }
