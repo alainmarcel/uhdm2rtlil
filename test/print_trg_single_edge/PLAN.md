@@ -27,22 +27,27 @@ existing handling for `$check`.
 
 **Repro**: this directory (`test/print_trg_single_edge/`).
 
-## PR 2: Route multi-edge non-reset always blocks — PENDING
+## PR 2: Route multi-edge non-reset always blocks — ✅ DONE
 
 **Symptom**: `always @(posedge a, posedge b) if (en) $display(...)`
 emits no `$print` cell at all.  Trigger signals (`eff_1_*` /
 `eff_2_*` in clk2fflogic_effects.sv) get dead-stripped.
 
-**Root cause**: `import_always_ff` sees 2+ edge triggers and routes
-to the async-reset path, which assumes `if (rst) ... else ...` with
-assignments.  Bodies that are pure `$display`/`$check` (no reset
-semantics) silently fall through with no cells emitted.
+**Root cause**: `import_always_ff`'s async-reset path matched only
+`vpiIfElse` bodies (`if (rst) ... else ...`).  A bare `if (cond)
+$display(...)` is `vpiIfStmt` (no else), and the path silently
+dropped it — the resulting process had empty body with only sync
+rules.
 
-**Fix plan**: detect "pure-effect body" (no assignments, only
-`$display`/`$check`) and route those multi-edge blocks through a
-new path that calls `import_statement_comb` on the body and creates
-sync rules for each edge trigger.  Repro to write:
-`test/print_trg_multi_edge/dut.sv`.
+**Fix**: when `assigned_signals` is empty AND no `vpiIfElse` body
+was matched, set `in_always_ff_context = true` /
+`current_ff_clock_sig = clock_sig` and call
+`import_statement_comb(stmt, &yosys_proc->root_case)` directly on
+the body.  Effect-only bodies (`$display` / `$check` calls) emit
+`$print`/`$check` cells with TRG bound; no temp wires or sync
+rules needed.
+
+**Repro**: `test/print_trg_multi_edge/`.
 
 ## PR 3: Multi-trigger `$print` cell emission — PENDING
 
@@ -74,7 +79,7 @@ the `(* gclk *)` attribute on a bare reg (already works).
 
 | PR | Issue | Status |
 |----|-------|--------|
-| 1 | `$print` TRG binding for single-edge | this PR |
-| 2 | Route multi-edge non-reset always | pending |
+| 1 | `$print` TRG binding for single-edge | merged |
+| 2 | Route multi-edge non-reset always | this PR |
 | 3 | Multi-trigger `$print` cells | pending |
 | 4 | clk2fflogic_effects end-to-end | pending |
