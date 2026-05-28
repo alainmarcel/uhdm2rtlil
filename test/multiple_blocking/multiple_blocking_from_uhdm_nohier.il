@@ -29,11 +29,11 @@ module \multiple_blocking
   wire width 3 $auto$rtlil.cc:3255:Not$7
   wire width 32 $auto$expression.cpp:2965:import_operation$8
   wire width 7 $auto$expression.cpp:3100:import_operation$10
-  wire width 32 $auto$process.cpp:6740:import_assignment_sync$12
-  wire width 32 $auto$process.cpp:6751:import_assignment_sync$14
-  wire width 32 $auto$process.cpp:6754:import_assignment_sync$16
-  wire width 32 $auto$process.cpp:6757:import_assignment_sync$18
-  wire width 32 $auto$process.cpp:6761:import_assignment_sync$20
+  wire width 32 $auto$process.cpp:6760:import_assignment_sync$12
+  wire width 32 $auto$process.cpp:6771:import_assignment_sync$14
+  wire width 32 $auto$process.cpp:6774:import_assignment_sync$16
+  wire width 32 $auto$process.cpp:6777:import_assignment_sync$18
+  wire width 32 $auto$process.cpp:6781:import_assignment_sync$20
   attribute \src "dut.sv:14.11-14.19"
   cell $add $add$dut.sv:14$3
     parameter \A_SIGNED 0
@@ -86,7 +86,7 @@ module \multiple_blocking
     connect \B \b
     connect \Y $auto$expression.cpp:3100:import_operation$10
   end
-  cell $shl $auto$process.cpp:6741:import_assignment_sync$13
+  cell $shl $auto$process.cpp:6761:import_assignment_sync$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -94,9 +94,9 @@ module \multiple_blocking
     parameter \Y_WIDTH 32
     connect \A { 29'00000000000000000000000000000 \c }
     connect \B $auto$expression.cpp:3100:import_operation$10
-    connect \Y $auto$process.cpp:6740:import_assignment_sync$12
+    connect \Y $auto$process.cpp:6760:import_assignment_sync$12
   end
-  cell $shl $auto$process.cpp:6752:import_assignment_sync$15
+  cell $shl $auto$process.cpp:6772:import_assignment_sync$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -104,34 +104,34 @@ module \multiple_blocking
     parameter \Y_WIDTH 32
     connect \A 32'11111111111111111111111111111111
     connect \B $auto$expression.cpp:3100:import_operation$10
-    connect \Y $auto$process.cpp:6751:import_assignment_sync$14
+    connect \Y $auto$process.cpp:6771:import_assignment_sync$14
   end
-  cell $not $auto$process.cpp:6755:import_assignment_sync$17
+  cell $not $auto$process.cpp:6775:import_assignment_sync$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:6751:import_assignment_sync$14
-    connect \Y $auto$process.cpp:6754:import_assignment_sync$16
+    connect \A $auto$process.cpp:6771:import_assignment_sync$14
+    connect \Y $auto$process.cpp:6774:import_assignment_sync$16
   end
-  cell $and $auto$process.cpp:6758:import_assignment_sync$19
+  cell $and $auto$process.cpp:6778:import_assignment_sync$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A \dout
-    connect \B $auto$process.cpp:6754:import_assignment_sync$16
-    connect \Y $auto$process.cpp:6757:import_assignment_sync$18
+    connect \B $auto$process.cpp:6774:import_assignment_sync$16
+    connect \Y $auto$process.cpp:6777:import_assignment_sync$18
   end
-  cell $or $auto$process.cpp:6762:import_assignment_sync$21
+  cell $or $auto$process.cpp:6782:import_assignment_sync$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:6757:import_assignment_sync$18
-    connect \B $auto$process.cpp:6740:import_assignment_sync$12
-    connect \Y $auto$process.cpp:6761:import_assignment_sync$20
+    connect \A $auto$process.cpp:6777:import_assignment_sync$18
+    connect \B $auto$process.cpp:6760:import_assignment_sync$12
+    connect \Y $auto$process.cpp:6781:import_assignment_sync$20
   end
   attribute \src "dut.sv:13.4-19.7"
   attribute \always_ff 1
@@ -140,6 +140,6 @@ module \multiple_blocking
       update \b $auto$expression.cpp:3020:import_operation$4 [0]
       update \c $auto$rtlil.cc:3255:Not$7
       update \a $auto$expression.cpp:2965:import_operation$2
-      update \dout $auto$process.cpp:6761:import_assignment_sync$20
+      update \dout $auto$process.cpp:6781:import_assignment_sync$20
   end
 end

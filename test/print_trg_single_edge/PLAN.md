@@ -73,12 +73,24 @@ negedge b) if (cond) $display(...)`.  Now emits `$print` with
 TRG_WIDTH=2, TRG_POLARITY=2'01, TRG={b, a} — matches Yosys's
 verilog frontend.
 
-## PR 4: `clk2fflogic_effects.sv` end-to-end pass — PENDING
+## PR 4: `clk2fflogic_effects.sv` end-to-end pass — ✅ DONE
 
-Copy the upstream file into `test/clk2fflogic_effects/`, confirm
-formal equivalence passes end-to-end.  Possible residual issues:
-`$finish` inside `__ICARUS__` guards (which Surelog skips), and
-the `(* gclk *)` attribute on a bare reg (already works).
+The remaining gap was the `(* gclk *) reg gclk;` global-clock
+attribute.  Yosys's verilog frontend lowers any sync rule whose
+trigger is a gclk-attributed wire to `RTLIL::STg` with empty
+signal, so `proc_dff` emits a `$ff` (clockless flop) instead of a
+`$dff` clocked by the undriven `gclk` wire.  Without this transform
+`synth` sees a `$dff` with no clock driver and strips the divided
+clock — and the entire effect chain depending on it.
+
+**Fix**: post-process `yosys_proc->syncs` at the end of
+`import_always_ff`: rewrite any sync rule whose signal is a wire
+with the `gclk` attribute to `type=STg` with empty signal.
+
+`test/clk2fflogic_effects/` (the upstream file imported verbatim)
+now passes formal equivalence end-to-end.
+
+All four PRs landed; the multi-PR series is complete.
 
 ## Status
 
@@ -86,5 +98,5 @@ the `(* gclk *)` attribute on a bare reg (already works).
 |----|-------|--------|
 | 1 | `$print` TRG binding for single-edge | merged |
 | 2 | Route multi-edge non-reset always | merged |
-| 3 | Multi-trigger `$print` cells | this PR |
-| 4 | clk2fflogic_effects end-to-end | pending |
+| 3 | Multi-trigger `$print` cells | merged |
+| 4 | clk2fflogic_effects end-to-end | this PR |

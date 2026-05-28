@@ -13,7 +13,7 @@ module \top
   attribute \src "dut.sv:15.64-15.67"
   wire width 8 output 4 \cnt
   attribute \src "dut.sv:26.13-26.37"
-  wire $display$0x55cf94b7b0a0:26$4_EN
+  wire $display$0x5644a5c340a0:26$4_EN
   attribute \src "dut.sv:20.20-20.27"
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
   wire width 32 $add$dut.sv:20$2_Y
@@ -29,7 +29,7 @@ module \top
     connect \Y $add$dut.sv:20$2_Y
   end
   attribute \src "dut.sv:26.13-26.37"
-  cell $print $display$0x55cf94b7b0a0:26$4
+  cell $print $display$0x5644a5c340a0:26$4
     parameter \TRG_WIDTH 2
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 2'11
@@ -37,7 +37,7 @@ module \top
     parameter \FORMAT "cnt={8:> 3d-u}\n"
     parameter \ARGS_WIDTH 8
     connect \TRG { \rst \clk }
-    connect \EN $display$0x55cf94b7b0a0:26$4_EN
+    connect \EN $display$0x5644a5c340a0:26$4_EN
     connect \ARGS \cnt
   end
   attribute \src "dut.sv:25.13-25.17|dut.sv:25.9-26.37"
@@ -46,7 +46,7 @@ module \top
     connect \A 1'0
     connect \B 1'1
     connect \S \cond
-    connect \Y $display$0x55cf94b7b0a0:26$4_EN
+    connect \Y $display$0x5644a5c340a0:26$4_EN
   end
   attribute \src "dut.sv:16.5-21.8"
   cell $sdff $auto$ff.cc:337:slice$11
