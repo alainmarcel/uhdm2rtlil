@@ -13,7 +13,7 @@ module \uut_forgen01
   wire width 32 signed \j
   attribute \src "dut.sv:9.12-9.15"
   wire width 32 \lut
-  wire $auto$expression.cpp:4592:import_bit_select$1
+  wire $auto$expression.cpp:4644:import_bit_select$1
   attribute \src "dut.sv:20.16-20.17"
   cell $shiftx $shiftx$dut.sv:20$2
     parameter \A_SIGNED 0
@@ -23,7 +23,7 @@ module \uut_forgen01
     parameter \Y_WIDTH 1
     connect \A \lut
     connect \B \a
-    connect \Y $auto$expression.cpp:4592:import_bit_select$1
+    connect \Y $auto$expression.cpp:4644:import_bit_select$1
   end
   attribute \src "dut.sv:11.1-18.4"
   process $proc$dut.sv:11$3
@@ -188,5 +188,5 @@ module \uut_forgen01
     sync always
       update \lut [31] 1'1
   end
-  connect \y $auto$expression.cpp:4592:import_bit_select$1
+  connect \y $auto$expression.cpp:4644:import_bit_select$1
 end

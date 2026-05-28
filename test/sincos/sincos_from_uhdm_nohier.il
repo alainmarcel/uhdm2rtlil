@@ -56,15 +56,15 @@ module \d
   attribute \src "dut.sv:45.1-122.4"
   wire width 20 $0\dz
   wire $auto$rtlil.cc:3313:Ge$3
-  wire width 20 $auto$expression.cpp:2981:import_operation$4
-  wire width 20 $auto$expression.cpp:2926:import_operation$6
-  wire width 20 $auto$expression.cpp:2981:import_operation$8
-  wire width 20 $auto$expression.cpp:2926:import_operation$10
-  wire width 20 $auto$expression.cpp:2981:import_operation$12
-  wire width 20 $auto$expression.cpp:2926:import_operation$14
+  wire width 20 $auto$expression.cpp:3020:import_operation$4
+  wire width 20 $auto$expression.cpp:2965:import_operation$6
+  wire width 20 $auto$expression.cpp:3020:import_operation$8
+  wire width 20 $auto$expression.cpp:2965:import_operation$10
+  wire width 20 $auto$expression.cpp:3020:import_operation$12
+  wire width 20 $auto$expression.cpp:2965:import_operation$14
   attribute \src "dut.sv:110.22-110.35"
   wire $eq$dut.sv:110$16_Y
-  wire width 5 $auto$expression.cpp:2926:import_operation$18
+  wire width 5 $auto$expression.cpp:2965:import_operation$18
   cell $ge $ge$dut.sv:100$2
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -84,7 +84,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \x
     connect \B \dx
-    connect \Y $auto$expression.cpp:2981:import_operation$4
+    connect \Y $auto$expression.cpp:3020:import_operation$4
   end
   attribute \src "dut.sv:102.25-102.31"
   cell $add $add$dut.sv:102$7
@@ -95,7 +95,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \y
     connect \B \dy
-    connect \Y $auto$expression.cpp:2926:import_operation$6
+    connect \Y $auto$expression.cpp:2965:import_operation$6
   end
   attribute \src "dut.sv:103.25-103.31"
   cell $sub $sub$dut.sv:103$9
@@ -106,7 +106,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \z
     connect \B \dz
-    connect \Y $auto$expression.cpp:2981:import_operation$8
+    connect \Y $auto$expression.cpp:3020:import_operation$8
   end
   attribute \src "dut.sv:106.25-106.31"
   cell $add $add$dut.sv:106$11
@@ -117,7 +117,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \x
     connect \B \dx
-    connect \Y $auto$expression.cpp:2926:import_operation$10
+    connect \Y $auto$expression.cpp:2965:import_operation$10
   end
   attribute \src "dut.sv:107.25-107.31"
   cell $sub $sub$dut.sv:107$13
@@ -128,7 +128,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \y
     connect \B \dy
-    connect \Y $auto$expression.cpp:2981:import_operation$12
+    connect \Y $auto$expression.cpp:3020:import_operation$12
   end
   attribute \src "dut.sv:108.25-108.31"
   cell $add $add$dut.sv:108$15
@@ -139,7 +139,7 @@ module \d
     parameter \Y_WIDTH 20
     connect \A \z
     connect \B \dz
-    connect \Y $auto$expression.cpp:2926:import_operation$14
+    connect \Y $auto$expression.cpp:2965:import_operation$14
   end
   attribute \src "dut.sv:110.22-110.35"
   cell $eq $eq$dut.sv:110$17
@@ -161,7 +161,7 @@ module \d
     parameter \Y_WIDTH 5
     connect \A \i
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2926:import_operation$18
+    connect \Y $auto$expression.cpp:2965:import_operation$18
   end
   attribute \src "dut.sv:45.1-122.4"
   attribute \always_ff 1
@@ -277,14 +277,14 @@ module \d
             switch $auto$rtlil.cc:3313:Ge$3
             attribute \src "dut.sv:100.17-109.20"
               case 1'1
-                assign $0\x $auto$expression.cpp:2981:import_operation$4
-                assign $0\y $auto$expression.cpp:2926:import_operation$6
-                assign $0\z $auto$expression.cpp:2981:import_operation$8
+                assign $0\x $auto$expression.cpp:3020:import_operation$4
+                assign $0\y $auto$expression.cpp:2965:import_operation$6
+                assign $0\z $auto$expression.cpp:3020:import_operation$8
             attribute \src "dut.sv:100.17-109.20"
               case 
-                assign $0\x $auto$expression.cpp:2926:import_operation$10
-                assign $0\y $auto$expression.cpp:2981:import_operation$12
-                assign $0\z $auto$expression.cpp:2926:import_operation$14
+                assign $0\x $auto$expression.cpp:2965:import_operation$10
+                assign $0\y $auto$expression.cpp:3020:import_operation$12
+                assign $0\z $auto$expression.cpp:2965:import_operation$14
             end
             attribute \src "dut.sv:110.17-118.20"
             switch $eq$dut.sv:110$16_Y
@@ -296,7 +296,7 @@ module \d
                 assign $0\done 1'1
             attribute \src "dut.sv:110.17-118.20"
               case 
-                assign $0\i $auto$expression.cpp:2926:import_operation$18
+                assign $0\i $auto$expression.cpp:2965:import_operation$18
             end
         end
     end

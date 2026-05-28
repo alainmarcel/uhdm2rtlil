@@ -14,8 +14,8 @@ module \top
   attribute \init 6'000000
   wire width 6 \ledCounter
   wire $auto$rtlil.cc:3307:Lt$7
-  wire width 24 $auto$expression.cpp:2926:import_operation$8
-  wire width 6 $auto$expression.cpp:2926:import_operation$10
+  wire width 24 $auto$expression.cpp:2965:import_operation$8
+  wire width 6 $auto$expression.cpp:2965:import_operation$10
   attribute \src "dut.sv:10.14-10.25"
   cell $not $not$dut.sv:10$3
     parameter \A_SIGNED 0
@@ -43,7 +43,7 @@ module \top
     parameter \Y_WIDTH 24
     connect \A \wait_counter
     connect \B 24'000000000000000000000001
-    connect \Y $auto$expression.cpp:2926:import_operation$8
+    connect \Y $auto$expression.cpp:2965:import_operation$8
   end
   attribute \src "dut.sv:18.19-18.35"
   cell $add $add$dut.sv:18$11
@@ -54,7 +54,7 @@ module \top
     parameter \Y_WIDTH 6
     connect \A \ledCounter
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2926:import_operation$10
+    connect \Y $auto$expression.cpp:2965:import_operation$10
   end
   attribute \src "dut.sv:12.1-20.4"
   attribute \always_ff 1
@@ -65,7 +65,7 @@ module \top
     parameter \WIDTH 24
     connect \CLK \CLK
     connect \SRST $auto$rtlil.cc:3307:Lt$7
-    connect \D $auto$expression.cpp:2926:import_operation$8
+    connect \D $auto$expression.cpp:2965:import_operation$8
     connect \Q \wait_counter
   end
   attribute \src "dut.sv:12.1-20.4"
@@ -76,7 +76,7 @@ module \top
     parameter \WIDTH 6
     connect \CLK \CLK
     connect \EN $auto$rtlil.cc:3307:Lt$7
-    connect \D $auto$expression.cpp:2926:import_operation$10
+    connect \D $auto$expression.cpp:2965:import_operation$10
     connect \Q \ledCounter
   end
 end

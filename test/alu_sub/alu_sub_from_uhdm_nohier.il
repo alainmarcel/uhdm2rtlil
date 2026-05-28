@@ -9,7 +9,7 @@ module \adder
   wire width 8 input 2 \b
   attribute \src "dut.sv:2.48-2.49"
   wire width 8 output 3 \y
-  wire width 8 $auto$expression.cpp:2926:import_operation$1
+  wire width 8 $auto$expression.cpp:2965:import_operation$1
   attribute \src "dut.sv:4.16-4.21"
   cell $add $add$dut.sv:4$2
     parameter \A_SIGNED 0
@@ -19,9 +19,9 @@ module \adder
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2926:import_operation$1
+    connect \Y $auto$expression.cpp:2965:import_operation$1
   end
-  connect \y $auto$expression.cpp:2926:import_operation$1
+  connect \y $auto$expression.cpp:2965:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:27.1-61.10"
@@ -56,7 +56,7 @@ module \alu
   wire $0\SF
   attribute \src "dut.sv:46.2-60.5"
   wire width 8 $0\result
-  wire width 9 $auto$expression.cpp:2981:import_operation$4
+  wire width 9 $auto$expression.cpp:3020:import_operation$4
   attribute \src "dut.sv:56.9-56.22"
   wire $eq$dut.sv:56$6_Y
   attribute \src "dut.sv:52.11-52.16"
@@ -68,7 +68,7 @@ module \alu
     parameter \Y_WIDTH 9
     connect \A { 1'0 \A }
     connect \B { 1'0 \B }
-    connect \Y $auto$expression.cpp:2981:import_operation$4
+    connect \Y $auto$expression.cpp:3020:import_operation$4
   end
   attribute \src "dut.sv:56.9-56.22"
   cell $eq $eq$dut.sv:56$7
@@ -101,7 +101,7 @@ module \alu
         assign $0\tmp { 1'0 \added }
     attribute \src "dut.sv:51.4-52.17"
       case 4'0001
-        assign $0\tmp $auto$expression.cpp:2981:import_operation$4
+        assign $0\tmp $auto$expression.cpp:3020:import_operation$4
     end
     sync posedge \clk
       update \CF $0\CF
