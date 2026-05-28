@@ -1809,6 +1809,26 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     // `q <= D; q[hi:lo] <= X;` patterns).
     normalize_overlapping_writes(&yosys_proc->root_case);
 
+    // `(* gclk *) reg gclk; always @(posedge gclk) clk <= !clk;` — the
+    // `gclk` attribute marks a wire as a global simulation clock with
+    // no real driver.  Yosys's verilog frontend lowers any sync rule
+    // whose trigger is a gclk-attributed wire to `RTLIL::STg` with an
+    // empty signal; `proc_dff` then emits a `$ff` (clockless flop)
+    // instead of a `$dff` clocked by the undriven `gclk` wire.
+    // Without this transform, `synth` sees the `$dff` with an undriven
+    // CLK and strips everything that depends on the divided clock —
+    // including the entire effect chain in
+    // yosys/tests/various/clk2fflogic_effects.sv.
+    for (auto sync : yosys_proc->syncs) {
+        if (sync->signal.is_wire()) {
+            RTLIL::Wire* w = sync->signal.as_wire();
+            if (w && w->attributes.count(RTLIL::escape_id("gclk"))) {
+                sync->type = RTLIL::STg;
+                sync->signal = RTLIL::SigSpec();
+            }
+        }
+    }
+
     // Clear contexts at the end of import_always_ff
     in_always_ff_context = false;
     current_ff_clock_sig = RTLIL::SigSpec();

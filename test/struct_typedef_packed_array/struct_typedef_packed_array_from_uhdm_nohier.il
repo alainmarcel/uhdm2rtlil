@@ -26,7 +26,7 @@ module \top
   process $proc$dut.sv:13$1
   end
   attribute \src "dut.sv:13.5-13.20"
-  process $auto$process.cpp:2621:operator()$2
+  process $auto$process.cpp:2641:operator()$2
     sync always
       update \s 48'000000000000000000000000000000000000000000000000
   end
