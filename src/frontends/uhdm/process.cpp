@@ -768,8 +768,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
             }
             
+            // Pure-effect always_ff body (no register assignments — only
+            // `$display`/`$check` calls): the async-reset path was built
+            // around assigning to flop registers and emits no body when
+            // `assigned_signals` is empty.  Route effect-only bodies
+            // through `import_statement_comb` against the root_case so
+            // the surrounding always_ff context (set below) drives the
+            // $print/$check cells' TRG bindings.  Without this, multi-
+            // edge always blocks like `always @(posedge a, posedge b)
+            // if (en) $display(...)` produce a process with empty body
+            // and no $print cells at all.
+            if (!if_else_stmt && assigned_signals.empty() && stmt) {
+                in_always_ff_context = true;
+                current_ff_clock_sig = clock_sig;
+                import_statement_comb(stmt, &yosys_proc->root_case);
+            }
+
             if (if_else_stmt) {
-                        
+
                         // Import the condition (!rst_n)
                         if (auto cond = if_else_stmt->VpiCondition()) {
                             RTLIL::SigSpec cond_sig = import_expression(cond);

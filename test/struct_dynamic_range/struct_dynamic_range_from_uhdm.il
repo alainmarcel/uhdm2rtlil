@@ -13,13 +13,13 @@ module \range_case
   attribute \src "dut.sv:32.7-32.8"
   attribute \nowrshmsk 1
   wire width 48 \s
-  wire width 32 $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$12
+  wire width 32 $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$12
   attribute \unused_bits "29 30 31"
   wire width 32 $auto$expression.cpp:6065:import_hier_path$2
-  wire width 32 $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$16
+  wire width 32 $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$16
   attribute \unused_bits "29 30 31"
   wire width 32 $auto$expression.cpp:6065:import_hier_path$22
-  wire width 32 $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$14
+  wire width 32 $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$14
   cell $shiftx $auto$expression.cpp:6080:import_hier_path$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
@@ -30,24 +30,24 @@ module \range_case
     connect \B { $auto$expression.cpp:6065:import_hier_path$22 [28:0] 3'000 }
     connect \Y \data_o
   end
-  cell $or $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$21
+  cell $or $auto$process.cpp:7402:emit_dynamic_struct_field_bit_write$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$16
-    connect \B $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$14
+    connect \A $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$16
+    connect \B $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$14
     connect \Y \s [39:8]
   end
-  cell $not $auto$process.cpp:7372:emit_dynamic_struct_field_bit_write$17
+  cell $not $auto$process.cpp:7388:emit_dynamic_struct_field_bit_write$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$12
-    connect \Y $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$16
+    connect \A $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$12
+    connect \Y $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$16
   end
-  cell $sub $auto$process.cpp:7330:emit_dynamic_struct_field_bit_write$9
+  cell $sub $auto$process.cpp:7346:emit_dynamic_struct_field_bit_write$9
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -67,7 +67,7 @@ module \range_case
     connect \B { 29'00000000000000000000000000000 \addr_o }
     connect \Y $auto$expression.cpp:6065:import_hier_path$22
   end
-  cell $shl $auto$process.cpp:7366:emit_dynamic_struct_field_bit_write$13
+  cell $shl $auto$process.cpp:7382:emit_dynamic_struct_field_bit_write$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -75,9 +75,9 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 255
     connect \B { $auto$expression.cpp:6065:import_hier_path$2 [28:0] 3'000 }
-    connect \Y $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$12
+    connect \Y $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$12
   end
-  cell $shl $auto$process.cpp:7369:emit_dynamic_struct_field_bit_write$15
+  cell $shl $auto$process.cpp:7385:emit_dynamic_struct_field_bit_write$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -85,7 +85,7 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A { 24'000000000000000000000000 \data_i }
     connect \B { $auto$expression.cpp:6065:import_hier_path$2 [28:0] 3'000 }
-    connect \Y $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$14
+    connect \Y $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$14
   end
   connect { \s [47:40] \s [7:0] } 16'1111111111111111
 end
@@ -102,13 +102,13 @@ module \range_shift_mask
   attribute \src "dut.sv:12.7-12.8"
   attribute \nowrshmsk 1
   wire width 48 \s
-  wire width 32 $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$39
+  wire width 32 $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$39
   attribute \unused_bits "29 30 31"
   wire width 32 $auto$expression.cpp:6065:import_hier_path$29
-  wire width 32 $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$43
+  wire width 32 $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$43
   attribute \unused_bits "29 30 31"
   wire width 32 $auto$expression.cpp:6065:import_hier_path$49
-  wire width 32 $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$41
+  wire width 32 $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$41
   cell $shiftx $auto$expression.cpp:6080:import_hier_path$54
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
@@ -119,24 +119,24 @@ module \range_shift_mask
     connect \B { $auto$expression.cpp:6065:import_hier_path$49 [28:0] 3'000 }
     connect \Y \data_o
   end
-  cell $or $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$48
+  cell $or $auto$process.cpp:7402:emit_dynamic_struct_field_bit_write$48
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$43
-    connect \B $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$41
+    connect \A $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$43
+    connect \B $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$41
     connect \Y \s [39:8]
   end
-  cell $not $auto$process.cpp:7372:emit_dynamic_struct_field_bit_write$44
+  cell $not $auto$process.cpp:7388:emit_dynamic_struct_field_bit_write$44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$39
-    connect \Y $auto$process.cpp:7371:emit_dynamic_struct_field_bit_write$43
+    connect \A $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$39
+    connect \Y $auto$process.cpp:7387:emit_dynamic_struct_field_bit_write$43
   end
-  cell $sub $auto$process.cpp:7330:emit_dynamic_struct_field_bit_write$36
+  cell $sub $auto$process.cpp:7346:emit_dynamic_struct_field_bit_write$36
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -156,7 +156,7 @@ module \range_shift_mask
     connect \B { 29'00000000000000000000000000000 \addr_o }
     connect \Y $auto$expression.cpp:6065:import_hier_path$49
   end
-  cell $shl $auto$process.cpp:7366:emit_dynamic_struct_field_bit_write$40
+  cell $shl $auto$process.cpp:7382:emit_dynamic_struct_field_bit_write$40
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -164,9 +164,9 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 255
     connect \B { $auto$expression.cpp:6065:import_hier_path$29 [28:0] 3'000 }
-    connect \Y $auto$process.cpp:7365:emit_dynamic_struct_field_bit_write$39
+    connect \Y $auto$process.cpp:7381:emit_dynamic_struct_field_bit_write$39
   end
-  cell $shl $auto$process.cpp:7369:emit_dynamic_struct_field_bit_write$42
+  cell $shl $auto$process.cpp:7385:emit_dynamic_struct_field_bit_write$42
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
@@ -174,7 +174,7 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A { 24'000000000000000000000000 \data_i }
     connect \B { $auto$expression.cpp:6065:import_hier_path$29 [28:0] 3'000 }
-    connect \Y $auto$process.cpp:7368:emit_dynamic_struct_field_bit_write$41
+    connect \Y $auto$process.cpp:7384:emit_dynamic_struct_field_bit_write$41
   end
   connect { \s [47:40] \s [7:0] } 16'1111111111111111
 end
