@@ -121,7 +121,7 @@ module \blockrom
   process $proc$dut.sv:16$1
   end
   attribute \src "dut.sv:16.2-27.5"
-  process $auto$process.cpp:2611:operator()$2
+  process $auto$process.cpp:2621:operator()$2
     sync always
       update \j 32'10100111100011000101001011100000
   end

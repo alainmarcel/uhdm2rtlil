@@ -73,7 +73,7 @@
  (* src = "dut.sv:16.5-21.8" *)
  \$_SDFF_PP0_  \cnt_reg[5]  /* _29_ */ (
  .C(clk),
-@@ -152,18 +160,17 @@
+@@ -152,17 +160,16 @@
  .Q(cnt[5]),
  .R(rst)
  );
@@ -85,17 +85,13 @@
 +.FORMAT("{48:> 15d-u}{8:> 3d-u}\n"),
  .PRIORITY(32'd4294967295),
  .TRG_ENABLE(32'd1),
--.TRG_POLARITY(2'h3),
--.TRG_WIDTH(32'd2)
-+.TRG_POLARITY(1'h1),
-+.TRG_WIDTH(32'd1)
+ .TRG_POLARITY(2'h3),
+ .TRG_WIDTH(32'd2)
  ) _30_ (
 -.ARGS(cnt),
 -.EN(cond),
--.TRG({ rst, clk })
 +.ARGS({ cnt, 48'h636e743d2564 }),
 +.EN(1'h1),
-+.TRG(clk)
+ .TRG({ rst, clk })
  );
  assign _06_[7:1] = cnt[7:1];
- assign _07_[0] = _06_[0];

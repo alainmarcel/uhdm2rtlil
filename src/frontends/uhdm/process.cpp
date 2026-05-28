@@ -489,6 +489,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                             log_flush();
                                             clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
                                             current_ff_clock_sig = clock_sig; // Store for assertions
+                            current_ff_edges = {{clock_sig, clock_posedge}};
                                             log("      Clock signal imported, setting current_ff_clock_sig\n");
                                             log_flush();
                                             break; // Use the first posedge as clock
@@ -504,6 +505,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
                             current_ff_clock_sig = clock_sig; // Store for assertions
+                            current_ff_edges = {{clock_sig, clock_posedge}};
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -514,6 +516,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
                             current_ff_clock_sig = clock_sig; // Store for assertions
+                            current_ff_edges = {{clock_sig, clock_posedge}};
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
                             log_flush();
                         }
@@ -536,9 +539,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (edge_trigger_count > 1) {
                                 log("      List contains %d edge triggers - marking as async reset\n", edge_trigger_count);
                                 yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
-                                
+
                                 // Extract clock and reset signals from the list
                                 // Convention: first posedge is clock, second edge trigger is reset
+                                // Also populate `current_ff_edges` (all triggers in order)
+                                // so `$print` / `$check` can emit multi-bit TRG.
+                                current_ff_edges.clear();
                                 bool found_clock = false;
                                 for (auto operand : *op->Operands()) {
                                     if (operand->VpiType() == vpiOperation) {
@@ -546,16 +552,18 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                         if (edge_op->VpiOpType() == vpiPosedgeOp || edge_op->VpiOpType() == vpiNegedgeOp) {
                                             if (edge_op->Operands() && !edge_op->Operands()->empty()) {
                                                 auto sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
+                                                bool is_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                                current_ff_edges.push_back({sig, is_posedge});
                                                 if (!found_clock) {
                                                     clock_sig = sig;
-                                                    clock_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                                    clock_posedge = is_posedge;
                                                     found_clock = true;
-                                                    log("      Found clock signal in list: %s (%s edge)\n", 
+                                                    log("      Found clock signal in list: %s (%s edge)\n",
                                                         log_signal(clock_sig), clock_posedge ? "pos" : "neg");
                                                 } else {
                                                     reset_sig = sig;
-                                                    reset_posedge = (edge_op->VpiOpType() == vpiPosedgeOp);
-                                                    log("      Found reset signal in list: %s (%s edge)\n", 
+                                                    reset_posedge = is_posedge;
+                                                    log("      Found reset signal in list: %s (%s edge)\n",
                                                         log_signal(reset_sig), reset_posedge ? "pos" : "neg");
                                                 }
                                             }
@@ -601,7 +609,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 if (all_edge_signals.size() > 0) {
                                     // Save all edge triggers for later use
                                     all_edge_triggers = all_edge_signals;
-                                    
+                                    current_ff_edges = all_edge_signals;
+
                                     // First edge trigger is the clock
                                     clock_sig = all_edge_signals[0].first;
                                     clock_posedge = all_edge_signals[0].second;
@@ -1803,6 +1812,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     // Clear contexts at the end of import_always_ff
     in_always_ff_context = false;
     current_ff_clock_sig = RTLIL::SigSpec();
+    current_ff_edges.clear();
     current_temp_wires.clear();
     current_lhs_specs.clear();
     loop_values.clear();
@@ -4990,14 +5000,27 @@ void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
 
     // For combinational always @*, no clock triggers.  For an
     // edge-triggered always block (always @(posedge clk) ...), bind
-    // TRG = clk so the EN-computing logic survives synth — mirrors
-    // `build_check_cell`'s handling for `$check`.  Without this, the
-    // `$print` cell is treated as a combinational sink, `EN`'s input
-    // cone collapses to 0, and `synth` strips all producer logic.
+    // TRG = clk so the EN-computing logic survives synth.  For
+    // multi-edge blocks (`always @(posedge a, negedge b)`), TRG is a
+    // multi-bit SigSpec (one bit per trigger) with per-bit polarity.
+    // Mirrors how Yosys's verilog frontend emits the cell.
     RTLIL::SigSpec triggers;
     RTLIL::Const polarity = RTLIL::Const(0, 0);
     bool trg_enable = false;
-    if (in_always_ff_context && !current_ff_clock_sig.empty()) {
+    if (in_always_ff_context && !current_ff_edges.empty()) {
+        // Build multi-bit TRG / TRG_POLARITY in the same order as the
+        // sensitivity list.  Yosys's verilog frontend emits the operands
+        // such that `TRG = { sigN, ..., sig1, sig0 }` (MSB-first append)
+        // and `TRG_POLARITY` has bit i corresponding to sig i; match
+        // that here.
+        std::vector<RTLIL::State> pol_bits;
+        for (const auto& [sig, is_posedge] : current_ff_edges) {
+            triggers.append(sig);
+            pol_bits.push_back(is_posedge ? RTLIL::State::S1 : RTLIL::State::S0);
+        }
+        polarity = RTLIL::Const(pol_bits);
+        trg_enable = true;
+    } else if (in_always_ff_context && !current_ff_clock_sig.empty()) {
         triggers = current_ff_clock_sig;
         polarity = RTLIL::Const(1, 1);   // posedge
         trg_enable = true;

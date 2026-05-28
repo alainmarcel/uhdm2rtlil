@@ -49,24 +49,29 @@ rules needed.
 
 **Repro**: `test/print_trg_multi_edge/`.
 
-## PR 3: Multi-trigger `$print` cell emission — PENDING
+## PR 3: Multi-trigger `$print` cell emission — ✅ DONE
 
 **Symptom**: even with PR2's routing, `$print` cells emitted inside
 a multi-edge always block still bind a single trigger; the second
 edge isn't connected.
 
-**Root cause**: `import_display_stmt` reads
-`current_ff_clock_sig` which is a single `SigSpec`, set during
-single-edge processing.  Multi-edge always blocks need
-`TRG = concat(sig0, sig1, ...)`, `TRG_POLARITY = Const(per-bit
+**Root cause**: `import_display_stmt` only read
+`current_ff_clock_sig` (a single `SigSpec`).  Multi-edge blocks
+need `TRG = {sigN, ..., sig0}`, `TRG_POLARITY = Const(per-bit
 polarities)`, `TRG_WIDTH = N`.
 
-**Fix plan**: introduce `current_ff_edges` (a vector of
-`(SigSpec, bool posedge)`), populated alongside
-`current_ff_clock_sig` for multi-edge sensitivities.
-`import_display_stmt` (and `build_check_cell`) emit multi-bit TRG
-when this vector has >1 entry.  Repro to write:
-`test/print_trg_mixed_edges/dut.sv`.
+**Fix**: added `current_ff_edges` (vector of `(SigSpec,
+bool posedge)`) to `UhdmImporter`.  Populated in three places
+during always_ff sensitivity-list parsing: top-level `vpiPosedgeOp`
+/ `vpiNegedgeOp`, `vpiEventOrOp` collection path, and `vpiListOp`
+async-reset detection path.  `import_display_stmt` builds
+`TRG = append(sig0, sig1, ...)` and `TRG_POLARITY = Const(pol
+bits)` from it.  Cleared at end of `import_always_ff`.
+
+**Repro**: `test/print_trg_mixed_edges/` — `always @(posedge a,
+negedge b) if (cond) $display(...)`.  Now emits `$print` with
+TRG_WIDTH=2, TRG_POLARITY=2'01, TRG={b, a} — matches Yosys's
+verilog frontend.
 
 ## PR 4: `clk2fflogic_effects.sv` end-to-end pass — PENDING
 
@@ -80,6 +85,6 @@ the `(* gclk *)` attribute on a bare reg (already works).
 | PR | Issue | Status |
 |----|-------|--------|
 | 1 | `$print` TRG binding for single-edge | merged |
-| 2 | Route multi-edge non-reset always | this PR |
-| 3 | Multi-trigger `$print` cells | pending |
+| 2 | Route multi-edge non-reset always | merged |
+| 3 | Multi-trigger `$print` cells | this PR |
 | 4 | clk2fflogic_effects end-to-end | pending |

@@ -27,13 +27,13 @@ module \top
     connect \Y $auto$expression.cpp:2965:import_operation$2
   end
   cell $print $print$$display$26$5
-    parameter \TRG_WIDTH 1
+    parameter \TRG_WIDTH 2
     parameter \TRG_ENABLE 1
-    parameter \TRG_POLARITY 1'1
+    parameter \TRG_POLARITY 2'11
     parameter \PRIORITY 32'11111111111111111111111111111111
     parameter \FORMAT "{48:> 15d-u}{8:> 3d-u}\n"
     parameter \ARGS_WIDTH 56
-    connect \TRG \clk
+    connect \TRG { \rst \clk }
     connect \EN $print$$display$26$5_EN
     connect \ARGS { \cnt 48'011000110110111001110100001111010010010101100100 }
   end

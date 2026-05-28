@@ -10,7 +10,7 @@ module \gate
   process $proc$dut.sv:21$1
   end
   attribute \src "dut.sv:21.5-23.8"
-  process $auto$process.cpp:2611:operator()$2
+  process $auto$process.cpp:2621:operator()$2
     sync always
       update \result 5
   end
