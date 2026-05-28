@@ -2,62 +2,54 @@
 
 (* keep =  1  *)
 (* top =  1  *)
-(* src = "dut.sv:1.1-92.10" *)
+(* src = "dut.sv:1.1-105.10" *)
 module top();
-  (* src = "dut.sv:59.14-59.15" *)
+  (* src = "dut.sv:71.14-71.15" *)
   wire [31:0] a;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:5.11-5.12" *)
-  wire signed [31:0] \operation1$func$dut.sv:65$10.i ;
+  wire signed [31:0] \operation1$func$dut.sv:77$9.i ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:4.17-4.20" *)
-  wire signed [31:0] \operation1$func$dut.sv:65$10.num ;
+  wire signed [31:0] \operation1$func$dut.sv:77$9.num ;
   (* src = "dut.sv:8.13-8.19" *)
-  wire signed [31:0] \operation1$func$dut.sv:65$10.shadow.rounds ;
+  wire signed [31:0] \operation1$func$dut.sv:77$9.shadow.rounds ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:5.11-5.12" *)
-  wire signed [31:0] \operation1$func$dut.sv:68$11.i ;
+  wire signed [31:0] \operation1$func$dut.sv:80$10.i ;
   (* nosync = 32'd1 *)
   (* src = "dut.sv:4.17-4.20" *)
-  wire signed [31:0] \operation1$func$dut.sv:68$11.num ;
+  wire signed [31:0] \operation1$func$dut.sv:80$10.num ;
   (* src = "dut.sv:8.13-8.19" *)
-  wire signed [31:0] \operation1$func$dut.sv:68$11.shadow.rounds ;
+  wire signed [31:0] \operation1$func$dut.sv:80$10.shadow.rounds ;
   (* nosync = 32'd1 *)
-  (* src = "dut.sv:23.15-23.18" *)
-  wire [4:0] \operation2$func$dut.sv:71$12.inp ;
+  (* src = "dut.sv:47.11-47.12" *)
+  wire signed [31:0] \operation3$func$dut.sv:87$11.i ;
   (* nosync = 32'd1 *)
-  (* src = "dut.sv:24.17-24.20" *)
-  wire signed [31:0] \operation2$func$dut.sv:71$12.num ;
+  (* src = "dut.sv:45.17-45.20" *)
+  wire signed [31:0] \operation3$func$dut.sv:87$11.num ;
+  (* src = "dut.sv:50.13-50.19" *)
+  wire signed [31:0] \operation3$func$dut.sv:87$11.shadow.rounds ;
   (* nosync = 32'd1 *)
-  (* src = "dut.sv:35.11-35.12" *)
-  wire signed [31:0] \operation3$func$dut.sv:74$13.i ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:33.17-33.20" *)
-  wire signed [31:0] \operation3$func$dut.sv:74$13.num ;
-  (* src = "dut.sv:38.13-38.19" *)
-  wire signed [31:0] \operation3$func$dut.sv:74$13.shadow.rounds ;
-  (* nosync = 32'd1 *)
-  (* src = "dut.sv:48.16-48.17" *)
-  wire [15:0] \operation4$func$dut.sv:77$14.a ;
-  (* src = "dut.sv:64.14-64.16" *)
-  wire [31:0] x1;
-  (* src = "dut.sv:67.14-67.17" *)
-  wire [31:0] x1b;
-  (* src = "dut.sv:70.14-70.16" *)
-  wire [31:0] x2;
-  (* src = "dut.sv:73.14-73.16" *)
-  wire [31:0] x3;
+  (* src = "dut.sv:60.16-60.17" *)
+  wire [15:0] \operation4$func$dut.sv:90$12.a ;
   (* src = "dut.sv:76.14-76.16" *)
+  wire [31:0] x1;
+  (* src = "dut.sv:79.14-79.17" *)
+  wire [31:0] x1b;
+  (* src = "dut.sv:86.14-86.16" *)
+  wire [31:0] x3;
+  (* src = "dut.sv:89.14-89.16" *)
   wire [16:0] x4;
-  (* src = "dut.sv:79.14-79.16" *)
+  (* src = "dut.sv:92.14-92.16" *)
   wire [31:0] x5;
   (* keep = 32'd1 *)
-  (* src = "dut.sv:83.3-83.17" *)
+  (* src = "dut.sv:101.3-101.19" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967295),
+    .PRIORITY(32'd4294967291),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -68,12 +60,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:84.3-84.17" *)
+  (* src = "dut.sv:102.3-102.23" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967294),
+    .PRIORITY(32'd4294967290),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -84,12 +76,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:85.3-85.19" *)
+  (* src = "dut.sv:103.3-103.19" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967293),
+    .PRIORITY(32'd4294967289),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -100,12 +92,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:86.3-86.20" *)
+  (* src = "dut.sv:96.3-96.17" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967292),
+    .PRIORITY(32'd4294967295),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -116,12 +108,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:87.3-87.18" *)
+  (* src = "dut.sv:97.3-97.17" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967291),
+    .PRIORITY(32'd4294967294),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -132,12 +124,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:88.3-88.19" *)
+  (* src = "dut.sv:98.3-98.19" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967290),
+    .PRIORITY(32'd4294967293),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -148,12 +140,12 @@ module top();
     .TRG()
   );
   (* keep = 32'd1 *)
-  (* src = "dut.sv:89.3-89.23" *)
+  (* src = "dut.sv:99.3-99.20" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
     .FLAVOR("assert"),
     .FORMAT(),
-    .PRIORITY(32'd4294967289),
+    .PRIORITY(32'd4294967292),
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
@@ -163,38 +155,19 @@ module top();
     .EN(1'h1),
     .TRG()
   );
-  (* keep = 32'd1 *)
-  (* src = "dut.sv:90.3-90.19" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967288),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _7_ (
-    .A(1'h1),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
-  assign \operation1$func$dut.sv:68$11.i  = 32'hxxxxxxxx;
-  assign \operation1$func$dut.sv:68$11.num  = 32'hxxxxxxxx;
-  assign \operation3$func$dut.sv:74$13.i  = 32'hxxxxxxxx;
-  assign \operation1$func$dut.sv:65$10.shadow.rounds  = 32'd0;
-  assign \operation1$func$dut.sv:65$10.i  = 32'hxxxxxxxx;
-  assign \operation1$func$dut.sv:65$10.num  = 32'hxxxxxxxx;
-  assign \operation3$func$dut.sv:74$13.num  = 32'hxxxxxxxx;
-  assign \operation4$func$dut.sv:77$14.a  = 16'hxxxx;
-  assign \operation2$func$dut.sv:71$12.num  = 32'hxxxxxxxx;
-  assign \operation2$func$dut.sv:71$12.inp  = 5'hxx;
-  assign \operation3$func$dut.sv:74$13.shadow.rounds  = 32'd0;
-  assign \operation1$func$dut.sv:68$11.shadow.rounds  = 32'd0;
+  assign \operation1$func$dut.sv:80$10.num  = 32'hxxxxxxxx;
+  assign \operation3$func$dut.sv:87$11.shadow.rounds  = 32'd0;
+  assign \operation1$func$dut.sv:77$9.shadow.rounds  = 32'd0;
+  assign \operation1$func$dut.sv:77$9.i  = 32'hxxxxxxxx;
+  assign \operation1$func$dut.sv:77$9.num  = 32'hxxxxxxxx;
+  assign \operation3$func$dut.sv:87$11.i  = 32'hxxxxxxxx;
+  assign \operation3$func$dut.sv:87$11.num  = 32'hxxxxxxxx;
+  assign \operation4$func$dut.sv:90$12.a  = 16'hxxxx;
+  assign \operation1$func$dut.sv:80$10.shadow.rounds  = 32'd0;
+  assign \operation1$func$dut.sv:80$10.i  = 32'hxxxxxxxx;
   assign x5 = 32'd64;
   assign x4 = 17'h00004;
   assign x3 = 32'd16;
-  assign x2 = 32'd4;
   assign x1b = 32'd16;
   assign x1 = 32'd16;
   assign a = 32'd2;
