@@ -4972,14 +4972,25 @@ void UhdmImporter::import_display_stmt(const UHDM::sys_func_call* call,
     proc_root_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(en_wire), RTLIL::State::S0));
     active_case->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(en_wire), RTLIL::State::S1));
 
-    // For combinational always @*, no clock triggers
+    // For combinational always @*, no clock triggers.  For an
+    // edge-triggered always block (always @(posedge clk) ...), bind
+    // TRG = clk so the EN-computing logic survives synth — mirrors
+    // `build_check_cell`'s handling for `$check`.  Without this, the
+    // `$print` cell is treated as a combinational sink, `EN`'s input
+    // cone collapses to 0, and `synth` strips all producer logic.
     RTLIL::SigSpec triggers;
     RTLIL::Const polarity = RTLIL::Const(0, 0);
+    bool trg_enable = false;
+    if (in_always_ff_context && !current_ff_clock_sig.empty()) {
+        triggers = current_ff_clock_sig;
+        polarity = RTLIL::Const(1, 1);   // posedge
+        trg_enable = true;
+    }
 
     // Build the $print cell
     RTLIL::Cell* cell = module->addCell(cell_id, ID($print));
-    cell->setParam(ID::TRG_WIDTH, 0);
-    cell->setParam(ID::TRG_ENABLE, false);
+    cell->setParam(ID::TRG_WIDTH, trg_enable ? triggers.size() : 0);
+    cell->setParam(ID::TRG_ENABLE, trg_enable);
     cell->setParam(ID::TRG_POLARITY, polarity);
     cell->setParam(ID::PRIORITY, --last_effect_priority);
     cell->setPort(ID::TRG, triggers);

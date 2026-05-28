@@ -56,7 +56,7 @@ module \d
   wire width 5 $procmux$32_Y
   attribute \src "dut.sv:110.22-110.35"
   wire $eq$dut.sv:110$16_Y
-  wire width 5 $auto$expression.cpp:2926:import_operation$18
+  wire width 5 $auto$expression.cpp:2965:import_operation$18
   wire $auto$opt_dff.cc:234:make_patterns_logic$150
   attribute \src "dut.sv:110.17-118.20"
   attribute \full_case 1
@@ -164,7 +164,7 @@ module \d
     parameter \Y_WIDTH 5
     connect \A \i
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:2926:import_operation$18
+    connect \Y $auto$expression.cpp:2965:import_operation$18
   end
   attribute \src "dut.sv:76.13-119.16|dut.sv:65.9-120.16"
   attribute \full_case 1
@@ -214,7 +214,7 @@ module \d
   attribute \full_case 1
   cell $mux $procmux$32
     parameter \WIDTH 5
-    connect \A $auto$expression.cpp:2926:import_operation$18
+    connect \A $auto$expression.cpp:2965:import_operation$18
     connect \B 5'x
     connect \S $eq$dut.sv:110$16_Y
     connect \Y $procmux$32_Y
