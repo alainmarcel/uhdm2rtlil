@@ -2127,10 +2127,20 @@ void UhdmImporter::import_always(const process_stmt* uhdm_process, RTLIL::Proces
     bool is_combinational = false;
     
     if (auto stmt = uhdm_process->Stmt()) {
+        // `always <stmt>` with no event control (e.g.
+        // `always $display(...)`) has no sensitivity list — it's a
+        // continuously running process, not a flop.  Route through the
+        // combinational path so `$print` cells get emitted.  Without
+        // this we fall into `import_always_ff` and hit "Clock signal is
+        // empty" (yosys/tests/fmt/display_lm.v).
+        if (stmt->VpiType() != vpiEventControl) {
+            is_combinational = true;
+            log("    Detected combinational always block (no event control)\n");
+        } else
         // Check if wrapped in event_control
         if (stmt->VpiType() == vpiEventControl) {
             const event_control* event_ctrl = any_cast<const event_control*>(stmt);
-            
+
             // Check if sensitivity list indicates combinational (*)
             if (auto event_expr = event_ctrl->VpiCondition()) {
                 // For always @*, the condition might be a specific marker or empty
