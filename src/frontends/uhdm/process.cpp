@@ -477,24 +477,38 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         // For always_ff with async reset, we expect posedge clk or negedge rst_n
                         // Mark this as having async reset - we'll handle it specially
                         yosys_proc->attributes[ID("has_async_reset")] = RTLIL::Const(1);
-                        
+
+                        // Collect ALL edges (posedge AND negedge) — the original
+                        // code only captured the first posedge and stayed empty
+                        // for all-negedge sensitivity lists (e.g.
+                        // `always @(negedge clk or negedge reset)` in
+                        // yosys/tests/hana/test_intermout.v f9_NegEdgeClock).
+                        // Populate `current_ff_edges` with the full list so
+                        // `$print`/`$check` cells can emit multi-bit TRG; pick
+                        // the first edge as the primary clock_sig.
                         if (op->Operands() && !op->Operands()->empty()) {
+                            current_ff_edges.clear();
                             for (auto operand : *op->Operands()) {
-                                if (operand->VpiType() == vpiOperation) {
-                                    const operation* edge_op = any_cast<const operation*>(operand);
-                                    if (edge_op->VpiOpType() == vpiPosedgeOp) {
-                                        clock_posedge = true;
-                                        if (edge_op->Operands() && !edge_op->Operands()->empty()) {
-                                            log("      Importing clock signal from posedge\n");
-                                            log_flush();
-                                            clock_sig = import_expression(any_cast<const expr*>((*edge_op->Operands())[0]));
-                                            current_ff_clock_sig = clock_sig; // Store for assertions
-                            current_ff_edges = {{clock_sig, clock_posedge}};
-                                            log("      Clock signal imported, setting current_ff_clock_sig\n");
-                                            log_flush();
-                                            break; // Use the first posedge as clock
-                                        }
-                                    }
+                                if (operand->VpiType() != vpiOperation) continue;
+                                const operation* edge_op = any_cast<const operation*>(operand);
+                                if (edge_op->VpiOpType() != vpiPosedgeOp &&
+                                    edge_op->VpiOpType() != vpiNegedgeOp)
+                                    continue;
+                                if (!edge_op->Operands() || edge_op->Operands()->empty())
+                                    continue;
+                                auto sig = import_expression(
+                                    any_cast<const expr*>((*edge_op->Operands())[0]));
+                                bool is_pos = (edge_op->VpiOpType() == vpiPosedgeOp);
+                                current_ff_edges.push_back({sig, is_pos});
+                                if (clock_sig.empty()) {
+                                    clock_sig = sig;
+                                    clock_posedge = is_pos;
+                                    current_ff_clock_sig = sig;
+                                    log("      Edge trigger %s (%s) — first, using as clock\n",
+                                        log_signal(sig), is_pos ? "pos" : "neg");
+                                } else {
+                                    log("      Edge trigger %s (%s) — additional\n",
+                                        log_signal(sig), is_pos ? "pos" : "neg");
                                 }
                             }
                         }
