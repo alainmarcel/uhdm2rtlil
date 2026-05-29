@@ -1732,8 +1732,11 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             temp_wires_map[sig.lhs_expr] = signal_temp_wires[dedup_key];
                         } else {
                             std::string temp_name = "$0\\" + dedup_key;
-                            if (module->wire(temp_name))
-                                log_error("Temp wire %s already exists\n", temp_name.c_str());
+                            int dup_idx = 0;
+                            while (module->wire(temp_name)) {
+                                dup_idx++;
+                                temp_name = "$" + std::to_string(dup_idx) + "\\" + dedup_key;
+                            }
                             RTLIL::SigChunk first_chunk = *lhs_spec.chunks().begin();
                             // Size to full base only when collapsing
                             // multiple slice writes; otherwise slice
@@ -1972,8 +1975,11 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
             temp_wire = signal_temp_wires[dedup_key];
         } else {
             std::string temp_name = "$0\\" + dedup_key;
-            if (module->wire(temp_name))
-                log_error("Temp wire %s already exists\n", temp_name.c_str());
+            int dup_idx = 0;
+            while (module->wire(temp_name)) {
+                dup_idx++;
+                temp_name = "$" + std::to_string(dup_idx) + "\\" + dedup_key;
+            }
             // Size the temp wire to the FULL base wire when we're
             // collapsing multiple slice writes (so chunks share it);
             // otherwise to the slice width (matches the original
