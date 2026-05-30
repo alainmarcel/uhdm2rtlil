@@ -1525,8 +1525,97 @@ void UhdmImporter::scan_for_direct_return_assignment(const any* stmt, const std:
     }
 }
 
+// Helper: does any assignment LHS inside `stmt` (recursively) target
+// `var_name`?  Counts full-wire writes, bit-selects, part-selects, and
+// indexed part-selects.  Used to decide whether a function parameter
+// passed by value can be const-folded — if the body mutates it, the
+// folded constant would be stale by the time the parameter is re-read.
+bool UhdmImporter::function_body_writes_to(const any* stmt, const std::string& var_name) {
+    if (!stmt) return false;
+    int type = stmt->UhdmType();
+    switch (type) {
+    case uhdmassignment: {
+        const assignment* assign = any_cast<const assignment*>(stmt);
+        if (assign && assign->Lhs()) {
+            const any* lhs = assign->Lhs();
+            std::string lhs_name;
+            switch (lhs->UhdmType()) {
+            case uhdmref_obj:
+                lhs_name = std::string(any_cast<const ref_obj*>(lhs)->VpiName());
+                break;
+            case uhdmbit_select:
+                lhs_name = std::string(any_cast<const bit_select*>(lhs)->VpiName());
+                break;
+            case uhdmpart_select:
+                lhs_name = std::string(any_cast<const part_select*>(lhs)->VpiName());
+                break;
+            case uhdmindexed_part_select:
+                lhs_name = std::string(
+                    any_cast<const indexed_part_select*>(lhs)->VpiName());
+                break;
+            default:
+                break;
+            }
+            if (lhs_name == var_name) return true;
+        }
+        return false;
+    }
+    case uhdmbegin: {
+        const begin* bg = any_cast<const begin*>(stmt);
+        if (bg && bg->Stmts())
+            for (auto s : *bg->Stmts())
+                if (function_body_writes_to(s, var_name)) return true;
+        return false;
+    }
+    case uhdmnamed_begin: {
+        const named_begin* nbg = any_cast<const named_begin*>(stmt);
+        if (nbg && nbg->Stmts())
+            for (auto s : *nbg->Stmts())
+                if (function_body_writes_to(s, var_name)) return true;
+        return false;
+    }
+    case uhdmif_stmt: {
+        const if_stmt* is = any_cast<const if_stmt*>(stmt);
+        return is && is->VpiStmt() && function_body_writes_to(is->VpiStmt(), var_name);
+    }
+    case uhdmif_else: {
+        const if_else* ie = any_cast<const if_else*>(stmt);
+        if (!ie) return false;
+        if (ie->VpiStmt() && function_body_writes_to(ie->VpiStmt(), var_name))
+            return true;
+        if (ie->VpiElseStmt() && function_body_writes_to(ie->VpiElseStmt(), var_name))
+            return true;
+        return false;
+    }
+    case uhdmcase_stmt: {
+        const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+        if (cs && cs->Case_items())
+            for (auto item : *cs->Case_items()) {
+                const case_item* ci = any_cast<const case_item*>(item);
+                if (ci && ci->Stmt() && function_body_writes_to(ci->Stmt(), var_name))
+                    return true;
+            }
+        return false;
+    }
+    case uhdmfor_stmt: {
+        const for_stmt* fs = any_cast<const for_stmt*>(stmt);
+        return fs && fs->VpiStmt() && function_body_writes_to(fs->VpiStmt(), var_name);
+    }
+    case uhdmwhile_stmt: {
+        const while_stmt* ws = any_cast<const while_stmt*>(stmt);
+        return ws && ws->VpiStmt() && function_body_writes_to(ws->VpiStmt(), var_name);
+    }
+    case uhdmrepeat: {
+        const repeat* rs = any_cast<const repeat*>(stmt);
+        return rs && rs->VpiStmt() && function_body_writes_to(rs->VpiStmt(), var_name);
+    }
+    default:
+        return false;
+    }
+}
+
 // Helper function to scan a statement and find variables assigned to the function name
-void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string& func_name, 
+void UhdmImporter::scan_for_return_variables(const any* stmt, const std::string& func_name,
                                               std::set<std::string>& return_vars, const function* func_def) {
     if (!stmt) return;
     
@@ -1701,7 +1790,7 @@ RTLIL::SigSpec UhdmImporter::process_function_with_context(const function* func_
                 std::string param_name = std::string(io_decl->VpiName());
                 if (args[arg_idx].is_fully_const()) {
                     ctx.const_wire_values[param_name] = args[arg_idx].as_const();
-                    log("UHDM: Parameter %s has constant value %s\n", 
+                    log("UHDM: Parameter %s has constant value %s\n",
                         param_name.c_str(), args[arg_idx].as_const().as_string().c_str());
                 }
                 arg_idx++;

@@ -722,6 +722,30 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                             if (offset >= 0 && offset + element_width <= base_sig.size()) {
                                 lhs_sig = base_sig.extract(offset, element_width);
                             }
+
+                            // If the base variable has a const-folded value
+                            // recorded in the function context (a constant
+                            // arg that's been mutated), update it in place
+                            // so subsequent reads of `inp` (e.g. `result =
+                            // num * inp`) see the post-write value rather
+                            // than the original arg.  Without this,
+                            // operation2 in various/const_arg_loop.sv
+                            // returns `num * original_inp` instead of
+                            // `num * (inp with bit flipped)`.
+                            FunctionCallContext* ctx = getCurrentFunctionContext();
+                            if (ctx && ctx->const_wire_values.count(base_name) &&
+                                rhs_sig.is_fully_const() &&
+                                element_width == 1) {
+                                RTLIL::Const& cur = ctx->const_wire_values[base_name];
+                                if (idx >= 0 && idx < (int)cur.size()) {
+                                    RTLIL::Const new_val = cur;
+                                    new_val.set(idx,
+                                        rhs_sig.as_const().is_fully_zero()
+                                            ? RTLIL::State::S0
+                                            : RTLIL::State::S1);
+                                    ctx->const_wire_values[base_name] = new_val;
+                                }
+                            }
                         }
                     }
                 }
@@ -4192,12 +4216,35 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
 RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing bit select\n");
-    
+
     // Get the signal name directly from the bit_select
     std::string signal_name = std::string(uhdm_bit->VpiName());
-    
+
     if (mode_debug)
         log("    Bit select signal name: '%s'\n", signal_name.c_str());
+
+    // Function-parameter bit access: if the parameter has a constant
+    // value tracked in the current FunctionCallContext, return the
+    // constant bit so subsequent expressions can constant-fold.  This
+    // makes `inp[0] = inp[0] ^ 1; result = num * inp;` evaluate the
+    // XOR as a constant, so the bit-select LHS update can in turn
+    // propagate the new value back into const_wire_values
+    // (various/const_arg_loop.sv operation2).
+    if (input_mapping && input_mapping->count(signal_name) && uhdm_bit->VpiIndex()) {
+        FunctionCallContext* ctx = getCurrentFunctionContext();
+        if (ctx && ctx->const_wire_values.count(signal_name)) {
+            RTLIL::SigSpec idx_sig = import_expression(
+                any_cast<const expr*>(uhdm_bit->VpiIndex()), input_mapping);
+            if (idx_sig.is_fully_const()) {
+                int idx = idx_sig.as_int();
+                const RTLIL::Const& cur = ctx->const_wire_values[signal_name];
+                if (idx >= 0 && idx < (int)cur.size()) {
+                    return RTLIL::SigSpec(RTLIL::Const(
+                        std::vector<RTLIL::State>{cur[idx]}));
+                }
+            }
+        }
+    }
     
     // Check if this is a memory access
     RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
