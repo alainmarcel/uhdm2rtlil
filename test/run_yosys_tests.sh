@@ -59,12 +59,46 @@ if [ -f "$SCRIPT_DIR/skipped_tests.txt" ]; then
     done < "$SCRIPT_DIR/skipped_tests.txt"
 fi
 
+# Load failing-tests list — entries are paths relative to
+# third_party/yosys/tests/ (e.g. `svinterfaces/load_and_derive.sv`).
+# Tests in this list are still RUN; if they fail they're reported as
+# EXPECTED FAILED, if they pass they're reported as UNEXPECTED SUCCESS.
+FAILING_TESTS_LIST=()
+if [ -f "$SCRIPT_DIR/failing_tests.txt" ]; then
+    while IFS= read -r line; do
+        if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [[ -n "$trimmed_line" ]]; then
+                FAILING_TESTS_LIST+=("$trimmed_line")
+            fi
+        fi
+    done < "$SCRIPT_DIR/failing_tests.txt"
+fi
+
+EXPECTED_FAILURES=0
+UNEXPECTED_SUCCESSES=0
+declare -a EXPECTED_FAILURE_NAMES
+declare -a UNEXPECTED_SUCCESS_NAMES
+
 # Helper function to check if test should be skipped
 should_skip_test() {
     local test_path="$1"
     for skipped_test in "${SKIPPED_TESTS_LIST[@]}"; do
         # Support exact matches and wildcards
         if [[ "$test_path" == "$skipped_test" ]] || [[ "$test_path" == *"$skipped_test"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Helper function to check if a test is marked expected-to-fail.  Match
+# is exact (no wildcards) — the upstream path lives in failing_tests.txt
+# as-is to keep the doc auditable.
+is_failing_test() {
+    local test_path="$1"
+    for failing_test in "${FAILING_TESTS_LIST[@]}"; do
+        if [[ "$test_path" == "$failing_test" ]]; then
             return 0
         fi
     done
@@ -229,25 +263,48 @@ EOF
                 
                 # Call test_equivalence.sh from the run directory
                 if (cd "$RUN_DIR" && bash "$SCRIPT_DIR/test_equivalence.sh" "$relative_test_dir"); then
+                    if is_failing_test "$relative_path"; then
+                        echo -e "${YELLOW}⚠️  UNEXPECTED SUCCESS — remove from failing_tests.txt${NC}"
+                        UNEXPECTED_SUCCESSES=$((UNEXPECTED_SUCCESSES + 1))
+                        UNEXPECTED_SUCCESS_NAMES+=("$relative_path")
+                    fi
                     echo -e "${GREEN}✅ Formal equivalence check passed${NC}"
                     PASSED_TESTS=$((PASSED_TESTS + 1))
                     PASSED_TEST_NAMES+=("$relative_path")
                     test_result="passed"
                 else
-                    echo -e "${RED}❌ Equivalence check failed${NC}"
-                    FAILED_TESTS=$((FAILED_TESTS + 1))
-                    FAILED_TEST_NAMES+=("$relative_path")
+                    if is_failing_test "$relative_path"; then
+                        echo -e "${YELLOW}⚠️  Expected failure (in failing_tests.txt)${NC}"
+                        EXPECTED_FAILURES=$((EXPECTED_FAILURES + 1))
+                        EXPECTED_FAILURE_NAMES+=("$relative_path")
+                    else
+                        echo -e "${RED}❌ Equivalence check failed${NC}"
+                        FAILED_TESTS=$((FAILED_TESTS + 1))
+                        FAILED_TEST_NAMES+=("$relative_path")
+                    fi
                 fi
             fi
         else
-            echo -e "${RED}❌ Missing output files${NC}"
+            if is_failing_test "$relative_path"; then
+                echo -e "${YELLOW}⚠️  Expected failure (in failing_tests.txt) — missing outputs${NC}"
+                EXPECTED_FAILURES=$((EXPECTED_FAILURES + 1))
+                EXPECTED_FAILURE_NAMES+=("$relative_path")
+            else
+                echo -e "${RED}❌ Missing output files${NC}"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+                FAILED_TEST_NAMES+=("$relative_path")
+            fi
+        fi
+    elif [ "$verilog_success" = true ] && [ "$uhdm_success" = false ]; then
+        if is_failing_test "$relative_path"; then
+            echo -e "${YELLOW}⚠️  Expected failure (in failing_tests.txt) — UHDM frontend failed${NC}"
+            EXPECTED_FAILURES=$((EXPECTED_FAILURES + 1))
+            EXPECTED_FAILURE_NAMES+=("$relative_path")
+        else
+            echo -e "${RED}❌ UHDM frontend failed${NC}"
             FAILED_TESTS=$((FAILED_TESTS + 1))
             FAILED_TEST_NAMES+=("$relative_path")
         fi
-    elif [ "$verilog_success" = true ] && [ "$uhdm_success" = false ]; then
-        echo -e "${RED}❌ UHDM frontend failed${NC}"
-        FAILED_TESTS=$((FAILED_TESTS + 1))
-        FAILED_TEST_NAMES+=("$relative_path")
     else
         # Both failed
         echo -e "${YELLOW}⚠️  Skipped - both frontends failed${NC}"
@@ -326,6 +383,8 @@ echo "  Total tests run: $TOTAL_TESTS"
 echo "  ✅ Passing tests: $PASSED_TESTS"
 echo "  🚀 UHDM-only success: $UHDM_ONLY_SUCCESS"
 echo "  ❌ Failed tests: $FAILED_TESTS"
+echo "  ⚠️  Expected failures (in failing_tests.txt): $EXPECTED_FAILURES"
+echo "  ⚠️  Unexpected successes (remove from failing_tests.txt): $UNEXPECTED_SUCCESSES"
 echo "  ⚠️  Skipped tests: $SKIPPED_TESTS"
 echo ""
 
@@ -361,6 +420,22 @@ if [ ${#FAILED_TEST_NAMES[@]} -gt 0 ]; then
     echo ""
 fi
 
+if [ ${#EXPECTED_FAILURE_NAMES[@]} -gt 0 ]; then
+    echo "⚠️  EXPECTED FAILURES (${#EXPECTED_FAILURE_NAMES[@]}) — listed in failing_tests.txt:"
+    for test in "${EXPECTED_FAILURE_NAMES[@]}"; do
+        echo "   - $test"
+    done
+    echo ""
+fi
+
+if [ ${#UNEXPECTED_SUCCESS_NAMES[@]} -gt 0 ]; then
+    echo "🎉 UNEXPECTED SUCCESSES (${#UNEXPECTED_SUCCESS_NAMES[@]}) — please remove from failing_tests.txt:"
+    for test in "${UNEXPECTED_SUCCESS_NAMES[@]}"; do
+        echo "   - $test"
+    done
+    echo ""
+fi
+
 if [ ${#SKIPPED_TEST_NAMES[@]} -gt 0 ]; then
     echo "⚠️  SKIPPED TESTS (${#SKIPPED_TEST_NAMES[@]}):"
     for test in "${SKIPPED_TEST_NAMES[@]}"; do
@@ -387,7 +462,10 @@ if [ ${#TEST_TIMES[@]} -gt 0 ]; then
     done
 fi
 
-# Exit with appropriate code
+# Exit with appropriate code.  Expected failures (in failing_tests.txt)
+# don't fail the suite — they're tracked but not blocking.  Unexpected
+# successes also don't fail (a passing test is a good thing); the
+# warning surfaces in the summary so the txt can be cleaned up.
 if [ $FAILED_TESTS -gt 0 ]; then
     exit 1
 else
