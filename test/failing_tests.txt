@@ -13,3 +13,10 @@
 # to `ref_mod`.
 svinterfaces/load_and_derive.sv
 svinterfaces/resolve_types.sv
+
+# Yosys-emitted post-synth netlist (write_verilog output) used as
+# part of yosys/tests/svinterfaces/runone.sh — not a SystemVerilog
+# source for our flow, only listed here so the upstream tracking
+# matrix stays exhaustive.  The matching .sv source
+# (svinterfaces/svinterface1.sv) is covered by test/svinterface1/.
+svinterfaces/svinterface1_syn.v
