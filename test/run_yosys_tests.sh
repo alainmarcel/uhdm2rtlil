@@ -179,16 +179,28 @@ run_test() {
     # Record test start time
     local test_start_time=$(date +%s.%N)
     
-    # Copy the test file
-    cp "$test_file" "$test_dir/dut.sv"
-    
+    # Preserve the source extension so Surelog picks the right language
+    # mode — `.v` enters Verilog-2001 mode (where `ref` etc. are not
+    # reserved); `.sv` enters SystemVerilog mode.  Without this,
+    # upstream Verilog-2001 tests (e.g. yosys/tests/various/
+    # port_sign_extend.v with `module ref(...)`) failed Surelog parse.
+    # Yosys's verilog frontend stays in `-sv` for both — it's lenient
+    # enough to accept either, and many `.v` files in the yosys tree
+    # do rely on a few `-sv` parser conveniences.
+    local src_ext="${test_file##*.}"
+    local dut_ext="sv"
+    if [ "$src_ext" = "v" ]; then
+        dut_ext="v"
+    fi
+    cp "$test_file" "$test_dir/dut.${dut_ext}"
+
     # Preprocess the test file to fix SystemVerilog constructs
-    preprocess_test_file "$test_dir/dut.sv"
-    
+    preprocess_test_file "$test_dir/dut.${dut_ext}"
+
     # Create Yosys scripts
     cat > "$test_dir/test_verilog_read.ys" << EOF
 # Test script to read Verilog file directly in Yosys
-read_verilog -sv dut.sv
+read_verilog -sv dut.${dut_ext}
 write_rtlil ${test_name}_from_verilog_nohier.il
 hierarchy -auto-top
 stat
@@ -226,10 +238,11 @@ EOF
         verilog_success=true
     fi
     
-    # Run Surelog to generate UHDM
+    # Run Surelog to generate UHDM.  Surelog picks SV vs Verilog-2001
+    # from the file extension — see the `dut_ext` choice above.
     # Note: Surelog may return non-zero for elaboration warnings/errors (e.g. $error
     # assertions) but still produce a valid UHDM file, so check for the file instead
-    $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm dut.sv > surelog.log 2>&1 || true
+    $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm dut.${dut_ext} > surelog.log 2>&1 || true
 
     # Run UHDM frontend
     uhdm_success=false
