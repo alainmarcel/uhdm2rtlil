@@ -2890,9 +2890,47 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     rhs.extend_u0(port_wire->width, port_wire->is_signed);
                 else if (rhs.size() > port_wire->width)
                     rhs = rhs.extract(0, port_wire->width);
-                module->connect(RTLIL::SigSpec(port_wire), rhs);
+                // For constant initialisers, mirror the Verilog
+                // frontend's `reg x = const`: set `\init` AND build a
+                // STa+STi process that drives `\<port>` from a
+                // `$1\<port>` temp wire.  `proc_init` lifts the STi to
+                // `\init`, `proc_clean` lowers the STa to a connect on
+                // the *temp* wire (harmless), and any concurrent FF
+                // driver of `\<port>` survives.  Previously we emitted
+                // `module->connect(\<port>, const)` directly; after
+                // `proc_dff` the constant displaced the FF's Q binding
+                // and the whole module collapsed
+                // (sat/asserts_seq.v `output reg a_old = 0`).
+                RTLIL::SigSpec lhs(port_wire);
+                if (rhs.is_fully_const()) {
+                    port_wire->attributes[ID::init] = rhs.as_const();
+                    std::string base_name = port_wire->name.str().substr(1);
+                    std::string tmp_name = "$1\\" + base_name +
+                        "[" + std::to_string(lhs.size() - 1) + ":0]";
+                    RTLIL::Wire *tmp_wire = module->addWire(
+                        RTLIL::escape_id(tmp_name), lhs.size());
+                    RTLIL::Process *p = module->addProcess(NEW_ID);
+                    p->root_case.actions.push_back(
+                        RTLIL::SigSig(RTLIL::SigSpec(tmp_wire), rhs));
+                    // STa with NO actions and STi with the update — same
+                    // shape as the Verilog frontend's `reg x = val`
+                    // process.  proc_init reads only the STi update and
+                    // hoists it to `\init`; without the empty STa the
+                    // pattern can drop into proc_clean's STa-merge path
+                    // and re-emit a stray `connect \<port> const`.
+                    RTLIL::SyncRule *sa = new RTLIL::SyncRule();
+                    sa->type = RTLIL::SyncType::STa;
+                    p->syncs.push_back(sa);
+                    RTLIL::SyncRule *si = new RTLIL::SyncRule();
+                    si->type = RTLIL::SyncType::STi;
+                    si->actions.push_back(
+                        RTLIL::SigSig(lhs, RTLIL::SigSpec(tmp_wire)));
+                    p->syncs.push_back(si);
+                } else {
+                    module->connect(lhs, rhs);
+                }
                 log("UHDM: Lowered port-initialiser '%s = <expr>' to "
-                    "continuous assign\n", port_name.c_str());
+                    "init+sync process\n", port_name.c_str());
             } catch (...) {
                 log_warning("UHDM: Failed to lower port-initialiser for '%s'\n",
                             port_name.c_str());
