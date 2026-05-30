@@ -8015,6 +8015,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (!ref->VpiName().empty()) {
                 signal_name = std::string(ref->VpiName());
             }
+        } else if (lhs_expr->VpiType() == vpiBitSelect) {
+            // `lfsr[0] <= ...` inside an always_ff body — the per-bit
+            // assignment must be redirected to the $0\<lfsr> temp wire
+            // so the sync rule `update \lfsr $0\lfsr` propagates it.
+            // Without this branch signal_name stayed empty and the
+            // assignment went straight to `\lfsr[0]`, leaving the temp
+            // wire holding the unmodified prior value (serial_crc).
+            const bit_select* bs = any_cast<const bit_select*>(lhs_expr);
+            if (!bs->VpiName().empty()) {
+                signal_name = std::string(bs->VpiName());
+            }
         } else if (lhs_expr->VpiType() == vpiPartSelect) {
             const part_select* ps = any_cast<const part_select*>(lhs_expr);
             // Get base signal from parent
@@ -8049,10 +8060,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
             RTLIL::SigSpec temp_spec(temp_wire);
 
-            // For struct-field hier_path writes, remap each LHS chunk on the
-            // actual wire to the equivalent slice of the $0\ temp wire so the
-            // FF sync update propagates the new value.
-            if (lhs_expr->VpiType() == vpiHierPath) {
+            // For struct-field hier_path writes and per-bit bit_select
+            // writes, remap each LHS chunk on the actual wire to the
+            // equivalent slice of the $0\ temp wire so the FF sync update
+            // `update \signal $0\signal` propagates the new value.
+            if (lhs_expr->VpiType() == vpiHierPath ||
+                lhs_expr->VpiType() == vpiBitSelect) {
                 std::string actual_wire_name = "\\" + signal_name;
                 RTLIL::SigSpec mapped_lhs;
                 for (const auto& ch : lhs.chunks()) {
@@ -8758,6 +8771,19 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     const ref_obj* ref = any_cast<const ref_obj*>(lhs);
                                     if (!ref->VpiName().empty()) {
                                         signal_name = std::string(ref->VpiName());
+                                    }
+                                } else if (lhs->VpiType() == vpiBitSelect) {
+                                    // `lfsr[0] <= ...` inside an always_ff
+                                    // body — partial write that has to be
+                                    // redirected to $0\<lfsr> so the sync
+                                    // rule `update \lfsr $0\lfsr` carries
+                                    // it.  Without this signal_name stayed
+                                    // empty and the write went straight to
+                                    // \lfsr[0] (serial_crc exposed it).
+                                    const bit_select* bs = any_cast<const bit_select*>(lhs);
+                                    if (!bs->VpiName().empty()) {
+                                        signal_name = std::string(bs->VpiName());
+                                        is_partial = true;
                                     }
                                 } else if (lhs->VpiType() == vpiPartSelect) {
                                     const part_select* ps = any_cast<const part_select*>(lhs);
