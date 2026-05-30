@@ -516,8 +516,16 @@ void UhdmImporter::interpret_statement(const any* stmt,
         
         case uhdmnamed_begin: {
             const named_begin* named_block = any_cast<const named_begin*>(stmt);
+            std::string block_name = std::string(named_block->VpiName());
             // Save and initialize block-local variables for proper scoping
             std::map<std::string, std::pair<bool, int64_t>> saved_vars;
+            // Create module-level wires for each block-local variable using
+            // the hierarchical name `\<block>.<var>` so a later
+            // `out = blk.x` (vpiHierPath) can resolve to it and the
+            // post-interpreter init-action emission can find a real wire to
+            // drive.  Without this, `\blk.x` doesn't exist and the value
+            // `x = 1` set inside the block is dropped on block exit
+            // (yosys/tests/simple/matching_end_labels.sv).
             if (named_block->Variables()) {
                 for (auto var : *named_block->Variables()) {
                     std::string name = std::string(var->VpiName());
@@ -526,12 +534,40 @@ void UhdmImporter::interpret_statement(const any* stmt,
                     else
                         saved_vars[name] = {false, 0};
                     variables[name] = 0;
+                    if (!block_name.empty()) {
+                        std::string hier_name = block_name + "." + name;
+                        if (!module->wire(RTLIL::escape_id(hier_name))) {
+                            int w = get_width(var, current_instance);
+                            if (w <= 0) w = 1;
+                            module->addWire(RTLIL::escape_id(hier_name), w);
+                        }
+                    }
                 }
             }
             if (named_block->Stmts()) {
                 for (auto sub_stmt : *named_block->Stmts()) {
                     interpret_statement(sub_stmt, variables, arrays, break_flag, continue_flag);
                     if (break_flag || continue_flag) break;
+                }
+            }
+            // Record the final block-local value under the hierarchical
+            // name BEFORE restoring scoping, so subsequent `blk.x` reads
+            // resolve via the `variables[block.x]` entry and the wire
+            // gets a driver in import_initial_interpreted.  Mask the
+            // value to the variable's declared width so a write like
+            // `x = 2` to `reg x` (1 bit) stores 0, not 2.
+            if (!block_name.empty() && named_block->Variables()) {
+                for (auto var : *named_block->Variables()) {
+                    std::string name = std::string(var->VpiName());
+                    if (variables.count(name)) {
+                        int w = get_width(var, current_instance);
+                        int64_t v = variables[name];
+                        if (w > 0 && w < 64) {
+                            int64_t mask = (1LL << w) - 1;
+                            v &= mask;
+                        }
+                        variables[block_name + "." + name] = v;
+                    }
                 }
             }
             // Restore scoping
