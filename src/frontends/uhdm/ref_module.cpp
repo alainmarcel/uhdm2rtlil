@@ -85,9 +85,19 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
     int inferred_width = 1; // default
     
     if (ref_mod->Ports()) {
+        int positional_port_idx = 0;
         for (auto port : *ref_mod->Ports()) {
+            positional_port_idx++;
             std::string port_name = std::string(port->VpiName());
-            
+            // Blackbox cells with positional args (e.g.
+            // `unknown u(~i, w);` in yosys/tests/various/abc9.v) get
+            // ports with no VpiName.  Use `$<index>` so each unnamed
+            // port stays distinct and Yosys doesn't crash on empty
+            // IdStrings during the design check.
+            if (port_name.empty()) {
+                port_name = "$" + std::to_string(positional_port_idx);
+            }
+
             // Get the actual connection (high_conn)
             if (port->High_conn()) {
                 // First, check if the target port is an interface port by looking at the module definition

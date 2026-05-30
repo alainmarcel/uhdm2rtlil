@@ -33,14 +33,23 @@ YOSYS_NAMESPACE_BEGIN
 using namespace UHDM;
 
 // Import a module port
-void UhdmImporter::import_port(const port* uhdm_port) {
+void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     std::string portname = std::string(uhdm_port->VpiName());
     int direction = uhdm_port->VpiDirection();
-    
-    // Handle empty port names
+
+    // Handle empty port names — blackbox modules instantiated with
+    // positional args (e.g. `unknown u(~i, w);` in
+    // yosys/tests/various/abc9.v) have ports with no VpiName.  Use
+    // `$<index>` (Verilog frontend's positional-port convention) so
+    // each unnamed port gets a unique wire name and the cell-side
+    // connection lookup matches.
     if (portname.empty()) {
-        log_warning("UHDM: Port has empty name, using default name 'unnamed_port'\n");
-        portname = "unnamed_port";
+        if (positional_idx > 0) {
+            portname = "$" + std::to_string(positional_idx);
+        } else {
+            log_warning("UHDM: Port has empty name, using default name 'unnamed_port'\n");
+            portname = "unnamed_port";
+        }
     }
     
     if (mode_debug)
@@ -1549,8 +1558,19 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     // Import port connections
     if (uhdm_inst->Ports()) {
         log("UHDM: Processing %d ports for instance\n", (int)uhdm_inst->Ports()->size());
+        int positional_port_idx = 0;
         for (auto port : *uhdm_inst->Ports()) {
             std::string port_name = std::string(port->VpiName());
+            // Blackbox cells with positional args (e.g.
+            // `unknown u(~i, w);` in yosys/tests/various/abc9.v
+            // module abc9_test028) get ports with empty VpiName.
+            // Yosys's IdString machinery asserts on empty names, so
+            // fall back to `$<index>` (the Verilog frontend's own
+            // positional-port convention).
+            positional_port_idx++;
+            if (port_name.empty()) {
+                port_name = "$" + std::to_string(positional_port_idx);
+            }
             
             // Get the actual connection (high_conn)
             if (port->High_conn()) {

@@ -850,8 +850,19 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 
                 // Import port connections
                 if (uhdm_module->Ports()) {
+                    int positional_port_idx = 0;
                     for (auto port : *uhdm_module->Ports()) {
                         std::string port_name = std::string(port->VpiName());
+                        // Blackbox cells with positional args (e.g.
+                        // `unknown u(~i, w);` in
+                        // yosys/tests/various/abc9.v abc9_test028) get
+                        // ports with empty VpiName.  Yosys's IdString
+                        // asserts on empty names — fall back to
+                        // `$<index>` like the Verilog frontend.
+                        positional_port_idx++;
+                        if (port_name.empty()) {
+                            port_name = "$" + std::to_string(positional_port_idx);
+                        }
                         if (port->High_conn()) {
                             // Interface ports: the cell's module has the port
                             // flattened into per-field wires (`\<port>.<field>`).
@@ -1399,7 +1410,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Import ports
     if (uhdm_module->Ports()) {
         log("UHDM: Found %d ports to import\n", (int)uhdm_module->Ports()->size());
+        int import_port_idx = 0;
         for (auto port : *uhdm_module->Ports()) {
+            import_port_idx++;
             std::string port_name = std::string(port->VpiName());
             any* high_conn = port->High_conn();
             if (high_conn) {
@@ -1415,7 +1428,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
               }
             }
             log("UHDM: About to import port: '%s'\n", port_name.c_str());
-            import_port(port);
+            import_port(port, import_port_idx);
         }
     }
 
