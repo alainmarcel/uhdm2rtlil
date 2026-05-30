@@ -428,7 +428,7 @@ struct UhdmImporter {
     void import_design(UHDM::design* uhdm_design);
     void import_module(const UHDM::module_inst* uhdm_module);
     void import_module_hierarchy(const UHDM::module_inst* uhdm_module, bool create_instances = true);
-    void import_port(const UHDM::port* uhdm_port);
+    void import_port(const UHDM::port* uhdm_port, int positional_idx = 0);
     void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
     void import_process(const UHDM::process_stmt* uhdm_process);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
