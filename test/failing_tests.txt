@@ -20,3 +20,13 @@ svinterfaces/resolve_types.sv
 # matrix stays exhaustive.  The matching .sv source
 # (svinterfaces/svinterface1.sv) is covered by test/svinterface1/.
 svinterfaces/svinterface1_syn.v
+
+# Verific-specific test that *requires* Verific to emit a specific
+# error message about a cross-module memory reference
+# (`u_sub_rom.mem[f_addr]` in an `assume` from the parent module).
+# The upstream `.ys` script asserts that error via
+# `logger -expect error`; Surelog accepts the SV without diagnostics
+# (legal IEEE-1800 hierarchical access — the error is a Verific
+# limitation, not a language issue), so the test is irrelevant to our
+# Surelog/UHDM flow.  Documented here for upstream-matrix parity.
+verific/ext_ramnet_err.sv
