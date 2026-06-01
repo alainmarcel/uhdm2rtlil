@@ -4407,32 +4407,37 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 if (index.is_fully_const()) {
                     int idx = index.as_const().as_int();
                     // Compute the element width from the parameter's
-                    // typespec ranges.  For a logic_typespec the OUTER
-                    // range count divides the total width; the
-                    // remainder is the element width that `P[i]`
-                    // extracts.
+                    // typespec ranges.  For a packed multi-range
+                    // logic_typespec the OUTER range count divides the
+                    // total width to give the slot width that `P[i]`
+                    // extracts.  For a plain 1-D parameter (single
+                    // range or int_typespec) `P[i]` is just bit `i`.
                     int elem_w = 1;
-                    int outer_size = 1;
                     int outer_low = 0;
+                    bool packed_multidim = false;
                     if (auto rts = param->Typespec()) {
                         if (auto ats = rts->Actual_typespec()) {
                             if (ats->UhdmType() == uhdmlogic_typespec) {
                                 auto lt = dynamic_cast<const UHDM::logic_typespec*>(ats);
-                                if (lt && lt->Ranges() && !lt->Ranges()->empty()) {
+                                if (lt && lt->Ranges() && !lt->Ranges()->empty() &&
+                                    (lt->Ranges()->size() > 1 ||
+                                     lt->Elem_typespec() != nullptr)) {
+                                    packed_multidim = true;
                                     auto r0 = (*lt->Ranges())[0];
                                     RTLIL::SigSpec ls = import_expression(r0->Left_expr());
                                     RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
                                     if (ls.is_fully_const() && rs2.is_fully_const()) {
                                         int l = ls.as_int(), r = rs2.as_int();
-                                        outer_size = std::abs(l - r) + 1;
+                                        int outer_size = std::abs(l - r) + 1;
                                         outer_low = std::min(l, r);
+                                        if (outer_size > 0 && total % outer_size == 0)
+                                            elem_w = total / outer_size;
                                     }
                                 }
                             }
                         }
                     }
-                    if (outer_size > 0 && total % outer_size == 0)
-                        elem_w = total / outer_size;
+                    (void)packed_multidim;
                     int slot = idx - outer_low;
                     int off = slot * elem_w;
                     if (off >= 0 && off + elem_w <= total) {
