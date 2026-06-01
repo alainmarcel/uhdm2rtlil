@@ -1588,10 +1588,27 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 if (func_name == "$signed" && args.size() == 1) {
-                    // $signed just returns the argument with signed interpretation
-                    // The signedness will be handled by the operation that uses it
-                    log_debug("UHDM: $signed returning argument of size %d\n", args[0].size());
-                    return args[0];
+                    // Wrap the argument in a signed intermediate wire so
+                    // downstream resize/extend paths (assignment widening,
+                    // arithmetic cell A/B_SIGNED) pick up the signedness
+                    // from `rhs.as_wire()->is_signed`.  Without the wire
+                    // the SigSpec carries no signedness tag and a
+                    // concat-LHS sync assignment like
+                    //   {y[31:20], y[10:1], ...} <= $signed({x, 1'b0});
+                    // zero-extends instead of sign-extends
+                    // (yosys/tests/functional/picorv32.v decoded_imm_j).
+                    if (args[0].is_wire() && args[0].as_wire()->is_signed) {
+                        log_debug("UHDM: $signed argument already signed wire, passing through (size %d)\n",
+                                  args[0].size());
+                        return args[0];
+                    }
+                    RTLIL::Wire* signed_w =
+                        module->addWire(NEW_ID, args[0].size());
+                    signed_w->is_signed = true;
+                    module->connect(RTLIL::SigSpec(signed_w), args[0]);
+                    log_debug("UHDM: $signed wrapped %d-bit arg in signed intermediate\n",
+                              args[0].size());
+                    return RTLIL::SigSpec(signed_w);
                 } else if (func_name == "$unsigned" && args.size() == 1) {
                     // $unsigned just returns the argument with unsigned interpretation
                     return args[0];

@@ -30,3 +30,14 @@ svinterfaces/svinterface1_syn.v
 # limitation, not a language issue), so the test is irrelevant to our
 # Surelog/UHDM flow.  Documented here for upstream-matrix parity.
 verific/ext_ramnet_err.sv
+
+# picorv32 is a 3000-line RISC-V core that exercises many corner cases
+# of the UHDM frontend simultaneously.  Rather than ship a partial fix,
+# the bugs surfaced by picorv32 are being extracted as minimal
+# reproducers (one PR per root cause) so each fix lands isolated and
+# regression-tested.  First reproducer landed: `test/concat_lhs_signext/`
+# covers `{y[31:20], y[10:1], y[11], y[19:12], y[0]} <= $signed({x,1'b0})`
+# (sign-extension across a swizzled concat LHS in an `always @(posedge)`).
+# Remaining picorv32 issues still in progress; expect this entry to be
+# removed once the dependent fixes are merged.
+functional/picorv32.v
