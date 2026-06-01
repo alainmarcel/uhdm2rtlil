@@ -130,9 +130,116 @@ void UhdmImporter::process_assignment_lhs_rhs(const UHDM::assignment* assign, RT
 }
 
 
+// Extract assigned signals from a single LHS expression. Handles ref_obj,
+// net_bit, part_select, indexed_part_select, bit_select, hier_path, and
+// concatenation operations (`{a, b[hi:lo], c[idx]} <= rhs`) by recursing on
+// each concat operand. Caller pushes results into `signals`.
+void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<AssignedSignal>& signals) {
+    if (!lhs_expr) return;
+
+    // Concat LHS: recurse on each operand so the temp-wire setup allocates
+    // a `$0\<base>` for each base wire written through the concat.
+    if (lhs_expr->VpiType() == vpiOperation) {
+        auto op = any_cast<const operation*>(lhs_expr);
+        if (op && op->VpiOpType() == vpiConcatOp) {
+            if (auto operands = op->Operands()) {
+                for (auto operand : *operands) {
+                    if (auto op_expr = dynamic_cast<const expr*>(operand)) {
+                        extract_lhs_signals(op_expr, signals);
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    AssignedSignal sig;
+    sig.lhs_expr = lhs_expr;
+
+    if (lhs_expr->VpiType() == vpiRefObj) {
+        auto ref = any_cast<const ref_obj*>(lhs_expr);
+        sig.name = std::string(ref->VpiName());
+        sig.is_part_select = false;
+        signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiNetBit) {
+        auto net_bit = any_cast<const UHDM::net_bit*>(lhs_expr);
+        sig.name = std::string(net_bit->VpiName());
+        sig.is_part_select = false;
+        signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+        auto indexed_part_sel = any_cast<const indexed_part_select*>(lhs_expr);
+        sig.is_part_select = true;
+        if (!indexed_part_sel->VpiName().empty())
+            sig.name = std::string(indexed_part_sel->VpiName());
+        signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiPartSelect) {
+        auto part_sel = any_cast<const part_select*>(lhs_expr);
+        sig.is_part_select = true;
+        if (auto parent = part_sel->VpiParent()) {
+            if (parent->VpiType() == vpiRefObj) {
+                auto ref = any_cast<const ref_obj*>(parent);
+                sig.name = std::string(ref->VpiName());
+            } else if (!parent->VpiName().empty()) {
+                sig.name = std::string(parent->VpiName());
+            }
+        }
+        if (sig.name.empty() && !part_sel->VpiDefName().empty())
+            sig.name = std::string(part_sel->VpiDefName());
+        if (sig.name.empty() && !part_sel->VpiName().empty())
+            sig.name = std::string(part_sel->VpiName());
+        signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiBitSelect) {
+        auto bit_sel = any_cast<const bit_select*>(lhs_expr);
+        sig.is_part_select = true;
+        if (!bit_sel->VpiName().empty()) {
+            sig.name = std::string(bit_sel->VpiName());
+        } else if (auto parent = bit_sel->VpiParent()) {
+            if (parent->VpiType() == vpiRefObj) {
+                auto ref = any_cast<const ref_obj*>(parent);
+                sig.name = std::string(ref->VpiName());
+            } else if (!parent->VpiName().empty()) {
+                sig.name = std::string(parent->VpiName());
+            }
+        }
+        if (!sig.name.empty()) {
+            auto idx = bit_sel->VpiIndex();
+            bool is_const_idx = idx && idx->VpiType() == vpiConstant;
+            if (!is_const_idx) {
+                RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
+                if (!module->memories.count(mem_id) &&
+                    module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                    return;
+                }
+            }
+        }
+        signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiHierPath) {
+        auto hp = any_cast<const hier_path*>(lhs_expr);
+        sig.is_part_select = false;
+        std::string full_name = std::string(hp->VpiName());
+        std::string base;
+        size_t dot_pos = full_name.find('.');
+        if (dot_pos != std::string::npos)
+            base = full_name.substr(0, dot_pos);
+        else
+            base = full_name;
+        RTLIL::Wire* base_w = base.empty() ? nullptr :
+            module->wire(RTLIL::escape_id(base));
+        bool base_is_wire = base_w != nullptr &&
+            !base_w->attributes.count(RTLIL::escape_id("is_interface"));
+        bool full_is_wire = !full_name.empty() &&
+            module->wire(RTLIL::escape_id(full_name)) != nullptr;
+        if (full_is_wire && !base_is_wire)
+            sig.name = full_name;
+        else
+            sig.name = base;
+        signals.push_back(sig);
+    }
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
-    
+
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
@@ -141,9 +248,13 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                 if (auto lhs_expr = dynamic_cast<const expr*>(lhs)) {
                     AssignedSignal sig;
                     sig.lhs_expr = lhs_expr;
-                    
+
                     log("extract_assigned_signals: LHS type is %d\n", lhs_expr->VpiType());
-                    if (lhs_expr->VpiType() == vpiRefObj) {
+                    if (lhs_expr->VpiType() == vpiOperation) {
+                        // Concat LHS — delegate to extract_lhs_signals which
+                        // recurses on each operand (`{a, b[hi:lo]} <= rhs`).
+                        extract_lhs_signals(lhs_expr, signals);
+                    } else if (lhs_expr->VpiType() == vpiRefObj) {
                         auto ref = any_cast<const ref_obj*>(lhs_expr);
                         sig.name = std::string(ref->VpiName());
                         sig.is_part_select = false;
