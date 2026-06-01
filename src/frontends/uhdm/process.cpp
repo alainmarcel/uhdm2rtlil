@@ -10,6 +10,7 @@
 #include <uhdm/sys_func_call.h>
 #include <uhdm/parameter.h>
 #include <uhdm/variables.h>
+#include <uhdm/attribute.h>
 #include "kernel/fmt.h"
 #include <algorithm>
 #include <functional>
@@ -8615,6 +8616,23 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
         sw->attributes[ID::full_case] = RTLIL::Const(1);
     }
 
+    // `(* full_case *)` / `(* parallel_case *)` Verilog attribute
+    // syntax shows up as a `vpiAttribute` child on the case_stmt.
+    // Same intent as the SV qualifier above — used by picorv32.v's
+    // `mem_la_wdata`/`mem_rdata_word` combinational case.
+    bool has_full_case_attr = false;
+    if (auto attrs = uhdm_case->Attributes()) {
+        for (auto a : *attrs) {
+            std::string nm(a->VpiName());
+            if (nm == "full_case") {
+                sw->attributes[ID::full_case] = RTLIL::Const(1);
+                has_full_case_attr = true;
+            } else if (nm == "parallel_case") {
+                sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+            }
+        }
+    }
+
     if (!items.empty()) {
         for (auto& d : items) {
             // Extend each case-item compare value to context width
@@ -8639,6 +8657,45 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
         RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
         add_src_attribute(default_case->attributes, uhdm_case);
         sw->cases.push_back(default_case);
+    }
+
+    // Ensure there's a default case when (* full_case *) is present and
+    // the user-written cases don't already cover every value.  The
+    // surrounding always_comb path emits hold defaults
+    // (`$0\sig = \sig`) BEFORE the switch, so an empty/absent default
+    // branch leaves `$0\sig` driven by `\sig` → `proc_dlatch` infers a
+    // latch even with `\full_case` set.  Match the Yosys Verilog
+    // frontend by emitting a default case that assigns `X` to every
+    // signal written anywhere in the case body — the attribute is the
+    // contract that the X path is unreachable, so the synthesizer can
+    // safely treat it as don't-care and collapse to pure comb logic.
+    if (has_full_case_attr) {
+        RTLIL::CaseRule* default_case = nullptr;
+        for (auto c : sw->cases) {
+            if (c->compare.empty()) { default_case = c; break; }
+        }
+        if (!default_case) {
+            default_case = new RTLIL::CaseRule;
+            sw->cases.push_back(default_case);
+        }
+
+        std::vector<AssignedSignal> body_signals;
+        if (auto case_items = uhdm_case->Case_items()) {
+            for (auto case_item : *case_items)
+                if (auto s = case_item->Stmt())
+                    extract_assigned_signals(s, body_signals);
+        }
+        std::set<std::string> seen_keys;
+        for (const auto& sig : body_signals) {
+            if (!sig.lhs_expr) continue;
+            RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
+            if (lhs.size() == 0) continue;
+            RTLIL::SigSpec mapped = map_to_temp_wire(lhs);
+            std::string key = log_signal(mapped);
+            if (!seen_keys.insert(key).second) continue;
+            default_case->actions.push_back(
+                RTLIL::SigSig(mapped, RTLIL::SigSpec(RTLIL::State::Sx, mapped.size())));
+        }
     }
 
     proc->root_case.switches.push_back(sw);
