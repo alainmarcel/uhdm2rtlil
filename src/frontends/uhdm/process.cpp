@@ -8564,13 +8564,23 @@ bool UhdmImporter::apply_case_qualifier_attrs(const case_stmt* uhdm_case, RTLIL:
     return has_full_case;
 }
 
-// Ensure a `full_case` switch has a default branch that assigns X to
-// every signal written anywhere in the case body.  The always_comb /
-// always_ff temp-wire setup emits hold defaults (`$0\sig = \sig`)
-// BEFORE the switch, so an empty/absent default branch leaves
-// `$0\sig` driven by the previous value of `\sig` → `proc_dlatch`
-// still infers a latch even with `\full_case` set.  Matches what
-// Yosys's Verilog frontend emits for `(* full_case *)`.
+// Ensure a `full_case` switch has a default branch.
+//
+// `always_comb` context:  surrounding hold defaults (`$0\sig = \sig`)
+//   create a combinational loop that `proc_dlatch` lowers to a latch
+//   even with `\full_case` set.  Override the hold by assigning X to
+//   every signal written in the case body — the attribute is the
+//   contract that the default branch is unreachable, so X is a safe
+//   don't-care for `proc_mux`/`opt` to collapse the latch path.
+//
+// `always_ff` context:  hold defaults are exactly what we want (FF
+//   holds its value when no case branch matches), and an X-default
+//   would forward X through the sync rule onto the FF's D input —
+//   `opt` then sees `D = X` and collapses the entire output to
+//   `assign sig = X` (e.g. picorv32's `case (cpu_state)` with
+//   `(* parallel_case, full_case *)` listing all 8 states collapsed
+//   `count_instr` to all-X).  Emit an empty default instead;
+//   `proc_dlatch` honours `\full_case` and skips latch inference.
 void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::SwitchRule* sw) {
     RTLIL::CaseRule* default_case = nullptr;
     for (auto c : sw->cases) {
@@ -8580,6 +8590,13 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
         default_case = new RTLIL::CaseRule;
         sw->cases.push_back(default_case);
     }
+
+    // Only emit X-overrides in always_comb context.  The two
+    // always_ff paths (comb-style switch via `in_always_ff_body_mode`,
+    // and the async-reset path) both want a plain empty default — the
+    // surrounding sync rule already holds the FF value, and an X-on-D
+    // would propagate through `opt` to the FF Q.
+    if (in_always_ff_context) return;
 
     std::vector<AssignedSignal> body_signals;
     if (auto case_items = uhdm_case->Case_items()) {
