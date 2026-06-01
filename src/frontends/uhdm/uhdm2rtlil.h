@@ -549,6 +549,8 @@ struct UhdmImporter {
     void import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Process* proc);
     void import_case_stmt_sync(const UHDM::case_stmt* uhdm_case, RTLIL::SyncRule* sync, bool is_reset);
     void import_case_stmt_comb(const UHDM::case_stmt* uhdm_case, RTLIL::Process* proc);
+    bool apply_case_qualifier_attrs(const UHDM::case_stmt* uhdm_case, RTLIL::SwitchRule* sw);
+    void emit_full_case_default(const UHDM::case_stmt* uhdm_case, RTLIL::SwitchRule* sw);
 
     // Task inlining for combinational processes
     void import_task_call_comb(const UHDM::task_call* tc, RTLIL::Process* proc);
