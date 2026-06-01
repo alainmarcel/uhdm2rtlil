@@ -8533,6 +8533,73 @@ void UhdmImporter::import_case_stmt_sync(const case_stmt* uhdm_case, RTLIL::Sync
     }
 }
 
+// Apply `unique case` / `priority case` SV qualifiers and the
+// `(* full_case *)` / `(* parallel_case *)` Verilog attribute syntax
+// to a SwitchRule.  Returns true when the `\full_case` attribute was
+// set (caller can then synthesise a default branch with X-assignments
+// via `emit_full_case_default`).  Both qualifier kinds map to the same
+// Yosys RTLIL attributes that `proc_dlatch` and `proc_mux` consume.
+bool UhdmImporter::apply_case_qualifier_attrs(const case_stmt* uhdm_case, RTLIL::SwitchRule* sw) {
+    bool has_full_case = false;
+    int qualifier = uhdm_case->VpiQualifier();
+    if (qualifier == vpiUniqueQualifier) {
+        sw->attributes[ID::full_case]     = RTLIL::Const(1);
+        sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+        has_full_case = true;
+    } else if (qualifier == vpiPriorityQualifier) {
+        sw->attributes[ID::full_case] = RTLIL::Const(1);
+        has_full_case = true;
+    }
+    if (auto attrs = uhdm_case->Attributes()) {
+        for (auto a : *attrs) {
+            std::string nm(a->VpiName());
+            if (nm == "full_case") {
+                sw->attributes[ID::full_case] = RTLIL::Const(1);
+                has_full_case = true;
+            } else if (nm == "parallel_case") {
+                sw->attributes[ID::parallel_case] = RTLIL::Const(1);
+            }
+        }
+    }
+    return has_full_case;
+}
+
+// Ensure a `full_case` switch has a default branch that assigns X to
+// every signal written anywhere in the case body.  The always_comb /
+// always_ff temp-wire setup emits hold defaults (`$0\sig = \sig`)
+// BEFORE the switch, so an empty/absent default branch leaves
+// `$0\sig` driven by the previous value of `\sig` → `proc_dlatch`
+// still infers a latch even with `\full_case` set.  Matches what
+// Yosys's Verilog frontend emits for `(* full_case *)`.
+void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::SwitchRule* sw) {
+    RTLIL::CaseRule* default_case = nullptr;
+    for (auto c : sw->cases) {
+        if (c->compare.empty()) { default_case = c; break; }
+    }
+    if (!default_case) {
+        default_case = new RTLIL::CaseRule;
+        sw->cases.push_back(default_case);
+    }
+
+    std::vector<AssignedSignal> body_signals;
+    if (auto case_items = uhdm_case->Case_items()) {
+        for (auto case_item : *case_items)
+            if (auto s = case_item->Stmt())
+                extract_assigned_signals(s, body_signals);
+    }
+    std::set<std::string> seen_keys;
+    for (const auto& sig : body_signals) {
+        if (!sig.lhs_expr) continue;
+        RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
+        if (lhs.size() == 0) continue;
+        RTLIL::SigSpec mapped = map_to_temp_wire(lhs);
+        std::string key = log_signal(mapped);
+        if (!seen_keys.insert(key).second) continue;
+        default_case->actions.push_back(
+            RTLIL::SigSig(mapped, RTLIL::SigSpec(RTLIL::State::Sx, mapped.size())));
+    }
+}
+
 // Import case statement for comb context
 void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Process* proc) {
     if (mode_debug)
@@ -8602,36 +8669,7 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
     sw->signal = case_sig;
     add_src_attribute(sw->attributes, uhdm_case);
 
-    // `unique case` / `priority case` SV qualifiers tell the
-    // synthesizer that every reachable case-selector value hits one of
-    // the listed items, so the synthesis pass should not infer a latch
-    // for the missing patterns.  Yosys's `proc_dlatch` reads
-    // `\full_case` (and `\parallel_case` for `unique`).  Mirroring
-    // what Yosys's own Verilog frontend emits.
-    int qualifier = uhdm_case->VpiQualifier();
-    if (qualifier == vpiUniqueQualifier) {
-        sw->attributes[ID::full_case]     = RTLIL::Const(1);
-        sw->attributes[ID::parallel_case] = RTLIL::Const(1);
-    } else if (qualifier == vpiPriorityQualifier) {
-        sw->attributes[ID::full_case] = RTLIL::Const(1);
-    }
-
-    // `(* full_case *)` / `(* parallel_case *)` Verilog attribute
-    // syntax shows up as a `vpiAttribute` child on the case_stmt.
-    // Same intent as the SV qualifier above — used by picorv32.v's
-    // `mem_la_wdata`/`mem_rdata_word` combinational case.
-    bool has_full_case_attr = false;
-    if (auto attrs = uhdm_case->Attributes()) {
-        for (auto a : *attrs) {
-            std::string nm(a->VpiName());
-            if (nm == "full_case") {
-                sw->attributes[ID::full_case] = RTLIL::Const(1);
-                has_full_case_attr = true;
-            } else if (nm == "parallel_case") {
-                sw->attributes[ID::parallel_case] = RTLIL::Const(1);
-            }
-        }
-    }
+    bool has_full_case_attr = apply_case_qualifier_attrs(uhdm_case, sw);
 
     if (!items.empty()) {
         for (auto& d : items) {
@@ -8659,44 +8697,8 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
         sw->cases.push_back(default_case);
     }
 
-    // Ensure there's a default case when (* full_case *) is present and
-    // the user-written cases don't already cover every value.  The
-    // surrounding always_comb path emits hold defaults
-    // (`$0\sig = \sig`) BEFORE the switch, so an empty/absent default
-    // branch leaves `$0\sig` driven by `\sig` → `proc_dlatch` infers a
-    // latch even with `\full_case` set.  Match the Yosys Verilog
-    // frontend by emitting a default case that assigns `X` to every
-    // signal written anywhere in the case body — the attribute is the
-    // contract that the X path is unreachable, so the synthesizer can
-    // safely treat it as don't-care and collapse to pure comb logic.
-    if (has_full_case_attr) {
-        RTLIL::CaseRule* default_case = nullptr;
-        for (auto c : sw->cases) {
-            if (c->compare.empty()) { default_case = c; break; }
-        }
-        if (!default_case) {
-            default_case = new RTLIL::CaseRule;
-            sw->cases.push_back(default_case);
-        }
-
-        std::vector<AssignedSignal> body_signals;
-        if (auto case_items = uhdm_case->Case_items()) {
-            for (auto case_item : *case_items)
-                if (auto s = case_item->Stmt())
-                    extract_assigned_signals(s, body_signals);
-        }
-        std::set<std::string> seen_keys;
-        for (const auto& sig : body_signals) {
-            if (!sig.lhs_expr) continue;
-            RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
-            if (lhs.size() == 0) continue;
-            RTLIL::SigSpec mapped = map_to_temp_wire(lhs);
-            std::string key = log_signal(mapped);
-            if (!seen_keys.insert(key).second) continue;
-            default_case->actions.push_back(
-                RTLIL::SigSig(mapped, RTLIL::SigSpec(RTLIL::State::Sx, mapped.size())));
-        }
-    }
+    if (has_full_case_attr)
+        emit_full_case_default(uhdm_case, sw);
 
     proc->root_case.switches.push_back(sw);
 
@@ -9113,6 +9115,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             sw->signal = case_expr;
             add_src_attribute(sw->attributes, uhdm_case);
 
+            // `unique`/`priority case` qualifiers and the
+            // `(* full_case *)` / `(* parallel_case *)` attributes are
+            // honoured here too — picorv32.v's huge always block at
+            // line 1397 has many nested `case` statements with these
+            // attributes, and missing them produces hundreds of muxes
+            // where the Verilog frontend produces pmuxes.
+            bool has_full_case_attr =
+                apply_case_qualifier_attrs(uhdm_case, sw);
+
             // Pass 2: emit case items with properly extended compare values
             for (auto& d : ci_data) {
                 for (auto& [sig, sgn] : d.exprs) {
@@ -9129,6 +9140,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
                 sw->cases.push_back(d.rule);
             }
+
+            if (has_full_case_attr)
+                emit_full_case_default(uhdm_case, sw);
 
             // Add the switch to the current case rule
             case_rule->switches.push_back(sw);
