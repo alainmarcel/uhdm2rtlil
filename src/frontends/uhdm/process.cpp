@@ -7743,8 +7743,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         } else if (lhs_expr->VpiType() == vpiPartSelect) {
             const part_select* ps = any_cast<const part_select*>(lhs_expr);
-            // Get base signal from parent
-            if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+            // Base name is on the part_select itself (vpiName); VpiParent
+            // is the unnamed assignment.  Prefer self, fall back to parent.
+            if (!ps->VpiName().empty()) {
+                signal_name = std::string(ps->VpiName());
+            } else if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ps->VpiParent()->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
@@ -8029,8 +8032,11 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         } else if (lhs_expr->VpiType() == vpiPartSelect) {
             const part_select* ps = any_cast<const part_select*>(lhs_expr);
-            // Get base signal from parent
-            if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+            // Base name is on the part_select itself (vpiName); VpiParent
+            // is the unnamed assignment.  Prefer self, fall back to parent.
+            if (!ps->VpiName().empty()) {
+                signal_name = std::string(ps->VpiName());
+            } else if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                 signal_name = std::string(ps->VpiParent()->VpiName());
             }
         } else if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
@@ -8564,23 +8570,26 @@ bool UhdmImporter::apply_case_qualifier_attrs(const case_stmt* uhdm_case, RTLIL:
     return has_full_case;
 }
 
-// Ensure a `full_case` switch has a default branch.
+// Ensure a `full_case` switch has a default branch that assigns X to the
+// signals genrtlil would X — matching the Yosys Verilog frontend so `opt`
+// fills the unreachable-state don't-cares identically.
 //
-// `always_comb` context:  surrounding hold defaults (`$0\sig = \sig`)
-//   create a combinational loop that `proc_dlatch` lowers to a latch
-//   even with `\full_case` set.  Override the hold by assigning X to
-//   every signal written in the case body — the attribute is the
-//   contract that the default branch is unreachable, so X is a safe
-//   don't-care for `proc_mux`/`opt` to collapse the latch path.
+// `always_comb` context:  X EVERY signal written in the case body.
+//   Surrounding hold defaults (`$0\sig = \sig`) create a combinational
+//   loop that `proc_dlatch` lowers to a latch even with `\full_case` set;
+//   the X-default overrides the hold so `proc_mux`/`opt` collapse the
+//   latch path (the attribute is the contract that the default is
+//   unreachable, so X is a safe don't-care).
 //
-// `always_ff` context:  hold defaults are exactly what we want (FF
-//   holds its value when no case branch matches), and an X-default
-//   would forward X through the sync rule onto the FF's D input —
-//   `opt` then sees `D = X` and collapses the entire output to
-//   `assign sig = X` (e.g. picorv32's `case (cpu_state)` with
-//   `(* parallel_case, full_case *)` listing all 8 states collapsed
-//   `count_instr` to all-X).  Emit an empty default instead;
-//   `proc_dlatch` honours `\full_case` and skips latch inference.
+// `always_ff` context:  X only the BLOCKING-assigned (`=`) combinational
+//   temps (e.g. picorv32's set_mem_do_*/current_pc/next_irq_pending).
+//   Non-blocking (`<=`) FF signals must HOLD: an X on a FF's D input
+//   propagates through `opt` to the FF Q and collapses its whole cone to
+//   `assign sig = X` (e.g. `case (cpu_state)` with `(* full_case *)`
+//   collapsed `count_instr` to all-X — commit ee63b3e4).  But OMITTING the
+//   X for the blocking temps made `opt` fill the unreachable `cpu_state=0`
+//   state differently from the Verilog frontend (which DOES X them),
+//   diverging set_mem_do_wdata → mem_state → mem_valid → wbm_* outputs.
 void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::SwitchRule* sw) {
     RTLIL::CaseRule* default_case = nullptr;
     for (auto c : sw->cases) {
@@ -8591,12 +8600,14 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
         sw->cases.push_back(default_case);
     }
 
-    // Only emit X-overrides in always_comb context.  The two
-    // always_ff paths (comb-style switch via `in_always_ff_body_mode`,
-    // and the async-reset path) both want a plain empty default — the
-    // surrounding sync rule already holds the FF value, and an X-on-D
-    // would propagate through `opt` to the FF Q.
-    if (in_always_ff_context) return;
+    // In always_ff, restrict the X-default to blocking-assigned temps so
+    // FF registers keep their hold semantics.
+    std::set<std::string> blocking_names;
+    if (in_always_ff_context) {
+        if (auto case_items = uhdm_case->Case_items())
+            for (auto case_item : *case_items)
+                collect_blocking_assigned_names(case_item->Stmt(), blocking_names);
+    }
 
     std::vector<AssignedSignal> body_signals;
     if (auto case_items = uhdm_case->Case_items()) {
@@ -8607,6 +8618,8 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
     std::set<std::string> seen_keys;
     for (const auto& sig : body_signals) {
         if (!sig.lhs_expr) continue;
+        // FF (non-blocking) signals hold; only blocking temps get X'd.
+        if (in_always_ff_context && !blocking_names.count(sig.name)) continue;
         RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
         if (lhs.size() == 0) continue;
         RTLIL::SigSpec mapped = map_to_temp_wire(lhs);
@@ -8863,8 +8876,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     }
                                 } else if (lhs->VpiType() == vpiPartSelect) {
                                     const part_select* ps = any_cast<const part_select*>(lhs);
-                                    // Get base signal from parent
-                                    if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
+                                    // The base signal name lives on the
+                                    // part_select itself (vpiName); its
+                                    // VpiParent is the enclosing (unnamed)
+                                    // assignment.  Match import_part_select's
+                                    // extraction order: self first, parent
+                                    // fallback.  Without the self-name check
+                                    // `count_cycle[63:32] <= 0` left
+                                    // signal_name empty, so the partial write
+                                    // bypassed $0\count_cycle and went straight
+                                    // to \count_cycle — collapsing the FF.
+                                    if (!ps->VpiName().empty()) {
+                                        signal_name = std::string(ps->VpiName());
+                                        is_partial = true;
+                                    } else if (ps->VpiParent() && !ps->VpiParent()->VpiName().empty()) {
                                         signal_name = std::string(ps->VpiParent()->VpiName());
                                         is_partial = true;
                                     }
@@ -8944,7 +8969,31 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             } else if (!current_temp_wires.empty()) {
                                 // Check if this exact LHS expression has a temp wire
                                 if (current_temp_wires.count(lhs)) {
-                                    target_sig = RTLIL::SigSpec(current_temp_wires[lhs]);
+                                    RTLIL::Wire* tw = current_temp_wires[lhs];
+                                    if (tw->width == lhs_sig.size()) {
+                                        // Dedicated full-wire or per-slice temp
+                                        // wire — drive it directly.
+                                        target_sig = RTLIL::SigSpec(tw);
+                                    } else {
+                                        // Partial write whose base collapsed
+                                        // onto ONE full-width temp wire (several
+                                        // writes target the same signal, e.g.
+                                        // `count_cycle <= ...;
+                                        //  count_cycle[63:32] <= 0;`).  The
+                                        // pointer map points at the full temp,
+                                        // so retarget only the addressed slice —
+                                        // otherwise `count_cycle[63:32] <= 0`
+                                        // would zero the entire 64-bit temp and
+                                        // drop bits [31:0].
+                                        RTLIL::SigSpec mapped;
+                                        for (const auto& ch : lhs_sig.chunks()) {
+                                            if (ch.wire && tw->width >= ch.offset + ch.width)
+                                                mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
+                                            else
+                                                mapped.append(ch);
+                                        }
+                                        target_sig = mapped;
+                                    }
                                     if (mode_debug)
                                         log("        Using temp wire for assignment\n");
                                 } else {

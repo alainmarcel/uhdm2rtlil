@@ -846,6 +846,63 @@ void UhdmImporter::extract_assigned_signal_names(const any* stmt, std::set<std::
     }
 }
 
+// Collect base names of signals written via BLOCKING (`=`) assignments
+// only.  Used by emit_full_case_default in always_ff context: genrtlil
+// emits `\sig = X` in a full_case default ONLY for blocking-assigned
+// combinational temps (e.g. picorv32's set_mem_do_*/current_pc/
+// next_irq_pending), while non-blocking (`<=`) FF signals must HOLD
+// (an X on a FF's D collapses its whole cone to X — see commit ee63b3e4).
+void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std::string>& signal_names) {
+    if (!stmt) return;
+    switch (stmt->VpiType()) {
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (assign->VpiBlocking()) {
+                std::vector<AssignedSignal> sigs;
+                extract_assigned_signals(stmt, sigs);
+                for (const auto& s : sigs)
+                    if (!s.name.empty()) signal_names.insert(s.name);
+            }
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin: {
+            if (VectorOfany* stmts = begin_block_stmts(stmt))
+                for (auto s : *stmts) collect_blocking_assigned_names(s, signal_names);
+            break;
+        }
+        case vpiIf: {
+            const UHDM::if_stmt* i = any_cast<const UHDM::if_stmt*>(stmt);
+            collect_blocking_assigned_names(i->VpiStmt(), signal_names);
+            break;
+        }
+        case vpiIfElse: {
+            const if_else* i = any_cast<const if_else*>(stmt);
+            collect_blocking_assigned_names(i->VpiStmt(), signal_names);
+            collect_blocking_assigned_names(i->VpiElseStmt(), signal_names);
+            break;
+        }
+        case vpiCase: {
+            const case_stmt* c = any_cast<const case_stmt*>(stmt);
+            if (c->Case_items())
+                for (auto it : *c->Case_items())
+                    collect_blocking_assigned_names(it->Stmt(), signal_names);
+            break;
+        }
+        case vpiFor: {
+            const for_stmt* f = any_cast<const for_stmt*>(stmt);
+            collect_blocking_assigned_names(f->VpiStmt(), signal_names);
+            break;
+        }
+        case vpiRepeat: {
+            const UHDM::repeat* r = any_cast<const UHDM::repeat*>(stmt);
+            collect_blocking_assigned_names(r->VpiStmt(), signal_names);
+            break;
+        }
+    }
+}
+
 // Helper function to check if an assignment is a memory write
 bool UhdmImporter::is_memory_write(const assignment* assign, RTLIL::Module* module) {
     if (!assign || !module) return false;
