@@ -9015,8 +9015,19 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     if (rhs_is_fill) {
                                         rhs_sig = RTLIL::SigSpec(rhs_fill_state, target_sig.size());
                                     } else {
-                                        // Extend RHS to match target width
-                                        rhs_sig.extend_u0(target_sig.size());
+                                        // Extend RHS to match target width,
+                                        // sign-extending when the RHS is a
+                                        // signed wire (e.g. a case branch
+                                        // `decoded_imm <= $signed(insn[31:20])`
+                                        // — `$signed` returns a signed
+                                        // intermediate wire).  Without the
+                                        // signedness check this zero-extended,
+                                        // so a negative I-type immediate
+                                        // decoded as 0x00000A0A instead of
+                                        // 0xFFFFFA0A (picorv32 branch target).
+                                        bool rhs_is_signed = rhs_sig.is_wire() &&
+                                            rhs_sig.as_wire()->is_signed;
+                                        rhs_sig.extend_u0(target_sig.size(), rhs_is_signed);
                                     }
                                 } else {
                                     // Truncate RHS to match target width
