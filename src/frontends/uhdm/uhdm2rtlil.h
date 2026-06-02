@@ -315,6 +315,23 @@ struct UhdmImporter {
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
 
+    // Blocking (`=`) temps assigned within the current always_ff body, mapped
+    // to their `$0\<sig>` next-value temp wire.  In always_ff body mode reads
+    // consult this so a blocking temp read same-cycle (e.g.
+    // `current_pc = reg_next_pc; reg_pc <= current_pc;`) sees the in-flight
+    // combinational value instead of the stale registered \<sig>.  Populated
+    // in program order during body processing; non-blocking (`<=`) register
+    // targets are NOT added, so their reads still see original values.
+    std::map<std::string, RTLIL::SigSpec> ff_blocking_temps;
+
+    // Value map a process RHS read should consult: in always_ff body mode use
+    // the blocking-temp map (registers keep their original value); otherwise
+    // the comb-value tracking map; null when not inside a process.
+    const std::map<std::string, RTLIL::SigSpec>* comb_read_map() const {
+        if (!current_comb_process) return nullptr;
+        return in_always_ff_body_mode ? &ff_blocking_temps : &current_comb_values;
+    }
+
     // Set when the current if-chain is inside a `priority if` / `unique if`
     // SV statement.  The qualifier on the outermost `if_else` is the only
     // one Surelog records; nested else-if levels need the same `\full_case`
