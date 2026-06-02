@@ -621,7 +621,10 @@ struct UhdmImporter {
     UHDM::VectorOfany *begin_block_stmts(const any *stmt);
     void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
-    void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names); 
+    void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);
+    // Collect base names of signals written via BLOCKING (`=`) assignments
+    // only (combinational temps), skipping non-blocking (`<=`) FF writes.
+    void collect_blocking_assigned_names(const any* stmt, std::set<std::string>& signal_names);
     bool contains_complex_constructs(const any* stmt);
     bool is_memory_write(const assignment* assign, RTLIL::Module* module);
     void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);

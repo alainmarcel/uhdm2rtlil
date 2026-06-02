@@ -487,6 +487,30 @@ SAT_SCRIPT="${TEST_DIR}/test_equiv_sat.ys"
 # remaps public-typed built-in gates back to their internal cell types
 # (satgen has no SAT models for `\$_NOT_` etc.).
 CHTYPE_BLOCK=$(sed -n '/^chtype -map/p' "$EQUIV_SCRIPT")
+
+# Optional per-test reset assertion for the SAT fallback.  Some designs
+# (e.g. picorv32) contain one-hot `(* full_case *)` FSMs whose all-zero
+# init state is unreachable in real hardware; `opt` legitimately fills
+# that state's don't-cares differently between the two frontends, so a
+# from-init SAT proof reports a spurious mismatch.  Holding the design in
+# reset for the first cycle(s) leaves that illegal state so equivalence is
+# checked only over reachable states — exactly how the hardware is used.
+#
+# Config: a `sat_reset.txt` in the test dir with one non-comment line:
+#   "<miter_input_wire> <active_value> [num_cycles=1]"
+# e.g. "in_wb_rst_i 1 1" (note: `miter -equiv` prefixes shared inputs
+# with `in_`).
+SAT_RESET_ARGS=""
+if [ -f "${TEST_DIR}/sat_reset.txt" ]; then
+    read -r RST_SIG RST_VAL RST_CYC < <(grep -vE '^[[:space:]]*(#|$)' "${TEST_DIR}/sat_reset.txt" | head -1)
+    RST_CYC=${RST_CYC:-1}
+    if [ -n "$RST_SIG" ] && [ -n "$RST_VAL" ]; then
+        for ((c=1; c<=RST_CYC; c++)); do
+            SAT_RESET_ARGS="${SAT_RESET_ARGS} -set-at ${c} ${RST_SIG} ${RST_VAL}"
+        done
+    fi
+fi
+
 cat > "$SAT_SCRIPT" << EOF
 read_verilog -lib +/simcells.v
 read_verilog -sv $VERILOG_SYNTH
@@ -512,7 +536,7 @@ design -stash gate
 design -copy-from gold -as gold gold
 design -copy-from gate -as gate gate
 miter -equiv -flatten -make_assert -make_outputs gold gate miter
-sat -prove-asserts -seq 32 -set-init-zero miter
+sat -prove-asserts -seq 32 -set-init-zero${SAT_RESET_ARGS} miter
 EOF
 
 SAT_LOG="${TEST_DIR}/equiv_check_sat.log"
