@@ -3752,7 +3752,21 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             return it->second;
         }
     }
-    
+
+    // In always_ff body mode, a blocking (`=`) temp that was already assigned
+    // earlier in this evaluation must read its in-flight `$0\<sig>` value, not
+    // the stale registered wire (e.g. `a = ctrl+1; ... case(a*b) ...` or
+    // `current_pc = reg_next_pc; reg_pc <= current_pc;`).  ff_blocking_temps is
+    // populated in program order during body processing and only holds
+    // blocking targets, so registers (non-blocking `<=`) are unaffected and a
+    // blocking accumulator's own RHS (`t = t+1`) still reads the old `\t`
+    // because the map entry is added only after the assignment.
+    if (in_always_ff_body_mode) {
+        auto bt = ff_blocking_temps.find(ref_name);
+        if (bt != ff_blocking_temps.end())
+            return bt->second;
+    }
+
     // Check if the ref_obj has an Actual_group() that points to the real signal
     // This is used in generate blocks where ref_obj names include generate scope prefixes
     // but the Actual_group() points to the real module-level signal

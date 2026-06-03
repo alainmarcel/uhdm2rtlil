@@ -27,12 +27,12 @@ module \multiple_blocking_gate
   wire width 3 $0\c
   attribute \src "dut.sv:11.4-83.9"
   wire width 32 $0\dout
-  wire width 6 $auto$expression.cpp:2965:import_operation$2
-  wire width 64 $auto$expression.cpp:3020:import_operation$4
+  wire width 6 $auto$expression.cpp:3006:import_operation$2
+  wire width 64 $auto$expression.cpp:3061:import_operation$4
   wire width 3 $auto$rtlil.cc:3255:Not$7
-  wire width 32 $auto$expression.cpp:2965:import_operation$8
-  wire width 7 $auto$expression.cpp:3100:import_operation$10
-  wire width 64 $auto$expression.cpp:2965:import_operation$12
+  wire width 32 $auto$expression.cpp:3006:import_operation$8
+  wire width 7 $auto$expression.cpp:3141:import_operation$10
+  wire width 64 $auto$expression.cpp:3006:import_operation$12
   attribute \src "dut.sv:13.13-13.23"
   cell $add $add$dut.sv:13$3
     parameter \A_SIGNED 0
@@ -42,7 +42,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 6
     connect \A { 1'0 \ctrl }
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2965:import_operation$2
+    connect \Y $auto$expression.cpp:3006:import_operation$2
   end
   attribute \src "dut.sv:14.13-14.22"
   cell $sub $sub$dut.sv:14$5
@@ -53,7 +53,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \sel }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3020:import_operation$4
+    connect \Y $auto$expression.cpp:3061:import_operation$4
   end
   attribute \src "dut.sv:15.13-15.19"
   cell $not $not$dut.sv:15$6
@@ -72,7 +72,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 32
     connect \A \dout
     connect \B 1
-    connect \Y $auto$expression.cpp:2965:import_operation$8
+    connect \Y $auto$expression.cpp:3006:import_operation$8
   end
   attribute \src "dut.sv:17.17-17.24"
   cell $mul $mul$dut.sv:17$11
@@ -81,9 +81,9 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 6
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 7
-    connect \A \a
-    connect \B \b
-    connect \Y $auto$expression.cpp:3100:import_operation$10
+    connect \A $0\a
+    connect \B $0\b
+    connect \Y $auto$expression.cpp:3141:import_operation$10
   end
   attribute \src "dut.sv:17.15-17.30"
   cell $add $add$dut.sv:17$13
@@ -92,115 +92,115 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:3100:import_operation$10 }
+    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:3141:import_operation$10 }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$expression.cpp:2965:import_operation$12
+    connect \Y $auto$expression.cpp:3006:import_operation$12
   end
   attribute \src "dut.sv:11.4-83.9"
   attribute \always_ff 1
   process $proc$dut.sv:11$1
-    assign $0\a $auto$expression.cpp:2965:import_operation$2
-    assign $0\b $auto$expression.cpp:3020:import_operation$4 [0]
+    assign $0\a $auto$expression.cpp:3006:import_operation$2
+    assign $0\b $auto$expression.cpp:3061:import_operation$4 [0]
     assign $0\c $auto$rtlil.cc:3255:Not$7
-    assign $0\dout $auto$expression.cpp:2965:import_operation$8
+    assign $0\dout $auto$expression.cpp:3006:import_operation$8
     attribute \src "dut.sv:17.9-82.16"
-    switch $auto$expression.cpp:2965:import_operation$12
+    switch $auto$expression.cpp:3006:import_operation$12
     attribute \src "dut.sv:18.11-19.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000000
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout { 29'00000000000000000000000000000 $0\c }
     attribute \src "dut.sv:20.11-21.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000001
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:1] { 28'0000000000000000000000000000 $0\c }
     attribute \src "dut.sv:22.11-23.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000010
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:2] { 27'000000000000000000000000000 $0\c }
     attribute \src "dut.sv:24.11-25.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000011
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:3] { 26'00000000000000000000000000 $0\c }
     attribute \src "dut.sv:26.11-27.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000100
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:4] { 25'0000000000000000000000000 $0\c }
     attribute \src "dut.sv:28.11-29.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000101
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:5] { 24'000000000000000000000000 $0\c }
     attribute \src "dut.sv:30.11-31.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000110
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:6] { 23'00000000000000000000000 $0\c }
     attribute \src "dut.sv:32.11-33.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000111
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:7] { 22'0000000000000000000000 $0\c }
     attribute \src "dut.sv:34.11-35.28"
       case 64'0000000000000000000000000000000000000000000000000000000000001000
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:8] { 21'000000000000000000000 $0\c }
     attribute \src "dut.sv:36.11-37.28"
       case 64'0000000000000000000000000000000000000000000000000000000000001001
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:9] { 20'00000000000000000000 $0\c }
     attribute \src "dut.sv:38.11-39.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001010
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:10] { 19'0000000000000000000 $0\c }
     attribute \src "dut.sv:40.11-41.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001011
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:11] { 18'000000000000000000 $0\c }
     attribute \src "dut.sv:42.11-43.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001100
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:12] { 17'00000000000000000 $0\c }
     attribute \src "dut.sv:44.11-45.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001101
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:13] { 16'0000000000000000 $0\c }
     attribute \src "dut.sv:46.11-47.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001110
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:14] { 15'000000000000000 $0\c }
     attribute \src "dut.sv:48.11-49.29"
       case 64'0000000000000000000000000000000000000000000000000000000000001111
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:15] { 14'00000000000000 $0\c }
     attribute \src "dut.sv:50.11-51.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010000
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:16] { 13'0000000000000 $0\c }
     attribute \src "dut.sv:52.11-53.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010001
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:17] { 12'000000000000 $0\c }
     attribute \src "dut.sv:54.11-55.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010010
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:18] { 11'00000000000 $0\c }
     attribute \src "dut.sv:56.11-57.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010011
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:19] { 10'0000000000 $0\c }
     attribute \src "dut.sv:58.11-59.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010100
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:20] { 9'000000000 $0\c }
     attribute \src "dut.sv:60.11-61.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010101
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:21] { 8'00000000 $0\c }
     attribute \src "dut.sv:62.11-63.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010110
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:22] { 7'0000000 $0\c }
     attribute \src "dut.sv:64.11-65.29"
       case 64'0000000000000000000000000000000000000000000000000000000000010111
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:23] { 6'000000 $0\c }
     attribute \src "dut.sv:66.11-67.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011000
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:24] { 5'00000 $0\c }
     attribute \src "dut.sv:68.11-69.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011001
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:25] { 4'0000 $0\c }
     attribute \src "dut.sv:70.11-71.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011010
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:26] { 3'000 $0\c }
     attribute \src "dut.sv:72.11-73.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011011
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:27] { 2'00 $0\c }
     attribute \src "dut.sv:74.11-75.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011100
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:28] { 1'0 $0\c }
     attribute \src "dut.sv:76.11-77.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011101
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:29] $0\c
     attribute \src "dut.sv:78.11-79.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011110
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31:30] $0\c [1:0]
     attribute \src "dut.sv:80.11-81.29"
       case 64'0000000000000000000000000000000000000000000000000000000000011111
-        assign $0\dout { 29'00000000000000000000000000000 \c }
+        assign $0\dout [31] $0\c [0]
     end
     sync posedge \clk
       update \a $0\a

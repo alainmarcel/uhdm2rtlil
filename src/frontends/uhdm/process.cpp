@@ -1784,6 +1784,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     // prevents current_comb_values from being read/written, so all RHS
                     // expressions see original register values, not updated $0\ values)
                     current_comb_values.clear();
+                    ff_blocking_temps.clear();
                     current_comb_process = yosys_proc;
                     in_always_ff_body_mode = true;
 
@@ -1797,6 +1798,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     current_comb_process = nullptr;
                     current_temp_wires.clear();
                     current_comb_values.clear();
+                    ff_blocking_temps.clear();
                     comb_value_aliases.clear();
 
                     // Create sync posedge/negedge rule with update actions: \x <= $0\x
@@ -7407,7 +7409,7 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
 
     // Confirm idx is dynamic (constant case has its own static path).
     RTLIL::SigSpec idx_sig = import_expression(bs->VpiIndex(),
-        (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+        comb_read_map());
     if (idx_sig.is_fully_const()) return false;
 
     // Compute pos = ascending ? (range_right - idx) : (idx - range_right)
@@ -7434,7 +7436,7 @@ bool UhdmImporter::emit_dynamic_struct_field_bit_write(
     int prev_ctx = expression_context_width;
     expression_context_width = elem_width;
     RTLIL::SigSpec rhs = import_expression(rhs_expr_obj,
-        (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+        comb_read_map());
     expression_context_width = prev_ctx;
     bool rhs_signed = is_expr_signed(rhs_expr_obj);
     if (rhs.size() < elem_width) rhs.extend_u0(elem_width, rhs_signed);
@@ -7616,13 +7618,13 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             if (first_elem && bs->VpiIndex() && bs->VpiIndex()->VpiType() != vpiConstant) {
                 // Dynamic write to expanded array
                 RTLIL::SigSpec dyn_addr = import_expression(bs->VpiIndex(),
-                    (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+                    comb_read_map());
 
                 RTLIL::SigSpec dyn_rhs;
                 if (auto rhs_any = uhdm_assign->Rhs()) {
                     if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
                         dyn_rhs = import_expression(rhs_e,
-                            (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+                            comb_read_map());
                 }
 
                 // Count elements
@@ -7688,7 +7690,7 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             int prev_ctx = expression_context_width;
             expression_context_width = lhs.size();
             rhs = import_expression(rhs_expr,
-                (current_comb_process && !in_always_ff_body_mode) ? &current_comb_values : nullptr);
+                comb_read_map());
             expression_context_width = prev_ctx;
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
@@ -7875,6 +7877,10 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 if (alias_it != comb_value_aliases.end()) {
                     current_comb_values[alias_it->second] = rhs;
                 }
+                // In always_ff body mode, a BLOCKING temp read same-cycle must
+                // resolve to its in-flight $0\ value (see CaseRule path).
+                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking())
+                    ff_blocking_temps[signal_name] = RTLIL::SigSpec(temp_wire);
                 return;
             }
         } else if (!lhs.empty()) {
@@ -8844,9 +8850,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // widen to it (SV context-determined sizing).
                             int prev_ctx = expression_context_width;
                             expression_context_width = lhs_sig.size();
-                            RTLIL::SigSpec rhs_sig = import_expression(rhs);
+                            // In always_ff body mode, resolve reads of blocking
+                            // temps to their in-flight $0\ value (registers stay
+                            // original).  always_comb behaviour is unchanged
+                            // (no map passed).
+                            RTLIL::SigSpec rhs_sig = import_expression(rhs,
+                                in_always_ff_body_mode ? &ff_blocking_temps : nullptr);
                             expression_context_width = prev_ctx;
-                            
+
                             // Check if we should assign to a temp wire instead
                             RTLIL::SigSpec target_sig = lhs_sig;
                             
@@ -9041,6 +9052,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             case_rule->actions.push_back(RTLIL::SigSig(target_sig, rhs_sig));
                             if (mode_debug)
                                 log("        Assignment added to case_rule, now has %d actions\n", (int)case_rule->actions.size());
+
+                            // Track BLOCKING temps so a later same-cycle read in
+                            // this always_ff body resolves to the in-flight
+                            // `$0\<sig>` value, not the stale registered wire
+                            // (e.g. `current_pc = reg_next_pc; reg_pc <=
+                            // current_pc;`).  Non-blocking (`<=`) register
+                            // targets are intentionally NOT tracked.
+                            if (in_always_ff_body_mode && assign->VpiBlocking() &&
+                                    !lhs_sig.empty()) {
+                                RTLIL::SigChunk fc = *lhs_sig.chunks().begin();
+                                if (fc.wire) {
+                                    std::string bn = fc.wire->name.str();
+                                    if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
+                                    if (RTLIL::Wire* t0 = module->wire("$0\\" + bn))
+                                        ff_blocking_temps[bn] = RTLIL::SigSpec(t0);
+                                }
+                            }
                         }
                     }
                 }
