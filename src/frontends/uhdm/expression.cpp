@@ -3184,6 +3184,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        // `<<<` (arithmetic left shift) is identical to `<<` for synthesis
+        // (no sign extension on a left shift).
+        case vpiArithLShiftOp:
         case vpiLShiftOp:
             if (operands.size() == 2) {
                 // Left shift operation: a << b
@@ -3208,6 +3211,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        // `>>>` (arithmetic right shift): sign-extends when the left operand
+        // is signed (the $signed() wrapper marks its result wire), else
+        // behaves like `>>`.  vpiArithRShiftOp (42) was previously unhandled
+        // and fell through to a 0 result, so `$signed(x) >>> n` became 0
+        // (picorv32 SRAI/SRA produced 0).  Shares the vpiRShiftOp handler,
+        // which already selects $sshr vs $shr from operand signedness.
+        case vpiArithRShiftOp:
         case vpiRShiftOp:
             if (operands.size() == 2) {
                 // Right shift operation: a >> b
