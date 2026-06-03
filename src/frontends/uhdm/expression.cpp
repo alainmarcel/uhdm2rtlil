@@ -3291,31 +3291,31 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
             break;
         case vpiLtOp:
-            if (operands.size() == 2)
-                {
-                    std::string cell_name = generate_cell_name(uhdm_op, "lt");
-                    return module->Lt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
-                }
-            break;
         case vpiLeOp:
-            if (operands.size() == 2)
-                {
-                    std::string cell_name = generate_cell_name(uhdm_op, "le");
-                    return module->Le(RTLIL::escape_id(cell_name), operands[0], operands[1]);
-                }
-            break;
         case vpiGtOp:
-            if (operands.size() == 2)
-                {
-                    std::string cell_name = generate_cell_name(uhdm_op, "gt");
-                    return module->Gt(RTLIL::escape_id(cell_name), operands[0], operands[1]);
-                }
-            break;
         case vpiGeOp:
             if (operands.size() == 2)
                 {
-                    std::string cell_name = generate_cell_name(uhdm_op, "ge");
-                    return module->Ge(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    // SV: a relational comparison is SIGNED iff BOTH operands
+                    // are signed (e.g. `$signed(a) < $signed(b)`).  The `$signed`
+                    // wrapper marks its result wire is_signed; without this the
+                    // cell defaulted to unsigned, so signed `<`/`>=` collapsed to
+                    // the unsigned version (picorv32 alu_lts === alu_ltu → SLTI/
+                    // SLT/BLT/BGE decoded wrong).
+                    bool a_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
+                    bool b_signed = operands[1].is_wire() && operands[1].as_wire()->is_signed;
+                    bool cmp_signed = a_signed && b_signed;
+                    const char* nm = op_type == vpiLtOp ? "lt" :
+                                     op_type == vpiLeOp ? "le" :
+                                     op_type == vpiGtOp ? "gt" : "ge";
+                    std::string cell_name = generate_cell_name(uhdm_op, nm);
+                    RTLIL::IdString cid = RTLIL::escape_id(cell_name);
+                    switch (op_type) {
+                        case vpiLtOp: return module->Lt(cid, operands[0], operands[1], cmp_signed);
+                        case vpiLeOp: return module->Le(cid, operands[0], operands[1], cmp_signed);
+                        case vpiGtOp: return module->Gt(cid, operands[0], operands[1], cmp_signed);
+                        default:      return module->Ge(cid, operands[0], operands[1], cmp_signed);
+                    }
                 }
             break;
         case vpiConditionOp:
