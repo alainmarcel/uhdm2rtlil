@@ -4209,6 +4209,17 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
 
+    // In always_ff body mode, a part-select of a BLOCKING temp assigned
+    // earlier in this evaluation (e.g. `tmp = A-B; result <= tmp[7:0];`)
+    // must read the in-flight `$0\tmp`, not the stale registered `\tmp` — the
+    // same redirect import_ref_obj applies to whole-signal reads.  Without it
+    // the read picks up the FF Q and the consumer gets an extra cycle of delay.
+    if (in_always_ff_body_mode && !base_signal_name.empty()) {
+        auto bt = ff_blocking_temps.find(base_signal_name);
+        if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
+            base = bt->second;
+    }
+
     log("      Base signal width: %d\n", base.size());
 
     // Get range
@@ -4537,8 +4548,16 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     }
     
     RTLIL::SigSpec base(wire);
+    // always_ff blocking-temp redirect (see import_ref_obj/import_part_select):
+    // a bit-select of a blocking temp assigned earlier this cycle (e.g.
+    // `CF <= tmp[8]`) reads the in-flight `$0\tmp`, not the registered `\tmp`.
+    if (in_always_ff_body_mode) {
+        auto bt = ff_blocking_temps.find(signal_name);
+        if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
+            base = bt->second;
+    }
     RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
-    
+
     if (index.size() == 0) {
         log_warning("Bit select index expression returned empty SigSpec for signal %s\n", signal_name.c_str());
         return RTLIL::SigSpec();

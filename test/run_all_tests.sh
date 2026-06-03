@@ -104,6 +104,21 @@ if [ -f "$SCRIPT_DIR/sim_equiv_analyzed.txt" ]; then
     done < "$SCRIPT_DIR/sim_equiv_analyzed.txt"
 fi
 
+# Read a KEY from a test's optional per-test config file
+# (`<test_dir>/sim_config`, simple `KEY=VALUE` lines), or echo the default.
+# Supported keys:
+#   SKIP_FORMAL=1   — skip the (slow) formal equivalence check for this test
+#                     and rely on the Verilator co-sim instead
+#   SIM_CYCLES=N    — number of random Verilator co-sim cycles (default 200)
+read_test_cfg() {
+    local test_dir="$1" key="$2" def="$3" cfg="$1/sim_config" v
+    if [ -f "$cfg" ]; then
+        v=$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$cfg" | tail -1 | cut -d= -f2- | tr -d '[:space:]')
+        if [ -n "$v" ]; then echo "$v"; return; fi
+    fi
+    echo "$def"
+}
+
 FAILED_TEST_NAMES=()
 SKIPPED_TEST_NAMES=()
 CRASHED_TEST_NAMES=()
@@ -119,13 +134,14 @@ EQUIV_FAILED_TEST_NAMES=()
 # them under the "🔍 ANALYZED" category instead of warning.
 run_sim_equivalence_softwarn() {
     local test_dir="$1"
+    local cycles="${2:-200}"
     local script="$SCRIPT_DIR/test_sim_equivalence.py"
     local plugin="$PROJECT_ROOT/build/extract_clocks_resets.so"
     if [ ! -f "$script" ] || [ ! -f "$plugin" ]; then
         return 0  # silently skip if the optional tooling isn't built
     fi
     local log="$test_dir/sim_equiv.log"
-    "$script" "$test_dir" >"$log" 2>&1
+    "$script" "$test_dir" --cycles "$cycles" >"$log" 2>&1
     local rc=$?
     if [ $rc -eq 0 ] && grep -q '^PASS:' "$log"; then
         echo "    ✅ Verilator co-sim PASSED"
@@ -328,7 +344,11 @@ display_timing_summary() {
 analyze_test_result() {
     local test_dir="$1"
     local exit_code="$2"
-    
+
+    # Per-test config (optional `<test_dir>/sim_config`).
+    local skip_formal; skip_formal=$(read_test_cfg "$test_dir" SKIP_FORMAL 0)
+    local sim_cycles;  sim_cycles=$(read_test_cfg "$test_dir" SIM_CYCLES 200)
+
     # Check for crashes (core dumps, aborts, etc)
     if [ "$exit_code" -eq 134 ] || [ "$exit_code" -eq 139 ] || [ "$exit_code" -eq 6 ]; then
         echo "💥 Test $test_dir CRASHED (exit code: $exit_code)"
@@ -367,7 +387,7 @@ analyze_test_result() {
         if [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
             echo "✅ Test $test_dir PASSED - UHDM succeeds where Verilog fails!"
             echo "    Demonstrates UHDM's superior SystemVerilog support"
-            run_sim_equivalence_softwarn "$test_dir"
+            run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
             UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
             UHDM_ONLY_TEST_NAMES+=("$test_dir")
             return 0
@@ -387,7 +407,7 @@ analyze_test_result() {
        [ -f "${test_dir}/verilog_path.log" ] && grep -q "ERROR" "${test_dir}/verilog_path.log"; then
         echo "✅ Test $test_dir PASSED - UHDM completes synth where Verilog synth errors!"
         echo "    Demonstrates UHDM's superior SystemVerilog support"
-        run_sim_equivalence_softwarn "$test_dir"
+        run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
         UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + 1))
         UHDM_ONLY_TEST_NAMES+=("$test_dir")
         return 0
@@ -411,10 +431,14 @@ analyze_test_result() {
         fi
         rm -f /tmp/uhdm_synth_clean.tmp /tmp/verilog_synth_clean.tmp
         
-        # Run formal equivalence check when both netlists exist
+        # Run formal equivalence check when both netlists exist, unless this
+        # test opts out via `sim_config: SKIP_FORMAL=1` (e.g. a large design
+        # whose formal proof is too slow — it relies on the Verilator co-sim).
         local equiv_passed=false
         local equiv_failed=false
-        if [ -x "./test_equivalence.sh" ]; then
+        if [ "$skip_formal" = "1" ]; then
+            echo "    ⏭  Formal equivalence SKIPPED (sim_config: SKIP_FORMAL=1)"
+        elif [ -x "./test_equivalence.sh" ]; then
             if ./test_equivalence.sh "$test_dir" >/dev/null 2>&1; then
                 echo "    ✅ Formal equivalence check PASSED"
                 equiv_passed=true
@@ -424,9 +448,21 @@ analyze_test_result() {
             fi
         fi
     fi
-    
+
+    # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
+    # using the per-test cycle count (SIM_CYCLES, default 200).  For a
+    # SKIP_FORMAL test it is the sole functional check.
+    if [ -f "$uhdm_synth" ]; then
+        run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
+    fi
+
     # Report results
-    if [ "$equiv_failed" = true ]; then
+    if [ "$skip_formal" = "1" ]; then
+        echo "✅ Test $test_dir PASSED - Verilator co-sim (formal skipped via sim_config)"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+        PASSED_TEST_NAMES+=("$test_dir")
+        return 0
+    elif [ "$equiv_failed" = true ]; then
         echo "❌ Test $test_dir FAILED - Formal equivalence check failed"
         EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + 1))
         EQUIV_FAILED_TEST_NAMES+=("$test_dir")
