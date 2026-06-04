@@ -4858,11 +4858,17 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
 
-    // Get the base index expression
+    // Get the base index and width expressions.  These are *address*
+    // operands, independent of the slice's datapath width — so the
+    // surrounding assignment's context width (e.g. the 4-bit LHS of
+    // `slice = data[offset+3 -: 4]`) must NOT cap them, or an arithmetic
+    // base like `offset+3` gets truncated (offset[3:0]) and the high
+    // address bits are lost.  Clear the context for these sub-imports.
+    int saved_ctx_width = expression_context_width;
+    expression_context_width = 0;
     RTLIL::SigSpec base_index = import_expression(uhdm_indexed->Base_expr(), input_mapping);
-
-    // Get the width expression
     RTLIL::SigSpec width_expr = import_expression(uhdm_indexed->Width_expr(), input_mapping);
+    expression_context_width = saved_ctx_width;
     
     // Both base_index and width must be constant for RTLIL
     if (base_index.is_fully_const() && width_expr.is_fully_const()) {
