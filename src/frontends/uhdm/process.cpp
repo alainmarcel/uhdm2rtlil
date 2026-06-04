@@ -7975,37 +7975,46 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 return;
             }
         } else if (!lhs.empty()) {
-            // This might be a bit slice - extract the base wire
-            RTLIL::SigChunk first_chunk = *lhs.chunks().begin();
-            if (first_chunk.wire) {
-                std::string signal_name = first_chunk.wire->name.str();
-                if (signal_name[0] == '\\') {
-                    signal_name = signal_name.substr(1);  // Remove leading backslash
+            // Remap EACH chunk of the LHS to its `$0\<wire>` temp at the same
+            // offset.  This handles a single part-select as well as a
+            // swizzled/reordered concat LHS like
+            //   { y[31:20], y[10:1], y[11], y[19:12], y[0] } <= rhs
+            // whose bit routing the old single-slice logic discarded (it took
+            // only the first chunk and extracted one contiguous `$0\y` slice,
+            // collapsing the concat to a straight `\y` write).
+            RTLIL::SigSpec mapped;
+            bool any_mapped = false;
+            for (const auto& ch : lhs.chunks()) {
+                if (ch.wire) {
+                    std::string signal_name = ch.wire->name.str();
+                    if (!signal_name.empty() && signal_name[0] == '\\')
+                        signal_name = signal_name.substr(1);
+                    // Per-bit/range temp wire first (generate-scope bit selects)
+                    int msb = ch.offset + ch.width - 1;
+                    int lsb = ch.offset;
+                    std::string ranged_temp_name =
+                        "$0\\" + signal_name + "[" + std::to_string(msb) + ":" + std::to_string(lsb) + "]";
+                    if (RTLIL::Wire* tw = module->wire(ranged_temp_name)) {
+                        if (tw->width == ch.width) {
+                            mapped.append(RTLIL::SigSpec(tw));
+                            any_mapped = true;
+                            continue;
+                        }
+                    }
+                    // Fallback: full-wire `$0\<wire>` temp, sliced at this offset
+                    if (RTLIL::Wire* tw = module->wire("$0\\" + signal_name)) {
+                        if (tw->width >= ch.offset + ch.width) {
+                            mapped.append(RTLIL::SigChunk(tw, ch.offset, ch.width));
+                            any_mapped = true;
+                            continue;
+                        }
+                    }
                 }
-
-                // Try per-bit/range temp wire name first (from generate scope bit selects)
-                int msb = first_chunk.offset + lhs.size() - 1;
-                int lsb = first_chunk.offset;
-                std::string ranged_temp_name = "$0\\" + signal_name + "[" + std::to_string(msb) + ":" + std::to_string(lsb) + "]";
-                RTLIL::Wire* temp_wire = module->wire(ranged_temp_name);
-
-                if (temp_wire) {
-                    // Per-bit/range temp wire - assign directly (exact width match)
-                    proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
-                    return;
-                }
-
-                // Fallback: full-wire temp wire with bit slice
-                std::string temp_name = "$0\\" + signal_name;
-                temp_wire = module->wire(temp_name);
-
-                if (temp_wire) {
-                    // Create a bit slice of the temp wire with the same offset
-                    RTLIL::SigSpec temp_spec(temp_wire);
-                    RTLIL::SigSpec temp_slice = temp_spec.extract(first_chunk.offset, lhs.size());
-                    proc->root_case.actions.push_back(RTLIL::SigSig(temp_slice, rhs));
-                    return;
-                }
+                mapped.append(ch);
+            }
+            if (any_mapped) {
+                proc->root_case.actions.push_back(RTLIL::SigSig(mapped, rhs));
+                return;
             }
         }
     }
