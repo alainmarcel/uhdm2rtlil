@@ -110,32 +110,12 @@ Test: aes_kexp128
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: allconst_attr
-    formal-only construct ($allconst/$allseq/$anyconst/$anyseq/cover): the
-    DUT's behaviour is defined only under the formal solver, so a random
-    Verilator co-sim is not meaningful.  Validated via synth/formal.
-
-Test: allseq_attr
-    formal-only construct ($allconst/$allseq/$anyconst/$anyseq/cover): the
-    DUT's behaviour is defined only under the formal solver, so a random
-    Verilator co-sim is not meaningful.  Validated via synth/formal.
-
 Test: always03
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: anyconst_attr
-    formal-only construct ($allconst/$allseq/$anyconst/$anyseq/cover): the
-    DUT's behaviour is defined only under the formal solver, so a random
-    Verilator co-sim is not meaningful.  Validated via synth/formal.
-
-Test: anyseq_attr
-    formal-only construct ($allconst/$allseq/$anyconst/$anyseq/cover): the
-    DUT's behaviour is defined only under the formal solver, so a random
-    Verilator co-sim is not meaningful.  Validated via synth/formal.
 
 Test: arrays01
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
@@ -256,27 +236,6 @@ Test: func_width_scope
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: hana_test_intermout
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: hierdefparam
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: iface_modport_passthrough
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: initval
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
@@ -292,13 +251,6 @@ Test: latch_002
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
 Test: lcov
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: logic_ops
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
@@ -353,13 +305,6 @@ Test: named_cover_assert
     Verilator co-sim is not meaningful.  Validated via synth/formal.
 
 Test: partsel_simple
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: port_sign_extend
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
@@ -464,13 +409,6 @@ Test: sp_write_first
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: svinterface1
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: svinterface_at_top
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
@@ -485,21 +423,7 @@ Test: typedef_packed_enum_array
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: various_port_sign_extend
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: verilog_primitives
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: wandwor
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
