@@ -277,7 +277,8 @@ def emit_wrapper_and_tb(dut_path: Path,
                        clocks: list[str],
                        resets: dict[str, bool],
                        out_dir: Path,
-                       unpacked: dict[str, int] | None = None) -> None:
+                       unpacked: dict[str, int] | None = None,
+                       cycles: int = 200) -> None:
     """Write `tb.sv` (wraps both DUTs as a non-clocking pass-through) and
     `tb_main.cpp` (drives the simulation cycle by cycle).
 
@@ -370,7 +371,6 @@ def emit_wrapper_and_tb(dut_path: Path,
 
     # C++ driver
     seed = 42
-    cycles = 200
     reset_cycles = 5
 
     cpp = []
@@ -568,6 +568,8 @@ def run_verilator(work: Path, paths: dict[str, Path],
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("test_name", help="test directory under test/")
+    ap.add_argument("--cycles", type=int, default=200,
+                    help="number of random simulation cycles (default: 200)")
     args = ap.parse_args()
 
     script_dir = Path(__file__).resolve().parent
@@ -628,7 +630,7 @@ def main() -> int:
         print(f"  unpacked-array ports: {unpacked}")
     print("▶ Emitting wrapper + testbench")
     emit_wrapper_and_tb(dut, orig_top, ports, clocks, resets, work,
-                        unpacked=unpacked)
+                        unpacked=unpacked, cycles=args.cycles)
 
     print("▶ Running Verilator co-sim")
     rc, out = run_verilator(work, paths, rtl_srcs)

@@ -3184,6 +3184,9 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        // `<<<` (arithmetic left shift) is identical to `<<` for synthesis
+        // (no sign extension on a left shift).
+        case vpiArithLShiftOp:
         case vpiLShiftOp:
             if (operands.size() == 2) {
                 // Left shift operation: a << b
@@ -3208,6 +3211,13 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 return result;
             }
             break;
+        // `>>>` (arithmetic right shift): sign-extends when the left operand
+        // is signed (the $signed() wrapper marks its result wire), else
+        // behaves like `>>`.  vpiArithRShiftOp (42) was previously unhandled
+        // and fell through to a 0 result, so `$signed(x) >>> n` became 0
+        // (picorv32 SRAI/SRA produced 0).  Shares the vpiRShiftOp handler,
+        // which already selects $sshr vs $shr from operand signedness.
+        case vpiArithRShiftOp:
         case vpiRShiftOp:
             if (operands.size() == 2) {
                 // Right shift operation: a >> b
@@ -4199,6 +4209,17 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         base = import_expression(any_cast<const expr*>(parent), input_mapping);
     }
 
+    // In always_ff body mode, a part-select of a BLOCKING temp assigned
+    // earlier in this evaluation (e.g. `tmp = A-B; result <= tmp[7:0];`)
+    // must read the in-flight `$0\tmp`, not the stale registered `\tmp` — the
+    // same redirect import_ref_obj applies to whole-signal reads.  Without it
+    // the read picks up the FF Q and the consumer gets an extra cycle of delay.
+    if (in_always_ff_body_mode && !base_signal_name.empty()) {
+        auto bt = ff_blocking_temps.find(base_signal_name);
+        if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
+            base = bt->second;
+    }
+
     log("      Base signal width: %d\n", base.size());
 
     // Get range
@@ -4527,8 +4548,16 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     }
     
     RTLIL::SigSpec base(wire);
+    // always_ff blocking-temp redirect (see import_ref_obj/import_part_select):
+    // a bit-select of a blocking temp assigned earlier this cycle (e.g.
+    // `CF <= tmp[8]`) reads the in-flight `$0\tmp`, not the registered `\tmp`.
+    if (in_always_ff_body_mode) {
+        auto bt = ff_blocking_temps.find(signal_name);
+        if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
+            base = bt->second;
+    }
     RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
-    
+
     if (index.size() == 0) {
         log_warning("Bit select index expression returned empty SigSpec for signal %s\n", signal_name.c_str());
         return RTLIL::SigSpec();
