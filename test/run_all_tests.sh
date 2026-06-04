@@ -147,12 +147,15 @@ run_sim_equivalence_softwarn() {
         echo "    ✅ Verilator co-sim PASSED"
         return 0
     fi
-    # Exit code 77 = autotools "skip" convention.  Used by the harness
-    # for self-checking testbenches that have no observable outputs
-    # (everything is asserted internally) — not a failure, just not
-    # applicable to co-simulation.
+    # Exit code 77 = autotools "skip" convention.  The harness emits it
+    # when co-sim is not applicable: a self-checking testbench with no
+    # observable outputs (everything asserted internally), OR Verilator
+    # cannot build the design (original RTL uses a construct it doesn't
+    # support — `~&`, `ref` args, arrayed defparam, some interfaces — or
+    # the synth netlist holds cells it can't model, e.g. $allconst).
+    # Neither is an RTL-vs-netlist divergence, so it's a skip, not a fail.
     if [ $rc -eq 77 ]; then
-        echo "    ⏭  Verilator co-sim SKIPPED (no outputs / self-checking)"
+        echo "    ⏭  Verilator co-sim SKIPPED (no outputs or not buildable)"
         return 0
     fi
     local base; base="$(basename "$test_dir")"

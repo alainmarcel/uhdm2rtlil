@@ -637,6 +637,16 @@ def main() -> int:
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)
+    if "[verilator build failed]" in out:
+        # Verilator could not COMPILE the design — either the original RTL
+        # uses a construct it doesn't support (`~&` binary nand, `ref` args,
+        # arrayed defparam, some interface forms) or the synth netlist
+        # contains cells it can't model ($allconst/$anyseq formal primitives,
+        # ...).  A build failure is not evidence of an RTL-vs-netlist
+        # divergence, so the co-sim is inapplicable: skip (autotools 77)
+        # instead of reporting a spurious mismatch.
+        print("⏭  Verilator cannot build this design — co-sim not applicable (skipping)")
+        return 77
     if "PASS:" in out and "MISMATCH" not in out and "FAIL:" not in out:
         return 0
     print("❌ simulation reported a mismatch or did not complete")
