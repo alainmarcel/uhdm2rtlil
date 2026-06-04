@@ -13,12 +13,20 @@ module \simple_always_ifelse
   wire width 8 input 3 \unit_result
   attribute \src "dut.sv:7.33-7.39"
   wire width 32 output 4 \result
+  attribute \src "dut.sv:13.13-19.16"
+  wire width 32 $0\result
   attribute \src "dut.sv:14.21-14.27"
   wire $logic_not$dut.sv:14.21-14.27$gen_blocks[0]$1_Y
+  attribute \src "dut.sv:13.13-19.16"
+  wire width 32 $1\result
   attribute \src "dut.sv:14.21-14.27"
   wire $logic_not$dut.sv:14.21-14.27$gen_blocks[1]$2_Y
+  attribute \src "dut.sv:13.13-19.16"
+  wire width 32 $2\result
   attribute \src "dut.sv:14.21-14.27"
   wire $logic_not$dut.sv:14.21-14.27$gen_blocks[2]$3_Y
+  attribute \src "dut.sv:13.13-19.16"
+  wire width 32 $3\result
   attribute \src "dut.sv:14.21-14.27"
   wire $logic_not$dut.sv:14.21-14.27$gen_blocks[3]$4_Y
   attribute \src "dut.sv:14.21-14.27"
@@ -57,64 +65,76 @@ module \simple_always_ifelse
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:13$1
+    assign $0\result \result
     attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[0]$1_Y
     attribute \src "dut.sv:14.29-16.20"
       case 1'1
-        assign \result [7:0] 8'00000000
+        assign $0\result [7:0] 8'00000000
     attribute \src "dut.sv:16.26-18.20"
       case 
-        assign \result [7:0] \unit_result
+        assign $0\result [7:0] \unit_result
     end
     sync posedge \clk
+      update \result [7:0] $0\result [7:0]
     sync negedge \rst_n
+      update \result [7:0] $0\result [7:0]
   end
   attribute \src "dut.sv:13.13-19.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:13$2
+    assign $1\result \result
     attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[1]$2_Y
     attribute \src "dut.sv:14.29-16.20"
       case 1'1
-        assign \result [15:8] 8'00000000
+        assign $1\result [15:8] 8'00000000
     attribute \src "dut.sv:16.26-18.20"
       case 
-        assign \result [15:8] \unit_result
+        assign $1\result [15:8] \unit_result
     end
     sync posedge \clk
+      update \result [15:8] $1\result [15:8]
     sync negedge \rst_n
+      update \result [15:8] $1\result [15:8]
   end
   attribute \src "dut.sv:13.13-19.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:13$3
+    assign $2\result \result
     attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[2]$3_Y
     attribute \src "dut.sv:14.29-16.20"
       case 1'1
-        assign \result [23:16] 8'00000000
+        assign $2\result [23:16] 8'00000000
     attribute \src "dut.sv:16.26-18.20"
       case 
-        assign \result [23:16] \unit_result
+        assign $2\result [23:16] \unit_result
     end
     sync posedge \clk
+      update \result [23:16] $2\result [23:16]
     sync negedge \rst_n
+      update \result [23:16] $2\result [23:16]
   end
   attribute \src "dut.sv:13.13-19.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:13$4
+    assign $3\result \result
     attribute \src "dut.sv:14.17-18.20"
     switch $logic_not$dut.sv:14.21-14.27$gen_blocks[3]$4_Y
     attribute \src "dut.sv:14.29-16.20"
       case 1'1
-        assign \result [31:24] 8'00000000
+        assign $3\result [31:24] 8'00000000
     attribute \src "dut.sv:16.26-18.20"
       case 
-        assign \result [31:24] \unit_result
+        assign $3\result [31:24] \unit_result
     end
     sync posedge \clk
+      update \result [31:24] $3\result [31:24]
     sync negedge \rst_n
+      update \result [31:24] $3\result [31:24]
   end
 end

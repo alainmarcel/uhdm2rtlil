@@ -711,6 +711,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             std::vector<AssignedSignal> assigned_signals;
             std::map<std::string, RTLIL::Wire*> temp_wires;  // Map from signal name to temp wire
             std::map<std::string, RTLIL::SigSpec> signal_specs; // Map from signal name to full signal SigSpec
+            // For a part-select LHS (`result[hi:lo] <= ...`) the FF must drive
+            // only that slice; records base name -> (offset, width) so the sync
+            // rule updates `\base[offset +: width]` instead of the whole wire.
+            std::map<std::string, std::pair<int,int>> part_slice;
 
             // Promote begin-block-local variables to module wires before the
             // assigned-signal scan tries to resolve them (Verilog frontend
@@ -732,14 +736,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     continue;
                 }
                 
-                // Skip part selects - they cause issues with generate blocks
-                // where each process only resets part of the signal
-                if (sig.is_part_select) {
-                    continue;
-                }
-                
                 processed_signals.insert(sig.name);
-                
+
                 // Get the full signal spec (not part select)
                 RTLIL::IdString signal_id = RTLIL::escape_id(sig.name);
                 if (!module->wire(signal_id)) {
@@ -749,10 +747,41 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 RTLIL::Wire* signal_wire = module->wire(signal_id);
                 RTLIL::SigSpec signal_spec(signal_wire);
                 signal_specs[sig.name] = signal_spec;
-                
+
+                // Part-select LHS (`result[hi:lo] <= ...`, incl. generate
+                // blocks each resetting a different slice): create a UNIQUE
+                // full-width temp per process (so two generate blocks driving
+                // disjoint slices of the same wire don't share a temp and
+                // conflict), record the slice, and sync only that slice below.
+                // Previously these were skipped — leaving the FF un-inferred so
+                // an async-reset `always_ff` collapsed to a combinational mux.
+                if (sig.is_part_select && sig.lhs_expr) {
+                    RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
+                    RTLIL::SigChunk fc = *lhs.chunks().begin();
+                    if (lhs.size() > 0 && lhs.chunks().size() == 1 &&
+                            fc.wire == signal_wire) {
+                        int off = fc.offset;
+                        int w   = fc.width;
+                        std::string temp_name = "$0\\" + sig.name;
+                        int dup = 0;
+                        while (module->wire(temp_name))
+                            temp_name = "$" + std::to_string(++dup) + "\\" + sig.name;
+                        RTLIL::Wire* temp_wire = module->addWire(temp_name, signal_spec.size());
+                        if (uhdm_process)
+                            add_src_attribute(temp_wire->attributes, uhdm_process);
+                        temp_wires[sig.name] = temp_wire;
+                        part_slice[sig.name] = {off, w};
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(temp_wire), signal_spec));
+                        log("      Created temp wire %s for part-select %s[%d +: %d]\n",
+                            temp_name.c_str(), sig.name.c_str(), off, w);
+                    }
+                    continue;
+                }
+
                 // Create temp wire with the same width as the full signal
                 std::string temp_name = "$0\\" + sig.name;
-                
+
                 // Check if temp wire already exists (e.g., from another generate block)
                 RTLIL::Wire* temp_wire = module->wire(temp_name);
                 if (!temp_wire) {
@@ -764,12 +793,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     }
                 }
                 temp_wires[sig.name] = temp_wire;
-                
+
                 // Create initial assignment in root case
                 yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
                     RTLIL::SigSpec(temp_wire), signal_spec));
-                    
-                log("      Created temp wire %s (width=%d) for full signal\n", 
+
+                log("      Created temp wire %s (width=%d) for full signal\n",
                     temp_name.c_str(), signal_spec.size());
             }
             
@@ -933,12 +962,20 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 for (const auto& [sig_name, temp_wire] : temp_wires) {
                     RTLIL::IdString signal_id = RTLIL::escape_id(sig_name);
                     if (module->wire(signal_id)) {
-                        // Update the full signal from the temp wire
-                        sync_clk->actions.push_back(RTLIL::SigSig(
-                            signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
-                        sync_rst->actions.push_back(RTLIL::SigSig(
-                            signal_specs[sig_name], RTLIL::SigSpec(temp_wire)));
-                            
+                        // For a part-select LHS, drive only the assigned slice
+                        // (`\sig[off +: w] <= temp[off +: w]`) so disjoint
+                        // generate-block slices each get their own FF; otherwise
+                        // update the full signal.
+                        RTLIL::SigSpec lhs = signal_specs[sig_name];
+                        RTLIL::SigSpec rhs = RTLIL::SigSpec(temp_wire);
+                        auto ps = part_slice.find(sig_name);
+                        if (ps != part_slice.end()) {
+                            lhs = lhs.extract(ps->second.first, ps->second.second);
+                            rhs = rhs.extract(ps->second.first, ps->second.second);
+                        }
+                        sync_clk->actions.push_back(RTLIL::SigSig(lhs, rhs));
+                        sync_rst->actions.push_back(RTLIL::SigSig(lhs, rhs));
+
                         log("      Added sync update for %s\n", sig_name.c_str());
                     }
                 }
@@ -8906,11 +8943,21 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     }
                                 } else if (lhs->VpiType() == vpiIndexedPartSelect) {
                                     const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs);
-                                    // Get base signal from parent
-                                    if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty()) {
+                                    // Base name is on the indexed_part_select
+                                    // itself (VpiDefName/VpiName); VpiParent is
+                                    // the unnamed assignment.  Mirror
+                                    // import_indexed_part_select's order so the
+                                    // slice write retargets $0\<base> (else
+                                    // `result[i*8 +: 8] <= 0` wrote \result
+                                    // directly and the FF never formed).
+                                    if (!ips->VpiDefName().empty())
+                                        signal_name = std::string(ips->VpiDefName());
+                                    else if (!ips->VpiName().empty())
+                                        signal_name = std::string(ips->VpiName());
+                                    else if (ips->VpiParent() && !ips->VpiParent()->VpiName().empty())
                                         signal_name = std::string(ips->VpiParent()->VpiName());
+                                    if (!signal_name.empty())
                                         is_partial = true;
-                                    }
                                 } else if (lhs->VpiType() == vpiHierPath) {
                                     // hier_path LHS — two shapes:
                                     //   * struct-field: `internal_bus.data`

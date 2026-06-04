@@ -16,45 +16,77 @@ module simple_always_ifelse(clk, rst_n, unit_result, result);
   (* src = "dut.sv:7.33-7.39" *)
   output [31:0] result;
   wire [31:0] result;
-  \$_AND_  _0_ (
-    .A(unit_result[6]),
-    .B(rst_n),
-    .Y(result[6])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[0]  /* _0_ */ (
+    .C(clk),
+    .D(unit_result[0]),
+    .Q(result[0]),
+    .R(rst_n)
   );
-  \$_AND_  _1_ (
-    .A(rst_n),
-    .B(unit_result[5]),
-    .Y(result[5])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[1]  /* _1_ */ (
+    .C(clk),
+    .D(unit_result[1]),
+    .Q(result[1]),
+    .R(rst_n)
   );
-  \$_AND_  _2_ (
-    .A(rst_n),
-    .B(unit_result[4]),
-    .Y(result[4])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[2]  /* _2_ */ (
+    .C(clk),
+    .D(unit_result[2]),
+    .Q(result[2]),
+    .R(rst_n)
   );
-  \$_AND_  _3_ (
-    .A(rst_n),
-    .B(unit_result[3]),
-    .Y(result[3])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[3]  /* _3_ */ (
+    .C(clk),
+    .D(unit_result[3]),
+    .Q(result[3]),
+    .R(rst_n)
   );
-  \$_AND_  _4_ (
-    .A(rst_n),
-    .B(unit_result[2]),
-    .Y(result[2])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[4]  /* _4_ */ (
+    .C(clk),
+    .D(unit_result[4]),
+    .Q(result[4]),
+    .R(rst_n)
   );
-  \$_AND_  _5_ (
-    .A(rst_n),
-    .B(unit_result[1]),
-    .Y(result[1])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[5]  /* _5_ */ (
+    .C(clk),
+    .D(unit_result[5]),
+    .Q(result[5]),
+    .R(rst_n)
   );
-  \$_AND_  _6_ (
-    .A(rst_n),
-    .B(unit_result[0]),
-    .Y(result[0])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[6]  /* _6_ */ (
+    .C(clk),
+    .D(unit_result[6]),
+    .Q(result[6]),
+    .R(rst_n)
   );
-  \$_AND_  _7_ (
-    .A(rst_n),
-    .B(unit_result[7]),
-    .Y(result[7])
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:13.13-19.16" *)
+  \$_DFF_PN0_  \result_reg[7]  /* _7_ */ (
+    .C(clk),
+    .D(unit_result[7]),
+    .Q(result[7]),
+    .R(rst_n)
   );
   assign result[31:8] = { result[7:0], result[7:0], result[7:0] };
 endmodule
