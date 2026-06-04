@@ -271,13 +271,6 @@ Test: many_functions
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: mem2reg_test1
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: module_scope_func
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known

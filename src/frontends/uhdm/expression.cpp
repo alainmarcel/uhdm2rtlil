@@ -4366,19 +4366,40 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
                 if (w) return RTLIL::SigSpec(w);
             } else {
-                // Dynamic index — build mux chain
-                // Start with last element as out-of-range default
+                // Dynamic index — build mux chain.
                 int last = num_elems - 1;
-                std::string last_name = signal_name + "[" + std::to_string(last) + "]";
+                int idx_w = GetSize(idx);
+                // Can the index address a non-existent element?  If the
+                // index width can represent a value >= num_elems, an
+                // out-of-range read is possible and needs an explicit
+                // fall-through value.  Otherwise every representable index
+                // is valid and the last element serves as the default.
+                bool oob_possible = (idx_w >= 31) ||
+                                    ((1LL << idx_w) > (long long)num_elems);
                 RTLIL::SigSpec result;
-                if (current_comb_values.count(last_name))
-                    result = current_comb_values.at(last_name);
-                else {
-                    RTLIL::Wire* w = module->wire(RTLIL::escape_id(last_name));
-                    result = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
+                int start;
+                if (oob_possible) {
+                    // An out-of-range index reads 0.  SystemVerilog calls
+                    // this X (don't-care), but emitting a literal X lets
+                    // `opt` fold the fall-through mux back to an arbitrary
+                    // element; a defined 0 both matches simulator behaviour
+                    // (Verilator reads OOB as 0) and stays a valid refinement
+                    // of the Verilog frontend's X, so formal equivalence is
+                    // preserved.
+                    result = RTLIL::SigSpec(RTLIL::State::S0, elem_w);
+                    start = last;  // give EVERY element an explicit idx==i mux
+                } else {
+                    std::string last_name = signal_name + "[" + std::to_string(last) + "]";
+                    if (current_comb_values.count(last_name))
+                        result = current_comb_values.at(last_name);
+                    else {
+                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(last_name));
+                        result = w ? RTLIL::SigSpec(w) : RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
+                    }
+                    start = last - 1;
                 }
 
-                for (int i = last - 1; i >= 0; i--) {
+                for (int i = start; i >= 0; i--) {
                     std::string ename = signal_name + "[" + std::to_string(i) + "]";
                     RTLIL::SigSpec elem_val;
                     if (current_comb_values.count(ename))
