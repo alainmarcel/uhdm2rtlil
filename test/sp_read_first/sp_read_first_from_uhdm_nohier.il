@@ -24,6 +24,8 @@ module \sp_read_first
   wire width 4 $memwr$\mem$addr$4
   wire width 8 $memwr$\mem$data$5
   wire $memwr$\mem$en$6
+  attribute \src "dut.sv:19.2-25.5"
+  wire width 8 $0\rdata_a
   wire width 8 \memrd_mem_DATA
   attribute \src "dut.sv:12.18-12.21"
   memory width 8 size 16 \mem
@@ -47,6 +49,7 @@ module \sp_read_first
   attribute \always_ff 1
   process $proc$dut.sv:19$3
     assign $memwr$\mem$en$6 1'0
+    assign $0\rdata_a \rdata_a
     attribute \src "dut.sv:21.3-22.27"
     switch \wren_a
     attribute \src "dut.sv:21.3-22.27"
@@ -61,11 +64,12 @@ module \sp_read_first
     switch \rden_a
     attribute \src "dut.sv:23.3-24.27"
       case 1'1
-        assign \rdata_a \memrd_mem_DATA
+        assign $0\rdata_a \memrd_mem_DATA
     attribute \src "dut.sv:23.3-24.27"
       case 
     end
     sync posedge \clk
+      update \rdata_a $0\rdata_a
       memwr \mem $memwr$\mem$addr$4 $memwr$\mem$data$5 { $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 } 0'x
   end
 end

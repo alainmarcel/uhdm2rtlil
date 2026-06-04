@@ -1623,6 +1623,51 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             mem_name.c_str(), addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
                     }
                     
+                    // Registered (non-memory) signals assigned alongside the
+                    // memory write — e.g. a synchronous read `rd_data <=
+                    // memory[addr]` — must be LATCHED by the posedge sync
+                    // rule, not driven combinationally.  Set up `$0\<sig>`
+                    // temps (so map_to_temp_wire redirects the body's writes
+                    // to them) plus a hold default, then add an `update
+                    // \sig $0\sig` to the sync rule below.  Memory names are
+                    // skipped — those are handled by the memwr control wires.
+                    std::vector<AssignedSignal> ff_reg_signals;
+                    extract_assigned_signals(stmt, ff_reg_signals);
+                    std::map<const UHDM::expr*, RTLIL::Wire*> ff_reg_temp_map;
+                    std::map<std::string, RTLIL::Wire*> ff_reg_temps;
+                    std::map<std::string, RTLIL::SigSpec> ff_reg_specs;
+                    for (const auto& sig : ff_reg_signals) {
+                        if (module->memories.count(RTLIL::escape_id(sig.name)))
+                            continue;  // memory write — handled above
+                        if (ff_reg_temps.count(sig.name)) {
+                            if (sig.lhs_expr)
+                                ff_reg_temp_map[sig.lhs_expr] = ff_reg_temps[sig.name];
+                            continue;
+                        }
+                        RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                        if (!wire)
+                            continue;
+                        std::string temp_name = "$0\\" + sig.name;
+                        int dup_idx = 0;
+                        while (module->wire(temp_name)) {
+                            dup_idx++;
+                            temp_name = "$" + std::to_string(dup_idx) + "\\" + sig.name;
+                        }
+                        RTLIL::Wire* temp_wire = module->addWire(temp_name, wire->width);
+                        if (uhdm_process)
+                            add_src_attribute(temp_wire->attributes, uhdm_process);
+                        ff_reg_temps[sig.name] = temp_wire;
+                        ff_reg_specs[sig.name] = RTLIL::SigSpec(wire);
+                        if (sig.lhs_expr)
+                            ff_reg_temp_map[sig.lhs_expr] = temp_wire;
+                        // Hold default: $0\sig = \sig (register holds when not assigned)
+                        yosys_proc->root_case.actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(temp_wire), RTLIL::SigSpec(wire)));
+                    }
+                    // Non-empty current_temp_wires gates map_to_temp_wire on;
+                    // it then resolves `$0\<sig>` by module-wire lookup.
+                    current_temp_wires = ff_reg_temp_map;
+
                     // Import the statement into the process body (root_case)
                     // This will generate assignments to the temp wires
                     log("      Importing statement into process body for memory write handling\n");
@@ -1630,7 +1675,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     import_statement_comb(stmt, &yosys_proc->root_case);
                     log("      Statement imported to process body\n");
                     log_flush();
-                    
+                    current_temp_wires.clear();
+
                     // Create sync rule with memory writes using temp wires
                     if (clock_sig.empty()) {
                         log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
@@ -1657,7 +1703,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         
                         log("      Added memory write action for %s\n", mem_name.c_str());
                     }
-                    
+
+                    // Latch the registered non-memory signals on the clock
+                    // edge: \sig <= $0\sig (mirrors the normal always_ff path).
+                    for (const auto& [sig_name, temp_wire] : ff_reg_temps) {
+                        sync->actions.push_back(
+                            RTLIL::SigSig(ff_reg_specs[sig_name], RTLIL::SigSpec(temp_wire)));
+                        log("      Added sync update for registered signal %s\n", sig_name.c_str());
+                    }
+
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule with memory writes created\n");
                     log_flush();
