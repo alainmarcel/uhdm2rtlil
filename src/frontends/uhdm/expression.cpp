@@ -2790,11 +2790,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 }
                 // Create a negation operation
                 int result_width = operands[0].size();
-                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                
+                RTLIL::Wire* result_wire = module->addWire(NEW_ID, result_width);
+                // Unary minus follows the operand's signedness (SV LRM
+                // §11.4.3): a signed operand yields a signed result.  Flag
+                // the result wire so a wider assignment context sign-extends
+                // (`x = -$signed({1'b0,a})` must sign-extend the negative
+                // value, not zero-extend it).
+                result_wire->is_signed =
+                    operands[0].is_wire() && operands[0].as_wire()->is_signed;
+                RTLIL::SigSpec result(result_wire);
+
                 // Check if operand is signed - for unary minus with $signed, assume signed
                 bool is_signed = true;  // Default to signed for unary minus
-                
+
                 std::string cell_name = generate_cell_name(uhdm_op, "neg");
                 auto c = module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
                 add_src_attribute(c->attributes, uhdm_op);
