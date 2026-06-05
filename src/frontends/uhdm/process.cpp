@@ -1507,18 +1507,27 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                     for (int i = 0; i < 3; i++) {
                                         std::string src_elem = stringf("M[%d]", i);
                                         std::string dst_elem = stringf("M[%d]", i + 1);
-                                        
-                                        if (register_temp_wires.count(src_elem) && register_temp_wires.count(dst_elem)) {
-                                            // Create the shift assignment
+
+                                        // Non-blocking shift `M[i+1] <= M[i]`: the
+                                        // source must be the REGISTERED element
+                                        // `\M[i]` (its value at the clock edge),
+                                        // NOT its `$0\` temp (the in-flight new
+                                        // value).  Reading the temp chained every
+                                        // stage to the freshly-computed M[0], so
+                                        // the whole pipeline filled in one cycle
+                                        // (mul_unsigned RES appeared 3 cycles early).
+                                        RTLIL::Wire* src_reg =
+                                            module->wire(RTLIL::escape_id(src_elem));
+                                        if (src_reg && register_temp_wires.count(dst_elem)) {
                                             yosys_proc->root_case.actions.push_back(
                                                 RTLIL::SigSig(
                                                     RTLIL::SigSpec(register_temp_wires[dst_elem]),
-                                                    RTLIL::SigSpec(register_temp_wires[src_elem])
+                                                    RTLIL::SigSpec(src_reg)
                                                 )
                                             );
                                             log("        Shift assignment: %s = %s\n",
                                                 register_temp_wires[dst_elem]->name.c_str(),
-                                                register_temp_wires[src_elem]->name.c_str());
+                                                src_reg->name.c_str());
                                         }
                                     }
                                 }
