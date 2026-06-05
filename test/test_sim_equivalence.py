@@ -198,8 +198,15 @@ def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
     # and they're not the subject of the equivalence check anyway.
     # Delete them before writing the netlist.
     out_top = out_v.with_name(out_v.stem + ".orig_top.txt")
+    mem_flag = out_v.with_name(out_v.stem + ".memflag.txt")
     script = (
         f"read_uhdm {uhdm}\n"
+        # Detect memories BEFORE synth expands/maps them.  Memory designs also
+        # need the gate-instance (-noexpr) form: the behavioral $mem output of
+        # write_verilog has read-during-write semantics that differ from the
+        # RTL under Verilator.
+        f"tee -q -o {mem_flag} select -count t:$mem t:$mem_v2 "
+        f"t:$memrd t:$memrd_v2 t:$memwr t:$memwr_v2\n"
         f"synth -auto-top\n"
         f"delete t:$check t:$print\n"
         f"flatten\n"
@@ -210,9 +217,44 @@ def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
         # the source has `bind`, multiple unrelated modules, etc.).
         f"tee -q -o {out_top} ls A:top\n"
         f"rename -top dut_netlist\n"
-        f"write_verilog -noattr -noexpr {out_v}\n"
+        # Write BOTH forms and pick below.  `-noexpr` renders FFs as gate
+        # $_DFF*_ instances — needed so ASYNC-reset FFs (multi-edge
+        # sensitivity) simulate correctly under Verilator — but it loses
+        # register power-up init values (a gate Q wire has no
+        # Verilator-honorable init) and writes coarse word-level cells as
+        # unresolvable instances.  Expression mode keeps `reg q = init;`
+        # (Verilator honors it, matching the RTL's SV initializers) and
+        # writes coarse cells as operators, but async FFs become behavioral
+        # always-blocks keyed on intermediate nets that Verilator
+        # mis-schedules.  So use `-noexpr` only when the design actually has
+        # async-edge FFs; otherwise prefer expression mode.
+        f"write_verilog -noattr {out_v}.expr\n"
+        f"write_verilog -noattr -noexpr {out_v}.noexpr\n"
     )
     sh([str(yosys), "-q", "-m", str(uhdm_plugin), "-p", script])
+    # Pick the netlist form.  An async-edge FF shows up in expression mode as
+    # a sensitivity list with two or more edges, e.g.
+    #   always @(posedge clk, posedge rst)
+    # — those need the gate-instance (-noexpr) form; everything else uses
+    # expression mode so register initializers survive into the co-sim.
+    import shutil
+    expr_path = Path(str(out_v) + ".expr")
+    noexpr_path = Path(str(out_v) + ".noexpr")
+    expr_text = expr_path.read_text() if expr_path.exists() else ""
+    has_async_ff = bool(re.search(
+        r"always @\([^)]*edge[^)]*(?:,|\bor\b)[^)]*edge", expr_text))
+    has_memory = False
+    if mem_flag.exists():
+        m = re.search(r"(\d+)\s+objects", mem_flag.read_text())
+        has_memory = bool(m and int(m.group(1)) > 0)
+    chosen = noexpr_path if (has_async_ff or has_memory) else expr_path
+    if chosen.exists():
+        shutil.copyfile(chosen, out_v)
+    for p in (expr_path, noexpr_path, mem_flag):
+        try:
+            p.unlink()
+        except OSError:
+            pass
     # Parse the `ls A:top` output.  Yosys formats it as:
     #
     #   1 modules:

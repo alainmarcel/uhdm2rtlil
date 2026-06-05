@@ -152,13 +152,6 @@ Test: dynslice
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: enum_values
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: escape_id
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
@@ -230,13 +223,6 @@ Test: latch_002
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
 Test: lcov
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: macc
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
@@ -360,3 +346,14 @@ Test: verilog_primitives
     blind spot).  Tracked here so the suite stays green; to be fixed and
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
+
+Test: wandwor
+    CONFIRMED ARTIFACT (not a UHDM bug).  wand/wor wired-net resolution.
+    The UHDM-synth netlist is structurally identical to Yosys's own
+    Verilog-frontend netlist (same $or/$and resolver cells) and passes
+    formal equivalence.  The co-sim mismatch is a GOLD-side Verilator
+    limitation: with -Wno-MULTIDRIVEN Verilator does not OR/AND-resolve
+    multiple continuous drivers on a wor/wand net (it picks one), so its RTL
+    sim disagrees with the correctly-resolved netlist.  (Now builds in
+    expression mode; previously it build-failed on the coarse $and cell.)
+
