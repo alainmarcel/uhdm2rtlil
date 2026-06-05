@@ -2136,6 +2136,134 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return import_func_call_comb(fc, current_comb_process);
                 }
 
+                // Top-level value-returning call (e.g. `assign out = f(...)`)
+                // with NO output/inout params: route through the combinational
+                // SSA inliner (import_func_call_comb), which stages function-local
+                // blocking temps via func_mapping exactly like always_comb
+                // inlining.  The legacy process_function_with_context path maps
+                // every local to ONE shared `$<ctx>$local_<var>` wire, so a
+                // sequential temp chain — function_arith: temp=a+b; temp=temp-c;
+                // temp=temp<<1; temp=temp|(a&b); func=temp^c — read the FINAL
+                // value at every step.  Functions with output args (the legacy
+                // path writes them back to the caller) or nested calls
+                // (input_mapping set) keep process_function_with_context.
+                if (!input_mapping) {
+                    bool has_output_param = false;
+                    if (auto ios = func_def->Io_decls()) {
+                        for (auto io_any : *ios) {
+                            if (auto io = any_cast<const UHDM::io_decl*>(io_any)) {
+                                int d = io->VpiDirection();
+                                if (d == vpiOutput || d == vpiInout) {
+                                    has_output_param = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // Only STRAIGHT-LINE bodies (no case/if/loop) are safe to
+                    // route here: import_func_call_comb stages sequential
+                    // blocking temps via func_mapping but does NOT capture a
+                    // control-flow-muxed return value (case/if assignments go
+                    // through import_case_stmt_comb and update wires, leaving
+                    // func_mapping[func_name] = Sx).  Control-flow functions keep
+                    // the proven process_function_with_context path.
+                    std::function<bool(const UHDM::any*)> is_straight_line =
+                        [&](const UHDM::any* s) -> bool {
+                            if (!s) return true;
+                            int t = s->VpiType();
+                            if (t == vpiCase || t == vpiIf || t == vpiIfElse ||
+                                t == vpiFor || t == vpiWhile || t == vpiDoWhile ||
+                                t == vpiRepeat || t == vpiForever)
+                                return false;
+                            // A part/bit/indexed-select LHS (e.g. a partial
+                            // return `func3[A:B] = ...`) is not captured by
+                            // func_mapping's whole-name tracking — keep those on
+                            // the legacy path.
+                            if (t == vpiAssignment || t == vpiAssignStmt) {
+                                auto a = any_cast<const UHDM::assignment*>(s);
+                                if (!a) return true;
+                                if (a->Lhs() && a->Lhs()->VpiType() != vpiRefObj)
+                                    return false;
+                                // A nested function call in the RHS reads its
+                                // args from current_comb_values, not the
+                                // enclosing func_mapping, so the callee sees the
+                                // wrong values (const_fold_func: help=flip(inp)
+                                // read the module input, not help's parameter).
+                                std::function<bool(const UHDM::any*)> has_call =
+                                    [&](const UHDM::any* e) -> bool {
+                                        if (!e) return false;
+                                        int et = e->VpiType();
+                                        if (et == vpiFuncCall || et == vpiSysFuncCall)
+                                            return true;
+                                        if (et == vpiOperation) {
+                                            auto op = any_cast<const UHDM::operation*>(e);
+                                            if (op && op->Operands())
+                                                for (auto o : *op->Operands())
+                                                    if (has_call(o)) return true;
+                                        }
+                                        return false;
+                                    };
+                                if (has_call(a->Rhs())) return false;
+                                return true;
+                            }
+                            if (t == vpiBegin || t == vpiNamedBegin) {
+                                if (auto stmts = begin_block_stmts(s))
+                                    for (auto cs : *stmts)
+                                        if (!is_straight_line(cs)) return false;
+                            }
+                            return true;
+                        };
+                    // Generate-scope functions (and hierarchical/shadowed calls)
+                    // resolve names through the gen-scope; import_func_call_comb
+                    // doesn't carry that context, so restrict the reroute to
+                    // plain module-scope calls.
+                    bool in_gen_scope = !gen_scope_stack.empty() ||
+                        (current_scope && current_scope->UhdmType() == uhdmgen_scope);
+                    // import_func_call_comb maps each actual straight into
+                    // func_mapping without extending it to the formal's width
+                    // (func_width_scope: 1-bit signed actual into a 5-bit
+                    // formal).  Only reroute when every actual already matches
+                    // its formal width.
+                    bool args_match = true;
+                    if (auto ios = func_def->Io_decls()) {
+                        int ai = 0;
+                        for (auto io_any : *ios) {
+                            auto io = any_cast<const UHDM::io_decl*>(io_any);
+                            if (!io || io->VpiDirection() != vpiInput) continue;
+                            int pw = get_width(io, current_instance);
+                            if (ai < (int)args.size() && args[ai].size() != pw) {
+                                args_match = false;
+                                break;
+                            }
+                            ai++;
+                        }
+                    }
+                    // Only reroute in true continuous-assign / module-level
+                    // context.  Inside an always_ff (esp. the async-reset sync
+                    // path, where current_comb_process is null) or an initial
+                    // block, the temp-process inliner does not integrate with
+                    // the procedural assignment lowering (simple_package:
+                    // internal_bus.data <= increment_data(...) zeroed the
+                    // struct).  always_comb already takes the
+                    // current_comb_process branch above.
+                    if (!has_output_param && !in_gen_scope && !in_always_ff_context &&
+                        !in_initial_block && args_match &&
+                        is_straight_line(func_def->Stmt())) {
+                        log("UHDM: Inlining function %s via import_func_call_comb (no enclosing process)\n",
+                            func_name.c_str());
+                        RTLIL::Process* tmp_proc = module->addProcess(NEW_ID);
+                        RTLIL::SyncRule* sta = new RTLIL::SyncRule();
+                        sta->type = RTLIL::SyncType::STa;
+                        sta->signal = RTLIL::SigSpec();
+                        tmp_proc->syncs.push_back(sta);
+                        RTLIL::Process* saved_proc = current_comb_process;
+                        current_comb_process = tmp_proc;
+                        RTLIL::SigSpec r = import_func_call_comb(fc, tmp_proc);
+                        current_comb_process = saved_proc;
+                        return r;
+                    }
+                }
+
                 // Use the new context-aware function processing
                 FunctionCallContext* parent_ctx = nullptr;
 
