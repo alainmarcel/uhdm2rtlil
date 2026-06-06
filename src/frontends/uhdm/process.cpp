@@ -7827,6 +7827,59 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
         }
     }
 
+    // Bit-select LHS on a plain register with a (loop-)constant index, e.g.
+    // `q[k] = ...` in an unrolled for loop.  Resolve it to the `\q[idx]`
+    // chunk so map_to_temp_wire redirects the write to `$0\q[idx]`.  Without
+    // this, the generic import_expression(LHS) below returns a fresh
+    // $bit_select temp wire and the real `q` bit is never driven (q collapses
+    // to X after opt) — exposed by simple_forloops' `q[k] = ... >> k`.
+    if (gen_scope_stack.empty()) if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiBitSelect) {
+            const bit_select* bs = any_cast<const bit_select*>(lhs_e);
+            std::string bs_name = std::string(bs->VpiName());
+            RTLIL::IdString wid = RTLIL::escape_id(bs_name);
+            RTLIL::Wire* w = module->wire(wid);
+            // Plain register: not a memory, not an expanded-array element set.
+            // Skipped inside generate scopes, where the bit-select's base wire
+            // needs scope-qualified resolution (gen_test1 / simple_generate).
+            if (w && !module->memories.count(wid)
+                  && !module->wire(RTLIL::escape_id(bs_name + "[0]"))
+                  && bs->VpiIndex()) {
+                // ONLY handle a bare ref to an unrolled loop var (`q[k]`).  Such
+                // an index must come from loop_values: import_ref_obj resolves a
+                // module-level `integer k` via its net (returning the `\k` wire)
+                // before it consults loop_values, so the generic LHS import
+                // below would build a stray $bit_select temp.  A literal-constant
+                // index (e.g. `asdf[3] <= ...`) is left to the generic path,
+                // which already resolves it to the right chunk (initval).
+                RTLIL::SigSpec idx_sig;
+                const UHDM::any* idx_node = bs->VpiIndex();
+                if ((idx_node->VpiType() == vpiRefObj || idx_node->VpiType() == vpiRefVar)) {
+                    std::string iname = std::string(idx_node->VpiName());
+                    if (loop_values.count(iname))
+                        idx_sig = RTLIL::Const(loop_values[iname], 32);
+                }
+                // NB: an empty SigSpec reports is_fully_const()==true, so the
+                // size check is essential — without it a non-loop-var (empty
+                // idx_sig) index would wrongly resolve to bit 0 (initval's
+                // `asdf[3] <= bar[3]` collapsed onto asdf[0]).
+                if (idx_sig.size() > 0 && idx_sig.is_fully_const()) {
+                    int idx = idx_sig.as_const().as_int();
+                    if (idx >= 0 && idx < w->width) {
+                        RTLIL::SigSpec lhs_bit(w, idx, 1);
+                        RTLIL::SigSpec rhs_bit;
+                        if (auto rhs_any = uhdm_assign->Rhs())
+                            if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                                rhs_bit = import_expression(rhs_e, comb_read_map());
+                        // emit_comb_assign truncates the RHS to the 1-bit LHS.
+                        emit_comb_assign(lhs_bit, rhs_bit, proc);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     // Import LHS (always an expr)
     if (auto lhs_expr = uhdm_assign->Lhs()) {
         lhs = import_expression(lhs_expr);

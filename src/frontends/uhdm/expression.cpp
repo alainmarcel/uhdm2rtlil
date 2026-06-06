@@ -2772,11 +2772,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     
     // Get operands
     std::vector<RTLIL::SigSpec> operands;
+    // Track operands that are intrinsically unsigned regardless of the
+    // operation's signedness — a concatenation (and replication) is ALWAYS
+    // unsigned in Verilog, so when widened inside a signed op (e.g.
+    // `signed_int - {a,b}`) it must be ZERO-extended, not sign-extended.
+    std::vector<bool> operand_is_unsigned;
     if (uhdm_op->Operands()) {
-        if (op_type == vpiConditionOp) { 
+        if (op_type == vpiConditionOp) {
             log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
         }
         for (auto operand : *uhdm_op->Operands()) {
+            int oty = operand->VpiType() == vpiOperation
+                ? any_cast<const operation*>(operand)->VpiOpType() : -1;
+            operand_is_unsigned.push_back(
+                oty == vpiConcatOp || oty == vpiMultiConcatOp);
             RTLIL::SigSpec op_sig = import_expression(any_cast<const expr*>(operand), input_mapping);
             if (op_type == vpiConditionOp) {
                 log("UHDM: ConditionOp operand %d has size %d\n", (int)operands.size(), op_sig.size());
@@ -3230,17 +3239,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // Truncate / extend each operand to result_width so the
                 // cell's A_WIDTH/B_WIDTH match Y_WIDTH cleanly.  Preserves
                 // sign-extension for signed operands.
-                auto resize_operand = [&](RTLIL::SigSpec op) {
+                auto resize_operand = [&](RTLIL::SigSpec op, bool op_unsigned) {
                     if (op.size() == result_width) return op;
                     if (op.size() > result_width)
                         return op.extract(0, result_width);
                     bool sgn = is_signed;
                     if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
+                    // A concatenation/replication operand is always unsigned —
+                    // zero-extend it even inside a signed add/subtract.
+                    if (op_unsigned) sgn = false;
                     op.extend_u0(result_width, sgn);
                     return op;
                 };
-                RTLIL::SigSpec a = resize_operand(operands[0]);
-                RTLIL::SigSpec b = resize_operand(operands[1]);
+                RTLIL::SigSpec a = resize_operand(operands[0],
+                    operand_is_unsigned.size() > 0 && operand_is_unsigned[0]);
+                RTLIL::SigSpec b = resize_operand(operands[1],
+                    operand_is_unsigned.size() > 1 && operand_is_unsigned[1]);
 
                 std::string cell_name = generate_cell_name(uhdm_op, "add");
                 auto c = module->addAdd(RTLIL::escape_id(cell_name), a, b, result, is_signed);
@@ -3276,17 +3290,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 // upper bits would be silently zero-padded — losing the
                 // borrow when LHS > operand width (exposed by
                 // `add_sub_bind_if`'s `result0[8:0] <= a0[7:0] - b0[7:0]`).
-                auto resize_operand = [&](RTLIL::SigSpec op) {
+                auto resize_operand = [&](RTLIL::SigSpec op, bool op_unsigned) {
                     if (op.size() == result_width) return op;
                     if (op.size() > result_width)
                         return op.extract(0, result_width);
                     bool sgn = is_signed;
                     if (op.is_wire() && !op.as_wire()->is_signed) sgn = false;
+                    // A concatenation/replication operand is always unsigned —
+                    // zero-extend it even inside a signed add/subtract.
+                    if (op_unsigned) sgn = false;
                     op.extend_u0(result_width, sgn);
                     return op;
                 };
-                RTLIL::SigSpec a = resize_operand(operands[0]);
-                RTLIL::SigSpec b = resize_operand(operands[1]);
+                RTLIL::SigSpec a = resize_operand(operands[0],
+                    operand_is_unsigned.size() > 0 && operand_is_unsigned[0]);
+                RTLIL::SigSpec b = resize_operand(operands[1],
+                    operand_is_unsigned.size() > 1 && operand_is_unsigned[1]);
 
                 std::string cell_name = generate_cell_name(uhdm_op, "sub");
                 auto c = module->addSub(RTLIL::escape_id(cell_name), a, b, result, is_signed);
@@ -3973,6 +3992,18 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         if (bt != ff_blocking_temps.end())
             return bt->second;
     }
+
+    // Unrolled loop variable: substitute its current value.  This must run
+    // BEFORE the Actual_group()/net resolution below, because a module-level
+    // `integer k` resolves to its `\k` net there and would mask the loop
+    // value (there is a second, now-redundant, loop_values check further down
+    // that only caught locally-declared loop vars).  loop_values is non-empty
+    // only while the owning block's loop body / post-loop tail is being
+    // imported, so a bare `k` correctly reads the wire in unrelated blocks.
+    // e.g. forloops01: `x <= k + {a,b}` in the always_ff must see k=2 (its
+    // loop's final value), not the shared `\k` net the always_comb drives to 4.
+    if (loop_values.count(ref_name))
+        return RTLIL::SigSpec(RTLIL::Const(loop_values[ref_name], 32));
 
     // Check if the ref_obj has an Actual_group() that points to the real signal
     // This is used in generate blocks where ref_obj names include generate scope prefixes
