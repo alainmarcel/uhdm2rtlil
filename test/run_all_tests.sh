@@ -846,7 +846,7 @@ print_comprehensive_summary() {
     FUNCTIONAL_TESTS=$((PASSED_TESTS + UHDM_ONLY_TESTS))
     echo "  • Tests that work: $FUNCTIONAL_TESTS/$TOTAL_TESTS"
     echo "  • Tests that crash: $CRASHED_TESTS/$TOTAL_TESTS"
-    echo "  • Tests that fail equivalence: $EQUIV_FAILED_TESTS/$TOTAL_TESTS"
+    echo "  • Tests that fail equivalence: $((EQUIV_FAILED_TESTS + MITER_FAILED_TESTS))/$TOTAL_TESTS (Induct-Formal: $EQUIV_FAILED_TESTS, Miter-Formal: $MITER_FAILED_TESTS)"
     echo "  • Tests that fail to generate output: $FAILED_TESTS/$TOTAL_TESTS"
 }
 
@@ -882,15 +882,20 @@ echo "📊 OVERALL STATISTICS:"
 echo "  Total tests run: $TOTAL_TESTS"
 echo "  ✅ Passing tests: $PASSED_TESTS"
 echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
-echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
-echo "  ❌ True failures: $FAILED_TESTS"
-echo "  💥 Crashes: $CRASHED_TESTS"
-if [ "$MITER_FAILED_TESTS" -gt 0 ]; then
-    echo "  ❌ Miter-Formal failures (UHDM != Verilog — real bugs equiv_induct missed): $MITER_FAILED_TESTS"
+# Equivalence failures = Induct-Formal (equiv_induct caught) + Miter-Formal
+# (UHDM != Verilog, proved by the SAT-from-reset miter that equiv_induct's
+# blind spot missed).  Both are genuine non-equivalences.
+TOTAL_EQUIV_FAILED=$((EQUIV_FAILED_TESTS + MITER_FAILED_TESTS))
+echo "  ❌ Equivalence failures: $TOTAL_EQUIV_FAILED"
+if [ "$TOTAL_EQUIV_FAILED" -gt 0 ]; then
+    echo "      ├─ Induct-Formal (equiv_induct caught): $EQUIV_FAILED_TESTS"
+    echo "      └─ Miter-Formal (UHDM != Verilog, equiv_induct missed): $MITER_FAILED_TESTS"
     for t in "${MITER_FAILED_TEST_NAMES[@]}"; do
-        echo "      - $t"
+        echo "          - $t"
     done
 fi
+echo "  ❌ True failures: $FAILED_TESTS"
+echo "  💥 Crashes: $CRASHED_TESTS"
 if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
     echo "  ⚠️  Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
     for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
@@ -924,7 +929,7 @@ echo
     echo "  Total tests run: $TOTAL_TESTS"
     echo "  ✅ Passing tests: $PASSED_TESTS"
     echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
-    echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
+    echo "  ❌ Equivalence failures: $((EQUIV_FAILED_TESTS + MITER_FAILED_TESTS)) (Induct-Formal: $EQUIV_FAILED_TESTS, Miter-Formal: $MITER_FAILED_TESTS)"
     echo "  ❌ True failures: $FAILED_TESTS"
     echo "  💥 Crashes: $CRASHED_TESTS"
     echo
