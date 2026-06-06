@@ -240,26 +240,34 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
                 cell->setPort(ID::A, inputs[0]);
                 cell->setPort(ID::B, inputs[1]);
             } else if (inputs.size() > 2) {
-                // Create a tree of XOR/XNOR gates
+                // A multi-input XOR/XNOR is an XOR-reduction of all inputs;
+                // XNOR adds ONE final inversion.  Build a chain of 2-input
+                // $_XOR_ gates, then invert once for XNOR.
+                // NOTE: a chain of 2-input $_XNOR_ is WRONG — the per-stage
+                // inversions cancel for odd input counts and yield XOR
+                // (verilog_primitives: xnor(out,in1,in2,in3) came out as
+                // in1^in2^in3 instead of ~(in1^in2^in3)).
                 RTLIL::SigSpec result = inputs[0];
                 for (size_t i = 1; i < inputs.size(); i++) {
                     RTLIL::Wire* temp_wire = module->addWire(NEW_ID);
-                    RTLIL::Cell* tree_cell = module->addCell(NEW_ID, cell_type);
+                    RTLIL::Cell* tree_cell = module->addCell(NEW_ID, ID($_XOR_));
                     tree_cell->setPort(ID::A, result);
                     tree_cell->setPort(ID::B, inputs[i]);
-                    if (i == inputs.size() - 1) {
-                        // Last gate connects to output
-                        tree_cell->setPort(ID::Y, outputs[0]);
-                    } else {
-                        // Intermediate gates connect to temp wire
-                        tree_cell->setPort(ID::Y, temp_wire);
-                        result = temp_wire;
-                    }
+                    tree_cell->setPort(ID::Y, temp_wire);
+                    result = RTLIL::SigSpec(temp_wire);
+                }
+                if (prim_type == vpiXnorPrim) {
+                    RTLIL::Cell* not_cell = module->addCell(NEW_ID, ID($_NOT_));
+                    not_cell->setPort(ID::A, result);
+                    not_cell->setPort(ID::Y, outputs[0]);
+                } else {
+                    module->connect(outputs[0], result);
                 }
                 // Don't need the original cell
                 module->remove(cell);
-                log("UHDM: Created tree of %d %s gates for multi-input primitive\n", 
-                    (int)(inputs.size() - 1), gate_type_str.c_str());
+                log("UHDM: Created %d-input %s as XOR-reduce%s\n",
+                    (int)inputs.size(), gate_type_str.c_str(),
+                    prim_type == vpiXnorPrim ? " + NOT" : "");
                 return;
             }
         } else {
