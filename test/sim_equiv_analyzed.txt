@@ -152,13 +152,6 @@ Test: dynslice
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: enum_values
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: escape_id
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
@@ -174,11 +167,13 @@ Test: fib
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
 Test: fib_simple
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
+    CONFIRMED ARTIFACT (not a UHDM bug).  An `initial` block computes an
+    output from a RUNTIME input: `initial fib2 = off + fib(2);` (= off+1).
+    Verilator runs the initial once at t=0 and LATCHES off+1 (off=0 -> 1,
+    held); synth makes it COMBINATIONAL (fib2 = off+1, tracks off).  Both
+    UHDM and Verilog frontends produce the combinational form (verified:
+    both netlists diverge from RTL identically), so this is inherent to
+    initial-reads-input under co-sim, not a frontend bug.
 
 Test: fsm
     CONFIRMED ARTIFACT (not a UHDM bug).  The UHDM and Verilog netlists are
@@ -202,11 +197,11 @@ Test: function_mixed
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
 Test: function_output
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
+    CONFIRMED ARTIFACT (not a UHDM bug).  Same as fib_simple: an `initial`
+    block drives outputs (fib0/fib1) from a runtime input `off` via a
+    function output arg.  Verilator latches the t=0 value; synth makes it
+    combinational.  Both frontends produce the combinational form, so both
+    diverge from RTL identically.
 
 Test: func_width_scope
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
@@ -236,13 +231,6 @@ Test: lcov
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: macc
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: many_functions
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
@@ -258,13 +246,6 @@ Test: module_scope_func
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
 Test: multiple_blocking
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
-Test: mul_unsigned
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
     blind spot).  Tracked here so the suite stays green; to be fixed and
@@ -361,9 +342,13 @@ Test: typedef_packed_enum_array
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: verilog_primitives
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
+Test: wandwor
+    CONFIRMED ARTIFACT (not a UHDM bug).  wand/wor wired-net resolution.
+    The UHDM-synth netlist is structurally identical to Yosys's own
+    Verilog-frontend netlist (same $or/$and resolver cells) and passes
+    formal equivalence.  The co-sim mismatch is a GOLD-side Verilator
+    limitation: with -Wno-MULTIDRIVEN Verilator does not OR/AND-resolve
+    multiple continuous drivers on a wor/wand net (it picks one), so its RTL
+    sim disagrees with the correctly-resolved netlist.  (Now builds in
+    expression mode; previously it build-failed on the coarse $and cell.)
+

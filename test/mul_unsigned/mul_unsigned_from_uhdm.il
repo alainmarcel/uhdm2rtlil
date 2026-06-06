@@ -41,10 +41,37 @@ module \mul_unsigned
   end
   attribute \src "dut.sv:21.1-28.5"
   attribute \always_ff 1
-  cell $dff $procdff$7
+  cell $dff $procdff$4
     parameter \WIDTH 15
     parameter \CLK_POLARITY 1'1
     connect \D $0\M[0][14:0]
+    connect \Q \M[0]
+    connect \CLK \clk
+  end
+  attribute \src "dut.sv:21.1-28.5"
+  attribute \always_ff 1
+  cell $dff $procdff$5
+    parameter \WIDTH 15
+    parameter \CLK_POLARITY 1'1
+    connect \D \M[0]
+    connect \Q \M[1]
+    connect \CLK \clk
+  end
+  attribute \src "dut.sv:21.1-28.5"
+  attribute \always_ff 1
+  cell $dff $procdff$6
+    parameter \WIDTH 15
+    parameter \CLK_POLARITY 1'1
+    connect \D \M[1]
+    connect \Q \M[2]
+    connect \CLK \clk
+  end
+  attribute \src "dut.sv:21.1-28.5"
+  attribute \always_ff 1
+  cell $dff $procdff$7
+    parameter \WIDTH 15
+    parameter \CLK_POLARITY 1'1
+    connect \D \M[2]
     connect \Q \M[3]
     connect \CLK \clk
   end
@@ -66,8 +93,5 @@ module \mul_unsigned
     connect \Q \rB
     connect \CLK \clk
   end
-  connect \M[2] \M[3]
-  connect \M[1] \M[3]
-  connect \M[0] \M[3]
   connect \RES \M[3]
 end
