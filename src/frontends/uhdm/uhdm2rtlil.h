@@ -397,6 +397,18 @@ struct UhdmImporter {
         int width;
     };
     std::map<std::string, MemoryWriteInfo> current_memory_writes;
+    // When a memory has MORE THAN ONE write statement in the same always block
+    // (e.g. a dual-port RAM: `if (wren_a) mem[a]<=da;  if (wren_b) mem[b]<=db;`)
+    // each write needs its own RTLIL write port — keying only by memory name
+    // collapses them into one muxed port and silently drops a write.  This map
+    // gives each write statement (keyed by its LHS bit_select node) its own
+    // addr/data/en wire set; body import prefers it over current_memory_writes.
+    std::map<const UHDM::any*, MemoryWriteInfo> current_memory_writes_by_lhs;
+    // Collect the LHS bit_select node of every memory-write statement, grouped
+    // by memory name in source order (mirrors scan_for_memory_writes).
+    void collect_memory_write_lhs(const UHDM::any* stmt,
+        std::map<std::string, std::vector<const UHDM::any*>>& out,
+        RTLIL::Module* module);
     
     // Track memory writes for process generation (like Verilog frontend)
     struct ProcessMemoryWrite {
