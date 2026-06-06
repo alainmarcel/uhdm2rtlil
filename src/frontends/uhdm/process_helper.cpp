@@ -919,9 +919,69 @@ bool UhdmImporter::is_memory_write(const assignment* assign, RTLIL::Module* modu
 }
 
 // Helper function to scan a statement tree for memory writes
+// Collect, in source order, the LHS bit_select node of every memory-write
+// statement, grouped by memory name.  Recurses through the same control-flow
+// constructs as scan_for_memory_writes so the order matches body import.
+void UhdmImporter::collect_memory_write_lhs(const any* stmt,
+        std::map<std::string, std::vector<const any*>>& out, RTLIL::Module* module) {
+    if (!stmt || !module) return;
+    switch (stmt->VpiType()) {
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (is_memory_write(assign, module)) {
+                if (auto lhs = assign->Lhs()) {
+                    if (lhs->VpiType() == vpiBitSelect) {
+                        const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
+                        out[std::string(bit_sel->VpiName())].push_back(lhs);
+                    }
+                }
+            }
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin: {
+            if (VectorOfany* stmts = begin_block_stmts(stmt))
+                for (auto s : *stmts)
+                    collect_memory_write_lhs(s, out, module);
+            break;
+        }
+        case vpiIf: {
+            const UHDM::if_stmt* s = any_cast<const UHDM::if_stmt*>(stmt);
+            if (auto t = s->VpiStmt()) collect_memory_write_lhs(t, out, module);
+            break;
+        }
+        case vpiIfElse: {
+            const if_else* s = any_cast<const if_else*>(stmt);
+            if (auto t = s->VpiStmt()) collect_memory_write_lhs(t, out, module);
+            if (auto e = s->VpiElseStmt()) collect_memory_write_lhs(e, out, module);
+            break;
+        }
+        case vpiCase: {
+            const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+            if (cs->Case_items())
+                for (auto ci : *cs->Case_items())
+                    if (auto s = ci->Stmt()) collect_memory_write_lhs(s, out, module);
+            break;
+        }
+        case vpiFor: {
+            const for_stmt* f = any_cast<const for_stmt*>(stmt);
+            if (auto b = f->VpiStmt()) collect_memory_write_lhs(b, out, module);
+            break;
+        }
+        case vpiRepeat: {
+            const UHDM::repeat* r = any_cast<const UHDM::repeat*>(stmt);
+            if (auto b = r->VpiStmt()) collect_memory_write_lhs(b, out, module);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module) {
     if (!stmt || !module) return;
-    
+
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {

@@ -1595,41 +1595,60 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     log("\n");
                     log_flush();
 
-                    // Create temp wires for memory control signals
+                    // Create temp wires for memory control signals.  A memory
+                    // may have several write statements in the same block (a
+                    // multi-port RAM) — give EACH write its own addr/data/en
+                    // wire set and its own RTLIL write port, keyed by the
+                    // write's LHS node, so they don't collapse into one port.
                     current_memory_writes.clear();
+                    current_memory_writes_by_lhs.clear();
+                    std::map<std::string, std::vector<const UHDM::any*>> mem_write_lhs;
+                    collect_memory_write_lhs(stmt, mem_write_lhs, module);
+                    // Write ports in source order, for the sync mem_write_actions below.
+                    std::vector<MemoryWriteInfo> ordered_memwrites;
                     for (const auto& mem_name : memory_names) {
                         RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
                         RTLIL::Memory* mem = module->memories.at(mem_id);
-                        
-                        // Create temp wires for this memory
-                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), incr_autoidx());
-                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), incr_autoidx());
-                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), incr_autoidx());
-                        
+
                         // Calculate address width from memory size
                         int addr_width = 1;
                         while ((1 << addr_width) < mem->size)
                             addr_width++;
-                        
-                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
-                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
-                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), 1);
-                        
-                        // Store in tracking structure
-                        MemoryWriteInfo info;
-                        info.mem_id = mem_id;
-                        info.addr_wire = addr_wire;
-                        info.data_wire = data_wire;
-                        info.en_wire = en_wire;
-                        info.width = mem->width;
-                        current_memory_writes[mem_name] = info;
-                        
-                        // Initialize enable to 0 in the process body
-                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
-                            RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
-                        
-                        log("      Created memory control wires for %s: addr=%s, data=%s, en=%s\n",
-                            mem_name.c_str(), addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
+
+                        const auto& lhs_list = mem_write_lhs[mem_name];
+                        int nwrites = std::max<size_t>(1, lhs_list.size());
+                        for (int w = 0; w < nwrites; w++) {
+                            // Create a distinct temp wire set for this write port.
+                            std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), incr_autoidx());
+                            std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), incr_autoidx());
+                            std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), incr_autoidx());
+
+                            RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
+                            RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
+                            RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), 1);
+
+                            MemoryWriteInfo info;
+                            info.mem_id = mem_id;
+                            info.addr_wire = addr_wire;
+                            info.data_wire = data_wire;
+                            info.en_wire = en_wire;
+                            info.width = mem->width;
+                            ordered_memwrites.push_back(info);
+                            // Map this write's LHS node to its port; keep the
+                            // first port under the memory name as a fallback for
+                            // body-import sites that match only by name.
+                            if (w < (int)lhs_list.size())
+                                current_memory_writes_by_lhs[lhs_list[w]] = info;
+                            if (w == 0)
+                                current_memory_writes[mem_name] = info;
+
+                            // Initialize enable to 0 in the process body
+                            yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
+
+                            log("      Created memory control wires for %s[port %d]: addr=%s, data=%s, en=%s\n",
+                                mem_name.c_str(), w, addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
+                        }
                     }
                     
                     // Registered (non-memory) signals assigned alongside the
@@ -1695,22 +1714,29 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
                     sync->signal = clock_sig;
                     
-                    // Add memory write actions for each memory
-                    for (const auto& [mem_name, info] : current_memory_writes) {
+                    // Add one memory write action per write port, in source
+                    // order (later ports take priority — matches the Verilog
+                    // frontend's source-order write priority).
+                    for (size_t pi = 0; pi < ordered_memwrites.size(); pi++) {
+                        const auto& info = ordered_memwrites[pi];
                         sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
                         RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
                         action.memid = info.mem_id;
                         action.address = RTLIL::SigSpec(info.addr_wire);
                         action.data = RTLIL::SigSpec(info.data_wire);
-                        
+                        // This write has priority over every earlier write port
+                        // (one bit per prior port, all set) — proc_memwr indexes
+                        // priority_mask[0..pi-1], so an empty mask would crash.
+                        action.priority_mask = RTLIL::Const(RTLIL::State::S1, (int)pi);
+
                         // Use the enable wire, expanded to memory width
                         RTLIL::SigSpec enable;
                         for (int i = 0; i < info.width; i++) {
                             enable.append(RTLIL::SigSpec(info.en_wire));
                         }
                         action.enable = enable;
-                        
-                        log("      Added memory write action for %s\n", mem_name.c_str());
+
+                        log("      Added memory write action for %s\n", info.mem_id.c_str());
                     }
 
                     // Latch the registered non-memory signals on the clock
@@ -1727,6 +1753,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     
                     // Clear memory write tracking
                     current_memory_writes.clear();
+                    current_memory_writes_by_lhs.clear();
                 } else if (needs_sync_path(stmt)) {
                     // Body contains a repeat loop or a for loop nested inside a conditional.
                     // These are not handled by import_statement_comb; fall back to the old
@@ -7662,14 +7689,22 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     // set up by `import_always_comb`. Without this, import_expression() on
     // the LHS bit_select would create a stray `$memrd` cell and the write
     // would never reach the memory (subbytes.v exposes this).
-    if (!current_memory_writes.empty()) {
+    if (!current_memory_writes.empty() || !current_memory_writes_by_lhs.empty()) {
         if (auto lhs_e = uhdm_assign->Lhs()) {
             if (lhs_e->VpiType() == vpiBitSelect) {
                 auto bs = any_cast<const bit_select*>(lhs_e);
                 std::string mem_name = std::string(bs->VpiName());
-                auto it = current_memory_writes.find(mem_name);
-                if (it != current_memory_writes.end()) {
-                    const MemoryWriteInfo& info = it->second;
+                // Prefer this write statement's own port (multi-port memory);
+                // fall back to the by-name port for single-write memories.
+                const MemoryWriteInfo* infop = nullptr;
+                if (auto lit = current_memory_writes_by_lhs.find(lhs_e);
+                        lit != current_memory_writes_by_lhs.end())
+                    infop = &lit->second;
+                else if (auto it = current_memory_writes.find(mem_name);
+                        it != current_memory_writes.end())
+                    infop = &it->second;
+                if (infop) {
+                    const MemoryWriteInfo& info = *infop;
                     RTLIL::SigSpec addr = import_expression(bs->VpiIndex());
                     if (addr.size() != info.addr_wire->width) {
                         if (addr.size() < info.addr_wire->width)
@@ -8915,15 +8950,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             }
 
             // Check if this is a memory write first
-            if (is_memory_write(assign, module) && !current_memory_writes.empty()) {
+            if (is_memory_write(assign, module) &&
+                    (!current_memory_writes.empty() || !current_memory_writes_by_lhs.empty())) {
                 // This is a memory write and we have temp wires for it
                 if (auto lhs_expr = assign->Lhs()) {
                     if (lhs_expr->VpiType() == vpiBitSelect) {
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
                         std::string mem_name = std::string(bit_sel->VpiName());
-                        
-                        if (current_memory_writes.count(mem_name)) {
-                            const MemoryWriteInfo& info = current_memory_writes[mem_name];
+
+                        // Prefer this write statement's own port (multi-port
+                        // memory); fall back to the by-name port otherwise.
+                        const MemoryWriteInfo* infop = nullptr;
+                        if (auto lit = current_memory_writes_by_lhs.find(lhs_expr);
+                                lit != current_memory_writes_by_lhs.end())
+                            infop = &lit->second;
+                        else if (current_memory_writes.count(mem_name))
+                            infop = &current_memory_writes[mem_name];
+                        if (infop) {
+                            const MemoryWriteInfo& info = *infop;
 
                             // Get address
                             RTLIL::SigSpec addr = import_expression(bit_sel->VpiIndex());

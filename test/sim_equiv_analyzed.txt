@@ -278,13 +278,6 @@ Test: priority_case
     removed from this file one isolated change at a time (cf. alu_sub,
     fixed by the always_ff blocking-temp part/bit-select redirect).
 
-Test: priority_memory
-    co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
-    divergence that the equiv_induct formal flow does NOT catch (known
-    blind spot).  Tracked here so the suite stays green; to be fixed and
-    removed from this file one isolated change at a time (cf. alu_sub,
-    fixed by the always_ff blocking-temp part/bit-select redirect).
-
 Test: reg_wire_error
     co-sim backlog: the Verilator co-sim detects a real RTL-vs-netlist
     divergence that the equiv_induct formal flow does NOT catch (known
