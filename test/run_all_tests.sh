@@ -91,34 +91,65 @@ SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
 SIM_EQUIV_ANALYZED_TESTS=0
 SIM_EQUIV_ANALYZED_NAMES=()
-# Of the analyzed tests, split into two classes for reporting:
-#   - ARTEFACT: a confirmed sim-vs-synth difference, NOT a frontend bug
-#     (the entry's explanation contains "CONFIRMED ARTIFACT").
-#   - POTENTIAL BUG: an un-investigated divergence that may be a real
-#     frontend bug to fix.
+# Each analyzed divergence is auto-classified (see classify_divergence) by a
+# SAT-from-reset formal miter, into three reporting buckets:
+#   🔬 ARTEFACT       — miter EQUIVALENT (UHDM == Verilog), or an override.
+#   🐛 POTENTIAL BUG  — miter NON-EQUIVALENT (UHDM frontend differs).
+#   ❓ UNCLASSIFIED   — miter INCONCLUSIVE and no override (needs triage).
 SIM_EQUIV_ARTEFACT_TESTS=0
 SIM_EQUIV_ARTEFACT_NAMES=()
 SIM_EQUIV_POTBUG_TESTS=0
 SIM_EQUIV_POTBUG_NAMES=()
+SIM_EQUIV_UNCLASS_TESTS=0
+SIM_EQUIV_UNCLASS_NAMES=()
 
 # Tests that are knowingly not made to pass sim-equiv, with a
 # documented reason in `test/sim_equiv_analyzed.txt`.  Populate the
-# set once at startup so the per-test path is just a lookup.  Also flag
-# which entries are CONFIRMED ARTEFACTs (their explanation block contains
-# "CONFIRMED ARTIFACT") vs un-investigated potential bugs.
+# set once at startup so the per-test path is just a lookup.
 declare -A SIM_EQUIV_ANALYZED_SET
-declare -A SIM_EQUIV_ARTEFACT_SET
 if [ -f "$SCRIPT_DIR/sim_equiv_analyzed.txt" ]; then
-    _cur_analyzed=""
     while IFS= read -r line; do
         if [[ "$line" =~ ^Test:[[:space:]]*([A-Za-z0-9_]+) ]]; then
-            _cur_analyzed="${BASH_REMATCH[1]}"
-            SIM_EQUIV_ANALYZED_SET[$_cur_analyzed]=1
-        elif [[ -n "$_cur_analyzed" && "$line" == *"CONFIRMED ARTIFACT"* ]]; then
-            SIM_EQUIV_ARTEFACT_SET[$_cur_analyzed]=1
+            SIM_EQUIV_ANALYZED_SET[${BASH_REMATCH[1]}]=1
         fi
     done < "$SCRIPT_DIR/sim_equiv_analyzed.txt"
 fi
+
+# Manual classification overrides for the miter's soundness caveats (latches,
+# abc9 muxes, SVA $check — satgen can't model them; reset-dependent false
+# NON-EQUIVALENT).  An override WINS over the miter.  See the file header.
+declare -A SIM_EQUIV_OVERRIDE
+if [ -f "$SCRIPT_DIR/sim_equiv_classification.txt" ]; then
+    while read -r _name _cls _rest; do
+        [[ -z "$_name" || "$_name" == \#* ]] && continue
+        SIM_EQUIV_OVERRIDE[$_name]="$_cls"
+    done < "$SCRIPT_DIR/sim_equiv_classification.txt"
+fi
+
+# Auto-classify a co-sim divergence: prints "artefact" / "bug" / "unknown".
+# Honours sim_equiv_classification.txt overrides first, else runs the SAT
+# miter (triage_cosim.py --no-cosim) on the gate-level *_synth.v netlists.
+classify_divergence() {
+    local base="$1"
+    if [ -n "${SIM_EQUIV_OVERRIDE[$base]:-}" ]; then
+        case "${SIM_EQUIV_OVERRIDE[$base]}" in
+            artefact) echo "artefact (override)"; return ;;
+            bug)      echo "bug (override)"; return ;;
+        esac
+    fi
+    if [ ! -f "$SCRIPT_DIR/triage_cosim.py" ]; then
+        echo "unknown"; return
+    fi
+    local v
+    v=$(cd "$SCRIPT_DIR" && timeout 150 python3 triage_cosim.py "$base" \
+            --no-cosim --seq 14 2>/dev/null \
+            | grep -oE 'NON-EQUIVALENT|EQUIVALENT|INCONCLUSIVE' | head -1)
+    case "$v" in
+        EQUIVALENT)     echo "artefact (miter)" ;;
+        NON-EQUIVALENT) echo "bug (miter)" ;;
+        *)              echo "unknown" ;;
+    esac
+}
 
 # Read a KEY from a test's optional per-test config file
 # (`<test_dir>/sim_config`, simple `KEY=VALUE` lines), or echo the default.
@@ -181,15 +212,22 @@ run_sim_equivalence_softwarn() {
     if [ -n "${SIM_EQUIV_ANALYZED_SET[$base]:-}" ]; then
         SIM_EQUIV_ANALYZED_TESTS=$((SIM_EQUIV_ANALYZED_TESTS + 1))
         SIM_EQUIV_ANALYZED_NAMES+=("$base")
-        if [ -n "${SIM_EQUIV_ARTEFACT_SET[$base]:-}" ]; then
-            echo "    🔬 Verilator co-sim ARTEFACT — sim/synth diff, not a bug (sim_equiv_analyzed.txt)"
-            SIM_EQUIV_ARTEFACT_TESTS=$((SIM_EQUIV_ARTEFACT_TESTS + 1))
-            SIM_EQUIV_ARTEFACT_NAMES+=("$base")
-        else
-            echo "    🐛 Verilator co-sim POTENTIAL BUG — un-investigated divergence (sim_equiv_analyzed.txt)"
-            SIM_EQUIV_POTBUG_TESTS=$((SIM_EQUIV_POTBUG_TESTS + 1))
-            SIM_EQUIV_POTBUG_NAMES+=("$base")
-        fi
+        # Auto-classify this divergence with the SAT miter (or an override).
+        local cls; cls="$(classify_divergence "$base")"
+        case "$cls" in
+            artefact*)
+                echo "    🔬 Verilator co-sim ARTEFACT — UHDM==Verilog, sim/synth diff [$cls]"
+                SIM_EQUIV_ARTEFACT_TESTS=$((SIM_EQUIV_ARTEFACT_TESTS + 1))
+                SIM_EQUIV_ARTEFACT_NAMES+=("$base") ;;
+            bug*)
+                echo "    🐛 Verilator co-sim POTENTIAL BUG — UHDM frontend differs [$cls]"
+                SIM_EQUIV_POTBUG_TESTS=$((SIM_EQUIV_POTBUG_TESTS + 1))
+                SIM_EQUIV_POTBUG_NAMES+=("$base") ;;
+            *)
+                echo "    ❓ Verilator co-sim UNCLASSIFIED — miter inconclusive, add an override"
+                SIM_EQUIV_UNCLASS_TESTS=$((SIM_EQUIV_UNCLASS_TESTS + 1))
+                SIM_EQUIV_UNCLASS_NAMES+=("$base") ;;
+        esac
         return 0
     fi
     echo "    ⚠️  Verilator co-sim WARNING (see $base/sim_equiv.log)"
@@ -839,17 +877,24 @@ if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
 fi
 if [ "$SIM_EQUIV_ANALYZED_TESTS" -gt 0 ]; then
     echo "  🔍 Verilator sim-equiv analyzed (known divergence): $SIM_EQUIV_ANALYZED_TESTS"
-    echo "       └─ split into confirmed artefacts vs un-investigated potential bugs:"
-    # Confirmed sim/synth artefacts — NOT frontend bugs.
-    echo "  🔬 Sim/synth ARTEFACTS (not bugs — Verilator-vs-synth diffs): $SIM_EQUIV_ARTEFACT_TESTS"
+    echo "       └─ auto-classified by the SAT-from-reset formal miter:"
+    # miter EQUIVALENT (or override) — UHDM == Verilog, the diff is Verilator-vs-synth.
+    echo "  🔬 Sim/synth ARTEFACTS (not bugs — UHDM==Verilog): $SIM_EQUIV_ARTEFACT_TESTS"
     for t in "${SIM_EQUIV_ARTEFACT_NAMES[@]}"; do
         echo "      - $t"
     done
-    # Un-investigated divergences that may be real frontend bugs to fix.
-    echo "  🐛 POTENTIAL BUGS (un-investigated divergences to triage): $SIM_EQUIV_POTBUG_TESTS"
+    # miter NON-EQUIVALENT — UHDM frontend genuinely differs from Verilog.
+    echo "  🐛 POTENTIAL BUGS (UHDM frontend differs — to fix): $SIM_EQUIV_POTBUG_TESTS"
     for t in "${SIM_EQUIV_POTBUG_NAMES[@]}"; do
         echo "      - $t"
     done
+    if [ "$SIM_EQUIV_UNCLASS_TESTS" -gt 0 ]; then
+        # miter INCONCLUSIVE and no override — add one to sim_equiv_classification.txt.
+        echo "  ❓ UNCLASSIFIED (miter inconclusive — add an override): $SIM_EQUIV_UNCLASS_TESTS"
+        for t in "${SIM_EQUIV_UNCLASS_NAMES[@]}"; do
+            echo "      - $t"
+        done
+    fi
 fi
 echo
 
