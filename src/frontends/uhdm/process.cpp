@@ -6853,9 +6853,20 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
     // Then: full_base <= new_base (under any current_condition).
     if (auto lhs_expr = uhdm_assign->Lhs(); lhs_expr && lhs_expr->VpiType() == vpiIndexedPartSelect) {
         const indexed_part_select* ips = any_cast<const indexed_part_select*>(lhs_expr);
+        // Blocking temps already assigned earlier in this block (e.g.
+        // `a = ctrl+1; ... dout[a*b +: w] = c;`) are tracked in
+        // pending_sync_assignments.  Reads in the index/RHS must see those
+        // in-flight values, not the registered (one-cycle-delayed) wire —
+        // otherwise the temps stay live and get spurious FFs.  Build a
+        // name->value map and pass it as an input_mapping (import_ref_obj
+        // resolves refs by name against it).
+        std::map<std::string, RTLIL::SigSpec> blocking_map;
+        for (const auto& [plhs, prhs] : pending_sync_assignments)
+            if (plhs.is_wire())
+                blocking_map[RTLIL::unescape_id(plhs.as_wire()->name)] = prhs;
         // Width must be constant; offset may be dynamic.
-        RTLIL::SigSpec width_sig = import_expression(ips->Width_expr());
-        RTLIL::SigSpec offset_sig = import_expression(ips->Base_expr());
+        RTLIL::SigSpec width_sig = import_expression(ips->Width_expr(), &blocking_map);
+        RTLIL::SigSpec offset_sig = import_expression(ips->Base_expr(), &blocking_map);
         // The index is self-determined (LRM Table 11-21): truncate it to that
         // width so e.g. `ctrl*sel` uses max(L,R) bits, matching the Verilog
         // frontend.  Without this the multiply keeps full-precision (sum-of-
@@ -6889,7 +6900,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 RTLIL::SigSpec rhs;
                 if (auto rhs_any = uhdm_assign->Rhs()) {
                     if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any))
-                        rhs = import_expression(rhs_expr);
+                        rhs = import_expression(rhs_expr, &blocking_map);
                 }
                 if (rhs.size() < width) rhs.extend_u0(width, false);
                 else if (rhs.size() > width) rhs = rhs.extract(0, width);
@@ -6915,8 +6926,16 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 RTLIL::Wire* inv_mask = module->addWire(NEW_ID, base_width);
                 module->addNot(NEW_ID, RTLIL::SigSpec(shifted_mask), inv_mask);
 
+                // Base value for the read-modify-write: honour any earlier
+                // blocking assignment to this register in the same block
+                // (e.g. `dout = dout + 1;` before `dout[i +: w] = c;`), so the
+                // part-select masks over the updated value, not the stale
+                // register output.
+                RTLIL::SigSpec base_value = pending_sync_assignments.count(RTLIL::SigSpec(base_wire))
+                    ? pending_sync_assignments[RTLIL::SigSpec(base_wire)]
+                    : RTLIL::SigSpec(base_wire);
                 RTLIL::Wire* keep = module->addWire(NEW_ID, base_width);
-                module->addAnd(NEW_ID, RTLIL::SigSpec(base_wire),
+                module->addAnd(NEW_ID, base_value,
                                RTLIL::SigSpec(inv_mask), keep);
 
                 RTLIL::Wire* new_base = module->addWire(NEW_ID, base_width);
