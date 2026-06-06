@@ -1,0 +1,28 @@
+# Manual classification OVERRIDES for the make-test SAT-miter auto-classifier
+# (run_all_tests.sh).  On every run, each Verilator co-sim divergence is
+# auto-classified by running a SAT-from-reset formal miter (UHDM-synth vs
+# Verilog-synth):
+#     miter NON-EQUIVALENT -> 🐛 potential bug   (UHDM frontend differs)
+#     miter EQUIVALENT     -> 🔬 artefact        (UHDM == Verilog)
+#     miter INCONCLUSIVE   -> use the override below, else ❓ unclassified
+#
+# This file is the authoritative override for the miter's SOUNDNESS CAVEATS:
+#   - satgen has no model for some cells: $_DLATCH_ (latches), abc9 MUXF7/LUT,
+#     SVA $check/$assert/$cover  -> the miter is INCONCLUSIVE for them.
+#   - the miter runs from -set-init-zero without asserting a design reset, so
+#     a reset-dependent design can show a FALSE NON-EQUIVALENT.
+# An override here WINS over the miter verdict.
+#
+# Format:  <test_name>  <artefact|bug>   # reason
+# ---------------------------------------------------------------------------
+
+# --- miter INCONCLUSIVE: cells satgen can't model -> classify by analysis ---
+wandwor                artefact   # wand/wor multi-driver; UHDM==Verilog (formal); Verilator-only diff
+latch_002              artefact   # $_DLATCH_ has no satgen model; formal-equivalent latch
+simple_abc9            artefact   # abc9 MUXF7/LUT cells have no satgen model
+sva_not                artefact   # SVA x-init; $check not modelled by satgen
+sva_counter            artefact   # SVA x-init; $check not modelled by satgen
+sva_value_change_sim   artefact   # SVA; $check not modelled by satgen
+named_cover_assert     artefact   # SVA cover/assert; $check not modelled by satgen
+unbased_unsized_param  artefact   # SVA $check/$eqx; miter INCONCLUSIVE
+jeras_tcb_gpio         artefact   # interface / uhdm-only; miter INCONCLUSIVE

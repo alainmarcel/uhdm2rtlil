@@ -4,19 +4,24 @@
 # in this file are reported under "ANALYZED" instead of "WARNING" in the
 # run_all_tests.sh summary — the mismatch is known and documented here.
 #
-# The summary further splits ANALYZED entries into two classes:
-#   ARTEFACT      — a CONFIRMED sim-vs-synth difference, NOT a frontend bug
-#                   (e.g. Verilator wand/wor handling, full_case /
-#                   parallel_case don't-cares, initial-reads-input, X-init,
-#                   multi-driver races).  Mark these by putting the exact
-#                   phrase "CONFIRMED ARTIFACT" in the explanation block.
-#   POTENTIAL BUG — an un-investigated divergence that may be a real
-#                   frontend bug to fix (no "CONFIRMED ARTIFACT" marker).
+# The summary then AUTO-CLASSIFIES each divergence (run_all_tests.sh ->
+# classify_divergence) by running a SAT-from-reset formal miter (UHDM-synth
+# vs Verilog-synth, see triage_cosim.py):
+#   🔬 ARTEFACT       — miter EQUIVALENT: UHDM == Verilog, the co-sim diff is
+#                       a Verilator-vs-synth difference, not a frontend bug.
+#   🐛 POTENTIAL BUG  — miter NON-EQUIVALENT: the UHDM frontend genuinely
+#                       differs from the Verilog frontend (equiv_induct's
+#                       blind spot missed it) — a real bug to fix.
+#   ❓ UNCLASSIFIED   — miter INCONCLUSIVE (satgen can't model the cells) and
+#                       no override -> add one to sim_equiv_classification.txt.
+# Manual overrides for the miter's soundness caveats live in
+# sim_equiv_classification.txt (latches/abc9/SVA, reset-dependent designs).
+# The free-text "CONFIRMED ARTIFACT" phrase below is human documentation
+# only; the bucket is decided by the miter + the override file.
 #
 # Format:
 #   Test: <test_name>
-#       <explanation, multi-line ok, indented under the Test: line.
-#        Include "CONFIRMED ARTIFACT" iff it is a proven sim/synth diff.>
+#       <explanation, multi-line ok, indented under the Test: line>
 #   <blank line separator>
 
 Test: sva_not
