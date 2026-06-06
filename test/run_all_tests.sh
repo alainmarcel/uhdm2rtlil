@@ -87,19 +87,21 @@ YOSYS_FAILED=0
 YOSYS_SKIPPED=0
 YOSYS_UHDM_ONLY=0
 EQUIV_FAILED_TESTS=0
+# Tests failed by the SAT-from-reset MITER (UHDM != Verilog) even though the
+# equiv_induct check passed — real bugs that equiv_induct's blind spot missed.
+MITER_FAILED_TESTS=0
+MITER_FAILED_TEST_NAMES=()
 SIM_EQUIV_WARN_TESTS=0
 SIM_EQUIV_WARN_NAMES=()
 SIM_EQUIV_ANALYZED_TESTS=0
 SIM_EQUIV_ANALYZED_NAMES=()
 # Each analyzed divergence is auto-classified (see classify_divergence) by a
-# SAT-from-reset formal miter, into three reporting buckets:
-#   🔬 ARTEFACT       — miter EQUIVALENT (UHDM == Verilog), or an override.
-#   🐛 POTENTIAL BUG  — miter NON-EQUIVALENT (UHDM frontend differs).
-#   ❓ UNCLASSIFIED   — miter INCONCLUSIVE and no override (needs triage).
+# SAT-from-reset formal miter:
+#   🔬 ARTEFACT       — miter EQUIVALENT (UHDM == Verilog), or an override -> pass.
+#   🐛 POTENTIAL BUG  — miter NON-EQUIVALENT (UHDM differs) -> Miter-Formal FAIL.
+#   ❓ UNCLASSIFIED   — miter INCONCLUSIVE and no override (needs triage) -> pass.
 SIM_EQUIV_ARTEFACT_TESTS=0
 SIM_EQUIV_ARTEFACT_NAMES=()
-SIM_EQUIV_POTBUG_TESTS=0
-SIM_EQUIV_POTBUG_NAMES=()
 SIM_EQUIV_UNCLASS_TESTS=0
 SIM_EQUIV_UNCLASS_NAMES=()
 
@@ -210,21 +212,27 @@ run_sim_equivalence_softwarn() {
     # clean — surface them under a separate "analyzed" category so the
     # warning count tracks only un-investigated failures.
     if [ -n "${SIM_EQUIV_ANALYZED_SET[$base]:-}" ]; then
-        SIM_EQUIV_ANALYZED_TESTS=$((SIM_EQUIV_ANALYZED_TESTS + 1))
-        SIM_EQUIV_ANALYZED_NAMES+=("$base")
         # Auto-classify this divergence with the SAT miter (or an override).
         local cls; cls="$(classify_divergence "$base")"
         case "$cls" in
             artefact*)
+                # UHDM == Verilog: a Verilator-vs-synth diff, not a bug -> pass.
                 echo "    🔬 Verilator co-sim ARTEFACT — UHDM==Verilog, sim/synth diff [$cls]"
+                SIM_EQUIV_ANALYZED_TESTS=$((SIM_EQUIV_ANALYZED_TESTS + 1))
+                SIM_EQUIV_ANALYZED_NAMES+=("$base")
                 SIM_EQUIV_ARTEFACT_TESTS=$((SIM_EQUIV_ARTEFACT_TESTS + 1))
                 SIM_EQUIV_ARTEFACT_NAMES+=("$base") ;;
             bug*)
+                # Miter proved UHDM != Verilog -> a real bug; FAIL the test
+                # (handled in analyze_test_result via SIM_EQUIV_MITER_BUG).
                 echo "    🐛 Verilator co-sim POTENTIAL BUG — UHDM frontend differs [$cls]"
-                SIM_EQUIV_POTBUG_TESTS=$((SIM_EQUIV_POTBUG_TESTS + 1))
-                SIM_EQUIV_POTBUG_NAMES+=("$base") ;;
+                echo "    ❌ Miter-Formal FAILED (UHDM and Verilog differ — the equiv_induct check missed it)"
+                SIM_EQUIV_MITER_BUG=1 ;;
             *)
+                # Miter inconclusive, no override -> documented, needs triage.
                 echo "    ❓ Verilator co-sim UNCLASSIFIED — miter inconclusive, add an override"
+                SIM_EQUIV_ANALYZED_TESTS=$((SIM_EQUIV_ANALYZED_TESTS + 1))
+                SIM_EQUIV_ANALYZED_NAMES+=("$base")
                 SIM_EQUIV_UNCLASS_TESTS=$((SIM_EQUIV_UNCLASS_TESTS + 1))
                 SIM_EQUIV_UNCLASS_NAMES+=("$base") ;;
         esac
@@ -505,10 +513,10 @@ analyze_test_result() {
             echo "    ⏭  Formal equivalence SKIPPED (sim_config: SKIP_FORMAL=1)"
         elif [ -x "./test_equivalence.sh" ]; then
             if ./test_equivalence.sh "$test_dir" >/dev/null 2>&1; then
-                echo "    ✅ Formal equivalence check PASSED"
+                echo "    ✅ Induct-Formal equivalence check PASSED (equiv_induct)"
                 equiv_passed=true
             else
-                echo "    ❌ Formal equivalence check FAILED - netlists are not logically equivalent"
+                echo "    ❌ Induct-Formal equivalence check FAILED - netlists are not logically equivalent"
                 equiv_failed=true
             fi
         fi
@@ -517,6 +525,7 @@ analyze_test_result() {
     # Verilator co-sim now runs for EVERY test (not just UHDM-only ones),
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
     # SKIP_FORMAL test it is the sole functional check.
+    SIM_EQUIV_MITER_BUG=0   # set to 1 by run_sim_equivalence_softwarn on a miter-confirmed bug
     if [ -f "$uhdm_synth" ]; then
         run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
     fi
@@ -528,10 +537,17 @@ analyze_test_result() {
         PASSED_TEST_NAMES+=("$test_dir")
         return 0
     elif [ "$equiv_failed" = true ]; then
-        echo "❌ Test $test_dir FAILED - Formal equivalence check failed"
+        echo "❌ Test $test_dir FAILED - Induct-Formal equivalence check failed"
         EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + 1))
         EQUIV_FAILED_TEST_NAMES+=("$test_dir")
         return 2  # Return 2 to indicate equivalence failure (different from other failures)
+    elif [ "${SIM_EQUIV_MITER_BUG:-0}" = "1" ]; then
+        # The SAT-from-reset miter proved UHDM != Verilog — a real bug, even
+        # though the equiv_induct check above passed (its known blind spot).
+        echo "❌ Test $test_dir FAILED - Miter-Formal proved UHDM != Verilog (equiv_induct missed it)"
+        MITER_FAILED_TESTS=$((MITER_FAILED_TESTS + 1))
+        MITER_FAILED_TEST_NAMES+=("$test_dir")
+        return 2
     elif [ "$rtlil_identical" = true ] && [ "$synth_identical" = true ]; then
         echo "✅ Test $test_dir PASSED - Both RTLIL and synthesized netlists are IDENTICAL"
         PASSED_TESTS=$((PASSED_TESTS + 1))
@@ -869,6 +885,12 @@ echo "  🚀 UHDM-only success: $UHDM_ONLY_TESTS"
 echo "  ❌ Equivalence failures: $EQUIV_FAILED_TESTS"
 echo "  ❌ True failures: $FAILED_TESTS"
 echo "  💥 Crashes: $CRASHED_TESTS"
+if [ "$MITER_FAILED_TESTS" -gt 0 ]; then
+    echo "  ❌ Miter-Formal failures (UHDM != Verilog — real bugs equiv_induct missed): $MITER_FAILED_TESTS"
+    for t in "${MITER_FAILED_TEST_NAMES[@]}"; do
+        echo "      - $t"
+    done
+fi
 if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
     echo "  ⚠️  Verilator sim-equiv warnings: $SIM_EQUIV_WARN_TESTS"
     for t in "${SIM_EQUIV_WARN_NAMES[@]}"; do
@@ -876,16 +898,12 @@ if [ "$SIM_EQUIV_WARN_TESTS" -gt 0 ]; then
     done
 fi
 if [ "$SIM_EQUIV_ANALYZED_TESTS" -gt 0 ]; then
-    echo "  🔍 Verilator sim-equiv analyzed (known divergence): $SIM_EQUIV_ANALYZED_TESTS"
-    echo "       └─ auto-classified by the SAT-from-reset formal miter:"
-    # miter EQUIVALENT (or override) — UHDM == Verilog, the diff is Verilator-vs-synth.
-    echo "  🔬 Sim/synth ARTEFACTS (not bugs — UHDM==Verilog): $SIM_EQUIV_ARTEFACT_TESTS"
+    # Divergences the miter proved UHDM==Verilog (or marked artefact via
+    # override): Verilator-vs-synth diffs, not bugs.  (Miter-confirmed bugs
+    # are reported above as ❌ Miter-Formal failures, not here.)
+    echo "  🔍 Verilator sim-equiv analyzed — known NON-bug divergences: $SIM_EQUIV_ANALYZED_TESTS"
+    echo "  🔬 Sim/synth ARTEFACTS (miter: UHDM==Verilog): $SIM_EQUIV_ARTEFACT_TESTS"
     for t in "${SIM_EQUIV_ARTEFACT_NAMES[@]}"; do
-        echo "      - $t"
-    done
-    # miter NON-EQUIVALENT — UHDM frontend genuinely differs from Verilog.
-    echo "  🐛 POTENTIAL BUGS (UHDM frontend differs — to fix): $SIM_EQUIV_POTBUG_TESTS"
-    for t in "${SIM_EQUIV_POTBUG_NAMES[@]}"; do
         echo "      - $t"
     done
     if [ "$SIM_EQUIV_UNCLASS_TESTS" -gt 0 ]; then
