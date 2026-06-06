@@ -6856,6 +6856,14 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Width must be constant; offset may be dynamic.
         RTLIL::SigSpec width_sig = import_expression(ips->Width_expr());
         RTLIL::SigSpec offset_sig = import_expression(ips->Base_expr());
+        // The index is self-determined (LRM Table 11-21): truncate it to that
+        // width so e.g. `ctrl*sel` uses max(L,R) bits, matching the Verilog
+        // frontend.  Without this the multiply keeps full-precision (sum-of-
+        // widths) bits, so a large product that should wrap (and write at the
+        // low end) instead shifts entirely out of range.
+        if (int sdw = self_determined_width(ips->Base_expr());
+            sdw > 0 && sdw < offset_sig.size())
+            offset_sig = offset_sig.extract(0, sdw);
         if (width_sig.is_fully_const() && !offset_sig.is_fully_const()) {
             // Resolve the base wire by name.
             std::string base_name;
