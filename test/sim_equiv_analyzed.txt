@@ -1,13 +1,22 @@
 # Tests that have been analyzed and consciously NOT made to pass the
 # Verilator co-simulation equivalence check.  Each entry has the test
 # name on a `Test:` line followed by an explanation block.  Entries
-# in this file are reported as `🔍 ANALYZED` instead of `⚠️ WARNING`
-# in the run_all_tests.sh summary — the warning is not a bug signal,
-# the reason for the mismatch is known and documented here.
+# in this file are reported under "ANALYZED" instead of "WARNING" in the
+# run_all_tests.sh summary — the mismatch is known and documented here.
+#
+# The summary further splits ANALYZED entries into two classes:
+#   ARTEFACT      — a CONFIRMED sim-vs-synth difference, NOT a frontend bug
+#                   (e.g. Verilator wand/wor handling, full_case /
+#                   parallel_case don't-cares, initial-reads-input, X-init,
+#                   multi-driver races).  Mark these by putting the exact
+#                   phrase "CONFIRMED ARTIFACT" in the explanation block.
+#   POTENTIAL BUG — an un-investigated divergence that may be a real
+#                   frontend bug to fix (no "CONFIRMED ARTIFACT" marker).
 #
 # Format:
 #   Test: <test_name>
-#       <explanation, multi-line ok, indented under the Test: line>
+#       <explanation, multi-line ok, indented under the Test: line.
+#        Include "CONFIRMED ARTIFACT" iff it is a proven sim/synth diff.>
 #   <blank line separator>
 
 Test: sva_not
