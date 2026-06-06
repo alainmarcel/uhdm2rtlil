@@ -489,6 +489,13 @@ struct UhdmImporter {
     RTLIL::SigSpec import_expression(const UHDM::expr* uhdm_expr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     
     RTLIL::SigSpec import_constant(const UHDM::constant* uhdm_const);
+    // LRM (IEEE 1800 Table 11-21) self-determined bit-length of an expression.
+    // Returns 0 when the width can't be determined structurally (caller should
+    // then leave the imported width unchanged).  Used to size self-determined
+    // contexts such as a part-select index, where arithmetic uses max(L,R)
+    // (NOT the full-precision sum the assignment-context importer falls back
+    // to).
+    int self_determined_width(const UHDM::any* node);
     RTLIL::SigSpec import_operation(const UHDM::operation* uhdm_op, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     RTLIL::SigSpec import_ref_obj(const UHDM::ref_obj* uhdm_ref, const UHDM::scope* inst = nullptr, const std::map<std::string, RTLIL::SigSpec>* input_mapping = nullptr);
     

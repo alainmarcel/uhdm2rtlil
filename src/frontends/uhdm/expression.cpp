@@ -2591,6 +2591,67 @@ static void mark_result_signed(RTLIL::SigSpec& result) {
     }
 }
 
+// LRM (IEEE 1800 Table 11-21) self-determined bit-length of an expression.
+// Returns 0 when it cannot be determined structurally (caller leaves the
+// imported width untouched).  Crucially, arithmetic (+ - * / %) and bitwise
+// (& | ^ ~^) ops use max(L, R) here — NOT the full-precision sum that
+// import_operation falls back to without an assignment context.  This is what
+// the Verilog frontend uses for self-determined positions like a part-select
+// index, so `dout[ctrl*sel +: 16]` truncates the index to max(width(ctrl),
+// width(sel)) rather than width(ctrl)+width(sel).
+int UhdmImporter::self_determined_width(const UHDM::any* node) {
+    if (!node)
+        return 0;
+    if (node->VpiType() == vpiOperation) {
+        const operation* op = any_cast<const operation*>(node);
+        std::vector<const UHDM::any*> ops;
+        if (op->Operands())
+            for (auto o : *op->Operands())
+                ops.push_back(o);
+        auto W = [&](size_t i) -> int {
+            return i < ops.size() ? self_determined_width(ops[i]) : 0;
+        };
+        switch (op->VpiOpType()) {
+            // Arithmetic and bitwise binary: max(L, R).
+            case vpiAddOp: case vpiSubOp: case vpiMultOp: case vpiDivOp:
+            case vpiModOp: case vpiBitAndOp: case vpiBitOrOp:
+            case vpiBitXorOp: case vpiBitXnorOp:
+                return std::max(W(0), W(1));
+            // Unary arithmetic / bitwise negation: width of the operand.
+            case vpiMinusOp: case vpiPlusOp: case vpiBitNegOp:
+                return W(0);
+            // Shifts: width of the left (shifted) operand.
+            case vpiLShiftOp: case vpiRShiftOp:
+            case vpiArithLShiftOp: case vpiArithRShiftOp:
+                return W(0);
+            // Conditional: max of the two result operands (1=then, 2=else).
+            case vpiConditionOp:
+                return std::max(W(1), W(2));
+            case vpiConcatOp: {
+                int s = 0;
+                for (auto o : ops)
+                    s += self_determined_width(o);
+                return s;
+            }
+            // Comparisons, logical, reductions: 1 bit.
+            case vpiEqOp: case vpiNeqOp: case vpiLtOp: case vpiLeOp:
+            case vpiGtOp: case vpiGeOp: case vpiLogAndOp: case vpiLogOrOp:
+            case vpiNotOp: case vpiUnaryAndOp: case vpiUnaryNandOp:
+            case vpiUnaryOrOp: case vpiUnaryNorOp: case vpiUnaryXorOp:
+            case vpiUnaryXNorOp:
+                return 1;
+            default:
+                return 0;  // unknown form -> "don't truncate"
+        }
+    }
+    // Leaf (ref / net / var / constant / select): width of the imported value.
+    // For these, import_expression resolves to an existing wire or a Const and
+    // creates no new logic, so this is side-effect-free.
+    if (auto e = dynamic_cast<const UHDM::expr*>(node))
+        return import_expression(e).size();
+    return 0;
+}
+
 // Import operation
 RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UHDM::scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     int op_type = uhdm_op->VpiOpType();
