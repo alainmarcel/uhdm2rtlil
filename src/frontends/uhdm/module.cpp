@@ -211,48 +211,49 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 if (auto r = find(c)) return r;
                         return nullptr;
                     };
-                    const UHDM::module_inst* elab = nullptr;
-                    for (auto t : *uhdm_design->TopModules()) {
-                        if (auto r = find(t)) { elab = r; break; }
-                    }
-                    if (elab && elab->Ports()) {
-                        for (auto ep : *elab->Ports()) {
+                    // Extract the parent-side interface_inst from a module
+                    // instance's port High_conn (carries the overridden
+                    // parameter).  Low_conn is the submodule's local view (no
+                    // override), so it's not used.  Only `iface_inst` is swapped
+                    // (parameter resolution / per-signal widths); `mp` (port
+                    // direction) intentionally keeps the submodule's own modport.
+                    auto eii_from = [&](const UHDM::module_inst* mi)
+                            -> const UHDM::interface_inst* {
+                        if (!mi || !mi->Ports()) return nullptr;
+                        for (auto ep : *mi->Ports()) {
                             if (std::string(ep->VpiName()) != portname) continue;
-                            // Prefer High_conn — that points to the parent's
-                            // local interface_inst (which carries the
-                            // overridden parameter).  Low_conn points to
-                            // the submodule's local view (no override).
-                            //
-                            // Only swap `iface_inst` (used for parameter
-                            // resolution / per-signal widths).  Do NOT swap
-                            // `mp`: the High_conn modport is the *outer*
-                            // (e.g. parent's) view; the submodule's own
-                            // modport (from Low_conn) is what dictates
-                            // per-field port direction.  Swapping `mp`
-                            // here would flip directions when the parent
-                            // and child use opposite modport views (the
-                            // submodule1/submodule2 pattern in
-                            // svinterfaces/svinterface1.sv).
-                            const UHDM::interface_inst* eii = nullptr;
-                            if (auto hc = ep->High_conn()) {
-                                if (hc->UhdmType() == uhdmref_obj) {
-                                    auto r2 = any_cast<const ref_obj*>(hc);
-                                    if (auto ag = r2->Actual_group()) {
-                                        if (ag->UhdmType() == uhdminterface_inst)
-                                            eii = any_cast<const UHDM::interface_inst*>(ag);
-                                        else if (ag->UhdmType() == uhdmmodport) {
-                                            auto emp = any_cast<const UHDM::modport*>(ag);
-                                            if (emp && emp->VpiParent() &&
-                                                emp->VpiParent()->UhdmType() == uhdminterface_inst)
-                                                eii = any_cast<const UHDM::interface_inst*>(emp->VpiParent());
-                                        }
+                            auto hc = ep->High_conn();
+                            if (hc && hc->UhdmType() == uhdmref_obj) {
+                                auto r2 = any_cast<const ref_obj*>(hc);
+                                if (auto ag = r2->Actual_group()) {
+                                    if (ag->UhdmType() == uhdminterface_inst)
+                                        return any_cast<const UHDM::interface_inst*>(ag);
+                                    if (ag->UhdmType() == uhdmmodport) {
+                                        auto emp = any_cast<const UHDM::modport*>(ag);
+                                        if (emp && emp->VpiParent() &&
+                                            emp->VpiParent()->UhdmType() == uhdminterface_inst)
+                                            return any_cast<const UHDM::interface_inst*>(emp->VpiParent());
                                     }
                                 }
                             }
-                            if (eii) iface_inst = eii;
                             break;
                         }
+                        return nullptr;
+                    };
+                    // Prefer current_instance's OWN elaborated port — it carries
+                    // THIS instance's parameter override (e.g. inst3 with
+                    // WIDTH=16).  Matching another same-def instance by name
+                    // (find) returns the first one (inst1, WIDTH=8) and gets the
+                    // wrong width; only use it when current_instance isn't
+                    // elaborated (the AllModules definition pass).
+                    const UHDM::interface_inst* eii = eii_from(current_instance);
+                    if (!eii) {
+                        const UHDM::module_inst* elab = nullptr;
+                        for (auto t : *uhdm_design->TopModules())
+                            if (auto r = find(t)) { elab = r; break; }
+                        eii = eii_from(elab);
                     }
+                    if (eii) iface_inst = eii;
                 }
 
                 // When the interface signal's typespec refers to an
