@@ -1,0 +1,12 @@
+# Yosys tests whose formal equivalence proof is too slow to run in the full
+# `make test-all` sweep.  For these, run_yosys_tests.sh SKIPS the formal check
+# (test_equivalence.sh) and instead verifies functional correctness with the
+# random Verilator co-sim (test_sim_equivalence.py) — mirroring what `make
+# test` does for the internal `functional_picorv32` test (sim_config:
+# SKIP_FORMAL=1).
+#
+# Format:  <path-relative-to-third_party/yosys/tests>[  <cycles>]
+#   - path matches the test's relative_path (with or without the .v/.sv ext)
+#   - optional second column overrides the co-sim cycle count (default 2000)
+# ---------------------------------------------------------------------------
+functional/picorv32  2000
