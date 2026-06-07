@@ -1432,6 +1432,46 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
         }
     }
 
+    // Output-port self-initialisers: `output logic [3:0] cnt = initval`.
+    // The elaborated instance's port High_conn is the parent connection, so
+    // the init expression survives only on the module DEFINITION's port
+    // (AllModules).  Evaluate it here — import_ref_obj resolves a parameter
+    // ref against THIS module's parameter_default_values, so `initval` yields
+    // the per-instance value — and tag the wire with \init, matching the
+    // Verilog frontend (defvalue: foo.cnt=1, bar.cnt=2).
+    if (uhdm_design && uhdm_design->AllModules() &&
+            !uhdm_module->VpiDefName().empty()) {
+        std::string want = std::string(uhdm_module->VpiDefName());
+        for (const module_inst* def : *uhdm_design->AllModules()) {
+            if (std::string(def->VpiDefName()) != want || !def->Ports())
+                continue;
+            for (auto dp : *def->Ports()) {
+                if (dp->VpiDirection() != vpiOutput || !dp->High_conn())
+                    continue;
+                auto init_e = dynamic_cast<const expr*>(dp->High_conn());
+                if (!init_e)
+                    continue;
+                RTLIL::SigSpec iv = import_expression(init_e);
+                // Require a fully-DEFINED value (no x/z): an unresolved init
+                // such as `output integer w = bar(4)` imports as all-x, and
+                // is_fully_const() is true for x — tagging \init=x would be
+                // wrong (func_port_implied_dir).  Skip those.
+                if (iv.empty() || !iv.is_fully_def())
+                    continue;
+                RTLIL::Wire* w = module->wire(RTLIL::escape_id(std::string(dp->VpiName())));
+                if (!w)
+                    continue;
+                RTLIL::Const c = iv.as_const();
+                if (c.size() != w->width)
+                    c = c.extract(0, w->width, RTLIL::State::S0);  // zero-extend/truncate
+                w->attributes[RTLIL::ID::init] = c;
+                log("UHDM: Set \\init on output port '%s' = %s\n",
+                    std::string(dp->VpiName()).c_str(), c.as_string().c_str());
+            }
+            break;
+        }
+    }
+
     // Pre-scan: identify array variables used ONLY in combinational (always @*) blocks.
     // Such arrays must NOT be created as $memory objects; instead they get individual
     // element wires so that write-then-read semantics work correctly in the same block.
