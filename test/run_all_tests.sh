@@ -11,6 +11,15 @@ set +e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Yosys-test (third_party/yosys/tests) discovery + setup paths.  These tests
+# are treated as read-only and materialised under test/run/<path>/ where they
+# then go through the SAME per-test analysis as the internal tests.
+YOSYS_TESTS_DIR="$PROJECT_ROOT/third_party/yosys/tests"
+RUN_DIR="$SCRIPT_DIR/run"
+YOSYS_BIN="$PROJECT_ROOT/out/current/bin/yosys"
+SURELOG_BIN="$PROJECT_ROOT/build/third_party/Surelog/bin/surelog"
+UHDM_PLUGIN="$PROJECT_ROOT/build/uhdm2rtlil.so"
+
 # Setup logging
 LOG_FILE="$SCRIPT_DIR/test.log"
 YOSYS_LOG_FILE="$SCRIPT_DIR/test-yosys.log"
@@ -356,6 +365,154 @@ should_skip_test() {
     return 1
 }
 
+# ---------------------------------------------------------------------------
+# Yosys-test (third_party/yosys/tests) support — folded in from the former
+# run_yosys_tests.sh so both test sources share ONE per-test analysis
+# (formal + Verilator co-sim + SAT-miter classification + SKIP_FORMAL).
+# ---------------------------------------------------------------------------
+
+# Tests whose formal proof is too slow: skip formal, verify via co-sim — the
+# same policy as `make test`'s internal `functional_picorv32`.  Entries are
+# yosys-relative paths (e.g. `functional/picorv32`), optional 2nd col = cycles.
+SKIP_FORMAL_COSIM_LIST=()
+if [ -f "$SCRIPT_DIR/skip_formal_cosim_tests.txt" ]; then
+    while IFS= read -r line; do
+        if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            [[ -n "$trimmed_line" ]] && SKIP_FORMAL_COSIM_LIST+=("$trimmed_line")
+        fi
+    done < "$SCRIPT_DIR/skip_formal_cosim_tests.txt"
+fi
+
+# Echo the co-sim cycle count if a yosys-relative path (with or without
+# extension) is in the skip-formal-use-cosim list (default 2000); else nothing.
+skip_formal_cosim_cycles() {
+    local p="$1" pat cyc
+    for entry in "${SKIP_FORMAL_COSIM_LIST[@]}"; do
+        pat="${entry%%[[:space:]]*}"
+        cyc="${entry#"$pat"}"; cyc="${cyc//[[:space:]]/}"
+        if [ "$p" = "$pat" ] || [ "$p" = "${pat%.v}" ] || [ "$p" = "${pat%.sv}" ]; then
+            echo "${cyc:-2000}"; return 0
+        fi
+    done
+    return 1
+}
+
+# Is this file a self-contained Verilog/SV test (has a module, no includes)?
+is_verilog_test() {
+    local file="$1"
+    [[ "$file" =~ \.(v|sv)$ ]] || return 1
+    [[ "$file" =~ \.vh$ ]] || [[ "$file" =~ _inc\.v$ ]] || [[ "$file" =~ _include\.v$ ]] && return 1
+    grep -q "^\s*module\s" "$file" 2>/dev/null || return 1
+    grep -q "^\s*\`include" "$file" 2>/dev/null && return 1
+    return 0
+}
+
+# Normalise a copied yosys test source for the UHDM frontend (module(...) →
+# module(); strip trailing commas in port lists).
+preprocess_test_file() {
+    local file="$1"
+    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\.\.\s*)/module \1()/g' "$file"
+    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\s*\.\s*\.\s*)/module \1()/g' "$file"
+    sed -i 's/,[ \t]*)/)/g' "$file"
+    sed -i ':a;N;$!ba;s/,\n[ \t]*)/\n  )/g' "$file"
+}
+
+# Materialise a yosys test under test/run/<rel>/ and run surelog + both
+# frontends + synth, producing the same *_from_{uhdm,verilog}{,_synth,_nohier}
+# layout the internal workflow does.  Sets YT_RUN_DIR (relative to test/) for
+# analyze_test_result; returns the UHDM yosys run's exit code (crash detect).
+setup_yosys_test() {
+    local test_file="$1"
+    local relative_path="${test_file#$YOSYS_TESTS_DIR/}"
+    local dir_name; dir_name="$(dirname "$relative_path")"
+    local test_name; test_name="$(basename "$test_file" .v)"; test_name="$(basename "$test_name" .sv)"
+    local rel="${dir_name}/${test_name}"
+    YT_RUN_DIR="run/${rel}"
+    local abs_dir="$RUN_DIR/${rel}"
+    rm -rf "$abs_dir"; mkdir -p "$abs_dir"
+
+    local src_ext="${test_file##*.}"; local dut_ext="sv"
+    [ "$src_ext" = "v" ] && dut_ext="v"
+    cp "$test_file" "$abs_dir/dut.${dut_ext}"
+    preprocess_test_file "$abs_dir/dut.${dut_ext}"
+
+    # Skip-formal-use-cosim tests get a sim_config so analyze_test_result skips
+    # the (too-slow) formal proof and relies on the random Verilator co-sim.
+    local sfc_cycles; sfc_cycles="$(skip_formal_cosim_cycles "$rel")"
+    if [ -n "$sfc_cycles" ]; then
+        printf 'SKIP_FORMAL=1\nSIM_CYCLES=%s\n' "$sfc_cycles" > "$abs_dir/sim_config"
+    fi
+
+    cat > "$abs_dir/test_verilog_read.ys" << EOF
+read_verilog -sv dut.${dut_ext}
+write_rtlil ${test_name}_from_verilog_nohier.il
+hierarchy -auto-top
+proc
+opt
+write_rtlil ${test_name}_from_verilog.il
+synth -auto-top
+write_verilog -noexpr ${test_name}_from_verilog_synth.v
+EOF
+    cat > "$abs_dir/test_uhdm_read.ys" << EOF
+plugin -i $UHDM_PLUGIN
+read_uhdm slpp_all/surelog.uhdm
+write_rtlil ${test_name}_from_uhdm_nohier.il
+hierarchy -auto-top
+proc
+opt
+write_rtlil ${test_name}_from_uhdm.il
+synth -auto-top
+write_verilog -noexpr ${test_name}_from_uhdm_synth.v
+EOF
+
+    local rc=0
+    ( cd "$abs_dir" || exit 1
+      $YOSYS_BIN -s test_verilog_read.ys > verilog_path.log 2>&1 || true
+      $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}" > surelog.log 2>&1 || true
+      if [ -f slpp_all/surelog.uhdm ]; then
+          $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
+      fi )
+    rc=$?
+    return $rc
+}
+
+# Shared result classifier — analyze a prepared test dir and bucket the
+# outcome (passed / equiv_failed / failed) against its expected-to-fail flag.
+# Used by BOTH the internal and yosys per-test loops so they behave identically.
+classify_test_outcome() {
+    local test_dir="$1" exit_code="$2" expected_to_fail="$3"
+    echo -n "Result: "
+    local test_result=""
+    analyze_test_result "$test_dir" "$exit_code"
+    local result_code=$?
+    if [ $result_code -eq 0 ]; then
+        test_result="passed"
+    elif [ $result_code -eq 2 ]; then
+        test_result="equiv_failed"
+    else
+        test_result="failed"
+    fi
+    if [ "$expected_to_fail" = true ]; then
+        if [ "$test_result" = "passed" ]; then
+            echo "    ⚠️  UNEXPECTED SUCCESS - This test was expected to fail!"
+            UNEXPECTED_SUCCESSES+=("$test_dir")
+        elif [ "$test_result" = "equiv_failed" ]; then
+            echo "    Note: This test was expected to fail (equivalence check failure)"
+        else
+            echo "    Note: This test was expected to fail"
+        fi
+    else
+        if [ "$test_result" = "failed" ]; then
+            echo "    ⚠️  UNEXPECTED FAILURE - This test was expected to pass!"
+            UNEXPECTED_FAILURES+=("$test_dir")
+        elif [ "$test_result" = "equiv_failed" ]; then
+            echo "    ⚠️  UNEXPECTED EQUIVALENCE FAILURE - This test should pass formal equivalence!"
+            UNEXPECTED_FAILURES+=("$test_dir")
+        fi
+    fi
+}
+
 # Function to display timing summary
 display_timing_summary() {
     if [ ${#TEST_TIMES[@]} -gt 0 ]; then
@@ -430,14 +587,19 @@ analyze_test_result() {
         return 1
     fi
     
+    # File-name prefix is the LAST path component (== test_dir for the simple
+    # internal tests like `always01`, but `picorv32` for a nested Yosys test
+    # dir like `run/functional/picorv32`).
+    local prefix; prefix="$(basename "$test_dir")"
+
     # Check if test generated output files
-    local uhdm_file="${test_dir}/${test_dir}_from_uhdm.il"
-    local verilog_file="${test_dir}/${test_dir}_from_verilog.il"
-    local uhdm_synth="${test_dir}/${test_dir}_from_uhdm_synth.v"
-    local verilog_synth="${test_dir}/${test_dir}_from_verilog_synth.v"
-    
+    local uhdm_file="${test_dir}/${prefix}_from_uhdm.il"
+    local verilog_file="${test_dir}/${prefix}_from_verilog.il"
+    local uhdm_synth="${test_dir}/${prefix}_from_uhdm_synth.v"
+    local verilog_synth="${test_dir}/${prefix}_from_verilog_synth.v"
+
     # Check if UHDM output exists (post-hierarchy or nohier)
-    local uhdm_nohier="${test_dir}/${test_dir}_from_uhdm_nohier.il"
+    local uhdm_nohier="${test_dir}/${prefix}_from_uhdm_nohier.il"
     if [ ! -f "$uhdm_file" ] && [ ! -f "$uhdm_nohier" ]; then
         echo "❌ Test $test_dir FAILED - UHDM output missing"
         FAILED_TESTS=$((FAILED_TESTS + 1))
@@ -446,7 +608,7 @@ analyze_test_result() {
     fi
     
     # If post-hierarchy outputs are missing, fall back to nohier comparison
-    local verilog_nohier="${test_dir}/${test_dir}_from_verilog_nohier.il"
+    local verilog_nohier="${test_dir}/${prefix}_from_verilog_nohier.il"
     if [ ! -f "$uhdm_file" ] && [ ! -f "$verilog_file" ] && [ -f "$uhdm_nohier" ] && [ -f "$verilog_nohier" ]; then
         # Both paths failed at hierarchy but produced nohier ILs - compare those
         echo "✅ Test $test_dir PASSED - comparing nohier ILs (both paths fail at hierarchy)"
@@ -632,44 +794,9 @@ if [ "$RUN_LOCAL" = true ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
     # Display timing info
     printf "Execution time: %.2f seconds\n" $duration
     
-    # Analyze the result
-    echo -n "Result: "
-    test_result=""
-    test_passed=false
-    analyze_test_result "$test_dir" "$exit_code"
-    result_code=$?
-    
-    # Determine test result type
-    if [ $result_code -eq 0 ]; then
-        test_passed=true
-        test_result="passed"
-    elif [ $result_code -eq 2 ]; then
-        # Equivalence check failure
-        test_result="equiv_failed"
-    else
-        test_result="failed"
-    fi
-    
-    # Check for unexpected results
-    if [ "$expected_to_fail" = true ]; then
-        if [ "$test_result" = "passed" ]; then
-            echo "    ⚠️  UNEXPECTED SUCCESS - This test was expected to fail!"
-            UNEXPECTED_SUCCESSES+=("$test_dir")
-        elif [ "$test_result" = "equiv_failed" ]; then
-            echo "    Note: This test was expected to fail (equivalence check failure)"
-        else
-            echo "    Note: This test was expected to fail"
-        fi
-    else
-        if [ "$test_result" = "failed" ]; then
-            echo "    ⚠️  UNEXPECTED FAILURE - This test was expected to pass!"
-            UNEXPECTED_FAILURES+=("$test_dir")
-        elif [ "$test_result" = "equiv_failed" ]; then
-            echo "    ⚠️  UNEXPECTED EQUIVALENCE FAILURE - This test should pass formal equivalence!"
-            UNEXPECTED_FAILURES+=("$test_dir")
-        fi
-    fi
-    
+    # Analyze + classify the result (shared with the yosys loop).
+    classify_test_outcome "$test_dir" "$exit_code" "$expected_to_fail"
+
     echo
     done
 fi  # End of local test loop
@@ -681,110 +808,72 @@ if [ "$RUN_YOSYS" = true ]; then
     echo "=========================================="
     echo
     
-    # Save current directory
-    SAVE_DIR=$(pwd)
-    
-    # Record Yosys tests start time
+    mkdir -p "$RUN_DIR"
     yosys_start_time=$(date +%s.%N)
-    
-    # Run the Yosys test script and capture results
-    YOSYS_OUTPUT_FILE="/tmp/yosys_test_output_$$.txt"
+
+    # Optional pattern filter when invoked as `--yosys <pattern>`.
+    yosys_pattern=""
     if [ -n "$SPECIFIC_TEST" ] && [ "$RUN_LOCAL" = false ]; then
-        "$SCRIPT_DIR/run_yosys_tests.sh" "$SPECIFIC_TEST" 2>&1 | tee "$YOSYS_OUTPUT_FILE"
-    else
-        "$SCRIPT_DIR/run_yosys_tests.sh" 2>&1 | tee "$YOSYS_OUTPUT_FILE"
+        yosys_pattern="$SPECIFIC_TEST"
+        yosys_pattern="${yosys_pattern#*$YOSYS_TESTS_DIR/}"
+        yosys_pattern="${yosys_pattern#../third_party/yosys/tests/}"
+        echo "Running yosys tests matching pattern: $yosys_pattern"
+        echo
     fi
-    YOSYS_EXIT_CODE=${PIPESTATUS[0]}
-    
-    # Record Yosys tests end time
-    yosys_end_time=$(date +%s.%N)
-    yosys_duration=$(echo "$yosys_end_time - $yosys_start_time" | bc)
-    
-    # Import individual test times from Yosys tests
-    TIMING_FILE="/tmp/yosys_test_times_latest.txt"
-    if [ -f "$TIMING_FILE" ]; then
-        while IFS='|' read test_name duration; do
-            TEST_TIMES["yosys:$test_name"]=$duration
-        done < "$TIMING_FILE"
-        rm -f "$TIMING_FILE"
-    else
-        # Fall back to just total time if individual times not available
-        TEST_TIMES["Yosys_Tests_Total"]=$yosys_duration
-    fi
-    
-    printf "Yosys tests total execution time: %.2f seconds\n" $yosys_duration
-    
-    # Return to original directory
-    cd "$SAVE_DIR"
-    
-    # Parse Yosys test results and update global counters
-    if [ -f "$YOSYS_OUTPUT_FILE" ]; then
-        # Extract and display Yosys test summary
-        echo "=== Yosys Test Summary ==="
-        
-        # Extract the summary section from the output (including statistics and test lists)
-        awk '/^=== TEST SUMMARY ===/,/^$/ {print}' "$YOSYS_OUTPUT_FILE" | tail -n +2 || true
-        
-        # Log Yosys summary to file  
-        {
+
+    # Native per-test loop: each yosys test is materialised under test/run/ and
+    # routed through the SAME analysis (setup_yosys_test → classify_test_outcome
+    # → analyze_test_result + co-sim/miter) as the internal tests.
+    while IFS= read -r -d '' yfile; do
+        is_verilog_test "$yfile" || continue
+        yrel="${yfile#$YOSYS_TESTS_DIR/}"          # e.g. functional/picorv32.v
+        if should_skip_test "$yrel"; then
+            echo "=========================================="
+            echo "Skipping yosys test: $yrel (marked in skipped_tests.txt)"
+            echo "=========================================="
+            SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+            SKIPPED_TEST_NAMES+=("yosys:$yrel")
             echo
-            echo "=== Yosys Test Summary ==="
-            # Get overall statistics
-            awk '/^📊 OVERALL STATISTICS:/,/^🎯 Success Rate:/' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
-            echo ""
-            # Get test result lists with their names
-            awk '/^✅ PASSED TESTS/,/^(🚀|❌|⚠️|$)/ {if ($0 !~ /^(🚀|❌|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
-            awk '/^🚀 UHDM-ONLY SUCCESS/,/^(✅|❌|⚠️|$)/ {if ($0 !~ /^(✅|❌|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
-            awk '/^❌ FAILED TESTS/,/^(✅|🚀|⚠️|$)/ {if ($0 !~ /^(✅|🚀|⚠️)/ || NR==1) print}' "$YOSYS_OUTPUT_FILE" | grep -v "^$" || true
-            echo ""
-            echo "Yosys test duration: $(printf "%.2f" $yosys_duration) seconds"
-        } >> "$YOSYS_LOG_FILE"
-        
-        # Extract test counts from Yosys output to update global counters
-        if grep -q "✅ PASSED TESTS" "$YOSYS_OUTPUT_FILE"; then
-            YOSYS_PASSED_COUNT=$(grep "✅ PASSED TESTS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
-            if [ -n "$YOSYS_PASSED_COUNT" ]; then
-                PASSED_TESTS=$((PASSED_TESTS + YOSYS_PASSED_COUNT))
-                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_PASSED_COUNT))
-            fi
+            continue
         fi
-        
-        # Extract UHDM-only success count and names
-        if grep -q "🚀 UHDM-ONLY SUCCESS" "$YOSYS_OUTPUT_FILE"; then
-            YOSYS_UHDM_COUNT=$(grep "🚀 UHDM-ONLY SUCCESS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
-            if [ -n "$YOSYS_UHDM_COUNT" ] && [ "$YOSYS_UHDM_COUNT" -gt 0 ]; then
-                UHDM_ONLY_TESTS=$((UHDM_ONLY_TESTS + YOSYS_UHDM_COUNT))
-                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_UHDM_COUNT))
-                
-                # Extract UHDM-only test names from the output
-                IN_UHDM_SECTION=false
-                while IFS= read -r line; do
-                    if [[ "$line" =~ ^🚀[[:space:]]UHDM-ONLY[[:space:]]SUCCESS ]]; then
-                        IN_UHDM_SECTION=true
-                    elif [[ "$line" =~ ^(✅|❌|⏭️|💥|$) ]] && [ "$IN_UHDM_SECTION" = true ]; then
-                        IN_UHDM_SECTION=false
-                    elif [ "$IN_UHDM_SECTION" = true ] && [[ "$line" =~ ^[[:space:]]+-[[:space:]] ]]; then
-                        test_name=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*//')
-                        UHDM_ONLY_TEST_NAMES+=("yosys:$test_name")
-                    fi
-                done < "$YOSYS_OUTPUT_FILE"
-            fi
+        echo "=========================================="
+        echo "Running yosys test: $yrel"
+        echo "=========================================="
+        TOTAL_TESTS=$((TOTAL_TESTS + 1))
+        expected_to_fail=false
+        is_failing_test "$yrel" && expected_to_fail=true
+
+        ystart=$(date +%s.%N)
+        setup_yosys_test "$yfile"; yexit=$?
+        ydur=$(echo "$(date +%s.%N) - $ystart" | bc)
+        TEST_TIMES["yosys:$yrel"]=$ydur
+        printf "Execution time: %.2f seconds\n" "$ydur"
+
+        # Both frontends produced no RTLIL at all — e.g. the `errors/` negative
+        # tests that BOTH Surelog and Yosys correctly reject.  The former
+        # run_yosys_tests.sh treated this as a SKIP (not a failure); keep that.
+        yprefix="$(basename "$YT_RUN_DIR")"
+        if [ ! -f "$YT_RUN_DIR/${yprefix}_from_uhdm_nohier.il" ] && \
+           [ ! -f "$YT_RUN_DIR/${yprefix}_from_verilog_nohier.il" ]; then
+            echo "Result:     ⚠️  Skipped - both frontends produced no output"
+            SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+            SKIPPED_TEST_NAMES+=("yosys:$yrel")
+            echo
+            continue
         fi
-        
-        # Extract failed test count
-        if grep -q "❌ FAILED TESTS" "$YOSYS_OUTPUT_FILE"; then
-            YOSYS_FAILED_COUNT=$(grep "❌ FAILED TESTS" "$YOSYS_OUTPUT_FILE" | sed 's/.*(\([0-9]*\)).*/\1/')
-            if [ -n "$YOSYS_FAILED_COUNT" ]; then
-                EQUIV_FAILED_TESTS=$((EQUIV_FAILED_TESTS + YOSYS_FAILED_COUNT))
-                TOTAL_TESTS=$((TOTAL_TESTS + YOSYS_FAILED_COUNT))
-            fi
-        fi
-        
-        # Clean up
-        rm -f "$YOSYS_OUTPUT_FILE"
-    fi
-    
-    echo  # Extra newline after Yosys tests
+
+        # Use YT_RUN_DIR (set by setup_yosys_test) for file access; the result
+        # is bucketed under that path in the shared counters/reporting.
+        classify_test_outcome "$YT_RUN_DIR" "$yexit" "$expected_to_fail"
+        echo
+    done < <( if [ -n "$yosys_pattern" ]; then
+                  find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) -path "*${yosys_pattern}*" -print0 | sort -z
+              else
+                  find "$YOSYS_TESTS_DIR" -type f \( -name "*.v" -o -name "*.sv" \) -print0 | sort -z
+              fi )
+
+    yosys_duration=$(echo "$(date +%s.%N) - $yosys_start_time" | bc)
+    printf "Yosys tests total execution time: %.2f seconds\n" "$yosys_duration"
 fi
 
 # Function to print comprehensive summary
