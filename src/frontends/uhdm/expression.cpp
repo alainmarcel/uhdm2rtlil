@@ -4586,10 +4586,15 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
             RTLIL::SigSpec idx = import_expression(uhdm_bit->VpiIndex(), input_mapping);
 
             if (idx.is_fully_const()) {
-                // Constant index — return current tracked value or raw wire
+                // Constant index — return current tracked value or raw wire.
+                // In always_ff body mode the tracked (in-flight `$0\`) value is
+                // suppressed so a non-blocking RHS reads the REGISTERED element
+                // (NB semantics) — e.g. aes_kexp128's `w[2] <= w[0]^w[1]^w[2]`
+                // must read the old w[0..2], not the values just queued for the
+                // next clock.  (Mirrors emit_comb_assign's scalar suppression.)
                 int i = idx.as_const().as_int();
                 std::string elem_name = signal_name + "[" + std::to_string(i) + "]";
-                if (current_comb_values.count(elem_name))
+                if (!in_always_ff_body_mode && current_comb_values.count(elem_name))
                     return current_comb_values.at(elem_name);
                 RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
                 if (w) return RTLIL::SigSpec(w);
