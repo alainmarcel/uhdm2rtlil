@@ -69,7 +69,6 @@ svtypes/logic_rom.sv
 svtypes/typedef_memory.sv
 techmap/mem_simple_4x1_map.v
 verilog/mem_bounds.sv
-# --- other pre-existing gaps (techmap recursion, abc9 mapping, rotate miter) ---
+# --- other pre-existing gaps (techmap recursion, abc9 mapping) ---
 techmap/recursive_map.v
 various/abc9.v
-simple/rotate.v
