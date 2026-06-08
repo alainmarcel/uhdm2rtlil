@@ -325,7 +325,11 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     const func_call* fc = any_cast<const func_call*>(assign->Rhs());
                     rhs_value = evaluate_recursive_function_call(fc, local_vars);
                 } else if (assign->Rhs()->VpiType() == vpiBitSelect ||
-                           assign->Rhs()->VpiType() == vpiVarSelect) {
+                           assign->Rhs()->VpiType() == vpiVarSelect ||
+                           assign->Rhs()->VpiType() == vpiPartSelect) {
+                    // vpiPartSelect handles `wrap = out[4:0]` (rotate's compile-
+                    // time index function); evaluate_single_operand slices the
+                    // tracked local-var constant.
                     rhs_value = evaluate_single_operand(assign->Rhs(), local_vars);
                 }
             }
@@ -744,6 +748,25 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             const RTLIL::Const& target = local_vars.at(nm);
             if (src >= 0 && src < target.size())
                 val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+        }
+    } else if (operand->VpiType() == vpiPartSelect) {
+        // `out[4:0]` read on a function-local var — extract the bit range from
+        // the tracked constant (needed for `wrap = out[4:0]` in rotate's
+        // compile-time index function).  Without this the part-select returns 0.
+        const part_select* ps = any_cast<const part_select*>(operand);
+        std::string nm = std::string(ps->VpiName());
+        if (local_vars.count(nm) && ps->Left_range() && ps->Right_range()) {
+            RTLIL::Const lv = evaluate_single_operand(
+                any_cast<const expr*>(ps->Left_range()), local_vars);
+            RTLIL::Const rv = evaluate_single_operand(
+                any_cast<const expr*>(ps->Right_range()), local_vars);
+            int lo = std::min(lv.as_int(), rv.as_int());
+            int hi = std::max(lv.as_int(), rv.as_int());
+            const RTLIL::Const& target = local_vars.at(nm);
+            std::vector<RTLIL::State> bits;
+            for (int b = lo; b <= hi; b++)
+                bits.push_back((b >= 0 && b < target.size()) ? target[b] : RTLIL::S0);
+            val = RTLIL::Const(bits);
         }
     }
     return val;
