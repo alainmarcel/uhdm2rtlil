@@ -420,6 +420,142 @@ static void normalize_overlapping_writes(RTLIL::CaseRule* case_rule)
     }
 }
 
+// --- SSA cv-threading for "simple" always_ff bodies -----------------------
+// A body is "simple" if every statement is a full-wire (ref) blocking/non-
+// blocking assignment, an if / if-else, or a begin block of those.  No
+// part/bit-select/concat LHS, no loops, no memory writes, no tasks, and not
+// inside a generate scope.  Such bodies need genrtlil-style SSA threading so
+// that `out2 <= out1` snapshots out1's value AT THAT POINT and a later
+// `out1 = out1 ^ out2` reads the registered out2 (always03).
+bool UhdmImporter::ff_body_is_simple(const UHDM::any* stmt) {
+    if (!stmt) return true;
+    switch (stmt->VpiType()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            const scope* sc = any_cast<const scope*>(stmt);
+            // A begin with local variable declarations is not handled here.
+            if (sc && sc->Variables() && !sc->Variables()->empty())
+                return false;
+            VectorOfany* s = begin_block_stmts(stmt);
+            if (s) for (auto x : *s) if (!ff_body_is_simple(x)) return false;
+            return true;
+        }
+        case vpiAssignment: {
+            auto a = any_cast<const assignment*>(stmt);
+            if (!a || !a->Lhs() || !a->Rhs()) return false;
+            int t = a->Lhs()->VpiType();
+            if (t != vpiRefObj && t != vpiRefVar) return false;
+            // Plain `=`/`<=` only (no compound `+=` etc.).
+            return a->VpiOpType() == 0 || a->VpiOpType() == vpiAssignmentOp;
+        }
+        case vpiIf: {
+            auto s = any_cast<const UHDM::if_stmt*>(stmt);
+            return s && ff_body_is_simple(s->VpiStmt());
+        }
+        case vpiIfElse: {
+            auto s = any_cast<const if_else*>(stmt);
+            return s && ff_body_is_simple(s->VpiStmt()) &&
+                        ff_body_is_simple(s->VpiElseStmt());
+        }
+        default:
+            return false;
+    }
+}
+
+// Current value of `name` from map `m`, else the registered wire \name.
+RTLIL::SigSpec UhdmImporter::ff_simple_val(
+        const std::map<std::string, RTLIL::SigSpec>& m, const std::string& name) {
+    auto it = m.find(name);
+    if (it != m.end()) return it->second;
+    if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(name)))
+        return RTLIL::SigSpec(w);
+    return RTLIL::SigSpec();
+}
+
+void UhdmImporter::ff_simple_eval(const UHDM::any* stmt,
+        std::map<std::string, RTLIL::SigSpec>& blk,
+        std::map<std::string, RTLIL::SigSpec>& nb) {
+    if (!stmt) return;
+    switch (stmt->VpiType()) {
+        case vpiBegin:
+        case vpiNamedBegin: {
+            VectorOfany* s = begin_block_stmts(stmt);
+            if (s) for (auto x : *s) ff_simple_eval(x, blk, nb);
+            break;
+        }
+        case vpiAssignment: {
+            auto a = any_cast<const assignment*>(stmt);
+            std::string name = std::string(a->Lhs()->VpiName());
+            RTLIL::Wire* w = module->wire(RTLIL::escape_id(name));
+            // Reads resolve blocking vars to their in-flight value (blk);
+            // everything else (registers, inputs) reads the real wire.
+            RTLIL::SigSpec rhs = import_expression(any_cast<const expr*>(a->Rhs()), &blk);
+            if (w) {
+                if (rhs.size() < w->width) rhs.extend_u0(w->width,
+                        rhs.is_wire() && rhs.as_wire()->is_signed);
+                else if (rhs.size() > w->width) rhs = rhs.extract(0, w->width);
+            }
+            if (a->VpiBlocking())
+                blk[name] = rhs;        // blocking: later reads see this
+            else
+                nb[name] = rhs;         // non-blocking: snapshot for the FF D
+            break;
+        }
+        case vpiIf:
+        case vpiIfElse: {
+            const expr* cond_e = nullptr;
+            const any* then_s = nullptr;
+            const any* else_s = nullptr;
+            if (stmt->VpiType() == vpiIf) {
+                auto s = any_cast<const UHDM::if_stmt*>(stmt);
+                cond_e = s->VpiCondition(); then_s = s->VpiStmt();
+            } else {
+                auto s = any_cast<const if_else*>(stmt);
+                cond_e = s->VpiCondition(); then_s = s->VpiStmt();
+                else_s = s->VpiElseStmt();
+            }
+            RTLIL::SigSpec cond = import_expression(cond_e, &blk);
+            if (cond.size() > 1) cond = module->ReduceBool(NEW_ID, cond);
+
+            auto blk0 = blk, nb0 = nb;
+            ff_simple_eval(then_s, blk, nb);
+            auto blk_t = blk, nb_t = nb;
+            blk = blk0; nb = nb0;
+            if (else_s) ff_simple_eval(else_s, blk, nb);
+            auto blk_e = blk, nb_e = nb;
+
+            // Merge: result[v] = cond ? then[v] : else[v], for every var
+            // touched in either branch (unchanged vars keep blk0/nb0).
+            auto merge = [&](std::map<std::string, RTLIL::SigSpec>& before,
+                             std::map<std::string, RTLIL::SigSpec>& tmap,
+                             std::map<std::string, RTLIL::SigSpec>& emap,
+                             std::map<std::string, RTLIL::SigSpec>& out) {
+                out = before;
+                std::set<std::string> keys;
+                for (auto& [k, v] : tmap) keys.insert(k);
+                for (auto& [k, v] : emap) keys.insert(k);
+                for (const auto& k : keys) {
+                    RTLIL::SigSpec tv = ff_simple_val(tmap, k);
+                    RTLIL::SigSpec ev = ff_simple_val(emap, k);
+                    if (tv == ev) { out[k] = tv; continue; }
+                    int w = std::max(tv.size(), ev.size());
+                    if (tv.size() < w) tv.extend_u0(w);
+                    if (ev.size() < w) ev.extend_u0(w);
+                    // module->Mux(A,B,S): Y = S ? B : A  →  cond ? tv : ev
+                    out[k] = module->Mux(NEW_ID, ev, tv, cond);
+                }
+            };
+            std::map<std::string, RTLIL::SigSpec> blk_m, nb_m;
+            merge(blk0, blk_t, blk_e, blk_m);
+            merge(nb0, nb_t, nb_e, nb_m);
+            blk = blk_m; nb = nb_m;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 // Import always_ff block
 void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     log("    Importing always_ff block\n");
@@ -1778,6 +1914,44 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                     yosys_proc->syncs.push_back(sync);
                     log("      Sync rule created (blocking-assignment fallback)\n");
+                    log_flush();
+                } else if (gen_scope_stack.empty() && ff_body_is_simple(stmt)) {
+                    // SSA cv-threading path: full-wire scalar blocking/non-
+                    // blocking assignments + if/if-else.  Threads each blocking
+                    // var's value so an NB assignment snapshots it at that point
+                    // and a later blocking read sees the registered value of NB
+                    // targets — the genrtlil semantics the switch model can't
+                    // express (always03).
+                    log("      Simple always_ff body: using SSA cv-threading\n");
+                    log_flush();
+                    if (clock_sig.empty())
+                        log_error("Clock signal is empty when creating sync rule at line %d\n", __LINE__);
+
+                    std::vector<AssignedSignal> assigned_signals;
+                    extract_assigned_signals(stmt, assigned_signals);
+
+                    std::map<std::string, RTLIL::SigSpec> blk, nb;
+                    ff_simple_eval(stmt, blk, nb);
+
+                    RTLIL::SyncRule* sync = new RTLIL::SyncRule;
+                    sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
+                    sync->signal = clock_sig;
+                    std::set<std::string> done;
+                    for (const auto& sig : assigned_signals) {
+                        if (!done.insert(sig.name).second) continue;
+                        RTLIL::Wire* w = module->wire(RTLIL::escape_id(sig.name));
+                        if (!w) continue;
+                        RTLIL::SigSpec d = blk.count(sig.name) ? blk[sig.name]
+                                          : (nb.count(sig.name) ? nb[sig.name]
+                                                                : RTLIL::SigSpec());
+                        if (d.empty()) continue;
+                        if (d.size() < w->width) d.extend_u0(w->width);
+                        else if (d.size() > w->width) d = d.extract(0, w->width);
+                        sync->actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(w), d));
+                        log("    SSA sync update: %s <= %s\n", w->name.c_str(), log_signal(d));
+                    }
+                    yosys_proc->syncs.push_back(sync);
+                    log("      Simple always_ff SSA sync rule created\n");
                     log_flush();
                 } else {
                     // No memory writes and no blocking assignments: use comb-style

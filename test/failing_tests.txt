@@ -36,10 +36,6 @@ verific/ext_ramnet_err.sv
 # and functional correctness is verified by the random Verilator co-sim instead
 # (same policy as the internal `functional_picorv32` test).
 
-# always03: mixed blocking/non-blocking in always_ff — the unified yosys flow's
-# SAT miter catches a real UHDM-vs-Verilog difference (same root cause as the
-# internal `always03` backlog item; needs the always_ff ordered-processor fix).
-simple/always03.v
 
 # ---------------------------------------------------------------------------
 # Surfaced by unifying run_yosys_tests.sh into run_all_tests.sh: the Yosys
