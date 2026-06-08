@@ -120,7 +120,14 @@ jobs:
     - name: Print ccache statistics
       run: |
         ccache --show-stats
-    
+
+    # Fast smoke test of the read_sv command (in-process Surelog compile, no
+    # .uhdm file).  Run first so a broken plugin entry point fails early,
+    # before the long internal + Yosys sweep.
+    - name: Test read_sv command
+      run: |
+        make test-read-sv
+
     - name: Run tests (internal + Yosys)
       run: |
         cd test

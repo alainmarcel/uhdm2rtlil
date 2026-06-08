@@ -1,5 +1,5 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test test-all test-yosys clean plugin install help
+.PHONY: all debug test test-read-sv test-all test-yosys clean plugin install help
 
 # Use bash as the default shell
 SHELL := /usr/bin/env bash
@@ -24,8 +24,14 @@ debug: build-debug
 	@echo "Building uhdm2rtlil in Debug mode..."
 	@cd build-debug && make -j$(CPU_CORES)
 
+# Smoke test for the `read_sv` command (in-process Surelog compile, no .uhdm).
+# Fast; run first in CI so a broken plugin entry point fails early.
+test-read-sv: all
+	@echo "Testing read_sv command..."
+	@cd test && ./test_read_sv.sh
+
 # Test target - runs our internal tests only
-test: all
+test: all test-read-sv
 	@echo "Running tests..."
 	@cd build && make test
 
@@ -89,7 +95,8 @@ help:
 	@echo "  all        - Build in Release mode (default)"
 	@echo "  debug      - Build in Debug mode"
 	@echo "  plugin     - Build and show plugin location"
-	@echo "  test       - Run internal tests only"
+	@echo "  test-read-sv - Smoke-test the read_sv command (in-process Surelog)"
+	@echo "  test       - Run internal tests only (includes test-read-sv)"
 	@echo "  test-all   - Run all tests (internal + Yosys)"
 	@echo "  test-yosys - Run Yosys tests only"
 	@echo "  clean      - Clean build artifacts"

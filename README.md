@@ -495,17 +495,55 @@ make
 ```
 
 ### Basic Usage
+
+The plugin (`uhdm2rtlil.so`) registers two Yosys commands for getting
+SystemVerilog into RTLIL:
+
+| Command | Input | Surelog run | Intermediate `.uhdm` |
+|---------|-------|-------------|----------------------|
+| **`read_sv`**   | SystemVerilog source(s) + Surelog flags | in-process | no — fully in-memory |
+| **`read_uhdm`** | a pre-generated `.uhdm` file             | separate / earlier | yes |
+
+#### `read_sv` — compile SystemVerilog directly (recommended)
+
+Runs the Surelog compiler **in-process** and imports the elaborated in-memory
+UHDM design straight to RTLIL, without writing or re-reading a `.uhdm` file.
+All arguments are forwarded to Surelog verbatim, exactly as if it were the
+`surelog` executable:
+
 ```bash
-# Method 1: Using the test workflow
+./out/current/bin/yosys -m uhdm2rtlil.so \
+  -p "read_sv -parse -nobuiltin design.sv; synth -top top_module"
+
+# Multi-file / flags work just like the surelog CLI:
+#   read_sv -parse -nobuiltin a.sv b.sv +incdir+inc -DWIDTH=8 -top mytop
+```
+
+`read_sv` forces parse + elaborate + in-memory UHDM elaboration on and `.uhdm`
+file writing off.  Pass any Surelog flag as usual; `-nobuiltin` is recommended
+to skip Surelog's built-in classes.  Plugin-only options (consumed, not passed
+to Surelog): `-uhdm_debug`, `-formal`, `-keep_names`.
+
+#### `read_uhdm` — read a pre-generated UHDM file
+
+Useful when the UHDM database was produced by a separate Surelog run (e.g. the
+test workflow, or for caching/debugging the `.uhdm`):
+
+```bash
+# Step 1: Generate UHDM from SystemVerilog
+./build/third_party/Surelog/bin/surelog -parse -d uhdm design.sv
+
+# Step 2: Read the UHDM file with the frontend
+./out/current/bin/yosys -m uhdm2rtlil.so \
+  -p "read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
+```
+
+Options: `-debug`, `-formal`, `-keep_names`.
+
+#### Using the test workflow
+```bash
 cd test
 bash test_uhdm_workflow.sh simple_counter
-
-# Method 2: Manual workflow
-# Step 1: Generate UHDM from SystemVerilog
-./build/third_party/Surelog/bin/surelog -parse design.sv
-
-# Step 2: Use Yosys with UHDM frontend (load plugin first)
-./out/current/bin/yosys -p "plugin -i uhdm2rtlil.so; read_uhdm slpp_all/surelog.uhdm; synth -top top_module"
 ```
 
 ## Testing Framework
@@ -523,7 +561,12 @@ Each test case is a directory containing:
 
 ### Running Tests
 ```bash
-# Run internal tests only (our test suite)
+# Smoke-test the read_sv command (in-process Surelog compile, no .uhdm file).
+# Verifies read_sv == Verilog frontend and that no .uhdm is written.  Fast;
+# CI runs this first, and `make test` runs it as part of the suite.
+make test-read-sv
+
+# Run internal tests only (our test suite; includes test-read-sv)
 make test
 
 # Run all tests (internal + Yosys tests)
