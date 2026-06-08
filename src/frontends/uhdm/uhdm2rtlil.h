@@ -547,6 +547,16 @@ struct UhdmImporter {
 
     // Process-specific import functions
     void import_always_ff(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
+    // SSA cv-threading path for "simple" always_ff bodies (full-wire scalar
+    // blocking/non-blocking assignments + if/if-else only, no gen scope).  Gets
+    // interleaved blocking/non-blocking ordering and NB snapshots right where
+    // the flat $0\-wire+switch model can't (always03).
+    bool ff_body_is_simple(const UHDM::any* stmt);
+    void ff_simple_eval(const UHDM::any* stmt,
+                        std::map<std::string, RTLIL::SigSpec>& blk,
+                        std::map<std::string, RTLIL::SigSpec>& nb);
+    RTLIL::SigSpec ff_simple_val(const std::map<std::string, RTLIL::SigSpec>& m,
+                                 const std::string& name);
     void import_always_comb(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_always(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
     void import_initial(const UHDM::process_stmt* uhdm_process, RTLIL::Process* yosys_proc);
