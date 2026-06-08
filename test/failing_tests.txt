@@ -61,7 +61,6 @@ memories/simple_sram_byte_en.v
 simple/mem2reg_bounds_tern.v
 simple/mem2reg.v
 simple/mem_arst.v
-svtypes/logic_rom.sv
 svtypes/typedef_memory.sv
 techmap/mem_simple_4x1_map.v
 verilog/mem_bounds.sv
