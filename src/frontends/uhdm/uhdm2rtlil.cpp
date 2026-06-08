@@ -16,6 +16,13 @@
 #include <uhdm/vpi_visitor.h>
 #include <functional>
 
+// Surelog public API — lets `read_sv` run the Surelog compiler in-process and
+// hand its in-memory UHDM design straight to the importer (no .uhdm round-trip).
+#include "Surelog/API/Surelog.h"
+#include "Surelog/CommandLine/CommandLineParser.h"
+#include "Surelog/ErrorReporting/ErrorContainer.h"
+#include "Surelog/SourceCompile/SymbolTable.h"
+
 USING_YOSYS_NAMESPACE
 
 using namespace UHDM;
@@ -106,10 +113,114 @@ struct ReadUHDMPass : public Frontend {
     }
 } ReadUHDMPass;
 
+// read_sv: compile SystemVerilog with Surelog (in-process) and import the
+// resulting in-memory UHDM design directly to RTLIL — no intermediate .uhdm
+// file.  All command arguments are forwarded to Surelog exactly as if it were
+// the `surelog` executable (e.g. `read_sv -parse top.sv +incdir+inc -DFOO`).
+struct ReadSVPass : public Pass {
+    ReadSVPass() : Pass("read_sv", "compile SystemVerilog via Surelog and import to RTLIL") {}
+
+    void help() override {
+        log("\n");
+        log("    read_sv [surelog options] <files>\n");
+        log("\n");
+        log("Run the Surelog SystemVerilog compiler in-process on the given\n");
+        log("arguments (forwarded verbatim, as to the `surelog` executable) and\n");
+        log("import the elaborated in-memory UHDM design into RTLIL — without\n");
+        log("writing or re-reading a .uhdm file.\n");
+        log("\n");
+        log("Parse/compile/elaborate and in-memory UHDM elaboration are forced\n");
+        log("on; UHDM-file writing is forced off.  Pass any other Surelog flag\n");
+        log("(e.g. -nobuiltin, +incdir+, -D, -top) as usual.\n");
+        log("\n");
+        log("Plugin options (consumed, not passed to Surelog):\n");
+        log("    -uhdm_debug      enable importer debug output\n");
+        log("    -formal          enable formal verification constructs\n");
+        log("    -keep_names      keep original signal names\n");
+        log("\n");
+    }
+
+    void execute(std::vector<std::string> args, RTLIL::Design *design) override {
+        log_header(design, "Executing read_sv (Surelog + UHDM frontend, in-memory).\n");
+
+        bool keep_names = false, debug = false, formal = false;
+
+        // argv[0] is the program name Surelog expects; the rest are forwarded
+        // verbatim, except for the few plugin-only options we consume here.
+        std::vector<std::string> sl_args;
+        sl_args.push_back("surelog");
+        for (size_t i = 1; i < args.size(); i++) {
+            if (args[i] == "-uhdm_debug") { debug = true; continue; }
+            if (args[i] == "-formal")     { formal = true; continue; }
+            if (args[i] == "-keep_names") { keep_names = true; continue; }
+            if (args[i] == "-help" || args[i] == "--help") { help(); return; }
+            sl_args.push_back(args[i]);
+        }
+        if (sl_args.size() <= 1)
+            log_cmd_error("read_sv: no input files / Surelog arguments given\n");
+
+        std::vector<const char*> argv;
+        argv.reserve(sl_args.size());
+        for (auto &s : sl_args) argv.push_back(s.c_str());
+
+        // Set up a Surelog session (mirrors the surelog executable's main()).
+        SURELOG::SymbolTable*   symbolTable = new SURELOG::SymbolTable();
+        SURELOG::ErrorContainer* errors     = new SURELOG::ErrorContainer(symbolTable);
+        SURELOG::CommandLineParser* clp =
+            new SURELOG::CommandLineParser(errors, symbolTable, false, false);
+
+        bool ok = clp->parseCommandLine((int)argv.size(), argv.data());
+        errors->printMessages(clp->muteStdout());
+        if (!ok || clp->help()) {
+            delete clp; delete errors; delete symbolTable;
+            if (!ok) log_cmd_error("read_sv: Surelog command-line parsing failed\n");
+            return;  // -help to surelog
+        }
+
+        // Force a full parse + elaborate with an ELABORATED in-memory UHDM, and
+        // make sure no .uhdm file is written (pure in-memory conversion).
+        clp->setParse(true);
+        clp->setCompile(true);
+        clp->setElaborate(true);
+        clp->setElabUhdm(true);
+        clp->setWriteUhdm(false);
+
+        SURELOG::scompiler* compiler = SURELOG::start_compiler(clp);
+        if (!compiler) {
+            errors->printMessages(clp->muteStdout());
+            delete clp; delete errors; delete symbolTable;
+            log_cmd_error("read_sv: Surelog compilation failed\n");
+        }
+
+        vpiHandle vpi_design = SURELOG::get_uhdm_design(compiler);
+        UHDM::design* uhdm_design =
+            vpi_design ? UhdmDesignFromVpiHandle(vpi_design) : nullptr;
+
+        if (!uhdm_design || !uhdm_design->AllModules()) {
+            SURELOG::shutdown_compiler(compiler);
+            delete clp; delete errors; delete symbolTable;
+            log_cmd_error("read_sv: no UHDM design produced (check Surelog errors above)\n");
+        }
+
+        size_t nmods = uhdm_design->AllModules()->size();
+
+        // Import BEFORE shutdown — shutdown_compiler purges UHDM/VPI memory.
+        UhdmImporter importer(design, keep_names, debug);
+        importer.mode_formal = formal;
+        importer.import_design(uhdm_design);
+
+        SURELOG::shutdown_compiler(compiler);
+        delete clp; delete errors; delete symbolTable;
+
+        log("read_sv: imported %zu modules from Surelog (in-memory UHDM).\n", nmods);
+    }
+} ReadSVPass;
+
 // Plugin entry point for Yosys
 extern "C" void yosys_plugin_initialize() {
     // Use the standard registration mechanism
     ReadUHDMPass.run_register();
+    ReadSVPass.run_register();
 }
 
 extern "C" const char *yosys_plugin_name() {
