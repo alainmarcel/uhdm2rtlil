@@ -54,9 +54,6 @@ memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v
 memlib/memlib_wren.v
 memories/amber23_sram_byte_en.v
-memories/implicit_en.v
-memories/no_implicit_en.v
-memories/shared_ports.v
 memories/simple_sram_byte_en.v
 simple/mem2reg_bounds_tern.v
 simple/mem2reg.v

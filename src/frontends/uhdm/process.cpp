@@ -1698,7 +1698,27 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     return;
                 }
                 
-                if (!memory_names.empty() && has_for_loop(stmt)) {
+                // Are ALL memory writes partial byte-enable writes
+                // (`mem[addr][slice] <= ...`, a var_select LHS)?  A for loop
+                // over such writes addresses ONE word and just fills different
+                // byte lanes, so it unrolls onto a single byte-enabled write
+                // port via the memwr/comb path below.  Whole-word writes in a
+                // for loop (`for(i) mem[i] <= ...`) address different words and
+                // still need the sync path.
+                bool all_mem_writes_partial = false;
+                {
+                    std::map<std::string, std::vector<const UHDM::any*>> tmp_lhs;
+                    collect_memory_write_lhs(stmt, tmp_lhs, module);
+                    bool any = false, allp = true;
+                    for (auto& kv : tmp_lhs)
+                        for (auto n : kv.second) {
+                            any = true;
+                            if (n->VpiType() != vpiVarSelect) allp = false;
+                        }
+                    all_mem_writes_partial = any && allp;
+                }
+
+                if (!memory_names.empty() && has_for_loop(stmt) && !all_mem_writes_partial) {
                     // Memory writes inside for loops: the custom CaseRule* memory-write
                     // path cannot handle for-loop unrolling.  Fall back to import_statement_sync
                     // which processes them correctly via import_statement_with_loop_vars.
@@ -1761,7 +1781,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                             RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
                             RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
-                            RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), 1);
+                            // Per-bit write enable (memory width) so partial
+                            // byte-enable writes `mem[a][hi:lo] <= d` can drive
+                            // just their slice; whole-word writes set all bits.
+                            RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), mem->width);
 
                             MemoryWriteInfo info;
                             info.mem_id = mem_id;
@@ -1778,9 +1801,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             if (w == 0)
                                 current_memory_writes[mem_name] = info;
 
-                            // Initialize enable to 0 in the process body
+                            // Initialize enable to 0 (all bits) and data to 0 in
+                            // the process body, so a partial write only needs to
+                            // drive its own slice; unwritten bytes stay disabled.
                             yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
-                                RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0)));
+                                RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
+                            yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                                RTLIL::SigSpec(data_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
 
                             log("      Created memory control wires for %s[port %d]: addr=%s, data=%s, en=%s\n",
                                 mem_name.c_str(), w, addr_wire_name.c_str(), data_wire_name.c_str(), en_wire_name.c_str());
@@ -1865,12 +1892,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         // priority_mask[0..pi-1], so an empty mask would crash.
                         action.priority_mask = RTLIL::Const(RTLIL::State::S1, (int)pi);
 
-                        // Use the enable wire, expanded to memory width
-                        RTLIL::SigSpec enable;
-                        for (int i = 0; i < info.width; i++) {
-                            enable.append(RTLIL::SigSpec(info.en_wire));
-                        }
-                        action.enable = enable;
+                        // Per-bit enable wire is already memory-width.
+                        action.enable = RTLIL::SigSpec(info.en_wire);
 
                         log("      Added memory write action for %s\n", info.mem_id.c_str());
                     }
@@ -7932,19 +7955,20 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     // would never reach the memory (subbytes.v exposes this).
     if (!current_memory_writes.empty() || !current_memory_writes_by_lhs.empty()) {
         if (auto lhs_e = uhdm_assign->Lhs()) {
-            if (lhs_e->VpiType() == vpiBitSelect) {
-                auto bs = any_cast<const bit_select*>(lhs_e);
-                std::string mem_name = std::string(bs->VpiName());
-                // Prefer this write statement's own port (multi-port memory);
-                // fall back to the by-name port for single-write memories.
-                const MemoryWriteInfo* infop = nullptr;
+            // Look up this write statement's own port (multi-port memory);
+            // fall back to the by-name port for single-write memories.
+            auto find_port = [&](const std::string& mem_name) -> const MemoryWriteInfo* {
                 if (auto lit = current_memory_writes_by_lhs.find(lhs_e);
                         lit != current_memory_writes_by_lhs.end())
-                    infop = &lit->second;
-                else if (auto it = current_memory_writes.find(mem_name);
+                    return &lit->second;
+                if (auto it = current_memory_writes.find(mem_name);
                         it != current_memory_writes.end())
-                    infop = &it->second;
-                if (infop) {
+                    return &it->second;
+                return nullptr;
+            };
+            if (lhs_e->VpiType() == vpiBitSelect) {
+                auto bs = any_cast<const bit_select*>(lhs_e);
+                if (const MemoryWriteInfo* infop = find_port(std::string(bs->VpiName()))) {
                     const MemoryWriteInfo& info = *infop;
                     RTLIL::SigSpec addr = import_expression(bs->VpiIndex());
                     if (addr.size() != info.addr_wire->width) {
@@ -7966,10 +7990,47 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                         RTLIL::SigSig(RTLIL::SigSpec(info.addr_wire), addr));
                     proc->root_case.actions.push_back(
                         RTLIL::SigSig(RTLIL::SigSpec(info.data_wire), data));
+                    // Whole-word write: enable every bit.
                     proc->root_case.actions.push_back(
                         RTLIL::SigSig(RTLIL::SigSpec(info.en_wire),
-                                      RTLIL::SigSpec(RTLIL::State::S1)));
+                                      RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
                     return;
+                }
+            } else if (lhs_e->VpiType() == vpiVarSelect) {
+                // Partial (byte-enable) write `mem[addr][hi:lo] <= data`:
+                // drive the addressed word's [hi:lo] slice of DATA and enable
+                // only those bits; the rest stay at their (disabled) default.
+                auto vs = any_cast<const var_select*>(lhs_e);
+                if (const MemoryWriteInfo* infop = find_port(std::string(vs->VpiName()))) {
+                    const MemoryWriteInfo& info = *infop;
+                    const expr* addr_expr = nullptr;
+                    int lo = 0, hi = 0;
+                    if (parse_mem_partial_select(vs, addr_expr, lo, hi)) {
+                        int w = hi - lo + 1;
+                        RTLIL::SigSpec addr = import_expression(addr_expr);
+                        if (addr.size() != info.addr_wire->width) {
+                            if (addr.size() < info.addr_wire->width)
+                                addr.extend_u0(info.addr_wire->width);
+                            else
+                                addr = addr.extract(0, info.addr_wire->width);
+                        }
+                        RTLIL::SigSpec data;
+                        if (auto rhs_any = uhdm_assign->Rhs())
+                            if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
+                                data = import_expression(rhs_e);
+                        if (data.size() != w) {
+                            if (data.size() < w) data.extend_u0(w);
+                            else data = data.extract(0, w);
+                        }
+                        proc->root_case.actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(info.addr_wire), addr));
+                        proc->root_case.actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(info.data_wire).extract(lo, w), data));
+                        proc->root_case.actions.push_back(
+                            RTLIL::SigSig(RTLIL::SigSpec(info.en_wire).extract(lo, w),
+                                          RTLIL::SigSpec(RTLIL::State::S1, w)));
+                        return;
+                    }
                 }
             }
         }
@@ -9248,19 +9309,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     (!current_memory_writes.empty() || !current_memory_writes_by_lhs.empty())) {
                 // This is a memory write and we have temp wires for it
                 if (auto lhs_expr = assign->Lhs()) {
+                    auto find_port = [&](const std::string& mem_name) -> const MemoryWriteInfo* {
+                        if (auto lit = current_memory_writes_by_lhs.find(lhs_expr);
+                                lit != current_memory_writes_by_lhs.end())
+                            return &lit->second;
+                        if (current_memory_writes.count(mem_name))
+                            return &current_memory_writes[mem_name];
+                        return nullptr;
+                    };
                     if (lhs_expr->VpiType() == vpiBitSelect) {
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs_expr);
                         std::string mem_name = std::string(bit_sel->VpiName());
-
-                        // Prefer this write statement's own port (multi-port
-                        // memory); fall back to the by-name port otherwise.
-                        const MemoryWriteInfo* infop = nullptr;
-                        if (auto lit = current_memory_writes_by_lhs.find(lhs_expr);
-                                lit != current_memory_writes_by_lhs.end())
-                            infop = &lit->second;
-                        else if (current_memory_writes.count(mem_name))
-                            infop = &current_memory_writes[mem_name];
-                        if (infop) {
+                        if (const MemoryWriteInfo* infop = find_port(mem_name)) {
                             const MemoryWriteInfo& info = *infop;
 
                             // Get address
@@ -9288,19 +9348,60 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     data = data.extract(0, info.width);
                                 }
                             }
-                            
-                            // Assign to temp wires
+
+                            // Assign to temp wires (whole-word write: enable all bits)
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(info.addr_wire), addr));
                             case_rule->actions.push_back(RTLIL::SigSig(
                                 RTLIL::SigSpec(info.data_wire), data));
                             case_rule->actions.push_back(RTLIL::SigSig(
-                                RTLIL::SigSpec(info.en_wire), RTLIL::SigSpec(RTLIL::State::S1)));
-                            
+                                RTLIL::SigSpec(info.en_wire),
+                                RTLIL::SigSpec(RTLIL::State::S1, info.en_wire->width)));
+
                             if (mode_debug)
                                 log("        Memory write to %s: addr=%s, data=%s\n",
                                     mem_name.c_str(), log_signal(addr), log_signal(data));
                             return;
+                        }
+                    } else if (lhs_expr->VpiType() == vpiVarSelect) {
+                        // Conditional partial (byte-enable) write
+                        // `if (cond) mem[addr][hi:lo] <= data` — drive the
+                        // [hi:lo] slice of DATA and enable only those bits.
+                        auto vs = any_cast<const var_select*>(lhs_expr);
+                        if (const MemoryWriteInfo* infop = find_port(std::string(vs->VpiName()))) {
+                            const MemoryWriteInfo& info = *infop;
+                            const expr* addr_expr = nullptr;
+                            int lo = 0, hi = 0;
+                            if (parse_mem_partial_select(vs, addr_expr, lo, hi)) {
+                                int w = hi - lo + 1;
+                                RTLIL::SigSpec addr = import_expression(addr_expr);
+                                if (addr.size() != info.addr_wire->width) {
+                                    if (addr.size() < info.addr_wire->width)
+                                        addr.extend_u0(info.addr_wire->width);
+                                    else
+                                        addr = addr.extract(0, info.addr_wire->width);
+                                }
+                                RTLIL::SigSpec data;
+                                if (auto rhs_any = assign->Rhs())
+                                    if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
+                                        int prev_ctx = expression_context_width;
+                                        expression_context_width = w;
+                                        data = import_expression(rhs_expr);
+                                        expression_context_width = prev_ctx;
+                                    }
+                                if (data.size() != w) {
+                                    if (data.size() < w) data.extend_u0(w);
+                                    else data = data.extract(0, w);
+                                }
+                                case_rule->actions.push_back(RTLIL::SigSig(
+                                    RTLIL::SigSpec(info.addr_wire), addr));
+                                case_rule->actions.push_back(RTLIL::SigSig(
+                                    RTLIL::SigSpec(info.data_wire).extract(lo, w), data));
+                                case_rule->actions.push_back(RTLIL::SigSig(
+                                    RTLIL::SigSpec(info.en_wire).extract(lo, w),
+                                    RTLIL::SigSpec(RTLIL::State::S1, w)));
+                                return;
+                            }
                         }
                     }
                 }
@@ -9644,6 +9745,69 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     std::string var_name = std::string(var->VpiName());
                     comb_value_aliases.erase(block_name + "." + var_name);
                 }
+            }
+            break;
+        }
+        case vpiFor: {
+            // Unroll a constant-bound for loop in CaseRule context, e.g. a
+            // byte-enable RAM `for (i=0;i<N;i++) if(..) mem[a][i*W+:W] <= ..`.
+            // Each iteration writes a different lane of the SAME word, so they
+            // accumulate onto one byte-enabled write port.
+            const for_stmt* for_loop = any_cast<const for_stmt*>(uhdm_stmt);
+            const any* fl_init = (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty())
+                                 ? for_loop->VpiForInitStmts()->at(0) : nullptr;
+            const expr* fl_cond = for_loop->VpiCondition();
+            const any* fl_inc = (for_loop->VpiForIncStmts() && !for_loop->VpiForIncStmts()->empty())
+                                ? for_loop->VpiForIncStmts()->at(0) : nullptr;
+            const any* fl_body = for_loop->VpiStmt();
+            std::string fl_var;
+            int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
+            bool fl_inclusive = false, ok = (fl_init && fl_cond && fl_body);
+            if (ok && fl_init->VpiType() == vpiAssignment) {
+                auto ia = any_cast<const assignment*>(fl_init);
+                if (ia->Lhs()) {
+                    int lt = ia->Lhs()->VpiType();
+                    if (lt == vpiRefVar) fl_var = std::string(any_cast<const ref_var*>(ia->Lhs())->VpiName());
+                    else if (lt == vpiRefObj) fl_var = std::string(any_cast<const ref_obj*>(ia->Lhs())->VpiName());
+                    else if (!ia->Lhs()->VpiName().empty()) fl_var = std::string(ia->Lhs()->VpiName());
+                }
+                RTLIL::SigSpec s = (ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant)
+                                   ? import_constant(any_cast<const constant*>(ia->Rhs())) : RTLIL::SigSpec();
+                if (fl_var.empty() || !s.is_fully_const()) ok = false; else fl_start = s.as_const().as_int();
+            } else ok = false;
+            if (ok && fl_cond->VpiType() == vpiOperation) {
+                auto co = any_cast<const operation*>(fl_cond);
+                if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
+                else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false; else ok = false;
+                if (ok && co->Operands() && co->Operands()->size() == 2) {
+                    RTLIL::SigSpec s = import_expression(any_cast<const expr*>(co->Operands()->at(1)));
+                    if (s.is_fully_const()) fl_end = s.as_const().as_int(); else ok = false;
+                } else ok = false;
+            } else ok = false;
+            if (ok && fl_inc) {
+                if (fl_inc->VpiType() == vpiOperation) {
+                    int ot = any_cast<const operation*>(fl_inc)->VpiOpType();
+                    if (ot != vpiPostIncOp && ot != vpiPreIncOp) ok = false;
+                } else if (fl_inc->VpiType() == vpiAssignment) {
+                    auto ia = any_cast<const assignment*>(fl_inc);
+                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
+                        auto ro = any_cast<const operation*>(ia->Rhs());
+                        if (ro->VpiOpType() == vpiAddOp && ro->Operands() && ro->Operands()->size() == 2) {
+                            RTLIL::SigSpec s = import_expression(any_cast<const expr*>(ro->Operands()->at(1)));
+                            if (s.is_fully_const()) fl_inc_val = s.as_const().as_int(); else ok = false;
+                        } else ok = false;
+                    } else ok = false;
+                }
+            }
+            if (ok) {
+                int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
+                for (int64_t i = fl_start; i <= loop_end; i += fl_inc_val) {
+                    loop_values[fl_var] = (int)i;
+                    import_statement_comb(fl_body, case_rule);
+                }
+                loop_values[fl_var] = (int)(fl_inclusive ? fl_end + fl_inc_val : fl_end);
+            } else {
+                log_warning("import_statement_comb(CaseRule*): unsupported for loop, skipping\n");
             }
             break;
         }
