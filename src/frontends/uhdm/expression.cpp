@@ -1293,6 +1293,42 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return RTLIL::SigSpec();
                 }
 
+                // Memory read with a (possibly dynamic) address and optional
+                // part-select: `mem[addr]` / `mem[addr][hi:lo]`.  Create a
+                // $memrd at the address and slice the requested bits — this is
+                // the read side of byte-enable RAMs (memories/implicit_en).
+                {
+                    RTLIL::IdString mem_id = RTLIL::escape_id(base_name);
+                    if (module->memories.count(mem_id)) {
+                        RTLIL::Memory* memory = module->memories.at(mem_id);
+                        const expr* addr_expr = nullptr;
+                        int psel_lo = 0, psel_hi = 0;
+                        bool have_psel = parse_mem_partial_select(vs, addr_expr, psel_lo, psel_hi);
+                        if (!addr_expr && !exprs->empty())
+                            addr_expr = (*exprs)[0];   // plain `mem[addr]` read (no slice)
+                        if (addr_expr) {
+                            RTLIL::SigSpec addr = import_expression(addr_expr, input_mapping);
+                            RTLIL::Cell* memrd_cell = module->addCell(new_id("memrd_" + base_name), ID($memrd));
+                            memrd_cell->setParam(ID::MEMID, RTLIL::Const(mem_id.str()));
+                            memrd_cell->setParam(ID::ABITS, GetSize(addr));
+                            memrd_cell->setParam(ID::WIDTH, memory->width);
+                            memrd_cell->setParam(ID::CLK_ENABLE, RTLIL::Const(0));
+                            memrd_cell->setParam(ID::CLK_POLARITY, RTLIL::Const(0));
+                            memrd_cell->setParam(ID::TRANSPARENT, RTLIL::Const(0));
+                            RTLIL::Wire* data_wire = module->addWire(new_id("memrd_" + base_name + "_DATA"), memory->width);
+                            memrd_cell->setPort(ID::CLK, RTLIL::SigSpec(RTLIL::State::Sx, 1));
+                            memrd_cell->setPort(ID::EN, RTLIL::SigSpec(RTLIL::State::S1, 1));
+                            memrd_cell->setPort(ID::ADDR, addr);
+                            memrd_cell->setPort(ID::DATA, data_wire);
+                            add_src_attribute(memrd_cell->attributes, vs);
+                            RTLIL::SigSpec rd(data_wire);
+                            if (have_psel && psel_lo >= 0 && psel_hi < rd.size())
+                                return rd.extract(psel_lo, psel_hi - psel_lo + 1);
+                            return rd;
+                        }
+                    }
+                }
+
                 // 2D unpacked array element access (`n[i][j]`).  When both
                 // indices are const and the base wire carries the
                 // `unpacked_*` metadata that `import_module` stamped on

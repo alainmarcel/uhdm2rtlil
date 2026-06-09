@@ -530,7 +530,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
                             int left = left_spec.as_int();
                             int right = right_spec.as_int();
                             width = std::abs(left - right) + 1;
-                            
+
                             if (mode_debug)
                                 log("    Packed range: [%d:%d], width=%d\n", left, right, width);
                         }
@@ -539,7 +539,33 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
             }
         }
     }
-    
+
+    // Typedef'd unpacked array (`ram16x4_t mem;`): no underlying Variables()/Nets()
+    // and no array Ranges() — the unpacked range and packed element type both
+    // live on the array_typespec.  Derive size from its range and width from its
+    // element typespec.
+    if ((size <= 1 || width <= 1) && uhdm_array->Typespec() &&
+        uhdm_array->Typespec()->Actual_typespec() &&
+        uhdm_array->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+        auto ats = any_cast<const UHDM::array_typespec*>(uhdm_array->Typespec()->Actual_typespec());
+        if (ats->Ranges() && !ats->Ranges()->empty()) {
+            auto range = (*ats->Ranges())[0];
+            if (range->Left_expr() && range->Right_expr()) {
+                RTLIL::SigSpec l = import_expression(range->Left_expr());
+                RTLIL::SigSpec r = import_expression(range->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    size = std::abs(l.as_int() - r.as_int()) + 1;
+                    start_offset = std::min(l.as_int(), r.as_int());
+                }
+            }
+        }
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
+            width = get_width_from_typespec(ats->Elem_typespec()->Actual_typespec());
+        if (mode_debug)
+            log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
+                width, size, start_offset);
+    }
+
     // Create RTLIL memory object
     RTLIL::IdString mem_id = RTLIL::escape_id(array_name);
     RTLIL::Memory *memory = new RTLIL::Memory;
@@ -547,15 +573,15 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
-    
+
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
-    
+
     // Add memory to module
     module->memories[mem_id] = memory;
-    
+
     if (mode_debug)
-        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n", 
+        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
             array_name.c_str(), width, size, start_offset);
 }
 
@@ -617,7 +643,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                             int left = left_spec.as_int();
                             int right = right_spec.as_int();
                             width = std::abs(left - right) + 1;
-                            
+
                             if (mode_debug)
                                 log("    Packed range: [%d:%d], width=%d\n", left, right, width);
                         }
@@ -626,7 +652,33 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
             }
         }
     }
-    
+
+    // Typedef'd unpacked array (`ram16x4_t mem;`): no underlying Variables()/Nets()
+    // and no array Ranges() — the unpacked range and packed element type both
+    // live on the array_typespec.  Derive size from its range and width from its
+    // element typespec.
+    if ((size <= 1 || width <= 1) && uhdm_array->Typespec() &&
+        uhdm_array->Typespec()->Actual_typespec() &&
+        uhdm_array->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+        auto ats = any_cast<const UHDM::array_typespec*>(uhdm_array->Typespec()->Actual_typespec());
+        if (ats->Ranges() && !ats->Ranges()->empty()) {
+            auto range = (*ats->Ranges())[0];
+            if (range->Left_expr() && range->Right_expr()) {
+                RTLIL::SigSpec l = import_expression(range->Left_expr());
+                RTLIL::SigSpec r = import_expression(range->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    size = std::abs(l.as_int() - r.as_int()) + 1;
+                    start_offset = std::min(l.as_int(), r.as_int());
+                }
+            }
+        }
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec())
+            width = get_width_from_typespec(ats->Elem_typespec()->Actual_typespec());
+        if (mode_debug)
+            log("    From array_typespec: width=%d, size=%d, start_offset=%d\n",
+                width, size, start_offset);
+    }
+
     // Create RTLIL memory object
     RTLIL::IdString mem_id = RTLIL::escape_id(array_name);
     RTLIL::Memory *memory = new RTLIL::Memory;
@@ -634,15 +686,15 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     memory->width = width;
     memory->size = size;
     memory->start_offset = start_offset;
-    
+
     // Add source attribute
     add_src_attribute(memory->attributes, uhdm_array);
-    
+
     // Add memory to module
     module->memories[mem_id] = memory;
-    
+
     if (mode_debug)
-        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n", 
+        log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
             array_name.c_str(), width, size, start_offset);
 }
 

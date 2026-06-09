@@ -904,6 +904,56 @@ void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std
 }
 
 // Helper function to check if an assignment is a memory write
+bool UhdmImporter::parse_mem_partial_select(const UHDM::var_select* vs,
+                                            const UHDM::expr*& addr_expr, int& lo, int& hi) {
+    addr_expr = nullptr;
+    const UHDM::any* sel = nullptr;
+    const UHDM::expr* second = nullptr;
+    if (!vs->Exprs()) return false;
+    // Exprs() = [address, selector].  The selector is a part_select or
+    // indexed_part_select; the other entry is the word address.  A plain
+    // second index (`mem[addr][bit]`) is a single-bit select.
+    for (auto e : *vs->Exprs()) {
+        int t = e->VpiType();
+        if (t == vpiPartSelect || t == vpiIndexedPartSelect)
+            sel = e;
+        else if (!addr_expr)
+            addr_expr = e;
+        else if (!second)
+            second = e;
+    }
+    if (!addr_expr) return false;
+    if (!sel) {
+        // No range selector: `mem[addr][bit]` — a constant-evaluable single bit.
+        if (!second) return false;
+        RTLIL::SigSpec b = import_expression(second);
+        if (!b.is_fully_const()) return false;
+        lo = hi = b.as_int();
+        return true;
+    }
+    if (sel->VpiType() == vpiPartSelect) {
+        auto ps = any_cast<const part_select*>(sel);
+        RTLIL::SigSpec l = import_expression(ps->Left_range());
+        RTLIL::SigSpec r = import_expression(ps->Right_range());
+        if (!l.is_fully_const() || !r.is_fully_const()) return false;
+        lo = std::min(l.as_int(), r.as_int());
+        hi = std::max(l.as_int(), r.as_int());
+        return true;
+    }
+    // indexed_part_select: `[base +: width]` (type 1) or `[base -: width]` (2)
+    auto ips = any_cast<const indexed_part_select*>(sel);
+    RTLIL::SigSpec base = import_expression(ips->Base_expr());
+    RTLIL::SigSpec width = import_expression(ips->Width_expr());
+    if (!base.is_fully_const() || !width.is_fully_const()) return false;
+    int b = base.as_int(), w = width.as_int();
+    if (ips->VpiIndexedPartSelectType() == 2) {   // -:
+        hi = b; lo = b - w + 1;
+    } else {                                       // +:
+        lo = b; hi = b + w - 1;
+    }
+    return true;
+}
+
 bool UhdmImporter::is_memory_write(const assignment* assign, RTLIL::Module* module) {
     if (!assign || !module) return false;
     
@@ -912,6 +962,13 @@ bool UhdmImporter::is_memory_write(const assignment* assign, RTLIL::Module* modu
             const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
             std::string signal_name = std::string(bit_sel->VpiName());
             RTLIL::IdString mem_id = RTLIL::escape_id(signal_name);
+            return module->memories.count(mem_id) > 0;
+        }
+        // Partial (byte-enable) memory write: `mem[addr][hi:lo] <= data`.
+        // UHDM represents the LHS as a var_select whose VpiName is the memory.
+        if (lhs->VpiType() == vpiVarSelect) {
+            const var_select* vs = any_cast<const var_select*>(lhs);
+            RTLIL::IdString mem_id = RTLIL::escape_id(std::string(vs->VpiName()));
             return module->memories.count(mem_id) > 0;
         }
     }
@@ -934,6 +991,9 @@ void UhdmImporter::collect_memory_write_lhs(const any* stmt,
                     if (lhs->VpiType() == vpiBitSelect) {
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
                         out[std::string(bit_sel->VpiName())].push_back(lhs);
+                    } else if (lhs->VpiType() == vpiVarSelect) {
+                        const var_select* vs = any_cast<const var_select*>(lhs);
+                        out[std::string(vs->VpiName())].push_back(lhs);
                     }
                 }
             }
@@ -992,6 +1052,9 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
                         const bit_select* bit_sel = any_cast<const bit_select*>(lhs);
                         std::string signal_name = std::string(bit_sel->VpiName());
                         memory_names.insert(signal_name);
+                    } else if (lhs->VpiType() == vpiVarSelect) {
+                        const var_select* vs = any_cast<const var_select*>(lhs);
+                        memory_names.insert(std::string(vs->VpiName()));
                     }
                 }
             }
@@ -1476,7 +1539,19 @@ bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     } else {
         return false;
     }
-    
+
+    // Unpacked array via array_typespec (typedef'd unpacked array, e.g.
+    // `typedef logic [3:0] ram16x4_t[0:15]; ram16x4_t mem;`): the net carries
+    // its unpacked dimension(s) in the array_typespec and its packed width in
+    // the element typespec -> infer a memory.
+    if (typespec->UhdmType() == uhdmarray_typespec) {
+        if (mode_debug) {
+            log("    Detected memory array: %s (logic_net with array_typespec)\n",
+                std::string(uhdm_net->VpiName()).c_str());
+        }
+        return true;
+    }
+
     // Check if typespec has both packed and unpacked dimensions
     if (typespec->UhdmType() == uhdmlogic_typespec) {
         auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
@@ -1565,7 +1640,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This var has both packed (from typespec) and unpacked (from array_var) dimensions
                     if (mode_debug) {
-                        log("    Detected memory array: %s (array_var with packed dimensions)\n", 
+                        log("    Detected memory array: %s (array_var with packed dimensions)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     }
                     return true;
@@ -1573,7 +1648,29 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
             }
         }
     }
-    
+
+    // Typedef'd unpacked array (`typedef logic [3:0] ram16x4_t[0:15]; ram16x4_t mem;`):
+    // the array_var has no underlying Variables(); its unpacked range and packed
+    // element type both live on the array_typespec.  Treat as a memory when the
+    // element typespec carries a packed dimension.
+    if (uhdm_array->Typespec() && uhdm_array->Typespec()->Actual_typespec() &&
+        uhdm_array->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+        auto ats = any_cast<const UHDM::array_typespec*>(uhdm_array->Typespec()->Actual_typespec());
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec()) {
+            auto elem = ats->Elem_typespec()->Actual_typespec();
+            if (elem->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(elem);
+                if (lt->Ranges() && !lt->Ranges()->empty()) {
+                    if (mode_debug) {
+                        log("    Detected memory array: %s (array_var with array_typespec)\n",
+                            std::string(uhdm_array->VpiName()).c_str());
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 

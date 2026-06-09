@@ -673,6 +673,12 @@ struct UhdmImporter {
     void collect_blocking_assigned_names(const any* stmt, std::set<std::string>& signal_names);
     bool contains_complex_constructs(const any* stmt);
     bool is_memory_write(const assignment* assign, RTLIL::Module* module);
+    // Parse a partial memory-select LHS/RHS `mem[addr][sel]` (var_select) into
+    // the address expression and the constant bit range [lo,hi] of its slice.
+    // Handles part_select (`[hi:lo]`) and indexed_part_select (`[base+:w]` /
+    // `[base-:w]`).  Returns false if there is no selector or it isn't constant.
+    bool parse_mem_partial_select(const UHDM::var_select* vs,
+                                  const UHDM::expr*& addr_expr, int& lo, int& hi);
     void scan_for_memory_writes(const any* stmt, std::set<std::string>& memory_names, RTLIL::Module* module);
     bool has_for_loop(const any* stmt);
     bool needs_sync_path(const any* stmt, bool inside_conditional = false);

@@ -697,26 +697,45 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
     if (is_memory_array(uhdm_net)) {
         log("UHDM: Net '%s' has both packed and unpacked dimensions - creating memory\n", netname.c_str());
         
-        // Get packed dimension (width) from typespec
+        // Get packed dimension (width) and unpacked dimension (size).
         int width = 1;
+        int size = 1;
         if (uhdm_net->Typespec()) {
             auto ref_typespec = uhdm_net->Typespec();
             const UHDM::typespec* typespec = nullptr;
-            
+
             if (ref_typespec && ref_typespec->Actual_typespec()) {
                 typespec = ref_typespec->Actual_typespec();
             }
             if (typespec && typespec->UhdmType() == uhdmlogic_typespec) {
                 auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
                 width = get_width_from_typespec(logic_typespec, inst);
+            } else if (typespec && typespec->UhdmType() == uhdmarray_typespec) {
+                // Typedef'd unpacked array (`ram16x4_t mem;`): width comes from
+                // the element typespec, size from the unpacked range(s).
+                auto ats = dynamic_cast<const UHDM::array_typespec*>(typespec);
+                if (ats) {
+                    if (auto et = ats->Elem_typespec()) {
+                        if (auto a = et->Actual_typespec())
+                            width = get_width_from_typespec(a, inst);
+                    }
+                    int range_total = 1;
+                    if (ats->Ranges()) {
+                        for (auto r : *ats->Ranges()) {
+                            if (r->Left_expr() && r->Right_expr()) {
+                                RTLIL::SigSpec lspec = import_expression(r->Left_expr());
+                                RTLIL::SigSpec rspec = import_expression(r->Right_expr());
+                                if (lspec.is_fully_const() && rspec.is_fully_const())
+                                    range_total *= std::abs(lspec.as_int() - rspec.as_int()) + 1;
+                            }
+                        }
+                    }
+                    size = range_total;
+                }
+            } else {
+                log_warning("UHDM: Net '%s' detected as memory but has no recognized array typespec\n", netname.c_str());
             }
         }
-        
-        // Get unpacked dimension (size) from net ranges
-        // Note: regular nets don't have unpacked dimensions - this shouldn't happen
-        // but we'll default to size 1
-        int size = 1;
-        log_warning("UHDM: Net '%s' detected as memory but regular nets don't have unpacked dimensions\n", netname.c_str());
         
         // Create RTLIL memory object
         RTLIL::IdString mem_id = RTLIL::escape_id(netname);
