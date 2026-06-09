@@ -1476,7 +1476,19 @@ bool UhdmImporter::is_memory_array(const UHDM::net* uhdm_net) {
     } else {
         return false;
     }
-    
+
+    // Unpacked array via array_typespec (typedef'd unpacked array, e.g.
+    // `typedef logic [3:0] ram16x4_t[0:15]; ram16x4_t mem;`): the net carries
+    // its unpacked dimension(s) in the array_typespec and its packed width in
+    // the element typespec -> infer a memory.
+    if (typespec->UhdmType() == uhdmarray_typespec) {
+        if (mode_debug) {
+            log("    Detected memory array: %s (logic_net with array_typespec)\n",
+                std::string(uhdm_net->VpiName()).c_str());
+        }
+        return true;
+    }
+
     // Check if typespec has both packed and unpacked dimensions
     if (typespec->UhdmType() == uhdmlogic_typespec) {
         auto logic_typespec = any_cast<const UHDM::logic_typespec*>(typespec);
@@ -1565,7 +1577,7 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     // This var has both packed (from typespec) and unpacked (from array_var) dimensions
                     if (mode_debug) {
-                        log("    Detected memory array: %s (array_var with packed dimensions)\n", 
+                        log("    Detected memory array: %s (array_var with packed dimensions)\n",
                             std::string(uhdm_array->VpiName()).c_str());
                     }
                     return true;
@@ -1573,7 +1585,29 @@ bool UhdmImporter::is_memory_array(const UHDM::array_var* uhdm_array) {
             }
         }
     }
-    
+
+    // Typedef'd unpacked array (`typedef logic [3:0] ram16x4_t[0:15]; ram16x4_t mem;`):
+    // the array_var has no underlying Variables(); its unpacked range and packed
+    // element type both live on the array_typespec.  Treat as a memory when the
+    // element typespec carries a packed dimension.
+    if (uhdm_array->Typespec() && uhdm_array->Typespec()->Actual_typespec() &&
+        uhdm_array->Typespec()->Actual_typespec()->UhdmType() == uhdmarray_typespec) {
+        auto ats = any_cast<const UHDM::array_typespec*>(uhdm_array->Typespec()->Actual_typespec());
+        if (ats->Elem_typespec() && ats->Elem_typespec()->Actual_typespec()) {
+            auto elem = ats->Elem_typespec()->Actual_typespec();
+            if (elem->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(elem);
+                if (lt->Ranges() && !lt->Ranges()->empty()) {
+                    if (mode_debug) {
+                        log("    Detected memory array: %s (array_var with array_typespec)\n",
+                            std::string(uhdm_array->VpiName()).c_str());
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 
