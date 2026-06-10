@@ -203,6 +203,7 @@ run_sim_equivalence_softwarn() {
     local rc=$?
     if [ $rc -eq 0 ] && grep -q '^PASS:' "$log"; then
         echo "    ✅ Verilator co-sim PASSED"
+        SIM_EQUIV_COSIM_PASSED=1
         return 0
     fi
     # Exit code 77 = autotools "skip" convention.  The harness emits it
@@ -398,6 +399,32 @@ skip_formal_cosim_cycles() {
     return 1
 }
 
+# Tests accepted as equivalent via co-sim when equiv_induct fails (opt-in):
+# multi-port / byte-enable / multi-clock RAMs where induct is incomplete and a
+# formal RAM miter is impractical.  See cosim_equiv_tests.txt.
+COSIM_EQUIV_LIST=()
+if [ -f "$SCRIPT_DIR/cosim_equiv_tests.txt" ]; then
+    while IFS= read -r line; do
+        if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+            trimmed_line=$(echo "$line" | sed 's/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            [[ -n "$trimmed_line" ]] && COSIM_EQUIV_LIST+=("$trimmed_line")
+        fi
+    done < "$SCRIPT_DIR/cosim_equiv_tests.txt"
+fi
+
+# Is this yosys-relative path (with or without extension) opted in to
+# co-sim-based equivalence acceptance?
+is_cosim_equiv() {
+    local p="$1" pat
+    for entry in "${COSIM_EQUIV_LIST[@]}"; do
+        pat="${entry%%[[:space:]]*}"
+        if [ "$p" = "$pat" ] || [ "$p" = "${pat%.v}" ] || [ "$p" = "${pat%.sv}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Is this file a self-contained Verilog/SV test (has a module, no includes)?
 is_verilog_test() {
     local file="$1"
@@ -442,6 +469,10 @@ setup_yosys_test() {
     local sfc_cycles; sfc_cycles="$(skip_formal_cosim_cycles "$rel")"
     if [ -n "$sfc_cycles" ]; then
         printf 'SKIP_FORMAL=1\nSIM_CYCLES=%s\n' "$sfc_cycles" > "$abs_dir/sim_config"
+    fi
+    # Opt-in: accept this RAM test as equivalent via co-sim if induct fails.
+    if is_cosim_equiv "$rel"; then
+        printf 'COSIM_EQUIV=1\n' >> "$abs_dir/sim_config"
     fi
 
     cat > "$abs_dir/test_verilog_read.ys" << EOF
@@ -688,6 +719,7 @@ analyze_test_result() {
     # using the per-test cycle count (SIM_CYCLES, default 200).  For a
     # SKIP_FORMAL test it is the sole functional check.
     SIM_EQUIV_MITER_BUG=0   # set to 1 by run_sim_equivalence_softwarn on a miter-confirmed bug
+    SIM_EQUIV_COSIM_PASSED=0 # set to 1 by run_sim_equivalence_softwarn on a clean co-sim
     if [ -f "$uhdm_synth" ]; then
         run_sim_equivalence_softwarn "$test_dir" "$sim_cycles"
     fi
@@ -695,6 +727,17 @@ analyze_test_result() {
     # Report results
     if [ "$skip_formal" = "1" ]; then
         echo "✅ Test $test_dir PASSED - Verilator co-sim (formal skipped via sim_config)"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+        PASSED_TEST_NAMES+=("$test_dir")
+        return 0
+    elif [ "$equiv_failed" = true ] \
+            && [ "$(read_test_cfg "$test_dir" COSIM_EQUIV 0)" = "1" ] \
+            && [ "${SIM_EQUIV_COSIM_PASSED:-0}" = "1" ] \
+            && [ "${SIM_EQUIV_MITER_BUG:-0}" != "1" ]; then
+        # Opt-in (cosim_equiv_tests.txt): equiv_induct is incomplete on this
+        # RAM, a formal RAM miter is impractical, but the Verilator co-sim
+        # confirms functional equivalence — accept it.
+        echo "✅ Test $test_dir PASSED - Verilator co-sim (equiv_induct incomplete for this RAM; opt-in COSIM_EQUIV)"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         PASSED_TEST_NAMES+=("$test_dir")
         return 0

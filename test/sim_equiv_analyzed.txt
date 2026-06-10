@@ -317,3 +317,128 @@ Test: wandwor
     sim disagrees with the correctly-resolved netlist.  (Now builds in
     expression mode; previously it build-failed on the coarse $and cell.)
 
+
+# ===========================================================================
+# Surfaced by the thorough Verilator co-sim (all clocks toggled, resets/
+# enables wiggled, output-activity guard) + the SAT-from-reset miter.  Each
+# entry below was auto-triaged with triage_cosim.py: the miter compares the
+# UHDM-synth and Yosys-Verilog-synth netlists, and a Verilog-side co-sim
+# (Verilog-synth vs behavioral RTL) tells artefact from real bug.
+# ===========================================================================
+
+# --- 🔬 ARTEFACTS: miter proves UHDM == Verilog ---------------------------
+# Co-sim divergence (value mismatch or low/zero output activity) is a
+# Verilator-RTL-vs-gate-netlist artefact (uninitialised-reg x-init / x-prop,
+# or a constant/under-exercised output), NOT a UHDM-frontend bug.  Both
+# frontends synthesise to equivalent netlists (SAT miter EQUIVALENT from
+# reset), so the divergence affects gold and gate identically.
+
+Test: counter_in_cpu_state
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Vacuous/low-activity output
+    under random stimulus; no value divergence vs the Verilog frontend.
+
+Test: counters_repeat
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  x-init counter; RTL keeps
+    'x in some bits the synch netlist legalises to 0.  Both frontends equal.
+
+Test: counters
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  x-init counter (yosys
+    sat/counters); Verilator-RTL-vs-netlist x-prop only.
+
+Test: counters-repeat
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  x-init counter (yosys
+    sat/counters-repeat); Verilator-RTL-vs-netlist x-prop only.
+
+Test: enum_values
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Output under-exercised /
+    x-init; no UHDM-vs-Verilog divergence.
+
+Test: gen_test5
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Constant/vacuous output;
+    co-sim has no activity to compare, formal proves equivalence.
+
+Test: gen_test6
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Constant/vacuous output;
+    co-sim has no activity to compare, formal proves equivalence.
+
+Test: iface_param_width_per_inst
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Constant/vacuous output
+    (interface-param width test); formal proves equivalence.
+
+Test: multiple_blocking
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Uninitialised regs a/b used
+    as a dynamic part-select index -> RTL x-prop the netlist legalises to 0.
+    Both frontends synthesise identically.
+
+Test: case_large
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  yosys simple/case_large;
+    Verilator-RTL-vs-netlist x-init/x-prop only.
+
+Test: code_hdl_models_encoder_using_case
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  asicworld encoder; co-sim
+    x-prop only, no frontend divergence.
+
+Test: code_hdl_models_encoder_using_if
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  asicworld encoder; co-sim
+    x-prop only, no frontend divergence.
+
+Test: genblk_dive
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  yosys simple/genblk_dive;
+    co-sim x-init/x-prop only.
+
+Test: genblk_port_shadow
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  yosys simple/
+    genblk_port_shadow; co-sim x-init/x-prop only.
+
+# --- ❓ INCONCLUSIVE: UHDM-only, no Verilog reference ----------------------
+# The Yosys Verilog frontend cannot build a reference netlist (no
+# *_from_verilog_synth.v), so neither the miter nor a Verilog-side co-sim
+# can run.  The UHDM co-sim is vacuous (constant/undriven output).  Left
+# unverified-but-documented; revisit if a reference becomes available.
+
+Test: hier_undriven_port
+    Inconclusive: UHDM-only (no Verilog reference netlist).  Output is an
+    intentionally undriven port -> vacuous (all-zero) co-sim; nothing to
+    formally compare.
+
+Test: setundef
+    Inconclusive: Verilog frontend build-fails (no reference).  Exercises
+    undef handling; UHDM co-sim is vacuous, miter cannot run.
+
+Test: struct_pattern_loop
+    Inconclusive: UHDM-only (no Verilog reference).  Vacuous (constant)
+    output; nothing to formally compare.
+
+# --- 🐛 CONFIRMED UHDM-vs-Verilog BUGS (see cosim_uhdm_bugs.txt) -----------
+# UHDM-synth diverges from BOTH the behavioral RTL and the Yosys Verilog
+# frontend (UHDM-cosim FAIL while Verilog-cosim PASS).  These FALSELY pass
+# equiv_induct (its unsound-induction blind spot).  Tracked as expected
+# Miter-Formal failures (failing_tests.txt) so the suite stays green; fix one
+# isolated change at a time and remove from all the tracking files.
+
+Test: macc
+    UHDM BUG: accumulator output stuck at 0x7FFFFFFFFF (40-bit max-positive)
+    while RTL and the Verilog frontend accumulate normally.  SAT miter
+    NON-EQUIVALENT from reset; UHDM-cosim FAIL / Verilog-cosim PASS.
+
+Test: simple_memory
+    UHDM BUG: synchronous whole-array clear-on-reset (for-loop mem[i]<=0)
+    not modelled -> reads stale data after a mid-run reset pulse.  SAT miter
+    NON-EQUIVALENT; UHDM-cosim FAIL / Verilog-cosim PASS.
+
+Test: asym_ram_sdp_read_wider
+    UHDM BUG: asymmetric dual-clock SDP RAM (narrow write / wide read) read
+    port diverges.  SAT miter NON-EQUIVALENT; UHDM-cosim FAIL / Verilog-cosim
+    PASS.
+
+Test: subbytes
+    UHDM BUG: async-reset (negedge) datapath with blocking temps diverges
+    from the Verilog frontend.  Miter INCONCLUSIVE (satgen can't model the
+    $_DFFE_PN0N_ cell) so classified `bug` via override; UHDM-cosim FAIL /
+    Verilog-cosim PASS is decisive.
+
+Test: blocking_temp_select
+    UHDM BUG: always_ff blocking temp read back via part-/bit-select in the
+    same cycle (minimal repro of the alu_sub pattern) diverges from the
+    Verilog frontend.  SAT miter NON-EQUIVALENT; UHDM-cosim FAIL /
+    Verilog-cosim PASS.  (Pre-existing baseline co-sim warning, now triaged.)

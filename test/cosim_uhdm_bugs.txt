@@ -1,0 +1,29 @@
+# Confirmed UHDM-frontend co-sim bugs
+# ===================================
+# The UHDM-frontend synthesised netlist diverges from BOTH the behavioral RTL
+# AND the Yosys Verilog-frontend netlist.  Surfaced by the thorough Verilator
+# co-sim (all clocks toggled, resets/enables wiggled, output-activity guard)
+# combined with the SAT-from-reset miter and the asymmetric Verilog-side
+# co-sim:
+#     UHDM-synth vs RTL      = FAIL
+#     Verilog-synth vs RTL   = PASS      (so the bug is the UHDM frontend)
+#     SAT miter UHDM vs Vlog = NON-EQUIVALENT (or cosim-decisive when the
+#                              miter is INCONCLUSIVE on an unmodellable cell)
+#
+# All four FALSELY PASS equiv_induct (its unsound-induction blind spot) — that
+# is why a weak co-sim or equiv_induct alone never caught them.
+#
+# Tracking (keep the suite green until fixed):
+#   - documented in sim_equiv_analyzed.txt
+#   - force-classified `bug` (subbytes only; the other three the miter calls
+#     NON-EQUIVALENT on its own) in sim_equiv_classification.txt
+#   - listed expected-fail in failing_tests.txt (internal name + yosys paths)
+# Fix one isolated change at a time, then remove from all of the above.
+#
+# test                      symptom
+# ------------------------  -----------------------------------------------
+macc                        accumulator output stuck at 0x7FFFFFFFFF (40-bit max+) instead of accumulating; miter NON-EQUIVALENT from reset.
+simple_memory               synchronous whole-array clear-on-reset (for i: mem[i]<=0) not modelled; reads stale data after a mid-run reset; miter NON-EQUIVALENT.
+asym_ram_sdp_read_wider     asymmetric dual-clock SDP RAM (narrow write / wide read) read port diverges; miter NON-EQUIVALENT.
+subbytes                    async-reset (negedge) datapath with blocking temps diverges; miter INCONCLUSIVE (satgen can't model $_DFFE_PN0N_), cosim-decisive.
+blocking_temp_select        always_ff blocking temp read via part-/bit-select same cycle (alu_sub-pattern repro); miter NON-EQUIVALENT.

@@ -286,9 +286,18 @@ def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
 
 def extract_ports(yosys: Path, cr_plugin: Path, simcells: Path,
                   netlist_v: Path, out_txt: Path) -> None:
+    # `proc` turns the behavioral `always @(posedge clk)` blocks that
+    # write_verilog emits for large memories (e.g. blockram's 1024x8 array,
+    # which stays a $mem rather than mapping to FFs) into $dff / $memwr_v2
+    # cells whose CLK ports the extractor can trace to a top clock.  Without
+    # it, such a netlist has NO clock-bearing cells and the co-sim never
+    # toggles a clock → vacuous all-zero match.  `memory_dff` exposes the
+    # write-port clocks as cells too.  Harmless for purely gate-level netlists.
     script = (
         f"read_verilog -nolatches {simcells} {netlist_v}\n"
         f"hierarchy -top dut_netlist\n"
+        f"proc\n"
+        f"memory_dff\n"
         f"extract_clocks_resets -o {out_txt}\n"
     )
     sh([str(yosys), "-q", "-m", str(cr_plugin), "-p", script])
@@ -425,6 +434,8 @@ def emit_wrapper_and_tb(dut_path: Path,
         "int main(int argc, char** argv) {",
         "    Vtb tb;",
         "    int mismatches = 0;",
+        "    unsigned long long act_or = 0;  // OR of every output value seen",
+        "    long act_nz = 0;                // cycles where any output != 0",
     ]
     # Init all driven inputs
     for c in clocks:
@@ -442,11 +453,20 @@ def emit_wrapper_and_tb(dut_path: Path,
     cpp.append("    tb.eval();")
 
     if clocks:
-        clk = clocks[0]
+        # A posedge on EVERY clock.  A design may have several independent
+        # clock domains / memory ports (e.g. blockram's clk_a_*/clk_b_*);
+        # toggling only clocks[0] leaves the others un-clocked, so their logic
+        # never updates and their outputs stay dead — a vacuous all-zero match.
+        def tick(indent="        "):
+            for c in clocks:
+                cpp.append(f"{indent}tb.{c} = 0;")
+            cpp.append(f"{indent}tb.eval();")
+            for c in clocks:
+                cpp.append(f"{indent}tb.{c} = 1;")
+            cpp.append(f"{indent}tb.eval();")
         cpp.append("    // Reset phase: hold reset asserted for several clock cycles")
         cpp.append(f"    for (int i = 0; i < {reset_cycles}; ++i) {{")
-        cpp.append(f"        tb.{clk} = 0; tb.eval();")
-        cpp.append(f"        tb.{clk} = 1; tb.eval();")
+        tick()
         cpp.append("    }")
         for r, ah in resets.items():
             cpp.append(f"    tb.{r} = {0 if ah else 1};  // de-assert reset")
@@ -477,8 +497,18 @@ def emit_wrapper_and_tb(dut_path: Path,
                         cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand() & 0x{m:x}U;")
                     else:
                         cpp.append(f"        tb.{n}[{i}] = (uint32_t)rand();")
-        cpp.append(f"        tb.{clk} = 0; tb.eval();")
-        cpp.append(f"        tb.{clk} = 1; tb.eval();")
+        # Wiggle reset/enable-style controls during the run instead of pinning
+        # them de-asserted.  A signal the clock/reset extractor flags as a
+        # "reset" is often ALSO a functional control — e.g. a RAM write-enable
+        # whose asserted edge synchronously clears the read port (amber23
+        # `o_read_data <= i_write_enable ? 0 : mem[a]`).  Pinning it off means
+        # the memory is never written and every read returns 0 → vacuous match.
+        # Both DUTs receive identical stimulus, so occasional assertion only
+        # adds coverage; it can never invalidate the equivalence comparison.
+        for r, ah in resets.items():
+            assert_v, deassert_v = (1, 0) if ah else (0, 1)
+            cpp.append(f"        tb.{r} = ((rand() & 3) == 0) ? {assert_v} : {deassert_v};")
+        tick()
         for n, w in outputs:
             # Verilator C++ codegen returns sub-byte signals as uint8_t with
             # uninitialised upper bits, so mask to the declared port width
@@ -491,7 +521,8 @@ def emit_wrapper_and_tb(dut_path: Path,
             cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
                        f" cycle, r, s);")
             cpp.append("            mismatches++;")
-            cpp.append("          } }")
+            cpp.append("          }")
+            cpp.append("          act_or |= r; if (r) act_nz++; }")
         cpp.append("    }")
     else:
         cpp.append(f"    srand({seed});")
@@ -535,7 +566,8 @@ def emit_wrapper_and_tb(dut_path: Path,
                 cpp.append(f"            std::printf(\"MISMATCH cycle %d: {n}: rtl=0x%llx nl=0x%llx\\n\","
                            f" cycle, r, s);")
                 cpp.append("            mismatches++;")
-                cpp.append("          } }")
+                cpp.append("          }")
+                cpp.append("          act_or |= r; if (r) act_nz++; }")
             else:
                 # Wide output: compare word-by-word.  Mask the top word to
                 # the leftover bits so undefined high bits in either side
@@ -564,14 +596,36 @@ def emit_wrapper_and_tb(dut_path: Path,
                            f" cycle, {rargs}, {nargs});")
                 cpp.append("            mismatches++;")
                 cpp.append("          }")
+                # Activity: OR every word of this wide output into act_or.
+                for i in range(nwords):
+                    cpp.append(f"          act_or |= (unsigned long long)(uint32_t)tb.rtl_{n}[{i}];")
                 cpp.append("        }")
         cpp.append("    }")
+    # Vacuous-pass guard: a co-sim that matches only because every output is
+    # all-zero on every cycle proves nothing.  Flag it when at least one
+    # comparable (<=64-bit) output exists yet no output bit was ever set.
+    has_tracked = any(w <= 64 for _, w in outputs)
     cpp += [
-        f"    if (mismatches == 0)",
+        '    std::printf("ACTIVITY: out_nonzero_cycles=%ld bits_ever_set=0x%llx\\n",'
+        " act_nz, act_or);",
+    ]
+    if has_tracked:
+        cpp += [
+            "    bool vacuous = (act_or == 0);",
+            "    if (vacuous)",
+            '        std::printf("VACUOUS: outputs were all-zero every cycle —'
+            ' co-sim did not exercise the design\\n");',
+        ]
+    else:
+        cpp += ["    bool vacuous = false;"]
+    cpp += [
+        f"    if (mismatches == 0 && !vacuous)",
         f"        std::printf(\"PASS: {cycles} cycles, 0 mismatches\\n\");",
-        "    else",
+        "    else if (mismatches)",
         f"        std::printf(\"FAIL: {cycles} cycles, %d mismatches\\n\", mismatches);",
-        "    return mismatches == 0 ? 0 : 1;",
+        "    else",
+        f"        std::printf(\"FAIL: {cycles} cycles, vacuous (no output activity)\\n\");",
+        "    return (mismatches == 0 && !vacuous) ? 0 : 1;",
         "}",
         "",
     ]

@@ -139,6 +139,27 @@ struct ExtractClocksResetsPass : public Pass {
             }
         }
 
+        // Memory cells carry clocks too.  A large synchronous RAM that does
+        // not map to FFs stays a $mem/$mem_v2 (or split $memrd*/$memwr* after
+        // `proc`), and its read/write ports are clocked from a top-level
+        // clock.  If we don't pick these up, a RAM-only design has no detected
+        // clock and the co-sim never toggles one → vacuous all-zero match.
+        for (auto cell : top->cells()) {
+            // Packed memory: per-port clock vectors RD_CLK / WR_CLK.
+            if (cell->type == ID($mem) || cell->type == ID($mem_v2)) {
+                if (cell->hasPort(ID::RD_CLK))
+                    record_top_port(cell->getPort(ID::RD_CLK), &clocks, nullptr, false);
+                if (cell->hasPort(ID::WR_CLK))
+                    record_top_port(cell->getPort(ID::WR_CLK), &clocks, nullptr, false);
+            }
+            // Split read/write port cells: single CLK each.
+            else if (cell->type == ID($memrd) || cell->type == ID($memrd_v2) ||
+                     cell->type == ID($memwr) || cell->type == ID($memwr_v2)) {
+                if (cell->hasPort(ID::CLK))
+                    record_top_port(cell->getPort(ID::CLK), &clocks, nullptr, false);
+            }
+        }
+
         std::ofstream f(output_file);
         if (!f.is_open())
             log_error("extract_clocks_resets: cannot open %s\n", output_file.c_str());

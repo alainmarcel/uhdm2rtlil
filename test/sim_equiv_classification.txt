@@ -26,3 +26,6 @@ sva_value_change_sim   artefact   # SVA; $check not modelled by satgen
 named_cover_assert     artefact   # SVA cover/assert; $check not modelled by satgen
 unbased_unsized_param  artefact   # SVA $check/$eqx; miter INCONCLUSIVE
 jeras_tcb_gpio         artefact   # interface / uhdm-only; miter INCONCLUSIVE
+
+# --- confirmed UHDM-vs-Verilog bug, miter INCONCLUSIVE (satgen cell) ---
+subbytes               bug        # async-reset datapath; $_DFFE_PN0N_ unmodellable, cosim-decisive (UHDM fail/Verilog pass). See cosim_uhdm_bugs.txt
