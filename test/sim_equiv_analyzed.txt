@@ -416,11 +416,6 @@ Test: struct_pattern_loop
 # Miter-Formal failures (failing_tests.txt) so the suite stays green; fix one
 # isolated change at a time and remove from all the tracking files.
 
-Test: macc
-    UHDM BUG: accumulator output stuck at 0x7FFFFFFFFF (40-bit max-positive)
-    while RTL and the Verilog frontend accumulate normally.  SAT miter
-    NON-EQUIVALENT from reset; UHDM-cosim FAIL / Verilog-cosim PASS.
-
 Test: simple_memory
     UHDM BUG: synchronous whole-array clear-on-reset (for-loop mem[i]<=0)
     not modelled -> reads stale data after a mid-run reset pulse.  SAT miter

@@ -22,7 +22,6 @@
 #
 # test                      symptom
 # ------------------------  -----------------------------------------------
-macc                        accumulator output stuck at 0x7FFFFFFFFF (40-bit max+) instead of accumulating; miter NON-EQUIVALENT from reset.
 simple_memory               synchronous whole-array clear-on-reset (for i: mem[i]<=0) not modelled; reads stale data after a mid-run reset; miter NON-EQUIVALENT.
 asym_ram_sdp_read_wider     asymmetric dual-clock SDP RAM (narrow write / wide read) read port diverges; miter NON-EQUIVALENT.
 subbytes                    async-reset (negedge) datapath with blocking temps diverges; miter INCONCLUSIVE (satgen can't model $_DFFE_PN0N_), cosim-decisive.

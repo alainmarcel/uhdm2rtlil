@@ -3566,6 +3566,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // SLT/BLT/BGE decoded wrong).
                     bool a_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
                     bool b_signed = operands[1].is_wire() && operands[1].as_wire()->is_signed;
+                    // A constant operand (e.g. a folded `2**(SIZEOUT-1)`) is not
+                    // a wire, so its signedness can't come from is_signed; fall
+                    // back to the UHDM expression type so `signed_reg >= 2**N`
+                    // stays signed (Verilog: signed iff BOTH operands signed).
+                    if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
+                        auto& uops = *uhdm_op->Operands();
+                        if (!a_signed)
+                            if (auto ae = any_cast<const expr*>(uops[0]))
+                                a_signed = is_expr_signed(ae);
+                        if (!b_signed)
+                            if (auto be = any_cast<const expr*>(uops[1]))
+                                b_signed = is_expr_signed(be);
+                    }
                     bool cmp_signed = a_signed && b_signed;
                     const char* nm = op_type == vpiLtOp ? "lt" :
                                      op_type == vpiLeOp ? "le" :
