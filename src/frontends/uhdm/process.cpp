@@ -489,7 +489,14 @@ void UhdmImporter::ff_simple_eval(const UHDM::any* stmt,
             RTLIL::Wire* w = module->wire(RTLIL::escape_id(name));
             // Reads resolve blocking vars to their in-flight value (blk);
             // everything else (registers, inputs) reads the real wire.
+            // Propagate the LHS width as the expression context (as every other
+            // assignment path does) so a widening arithmetic RHS keeps its carry
+            // — e.g. `reg [8:0] t; t = a + b;` must be a 9-bit add, not an 8-bit
+            // add zero-extended (which drops the carry into t[8]).
+            int prev_ctx = expression_context_width;
+            if (w) expression_context_width = w->width;
             RTLIL::SigSpec rhs = import_expression(any_cast<const expr*>(a->Rhs()), &blk);
+            expression_context_width = prev_ctx;
             if (w) {
                 if (rhs.size() < w->width) rhs.extend_u0(w->width,
                         rhs.is_wire() && rhs.as_wire()->is_signed);

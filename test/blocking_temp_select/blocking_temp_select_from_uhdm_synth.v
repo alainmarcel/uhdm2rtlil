@@ -250,66 +250,66 @@ module blocking_temp_select(clk, a, b, lo, carry);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  carry_reg /* _70_ */ (
-    .C(clk),
-    .D(_29_[7]),
-    .Q(carry)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[0]  /* _71_ */ (
+  \$_DFF_P_  \lo_reg[0]  /* _70_ */ (
     .C(clk),
     .D(_30_[0]),
     .Q(lo[0])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[1]  /* _72_ */ (
+  \$_DFF_P_  \lo_reg[1]  /* _71_ */ (
     .C(clk),
     .D(_31_[1]),
     .Q(lo[1])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[2]  /* _73_ */ (
+  \$_DFF_P_  \lo_reg[2]  /* _72_ */ (
     .C(clk),
     .D(_31_[2]),
     .Q(lo[2])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[3]  /* _74_ */ (
+  \$_DFF_P_  \lo_reg[3]  /* _73_ */ (
     .C(clk),
     .D(_31_[3]),
     .Q(lo[3])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[4]  /* _75_ */ (
+  \$_DFF_P_  \lo_reg[4]  /* _74_ */ (
     .C(clk),
     .D(_31_[4]),
     .Q(lo[4])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[5]  /* _76_ */ (
+  \$_DFF_P_  \lo_reg[5]  /* _75_ */ (
     .C(clk),
     .D(_31_[5]),
     .Q(lo[5])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[6]  /* _77_ */ (
+  \$_DFF_P_  \lo_reg[6]  /* _76_ */ (
     .C(clk),
     .D(_31_[6]),
     .Q(lo[6])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:14.2-18.5" *)
-  \$_DFF_P_  \lo_reg[7]  /* _78_ */ (
+  \$_DFF_P_  \lo_reg[7]  /* _77_ */ (
     .C(clk),
     .D(_31_[7]),
     .Q(lo[7])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:14.2-18.5" *)
+  \$_DFF_P_  carry_reg /* _78_ */ (
+    .C(clk),
+    .D(_29_[7]),
+    .Q(carry)
   );
   assign { _31_[8], _31_[0] } = { _29_[7], _30_[0] };
   assign _29_[8] = 1'h0;

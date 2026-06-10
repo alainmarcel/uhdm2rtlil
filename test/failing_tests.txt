@@ -67,7 +67,6 @@ macc
 simple_memory
 asym_ram_sdp_read_wider
 subbytes
-blocking_temp_select
 arch/xilinx/macc.v
 arch/xilinx/asym_ram_sdp_read_wider.v
 simple/subbytes.v

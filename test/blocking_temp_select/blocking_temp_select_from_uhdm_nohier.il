@@ -15,13 +15,7 @@ module \blocking_temp_select
   wire output 5 \carry
   attribute \src "dut.sv:13.12-13.13"
   wire width 9 \t
-  attribute \src "dut.sv:14.2-18.5"
-  wire width 9 $0\t
-  attribute \src "dut.sv:14.2-18.5"
-  wire width 8 $0\lo
-  attribute \src "dut.sv:14.2-18.5"
-  wire $0\carry
-  wire width 9 $auto$expression.cpp:3006:import_operation$2
+  wire width 9 $auto$expression.cpp:3248:import_operation$2
   attribute \src "dut.sv:15.7-15.12"
   cell $add $add$dut.sv:15$3
     parameter \A_SIGNED 0
@@ -31,17 +25,14 @@ module \blocking_temp_select
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
     connect \B { 1'0 \b }
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3248:import_operation$2
   end
   attribute \src "dut.sv:14.2-18.5"
   attribute \always_ff 1
   process $proc$dut.sv:14$1
-    assign $0\t $auto$expression.cpp:3006:import_operation$2
-    assign $0\lo $0\t [7:0]
-    assign $0\carry $0\t [8]
     sync posedge \clk
-      update \carry $0\carry
-      update \lo $0\lo
-      update \t $0\t
+      update \t $auto$expression.cpp:3248:import_operation$2
+      update \lo $auto$expression.cpp:3248:import_operation$2 [7:0]
+      update \carry $auto$expression.cpp:3248:import_operation$2 [8]
   end
 end
