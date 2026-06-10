@@ -4483,6 +4483,17 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
         if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
             base = bt->second;
     }
+    // The SSA always_ff path (ff_simple_eval) and always_comb thread same-cycle
+    // blocking values through input_mapping rather than ff_blocking_temps; a
+    // part-select of such a value must read the in-flight value too, mirroring
+    // import_ref_obj's whole-signal substitution.  PR #291 redirected
+    // whole-signal blocking-temp reads but missed part/bit-selects, so the
+    // consumer read the registered wire and got an extra cycle of delay.
+    if (input_mapping && !base_signal_name.empty()) {
+        auto im = input_mapping->find(base_signal_name);
+        if (im != input_mapping->end() && im->second.size() == base.size())
+            base = im->second;
+    }
 
     log("      Base signal width: %d\n", base.size());
 
@@ -4845,6 +4856,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         auto bt = ff_blocking_temps.find(signal_name);
         if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
             base = bt->second;
+    }
+    // SSA always_ff (ff_simple_eval) / always_comb thread same-cycle blocking
+    // values through input_mapping; a bit-select of such a value must read the
+    // in-flight value too (mirrors import_ref_obj; PR #291 missed bit-selects).
+    if (input_mapping && !signal_name.empty()) {
+        auto im = input_mapping->find(signal_name);
+        if (im != input_mapping->end() && im->second.size() == base.size())
+            base = im->second;
     }
     RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
 

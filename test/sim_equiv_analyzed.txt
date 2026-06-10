@@ -436,9 +436,3 @@ Test: subbytes
     from the Verilog frontend.  Miter INCONCLUSIVE (satgen can't model the
     $_DFFE_PN0N_ cell) so classified `bug` via override; UHDM-cosim FAIL /
     Verilog-cosim PASS is decisive.
-
-Test: blocking_temp_select
-    UHDM BUG: always_ff blocking temp read back via part-/bit-select in the
-    same cycle (minimal repro of the alu_sub pattern) diverges from the
-    Verilog frontend.  SAT miter NON-EQUIVALENT; UHDM-cosim FAIL /
-    Verilog-cosim PASS.  (Pre-existing baseline co-sim warning, now triaged.)
