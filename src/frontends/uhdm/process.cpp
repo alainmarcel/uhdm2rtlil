@@ -33,25 +33,54 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
         // signedness on the typespec.
         if (c->Typespec() && c->Typespec()->Actual_typespec())
             return is_typespec_signed(c->Typespec()->Actual_typespec());
+        // An unsized, unbased decimal literal (`2`, `39`) is SIGNED in Verilog
+        // (LRM §5.7.1), even though Surelog tags it vpiUIntConst.  A based or
+        // sized literal carries a base specifier (`8'hFF`, `40'd2`) and stays
+        // unsigned.  Needed so `signed_reg >= 2**(N-1)` compares as signed
+        // (macc overflow): the power operand recurses to these leaf literals.
+        int ct = c->VpiConstType();
+        if ((ct == vpiUIntConst || ct == vpiIntConst || ct == vpiDecConst) &&
+            !deco.empty() && deco.find('\'') == std::string_view::npos)
+            return true;
         return false;
     }
     if (auto r = any_cast<const UHDM::ref_obj*>(e)) {
+        // The SV base integer types int/integer/shortint/longint/byte are
+        // SIGNED by default (only `... unsigned` is unsigned), but Surelog
+        // often leaves VpiSigned unset on an inferred typespec — e.g. a plain
+        // `parameter SIZEOUT = 40` gets an int_typespec with no signed flag.
+        // Treat them as signed here so a signed-expression chain like
+        // `2**(SIZEOUT-1)` is recognised as signed for relational compares.
+        auto ts_signed = [&](const UHDM::any* ts) -> bool {
+            if (!ts) return false;
+            if (is_typespec_signed(ts)) return true;
+            switch (ts->UhdmType()) {
+                case UHDM::uhdmint_typespec:
+                case UHDM::uhdminteger_typespec:
+                case UHDM::uhdmshort_int_typespec:
+                case UHDM::uhdmlong_int_typespec:
+                case UHDM::uhdmbyte_typespec:
+                    return true;
+                default:
+                    return false;
+            }
+        };
         if (r->Actual_group()) {
             if (auto v = dynamic_cast<const UHDM::variables*>(r->Actual_group())) {
                 if (v->VpiSigned()) return true;
                 if (v->Typespec() && v->Typespec()->Actual_typespec())
-                    return is_typespec_signed(v->Typespec()->Actual_typespec());
+                    return ts_signed(v->Typespec()->Actual_typespec());
             }
             if (auto p = dynamic_cast<const UHDM::parameter*>(r->Actual_group())) {
                 if (p->VpiSigned()) return true;
                 if (p->Typespec() && p->Typespec()->Actual_typespec())
-                    return is_typespec_signed(p->Typespec()->Actual_typespec());
+                    return ts_signed(p->Typespec()->Actual_typespec());
             }
             // `reg signed` lands as a logic_net in the elaborated model.
             if (auto n = dynamic_cast<const UHDM::net*>(r->Actual_group())) {
                 if (n->VpiSigned()) return true;
                 if (n->Typespec() && n->Typespec()->Actual_typespec())
-                    return is_typespec_signed(n->Typespec()->Actual_typespec());
+                    return ts_signed(n->Typespec()->Actual_typespec());
             }
         }
         return false;
@@ -91,6 +120,39 @@ bool UhdmImporter::is_expr_signed(const UHDM::expr* e) {
                 return false;
             }
             if (ts) return is_typespec_signed(ts);
+        }
+        // Verilog operator self-determined signedness (LRM §11.8.1): needed so
+        // a folded constant sub-expression (e.g. `2**(SIZEOUT-1)`) keeps the
+        // signedness of its leaf literals for relational-compare signedness.
+        auto ops_signed = [&](int from, int count) -> bool {
+            if (!op->Operands()) return false;
+            auto& ops = *op->Operands();
+            if ((int)ops.size() < from + count) return false;
+            for (int i = from; i < from + count; i++) {
+                auto oe = any_cast<const UHDM::expr*>(ops[i]);
+                if (!oe || !is_expr_signed(oe)) return false;
+            }
+            return true;
+        };
+        switch (op->VpiOpType()) {
+            // Arithmetic / bitwise binary: signed iff ALL operands signed.
+            case vpiAddOp: case vpiSubOp: case vpiMultOp: case vpiDivOp:
+            case vpiModOp: case vpiPowerOp:
+            case vpiBitAndOp: case vpiBitOrOp: case vpiBitXorOp:
+                return ops_signed(0, 2);
+            // Unary +/-/~: follow the operand.
+            case vpiMinusOp: case vpiPlusOp: case vpiBitNegOp:
+                return ops_signed(0, 1);
+            // Shifts: signed iff the value (left) operand is signed.
+            case vpiLShiftOp: case vpiRShiftOp:
+            case vpiArithLShiftOp: case vpiArithRShiftOp:
+                return ops_signed(0, 1);
+            // Ternary: signed iff both result branches signed.
+            case vpiConditionOp:
+                return ops_signed(1, 2);
+            // Relational / equality / logical / reduction / concat → unsigned.
+            default:
+                return false;
         }
     }
     return false;
