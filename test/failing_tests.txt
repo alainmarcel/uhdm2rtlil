@@ -65,6 +65,4 @@ various/abc9.v
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
 simple_memory
 asym_ram_sdp_read_wider
-subbytes
 arch/xilinx/asym_ram_sdp_read_wider.v
-simple/subbytes.v

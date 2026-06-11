@@ -33,25 +33,28 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* src = "dut.sv:4.103-4.117" *)
   output sbox_decrypt_o;
   wire sbox_decrypt_o;
-  wire _00_;
-  wire _01_;
-  wire _02_;
-  wire _03_;
-  wire _04_;
-  wire _05_;
-  wire _06_;
-  wire _07_;
-  wire _08_;
-  wire _09_;
-  wire _10_;
-  wire _11_;
-  wire _12_;
-  wire _13_;
-  wire _14_;
-  wire _15_;
-  wire _16_;
-  wire _17_;
-  wire _18_;
+  (* src = "dut.sv:45.1-80.4" *)
+  wire [31:0] _000_;
+  wire _001_;
+  wire _002_;
+  wire _003_;
+  wire _004_;
+  wire _005_;
+  wire _006_;
+  wire _007_;
+  wire _008_;
+  wire _009_;
+  wire _010_;
+  wire _011_;
+  wire _012_;
+  wire _013_;
+  wire _014_;
+  wire _015_;
+  wire _016_;
+  wire _017_;
+  wire _018_;
+  wire _019_;
+  wire _020_;
   (* src = "dut.sv:42.11-42.21" *)
   wire [7:0] \data_array[0] ;
   (* src = "dut.sv:42.11-42.21" *)
@@ -64,184 +67,374 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   wire [31:0] data_i_var;
   (* src = "dut.sv:24.12-24.20" *)
   wire [31:0] data_reg;
-  wire [7:0] data_reg_128;
-  (* src = "dut.sv:43.11-43.23" *)
-  wire [7:0] \data_reg_var[0] ;
-  (* src = "dut.sv:43.11-43.23" *)
-  wire [7:0] \data_reg_var[1] ;
-  (* src = "dut.sv:43.11-43.23" *)
-  wire [7:0] \data_reg_var[2] ;
-  (* src = "dut.sv:43.11-43.23" *)
-  wire [7:0] \data_reg_var[3] ;
+  (* src = "dut.sv:41.24-41.36" *)
+  wire [31:0] data_reg_128;
   (* src = "dut.sv:26.5-26.17" *)
   wire next_ready_o;
   (* src = "dut.sv:23.11-23.21" *)
   wire [1:0] next_state;
   (* src = "dut.sv:22.11-22.16" *)
   wire [1:0] state;
-  \$_ORNOT_  _19_ (
+  \$_ORNOT_  _021_ (
     .A(1'h0),
     .B(state[0]),
-    .Y(_01_)
+    .Y(_002_)
   );
-  \$_ORNOT_  _20_ (
+  \$_ORNOT_  _022_ (
     .A(state[0]),
     .B(1'h0),
-    .Y(_02_)
+    .Y(_003_)
   );
-  \$_MUX_  _21_ (
-    .A(data_i[14]),
-    .B(data_i[6]),
-    .S(_02_),
-    .Y(_03_)
-  );
-  \$_MUX_  _22_ (
-    .A(data_i[22]),
-    .B(_03_),
-    .S(_01_),
-    .Y(_04_)
-  );
-  \$_MUX_  _23_ (
-    .A(data_i[30]),
-    .B(_04_),
-    .S(state[0]),
-    .Y(sbox_data_o[6])
-  );
-  \$_MUX_  _24_ (
+  \$_MUX_  _023_ (
     .A(data_i[13]),
     .B(data_i[5]),
-    .S(_02_),
-    .Y(_05_)
+    .S(_003_),
+    .Y(_004_)
   );
-  \$_MUX_  _25_ (
+  \$_MUX_  _024_ (
     .A(data_i[21]),
-    .B(_05_),
-    .S(_01_),
-    .Y(_06_)
+    .B(_004_),
+    .S(_002_),
+    .Y(_005_)
   );
-  \$_MUX_  _26_ (
+  \$_MUX_  _025_ (
     .A(data_i[29]),
-    .B(_06_),
+    .B(_005_),
     .S(state[0]),
     .Y(sbox_data_o[5])
   );
-  \$_MUX_  _27_ (
+  \$_MUX_  _026_ (
     .A(data_i[12]),
     .B(data_i[4]),
-    .S(_02_),
-    .Y(_07_)
+    .S(_003_),
+    .Y(_006_)
   );
-  \$_MUX_  _28_ (
+  \$_MUX_  _027_ (
     .A(data_i[20]),
-    .B(_07_),
-    .S(_01_),
-    .Y(_08_)
+    .B(_006_),
+    .S(_002_),
+    .Y(_007_)
   );
-  \$_MUX_  _29_ (
+  \$_MUX_  _028_ (
     .A(data_i[28]),
-    .B(_08_),
+    .B(_007_),
     .S(state[0]),
     .Y(sbox_data_o[4])
   );
-  \$_MUX_  _30_ (
+  \$_MUX_  _029_ (
     .A(data_i[11]),
     .B(data_i[3]),
-    .S(_02_),
-    .Y(_09_)
+    .S(_003_),
+    .Y(_008_)
   );
-  \$_MUX_  _31_ (
+  \$_MUX_  _030_ (
     .A(data_i[19]),
-    .B(_09_),
-    .S(_01_),
-    .Y(_10_)
+    .B(_008_),
+    .S(_002_),
+    .Y(_009_)
   );
-  \$_MUX_  _32_ (
+  \$_MUX_  _031_ (
     .A(data_i[27]),
-    .B(_10_),
+    .B(_009_),
     .S(state[0]),
     .Y(sbox_data_o[3])
   );
-  \$_MUX_  _33_ (
+  \$_MUX_  _032_ (
     .A(data_i[10]),
     .B(data_i[2]),
-    .S(_02_),
-    .Y(_11_)
+    .S(_003_),
+    .Y(_010_)
   );
-  \$_MUX_  _34_ (
+  \$_MUX_  _033_ (
     .A(data_i[18]),
-    .B(_11_),
-    .S(_01_),
-    .Y(_12_)
+    .B(_010_),
+    .S(_002_),
+    .Y(_011_)
   );
-  \$_MUX_  _35_ (
+  \$_MUX_  _034_ (
     .A(data_i[26]),
-    .B(_12_),
+    .B(_011_),
     .S(state[0]),
     .Y(sbox_data_o[2])
   );
-  \$_MUX_  _36_ (
+  \$_MUX_  _035_ (
     .A(data_i[9]),
     .B(data_i[1]),
-    .S(_02_),
-    .Y(_13_)
+    .S(_003_),
+    .Y(_012_)
   );
-  \$_MUX_  _37_ (
+  \$_MUX_  _036_ (
     .A(data_i[17]),
-    .B(_13_),
-    .S(_01_),
-    .Y(_14_)
+    .B(_012_),
+    .S(_002_),
+    .Y(_013_)
   );
-  \$_MUX_  _38_ (
+  \$_MUX_  _037_ (
     .A(data_i[25]),
-    .B(_14_),
+    .B(_013_),
     .S(state[0]),
     .Y(sbox_data_o[1])
   );
-  \$_MUX_  _39_ (
+  \$_MUX_  _038_ (
     .A(data_i[8]),
     .B(data_i[0]),
-    .S(_02_),
-    .Y(_15_)
+    .S(_003_),
+    .Y(_014_)
   );
-  \$_MUX_  _40_ (
+  \$_MUX_  _039_ (
     .A(data_i[16]),
-    .B(_15_),
-    .S(_01_),
-    .Y(_16_)
+    .B(_014_),
+    .S(_002_),
+    .Y(_015_)
   );
-  \$_MUX_  _41_ (
+  \$_MUX_  _040_ (
     .A(data_i[24]),
-    .B(_16_),
+    .B(_015_),
     .S(state[0]),
     .Y(sbox_data_o[0])
   );
-  \$_MUX_  _42_ (
+  \$_MUX_  _041_ (
+    .A(sbox_data_i[6]),
+    .B(data_reg[30]),
+    .S(state[0]),
+    .Y(_000_[30])
+  );
+  \$_MUX_  _042_ (
+    .A(sbox_data_i[5]),
+    .B(data_reg[29]),
+    .S(state[0]),
+    .Y(_000_[29])
+  );
+  \$_MUX_  _043_ (
+    .A(sbox_data_i[4]),
+    .B(data_reg[28]),
+    .S(state[0]),
+    .Y(_000_[28])
+  );
+  \$_MUX_  _044_ (
+    .A(sbox_data_i[3]),
+    .B(data_reg[27]),
+    .S(state[0]),
+    .Y(_000_[27])
+  );
+  \$_MUX_  _045_ (
+    .A(sbox_data_i[2]),
+    .B(data_reg[26]),
+    .S(state[0]),
+    .Y(_000_[26])
+  );
+  \$_MUX_  _046_ (
+    .A(sbox_data_i[1]),
+    .B(data_reg[25]),
+    .S(state[0]),
+    .Y(_000_[25])
+  );
+  \$_MUX_  _047_ (
+    .A(sbox_data_i[0]),
+    .B(data_reg[24]),
+    .S(state[0]),
+    .Y(_000_[24])
+  );
+  \$_MUX_  _048_ (
+    .A(sbox_data_i[6]),
+    .B(data_reg[22]),
+    .S(_002_),
+    .Y(_000_[22])
+  );
+  \$_MUX_  _049_ (
+    .A(sbox_data_i[5]),
+    .B(data_reg[21]),
+    .S(_002_),
+    .Y(_000_[21])
+  );
+  \$_MUX_  _050_ (
+    .A(sbox_data_i[4]),
+    .B(data_reg[20]),
+    .S(_002_),
+    .Y(_000_[20])
+  );
+  \$_MUX_  _051_ (
+    .A(sbox_data_i[3]),
+    .B(data_reg[19]),
+    .S(_002_),
+    .Y(_000_[19])
+  );
+  \$_MUX_  _052_ (
+    .A(sbox_data_i[2]),
+    .B(data_reg[18]),
+    .S(_002_),
+    .Y(_000_[18])
+  );
+  \$_MUX_  _053_ (
+    .A(sbox_data_i[1]),
+    .B(data_reg[17]),
+    .S(_002_),
+    .Y(_000_[17])
+  );
+  \$_MUX_  _054_ (
+    .A(sbox_data_i[0]),
+    .B(data_reg[16]),
+    .S(_002_),
+    .Y(_000_[16])
+  );
+  \$_MUX_  _055_ (
+    .A(sbox_data_i[6]),
+    .B(data_reg[14]),
+    .S(_003_),
+    .Y(_000_[14])
+  );
+  \$_MUX_  _056_ (
+    .A(sbox_data_i[5]),
+    .B(data_reg[13]),
+    .S(_003_),
+    .Y(_000_[13])
+  );
+  \$_MUX_  _057_ (
+    .A(sbox_data_i[4]),
+    .B(data_reg[12]),
+    .S(_003_),
+    .Y(_000_[12])
+  );
+  \$_MUX_  _058_ (
+    .A(sbox_data_i[3]),
+    .B(data_reg[11]),
+    .S(_003_),
+    .Y(_000_[11])
+  );
+  \$_MUX_  _059_ (
+    .A(sbox_data_i[2]),
+    .B(data_reg[10]),
+    .S(_003_),
+    .Y(_000_[10])
+  );
+  \$_MUX_  _060_ (
+    .A(sbox_data_i[1]),
+    .B(data_reg[9]),
+    .S(_003_),
+    .Y(_000_[9])
+  );
+  \$_MUX_  _061_ (
+    .A(sbox_data_i[0]),
+    .B(data_reg[8]),
+    .S(_003_),
+    .Y(_000_[8])
+  );
+  \$_NAND_  _062_ (
+    .A(state[0]),
+    .B(1'h0),
+    .Y(_016_)
+  );
+  \$_MUX_  _063_ (
+    .A(sbox_data_i[6]),
+    .B(data_reg[6]),
+    .S(_016_),
+    .Y(_000_[6])
+  );
+  \$_MUX_  _064_ (
+    .A(sbox_data_i[5]),
+    .B(data_reg[5]),
+    .S(_016_),
+    .Y(_000_[5])
+  );
+  \$_MUX_  _065_ (
+    .A(sbox_data_i[4]),
+    .B(data_reg[4]),
+    .S(_016_),
+    .Y(_000_[4])
+  );
+  \$_MUX_  _066_ (
+    .A(sbox_data_i[3]),
+    .B(data_reg[3]),
+    .S(_016_),
+    .Y(_000_[3])
+  );
+  \$_MUX_  _067_ (
+    .A(sbox_data_i[2]),
+    .B(data_reg[2]),
+    .S(_016_),
+    .Y(_000_[2])
+  );
+  \$_MUX_  _068_ (
+    .A(sbox_data_i[1]),
+    .B(data_reg[1]),
+    .S(_016_),
+    .Y(_000_[1])
+  );
+  \$_MUX_  _069_ (
+    .A(sbox_data_i[0]),
+    .B(data_reg[0]),
+    .S(_016_),
+    .Y(_000_[0])
+  );
+  \$_MUX_  _070_ (
+    .A(sbox_data_i[7]),
+    .B(data_reg[7]),
+    .S(_016_),
+    .Y(_000_[7])
+  );
+  \$_MUX_  _071_ (
+    .A(data_i[14]),
+    .B(data_i[6]),
+    .S(_003_),
+    .Y(_017_)
+  );
+  \$_MUX_  _072_ (
+    .A(data_i[22]),
+    .B(_017_),
+    .S(_002_),
+    .Y(_018_)
+  );
+  \$_MUX_  _073_ (
+    .A(data_i[30]),
+    .B(_018_),
+    .S(state[0]),
+    .Y(sbox_data_o[6])
+  );
+  \$_MUX_  _074_ (
+    .A(sbox_data_i[7]),
+    .B(data_reg[15]),
+    .S(_003_),
+    .Y(_000_[15])
+  );
+  \$_MUX_  _075_ (
+    .A(sbox_data_i[7]),
+    .B(data_reg[23]),
+    .S(_002_),
+    .Y(_000_[23])
+  );
+  \$_MUX_  _076_ (
+    .A(sbox_data_i[7]),
+    .B(data_reg[31]),
+    .S(state[0]),
+    .Y(_000_[31])
+  );
+  \$_MUX_  _077_ (
     .A(data_i[15]),
     .B(data_i[7]),
-    .S(_02_),
-    .Y(_17_)
+    .S(_003_),
+    .Y(_019_)
   );
-  \$_MUX_  _43_ (
+  \$_MUX_  _078_ (
     .A(data_i[23]),
-    .B(_17_),
-    .S(_01_),
-    .Y(_18_)
+    .B(_019_),
+    .S(_002_),
+    .Y(_020_)
   );
-  \$_MUX_  _44_ (
+  \$_MUX_  _079_ (
     .A(data_i[31]),
-    .B(_18_),
+    .B(_020_),
     .S(state[0]),
     .Y(sbox_data_o[7])
   );
-  \$_ORNOT_  _45_ (
+  \$_ORNOT_  _080_ (
     .A(start_i),
     .B(state[0]),
-    .Y(_00_)
+    .Y(_001_)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[0]  /* _46_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[0]  /* _081_ */ (
     .C(clk),
     .D(data_reg_128[0]),
     .E(state[0]),
@@ -251,7 +444,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[1]  /* _47_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[1]  /* _082_ */ (
     .C(clk),
     .D(data_reg_128[1]),
     .E(state[0]),
@@ -261,7 +454,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[2]  /* _48_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[2]  /* _083_ */ (
     .C(clk),
     .D(data_reg_128[2]),
     .E(state[0]),
@@ -271,7 +464,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[3]  /* _49_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[3]  /* _084_ */ (
     .C(clk),
     .D(data_reg_128[3]),
     .E(state[0]),
@@ -281,7 +474,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[4]  /* _50_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[4]  /* _085_ */ (
     .C(clk),
     .D(data_reg_128[4]),
     .E(state[0]),
@@ -291,7 +484,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[5]  /* _51_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[5]  /* _086_ */ (
     .C(clk),
     .D(data_reg_128[5]),
     .E(state[0]),
@@ -301,7 +494,7 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[6]  /* _52_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[6]  /* _087_ */ (
     .C(clk),
     .D(data_reg_128[6]),
     .E(state[0]),
@@ -311,85 +504,464 @@ module subbytes_00(clk, reset, start_i, decrypt_i, data_i, ready_o, data_o, sbox
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0N_  \data_reg_reg[7]  /* _53_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[7]  /* _088_ */ (
     .C(clk),
     .D(data_reg_128[7]),
     .E(state[0]),
     .Q(data_reg[7]),
     .R(reset)
   );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[0]  /* _54_ */ (
-    .D(data_reg[0]),
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[8]  /* _089_ */ (
+    .C(clk),
+    .D(data_reg_128[8]),
     .E(state[0]),
-    .Q(data_reg_128[0])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[1]  /* _55_ */ (
-    .D(data_reg[1]),
-    .E(state[0]),
-    .Q(data_reg_128[1])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[2]  /* _56_ */ (
-    .D(data_reg[2]),
-    .E(state[0]),
-    .Q(data_reg_128[2])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[3]  /* _57_ */ (
-    .D(data_reg[3]),
-    .E(state[0]),
-    .Q(data_reg_128[3])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[4]  /* _58_ */ (
-    .D(data_reg[4]),
-    .E(state[0]),
-    .Q(data_reg_128[4])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[5]  /* _59_ */ (
-    .D(data_reg[5]),
-    .E(state[0]),
-    .Q(data_reg_128[5])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[6]  /* _60_ */ (
-    .D(data_reg[6]),
-    .E(state[0]),
-    .Q(data_reg_128[6])
-  );
-  (* src = "dut.sv:45.1-80.4" *)
-  \$_DLATCH_N_  \data_reg_128_reg[7]  /* _61_ */ (
-    .D(data_reg[7]),
-    .E(state[0]),
-    .Q(data_reg_128[7])
+    .Q(data_reg[8]),
+    .R(reset)
   );
   (* \"has_async_reset"  = 32'd1 *)
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:28.1-39.4" *)
-  \$_DFFE_PN0P_  \state_reg[0]  /* _62_ */ (
+  \$_DFFE_PN0N_  \data_reg_reg[9]  /* _090_ */ (
+    .C(clk),
+    .D(data_reg_128[9]),
+    .E(state[0]),
+    .Q(data_reg[9]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[10]  /* _091_ */ (
+    .C(clk),
+    .D(data_reg_128[10]),
+    .E(state[0]),
+    .Q(data_reg[10]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[11]  /* _092_ */ (
+    .C(clk),
+    .D(data_reg_128[11]),
+    .E(state[0]),
+    .Q(data_reg[11]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[12]  /* _093_ */ (
+    .C(clk),
+    .D(data_reg_128[12]),
+    .E(state[0]),
+    .Q(data_reg[12]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[13]  /* _094_ */ (
+    .C(clk),
+    .D(data_reg_128[13]),
+    .E(state[0]),
+    .Q(data_reg[13]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[14]  /* _095_ */ (
+    .C(clk),
+    .D(data_reg_128[14]),
+    .E(state[0]),
+    .Q(data_reg[14]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[15]  /* _096_ */ (
+    .C(clk),
+    .D(data_reg_128[15]),
+    .E(state[0]),
+    .Q(data_reg[15]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[16]  /* _097_ */ (
+    .C(clk),
+    .D(data_reg_128[16]),
+    .E(state[0]),
+    .Q(data_reg[16]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[17]  /* _098_ */ (
+    .C(clk),
+    .D(data_reg_128[17]),
+    .E(state[0]),
+    .Q(data_reg[17]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[18]  /* _099_ */ (
+    .C(clk),
+    .D(data_reg_128[18]),
+    .E(state[0]),
+    .Q(data_reg[18]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[19]  /* _100_ */ (
+    .C(clk),
+    .D(data_reg_128[19]),
+    .E(state[0]),
+    .Q(data_reg[19]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[20]  /* _101_ */ (
+    .C(clk),
+    .D(data_reg_128[20]),
+    .E(state[0]),
+    .Q(data_reg[20]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[21]  /* _102_ */ (
+    .C(clk),
+    .D(data_reg_128[21]),
+    .E(state[0]),
+    .Q(data_reg[21]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[22]  /* _103_ */ (
+    .C(clk),
+    .D(data_reg_128[22]),
+    .E(state[0]),
+    .Q(data_reg[22]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[23]  /* _104_ */ (
+    .C(clk),
+    .D(data_reg_128[23]),
+    .E(state[0]),
+    .Q(data_reg[23]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[24]  /* _105_ */ (
+    .C(clk),
+    .D(data_reg_128[24]),
+    .E(state[0]),
+    .Q(data_reg[24]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[25]  /* _106_ */ (
+    .C(clk),
+    .D(data_reg_128[25]),
+    .E(state[0]),
+    .Q(data_reg[25]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[26]  /* _107_ */ (
+    .C(clk),
+    .D(data_reg_128[26]),
+    .E(state[0]),
+    .Q(data_reg[26]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[27]  /* _108_ */ (
+    .C(clk),
+    .D(data_reg_128[27]),
+    .E(state[0]),
+    .Q(data_reg[27]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[28]  /* _109_ */ (
+    .C(clk),
+    .D(data_reg_128[28]),
+    .E(state[0]),
+    .Q(data_reg[28]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[29]  /* _110_ */ (
+    .C(clk),
+    .D(data_reg_128[29]),
+    .E(state[0]),
+    .Q(data_reg[29]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[30]  /* _111_ */ (
+    .C(clk),
+    .D(data_reg_128[30]),
+    .E(state[0]),
+    .Q(data_reg[30]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0N_  \data_reg_reg[31]  /* _112_ */ (
+    .C(clk),
+    .D(data_reg_128[31]),
+    .E(state[0]),
+    .Q(data_reg[31]),
+    .R(reset)
+  );
+  (* \"has_async_reset"  = 32'd1 *)
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:28.1-39.4" *)
+  \$_DFFE_PN0P_  \state_reg[0]  /* _113_ */ (
     .C(clk),
     .D(1'h1),
-    .E(_00_),
+    .E(_001_),
     .Q(state[0]),
     .R(reset)
   );
-  assign \data_reg_var[3]  = data_reg[7:0];
-  assign \data_reg_var[2]  = 8'h00;
-  assign \data_reg_var[1]  = 8'h00;
-  assign \data_reg_var[0]  = 8'h00;
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[0]  /* _114_ */ (
+    .D(_000_[0]),
+    .E(state[0]),
+    .Q(data_reg_128[0])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[1]  /* _115_ */ (
+    .D(_000_[1]),
+    .E(state[0]),
+    .Q(data_reg_128[1])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[2]  /* _116_ */ (
+    .D(_000_[2]),
+    .E(state[0]),
+    .Q(data_reg_128[2])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[3]  /* _117_ */ (
+    .D(_000_[3]),
+    .E(state[0]),
+    .Q(data_reg_128[3])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[4]  /* _118_ */ (
+    .D(_000_[4]),
+    .E(state[0]),
+    .Q(data_reg_128[4])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[5]  /* _119_ */ (
+    .D(_000_[5]),
+    .E(state[0]),
+    .Q(data_reg_128[5])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[6]  /* _120_ */ (
+    .D(_000_[6]),
+    .E(state[0]),
+    .Q(data_reg_128[6])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[7]  /* _121_ */ (
+    .D(_000_[7]),
+    .E(state[0]),
+    .Q(data_reg_128[7])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[8]  /* _122_ */ (
+    .D(_000_[8]),
+    .E(state[0]),
+    .Q(data_reg_128[8])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[9]  /* _123_ */ (
+    .D(_000_[9]),
+    .E(state[0]),
+    .Q(data_reg_128[9])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[10]  /* _124_ */ (
+    .D(_000_[10]),
+    .E(state[0]),
+    .Q(data_reg_128[10])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[11]  /* _125_ */ (
+    .D(_000_[11]),
+    .E(state[0]),
+    .Q(data_reg_128[11])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[12]  /* _126_ */ (
+    .D(_000_[12]),
+    .E(state[0]),
+    .Q(data_reg_128[12])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[13]  /* _127_ */ (
+    .D(_000_[13]),
+    .E(state[0]),
+    .Q(data_reg_128[13])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[14]  /* _128_ */ (
+    .D(_000_[14]),
+    .E(state[0]),
+    .Q(data_reg_128[14])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[15]  /* _129_ */ (
+    .D(_000_[15]),
+    .E(state[0]),
+    .Q(data_reg_128[15])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[16]  /* _130_ */ (
+    .D(_000_[16]),
+    .E(state[0]),
+    .Q(data_reg_128[16])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[17]  /* _131_ */ (
+    .D(_000_[17]),
+    .E(state[0]),
+    .Q(data_reg_128[17])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[18]  /* _132_ */ (
+    .D(_000_[18]),
+    .E(state[0]),
+    .Q(data_reg_128[18])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[19]  /* _133_ */ (
+    .D(_000_[19]),
+    .E(state[0]),
+    .Q(data_reg_128[19])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[20]  /* _134_ */ (
+    .D(_000_[20]),
+    .E(state[0]),
+    .Q(data_reg_128[20])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[21]  /* _135_ */ (
+    .D(_000_[21]),
+    .E(state[0]),
+    .Q(data_reg_128[21])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[22]  /* _136_ */ (
+    .D(_000_[22]),
+    .E(state[0]),
+    .Q(data_reg_128[22])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[23]  /* _137_ */ (
+    .D(_000_[23]),
+    .E(state[0]),
+    .Q(data_reg_128[23])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[24]  /* _138_ */ (
+    .D(_000_[24]),
+    .E(state[0]),
+    .Q(data_reg_128[24])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[25]  /* _139_ */ (
+    .D(_000_[25]),
+    .E(state[0]),
+    .Q(data_reg_128[25])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[26]  /* _140_ */ (
+    .D(_000_[26]),
+    .E(state[0]),
+    .Q(data_reg_128[26])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[27]  /* _141_ */ (
+    .D(_000_[27]),
+    .E(state[0]),
+    .Q(data_reg_128[27])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[28]  /* _142_ */ (
+    .D(_000_[28]),
+    .E(state[0]),
+    .Q(data_reg_128[28])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[29]  /* _143_ */ (
+    .D(_000_[29]),
+    .E(state[0]),
+    .Q(data_reg_128[29])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[30]  /* _144_ */ (
+    .D(_000_[30]),
+    .E(state[0]),
+    .Q(data_reg_128[30])
+  );
+  (* src = "dut.sv:45.1-80.4" *)
+  \$_DLATCH_N_  \data_reg_128_reg[31]  /* _145_ */ (
+    .D(_000_[31]),
+    .E(state[0]),
+    .Q(data_reg_128[31])
+  );
   assign \data_array[3]  = data_i[7:0];
   assign \data_array[2]  = data_i[15:8];
   assign \data_array[1]  = data_i[23:16];
   assign \data_array[0]  = data_i[31:24];
   assign data_i_var = data_i;
   assign next_ready_o = 1'h0;
-  assign data_reg[31:8] = 24'h000000;
   assign next_state = 2'h1;
   assign state[1] = 1'h0;
   assign sbox_decrypt_o = decrypt_i;
-  assign data_o = { 24'h000000, data_reg[7:0] };
+  assign data_o = data_reg;
   assign ready_o = 1'h0;
 endmodule
