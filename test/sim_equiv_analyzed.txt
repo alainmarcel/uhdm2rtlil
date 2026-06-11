@@ -426,8 +426,3 @@ Test: asym_ram_sdp_read_wider
     port diverges.  SAT miter NON-EQUIVALENT; UHDM-cosim FAIL / Verilog-cosim
     PASS.
 
-Test: subbytes
-    UHDM BUG: async-reset (negedge) datapath with blocking temps diverges
-    from the Verilog frontend.  Miter INCONCLUSIVE (satgen can't model the
-    $_DFFE_PN0N_ cell) so classified `bug` via override; UHDM-cosim FAIL /
-    Verilog-cosim PASS is decisive.

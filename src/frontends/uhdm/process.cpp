@@ -7781,6 +7781,84 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     return true;
 }
 
+// Write to an UNPACKED array element with a dynamic index:
+// `arr[idx] = rhs` where `arr` is an unpacked array flattened to per-element
+// wires (`\arr[0]`, `\arr[1]`, …) and `idx` is non-constant.  Mirrors the
+// read mux-chain in import_bit_select: for every element k emit
+// `arr[k] = (idx == k) ? rhs : arr[k]`, driving each element's `$0\` temp
+// and threading current_comb_values so a later same-cycle read (e.g.
+// subbytes' `data_reg_128[..] = data_reg_var[k]` repack) sees the update.
+// Returns false (so the caller falls back) when the LHS is not an expanded
+// unpacked array or the index is constant (the static path handles those).
+bool UhdmImporter::emit_dynamic_unpacked_array_write(
+        const UHDM::bit_select* bs,
+        const UHDM::any* rhs_any,
+        RTLIL::Process* proc,
+        RTLIL::CaseRule* case_rule) {
+    if (!bs) return false;
+    std::string base_name = std::string(bs->VpiName());
+    if (base_name.empty()) return false;
+    // Expanded unpacked array: element wires \base[0], \base[1], … exist.
+    // (A real $memory has no such wires — bail so the memory path handles it.)
+    RTLIL::Wire* first = module->wire(RTLIL::escape_id(base_name + "[0]"));
+    if (!first) return false;
+    int elem_w = first->width;
+    int num_elems = 0;
+    while (module->wire(RTLIL::escape_id(
+               base_name + "[" + std::to_string(num_elems) + "]")))
+        num_elems++;
+    if (num_elems <= 0) return false;
+
+    auto idx_expr = bs->VpiIndex();
+    if (!idx_expr) return false;
+    RTLIL::SigSpec idx = import_expression(idx_expr);
+    if (idx.size() == 0 || idx.is_fully_const()) return false;  // static path
+
+    if (!rhs_any) return false;
+    auto rhs_expr_obj = dynamic_cast<const UHDM::expr*>(rhs_any);
+    if (!rhs_expr_obj) return false;
+    int prev_ctx = expression_context_width;
+    expression_context_width = elem_w;
+    RTLIL::SigSpec rhs = import_expression(rhs_expr_obj);
+    expression_context_width = prev_ctx;
+    bool rhs_signed = is_expr_signed(rhs_expr_obj);
+    if (rhs.size() < elem_w) rhs.extend_u0(elem_w, rhs_signed);
+    else if (rhs.size() > elem_w) rhs = rhs.extract(0, elem_w);
+
+    for (int k = 0; k < num_elems; k++) {
+        std::string ename = base_name + "[" + std::to_string(k) + "]";
+        RTLIL::Wire* ew = module->wire(RTLIL::escape_id(ename));
+        if (!ew) continue;
+        // Current (in-flight) value of this element — the unpacked byte that
+        // was assigned earlier this cycle, else the registered wire.
+        RTLIL::SigSpec cur;
+        if (!in_always_ff_body_mode && current_comb_values.count(ename))
+            cur = current_comb_values.at(ename);
+        else
+            cur = RTLIL::SigSpec(ew);
+        // sel = (idx == k);  new = sel ? rhs : cur  (Mux: Y = S ? B : A)
+        RTLIL::Wire* sel = module->addWire(NEW_ID, 1);
+        module->addEq(NEW_ID, idx,
+                      RTLIL::SigSpec(RTLIL::Const(k, GetSize(idx))), sel);
+        RTLIL::Wire* nv = module->addWire(NEW_ID, elem_w);
+        module->addMux(NEW_ID, cur, rhs, RTLIL::SigSpec(sel), nv);
+        if (proc) {
+            emit_comb_assign(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv), proc);
+        } else if (case_rule) {
+            std::string temp_name = "$0\\" + ename;
+            if (RTLIL::Wire* tw = module->wire(temp_name))
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(tw), RTLIL::SigSpec(nv)));
+            else
+                case_rule->actions.push_back(
+                    RTLIL::SigSig(RTLIL::SigSpec(ew), RTLIL::SigSpec(nv)));
+        }
+        if (!in_always_ff_body_mode)
+            current_comb_values[ename] = RTLIL::SigSpec(nv);
+    }
+    return true;
+}
+
 // Write to a struct field's dynamic bit-select: `s.field[idx] = rhs` where
 // `field` is a packed array (e.g., `logic [0:3][7:0] data`) and `idx` is
 // non-constant.  Walks the struct typespec to find the field's offset
@@ -8014,6 +8092,19 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             auto hp = any_cast<const hier_path*>(lhs_e);
             if (emit_dynamic_struct_field_bit_write(
                     hp, uhdm_assign->Rhs(), proc, nullptr))
+                return;
+        }
+    }
+
+    // `arr[idx] = rhs` with dynamic `idx` on an unpacked array flattened to
+    // per-element wires — emit a per-element conditional write (subbytes'
+    // `data_reg_var[state] = sbox_data_i`).  Without this, import_expression()
+    // on the LHS reads the element via a mux and writes to a stray temp.
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiBitSelect) {
+            auto bs = any_cast<const bit_select*>(lhs_e);
+            if (emit_dynamic_unpacked_array_write(
+                    bs, uhdm_assign->Rhs(), proc, nullptr))
                 return;
         }
     }
@@ -8536,6 +8627,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             auto hp = any_cast<const hier_path*>(lhs_e);
             if (emit_dynamic_struct_field_bit_write(
                     hp, uhdm_assign->Rhs(), nullptr, case_rule))
+                return;
+        }
+    }
+
+    // `arr[idx] = rhs` with dynamic `idx` on an unpacked array flattened to
+    // per-element wires — emit a per-element conditional write (subbytes'
+    // `data_reg_var[state] = sbox_data_i` inside the `if (state) … else`).
+    if (auto lhs_e = uhdm_assign->Lhs()) {
+        if (lhs_e->VpiType() == vpiBitSelect) {
+            auto bs = any_cast<const bit_select*>(lhs_e);
+            if (emit_dynamic_unpacked_array_write(
+                    bs, uhdm_assign->Rhs(), nullptr, case_rule))
                 return;
         }
     }
@@ -9369,6 +9472,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     auto ips = any_cast<const indexed_part_select*>(lhs_e);
                     if (emit_dynamic_indexed_part_select_write(
                             ips, assign->Rhs(), nullptr, case_rule))
+                        return;
+                }
+            }
+
+            // `arr[idx] = rhs` with dynamic `idx` on an unpacked array
+            // flattened to per-element wires (subbytes' `data_reg_var[state]
+            // = sbox_data_i` inside `if (state) … else`).  Must run before the
+            // generic LHS import, which would read the element via a mux and
+            // write the result into a stray temp instead of the array.
+            if (auto lhs_e = assign->Lhs()) {
+                if (lhs_e->VpiType() == vpiBitSelect) {
+                    auto bs = any_cast<const bit_select*>(lhs_e);
+                    if (emit_dynamic_unpacked_array_write(
+                            bs, assign->Rhs(), nullptr, case_rule))
                         return;
                 }
             }

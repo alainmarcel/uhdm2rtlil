@@ -28,4 +28,3 @@ unbased_unsized_param  artefact   # SVA $check/$eqx; miter INCONCLUSIVE
 jeras_tcb_gpio         artefact   # interface / uhdm-only; miter INCONCLUSIVE
 
 # --- confirmed UHDM-vs-Verilog bug, miter INCONCLUSIVE (satgen cell) ---
-subbytes               bug        # async-reset datapath; $_DFFE_PN0N_ unmodellable, cosim-decisive (UHDM fail/Verilog pass). See cosim_uhdm_bugs.txt
