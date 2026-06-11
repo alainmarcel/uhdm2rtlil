@@ -4537,6 +4537,63 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 (long long)increment, inclusive);
             
             if (can_unroll && body) {
+                // In an always_ff (NOT an initial block), a for-loop whose
+                // begin-block body writes a memory (`if(rst) for(i) mem[i]<=0`)
+                // is a RUNTIME clear/fill, not a ROM init.  Unroll it into one
+                // sync memwr per iteration via the general
+                // import_statement_sync path: it reaches import_assignment_sync's
+                // memwr handler with the loop index folded to a constant (via
+                // loop_values) and the write gated by the enclosing condition
+                // (rst).  This bypasses the initial-block $meminit / interpreter
+                // / ROM-init special cases below, which otherwise treat the
+                // runtime clear as a power-on init (so a mid-run reset never
+                // clears the memory — simple_memory).
+                // Only the simple runtime-fill shape `mem[<loop_var>] <= …`
+                // (what the ROM-init heuristics below mis-handle).  A write at a
+                // computed/port-dependent address — e.g.
+                // asym_ram_sdp_write_wider's `RAM[addrA*RATIO+i] <= diA[…]` — is
+                // already handled correctly by the begin-block path, so leave it.
+                auto mem_writes_indexed_by_loop_var = [&](const any* blk) -> bool {
+                    auto* stmts = (blk->VpiType() == vpiBegin ||
+                                   blk->VpiType() == vpiNamedBegin)
+                                      ? begin_block_stmts(blk) : nullptr;
+                    if (!stmts) return false;
+                    bool any_mem = false;
+                    for (auto x : *stmts) {
+                        if (x->VpiType() != vpiAssignment) continue;
+                        auto a = any_cast<const assignment*>(x);
+                        if (!a->Lhs() || a->Lhs()->VpiType() != vpiBitSelect) continue;
+                        auto bsl = any_cast<const bit_select*>(a->Lhs());
+                        if (!module->memories.count(
+                                RTLIL::escape_id(std::string(bsl->VpiName()))))
+                            continue;
+                        any_mem = true;
+                        auto idx = bsl->VpiIndex();
+                        if (!idx || idx->VpiType() != vpiRefObj ||
+                            std::string(any_cast<const ref_obj*>(idx)->VpiName())
+                                != loop_var_name)
+                            return false;  // computed address → defer
+                    }
+                    return any_mem;
+                };
+                if (!in_initial_block &&
+                    (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) &&
+                    mem_writes_indexed_by_loop_var(body)) {
+                    {
+                        int64_t loop_end = inclusive ? end_value : end_value - 1;
+                        for (int64_t i = start_value;
+                             increment > 0 ? i <= loop_end : i >= loop_end;
+                             i += increment) {
+                            loop_values[loop_var_name] = (int)i;
+                            import_statement_sync(body, sync, is_reset);
+                        }
+                        loop_values[loop_var_name] =
+                            (int)(inclusive ? end_value + increment : end_value);
+                        log("        always_ff memory-write for loop unrolled\n");
+                        break;  // done with the vpiFor case
+                    }
+                }
+
                 // Handle single assignment in loop body (shift register pattern)
                 if (body->VpiType() == vpiAssignment) {
                     const assignment* assign = any_cast<const assignment*>(body);
@@ -7368,7 +7425,20 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                 } else {
                     addr = import_expression(bit_sel->VpiIndex());
                 }
-                
+
+                // Size the address to the memory's address width.  A folded
+                // loop-index constant comes back 32-bit (Const(k, 32)), but
+                // PROC_MEMWR requires every write port's ADDR to match the
+                // memory's ABITS — otherwise it crashes reconciling a
+                // 32-bit-addr clear (`for(i) mem[i]<=0`) against the normal
+                // 4-bit-addr data write (simple_memory).
+                {
+                    int abits = 1;
+                    while ((1 << abits) < memory->size) abits++;
+                    if (addr.size() > abits) addr = addr.extract(0, abits);
+                    else if (addr.size() < abits) addr.extend_u0(abits, false);
+                }
+
                 // Get data - check if it needs variable substitution.
                 // Propagate memory width as context so arithmetic RHS
                 // (e.g. `M[0] <= rA * rB`) widens to the destination
@@ -7399,12 +7469,20 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
                     }
                 }
                 
-                // Create memwr action
+                // Create memwr action.  priority_mask must be sized to the
+                // number of writes already queued in this sync rule, or
+                // PROC_MEMWR segfaults indexing it (it stays 0-width otherwise;
+                // harmless for a single write, fatal once a `for(i) mem[i]<=0`
+                // clear adds many).  All-1s = this (later-in-source) write wins
+                // over every prior one — the standard Verilog last-write-wins
+                // semantics.
+                int nprev_writes = (int)sync->mem_write_actions.size();
                 sync->mem_write_actions.push_back(RTLIL::MemWriteAction());
                 RTLIL::MemWriteAction &action = sync->mem_write_actions.back();
                 action.memid = mem_id;
                 action.address = addr;
                 action.data = data;
+                action.priority_mask = RTLIL::Const(RTLIL::State::S1, nprev_writes);
                 
                 // Use current condition as enable if we're inside an if statement
                 if (!current_condition.empty()) {
