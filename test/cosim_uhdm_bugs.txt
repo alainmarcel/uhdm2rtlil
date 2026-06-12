@@ -18,9 +18,8 @@
 #   - listed expected-fail in failing_tests.txt (internal name + yosys paths)
 # Fix one isolated change at a time, then remove from all of the above.
 #
-# FIXED so far: blocking_temp_select, macc, subbytes.
+# FIXED so far: blocking_temp_select, macc, subbytes, simple_memory.
 #
 # test                      symptom
 # ------------------------  -----------------------------------------------
-simple_memory               synchronous whole-array clear-on-reset (for i: mem[i]<=0) not modelled; reads stale data after a mid-run reset; miter NON-EQUIVALENT.
 asym_ram_sdp_read_wider     asymmetric dual-clock SDP RAM (narrow write / wide read) read port diverges; miter NON-EQUIVALENT.

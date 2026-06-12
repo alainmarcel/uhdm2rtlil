@@ -22,182 +22,22 @@ module \simple_memory
   attribute \src "dut.sv:18.13-18.14"
   wire width 32 signed \i
   attribute \src "dut.sv:24.13-24.38"
-  wire width 8 $auto$process.cpp:7053:import_assignment_sync$2
+  wire width 8 $auto$process.cpp:7651:import_assignment_sync$2
   attribute \src "dut.sv:20.9-33.12"
   wire $auto$process_helper.cpp:88:create_not_cell$4
   wire $auto$rtlil.cc:3302:And$7
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:32.13-32.37"
-  wire width 8 $auto$process.cpp:7053:import_assignment_sync$8
+  wire width 8 $auto$process.cpp:7651:import_assignment_sync$8
   attribute \src "dut.sv:15.21-15.27"
   memory width 8 size 16 \memory
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$12
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 12
-    connect \ADDR 0
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$13
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 13
-    connect \ADDR 1
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$14
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 14
-    connect \ADDR 2
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$15
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 15
-    connect \ADDR 3
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$16
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 16
-    connect \ADDR 4
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$17
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 17
-    connect \ADDR 5
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$18
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 18
-    connect \ADDR 6
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$19
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 19
-    connect \ADDR 7
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$20
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 20
-    connect \ADDR 8
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$21
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 21
-    connect \ADDR 9
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$22
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 22
-    connect \ADDR 10
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$23
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 23
-    connect \ADDR 11
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$24
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 24
-    connect \ADDR 12
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$25
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 25
-    connect \ADDR 13
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$26
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 26
-    connect \ADDR 14
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
-  cell $meminit_v2 $meminit$\memory$dut.sv:21$27
-    parameter \MEMID "\\memory"
-    parameter \ABITS 32
-    parameter \WIDTH 8
-    parameter \WORDS 1
-    parameter \PRIORITY 27
-    connect \ADDR 15
-    connect \DATA 8'00000000
-    connect \EN 8'11111111
-  end
   attribute \src "dut.sv:24.13-24.38"
-  cell $mux $auto$process.cpp:7055:import_assignment_sync$3
+  cell $mux $auto$process.cpp:7653:import_assignment_sync$3
     parameter \WIDTH 8
     connect \A \data_out
     connect \B 8'00000000
     connect \S \rst
-    connect \Y $auto$process.cpp:7053:import_assignment_sync$2
+    connect \Y $auto$process.cpp:7651:import_assignment_sync$2
   end
   attribute \src "dut.sv:20.9-33.12"
   cell $not $auto$process_helper.cpp:91:create_not_cell$5
@@ -207,7 +47,7 @@ module \simple_memory
     connect \A \rst
     connect \Y $auto$process_helper.cpp:88:create_not_cell$4
   end
-  cell $and $auto$process.cpp:8116:import_if_stmt_sync$6
+  cell $and $auto$process.cpp:8948:import_if_stmt_sync$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -231,18 +71,34 @@ module \simple_memory
     connect \DATA \memrd_memory_DATA
   end
   attribute \src "dut.sv:32.13-32.37"
-  cell $mux $auto$process.cpp:7055:import_assignment_sync$9
+  cell $mux $auto$process.cpp:7653:import_assignment_sync$9
     parameter \WIDTH 8
-    connect \A $auto$process.cpp:7053:import_assignment_sync$2
+    connect \A $auto$process.cpp:7651:import_assignment_sync$2
     connect \B \memrd_memory_DATA
     connect \S $auto$process_helper.cpp:88:create_not_cell$4
-    connect \Y $auto$process.cpp:7053:import_assignment_sync$8
+    connect \Y $auto$process.cpp:7651:import_assignment_sync$8
   end
   attribute \src "dut.sv:19.5-34.8"
   attribute \always_ff 1
   process $proc$dut.sv:19$1
     sync posedge \clk
-      update \data_out $auto$process.cpp:7053:import_assignment_sync$8
-      memwr \memory \addr \data_in { $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 } 0'x
+      update \data_out $auto$process.cpp:7651:import_assignment_sync$8
+      memwr \memory 4'0000 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 0'x
+      memwr \memory 4'0001 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 1'1
+      memwr \memory 4'0010 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 2'11
+      memwr \memory 4'0011 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 3'111
+      memwr \memory 4'0100 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 4'1111
+      memwr \memory 4'0101 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 5'11111
+      memwr \memory 4'0110 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 6'111111
+      memwr \memory 4'0111 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 7'1111111
+      memwr \memory 4'1000 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 8'11111111
+      memwr \memory 4'1001 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 9'111111111
+      memwr \memory 4'1010 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 10'1111111111
+      memwr \memory 4'1011 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 11'11111111111
+      memwr \memory 4'1100 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 12'111111111111
+      memwr \memory 4'1101 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 13'1111111111111
+      memwr \memory 4'1110 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 14'11111111111111
+      memwr \memory 4'1111 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 15'111111111111111
+      memwr \memory \addr \data_in { $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 $auto$rtlil.cc:3302:And$7 } 16'1111111111111111
   end
 end
