@@ -3649,9 +3649,32 @@ void UhdmImporter::import_statement_with_loop_vars(const any* uhdm_stmt, RTLIL::
             
             // Add the assignment or memory write
             if (!lhs_spec.empty() && !rhs_spec.empty()) {
-                pending_sync_assignments[lhs_spec] = rhs_spec;
-                log("        Added assignment with substitution: %s <= %s\n", 
-                    log_signal(lhs_spec), log_signal(rhs_spec));
+                // Apply the enclosing condition (e.g. `if(enaB)`) as a hold-mux
+                // so the register keeps its old value when the condition is
+                // false — matching the non-loop import_assignment_sync path.
+                // Without this an enabled, loop-unrolled write such as
+                // `if(enaB) for(i) readB[i*W+:W] <= RAM[…]` updates every clock
+                // (asym_ram_sdp_read_wider's wide read).
+                if (!current_condition.empty()) {
+                    // Size the RHS to the slice so the mux operands match.
+                    if (rhs_spec.size() < lhs_spec.size())
+                        rhs_spec.extend_u0(lhs_spec.size(),
+                            rhs_spec.is_wire() && rhs_spec.as_wire()->is_signed);
+                    else if (rhs_spec.size() > lhs_spec.size())
+                        rhs_spec = rhs_spec.extract(0, lhs_spec.size());
+                    RTLIL::SigSpec else_val =
+                        pending_sync_assignments.count(lhs_spec)
+                            ? pending_sync_assignments[lhs_spec] : lhs_spec;
+                    RTLIL::Wire* mux_w = module->addWire(NEW_ID, lhs_spec.size());
+                    module->addMux(NEW_ID, else_val, rhs_spec,
+                                   current_condition, mux_w);
+                    pending_sync_assignments[lhs_spec] = RTLIL::SigSpec(mux_w);
+                } else {
+                    pending_sync_assignments[lhs_spec] = rhs_spec;
+                }
+                log("        Added assignment with substitution: %s <= %s (cond=%s)\n",
+                    log_signal(lhs_spec), log_signal(rhs_spec),
+                    current_condition.empty() ? "none" : log_signal(current_condition));
             } else if (lhs_spec.empty() && lhs && lhs->VpiType() == vpiBitSelect && !rhs_spec.empty()) {
                 // Special case: memory write with concatenated index
                 const bit_select* bs = any_cast<const bit_select*>(lhs);
