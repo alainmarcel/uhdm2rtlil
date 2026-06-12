@@ -417,8 +417,4 @@ Test: struct_pattern_loop
 # isolated change at a time and remove from all the tracking files.
 
 
-Test: asym_ram_sdp_read_wider
-    UHDM BUG: asymmetric dual-clock SDP RAM (narrow write / wide read) read
-    port diverges.  SAT miter NON-EQUIVALENT; UHDM-cosim FAIL / Verilog-cosim
-    PASS.
 

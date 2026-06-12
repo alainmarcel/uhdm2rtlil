@@ -63,5 +63,3 @@ various/abc9.v
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
 # Expected Miter-Formal failures: UHDM-synth != Verilog-synth, falsely pass
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
-asym_ram_sdp_read_wider
-arch/xilinx/asym_ram_sdp_read_wider.v
