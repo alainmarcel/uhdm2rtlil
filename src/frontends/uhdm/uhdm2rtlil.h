@@ -268,6 +268,13 @@ struct UhdmImporter {
     // Used to propagate LHS width into arithmetic operations per Verilog semantics
     int expression_context_width = 0;
 
+    // Context signedness (LRM §11.8.1): an unsigned context-determined operator
+    // forces every operand — including a signed sub-expression — to be treated
+    // as unsigned (zero-extended).  e.g. in `(a+b) + 3'd0` the unsigned `3'd0`
+    // makes the whole expression, and the inner signed `a+b`, unsigned.  Reset
+    // at self-determined boundaries (concats).
+    bool expression_context_unsigned = false;
+
     // Init values computed by the interpreter (maps wire to constant value)
     // Used to resolve cross-process init dependencies (e.g., initial x = gen.x
     // where gen.x was computed by an earlier interpreter-based initial block)
