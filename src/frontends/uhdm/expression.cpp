@@ -3062,6 +3062,16 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     }
     
     switch (op_type) {
+        case vpiPlusOp:
+            // Unary plus is a value no-op, but it must PRESERVE the operand's
+            // signedness so a wider assignment context sign-extends a signed
+            // operand (`y[7:0] = +s1`, s1 signed[3:0] = -1 -> 0xFF).  It was
+            // unhandled and fell through to the default below, which returned
+            // an empty SigSpec — `+s1` produced 0/x instead of the value
+            // (operators test mode 68, caught by the SAT miter, NOT equiv_induct).
+            if (operands.size() == 1)
+                return operands[0];
+            break;
         case vpiMinusOp:
             // Unary minus operation
             if (operands.size() == 1) {
@@ -3070,20 +3080,20 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     log_warning("vpiMinusOp has empty operand!\n");
                     return RTLIL::SigSpec();
                 }
-                // Create a negation operation
-                int result_width = operands[0].size();
+                // Negate at the CONTEXT width (SV context-determined sizing):
+                // the operand is extended to the result width FIRST, then
+                // negated — `y[7:0] = -u1` (u1 unsigned[3:0]=5) is 0-extend to
+                // 0x05 then negate = 0xFB, NOT the 4-bit negate 0x0B zero-
+                // extended (operators mode 65).  A_SIGNED follows the operand's
+                // own signedness so the extension is sign- vs zero-correct (a
+                // signed operand / `$signed(...)` wrapper sign-extends).
+                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
+                bool is_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
                 RTLIL::Wire* result_wire = module->addWire(NEW_ID, result_width);
-                // Unary minus follows the operand's signedness (SV LRM
-                // §11.4.3): a signed operand yields a signed result.  Flag
-                // the result wire so a wider assignment context sign-extends
-                // (`x = -$signed({1'b0,a})` must sign-extend the negative
-                // value, not zero-extend it).
-                result_wire->is_signed =
-                    operands[0].is_wire() && operands[0].as_wire()->is_signed;
+                // Unary minus follows the operand's signedness (SV LRM §11.4.3);
+                // flag the result so any further widening sign-extends correctly.
+                result_wire->is_signed = is_signed;
                 RTLIL::SigSpec result(result_wire);
-
-                // Check if operand is signed - for unary minus with $signed, assume signed
-                bool is_signed = true;  // Default to signed for unary minus
 
                 std::string cell_name = generate_cell_name(uhdm_op, "neg");
                 auto c = module->addNeg(RTLIL::escape_id(cell_name), operands[0], result, is_signed);
@@ -3525,27 +3535,38 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiRShiftOp:
             if (operands.size() == 2) {
                 // Right shift operation: a >> b
-                // Result width is typically the same as the first operand
-                int result_width = operands[0].size();
+                // Result width: use the context width when set (SV
+                // context-determined sizing), so the shift cell widens the
+                // shifted operand to the LHS width and the signed `$sshr`
+                // SIGN-extends it (and `$shr` zero-extends) internally —
+                // matching the Verilog frontend, which emits Y_WIDTH = context.
+                // Using the bare operand width left e.g. `y[7:0] <= s1 >>> u2`
+                // (s1 signed[3:0]) as a 4-bit $sshr that was then ZERO-extended
+                // to 8 bits at the assignment, dropping the sign (operators
+                // test: y rtl=0xf8 vs nl=0x08).
+                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
                 
-                // Check if operands are signed
-                bool is_signed = false;
-                if (operands[0].is_wire()) {
-                    RTLIL::Wire* wire = operands[0].as_wire();
-                    if (wire && wire->is_signed) {
-                        is_signed = true;
-                    }
-                }
-                
-                // Use Shr cell for right shift operation (or Sshr for signed)
-                if (is_signed) {
+                // Check if the shifted (left) operand is signed.
+                bool is_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
+
+                // Pick the cell by SHIFT KIND, not just signedness:
+                //   `>>>` (arithmetic) of a SIGNED operand fills vacated bits
+                //         with the sign bit  -> $sshr.
+                //   `>>`  (logical) ALWAYS zero-fills                 -> $shr,
+                //         but a signed operand is still sign-extended to the
+                //         result width first (A_SIGNED=1) — matching Verilog
+                //         (`s1 >> u2` => $shr A_SIGNED=1, Y_WIDTH=context).
+                // Previously BOTH `>>` and `>>>` used $sshr for a signed
+                // operand, so a logical `>>` of a signed value kept the sign
+                // bits (operators modes 4-7: 0xff instead of 0x1f).
+                if (op_type == vpiArithRShiftOp && is_signed) {
                     std::string cell_name = generate_cell_name(uhdm_op, "sshr");
-                    auto c = module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                    auto c = module->addSshr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, true);
                     add_src_attribute(c->attributes, uhdm_op);
                 } else {
                     std::string cell_name = generate_cell_name(uhdm_op, "shr");
-                    auto c = module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, false);
+                    auto c = module->addShr(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                     add_src_attribute(c->attributes, uhdm_op);
                 }
                 return result;
