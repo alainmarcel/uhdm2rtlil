@@ -2813,6 +2813,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // unsigned in Verilog, so when widened inside a signed op (e.g.
     // `signed_int - {a,b}`) it must be ZERO-extended, not sign-extended.
     std::vector<bool> operand_is_unsigned;
+    // Concatenation / replication operands are SELF-DETERMINED in Verilog
+    // (LRM §11.8.1): the surrounding assignment's context width must NOT widen
+    // them.  Without clearing it, `tmp = {1'b0, ~B}` with a 9-bit `tmp` widens
+    // `~B` to 9 bits — turning the value into `~{1'b0, B}`, whose explicit MSB
+    // flips from 0 to 1 (alu's NOT/shift flag bits: CF/SF wrong).
+    int saved_ctx_for_concat_operands = expression_context_width;
+    if (op_type == vpiConcatOp || op_type == vpiMultiConcatOp)
+        expression_context_width = 0;
     if (uhdm_op->Operands()) {
         if (op_type == vpiConditionOp) {
             log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
@@ -2843,7 +2851,8 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             operands.push_back(op_sig);
         }
     }
-    
+    expression_context_width = saved_ctx_for_concat_operands;
+
     // Check if all operands are constant - if so, we can evaluate the operation
     // But only do this when we're in a function context with loop variables
     bool all_const = true;
