@@ -2819,8 +2819,46 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     // `~B` to 9 bits — turning the value into `~{1'b0, B}`, whose explicit MSB
     // flips from 0 to 1 (alu's NOT/shift flag bits: CF/SF wrong).
     int saved_ctx_for_concat_operands = expression_context_width;
-    if (op_type == vpiConcatOp || op_type == vpiMultiConcatOp)
+    // Context signedness this operator was asked to produce (LRM §11.8.1).
+    const bool ctx_unsigned_entry = expression_context_unsigned;
+    bool saved_ctx_unsigned = expression_context_unsigned;
+    if (op_type == vpiConcatOp || op_type == vpiMultiConcatOp) {
         expression_context_width = 0;
+        // A concat starts a fresh self-determined context: its operands follow
+        // their own signedness (`{a+b}` keeps the signed `a+b`), so reset.
+        expression_context_unsigned = false;
+    } else if (op_type == vpiAddOp || op_type == vpiSubOp ||
+               op_type == vpiMultOp || op_type == vpiDivOp ||
+               op_type == vpiModOp || op_type == vpiBitAndOp ||
+               op_type == vpiBitOrOp || op_type == vpiBitXorOp ||
+               op_type == vpiConditionOp) {
+        // A context-determined arithmetic/bitwise operator is unsigned iff its
+        // context already is, or any operand is unsigned — and it pushes that
+        // unsigned-ness down so a signed sub-expression zero-extends.
+        if (ctx_unsigned_entry || !is_expr_signed(uhdm_op))
+            expression_context_unsigned = true;
+    } else if (op_type == vpiEqOp || op_type == vpiNeqOp ||
+               op_type == vpiLtOp || op_type == vpiLeOp ||
+               op_type == vpiGtOp || op_type == vpiGeOp) {
+        // A comparison's RESULT is unsigned 1-bit, but its operands are sized
+        // and extended together using their JOINT signedness (both signed →
+        // signed).  Propagate unsigned-ness to the operands when they aren't
+        // both signed, so `(a+b) != 3'd0` (signedexpr) zero-extends the inner
+        // signed add for an unsigned compare.
+        // The 1-bit RESULT width must NOT propagate into the operands — they
+        // are sized to max(operand widths) among themselves.  Without this,
+        // `a+b != 3'd0` (zu is 1-bit) collapsed the `a+b` to a 1-bit add.
+        expression_context_width = 0;
+        bool ops_all_signed = false;
+        if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 2) {
+            auto& uops = *uhdm_op->Operands();
+            auto e0 = any_cast<const expr*>(uops[0]);
+            auto e1 = any_cast<const expr*>(uops[1]);
+            ops_all_signed = e0 && e1 && is_expr_signed(e0) && is_expr_signed(e1);
+        }
+        if (ctx_unsigned_entry || !ops_all_signed)
+            expression_context_unsigned = true;
+    }
     if (uhdm_op->Operands()) {
         if (op_type == vpiConditionOp) {
             log("UHDM: ConditionOp (type=%d) has %d operands\n", op_type, (int)uhdm_op->Operands()->size());
@@ -2852,6 +2890,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         }
     }
     expression_context_width = saved_ctx_for_concat_operands;
+    expression_context_unsigned = saved_ctx_unsigned;
 
     // Check if all operands are constant - if so, we can evaluate the operation
     // But only do this when we're in a function context with loop variables
@@ -3112,7 +3151,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitAndOp:
             if (operands.size() == 2)
                 {
-                    bool is_signed = check_operands_signed(operands);
+                    bool is_signed = check_operands_signed(operands) && !ctx_unsigned_entry;
                     std::string cell_name = generate_cell_name(uhdm_op, "and");
                     RTLIL::SigSpec result = module->And(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
                     if (auto c = module->cell(RTLIL::escape_id(cell_name)))
@@ -3124,7 +3163,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitOrOp:
             if (operands.size() == 2)
                 {
-                    bool is_signed = check_operands_signed(operands);
+                    bool is_signed = check_operands_signed(operands) && !ctx_unsigned_entry;
                     std::string cell_name = generate_cell_name(uhdm_op, "or");
                     RTLIL::SigSpec result = module->Or(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
                     if (auto c = module->cell(RTLIL::escape_id(cell_name)))
@@ -3136,7 +3175,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitXorOp:
             if (operands.size() == 2)
                 {
-                    bool is_signed = check_operands_signed(operands);
+                    bool is_signed = check_operands_signed(operands) && !ctx_unsigned_entry;
                     std::string cell_name = generate_cell_name(uhdm_op, "xor");
                     RTLIL::SigSpec result = module->Xor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
                     if (auto c = module->cell(RTLIL::escape_id(cell_name)))
@@ -3158,7 +3197,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     // Yosys Verilog frontend extends a[0] to 8 bits
                     // inside the NOT so `~a[0]` is `8'b1111_111X̄`,
                     // masking only bit 0.
-                    bool is_signed = check_operands_signed(operands);
+                    bool is_signed = check_operands_signed(operands) && !ctx_unsigned_entry;
                     RTLIL::SigSpec op = operands[0];
                     if (expression_context_width > op.size()) {
                         op.extend_u0(expression_context_width, is_signed);
@@ -3174,7 +3213,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         case vpiBitXNorOp:  // Both vpiBitXNorOp and vpiBitXnorOp are the same
             if (operands.size() == 2)
                 {
-                    bool is_signed = check_operands_signed(operands);
+                    bool is_signed = check_operands_signed(operands) && !ctx_unsigned_entry;
                     std::string cell_name = generate_cell_name(uhdm_op, "xnor");
                     RTLIL::SigSpec result = module->Xnor(RTLIL::escape_id(cell_name), operands[0], operands[1], is_signed);
                     if (auto c = module->cell(RTLIL::escape_id(cell_name)))
@@ -3280,6 +3319,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     }
                     if (!op_signed) { is_signed = false; break; }
                 }
+                // An unsigned context forces unsigned extension even when both
+                // operands are signed — `(a+b) + 3'd0` (signedexpr): the inner
+                // signed add is zero-extended, not sign-extended.
+                if (ctx_unsigned_entry) is_signed = false;
 
                 // Truncate / extend each operand to result_width so the
                 // cell's A_WIDTH/B_WIDTH match Y_WIDTH cleanly.  Preserves
