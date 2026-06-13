@@ -933,7 +933,59 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             if (stmt) {
                 extract_assigned_signals(stmt, assigned_signals);
             }
-            
+
+            // Async-reset always_ff that ALSO writes a memory (issue #326):
+            // `mem[ptr] <= data` inside the else (non-reset) branch.  `mem` is a
+            // $mem, not a wire, so it must NOT go through the register temp-wire
+            // path below (which would error "Signal not found").  Set up per-
+            // write addr/data/en control wires + current_memory_writes so the
+            // body import drives them, then emit the $memwr on the CLOCK edge
+            // only (the async reset never writes the memory).
+            std::set<std::string> ff_memory_names;
+            std::vector<MemoryWriteInfo> ff_ordered_memwrites;
+            if (stmt) {
+                scan_for_memory_writes(stmt, ff_memory_names, module);
+            }
+            if (!ff_memory_names.empty()) {
+                current_memory_writes.clear();
+                current_memory_writes_by_lhs.clear();
+                std::map<std::string, std::vector<const UHDM::any*>> mem_write_lhs;
+                collect_memory_write_lhs(stmt, mem_write_lhs, module);
+                for (const auto& mem_name : ff_memory_names) {
+                    RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
+                    RTLIL::Memory* mem = module->memories.at(mem_id);
+                    int addr_width = 1;
+                    while ((1 << addr_width) < mem->size) addr_width++;
+                    const auto& lhs_list = mem_write_lhs[mem_name];
+                    int nwrites = std::max<size_t>(1, lhs_list.size());
+                    for (int w = 0; w < nwrites; w++) {
+                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), incr_autoidx());
+                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), incr_autoidx());
+                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), incr_autoidx());
+                        RTLIL::Wire* addr_wire = module->addWire(RTLIL::escape_id(addr_wire_name), addr_width);
+                        RTLIL::Wire* data_wire = module->addWire(RTLIL::escape_id(data_wire_name), mem->width);
+                        RTLIL::Wire* en_wire = module->addWire(RTLIL::escape_id(en_wire_name), mem->width);
+                        MemoryWriteInfo info;
+                        info.mem_id = mem_id;
+                        info.addr_wire = addr_wire;
+                        info.data_wire = data_wire;
+                        info.en_wire = en_wire;
+                        info.width = mem->width;
+                        ff_ordered_memwrites.push_back(info);
+                        if (w < (int)lhs_list.size())
+                            current_memory_writes_by_lhs[lhs_list[w]] = info;
+                        if (w == 0)
+                            current_memory_writes[mem_name] = info;
+                        // Default enable/data to 0 in the process body so an
+                        // un-taken conditional write leaves the memory unchanged.
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(en_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
+                        yosys_proc->root_case.actions.push_back(RTLIL::SigSig(
+                            RTLIL::SigSpec(data_wire), RTLIL::SigSpec(RTLIL::State::S0, mem->width)));
+                    }
+                }
+            }
+
             // Create ONE temp wire per unique signal (not per assignment)
             std::set<std::string> processed_signals;
             for (const auto& sig : assigned_signals) {
@@ -946,6 +998,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                 // Get the full signal spec (not part select)
                 RTLIL::IdString signal_id = RTLIL::escape_id(sig.name);
+                if (module->memories.count(signal_id)) {
+                    // Memory write (`mem[ptr] <= ...`) — driven through the
+                    // memwr control wires set up above, not a register temp
+                    // wire.  Skip (issue #326).
+                    continue;
+                }
                 if (!module->wire(signal_id)) {
                     log_error("Signal %s not found in module\n", sig.name.c_str());
                     continue;
@@ -1192,7 +1250,24 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         log("      Added sync update for %s\n", sig_name.c_str());
                     }
                 }
-                
+
+                // Memory writes happen on the CLOCK edge only (issue #326) —
+                // the async reset clears the pointers/flags, never the memory.
+                // The body import drove each port's addr/data/en control wires
+                // (gated by its condition); attach the $memwr to sync_clk.
+                for (size_t pi = 0; pi < ff_ordered_memwrites.size(); pi++) {
+                    const auto& info = ff_ordered_memwrites[pi];
+                    sync_clk->mem_write_actions.push_back(RTLIL::MemWriteAction());
+                    RTLIL::MemWriteAction &action = sync_clk->mem_write_actions.back();
+                    action.memid = info.mem_id;
+                    action.address = RTLIL::SigSpec(info.addr_wire);
+                    action.data = RTLIL::SigSpec(info.data_wire);
+                    action.priority_mask = RTLIL::Const(RTLIL::State::S1, (int)pi);
+                    action.enable = RTLIL::SigSpec(info.en_wire);
+                    log("      Added memory write action for %s on clock edge\n",
+                        info.mem_id.c_str());
+                }
+
                 yosys_proc->syncs.push_back(sync_clk);
                 yosys_proc->syncs.push_back(sync_rst);
                 
@@ -1204,6 +1279,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             in_always_ff_context = false;
             current_ff_clock_sig = RTLIL::SigSpec();
             ff_blocking_temps.clear();
+            current_memory_writes.clear();
+            current_memory_writes_by_lhs.clear();
 
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
