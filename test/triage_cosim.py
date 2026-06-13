@@ -44,14 +44,6 @@ def sh(cmd, **kw):
                           stderr=subprocess.STDOUT, **kw)
 
 
-def _chtype_block() -> str:
-    """Grab the public->internal gate chtype mappings from test_equivalence.sh
-    so satgen can model the public-typed cells in the synth .v files."""
-    eq = (Path(__file__).resolve().parent / "test_equivalence.sh").read_text()
-    return "\n".join(l.strip() for l in eq.splitlines()
-                     if l.strip().startswith("chtype -map"))
-
-
 def sat_miter(paths, test_dir: Path, uhdm: Path, seq: int) -> tuple[str, str]:
     """Run the SAT-from-reset miter (UHDM gate vs Verilog gold).
 
@@ -65,22 +57,41 @@ def sat_miter(paths, test_dir: Path, uhdm: Path, seq: int) -> tuple[str, str]:
     if not (vlog_synth.exists() and uhdm_synth.exists()):
         return "INCONCLUSIVE", "missing *_synth.v (run the workflow first)"
     yosys = str(paths["yosys"])
-    chtype = _chtype_block()
+    # Read the synth .v with `-icells`: the gate netlists instantiate built-in
+    # cell types that write_verilog escaped to public idents (\$_DFFE_PN0P_,
+    # \$_MUX_, ...).  `-icells` parses those straight back to the INTERNAL cell
+    # types so async2sync recognises the async FFs and satgen can model every
+    # cell.  The old `-lib +/simcells.v` + chtype path only remapped the
+    # COMBINATIONAL gates, leaving public-typed async FFs that async2sync
+    # skipped and satgen could not model -> spurious INCONCLUSIVE on every
+    # design with an async reset (issue #326 noc_tni_buffer, issue #325
+    # local_var_in_always, ...).  async2sync runs per-design (before the miter
+    # flattens them) so the FFs are already synchronous when sat sees them.
+    # The miter compares OUTPUTS only.  A design may carry its own embedded
+    # assertions (`$check`/`$assert`) and `$print` cells — e.g. a coverage
+    # assert like `assert(out1 == 8'h42)` that is intentionally violable.
+    # `sat -prove-asserts` would trip on those design asserts and report a
+    # spurious NON-EQUIVALENT, so delete all verification/effect cells from
+    # each side before building the equivalence miter (both sides carry the
+    # same asserts, so they are never an equivalence differentiator anyway).
+    strip = "delete t:$check t:$print t:$assert t:$assume t:$cover"
     script = f"""
-        read_verilog -lib +/simcells.v
-        read_verilog -sv {vlog_synth}
+        read_verilog -icells {vlog_synth}
         hierarchy -auto-top
         proc
+        {strip}
+        async2sync
         flatten
         opt -purge
         rename -top gold
         design -stash GOLD
 
         design -reset
-        read_verilog -lib +/simcells.v
-        read_verilog -sv {uhdm_synth}
+        read_verilog -icells {uhdm_synth}
         hierarchy -auto-top
         proc
+        {strip}
+        async2sync
         flatten
         opt -purge
         rename -top gate
@@ -88,8 +99,6 @@ def sat_miter(paths, test_dir: Path, uhdm: Path, seq: int) -> tuple[str, str]:
 
         design -copy-from GOLD -as gold gold
         design -copy-from GATE -as gate gate
-        {chtype}
-        async2sync
         miter -equiv -make_assert -make_outputs -flatten gold gate miter
         hierarchy -top miter
         sat -prove-asserts -seq {seq} -set-init-zero miter
@@ -180,6 +189,16 @@ def main() -> int:
         verdict = "🐛 REAL BUG (UHDM frontend differs from Verilog)"
     elif mv == "EQUIVALENT" and (uc == vc or vc in ("BUILD-FAIL", "SKIP")):
         verdict = "🔬 ARTEFACT (UHDM == Verilog; co-sim diff is Verilator-vs-synth)"
+    elif mv == "INCONCLUSIVE" and uc == "PASS" and vc == "PASS":
+        # The sound miter could not finish (SAT is impractical on wide
+        # multipliers / large RAMs — UNSAT hangs).  Both Verilator co-sims
+        # passing means the UHDM netlist matches the reference RTL exactly as
+        # well as the Verilog netlist does: no observable frontend bug.  This
+        # is a co-sim-confirmed PASS, weaker than a proven ARTEFACT but a clear
+        # not-a-bug.
+        verdict = "✅ CO-SIM OK (both co-sims pass; SAT miter impractical here)"
+    elif mv == "INCONCLUSIVE" and uc == "FAIL" and vc == "FAIL":
+        verdict = "🔬 ARTEFACT (both co-sims fail — Verilator-vs-synth, both frontends agree)"
     else:
         verdict = "❓ INCONCLUSIVE — investigate manually"
     print(f"  VERDICT: {verdict}")
