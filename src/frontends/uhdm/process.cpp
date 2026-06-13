@@ -925,6 +925,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // assigned-signal scan tries to resolve them (Verilog frontend
             // does the same — block-locals in always_ff retain their value).
             if (stmt) {
+                block_local_promoted.clear();
                 create_block_local_wires(stmt);
             }
 
@@ -1007,6 +1008,13 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     temp_name.c_str(), signal_spec.size());
             }
             
+            // Reset the in-flight blocking-temp map before importing this
+            // process's body (issue #325): a block-local blocking temp `dec`
+            // assigned in the else branch must resolve to its $0\dec when read
+            // by a later non-blocking assignment in the same branch.  Stale
+            // entries from a previously-imported process must not leak in.
+            ff_blocking_temps.clear();
+
             // Import the if-else as switch statements
             const if_else* if_else_stmt = nullptr;
             
@@ -1195,7 +1203,8 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Clear always_ff context after async reset handling
             in_always_ff_context = false;
             current_ff_clock_sig = RTLIL::SigSpec();
-            
+            ff_blocking_temps.clear();
+
         } else {
             // No async reset - check if this is a simple synchronous if-else pattern
             log("      No async reset detected\n");
@@ -2881,6 +2890,24 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
         auto b = any_cast<const UHDM::named_begin*>(stmt);
         vars = b->Variables();
         stmts = b->Stmts();
+    } else if (type == vpiIf) {
+        // Recurse into control-flow branches too — a block-local variable can
+        // live in the begin block of an if/else/case/loop body, not only at the
+        // always-block top level (issue #325: `else begin logic [W-1:0] dec; …`).
+        create_block_local_wires(any_cast<const UHDM::if_stmt*>(stmt)->VpiStmt());
+    } else if (type == vpiIfElse) {
+        auto s = any_cast<const UHDM::if_else*>(stmt);
+        create_block_local_wires(s->VpiStmt());
+        create_block_local_wires(s->VpiElseStmt());
+    } else if (type == vpiCase) {
+        auto s = any_cast<const UHDM::case_stmt*>(stmt);
+        if (s->Case_items())
+            for (auto ci : *s->Case_items())
+                create_block_local_wires(ci->Stmt());
+    } else if (type == vpiFor) {
+        create_block_local_wires(any_cast<const UHDM::for_stmt*>(stmt)->VpiStmt());
+    } else if (type == vpiWhile) {
+        create_block_local_wires(any_cast<const UHDM::while_stmt*>(stmt)->VpiStmt());
     }
     if (vars) {
         for (auto v : *vars) {
@@ -2902,6 +2929,7 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
             }
             add_src_attribute(wire->attributes, v);
             name_map[vname] = wire;
+            block_local_promoted.insert(vname);
             if (mode_debug)
                 log("UHDM: Created block-local wire %s (width=%d, signed=%d)\n",
                     vname.c_str(), w, wire->is_signed);
@@ -9716,8 +9744,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // temps to their in-flight $0\ value (registers stay
                             // original).  always_comb behaviour is unchanged
                             // (no map passed).
+                            // Resolve in-flight blocking temps via ff_blocking_temps
+                            // for BOTH the simple always_ff path (in_always_ff_body_mode)
+                            // AND the async-reset always_ff path (only
+                            // in_always_ff_context is set there — issue #325: a
+                            // block-local `dec = ...; credit_cnt <= credit_cnt - dec`
+                            // in the else branch must read the in-flight $0\dec,
+                            // not the registered \dec).  ff_blocking_temps is the
+                            // input_mapping, whose lookup in import_ref_obj is not
+                            // gated on the body-mode flag.
                             RTLIL::SigSpec rhs_sig = import_expression(rhs,
-                                in_always_ff_body_mode ? &ff_blocking_temps : nullptr);
+                                (in_always_ff_body_mode || in_always_ff_context)
+                                    ? &ff_blocking_temps : nullptr);
                             expression_context_width = prev_ctx;
 
                             // Check if we should assign to a temp wire instead
@@ -9931,8 +9969,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // (e.g. `current_pc = reg_next_pc; reg_pc <=
                             // current_pc;`).  Non-blocking (`<=`) register
                             // targets are intentionally NOT tracked.
-                            if (in_always_ff_body_mode && assign->VpiBlocking() &&
-                                    !lhs_sig.empty()) {
+                            if ((in_always_ff_body_mode || in_always_ff_context) &&
+                                    assign->VpiBlocking() && !lhs_sig.empty()) {
                                 RTLIL::SigChunk fc = *lhs_sig.chunks().begin();
                                 if (fc.wire) {
                                     std::string bn = fc.wire->name.str();
@@ -9975,6 +10013,23 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     std::string var_name = std::string(var->VpiName());
                     int width = get_width(var, current_instance);
                     if (width <= 0) width = 16;
+
+                    // Reuse the simple-named wire create_block_local_wires()
+                    // already made for an always-block block-local (incl. one
+                    // nested in an if/else — issue #325): the always block's own
+                    // $0\ temp / blocking-temp machinery drives and reads it, so
+                    // a second scoped wire here would leave reads/writes split.
+                    // Gate on block_local_promoted so a block-local merely
+                    // SHADOWING a module signal (whose wire pre-exists but was
+                    // NOT promoted) still gets its own scoped wire.
+                    if (block_local_promoted.count(var_name))
+                    if (RTLIL::Wire* pre = module->wire(RTLIL::escape_id(var_name))) {
+                        if (name_map.count(var_name) && name_map[var_name] != pre)
+                            saved_name_map[var_name] = name_map[var_name];
+                        name_map[var_name] = pre;
+                        block_local_vars.insert(var_name);
+                        continue;
+                    }
 
                     std::string hier_name = block_name + "." + var_name;
                     RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(hier_name), width);

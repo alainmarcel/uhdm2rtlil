@@ -331,6 +331,14 @@ struct UhdmImporter {
     // targets are NOT added, so their reads still see original values.
     std::map<std::string, RTLIL::SigSpec> ff_blocking_temps;
 
+    // Names of block-local variables that create_block_local_wires() actually
+    // promoted to a fresh module wire (it SKIPS a var whose name already
+    // collides with a module signal — that var must keep a scoped wire).  The
+    // begin-block handlers reuse a pre-existing simple-named wire ONLY when its
+    // name is here, so a block-local shadowing a module var (asgn_expr_sv,
+    // scopes) is not wrongly aliased to that module signal.
+    std::set<std::string> block_local_promoted;
+
     // Value map a process RHS read should consult: in always_ff body mode use
     // the blocking-temp map (registers keep their original value); otherwise
     // the comb-value tracking map; null when not inside a process.
