@@ -132,3 +132,32 @@ Then guard against regressions across the whole suite:
 Internal must end with 0 equivalence failures / 0 crashes; the yosys run should
 not add unexpected failures beyond the pre-existing baseline in
 `test/failing_tests.txt`.
+
+## Recording the outcome — ALWAYS mark a triaged divergence
+
+A co-sim WARNING you have triaged must NOT be left as a bare warning — record it
+in the right `test/*.txt` so the suite reports it under ANALYZED (not WARNING)
+and future runs don't re-triage it from scratch. Pick the file by outcome:
+
+- **Artefact (miter EQUIVALENT, UHDM == Verilog)** → add a `Test: <basename>`
+  entry to **`test/sim_equiv_analyzed.txt`** with a one-paragraph explanation.
+  run_all_tests.sh re-runs the miter on every entry and auto-buckets it 🔬
+  ARTEFACT — so an EQUIVALENT miter needs NOTHING else. Use the test's basename
+  (e.g. `code_hdl_models_pri_encoder_using_assign`), matching the existing
+  entries. Typical artefacts: `== <const with x bits>` (synth wildcard vs
+  Verilator 4-state x), latch/FF X-init, other x-propagation.
+- **Real UHDM bug (miter NON-EQUIVALENT, or UHDM-cosim FAIL + Verilog-cosim
+  PASS)** → add it to **`test/sim_equiv_analyzed.txt`** (keeps the suite green)
+  AND to the bug backlog **`test/cosim_uhdm_bugs.txt`** AND list it expected-fail
+  in **`test/failing_tests.txt`** (internal name and/or yosys path). Fix one
+  isolated change at a time, then REMOVE it from all three.
+- **Miter INCONCLUSIVE (satgen can't model the cells — `$_DLATCH_`, abc9
+  MUXF7/LUT, SVA `$check`; or a reset-dependent false NON-EQ)** → the auto-
+  classifier can't decide, so add a manual override line to
+  **`test/sim_equiv_classification.txt`**: `<basename>  <artefact|bug>  # reason`.
+  An override WINS over the miter. Still also add the `sim_equiv_analyzed.txt`
+  entry. (Before calling it inconclusive, try isolating the unmodellable cell —
+  e.g. drop a `$pow`/`$div`-bearing mode — so the miter can run on the rest.)
+
+Don't invent or rename test files from training data — only touch the four
+above, and confirm the basename matches how run_all_tests.sh reports the test.
