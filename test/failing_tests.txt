@@ -101,7 +101,6 @@ VarPassedTo2Submodules
 VarSelect
 xor_assignment
 # --- output-generation (true) failures (10):
-ContinueNested
 hier_path
 ParameterSizeOfInstance
 StructMemberAsModuleInput
