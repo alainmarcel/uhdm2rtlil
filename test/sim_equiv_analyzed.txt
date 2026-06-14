@@ -382,6 +382,14 @@ Test: code_hdl_models_encoder_using_if
     Artefact: miter EQUIVALENT (UHDM==Verilog).  asicworld encoder; co-sim
     x-prop only, no frontend divergence.
 
+Test: code_hdl_models_pri_encoder_using_assign
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Priority encoder built from
+    `encoder_in == 16'bxxxx_..._xxx1` chains — `==` against a constant with x
+    bits.  Synthesis treats the x bits as don't-cares (wildcard match), but
+    Verilator's 4-state `==` returns x and the chain falls through to the
+    default 0xF.  Sim-vs-synth x semantics, identical for BOTH frontends — not
+    a UHDM bug.
+
 Test: genblk_dive
     Artefact: miter EQUIVALENT (UHDM==Verilog).  yosys simple/genblk_dive;
     co-sim x-init/x-prop only.
