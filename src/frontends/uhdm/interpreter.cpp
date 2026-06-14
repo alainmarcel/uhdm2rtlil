@@ -359,6 +359,17 @@ int64_t UhdmImporter::evaluate_expression(const any* expr,
 }
 
 // Interpret a statement
+// A `for`/loop control variable can be declared with any of the 2-state /
+// 4-state integer types — `int` (int_var), `integer` (integer_var), `byte`,
+// `shortint`, `longint`.  Code paths that only recognised `integer_var` missed
+// `for (int i = ...)` (the most common form), so the loop var wasn't tracked /
+// reset and the loop misbehaved on re-entry.
+static inline bool is_integer_var_type(int t) {
+    return t == UHDM::uhdmint_var || t == UHDM::uhdminteger_var ||
+           t == UHDM::uhdmshort_int_var || t == UHDM::uhdmlong_int_var ||
+           t == UHDM::uhdmbyte_var;
+}
+
 void UhdmImporter::interpret_statement(const any* stmt,
                                       std::map<std::string, int64_t>& variables,
                                       std::map<std::string, std::vector<int64_t>>& arrays,
@@ -386,10 +397,10 @@ void UhdmImporter::interpret_statement(const any* stmt,
                 } else if (lhs_type == uhdmref_var) {
                     const ref_var* ref = any_cast<const ref_var*>(assign->Lhs());
                     lhs_name = std::string(ref->VpiName());
-                } else if (lhs_type == uhdminteger_var) {
-                    // For-loop variable declarations (e.g., for (integer x = ...))
-                    const integer_var* iv = any_cast<const integer_var*>(assign->Lhs());
-                    lhs_name = std::string(iv->VpiName());
+                } else if (is_integer_var_type(lhs_type)) {
+                    // For-loop variable declarations (e.g. `for (int x = ...)`
+                    // or `integer`/`byte`/`shortint`/`longint`).
+                    lhs_name = std::string(any_cast<const UHDM::variables*>(assign->Lhs())->VpiName());
                 } else if (lhs_type == uhdmhier_path) {
                     // Hierarchical path (e.g., gen.x)
                     const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
@@ -619,9 +630,9 @@ void UhdmImporter::interpret_statement(const any* stmt,
             auto detect_loop_vars = [&](const any* init) {
                 if (init && init->UhdmType() == uhdmassignment) {
                     const assignment* a = any_cast<const assignment*>(init);
-                    if (a->Lhs() && a->Lhs()->UhdmType() == uhdminteger_var) {
-                        const integer_var* iv = any_cast<const integer_var*>(a->Lhs());
-                        loop_var_names.push_back(std::string(iv->VpiName()));
+                    if (a->Lhs() && is_integer_var_type(a->Lhs()->UhdmType())) {
+                        loop_var_names.push_back(
+                            std::string(any_cast<const UHDM::variables*>(a->Lhs())->VpiName()));
                     }
                 }
             };

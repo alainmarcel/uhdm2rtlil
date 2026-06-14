@@ -2911,7 +2911,15 @@ static bool for_stmt_has_declaration(const for_stmt* fs) {
     auto check_init_decl = [](const any* init) -> bool {
         if (!init || init->UhdmType() != uhdmassignment) return false;
         const assignment* a = any_cast<const assignment*>(init);
-        return a->Lhs() && a->Lhs()->UhdmType() == uhdminteger_var;
+        // Any integer-family loop var: `int`(int_var) / `integer` / byte /
+        // shortint / longint — `for (int i = ...)` is the common form and was
+        // previously missed (only integer_var was checked), so the loop fell to
+        // the sync path and failed to unroll.
+        if (!a->Lhs()) return false;
+        int lt = a->Lhs()->UhdmType();
+        return lt == uhdmint_var || lt == uhdminteger_var ||
+               lt == uhdmshort_int_var || lt == uhdmlong_int_var ||
+               lt == uhdmbyte_var;
     };
     if (fs->VpiForInitStmt() && check_init_decl(fs->VpiForInitStmt())) return true;
     if (fs->VpiForInitStmts()) {
@@ -5066,8 +5074,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                                 if (assign->Lhs() && assign->Lhs()->VpiType() == vpiRefVar) {
                                                     const ref_var* var_ref = any_cast<const ref_var*>(assign->Lhs());
                                                     const UHDM::any* actual = var_ref->Actual_group();
-                                                    // TODO: support all flavors of integers (short...)
-                                                    if (actual && (actual->UhdmType() == uhdminteger_var) && assign->Rhs()) {
+                                                    int avt = actual ? actual->UhdmType() : 0;
+                                                    if (actual && (avt == uhdmint_var || avt == uhdminteger_var ||
+                                                                   avt == uhdmshort_int_var || avt == uhdmlong_int_var ||
+                                                                   avt == uhdmbyte_var) && assign->Rhs()) {
                                                         if (assign->Rhs()->VpiType() == vpiConstant) {
                                                             std::string var_name = std::string(var_ref->VpiName());
                                                             const constant* const_val = any_cast<const constant*>(assign->Rhs());
