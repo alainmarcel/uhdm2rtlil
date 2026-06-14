@@ -96,6 +96,12 @@ target_compile_options(uhdm2rtlil PRIVATE
     -Wno-unused-parameter # Yosys headers have many unused parameters
     -Wno-sign-compare     # Common in Yosys code
     -Wno-array-bounds     # False positive in Yosys io.h header
+    # GCC 15 (Ubuntu 25.10) emits false-positive -Wmaybe-uninitialized inside
+    # the inlined std::vector move-constructor of RTLIL::SigChunk/SigSpec (e.g.
+    # `RTLIL::SigSig(RTLIL::SigSpec(), RTLIL::SigSpec())` in functions.cpp); the
+    # code is correct, the warning is a known compiler analysis artefact, so
+    # don't let -Werror reject it.  (issue #335)
+    -Wno-maybe-uninitialized
 )
 
 # Add required Yosys defines
