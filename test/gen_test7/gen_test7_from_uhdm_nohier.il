@@ -12,6 +12,7 @@ module \gen_test7
   wire width 3 \cond.sub_out1
   wire width 3 \cond.sub_out2
   wire width 3 \cond.sub_out3
+  wire width 32 \init.x
   wire \cond.x
   attribute \src "dut.sv:16.4-21.7"
   wire $0\cond.x
@@ -28,6 +29,7 @@ module \gen_test7
     sync always
     sync init
       update \cond.sub_out1 3'100
+      update \init.x 4
       update \out1 3'100
   end
   attribute \src "dut.sv:16.4-21.7"

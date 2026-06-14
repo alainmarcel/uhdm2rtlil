@@ -15,7 +15,7 @@ module \simple_memory_noreset
   wire width 8 output 5 \data_out
   wire width 4 $memwr$\memory$addr$2
   wire width 8 $memwr$\memory$data$3
-  wire $memwr$\memory$en$4
+  wire width 8 $memwr$\memory$en$4
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:10.17-10.23"
   memory width 8 size 16 \memory
@@ -34,14 +34,6 @@ module \simple_memory_noreset
   end
   attribute \src "dut.sv:14.9-16.12"
   cell $mux $procmux$5
-    parameter \WIDTH 8
-    connect \A 8'x
-    connect \B \data_in
-    connect \S \we
-    connect \Y $memwr$\memory$data$3
-  end
-  attribute \src "dut.sv:14.9-16.12"
-  cell $mux $procmux$7
     parameter \WIDTH 4
     connect \A 4'x
     connect \B \addr
@@ -49,12 +41,20 @@ module \simple_memory_noreset
     connect \Y $memwr$\memory$addr$2
   end
   attribute \src "dut.sv:14.9-16.12"
+  cell $mux $procmux$7
+    parameter \WIDTH 8
+    connect \A 8'00000000
+    connect \B \data_in
+    connect \S \we
+    connect \Y $memwr$\memory$data$3
+  end
+  attribute \src "dut.sv:14.9-16.12"
   cell $mux $procmux$9
     parameter \WIDTH 1
     connect \A 1'0
     connect \B 1'1
     connect \S \we
-    connect \Y $memwr$\memory$en$4
+    connect \Y $memwr$\memory$en$4 [0]
   end
   attribute \src "dut.sv:13.5-18.8"
   attribute \always_ff 1
@@ -75,7 +75,8 @@ module \simple_memory_noreset
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\memory$addr$2
     connect \DATA $memwr$\memory$data$3
-    connect \EN { $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 }
+    connect \EN { $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] }
     connect \CLK \clk
   end
+  connect $memwr$\memory$en$4 [7:1] { $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] }
 end

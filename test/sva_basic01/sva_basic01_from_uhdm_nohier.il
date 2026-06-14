@@ -22,12 +22,6 @@ module \top
   attribute \src "dut.sv:8.29-8.38"
   attribute \init 1'0
   wire \ready
-  attribute \src "dut.sv:10.2-14.5"
-  wire $0\read
-  attribute \src "dut.sv:10.2-14.5"
-  wire $0\write
-  attribute \src "dut.sv:10.2-14.5"
-  wire $0\ready
   attribute \src "dut.sv:11.11-11.16"
   wire $logic_not$dut.sv:11.11-11.16$1_Y
   attribute \src "dut.sv:11.11-11.16"
@@ -40,7 +34,7 @@ module \top
   end
   attribute \src "dut.sv:20.2-20.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$5
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$5
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -55,7 +49,7 @@ module \top
   end
   attribute \src "dut.sv:24.2-24.61"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$6
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -71,13 +65,10 @@ module \top
   attribute \src "dut.sv:10.2-14.5"
   attribute \always_ff 1
   process $proc$dut.sv:10$4
-    assign $0\read $logic_not$dut.sv:11.11-11.16$1_Y
-    assign $0\write \ctrl
-    assign $0\ready \write
     sync posedge \clock
-      update \read $0\read
-      update \ready $0\ready
-      update \write $0\write
+      update \read $logic_not$dut.sv:11.11-11.16$1_Y
+      update \write \ctrl
+      update \ready \write
   end
   connect \read_o \read
   connect \write_o \write

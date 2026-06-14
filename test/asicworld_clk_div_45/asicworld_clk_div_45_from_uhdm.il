@@ -34,10 +34,10 @@ module \clk_div_45
   wire $auto$rtlil.cc:3323:LogicOr$23
   attribute \src "dut.sv:45.57-45.70"
   wire $eq$dut.sv:45$37_Y
-  wire width 4 $auto$expression.cpp:2965:import_operation$26
+  wire width 4 $auto$expression.cpp:3317:import_operation$26
   wire $auto$rtlil.cc:3322:LogicAnd$40
   wire $auto$rtlil.cc:3323:LogicOr$42
-  wire width 4 $auto$expression.cpp:2965:import_operation$45
+  wire width 4 $auto$expression.cpp:3317:import_operation$45
   attribute \src "dut.sv:45.15-45.28"
   wire $eq$dut.sv:45$31_Y
   wire $auto$rtlil.cc:3255:Not$34
@@ -126,7 +126,7 @@ module \clk_div_45
     parameter \WIDTH 4
     connect \CLK \clk_in
     connect \SRST $auto$opt_dff.cc:275:combine_resets$80
-    connect \D $auto$expression.cpp:2965:import_operation$26
+    connect \D $auto$expression.cpp:3317:import_operation$26
     connect \Q \counter1
   end
   attribute \src "dut.sv:34.57-34.70"
@@ -177,7 +177,7 @@ module \clk_div_45
     parameter \Y_WIDTH 4
     connect \A \counter1
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2965:import_operation$26
+    connect \Y $auto$expression.cpp:3317:import_operation$26
   end
   cell $reduce_or $auto$opt_dff.cc:277:combine_resets$88
     parameter \A_SIGNED 0
@@ -269,7 +269,7 @@ module \clk_div_45
     parameter \Y_WIDTH 4
     connect \A \counter2
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2965:import_operation$45
+    connect \Y $auto$expression.cpp:3317:import_operation$45
   end
   attribute \src "dut.sv:41.1-50.4"
   attribute \always_ff 1
@@ -280,7 +280,7 @@ module \clk_div_45
     parameter \WIDTH 4
     connect \CLK \clk_in
     connect \SRST $auto$opt_dff.cc:275:combine_resets$87
-    connect \D $auto$expression.cpp:2965:import_operation$45
+    connect \D $auto$expression.cpp:3317:import_operation$45
     connect \Q \counter2
   end
   cell $reduce_or $auto$opt_dff.cc:277:combine_resets$81

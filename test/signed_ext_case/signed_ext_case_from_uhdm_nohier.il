@@ -19,14 +19,14 @@ module \top
   wire width 8 output 7 \y
   attribute \src "dut.sv:11.1-24.4"
   wire width 8 $0\y
-  wire width 8 $auto$expression.cpp:3548:import_operation$2
-  wire width 8 $auto$expression.cpp:3548:import_operation$4
-  wire width 8 $auto$expression.cpp:3548:import_operation$6
-  wire width 8 $auto$expression.cpp:3548:import_operation$8
-  wire width 8 $auto$expression.cpp:3548:import_operation$10
-  wire width 8 $auto$expression.cpp:3510:import_operation$12
-  wire width 8 signed $auto$expression.cpp:3092:import_operation$14
-  wire width 8 $auto$expression.cpp:3092:import_operation$16
+  wire width 8 $auto$expression.cpp:3547:import_operation$2
+  wire width 8 $auto$expression.cpp:3547:import_operation$4
+  wire width 8 $auto$expression.cpp:3547:import_operation$6
+  wire width 8 $auto$expression.cpp:3547:import_operation$8
+  wire width 8 $auto$expression.cpp:3547:import_operation$10
+  wire width 8 $auto$expression.cpp:3509:import_operation$12
+  wire width 8 signed $auto$expression.cpp:3103:import_operation$14
+  wire width 8 $auto$expression.cpp:3103:import_operation$16
   attribute \src "dut.sv:13.17-13.26"
   cell $shr $shr$dut.sv:13$3
     parameter \A_SIGNED 1
@@ -36,7 +36,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$2
+    connect \Y $auto$expression.cpp:3547:import_operation$2
   end
   attribute \src "dut.sv:14.17-14.26"
   cell $sshr $sshr$dut.sv:14$5
@@ -47,7 +47,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$4
+    connect \Y $auto$expression.cpp:3547:import_operation$4
   end
   attribute \src "dut.sv:15.17-15.26"
   cell $shr $shr$dut.sv:15$7
@@ -58,7 +58,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \s2
-    connect \Y $auto$expression.cpp:3548:import_operation$6
+    connect \Y $auto$expression.cpp:3547:import_operation$6
   end
   attribute \src "dut.sv:16.17-16.26"
   cell $sshr $sshr$dut.sv:16$9
@@ -69,7 +69,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \s2
-    connect \Y $auto$expression.cpp:3548:import_operation$8
+    connect \Y $auto$expression.cpp:3547:import_operation$8
   end
   attribute \src "dut.sv:17.17-17.26"
   cell $shr $shr$dut.sv:17$11
@@ -80,7 +80,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \u1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$10
+    connect \Y $auto$expression.cpp:3547:import_operation$10
   end
   attribute \src "dut.sv:18.17-18.26"
   cell $shl $shl$dut.sv:18$13
@@ -91,7 +91,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3510:import_operation$12
+    connect \Y $auto$expression.cpp:3509:import_operation$12
   end
   attribute \src "dut.sv:20.17-20.20"
   cell $neg $neg$dut.sv:20$15
@@ -99,7 +99,7 @@ module \top
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
     connect \A \s1
-    connect \Y $auto$expression.cpp:3092:import_operation$14
+    connect \Y $auto$expression.cpp:3103:import_operation$14
   end
   attribute \src "dut.sv:21.17-21.20"
   cell $neg $neg$dut.sv:21$17
@@ -107,7 +107,7 @@ module \top
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
     connect \A \u1
-    connect \Y $auto$expression.cpp:3092:import_operation$16
+    connect \Y $auto$expression.cpp:3103:import_operation$16
   end
   attribute \src "dut.sv:11.1-24.4"
   attribute \always_ff 1
@@ -117,31 +117,31 @@ module \top
     switch { 60'000000000000000000000000000000000000000000000000000000000000 \mode }
     attribute \src "dut.sv:13.9-13.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000000
-        assign $0\y $auto$expression.cpp:3548:import_operation$2
+        assign $0\y $auto$expression.cpp:3547:import_operation$2
     attribute \src "dut.sv:14.9-14.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000001
-        assign $0\y $auto$expression.cpp:3548:import_operation$4
+        assign $0\y $auto$expression.cpp:3547:import_operation$4
     attribute \src "dut.sv:15.9-15.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000010
-        assign $0\y $auto$expression.cpp:3548:import_operation$6
+        assign $0\y $auto$expression.cpp:3547:import_operation$6
     attribute \src "dut.sv:16.9-16.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000011
-        assign $0\y $auto$expression.cpp:3548:import_operation$8
+        assign $0\y $auto$expression.cpp:3547:import_operation$8
     attribute \src "dut.sv:17.9-17.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000100
-        assign $0\y $auto$expression.cpp:3548:import_operation$10
+        assign $0\y $auto$expression.cpp:3547:import_operation$10
     attribute \src "dut.sv:18.9-18.27"
       case 64'0000000000000000000000000000000000000000000000000000000000000101
-        assign $0\y $auto$expression.cpp:3510:import_operation$12
+        assign $0\y $auto$expression.cpp:3509:import_operation$12
     attribute \src "dut.sv:19.9-19.21"
       case 64'0000000000000000000000000000000000000000000000000000000000000110
         assign $0\y { \s1 [3] \s1 [3] \s1 [3] \s1 [3] \s1 }
     attribute \src "dut.sv:20.9-20.21"
       case 64'0000000000000000000000000000000000000000000000000000000000000111
-        assign $0\y $auto$expression.cpp:3092:import_operation$14
+        assign $0\y $auto$expression.cpp:3103:import_operation$14
     attribute \src "dut.sv:21.9-21.21"
       case 64'0000000000000000000000000000000000000000000000000000000000001000
-        assign $0\y $auto$expression.cpp:3092:import_operation$16
+        assign $0\y $auto$expression.cpp:3103:import_operation$16
     attribute \src "dut.sv:22.9-22.21"
       case 64'0000000000000000000000000000000000000000000000000000000000001001
         assign $0\y { 4'0000 \u1 }

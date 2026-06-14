@@ -47,7 +47,7 @@ module \r5p_gpr
   wire $memwr$\gpr$en
   wire width 5 $memwr$\gpr$addr$8
   wire width 32 $memwr$\gpr$data$9
-  wire $memwr$\gpr$en$10
+  wire width 32 $memwr$\gpr$en$10
   attribute \src "dut.sv:59.20-59.23"
   memory width 32 size 32 \gpr
   cell $reduce_or $reduce_or$dut.sv:49$1
@@ -109,19 +109,20 @@ module \r5p_gpr
   attribute \always_ff 1
   process $proc$dut.sv:63$7
     assign $memwr$\gpr$en 1'0
-    assign $memwr$\gpr$en$10 1'0
+    assign $memwr$\gpr$en$10 0
+    assign $memwr$\gpr$data$9 0
     attribute \src "dut.sv:64.3-64.31"
     switch \wen
     attribute \src "dut.sv:64.3-64.31"
       case 1'1
         assign $memwr$\gpr$addr$8 \a_rd
         assign $memwr$\gpr$data$9 \d_rd
-        assign $memwr$\gpr$en$10 1'1
+        assign $memwr$\gpr$en$10 32'11111111111111111111111111111111
     attribute \src "dut.sv:64.3-64.31"
       case 
     end
     sync posedge \clk
-      memwr \gpr $memwr$\gpr$addr$8 $memwr$\gpr$data$9 { $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 } 0'x
+      memwr \gpr $memwr$\gpr$addr$8 $memwr$\gpr$data$9 $memwr$\gpr$en$10 0'x
   end
   connect \d_rs1 \t_rs1
   connect \d_rs2 \t_rs2

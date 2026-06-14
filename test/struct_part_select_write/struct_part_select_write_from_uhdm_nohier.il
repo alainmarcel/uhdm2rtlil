@@ -9,7 +9,7 @@ module \top
   wire width 16 $0\s
   attribute \src "dut.sv:15.24-15.37"
   wire $eq$dut.sv:15$3_Y
-  wire $auto$process.cpp:111:build_check_cell$5
+  wire $auto$process.cpp:174:build_check_cell$5
   attribute \src "dut.sv:15.24-15.37"
   cell $eq $eq$dut.sv:15$4
     parameter \A_SIGNED 0
@@ -23,7 +23,7 @@ module \top
   end
   attribute \src "dut.sv:15.17-15.39"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$6
+  cell $check $auto$process.cpp:184:build_check_cell$6
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -33,7 +33,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:15$3_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$5
+    connect \EN $auto$process.cpp:174:build_check_cell$5
     connect \TRG { }
   end
   attribute \src "dut.sv:10.5-13.8"
@@ -46,8 +46,8 @@ module \top
   end
   attribute \src "dut.sv:15.5-15.39"
   process $proc$dut.sv:15$2
-    assign $auto$process.cpp:111:build_check_cell$5 1'0
-    assign $auto$process.cpp:111:build_check_cell$5 1'1
+    assign $auto$process.cpp:174:build_check_cell$5 1'0
+    assign $auto$process.cpp:174:build_check_cell$5 1'1
     sync always
   end
 end

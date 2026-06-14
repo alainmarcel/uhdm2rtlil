@@ -16,8 +16,8 @@ module \pico_count_cycle
   wire width 64 output 4 \count_cycle
   attribute \src "dut.sv:14.21-14.32"
   wire width 64 output 5 \count_instr
-  wire width 64 $auto$expression.cpp:3006:import_operation$2
-  wire width 64 $auto$expression.cpp:3006:import_operation$8
+  wire width 64 $auto$expression.cpp:3317:import_operation$2
+  wire width 64 $auto$expression.cpp:3317:import_operation$8
   attribute \src "dut.sv:20.28-20.43"
   cell $add $add$dut.sv:20$3
     parameter \A_SIGNED 0
@@ -27,7 +27,7 @@ module \pico_count_cycle
     parameter \Y_WIDTH 64
     connect \A \count_cycle
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:16.2-38.5"
   attribute \always_ff 1
@@ -38,7 +38,7 @@ module \pico_count_cycle
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [63:32]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [63:32]
     connect \Q \count_cycle [63:32]
   end
   attribute \src "dut.sv:16.2-38.5"
@@ -50,7 +50,7 @@ module \pico_count_cycle
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [31:0]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [31:0]
     connect \Q \count_cycle [31:0]
   end
   attribute \src "dut.sv:29.20-29.35"
@@ -62,7 +62,7 @@ module \pico_count_cycle
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$8
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
   attribute \src "dut.sv:16.2-38.5"
   attribute \always_ff 1
@@ -75,7 +75,7 @@ module \pico_count_cycle
     connect \CLK \clk
     connect \EN \do_count
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$8 [31:0]
+    connect \D $auto$expression.cpp:3317:import_operation$8 [31:0]
     connect \Q \count_instr [31:0]
   end
   attribute \src "dut.sv:16.2-38.5"
@@ -89,7 +89,7 @@ module \pico_count_cycle
     connect \CLK \clk
     connect \EN \do_count
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$8 [63:32]
+    connect \D $auto$expression.cpp:3317:import_operation$8 [63:32]
     connect \Q \count_instr [63:32]
   end
 end

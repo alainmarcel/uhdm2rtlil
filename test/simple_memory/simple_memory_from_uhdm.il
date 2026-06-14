@@ -46,7 +46,7 @@ module \simple_memory
     connect \A \rst
     connect \Y $auto$process_helper.cpp:88:create_not_cell$4
   end
-  cell $and $auto$process.cpp:8948:import_if_stmt_sync$6
+  cell $and $auto$process.cpp:9076:import_if_stmt_sync$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1

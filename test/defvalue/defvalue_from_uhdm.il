@@ -8,12 +8,12 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000010
   attribute \src "dut.sv:9.8-9.13"
   wire input 1 \clock
   attribute \src "dut.sv:10.21-10.24"
+  attribute \init 4'0010
   wire width 4 output 2 \cnt
   attribute \src "dut.sv:14.14-14.19"
   attribute \defaultvalue 4'1010
   wire width 4 input 3 \delta
-  attribute \src "dut.sv:20.2-21.22"
-  wire width 4 $0\cnt
+  wire width 4 $auto$expression.cpp:3317:import_operation$8
   attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$9
     parameter \A_SIGNED 0
@@ -23,14 +23,14 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000010
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B \delta
-    connect \Y $0\cnt
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
   attribute \src "dut.sv:20.2-21.22"
   attribute \always_ff 1
   cell $dff $procdff$11
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $0\cnt
+    connect \D $auto$expression.cpp:3317:import_operation$8
     connect \Q \cnt
     connect \CLK \clock
   end
@@ -65,12 +65,12 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000001
   attribute \src "dut.sv:9.8-9.13"
   wire input 1 \clock
   attribute \src "dut.sv:10.21-10.24"
+  attribute \init 4'0001
   wire width 4 output 2 \cnt
   attribute \src "dut.sv:14.14-14.19"
   attribute \defaultvalue 4'1010
   wire width 4 input 3 \delta
-  attribute \src "dut.sv:20.2-21.22"
-  wire width 4 $0\cnt
+  wire width 4 $auto$expression.cpp:3317:import_operation$5
   attribute \src "dut.sv:21.10-21.21"
   cell $add $add$dut.sv:21$6
     parameter \A_SIGNED 0
@@ -80,14 +80,14 @@ module $paramod\cnt\initval=s32'00000000000000000000000000000001
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B \delta
-    connect \Y $0\cnt
+    connect \Y $auto$expression.cpp:3317:import_operation$5
   end
   attribute \src "dut.sv:20.2-21.22"
   attribute \always_ff 1
   cell $dff $procdff$10
     parameter \WIDTH 4
     parameter \CLK_POLARITY 1'1
-    connect \D $0\cnt
+    connect \D $auto$expression.cpp:3317:import_operation$5
     connect \Q \cnt
     connect \CLK \clock
   end

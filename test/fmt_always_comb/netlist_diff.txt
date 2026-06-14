@@ -8,7 +8,7 @@
  \$print  #(
  .ARGS_WIDTH(32'd3),
  .FORMAT("{1:> 1d-u}{1:> 1d-u}{1:> 1d-u}\n"),
-@@ -31,8 +30,8 @@
+@@ -31,19 +30,18 @@
  );
  endmodule
  (* keep =  1  *)
@@ -18,8 +18,8 @@
  module top(clk);
  (* src = "dut.sv:1.18-1.21" *)
  input clk;
-@@ -40,10 +39,10 @@
- (* src = "dut.sv:8.2-11.8" *)
+ wire clk;
+-(* src = "dut.sv:8.2-11.8" *)
  wire _0_;
  (* init = 1'h0 *)
 -(* src = "dut.sv:2.9-2.10" *)
@@ -31,7 +31,7 @@
  wire b;
  (* src = "dut.sv:4.10-4.11" *)
  (* unused_bits = "0" *)
-@@ -52,20 +51,20 @@
+@@ -52,20 +50,20 @@
  .A(b),
  .Y(_0_)
  );

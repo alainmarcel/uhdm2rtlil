@@ -22,8 +22,8 @@ module \sp_write_first
   wire width 8 \memrd_mem_DATA
   wire width 4 $memwr$\mem$addr$4
   wire width 8 $memwr$\mem$data$5
-  wire $memwr$\mem$en$6
-  wire width 8 $procmux$12_Y
+  wire width 8 $memwr$\mem$en$6
+  wire width 8 $procmux$10_Y
   attribute \src "dut.sv:12.18-12.21"
   memory width 8 size 16 \mem
   attribute \src "dut.sv:27.20-27.26"
@@ -41,14 +41,6 @@ module \sp_write_first
   end
   attribute \src "dut.sv:21.3-22.27"
   cell $mux $procmux$7
-    parameter \WIDTH 8
-    connect \A 8'x
-    connect \B \wdata_a
-    connect \S \wren_a
-    connect \Y $memwr$\mem$data$5
-  end
-  attribute \src "dut.sv:21.3-22.27"
-  cell $mux $procmux$9
     parameter \WIDTH 4
     connect \A 4'x
     connect \B \addr_a
@@ -57,12 +49,12 @@ module \sp_write_first
   end
   attribute \src "dut.sv:24.4-27.28"
   attribute \full_case 1
-  cell $mux $procmux$12
+  cell $mux $procmux$10
     parameter \WIDTH 8
     connect \A \memrd_mem_DATA
     connect \B \wdata_a
     connect \S \wren_a
-    connect \Y $procmux$12_Y
+    connect \Y $procmux$10_Y
   end
   cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$19
     parameter \MEMID "\\mem"
@@ -74,8 +66,16 @@ module \sp_write_first
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\mem$addr$4
     connect \DATA $memwr$\mem$data$5
-    connect \EN { $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 }
+    connect \EN { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
     connect \CLK \clk
+  end
+  attribute \src "dut.sv:21.3-22.27"
+  cell $mux $procmux$14
+    parameter \WIDTH 8
+    connect \A 8'00000000
+    connect \B \wdata_a
+    connect \S \wren_a
+    connect \Y $memwr$\mem$data$5
   end
   attribute \src "dut.sv:21.3-22.27"
   cell $mux $procmux$16
@@ -83,7 +83,7 @@ module \sp_write_first
     connect \A 1'0
     connect \B 1'1
     connect \S \wren_a
-    connect \Y $memwr$\mem$en$6
+    connect \Y $memwr$\mem$en$6 [0]
   end
   attribute \src "dut.sv:19.2-28.5"
   attribute \always_ff 1
@@ -93,7 +93,8 @@ module \sp_write_first
     parameter \WIDTH 8
     connect \CLK \clk
     connect \EN \rden_a
-    connect \D $procmux$12_Y
+    connect \D $procmux$10_Y
     connect \Q \rdata_a
   end
+  connect $memwr$\mem$en$6 [7:1] { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
 end

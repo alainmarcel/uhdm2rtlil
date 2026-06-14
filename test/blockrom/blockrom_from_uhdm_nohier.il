@@ -19,8 +19,6 @@ module \blockrom
   wire width 32 signed \j
   attribute \src "dut.sv:10.15-10.25"
   wire width 8 \data_out_r
-  attribute \src "dut.sv:29.2-31.5"
-  wire width 8 $0\data_out_r
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:11.15-11.21"
   memory width 8 size 8 \memory
@@ -121,16 +119,15 @@ module \blockrom
   process $proc$dut.sv:16$1
   end
   attribute \src "dut.sv:16.2-27.5"
-  process $auto$process.cpp:2641:operator()$2
+  process $auto$process.cpp:3172:operator()$2
     sync always
       update \j 32'10100111100011000101001011100000
   end
   attribute \src "dut.sv:29.2-31.5"
   attribute \always_ff 1
   process $proc$dut.sv:29$3
-    assign $0\data_out_r \memrd_memory_DATA
     sync posedge \clk
-      update \data_out_r $0\data_out_r
+      update \data_out_r \memrd_memory_DATA
   end
   connect \data_out \data_out_r
 end

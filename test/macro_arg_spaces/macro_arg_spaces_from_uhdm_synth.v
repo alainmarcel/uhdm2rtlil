@@ -338,6 +338,15 @@ module macro_arg_spaces_top(i, x, y, z);
   wire _320_;
   wire _321_;
   wire _322_;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:10.15-10.16" *)
+  wire [31:0] \a$func$dut.sv:24$2.i ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:20.15-20.16" *)
+  wire [31:0] \b$func$dut.sv:26$14.i ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:15.15-15.16" *)
+  wire [31:0] \f$func$dut.sv:25$8.i ;
   \$_NOT_  _323_ (
     .A(i[3]),
     .Y(_317_)
@@ -2259,6 +2268,9 @@ module macro_arg_spaces_top(i, x, y, z);
     .B(_316_),
     .Y(y[19])
   );
+  assign \f$func$dut.sv:25$8.i  = 32'hxxxxxxxx;
+  assign \b$func$dut.sv:26$14.i  = 32'hxxxxxxxx;
+  assign \a$func$dut.sv:24$2.i  = 32'hxxxxxxxx;
   assign z[1:0] = i[1:0];
   assign y[0] = i[0];
   assign x = { i[30:0], 1'h0 };

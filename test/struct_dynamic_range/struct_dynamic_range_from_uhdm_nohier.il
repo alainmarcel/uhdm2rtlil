@@ -16,24 +16,24 @@ module \range_case
   wire width 48 \s
   attribute \src "dut.sv:34.5-38.8"
   wire width 48 $0\s
-  wire width 32 $auto$expression.cpp:6065:import_hier_path$2
-  wire width 32 $auto$expression.cpp:6075:import_hier_path$4
-  wire width 8 $auto$expression.cpp:6079:import_hier_path$6
+  wire width 32 $auto$expression.cpp:6587:import_hier_path$2
+  wire width 32 $auto$expression.cpp:6597:import_hier_path$4
+  wire width 8 $auto$expression.cpp:6601:import_hier_path$6
   attribute \src "dut.sv:34.5-38.8"
-  wire width 8 $0\$auto$expression.cpp:6079:import_hier_path$6
+  wire width 8 $0\$auto$expression.cpp:6601:import_hier_path$6
   attribute \src "dut.sv:34.5-38.8"
   wire width 8 $0\data_o
-  wire width 32 $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$8
-  wire width 32 $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$10
-  wire width 32 $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$12
-  wire width 32 $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$14
-  wire width 32 $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$16
-  wire width 32 $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$18
-  wire width 32 $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$20
-  wire width 32 $auto$expression.cpp:6065:import_hier_path$22
-  wire width 32 $auto$expression.cpp:6075:import_hier_path$24
-  wire width 8 $auto$expression.cpp:6079:import_hier_path$26
-  cell $sub $auto$expression.cpp:6068:import_hier_path$3
+  wire width 32 $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$8
+  wire width 32 $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$10
+  wire width 32 $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$12
+  wire width 32 $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$14
+  wire width 32 $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$16
+  wire width 32 $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$18
+  wire width 32 $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$20
+  wire width 32 $auto$expression.cpp:6587:import_hier_path$22
+  wire width 32 $auto$expression.cpp:6597:import_hier_path$24
+  wire width 8 $auto$expression.cpp:6601:import_hier_path$26
+  cell $sub $auto$expression.cpp:6590:import_hier_path$3
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -41,29 +41,29 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$expression.cpp:6065:import_hier_path$2
+    connect \Y $auto$expression.cpp:6587:import_hier_path$2
   end
-  cell $mul $auto$expression.cpp:6076:import_hier_path$5
+  cell $mul $auto$expression.cpp:6598:import_hier_path$5
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:6065:import_hier_path$2
+    connect \A $auto$expression.cpp:6587:import_hier_path$2
     connect \B 8
-    connect \Y $auto$expression.cpp:6075:import_hier_path$4
+    connect \Y $auto$expression.cpp:6597:import_hier_path$4
   end
-  cell $shiftx $auto$expression.cpp:6080:import_hier_path$7
+  cell $shiftx $auto$expression.cpp:6602:import_hier_path$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \s [39:8]
-    connect \B $auto$expression.cpp:6075:import_hier_path$4
-    connect \Y $auto$expression.cpp:6079:import_hier_path$6
+    connect \B $auto$expression.cpp:6597:import_hier_path$4
+    connect \Y $auto$expression.cpp:6601:import_hier_path$6
   end
-  cell $sub $auto$process.cpp:7389:emit_dynamic_struct_field_bit_write$9
+  cell $sub $auto$process.cpp:8193:emit_dynamic_struct_field_bit_write$9
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -71,66 +71,66 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$8
+    connect \Y $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$8
   end
-  cell $mul $auto$process.cpp:7395:emit_dynamic_struct_field_bit_write$11
+  cell $mul $auto$process.cpp:8199:emit_dynamic_struct_field_bit_write$11
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$8
+    connect \A $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$8
     connect \B 8
-    connect \Y $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$10
+    connect \Y $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$10
   end
-  cell $shl $auto$process.cpp:7425:emit_dynamic_struct_field_bit_write$13
+  cell $shl $auto$process.cpp:8229:emit_dynamic_struct_field_bit_write$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A 255
-    connect \B $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$10
-    connect \Y $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$12
+    connect \B $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$10
+    connect \Y $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$12
   end
-  cell $shl $auto$process.cpp:7428:emit_dynamic_struct_field_bit_write$15
+  cell $shl $auto$process.cpp:8232:emit_dynamic_struct_field_bit_write$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A { 24'000000000000000000000000 \data_i }
-    connect \B $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$10
-    connect \Y $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$14
+    connect \B $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$10
+    connect \Y $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$14
   end
-  cell $not $auto$process.cpp:7431:emit_dynamic_struct_field_bit_write$17
+  cell $not $auto$process.cpp:8235:emit_dynamic_struct_field_bit_write$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$12
-    connect \Y $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$16
+    connect \A $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$12
+    connect \Y $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$16
   end
-  cell $and $auto$process.cpp:7443:emit_dynamic_struct_field_bit_write$19
+  cell $and $auto$process.cpp:8247:emit_dynamic_struct_field_bit_write$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A 32'11111111111111111111111111111111
-    connect \B $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$16
-    connect \Y $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$18
+    connect \B $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$16
+    connect \Y $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$18
   end
-  cell $or $auto$process.cpp:7445:emit_dynamic_struct_field_bit_write$21
+  cell $or $auto$process.cpp:8249:emit_dynamic_struct_field_bit_write$21
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$18
-    connect \B $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$14
-    connect \Y $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$20
+    connect \A $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$18
+    connect \B $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$14
+    connect \Y $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$20
   end
-  cell $sub $auto$expression.cpp:6068:import_hier_path$23
+  cell $sub $auto$expression.cpp:6590:import_hier_path$23
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -138,38 +138,38 @@ module \range_case
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_o }
-    connect \Y $auto$expression.cpp:6065:import_hier_path$22
+    connect \Y $auto$expression.cpp:6587:import_hier_path$22
   end
-  cell $mul $auto$expression.cpp:6076:import_hier_path$25
+  cell $mul $auto$expression.cpp:6598:import_hier_path$25
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:6065:import_hier_path$22
+    connect \A $auto$expression.cpp:6587:import_hier_path$22
     connect \B 8
-    connect \Y $auto$expression.cpp:6075:import_hier_path$24
+    connect \Y $auto$expression.cpp:6597:import_hier_path$24
   end
-  cell $shiftx $auto$expression.cpp:6080:import_hier_path$27
+  cell $shiftx $auto$expression.cpp:6602:import_hier_path$27
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
-    connect \A $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$20
-    connect \B $auto$expression.cpp:6075:import_hier_path$24
-    connect \Y $auto$expression.cpp:6079:import_hier_path$26
+    connect \A $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$20
+    connect \B $auto$expression.cpp:6597:import_hier_path$24
+    connect \Y $auto$expression.cpp:6601:import_hier_path$26
   end
   attribute \src "dut.sv:34.5-38.8"
   process $proc$dut.sv:34$1
-    assign $0\$auto$expression.cpp:6079:import_hier_path$6 $auto$expression.cpp:6079:import_hier_path$6
+    assign $0\$auto$expression.cpp:6601:import_hier_path$6 $auto$expression.cpp:6601:import_hier_path$6
     assign $0\data_o \data_o
     assign $0\s \s
     assign $0\s 48'111111111111111111111111111111111111111111111111
-    assign $0\s [39:8] $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$20
-    assign $0\data_o $auto$expression.cpp:6079:import_hier_path$26
+    assign $0\s [39:8] $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$20
+    assign $0\data_o $auto$expression.cpp:6601:import_hier_path$26
     sync always
-      update $auto$expression.cpp:6079:import_hier_path$6 $0\$auto$expression.cpp:6079:import_hier_path$6
+      update $auto$expression.cpp:6601:import_hier_path$6 $0\$auto$expression.cpp:6601:import_hier_path$6
       update \data_o $0\data_o
       update \s $0\s
   end
@@ -190,24 +190,24 @@ module \range_shift_mask
   wire width 48 \s
   attribute \src "dut.sv:14.5-18.8"
   wire width 48 $0\s
-  wire width 32 $auto$expression.cpp:6065:import_hier_path$29
-  wire width 32 $auto$expression.cpp:6075:import_hier_path$31
-  wire width 8 $auto$expression.cpp:6079:import_hier_path$33
+  wire width 32 $auto$expression.cpp:6587:import_hier_path$29
+  wire width 32 $auto$expression.cpp:6597:import_hier_path$31
+  wire width 8 $auto$expression.cpp:6601:import_hier_path$33
   attribute \src "dut.sv:14.5-18.8"
-  wire width 8 $0\$auto$expression.cpp:6079:import_hier_path$33
+  wire width 8 $0\$auto$expression.cpp:6601:import_hier_path$33
   attribute \src "dut.sv:14.5-18.8"
   wire width 8 $0\data_o
-  wire width 32 $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$35
-  wire width 32 $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$37
-  wire width 32 $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$39
-  wire width 32 $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$41
-  wire width 32 $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$43
-  wire width 32 $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$45
-  wire width 32 $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$47
-  wire width 32 $auto$expression.cpp:6065:import_hier_path$49
-  wire width 32 $auto$expression.cpp:6075:import_hier_path$51
-  wire width 8 $auto$expression.cpp:6079:import_hier_path$53
-  cell $sub $auto$expression.cpp:6068:import_hier_path$30
+  wire width 32 $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$35
+  wire width 32 $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$37
+  wire width 32 $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$39
+  wire width 32 $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$41
+  wire width 32 $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$43
+  wire width 32 $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$45
+  wire width 32 $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$47
+  wire width 32 $auto$expression.cpp:6587:import_hier_path$49
+  wire width 32 $auto$expression.cpp:6597:import_hier_path$51
+  wire width 8 $auto$expression.cpp:6601:import_hier_path$53
+  cell $sub $auto$expression.cpp:6590:import_hier_path$30
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -215,29 +215,29 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$expression.cpp:6065:import_hier_path$29
+    connect \Y $auto$expression.cpp:6587:import_hier_path$29
   end
-  cell $mul $auto$expression.cpp:6076:import_hier_path$32
+  cell $mul $auto$expression.cpp:6598:import_hier_path$32
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:6065:import_hier_path$29
+    connect \A $auto$expression.cpp:6587:import_hier_path$29
     connect \B 8
-    connect \Y $auto$expression.cpp:6075:import_hier_path$31
+    connect \Y $auto$expression.cpp:6597:import_hier_path$31
   end
-  cell $shiftx $auto$expression.cpp:6080:import_hier_path$34
+  cell $shiftx $auto$expression.cpp:6602:import_hier_path$34
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
     connect \A \s [39:8]
-    connect \B $auto$expression.cpp:6075:import_hier_path$31
-    connect \Y $auto$expression.cpp:6079:import_hier_path$33
+    connect \B $auto$expression.cpp:6597:import_hier_path$31
+    connect \Y $auto$expression.cpp:6601:import_hier_path$33
   end
-  cell $sub $auto$process.cpp:7389:emit_dynamic_struct_field_bit_write$36
+  cell $sub $auto$process.cpp:8193:emit_dynamic_struct_field_bit_write$36
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -245,66 +245,66 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_i }
-    connect \Y $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$35
+    connect \Y $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$35
   end
-  cell $mul $auto$process.cpp:7395:emit_dynamic_struct_field_bit_write$38
+  cell $mul $auto$process.cpp:8199:emit_dynamic_struct_field_bit_write$38
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7386:emit_dynamic_struct_field_bit_write$35
+    connect \A $auto$process.cpp:8190:emit_dynamic_struct_field_bit_write$35
     connect \B 8
-    connect \Y $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$37
+    connect \Y $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$37
   end
-  cell $shl $auto$process.cpp:7425:emit_dynamic_struct_field_bit_write$40
+  cell $shl $auto$process.cpp:8229:emit_dynamic_struct_field_bit_write$40
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A 255
-    connect \B $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$37
-    connect \Y $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$39
+    connect \B $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$37
+    connect \Y $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$39
   end
-  cell $shl $auto$process.cpp:7428:emit_dynamic_struct_field_bit_write$42
+  cell $shl $auto$process.cpp:8232:emit_dynamic_struct_field_bit_write$42
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A { 24'000000000000000000000000 \data_i }
-    connect \B $auto$process.cpp:7394:emit_dynamic_struct_field_bit_write$37
-    connect \Y $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$41
+    connect \B $auto$process.cpp:8198:emit_dynamic_struct_field_bit_write$37
+    connect \Y $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$41
   end
-  cell $not $auto$process.cpp:7431:emit_dynamic_struct_field_bit_write$44
+  cell $not $auto$process.cpp:8235:emit_dynamic_struct_field_bit_write$44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7424:emit_dynamic_struct_field_bit_write$39
-    connect \Y $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$43
+    connect \A $auto$process.cpp:8228:emit_dynamic_struct_field_bit_write$39
+    connect \Y $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$43
   end
-  cell $and $auto$process.cpp:7443:emit_dynamic_struct_field_bit_write$46
+  cell $and $auto$process.cpp:8247:emit_dynamic_struct_field_bit_write$46
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
     connect \A 32'11111111111111111111111111111111
-    connect \B $auto$process.cpp:7430:emit_dynamic_struct_field_bit_write$43
-    connect \Y $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$45
+    connect \B $auto$process.cpp:8234:emit_dynamic_struct_field_bit_write$43
+    connect \Y $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$45
   end
-  cell $or $auto$process.cpp:7445:emit_dynamic_struct_field_bit_write$48
+  cell $or $auto$process.cpp:8249:emit_dynamic_struct_field_bit_write$48
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:7442:emit_dynamic_struct_field_bit_write$45
-    connect \B $auto$process.cpp:7427:emit_dynamic_struct_field_bit_write$41
-    connect \Y $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$47
+    connect \A $auto$process.cpp:8246:emit_dynamic_struct_field_bit_write$45
+    connect \B $auto$process.cpp:8231:emit_dynamic_struct_field_bit_write$41
+    connect \Y $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$47
   end
-  cell $sub $auto$expression.cpp:6068:import_hier_path$50
+  cell $sub $auto$expression.cpp:6590:import_hier_path$50
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
@@ -312,38 +312,38 @@ module \range_shift_mask
     parameter \Y_WIDTH 32
     connect \A 3
     connect \B { 29'00000000000000000000000000000 \addr_o }
-    connect \Y $auto$expression.cpp:6065:import_hier_path$49
+    connect \Y $auto$expression.cpp:6587:import_hier_path$49
   end
-  cell $mul $auto$expression.cpp:6076:import_hier_path$52
+  cell $mul $auto$expression.cpp:6598:import_hier_path$52
     parameter \A_SIGNED 1
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:6065:import_hier_path$49
+    connect \A $auto$expression.cpp:6587:import_hier_path$49
     connect \B 8
-    connect \Y $auto$expression.cpp:6075:import_hier_path$51
+    connect \Y $auto$expression.cpp:6597:import_hier_path$51
   end
-  cell $shiftx $auto$expression.cpp:6080:import_hier_path$54
+  cell $shiftx $auto$expression.cpp:6602:import_hier_path$54
     parameter \A_SIGNED 0
     parameter \B_SIGNED 1
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 8
-    connect \A $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$47
-    connect \B $auto$expression.cpp:6075:import_hier_path$51
-    connect \Y $auto$expression.cpp:6079:import_hier_path$53
+    connect \A $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$47
+    connect \B $auto$expression.cpp:6597:import_hier_path$51
+    connect \Y $auto$expression.cpp:6601:import_hier_path$53
   end
   attribute \src "dut.sv:14.5-18.8"
   process $proc$dut.sv:14$28
-    assign $0\$auto$expression.cpp:6079:import_hier_path$33 $auto$expression.cpp:6079:import_hier_path$33
+    assign $0\$auto$expression.cpp:6601:import_hier_path$33 $auto$expression.cpp:6601:import_hier_path$33
     assign $0\data_o \data_o
     assign $0\s \s
     assign $0\s 48'111111111111111111111111111111111111111111111111
-    assign $0\s [39:8] $auto$process.cpp:7444:emit_dynamic_struct_field_bit_write$47
-    assign $0\data_o $auto$expression.cpp:6079:import_hier_path$53
+    assign $0\s [39:8] $auto$process.cpp:8248:emit_dynamic_struct_field_bit_write$47
+    assign $0\data_o $auto$expression.cpp:6601:import_hier_path$53
     sync always
-      update $auto$expression.cpp:6079:import_hier_path$33 $0\$auto$expression.cpp:6079:import_hier_path$33
+      update $auto$expression.cpp:6601:import_hier_path$33 $0\$auto$expression.cpp:6601:import_hier_path$33
       update \data_o $0\data_o
       update \s $0\s
   end
@@ -364,17 +364,17 @@ module \top
   attribute \src "dut.sv:59.17-59.27"
   wire width 8 \data_case3
   wire $auto$rtlil.cc:3311:Eqx$57
-  wire $auto$process.cpp:111:build_check_cell$58
+  wire $auto$process.cpp:174:build_check_cell$58
   wire $auto$rtlil.cc:3311:Eqx$61
-  wire $auto$process.cpp:111:build_check_cell$62
+  wire $auto$process.cpp:174:build_check_cell$62
   wire $auto$rtlil.cc:3311:Eqx$65
-  wire $auto$process.cpp:111:build_check_cell$66
+  wire $auto$process.cpp:174:build_check_cell$66
   wire $auto$rtlil.cc:3311:Eqx$70
-  wire $auto$process.cpp:111:build_check_cell$71
+  wire $auto$process.cpp:174:build_check_cell$71
   wire $auto$rtlil.cc:3311:Eqx$74
-  wire $auto$process.cpp:111:build_check_cell$75
+  wire $auto$process.cpp:174:build_check_cell$75
   wire $auto$rtlil.cc:3311:Eqx$78
-  wire $auto$process.cpp:111:build_check_cell$79
+  wire $auto$process.cpp:174:build_check_cell$79
   cell $eqx $eqx$dut.sv:50$56
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -387,7 +387,7 @@ module \top
   end
   attribute \src "dut.sv:50.9-50.44"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$59
+  cell $check $auto$process.cpp:184:build_check_cell$59
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -397,7 +397,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$57
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$58
+    connect \EN $auto$process.cpp:174:build_check_cell$58
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:51$60
@@ -412,7 +412,7 @@ module \top
   end
   attribute \src "dut.sv:51.9-51.44"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$63
+  cell $check $auto$process.cpp:184:build_check_cell$63
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -422,7 +422,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$61
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$62
+    connect \EN $auto$process.cpp:174:build_check_cell$62
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:52$64
@@ -437,7 +437,7 @@ module \top
   end
   attribute \src "dut.sv:52.9-52.44"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$67
+  cell $check $auto$process.cpp:184:build_check_cell$67
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -447,7 +447,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$65
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$66
+    connect \EN $auto$process.cpp:174:build_check_cell$66
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:63$69
@@ -462,7 +462,7 @@ module \top
   end
   attribute \src "dut.sv:63.9-63.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$72
+  cell $check $auto$process.cpp:184:build_check_cell$72
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -472,7 +472,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$70
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$71
+    connect \EN $auto$process.cpp:174:build_check_cell$71
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:64$73
@@ -487,7 +487,7 @@ module \top
   end
   attribute \src "dut.sv:64.9-64.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$76
+  cell $check $auto$process.cpp:184:build_check_cell$76
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -497,7 +497,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$74
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$75
+    connect \EN $auto$process.cpp:174:build_check_cell$75
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:65$77
@@ -512,7 +512,7 @@ module \top
   end
   attribute \src "dut.sv:65.9-65.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$80
+  cell $check $auto$process.cpp:184:build_check_cell$80
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -522,7 +522,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$78
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$79
+    connect \EN $auto$process.cpp:174:build_check_cell$79
     connect \TRG { }
   end
   cell \range_shift_mask \range_shift_mask1
@@ -563,22 +563,22 @@ module \top
   end
   attribute \src "dut.sv:49.5-53.8"
   process $proc$dut.sv:49$55
-    assign $auto$process.cpp:111:build_check_cell$58 1'0
-    assign $auto$process.cpp:111:build_check_cell$62 1'0
-    assign $auto$process.cpp:111:build_check_cell$66 1'0
-    assign $auto$process.cpp:111:build_check_cell$58 1'1
-    assign $auto$process.cpp:111:build_check_cell$62 1'1
-    assign $auto$process.cpp:111:build_check_cell$66 1'1
+    assign $auto$process.cpp:174:build_check_cell$58 1'0
+    assign $auto$process.cpp:174:build_check_cell$62 1'0
+    assign $auto$process.cpp:174:build_check_cell$66 1'0
+    assign $auto$process.cpp:174:build_check_cell$58 1'1
+    assign $auto$process.cpp:174:build_check_cell$62 1'1
+    assign $auto$process.cpp:174:build_check_cell$66 1'1
     sync always
   end
   attribute \src "dut.sv:62.5-66.8"
   process $proc$dut.sv:62$68
-    assign $auto$process.cpp:111:build_check_cell$71 1'0
-    assign $auto$process.cpp:111:build_check_cell$75 1'0
-    assign $auto$process.cpp:111:build_check_cell$79 1'0
-    assign $auto$process.cpp:111:build_check_cell$71 1'1
-    assign $auto$process.cpp:111:build_check_cell$75 1'1
-    assign $auto$process.cpp:111:build_check_cell$79 1'1
+    assign $auto$process.cpp:174:build_check_cell$71 1'0
+    assign $auto$process.cpp:174:build_check_cell$75 1'0
+    assign $auto$process.cpp:174:build_check_cell$79 1'0
+    assign $auto$process.cpp:174:build_check_cell$71 1'1
+    assign $auto$process.cpp:174:build_check_cell$75 1'1
+    assign $auto$process.cpp:174:build_check_cell$79 1'1
     sync always
   end
 end

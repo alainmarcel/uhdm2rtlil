@@ -13,12 +13,12 @@ module \signed_compare
   wire output 4 \ltu
   attribute \src "dut.sv:11.21-11.24"
   wire output 5 \ges
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$1
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$2
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$1
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$2
   wire $auto$rtlil.cc:3307:Lt$4
   wire $auto$rtlil.cc:3307:Lt$6
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$7
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$8
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$7
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$8
   wire $auto$rtlil.cc:3313:Ge$10
   cell $lt $lt$dut.sv:13$3
     parameter \A_SIGNED 1
@@ -26,8 +26,8 @@ module \signed_compare
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:1606:import_expression$1
-    connect \B $auto$expression.cpp:1606:import_expression$2
+    connect \A $auto$expression.cpp:1642:import_expression$1
+    connect \B $auto$expression.cpp:1642:import_expression$2
     connect \Y $auto$rtlil.cc:3307:Lt$4
   end
   cell $lt $lt$dut.sv:14$5
@@ -46,15 +46,15 @@ module \signed_compare
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 1
-    connect \A $auto$expression.cpp:1606:import_expression$7
-    connect \B $auto$expression.cpp:1606:import_expression$8
+    connect \A $auto$expression.cpp:1642:import_expression$7
+    connect \B $auto$expression.cpp:1642:import_expression$8
     connect \Y $auto$rtlil.cc:3313:Ge$10
   end
-  connect $auto$expression.cpp:1606:import_expression$1 \a
-  connect $auto$expression.cpp:1606:import_expression$2 \b
+  connect $auto$expression.cpp:1642:import_expression$1 \a
+  connect $auto$expression.cpp:1642:import_expression$2 \b
   connect \lts $auto$rtlil.cc:3307:Lt$4
   connect \ltu $auto$rtlil.cc:3307:Lt$6
-  connect $auto$expression.cpp:1606:import_expression$7 \a
-  connect $auto$expression.cpp:1606:import_expression$8 \b
+  connect $auto$expression.cpp:1642:import_expression$7 \a
+  connect $auto$expression.cpp:1642:import_expression$8 \b
   connect \ges $auto$rtlil.cc:3313:Ge$10
 end

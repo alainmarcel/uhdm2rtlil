@@ -127,10 +127,10 @@ module \abc9_test012_sub
     switch $logic_not$dut.sv:100.9-100.12$2_Y
     attribute \src "dut.sv:100.5-103.26"
       case 1'1
-        assign $0\latch \io
+        assign $0\latch [3:0] \io [3:0]
     attribute \src "dut.sv:100.5-103.26"
       case 
-        assign $0\latch \io
+        assign $0\latch [7:4] \io [3:0]
     end
     sync always
       update \latch $0\latch
@@ -868,8 +868,8 @@ module \abc9_test021
   wire \grant_encoded
   attribute \src "dut.sv:200.18-200.29"
   wire \grant_valid
-  wire width 4 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74
-  wire width 2 $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75
+  wire width 4 $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$74
+  wire width 2 $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$75
   attribute \src "dut.sv:179.7-182.4"
   cell $_NOT_ \u0
     connect \Y \a
@@ -892,12 +892,12 @@ module \abc9_test021
     connect \rst \rst
     connect \request \request
     connect \acknowledge \acknowledge
-    connect \grant $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74
+    connect \grant $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$74
     connect \grant_valid \grant_valid
-    connect \grant_encoded $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75
+    connect \grant_encoded $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$75
   end
-  connect \grant $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$74 [0]
-  connect \grant_encoded $auto$uhdm2rtlil.cpp:924:import_module_hierarchy$75 [0]
+  connect \grant $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$74 [0]
+  connect \grant_encoded $auto$uhdm2rtlil.cpp:1087:import_module_hierarchy$75 [0]
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:226.1-236.10"
@@ -911,8 +911,6 @@ module \abc9_test022
   attribute \src "dut.sv:232.16-232.51"
   attribute \init 8'00000000
   wire width 8 \m_eth_payload_axis_tkeep_reg
-  attribute \src "dut.sv:234.5-235.59"
-  wire width 8 $0\m_eth_payload_axis_tkeep_reg
   wire width 8 $auto$rtlil.cc:3390:Mux$79
   cell $mux $mux$dut.sv:235$78
     parameter \WIDTH 8
@@ -924,9 +922,8 @@ module \abc9_test022
   attribute \src "dut.sv:234.5-235.59"
   attribute \always_ff 1
   process $proc$dut.sv:234$77
-    assign $0\m_eth_payload_axis_tkeep_reg $auto$rtlil.cc:3390:Mux$79
     sync posedge \clk
-      update \m_eth_payload_axis_tkeep_reg $0\m_eth_payload_axis_tkeep_reg
+      update \m_eth_payload_axis_tkeep_reg $auto$rtlil.cc:3390:Mux$79
   end
   connect \m_eth_payload_axis_tkeep \m_eth_payload_axis_tkeep_reg
 end
@@ -942,15 +939,15 @@ module \abc9_test023
   wire width 2 output 2 \dout
   attribute \src "dut.sv:246.17-246.21"
   wire width 4 \mask
-  wire width 4 $auto$module.cpp:1124:import_continuous_assign$80
-  wire width 2 $auto$expression.cpp:3113:import_operation$82
-  wire width 2 $auto$expression.cpp:3136:import_operation$84
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$81
+  wire width 4 $auto$module.cpp:1218:import_continuous_assign$80
+  wire width 2 $auto$expression.cpp:3509:import_operation$82
+  wire width 2 $auto$expression.cpp:3547:import_operation$84
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$81
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 4
     connect \A 2'11
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$80
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$80
   end
   attribute \src "dut.sv:247.17-247.35"
   cell $shl $shl$dut.sv:247$83
@@ -961,7 +958,7 @@ module \abc9_test023
     parameter \Y_WIDTH 2
     connect \A \mask
     connect \B \din [1:0]
-    connect \Y $auto$expression.cpp:3113:import_operation$82
+    connect \Y $auto$expression.cpp:3509:import_operation$82
   end
   attribute \src "dut.sv:247.16-247.41"
   cell $shr $shr$dut.sv:247$85
@@ -970,12 +967,12 @@ module \abc9_test023
     parameter \A_WIDTH 2
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 2
-    connect \A $auto$expression.cpp:3113:import_operation$82
+    connect \A $auto$expression.cpp:3509:import_operation$82
     connect \B 2
-    connect \Y $auto$expression.cpp:3136:import_operation$84
+    connect \Y $auto$expression.cpp:3547:import_operation$84
   end
-  connect \mask $auto$module.cpp:1124:import_continuous_assign$80
-  connect \dout $auto$expression.cpp:3136:import_operation$84
+  connect \mask $auto$module.cpp:1218:import_continuous_assign$80
+  connect \dout $auto$expression.cpp:3547:import_operation$84
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:250.1-252.10"
@@ -1008,24 +1005,24 @@ module \abc9_test026
   wire width 4 output 1 \o
   attribute \src "dut.sv:262.37-262.38"
   wire width 4 output 2 \p
-  wire width 4 $auto$module.cpp:1124:import_continuous_assign$86
-  wire width 4 $auto$module.cpp:1124:import_continuous_assign$88
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$87
+  wire width 4 $auto$module.cpp:1218:import_continuous_assign$86
+  wire width 4 $auto$module.cpp:1218:import_continuous_assign$88
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$87
     parameter \A_SIGNED 0
     parameter \A_WIDTH 2
     parameter \Y_WIDTH 4
     connect \A 2'1-
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$86
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$86
   end
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$89
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$89
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 4
     connect \A 3'1-0
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$88
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$88
   end
-  connect \o $auto$module.cpp:1124:import_continuous_assign$86
-  connect \p $auto$module.cpp:1124:import_continuous_assign$88
+  connect \o $auto$module.cpp:1218:import_continuous_assign$86
+  connect \p $auto$module.cpp:1218:import_continuous_assign$88
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:267.1-271.10"
@@ -1067,22 +1064,16 @@ module \abc9_test031
   attribute \src "dut.sv:273.57-273.59"
   wire output 5 \q2
   attribute \src "dut.sv:274.1-274.32"
-  wire $0\q1
-  attribute \src "dut.sv:275.1-275.33"
-  wire $0\q2
-  attribute \src "dut.sv:274.1-274.32"
   attribute \always_ff 1
   process $proc$dut.sv:274$91
-    assign $0\q1 \d
     sync posedge \clk1
-      update \q1 $0\q1
+      update \q1 \d
   end
   attribute \src "dut.sv:275.1-275.33"
   attribute \always_ff 1
   process $proc$dut.sv:275$92
-    assign $0\q2 \q1
     sync negedge \clk2
-      update \q2 $0\q2
+      update \q2 \q1
   end
 end
 attribute \cells_not_processed 1
@@ -1145,9 +1136,9 @@ module \abc9_test033
       case 
         assign $0\q \d
     end
-    sync posedge \r
-      update \q $0\q
     sync negedge \clk
+      update \q $0\q
+    sync posedge \r
       update \q $0\q
   end
 end
@@ -1163,22 +1154,16 @@ module \abc9_test034
   attribute \src "dut.sv:290.50-290.52"
   wire output 4 \q2
   attribute \src "dut.sv:291.1-291.31"
-  wire $0\q1
-  attribute \src "dut.sv:292.1-292.32"
-  wire $0\q2
-  attribute \src "dut.sv:291.1-291.31"
   attribute \always_ff 1
   process $proc$dut.sv:291$95
-    assign $0\q1 \d
     sync posedge \clk
-      update \q1 $0\q1
+      update \q1 \d
   end
   attribute \src "dut.sv:292.1-292.32"
   attribute \always_ff 1
   process $proc$dut.sv:292$96
-    assign $0\q2 \q1
     sync posedge \clk
-      update \q2 $0\q2
+      update \q2 \q1
   end
 end
 attribute \cells_not_processed 1

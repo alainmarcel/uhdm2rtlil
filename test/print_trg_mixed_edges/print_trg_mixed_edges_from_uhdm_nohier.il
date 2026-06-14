@@ -15,7 +15,7 @@ module \top
   wire width 8 output 5 \cnt
   attribute \src "dut.sv:13.5-16.8"
   wire width 8 $0\cnt[7:0]
-  wire width 8 $auto$expression.cpp:2965:import_operation$2
+  wire width 8 $auto$expression.cpp:3317:import_operation$2
   wire $print$$display$21$5_EN
   attribute \src "dut.sv:15.20-15.27"
   cell $add $add$dut.sv:15$3
@@ -26,7 +26,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2965:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   cell $print $print$$display$21$5
     parameter \TRG_WIDTH 2
@@ -47,7 +47,7 @@ module \top
     switch \cond
     attribute \src "dut.sv:15.13-15.27"
       case 1'1
-        assign $0\cnt[7:0] $auto$expression.cpp:2965:import_operation$2
+        assign $0\cnt[7:0] $auto$expression.cpp:3317:import_operation$2
       case 
     end
     sync posedge \clk

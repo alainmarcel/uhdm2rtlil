@@ -13,7 +13,7 @@ module \blocking_temp_select
   wire width 8 output 4 \lo
   attribute \src "dut.sv:11.20-11.25"
   wire output 5 \carry
-  wire width 9 $auto$expression.cpp:3248:import_operation$2
+  wire width 9 $auto$expression.cpp:3317:import_operation$2
   attribute \src "dut.sv:15.7-15.12"
   cell $add $add$dut.sv:15$3
     parameter \A_SIGNED 0
@@ -23,14 +23,14 @@ module \blocking_temp_select
     parameter \Y_WIDTH 9
     connect \A { 1'0 \a }
     connect \B { 1'0 \b }
-    connect \Y $auto$expression.cpp:3248:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:14.2-18.5"
   attribute \always_ff 1
   cell $dff $procdff$6
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:3248:import_operation$2 [8]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [8]
     connect \Q \carry
     connect \CLK \clk
   end
@@ -39,7 +39,7 @@ module \blocking_temp_select
   cell $dff $procdff$5
     parameter \WIDTH 8
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:3248:import_operation$2 [7:0]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [7:0]
     connect \Q \lo
     connect \CLK \clk
   end

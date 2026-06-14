@@ -22,7 +22,7 @@ module \sp_read_first
   wire width 8 \memrd_mem_DATA
   wire width 4 $memwr$\mem$addr$4
   wire width 8 $memwr$\mem$data$5
-  wire $memwr$\mem$en$6
+  wire width 8 $memwr$\mem$en$6
   attribute \src "dut.sv:12.18-12.21"
   memory width 8 size 16 \mem
   attribute \src "dut.sv:24.19-24.25"
@@ -40,14 +40,6 @@ module \sp_read_first
   end
   attribute \src "dut.sv:21.3-22.27"
   cell $mux $procmux$7
-    parameter \WIDTH 8
-    connect \A 8'x
-    connect \B \wdata_a
-    connect \S \wren_a
-    connect \Y $memwr$\mem$data$5
-  end
-  attribute \src "dut.sv:21.3-22.27"
-  cell $mux $procmux$9
     parameter \WIDTH 4
     connect \A 4'x
     connect \B \addr_a
@@ -64,8 +56,16 @@ module \sp_read_first
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\mem$addr$4
     connect \DATA $memwr$\mem$data$5
-    connect \EN { $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 }
+    connect \EN { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
     connect \CLK \clk
+  end
+  attribute \src "dut.sv:21.3-22.27"
+  cell $mux $procmux$11
+    parameter \WIDTH 8
+    connect \A 8'00000000
+    connect \B \wdata_a
+    connect \S \wren_a
+    connect \Y $memwr$\mem$data$5
   end
   attribute \src "dut.sv:21.3-22.27"
   cell $mux $procmux$13
@@ -73,7 +73,7 @@ module \sp_read_first
     connect \A 1'0
     connect \B 1'1
     connect \S \wren_a
-    connect \Y $memwr$\mem$en$6
+    connect \Y $memwr$\mem$en$6 [0]
   end
   attribute \src "dut.sv:19.2-25.5"
   attribute \always_ff 1
@@ -86,4 +86,5 @@ module \sp_read_first
     connect \D \memrd_mem_DATA
     connect \Q \rdata_a
   end
+  connect $memwr$\mem$en$6 [7:1] { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
 end

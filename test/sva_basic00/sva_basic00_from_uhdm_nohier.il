@@ -11,8 +11,6 @@ module \top
   wire input 3 \antecedent
   attribute \src "dut.sv:1.54-1.64"
   wire output 4 \consequent
-  attribute \src "dut.sv:2.2-3.40"
-  wire $0\consequent
   wire width 64 $auto$rtlil.cc:3390:Mux$3
   cell $mux $mux$dut.sv:3$2
     parameter \WIDTH 64
@@ -23,7 +21,7 @@ module \top
   end
   attribute \src "dut.sv:9.2-10.67"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -39,8 +37,7 @@ module \top
   attribute \src "dut.sv:2.2-3.40"
   attribute \always_ff 1
   process $proc$dut.sv:2$1
-    assign $0\consequent $auto$rtlil.cc:3390:Mux$3 [0]
     sync posedge \clk
-      update \consequent $0\consequent
+      update \consequent $auto$rtlil.cc:3390:Mux$3 [0]
   end
 end

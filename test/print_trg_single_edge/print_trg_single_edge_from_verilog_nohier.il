@@ -16,7 +16,7 @@ module \top
   attribute \src "dut.sv:17.13-17.25"
   wire $eq$dut.sv:17$3_Y
   attribute \src "dut.sv:18.13-18.44"
-  wire $display$0x55dfa0f79f10:18$4_EN
+  wire $display$0x5595acc28f10:18$4_EN
   attribute \src "dut.sv:16.20-16.27"
   cell $add $add$dut.sv:16$2
     parameter \A_SIGNED 0
@@ -40,7 +40,7 @@ module \top
     connect \Y $eq$dut.sv:17$3_Y
   end
   attribute \src "dut.sv:18.13-18.44"
-  cell $print $display$0x55dfa0f79f10:18$4
+  cell $print $display$0x5595acc28f10:18$4
     parameter \TRG_WIDTH 1
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 1'1
@@ -48,13 +48,13 @@ module \top
     parameter \FORMAT "hit at cnt={8:> 3d-u}\n"
     parameter \ARGS_WIDTH 8
     connect \TRG \clk
-    connect \EN $display$0x55dfa0f79f10:18$4_EN
+    connect \EN $display$0x5595acc28f10:18$4_EN
     connect \ARGS \cnt
   end
   attribute \src "dut.sv:12.5-19.8"
   process $proc$dut.sv:12$1
     assign $0\cnt[7:0] \cnt
-    assign $display$0x55dfa0f79f10:18$4_EN 1'0
+    assign $display$0x5595acc28f10:18$4_EN 1'0
     attribute \src "dut.sv:13.9-16.28"
     switch \rst
     attribute \src "dut.sv:13.13-13.16"
@@ -68,7 +68,7 @@ module \top
     switch $eq$dut.sv:17$3_Y
     attribute \src "dut.sv:17.13-17.25"
       case 1'1
-        assign $display$0x55dfa0f79f10:18$4_EN 1'1
+        assign $display$0x5595acc28f10:18$4_EN 1'1
       case 
     end
     sync posedge \clk

@@ -13,194 +13,349 @@ module \a23_barrel_shift_fpga_rotate
   wire width 32 output 4 \rot_prod
   wire width 32 \netgen[0].in
   wire width 32 \netgen[0].out
-  wire $auto$rtlil.cc:3302:And$1788
-  wire $auto$rtlil.cc:3302:And$761
-  wire $auto$rtlil.cc:3302:And$878
+  wire $auto$rtlil.cc:3302:And$635
+  wire $auto$rtlil.cc:3302:And$2078
+  wire $auto$rtlil.cc:3302:And$1268
   wire $auto$rtlil.cc:3302:And$7
   wire $auto$rtlil.cc:3302:And$2074
-  wire $auto$rtlil.cc:3302:And$1346
-  wire $auto$rtlil.cc:3302:And$358
-  wire $auto$rtlil.cc:3302:And$1229
-  wire $auto$rtlil.cc:3302:And$605
-  wire $auto$rtlil.cc:3302:And$1580
-  wire $auto$rtlil.cc:3302:And$20
-  wire $auto$rtlil.cc:3302:And$1775
-  wire $auto$rtlil.cc:3302:And$2061
-  wire $auto$rtlil.cc:3302:And$1203
-  wire $auto$rtlil.cc:3302:And$969
-  wire $auto$rtlil.cc:3302:And$371
-  wire $auto$rtlil.cc:3302:And$1437
-  wire $auto$rtlil.cc:3302:And$33
-  wire $auto$rtlil.cc:3302:And$774
-  wire $auto$rtlil.cc:3302:And$1268
-  wire $auto$rtlil.cc:3302:And$2048
-  wire $auto$rtlil.cc:3302:And$618
-  wire $auto$rtlil.cc:3302:And$1762
-  wire $auto$rtlil.cc:3302:And$1060
-  wire $auto$rtlil.cc:3302:And$46
-  wire $auto$rtlil.cc:3302:And$384
-  wire $auto$rtlil.cc:3302:And$1567
-  wire $auto$rtlil.cc:3302:And$891
-  wire $auto$rtlil.cc:3302:And$2035
-  wire $auto$rtlil.cc:3302:And$1034
-  wire $auto$rtlil.cc:3302:And$1333
-  wire $auto$rtlil.cc:3302:And$59
-  wire $auto$rtlil.cc:3302:And$1151
-  wire $auto$rtlil.cc:3302:And$1749
-  wire $auto$rtlil.cc:3302:And$397
-  wire $auto$rtlil.cc:3302:And$631
-  wire $auto$rtlil.cc:3302:And$2022
-  wire $auto$rtlil.cc:3302:And$787
-  wire $auto$rtlil.cc:3302:And$72
+  wire $auto$rtlil.cc:3302:And$11
   wire $auto$rtlil.cc:3302:And$1424
-  wire $auto$rtlil.cc:3302:And$1554
-  wire $auto$rtlil.cc:3302:And$1125
-  wire $auto$rtlil.cc:3302:And$1259
-  wire $auto$rtlil.cc:3302:And$410
-  wire $auto$rtlil.cc:3302:And$2009
-  wire $auto$rtlil.cc:3302:And$85
-  wire $auto$rtlil.cc:3302:And$1736
-  wire $auto$rtlil.cc:3302:And$982
+  wire $auto$rtlil.cc:3302:And$1320
+  wire $auto$rtlil.cc:3302:And$1636
   wire $auto$rtlil.cc:3302:And$644
-  wire width 32 \netgen[1].in
-  wire width 32 \netgen[1].out
-  wire $auto$rtlil.cc:3302:And$904
+  wire $auto$rtlil.cc:3302:And$20
+  wire $auto$rtlil.cc:3302:And$2065
+  wire $auto$rtlil.cc:3302:And$24
+  wire $auto$rtlil.cc:3302:And$943
+  wire $auto$rtlil.cc:3302:And$2061
+  wire $auto$rtlil.cc:3302:And$648
+  wire $auto$rtlil.cc:3302:And$1632
+  wire $auto$rtlil.cc:3302:And$33
+  wire $auto$rtlil.cc:3302:And$1168
+  wire $auto$rtlil.cc:3302:And$37
+  wire $auto$rtlil.cc:3302:And$947
+  wire $auto$rtlil.cc:3302:And$2052
+  wire $auto$rtlil.cc:3302:And$1216
+  wire $auto$rtlil.cc:3302:And$2048
+  wire $auto$rtlil.cc:3302:And$46
+  wire $auto$rtlil.cc:3302:And$657
+  wire $auto$rtlil.cc:3302:And$50
+  wire $auto$rtlil.cc:3302:And$1099
+  wire $auto$rtlil.cc:3302:And$661
+  wire $auto$rtlil.cc:3302:And$1623
+  wire $auto$rtlil.cc:3302:And$2039
+  wire $auto$rtlil.cc:3302:And$59
+  wire $auto$rtlil.cc:3302:And$1415
+  wire $auto$rtlil.cc:3302:And$63
+  wire $auto$rtlil.cc:3302:And$2035
+  wire $auto$rtlil.cc:3302:And$1619
+  wire $auto$rtlil.cc:3302:And$1207
+  wire $auto$rtlil.cc:3302:And$670
+  wire $auto$rtlil.cc:3302:And$72
+  wire $auto$rtlil.cc:3302:And$956
+  wire $auto$rtlil.cc:3302:And$76
+  wire $auto$rtlil.cc:3302:And$2026
+  wire $auto$rtlil.cc:3302:And$674
+  wire $auto$rtlil.cc:3302:And$2022
+  wire $auto$rtlil.cc:3302:And$1411
+  wire $auto$rtlil.cc:3302:And$85
+  wire $auto$rtlil.cc:3302:And$960
+  wire $auto$rtlil.cc:3302:And$89
+  wire $auto$rtlil.cc:3302:And$1610
+  wire $auto$rtlil.cc:3302:And$1103
+  wire $auto$rtlil.cc:3302:And$2013
+  wire $auto$rtlil.cc:3302:And$683
   wire $auto$rtlil.cc:3302:And$98
   wire $auto$rtlil.cc:3304:Xor$100
   wire $auto$rtlil.cc:3302:And$102
-  wire $auto$rtlil.cc:3302:And$1996
-  wire $auto$rtlil.cc:3255:Not$419
+  wire $auto$rtlil.cc:3302:And$2009
+  wire $auto$rtlil.cc:3302:And$1606
   wire $auto$rtlil.cc:3255:Not$107
   wire $auto$rtlil.cc:3304:Xor$109
   wire $auto$rtlil.cc:3302:And$111
+  wire $auto$rtlil.cc:3302:And$687
+  wire $auto$rtlil.cc:3302:And$115
+  wire $auto$rtlil.cc:3302:And$1242
+  wire $auto$rtlil.cc:3302:And$1311
+  wire $auto$rtlil.cc:3302:And$2000
+  wire $auto$rtlil.cc:3302:And$1229
+  wire $auto$rtlil.cc:3302:And$124
+  wire $auto$rtlil.cc:3302:And$1996
+  wire $auto$rtlil.cc:3302:And$128
+  wire $auto$rtlil.cc:3302:And$969
+  wire $auto$rtlil.cc:3302:And$696
+  wire $auto$rtlil.cc:3302:And$1597
+  wire $auto$rtlil.cc:3302:And$700
+  wire $auto$rtlil.cc:3302:And$137
+  wire $auto$rtlil.cc:3302:And$1987
+  wire $auto$rtlil.cc:3302:And$141
+  wire $auto$rtlil.cc:3302:And$1402
+  wire $auto$rtlil.cc:3302:And$1983
+  wire $auto$rtlil.cc:3302:And$1593
+  wire $auto$rtlil.cc:3302:And$973
+  wire $auto$rtlil.cc:3302:And$150
+  wire $auto$rtlil.cc:3302:And$1307
+  wire $auto$rtlil.cc:3302:And$154
+  wire $auto$rtlil.cc:3302:And$709
+  wire $auto$rtlil.cc:3302:And$1974
+  wire $auto$rtlil.cc:3302:And$1398
+  wire $auto$rtlil.cc:3302:And$1970
+  wire $auto$rtlil.cc:3302:And$163
+  wire $auto$rtlil.cc:3302:And$713
+  wire $auto$rtlil.cc:3302:And$167
+  wire $auto$rtlil.cc:3302:And$1112
+  wire $auto$rtlil.cc:3302:And$1584
+  wire $auto$rtlil.cc:3302:And$1177
+  wire $auto$rtlil.cc:3302:And$1961
+  wire $auto$rtlil.cc:3302:And$176
+  wire $auto$rtlil.cc:3302:And$1580
+  wire $auto$rtlil.cc:3302:And$180
+  wire $auto$rtlil.cc:3302:And$1957
+  wire $auto$rtlil.cc:3302:And$722
+  wire $auto$rtlil.cc:3302:And$982
+  wire $auto$rtlil.cc:3302:And$726
+  wire $auto$rtlil.cc:3302:And$189
+  wire $auto$rtlil.cc:3302:And$1116
+  wire $auto$rtlil.cc:3302:And$193
+  wire $auto$rtlil.cc:3302:And$1948
+  wire $auto$rtlil.cc:3302:And$986
+  wire $auto$rtlil.cc:3302:And$1944
+  wire $auto$rtlil.cc:3302:And$1259
+  wire $auto$rtlil.cc:3302:And$202
+  wire $auto$rtlil.cc:3302:And$1571
+  wire $auto$rtlil.cc:3302:And$206
+  wire $auto$rtlil.cc:3302:And$735
+  wire $auto$rtlil.cc:3302:And$1389
+  wire $auto$rtlil.cc:3302:And$1935
+  wire $auto$rtlil.cc:3302:And$739
+  wire $auto$rtlil.cc:3302:And$215
+  wire $auto$rtlil.cc:3302:And$1931
+  wire $auto$rtlil.cc:3302:And$219
+  wire $auto$rtlil.cc:3302:And$1567
+  wire $auto$rtlil.cc:3302:And$1181
+  wire $auto$rtlil.cc:3302:And$1385
+  wire $auto$rtlil.cc:3302:And$995
+  wire $auto$rtlil.cc:3302:And$228
+  wire $auto$rtlil.cc:3302:And$1922
+  wire $auto$rtlil.cc:3302:And$232
+  wire $auto$rtlil.cc:3302:And$748
+  wire $auto$rtlil.cc:3302:And$1918
+  wire $auto$rtlil.cc:3304:Xor$1257
+  wire $auto$rtlil.cc:3302:And$752
+  wire $auto$rtlil.cc:3302:And$241
+  wire $auto$rtlil.cc:3302:And$1558
+  wire $auto$rtlil.cc:3302:And$245
+  wire $auto$rtlil.cc:3302:And$999
+  wire $auto$rtlil.cc:3302:And$1909
+  wire $auto$rtlil.cc:3302:And$1554
+  wire $auto$rtlil.cc:3302:And$1905
+  wire $auto$rtlil.cc:3302:And$254
+  wire $auto$rtlil.cc:3302:And$1298
+  wire $auto$rtlil.cc:3302:And$258
+  wire $auto$rtlil.cc:3302:And$761
+  wire $auto$rtlil.cc:3302:And$1125
+  wire $auto$rtlil.cc:3302:And$765
+  wire $auto$rtlil.cc:3302:And$1896
+  wire $auto$rtlil.cc:3302:And$267
+  wire $auto$rtlil.cc:3255:Not$1004
+  wire $auto$rtlil.cc:3302:And$271
+  wire $auto$rtlil.cc:3302:And$1892
+  wire $auto$rtlil.cc:3304:Xor$1006
+  wire $auto$rtlil.cc:3302:And$1545
+  wire $auto$rtlil.cc:3302:And$1008
+  wire $auto$rtlil.cc:3302:And$280
+  wire $auto$rtlil.cc:3302:And$774
+  wire $auto$rtlil.cc:3302:And$284
+  wire $auto$rtlil.cc:3302:And$1883
+  wire $auto$rtlil.cc:3302:And$1541
+  wire $auto$rtlil.cc:3302:And$1879
+  wire $auto$rtlil.cc:3302:And$778
+  wire $auto$rtlil.cc:3302:And$293
+  wire $auto$rtlil.cc:3304:Xor$1010
+  wire $auto$rtlil.cc:3302:And$297
+  wire $auto$rtlil.cc:3302:And$1012
+  wire $auto$rtlil.cc:3302:And$1255
+  wire $auto$rtlil.cc:3302:And$1870
+  wire $auto$rtlil.cc:3302:And$1376
+  wire $auto$rtlil.cc:3302:And$306
+  wire $auto$rtlil.cc:3302:And$1866
+  wire $auto$rtlil.cc:3302:And$310
+  wire $auto$rtlil.cc:3302:And$787
+  wire $auto$rtlil.cc:3302:And$1532
+  wire $auto$rtlil.cc:3302:And$791
+  wire $auto$rtlil.cc:3302:And$1129
+  wire $auto$rtlil.cc:3302:And$319
+  wire $auto$rtlil.cc:3302:And$1857
+  wire $auto$rtlil.cc:3302:And$323
+  wire $auto$rtlil.cc:3302:And$1528
+  wire $auto$rtlil.cc:3302:And$1853
+  wire $auto$rtlil.cc:3302:And$1372
+  wire $auto$rtlil.cc:3302:And$1021
+  wire $auto$rtlil.cc:3302:And$332
+  wire $auto$rtlil.cc:3302:And$800
+  wire $auto$rtlil.cc:3302:And$336
+  wire $auto$rtlil.cc:3302:And$1294
+  wire $auto$rtlil.cc:3302:And$1844
+  wire $auto$rtlil.cc:3302:And$804
+  wire $auto$rtlil.cc:3302:And$1840
+  wire $auto$rtlil.cc:3302:And$345
+  wire $auto$rtlil.cc:3302:And$1025
+  wire $auto$rtlil.cc:3302:And$349
+  wire $auto$rtlil.cc:3302:And$1519
+  wire $auto$rtlil.cc:3304:Xor$1253
+  wire $auto$rtlil.cc:3302:And$1515
+  wire $auto$rtlil.cc:3302:And$1831
+  wire $auto$rtlil.cc:3302:And$358
+  wire $auto$rtlil.cc:3302:And$813
+  wire $auto$rtlil.cc:3302:And$362
+  wire $auto$rtlil.cc:3302:And$1827
+  wire $auto$rtlil.cc:3255:Not$1251
+  wire $auto$rtlil.cc:3302:And$817
+  wire $auto$rtlil.cc:3302:And$1190
+  wire $auto$rtlil.cc:3302:And$371
+  wire $auto$rtlil.cc:3302:And$1363
+  wire $auto$rtlil.cc:3302:And$375
+  wire $auto$rtlil.cc:3302:And$1818
+  wire $auto$rtlil.cc:3302:And$1034
+  wire $auto$rtlil.cc:3302:And$1814
+  wire $auto$rtlil.cc:3302:And$1506
+  wire $auto$rtlil.cc:3302:And$384
+  wire $auto$rtlil.cc:3302:And$826
+  wire $auto$rtlil.cc:3302:And$388
+  wire $auto$rtlil.cc:3302:And$1138
+  wire $auto$rtlil.cc:3302:And$830
+  wire $auto$rtlil.cc:3302:And$1805
+  wire $auto$rtlil.cc:3302:And$1502
+  wire $auto$rtlil.cc:3302:And$397
+  wire $auto$rtlil.cc:3302:And$1801
+  wire $auto$rtlil.cc:3302:And$401
+  wire width 32 \netgen[2].in
+  wire width 32 \netgen[2].out
+  wire $auto$rtlil.cc:3302:And$1038
+  wire $auto$rtlil.cc:3302:And$1359
+  wire $auto$rtlil.cc:3302:And$410
+  wire $auto$rtlil.cc:3302:And$1792
+  wire $auto$rtlil.cc:3302:And$414
+  wire $auto$rtlil.cc:3302:And$1220
+  wire width 32 \netgen[1].in
+  wire width 32 \netgen[1].out
+  wire $auto$rtlil.cc:3302:And$1788
+  wire $auto$rtlil.cc:3255:Not$419
   wire $auto$rtlil.cc:3304:Xor$421
   wire $auto$rtlil.cc:3302:And$423
   wire $auto$rtlil.cc:3304:Xor$425
   wire $auto$rtlil.cc:3302:And$427
-  wire $auto$rtlil.cc:3304:Xor$1257
-  wire $auto$rtlil.cc:3302:And$1983
-  wire $auto$rtlil.cc:3302:And$124
-  wire $auto$rtlil.cc:3302:And$800
-  wire $auto$rtlil.cc:3302:And$1541
-  wire $auto$rtlil.cc:3302:And$1723
+  wire $auto$rtlil.cc:3302:And$839
+  wire $auto$rtlil.cc:3302:And$1142
+  wire $auto$rtlil.cc:3302:And$843
+  wire $auto$rtlil.cc:3302:And$1493
   wire $auto$rtlil.cc:3302:And$436
-  wire $auto$rtlil.cc:3302:And$1255
-  wire $auto$rtlil.cc:3302:And$1411
-  wire $auto$rtlil.cc:3302:And$137
-  wire $auto$rtlil.cc:3302:And$1970
-  wire $auto$rtlil.cc:3302:And$657
-  wire $auto$rtlil.cc:3302:And$1320
-  wire $auto$rtlil.cc:3304:Xor$1253
-  wire $auto$rtlil.cc:3255:Not$1251
+  wire $auto$rtlil.cc:3302:And$1779
+  wire $auto$rtlil.cc:3302:And$440
+  wire $auto$rtlil.cc:3302:And$1285
+  wire $auto$rtlil.cc:3302:And$1775
+  wire $auto$rtlil.cc:3302:And$1489
+  wire $auto$rtlil.cc:3302:And$1047
   wire $auto$rtlil.cc:3302:And$449
-  wire $auto$rtlil.cc:3302:And$150
-  wire $auto$rtlil.cc:3302:And$1710
-  wire $auto$rtlil.cc:3302:And$1957
-  wire $auto$rtlil.cc:3302:And$1099
-  wire $auto$rtlil.cc:3302:And$1528
-  wire $auto$rtlil.cc:3302:And$813
-  wire $auto$rtlil.cc:3302:And$670
-  wire $auto$rtlil.cc:3302:And$163
-  wire $auto$rtlil.cc:3302:And$917
+  wire $auto$rtlil.cc:3302:And$852
+  wire $auto$rtlil.cc:3302:And$453
+  wire $auto$rtlil.cc:3302:And$1194
+  wire $auto$rtlil.cc:3302:And$1766
+  wire $auto$rtlil.cc:3302:And$856
+  wire $auto$rtlil.cc:3302:And$1762
   wire $auto$rtlil.cc:3302:And$462
-  wire $auto$rtlil.cc:3302:And$1944
-  wire width 32 \netgen[3].out
-  wire $auto$rtlil.cc:3302:And$1697
-  wire $auto$rtlil.cc:3302:And$1398
-  wire $auto$rtlil.cc:3302:And$176
-  wire $auto$rtlil.cc:3302:And$995
-  wire width 32 \netgen[3].in
-  wire $auto$rtlil.cc:3302:And$1515
-  wire $auto$rtlil.cc:3302:And$1931
+  wire $auto$rtlil.cc:3302:And$1051
+  wire $auto$rtlil.cc:3302:And$466
+  wire $auto$rtlil.cc:3302:And$1350
+  wire $auto$rtlil.cc:3302:And$1480
+  wire $auto$rtlil.cc:3302:And$1281
+  wire $auto$rtlil.cc:3302:And$1753
   wire $auto$rtlil.cc:3302:And$475
-  wire $auto$rtlil.cc:3302:And$683
-  wire $auto$rtlil.cc:3302:And$189
-  wire $auto$rtlil.cc:3302:And$1307
-  wire $auto$rtlil.cc:3302:And$1684
-  wire $auto$rtlil.cc:3302:And$826
-  wire $auto$rtlil.cc:3302:And$1086
-  wire $auto$rtlil.cc:3302:And$1918
-  wire $auto$rtlil.cc:3302:And$1216
-  wire $auto$rtlil.cc:3302:And$202
+  wire $auto$rtlil.cc:3302:And$865
+  wire $auto$rtlil.cc:3302:And$479
+  wire $auto$rtlil.cc:3302:And$1749
+  wire $auto$rtlil.cc:3302:And$1476
+  wire $auto$rtlil.cc:3302:And$869
+  wire $auto$rtlil.cc:3302:And$1346
   wire $auto$rtlil.cc:3302:And$488
-  wire $auto$rtlil.cc:3302:And$930
+  wire width 32 \netgen[3].out
+  wire $auto$rtlil.cc:3302:And$492
+  wire $auto$rtlil.cc:3302:And$1740
+  wire $auto$rtlil.cc:3302:And$1060
+  wire $auto$rtlil.cc:3302:And$1736
+  wire $auto$rtlil.cc:3302:And$1151
+  wire $auto$rtlil.cc:3302:And$501
+  wire $auto$rtlil.cc:3302:And$878
+  wire $auto$rtlil.cc:3302:And$505
+  wire $auto$rtlil.cc:3302:And$1467
+  wire $auto$rtlil.cc:3302:And$882
+  wire $auto$rtlil.cc:3302:And$1727
+  wire $auto$rtlil.cc:3302:And$1064
+  wire $auto$rtlil.cc:3302:And$514
+  wire $auto$rtlil.cc:3302:And$1723
+  wire $auto$rtlil.cc:3302:And$518
+  wire $auto$rtlil.cc:3302:And$1463
+  wire width 32 \netgen[3].in
+  wire $auto$rtlil.cc:3302:And$1155
+  wire $auto$rtlil.cc:3302:And$891
+  wire $auto$rtlil.cc:3302:And$527
+  wire $auto$rtlil.cc:3302:And$1714
+  wire $auto$rtlil.cc:3302:And$531
+  wire $auto$rtlil.cc:3302:And$1337
+  wire $auto$rtlil.cc:3302:And$1710
+  wire $auto$rtlil.cc:3302:And$895
+  wire $auto$rtlil.cc:3302:And$1233
+  wire $auto$rtlil.cc:3302:And$540
+  wire $auto$rtlil.cc:3302:And$1454
+  wire $auto$rtlil.cc:3302:And$544
+  wire $auto$rtlil.cc:3302:And$1073
+  wire $auto$rtlil.cc:3302:And$1701
+  wire $auto$rtlil.cc:3302:And$1450
+  wire $auto$rtlil.cc:3302:And$1697
+  wire $auto$rtlil.cc:3302:And$553
+  wire $auto$rtlil.cc:3302:And$904
+  wire $auto$rtlil.cc:3302:And$557
+  wire $auto$rtlil.cc:3302:And$1333
+  wire $auto$rtlil.cc:3302:And$908
+  wire $auto$rtlil.cc:3302:And$1077
+  wire $auto$rtlil.cc:3302:And$1688
+  wire $auto$rtlil.cc:3302:And$566
+  wire $auto$rtlil.cc:3302:And$1246
+  wire $auto$rtlil.cc:3302:And$570
+  wire $auto$rtlil.cc:3302:And$1684
+  wire $auto$rtlil.cc:3302:And$1272
+  wire $auto$rtlil.cc:3302:And$1441
+  wire $auto$rtlil.cc:3302:And$917
+  wire $auto$rtlil.cc:3302:And$579
+  wire $auto$rtlil.cc:3302:And$1203
+  wire $auto$rtlil.cc:3302:And$583
   wire $auto$rtlil.cc:3302:And$1675
   wire $auto$rtlil.cc:3304:Xor$1673
   wire $auto$rtlil.cc:3302:And$1671
-  wire $auto$rtlil.cc:3302:And$1905
-  wire $auto$rtlil.cc:3302:And$215
   wire $auto$rtlil.cc:3304:Xor$1669
+  wire $auto$rtlil.cc:3302:And$592
   wire $auto$rtlil.cc:3255:Not$1667
-  wire $auto$rtlil.cc:3302:And$501
-  wire width 32 \netgen[2].in
+  wire $auto$rtlil.cc:3302:And$596
+  wire $auto$rtlil.cc:3302:And$921
   wire width 32 \netgen[4].out
   wire width 32 \netgen[4].in
-  wire $auto$rtlil.cc:3302:And$228
-  wire $auto$rtlil.cc:3302:And$1892
-  wire $auto$rtlil.cc:3302:And$696
-  wire $auto$rtlil.cc:3302:And$1502
-  wire width 32 \netgen[2].out
-  wire $auto$rtlil.cc:3302:And$514
-  wire $auto$rtlil.cc:3302:And$1658
-  wire $auto$rtlil.cc:3302:And$241
-  wire $auto$rtlil.cc:3302:And$1385
-  wire $auto$rtlil.cc:3302:And$1879
-  wire $auto$rtlil.cc:3302:And$1138
-  wire $auto$rtlil.cc:3255:Not$1004
-  wire $auto$rtlil.cc:3302:And$839
-  wire $auto$rtlil.cc:3302:And$709
-  wire $auto$rtlil.cc:3302:And$254
-  wire $auto$rtlil.cc:3302:And$527
-  wire $auto$rtlil.cc:3304:Xor$1006
-  wire $auto$rtlil.cc:3302:And$1866
-  wire $auto$rtlil.cc:3302:And$1645
-  wire $auto$rtlil.cc:3302:And$1489
-  wire $auto$rtlil.cc:3302:And$1008
-  wire $auto$rtlil.cc:3302:And$267
-  wire $auto$rtlil.cc:3302:And$1294
-  wire $auto$rtlil.cc:3304:Xor$1010
-  wire $auto$rtlil.cc:3302:And$540
-  wire $auto$rtlil.cc:3302:And$1853
-  wire $auto$rtlil.cc:3302:And$1372
-  wire $auto$rtlil.cc:3302:And$722
-  wire $auto$rtlil.cc:3302:And$280
-  wire $auto$rtlil.cc:3302:And$1632
-  wire $auto$rtlil.cc:3302:And$943
-  wire $auto$rtlil.cc:3302:And$852
-  wire $auto$rtlil.cc:3302:And$1476
-  wire $auto$rtlil.cc:3302:And$1840
-  wire $auto$rtlil.cc:3302:And$553
-  wire $auto$rtlil.cc:3302:And$293
-  wire $auto$rtlil.cc:3302:And$1012
-  wire $auto$rtlil.cc:3302:And$1242
-  wire $auto$rtlil.cc:3302:And$1047
-  wire $auto$rtlil.cc:3302:And$1619
-  wire $auto$rtlil.cc:3302:And$735
-  wire $auto$rtlil.cc:3302:And$1827
-  wire $auto$rtlil.cc:3302:And$306
-  wire $auto$rtlil.cc:3302:And$1177
-  wire $auto$rtlil.cc:3302:And$566
-  wire $auto$rtlil.cc:3302:And$1073
-  wire $auto$rtlil.cc:3302:And$1359
-  wire $auto$rtlil.cc:3302:And$1463
-  wire $auto$rtlil.cc:3302:And$865
-  wire $auto$rtlil.cc:3302:And$319
-  wire $auto$rtlil.cc:3302:And$1814
-  wire $auto$rtlil.cc:3302:And$1606
-  wire $auto$rtlil.cc:3302:And$1281
-  wire $auto$rtlil.cc:3302:And$579
-  wire $auto$rtlil.cc:3302:And$748
-  wire $auto$rtlil.cc:3302:And$956
-  wire $auto$rtlil.cc:3302:And$332
-  wire $auto$rtlil.cc:3302:And$1021
-  wire $auto$rtlil.cc:3302:And$1801
-  wire $auto$rtlil.cc:3302:And$1190
-  wire $auto$rtlil.cc:3302:And$1112
-  wire $auto$rtlil.cc:3302:And$1593
-  wire $auto$rtlil.cc:3302:And$592
-  wire $auto$rtlil.cc:3302:And$345
-  wire $auto$rtlil.cc:3302:And$1450
+  wire $auto$rtlil.cc:3302:And$1437
+  wire $auto$rtlil.cc:3302:And$605
+  wire $auto$rtlil.cc:3302:And$1662
+  wire $auto$rtlil.cc:3302:And$609
   wire $auto$rtlil.cc:3302:And$1164
+  wire $auto$rtlil.cc:3302:And$1658
+  wire $auto$rtlil.cc:3302:And$1086
+  wire $auto$rtlil.cc:3302:And$1324
+  wire $auto$rtlil.cc:3302:And$618
+  wire $auto$rtlil.cc:3302:And$930
+  wire $auto$rtlil.cc:3302:And$622
+  wire $auto$rtlil.cc:3302:And$1090
+  wire $auto$rtlil.cc:3302:And$1649
+  wire $auto$rtlil.cc:3302:And$934
+  wire $auto$rtlil.cc:3302:And$1645
+  wire $auto$rtlil.cc:3302:And$631
+  wire $auto$rtlil.cc:3302:And$1428
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$1410
     parameter \A_SIGNED 0
@@ -213,15 +368,15 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$1411
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1098
+  cell $and $and$dut.sv:21$1332
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [20]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1099
+    connect \A \netgen[3].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1333
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$6
@@ -242,19 +397,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$2009
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$2013
     connect \Y \netgen[3].in [26]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$740
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$10
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$735
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [24]
+    connect \A \netgen[0].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$11
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$12
@@ -264,27 +419,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$7
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$11
     connect \Y \rot_prod [0]
   end
-  attribute \src "dut.sv:21.51-21.67"
-  cell $not $not$dut.sv:21$1653
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \shift_amount [3]
-    connect \Y $auto$rtlil.cc:3255:Not$1251
-  end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1767
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1414
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1762
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [7]
+    connect \A \netgen[3].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1415
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1076
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1077
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$19
@@ -305,19 +463,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1411
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1415
     connect \Y \netgen[2].in [12]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$747
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [25]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$748
+    connect \A \netgen[0].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$24
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$25
@@ -327,30 +485,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$20
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$24
     connect \Y \rot_prod [1]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1865
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1869
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [15]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1866
+    connect \A \i_in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1870
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1104
+  cell $or $or$dut.sv:21$1078
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1099
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [20]
+    connect \A $auto$rtlil.cc:3302:And$1073
+    connect \B $auto$rtlil.cc:3302:And$1077
+    connect \Y \netgen[1].in [18]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$32
@@ -363,27 +521,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$33
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$753
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$748
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [25]
-  end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1657
+  cell $and $and$dut.sv:21$1761
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [31]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1658
+    connect \A \i_in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1762
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$36
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[0].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$37
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$38
@@ -393,7 +551,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$33
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$37
     connect \Y \rot_prod [2]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -407,16 +565,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1424
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1982
+  attribute \src "dut.sv:21.51-21.79"
+  cell $xor $xor$dut.sv:21$1408
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [24]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1983
+    connect \A $auto$rtlil.cc:3255:Not$1251
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1253
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$45
@@ -437,19 +595,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1866
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1870
     connect \Y \netgen[3].in [15]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$760
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$49
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [26]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$761
+    connect \A \netgen[0].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$50
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$51
@@ -459,30 +617,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$46
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$50
     connect \Y \rot_prod [3]
   end
-  attribute \src "dut.sv:22.60-22.87"
-  cell $xor $xor$dut.sv:22$1659
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1427
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \shift_amount [3]
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1257
+    connect \A \netgen[3].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1428
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1273
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1085
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1268
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [1]
+    connect \A \netgen[2].in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1086
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$58
@@ -503,19 +661,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1424
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1428
     connect \Y \netgen[2].in [13]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$766
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$62
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$761
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [26]
+    connect \A \netgen[0].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$63
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$64
@@ -525,30 +683,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$59
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$63
     connect \Y \rot_prod [4]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1111
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2064
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [21]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1112
+    connect \A \i_in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2065
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1351
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1336
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1346
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [7]
+    connect \A \netgen[3].in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1337
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$71
@@ -561,27 +719,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$72
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$773
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1089
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [27]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$774
+    connect \A \netgen[2].in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1090
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1663
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$75
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1658
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [31]
+    connect \A \netgen[0].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$76
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$77
@@ -591,7 +749,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$72
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$76
     connect \Y \rot_prod [5]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -605,16 +763,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1437
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$2008
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1091
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [26]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$2009
+    connect \A $auto$rtlil.cc:3302:And$1086
+    connect \B $auto$rtlil.cc:3302:And$1090
+    connect \Y \netgen[1].in [19]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$84
@@ -627,27 +785,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$85
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$779
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1765
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$774
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [27]
+    connect \A \i_in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1766
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1117
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$88
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1112
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [21]
+    connect \A \netgen[0].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$89
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$90
@@ -657,30 +815,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$85
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$89
     connect \Y \rot_prod [6]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1774
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1440
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [8]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1775
+    connect \A \netgen[3].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1441
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$786
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1338
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [28]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$787
+    connect \A $auto$rtlil.cc:3302:And$1333
+    connect \B $auto$rtlil.cc:3302:And$1337
+    connect \Y \netgen[2].in [6]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$97
@@ -701,19 +859,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1437
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1441
     connect \Y \netgen[2].in [14]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1280
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$101
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [2]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1281
+    connect \A \netgen[0].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$102
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$103
@@ -738,15 +896,15 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$1879
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1124
+  cell $and $and$dut.sv:21$1098
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [22]
+    connect \A \netgen[2].in [20]
     connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1125
+    connect \Y $auto$rtlil.cc:3302:And$1099
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$110
@@ -760,26 +918,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$111
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$792
+  cell $or $or$dut.sv:21$1767
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$787
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [28]
+    connect \A $auto$rtlil.cc:3302:And$1762
+    connect \B $auto$rtlil.cc:3302:And$1766
+    connect \Y \netgen[3].in [7]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1670
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$114
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1671
+    connect \A \netgen[0].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$115
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$116
@@ -789,7 +947,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$111
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$115
     connect \Y \rot_prod [8]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -803,16 +961,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1450
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$2053
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1102
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$2048
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [29]
+    connect \A \netgen[2].in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1103
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$123
@@ -825,27 +983,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$124
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$799
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [29]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$800
-  end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1949
+  cell $or $or$dut.sv:21$1104
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1944
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [21]
+    connect \A $auto$rtlil.cc:3302:And$1099
+    connect \B $auto$rtlil.cc:3302:And$1103
+    connect \Y \netgen[1].in [20]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$127
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[0].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$128
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$129
@@ -855,30 +1013,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$124
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$128
     connect \Y \rot_prod [9]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1390
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1453
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1385
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [10]
+    connect \A \netgen[3].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1454
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$805
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1982
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$800
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [29]
+    connect \A \i_in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1983
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$136
@@ -899,19 +1057,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1450
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1454
     connect \Y \netgen[2].in [15]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1130
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$140
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1125
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [22]
+    connect \A \netgen[0].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$141
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$142
@@ -921,30 +1079,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$137
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$141
     connect \Y \rot_prod [10]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1358
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1882
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [8]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1359
+    connect \A \i_in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1883
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$812
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1843
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [30]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$813
+    connect \A \i_in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1844
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$149
@@ -957,27 +1115,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$150
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1676
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1111
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1671
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [0]
+    connect \A \netgen[2].in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1112
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1286
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$153
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1281
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [2]
+    connect \A \netgen[0].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$154
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$155
@@ -987,7 +1145,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$150
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$154
     connect \Y \rot_prod [11]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1001,16 +1159,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1463
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$818
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1397
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$813
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [30]
+    connect \A \netgen[3].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1398
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$162
@@ -1031,16 +1189,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1879
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1883
     connect \Y \netgen[3].in [16]
   end
-  attribute \src "dut.sv:21.51-21.67"
-  cell $not $not$dut.sv:21$821
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$166
     parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
     parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \shift_amount [1]
-    connect \Y $auto$rtlil.cc:3255:Not$419
+    connect \A \netgen[0].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$167
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$168
@@ -1050,30 +1211,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$163
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$167
     connect \Y \rot_prod [12]
   end
-  attribute \src "dut.sv:21.51-21.79"
-  cell $xor $xor$dut.sv:21$823
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1466
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3255:Not$419
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$421
+    connect \A \netgen[3].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1467
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$825
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1115
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [31]
-    connect \B $auto$rtlil.cc:3304:Xor$421
-    connect \Y $auto$rtlil.cc:3302:And$826
+    connect \A \netgen[2].in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1116
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$175
@@ -1094,19 +1255,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1463
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1467
     connect \Y \netgen[2].in [16]
   end
-  attribute \src "dut.sv:22.60-22.87"
-  cell $xor $xor$dut.sv:22$827
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$179
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \shift_amount [1]
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$425
+    connect \A \netgen[0].in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$180
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$181
@@ -1116,7 +1277,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$176
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$180
     connect \Y \rot_prod [13]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1130,16 +1291,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2022
   end
-  attribute \src "dut.sv:22.42-22.88"
-  cell $and $and$dut.sv:22$829
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1117
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[1].in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$425
-    connect \Y $auto$rtlil.cc:3302:And$427
+    connect \A $auto$rtlil.cc:3302:And$1112
+    connect \B $auto$rtlil.cc:3302:And$1116
+    connect \Y \netgen[1].in [21]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$188
@@ -1152,27 +1313,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$189
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$831
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$826
-    connect \B $auto$rtlil.cc:3302:And$427
-    connect \Y \netgen[0].in [31]
-  end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$2073
+  cell $and $and$dut.sv:21$1774
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [31]
+    connect \A \i_in [8]
     connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$2074
+    connect \Y $auto$rtlil.cc:3302:And$1775
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$192
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[0].in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$193
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$194
@@ -1182,7 +1343,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$189
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$193
     connect \Y \rot_prod [14]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1197,15 +1358,15 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$1476
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1137
+  cell $and $and$dut.sv:21$1345
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [23]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1138
+    connect \A \netgen[3].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1346
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$201
@@ -1219,26 +1380,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$202
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$838
+  cell $and $and$dut.sv:21$1124
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [0]
+    connect \A \netgen[2].in [22]
     connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$839
+    connect \Y $auto$rtlil.cc:3302:And$1125
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1780
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$205
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1775
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [8]
+    connect \A \netgen[0].in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$206
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$207
@@ -1248,30 +1409,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$202
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$206
     connect \Y \rot_prod [15]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1826
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1479
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [12]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1827
+    connect \A \netgen[3].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1480
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$844
+  cell $or $or$dut.sv:21$2053
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$839
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [0]
+    connect \A $auto$rtlil.cc:3302:And$2048
+    connect \B $auto$rtlil.cc:3302:And$2052
+    connect \Y \netgen[3].in [29]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$214
@@ -1292,19 +1453,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1476
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1480
     connect \Y \netgen[2].in [17]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1683
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$218
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [1]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1684
+    connect \A \netgen[0].in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$219
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$220
@@ -1314,7 +1475,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$215
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$219
     connect \Y \rot_prod [16]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1328,16 +1489,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1892
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1143
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1128
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1138
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [23]
+    connect \A \netgen[2].in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1129
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$227
@@ -1350,27 +1511,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$228
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$851
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1130
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [1]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$852
+    connect \A $auto$rtlil.cc:3302:And$1125
+    connect \B $auto$rtlil.cc:3302:And$1129
+    connect \Y \netgen[1].in [22]
   end
   attribute \src "dut.sv:22.42-22.88"
-  cell $and $and$dut.sv:22$2012
+  cell $and $and$dut.sv:22$231
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$1673
-    connect \Y $auto$rtlil.cc:3302:And$1675
+    connect \A \netgen[0].in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$232
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$233
@@ -1380,7 +1541,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$228
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$232
     connect \Y \rot_prod [17]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1394,16 +1555,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1489
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1293
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1778
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [3]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1294
+    connect \A \i_in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1779
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$240
@@ -1424,19 +1585,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$2061
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$2065
     connect \Y \netgen[3].in [30]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$857
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$244
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$852
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [1]
+    connect \A \netgen[0].in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$245
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$246
@@ -1446,30 +1607,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$241
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$245
     connect \Y \rot_prod [18]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1150
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1492
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [24]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1151
+    connect \A \netgen[3].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1493
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$2001
+  cell $or $or$dut.sv:21$1845
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1996
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [25]
+    connect \A $auto$rtlil.cc:3302:And$1840
+    connect \B $auto$rtlil.cc:3302:And$1844
+    connect \Y \netgen[3].in [13]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$253
@@ -1490,19 +1651,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1489
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1493
     connect \Y \netgen[2].in [18]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$864
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$257
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [2]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$865
+    connect \A \netgen[0].in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$258
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$259
@@ -1512,30 +1673,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$254
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$258
     connect \Y \rot_prod [19]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1689
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1895
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1684
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [1]
+    connect \A \i_in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1896
   end
-  attribute \src "dut.sv:21.51-21.79"
-  cell $xor $xor$dut.sv:21$1408
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1137
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3255:Not$1251
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1253
+    connect \A \netgen[2].in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1138
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$266
@@ -1549,26 +1710,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$267
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$870
+  cell $or $or$dut.sv:21$1780
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$865
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [2]
+    connect \A $auto$rtlil.cc:3302:And$1775
+    connect \B $auto$rtlil.cc:3302:And$1779
+    connect \Y \netgen[3].in [8]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1956
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$270
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [22]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1957
+    connect \A \netgen[0].in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$271
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$272
@@ -1578,7 +1739,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$267
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$271
     connect \Y \rot_prod [20]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1592,16 +1753,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1502
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1156
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1141
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1151
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [24]
+    connect \A \netgen[2].in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1142
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$279
@@ -1622,19 +1783,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1892
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1896
     connect \Y \netgen[3].in [17]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$877
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$283
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [3]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$878
+    connect \A \netgen[0].in [20]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$284
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$285
@@ -1644,30 +1805,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$280
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$284
     connect \Y \rot_prod [21]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1787
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1505
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [9]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1788
+    connect \A \netgen[3].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1506
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1299
+  cell $or $or$dut.sv:21$1143
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1294
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [3]
+    connect \A $auto$rtlil.cc:3302:And$1138
+    connect \B $auto$rtlil.cc:3302:And$1142
+    connect \Y \netgen[1].in [23]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$292
@@ -1688,19 +1849,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1502
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1506
     connect \Y \netgen[2].in [19]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$883
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$296
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$878
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [3]
+    connect \A \netgen[0].in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$297
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$298
@@ -1710,30 +1871,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$293
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$297
     connect \Y \rot_prod [22]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1696
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2025
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [2]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1697
+    connect \A \i_in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2026
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1163
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1986
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [25]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1164
+    connect \A \i_in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1987
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$305
@@ -1746,27 +1907,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$306
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$890
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1349
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [4]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$891
+    connect \A \netgen[3].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1350
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1988
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$309
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1983
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [24]
+    connect \A \netgen[0].in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$310
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$311
@@ -1776,7 +1937,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$306
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$310
     connect \Y \rot_prod [23]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1790,16 +1951,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1515
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1364
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1150
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1359
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [8]
+    connect \A \netgen[2].in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1151
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$318
@@ -1813,26 +1974,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$319
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$896
+  cell $or $or$dut.sv:21$1351
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$891
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [4]
+    connect \A $auto$rtlil.cc:3302:And$1346
+    connect \B $auto$rtlil.cc:3302:And$1350
+    connect \Y \netgen[2].in [7]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1169
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$322
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1164
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [25]
+    connect \A \netgen[0].in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$323
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$324
@@ -1842,30 +2003,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$319
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$323
     connect \Y \rot_prod [24]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1852
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1518
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [14]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1853
+    connect \A \netgen[3].in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1519
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$903
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1154
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [5]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$904
+    connect \A \netgen[2].in [20]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1155
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$331
@@ -1886,19 +2047,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1515
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1519
     connect \Y \netgen[2].in [20]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1702
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$335
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1697
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [2]
+    connect \A \netgen[0].in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$336
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$337
@@ -1908,7 +2069,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$332
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$336
     connect \Y \rot_prod [25]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1922,16 +2083,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1905
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1306
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1156
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [4]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1307
+    connect \A $auto$rtlil.cc:3302:And$1151
+    connect \B $auto$rtlil.cc:3302:And$1155
+    connect \Y \netgen[1].in [24]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$344
@@ -1944,27 +2105,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$345
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$909
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$904
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [5]
-  end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1176
+  cell $and $and$dut.sv:21$1787
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [26]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1177
+    connect \A \i_in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1788
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$348
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[0].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$349
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$350
@@ -1974,7 +2135,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$345
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$349
     connect \Y \rot_prod [26]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -1988,16 +2149,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1528
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1793
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$2008
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1788
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [9]
+    connect \A \i_in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$2009
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$357
@@ -2018,19 +2179,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$2022
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$2026
     connect \Y \netgen[3].in [27]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$916
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$361
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [6]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$917
+    connect \A \netgen[0].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$362
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$363
@@ -2040,30 +2201,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$358
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$362
     connect \Y \rot_prod [27]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1832
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1531
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1827
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [12]
+    connect \A \netgen[3].in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1532
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1182
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1163
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1177
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [26]
+    connect \A \netgen[2].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1164
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$370
@@ -2084,19 +2245,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1528
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1532
     connect \Y \netgen[2].in [21]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$922
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$374
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$917
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [6]
+    connect \A \netgen[0].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$375
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$376
@@ -2106,30 +2267,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$371
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$375
     connect \Y \rot_prod [28]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1709
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1908
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [3]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1710
+    connect \A \i_in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1909
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1397
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1988
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [11]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1398
+    connect \A $auto$rtlil.cc:3302:And$1983
+    connect \B $auto$rtlil.cc:3302:And$1987
+    connect \Y \netgen[3].in [24]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$383
@@ -2142,27 +2303,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$109
     connect \Y $auto$rtlil.cc:3302:And$384
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$929
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1167
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [7]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$930
+    connect \A \netgen[2].in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1168
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1962
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$387
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1957
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [22]
+    connect \A \netgen[0].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$388
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$389
@@ -2172,7 +2333,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$384
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$388
     connect \Y \rot_prod [29]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2187,15 +2348,15 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$1541
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1312
+  cell $or $or$dut.sv:21$1169
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1307
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [4]
+    connect \A $auto$rtlil.cc:3302:And$1164
+    connect \B $auto$rtlil.cc:3302:And$1168
+    connect \Y \netgen[1].in [25]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$396
@@ -2216,19 +2377,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1905
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1909
     connect \Y \netgen[3].in [18]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$935
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$400
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$930
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [7]
+    connect \A \netgen[0].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$100
+    connect \Y $auto$rtlil.cc:3302:And$401
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$402
@@ -2238,7 +2399,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$397
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$401
     connect \Y \rot_prod [30]
   end
   attribute \src "dut.sv:21.51-21.67"
@@ -2289,9 +2450,9 @@ module \a23_barrel_shift_fpga_rotate
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[0].in [0]
+    connect \A \netgen[0].in [30]
     connect \B $auto$rtlil.cc:3304:Xor$100
-    connect \Y $auto$rtlil.cc:3302:And$102
+    connect \Y $auto$rtlil.cc:3302:And$414
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$415
@@ -2301,30 +2462,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$410
-    connect \B $auto$rtlil.cc:3302:And$102
+    connect \B $auto$rtlil.cc:3302:And$414
     connect \Y \rot_prod [31]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1189
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1544
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [27]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1190
+    connect \A \netgen[3].in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1545
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$2060
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1791
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [30]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$2061
+    connect \A \i_in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1792
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$422
@@ -2345,19 +2506,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1541
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1545
     connect \Y \netgen[2].in [22]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$942
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$426
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [8]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$943
+    connect \A \netgen[1].in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$427
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$428
@@ -2378,16 +2539,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \A \shift_amount [4]
     connect \Y $auto$rtlil.cc:3255:Not$1667
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1715
+  attribute \src "dut.sv:21.51-21.79"
+  cell $xor $xor$dut.sv:21$1863
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1710
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [3]
+    connect \A $auto$rtlil.cc:3255:Not$1667
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1669
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$435
@@ -2401,26 +2562,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$436
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1371
+  cell $and $and$dut.sv:21$1176
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [9]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1372
+    connect \A \netgen[2].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1177
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$948
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$439
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$943
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [8]
+    connect \A \netgen[1].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$440
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$441
@@ -2430,7 +2591,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$436
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$440
     connect \Y \netgen[0].in [1]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2444,16 +2605,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1554
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$2047
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1793
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [29]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$2048
+    connect \A $auto$rtlil.cc:3302:And$1788
+    connect \B $auto$rtlil.cc:3302:And$1792
+    connect \Y \netgen[3].in [9]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$448
@@ -2466,27 +2627,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$449
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1195
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1180
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1190
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [27]
+    connect \A \netgen[2].in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1181
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$955
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$452
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [9]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$956
+    connect \A \netgen[1].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$453
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$454
@@ -2496,30 +2657,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$449
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$453
     connect \Y \netgen[0].in [2]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1800
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1557
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [10]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1801
+    connect \A \netgen[3].in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1558
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1319
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1182
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [5]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1320
+    connect \A $auto$rtlil.cc:3302:And$1177
+    connect \B $auto$rtlil.cc:3302:And$1181
+    connect \Y \netgen[1].in [26]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$461
@@ -2540,19 +2701,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1554
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1558
     connect \Y \netgen[2].in [23]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$961
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$465
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$956
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [9]
+    connect \A \netgen[1].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$466
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$467
@@ -2562,7 +2723,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$462
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$466
     connect \Y \netgen[0].in [3]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2576,16 +2737,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1918
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1722
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2077
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [4]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1723
+    connect \A \i_in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2078
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$474
@@ -2599,26 +2760,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$475
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1202
+  cell $and $and$dut.sv:21$1358
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [28]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1203
+    connect \A \netgen[3].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1359
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$968
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$478
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [10]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$969
+    connect \A \netgen[1].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$479
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$480
@@ -2628,7 +2789,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$475
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$479
     connect \Y \netgen[0].in [4]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2642,16 +2803,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1567
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$2079
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1189
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$2074
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [31]
+    connect \A \netgen[2].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1190
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$487
@@ -2664,27 +2825,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$488
   end
-  attribute \src "dut.sv:21.51-21.79"
-  cell $xor $xor$dut.sv:21$1863
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1401
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3255:Not$1667
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1669
+    connect \A \netgen[3].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1402
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$974
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$491
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$969
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [10]
+    connect \A \netgen[1].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$492
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$493
@@ -2694,30 +2855,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$488
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$492
     connect \Y \netgen[0].in [5]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1208
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1570
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1203
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [28]
+    connect \A \netgen[3].in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1571
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1325
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1193
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1320
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [5]
+    connect \A \netgen[2].in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1194
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$500
@@ -2738,19 +2899,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1567
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1571
     connect \Y \netgen[2].in [24]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$981
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$504
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [11]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$982
+    connect \A \netgen[1].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$505
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$506
@@ -2760,30 +2921,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$501
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$505
     connect \Y \netgen[0].in [6]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1728
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1921
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1723
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [4]
+    connect \A \i_in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1922
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1839
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1195
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [13]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1840
+    connect \A $auto$rtlil.cc:3302:And$1190
+    connect \B $auto$rtlil.cc:3302:And$1194
+    connect \Y \netgen[1].in [27]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$513
@@ -2796,27 +2957,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$514
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$987
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$982
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [11]
-  end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1969
+  cell $and $and$dut.sv:21$1800
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [23]
+    connect \A \i_in [10]
     connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1970
+    connect \Y $auto$rtlil.cc:3302:And$1801
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$517
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$518
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$519
@@ -2826,7 +2987,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$514
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$518
     connect \Y \netgen[0].in [7]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2840,16 +3001,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1580
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1215
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1362
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [29]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1216
+    connect \A \netgen[3].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1363
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$526
@@ -2870,19 +3031,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1918
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1922
     connect \Y \netgen[3].in [19]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$994
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$530
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [12]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$995
+    connect \A \netgen[1].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$531
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$532
@@ -2892,30 +3053,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$527
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$531
     connect \Y \netgen[0].in [8]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1806
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1583
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1801
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [10]
+    connect \A \netgen[3].in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1584
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1377
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1202
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1372
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [9]
+    connect \A \netgen[2].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1203
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$539
@@ -2936,19 +3097,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1580
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1584
     connect \Y \netgen[2].in [25]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1000
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$543
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$995
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [12]
+    connect \A \netgen[1].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$544
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$545
@@ -2958,7 +3119,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$540
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$544
     connect \Y \netgen[0].in [9]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -2972,16 +3133,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$2035
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1735
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1364
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [5]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1736
+    connect \A $auto$rtlil.cc:3302:And$1359
+    connect \B $auto$rtlil.cc:3302:And$1363
+    connect \Y \netgen[2].in [8]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$552
@@ -2994,27 +3155,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$553
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1221
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1206
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1216
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [29]
+    connect \A \netgen[2].in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1207
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1007
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$556
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [13]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1008
+    connect \A \netgen[1].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$557
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$558
@@ -3024,7 +3185,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$553
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$557
     connect \Y \netgen[0].in [10]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3038,16 +3199,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1593
   end
-  attribute \src "dut.sv:22.60-22.87"
-  cell $xor $xor$dut.sv:22$2075
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1208
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \shift_amount [4]
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1673
+    connect \A $auto$rtlil.cc:3302:And$1203
+    connect \B $auto$rtlil.cc:3302:And$1207
+    connect \Y \netgen[1].in [28]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$565
@@ -3060,27 +3221,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$566
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1995
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1804
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [25]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1996
+    connect \A \i_in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1805
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1013
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$569
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1008
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [13]
+    connect \A \netgen[1].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$570
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$571
@@ -3090,30 +3251,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$566
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$570
     connect \Y \netgen[0].in [11]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1332
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1596
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [6]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1333
+    connect \A \netgen[3].in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1597
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1228
+  cell $and $and$dut.sv:21$1852
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [30]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1229
+    connect \A \i_in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1853
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$578
@@ -3134,19 +3295,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1593
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1597
     connect \Y \netgen[2].in [26]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1020
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$582
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [14]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1021
+    connect \A \netgen[1].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$583
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$584
@@ -3156,7 +3317,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$579
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$583
     connect \Y \netgen[0].in [12]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3170,16 +3331,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1931
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1741
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1215
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1736
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [5]
+    connect \A \netgen[2].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1216
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$591
@@ -3192,27 +3353,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$592
   end
-  attribute \src "dut.sv:22.42-22.88"
-  cell $and $and$dut.sv:22$1401
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$1257
-    connect \Y $auto$rtlil.cc:3302:And$1259
-  end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1026
+  cell $or $or$dut.sv:21$1806
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1021
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [14]
+    connect \A $auto$rtlil.cc:3302:And$1801
+    connect \B $auto$rtlil.cc:3302:And$1805
+    connect \Y \netgen[3].in [10]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$595
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$596
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$597
@@ -3222,7 +3383,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$592
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$596
     connect \Y \netgen[0].in [13]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3236,16 +3397,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1606
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1403
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1219
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1398
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [11]
+    connect \A \netgen[2].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1220
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$604
@@ -3259,26 +3420,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$605
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1234
+  cell $or $or$dut.sv:21$1221
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1229
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [30]
+    connect \A $auto$rtlil.cc:3302:And$1216
+    connect \B $auto$rtlil.cc:3302:And$1220
+    connect \Y \netgen[1].in [29]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1033
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$608
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [15]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1034
+    connect \A \netgen[1].in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$609
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$610
@@ -3288,27 +3449,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$605
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$609
     connect \Y \netgen[0].in [14]
   end
-  attribute \src "dut.sv:21.51-21.67"
-  cell $not $not$dut.sv:21$1237
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \shift_amount [2]
-    connect \Y $auto$rtlil.cc:3255:Not$1004
-  end
-  attribute \src "dut.sv:21.51-21.79"
-  cell $xor $xor$dut.sv:21$1239
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1609
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3255:Not$1004
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1006
+    connect \A \netgen[3].in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1610
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1995
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1996
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$617
@@ -3329,19 +3493,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1606
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1610
     connect \Y \netgen[2].in [27]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1039
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$621
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1034
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [15]
+    connect \A \netgen[1].in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$622
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$623
@@ -3351,30 +3515,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$618
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$622
     connect \Y \netgen[0].in [15]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1748
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1934
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [6]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1749
+    connect \A \i_in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1935
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1241
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1403
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [31]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1242
+    connect \A $auto$rtlil.cc:3302:And$1398
+    connect \B $auto$rtlil.cc:3302:And$1402
+    connect \Y \netgen[2].in [11]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$630
@@ -3388,26 +3552,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$631
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1046
+  cell $and $and$dut.sv:21$1228
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [16]
+    connect \A \netgen[2].in [30]
     connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1047
+    connect \Y $auto$rtlil.cc:3302:And$1229
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1975
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$634
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1970
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [23]
+    connect \A \netgen[1].in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$635
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$636
@@ -3417,7 +3581,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$631
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$635
     connect \Y \netgen[0].in [16]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3431,16 +3595,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1619
   end
-  attribute \src "dut.sv:22.60-22.87"
-  cell $xor $xor$dut.sv:22$1243
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1371
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \shift_amount [2]
-    connect \B \direction
-    connect \Y $auto$rtlil.cc:3304:Xor$1010
+    connect \A \netgen[3].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1372
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$643
@@ -3461,19 +3625,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1931
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$1935
     connect \Y \netgen[3].in [20]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1052
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$647
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1047
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [16]
+    connect \A \netgen[1].in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$648
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$649
@@ -3483,30 +3647,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$644
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$648
     connect \Y \netgen[0].in [17]
   end
   attribute \src "dut.sv:22.42-22.88"
-  cell $and $and$dut.sv:22$1245
+  cell $and $and$dut.sv:22$1622
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$1010
-    connect \Y $auto$rtlil.cc:3302:And$1012
+    connect \A \netgen[3].in [20]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1623
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1247
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1232
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1242
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [31]
+    connect \A \netgen[2].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1233
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$656
@@ -3527,19 +3691,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1619
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1623
     connect \Y \netgen[2].in [28]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1059
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$660
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [17]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1060
+    connect \A \netgen[1].in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$661
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$662
@@ -3549,30 +3713,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$657
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$661
     connect \Y \netgen[0].in [18]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1754
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2038
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1749
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [6]
+    connect \A \i_in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2039
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1813
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1234
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [11]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1814
+    connect \A $auto$rtlil.cc:3302:And$1229
+    connect \B $auto$rtlil.cc:3302:And$1233
+    connect \Y \netgen[1].in [30]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$669
@@ -3585,27 +3749,24 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$670
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1065
+  attribute \src "dut.sv:21.51-21.67"
+  cell $not $not$dut.sv:21$1237
     parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
     parameter \A_WIDTH 1
-    parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1060
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [17]
+    connect \A \shift_amount [2]
+    connect \Y $auto$rtlil.cc:3255:Not$1004
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1338
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$673
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1333
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [6]
+    connect \A \netgen[1].in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$674
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$675
@@ -3615,7 +3776,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$670
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$674
     connect \Y \netgen[0].in [19]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3629,16 +3790,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1632
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1254
+  attribute \src "dut.sv:21.51-21.79"
+  cell $xor $xor$dut.sv:21$1239
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [0]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1255
+    connect \A $auto$rtlil.cc:3255:Not$1004
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1006
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$682
@@ -3652,26 +3813,26 @@ module \a23_barrel_shift_fpga_rotate
     connect \Y $auto$rtlil.cc:3302:And$683
   end
   attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1072
+  cell $and $and$dut.sv:21$1241
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [18]
+    connect \A \netgen[2].in [31]
     connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1073
+    connect \Y $auto$rtlil.cc:3302:And$1242
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1384
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$686
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [10]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1385
+    connect \A \netgen[1].in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$687
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$688
@@ -3681,30 +3842,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$683
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$687
     connect \Y \netgen[0].in [20]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1858
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1635
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1853
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [14]
+    connect \A \netgen[3].in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1636
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1078
+  attribute \src "dut.sv:22.60-22.87"
+  cell $xor $xor$dut.sv:22$1243
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1073
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [18]
+    connect \A \shift_amount [2]
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1010
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$695
@@ -3725,19 +3886,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1632
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1636
     connect \Y \netgen[2].in [29]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1761
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$699
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \i_in [7]
-    connect \B $auto$rtlil.cc:3304:Xor$1669
-    connect \Y $auto$rtlil.cc:3302:And$1762
+    connect \A \netgen[1].in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$700
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$701
@@ -3747,7 +3908,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$696
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$700
     connect \Y \netgen[0].in [21]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3761,16 +3922,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1669
     connect \Y $auto$rtlil.cc:3302:And$1944
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1260
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1245
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1255
-    connect \B $auto$rtlil.cc:3302:And$1259
-    connect \Y \netgen[2].in [0]
+    connect \A \netgen[2].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1246
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$708
@@ -3783,27 +3944,27 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$421
     connect \Y $auto$rtlil.cc:3302:And$709
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1085
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1247
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[2].in [19]
-    connect \B $auto$rtlil.cc:3304:Xor$1006
-    connect \Y $auto$rtlil.cc:3302:And$1086
+    connect \A $auto$rtlil.cc:3302:And$1242
+    connect \B $auto$rtlil.cc:3302:And$1246
+    connect \Y \netgen[1].in [31]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1345
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$712
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [7]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1346
+    connect \A \netgen[1].in [20]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$713
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$714
@@ -3813,7 +3974,7 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$709
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$713
     connect \Y \netgen[0].in [22]
   end
   attribute \src "dut.sv:21.42-21.80"
@@ -3827,16 +3988,16 @@ module \a23_barrel_shift_fpga_rotate
     connect \B $auto$rtlil.cc:3304:Xor$1253
     connect \Y $auto$rtlil.cc:3302:And$1645
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1845
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1813
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1840
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [13]
+    connect \A \i_in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1814
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$721
@@ -3857,19 +4018,19 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$2035
-    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \B $auto$rtlil.cc:3302:And$2039
     connect \Y \netgen[3].in [28]
   end
-  attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1091
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$725
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1086
-    connect \B $auto$rtlil.cc:3302:And$1012
-    connect \Y \netgen[1].in [19]
+    connect \A \netgen[1].in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$726
   end
   attribute \src "dut.sv:21.42-22.88"
   cell $or $or$dut.sv:21$727
@@ -3879,30 +4040,30 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$722
-    connect \B $auto$rtlil.cc:3302:And$427
+    connect \B $auto$rtlil.cc:3302:And$726
     connect \Y \netgen[0].in [23]
   end
-  attribute \src "dut.sv:21.42-21.80"
-  cell $and $and$dut.sv:21$1267
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1648
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \netgen[3].in [1]
-    connect \B $auto$rtlil.cc:3304:Xor$1253
-    connect \Y $auto$rtlil.cc:3302:And$1268
+    connect \A \netgen[3].in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1649
   end
   attribute \src "dut.sv:21.42-22.88"
-  cell $or $or$dut.sv:21$1819
+  cell $or $or$dut.sv:21$2079
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $auto$rtlil.cc:3302:And$1814
-    connect \B $auto$rtlil.cc:3302:And$1675
-    connect \Y \netgen[3].in [11]
+    connect \A $auto$rtlil.cc:3302:And$2074
+    connect \B $auto$rtlil.cc:3302:And$2078
+    connect \Y \netgen[3].in [31]
   end
   attribute \src "dut.sv:21.42-21.80"
   cell $and $and$dut.sv:21$734
@@ -3923,13 +4084,1712 @@ module \a23_barrel_shift_fpga_rotate
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3302:And$1645
-    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \B $auto$rtlil.cc:3302:And$1649
     connect \Y \netgen[2].in [30]
   end
-  connect \netgen[2].out \netgen[1].in
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$738
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$739
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$740
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$735
+    connect \B $auto$rtlil.cc:3302:And$739
+    connect \Y \netgen[0].in [24]
+  end
+  attribute \src "dut.sv:21.51-21.67"
+  cell $not $not$dut.sv:21$1653
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \shift_amount [3]
+    connect \Y $auto$rtlil.cc:3255:Not$1251
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1254
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1255
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$747
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$748
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1375
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1376
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$751
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$752
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$753
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$748
+    connect \B $auto$rtlil.cc:3302:And$752
+    connect \Y \netgen[0].in [25]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1657
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1658
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1258
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1259
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$760
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$761
+  end
+  attribute \src "dut.sv:22.60-22.87"
+  cell $xor $xor$dut.sv:22$1659
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \shift_amount [3]
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1257
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$764
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [24]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$765
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$766
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$761
+    connect \B $auto$rtlil.cc:3302:And$765
+    connect \Y \netgen[0].in [26]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1661
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1662
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1260
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1255
+    connect \B $auto$rtlil.cc:3302:And$1259
+    connect \Y \netgen[2].in [0]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$773
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$774
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1663
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1658
+    connect \B $auto$rtlil.cc:3302:And$1662
+    connect \Y \netgen[2].in [31]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$777
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$778
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$779
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$774
+    connect \B $auto$rtlil.cc:3302:And$778
+    connect \Y \netgen[0].in [27]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1947
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1948
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1817
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1818
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$786
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$787
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1377
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1372
+    connect \B $auto$rtlil.cc:3302:And$1376
+    connect \Y \netgen[2].in [9]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$790
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$791
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$792
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$787
+    connect \B $auto$rtlil.cc:3302:And$791
+    connect \Y \netgen[0].in [28]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1670
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1671
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1267
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1268
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$799
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$800
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1949
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1944
+    connect \B $auto$rtlil.cc:3302:And$1948
+    connect \Y \netgen[3].in [21]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$803
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$804
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$805
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$800
+    connect \B $auto$rtlil.cc:3302:And$804
+    connect \Y \netgen[0].in [29]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1674
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1675
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1819
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1814
+    connect \B $auto$rtlil.cc:3302:And$1818
+    connect \Y \netgen[3].in [11]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$812
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$813
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1676
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1671
+    connect \B $auto$rtlil.cc:3302:And$1675
+    connect \Y \netgen[3].in [0]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$816
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$817
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$818
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$813
+    connect \B $auto$rtlil.cc:3302:And$817
+    connect \Y \netgen[0].in [30]
+  end
+  attribute \src "dut.sv:21.51-21.67"
+  cell $not $not$dut.sv:21$821
+    parameter \A_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \shift_amount [1]
+    connect \Y $auto$rtlil.cc:3255:Not$419
+  end
+  attribute \src "dut.sv:21.51-21.79"
+  cell $xor $xor$dut.sv:21$823
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3255:Not$419
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$421
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$825
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$421
+    connect \Y $auto$rtlil.cc:3302:And$826
+  end
+  attribute \src "dut.sv:22.60-22.87"
+  cell $xor $xor$dut.sv:22$827
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \shift_amount [1]
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$425
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$829
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[1].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$425
+    connect \Y $auto$rtlil.cc:3302:And$830
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$831
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$826
+    connect \B $auto$rtlil.cc:3302:And$830
+    connect \Y \netgen[0].in [31]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$2073
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$2074
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1271
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [25]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1272
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$838
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$839
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1273
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1268
+    connect \B $auto$rtlil.cc:3302:And$1272
+    connect \Y \netgen[2].in [1]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$842
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$843
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$844
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$839
+    connect \B $auto$rtlil.cc:3302:And$843
+    connect \Y \netgen[1].in [0]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1683
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1684
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1999
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2000
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$851
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$852
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1856
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1857
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$855
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$856
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$857
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$852
+    connect \B $auto$rtlil.cc:3302:And$856
+    connect \Y \netgen[1].in [1]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1687
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1688
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1280
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1281
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$864
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$865
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1689
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1684
+    connect \B $auto$rtlil.cc:3302:And$1688
+    connect \Y \netgen[3].in [1]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$868
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$869
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$870
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$865
+    connect \B $auto$rtlil.cc:3302:And$869
+    connect \Y \netgen[1].in [2]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1956
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1957
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1865
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1866
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$877
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$878
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1284
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [26]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1285
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$881
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [31]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$882
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$883
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$878
+    connect \B $auto$rtlil.cc:3302:And$882
+    connect \Y \netgen[1].in [3]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1696
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1697
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1286
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1281
+    connect \B $auto$rtlil.cc:3302:And$1285
+    connect \Y \netgen[2].in [2]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$890
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$891
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1826
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1827
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$894
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [0]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$895
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$896
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$891
+    connect \B $auto$rtlil.cc:3302:And$895
+    connect \Y \netgen[1].in [4]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1700
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1701
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1384
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1385
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$903
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$904
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1702
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1697
+    connect \B $auto$rtlil.cc:3302:And$1701
+    connect \Y \netgen[3].in [2]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$907
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [1]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$908
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$909
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$904
+    connect \B $auto$rtlil.cc:3302:And$908
+    connect \Y \netgen[1].in [5]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1960
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1961
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1293
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1294
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$916
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$917
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$2001
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1996
+    connect \B $auto$rtlil.cc:3302:And$2000
+    connect \Y \netgen[3].in [25]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$920
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$921
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$922
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$917
+    connect \B $auto$rtlil.cc:3302:And$921
+    connect \Y \netgen[1].in [6]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1709
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1710
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1297
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [27]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1298
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$929
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$930
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1962
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1957
+    connect \B $auto$rtlil.cc:3302:And$1961
+    connect \Y \netgen[3].in [22]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$933
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [3]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$934
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$935
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$930
+    connect \B $auto$rtlil.cc:3302:And$934
+    connect \Y \netgen[1].in [7]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1713
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [19]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1714
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1299
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1294
+    connect \B $auto$rtlil.cc:3302:And$1298
+    connect \Y \netgen[2].in [3]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$942
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$943
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1715
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1710
+    connect \B $auto$rtlil.cc:3302:And$1714
+    connect \Y \netgen[3].in [3]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$946
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$947
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$948
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$943
+    connect \B $auto$rtlil.cc:3302:And$947
+    connect \Y \netgen[1].in [8]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$2047
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$2048
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1830
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1831
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$955
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$956
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1858
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1853
+    connect \B $auto$rtlil.cc:3302:And$1857
+    connect \Y \netgen[3].in [14]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$959
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$960
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$961
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$956
+    connect \B $auto$rtlil.cc:3302:And$960
+    connect \Y \netgen[1].in [9]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1722
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1723
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1306
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [4]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1307
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$968
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$969
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1832
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1827
+    connect \B $auto$rtlil.cc:3302:And$1831
+    connect \Y \netgen[3].in [12]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$972
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$973
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$974
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$969
+    connect \B $auto$rtlil.cc:3302:And$973
+    connect \Y \netgen[1].in [10]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1726
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [20]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1727
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1310
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [28]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1311
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$981
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$982
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1728
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1723
+    connect \B $auto$rtlil.cc:3302:And$1727
+    connect \Y \netgen[3].in [4]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$985
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$986
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$987
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$982
+    connect \B $auto$rtlil.cc:3302:And$986
+    connect \Y \netgen[1].in [11]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1969
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [23]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1970
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1312
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1307
+    connect \B $auto$rtlil.cc:3302:And$1311
+    connect \Y \netgen[2].in [4]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$994
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$995
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$2060
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [30]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$2061
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$998
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [8]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$999
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1000
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$995
+    connect \B $auto$rtlil.cc:3302:And$999
+    connect \Y \netgen[1].in [12]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1735
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1736
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1388
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [2]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1389
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1007
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1008
+  end
+  attribute \src "dut.sv:22.60-22.87"
+  cell $xor $xor$dut.sv:22$2075
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \shift_amount [4]
+    connect \B \direction
+    connect \Y $auto$rtlil.cc:3304:Xor$1673
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1011
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [9]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1012
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1013
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1008
+    connect \B $auto$rtlil.cc:3302:And$1012
+    connect \Y \netgen[1].in [13]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1739
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [21]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1740
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1319
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [5]
+    connect \B $auto$rtlil.cc:3304:Xor$1253
+    connect \Y $auto$rtlil.cc:3302:And$1320
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1020
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [14]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1021
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1741
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1736
+    connect \B $auto$rtlil.cc:3302:And$1740
+    connect \Y \netgen[3].in [5]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1024
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1025
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1026
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1021
+    connect \B $auto$rtlil.cc:3302:And$1025
+    connect \Y \netgen[1].in [14]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1973
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [7]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1974
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1390
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1385
+    connect \B $auto$rtlil.cc:3302:And$1389
+    connect \Y \netgen[2].in [10]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1033
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [15]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1034
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1323
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[3].in [29]
+    connect \B $auto$rtlil.cc:3304:Xor$1257
+    connect \Y $auto$rtlil.cc:3302:And$1324
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1037
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [11]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1038
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1039
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1034
+    connect \B $auto$rtlil.cc:3302:And$1038
+    connect \Y \netgen[1].in [15]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1748
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [6]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1749
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1325
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1320
+    connect \B $auto$rtlil.cc:3302:And$1324
+    connect \Y \netgen[2].in [5]
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1046
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [16]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1047
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1975
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1970
+    connect \B $auto$rtlil.cc:3302:And$1974
+    connect \Y \netgen[3].in [23]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1050
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [12]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1051
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1052
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1047
+    connect \B $auto$rtlil.cc:3302:And$1051
+    connect \Y \netgen[1].in [16]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1752
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [22]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$1753
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1839
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$1669
+    connect \Y $auto$rtlil.cc:3302:And$1840
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1059
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [17]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1060
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1754
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1749
+    connect \B $auto$rtlil.cc:3302:And$1753
+    connect \Y \netgen[3].in [6]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$1063
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$1010
+    connect \Y $auto$rtlil.cc:3302:And$1064
+  end
+  attribute \src "dut.sv:21.42-22.88"
+  cell $or $or$dut.sv:21$1065
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A $auto$rtlil.cc:3302:And$1060
+    connect \B $auto$rtlil.cc:3302:And$1064
+    connect \Y \netgen[1].in [17]
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2051
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [13]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2052
+  end
+  attribute \src "dut.sv:22.42-22.88"
+  cell $and $and$dut.sv:22$2012
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \i_in [10]
+    connect \B $auto$rtlil.cc:3304:Xor$1673
+    connect \Y $auto$rtlil.cc:3302:And$2013
+  end
+  attribute \src "dut.sv:21.42-21.80"
+  cell $and $and$dut.sv:21$1072
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 1
+    parameter \B_WIDTH 1
+    parameter \Y_WIDTH 1
+    connect \A \netgen[2].in [18]
+    connect \B $auto$rtlil.cc:3304:Xor$1006
+    connect \Y $auto$rtlil.cc:3302:And$1073
+  end
   connect \netgen[4].in \i_in
   connect \netgen[4].out \netgen[3].in
   connect \netgen[3].out \netgen[2].in
   connect \netgen[1].out \netgen[0].in
+  connect \netgen[2].out \netgen[1].in
   connect \netgen[0].out \rot_prod
 end

@@ -13,7 +13,7 @@ module \mul_sync_reset_test
   wire width 3 input 4 \b
   attribute \src "dut.sv:1.45-1.46"
   wire width 9 output 5 \p
-  wire width 9 $auto$expression.cpp:3100:import_operation$2
+  wire width 9 $auto$expression.cpp:3467:import_operation$2
   attribute \src "dut.sv:13.18-13.23"
   cell $mul $mul$dut.sv:13$3
     parameter \A_SIGNED 0
@@ -23,7 +23,7 @@ module \mul_sync_reset_test
     parameter \Y_WIDTH 9
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:3100:import_operation$2
+    connect \Y $auto$expression.cpp:3467:import_operation$2
   end
   attribute \src "dut.sv:7.5-15.8"
   attribute \always_ff 1
@@ -34,7 +34,7 @@ module \mul_sync_reset_test
     parameter \WIDTH 9
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:3100:import_operation$2
+    connect \D $auto$expression.cpp:3467:import_operation$2
     connect \Q \p
   end
 end

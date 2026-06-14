@@ -479,199 +479,7 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[0]  /* _132_ */ (
-    .C(CLK),
-    .D(_048_[0]),
-    .Q(wait_counter[0]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[1]  /* _133_ */ (
-    .C(CLK),
-    .D(_049_[1]),
-    .Q(wait_counter[1]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[2]  /* _134_ */ (
-    .C(CLK),
-    .D(_049_[2]),
-    .Q(wait_counter[2]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[3]  /* _135_ */ (
-    .C(CLK),
-    .D(_049_[3]),
-    .Q(wait_counter[3]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[4]  /* _136_ */ (
-    .C(CLK),
-    .D(_049_[4]),
-    .Q(wait_counter[4]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[5]  /* _137_ */ (
-    .C(CLK),
-    .D(_049_[5]),
-    .Q(wait_counter[5]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[6]  /* _138_ */ (
-    .C(CLK),
-    .D(_049_[6]),
-    .Q(wait_counter[6]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[7]  /* _139_ */ (
-    .C(CLK),
-    .D(_049_[7]),
-    .Q(wait_counter[7]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[8]  /* _140_ */ (
-    .C(CLK),
-    .D(_049_[8]),
-    .Q(wait_counter[8]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[9]  /* _141_ */ (
-    .C(CLK),
-    .D(_049_[9]),
-    .Q(wait_counter[9]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[10]  /* _142_ */ (
-    .C(CLK),
-    .D(_049_[10]),
-    .Q(wait_counter[10]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[11]  /* _143_ */ (
-    .C(CLK),
-    .D(_049_[11]),
-    .Q(wait_counter[11]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[12]  /* _144_ */ (
-    .C(CLK),
-    .D(_049_[12]),
-    .Q(wait_counter[12]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[13]  /* _145_ */ (
-    .C(CLK),
-    .D(_049_[13]),
-    .Q(wait_counter[13]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[14]  /* _146_ */ (
-    .C(CLK),
-    .D(_049_[14]),
-    .Q(wait_counter[14]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[15]  /* _147_ */ (
-    .C(CLK),
-    .D(_049_[15]),
-    .Q(wait_counter[15]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[16]  /* _148_ */ (
-    .C(CLK),
-    .D(_049_[16]),
-    .Q(wait_counter[16]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[17]  /* _149_ */ (
-    .C(CLK),
-    .D(_049_[17]),
-    .Q(wait_counter[17]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[18]  /* _150_ */ (
-    .C(CLK),
-    .D(_049_[18]),
-    .Q(wait_counter[18]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[19]  /* _151_ */ (
-    .C(CLK),
-    .D(_049_[19]),
-    .Q(wait_counter[19]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[20]  /* _152_ */ (
-    .C(CLK),
-    .D(_049_[20]),
-    .Q(wait_counter[20]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[21]  /* _153_ */ (
-    .C(CLK),
-    .D(_049_[21]),
-    .Q(wait_counter[21]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[22]  /* _154_ */ (
-    .C(CLK),
-    .D(_049_[22]),
-    .Q(wait_counter[22]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_SDFF_PP0_  \wait_counter_reg[23]  /* _155_ */ (
-    .C(CLK),
-    .D(_049_[23]),
-    .Q(wait_counter[23]),
-    .R(_046_[18])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[0]  /* _156_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[0]  /* _132_ */ (
     .C(CLK),
     .D(LED[0]),
     .E(_046_[18]),
@@ -679,7 +487,7 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[1]  /* _157_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[1]  /* _133_ */ (
     .C(CLK),
     .D(_047_[1]),
     .E(_046_[18]),
@@ -687,7 +495,7 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[2]  /* _158_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[2]  /* _134_ */ (
     .C(CLK),
     .D(_047_[2]),
     .E(_046_[18]),
@@ -695,7 +503,7 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[3]  /* _159_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[3]  /* _135_ */ (
     .C(CLK),
     .D(_047_[3]),
     .E(_046_[18]),
@@ -703,7 +511,7 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[4]  /* _160_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[4]  /* _136_ */ (
     .C(CLK),
     .D(_047_[4]),
     .E(_046_[18]),
@@ -711,11 +519,203 @@ module top(CLK, LED);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:12.1-20.4" *)
-  \$_DFFE_PP_  \ledCounter_reg[5]  /* _161_ */ (
+  \$_DFFE_PP_  \ledCounter_reg[5]  /* _137_ */ (
     .C(CLK),
     .D(_047_[5]),
     .E(_046_[18]),
     .Q(ledCounter[5])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[0]  /* _138_ */ (
+    .C(CLK),
+    .D(_048_[0]),
+    .Q(wait_counter[0]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[1]  /* _139_ */ (
+    .C(CLK),
+    .D(_049_[1]),
+    .Q(wait_counter[1]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[2]  /* _140_ */ (
+    .C(CLK),
+    .D(_049_[2]),
+    .Q(wait_counter[2]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[3]  /* _141_ */ (
+    .C(CLK),
+    .D(_049_[3]),
+    .Q(wait_counter[3]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[4]  /* _142_ */ (
+    .C(CLK),
+    .D(_049_[4]),
+    .Q(wait_counter[4]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[5]  /* _143_ */ (
+    .C(CLK),
+    .D(_049_[5]),
+    .Q(wait_counter[5]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[6]  /* _144_ */ (
+    .C(CLK),
+    .D(_049_[6]),
+    .Q(wait_counter[6]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[7]  /* _145_ */ (
+    .C(CLK),
+    .D(_049_[7]),
+    .Q(wait_counter[7]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[8]  /* _146_ */ (
+    .C(CLK),
+    .D(_049_[8]),
+    .Q(wait_counter[8]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[9]  /* _147_ */ (
+    .C(CLK),
+    .D(_049_[9]),
+    .Q(wait_counter[9]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[10]  /* _148_ */ (
+    .C(CLK),
+    .D(_049_[10]),
+    .Q(wait_counter[10]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[11]  /* _149_ */ (
+    .C(CLK),
+    .D(_049_[11]),
+    .Q(wait_counter[11]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[12]  /* _150_ */ (
+    .C(CLK),
+    .D(_049_[12]),
+    .Q(wait_counter[12]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[13]  /* _151_ */ (
+    .C(CLK),
+    .D(_049_[13]),
+    .Q(wait_counter[13]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[14]  /* _152_ */ (
+    .C(CLK),
+    .D(_049_[14]),
+    .Q(wait_counter[14]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[15]  /* _153_ */ (
+    .C(CLK),
+    .D(_049_[15]),
+    .Q(wait_counter[15]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[16]  /* _154_ */ (
+    .C(CLK),
+    .D(_049_[16]),
+    .Q(wait_counter[16]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[17]  /* _155_ */ (
+    .C(CLK),
+    .D(_049_[17]),
+    .Q(wait_counter[17]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[18]  /* _156_ */ (
+    .C(CLK),
+    .D(_049_[18]),
+    .Q(wait_counter[18]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[19]  /* _157_ */ (
+    .C(CLK),
+    .D(_049_[19]),
+    .Q(wait_counter[19]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[20]  /* _158_ */ (
+    .C(CLK),
+    .D(_049_[20]),
+    .Q(wait_counter[20]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[21]  /* _159_ */ (
+    .C(CLK),
+    .D(_049_[21]),
+    .Q(wait_counter[21]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[22]  /* _160_ */ (
+    .C(CLK),
+    .D(_049_[22]),
+    .Q(wait_counter[22]),
+    .R(_046_[18])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:12.1-20.4" *)
+  \$_SDFF_PP0_  \wait_counter_reg[23]  /* _161_ */ (
+    .C(CLK),
+    .D(_049_[23]),
+    .Q(wait_counter[23]),
+    .R(_046_[18])
   );
   assign _047_[0] = LED[0];
   assign _049_[0] = _048_[0];

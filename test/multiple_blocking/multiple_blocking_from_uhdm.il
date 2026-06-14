@@ -18,22 +18,18 @@ module \multiple_blocking
   wire input 4 \sel
   attribute \src "dut.sv:7.28-7.32"
   wire width 32 output 5 \dout
-  attribute \src "dut.sv:10.22-10.23"
-  wire width 6 \a
-  attribute \src "dut.sv:11.23-11.24"
-  wire \b
-  attribute \src "dut.sv:12.21-12.22"
-  wire width 3 \c
-  wire width 6 $auto$expression.cpp:2965:import_operation$2
+  wire width 32 $auto$process.cpp:7486:import_assignment_sync$20
+  wire width 32 $auto$process.cpp:7482:import_assignment_sync$18
+  wire width 32 $auto$process.cpp:7471:import_assignment_sync$16
+  wire width 6 $auto$expression.cpp:3317:import_operation$2
   attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63"
-  wire width 64 $auto$expression.cpp:3020:import_operation$4
+  wire width 64 $auto$expression.cpp:3381:import_operation$4
   wire width 3 $auto$rtlil.cc:3255:Not$7
-  wire width 32 $auto$process.cpp:6781:import_assignment_sync$20
-  wire width 7 $auto$expression.cpp:3100:import_operation$10
-  wire width 32 $auto$process.cpp:6760:import_assignment_sync$12
-  wire width 32 $auto$process.cpp:6771:import_assignment_sync$14
-  wire width 32 $auto$process.cpp:6774:import_assignment_sync$16
-  wire width 32 $auto$process.cpp:6777:import_assignment_sync$18
+  wire width 32 $auto$expression.cpp:3317:import_operation$8
+  attribute \unused_bits "6"
+  wire width 7 $auto$expression.cpp:3467:import_operation$10
+  wire width 32 $auto$process.cpp:7457:import_assignment_sync$12
+  wire width 32 $auto$process.cpp:7468:import_assignment_sync$14
   attribute \src "dut.sv:14.11-14.19"
   cell $add $add$dut.sv:14$3
     parameter \A_SIGNED 0
@@ -43,7 +39,7 @@ module \multiple_blocking
     parameter \Y_WIDTH 6
     connect \A { 1'0 \ctrl }
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2965:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:15.11-15.18"
   cell $sub $sub$dut.sv:15$5
@@ -54,7 +50,7 @@ module \multiple_blocking
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \sel }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3020:import_operation$4
+    connect \Y $auto$expression.cpp:3381:import_operation$4
   end
   attribute \src "dut.sv:16.11-16.15"
   cell $not $not$dut.sv:16$6
@@ -64,14 +60,16 @@ module \multiple_blocking
     connect \A { 1'0 \din }
     connect \Y $auto$rtlil.cc:3255:Not$7
   end
-  attribute \src "dut.sv:13.4-19.7"
-  attribute \always_ff 1
-  cell $dff $procdff$25
-    parameter \WIDTH 32
-    parameter \CLK_POLARITY 1'1
-    connect \D $auto$process.cpp:6781:import_assignment_sync$20
-    connect \Q \dout
-    connect \CLK \clk
+  attribute \src "dut.sv:17.14-17.22"
+  cell $add $add$dut.sv:17$9
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A \dout
+    connect \B 1
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
   attribute \src "dut.sv:18.12-18.15"
   cell $mul $mul$dut.sv:18$11
@@ -80,82 +78,64 @@ module \multiple_blocking
     parameter \A_WIDTH 6
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 7
-    connect \A \a
-    connect \B \b
-    connect \Y $auto$expression.cpp:3100:import_operation$10
+    connect \A $auto$expression.cpp:3317:import_operation$2
+    connect \B $auto$expression.cpp:3381:import_operation$4 [0]
+    connect \Y $auto$expression.cpp:3467:import_operation$10
   end
-  cell $shl $auto$process.cpp:6761:import_assignment_sync$13
+  cell $shl $auto$process.cpp:7458:import_assignment_sync$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 7
+    parameter \B_WIDTH 6
     parameter \Y_WIDTH 32
-    connect \A { 29'00000000000000000000000000000 \c }
-    connect \B $auto$expression.cpp:3100:import_operation$10
-    connect \Y $auto$process.cpp:6760:import_assignment_sync$12
+    connect \A { 29'00000000000000000000000000000 $auto$rtlil.cc:3255:Not$7 }
+    connect \B $auto$expression.cpp:3467:import_operation$10 [5:0]
+    connect \Y $auto$process.cpp:7457:import_assignment_sync$12
   end
-  cell $shl $auto$process.cpp:6772:import_assignment_sync$15
+  cell $shl $auto$process.cpp:7469:import_assignment_sync$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
-    parameter \B_WIDTH 7
+    parameter \B_WIDTH 6
     parameter \Y_WIDTH 32
     connect \A 32'11111111111111111111111111111111
-    connect \B $auto$expression.cpp:3100:import_operation$10
-    connect \Y $auto$process.cpp:6771:import_assignment_sync$14
+    connect \B $auto$expression.cpp:3467:import_operation$10 [5:0]
+    connect \Y $auto$process.cpp:7468:import_assignment_sync$14
   end
-  cell $not $auto$process.cpp:6775:import_assignment_sync$17
+  cell $not $auto$process.cpp:7472:import_assignment_sync$17
     parameter \A_SIGNED 0
     parameter \A_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:6771:import_assignment_sync$14
-    connect \Y $auto$process.cpp:6774:import_assignment_sync$16
+    connect \A $auto$process.cpp:7468:import_assignment_sync$14
+    connect \Y $auto$process.cpp:7471:import_assignment_sync$16
   end
-  cell $and $auto$process.cpp:6778:import_assignment_sync$19
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
-    parameter \Y_WIDTH 32
-    connect \A \dout
-    connect \B $auto$process.cpp:6774:import_assignment_sync$16
-    connect \Y $auto$process.cpp:6777:import_assignment_sync$18
-  end
-  cell $or $auto$process.cpp:6782:import_assignment_sync$21
+  cell $and $auto$process.cpp:7483:import_assignment_sync$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
     parameter \Y_WIDTH 32
-    connect \A $auto$process.cpp:6777:import_assignment_sync$18
-    connect \B $auto$process.cpp:6760:import_assignment_sync$12
-    connect \Y $auto$process.cpp:6781:import_assignment_sync$20
+    connect \A $auto$expression.cpp:3317:import_operation$8
+    connect \B $auto$process.cpp:7471:import_assignment_sync$16
+    connect \Y $auto$process.cpp:7482:import_assignment_sync$18
+  end
+  cell $or $auto$process.cpp:7487:import_assignment_sync$21
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 32
+    parameter \B_WIDTH 32
+    parameter \Y_WIDTH 32
+    connect \A $auto$process.cpp:7482:import_assignment_sync$18
+    connect \B $auto$process.cpp:7457:import_assignment_sync$12
+    connect \Y $auto$process.cpp:7486:import_assignment_sync$20
   end
   attribute \src "dut.sv:13.4-19.7"
   attribute \always_ff 1
-  cell $dff $procdff$22
-    parameter \WIDTH 1
+  cell $dff $procdff$25
+    parameter \WIDTH 32
     parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:3020:import_operation$4 [0]
-    connect \Q \b
-    connect \CLK \clk
-  end
-  attribute \src "dut.sv:13.4-19.7"
-  attribute \always_ff 1
-  cell $dff $procdff$23
-    parameter \WIDTH 3
-    parameter \CLK_POLARITY 1'1
-    connect \D $auto$rtlil.cc:3255:Not$7
-    connect \Q \c
-    connect \CLK \clk
-  end
-  attribute \src "dut.sv:13.4-19.7"
-  attribute \always_ff 1
-  cell $dff $procdff$24
-    parameter \WIDTH 6
-    parameter \CLK_POLARITY 1'1
-    connect \D $auto$expression.cpp:2965:import_operation$2
-    connect \Q \a
+    connect \D $auto$process.cpp:7486:import_assignment_sync$20
+    connect \Q \dout
     connect \CLK \clk
   end
 end

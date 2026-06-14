@@ -17,16 +17,16 @@ module \top
   wire output 1 \out
   attribute \src "dut.sv:13.18-13.28"
   wire \b_internal
-  wire $auto$module.cpp:1124:import_continuous_assign$1
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$2
+  wire $auto$module.cpp:1218:import_continuous_assign$1
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 0
     parameter \Y_WIDTH 1
     connect \A { }
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$1
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$1
   end
   cell \a \inst
     connect \b \b_internal
   end
-  connect \out $auto$module.cpp:1124:import_continuous_assign$1
+  connect \out $auto$module.cpp:1218:import_continuous_assign$1
 end

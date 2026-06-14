@@ -8,12 +8,10 @@
  module const_fold_func_top(inp, out1, out2, out3, out4, out5, out6);
  (* src = "dut.sv:2.19-2.22" *)
  input [3:0] inp;
-@@ -24,48 +24,6 @@
- output [3:0] out6;
- wire [3:0] out6;
+@@ -26,46 +26,19 @@
  wire _0_;
--(* nosync = 32'd1 *)
--(* src = "dut.sv:7.15-7.18" *)
+ (* nosync = 32'd1 *)
+ (* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:13$13.inp ;
 -(* nosync = 32'd1 *)
 -(* src = "dut.sv:7.15-7.18" *)
@@ -21,20 +19,23 @@
 -(* nosync = 32'd1 *)
 -(* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:42$20.inp ;
--(* nosync = 32'd1 *)
--(* src = "dut.sv:7.15-7.18" *)
++wire [3:0] \flip$func$dut.sv:56$2.inp ;
+ (* nosync = 32'd1 *)
+ (* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:42$22.inp ;
 -(* nosync = 32'd1 *)
 -(* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:56$10.inp ;
--(* nosync = 32'd1 *)
--(* src = "dut.sv:7.15-7.18" *)
--wire [3:0] \flip$func$dut.sv:56$9.inp ;
--(* nosync = 32'd1 *)
--(* src = "dut.sv:7.15-7.18" *)
++wire [3:0] \flip$func$dut.sv:56$8.inp ;
+ (* nosync = 32'd1 *)
+ (* src = "dut.sv:7.15-7.18" *)
+ wire [3:0] \flip$func$dut.sv:56$9.inp ;
+ (* nosync = 32'd1 *)
+ (* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:57$11.inp ;
--(* nosync = 32'd1 *)
--(* src = "dut.sv:7.15-7.18" *)
++wire [3:0] \flip$func$dut.sv:57$19.inp ;
+ (* nosync = 32'd1 *)
+ (* src = "dut.sv:7.15-7.18" *)
 -wire [3:0] \flip$func$dut.sv:59$16.inp ;
 -(* nosync = 32'd1 *)
 -(* src = "dut.sv:12.15-12.18" *)
@@ -54,19 +55,33 @@
 -(* nosync = 32'd1 *)
 -(* src = "dut.sv:38.15-38.19" *)
 -wire [3:0] \pow_flip_a$func$dut.sv:59$17.base ;
++wire [3:0] \flip$func$dut.sv:59$50.inp ;
  \$_NOT_  _1_ (
  .A(inp[1]),
  .Y(_0_)
-@@ -86,20 +44,6 @@
+@@ -77,29 +50,20 @@
+ .Y(out4[2])
+ );
+ \$_ANDNOT_  _3_ (
+-.A(inp[1]),
++.A(inp[3]),
  .B(inp[0]),
- .Y(out4[3])
+-.Y(out4[1])
++.Y(out4[3])
+ );
+ \$_ANDNOT_  _4_ (
+-.A(inp[3]),
++.A(inp[1]),
+ .B(inp[0]),
+-.Y(out4[3])
++.Y(out4[1])
  );
 -assign \pow_flip_a$func$dut.sv:42$19.base  = 4'hx;
 -assign \flip$func$dut.sv:57$11.inp  = 4'hx;
 -assign \flip$func$dut.sv:42$22.inp  = 4'hx;
 -assign \flip$func$dut.sv:56$10.inp  = 4'hx;
 -assign \flip$func$dut.sv:42$18.inp  = 4'hx;
--assign \flip$func$dut.sv:56$9.inp  = 4'hx;
+ assign \flip$func$dut.sv:56$9.inp  = 4'hx;
 -assign \pow_flip_a$func$dut.sv:59$17.base  = 4'hx;
 -assign \pow_flip_a$func$dut.sv:42$21.base  = 4'hx;
 -assign \help$func$dut.sv:57$12.inp  = 4'hx;
@@ -75,6 +90,10 @@
 -assign \help_mul$func$dut.sv:58$14.inp  = 4'hx;
 -assign \flip$func$dut.sv:42$20.inp  = 4'hx;
 -assign \flip$func$dut.sv:13$13.inp  = 4'hx;
++assign \flip$func$dut.sv:59$50.inp  = 4'hx;
++assign \flip$func$dut.sv:56$8.inp  = 4'hx;
++assign \flip$func$dut.sv:57$19.inp  = 4'hx;
++assign \flip$func$dut.sv:56$2.inp  = 4'hx;
  assign out6 = 4'bx010;
  assign out5 = 4'ha;
  assign out4[0] = 1'h0;

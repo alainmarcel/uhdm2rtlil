@@ -57,13 +57,10 @@ module \dff
   attribute \src "dut.sv:2.20-2.21"
   wire output 3 \q
   attribute \src "dut.sv:5.1-6.9"
-  wire $0\q
-  attribute \src "dut.sv:5.1-6.9"
   attribute \always_ff 1
   process $proc$dut.sv:5$2
-    assign $0\q \d
     sync posedge \clk
-      update \q $0\q
+      update \q \d
   end
 end
 attribute \cells_not_processed 1

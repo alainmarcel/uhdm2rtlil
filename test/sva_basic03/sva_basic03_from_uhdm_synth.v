@@ -22,26 +22,25 @@ module top(clk, selA, selB, QA, QB, Q);
   (* src = "dut.sv:1.75-1.76" *)
   output Q;
   wire Q;
-  (* src = "dut.sv:2.2-5.5" *)
   wire _0_;
   wire _1_;
   \$_MUX_  _2_ (
     .A(QA),
     .B(QB),
     .S(selB),
-    .Y(_0_)
+    .Y(_1_)
   );
   \$_OR_  _3_ (
     .A(selB),
     .B(selA),
-    .Y(_1_)
+    .Y(_0_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:2.2-5.5" *)
   \$_DFFE_PP_  Q_reg /* _4_ */ (
     .C(clk),
-    .D(_0_),
-    .E(_1_),
+    .D(_1_),
+    .E(_0_),
     .Q(Q)
   );
   (* keep = 32'd1 *)

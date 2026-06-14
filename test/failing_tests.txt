@@ -63,3 +63,51 @@ various/abc9.v
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
 # Expected Miter-Formal failures: UHDM-synth != Verilog-synth, falsely pass
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
+
+# ---------------------------------------------------------------------------
+# Imported from chipsalliance/UHDM-integration-tests (commit 668c4c45).
+# These exercise UHDM frontend feature gaps / non-synthesizable constructs
+# (unpacked-array init, 2D function args, assignment patterns, break/continue,
+# real/string/$display, etc.).  Tracked as expected failures pending
+# incremental frontend fixes — see test/imported_tests_status.txt.
+# --- equiv_induct failures (29):
+2DUnpackedArray
+AssignBitSelectPartSelect
+AssignmentToConcatenation
+CastClog2ToMinimalSizeOfParamValueFromCommandLine
+CastStructArray
+compound_assignments
+EnumParameterInNestedModules
+ExpressionInIndex
+IndexedPartSelect
+IndexedPartSelectOfMember
+InterfaceAlways
+InterfaceInitial
+InterfaceWithPort
+MultipleAssignments
+NestedGenscopesInModuleWithMultidimensionalPorts
+OutputSizeWithParameterOfInstanceInitializedByStructMember
+PackedArray
+PartSelectOfPartSelectedBitSelect
+Repeat
+SelfSelectsInBitSelectAfterBitSelect
+SignedWire
+StructOfArrayOfStructs
+TypedefPackedDimensions
+TypedefVariableDimensions
+unary_op_not_log
+unary_op_plus
+VarPassedTo2Submodules
+VarSelect
+xor_assignment
+# --- output-generation (true) failures (10):
+Break
+BreakContinue
+BreakNested
+Continue
+ContinueNested
+hier_path
+ParameterSizeOfInstance
+StructMemberAsModuleInput
+SystemFunctions
+UnionParameter

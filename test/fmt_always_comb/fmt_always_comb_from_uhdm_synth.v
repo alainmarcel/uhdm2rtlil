@@ -38,7 +38,6 @@ module top(clk);
   (* src = "dut.sv:1.18-1.21" *)
   input clk;
   wire clk;
-  (* src = "dut.sv:8.2-11.8" *)
   wire _0_;
   (* init = 1'h0 *)
   (* src = "dut.sv:2.9-2.14" *)

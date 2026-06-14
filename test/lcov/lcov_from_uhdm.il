@@ -47,10 +47,10 @@ module \top
   wire width 8 $auto$rtlil.cc:3255:Not$10
   attribute \src "dut.sv:41.5-46.8"
   wire width 8 $0\reg3
-  wire width 8 $auto$expression.cpp:3020:import_operation$38
+  wire width 8 $auto$expression.cpp:3381:import_operation$38
   attribute \src "dut.sv:56.17-56.30"
   wire $eq$dut.sv:56$46_Y
-  wire width 8 $auto$expression.cpp:2965:import_operation$36
+  wire width 8 $auto$expression.cpp:3317:import_operation$36
   attribute \unused_bits "0 2 4 6 8 9 10 11"
   wire width 12 $auto$rtlil.cc:3304:Xor$20
   attribute \src "dut.sv:14.21-14.26"
@@ -128,7 +128,7 @@ module \top
     connect \CLK \clk
     connect \EN \en
     connect \ARST \rst
-    connect \D $auto$expression.cpp:3020:import_operation$38
+    connect \D $auto$expression.cpp:3381:import_operation$38
     connect \Q \reg2
   end
   attribute \src "dut.sv:41.5-46.8"
@@ -178,7 +178,7 @@ module \top
     connect \CLK \clk
     connect \EN \en
     connect \ARST \rst
-    connect \D $auto$expression.cpp:2965:import_operation$36
+    connect \D $auto$expression.cpp:3317:import_operation$36
     connect \Q \reg1
   end
   cell $not $auto$opt_expr.cc:702:replace_const_cells$63
@@ -219,7 +219,7 @@ module \top
   end
   attribute \src "dut.sv:56.9-56.32"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$49
+  cell $check $auto$process.cpp:184:build_check_cell$49
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -252,7 +252,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_1
     connect \B \cone1_2
-    connect \Y $auto$expression.cpp:2965:import_operation$36
+    connect \Y $auto$expression.cpp:3317:import_operation$36
   end
   attribute \src "dut.sv:28.21-28.38"
   cell $sub $sub$dut.sv:28$39
@@ -263,7 +263,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cone1_2
     connect \B \cone1_1
-    connect \Y $auto$expression.cpp:3020:import_operation$38
+    connect \Y $auto$expression.cpp:3381:import_operation$38
   end
   attribute \src "dut.sv:45.21-45.38"
   cell $xor $xor$dut.sv:45$41

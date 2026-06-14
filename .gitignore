@@ -47,3 +47,10 @@ core.*
 test/run/
 # Specifically ignore all .v files in test/run/
 test/run/**/*.v
+# Suite run logs (transient)
+test/test.log
+test/test-yosys.log
+test/test_results.log
+test/old-test.log
+test/old-test-yosys.log
+__pycache__/

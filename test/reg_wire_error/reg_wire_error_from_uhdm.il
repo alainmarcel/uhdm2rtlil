@@ -53,26 +53,26 @@ module \test
   wire \mw3[0]
   attribute \src "dut.sv:47.8-47.11"
   wire \mr3[0]
-  cell $mux $auto$expression.cpp:4296:import_bit_select$12
+  cell $mux $auto$expression.cpp:4791:import_bit_select$12
     parameter \WIDTH 1
     connect \A \ml1[0]
     connect \B 1'1
     connect \S \i
     connect \Y \o_ml
   end
-  cell $mux $auto$expression.cpp:4296:import_bit_select$4
-    parameter \WIDTH 1
-    connect \A \mw1[0]
-    connect \B 1'1
-    connect \S \i
-    connect \Y \o_mw
-  end
-  cell $mux $auto$expression.cpp:4296:import_bit_select$8
+  cell $mux $auto$expression.cpp:4791:import_bit_select$8
     parameter \WIDTH 1
     connect \A \mr1[0]
     connect \B \mr1[1]
     connect \S \i
     connect \Y \o_mr
+  end
+  cell $mux $auto$expression.cpp:4791:import_bit_select$4
+    parameter \WIDTH 1
+    connect \A \mw1[0]
+    connect \B 1'1
+    connect \S \i
+    connect \Y \o_mw
   end
   connect \mr3[0] 1'0
   connect \mw3[0] 1'0

@@ -14,10 +14,25 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 300 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 99.7% (299/300 tests functional, 1 known failure)
-- **Passing**: 255 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 45 tests demonstrating UHDM's superior SystemVerilog support — tests in this category use SystemVerilog features the Verilog frontend can't parse, so formal equivalence against it is not possible. They are instead verified end-to-end against Verilator with random constraint generation: the original `dut.sv` (RTL) and the UHDM-frontend's post-`synth -auto-top` gate-level netlist are instantiated side-by-side in a SystemVerilog testbench driven by shared clocks/resets and randomized inputs, and their outputs are compared cycle by cycle:
+- **Total Tests**: 649 tests covering comprehensive SystemVerilog features
+- **Success Rate**: 93% (610/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
+- **Passing**: 378 tests with formal equivalence verified between UHDM and Verilog frontends
+- **UHDM-Only Success**: 232 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Known failures**: 39 (29 equiv_induct, 10 output-generation), all from the freshly-imported
+  chipsalliance/UHDM-integration-tests suite exercising UHDM frontend feature gaps /
+  non-synthesizable constructs — tracked in `test/failing_tests.txt` and
+  `test/imported_tests_status.txt`, to be fixed incrementally. No pre-existing test regressed.
+
+> **Note (2026-06-14):** 349 DUTs from
+> [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
+> were imported as `test/<Name>/dut.sv` (harnesses excluded). Of the 316 observable ones,
+> 89 pass as-is; the remainder expose feature gaps clustered by area (Parameter, Function,
+> Array, Pattern, Struct, Enum). See `test/imported_tests_status.txt` for the per-test
+> breakdown.
+
+The original UHDM-only verification (random-constraint Verilator co-sim: the original `dut.sv`
+(RTL) and the UHDM-frontend's post-`synth -auto-top` gate-level netlist instantiated side-by-side
+in a testbench with shared clocks/resets and randomized inputs, outputs compared cycle by cycle):
   - `nested_struct` - Complex nested structures
   - `simple_instance_array` - Instance array support
   - `simple_package` - Package support

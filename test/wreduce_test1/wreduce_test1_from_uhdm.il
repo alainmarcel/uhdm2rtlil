@@ -16,11 +16,9 @@ module \wreduce_test1
   attribute \src "dut.sv:1.63-1.64"
   wire width 8 output 6 \w
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3020:import_operation$1
+  wire width 32 $auto$expression.cpp:3381:import_operation$1
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3100:import_operation$3
-  attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$5
+  wire width 32 $auto$expression.cpp:3467:import_operation$3
   attribute \src "dut.sv:2.14-2.19"
   cell $sub $sub$dut.sv:2$2
     parameter \A_SIGNED 0
@@ -30,7 +28,7 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:3020:import_operation$1 [31:8] \x }
+    connect \Y { $auto$expression.cpp:3381:import_operation$1 [31:8] \x }
   end
   attribute \src "dut.sv:3.14-3.19"
   cell $mul $mul$dut.sv:3$4
@@ -41,7 +39,7 @@ module \wreduce_test1
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:3100:import_operation$3 [31:8] \y }
+    connect \Y { $auto$expression.cpp:3467:import_operation$3 [31:8] \y }
   end
   attribute \src "dut.sv:4.14-4.20"
   cell $shr $shr$dut.sv:4$6
@@ -49,10 +47,10 @@ module \wreduce_test1
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 32
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y { $auto$expression.cpp:3175:import_operation$5 [31:8] \z }
+    connect \Y \z
   end
   attribute \src "dut.sv:5.14-5.20"
   cell $shl $shl$dut.sv:5$8
@@ -65,7 +63,6 @@ module \wreduce_test1
     connect \B \b
     connect \Y \w
   end
-  connect $auto$expression.cpp:3175:import_operation$5 [7:0] \z
-  connect $auto$expression.cpp:3100:import_operation$3 [7:0] \y
-  connect $auto$expression.cpp:3020:import_operation$1 [7:0] \x
+  connect $auto$expression.cpp:3467:import_operation$3 [7:0] \y
+  connect $auto$expression.cpp:3381:import_operation$1 [7:0] \x
 end

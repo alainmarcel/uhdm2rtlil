@@ -128,7 +128,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [0]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [0]
     connect \Y $auto$rtlil.cc:3304:Xor$9
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -139,7 +139,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [1]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [1]
     connect \Y $auto$rtlil.cc:3304:Xor$11
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -150,7 +150,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [2]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [2]
     connect \Y $auto$rtlil.cc:3304:Xor$13
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -161,7 +161,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [3]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [3]
     connect \Y $auto$rtlil.cc:3304:Xor$15
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -172,7 +172,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [4]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [4]
     connect \Y $auto$rtlil.cc:3304:Xor$17
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -183,7 +183,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [5]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [5]
     connect \Y $auto$rtlil.cc:3304:Xor$19
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -194,7 +194,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [6]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [6]
     connect \Y $auto$rtlil.cc:3304:Xor$21
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -205,7 +205,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [7]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [7]
     connect \Y $auto$rtlil.cc:3304:Xor$23
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -216,7 +216,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [8]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [8]
     connect \Y $auto$rtlil.cc:3304:Xor$25
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -227,7 +227,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [9]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [9]
     connect \Y $auto$rtlil.cc:3304:Xor$27
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -238,7 +238,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [10]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [10]
     connect \Y $auto$rtlil.cc:3304:Xor$29
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -249,7 +249,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [11]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [11]
     connect \Y $auto$rtlil.cc:3304:Xor$31
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -260,7 +260,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [12]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [12]
     connect \Y $auto$rtlil.cc:3304:Xor$33
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -271,7 +271,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [13]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [13]
     connect \Y $auto$rtlil.cc:3304:Xor$35
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -282,7 +282,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [14]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [14]
     connect \Y $auto$rtlil.cc:3304:Xor$37
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -293,7 +293,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [15]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [15]
     connect \Y $auto$rtlil.cc:3304:Xor$39
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -304,7 +304,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [16]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [16]
     connect \Y $auto$rtlil.cc:3304:Xor$41
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -315,7 +315,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [17]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [17]
     connect \Y $auto$rtlil.cc:3304:Xor$43
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -326,7 +326,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [18]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [18]
     connect \Y $auto$rtlil.cc:3304:Xor$45
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -337,7 +337,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [19]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [19]
     connect \Y $auto$rtlil.cc:3304:Xor$47
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -348,7 +348,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [20]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [20]
     connect \Y $auto$rtlil.cc:3304:Xor$49
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -359,7 +359,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [21]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [21]
     connect \Y $auto$rtlil.cc:3304:Xor$51
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -370,7 +370,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [22]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [22]
     connect \Y $auto$rtlil.cc:3304:Xor$53
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -381,7 +381,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [23]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [23]
     connect \Y $auto$rtlil.cc:3304:Xor$55
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -392,7 +392,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [24]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [24]
     connect \Y $auto$rtlil.cc:3304:Xor$57
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -403,7 +403,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [25]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [25]
     connect \Y $auto$rtlil.cc:3304:Xor$59
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -414,7 +414,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [26]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [26]
     connect \Y $auto$rtlil.cc:3304:Xor$61
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -425,7 +425,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [27]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [27]
     connect \Y $auto$rtlil.cc:3304:Xor$63
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -436,7 +436,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [28]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [28]
     connect \Y $auto$rtlil.cc:3304:Xor$65
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -447,7 +447,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [29]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [29]
     connect \Y $auto$rtlil.cc:3304:Xor$67
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -458,7 +458,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [30]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [30]
     connect \Y $auto$rtlil.cc:3304:Xor$69
   end
   attribute \src "dut.sv:10.17-10.40"
@@ -469,7 +469,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [31]
+    connect \B $0\func1$func$dut.sv:30$2.inp$4 [31]
     connect \Y $auto$rtlil.cc:3304:Xor$71
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -480,7 +480,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [0]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [0]
     connect \Y $auto$rtlil.cc:3304:Xor$80
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -491,7 +491,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [1]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [1]
     connect \Y $auto$rtlil.cc:3304:Xor$82
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -502,7 +502,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [2]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [2]
     connect \Y $auto$rtlil.cc:3304:Xor$84
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -513,7 +513,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [3]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [3]
     connect \Y $auto$rtlil.cc:3304:Xor$86
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -524,7 +524,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [4]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [4]
     connect \Y $auto$rtlil.cc:3304:Xor$88
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -535,7 +535,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [5]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [5]
     connect \Y $auto$rtlil.cc:3304:Xor$90
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -546,7 +546,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [6]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [6]
     connect \Y $auto$rtlil.cc:3304:Xor$92
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -557,7 +557,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [7]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [7]
     connect \Y $auto$rtlil.cc:3304:Xor$94
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -568,7 +568,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [8]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [8]
     connect \Y $auto$rtlil.cc:3304:Xor$96
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -579,7 +579,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [9]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [9]
     connect \Y $auto$rtlil.cc:3304:Xor$98
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -590,7 +590,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [10]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [10]
     connect \Y $auto$rtlil.cc:3304:Xor$100
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -601,7 +601,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [11]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [11]
     connect \Y $auto$rtlil.cc:3304:Xor$102
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -612,7 +612,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [12]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [12]
     connect \Y $auto$rtlil.cc:3304:Xor$104
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -623,7 +623,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [13]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [13]
     connect \Y $auto$rtlil.cc:3304:Xor$106
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -634,7 +634,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [14]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [14]
     connect \Y $auto$rtlil.cc:3304:Xor$108
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -645,7 +645,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [15]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [15]
     connect \Y $auto$rtlil.cc:3304:Xor$110
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -656,7 +656,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [16]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [16]
     connect \Y $auto$rtlil.cc:3304:Xor$112
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -667,7 +667,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [17]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [17]
     connect \Y $auto$rtlil.cc:3304:Xor$114
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -678,7 +678,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [18]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [18]
     connect \Y $auto$rtlil.cc:3304:Xor$116
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -689,7 +689,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [19]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [19]
     connect \Y $auto$rtlil.cc:3304:Xor$118
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -700,7 +700,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [20]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [20]
     connect \Y $auto$rtlil.cc:3304:Xor$120
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -711,7 +711,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [21]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [21]
     connect \Y $auto$rtlil.cc:3304:Xor$122
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -722,7 +722,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [22]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [22]
     connect \Y $auto$rtlil.cc:3304:Xor$124
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -733,7 +733,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [23]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [23]
     connect \Y $auto$rtlil.cc:3304:Xor$126
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -744,7 +744,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [24]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [24]
     connect \Y $auto$rtlil.cc:3304:Xor$128
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -755,7 +755,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [25]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [25]
     connect \Y $auto$rtlil.cc:3304:Xor$130
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -766,7 +766,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [26]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [26]
     connect \Y $auto$rtlil.cc:3304:Xor$132
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -777,7 +777,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [27]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [27]
     connect \Y $auto$rtlil.cc:3304:Xor$134
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -788,7 +788,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [28]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [28]
     connect \Y $auto$rtlil.cc:3304:Xor$136
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -799,7 +799,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [29]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [29]
     connect \Y $auto$rtlil.cc:3304:Xor$138
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -810,7 +810,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 0
-    connect \B \inp [30]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [30]
     connect \Y $auto$rtlil.cc:3304:Xor$140
   end
   attribute \src "dut.sv:18.17-18.40"
@@ -821,7 +821,7 @@ module \func_block_top
     parameter \B_WIDTH 1
     parameter \Y_WIDTH 32
     connect \A 1
-    connect \B \inp [31]
+    connect \B $0\func2$func$dut.sv:31$73.inp$75 [31]
     connect \Y $auto$rtlil.cc:3304:Xor$142
   end
   attribute \src "dut.sv:30.16-30.26"
@@ -931,7 +931,7 @@ module \func_block_top
     assign $0\func3$func$dut.sv:32$144.$result$147 $1\func3$func$dut.sv:32$144.$result$148
     assign $0\func3$func$dut.sv:32$143.$result$149 $1\func3$func$dut.sv:32$144.$result$148
     assign $1\func3$func$dut.sv:32$144.$result$148 0
-    assign $1\func3$func$dut.sv:32$144.$result$148 [31:1] \inp [31:1]
+    assign $1\func3$func$dut.sv:32$144.$result$148 [31:1] $0\func3$func$dut.sv:32$144.inp$146 [31:1]
     sync always
       update \func3$func$dut.sv:32$143.$result $0\func3$func$dut.sv:32$143.$result$149
       update \func3$func$dut.sv:32$144.$result 32'x

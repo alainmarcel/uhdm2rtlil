@@ -20,11 +20,11 @@ attribute \src "dut.sv:9.1-12.10"
 attribute \cells_not_processed 1
 module \bot
   attribute \src "dut.sv:11.12-11.41"
-  wire $display$0x55c277a691b0:11$2_EN
+  wire $display$0x5559a702b1b0:11$2_EN
   attribute \src "dut.sv:10.13-10.42"
-  wire $display$0x55c277a691b0:10$4_EN
+  wire $display$0x5559a702b1b0:10$4_EN
   attribute \src "dut.sv:11.12-11.41"
-  cell $print $display$0x55c277a691b0:11$2
+  cell $print $display$0x5559a702b1b0:11$2
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
@@ -32,11 +32,11 @@ module \bot
     parameter \FORMAT "%l: \\bot\n%m: \\bot\n"
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $display$0x55c277a691b0:11$2_EN
+    connect \EN $display$0x5559a702b1b0:11$2_EN
     connect \ARGS { }
   end
   attribute \src "dut.sv:10.13-10.42"
-  cell $print $display$0x55c277a691b0:10$4
+  cell $print $display$0x5559a702b1b0:10$4
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 0'x
@@ -44,19 +44,19 @@ module \bot
     parameter \FORMAT "%l: \\bot\n%m: \\bot\n"
     parameter \ARGS_WIDTH 0
     connect \TRG { }
-    connect \EN $display$0x55c277a691b0:10$4_EN
+    connect \EN $display$0x5559a702b1b0:10$4_EN
     connect \ARGS { }
   end
   attribute \src "dut.sv:11.5-11.41"
   process $proc$dut.sv:11$1
-    assign $display$0x55c277a691b0:11$2_EN 1'0
-    assign $display$0x55c277a691b0:11$2_EN 1'1
+    assign $display$0x5559a702b1b0:11$2_EN 1'0
+    assign $display$0x5559a702b1b0:11$2_EN 1'1
     sync always
   end
   attribute \src "dut.sv:10.12-10.12"
   process $proc$dut.sv:10$3
-    assign $display$0x55c277a691b0:10$4_EN 1'0
-    assign $display$0x55c277a691b0:10$4_EN 1'1
+    assign $display$0x5559a702b1b0:10$4_EN 1'0
+    assign $display$0x5559a702b1b0:10$4_EN 1'1
     sync always
   end
 end

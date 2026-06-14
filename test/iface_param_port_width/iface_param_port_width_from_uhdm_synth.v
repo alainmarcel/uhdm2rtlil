@@ -7,9 +7,9 @@ module bus_master(din, \bus.data );
   input [15:0] din;
   wire [15:0] din;
   (* src = "dut.sv:9.28-9.32" *)
-  output [15:0] \bus.data ;
-  wire [15:0] \bus.data ;
-  assign \bus.data  = din;
+  output [7:0] \bus.data ;
+  wire [7:0] \bus.data ;
+  assign \bus.data  = din[7:0];
 endmodule
 
 (* src = "dut.sv:18.1-25.10" *)
@@ -21,12 +21,10 @@ module top(din, dout);
   (* src = "dut.sv:20.24-20.28" *)
   output [7:0] dout;
   wire [7:0] dout;
-  (* unused_bits = "0 1 2 3 4 5 6 7" *)
-  wire [7:0] _0_;
   (* src = "dut.sv:9.28-9.32" *)
   wire [7:0] \bus.data ;
   bus_master m0 (
-    .\bus.data ({ _0_, \bus.data  }),
+    .\bus.data (\bus.data ),
     .din({ 8'h00, din })
   );
   assign dout = \bus.data ;

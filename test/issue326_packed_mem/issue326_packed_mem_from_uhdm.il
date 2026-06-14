@@ -46,10 +46,10 @@ module \noc_tni_buffer
   wire width 64 $auto$rtlil.cc:3390:Mux$64
   wire width 64 $memwr$\mem$data$19
   wire width 64 $memwr$\mem$en$20
-  wire width 5 $auto$expression.cpp:3296:import_operation$21
+  wire width 5 $auto$expression.cpp:3317:import_operation$21
   wire width 64 \memrd_mem_DATA
   wire $auto$rtlil.cc:3322:LogicAnd$10
-  wire width 5 $auto$expression.cpp:3296:import_operation$23
+  wire width 5 $auto$expression.cpp:3317:import_operation$23
   wire $auto$rtlil.cc:3322:LogicAnd$14
   attribute \src "dut.sv:45.5-64.8"
   wire $0\credit_return
@@ -191,7 +191,7 @@ module \noc_tni_buffer
     parameter \Y_WIDTH 5
     connect \A \write_ptr
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:3296:import_operation$21
+    connect \Y $auto$expression.cpp:3317:import_operation$21
   end
   attribute \src "dut.sv:57.29-57.44"
   cell $add $add$dut.sv:57$24
@@ -202,7 +202,7 @@ module \noc_tni_buffer
     parameter \Y_WIDTH 5
     connect \A \read_ptr
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:3296:import_operation$23
+    connect \Y $auto$expression.cpp:3317:import_operation$23
   end
   attribute \src "dut.sv:56.13-62.16"
   attribute \full_case 1
@@ -233,7 +233,7 @@ module \noc_tni_buffer
     connect \CLK \clk
     connect \EN \push
     connect \ARST \rst_n
-    connect \D $auto$expression.cpp:3296:import_operation$21
+    connect \D $auto$expression.cpp:3317:import_operation$21
     connect \Q \write_ptr
   end
   attribute \src "dut.sv:45.5-64.8"
@@ -248,7 +248,7 @@ module \noc_tni_buffer
     connect \CLK \clk
     connect \EN \pop
     connect \ARST \rst_n
-    connect \D $auto$expression.cpp:3296:import_operation$23
+    connect \D $auto$expression.cpp:3317:import_operation$23
     connect \Q \read_ptr
   end
   attribute \src "dut.sv:45.5-64.8"

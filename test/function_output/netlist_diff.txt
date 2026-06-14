@@ -19,9 +19,11 @@
  output signed [31:0] fib1;
  wire signed [31:0] fib1;
  wire _00_;
-@@ -42,11 +42,11 @@
+@@ -41,12 +41,13 @@
+ wire _27_;
  wire _28_;
  wire _29_;
++wire [31:0] \blk.unused ;
  (* nosync = 32'd1 *)
 -(* src = "dut.sv:14.24-14.25" *)
 -wire signed [31:0] \fib_wrap$func$dut.sv:25$1.o ;
@@ -35,7 +37,7 @@
  \$_NOT_  _30_ (
  .A(off[0]),
  .Y(fib1[0])
-@@ -356,7 +356,7 @@
+@@ -356,7 +357,8 @@
  .B(off[0]),
  .Y(fib1[1])
  );
@@ -43,5 +45,6 @@
 -assign \fib_wrap$func$dut.sv:25$1.o  = 32'hxxxxxxxx;
 +assign \fib_wrap$func$dut.sv:25$3.o  = 32'hxxxxxxxx;
 +assign \fib_wrap$func$dut.sv:26$12.o  = 32'hxxxxxxxx;
++assign \blk.unused  = 32'd0;
  assign fib0 = off;
  endmodule

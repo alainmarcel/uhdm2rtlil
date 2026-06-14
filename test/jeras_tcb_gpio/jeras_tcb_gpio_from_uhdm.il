@@ -13,7 +13,9 @@ module $paramod\tcb_gpio\GW=s32'00000000000000000000000000100000
   attribute \src "tcb_gpio.sv:30.25-30.31"
   wire width 32 input 3 \gpio_i
   wire $auto$opt_dff.cc:251:make_patterns_logic$51
+  attribute \src "tcb_if.sv:28.16-28.19"
   wire input 16 \bus.clk
+  attribute \src "tcb_if.sv:29.16-29.19"
   wire input 15 \bus.rst
   attribute \src "tcb_if.sv:33.18-33.21"
   wire input 14 \bus.vld

@@ -1,0 +1,18 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -6,14 +6,12 @@
+ wire signed [31:0] a;
+ assign a = 32'd3;
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:5.1-7.10" *)
++(* top =  1  *)
+ module top(o);
+ (* src = "dut.sv:5.23-5.24" *)
+ output signed [31:0] o;
+ wire signed [31:0] o;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:6.14-6.26" *)
+ submodule u_sub (
+ .a(o)
+ );

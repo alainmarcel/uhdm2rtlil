@@ -16,13 +16,26 @@ module \top
   wire input 5 \QB
   attribute \src "dut.sv:1.75-1.76"
   wire output 6 \Q
-  attribute \src "dut.sv:2.2-5.5"
-  wire $0\Q
+  wire $auto$rtlil.cc:3390:Mux$3
+  wire $auto$rtlil.cc:3390:Mux$5
   wire $auto$opt_dff.cc:234:make_patterns_logic$10
-  wire $procmux$4_Y
+  cell $mux $auto$process.cpp:614:operator()$2
+    parameter \WIDTH 1
+    connect \A 1'x
+    connect \B \QA
+    connect \S \selA
+    connect \Y $auto$rtlil.cc:3390:Mux$3
+  end
+  cell $mux $auto$process.cpp:614:operator()$4
+    parameter \WIDTH 1
+    connect \A $auto$rtlil.cc:3390:Mux$3
+    connect \B \QB
+    connect \S \selB
+    connect \Y $auto$rtlil.cc:3390:Mux$5
+  end
   attribute \src "dut.sv:12.2-12.73"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$2
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -37,7 +50,7 @@ module \top
   end
   attribute \src "dut.sv:13.2-13.73"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$3
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$7
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -50,22 +63,6 @@ module \top
     connect \A 1'1
     connect \ARGS { }
   end
-  attribute \src "dut.sv:3.3-3.21"
-  cell $mux $procmux$4
-    parameter \WIDTH 1
-    connect \A 1'x
-    connect \B \QA
-    connect \S \selA
-    connect \Y $procmux$4_Y
-  end
-  attribute \src "dut.sv:4.3-4.21"
-  cell $mux $procmux$6
-    parameter \WIDTH 1
-    connect \A $procmux$4_Y
-    connect \B \QB
-    connect \S \selB
-    connect \Y $0\Q
-  end
   attribute \src "dut.sv:2.2-5.5"
   attribute \always_ff 1
   cell $dffe $auto$ff.cc:337:slice$9
@@ -74,7 +71,7 @@ module \top
     parameter \WIDTH 1
     connect \CLK \clk
     connect \EN $auto$opt_dff.cc:234:make_patterns_logic$10
-    connect \D $0\Q
+    connect \D $auto$rtlil.cc:3390:Mux$5
     connect \Q \Q
   end
   cell $reduce_bool $auto$opt_dff.cc:235:make_patterns_logic$11

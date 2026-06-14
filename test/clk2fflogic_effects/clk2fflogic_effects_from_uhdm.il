@@ -4,7 +4,7 @@ attribute \top 1
 attribute \src "dut.sv:1.1-101.10"
 attribute \keep 1
 module \top
-  wire $print$$display$52$37_EN
+  wire $auto$process.cpp:174:build_check_cell$54
   attribute \src "dut.sv:6.5-6.12"
   attribute \init 1'0
   wire \clk
@@ -44,59 +44,31 @@ module \top
   attribute \src "dut.sv:25.5-25.17"
   attribute \init 1'0
   wire \eff_3_a
-  attribute \src "dut.sv:7.1-8.17"
-  wire $0\clk
+  attribute \src "dut.sv:8.12-8.16"
+  wire $logic_not$dut.sv:8.12-8.16$1_Y
+  wire width 6 $auto$expression.cpp:3317:import_operation$16
+  wire $auto$expression.cpp:3547:import_operation$18
+  wire $auto$expression.cpp:3547:import_operation$20
+  wire $auto$expression.cpp:3547:import_operation$22
+  wire $auto$expression.cpp:3547:import_operation$24
+  wire $auto$expression.cpp:3547:import_operation$26
+  attribute \src "dut.sv:42.18-42.29"
+  wire $logic_not$dut.sv:42.18-42.29$2_Y
+  wire $auto$expression.cpp:3547:import_operation$28
+  wire $auto$expression.cpp:3547:import_operation$30
+  wire $auto$expression.cpp:3547:import_operation$32
+  wire $auto$expression.cpp:3547:import_operation$34
+  wire $print$$display$52$37_EN
   wire $print$$display$80$51_EN
-  attribute \src "dut.sv:30.1-48.4"
-  wire width 6 $0\counter
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_0_trg
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_0_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_trgA
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_trgB
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_en
   wire $print$$display$60$41_EN
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_2_trgB
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_2_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_trg
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_a
   wire $print$$display$64$43_EN
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$18
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$20
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$22
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$24
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$26
-  wire $auto$process.cpp:111:build_check_cell$54
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$28
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$30
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$32
-  attribute \unused_bits "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
-  wire width 32 $auto$expression.cpp:3175:import_operation$34
   attribute \src "dut.sv:8.12-8.16"
   cell $logic_not $logic_not$dut.sv:8.12-8.16$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \clk
-    connect \Y $0\clk
+    connect \Y $logic_not$dut.sv:8.12-8.16$1_Y
   end
   attribute \src "dut.sv:32.16-32.27"
   cell $add $add$dut.sv:32$17
@@ -107,7 +79,7 @@ module \top
     parameter \Y_WIDTH 6
     connect \A \counter
     connect \B 6'000001
-    connect \Y $0\counter
+    connect \Y $auto$expression.cpp:3317:import_operation$16
   end
   attribute \src "dut.sv:34.17-34.64"
   cell $shr $shr$dut.sv:34$19
@@ -115,10 +87,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 209706
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$18 [31:1] $0\eff_0_trg }
+    connect \Y $auto$expression.cpp:3547:import_operation$18
   end
   attribute \src "dut.sv:35.17-35.64"
   cell $shr $shr$dut.sv:35$21
@@ -126,10 +98,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 396726
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$20 [31:1] $0\eff_0_en }
+    connect \Y $auto$expression.cpp:3547:import_operation$20
   end
   attribute \src "dut.sv:37.18-37.65"
   cell $shr $shr$dut.sv:37$23
@@ -137,10 +109,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 15390
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$22 [31:1] $0\eff_1_trgA }
+    connect \Y $auto$expression.cpp:3547:import_operation$22
   end
   attribute \src "dut.sv:38.18-38.65"
   cell $shr $shr$dut.sv:38$25
@@ -148,10 +120,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 61560
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$24 [31:1] $0\eff_1_trgB }
+    connect \Y $auto$expression.cpp:3547:import_operation$24
   end
   attribute \src "dut.sv:39.18-39.65"
   cell $shr $shr$dut.sv:39$27
@@ -159,10 +131,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 43690
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$26 [31:1] $0\eff_1_en }
+    connect \Y $auto$expression.cpp:3547:import_operation$26
   end
   attribute \src "dut.sv:42.18-42.29"
   cell $logic_not $logic_not$dut.sv:42.18-42.29$2
@@ -170,7 +142,7 @@ module \top
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \counter [0]
-    connect \Y $0\eff_2_trgB
+    connect \Y $logic_not$dut.sv:42.18-42.29$2_Y
   end
   attribute \src "dut.sv:43.18-43.65"
   cell $shr $shr$dut.sv:43$29
@@ -178,10 +150,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 1020
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$28 [31:1] $0\eff_2_en }
+    connect \Y $auto$expression.cpp:3547:import_operation$28
   end
   attribute \src "dut.sv:45.18-45.65"
   cell $shr $shr$dut.sv:45$31
@@ -189,10 +161,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'10101010101010101010101010101010
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$30 [31:1] $0\eff_3_trg }
+    connect \Y $auto$expression.cpp:3547:import_operation$30
   end
   attribute \src "dut.sv:46.18-46.65"
   cell $shr $shr$dut.sv:46$33
@@ -200,10 +172,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'11101110010001001110111001000100
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$32 [31:1] $0\eff_3_en }
+    connect \Y $auto$expression.cpp:3547:import_operation$32
   end
   attribute \src "dut.sv:47.18-47.65"
   cell $shr $shr$dut.sv:47$35
@@ -211,10 +183,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'11111010111110100101000001010000
     connect \B \counter
-    connect \Y { $auto$expression.cpp:3175:import_operation$34 [31:1] $0\eff_3_a }
+    connect \Y $auto$expression.cpp:3547:import_operation$34
   end
   cell $print $print$$display$52$37
     parameter \TRG_WIDTH 1
@@ -312,7 +284,7 @@ module \top
     parameter \FORMAT "{112:> 34d-u}{6:> 2d-u}\n"
     parameter \ARGS_WIDTH 118
     connect \TRG \eff_3_trg
-    connect \EN $auto$process.cpp:111:build_check_cell$54
+    connect \EN $auto$process.cpp:174:build_check_cell$54
     connect \ARGS { \counter 112'0010010100110000001100100110010000111010001000000110010101100110011001100011001100100000011101100111011001110110 }
   end
   attribute \src "dut.sv:89.9-89.31"
@@ -327,7 +299,7 @@ module \top
     parameter \TRG_WIDTH 1
     connect \A \eff_3_a
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$54
+    connect \EN $auto$process.cpp:174:build_check_cell$54
     connect \TRG \eff_3_trg
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -335,8 +307,8 @@ module \top
   cell $dff $procdff$83
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_2_trgB
-    connect \Q \eff_2_trgB
+    connect \D $auto$expression.cpp:3547:import_operation$28
+    connect \Q \eff_2_en
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -344,8 +316,8 @@ module \top
   cell $dff $procdff$84
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_3_a
-    connect \Q \eff_3_a
+    connect \D $auto$expression.cpp:3547:import_operation$30
+    connect \Q \eff_3_trg
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -353,7 +325,7 @@ module \top
   cell $dff $procdff$85
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_3_en
+    connect \D $auto$expression.cpp:3547:import_operation$32
     connect \Q \eff_3_en
     connect \CLK \clk
   end
@@ -378,8 +350,8 @@ module \top
   cell $dff $procdff$86
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_3_trg
-    connect \Q \eff_3_trg
+    connect \D $auto$expression.cpp:3547:import_operation$34
+    connect \Q \eff_3_a
     connect \CLK \clk
   end
   attribute \src "dut.sv:51.5-52.43"
@@ -394,7 +366,7 @@ module \top
   attribute \always_ff 1
   cell $ff $procdff$87
     parameter \WIDTH 1
-    connect \D $0\clk
+    connect \D $logic_not$dut.sv:8.12-8.16$1_Y
     connect \Q \clk
   end
   attribute \src "dut.sv:83.5-91.8"
@@ -403,7 +375,7 @@ module \top
     connect \A 1'0
     connect \B 1'1
     connect \S \eff_3_en
-    connect \Y $auto$process.cpp:111:build_check_cell$54
+    connect \Y $auto$process.cpp:174:build_check_cell$54
   end
   attribute \src "dut.sv:79.5-80.30"
   cell $mux $procmux$73
@@ -418,7 +390,7 @@ module \top
   cell $dff $procdff$75
     parameter \WIDTH 6
     parameter \CLK_POLARITY 1'1
-    connect \D $0\counter
+    connect \D $auto$expression.cpp:3317:import_operation$16
     connect \Q \counter
     connect \CLK \clk
   end
@@ -427,8 +399,8 @@ module \top
   cell $dff $procdff$76
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_0_en
-    connect \Q \eff_0_en
+    connect \D $auto$expression.cpp:3547:import_operation$18
+    connect \Q \eff_0_trg
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -436,8 +408,8 @@ module \top
   cell $dff $procdff$77
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_0_trg
-    connect \Q \eff_0_trg
+    connect \D $auto$expression.cpp:3547:import_operation$20
+    connect \Q \eff_0_en
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -445,8 +417,8 @@ module \top
   cell $dff $procdff$78
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_1_en
-    connect \Q \eff_1_en
+    connect \D $auto$expression.cpp:3547:import_operation$22
+    connect \Q \eff_1_trgA
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -454,8 +426,8 @@ module \top
   cell $dff $procdff$79
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_1_trgA
-    connect \Q \eff_1_trgA
+    connect \D $auto$expression.cpp:3547:import_operation$24
+    connect \Q \eff_1_trgB
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -463,8 +435,8 @@ module \top
   cell $dff $procdff$80
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_1_trgB
-    connect \Q \eff_1_trgB
+    connect \D $auto$expression.cpp:3547:import_operation$26
+    connect \Q \eff_1_en
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -472,8 +444,8 @@ module \top
   cell $dff $procdff$81
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\eff_2_en
-    connect \Q \eff_2_en
+    connect \D \counter [0]
+    connect \Q \eff_2_trgA
     connect \CLK \clk
   end
   attribute \src "dut.sv:30.1-48.4"
@@ -481,17 +453,8 @@ module \top
   cell $dff $procdff$82
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D \counter [0]
-    connect \Q \eff_2_trgA
+    connect \D $logic_not$dut.sv:42.18-42.29$2_Y
+    connect \Q \eff_2_trgB
     connect \CLK \clk
   end
-  connect $auto$expression.cpp:3175:import_operation$34 [0] $0\eff_3_a
-  connect $auto$expression.cpp:3175:import_operation$32 [0] $0\eff_3_en
-  connect $auto$expression.cpp:3175:import_operation$30 [0] $0\eff_3_trg
-  connect $auto$expression.cpp:3175:import_operation$28 [0] $0\eff_2_en
-  connect $auto$expression.cpp:3175:import_operation$26 [0] $0\eff_1_en
-  connect $auto$expression.cpp:3175:import_operation$24 [0] $0\eff_1_trgB
-  connect $auto$expression.cpp:3175:import_operation$22 [0] $0\eff_1_trgA
-  connect $auto$expression.cpp:3175:import_operation$20 [0] $0\eff_0_en
-  connect $auto$expression.cpp:3175:import_operation$18 [0] $0\eff_0_trg
 end

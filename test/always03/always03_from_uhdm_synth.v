@@ -36,25 +36,24 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   (* src = "dut.sv:1.71-1.75" *)
   output out3;
   wire out3;
-  (* src = "dut.sv:7.1-20.4" *)
   wire _0_;
   wire _1_;
   wire _2_;
-  \$_MUX_  _3_ (
+  \$_XOR_  _3_ (
+    .A(in1),
+    .B(in2),
+    .Y(_1_)
+  );
+  \$_XOR_  _4_ (
+    .A(out2),
+    .B(_1_),
+    .Y(_0_)
+  );
+  \$_MUX_  _5_ (
     .A(in7),
     .B(in6),
     .S(in5),
     .Y(_2_)
-  );
-  \$_NOR_  _4_ (
-    .A(in2),
-    .B(out2),
-    .Y(_1_)
-  );
-  \$_XNOR_  _5_ (
-    .A(out1),
-    .B(_1_),
-    .Y(_0_)
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:7.1-20.4" *)
@@ -68,7 +67,7 @@ module always03(clock, in1, in2, in3, in4, in5, in6, in7, out1, out2, out3);
   (* src = "dut.sv:7.1-20.4" *)
   \$_DFFE_PN_  out2_reg /* _7_ */ (
     .C(clock),
-    .D(out1),
+    .D(_1_),
     .E(in3),
     .Q(out2)
   );

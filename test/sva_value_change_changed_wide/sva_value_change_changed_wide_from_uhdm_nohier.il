@@ -19,16 +19,12 @@ module \top
   attribute \src "dut.sv:13.23-13.30"
   attribute \init 3'000
   wire width 3 \b_q
-  attribute \src "dut.sv:14.2-17.5"
-  wire width 3 $0\a_q
-  attribute \src "dut.sv:14.2-17.5"
-  wire width 3 $0\b_q
   wire $auto$rtlil.cc:3262:ReduceBool$5
   wire $auto$rtlil.cc:3323:LogicOr$8
   wire $auto$rtlil.cc:3323:LogicOr$10
   attribute \src "dut.sv:29.9-29.76"
   wire $eq$dut.sv:29$11_Y
-  cell $reduce_bool $auto$uhdm2rtlil.cpp:2919:import_module$4
+  cell $reduce_bool $auto$uhdm2rtlil.cpp:3162:import_module$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 1
@@ -37,7 +33,7 @@ module \top
   end
   attribute \src "dut.sv:24.2-26.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$6
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$6
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -83,7 +79,7 @@ module \top
   end
   attribute \src "dut.sv:28.5-30.7"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$13
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$13
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -99,11 +95,9 @@ module \top
   attribute \src "dut.sv:14.2-17.5"
   attribute \always_ff 1
   process $proc$dut.sv:14$3
-    assign $0\a_q \a
-    assign $0\b_q \b
     sync posedge \clk
-      update \a_q $0\a_q
-      update \b_q $0\b_q
+      update \a_q \a
+      update \b_q \b
   end
   connect \a_o \a_q
   connect \b_o \b_q

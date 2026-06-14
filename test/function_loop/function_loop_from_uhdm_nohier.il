@@ -36,14 +36,14 @@ module \function_loop
     assign $0\func_loop$func$dut.sv:22$2.$result$5 $1\func_loop$func$dut.sv:22$2.$result$6
     assign $0\func_loop$func$dut.sv:22$1.$result$7 $1\func_loop$func$dut.sv:22$2.$result$6
     assign $1\func_loop$func$dut.sv:22$2.$result$6 8'00000000
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [0] \x [7]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [1] \x [6]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [2] \x [5]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [3] \x [4]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [4] \x [3]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [5] \x [2]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [6] \x [1]
-    assign $1\func_loop$func$dut.sv:22$2.$result$6 [7] \x [0]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [0] $0\func_loop$func$dut.sv:22$2.x$4 [7]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [1] $0\func_loop$func$dut.sv:22$2.x$4 [6]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [2] $0\func_loop$func$dut.sv:22$2.x$4 [5]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [3] $0\func_loop$func$dut.sv:22$2.x$4 [4]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [4] $0\func_loop$func$dut.sv:22$2.x$4 [3]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [5] $0\func_loop$func$dut.sv:22$2.x$4 [2]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [6] $0\func_loop$func$dut.sv:22$2.x$4 [1]
+    assign $1\func_loop$func$dut.sv:22$2.$result$6 [7] $0\func_loop$func$dut.sv:22$2.x$4 [0]
     sync always
       update \func_loop$func$dut.sv:22$1.$result $0\func_loop$func$dut.sv:22$1.$result$7
       update \func_loop$func$dut.sv:22$2.$result 8'x

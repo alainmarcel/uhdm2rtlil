@@ -27,12 +27,12 @@ module \multiple_blocking_gate
   wire width 3 $0\c
   attribute \src "dut.sv:11.4-83.9"
   wire width 32 $0\dout
-  wire width 6 $auto$expression.cpp:3006:import_operation$2
-  wire width 64 $auto$expression.cpp:3061:import_operation$4
+  wire width 6 $auto$expression.cpp:3317:import_operation$2
+  wire width 64 $auto$expression.cpp:3381:import_operation$4
   wire width 3 $auto$rtlil.cc:3255:Not$7
-  wire width 32 $auto$expression.cpp:3006:import_operation$8
-  wire width 7 $auto$expression.cpp:3141:import_operation$10
-  wire width 64 $auto$expression.cpp:3006:import_operation$12
+  wire width 32 $auto$expression.cpp:3317:import_operation$8
+  wire width 7 $auto$expression.cpp:3467:import_operation$10
+  wire width 64 $auto$expression.cpp:3317:import_operation$12
   attribute \src "dut.sv:13.13-13.23"
   cell $add $add$dut.sv:13$3
     parameter \A_SIGNED 0
@@ -42,7 +42,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 6
     connect \A { 1'0 \ctrl }
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:14.13-14.22"
   cell $sub $sub$dut.sv:14$5
@@ -53,7 +53,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 64
     connect \A { 63'000000000000000000000000000000000000000000000000000000000000000 \sel }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3061:import_operation$4
+    connect \Y $auto$expression.cpp:3381:import_operation$4
   end
   attribute \src "dut.sv:15.13-15.19"
   cell $not $not$dut.sv:15$6
@@ -72,7 +72,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 32
     connect \A \dout
     connect \B 1
-    connect \Y $auto$expression.cpp:3006:import_operation$8
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
   attribute \src "dut.sv:17.17-17.24"
   cell $mul $mul$dut.sv:17$11
@@ -83,7 +83,7 @@ module \multiple_blocking_gate
     parameter \Y_WIDTH 7
     connect \A $0\a
     connect \B $0\b
-    connect \Y $auto$expression.cpp:3141:import_operation$10
+    connect \Y $auto$expression.cpp:3467:import_operation$10
   end
   attribute \src "dut.sv:17.15-17.30"
   cell $add $add$dut.sv:17$13
@@ -92,19 +92,19 @@ module \multiple_blocking_gate
     parameter \A_WIDTH 64
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 64
-    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:3141:import_operation$10 }
+    connect \A { 57'000000000000000000000000000000000000000000000000000000000 $auto$expression.cpp:3467:import_operation$10 }
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \Y $auto$expression.cpp:3006:import_operation$12
+    connect \Y $auto$expression.cpp:3317:import_operation$12
   end
   attribute \src "dut.sv:11.4-83.9"
   attribute \always_ff 1
   process $proc$dut.sv:11$1
-    assign $0\a $auto$expression.cpp:3006:import_operation$2
-    assign $0\b $auto$expression.cpp:3061:import_operation$4 [0]
+    assign $0\a $auto$expression.cpp:3317:import_operation$2
+    assign $0\b $auto$expression.cpp:3381:import_operation$4 [0]
     assign $0\c $auto$rtlil.cc:3255:Not$7
-    assign $0\dout $auto$expression.cpp:3006:import_operation$8
+    assign $0\dout $auto$expression.cpp:3317:import_operation$8
     attribute \src "dut.sv:17.9-82.16"
-    switch $auto$expression.cpp:3006:import_operation$12
+    switch $auto$expression.cpp:3317:import_operation$12
     attribute \src "dut.sv:18.11-19.28"
       case 64'0000000000000000000000000000000000000000000000000000000000000000
         assign $0\dout { 29'00000000000000000000000000000 $0\c }

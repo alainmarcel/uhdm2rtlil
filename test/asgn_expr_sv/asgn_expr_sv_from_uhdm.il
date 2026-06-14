@@ -201,7 +201,7 @@ module \top
   wire width 32 \check$func$dut.sv:54$86.c
   attribute \src "dut.sv:70.13-70.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$121
+  cell $check $auto$process.cpp:184:build_check_cell$121
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -216,7 +216,7 @@ module \top
   end
   attribute \src "dut.sv:67.13-67.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$111
+  cell $check $auto$process.cpp:184:build_check_cell$111
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

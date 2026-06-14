@@ -25,19 +25,19 @@ module \mem2reg_test1
   wire width 4 $0\array[2]
   attribute \src "dut.sv:9.1-15.4"
   wire width 4 $0\out_data
-  wire $auto$process.cpp:7686:import_assignment_comb$2
-  wire width 4 $auto$process.cpp:7694:import_assignment_comb$4
-  wire $auto$process.cpp:7686:import_assignment_comb$6
-  wire width 4 $auto$process.cpp:7694:import_assignment_comb$8
-  wire $auto$process.cpp:7686:import_assignment_comb$10
-  wire width 4 $auto$process.cpp:7694:import_assignment_comb$12
-  wire $auto$expression.cpp:4412:import_bit_select$14
-  wire width 4 $auto$expression.cpp:4415:import_bit_select$16
-  wire $auto$expression.cpp:4412:import_bit_select$18
-  wire width 4 $auto$expression.cpp:4415:import_bit_select$20
-  wire $auto$expression.cpp:4412:import_bit_select$22
-  wire width 4 $auto$expression.cpp:4415:import_bit_select$24
-  cell $eq $auto$process.cpp:7687:import_assignment_comb$3
+  wire $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$2
+  wire width 4 $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$4
+  wire $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$6
+  wire width 4 $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$8
+  wire $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$10
+  wire width 4 $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$12
+  wire $auto$expression.cpp:4787:import_bit_select$14
+  wire width 4 $auto$expression.cpp:4790:import_bit_select$16
+  wire $auto$expression.cpp:4787:import_bit_select$18
+  wire width 4 $auto$expression.cpp:4790:import_bit_select$20
+  wire $auto$expression.cpp:4787:import_bit_select$22
+  wire width 4 $auto$expression.cpp:4790:import_bit_select$24
+  cell $eq $auto$process.cpp:8047:emit_dynamic_unpacked_array_write$3
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -45,16 +45,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \in_addr
     connect \B 2'00
-    connect \Y $auto$process.cpp:7686:import_assignment_comb$2
+    connect \Y $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$2
   end
-  cell $mux $auto$process.cpp:7695:import_assignment_comb$5
+  cell $mux $auto$process.cpp:8050:emit_dynamic_unpacked_array_write$5
     parameter \WIDTH 4
     connect \A 4'0000
     connect \B \in_data
-    connect \S $auto$process.cpp:7686:import_assignment_comb$2
-    connect \Y $auto$process.cpp:7694:import_assignment_comb$4
+    connect \S $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$2
+    connect \Y $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$4
   end
-  cell $eq $auto$process.cpp:7687:import_assignment_comb$7
+  cell $eq $auto$process.cpp:8047:emit_dynamic_unpacked_array_write$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -62,16 +62,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \in_addr
     connect \B 2'01
-    connect \Y $auto$process.cpp:7686:import_assignment_comb$6
+    connect \Y $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$6
   end
-  cell $mux $auto$process.cpp:7695:import_assignment_comb$9
+  cell $mux $auto$process.cpp:8050:emit_dynamic_unpacked_array_write$9
     parameter \WIDTH 4
     connect \A 4'0111
     connect \B \in_data
-    connect \S $auto$process.cpp:7686:import_assignment_comb$6
-    connect \Y $auto$process.cpp:7694:import_assignment_comb$8
+    connect \S $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$6
+    connect \Y $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$8
   end
-  cell $eq $auto$process.cpp:7687:import_assignment_comb$11
+  cell $eq $auto$process.cpp:8047:emit_dynamic_unpacked_array_write$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -79,16 +79,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \in_addr
     connect \B 2'10
-    connect \Y $auto$process.cpp:7686:import_assignment_comb$10
+    connect \Y $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$10
   end
-  cell $mux $auto$process.cpp:7695:import_assignment_comb$13
+  cell $mux $auto$process.cpp:8050:emit_dynamic_unpacked_array_write$13
     parameter \WIDTH 4
     connect \A 4'1010
     connect \B \in_data
-    connect \S $auto$process.cpp:7686:import_assignment_comb$10
-    connect \Y $auto$process.cpp:7694:import_assignment_comb$12
+    connect \S $auto$process.cpp:8046:emit_dynamic_unpacked_array_write$10
+    connect \Y $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$12
   end
-  cell $eq $auto$expression.cpp:4413:import_bit_select$15
+  cell $eq $auto$expression.cpp:4788:import_bit_select$15
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -96,16 +96,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'10
-    connect \Y $auto$expression.cpp:4412:import_bit_select$14
+    connect \Y $auto$expression.cpp:4787:import_bit_select$14
   end
-  cell $mux $auto$expression.cpp:4416:import_bit_select$17
+  cell $mux $auto$expression.cpp:4791:import_bit_select$17
     parameter \WIDTH 4
     connect \A 4'0000
-    connect \B $auto$process.cpp:7694:import_assignment_comb$12
-    connect \S $auto$expression.cpp:4412:import_bit_select$14
-    connect \Y $auto$expression.cpp:4415:import_bit_select$16
+    connect \B $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$12
+    connect \S $auto$expression.cpp:4787:import_bit_select$14
+    connect \Y $auto$expression.cpp:4790:import_bit_select$16
   end
-  cell $eq $auto$expression.cpp:4413:import_bit_select$19
+  cell $eq $auto$expression.cpp:4788:import_bit_select$19
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -113,16 +113,16 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'01
-    connect \Y $auto$expression.cpp:4412:import_bit_select$18
+    connect \Y $auto$expression.cpp:4787:import_bit_select$18
   end
-  cell $mux $auto$expression.cpp:4416:import_bit_select$21
+  cell $mux $auto$expression.cpp:4791:import_bit_select$21
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:4415:import_bit_select$16
-    connect \B $auto$process.cpp:7694:import_assignment_comb$8
-    connect \S $auto$expression.cpp:4412:import_bit_select$18
-    connect \Y $auto$expression.cpp:4415:import_bit_select$20
+    connect \A $auto$expression.cpp:4790:import_bit_select$16
+    connect \B $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$8
+    connect \S $auto$expression.cpp:4787:import_bit_select$18
+    connect \Y $auto$expression.cpp:4790:import_bit_select$20
   end
-  cell $eq $auto$expression.cpp:4413:import_bit_select$23
+  cell $eq $auto$expression.cpp:4788:import_bit_select$23
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 2
@@ -130,14 +130,14 @@ module \mem2reg_test1
     parameter \Y_WIDTH 1
     connect \A \out_addr
     connect \B 2'00
-    connect \Y $auto$expression.cpp:4412:import_bit_select$22
+    connect \Y $auto$expression.cpp:4787:import_bit_select$22
   end
-  cell $mux $auto$expression.cpp:4416:import_bit_select$25
+  cell $mux $auto$expression.cpp:4791:import_bit_select$25
     parameter \WIDTH 4
-    connect \A $auto$expression.cpp:4415:import_bit_select$20
-    connect \B $auto$process.cpp:7694:import_assignment_comb$4
-    connect \S $auto$expression.cpp:4412:import_bit_select$22
-    connect \Y $auto$expression.cpp:4415:import_bit_select$24
+    connect \A $auto$expression.cpp:4790:import_bit_select$20
+    connect \B $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$4
+    connect \S $auto$expression.cpp:4787:import_bit_select$22
+    connect \Y $auto$expression.cpp:4790:import_bit_select$24
   end
   attribute \src "dut.sv:9.1-15.4"
   process $proc$dut.sv:9$1
@@ -148,10 +148,10 @@ module \mem2reg_test1
     assign $0\array[0] 4'0000
     assign $0\array[1] 4'0111
     assign $0\array[2] 4'1010
-    assign $0\array[0] $auto$process.cpp:7694:import_assignment_comb$4
-    assign $0\array[1] $auto$process.cpp:7694:import_assignment_comb$8
-    assign $0\array[2] $auto$process.cpp:7694:import_assignment_comb$12
-    assign $0\out_data $auto$expression.cpp:4415:import_bit_select$24
+    assign $0\array[0] $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$4
+    assign $0\array[1] $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$8
+    assign $0\array[2] $auto$process.cpp:8049:emit_dynamic_unpacked_array_write$12
+    assign $0\out_data $auto$expression.cpp:4790:import_bit_select$24
     sync always
       update \array[0] $0\array[0]
       update \array[1] $0\array[1]

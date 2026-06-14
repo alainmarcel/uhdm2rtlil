@@ -11,7 +11,7 @@ module \top
   attribute \src "dut.sv:11.52-11.55"
   wire width 8 output 3 \cnt
   attribute \src "dut.sv:18.13-18.44"
-  wire $display$0x55dfa0f79f10:18$4_EN
+  wire $display$0x5595acc28f10:18$4_EN
   attribute \src "dut.sv:16.20-16.27"
   attribute \unused_bits "8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
   wire width 32 $add$dut.sv:16$2_Y
@@ -40,7 +40,7 @@ module \top
     connect \Y $eq$dut.sv:17$3_Y
   end
   attribute \src "dut.sv:18.13-18.44"
-  cell $print $display$0x55dfa0f79f10:18$4
+  cell $print $display$0x5595acc28f10:18$4
     parameter \TRG_WIDTH 1
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 1'1
@@ -48,7 +48,7 @@ module \top
     parameter \FORMAT "hit at cnt={8:> 3d-u}\n"
     parameter \ARGS_WIDTH 8
     connect \TRG \clk
-    connect \EN $display$0x55dfa0f79f10:18$4_EN
+    connect \EN $display$0x5595acc28f10:18$4_EN
     connect \ARGS \cnt
   end
   attribute \src "dut.sv:12.5-19.8"
@@ -68,6 +68,6 @@ module \top
     connect \A 1'0
     connect \B 1'1
     connect \S $eq$dut.sv:17$3_Y
-    connect \Y $display$0x55dfa0f79f10:18$4_EN
+    connect \Y $display$0x5595acc28f10:18$4_EN
   end
 end

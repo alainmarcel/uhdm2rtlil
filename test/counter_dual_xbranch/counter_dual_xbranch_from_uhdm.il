@@ -31,8 +31,8 @@ module \counter_dual_xbranch
   wire width 64 output 11 \count_instr
   wire $procmux$37_CMP
   wire $auto$opt_dff.cc:251:make_patterns_logic$62
-  wire width 64 $auto$expression.cpp:3006:import_operation$2
-  wire width 64 $auto$expression.cpp:3006:import_operation$24
+  wire width 64 $auto$expression.cpp:3317:import_operation$2
+  wire width 64 $auto$expression.cpp:3317:import_operation$24
   attribute \src "dut.sv:33.37-33.52"
   cell $add $add$dut.sv:33$3
     parameter \A_SIGNED 0
@@ -42,7 +42,7 @@ module \counter_dual_xbranch
     parameter \Y_WIDTH 64
     connect \A \count_cycle
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:31.5-59.8"
   attribute \always_ff 1
@@ -55,7 +55,7 @@ module \counter_dual_xbranch
     connect \CLK \clk
     connect \EN $auto$opt_dff.cc:251:make_patterns_logic$62
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$24 [31:0]
+    connect \D $auto$expression.cpp:3317:import_operation$24 [31:0]
     connect \Q \count_instr [31:0]
   end
   attribute \src "dut.sv:31.5-59.8"
@@ -67,7 +67,7 @@ module \counter_dual_xbranch
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [31:0]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [31:0]
     connect \Q \count_cycle [31:0]
   end
   attribute \src "dut.sv:31.5-59.8"
@@ -81,7 +81,7 @@ module \counter_dual_xbranch
     connect \CLK \clk
     connect \EN $auto$opt_dff.cc:251:make_patterns_logic$62
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$24 [63:32]
+    connect \D $auto$expression.cpp:3317:import_operation$24 [63:32]
     connect \Q \count_instr [63:32]
   end
   attribute \src "dut.sv:31.5-59.8"
@@ -93,7 +93,7 @@ module \counter_dual_xbranch
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [63:32]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [63:32]
     connect \Q \count_cycle [63:32]
   end
   attribute \src "dut.sv:52.44-52.59"
@@ -105,7 +105,7 @@ module \counter_dual_xbranch
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$24
+    connect \Y $auto$expression.cpp:3317:import_operation$24
   end
   cell $reduce_and $auto$opt_dff.cc:252:make_patterns_logic$63
     parameter \A_SIGNED 0

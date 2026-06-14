@@ -15,7 +15,9 @@ module $paramod\tcb_gpio\GW=s32'00000000000000000000000000100000
   wire width 32 input 3 \gpio_i
   attribute \src "tcb_gpio.sv:69.3-82.6"
   wire width 32 $0\gpio_e
+  attribute \src "tcb_if.sv:28.16-28.19"
   wire input 16 \bus.clk
+  attribute \src "tcb_if.sv:29.16-29.19"
   wire input 15 \bus.rst
   attribute \src "tcb_if.sv:33.18-33.21"
   wire input 14 \bus.vld

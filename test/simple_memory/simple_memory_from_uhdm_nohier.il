@@ -22,22 +22,22 @@ module \simple_memory
   attribute \src "dut.sv:18.13-18.14"
   wire width 32 signed \i
   attribute \src "dut.sv:24.13-24.38"
-  wire width 8 $auto$process.cpp:7651:import_assignment_sync$2
+  wire width 8 $auto$process.cpp:7779:import_assignment_sync$2
   attribute \src "dut.sv:20.9-33.12"
   wire $auto$process_helper.cpp:88:create_not_cell$4
   wire $auto$rtlil.cc:3302:And$7
   wire width 8 \memrd_memory_DATA
   attribute \src "dut.sv:32.13-32.37"
-  wire width 8 $auto$process.cpp:7651:import_assignment_sync$8
+  wire width 8 $auto$process.cpp:7779:import_assignment_sync$8
   attribute \src "dut.sv:15.21-15.27"
   memory width 8 size 16 \memory
   attribute \src "dut.sv:24.13-24.38"
-  cell $mux $auto$process.cpp:7653:import_assignment_sync$3
+  cell $mux $auto$process.cpp:7781:import_assignment_sync$3
     parameter \WIDTH 8
     connect \A \data_out
     connect \B 8'00000000
     connect \S \rst
-    connect \Y $auto$process.cpp:7651:import_assignment_sync$2
+    connect \Y $auto$process.cpp:7779:import_assignment_sync$2
   end
   attribute \src "dut.sv:20.9-33.12"
   cell $not $auto$process_helper.cpp:91:create_not_cell$5
@@ -47,7 +47,7 @@ module \simple_memory
     connect \A \rst
     connect \Y $auto$process_helper.cpp:88:create_not_cell$4
   end
-  cell $and $auto$process.cpp:8948:import_if_stmt_sync$6
+  cell $and $auto$process.cpp:9076:import_if_stmt_sync$6
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 1
@@ -71,18 +71,18 @@ module \simple_memory
     connect \DATA \memrd_memory_DATA
   end
   attribute \src "dut.sv:32.13-32.37"
-  cell $mux $auto$process.cpp:7653:import_assignment_sync$9
+  cell $mux $auto$process.cpp:7781:import_assignment_sync$9
     parameter \WIDTH 8
-    connect \A $auto$process.cpp:7651:import_assignment_sync$2
+    connect \A $auto$process.cpp:7779:import_assignment_sync$2
     connect \B \memrd_memory_DATA
     connect \S $auto$process_helper.cpp:88:create_not_cell$4
-    connect \Y $auto$process.cpp:7651:import_assignment_sync$8
+    connect \Y $auto$process.cpp:7779:import_assignment_sync$8
   end
   attribute \src "dut.sv:19.5-34.8"
   attribute \always_ff 1
   process $proc$dut.sv:19$1
     sync posedge \clk
-      update \data_out $auto$process.cpp:7651:import_assignment_sync$8
+      update \data_out $auto$process.cpp:7779:import_assignment_sync$8
       memwr \memory 4'0000 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 0'x
       memwr \memory 4'0001 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 1'1
       memwr \memory 4'0010 8'00000000 { \rst \rst \rst \rst \rst \rst \rst \rst } 2'11

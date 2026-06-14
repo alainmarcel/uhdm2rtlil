@@ -38,7 +38,7 @@ module \fsm_test
   wire $auto$rtlil.cc:3255:Not$93
   attribute \src "dut.sv:31.21-31.29"
   wire $eq$dut.sv:31$8_Y
-  wire width 4 $auto$expression.cpp:2965:import_operation$10
+  wire width 4 $auto$expression.cpp:3317:import_operation$10
   attribute \src "dut.sv:38.21-38.30"
   wire $eq$dut.sv:38$12_Y
   wire $auto$opt_reduce.cc:137:opt_pmux$90
@@ -118,11 +118,11 @@ module \fsm_test
   cell $eq $procmux$64_CMP0
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 300
+    connect \A { \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000100101100
     connect \Y $procmux$24_CMP
   end
   cell $reduce_or $auto$opt_reduce.cc:131:opt_pmux$89
@@ -136,11 +136,11 @@ module \fsm_test
   cell $eq $procmux$67_CMP0
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 210
+    connect \A { \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000011010010
     connect \Y $procmux$31_CMP
   end
   attribute \src "dut.sv:45.21-45.29"
@@ -163,7 +163,7 @@ module \fsm_test
     parameter \Y_WIDTH 4
     connect \A \cnt
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2965:import_operation$10
+    connect \Y $auto$expression.cpp:3317:import_operation$10
   end
   attribute \src "dut.sv:52.21-52.30"
   cell $eq $eq$dut.sv:52$21
@@ -197,11 +197,11 @@ module \fsm_test
   cell $eq $procmux$70_CMP0
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 200
+    connect \A { \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000011001000
     connect \Y $procmux$32_CMP
   end
   cell $reduce_and $auto$opt_dff.cc:252:make_patterns_logic$118
@@ -247,11 +247,11 @@ module \fsm_test
   cell $eq $procmux$75_CMP0
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 100
+    connect \A { \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000001100100
     connect \Y $procmux$75_CMP
   end
   attribute \src "dut.sv:48.13-54.16|dut.sv:20.9-55.16"
@@ -288,7 +288,7 @@ module \fsm_test
     parameter \WIDTH 4
     connect \CLK \clk
     connect \SRST $auto$opt_dff.cc:275:combine_resets$94
-    connect \D $auto$expression.cpp:2965:import_operation$10
+    connect \D $auto$expression.cpp:3317:import_operation$10
     connect \Q \cnt
   end
   attribute \src "dut.sv:34.13-40.16|dut.sv:20.9-55.16"
@@ -400,11 +400,11 @@ module \fsm_test
   cell $eq $procmux$61_CMP0
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
-    parameter \A_WIDTH 32
-    parameter \B_WIDTH 32
+    parameter \A_WIDTH 64
+    parameter \B_WIDTH 64
     parameter \Y_WIDTH 1
-    connect \A \state
-    connect \B 310
+    connect \A { \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state [31] \state }
+    connect \B 64'0000000000000000000000000000000000000000000000000000000100110110
     connect \Y $procmux$23_CMP
   end
   cell $reduce_or $auto$opt_reduce.cc:131:opt_pmux$85
