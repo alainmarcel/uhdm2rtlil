@@ -39,13 +39,36 @@ output compare. Prints `PASS`/`FAIL` and an `ACTIVITY:` line.
 `equiv_make` + `equiv_induct` between UHDM and Verilog netlists.
 - **Blind spot — unsound induction**: `equiv_induct` silently PASSES some
   non-equivalent designs (unreachable-state invariants it can't refute). A PASS
-  here is suggestive, not proof.
+  here is suggestive, **never proof**.
+  - ⛔ **NEVER declare equivalence — and NEVER call a remaining co-sim
+    divergence an "artefact"/"div-by-zero x"/"optimization" — on the strength of
+    an `equiv_induct` PASS.** That is the single easiest way to ship a real bug.
+    You MUST clear it with the sound miter (tool 4) first. Observed failure
+    mode: after a partial fix, `equiv_induct` PASSED the `operators` test while
+    the sound miter still found a NON-EQUIVALENT counterexample — a second real
+    sign/width bug `equiv_induct` masked. If the miter is INCONCLUSIVE (e.g. an
+    unmodellable `$pow`/`$div`), REMOVE/ISOLATE the unmodellable operator and
+    re-run the miter on the rest — do not fall back to the equiv_induct PASS.
 - **Blind spot — async FFs / public gate types**: on Yosys 0.64 it can abort
   with "No SAT model available for cell …". That is a flow limitation, not a
   frontend bug — fall through to tool 4 (the miter handles it).
 
 ### 4. Sound triage — `python3 triage_cosim.py <name> [--seq N] [--cycles N]`
 The discriminator. Runs TWO independent sound-ish checks and prints a verdict:
+- ⚠️ **The miter says they DIFFER, not which side is wrong.** Yosys's own
+  Verilog frontend has bugs too, so a NON-EQUIVALENT can be the *Verilog*
+  frontend being wrong while UHDM is correct. Before "fixing" UHDM to match
+  Verilog, adjudicate the disputed vector with an INDEPENDENT reference
+  simulator — `iverilog -g2012` (or Verilator) on the behavioural source.
+  Observed: `operators` mode `s1>>s2` — miter UHDM=0xff vs Verilog=0x00;
+  iverilog said 0x00, so UHDM was the buggy one — but the same run also had
+  cases where iverilog matched UHDM, i.e. Verilog was wrong. Quick recipe:
+  `iverilog` the behavioural DUT over all case selectors with fixed inputs,
+  `yosys ... eval -set <in> <val> -show <out>` the UHDM netlist for the same
+  vectors, and diff per selector — the modes where UHDM ≠ iverilog are the real
+  UHDM bugs; modes where Verilog ≠ iverilog are Verilog-frontend bugs to leave
+  alone. **Watch for `$pow`/`$div` etc. that satgen can't model — isolate or
+  drop them so the miter can run on the rest (see the equiv_induct warning).**
 - **SAT-from-reset miter** (UHDM-synth vs Verilog-synth): bounded, sound. Reads
   both `*_synth.v` with `read_verilog -icells` so write_verilog's public-typed
   built-in cells (`\$_DFFE_PN0P_`, `\$_MUX_`, …) come back as INTERNAL cells,
@@ -69,6 +92,13 @@ Verdict it prints:
 A co-sim divergence is **only** a real frontend bug if it ALSO fails the sound
 check: miter NON-EQUIVALENT, or (UHDM co-sim FAIL **and** Verilog co-sim PASS).
 A vacuous co-sim PASS and an `equiv_induct` PASS each prove nothing on their own.
+
+The symmetric trap: declaring "equivalent / the rest is an artefact" is a
+positive claim that ALSO requires the sound miter. `equiv_induct` PASS + gate
+counts matching is NOT sufficient — only a miter EQUIVALENT (bounded proof, on a
+design with all operators modellable) lets you call remaining co-sim diffs
+artefacts. When in doubt, run the miter; if it can't run, say "unverified", not
+"artefact".
 
 ## Gotchas
 
