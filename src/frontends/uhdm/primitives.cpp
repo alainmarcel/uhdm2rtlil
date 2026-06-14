@@ -271,10 +271,45 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
                 return;
             }
         } else {
-            // Two input gates
-            if (inputs.size() >= 2) {
+            // AND / OR / NAND / NOR.  These can ALSO have >2 inputs
+            // (`or U (carry, a, b, c)`); a fixed 2-input cell silently
+            // DROPPED the extra inputs (full_adder_gates: carry = a|b
+            // instead of a|b|c).  For >2, reduce all inputs with a chain
+            // of the 2-input base op ($_AND_ for AND/NAND, $_OR_ for
+            // OR/NOR); NAND/NOR add ONE final inversion.
+            if (inputs.size() == 2) {
                 cell->setPort(ID::A, inputs[0]);
                 cell->setPort(ID::B, inputs[1]);
+            } else if (inputs.size() > 2) {
+                RTLIL::IdString base =
+                    (prim_type == vpiAndPrim || prim_type == vpiNandPrim)
+                        ? ID($_AND_) : ID($_OR_);
+                bool invert = (prim_type == vpiNandPrim || prim_type == vpiNorPrim);
+                RTLIL::SigSpec result = inputs[0];
+                for (size_t i = 1; i < inputs.size(); i++) {
+                    RTLIL::Wire* temp_wire = module->addWire(NEW_ID);
+                    RTLIL::Cell* tree_cell = module->addCell(NEW_ID, base);
+                    tree_cell->setPort(ID::A, result);
+                    tree_cell->setPort(ID::B, inputs[i]);
+                    tree_cell->setPort(ID::Y, temp_wire);
+                    result = RTLIL::SigSpec(temp_wire);
+                }
+                if (invert) {
+                    RTLIL::Cell* not_cell = module->addCell(NEW_ID, ID($_NOT_));
+                    not_cell->setPort(ID::A, result);
+                    not_cell->setPort(ID::Y, outputs[0]);
+                } else {
+                    module->connect(outputs[0], result);
+                }
+                module->remove(cell);
+                log("UHDM: Created %d-input %s as reduce%s\n",
+                    (int)inputs.size(), gate_type_str.c_str(),
+                    invert ? " + NOT" : "");
+                return;
+            } else if (inputs.size() == 1) {
+                // Degenerate 1-input and/or behaves like a buffer of A.
+                cell->setPort(ID::A, inputs[0]);
+                cell->setPort(ID::B, inputs[0]);
             }
         }
     } else {
