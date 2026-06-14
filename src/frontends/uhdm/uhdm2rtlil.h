@@ -679,6 +679,11 @@ struct UhdmImporter {
     // case-statement context extension. Walks ref_obj into its target (variable,
     // parameter, or net) and inspects VpiSigned() / Typespec.
     bool is_expr_signed(const UHDM::expr* e);
+    // SV §11.8.1: a binary arithmetic op (+ - * / %) is SIGNED only if EVERY
+    // operand is signed; any unsigned operand makes the whole op unsigned.
+    // Uses is_expr_signed on the UHDM operands so constants are classified
+    // correctly (the RTLIL SigSpec loses a constant's signedness).
+    bool operands_all_signed(const UHDM::operation* op);
     void import_attributes(dict<RTLIL::IdString, RTLIL::Const> &attributes, const UHDM::any* uhdm_obj);
     void import_memory_objects(const UHDM::module_inst* uhdm_module);
     void add_src_attribute(dict<RTLIL::IdString, RTLIL::Const>& attributes, const UHDM::any* uhdm_obj);

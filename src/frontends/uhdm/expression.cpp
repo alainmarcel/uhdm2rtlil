@@ -2620,6 +2620,17 @@ static bool check_operands_signed(const std::vector<RTLIL::SigSpec>& operands) {
     return false;
 }
 
+bool UhdmImporter::operands_all_signed(const UHDM::operation* op) {
+    if (!op || !op->Operands() || op->Operands()->empty())
+        return false;
+    for (auto o : *op->Operands()) {
+        auto e = any_cast<const expr*>(o);
+        if (!e || !is_expr_signed(e))
+            return false;
+    }
+    return true;
+}
+
 // Mark the output wire of a SigSpec as signed
 static void mark_result_signed(RTLIL::SigSpec& result) {
     if (result.is_wire()) {
@@ -3369,17 +3380,10 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result_width = expression_context_width;
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
 
-                // Check if operands are signed
-                bool is_signed = false;
-                for (const auto& operand : operands) {
-                    if (operand.is_wire()) {
-                        RTLIL::Wire* wire = operand.as_wire();
-                        if (wire && wire->is_signed) {
-                            is_signed = true;
-                            break;
-                        }
-                    }
-                }
+                // SV §11.8.1: signed subtract only when BOTH operands are signed;
+                // a mixed `u1 - s2` / `s1 - u2` is UNSIGNED (operands treated as
+                // unsigned) — was wrongly signed (operators mode 45/46).
+                bool is_signed = operands_all_signed(uhdm_op);
 
                 // Extend each operand to result_width so the cell's
                 // A_WIDTH / B_WIDTH match Y_WIDTH cleanly (matches the
@@ -3413,24 +3417,32 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiDivOp:
             if (operands.size() == 2) {
-                // For division, create a div cell
-                int result_width = operands[0].size();
+                // SV: signed division only when BOTH operands are signed; a
+                // mixed `u1 / s2` is unsigned (operators mode 53/54).
+                int result_width = expression_context_width > 0
+                    ? std::max({operands[0].size(), expression_context_width})
+                    : operands[0].size();
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                
-                // Check if operands are signed
-                bool is_signed = false;
-                for (const auto& operand : operands) {
-                    if (operand.is_wire()) {
-                        RTLIL::Wire* wire = operand.as_wire();
-                        if (wire && wire->is_signed) {
-                            is_signed = true;
-                            break;
-                        }
-                    }
-                }
-                
+                bool is_signed = operands_all_signed(uhdm_op);
                 std::string cell_name = generate_cell_name(uhdm_op, "div");
                 auto c = module->addDiv(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
+                add_src_attribute(c->attributes, uhdm_op);
+                return result;
+            }
+            break;
+        case vpiModOp:
+            if (operands.size() == 2) {
+                // Modulo had NO runtime handler — it fell through to the switch
+                // default and returned an empty SigSpec, so `a % b` with variable
+                // operands collapsed to 0 (operators modes 56-59).  Mirror the
+                // division handler; signed only when BOTH operands are signed.
+                int result_width = expression_context_width > 0
+                    ? std::max({operands[0].size(), expression_context_width})
+                    : operands[0].size();
+                RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
+                bool is_signed = operands_all_signed(uhdm_op);
+                std::string cell_name = generate_cell_name(uhdm_op, "mod");
+                auto c = module->addMod(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 add_src_attribute(c->attributes, uhdm_op);
                 return result;
             }
@@ -3453,22 +3465,12 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result_width = operands[0].size() + operands[1].size();
                 }
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                
-                // Check if operands are signed by checking if they come from signed wires
-                bool is_signed = false;
-                
-                // Check if all operands come from signed wires
-                for (const auto& operand : operands) {
-                    // Check if the operand is a wire
-                    if (operand.is_wire()) {
-                        RTLIL::Wire* wire = operand.as_wire();
-                        if (wire && wire->is_signed) {
-                            is_signed = true;
-                            break;  // If any operand is signed, treat the operation as signed
-                        }
-                    }
-                }
-                
+
+                // SV §11.8.1: signed multiply only when BOTH operands are signed;
+                // a mixed `u1 * s2` is UNSIGNED (operands treated as unsigned) —
+                // was wrongly signed (operators mode 49/50: 0xe7 vs 0x37).
+                bool is_signed = operands_all_signed(uhdm_op);
+
                 std::string cell_name = generate_cell_name(uhdm_op, "mul");
                 auto c = module->addMul(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
                 add_src_attribute(c->attributes, uhdm_op);
@@ -3477,20 +3479,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             break;
         case vpiPowerOp:
             if (operands.size() == 2) {
-                // Power operation: base ** exponent
-                // Result width is typically the same as the base operand
-                int result_width = operands[0].size();
+                // Power operation: base ** exponent.  Result width is the
+                // context width (SV context-determined sizing) — using the bare
+                // base width truncated `4'd2 ** u1` (= 2**5 = 32) to 4 bits = 0
+                // before it reached the 8-bit LHS (operators modes 60/62).
+                int result_width = expression_context_width > 0 ? expression_context_width : operands[0].size();
                 RTLIL::SigSpec result = module->addWire(NEW_ID, result_width);
-                
-                // Check if operands are signed
-                bool is_signed = false;
-                if (operands[0].is_wire()) {
-                    RTLIL::Wire* wire = operands[0].as_wire();
-                    if (wire && wire->is_signed) {
-                        is_signed = true;
-                    }
-                }
-                
+
+                // $pow signedness follows the base operand (the exponent only
+                // scales it); a signed base sign-extends.
+                bool is_signed = operands[0].is_wire() && operands[0].as_wire()->is_signed;
+
                 // Use Pow cell for power operation
                 std::string cell_name = generate_cell_name(uhdm_op, "pow");
                 auto c = module->addPow(RTLIL::escape_id(cell_name), operands[0], operands[1], result, is_signed);
@@ -3677,9 +3676,19 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 log("UHDM: ConditionOp - operand sizes: cond=%d, true=%d, false=%d\n",
                     operands[0].size(), operands[1].size(), operands[2].size());
 
-                // Check if the true/false operands are signed
-                std::vector<RTLIL::SigSpec> value_operands = {operands[1], operands[2]};
-                bool is_signed = check_operands_signed(value_operands);
+                // SV §11.8.1: a conditional `?:` is signed only when BOTH
+                // result branches are signed; a mixed `c ? s1 : u2` is UNSIGNED,
+                // so its branches zero-extend (operators mode 82: 0x09 not the
+                // sign-extended 0xf9).  Operand signedness comes from the UHDM
+                // expressions (is_expr_signed) — `check_operands_signed`
+                // returned true if EITHER branch was signed (wrong here).
+                bool is_signed = false;
+                if (uhdm_op->Operands() && uhdm_op->Operands()->size() == 3) {
+                    auto& uops = *uhdm_op->Operands();
+                    auto te = any_cast<const expr*>(uops[1]);
+                    auto fe = any_cast<const expr*>(uops[2]);
+                    is_signed = te && fe && is_expr_signed(te) && is_expr_signed(fe);
+                }
 
                 // Ensure the condition is 1-bit
                 RTLIL::SigSpec cond = operands[0];
