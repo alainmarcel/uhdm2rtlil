@@ -39,16 +39,16 @@ module top(a, b, c, d, e, f, g, h, i, j, k, l);
   (* src = "dut.sv:1.58-1.59" *)
   output l;
   wire l;
-  assign l = 1'h1;
-  assign k = 1'h1;
-  assign j = 1'h0;
+  assign l = 1'h0;
+  assign k = 1'h0;
+  assign j = 1'h1;
   assign i = 1'h0;
   assign h = 1'h1;
-  assign g = 1'h1;
-  assign f = 1'h1;
-  assign e = 1'h1;
-  assign d = 1'h1;
-  assign c = 1'h0;
+  assign g = 1'h0;
+  assign f = 1'h0;
+  assign e = 1'h0;
+  assign d = 1'h0;
+  assign c = 1'h1;
   assign b = 1'h0;
-  assign a = 1'h1;
+  assign a = 1'h0;
 endmodule

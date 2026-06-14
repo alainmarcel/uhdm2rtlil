@@ -6,5 +6,5 @@ module top(a);
   (* src = "dut.sv:1.25-1.26" *)
   output a;
   wire a;
-  assign a = 1'h0;
+  assign a = 1'h1;
 endmodule

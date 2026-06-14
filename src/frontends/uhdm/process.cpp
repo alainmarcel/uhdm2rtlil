@@ -2953,6 +2953,33 @@ static bool statement_has_for_declaration(const any* stmt) {
     return false;
 }
 
+// Helper: an `initial` block that uses a compound assignment (`+=`, `-=`,
+// `^=`, `<<=`, …) must be compile-time evaluated by the interpreter.  The
+// sync/comb paths drop the read-modify-write and treat `a ^= b` as `a = b`,
+// so `a = 1; a ^= 0;` wrongly produced 0 (xor_assignment, compound_assignments).
+static bool statement_has_compound_assignment(const any* stmt) {
+    if (!stmt) return false;
+    int type = stmt->VpiType();
+    if (type == vpiAssignment) {
+        const assignment* a = any_cast<const assignment*>(stmt);
+        int op = a->VpiOpType();
+        // vpiOpType 82 = plain `=`, 0 = unset; anything else is compound.
+        return op != 0 && op != 82;
+    }
+    if (type == vpiBegin) {
+        auto b = any_cast<const UHDM::begin*>(stmt);
+        if (b->Stmts())
+            for (auto child : *b->Stmts())
+                if (statement_has_compound_assignment(child)) return true;
+    } else if (type == vpiNamedBegin) {
+        auto b = any_cast<const UHDM::named_begin*>(stmt);
+        if (b->Stmts())
+            for (auto child : *b->Stmts())
+                if (statement_has_compound_assignment(child)) return true;
+    }
+    return false;
+}
+
 // Helper: check if a UHDM statement tree contains block-local variable declarations
 // that require the interpreter approach for proper scoping
 static bool block_has_local_variables(const any* stmt) {
@@ -3075,8 +3102,11 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
                          stmt->VpiType() == vpiMethodTaskCall);
         has_partial_write = statement_has_partial_write(stmt);
     }
+    bool has_compound_assign = uhdm_process->Stmt() &&
+        statement_has_compound_assignment(uhdm_process->Stmt());
 
-    if (has_for_decl || has_local_vars || has_scalar_ctrl_loop) {
+    if (has_for_decl || has_local_vars || has_scalar_ctrl_loop ||
+        (has_compound_assign && !use_comb_approach && !has_partial_write)) {
         import_initial_interpreted(uhdm_process, yosys_proc);
     } else if (use_comb_approach || has_task_call || has_partial_write) {
         import_initial_comb(uhdm_process, yosys_proc);
