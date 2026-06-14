@@ -452,6 +452,13 @@ struct UhdmImporter {
     // Track if we're currently processing an initial block
     bool in_initial_block = false;
 
+    // Compile-time function evaluator (evaluate_function_stmt) loop control:
+    // set by a `break`/`continue` statement, checked/cleared by the enclosing
+    // loop and begin-block so a `while`/`for`/`repeat` in a function body can
+    // exit/skip early (BreakWhile/ContinueWhile/...).
+    bool func_loop_break_ = false;
+    bool func_loop_continue_ = false;
+
     // Counter for generating unique unnamed block names
     int unnamed_block_counter = 0;
 

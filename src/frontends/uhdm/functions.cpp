@@ -37,6 +37,7 @@
 #include <uhdm/for_stmt.h>
 #include <uhdm/while_stmt.h>
 #include <uhdm/repeat.h>
+#include <uhdm/return_stmt.h>
 #include <uhdm/range.h>
 #include <uhdm/parameter.h>
 
@@ -50,6 +51,9 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
         log_error("Function definition is null in evaluate_function_call\n");
         return RTLIL::Const();
     }
+    // Clear any stale loop-control flags from a prior evaluation.
+    func_loop_break_ = false;
+    func_loop_continue_ = false;
 
     // Recursion depth limit to prevent infinite loops
     static int recursion_depth = 0;
@@ -533,8 +537,11 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 RTLIL::Const last_result;
                 for (auto s : *stmts) {
                     last_result = evaluate_function_stmt(s, block_vars, func_name);
+                    // A break/continue stops executing the rest of this block;
+                    // the enclosing loop consumes the flag.
+                    if (func_loop_break_ || func_loop_continue_) break;
                 }
-                
+
                 // Copy any updates to non-local variables back to the parent scope
                 // Local variables declared in this block should not affect the parent scope
                 for (auto& [name, value] : block_vars) {
@@ -579,6 +586,8 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (cond_value.size() == 0 || cond_value.is_fully_zero()) break;
                 if (fs->VpiStmt())
                     last_result = evaluate_function_stmt(fs->VpiStmt(), local_vars, func_name);
+                if (func_loop_break_) { func_loop_break_ = false; break; }
+                if (func_loop_continue_) func_loop_continue_ = false;  // fall through to inc
                 run_init_inc(fs->VpiForIncStmt(), fs->VpiForIncStmts());
                 iterations++;
             }
@@ -615,6 +624,8 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (ws->VpiStmt()) {
                     last_result = evaluate_function_stmt(ws->VpiStmt(), local_vars, func_name);
                 }
+                if (func_loop_break_) { func_loop_break_ = false; break; }
+                if (func_loop_continue_) func_loop_continue_ = false;
                 iterations++;
             }
 
@@ -651,9 +662,38 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                 if (rp->VpiStmt()) {
                     last_result = evaluate_function_stmt(rp->VpiStmt(), local_vars, func_name);
                 }
+                if (func_loop_break_) { func_loop_break_ = false; break; }
+                if (func_loop_continue_) func_loop_continue_ = false;
             }
 
             return last_result;
+        }
+
+        case vpiBreak:
+            func_loop_break_ = true;
+            return RTLIL::Const();
+
+        case vpiContinue:
+            func_loop_continue_ = true;
+            return RTLIL::Const();
+
+        case vpiReturn: {
+            // `return <expr>` — set the function's result variable (named after
+            // the function) so evaluate_function_call picks it up.  Was
+            // unhandled, so a function whose value comes via `return x` (rather
+            // than `func = x`) evaluated to 0 (BreakWhile/ContinueWhile/...).
+            const return_stmt* rs = any_cast<const return_stmt*>(stmt);
+            if (rs && rs->VpiCondition()) {
+                RTLIL::Const v;
+                if (rs->VpiCondition()->VpiType() == vpiOperation)
+                    v = evaluate_operation_const(
+                            any_cast<const operation*>(rs->VpiCondition()), local_vars);
+                else
+                    v = evaluate_single_operand(rs->VpiCondition(), local_vars);
+                local_vars[func_name] = v;
+                return v;
+            }
+            return RTLIL::Const();
         }
     }
 
