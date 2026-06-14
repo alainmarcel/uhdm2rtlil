@@ -5,5 +5,5 @@ attribute \src "dut.sv:1.1-12.10"
 module \top
   attribute \src "dut.sv:1.23-1.24"
   wire width 32 output 1 signed \a
-  connect \a 0
+  connect \a 184
 end

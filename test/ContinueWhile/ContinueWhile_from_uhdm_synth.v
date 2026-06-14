@@ -6,5 +6,5 @@ module top(a);
   (* src = "dut.sv:1.23-1.24" *)
   output signed [31:0] a;
   wire signed [31:0] a;
-  assign a = 32'd0;
+  assign a = 32'd128;
 endmodule

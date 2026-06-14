@@ -4,14 +4,14 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:1.1-12.10"
 module \top
   attribute \src "dut.sv:1.23-1.24"
-  attribute \init 0
+  attribute \init 184
   wire width 32 output 1 signed \a
   attribute \src "dut.sv:11.4-11.30"
   process $proc$dut.sv:11$1
   end
   attribute \src "dut.sv:11.4-11.30"
-  process $auto$process.cpp:3172:operator()$2
+  process $auto$process.cpp:3230:operator()$2
     sync always
-      update \a 0
+      update \a 184
   end
 end
