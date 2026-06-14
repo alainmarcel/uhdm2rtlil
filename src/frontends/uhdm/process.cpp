@@ -2871,6 +2871,26 @@ static bool statement_has_scalar_control_for_loop(const any* stmt) {
         // For-loop with control flow and scalar assignments needs the interpreter
         return statement_contains_control_flow(fs->VpiStmt());
     }
+    // `repeat`/`while`/`do-while` over SCALAR state (not memory/bit-select init)
+    // must be compile-time evaluated by the interpreter — the sync/comb paths
+    // can't loop-accumulate a scalar and have no `break`/`continue` handling
+    // (Break/Continue/Repeat/...While tests).  Memory-init loops (bit-select
+    // body) stay on the sync path.
+    if (type == vpiRepeat) {
+        const UHDM::repeat* rs = any_cast<const UHDM::repeat*>(stmt);
+        if (!rs->VpiStmt()) return false;
+        return !body_assigns_to_bit_select(rs->VpiStmt());
+    }
+    if (type == vpiWhile) {
+        const while_stmt* ws = any_cast<const while_stmt*>(stmt);
+        if (!ws->VpiStmt()) return false;
+        return !body_assigns_to_bit_select(ws->VpiStmt());
+    }
+    if (type == vpiDoWhile) {
+        const UHDM::do_while* dw = any_cast<const UHDM::do_while*>(stmt);
+        if (!dw->VpiStmt()) return false;
+        return !body_assigns_to_bit_select(dw->VpiStmt());
+    }
     if (type == vpiBegin) {
         auto b = any_cast<const UHDM::begin*>(stmt);
         if (b->Stmts())

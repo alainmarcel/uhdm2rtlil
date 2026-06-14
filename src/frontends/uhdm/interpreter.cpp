@@ -715,7 +715,66 @@ void UhdmImporter::interpret_statement(const any* stmt,
             evaluate_expression(stmt, variables, arrays);
             break;
         }
-        
+
+        case uhdmbreak_stmt:
+            // `break` — stop the innermost loop.  Enclosing loop/begin handlers
+            // check this flag after each statement and clear it.
+            break_flag = true;
+            break;
+
+        case uhdmcontinue_stmt:
+            // `continue` — skip to the next iteration of the innermost loop.
+            continue_flag = true;
+            break;
+
+        case uhdmrepeat: {
+            // `repeat (N) body` — execute body N times (N evaluated once).
+            const UHDM::repeat* rep = any_cast<const UHDM::repeat*>(stmt);
+            int64_t count = 0;
+            if (rep->VpiCondition())
+                count = evaluate_expression(rep->VpiCondition(), variables, arrays);
+            const int64_t MAX_ITERATIONS = 100000;
+            for (int64_t i = 0; i < count && i < MAX_ITERATIONS; i++) {
+                if (rep->VpiStmt())
+                    interpret_statement(rep->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                if (break_flag) { break_flag = false; break; }
+                if (continue_flag) continue_flag = false;
+            }
+            break;
+        }
+
+        case uhdmwhile_stmt: {
+            // `while (cond) body`
+            const while_stmt* ws = any_cast<const while_stmt*>(stmt);
+            int iter = 0;
+            const int MAX_ITERATIONS = 100000;
+            while (iter++ < MAX_ITERATIONS) {
+                if (!ws->VpiCondition()) break;
+                if (evaluate_expression(ws->VpiCondition(), variables, arrays) == 0) break;
+                if (ws->VpiStmt())
+                    interpret_statement(ws->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                if (break_flag) { break_flag = false; break; }
+                if (continue_flag) continue_flag = false;
+            }
+            break;
+        }
+
+        case uhdmdo_while: {
+            // `do body while (cond)` — body runs at least once.
+            const UHDM::do_while* dw = any_cast<const UHDM::do_while*>(stmt);
+            int iter = 0;
+            const int MAX_ITERATIONS = 100000;
+            do {
+                if (dw->VpiStmt())
+                    interpret_statement(dw->VpiStmt(), variables, arrays, break_flag, continue_flag);
+                if (break_flag) { break_flag = false; break; }
+                if (continue_flag) continue_flag = false;
+                if (!dw->VpiCondition()) break;
+            } while (iter++ < MAX_ITERATIONS &&
+                     evaluate_expression(dw->VpiCondition(), variables, arrays) != 0);
+            break;
+        }
+
         default:
             if (mode_debug) {
                 log("        Unsupported statement type %d\n", stmt_type);
