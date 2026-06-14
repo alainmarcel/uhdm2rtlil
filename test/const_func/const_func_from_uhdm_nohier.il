@@ -42,58 +42,58 @@ module \top
   wire \d4
   attribute \src "dut.sv:66.16-66.23"
   wire $eq$dut.sv:66$2_Y
-  wire $auto$process.cpp:111:build_check_cell$4
+  wire $auto$process.cpp:174:build_check_cell$4
   attribute \src "dut.sv:67.16-67.23"
   wire $eq$dut.sv:67$6_Y
-  wire $auto$process.cpp:111:build_check_cell$8
+  wire $auto$process.cpp:174:build_check_cell$8
   attribute \src "dut.sv:68.16-68.27"
   wire $eq$dut.sv:68$10_Y
-  wire $auto$process.cpp:111:build_check_cell$12
+  wire $auto$process.cpp:174:build_check_cell$12
   attribute \src "dut.sv:69.16-69.23"
   wire $eq$dut.sv:69$14_Y
-  wire $auto$process.cpp:111:build_check_cell$16
+  wire $auto$process.cpp:174:build_check_cell$16
   attribute \src "dut.sv:70.16-70.27"
   wire $eq$dut.sv:70$18_Y
-  wire $auto$process.cpp:111:build_check_cell$20
+  wire $auto$process.cpp:174:build_check_cell$20
   attribute \src "dut.sv:71.16-71.27"
   wire $eq$dut.sv:71$22_Y
-  wire $auto$process.cpp:111:build_check_cell$24
+  wire $auto$process.cpp:174:build_check_cell$24
   attribute \src "dut.sv:72.16-72.23"
   wire $eq$dut.sv:72$26_Y
-  wire $auto$process.cpp:111:build_check_cell$28
+  wire $auto$process.cpp:174:build_check_cell$28
   attribute \src "dut.sv:73.16-73.26"
   wire $eq$dut.sv:73$30_Y
-  wire $auto$process.cpp:111:build_check_cell$32
+  wire $auto$process.cpp:174:build_check_cell$32
   attribute \src "dut.sv:74.16-74.23"
   wire $eq$dut.sv:74$34_Y
-  wire $auto$process.cpp:111:build_check_cell$36
+  wire $auto$process.cpp:174:build_check_cell$36
   attribute \src "dut.sv:75.16-75.23"
   wire $eq$dut.sv:75$38_Y
-  wire $auto$process.cpp:111:build_check_cell$40
+  wire $auto$process.cpp:174:build_check_cell$40
   attribute \src "dut.sv:76.16-76.23"
   wire $eq$dut.sv:76$42_Y
-  wire $auto$process.cpp:111:build_check_cell$44
+  wire $auto$process.cpp:174:build_check_cell$44
   attribute \src "dut.sv:77.16-77.23"
   wire $eq$dut.sv:77$46_Y
-  wire $auto$process.cpp:111:build_check_cell$48
+  wire $auto$process.cpp:174:build_check_cell$48
   attribute \src "dut.sv:78.16-78.23"
   wire $eq$dut.sv:78$50_Y
-  wire $auto$process.cpp:111:build_check_cell$52
+  wire $auto$process.cpp:174:build_check_cell$52
   attribute \src "dut.sv:79.16-79.23"
   wire $eq$dut.sv:79$54_Y
-  wire $auto$process.cpp:111:build_check_cell$56
+  wire $auto$process.cpp:174:build_check_cell$56
   attribute \src "dut.sv:80.16-80.23"
   wire $eq$dut.sv:80$58_Y
-  wire $auto$process.cpp:111:build_check_cell$60
+  wire $auto$process.cpp:174:build_check_cell$60
   attribute \src "dut.sv:81.16-81.23"
   wire $eq$dut.sv:81$62_Y
-  wire $auto$process.cpp:111:build_check_cell$64
+  wire $auto$process.cpp:174:build_check_cell$64
   attribute \src "dut.sv:83.16-83.22"
   wire $eq$dut.sv:83$66_Y
-  wire $auto$process.cpp:111:build_check_cell$68
+  wire $auto$process.cpp:174:build_check_cell$68
   attribute \src "dut.sv:84.16-84.23"
   wire $eq$dut.sv:84$70_Y
-  wire $auto$process.cpp:111:build_check_cell$72
+  wire $auto$process.cpp:174:build_check_cell$72
   attribute \src "dut.sv:66.16-66.23"
   cell $eq $eq$dut.sv:66$3
     parameter \A_SIGNED 0
@@ -107,7 +107,7 @@ module \top
   end
   attribute \src "dut.sv:66.9-66.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$5
+  cell $check $auto$process.cpp:184:build_check_cell$5
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -117,7 +117,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:66$2_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$4
+    connect \EN $auto$process.cpp:174:build_check_cell$4
     connect \TRG { }
   end
   attribute \src "dut.sv:67.16-67.23"
@@ -133,7 +133,7 @@ module \top
   end
   attribute \src "dut.sv:67.9-67.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$9
+  cell $check $auto$process.cpp:184:build_check_cell$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -143,7 +143,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:67$6_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$8
+    connect \EN $auto$process.cpp:174:build_check_cell$8
     connect \TRG { }
   end
   attribute \src "dut.sv:68.16-68.27"
@@ -159,7 +159,7 @@ module \top
   end
   attribute \src "dut.sv:68.9-68.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$13
+  cell $check $auto$process.cpp:184:build_check_cell$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -169,7 +169,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:68$10_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$12
+    connect \EN $auto$process.cpp:174:build_check_cell$12
     connect \TRG { }
   end
   attribute \src "dut.sv:69.16-69.23"
@@ -185,7 +185,7 @@ module \top
   end
   attribute \src "dut.sv:69.9-69.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$17
+  cell $check $auto$process.cpp:184:build_check_cell$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -195,7 +195,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:69$14_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$16
+    connect \EN $auto$process.cpp:174:build_check_cell$16
     connect \TRG { }
   end
   attribute \src "dut.sv:70.16-70.27"
@@ -211,7 +211,7 @@ module \top
   end
   attribute \src "dut.sv:70.9-70.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$21
+  cell $check $auto$process.cpp:184:build_check_cell$21
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -221,7 +221,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:70$18_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$20
+    connect \EN $auto$process.cpp:174:build_check_cell$20
     connect \TRG { }
   end
   attribute \src "dut.sv:71.16-71.27"
@@ -237,7 +237,7 @@ module \top
   end
   attribute \src "dut.sv:71.9-71.29"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$25
+  cell $check $auto$process.cpp:184:build_check_cell$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -247,7 +247,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:71$22_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$24
+    connect \EN $auto$process.cpp:174:build_check_cell$24
     connect \TRG { }
   end
   attribute \src "dut.sv:72.16-72.23"
@@ -263,7 +263,7 @@ module \top
   end
   attribute \src "dut.sv:72.9-72.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$29
+  cell $check $auto$process.cpp:184:build_check_cell$29
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -273,7 +273,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:72$26_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$28
+    connect \EN $auto$process.cpp:174:build_check_cell$28
     connect \TRG { }
   end
   attribute \src "dut.sv:73.16-73.26"
@@ -289,7 +289,7 @@ module \top
   end
   attribute \src "dut.sv:73.9-73.28"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$33
+  cell $check $auto$process.cpp:184:build_check_cell$33
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -299,7 +299,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:73$30_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$32
+    connect \EN $auto$process.cpp:174:build_check_cell$32
     connect \TRG { }
   end
   attribute \src "dut.sv:74.16-74.23"
@@ -315,7 +315,7 @@ module \top
   end
   attribute \src "dut.sv:74.9-74.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$37
+  cell $check $auto$process.cpp:184:build_check_cell$37
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -325,7 +325,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:74$34_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$36
+    connect \EN $auto$process.cpp:174:build_check_cell$36
     connect \TRG { }
   end
   attribute \src "dut.sv:75.16-75.23"
@@ -341,7 +341,7 @@ module \top
   end
   attribute \src "dut.sv:75.9-75.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$41
+  cell $check $auto$process.cpp:184:build_check_cell$41
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -351,7 +351,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:75$38_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$40
+    connect \EN $auto$process.cpp:174:build_check_cell$40
     connect \TRG { }
   end
   attribute \src "dut.sv:76.16-76.23"
@@ -367,7 +367,7 @@ module \top
   end
   attribute \src "dut.sv:76.9-76.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$45
+  cell $check $auto$process.cpp:184:build_check_cell$45
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -377,7 +377,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:76$42_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$44
+    connect \EN $auto$process.cpp:174:build_check_cell$44
     connect \TRG { }
   end
   attribute \src "dut.sv:77.16-77.23"
@@ -393,7 +393,7 @@ module \top
   end
   attribute \src "dut.sv:77.9-77.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$49
+  cell $check $auto$process.cpp:184:build_check_cell$49
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -403,7 +403,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:77$46_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$48
+    connect \EN $auto$process.cpp:174:build_check_cell$48
     connect \TRG { }
   end
   attribute \src "dut.sv:78.16-78.23"
@@ -419,7 +419,7 @@ module \top
   end
   attribute \src "dut.sv:78.9-78.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$53
+  cell $check $auto$process.cpp:184:build_check_cell$53
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -429,7 +429,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:78$50_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$52
+    connect \EN $auto$process.cpp:174:build_check_cell$52
     connect \TRG { }
   end
   attribute \src "dut.sv:79.16-79.23"
@@ -445,7 +445,7 @@ module \top
   end
   attribute \src "dut.sv:79.9-79.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$57
+  cell $check $auto$process.cpp:184:build_check_cell$57
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -455,7 +455,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:79$54_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$56
+    connect \EN $auto$process.cpp:174:build_check_cell$56
     connect \TRG { }
   end
   attribute \src "dut.sv:80.16-80.23"
@@ -471,7 +471,7 @@ module \top
   end
   attribute \src "dut.sv:80.9-80.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$61
+  cell $check $auto$process.cpp:184:build_check_cell$61
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -481,7 +481,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:80$58_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$60
+    connect \EN $auto$process.cpp:174:build_check_cell$60
     connect \TRG { }
   end
   attribute \src "dut.sv:81.16-81.23"
@@ -497,7 +497,7 @@ module \top
   end
   attribute \src "dut.sv:81.9-81.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$65
+  cell $check $auto$process.cpp:184:build_check_cell$65
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -507,7 +507,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:81$62_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$64
+    connect \EN $auto$process.cpp:174:build_check_cell$64
     connect \TRG { }
   end
   attribute \src "dut.sv:83.16-83.22"
@@ -523,7 +523,7 @@ module \top
   end
   attribute \src "dut.sv:83.9-83.24"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$69
+  cell $check $auto$process.cpp:184:build_check_cell$69
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -533,7 +533,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:83$66_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$68
+    connect \EN $auto$process.cpp:174:build_check_cell$68
     connect \TRG { }
   end
   attribute \src "dut.sv:84.16-84.23"
@@ -549,7 +549,7 @@ module \top
   end
   attribute \src "dut.sv:84.9-84.25"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$73
+  cell $check $auto$process.cpp:184:build_check_cell$73
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -559,7 +559,7 @@ module \top
     parameter \TRG_WIDTH 0
     connect \A $eq$dut.sv:84$70_Y
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$72
+    connect \EN $auto$process.cpp:174:build_check_cell$72
     connect \TRG { }
   end
   cell $paramod\Example\OUTPUT="FOO" \e1
@@ -588,42 +588,42 @@ module \top
   end
   attribute \src "dut.sv:65.5-85.8"
   process $proc$dut.sv:65$1
-    assign $auto$process.cpp:111:build_check_cell$4 1'0
-    assign $auto$process.cpp:111:build_check_cell$8 1'0
-    assign $auto$process.cpp:111:build_check_cell$12 1'0
-    assign $auto$process.cpp:111:build_check_cell$16 1'0
-    assign $auto$process.cpp:111:build_check_cell$20 1'0
-    assign $auto$process.cpp:111:build_check_cell$24 1'0
-    assign $auto$process.cpp:111:build_check_cell$28 1'0
-    assign $auto$process.cpp:111:build_check_cell$32 1'0
-    assign $auto$process.cpp:111:build_check_cell$36 1'0
-    assign $auto$process.cpp:111:build_check_cell$40 1'0
-    assign $auto$process.cpp:111:build_check_cell$44 1'0
-    assign $auto$process.cpp:111:build_check_cell$48 1'0
-    assign $auto$process.cpp:111:build_check_cell$52 1'0
-    assign $auto$process.cpp:111:build_check_cell$56 1'0
-    assign $auto$process.cpp:111:build_check_cell$60 1'0
-    assign $auto$process.cpp:111:build_check_cell$64 1'0
-    assign $auto$process.cpp:111:build_check_cell$68 1'0
-    assign $auto$process.cpp:111:build_check_cell$72 1'0
-    assign $auto$process.cpp:111:build_check_cell$4 1'1
-    assign $auto$process.cpp:111:build_check_cell$8 1'1
-    assign $auto$process.cpp:111:build_check_cell$12 1'1
-    assign $auto$process.cpp:111:build_check_cell$16 1'1
-    assign $auto$process.cpp:111:build_check_cell$20 1'1
-    assign $auto$process.cpp:111:build_check_cell$24 1'1
-    assign $auto$process.cpp:111:build_check_cell$28 1'1
-    assign $auto$process.cpp:111:build_check_cell$32 1'1
-    assign $auto$process.cpp:111:build_check_cell$36 1'1
-    assign $auto$process.cpp:111:build_check_cell$40 1'1
-    assign $auto$process.cpp:111:build_check_cell$44 1'1
-    assign $auto$process.cpp:111:build_check_cell$48 1'1
-    assign $auto$process.cpp:111:build_check_cell$52 1'1
-    assign $auto$process.cpp:111:build_check_cell$56 1'1
-    assign $auto$process.cpp:111:build_check_cell$60 1'1
-    assign $auto$process.cpp:111:build_check_cell$64 1'1
-    assign $auto$process.cpp:111:build_check_cell$68 1'1
-    assign $auto$process.cpp:111:build_check_cell$72 1'1
+    assign $auto$process.cpp:174:build_check_cell$4 1'0
+    assign $auto$process.cpp:174:build_check_cell$8 1'0
+    assign $auto$process.cpp:174:build_check_cell$12 1'0
+    assign $auto$process.cpp:174:build_check_cell$16 1'0
+    assign $auto$process.cpp:174:build_check_cell$20 1'0
+    assign $auto$process.cpp:174:build_check_cell$24 1'0
+    assign $auto$process.cpp:174:build_check_cell$28 1'0
+    assign $auto$process.cpp:174:build_check_cell$32 1'0
+    assign $auto$process.cpp:174:build_check_cell$36 1'0
+    assign $auto$process.cpp:174:build_check_cell$40 1'0
+    assign $auto$process.cpp:174:build_check_cell$44 1'0
+    assign $auto$process.cpp:174:build_check_cell$48 1'0
+    assign $auto$process.cpp:174:build_check_cell$52 1'0
+    assign $auto$process.cpp:174:build_check_cell$56 1'0
+    assign $auto$process.cpp:174:build_check_cell$60 1'0
+    assign $auto$process.cpp:174:build_check_cell$64 1'0
+    assign $auto$process.cpp:174:build_check_cell$68 1'0
+    assign $auto$process.cpp:174:build_check_cell$72 1'0
+    assign $auto$process.cpp:174:build_check_cell$4 1'1
+    assign $auto$process.cpp:174:build_check_cell$8 1'1
+    assign $auto$process.cpp:174:build_check_cell$12 1'1
+    assign $auto$process.cpp:174:build_check_cell$16 1'1
+    assign $auto$process.cpp:174:build_check_cell$20 1'1
+    assign $auto$process.cpp:174:build_check_cell$24 1'1
+    assign $auto$process.cpp:174:build_check_cell$28 1'1
+    assign $auto$process.cpp:174:build_check_cell$32 1'1
+    assign $auto$process.cpp:174:build_check_cell$36 1'1
+    assign $auto$process.cpp:174:build_check_cell$40 1'1
+    assign $auto$process.cpp:174:build_check_cell$44 1'1
+    assign $auto$process.cpp:174:build_check_cell$48 1'1
+    assign $auto$process.cpp:174:build_check_cell$52 1'1
+    assign $auto$process.cpp:174:build_check_cell$56 1'1
+    assign $auto$process.cpp:174:build_check_cell$60 1'1
+    assign $auto$process.cpp:174:build_check_cell$64 1'1
+    assign $auto$process.cpp:174:build_check_cell$68 1'1
+    assign $auto$process.cpp:174:build_check_cell$72 1'1
     sync always
   end
   connect \out { \a1 [19:0] \a2 \a3 \a4 \b1 \b2 \b3 \b4 \c1 \c2 \c3 \c4 \d1 \d2 \d3 \d4 }
@@ -649,7 +649,7 @@ module $paramod\Example\OUTPUT="FOO"
   process $proc$dut.sv:27$74
   end
   attribute \src "dut.sv:27.17-27.34"
-  process $auto$process.cpp:2641:operator()$75
+  process $auto$process.cpp:3172:operator()$75
     sync always
       update \outC 1'1
   end
@@ -703,7 +703,7 @@ module $paramod\Example\OUTPUT="BAR"
   process $proc$dut.sv:24$82
   end
   attribute \src "dut.sv:24.9-24.26"
-  process $auto$process.cpp:2641:operator()$83
+  process $auto$process.cpp:3172:operator()$83
     sync always
       update \outC 1'0
   end
@@ -747,7 +747,7 @@ module $paramod\Example\OUTPUT="BAZ"
   process $proc$dut.sv:24$88
   end
   attribute \src "dut.sv:24.9-24.26"
-  process $auto$process.cpp:2641:operator()$89
+  process $auto$process.cpp:3172:operator()$89
     sync always
       update \outC 1'0
   end

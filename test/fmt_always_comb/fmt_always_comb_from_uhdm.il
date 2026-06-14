@@ -56,17 +56,15 @@ module \top
   attribute \src "dut.sv:4.10-4.11"
   attribute \unused_bits "0"
   wire \y
-  attribute \src "dut.sv:8.2-11.8"
-  wire $0\a
-  attribute \src "dut.sv:8.2-11.8"
-  wire $0\b
   attribute \src "dut.sv:9.15-9.17"
   wire $logic_not$dut.sv:9.15-9.17$1_Y
-  attribute \src "dut.sv:10.20-10.22"
-  wire $logic_not$dut.sv:10.20-10.22$4_Y
+  wire $auto$rtlil.cc:3323:LogicOr$25
   wire $auto$rtlil.cc:3322:LogicAnd$15
   wire $auto$rtlil.cc:3322:LogicAnd$23
   wire $auto$rtlil.cc:3322:LogicAnd$17
+  wire $auto$rtlil.cc:3323:LogicOr$19
+  attribute \src "dut.sv:10.20-10.22"
+  wire $logic_not$dut.sv:10.20-10.22$4_Y
   attribute \src "dut.sv:9.15-9.17"
   cell $logic_not $logic_not$dut.sv:9.15-9.17$1
     parameter \A_SIGNED 0
@@ -80,7 +78,7 @@ module \top
   cell $dff $procdff$28
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\a
+    connect \D $auto$rtlil.cc:3323:LogicOr$19
     connect \Q \a
     connect \CLK \clk
   end
@@ -99,7 +97,7 @@ module \top
   cell $dff $procdff$29
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\b
+    connect \D $auto$rtlil.cc:3323:LogicOr$25
     connect \Q \b
     connect \CLK \clk
   end
@@ -116,7 +114,7 @@ module \top
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3322:LogicAnd$15
     connect \B $auto$rtlil.cc:3322:LogicAnd$17
-    connect \Y $0\a
+    connect \Y $auto$rtlil.cc:3323:LogicOr$19
   end
   attribute \src "dut.sv:10.20-10.22"
   cell $logic_not $logic_not$dut.sv:10.20-10.22$4
@@ -154,6 +152,6 @@ module \top
     parameter \Y_WIDTH 1
     connect \A $auto$rtlil.cc:3322:LogicAnd$17
     connect \B $auto$rtlil.cc:3322:LogicAnd$23
-    connect \Y $0\b
+    connect \Y $auto$rtlil.cc:3323:LogicOr$25
   end
 end

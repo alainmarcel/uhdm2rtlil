@@ -26,7 +26,7 @@
 -  attribute \src "dut.sv:33.28-33.56"
 -  wire width 64 $ternary$dut.sv:33$4_Y
 +  wire width 64 $0\count_instr
-+  wire width 64 $auto$expression.cpp:3006:import_operation$2
++  wire width 64 $auto$expression.cpp:3317:import_operation$2
 +  wire width 64 $auto$rtlil.cc:3390:Mux$5
 +  wire $auto$rtlil.cc:3262:ReduceBool$7
    attribute \src "dut.sv:40.13-40.20"
@@ -64,7 +64,7 @@
 +  wire $auto$rtlil.cc:3322:LogicAnd$19
 +  wire $auto$rtlil.cc:3323:LogicOr$21
 +  wire $auto$rtlil.cc:3322:LogicAnd$23
-+  wire width 64 $auto$expression.cpp:3006:import_operation$24
++  wire width 64 $auto$expression.cpp:3317:import_operation$24
 +  wire $auto$rtlil.cc:3262:ReduceBool$27
    attribute \src "dut.sv:33.37-33.52"
 -  cell $add $add$dut.sv:33$2
@@ -87,7 +87,7 @@
 -    connect \A 0
 -    connect \Y $extend$dut.sv:33$3_Y
 +    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-+    connect \Y $auto$expression.cpp:3006:import_operation$2
++    connect \Y $auto$expression.cpp:3317:import_operation$2
    end
 -  attribute \src "dut.sv:33.28-33.56"
 -  cell $mux $ternary$dut.sv:33$4
@@ -96,12 +96,12 @@
 -    connect \A $extend$dut.sv:33$3_Y
 -    connect \B $add$dut.sv:33$2_Y
 +    connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
-+    connect \B $auto$expression.cpp:3006:import_operation$2
++    connect \B $auto$expression.cpp:3317:import_operation$2
      connect \S \resetn
 -    connect \Y $ternary$dut.sv:33$4_Y
 +    connect \Y $auto$rtlil.cc:3390:Mux$5
 +  end
-+  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$6
++  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$6
 +    parameter \A_SIGNED 0
 +    parameter \A_WIDTH 64
 +    parameter \Y_WIDTH 1
@@ -258,9 +258,9 @@
 -    connect \B 1
 -    connect \Y $add$dut.sv:52$16_Y
 +    connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-+    connect \Y $auto$expression.cpp:3006:import_operation$24
++    connect \Y $auto$expression.cpp:3317:import_operation$24
 +  end
-+  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$26
++  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$26
 +    parameter \A_SIGNED 0
 +    parameter \A_WIDTH 64
 +    parameter \Y_WIDTH 1
@@ -342,7 +342,7 @@
 +                    attribute \src "dut.sv:51.25-54.28"
                        case 1'1
 -                        assign $0\count_instr[63:0] $add$dut.sv:52$16_Y
-+                        assign $0\count_instr $auto$expression.cpp:3006:import_operation$24
++                        assign $0\count_instr $auto$expression.cpp:3317:import_operation$24
 +                        attribute \src "dut.sv:53.29-53.77"
 +                        switch $auto$rtlil.cc:3262:ReduceBool$27
 +                        attribute \src "dut.sv:53.29-53.77"

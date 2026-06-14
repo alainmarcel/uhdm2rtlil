@@ -25,6 +25,21 @@ module const_fold_func_top(inp, out1, out2, out3, out4, out5, out6);
   output [3:0] out6;
   wire [3:0] out6;
   wire _0_;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:7.15-7.18" *)
+  wire [3:0] \flip$func$dut.sv:56$2.inp ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:7.15-7.18" *)
+  wire [3:0] \flip$func$dut.sv:56$8.inp ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:7.15-7.18" *)
+  wire [3:0] \flip$func$dut.sv:56$9.inp ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:7.15-7.18" *)
+  wire [3:0] \flip$func$dut.sv:57$19.inp ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:7.15-7.18" *)
+  wire [3:0] \flip$func$dut.sv:59$50.inp ;
   \$_NOT_  _1_ (
     .A(inp[1]),
     .Y(_0_)
@@ -36,15 +51,20 @@ module const_fold_func_top(inp, out1, out2, out3, out4, out5, out6);
     .Y(out4[2])
   );
   \$_ANDNOT_  _3_ (
-    .A(inp[1]),
-    .B(inp[0]),
-    .Y(out4[1])
-  );
-  \$_ANDNOT_  _4_ (
     .A(inp[3]),
     .B(inp[0]),
     .Y(out4[3])
   );
+  \$_ANDNOT_  _4_ (
+    .A(inp[1]),
+    .B(inp[0]),
+    .Y(out4[1])
+  );
+  assign \flip$func$dut.sv:56$9.inp  = 4'hx;
+  assign \flip$func$dut.sv:59$50.inp  = 4'hx;
+  assign \flip$func$dut.sv:56$8.inp  = 4'hx;
+  assign \flip$func$dut.sv:57$19.inp  = 4'hx;
+  assign \flip$func$dut.sv:56$2.inp  = 4'hx;
   assign out6 = 4'bx010;
   assign out5 = 4'ha;
   assign out4[0] = 1'h0;

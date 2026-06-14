@@ -40,7 +40,7 @@ module \counter_ifelse_chain
   wire $auto$rtlil.cc:3322:LogicAnd$13
   wire $auto$rtlil.cc:3323:LogicOr$15
   wire $auto$rtlil.cc:3322:LogicAnd$17
-  wire width 64 $auto$expression.cpp:3006:import_operation$18
+  wire width 64 $auto$expression.cpp:3317:import_operation$18
   attribute \src "dut.sv:36.13-36.20"
   cell $logic_not $logic_not$dut.sv:36.13-36.20$1
     parameter \A_SIGNED 0
@@ -150,7 +150,7 @@ module \counter_ifelse_chain
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$18
+    connect \Y $auto$expression.cpp:3317:import_operation$18
   end
   attribute \src "dut.sv:35.5-48.8"
   attribute \always_ff 1
@@ -185,7 +185,7 @@ module \counter_ifelse_chain
                 switch 1'1
                 attribute \src "dut.sv:44.13-46.16"
                   case 1'1
-                    assign $0\count_instr[63:0] $auto$expression.cpp:3006:import_operation$18
+                    assign $0\count_instr[63:0] $auto$expression.cpp:3317:import_operation$18
                 attribute \src "dut.sv:44.13-46.16"
                   case 
                 end

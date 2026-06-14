@@ -15,6 +15,12 @@ module top();
   (* nosync = 32'd1 *)
   (* src = "dut.sv:74.14-74.30" *)
   wire [31:0] \operation3$func$dut.sv:74$54.i ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:48.16-48.17" *)
+  wire [15:0] \operation4$func$dut.sv:77$75.a ;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:49.9-49.10" *)
+  wire \operation4$func$dut.sv:77$75.b ;
   (* src = "dut.sv:64.14-64.16" *)
   wire [31:0] x1;
   (* src = "dut.sv:67.14-67.17" *)
@@ -28,22 +34,6 @@ module top();
   (* src = "dut.sv:79.14-79.16" *)
   wire [31:0] x5;
   (* keep = 32'd1 *)
-  (* src = "dut.sv:87.3-87.19" *)
-  \$check  #(
-    .ARGS_WIDTH(32'd0),
-    .FLAVOR("assert"),
-    .FORMAT(),
-    .PRIORITY(32'd4294967291),
-    .TRG_ENABLE(32'd0),
-    .TRG_POLARITY(),
-    .TRG_WIDTH(32'd0)
-  ) _0_ (
-    .A(1'h1),
-    .ARGS(),
-    .EN(1'h1),
-    .TRG()
-  );
-  (* keep = 32'd1 *)
   (* src = "dut.sv:88.3-88.20" *)
   \$check  #(
     .ARGS_WIDTH(32'd0),
@@ -53,7 +43,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _1_ (
+  ) _0_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -69,7 +59,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _2_ (
+  ) _1_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -85,7 +75,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _3_ (
+  ) _2_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -101,7 +91,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _4_ (
+  ) _3_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -117,7 +107,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _5_ (
+  ) _4_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -133,7 +123,7 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
-  ) _6_ (
+  ) _5_ (
     .A(1'h1),
     .ARGS(),
     .EN(1'h1),
@@ -149,6 +139,22 @@ module top();
     .TRG_ENABLE(32'd0),
     .TRG_POLARITY(),
     .TRG_WIDTH(32'd0)
+  ) _6_ (
+    .A(1'h1),
+    .ARGS(),
+    .EN(1'h1),
+    .TRG()
+  );
+  (* keep = 32'd1 *)
+  (* src = "dut.sv:87.3-87.19" *)
+  \$check  #(
+    .ARGS_WIDTH(32'd0),
+    .FLAVOR("assert"),
+    .FORMAT(),
+    .PRIORITY(32'd4294967291),
+    .TRG_ENABLE(32'd0),
+    .TRG_POLARITY(),
+    .TRG_WIDTH(32'd0)
   ) _7_ (
     .A(1'h1),
     .ARGS(),
@@ -156,7 +162,9 @@ module top();
     .TRG()
   );
   assign \operation3$func$dut.sv:74$54.i  = 32'hxxxxxxxx;
+  assign \operation4$func$dut.sv:77$75.a  = 16'hxxxx;
   assign \operation1$func$dut.sv:68$23.i  = 32'hxxxxxxxx;
+  assign \operation4$func$dut.sv:77$75.b  = 1'hx;
   assign \operation1$func$dut.sv:65$2.i  = 32'hxxxxxxxx;
   assign x5 = 32'd64;
   assign x4 = 17'h00004;

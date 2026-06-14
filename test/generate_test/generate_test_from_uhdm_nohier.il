@@ -11,7 +11,7 @@ module \adder
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  wire width 8 $auto$expression.cpp:2965:import_operation$1
+  wire width 8 $auto$expression.cpp:3317:import_operation$1
   attribute \src "dut.sv:11.18-11.23"
   cell $add $add$dut.sv:11$2
     parameter \A_SIGNED 0
@@ -21,9 +21,9 @@ module \adder
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2965:import_operation$1
+    connect \Y $auto$expression.cpp:3317:import_operation$1
   end
-  connect \sum $auto$expression.cpp:2965:import_operation$1
+  connect \sum $auto$expression.cpp:3317:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:15.1-23.10"
@@ -36,7 +36,7 @@ module \subtractor
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  wire width 8 $auto$expression.cpp:3020:import_operation$3
+  wire width 8 $auto$expression.cpp:3381:import_operation$3
   attribute \src "dut.sv:22.19-22.24"
   cell $sub $sub$dut.sv:22$4
     parameter \A_SIGNED 0
@@ -46,9 +46,9 @@ module \subtractor
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:3020:import_operation$3
+    connect \Y $auto$expression.cpp:3381:import_operation$3
   end
-  connect \diff $auto$expression.cpp:3020:import_operation$3
+  connect \diff $auto$expression.cpp:3381:import_operation$3
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:26.1-110.10"
@@ -71,15 +71,23 @@ module \generate_test
   attribute \src "dut.sv:36.35-36.47"
   wire width 8 output 7 \extra_result
   wire width 8 \gen_units[0].unit_result
+  attribute \src "dut.sv:68.13-74.16"
+  wire width 32 $0\result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[0]$1_Y
   wire width 8 \gen_units[1].unit_result
+  attribute \src "dut.sv:68.13-74.16"
+  wire width 32 $1\result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[1]$2_Y
   wire width 8 \gen_units[2].unit_result
+  attribute \src "dut.sv:68.13-74.16"
+  wire width 32 $2\result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[2]$3_Y
   wire width 8 \gen_units[3].unit_result
+  attribute \src "dut.sv:68.13-74.16"
+  wire width 32 $3\result
   attribute \src "dut.sv:69.21-69.27"
   wire $logic_not$dut.sv:69.21-69.27$gen_units[3]$4_Y
   wire width 8 \extra_logic.extra_sum
@@ -161,65 +169,77 @@ module \generate_test
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:68$5
+    assign $0\result \result
     attribute \src "dut.sv:69.17-73.20"
     switch $logic_not$dut.sv:69.21-69.27$gen_units[0]$1_Y
     attribute \src "dut.sv:69.29-71.20"
       case 1'1
-        assign \result [7:0] 8'00000000
+        assign $0\result [7:0] 8'00000000
     attribute \src "dut.sv:71.26-73.20"
       case 
-        assign \result [7:0] \gen_units[0].unit_result
+        assign $0\result [7:0] \gen_units[0].unit_result
     end
     sync posedge \clk
+      update \result [7:0] $0\result [7:0]
     sync negedge \rst_n
+      update \result [7:0] $0\result [7:0]
   end
   attribute \src "dut.sv:68.13-74.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:68$8
+    assign $1\result \result
     attribute \src "dut.sv:69.17-73.20"
     switch $logic_not$dut.sv:69.21-69.27$gen_units[1]$2_Y
     attribute \src "dut.sv:69.29-71.20"
       case 1'1
-        assign \result [15:8] 8'00000000
+        assign $1\result [15:8] 8'00000000
     attribute \src "dut.sv:71.26-73.20"
       case 
-        assign \result [15:8] \gen_units[1].unit_result
+        assign $1\result [15:8] \gen_units[1].unit_result
     end
     sync posedge \clk
+      update \result [15:8] $1\result [15:8]
     sync negedge \rst_n
+      update \result [15:8] $1\result [15:8]
   end
   attribute \src "dut.sv:68.13-74.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:68$11
+    assign $2\result \result
     attribute \src "dut.sv:69.17-73.20"
     switch $logic_not$dut.sv:69.21-69.27$gen_units[2]$3_Y
     attribute \src "dut.sv:69.29-71.20"
       case 1'1
-        assign \result [23:16] 8'00000000
+        assign $2\result [23:16] 8'00000000
     attribute \src "dut.sv:71.26-73.20"
       case 
-        assign \result [23:16] \gen_units[2].unit_result
+        assign $2\result [23:16] \gen_units[2].unit_result
     end
     sync posedge \clk
+      update \result [23:16] $2\result [23:16]
     sync negedge \rst_n
+      update \result [23:16] $2\result [23:16]
   end
   attribute \src "dut.sv:68.13-74.16"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
   process $proc$dut.sv:68$12
+    assign $3\result \result
     attribute \src "dut.sv:69.17-73.20"
     switch $logic_not$dut.sv:69.21-69.27$gen_units[3]$4_Y
     attribute \src "dut.sv:69.29-71.20"
       case 1'1
-        assign \result [31:24] 8'00000000
+        assign $3\result [31:24] 8'00000000
     attribute \src "dut.sv:71.26-73.20"
       case 
-        assign \result [31:24] \gen_units[3].unit_result
+        assign $3\result [31:24] \gen_units[3].unit_result
     end
     sync posedge \clk
+      update \result [31:24] $3\result [31:24]
     sync negedge \rst_n
+      update \result [31:24] $3\result [31:24]
   end
   attribute \src "dut.sv:94.17-100.20"
   attribute \always_ff 1
@@ -260,7 +280,7 @@ module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:9.30-9.33"
   wire width 8 output 3 \sum
-  wire width 8 $auto$expression.cpp:2965:import_operation$6
+  wire width 8 $auto$expression.cpp:3317:import_operation$6
   attribute \src "dut.sv:11.18-11.23"
   cell $add $add$dut.sv:11$7
     parameter \A_SIGNED 0
@@ -270,9 +290,9 @@ module $paramod\adder\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:2965:import_operation$6
+    connect \Y $auto$expression.cpp:3317:import_operation$6
   end
-  connect \sum $auto$expression.cpp:2965:import_operation$6
+  connect \sum $auto$expression.cpp:3317:import_operation$6
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:58.17-64.19"
@@ -286,7 +306,7 @@ module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
   wire width 8 input 2 \b
   attribute \src "dut.sv:20.30-20.34"
   wire width 8 output 3 \diff
-  wire width 8 $auto$expression.cpp:3020:import_operation$9
+  wire width 8 $auto$expression.cpp:3381:import_operation$9
   attribute \src "dut.sv:22.19-22.24"
   cell $sub $sub$dut.sv:22$10
     parameter \A_SIGNED 0
@@ -296,7 +316,7 @@ module $paramod\subtractor\WIDTH=s32'00000000000000000000000000001000
     parameter \Y_WIDTH 8
     connect \A \a
     connect \B \b
-    connect \Y $auto$expression.cpp:3020:import_operation$9
+    connect \Y $auto$expression.cpp:3381:import_operation$9
   end
-  connect \diff $auto$expression.cpp:3020:import_operation$9
+  connect \diff $auto$expression.cpp:3381:import_operation$9
 end

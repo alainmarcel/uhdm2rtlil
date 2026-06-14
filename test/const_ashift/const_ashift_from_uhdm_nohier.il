@@ -17,14 +17,14 @@ module \const_ashift
   wire width 32 output 6 \shr1
   attribute \src "dut.sv:10.21-10.25"
   wire width 32 output 7 \asr1
-  wire width 32 $auto$expression.cpp:3196:import_operation$1
-  wire width 32 $auto$expression.cpp:3226:import_operation$3
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$5
-  wire width 32 $auto$expression.cpp:3226:import_operation$6
-  wire width 32 $auto$expression.cpp:3196:import_operation$8
-  wire width 32 $auto$expression.cpp:3226:import_operation$10
-  wire width 32 signed $auto$expression.cpp:1606:import_expression$12
-  wire width 32 $auto$expression.cpp:3226:import_operation$13
+  wire width 32 $auto$expression.cpp:3509:import_operation$1
+  wire width 32 $auto$expression.cpp:3547:import_operation$3
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$5
+  wire width 32 $auto$expression.cpp:3547:import_operation$6
+  wire width 32 $auto$expression.cpp:3509:import_operation$8
+  wire width 32 $auto$expression.cpp:3547:import_operation$10
+  wire width 32 signed $auto$expression.cpp:1642:import_expression$12
+  wire width 32 $auto$expression.cpp:3547:import_operation$13
   attribute \src "dut.sv:12.16-12.22"
   cell $shl $shl$dut.sv:12$2
     parameter \A_SIGNED 0
@@ -34,7 +34,7 @@ module \const_ashift
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3196:import_operation$1
+    connect \Y $auto$expression.cpp:3509:import_operation$1
   end
   attribute \src "dut.sv:13.16-13.22"
   cell $shr $shr$dut.sv:13$4
@@ -45,7 +45,7 @@ module \const_ashift
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3226:import_operation$3
+    connect \Y $auto$expression.cpp:3547:import_operation$3
   end
   attribute \src "dut.sv:14.16-14.32"
   cell $sshr $sshr$dut.sv:14$7
@@ -54,9 +54,9 @@ module \const_ashift
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:1606:import_expression$5
+    connect \A $auto$expression.cpp:1642:import_expression$5
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000100
-    connect \Y $auto$expression.cpp:3226:import_operation$6
+    connect \Y $auto$expression.cpp:3547:import_operation$6
   end
   attribute \src "dut.sv:15.16-15.22"
   cell $shl $shl$dut.sv:15$9
@@ -67,7 +67,7 @@ module \const_ashift
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3196:import_operation$8
+    connect \Y $auto$expression.cpp:3509:import_operation$8
   end
   attribute \src "dut.sv:16.16-16.22"
   cell $shr $shr$dut.sv:16$11
@@ -78,7 +78,7 @@ module \const_ashift
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3226:import_operation$10
+    connect \Y $auto$expression.cpp:3547:import_operation$10
   end
   attribute \src "dut.sv:17.16-17.32"
   cell $sshr $sshr$dut.sv:17$14
@@ -87,16 +87,16 @@ module \const_ashift
     parameter \A_WIDTH 32
     parameter \B_WIDTH 64
     parameter \Y_WIDTH 32
-    connect \A $auto$expression.cpp:1606:import_expression$12
+    connect \A $auto$expression.cpp:1642:import_expression$12
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3226:import_operation$13
+    connect \Y $auto$expression.cpp:3547:import_operation$13
   end
-  connect \shl4 $auto$expression.cpp:3196:import_operation$1
-  connect \shr4 $auto$expression.cpp:3226:import_operation$3
-  connect $auto$expression.cpp:1606:import_expression$5 \a
-  connect \asr4 $auto$expression.cpp:3226:import_operation$6
-  connect \shl1 $auto$expression.cpp:3196:import_operation$8
-  connect \shr1 $auto$expression.cpp:3226:import_operation$10
-  connect $auto$expression.cpp:1606:import_expression$12 \a
-  connect \asr1 $auto$expression.cpp:3226:import_operation$13
+  connect \shl4 $auto$expression.cpp:3509:import_operation$1
+  connect \shr4 $auto$expression.cpp:3547:import_operation$3
+  connect $auto$expression.cpp:1642:import_expression$5 \a
+  connect \asr4 $auto$expression.cpp:3547:import_operation$6
+  connect \shl1 $auto$expression.cpp:3509:import_operation$8
+  connect \shr1 $auto$expression.cpp:3547:import_operation$10
+  connect $auto$expression.cpp:1642:import_expression$12 \a
+  connect \asr1 $auto$expression.cpp:3547:import_operation$13
 end

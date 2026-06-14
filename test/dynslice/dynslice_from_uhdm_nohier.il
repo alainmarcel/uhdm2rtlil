@@ -13,12 +13,12 @@ module \dynslice
   wire width 4 input 4 \sel
   attribute \src "dut.sv:6.24-6.28"
   wire width 128 output 5 \dout
-  wire width 14 $auto$expression.cpp:3100:import_operation$2
-  wire width 128 $auto$process.cpp:6760:import_assignment_sync$4
-  wire width 128 $auto$process.cpp:6771:import_assignment_sync$6
-  wire width 128 $auto$process.cpp:6774:import_assignment_sync$8
-  wire width 128 $auto$process.cpp:6777:import_assignment_sync$10
-  wire width 128 $auto$process.cpp:6781:import_assignment_sync$12
+  wire width 14 $auto$expression.cpp:3467:import_operation$2
+  wire width 128 $auto$process.cpp:7457:import_assignment_sync$4
+  wire width 128 $auto$process.cpp:7468:import_assignment_sync$6
+  wire width 128 $auto$process.cpp:7471:import_assignment_sync$8
+  wire width 128 $auto$process.cpp:7482:import_assignment_sync$10
+  wire width 128 $auto$process.cpp:7486:import_assignment_sync$12
   attribute \src "dut.sv:10.10-10.18"
   cell $mul $mul$dut.sv:10$3
     parameter \A_SIGNED 0
@@ -28,59 +28,59 @@ module \dynslice
     parameter \Y_WIDTH 14
     connect \A \ctrl
     connect \B \sel
-    connect \Y $auto$expression.cpp:3100:import_operation$2
+    connect \Y $auto$expression.cpp:3467:import_operation$2
   end
-  cell $shl $auto$process.cpp:6761:import_assignment_sync$5
+  cell $shl $auto$process.cpp:7458:import_assignment_sync$5
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 128
-    parameter \B_WIDTH 14
+    parameter \B_WIDTH 10
     parameter \Y_WIDTH 128
     connect \A { 112'0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 \din }
-    connect \B $auto$expression.cpp:3100:import_operation$2
-    connect \Y $auto$process.cpp:6760:import_assignment_sync$4
+    connect \B $auto$expression.cpp:3467:import_operation$2 [9:0]
+    connect \Y $auto$process.cpp:7457:import_assignment_sync$4
   end
-  cell $shl $auto$process.cpp:6772:import_assignment_sync$7
+  cell $shl $auto$process.cpp:7469:import_assignment_sync$7
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 128
-    parameter \B_WIDTH 14
+    parameter \B_WIDTH 10
     parameter \Y_WIDTH 128
     connect \A 128'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111
-    connect \B $auto$expression.cpp:3100:import_operation$2
-    connect \Y $auto$process.cpp:6771:import_assignment_sync$6
+    connect \B $auto$expression.cpp:3467:import_operation$2 [9:0]
+    connect \Y $auto$process.cpp:7468:import_assignment_sync$6
   end
-  cell $not $auto$process.cpp:6775:import_assignment_sync$9
+  cell $not $auto$process.cpp:7472:import_assignment_sync$9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 128
     parameter \Y_WIDTH 128
-    connect \A $auto$process.cpp:6771:import_assignment_sync$6
-    connect \Y $auto$process.cpp:6774:import_assignment_sync$8
+    connect \A $auto$process.cpp:7468:import_assignment_sync$6
+    connect \Y $auto$process.cpp:7471:import_assignment_sync$8
   end
-  cell $and $auto$process.cpp:6778:import_assignment_sync$11
+  cell $and $auto$process.cpp:7483:import_assignment_sync$11
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 128
     parameter \B_WIDTH 128
     parameter \Y_WIDTH 128
     connect \A \dout
-    connect \B $auto$process.cpp:6774:import_assignment_sync$8
-    connect \Y $auto$process.cpp:6777:import_assignment_sync$10
+    connect \B $auto$process.cpp:7471:import_assignment_sync$8
+    connect \Y $auto$process.cpp:7482:import_assignment_sync$10
   end
-  cell $or $auto$process.cpp:6782:import_assignment_sync$13
+  cell $or $auto$process.cpp:7487:import_assignment_sync$13
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
     parameter \A_WIDTH 128
     parameter \B_WIDTH 128
     parameter \Y_WIDTH 128
-    connect \A $auto$process.cpp:6777:import_assignment_sync$10
-    connect \B $auto$process.cpp:6760:import_assignment_sync$4
-    connect \Y $auto$process.cpp:6781:import_assignment_sync$12
+    connect \A $auto$process.cpp:7482:import_assignment_sync$10
+    connect \B $auto$process.cpp:7457:import_assignment_sync$4
+    connect \Y $auto$process.cpp:7486:import_assignment_sync$12
   end
   attribute \src "dut.sv:8.1-11.4"
   attribute \always_ff 1
   process $proc$dut.sv:8$1
     sync posedge \clk
-      update \dout $auto$process.cpp:6781:import_assignment_sync$12
+      update \dout $auto$process.cpp:7486:import_assignment_sync$12
   end
 end

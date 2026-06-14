@@ -15,7 +15,7 @@ module \simple_memory_noreset
   wire width 8 output 5 \data_out
   wire width 4 $memwr$\memory$addr$2
   wire width 8 $memwr$\memory$data$3
-  wire $memwr$\memory$en$4
+  wire width 8 $memwr$\memory$en$4
   attribute \src "dut.sv:13.5-18.8"
   wire width 8 $0\data_out
   wire width 8 \memrd_memory_DATA
@@ -37,7 +37,8 @@ module \simple_memory_noreset
   attribute \src "dut.sv:13.5-18.8"
   attribute \always_ff 1
   process $proc$dut.sv:13$1
-    assign $memwr$\memory$en$4 1'0
+    assign $memwr$\memory$en$4 8'00000000
+    assign $memwr$\memory$data$3 8'00000000
     assign $0\data_out \memrd_memory_DATA
     attribute \src "dut.sv:14.9-16.12"
     switch \we
@@ -45,12 +46,12 @@ module \simple_memory_noreset
       case 1'1
         assign $memwr$\memory$addr$2 \addr
         assign $memwr$\memory$data$3 \data_in
-        assign $memwr$\memory$en$4 1'1
+        assign $memwr$\memory$en$4 8'11111111
     attribute \src "dut.sv:14.9-16.12"
       case 
     end
     sync posedge \clk
       update \data_out $0\data_out
-      memwr \memory $memwr$\memory$addr$2 $memwr$\memory$data$3 { $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 } 0'x
+      memwr \memory $memwr$\memory$addr$2 $memwr$\memory$data$3 $memwr$\memory$en$4 0'x
   end
 end

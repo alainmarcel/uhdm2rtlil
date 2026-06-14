@@ -45,46 +45,20 @@ module \top
   attribute \src "dut.sv:25.5-25.17"
   attribute \init 1'0
   wire \eff_3_a
-  attribute \src "dut.sv:7.1-8.17"
-  wire $0\clk
   attribute \src "dut.sv:8.12-8.16"
   wire $logic_not$dut.sv:8.12-8.16$1_Y
-  attribute \src "dut.sv:30.1-48.4"
-  wire width 6 $0\counter
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_0_trg
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_0_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_trgA
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_trgB
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_1_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_2_trgA
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_2_trgB
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_2_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_trg
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_en
-  attribute \src "dut.sv:30.1-48.4"
-  wire $0\eff_3_a
-  wire width 6 $auto$expression.cpp:2965:import_operation$16
-  wire width 32 $auto$expression.cpp:3175:import_operation$18
-  wire width 32 $auto$expression.cpp:3175:import_operation$20
-  wire width 32 $auto$expression.cpp:3175:import_operation$22
-  wire width 32 $auto$expression.cpp:3175:import_operation$24
-  wire width 32 $auto$expression.cpp:3175:import_operation$26
+  wire width 6 $auto$expression.cpp:3317:import_operation$16
+  wire $auto$expression.cpp:3547:import_operation$18
+  wire $auto$expression.cpp:3547:import_operation$20
+  wire $auto$expression.cpp:3547:import_operation$22
+  wire $auto$expression.cpp:3547:import_operation$24
+  wire $auto$expression.cpp:3547:import_operation$26
   attribute \src "dut.sv:42.18-42.29"
   wire $logic_not$dut.sv:42.18-42.29$2_Y
-  wire width 32 $auto$expression.cpp:3175:import_operation$28
-  wire width 32 $auto$expression.cpp:3175:import_operation$30
-  wire width 32 $auto$expression.cpp:3175:import_operation$32
-  wire width 32 $auto$expression.cpp:3175:import_operation$34
+  wire $auto$expression.cpp:3547:import_operation$28
+  wire $auto$expression.cpp:3547:import_operation$30
+  wire $auto$expression.cpp:3547:import_operation$32
+  wire $auto$expression.cpp:3547:import_operation$34
   wire $print$$display$52$37_EN
   wire $print$$display$56$39_EN
   wire $print$$display$60$41_EN
@@ -94,7 +68,7 @@ module \top
   wire $print$$display$76$49_EN
   wire $print$$display$80$51_EN
   wire $print$$display$84$53_EN
-  wire $auto$process.cpp:111:build_check_cell$54
+  wire $auto$process.cpp:174:build_check_cell$54
   attribute \src "dut.sv:8.12-8.16"
   cell $logic_not $logic_not$dut.sv:8.12-8.16$1
     parameter \A_SIGNED 0
@@ -112,7 +86,7 @@ module \top
     parameter \Y_WIDTH 6
     connect \A \counter
     connect \B 6'000001
-    connect \Y $auto$expression.cpp:2965:import_operation$16
+    connect \Y $auto$expression.cpp:3317:import_operation$16
   end
   attribute \src "dut.sv:34.17-34.64"
   cell $shr $shr$dut.sv:34$19
@@ -120,10 +94,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 209706
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$18
+    connect \Y $auto$expression.cpp:3547:import_operation$18
   end
   attribute \src "dut.sv:35.17-35.64"
   cell $shr $shr$dut.sv:35$21
@@ -131,10 +105,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 396726
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$20
+    connect \Y $auto$expression.cpp:3547:import_operation$20
   end
   attribute \src "dut.sv:37.18-37.65"
   cell $shr $shr$dut.sv:37$23
@@ -142,10 +116,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 15390
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$22
+    connect \Y $auto$expression.cpp:3547:import_operation$22
   end
   attribute \src "dut.sv:38.18-38.65"
   cell $shr $shr$dut.sv:38$25
@@ -153,10 +127,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 61560
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$24
+    connect \Y $auto$expression.cpp:3547:import_operation$24
   end
   attribute \src "dut.sv:39.18-39.65"
   cell $shr $shr$dut.sv:39$27
@@ -164,10 +138,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 43690
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$26
+    connect \Y $auto$expression.cpp:3547:import_operation$26
   end
   attribute \src "dut.sv:42.18-42.29"
   cell $logic_not $logic_not$dut.sv:42.18-42.29$2
@@ -183,10 +157,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 1020
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$28
+    connect \Y $auto$expression.cpp:3547:import_operation$28
   end
   attribute \src "dut.sv:45.18-45.65"
   cell $shr $shr$dut.sv:45$31
@@ -194,10 +168,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'10101010101010101010101010101010
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$30
+    connect \Y $auto$expression.cpp:3547:import_operation$30
   end
   attribute \src "dut.sv:46.18-46.65"
   cell $shr $shr$dut.sv:46$33
@@ -205,10 +179,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'11101110010001001110111001000100
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$32
+    connect \Y $auto$expression.cpp:3547:import_operation$32
   end
   attribute \src "dut.sv:47.18-47.65"
   cell $shr $shr$dut.sv:47$35
@@ -216,10 +190,10 @@ module \top
     parameter \B_SIGNED 0
     parameter \A_WIDTH 32
     parameter \B_WIDTH 6
-    parameter \Y_WIDTH 32
+    parameter \Y_WIDTH 1
     connect \A 32'11111010111110100101000001010000
     connect \B \counter
-    connect \Y $auto$expression.cpp:3175:import_operation$34
+    connect \Y $auto$expression.cpp:3547:import_operation$34
   end
   cell $print $print$$display$52$37
     parameter \TRG_WIDTH 1
@@ -332,7 +306,7 @@ module \top
     parameter \TRG_WIDTH 1
     connect \A \eff_3_a
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$54
+    connect \EN $auto$process.cpp:174:build_check_cell$54
     connect \TRG \eff_3_trg
   end
   attribute \src "dut.sv:78.1-80.30"
@@ -353,14 +327,14 @@ module \top
   attribute \src "dut.sv:82.1-91.8"
   attribute \always_ff 1
   process $proc$dut.sv:82$52
-    assign $auto$process.cpp:111:build_check_cell$54 1'0
+    assign $auto$process.cpp:174:build_check_cell$54 1'0
     assign $print$$display$84$53_EN 1'0
     attribute \src "dut.sv:83.5-91.8"
     switch \eff_3_en
     attribute \src "dut.sv:83.5-91.8"
       case 1'1
         assign $print$$display$84$53_EN 1'1
-        assign $auto$process.cpp:111:build_check_cell$54 1'1
+        assign $auto$process.cpp:174:build_check_cell$54 1'1
     attribute \src "dut.sv:83.5-91.8"
       case 
     end
@@ -369,38 +343,25 @@ module \top
   attribute \src "dut.sv:7.1-8.17"
   attribute \always_ff 1
   process $proc$dut.sv:7$14
-    assign $0\clk $logic_not$dut.sv:8.12-8.16$1_Y
     sync global
-      update \clk $0\clk
+      update \clk $logic_not$dut.sv:8.12-8.16$1_Y
   end
   attribute \src "dut.sv:30.1-48.4"
   attribute \always_ff 1
   process $proc$dut.sv:30$15
-    assign $0\counter $auto$expression.cpp:2965:import_operation$16
-    assign $0\eff_0_trg $auto$expression.cpp:3175:import_operation$18 [0]
-    assign $0\eff_0_en $auto$expression.cpp:3175:import_operation$20 [0]
-    assign $0\eff_1_trgA $auto$expression.cpp:3175:import_operation$22 [0]
-    assign $0\eff_1_trgB $auto$expression.cpp:3175:import_operation$24 [0]
-    assign $0\eff_1_en $auto$expression.cpp:3175:import_operation$26 [0]
-    assign $0\eff_2_trgA \counter [0]
-    assign $0\eff_2_trgB $logic_not$dut.sv:42.18-42.29$2_Y
-    assign $0\eff_2_en $auto$expression.cpp:3175:import_operation$28 [0]
-    assign $0\eff_3_trg $auto$expression.cpp:3175:import_operation$30 [0]
-    assign $0\eff_3_en $auto$expression.cpp:3175:import_operation$32 [0]
-    assign $0\eff_3_a $auto$expression.cpp:3175:import_operation$34 [0]
     sync posedge \clk
-      update \counter $0\counter
-      update \eff_0_en $0\eff_0_en
-      update \eff_0_trg $0\eff_0_trg
-      update \eff_1_en $0\eff_1_en
-      update \eff_1_trgA $0\eff_1_trgA
-      update \eff_1_trgB $0\eff_1_trgB
-      update \eff_2_en $0\eff_2_en
-      update \eff_2_trgA $0\eff_2_trgA
-      update \eff_2_trgB $0\eff_2_trgB
-      update \eff_3_a $0\eff_3_a
-      update \eff_3_en $0\eff_3_en
-      update \eff_3_trg $0\eff_3_trg
+      update \counter $auto$expression.cpp:3317:import_operation$16
+      update \eff_0_trg $auto$expression.cpp:3547:import_operation$18
+      update \eff_0_en $auto$expression.cpp:3547:import_operation$20
+      update \eff_1_trgA $auto$expression.cpp:3547:import_operation$22
+      update \eff_1_trgB $auto$expression.cpp:3547:import_operation$24
+      update \eff_1_en $auto$expression.cpp:3547:import_operation$26
+      update \eff_2_trgA \counter [0]
+      update \eff_2_trgB $logic_not$dut.sv:42.18-42.29$2_Y
+      update \eff_2_en $auto$expression.cpp:3547:import_operation$28
+      update \eff_3_trg $auto$expression.cpp:3547:import_operation$30
+      update \eff_3_en $auto$expression.cpp:3547:import_operation$32
+      update \eff_3_a $auto$expression.cpp:3547:import_operation$34
   end
   attribute \src "dut.sv:50.1-52.43"
   attribute \always_ff 1

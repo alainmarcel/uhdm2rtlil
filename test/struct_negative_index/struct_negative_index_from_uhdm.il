@@ -8,7 +8,7 @@ module \top
   wire width 32 \s
   attribute \src "dut.sv:17.17-17.36"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$6
+  cell $check $auto$process.cpp:184:build_check_cell$6
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

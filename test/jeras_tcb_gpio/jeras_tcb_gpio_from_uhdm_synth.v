@@ -47,8 +47,10 @@ module \$paramod\tcb_gpio\GW=s32'00000000000000000000000000100000 (gpio_o, gpio_
   (* src = "tcb_if.sv:33.18-33.21" *)
   input \bus.vld ;
   wire \bus.vld ;
+  (* src = "tcb_if.sv:29.16-29.19" *)
   input \bus.rst ;
   wire \bus.rst ;
+  (* src = "tcb_if.sv:28.16-28.19" *)
   input \bus.clk ;
   wire \bus.clk ;
   wire _000_;

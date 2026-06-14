@@ -4,7 +4,7 @@
 (* src = "dut.sv:1.1-101.10" *)
 (* top =  1  *)
 module top();
-  (* src = "dut.sv:7.1-8.17" *)
+  (* src = "dut.sv:8.12-8.16" *)
   wire _000_;
   wire _001_;
   wire _002_;
@@ -376,15 +376,7 @@ module top();
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_0_trg_reg /* _096_ */ (
-    .C(clk),
-    .D(_034_),
-    .Q(eff_0_trg),
-    .R(counter[5])
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_0_en_reg /* _097_ */ (
+  \$_SDFF_PP0_  eff_0_en_reg /* _096_ */ (
     .C(clk),
     .D(_035_),
     .Q(eff_0_en),
@@ -392,23 +384,23 @@ module top();
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_3_a_reg /* _098_ */ (
+  \$_SDFF_PP0_  eff_0_trg_reg /* _097_ */ (
     .C(clk),
-    .D(_039_),
-    .Q(eff_3_a),
+    .D(_034_),
+    .Q(eff_0_trg),
     .R(counter[5])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_3_en_reg /* _099_ */ (
+  \$_SDFF_PP0_  eff_1_trgA_reg /* _098_ */ (
     .C(clk),
-    .D(_038_),
-    .Q(eff_3_en),
-    .R(counter[5])
+    .D(_036_),
+    .Q(eff_1_trgA),
+    .R(counter[4])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_3_trg_reg /* _100_ */ (
+  \$_SDFF_PP0_  eff_3_trg_reg /* _099_ */ (
     .C(clk),
     .D(counter[0]),
     .Q(eff_3_trg),
@@ -416,18 +408,26 @@ module top();
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_1_trgB_reg /* _101_ */ (
+  \$_SDFF_PP0_  eff_3_en_reg /* _100_ */ (
     .C(clk),
-    .D(_037_),
-    .Q(eff_1_trgB),
-    .R(counter[4])
+    .D(_038_),
+    .Q(eff_3_en),
+    .R(counter[5])
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:30.1-48.4" *)
-  \$_SDFF_PP0_  eff_1_trgA_reg /* _102_ */ (
+  \$_SDFF_PP0_  eff_3_a_reg /* _101_ */ (
     .C(clk),
-    .D(_036_),
-    .Q(eff_1_trgA),
+    .D(_039_),
+    .Q(eff_3_a),
+    .R(counter[5])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:30.1-48.4" *)
+  \$_SDFF_PP0_  eff_1_trgB_reg /* _102_ */ (
+    .C(clk),
+    .D(_037_),
+    .Q(eff_1_trgB),
     .R(counter[4])
   );
   \$print  #(

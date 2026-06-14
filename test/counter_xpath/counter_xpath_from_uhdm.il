@@ -14,8 +14,8 @@ module \counter_xpath
   wire width 64 output 3 \count_cycle
   attribute \src "dut.sv:21.24-21.35"
   wire width 64 output 4 \count_instr
-  wire width 64 $auto$expression.cpp:3006:import_operation$2
-  wire width 64 $auto$expression.cpp:3006:import_operation$8
+  wire width 64 $auto$expression.cpp:3317:import_operation$2
+  wire width 64 $auto$expression.cpp:3317:import_operation$8
   attribute \src "dut.sv:28.37-28.52"
   cell $add $add$dut.sv:28$3
     parameter \A_SIGNED 0
@@ -25,7 +25,7 @@ module \counter_xpath
     parameter \Y_WIDTH 64
     connect \A \count_cycle
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:26.5-42.8"
   attribute \always_ff 1
@@ -36,7 +36,7 @@ module \counter_xpath
     parameter \WIDTH 64
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$8
+    connect \D $auto$expression.cpp:3317:import_operation$8
     connect \Q \count_instr
   end
   attribute \src "dut.sv:26.5-42.8"
@@ -48,7 +48,7 @@ module \counter_xpath
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [31:0]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [31:0]
     connect \Q \count_cycle [31:0]
   end
   attribute \src "dut.sv:26.5-42.8"
@@ -60,7 +60,7 @@ module \counter_xpath
     parameter \WIDTH 32
     connect \CLK \clk
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$2 [63:32]
+    connect \D $auto$expression.cpp:3317:import_operation$2 [63:32]
     connect \Q \count_cycle [63:32]
   end
   attribute \src "dut.sv:39.28-39.43"
@@ -72,6 +72,6 @@ module \counter_xpath
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$8
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
 end

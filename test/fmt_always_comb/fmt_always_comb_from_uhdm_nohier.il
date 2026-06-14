@@ -98,10 +98,6 @@ module \top
   wire \b
   attribute \src "dut.sv:4.10-4.11"
   wire \y
-  attribute \src "dut.sv:8.2-11.8"
-  wire $0\a
-  attribute \src "dut.sv:8.2-11.8"
-  wire $0\b
   attribute \src "dut.sv:9.15-9.17"
   wire $logic_not$dut.sv:9.15-9.17$1_Y
   attribute \src "dut.sv:9.21-9.23"
@@ -216,10 +212,8 @@ module \top
   attribute \src "dut.sv:8.2-11.8"
   attribute \always_ff 1
   process $proc$dut.sv:8$13
-    assign $0\a $auto$rtlil.cc:3323:LogicOr$19
-    assign $0\b $auto$rtlil.cc:3323:LogicOr$25
     sync posedge \clk
-      update \a $0\a
-      update \b $0\b
+      update \a $auto$rtlil.cc:3323:LogicOr$19
+      update \b $auto$rtlil.cc:3323:LogicOr$25
   end
 end

@@ -19,7 +19,7 @@ module top(clock, ctrl, read_o, write_o, ready_o);
   (* src = "dut.sv:6.32-6.39" *)
   output ready_o;
   wire ready_o;
-  (* src = "dut.sv:10.2-14.5" *)
+  (* src = "dut.sv:11.11-11.16" *)
   wire _0_;
   (* init = 1'h0 *)
   (* src = "dut.sv:8.8-8.16" *)
@@ -43,17 +43,17 @@ module top(clock, ctrl, read_o, write_o, ready_o);
   );
   (* \always_ff  = 32'd1 *)
   (* src = "dut.sv:10.2-14.5" *)
-  \$_DFF_P_  ready_reg /* _3_ */ (
-    .C(clock),
-    .D(write),
-    .Q(ready)
-  );
-  (* \always_ff  = 32'd1 *)
-  (* src = "dut.sv:10.2-14.5" *)
-  \$_DFF_P_  write_reg /* _4_ */ (
+  \$_DFF_P_  write_reg /* _3_ */ (
     .C(clock),
     .D(ctrl),
     .Q(write)
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:10.2-14.5" *)
+  \$_DFF_P_  ready_reg /* _4_ */ (
+    .C(clock),
+    .D(write),
+    .Q(ready)
   );
   top_properties properties_inst (
     .clock(clock),

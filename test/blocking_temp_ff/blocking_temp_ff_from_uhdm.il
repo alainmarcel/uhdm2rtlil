@@ -11,8 +11,7 @@ module \blocking_temp_ff
   wire width 32 output 3 \q
   attribute \src "dut.sv:11.13-11.14"
   wire width 32 \t
-  attribute \src "dut.sv:12.2-15.5"
-  wire width 32 $0\q
+  wire width 32 $auto$expression.cpp:3317:import_operation$2
   attribute \src "dut.sv:13.7-13.12"
   cell $add $add$dut.sv:13$3
     parameter \A_SIGNED 0
@@ -22,16 +21,16 @@ module \blocking_temp_ff
     parameter \Y_WIDTH 32
     connect \A \a
     connect \B 1
-    connect \Y $0\q
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:12.2-15.5"
   attribute \always_ff 1
   cell $dff $procdff$5
     parameter \WIDTH 32
     parameter \CLK_POLARITY 1'1
-    connect \D $0\q
-    connect \Q \t
+    connect \D $auto$expression.cpp:3317:import_operation$2
+    connect \Q \q
     connect \CLK \clk
   end
-  connect \q \t
+  connect \t \q
 end

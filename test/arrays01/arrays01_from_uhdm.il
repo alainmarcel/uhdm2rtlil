@@ -15,7 +15,7 @@ module \arrays01
   wire width 4 output 5 \rd_data
   wire width 4 $memwr$\memory$addr$2
   wire width 4 $memwr$\memory$data$3
-  wire $memwr$\memory$en$4
+  wire width 4 $memwr$\memory$en$4
   wire width 4 \memrd_memory_DATA
   attribute \src "dut.sv:8.11-8.17"
   memory width 4 size 16 \memory
@@ -36,17 +36,17 @@ module \arrays01
   cell $mux $procmux$5
     parameter \WIDTH 4
     connect \A 4'x
-    connect \B \wr_data
+    connect \B \addr
     connect \S \we
-    connect \Y $memwr$\memory$data$3
+    connect \Y $memwr$\memory$addr$2
   end
   attribute \src "dut.sv:11.2-12.27"
   cell $mux $procmux$7
     parameter \WIDTH 4
-    connect \A 4'x
-    connect \B \addr
+    connect \A 4'0000
+    connect \B \wr_data
     connect \S \we
-    connect \Y $memwr$\memory$addr$2
+    connect \Y $memwr$\memory$data$3
   end
   attribute \src "dut.sv:11.2-12.27"
   cell $mux $procmux$9
@@ -54,7 +54,7 @@ module \arrays01
     connect \A 1'0
     connect \B 1'1
     connect \S \we
-    connect \Y $memwr$\memory$en$4
+    connect \Y $memwr$\memory$en$4 [0]
   end
   attribute \src "dut.sv:10.1-14.4"
   attribute \always_ff 1
@@ -75,7 +75,8 @@ module \arrays01
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\memory$addr$2
     connect \DATA $memwr$\memory$data$3
-    connect \EN { $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 }
+    connect \EN { $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] }
     connect \CLK \clock
   end
+  connect $memwr$\memory$en$4 [3:1] { $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] $memwr$\memory$en$4 [0] }
 end

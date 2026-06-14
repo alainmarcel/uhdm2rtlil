@@ -18,12 +18,12 @@ module \counter_xpath
   wire width 64 $0\count_cycle
   attribute \src "dut.sv:26.5-42.8"
   wire width 64 $0\count_instr
-  wire width 64 $auto$expression.cpp:3006:import_operation$2
+  wire width 64 $auto$expression.cpp:3317:import_operation$2
   wire width 64 $auto$rtlil.cc:3390:Mux$5
   wire $auto$rtlil.cc:3262:ReduceBool$7
   attribute \src "dut.sv:35.13-35.20"
   wire $logic_not$dut.sv:35.13-35.20$1_Y
-  wire width 64 $auto$expression.cpp:3006:import_operation$8
+  wire width 64 $auto$expression.cpp:3317:import_operation$8
   wire $auto$rtlil.cc:3262:ReduceBool$11
   attribute \src "dut.sv:28.37-28.52"
   cell $add $add$dut.sv:28$3
@@ -34,16 +34,16 @@ module \counter_xpath
     parameter \Y_WIDTH 64
     connect \A \count_cycle
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   cell $mux $mux$dut.sv:28$4
     parameter \WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \B $auto$expression.cpp:3006:import_operation$2
+    connect \B $auto$expression.cpp:3317:import_operation$2
     connect \S \resetn
     connect \Y $auto$rtlil.cc:3390:Mux$5
   end
-  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$6
+  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -67,9 +67,9 @@ module \counter_xpath
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$8
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
-  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$10
+  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$10
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -117,7 +117,7 @@ module \counter_xpath
         switch 1'1
         attribute \src "dut.sv:38.18-41.12"
           case 1'1
-            assign $0\count_instr $auto$expression.cpp:3006:import_operation$8
+            assign $0\count_instr $auto$expression.cpp:3317:import_operation$8
             attribute \src "dut.sv:40.13-40.61"
             switch $auto$rtlil.cc:3262:ReduceBool$11
             attribute \src "dut.sv:40.13-40.61"

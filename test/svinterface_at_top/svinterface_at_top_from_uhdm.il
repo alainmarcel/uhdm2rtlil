@@ -52,6 +52,104 @@ module \TopModule
   connect \passThrough \MyInterfaceInstance.passThrough
   connect \sig_out \MyInterfaceInstance.mysig_out
 end
+attribute \src "dut.sv:99.1-125.10"
+module \SubModule2
+  attribute \src "dut.sv:101.17-101.20"
+  wire input 1 \clk
+  attribute \src "dut.sv:102.17-102.20"
+  wire input 2 \rst
+  attribute \src "dut.sv:116.16-116.54"
+  wire $eq$dut.sv:116$11_Y
+  attribute \src "dut.sv:37.9-37.16"
+  wire input 14 \u_MyInterfaceInSub2.setting
+  attribute \src "dut.sv:38.21-38.34"
+  wire width 4 output 13 \u_MyInterfaceInSub2.other_setting
+  attribute \src "dut.sv:40.15-40.24"
+  wire width 2 input 12 \u_MyInterfaceInSub2.mysig_out
+  attribute \src "dut.sv:42.16-42.27"
+  wire width 16 output 11 \u_MyInterfaceInSub2.passThrough
+  attribute \src "dut.sv:114.16-114.54"
+  wire $eq$dut.sv:114$9_Y
+  attribute \src "dut.sv:37.9-37.16"
+  wire input 10 \u_MyInterfaceFromTopDown.setting
+  attribute \src "dut.sv:38.21-38.34"
+  wire width 3 output 9 \u_MyInterfaceFromTopDown.other_setting
+  attribute \src "dut.sv:40.15-40.24"
+  wire width 2 output 8 \u_MyInterfaceFromTopDown.mysig_out
+  attribute \src "dut.sv:42.16-42.27"
+  wire width 16 output 7 \u_MyInterfaceFromTopDown.passThrough
+  attribute \src "dut.sv:112.11-112.49"
+  wire $eq$dut.sv:112$7_Y
+  attribute \src "dut.sv:37.9-37.16"
+  wire input 6 \u_MyInterfaceInSub3.setting
+  attribute \src "dut.sv:38.21-38.34"
+  wire width 22 output 5 \u_MyInterfaceInSub3.other_setting
+  attribute \src "dut.sv:40.15-40.24"
+  wire width 2 input 4 \u_MyInterfaceInSub3.mysig_out
+  attribute \src "dut.sv:42.16-42.27"
+  wire width 16 output 3 \u_MyInterfaceInSub3.passThrough
+  wire width 22 $procmux$20_Y
+  wire width 22 $procmux$17_Y
+  attribute \src "dut.sv:112.7-119.56"
+  attribute \full_case 1
+  cell $mux $procmux$23
+    parameter \WIDTH 22
+    connect \A $procmux$20_Y
+    connect \B 22'0000000000001111101000
+    connect \S $eq$dut.sv:112$7_Y
+    connect \Y \u_MyInterfaceInSub3.other_setting
+  end
+  attribute \src "dut.sv:112.11-112.49"
+  cell $logic_not $eq$dut.sv:112$8
+    parameter \A_SIGNED 0
+    parameter \Y_WIDTH 1
+    parameter \A_WIDTH 2
+    connect \A \u_MyInterfaceInSub3.mysig_out
+    connect \Y $eq$dut.sv:112$7_Y
+  end
+  attribute \src "dut.sv:114.16-114.54"
+  cell $eq $eq$dut.sv:114$10
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \u_MyInterfaceInSub3.mysig_out
+    connect \B 2'01
+    connect \Y $eq$dut.sv:114$9_Y
+  end
+  attribute \src "dut.sv:116.16-116.54"
+  cell $eq $eq$dut.sv:116$12
+    parameter \A_SIGNED 0
+    parameter \B_SIGNED 0
+    parameter \A_WIDTH 2
+    parameter \B_WIDTH 2
+    parameter \Y_WIDTH 1
+    connect \A \u_MyInterfaceInSub3.mysig_out
+    connect \B 2'10
+    connect \Y $eq$dut.sv:116$11_Y
+  end
+  attribute \src "dut.sv:116.12-119.56"
+  attribute \full_case 1
+  cell $mux $procmux$17
+    parameter \WIDTH 22
+    connect \A 22'0000000000111110100000
+    connect \B 22'0000000000101110111000
+    connect \S $eq$dut.sv:116$11_Y
+    connect \Y $procmux$17_Y
+  end
+  attribute \src "dut.sv:114.12-119.56"
+  attribute \full_case 1
+  cell $mux $procmux$20
+    parameter \WIDTH 22
+    connect \A $procmux$17_Y
+    connect \B 22'0000000000011111010000
+    connect \S $eq$dut.sv:114$9_Y
+    connect \Y $procmux$20_Y
+  end
+  connect \u_MyInterfaceFromTopDown.mysig_out 2'x0
+  connect \u_MyInterfaceInSub2.passThrough 16'1100100001111100
+end
 attribute \src "dut.sv:61.1-97.10"
 module \SubModule1
   attribute \src "dut.sv:62.17-62.20"
@@ -116,7 +214,7 @@ module \SubModule1
   end
   attribute \src "dut.sv:76.7-79.41"
   attribute \full_case 1
-  cell $mux $procmux$23
+  cell $mux $procmux$14
     parameter \WIDTH 2
     connect \A $auto$rtlil.cc:3255:Not$3
     connect \B \sig
@@ -139,102 +237,4 @@ module \SubModule1
   connect \MyInterfaceInstanceInSub.mysig_out \sig
   connect \MyInterfaceInstanceInSub.setting 1'0
   connect \outOther \MyInterfaceInstanceInSub.other_setting
-end
-attribute \src "dut.sv:99.1-125.10"
-module \SubModule2
-  attribute \src "dut.sv:101.17-101.20"
-  wire input 1 \clk
-  attribute \src "dut.sv:102.17-102.20"
-  wire input 2 \rst
-  attribute \src "dut.sv:116.16-116.54"
-  wire $eq$dut.sv:116$11_Y
-  attribute \src "dut.sv:37.9-37.16"
-  wire input 14 \u_MyInterfaceInSub2.setting
-  attribute \src "dut.sv:38.21-38.34"
-  wire width 4 output 13 \u_MyInterfaceInSub2.other_setting
-  attribute \src "dut.sv:40.15-40.24"
-  wire width 2 input 12 \u_MyInterfaceInSub2.mysig_out
-  attribute \src "dut.sv:42.16-42.27"
-  wire width 16 output 11 \u_MyInterfaceInSub2.passThrough
-  attribute \src "dut.sv:114.16-114.54"
-  wire $eq$dut.sv:114$9_Y
-  attribute \src "dut.sv:37.9-37.16"
-  wire input 10 \u_MyInterfaceFromTopDown.setting
-  attribute \src "dut.sv:38.21-38.34"
-  wire width 3 output 9 \u_MyInterfaceFromTopDown.other_setting
-  attribute \src "dut.sv:40.15-40.24"
-  wire width 2 output 8 \u_MyInterfaceFromTopDown.mysig_out
-  attribute \src "dut.sv:42.16-42.27"
-  wire width 16 output 7 \u_MyInterfaceFromTopDown.passThrough
-  attribute \src "dut.sv:112.11-112.49"
-  wire $eq$dut.sv:112$7_Y
-  attribute \src "dut.sv:37.9-37.16"
-  wire input 6 \u_MyInterfaceInSub3.setting
-  attribute \src "dut.sv:38.21-38.34"
-  wire width 22 output 5 \u_MyInterfaceInSub3.other_setting
-  attribute \src "dut.sv:40.15-40.24"
-  wire width 2 input 4 \u_MyInterfaceInSub3.mysig_out
-  attribute \src "dut.sv:42.16-42.27"
-  wire width 16 output 3 \u_MyInterfaceInSub3.passThrough
-  wire width 22 $procmux$17_Y
-  wire width 22 $procmux$14_Y
-  attribute \src "dut.sv:112.7-119.56"
-  attribute \full_case 1
-  cell $mux $procmux$20
-    parameter \WIDTH 22
-    connect \A $procmux$17_Y
-    connect \B 22'0000000000001111101000
-    connect \S $eq$dut.sv:112$7_Y
-    connect \Y \u_MyInterfaceInSub3.other_setting
-  end
-  attribute \src "dut.sv:112.11-112.49"
-  cell $logic_not $eq$dut.sv:112$8
-    parameter \A_SIGNED 0
-    parameter \Y_WIDTH 1
-    parameter \A_WIDTH 2
-    connect \A \u_MyInterfaceInSub3.mysig_out
-    connect \Y $eq$dut.sv:112$7_Y
-  end
-  attribute \src "dut.sv:114.16-114.54"
-  cell $eq $eq$dut.sv:114$10
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \u_MyInterfaceInSub3.mysig_out
-    connect \B 2'01
-    connect \Y $eq$dut.sv:114$9_Y
-  end
-  attribute \src "dut.sv:116.16-116.54"
-  cell $eq $eq$dut.sv:116$12
-    parameter \A_SIGNED 0
-    parameter \B_SIGNED 0
-    parameter \A_WIDTH 2
-    parameter \B_WIDTH 2
-    parameter \Y_WIDTH 1
-    connect \A \u_MyInterfaceInSub3.mysig_out
-    connect \B 2'10
-    connect \Y $eq$dut.sv:116$11_Y
-  end
-  attribute \src "dut.sv:116.12-119.56"
-  attribute \full_case 1
-  cell $mux $procmux$14
-    parameter \WIDTH 22
-    connect \A 22'0000000000111110100000
-    connect \B 22'0000000000101110111000
-    connect \S $eq$dut.sv:116$11_Y
-    connect \Y $procmux$14_Y
-  end
-  attribute \src "dut.sv:114.12-119.56"
-  attribute \full_case 1
-  cell $mux $procmux$17
-    parameter \WIDTH 22
-    connect \A $procmux$14_Y
-    connect \B 22'0000000000011111010000
-    connect \S $eq$dut.sv:114$9_Y
-    connect \Y $procmux$17_Y
-  end
-  connect \u_MyInterfaceFromTopDown.mysig_out 2'x0
-  connect \u_MyInterfaceInSub2.passThrough 16'1100100001111100
 end

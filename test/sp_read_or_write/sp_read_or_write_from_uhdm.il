@@ -22,7 +22,7 @@ module \sp_read_or_write
   wire $auto$opt_dff.cc:251:make_patterns_logic$26
   wire width 4 $memwr$\mem$addr$4
   wire width 8 $memwr$\mem$data$5
-  wire $memwr$\mem$en$6
+  wire width 8 $memwr$\mem$en$6
   wire $auto$rtlil.cc:3255:Not$25
   wire width 8 \memrd_mem_DATA
   attribute \src "dut.sv:12.18-12.21"
@@ -43,15 +43,6 @@ module \sp_read_or_write
   attribute \src "dut.sv:20.3-23.27"
   attribute \full_case 1
   cell $mux $procmux$8
-    parameter \WIDTH 8
-    connect \A 8'x
-    connect \B \wdata_a
-    connect \S \wren_a
-    connect \Y $memwr$\mem$data$5
-  end
-  attribute \src "dut.sv:20.3-23.27"
-  attribute \full_case 1
-  cell $mux $procmux$11
     parameter \WIDTH 4
     connect \A 4'x
     connect \B \addr_a
@@ -74,12 +65,21 @@ module \sp_read_or_write
   end
   attribute \src "dut.sv:20.3-23.27"
   attribute \full_case 1
+  cell $mux $procmux$16
+    parameter \WIDTH 8
+    connect \A 8'00000000
+    connect \B \wdata_a
+    connect \S \wren_a
+    connect \Y $memwr$\mem$data$5
+  end
+  attribute \src "dut.sv:20.3-23.27"
+  attribute \full_case 1
   cell $mux $procmux$19
     parameter \WIDTH 1
     connect \A 1'0
     connect \B 1'1
     connect \S \wren_a
-    connect \Y $memwr$\mem$en$6
+    connect \Y $memwr$\mem$en$6 [0]
   end
   attribute \src "dut.sv:19.2-24.5"
   attribute \always_ff 1
@@ -102,7 +102,8 @@ module \sp_read_or_write
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\mem$addr$4
     connect \DATA $memwr$\mem$data$5
-    connect \EN { $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 $memwr$\mem$en$6 }
+    connect \EN { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
     connect \CLK \clk
   end
+  connect $memwr$\mem$en$6 [7:1] { $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] $memwr$\mem$en$6 [0] }
 end

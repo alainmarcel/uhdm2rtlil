@@ -11,7 +11,7 @@ module \top
   attribute \src "dut.sv:11.52-11.55"
   wire width 8 output 3 \cnt
   wire $print$$display$18$6_EN
-  wire width 8 $auto$expression.cpp:2965:import_operation$2
+  wire width 8 $auto$expression.cpp:3317:import_operation$2
   attribute \src "dut.sv:17.13-17.25"
   wire $eq$dut.sv:17$4_Y
   attribute \src "dut.sv:16.20-16.27"
@@ -23,7 +23,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2965:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   attribute \src "dut.sv:17.13-17.25"
   cell $eq $eq$dut.sv:17$5
@@ -56,7 +56,7 @@ module \top
     parameter \WIDTH 8
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2965:import_operation$2
+    connect \D $auto$expression.cpp:3317:import_operation$2
     connect \Q \cnt
   end
   attribute \src "dut.sv:17.9-18.44"

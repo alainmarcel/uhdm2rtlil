@@ -7,6 +7,7 @@ module \$paramod\cnt\initval=s32'00000000000000000000000000000001 (clock, cnt, d
   (* src = "dut.sv:9.8-9.13" *)
   input clock;
   wire clock;
+  (* init = 4'h1 *)
   (* src = "dut.sv:10.21-10.24" *)
   output [3:0] cnt;
   wire [3:0] cnt;
@@ -139,6 +140,7 @@ module \$paramod\cnt\initval=s32'00000000000000000000000000000010 (clock, cnt, d
   (* src = "dut.sv:9.8-9.13" *)
   input clock;
   wire clock;
+  (* init = 4'h2 *)
   (* src = "dut.sv:10.21-10.24" *)
   output [3:0] cnt;
   wire [3:0] cnt;

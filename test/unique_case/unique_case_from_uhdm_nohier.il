@@ -450,6 +450,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -473,6 +474,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -496,6 +498,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -519,6 +522,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -542,6 +546,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -565,6 +570,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -588,6 +594,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -611,6 +618,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -634,6 +642,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -657,6 +666,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -680,6 +690,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -703,6 +714,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -726,6 +738,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -749,6 +762,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -772,6 +786,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     attribute \src "dut.sv:5.1-8.8"
     attribute \full_case 1
@@ -795,6 +810,7 @@ module \unique_case
         attribute \src "dut.sv:7.4-7.27"
           case 
         end
+      case 
     end
     sync posedge \clock
   end

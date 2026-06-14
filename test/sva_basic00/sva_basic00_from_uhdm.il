@@ -26,7 +26,7 @@ module \top
   end
   attribute \src "dut.sv:9.2-10.67"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0

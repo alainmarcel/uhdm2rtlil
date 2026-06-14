@@ -13,7 +13,7 @@ module \top_properties
   wire input 4 \ready
   attribute \src "dut.sv:22.2-22.62"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$1
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$1
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -28,7 +28,7 @@ module \top_properties
   end
   attribute \src "dut.sv:26.2-26.61"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$2
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$2
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -65,15 +65,15 @@ module \top
   attribute \src "dut.sv:8.29-8.38"
   attribute \init 1'0
   wire \ready
-  attribute \src "dut.sv:10.2-14.5"
-  wire $0\read
+  attribute \src "dut.sv:11.11-11.16"
+  wire $logic_not$dut.sv:11.11-11.16$1_Y
   attribute \src "dut.sv:11.11-11.16"
   cell $logic_not $logic_not$dut.sv:11.11-11.16$1
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
     connect \A \ctrl
-    connect \Y $0\read
+    connect \Y $logic_not$dut.sv:11.11-11.16$1_Y
   end
   cell \top_properties \properties_inst
     connect \clock \clock
@@ -86,7 +86,7 @@ module \top
   cell $dff $procdff$7
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D $0\read
+    connect \D $logic_not$dut.sv:11.11-11.16$1_Y
     connect \Q \read
     connect \CLK \clock
   end
@@ -95,8 +95,8 @@ module \top
   cell $dff $procdff$8
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D \write
-    connect \Q \ready
+    connect \D \ctrl
+    connect \Q \write
     connect \CLK \clock
   end
   attribute \src "dut.sv:10.2-14.5"
@@ -104,8 +104,8 @@ module \top
   cell $dff $procdff$9
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D \ctrl
-    connect \Q \write
+    connect \D \write
+    connect \Q \ready
     connect \CLK \clock
   end
   connect \ready_o \ready

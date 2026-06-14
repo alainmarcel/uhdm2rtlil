@@ -95,7 +95,7 @@ module \act
   wire width 3 signed \tmp8[0]
   attribute \src "dut.v:59.2-59.27"
   wire width 3 $0\tmp8
-  wire signed $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$9
+  wire signed $auto$uhdm2rtlil.cpp:1035:import_module_hierarchy$9
   wire width 2 signed $auto$rtlil.cc:3304:Xor$11
   wire $auto$rtlil.cc:3262:ReduceBool$13
   wire width 3 signed $auto$rtlil.cc:3390:Mux$15
@@ -109,7 +109,7 @@ module \act
     connect \b \o2
   end
   cell \PassThrough \pt3
-    connect \a $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$9
+    connect \a $auto$uhdm2rtlil.cpp:1035:import_module_hierarchy$9
     connect \b \o3
   end
   cell \PassThrough \pt4
@@ -182,37 +182,37 @@ module \act
     connect \out \nay2
   end
   attribute \src "dut.v:47.20-47.25"
-  process $auto$module.cpp:1181:import_continuous_assign$1
+  process $auto$module.cpp:1275:import_continuous_assign$1
     sync always
       update \tmp5a 2'11
   end
   attribute \src "dut.v:48.20-48.25"
-  process $auto$module.cpp:1181:import_continuous_assign$2
+  process $auto$module.cpp:1275:import_continuous_assign$2
     sync always
       update \tmp5b 2'01
   end
   attribute \src "dut.v:51.20-51.25"
-  process $auto$module.cpp:1181:import_continuous_assign$3
+  process $auto$module.cpp:1275:import_continuous_assign$3
     sync always
       update \tmp6a 3'100
   end
   attribute \src "dut.v:52.20-52.25"
-  process $auto$module.cpp:1181:import_continuous_assign$4
+  process $auto$module.cpp:1275:import_continuous_assign$4
     sync always
       update \tmp6b 3'001
   end
   attribute \src "dut.v:55.20-55.24"
-  process $auto$module.cpp:1181:import_continuous_assign$5
+  process $auto$module.cpp:1275:import_continuous_assign$5
     sync always
       update \tmp7 3'011
   end
   attribute \src "dut.v:62.20-62.25"
-  process $auto$module.cpp:1181:import_continuous_assign$6
+  process $auto$module.cpp:1275:import_continuous_assign$6
     sync always
       update \tmp9a 3'100
   end
   attribute \src "dut.v:63.20-63.25"
-  process $auto$module.cpp:1181:import_continuous_assign$7
+  process $auto$module.cpp:1275:import_continuous_assign$7
     sync always
       update \tmp9b 2'11
   end
@@ -225,7 +225,7 @@ module \act
   end
   connect \tmp2 1'1
   connect \tmp4 1'1
-  connect $auto$uhdm2rtlil.cpp:872:import_module_hierarchy$9 1'1
+  connect $auto$uhdm2rtlil.cpp:1035:import_module_hierarchy$9 1'1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.v:75.1-95.10"

@@ -23,7 +23,7 @@ module \local_var_in_always
   wire width 5 $0\credit_cnt
   attribute \src "dut.sv:9.5-17.8"
   wire width 5 $0\dec
-  wire width 5 $auto$expression.cpp:3360:import_operation$6
+  wire width 5 $auto$expression.cpp:3381:import_operation$6
   attribute \src "dut.sv:9.5-17.8"
   attribute \always_ff 1
   attribute \"has_async_reset" 1
@@ -63,7 +63,7 @@ module \local_var_in_always
     parameter \Y_WIDTH 5
     connect \A \credit_cnt
     connect \B $0\dec
-    connect \Y $auto$expression.cpp:3360:import_operation$6
+    connect \Y $auto$expression.cpp:3381:import_operation$6
   end
   attribute \src "dut.sv:15.27-15.78"
   cell $add $add$dut.sv:15$9
@@ -72,7 +72,7 @@ module \local_var_in_always
     parameter \A_WIDTH 5
     parameter \B_WIDTH 5
     parameter \Y_WIDTH 5
-    connect \A $auto$expression.cpp:3360:import_operation$6
+    connect \A $auto$expression.cpp:3381:import_operation$6
     connect \B \credit_return_val
     connect \Y $0\credit_cnt
   end

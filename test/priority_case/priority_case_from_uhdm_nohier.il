@@ -30,6 +30,8 @@ module \priority_case
     attribute \src "dut.sv:22.13-22.27"
       case 3'100
         assign $0\y \c
+      case 
+        assign $0\y 1'x
     end
     sync always
       update \y $0\y

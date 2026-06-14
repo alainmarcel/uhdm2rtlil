@@ -20,8 +20,6 @@ module \initval
   wire width 2 $0\foo[1:0]
   attribute \src "dut.sv:9.3-10.26"
   wire width 2 $0\foo[3:2]
-  attribute \src "dut.sv:12.3-13.21"
-  wire width 4 $0\last_bar
   attribute \src "dut.sv:15.3-16.23"
   wire $0\asdf[3:3]
   attribute \src "dut.sv:17.3-18.24"
@@ -41,7 +39,7 @@ module \initval
   end
   attribute \src "dut.sv:20.3-20.54"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2963:import_module$11
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$11
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -57,9 +55,8 @@ module \initval
   attribute \src "dut.sv:12.3-13.21"
   attribute \always_ff 1
   process $proc$dut.sv:12$6
-    assign $0\last_bar \bar
     sync posedge \clk
-      update \last_bar $0\last_bar
+      update \last_bar \bar
   end
   attribute \src "dut.sv:15.3-16.23"
   attribute \always_ff 1

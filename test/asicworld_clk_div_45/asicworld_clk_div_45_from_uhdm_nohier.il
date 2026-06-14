@@ -36,7 +36,7 @@ module \clk_div_45
   wire $auto$rtlil.cc:3322:LogicAnd$21
   wire $auto$rtlil.cc:3323:LogicOr$23
   wire $auto$rtlil.cc:3255:Not$25
-  wire width 4 $auto$expression.cpp:2965:import_operation$26
+  wire width 4 $auto$expression.cpp:3317:import_operation$26
   attribute \src "dut.sv:41.1-50.4"
   wire width 4 $0\counter2[3:0]
   attribute \src "dut.sv:41.1-50.4"
@@ -52,7 +52,7 @@ module \clk_div_45
   wire $auto$rtlil.cc:3322:LogicAnd$40
   wire $auto$rtlil.cc:3323:LogicOr$42
   wire $auto$rtlil.cc:3255:Not$44
-  wire width 4 $auto$expression.cpp:2965:import_operation$45
+  wire width 4 $auto$expression.cpp:3317:import_operation$45
   cell $lt $lt$dut.sv:52$1
     parameter \A_SIGNED 0
     parameter \B_SIGNED 0
@@ -182,7 +182,7 @@ module \clk_div_45
     parameter \Y_WIDTH 4
     connect \A \counter1
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2965:import_operation$26
+    connect \Y $auto$expression.cpp:3317:import_operation$26
   end
   attribute \src "dut.sv:42.5-42.19"
   cell $eq $eq$dut.sv:42$30
@@ -272,7 +272,7 @@ module \clk_div_45
     parameter \Y_WIDTH 4
     connect \A \counter2
     connect \B 4'0001
-    connect \Y $auto$expression.cpp:2965:import_operation$45
+    connect \Y $auto$expression.cpp:3317:import_operation$45
   end
   attribute \src "dut.sv:30.1-39.4"
   attribute \always_ff 1
@@ -295,7 +295,7 @@ module \clk_div_45
             assign $0\toggle1[0:0] $auto$rtlil.cc:3255:Not$25
         attribute \src "dut.sv:34.10-39.4"
           case 
-            assign $0\counter1[3:0] $auto$expression.cpp:2965:import_operation$26
+            assign $0\counter1[3:0] $auto$expression.cpp:3317:import_operation$26
         end
     end
     sync posedge \clk_in
@@ -323,7 +323,7 @@ module \clk_div_45
             assign $0\toggle2[0:0] $auto$rtlil.cc:3255:Not$44
         attribute \src "dut.sv:45.10-50.4"
           case 
-            assign $0\counter2[3:0] $auto$expression.cpp:2965:import_operation$45
+            assign $0\counter2[3:0] $auto$expression.cpp:3317:import_operation$45
         end
     end
     sync negedge \clk_in

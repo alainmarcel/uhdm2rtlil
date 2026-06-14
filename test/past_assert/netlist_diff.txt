@@ -33,17 +33,17 @@
  );
 +(* \always_ff  = 32'd1 *)
 +(* src = "dut.sv:28.5-31.8" *)
-+\$_DFF_P_  f_past_valid_reg /* _2_ */ (
-+.C(i_clk),
-+.D(1'h1),
-+.Q(f_past_valid)
-+);
-+(* \always_ff  = 32'd1 *)
-+(* src = "dut.sv:28.5-31.8" *)
-+\$_DFF_P_  o_w_reg /* _3_ */ (
++\$_DFF_P_  o_w_reg /* _2_ */ (
 +.C(i_clk),
 +.D(i_w),
 +.Q(o_w)
++);
++(* \always_ff  = 32'd1 *)
++(* src = "dut.sv:28.5-31.8" *)
++\$_DFF_P_  f_past_valid_reg /* _3_ */ (
++.C(i_clk),
++.D(1'h1),
++.Q(f_past_valid)
 +);
  (* keep = 32'd1 *)
 -(* src = "dut.sv:37.9-37.20" *)

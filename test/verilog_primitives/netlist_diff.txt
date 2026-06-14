@@ -8,19 +8,3 @@
  module verilog_primitives(in1, in2, in3, out_buf0, out_buf1, out_buf2, out_buf3, out_buf4, out_not0, out_not1, out_not2, out_xnor);
  (* src = "dut.sv:2.13-2.16" *)
  input in1;
-@@ -44,12 +44,12 @@
- .Y(out_not0)
- );
- \$_XOR_  _2_ (
--.A(in3),
--.B(in2),
-+.A(in2),
-+.B(in3),
- .Y(_0_)
- );
- \$_XNOR_  _3_ (
--.A(in1),
-+.A(out_not0),
- .B(_0_),
- .Y(out_xnor)
- );

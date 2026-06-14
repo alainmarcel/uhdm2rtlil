@@ -24,7 +24,7 @@ module \counter_ifelse_chain
   wire width 32 input 8 \irq_mask
   attribute \src "dut.sv:33.24-33.35"
   wire width 64 output 9 \count_instr
-  wire width 64 $auto$expression.cpp:3006:import_operation$18
+  wire width 64 $auto$expression.cpp:3317:import_operation$18
   attribute \src "dut.sv:35.5-48.8"
   attribute \always_ff 1
   cell $sdffe $auto$ff.cc:337:slice$30
@@ -36,7 +36,7 @@ module \counter_ifelse_chain
     connect \CLK \clk
     connect \EN \decoder_trigger
     connect \SRST \resetn
-    connect \D $auto$expression.cpp:3006:import_operation$18
+    connect \D $auto$expression.cpp:3317:import_operation$18
     connect \Q \count_instr
   end
   attribute \src "dut.sv:45.32-45.47"
@@ -48,6 +48,6 @@ module \counter_ifelse_chain
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$18
+    connect \Y $auto$expression.cpp:3317:import_operation$18
   end
 end

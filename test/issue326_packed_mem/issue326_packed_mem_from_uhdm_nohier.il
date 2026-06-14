@@ -68,8 +68,8 @@ module \noc_tni_buffer
   wire width 8 $0\credit_return_src
   attribute \src "dut.sv:46.13-46.19"
   wire $logic_not$dut.sv:46.13-46.19$3_Y
-  wire width 5 $auto$expression.cpp:3296:import_operation$21
-  wire width 5 $auto$expression.cpp:3296:import_operation$23
+  wire width 5 $auto$expression.cpp:3317:import_operation$21
+  wire width 5 $auto$expression.cpp:3317:import_operation$23
   attribute \src "dut.sv:25.28-25.31"
   memory width 64 size 16 \mem
   cell $ne $ne$dut.sv:32$1
@@ -200,7 +200,7 @@ module \noc_tni_buffer
     parameter \Y_WIDTH 5
     connect \A \write_ptr
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:3296:import_operation$21
+    connect \Y $auto$expression.cpp:3317:import_operation$21
   end
   attribute \src "dut.sv:57.29-57.44"
   cell $add $add$dut.sv:57$24
@@ -211,7 +211,7 @@ module \noc_tni_buffer
     parameter \Y_WIDTH 5
     connect \A \read_ptr
     connect \B 5'00001
-    connect \Y $auto$expression.cpp:3296:import_operation$23
+    connect \Y $auto$expression.cpp:3317:import_operation$23
   end
   attribute \src "dut.sv:45.5-64.8"
   attribute \always_ff 1
@@ -240,7 +240,7 @@ module \noc_tni_buffer
             assign $memwr$\mem$addr$18 \write_ptr [3:0]
             assign $memwr$\mem$data$19 \rx_payload
             assign $memwr$\mem$en$20 64'1111111111111111111111111111111111111111111111111111111111111111
-            assign $0\write_ptr $auto$expression.cpp:3296:import_operation$21
+            assign $0\write_ptr $auto$expression.cpp:3317:import_operation$21
         attribute \src "dut.sv:52.13-55.16"
           case 
         end
@@ -248,7 +248,7 @@ module \noc_tni_buffer
         switch \pop
         attribute \src "dut.sv:56.13-62.16"
           case 1'1
-            assign $0\read_ptr $auto$expression.cpp:3296:import_operation$23
+            assign $0\read_ptr $auto$expression.cpp:3317:import_operation$23
             assign $0\credit_return 1'1
             assign $0\credit_return_src \depack_payload [52:45]
         attribute \src "dut.sv:56.13-62.16"

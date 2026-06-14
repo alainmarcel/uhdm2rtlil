@@ -28,8 +28,8 @@ module \local_var_in_always
   wire $logic_not$dut.sv:10.13-10.19$1_Y
   wire $auto$rtlil.cc:3322:LogicAnd$3
   wire width 5 $auto$rtlil.cc:3390:Mux$5
-  wire width 5 $auto$expression.cpp:3360:import_operation$6
-  wire width 5 $auto$expression.cpp:3296:import_operation$8
+  wire width 5 $auto$expression.cpp:3381:import_operation$6
+  wire width 5 $auto$expression.cpp:3317:import_operation$8
   attribute \src "dut.sv:10.13-10.19"
   cell $logic_not $logic_not$dut.sv:10.13-10.19$1
     parameter \A_SIGNED 0
@@ -64,7 +64,7 @@ module \local_var_in_always
     parameter \Y_WIDTH 5
     connect \A \credit_cnt
     connect \B $0\dec
-    connect \Y $auto$expression.cpp:3360:import_operation$6
+    connect \Y $auto$expression.cpp:3381:import_operation$6
   end
   attribute \src "dut.sv:15.27-15.78"
   cell $add $add$dut.sv:15$9
@@ -73,9 +73,9 @@ module \local_var_in_always
     parameter \A_WIDTH 5
     parameter \B_WIDTH 5
     parameter \Y_WIDTH 5
-    connect \A $auto$expression.cpp:3360:import_operation$6
+    connect \A $auto$expression.cpp:3381:import_operation$6
     connect \B \credit_return_val
-    connect \Y $auto$expression.cpp:3296:import_operation$8
+    connect \Y $auto$expression.cpp:3317:import_operation$8
   end
   attribute \src "dut.sv:9.5-17.8"
   attribute \always_ff 1
@@ -91,7 +91,7 @@ module \local_var_in_always
     attribute \src "dut.sv:12.18-16.12"
       case 
         assign $0\dec $auto$rtlil.cc:3390:Mux$5
-        assign $0\credit_cnt $auto$expression.cpp:3296:import_operation$8
+        assign $0\credit_cnt $auto$expression.cpp:3317:import_operation$8
     end
     sync posedge \clk
       update \credit_cnt $0\credit_cnt

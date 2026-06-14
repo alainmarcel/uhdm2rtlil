@@ -6,6 +6,7 @@ module gen_test7();
   wire [2:0] \cond.sub_out1 ;
   wire [2:0] \cond.sub_out2 ;
   wire [2:0] \cond.sub_out3 ;
+  wire [31:0] \init.x ;
   (* src = "dut.sv:2.12-2.16" *)
   wire [2:0] out1;
   (* src = "dut.sv:3.12-3.16" *)
@@ -15,6 +16,7 @@ module gen_test7();
   (* src = "dut.sv:17.23-17.24" *)
   wire [31:0] \proc.x ;
   assign \proc.x  = 32'd2;
+  assign \init.x  = 32'd4;
   assign \cond.sub_out3  = 3'h7;
   assign \cond.sub_out2  = 3'h2;
   assign \cond.sub_out1  = 3'h4;

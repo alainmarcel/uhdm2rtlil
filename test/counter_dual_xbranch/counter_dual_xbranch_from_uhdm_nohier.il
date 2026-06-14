@@ -33,7 +33,7 @@ module \counter_dual_xbranch
   wire width 64 $0\count_cycle
   attribute \src "dut.sv:31.5-59.8"
   wire width 64 $0\count_instr
-  wire width 64 $auto$expression.cpp:3006:import_operation$2
+  wire width 64 $auto$expression.cpp:3317:import_operation$2
   wire width 64 $auto$rtlil.cc:3390:Mux$5
   wire $auto$rtlil.cc:3262:ReduceBool$7
   attribute \src "dut.sv:40.13-40.20"
@@ -50,7 +50,7 @@ module \counter_dual_xbranch
   wire $auto$rtlil.cc:3322:LogicAnd$19
   wire $auto$rtlil.cc:3323:LogicOr$21
   wire $auto$rtlil.cc:3322:LogicAnd$23
-  wire width 64 $auto$expression.cpp:3006:import_operation$24
+  wire width 64 $auto$expression.cpp:3317:import_operation$24
   wire $auto$rtlil.cc:3262:ReduceBool$27
   attribute \src "dut.sv:33.37-33.52"
   cell $add $add$dut.sv:33$3
@@ -61,16 +61,16 @@ module \counter_dual_xbranch
     parameter \Y_WIDTH 64
     connect \A \count_cycle
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   cell $mux $mux$dut.sv:33$4
     parameter \WIDTH 64
     connect \A 64'0000000000000000000000000000000000000000000000000000000000000000
-    connect \B $auto$expression.cpp:3006:import_operation$2
+    connect \B $auto$expression.cpp:3317:import_operation$2
     connect \S \resetn
     connect \Y $auto$rtlil.cc:3390:Mux$5
   end
-  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$6
+  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -186,9 +186,9 @@ module \counter_dual_xbranch
     parameter \Y_WIDTH 64
     connect \A \count_instr
     connect \B 64'0000000000000000000000000000000000000000000000000000000000000001
-    connect \Y $auto$expression.cpp:3006:import_operation$24
+    connect \Y $auto$expression.cpp:3317:import_operation$24
   end
-  cell $reduce_bool $auto$process.cpp:9237:import_statement_comb$26
+  cell $reduce_bool $auto$process.cpp:10343:import_statement_comb$26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 64
     parameter \Y_WIDTH 1
@@ -252,7 +252,7 @@ module \counter_dual_xbranch
                     switch 1'1
                     attribute \src "dut.sv:51.25-54.28"
                       case 1'1
-                        assign $0\count_instr $auto$expression.cpp:3006:import_operation$24
+                        assign $0\count_instr $auto$expression.cpp:3317:import_operation$24
                         attribute \src "dut.sv:53.29-53.77"
                         switch $auto$rtlil.cc:3262:ReduceBool$27
                         attribute \src "dut.sv:53.29-53.77"

@@ -16,6 +16,9 @@ module \gen_test7
   wire width 3 \cond.sub_out1
   wire width 3 \cond.sub_out2
   wire width 3 \cond.sub_out3
+  attribute \unused_bits "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31"
+  attribute \init 4
+  wire width 32 \init.x
   attribute \src "dut.sv:17.23-17.24"
   wire width 32 \proc.x
   connect \proc.x 2

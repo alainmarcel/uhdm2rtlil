@@ -39,7 +39,7 @@ module \r5p_gpr
   wire width 32 \t_rs2
   wire $auto$rtlil.cc:3259:ReduceOr$2
   wire $auto$rtlil.cc:3303:Or$4
-  wire $memwr$\gpr$en$10
+  wire width 32 $memwr$\gpr$en$10
   wire width 32 \memrd_gpr_DATA
   wire width 32 \memrd_gpr_DATA_1
   wire width 5 $memwr$\gpr$addr$8
@@ -103,14 +103,6 @@ module \r5p_gpr
   end
   attribute \src "dut.sv:64.3-64.31"
   cell $mux $procmux$11
-    parameter \WIDTH 32
-    connect \A 32'x
-    connect \B \d_rd
-    connect \S \wen
-    connect \Y $memwr$\gpr$data$9
-  end
-  attribute \src "dut.sv:64.3-64.31"
-  cell $mux $procmux$13
     parameter \WIDTH 5
     connect \A 5'x
     connect \B \a_rd
@@ -118,12 +110,20 @@ module \r5p_gpr
     connect \Y $memwr$\gpr$addr$8
   end
   attribute \src "dut.sv:64.3-64.31"
+  cell $mux $procmux$13
+    parameter \WIDTH 32
+    connect \A 0
+    connect \B \d_rd
+    connect \S \wen
+    connect \Y $memwr$\gpr$data$9
+  end
+  attribute \src "dut.sv:64.3-64.31"
   cell $mux $procmux$15
     parameter \WIDTH 1
     connect \A 1'0
     connect \B 1'1
     connect \S \wen
-    connect \Y $memwr$\gpr$en$10
+    connect \Y $memwr$\gpr$en$10 [0]
   end
   cell $memwr_v2 $auto$proc_memwr.cc:45:proc_memwr$17
     parameter \MEMID "\\gpr"
@@ -135,9 +135,10 @@ module \r5p_gpr
     parameter \CLK_POLARITY 1'1
     connect \ADDR $memwr$\gpr$addr$8
     connect \DATA $memwr$\gpr$data$9
-    connect \EN { $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 $memwr$\gpr$en$10 }
+    connect \EN { $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] }
     connect \CLK \clk
   end
+  connect $memwr$\gpr$en$10 [31:1] { $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] $memwr$\gpr$en$10 [0] }
   connect \t_rs2 \memrd_gpr_DATA_1
   connect \t_rs1 \memrd_gpr_DATA
   connect \d_rs2 \memrd_gpr_DATA_1

@@ -44,45 +44,45 @@ module \unbased_unsized
   wire width 64 \o15
   attribute \src "dut.sv:13.24-13.27"
   wire width 64 \o16
-  wire width 64 $auto$module.cpp:1124:import_continuous_assign$1
-  wire width 64 $auto$module.cpp:1124:import_continuous_assign$3
+  wire width 64 $auto$module.cpp:1218:import_continuous_assign$1
+  wire width 64 $auto$module.cpp:1218:import_continuous_assign$3
   wire $auto$rtlil.cc:3311:Eqx$7
-  wire $auto$process.cpp:111:build_check_cell$8
+  wire $auto$process.cpp:174:build_check_cell$8
   wire $auto$rtlil.cc:3311:Eqx$11
-  wire $auto$process.cpp:111:build_check_cell$12
+  wire $auto$process.cpp:174:build_check_cell$12
   wire $auto$rtlil.cc:3311:Eqx$15
-  wire $auto$process.cpp:111:build_check_cell$16
+  wire $auto$process.cpp:174:build_check_cell$16
   wire $auto$rtlil.cc:3311:Eqx$19
-  wire $auto$process.cpp:111:build_check_cell$20
+  wire $auto$process.cpp:174:build_check_cell$20
   wire $auto$rtlil.cc:3311:Eqx$23
-  wire $auto$process.cpp:111:build_check_cell$24
+  wire $auto$process.cpp:174:build_check_cell$24
   wire $auto$rtlil.cc:3311:Eqx$27
-  wire $auto$process.cpp:111:build_check_cell$28
+  wire $auto$process.cpp:174:build_check_cell$28
   wire $auto$rtlil.cc:3311:Eqx$31
-  wire $auto$process.cpp:111:build_check_cell$32
+  wire $auto$process.cpp:174:build_check_cell$32
   wire $auto$rtlil.cc:3311:Eqx$35
-  wire $auto$process.cpp:111:build_check_cell$36
+  wire $auto$process.cpp:174:build_check_cell$36
   wire $auto$rtlil.cc:3311:Eqx$39
-  wire $auto$process.cpp:111:build_check_cell$40
+  wire $auto$process.cpp:174:build_check_cell$40
   wire $auto$rtlil.cc:3311:Eqx$43
-  wire $auto$process.cpp:111:build_check_cell$44
+  wire $auto$process.cpp:174:build_check_cell$44
   wire $auto$rtlil.cc:3311:Eqx$47
-  wire $auto$process.cpp:111:build_check_cell$48
+  wire $auto$process.cpp:174:build_check_cell$48
   wire $auto$rtlil.cc:3311:Eqx$51
-  wire $auto$process.cpp:111:build_check_cell$52
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$2
+  wire $auto$process.cpp:174:build_check_cell$52
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'x
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$1
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$1
   end
-  cell $pos $auto$module.cpp:1125:import_continuous_assign$4
+  cell $pos $auto$module.cpp:1219:import_continuous_assign$4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 3
     parameter \Y_WIDTH 64
     connect \A 3'zzz
-    connect \Y $auto$module.cpp:1124:import_continuous_assign$3
+    connect \Y $auto$module.cpp:1218:import_continuous_assign$3
   end
   cell $eqx $eqx$dut.sv:27$6
     parameter \A_SIGNED 0
@@ -96,7 +96,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:27.9-27.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$9
+  cell $check $auto$process.cpp:184:build_check_cell$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -106,7 +106,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$7
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$8
+    connect \EN $auto$process.cpp:174:build_check_cell$8
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:28$10
@@ -121,7 +121,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:28.9-28.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$13
+  cell $check $auto$process.cpp:184:build_check_cell$13
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -131,7 +131,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$11
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$12
+    connect \EN $auto$process.cpp:174:build_check_cell$12
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:29$14
@@ -146,7 +146,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:29.9-29.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$17
+  cell $check $auto$process.cpp:184:build_check_cell$17
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -156,7 +156,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$15
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$16
+    connect \EN $auto$process.cpp:174:build_check_cell$16
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:30$18
@@ -171,7 +171,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:30.9-30.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$21
+  cell $check $auto$process.cpp:184:build_check_cell$21
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -181,7 +181,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$19
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$20
+    connect \EN $auto$process.cpp:174:build_check_cell$20
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:31$22
@@ -196,7 +196,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:31.9-31.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$25
+  cell $check $auto$process.cpp:184:build_check_cell$25
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -206,7 +206,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$23
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$24
+    connect \EN $auto$process.cpp:174:build_check_cell$24
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:32$26
@@ -221,7 +221,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:32.9-32.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$29
+  cell $check $auto$process.cpp:184:build_check_cell$29
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -231,7 +231,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$27
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$28
+    connect \EN $auto$process.cpp:174:build_check_cell$28
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:33$30
@@ -246,7 +246,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:33.9-33.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$33
+  cell $check $auto$process.cpp:184:build_check_cell$33
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -256,7 +256,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$31
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$32
+    connect \EN $auto$process.cpp:174:build_check_cell$32
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:34$34
@@ -271,7 +271,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:34.9-34.42"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$37
+  cell $check $auto$process.cpp:184:build_check_cell$37
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -281,7 +281,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$35
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$36
+    connect \EN $auto$process.cpp:174:build_check_cell$36
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:35$38
@@ -296,7 +296,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:35.9-35.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$41
+  cell $check $auto$process.cpp:184:build_check_cell$41
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -306,7 +306,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$39
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$40
+    connect \EN $auto$process.cpp:174:build_check_cell$40
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:36$42
@@ -321,7 +321,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:36.9-36.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$45
+  cell $check $auto$process.cpp:184:build_check_cell$45
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -331,7 +331,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$43
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$44
+    connect \EN $auto$process.cpp:174:build_check_cell$44
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:37$46
@@ -346,7 +346,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:37.9-37.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$49
+  cell $check $auto$process.cpp:184:build_check_cell$49
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -356,7 +356,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$47
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$48
+    connect \EN $auto$process.cpp:174:build_check_cell$48
     connect \TRG { }
   end
   cell $eqx $eqx$dut.sv:38$50
@@ -371,7 +371,7 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:38.9-38.38"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$53
+  cell $check $auto$process.cpp:184:build_check_cell$53
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -381,7 +381,7 @@ module \unbased_unsized
     parameter \TRG_WIDTH 0
     connect \A $auto$rtlil.cc:3311:Eqx$51
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$52
+    connect \EN $auto$process.cpp:174:build_check_cell$52
     connect \TRG { }
   end
   cell \pass_through \pt09
@@ -402,30 +402,30 @@ module \unbased_unsized
   end
   attribute \src "dut.sv:26.5-39.8"
   process $proc$dut.sv:26$5
-    assign $auto$process.cpp:111:build_check_cell$8 1'0
-    assign $auto$process.cpp:111:build_check_cell$12 1'0
-    assign $auto$process.cpp:111:build_check_cell$16 1'0
-    assign $auto$process.cpp:111:build_check_cell$20 1'0
-    assign $auto$process.cpp:111:build_check_cell$24 1'0
-    assign $auto$process.cpp:111:build_check_cell$28 1'0
-    assign $auto$process.cpp:111:build_check_cell$32 1'0
-    assign $auto$process.cpp:111:build_check_cell$36 1'0
-    assign $auto$process.cpp:111:build_check_cell$40 1'0
-    assign $auto$process.cpp:111:build_check_cell$44 1'0
-    assign $auto$process.cpp:111:build_check_cell$48 1'0
-    assign $auto$process.cpp:111:build_check_cell$52 1'0
-    assign $auto$process.cpp:111:build_check_cell$8 1'1
-    assign $auto$process.cpp:111:build_check_cell$12 1'1
-    assign $auto$process.cpp:111:build_check_cell$16 1'1
-    assign $auto$process.cpp:111:build_check_cell$20 1'1
-    assign $auto$process.cpp:111:build_check_cell$24 1'1
-    assign $auto$process.cpp:111:build_check_cell$28 1'1
-    assign $auto$process.cpp:111:build_check_cell$32 1'1
-    assign $auto$process.cpp:111:build_check_cell$36 1'1
-    assign $auto$process.cpp:111:build_check_cell$40 1'1
-    assign $auto$process.cpp:111:build_check_cell$44 1'1
-    assign $auto$process.cpp:111:build_check_cell$48 1'1
-    assign $auto$process.cpp:111:build_check_cell$52 1'1
+    assign $auto$process.cpp:174:build_check_cell$8 1'0
+    assign $auto$process.cpp:174:build_check_cell$12 1'0
+    assign $auto$process.cpp:174:build_check_cell$16 1'0
+    assign $auto$process.cpp:174:build_check_cell$20 1'0
+    assign $auto$process.cpp:174:build_check_cell$24 1'0
+    assign $auto$process.cpp:174:build_check_cell$28 1'0
+    assign $auto$process.cpp:174:build_check_cell$32 1'0
+    assign $auto$process.cpp:174:build_check_cell$36 1'0
+    assign $auto$process.cpp:174:build_check_cell$40 1'0
+    assign $auto$process.cpp:174:build_check_cell$44 1'0
+    assign $auto$process.cpp:174:build_check_cell$48 1'0
+    assign $auto$process.cpp:174:build_check_cell$52 1'0
+    assign $auto$process.cpp:174:build_check_cell$8 1'1
+    assign $auto$process.cpp:174:build_check_cell$12 1'1
+    assign $auto$process.cpp:174:build_check_cell$16 1'1
+    assign $auto$process.cpp:174:build_check_cell$20 1'1
+    assign $auto$process.cpp:174:build_check_cell$24 1'1
+    assign $auto$process.cpp:174:build_check_cell$28 1'1
+    assign $auto$process.cpp:174:build_check_cell$32 1'1
+    assign $auto$process.cpp:174:build_check_cell$36 1'1
+    assign $auto$process.cpp:174:build_check_cell$40 1'1
+    assign $auto$process.cpp:174:build_check_cell$44 1'1
+    assign $auto$process.cpp:174:build_check_cell$48 1'1
+    assign $auto$process.cpp:174:build_check_cell$52 1'1
     sync always
   end
   connect \o01 64'0000000000000000000000000000000000000000000000000000000000000000
@@ -434,6 +434,6 @@ module \unbased_unsized
   connect \o04 64'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
   connect \o05 64'0000000000000000000000000000000000000000000000000000000000000000
   connect \o06 64'0000000000000000000000000000000000000000000000000000000000000111
-  connect \o07 $auto$module.cpp:1124:import_continuous_assign$1
-  connect \o08 $auto$module.cpp:1124:import_continuous_assign$3
+  connect \o07 $auto$module.cpp:1218:import_continuous_assign$1
+  connect \o08 $auto$module.cpp:1218:import_continuous_assign$3
 end

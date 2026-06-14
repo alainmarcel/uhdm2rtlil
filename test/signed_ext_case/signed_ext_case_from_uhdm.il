@@ -19,14 +19,14 @@ module \top
   wire width 8 output 7 \y
   attribute \src "dut.sv:11.1-24.4"
   wire width 8 $0\y
-  wire width 8 $auto$expression.cpp:3548:import_operation$2
-  wire width 8 $auto$expression.cpp:3548:import_operation$4
-  wire width 8 $auto$expression.cpp:3548:import_operation$6
-  wire width 8 $auto$expression.cpp:3548:import_operation$8
-  wire width 8 $auto$expression.cpp:3548:import_operation$10
-  wire width 8 $auto$expression.cpp:3510:import_operation$12
-  wire width 8 signed $auto$expression.cpp:3092:import_operation$14
-  wire width 8 $auto$expression.cpp:3092:import_operation$16
+  wire width 8 $auto$expression.cpp:3547:import_operation$2
+  wire width 8 $auto$expression.cpp:3547:import_operation$4
+  wire width 8 $auto$expression.cpp:3547:import_operation$6
+  wire width 8 $auto$expression.cpp:3547:import_operation$8
+  wire width 8 $auto$expression.cpp:3547:import_operation$10
+  wire width 8 $auto$expression.cpp:3509:import_operation$12
+  wire width 8 signed $auto$expression.cpp:3103:import_operation$14
+  wire width 8 $auto$expression.cpp:3103:import_operation$16
   wire $procmux$19_CMP
   wire $auto$opt_dff.cc:234:make_patterns_logic$31
   wire $procmux$20_CMP
@@ -47,7 +47,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$2
+    connect \Y $auto$expression.cpp:3547:import_operation$2
   end
   attribute \src "dut.sv:14.17-14.26"
   cell $sshr $sshr$dut.sv:14$5
@@ -58,7 +58,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$4
+    connect \Y $auto$expression.cpp:3547:import_operation$4
   end
   attribute \src "dut.sv:15.17-15.26"
   cell $shr $shr$dut.sv:15$7
@@ -69,7 +69,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \s2
-    connect \Y $auto$expression.cpp:3548:import_operation$6
+    connect \Y $auto$expression.cpp:3547:import_operation$6
   end
   attribute \src "dut.sv:16.17-16.26"
   cell $sshr $sshr$dut.sv:16$9
@@ -80,7 +80,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \s2
-    connect \Y $auto$expression.cpp:3548:import_operation$8
+    connect \Y $auto$expression.cpp:3547:import_operation$8
   end
   attribute \src "dut.sv:17.17-17.26"
   cell $shr $shr$dut.sv:17$11
@@ -91,7 +91,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \u1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3548:import_operation$10
+    connect \Y $auto$expression.cpp:3547:import_operation$10
   end
   attribute \src "dut.sv:18.17-18.26"
   cell $shl $shl$dut.sv:18$13
@@ -102,7 +102,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \s1
     connect \B \u2
-    connect \Y $auto$expression.cpp:3510:import_operation$12
+    connect \Y $auto$expression.cpp:3509:import_operation$12
   end
   attribute \src "dut.sv:20.17-20.20"
   cell $neg $neg$dut.sv:20$15
@@ -110,7 +110,7 @@ module \top
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
     connect \A \s1
-    connect \Y $auto$expression.cpp:3092:import_operation$14
+    connect \Y $auto$expression.cpp:3103:import_operation$14
   end
   attribute \src "dut.sv:21.17-21.20"
   cell $neg $neg$dut.sv:21$17
@@ -118,7 +118,7 @@ module \top
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 8
     connect \A \u1
-    connect \Y $auto$expression.cpp:3092:import_operation$16
+    connect \Y $auto$expression.cpp:3103:import_operation$16
   end
   attribute \src "dut.sv:22.9-22.21|dut.sv:12.5-23.12"
   cell $eq $procmux$19_CMP0
@@ -136,7 +136,7 @@ module \top
     parameter \WIDTH 8
     parameter \S_WIDTH 10
     connect \A 8'x
-    connect \B { $auto$expression.cpp:3548:import_operation$2 $auto$expression.cpp:3548:import_operation$4 $auto$expression.cpp:3548:import_operation$6 $auto$expression.cpp:3548:import_operation$8 $auto$expression.cpp:3548:import_operation$10 $auto$expression.cpp:3510:import_operation$12 \s1 [3] \s1 [3] \s1 [3] \s1 [3] \s1 $auto$expression.cpp:3092:import_operation$14 $auto$expression.cpp:3092:import_operation$16 4'0000 \u1 }
+    connect \B { $auto$expression.cpp:3547:import_operation$2 $auto$expression.cpp:3547:import_operation$4 $auto$expression.cpp:3547:import_operation$6 $auto$expression.cpp:3547:import_operation$8 $auto$expression.cpp:3547:import_operation$10 $auto$expression.cpp:3509:import_operation$12 \s1 [3] \s1 [3] \s1 [3] \s1 [3] \s1 $auto$expression.cpp:3103:import_operation$14 $auto$expression.cpp:3103:import_operation$16 4'0000 \u1 }
     connect \S { $procmux$28_CMP $procmux$27_CMP $procmux$26_CMP $procmux$25_CMP $procmux$24_CMP $procmux$23_CMP $procmux$22_CMP $procmux$21_CMP $procmux$20_CMP $procmux$19_CMP }
     connect \Y $0\y
   end

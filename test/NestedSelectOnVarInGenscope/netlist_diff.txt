@@ -1,0 +1,45 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -9,36 +9,28 @@
+ wire o;
+ assign o = data_i;
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:5.1-13.10" *)
++(* top =  1  *)
+ module top(o);
+ (* src = "dut.sv:5.31-5.32" *)
+ output [3:0] o;
+ wire [3:0] o;
+-(* src = "dut.sv:6.21-6.27" *)
++(* src = "dut.sv:6.21-6.34" *)
+ wire [3:0] data_i;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:8.11-11.8" *)
++(* src = "dut.sv:8.7-11.9" *)
+ sub \gen_sbox_j[0].u_sub  (
+-.data_i(1'h0),
+ .o(o[0])
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:8.11-11.8" *)
++(* src = "dut.sv:8.7-11.9" *)
+ sub \gen_sbox_j[1].u_sub  (
+-.data_i(1'h1),
+ .o(o[1])
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:8.11-11.8" *)
++(* src = "dut.sv:8.7-11.9" *)
+ sub \gen_sbox_j[2].u_sub  (
+-.data_i(1'h0),
+ .o(o[2])
+ );
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:8.11-11.8" *)
++(* src = "dut.sv:8.7-11.9" *)
+ sub \gen_sbox_j[3].u_sub  (
+-.data_i(1'h1),
+ .o(o[3])
+ );
+ assign data_i = 4'ha;

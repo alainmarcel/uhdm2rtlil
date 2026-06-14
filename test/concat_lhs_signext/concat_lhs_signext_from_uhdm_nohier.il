@@ -12,16 +12,16 @@ module \concat_lhs_signext
   wire width 32 output 3 \y
   attribute \src "dut.sv:15.5-17.35"
   wire width 32 $0\y
-  wire width 21 signed $auto$expression.cpp:1606:import_expression$4
+  wire width 21 signed $auto$expression.cpp:1642:import_expression$4
   attribute \src "dut.sv:14.5-14.23"
   process $proc$dut.sv:14$1
   end
   attribute \src "dut.sv:15.5-17.35"
   attribute \always_ff 1
   process $proc$dut.sv:15$3
-    assign { $0\y [31:20] $0\y [10:1] $0\y [11] $0\y [19:12] $0\y [0] } { $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 [20] $auto$expression.cpp:1606:import_expression$4 }
+    assign { $0\y [31:20] $0\y [10:1] $0\y [11] $0\y [19:12] $0\y [0] } { $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 [20] $auto$expression.cpp:1642:import_expression$4 }
     sync posedge \clk
       update \y $0\y
   end
-  connect $auto$expression.cpp:1606:import_expression$4 { \x 1'0 }
+  connect $auto$expression.cpp:1642:import_expression$4 { \x 1'0 }
 end

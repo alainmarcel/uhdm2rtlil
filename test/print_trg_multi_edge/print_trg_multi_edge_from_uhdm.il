@@ -13,7 +13,7 @@ module \top
   attribute \src "dut.sv:15.64-15.67"
   wire width 8 output 4 \cnt
   wire $print$$display$26$5_EN
-  wire width 8 $auto$expression.cpp:2965:import_operation$2
+  wire width 8 $auto$expression.cpp:3317:import_operation$2
   attribute \src "dut.sv:20.20-20.27"
   cell $add $add$dut.sv:20$3
     parameter \A_SIGNED 0
@@ -23,7 +23,7 @@ module \top
     parameter \Y_WIDTH 8
     connect \A \cnt
     connect \B 8'00000001
-    connect \Y $auto$expression.cpp:2965:import_operation$2
+    connect \Y $auto$expression.cpp:3317:import_operation$2
   end
   cell $print $print$$display$26$5
     parameter \TRG_WIDTH 2
@@ -53,7 +53,7 @@ module \top
     parameter \WIDTH 8
     connect \CLK \clk
     connect \SRST \rst
-    connect \D $auto$expression.cpp:2965:import_operation$2
+    connect \D $auto$expression.cpp:3317:import_operation$2
     connect \Q \cnt
   end
 end

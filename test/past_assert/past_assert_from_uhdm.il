@@ -15,15 +15,15 @@ module \mre
   attribute \src "dut.sv:25.9-25.21"
   attribute \init 1'0
   wire \f_past_valid
-  wire $auto$process.cpp:111:build_check_cell$9
+  wire $auto$process.cpp:174:build_check_cell$9
   wire $auto$rtlil.cc:3302:And$8
   attribute \src "dut.sv:28.5-31.8"
   attribute \always_ff 1
   cell $dff $procdff$14
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D \i_w
-    connect \Q \o_w
+    connect \D 1'1
+    connect \Q \f_past_valid
     connect \CLK \i_clk
   end
   attribute \src "dut.sv:36.9-36.34"
@@ -39,7 +39,7 @@ module \mre
   end
   attribute \src "dut.sv:37.9-37.21"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$10
+  cell $check $auto$process.cpp:184:build_check_cell$10
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""
@@ -49,7 +49,7 @@ module \mre
     parameter \TRG_WIDTH 1
     connect \A \o_w
     connect \ARGS { }
-    connect \EN $auto$process.cpp:111:build_check_cell$9
+    connect \EN $auto$process.cpp:174:build_check_cell$9
     connect \TRG \i_clk
   end
   attribute \src "dut.sv:36.5-37.21"
@@ -58,15 +58,15 @@ module \mre
     connect \A 1'0
     connect \B 1'1
     connect \S $auto$rtlil.cc:3302:And$8
-    connect \Y $auto$process.cpp:111:build_check_cell$9
+    connect \Y $auto$process.cpp:174:build_check_cell$9
   end
   attribute \src "dut.sv:28.5-31.8"
   attribute \always_ff 1
   cell $dff $procdff$13
     parameter \WIDTH 1
     parameter \CLK_POLARITY 1'1
-    connect \D 1'1
-    connect \Q \f_past_valid
+    connect \D \i_w
+    connect \Q \o_w
     connect \CLK \i_clk
   end
   connect \o_past_valid_o \f_past_valid

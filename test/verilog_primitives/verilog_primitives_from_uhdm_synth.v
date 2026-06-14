@@ -45,12 +45,12 @@ module verilog_primitives(in1, in2, in3, out_buf0, out_buf1, out_buf2, out_buf3,
     .Y(out_not0)
   );
   \$_XOR_  _2_ (
-    .A(in2),
-    .B(in3),
+    .A(in3),
+    .B(in2),
     .Y(_0_)
   );
   \$_XNOR_  _3_ (
-    .A(out_not0),
+    .A(in1),
     .B(_0_),
     .Y(out_xnor)
   );

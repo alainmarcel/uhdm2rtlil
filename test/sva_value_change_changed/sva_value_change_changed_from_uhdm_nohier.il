@@ -19,11 +19,9 @@ module \top
   attribute \src "dut.sv:29.7-29.8"
   attribute \init 1'x
   wire \x
-  attribute \src "dut.sv:14.2-14.36"
-  wire $0\b_prev
   attribute \src "dut.sv:24.2-26.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -39,12 +37,11 @@ module \top
   attribute \src "dut.sv:14.2-14.36"
   attribute \always_ff 1
   process $proc$dut.sv:14$3
-    assign $0\b_prev \b
     sync posedge \clk
-      update \b_prev $0\b_prev
+      update \b_prev \b
   end
   attribute \src "dut.sv:29.7-29.8"
-  process $auto$module.cpp:1181:import_continuous_assign$2
+  process $auto$module.cpp:1275:import_continuous_assign$2
     sync always
       update \x 1'x
   end

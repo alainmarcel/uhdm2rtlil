@@ -37,7 +37,7 @@ module \top
   end
   attribute \src "dut.sv:16.5-16.24"
   attribute \keep 1
-  cell $check $auto$process.cpp:121:build_check_cell$9
+  cell $check $auto$process.cpp:184:build_check_cell$9
     parameter \ARGS_WIDTH 0
     parameter \FLAVOR "assert"
     parameter \FORMAT ""

@@ -23,13 +23,9 @@ module \top
   wire \b_q
   attribute \src "dut.sv:12.10-12.16"
   wire \a_copy
-  attribute \src "dut.sv:16.2-19.5"
-  wire $0\a_q
-  attribute \src "dut.sv:16.2-19.5"
-  wire $0\b_q
   attribute \src "dut.sv:25.2-27.4"
   attribute \keep 1
-  cell $check $auto$uhdm2rtlil.cpp:2922:import_module$4
+  cell $check $auto$uhdm2rtlil.cpp:3165:import_module$4
     parameter \FLAVOR "assert"
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
@@ -45,11 +41,9 @@ module \top
   attribute \src "dut.sv:16.2-19.5"
   attribute \always_ff 1
   process $proc$dut.sv:16$3
-    assign $0\a_q \a
-    assign $0\b_q \b
     sync posedge \clk
-      update \a_q $0\a_q
-      update \b_q $0\b_q
+      update \a_q \a
+      update \b_q \b
   end
   connect \a_copy \a
   connect \a_copy_o \a_copy

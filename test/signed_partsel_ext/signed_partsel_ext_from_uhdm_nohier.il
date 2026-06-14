@@ -23,10 +23,10 @@ module \signed_partsel_ext
   wire \is_s
   attribute \src "dut.sv:22.2-32.5"
   wire width 32 $0\decoded_imm
-  wire width 32 $auto$expression.cpp:3193:import_operation$2
-  wire width 12 signed $auto$expression.cpp:1606:import_expression$4
-  wire width 13 signed $auto$expression.cpp:1606:import_expression$5
-  wire width 12 signed $auto$expression.cpp:1606:import_expression$6
+  wire width 32 $auto$expression.cpp:3509:import_operation$2
+  wire width 12 signed $auto$expression.cpp:1642:import_expression$4
+  wire width 13 signed $auto$expression.cpp:1642:import_expression$5
+  wire width 12 signed $auto$expression.cpp:1642:import_expression$6
   attribute \src "dut.sv:26.26-26.43"
   cell $shl $shl$dut.sv:26$3
     parameter \A_SIGNED 0
@@ -36,7 +36,7 @@ module \signed_partsel_ext
     parameter \Y_WIDTH 32
     connect \A \insn [31:12]
     connect \B 64'0000000000000000000000000000000000000000000000000000000000001100
-    connect \Y $auto$expression.cpp:3193:import_operation$2
+    connect \Y $auto$expression.cpp:3509:import_operation$2
   end
   attribute \src "dut.sv:22.2-32.5"
   process $proc$dut.sv:22$1
@@ -49,16 +49,16 @@ module \signed_partsel_ext
         assign $0\decoded_imm \imm_j
     attribute \src "dut.sv:26.4-26.44"
       case \is_lui
-        assign $0\decoded_imm $auto$expression.cpp:3193:import_operation$2
+        assign $0\decoded_imm $auto$expression.cpp:3509:import_operation$2
     attribute \src "dut.sv:27.4-27.47"
       case \is_i
-        assign $0\decoded_imm { $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 [11] $auto$expression.cpp:1606:import_expression$4 }
+        assign $0\decoded_imm { $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 [11] $auto$expression.cpp:1642:import_expression$4 }
     attribute \src "dut.sv:28.4-28.86"
       case \is_b
-        assign $0\decoded_imm { $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 [12] $auto$expression.cpp:1606:import_expression$5 }
+        assign $0\decoded_imm { $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 [12] $auto$expression.cpp:1642:import_expression$5 }
     attribute \src "dut.sv:29.4-29.61"
       case \is_s
-        assign $0\decoded_imm { $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 [11] $auto$expression.cpp:1606:import_expression$6 }
+        assign $0\decoded_imm { $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 [11] $auto$expression.cpp:1642:import_expression$6 }
     attribute \src "dut.sv:30.4-30.33"
       case 
         assign $0\decoded_imm 0
@@ -71,7 +71,7 @@ module \signed_partsel_ext
   connect \is_i \sel [2]
   connect \is_b \sel [3]
   connect \is_s \sel [4]
-  connect $auto$expression.cpp:1606:import_expression$4 \insn [31:20]
-  connect $auto$expression.cpp:1606:import_expression$5 { \insn [31] \insn [7] \insn [30:25] \insn [11:8] 1'0 }
-  connect $auto$expression.cpp:1606:import_expression$6 { \insn [31:25] \insn [11:7] }
+  connect $auto$expression.cpp:1642:import_expression$4 \insn [31:20]
+  connect $auto$expression.cpp:1642:import_expression$5 { \insn [31] \insn [7] \insn [30:25] \insn [11:8] 1'0 }
+  connect $auto$expression.cpp:1642:import_expression$6 { \insn [31:25] \insn [11:7] }
 end

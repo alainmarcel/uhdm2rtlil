@@ -21,7 +21,7 @@ attribute \src "dut.sv:9.1-12.10"
 attribute \keep 1
 module \bot
   attribute \src "dut.sv:11.12-11.41"
-  cell $print $display$0x55c277a691b0:11$2
+  cell $print $display$0x5559a702b1b0:11$2
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 0
     parameter \TRG_POLARITY 0'x
@@ -33,7 +33,7 @@ module \bot
     connect \ARGS { }
   end
   attribute \src "dut.sv:10.13-10.42"
-  cell $print $display$0x55c277a691b0:10$4
+  cell $print $display$0x5559a702b1b0:10$4
     parameter \TRG_WIDTH 0
     parameter \TRG_ENABLE 1
     parameter \TRG_POLARITY 0'x

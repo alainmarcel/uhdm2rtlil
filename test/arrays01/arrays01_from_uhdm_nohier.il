@@ -15,7 +15,7 @@ module \arrays01
   wire width 4 output 5 \rd_data
   wire width 4 $memwr$\memory$addr$2
   wire width 4 $memwr$\memory$data$3
-  wire $memwr$\memory$en$4
+  wire width 4 $memwr$\memory$en$4
   attribute \src "dut.sv:10.1-14.4"
   wire width 4 $0\rd_data
   wire width 4 \memrd_memory_DATA
@@ -37,7 +37,8 @@ module \arrays01
   attribute \src "dut.sv:10.1-14.4"
   attribute \always_ff 1
   process $proc$dut.sv:10$1
-    assign $memwr$\memory$en$4 1'0
+    assign $memwr$\memory$en$4 4'0000
+    assign $memwr$\memory$data$3 4'0000
     assign $0\rd_data \memrd_memory_DATA
     attribute \src "dut.sv:11.2-12.27"
     switch \we
@@ -45,12 +46,12 @@ module \arrays01
       case 1'1
         assign $memwr$\memory$addr$2 \addr
         assign $memwr$\memory$data$3 \wr_data
-        assign $memwr$\memory$en$4 1'1
+        assign $memwr$\memory$en$4 4'1111
     attribute \src "dut.sv:11.2-12.27"
       case 
     end
     sync posedge \clock
       update \rd_data $0\rd_data
-      memwr \memory $memwr$\memory$addr$2 $memwr$\memory$data$3 { $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 $memwr$\memory$en$4 } 0'x
+      memwr \memory $memwr$\memory$addr$2 $memwr$\memory$data$3 $memwr$\memory$en$4 0'x
   end
 end

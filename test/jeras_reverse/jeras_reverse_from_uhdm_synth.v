@@ -10,5 +10,9 @@ module test_reverse(dti, dto);
   (* src = "dut.sv:6.27-6.30" *)
   output [31:0] dto;
   wire [31:0] dto;
+  (* nosync = 32'd1 *)
+  (* src = "dut.sv:10.62-10.65" *)
+  wire [31:0] \bitrev$func$dut.sv:18$2.val ;
+  assign \bitrev$func$dut.sv:18$2.val  = 32'hxxxxxxxx;
   assign dto = { dti[0], dti[1], dti[2], dti[3], dti[4], dti[5], dti[6], dti[7], dti[8], dti[9], dti[10], dti[11], dti[12], dti[13], dti[14], dti[15], dti[16], dti[17], dti[18], dti[19], dti[20], dti[21], dti[22], dti[23], dti[24], dti[25], dti[26], dti[27], dti[28], dti[29], dti[30], dti[31] };
 endmodule
