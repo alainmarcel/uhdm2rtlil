@@ -452,8 +452,12 @@ void UhdmImporter::interpret_statement(const any* stmt,
                             case vpiMultOp: rhs_value = current_val * rhs_value; break;
                             case vpiDivOp: if (rhs_value != 0) rhs_value = current_val / rhs_value; break;
                             case vpiModOp: if (rhs_value != 0) rhs_value = current_val % rhs_value; break;
-                            case vpiLShiftOp: rhs_value = current_val << rhs_value; break;
+                            case vpiLShiftOp:
+                            case vpiArithLShiftOp: rhs_value = current_val << rhs_value; break;
                             case vpiRShiftOp: rhs_value = current_val >> rhs_value; break;
+                            // `>>>=` arithmetic right shift: int64_t `>>` is
+                            // already sign-preserving (compound_assignments k/l).
+                            case vpiArithRShiftOp: rhs_value = current_val >> rhs_value; break;
                             case vpiBitAndOp: rhs_value = current_val & rhs_value; break;
                             case vpiBitOrOp: rhs_value = current_val | rhs_value; break;
                             case vpiBitXorOp: rhs_value = current_val ^ rhs_value; break;
