@@ -12,6 +12,6 @@ module top(b, c);
   (* src = "dut.sv:2.14-2.15" *)
   wire [7:0] a;
   assign a = 8'h0f;
-  assign c = 4'h0;
+  assign c = 4'h3;
   assign b = 4'h3;
 endmodule
