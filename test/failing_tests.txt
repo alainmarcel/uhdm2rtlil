@@ -77,16 +77,12 @@ CastClog2ToMinimalSizeOfParamValueFromCommandLine
 CastStructArray
 EnumParameterInNestedModules
 ExpressionInIndex
-IndexedPartSelectOfMember
 InterfaceAlways
 InterfaceInitial
 InterfaceWithPort
 MultipleAssignments
-NestedGenscopesInModuleWithMultidimensionalPorts
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
-PartSelectOfPartSelectedBitSelect
-Repeat
 SignedWire
 StructOfArrayOfStructs
 TypedefPackedDimensions
@@ -94,9 +90,7 @@ TypedefVariableDimensions
 unary_op_not_log
 unary_op_plus
 VarPassedTo2Submodules
-VarSelect
 # --- output-generation (true) failures (10):
-hier_path
 ParameterSizeOfInstance
 StructMemberAsModuleInput
 SystemFunctions

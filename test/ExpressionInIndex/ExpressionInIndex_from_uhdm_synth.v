@@ -6,5 +6,8 @@ module top(o);
   (* src = "dut.sv:1.23-1.24" *)
   output signed [31:0] o;
   wire signed [31:0] o;
-  assign o = 32'hxxxxxxxx;
+  (* src = "dut.sv:6.29-6.43" *)
+  wire [95:0] sram_otp_key_o;
+  assign sram_otp_key_o = 96'hxxxxxxxxxxxxxxxx00000001;
+  assign o = 32'd1;
 endmodule

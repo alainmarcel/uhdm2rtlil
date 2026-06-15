@@ -9,5 +9,5 @@ module top(b);
   (* src = "dut.sv:2.19-2.20" *)
   wire [7:0] a;
   assign a = 8'h0f;
-  assign b = 4'h0;
+  assign b = 4'h1;
 endmodule
