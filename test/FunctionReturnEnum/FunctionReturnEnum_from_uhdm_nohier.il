@@ -7,5 +7,5 @@ module \top
   parameter \MuBi4Width 4
   attribute \src "dut.sv:1.23-1.24"
   wire width 32 output 1 signed \o
-  connect \o 0
+  connect \o 5
 end

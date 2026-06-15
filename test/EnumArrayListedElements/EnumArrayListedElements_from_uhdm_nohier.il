@@ -8,13 +8,14 @@ module \top
   attribute \src "dut.sv:9.26-9.56"
   wire width 8 \x
   attribute \src "dut.sv:10.15-10.22"
-  wire width 32 signed $auto$expression.cpp:3997:import_operation$1
-  cell $pos $auto$expression.cpp:4000:import_operation$2
+  wire width 32 signed $auto$expression.cpp:4060:import_operation$1
+  cell $pos $auto$expression.cpp:4063:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 8
     parameter \Y_WIDTH 32
     connect \A \x
-    connect \Y $auto$expression.cpp:3997:import_operation$1
+    connect \Y $auto$expression.cpp:4060:import_operation$1
   end
-  connect \o $auto$expression.cpp:3997:import_operation$1
+  connect \x 8'10101111
+  connect \o $auto$expression.cpp:4060:import_operation$1
 end

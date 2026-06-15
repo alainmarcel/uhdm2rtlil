@@ -2841,6 +2841,27 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         return RTLIL::SigSpec();
     }
 
+    if (op_type == vpiMultiAssignmentPatternOp) {
+        // Replicated array aggregate: '{N{pattern}}.  Operands: [0] = count
+        // constant N, [1] = the pattern element (often wrapped in a concat).
+        // Build the element value once and replicate it N times.  First element
+        // ends up at the MSB (same order as concatenation).
+        if (uhdm_op->Operands() && uhdm_op->Operands()->size() >= 2) {
+            auto& ops = *uhdm_op->Operands();
+            RTLIL::SigSpec count_sig = import_expression(any_cast<const expr*>(ops[0]), input_mapping);
+            int count = count_sig.is_fully_const() ? count_sig.as_const().as_int() : 0;
+            RTLIL::SigSpec elem = import_expression(any_cast<const expr*>(ops[1]), input_mapping);
+            RTLIL::SigSpec result;
+            for (int i = 0; i < count; i++)
+                result.append(elem);
+            if (mode_debug)
+                log("UHDM: MultiAssignmentPatternOp %d x %d-bit = %d-bit\n",
+                    count, elem.size(), result.size());
+            return result;
+        }
+        return RTLIL::SigSpec();
+    }
+
     // Try to reduce it first (for non-side-effect operations). We skip
     // `vpiCastOp` here: Surelog's reduceExpr folds `8'(4'(signed'(...)))`
     // into a single constant but applies plain zero-extension at the

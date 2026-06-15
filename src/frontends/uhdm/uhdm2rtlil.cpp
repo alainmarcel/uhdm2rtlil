@@ -2312,6 +2312,16 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 vars_with_init_expr.push_back(std::make_pair(var, wire));
                             }
                         }
+                    } else if (var->UhdmType() == uhdmpacked_array_var) {
+                        // Packed array var with an initializer, e.g.
+                        // `lc_tx_t [7:0] x = '{8{On}}` — a net-declaration
+                        // continuous assignment.  Defer driving it.
+                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(var)) {
+                            if (pav->Expr()) {
+                                log("UHDM: packed_array_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
+                                vars_with_init_expr.push_back(std::make_pair(var, wire));
+                            }
+                        }
                     }
 
                     log("UHDM: Created wire '%s' for variable\n", wire->name.c_str());
@@ -2519,6 +2529,23 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 RTLIL::SigSig(RTLIL::SigSpec(wire), init_val));
                             proc->syncs.push_back(sync_always);
                             log("UHDM: Created init process for variable '%s'\n", var_name.c_str());
+                        }
+                    }
+                }
+            } else if (var->UhdmType() == uhdmpacked_array_var) {
+                // `lc_tx_t [7:0] x = '{8{On}}` — drive the net with its
+                // (constant) array-pattern initializer.
+                if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(var)) {
+                    if (pav->Expr()) {
+                        log("UHDM: Processing initializer for packed_array_var '%s'\n", var_name.c_str());
+                        RTLIL::SigSpec init_val = import_expression(pav->Expr());
+                        if (init_val.size() > 0) {
+                            if (init_val.size() < wire->width)
+                                init_val.extend_u0(wire->width, false);
+                            else if (init_val.size() > wire->width)
+                                init_val = init_val.extract(0, wire->width);
+                            module->connect(RTLIL::SigSpec(wire), init_val);
+                            log("UHDM: Connected packed_array_var '%s' to its initializer\n", var_name.c_str());
                         }
                     }
                 }

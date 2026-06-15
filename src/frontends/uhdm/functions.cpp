@@ -38,6 +38,7 @@
 #include <uhdm/while_stmt.h>
 #include <uhdm/repeat.h>
 #include <uhdm/return_stmt.h>
+#include <uhdm/enum_const.h>
 #include <uhdm/range.h>
 #include <uhdm/parameter.h>
 
@@ -717,6 +718,12 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
         std::string var_name = std::string(ref->VpiName());
         if (local_vars.count(var_name)) {
             val = local_vars.at(var_name);
+        } else if (ref->Actual_group() &&
+                   ref->Actual_group()->UhdmType() == uhdmenum_const) {
+            // Enum constant (e.g. `return MuBi4Hi;`) — resolve its literal value.
+            const enum_const* ec = any_cast<const enum_const*>(ref->Actual_group());
+            int w = ec->VpiSize() > 0 ? ec->VpiSize() : 32;
+            val = RTLIL::Const(parse_vpi_value_to_int(std::string(ec->VpiValue())), w);
         } else if (ref->Actual_group() && ref->Actual_group()->VpiType() == vpiParameter) {
             // Package/scope parameter not in local_vars — resolve via VpiValue()
             const parameter* param = any_cast<const parameter*>(ref->Actual_group());
