@@ -6308,6 +6308,44 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // struct typespec (members in reverse: last listed = LSB).
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
         auto& pe_ips = *uhdm_hier->Path_elems();
+        // `a.b[base +: width]` / `a.b[base -: width]` — INDEXED part-select of a
+        // struct MEMBER.  Path_elems: [ref_obj(struct), indexed_part_select(member)].
+        // Resolve the member's offset within the struct wire, then slice.
+        // (IndexedPartSelectOfMember `a.b[0+:8]` — the struct-member-access
+        // fallback couldn't parse `b[0+:8]`.)
+        if (pe_ips[0]->UhdmType() == uhdmref_obj &&
+            pe_ips[1]->UhdmType() == uhdmindexed_part_select) {
+            const ref_obj* ro = any_cast<const ref_obj*>(pe_ips[0]);
+            const indexed_part_select* ips = any_cast<const indexed_part_select*>(pe_ips[1]);
+            if (ro && ips && ips->Base_expr() && ips->Width_expr()) {
+                std::string struct_name = std::string(ro->VpiName());
+                std::string field_name = std::string(ips->VpiName());
+                RTLIL::Wire* base_wire = name_map.count(struct_name)
+                    ? name_map[struct_name]
+                    : module->wire(RTLIL::escape_id(struct_name));
+                // Struct typespec via the ref_obj's resolved variable.
+                const UHDM::typespec* ts = nullptr;
+                if (auto actual = ro->Actual_group())
+                    if (auto e = dynamic_cast<const UHDM::expr*>(actual))
+                        if (auto rt = e->Typespec())
+                            ts = rt->Actual_typespec();
+                int field_offset = 0, field_width = 0;
+                if (base_wire && ts &&
+                        calculate_struct_member_offset(ts, field_name, inst,
+                                                       field_offset, field_width)) {
+                    RTLIL::SigSpec base_sig = import_expression(ips->Base_expr(), input_mapping);
+                    RTLIL::SigSpec width_sig = import_expression(ips->Width_expr(), input_mapping);
+                    if (base_sig.is_fully_const() && width_sig.is_fully_const()) {
+                        int b = base_sig.as_const().as_int();
+                        int w = width_sig.as_const().as_int();
+                        bool pos = ips->VpiIndexedPartSelectType() == vpiPosIndexed;
+                        int low = field_offset + (pos ? b : (b - w + 1));
+                        if (w > 0 && low >= 0 && low + w <= base_wire->width)
+                            return RTLIL::SigSpec(base_wire).extract(low, w);
+                    }
+                }
+            }
+        }
         if (pe_ips[0]->UhdmType() == uhdmbit_select &&
             pe_ips[1]->UhdmType() == uhdmindexed_part_select) {
             const bit_select* bs = any_cast<const bit_select*>(pe_ips[0]);

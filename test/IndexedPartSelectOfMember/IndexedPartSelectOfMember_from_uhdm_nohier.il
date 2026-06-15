@@ -10,5 +10,5 @@ module \top
   connect \a [0] 1'1
   connect \a [7] 1'1
   connect \a [8] 1'1
-  connect \o 8'x
+  connect \o \a [7:0]
 end
