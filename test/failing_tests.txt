@@ -85,7 +85,6 @@ MultipleAssignments
 NestedGenscopesInModuleWithMultidimensionalPorts
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
-PartSelectOfPartSelectedBitSelect
 Repeat
 SignedWire
 StructOfArrayOfStructs
@@ -94,7 +93,6 @@ TypedefVariableDimensions
 unary_op_not_log
 unary_op_plus
 VarPassedTo2Submodules
-VarSelect
 # --- output-generation (true) failures (10):
 hier_path
 ParameterSizeOfInstance

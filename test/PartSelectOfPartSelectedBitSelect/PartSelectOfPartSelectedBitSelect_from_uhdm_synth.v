@@ -12,5 +12,5 @@ module top(o);
   wire [1:0] iccm_rw_addr_q;
   assign iccm_rw_addr_q = 2'h2;
   assign iccm_bank_dout_hi = 12'habc;
-  assign o = 6'h00;
+  assign o = 6'h3c;
 endmodule

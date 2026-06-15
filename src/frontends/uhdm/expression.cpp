@@ -1370,85 +1370,86 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
-                // First expression should be the array index
+                // First expression is the array index.
                 const expr* first_idx = (*exprs)[0];
                 RTLIL::SigSpec idx_sig = import_expression(first_idx, input_mapping);
 
-                if (!idx_sig.is_fully_const()) {
-                    log_warning("vpiVarSelect '%s': non-constant array index\n", base_name.c_str());
-                    return RTLIL::SigSpec();
-                }
-
-                int array_idx = idx_sig.as_const().as_int();
-                std::string element_name = base_name + "[" + std::to_string(array_idx) + "]";
-                log("  vpiVarSelect: resolved to element '%s'\n", element_name.c_str());
-
-                // `element_sig` is the value of `base[array_idx]` — either a
-                // dedicated `base[idx]` wire (UNPACKED array) or a slice of the
-                // single packed wire (PACKED multi-dim array `logic [N][M] x`).
-                RTLIL::SigSpec element_sig;
-
-                // Find a dedicated wire for this array element (unpacked arrays).
-                RTLIL::Wire* element_wire = nullptr;
-                std::string gen_scope = get_current_gen_scope();
-                if (!gen_scope.empty()) {
-                    std::string hier_name = gen_scope + "." + element_name;
-                    if (name_map.count(hier_name))
-                        element_wire = name_map[hier_name];
-                }
-                if (!element_wire && name_map.count(element_name))
-                    element_wire = name_map[element_name];
-                if (!element_wire)
-                    element_wire = module->wire(RTLIL::escape_id(element_name));
-
-                if (element_wire) {
-                    element_sig = RTLIL::SigSpec(element_wire);
-                } else {
-                    // PACKED multi-dim array: `x[idx]` is an element_width-bit
-                    // SLICE of the single packed wire `x`, not a separate wire.
-                    // element_width = base_width / outer_dim_size (or the
-                    // Elem_typespec width).  Without this, `x[0][1:0]` on
-                    // `logic [4:0][1:0] x` returned 0 (AssignBitSelectPartSelect,
-                    // PartSelectOfPartSelectedBitSelect, SelfSelects…).
-                    RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
-                    int elem_w = 0;
-                    if (base_wire) {
-                        if (auto actual = vs->Actual_group()) {
-                            const UHDM::ref_typespec* rt = nullptr;
-                            if (auto e = dynamic_cast<const UHDM::expr*>(actual))
-                                rt = e->Typespec();
-                            const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
-                            if (a && a->UhdmType() == uhdmlogic_typespec) {
-                                auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
-                                if (lt && lt->Elem_typespec() &&
-                                        lt->Elem_typespec()->Actual_typespec()) {
-                                    elem_w = get_width_from_typespec(
-                                        lt->Elem_typespec()->Actual_typespec(), current_instance);
-                                } else if (lt && lt->Ranges() && lt->Ranges()->size() > 1) {
-                                    auto r0 = lt->Ranges()->at(0);
-                                    if (r0->Left_expr() && r0->Right_expr()) {
-                                        RTLIL::SigSpec lo = import_expression(r0->Left_expr(), input_mapping);
-                                        RTLIL::SigSpec hi = import_expression(r0->Right_expr(), input_mapping);
-                                        if (lo.is_fully_const() && hi.is_fully_const()) {
-                                            int sz = std::abs(lo.as_const().as_int() -
-                                                              hi.as_const().as_int()) + 1;
-                                            if (sz > 0 && base_wire->width % sz == 0)
-                                                elem_w = base_wire->width / sz;
-                                        }
+                // Packed multi-dim array element width (0 if not packed): for
+                // `logic [N-1:0][M-1:0] x`, `x[idx]` is an element_width-bit slice
+                // of the single packed wire `x` (element_width = base/outer or the
+                // Elem_typespec width).
+                RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
+                int elem_w = 0;
+                if (base_wire) {
+                    if (auto actual = vs->Actual_group()) {
+                        const UHDM::ref_typespec* rt = nullptr;
+                        if (auto e = dynamic_cast<const UHDM::expr*>(actual))
+                            rt = e->Typespec();
+                        const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
+                        if (a && a->UhdmType() == uhdmlogic_typespec) {
+                            auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);
+                            if (lt && lt->Elem_typespec() &&
+                                    lt->Elem_typespec()->Actual_typespec()) {
+                                elem_w = get_width_from_typespec(
+                                    lt->Elem_typespec()->Actual_typespec(), current_instance);
+                            } else if (lt && lt->Ranges() && lt->Ranges()->size() > 1) {
+                                auto r0 = lt->Ranges()->at(0);
+                                if (r0->Left_expr() && r0->Right_expr()) {
+                                    RTLIL::SigSpec lo = import_expression(r0->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec hi = import_expression(r0->Right_expr(), input_mapping);
+                                    if (lo.is_fully_const() && hi.is_fully_const()) {
+                                        int sz = std::abs(lo.as_const().as_int() -
+                                                          hi.as_const().as_int()) + 1;
+                                        if (sz > 0 && base_wire->width % sz == 0)
+                                            elem_w = base_wire->width / sz;
                                     }
                                 }
                             }
                         }
-                        if (elem_w > 0) {
-                            int off = array_idx * elem_w;
-                            if (off >= 0 && off + elem_w <= base_wire->width)
-                                element_sig = RTLIL::SigSpec(base_wire).extract(off, elem_w);
-                        }
+                    }
+                }
+
+                // `element_sig` = value of `base[idx]`.
+                RTLIL::SigSpec element_sig;
+                if (idx_sig.is_fully_const()) {
+                    int array_idx = idx_sig.as_const().as_int();
+                    std::string element_name = base_name + "[" + std::to_string(array_idx) + "]";
+                    // Dedicated element wire (UNPACKED array)?
+                    RTLIL::Wire* element_wire = nullptr;
+                    std::string gen_scope = get_current_gen_scope();
+                    if (!gen_scope.empty() && name_map.count(gen_scope + "." + element_name))
+                        element_wire = name_map[gen_scope + "." + element_name];
+                    if (!element_wire && name_map.count(element_name))
+                        element_wire = name_map[element_name];
+                    if (!element_wire)
+                        element_wire = module->wire(RTLIL::escape_id(element_name));
+                    if (element_wire) {
+                        element_sig = RTLIL::SigSpec(element_wire);
+                    } else if (elem_w > 0 && base_wire) {
+                        int off = array_idx * elem_w;
+                        if (off >= 0 && off + elem_w <= base_wire->width)
+                            element_sig = RTLIL::SigSpec(base_wire).extract(off, elem_w);
                     }
                     if (element_sig.empty()) {
-                        log_warning("vpiVarSelect: wire '%s' not found\n", element_name.c_str());
+                        log_warning("vpiVarSelect: element '%s' not found\n", element_name.c_str());
                         return RTLIL::SigSpec();
                     }
+                } else if (elem_w > 0 && base_wire) {
+                    // Dynamic packed index — element = (base >> idx*elem_w)[elem_w]
+                    // via $shiftx.  `opt` const-folds it when the index is
+                    // effectively constant (PartSelectOfPartSelectedBitSelect:
+                    // `iccm[iccm_addr[0:0]][5:0]`, the index is a const-driven
+                    // wire slice).
+                    RTLIL::SigSpec shift_amt = idx_sig;
+                    if (elem_w > 1)
+                        shift_amt = module->Mul(NEW_ID, idx_sig,
+                                                RTLIL::Const(elem_w, 32), false);
+                    RTLIL::Wire* ew = module->addWire(NEW_ID, elem_w);
+                    module->addShiftx(NEW_ID, RTLIL::SigSpec(base_wire), shift_amt, ew);
+                    element_sig = RTLIL::SigSpec(ew);
+                } else {
+                    log_warning("vpiVarSelect '%s': non-constant array index\n", base_name.c_str());
+                    return RTLIL::SigSpec();
                 }
 
                 RTLIL::SigSpec result = element_sig;
@@ -1468,11 +1469,11 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                             if (offset + width <= element_sig.size()) {
                                 result = element_sig.extract(offset, width);
                             } else {
-                                log_warning("vpiVarSelect: part select [%d:%d] out of range for %d-bit element '%s'\n",
-                                    left_val, right_val, element_sig.size(), element_name.c_str());
+                                log_warning("vpiVarSelect: part select [%d:%d] out of range for %d-bit element of '%s'\n",
+                                    left_val, right_val, element_sig.size(), base_name.c_str());
                             }
                         } else {
-                            log_warning("vpiVarSelect: non-constant part select on '%s'\n", element_name.c_str());
+                            log_warning("vpiVarSelect: non-constant part select on '%s'\n", base_name.c_str());
                         }
                     } else if (second_idx->VpiType() == vpiBitSelect) {
                         // Bit select within the element.  Index may be dynamic
