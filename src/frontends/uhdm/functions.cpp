@@ -285,7 +285,8 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     }
                     // Detect array-element write: `state[i] = <value>`.
                     if (bs->Actual_group() &&
-                        bs->Actual_group()->UhdmType() == uhdmarray_var &&
+                        (bs->Actual_group()->UhdmType() == uhdmarray_var ||
+                         bs->Actual_group()->UhdmType() == uhdmpacked_array_var) &&
                         array_local_element_widths.count(lhs_name)) {
                         lhs_is_array_element = true;
                         lhs_array_element_width = array_local_element_widths[lhs_name];
@@ -325,6 +326,9 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     std::string var_name = std::string(ref->VpiName());
                     if (local_vars.count(var_name)) {
                         rhs_value = local_vars[var_name];
+                    } else {
+                        // Not a local — could be an enum const or package parameter.
+                        rhs_value = evaluate_single_operand(ref, local_vars);
                     }
                 } else if (assign->Rhs()->VpiType() == vpiFuncCall) {
                     const func_call* fc = any_cast<const func_call*>(assign->Rhs());
@@ -520,6 +524,20 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         array_local_element_widths[var_name] = elem_w;
                         log("    array_var %s: elem_w=%d, total=%d, width=%d\n",
                             var_name.c_str(), elem_w, total, width);
+                    } else if (var->UhdmType() == uhdmpacked_array_var) {
+                        // Packed array of (e.g.) enums: `sp2v_e [1:0] out` — element
+                        // width comes from Elements()[0], total from get_width.  Register
+                        // the element width so `out[0] = X` writes a whole element slice
+                        // rather than a single bit.
+                        auto pav = any_cast<const packed_array_var*>(var);
+                        width = get_width(var, current_instance);
+                        int elem_w = 1;
+                        if (pav->Elements() && !pav->Elements()->empty())
+                            if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
+                                elem_w = get_width(e0, current_instance);
+                        if (elem_w > 0) array_local_element_widths[var_name] = elem_w;
+                        log("    packed_array_var %s: elem_w=%d, width=%d\n",
+                            var_name.c_str(), elem_w, width);
                     } else {
                         width = get_width(var, current_instance);
                     }
