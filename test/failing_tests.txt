@@ -81,10 +81,8 @@ InterfaceAlways
 InterfaceInitial
 InterfaceWithPort
 MultipleAssignments
-NestedGenscopesInModuleWithMultidimensionalPorts
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
-Repeat
 SignedWire
 StructOfArrayOfStructs
 TypedefPackedDimensions
@@ -93,7 +91,6 @@ unary_op_not_log
 unary_op_plus
 VarPassedTo2Submodules
 # --- output-generation (true) failures (10):
-hier_path
 ParameterSizeOfInstance
 StructMemberAsModuleInput
 SystemFunctions
