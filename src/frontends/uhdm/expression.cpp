@@ -5432,6 +5432,35 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     }
                 }
             }
+            // Built-in enum methods `e.first()` / `e.last()` / `e.num()`:
+            // these are compile-time constants of the enum TYPE (independent of
+            // e's runtime value), so they have no user `Function()` (fdef null).
+            if (!fdef && uhdm_hier->Path_elems()->size() >= 2 &&
+                (func_name == "first" || func_name == "last" || func_name == "num")) {
+                const UHDM::enum_typespec* ets = nullptr;
+                auto base_elem = (*uhdm_hier->Path_elems())[0];
+                const UHDM::any* actual = base_elem;
+                if (auto ro = dynamic_cast<const UHDM::ref_obj*>(base_elem))
+                    if (ro->Actual_group()) actual = ro->Actual_group();
+                if (auto av = dynamic_cast<const UHDM::expr*>(actual))
+                    if (auto rt = av->Typespec())
+                        if (auto at = rt->Actual_typespec())
+                            if (at->UhdmType() == uhdmenum_typespec)
+                                ets = any_cast<const UHDM::enum_typespec*>(at);
+                if (ets && ets->Enum_consts() && !ets->Enum_consts()->empty()) {
+                    auto& consts = *ets->Enum_consts();
+                    if (func_name == "num")
+                        return RTLIL::SigSpec(RTLIL::Const((int)consts.size(), 32));
+                    int width = get_width_from_typespec(ets, inst);
+                    if (width <= 0) width = 32;
+                    auto ec = (func_name == "first") ? consts.front() : consts.back();
+                    int64_t v = parse_vpi_value_to_int(std::string(ec->VpiValue()));
+                    log("    enum method %s.%s() -> %lld (%d-bit)\n",
+                        std::string(base_elem->VpiName()).c_str(), func_name.c_str(),
+                        (long long)v, width);
+                    return RTLIL::SigSpec(RTLIL::Const(v, width));
+                }
+            }
             if (fdef) {
                 // Collect arguments.
                 std::vector<RTLIL::SigSpec> args;

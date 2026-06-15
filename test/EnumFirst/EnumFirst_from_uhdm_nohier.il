@@ -11,5 +11,5 @@ module \top
   attribute \enum_value_00000000000000000000000000000001 "\\a"
   attribute \enum_value_00000000000000000000000000000010 "\\b"
   wire width 32 \e
-  connect \o 32'x
+  connect \o 1
 end
