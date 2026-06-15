@@ -5257,22 +5257,22 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     if (base_index.is_fully_const() && width_expr.is_fully_const()) {
         int offset = base_index.as_const().as_int();
         int width = width_expr.as_const().as_int();
-        
-        // Validate offset and width
-        if (offset < 0 || width <= 0 || offset + width > base.size()) {
-            log_warning("Invalid indexed part select: offset=%d, width=%d, base_size=%d\n",
-                offset, width, base.size());
+
+        // The LOW bit of the slice depends on the direction:
+        //   `+:` -> [offset +: width]  = [offset+width-1 : offset], low = offset
+        //   `-:` -> [offset -: width]  = [offset : offset-width+1], low = offset-width+1
+        // Validate against the ACTUAL low bit — the old check `offset+width >
+        // base.size()` is only right for `+:` and wrongly rejected e.g.
+        // `a[5-:4]` on an 8-bit `a` (5+4=9>8) -> returned empty -> 0
+        // (IndexedPartSelect c).
+        bool pos = uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed;
+        int low = pos ? offset : (offset - width + 1);
+        if (low < 0 || width <= 0 || low + width > base.size()) {
+            log_warning("Invalid indexed part select: low=%d, width=%d, base_size=%d\n",
+                low, width, base.size());
             return RTLIL::SigSpec();
         }
-        
-        // Handle +: and -: operators
-        if (uhdm_indexed->VpiIndexedPartSelectType() == vpiPosIndexed) {
-            // The +: operator means [offset +: width] = [offset+width-1:offset]
-            return base.extract(offset, width);
-        } else {
-            // The -: operator means [offset -: width] = [offset:offset-width+1]
-            return base.extract(offset - width + 1, width);
-        }
+        return base.extract(low, width);
     }
     
     // Dynamic base index — emit $shiftx cell

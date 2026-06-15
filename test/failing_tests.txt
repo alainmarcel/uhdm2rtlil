@@ -78,7 +78,6 @@ CastClog2ToMinimalSizeOfParamValueFromCommandLine
 CastStructArray
 EnumParameterInNestedModules
 ExpressionInIndex
-IndexedPartSelect
 IndexedPartSelectOfMember
 InterfaceAlways
 InterfaceInitial
