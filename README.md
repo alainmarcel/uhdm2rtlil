@@ -22,8 +22,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   chipsalliance/UHDM-integration-tests suite exercising UHDM frontend feature gaps /
   non-synthesizable constructs — tracked in `test/failing_tests.txt` and
   `test/imported_tests_status.txt`, fixed incrementally (break/continue, repeat/while,
-  `int` loop vars, compound assignments, function break/continue/return, and part-selects
-  so far).
+  `int` loop vars, compound assignments, function break/continue/return, part-selects,
+  and the enum cluster — built-in `.first()`/`.last()`/`.num()`, `enum_const` function
+  returns, replicated array patterns `'{N{x}}`, `packed_array_var` net-decl initializers,
+  and function-local packed enum arrays — so far).
   No pre-existing test regressed.
 
 > **Note (2026-06-14):** 349 DUTs from
