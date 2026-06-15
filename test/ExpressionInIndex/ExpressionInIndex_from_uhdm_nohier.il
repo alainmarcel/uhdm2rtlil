@@ -7,5 +7,6 @@ module \top
   wire width 32 output 1 signed \o
   attribute \src "dut.sv:6.29-6.43"
   wire width 96 \sram_otp_key_o
-  connect \o 32'x
+  connect \sram_otp_key_o [31:0] 1
+  connect \o \sram_otp_key_o [31:0]
 end

@@ -6102,32 +6102,50 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     int elem_idx = idx_sig.as_const().as_int();
                     std::string elem_name = base_name + "[" +
                                             std::to_string(elem_idx) + "]";
-                    RTLIL::Wire* elem_wire = nullptr;
-                    if (name_map.count(elem_name))
-                        elem_wire = name_map[elem_name];
-                    // Find the struct typespec via the inner struct_net of
-                    // the array_net (recorded in wire_map by the array_net
-                    // handler), or via any other registered UHDM object that
-                    // shares the flat base wire.
-                    const UHDM::struct_typespec* st = nullptr;
                     RTLIL::Wire* base_flat_wire = name_map.count(base_name)
                                                     ? name_map[base_name]
-                                                    : nullptr;
-                    if (base_flat_wire) {
-                        for (auto& kv : wire_map) {
-                            if (kv.second != base_flat_wire) continue;
-                            if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) {
-                                if (auto rts = sn->Typespec()) {
-                                    if (auto ats = rts->Actual_typespec()) {
-                                        if (ats->UhdmType() == uhdmstruct_typespec)
-                                            st = any_cast<const UHDM::struct_typespec*>(ats);
-                                    }
-                                }
+                                                    : module->wire(RTLIL::escape_id(base_name));
+
+                    // The element value: a dedicated per-element wire (UNPACKED
+                    // array of structs) or an element_width-bit slice of the
+                    // single packed wire (PACKED array of structs).
+                    RTLIL::SigSpec element_sig;
+                    const UHDM::struct_typespec* st = nullptr;
+
+                    if (name_map.count(elem_name)) {
+                        element_sig = RTLIL::SigSpec(name_map[elem_name]);
+                        // struct typespec via the inner struct_net of the array_net.
+                        if (base_flat_wire) {
+                            for (auto& kv : wire_map) {
+                                if (kv.second != base_flat_wire) continue;
+                                if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first))
+                                    if (auto rts = sn->Typespec())
+                                        if (auto ats = rts->Actual_typespec())
+                                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                                if (st) break;
                             }
-                            if (st) break;
+                        }
+                    } else if (base_flat_wire) {
+                        // PACKED array of structs (packed_array_var): the element
+                        // type is the first struct_var in Elements().
+                        // ExpressionInIndex: `sram_otp_key_o[0].nonce`.
+                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(bs->Actual_group()))
+                            if (pav->Elements() && !pav->Elements()->empty())
+                                if (auto sv = dynamic_cast<const UHDM::struct_var*>(pav->Elements()->at(0)))
+                                    if (auto rts = sv->Typespec())
+                                        if (auto ats = rts->Actual_typespec())
+                                            if (ats->UhdmType() == uhdmstruct_typespec)
+                                                st = any_cast<const UHDM::struct_typespec*>(ats);
+                        if (st) {
+                            int elem_w = get_width_from_typespec(st, inst);
+                            int off = elem_idx * elem_w;
+                            if (elem_w > 0 && off >= 0 && off + elem_w <= base_flat_wire->width)
+                                element_sig = RTLIL::SigSpec(base_flat_wire).extract(off, elem_w);
                         }
                     }
-                    if (elem_wire && st && st->Members()) {
+
+                    if (!element_sig.empty() && st && st->Members()) {
                         // Find field offset (from LSB) and width by walking
                         // members in reverse (last listed = LSB).
                         int field_offset = 0;
@@ -6147,16 +6165,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             field_offset += mw;
                         }
                         if (found_field && field_width > 0 &&
-                            field_offset + field_width <= elem_wire->width) {
-                            if (mode_debug)
-                                log("    Array struct scalar field: %s[%d].%s -> "
-                                    "%s[%d+:%d]\n",
-                                    base_name.c_str(), elem_idx,
-                                    field_name.c_str(),
-                                    elem_wire->name.c_str(),
-                                    field_offset, field_width);
-                            return RTLIL::SigSpec(elem_wire)
-                                .extract(field_offset, field_width);
+                            field_offset + field_width <= element_sig.size()) {
+                            return element_sig.extract(field_offset, field_width);
                         }
                     }
                 }
