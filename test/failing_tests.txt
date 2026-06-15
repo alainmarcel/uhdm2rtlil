@@ -72,7 +72,6 @@ various/abc9.v
 # incremental frontend fixes — see test/imported_tests_status.txt.
 # --- equiv_induct failures (29):
 2DUnpackedArray
-AssignBitSelectPartSelect
 AssignmentToConcatenation
 CastClog2ToMinimalSizeOfParamValueFromCommandLine
 CastStructArray
@@ -88,7 +87,6 @@ OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
 PartSelectOfPartSelectedBitSelect
 Repeat
-SelfSelectsInBitSelectAfterBitSelect
 SignedWire
 StructOfArrayOfStructs
 TypedefPackedDimensions

@@ -9,5 +9,5 @@ module top(o);
   (* src = "dut.sv:2.21-2.27" *)
   wire [9:0] x;
   assign x = 10'h3ff;
-  assign o = 2'h0;
+  assign o = 2'h3;
 endmodule
