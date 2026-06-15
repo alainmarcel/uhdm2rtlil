@@ -15,13 +15,15 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 649 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 93% (610/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
-- **Passing**: 378 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 232 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Known failures**: 39 (29 equiv_induct, 10 output-generation), all from the freshly-imported
+- **Success Rate**: 95% (618/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
+- **Passing**: 381 tests with formal equivalence verified between UHDM and Verilog frontends
+- **UHDM-Only Success**: 237 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Known failures**: 31 (26 equiv_induct, 5 output-generation), all from the imported
   chipsalliance/UHDM-integration-tests suite exercising UHDM frontend feature gaps /
   non-synthesizable constructs — tracked in `test/failing_tests.txt` and
-  `test/imported_tests_status.txt`, to be fixed incrementally. No pre-existing test regressed.
+  `test/imported_tests_status.txt`, fixed incrementally (break/continue, repeat/while,
+  `int` loop vars, compound assignments, and function break/continue/return so far).
+  No pre-existing test regressed.
 
 > **Note (2026-06-14):** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
