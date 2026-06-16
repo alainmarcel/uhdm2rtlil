@@ -5044,6 +5044,47 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         packed_outer_l = wire->attributes.at(RTLIL::escape_id("packed_outer_left")).as_int();
         packed_outer_r = wire->attributes.at(RTLIL::escape_id("packed_outer_right")).as_int();
     }
+    // Packed array of a (packed) struct/enum: `filter_ctl_t [1:0] a` is a
+    // packed_array_var whose flat wire carries no packed_elem_width attribute, so
+    // `a[i]` would wrongly extract a single bit.  Derive the element width from
+    // the packed_array_typespec Elem_typespec (StructPackedArray: a[1] is the
+    // upper 10-bit element, not bit 1).
+    if (packed_elem_w <= 1 && wire) {
+        // Find the packed_array_var (via wire_map) to read its Ranges()/Elements();
+        // for a typedef'd packed array of struct this is the only place the outer
+        // dimension and element type are both available.
+        const UHDM::packed_array_var* pav = nullptr;
+        for (auto& kv : wire_map) {
+            if (kv.second != wire) continue;
+            if (kv.first->UhdmType() == uhdmpacked_array_var) {
+                pav = any_cast<const UHDM::packed_array_var*>(kv.first);
+                break;
+            }
+        }
+        if (pav) {
+            int ew = 0;
+            if (pav->Elements() && !pav->Elements()->empty())
+                if (auto e0 = dynamic_cast<const UHDM::any*>((*pav->Elements())[0]))
+                    ew = get_width(e0, inst);
+            if (ew <= 0 && pav->Typespec())
+                if (auto pts = pav->Typespec()->Actual_typespec())
+                    if (pts->UhdmType() == uhdmpacked_array_typespec)
+                        if (auto pat = any_cast<const UHDM::packed_array_typespec*>(pts))
+                            if (pat->Elem_typespec())
+                                if (auto et = pat->Elem_typespec()->Actual_typespec())
+                                    ew = get_width_from_typespec(et, inst);
+            if (ew > 1 && pav->Ranges() && !pav->Ranges()->empty()) {
+                auto r0 = (*pav->Ranges())[0];
+                RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+                if (ls.is_fully_const() && rs.is_fully_const()) {
+                    packed_elem_w = ew;
+                    packed_outer_l = ls.as_int();
+                    packed_outer_r = rs.as_int();
+                }
+            }
+        }
+    }
 
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
