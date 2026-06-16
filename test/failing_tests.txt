@@ -84,10 +84,8 @@ MultipleAssignments
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
 SignedWire
-StructOfArrayOfStructs
 VarPassedTo2Submodules
 # --- output-generation (true) failures (10):
 ParameterSizeOfInstance
-StructMemberAsModuleInput
 SystemFunctions
 UnionParameter

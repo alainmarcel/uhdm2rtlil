@@ -8,12 +8,15 @@ package my_pkg;
    } ast_alert_rsp_t;
 endpackage // my_pkg
 
-module top(output o);
+// Exercise nested struct → packed-array-of-struct → field access
+// (`ast_alert_o.alerts_ack[i].p`) with every element driven so the design is
+// fully controllable/observable (no dead undriven-X bits).
+module top(input [1:0] din, output [1:0] o);
    my_pkg::ast_alert_rsp_t ast_alert_o;
    always_comb begin
-      for (int i = 0; i < 1; i++) begin
-         ast_alert_o.alerts_ack[0].p = 1'b1;
+      for (int i = 0; i < 2; i++) begin
+         ast_alert_o.alerts_ack[i].p = din[i];
       end
    end
-   assign o = ast_alert_o.alerts_ack[0].p;
+   assign o = {ast_alert_o.alerts_ack[1].p, ast_alert_o.alerts_ack[0].p};
 endmodule // top
