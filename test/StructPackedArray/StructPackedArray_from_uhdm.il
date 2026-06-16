@@ -6,8 +6,7 @@ module \top
   attribute \src "dut.sv:1.31-1.32"
   wire width 10 output 1 \o
   attribute \src "dut.sv:6.23-6.43"
-  attribute \unused_bits "0 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19"
   wire width 20 \a
-  connect \a [1] \o [0]
-  connect \o [9:1] 9'000000000
+  connect \a 20'00000011110000000000
+  connect \o 10'0000001111
 end

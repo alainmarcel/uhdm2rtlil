@@ -1,0 +1,22 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -6,17 +6,15 @@
+ wire o;
+ assign o = 1'h1;
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:5.1-15.10" *)
++(* top =  1  *)
+ module top(o);
+ (* src = "dut.sv:5.26-5.27" *)
+ output o;
+ wire o;
+ (* src = "dut.sv:10.16-10.26" *)
+ (* wiretype = "\\alert_rx_t" *)
+-wire [0:0] alert_rx_i;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:12.8-12.32" *)
++wire alert_rx_i;
+ dut d (
+ .o(alert_rx_i)
+ );

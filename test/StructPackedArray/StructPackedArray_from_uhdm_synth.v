@@ -6,7 +6,8 @@ module top(o);
   (* src = "dut.sv:1.31-1.32" *)
   output [9:0] o;
   wire [9:0] o;
-  wire [1:0] a;
-  assign a = 2'hx;
-  assign o = 10'b000000000x;
+  (* src = "dut.sv:6.23-6.43" *)
+  wire [19:0] a;
+  assign a = 20'h03c00;
+  assign o = 10'h00f;
 endmodule

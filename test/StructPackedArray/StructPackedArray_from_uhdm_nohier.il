@@ -7,5 +7,6 @@ module \top
   wire width 10 output 1 \o
   attribute \src "dut.sv:6.23-6.43"
   wire width 20 \a
-  connect \o { 9'000000000 \a [1] }
+  connect \a 20'00000011110000000000
+  connect \o \a [19:10]
 end
