@@ -6180,13 +6180,39 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         // PACKED array of structs (packed_array_var): the element
                         // type is the first struct_var in Elements().
                         // ExpressionInIndex: `sram_otp_key_o[0].nonce`.
-                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(bs->Actual_group()))
+                        if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(bs->Actual_group())) {
                             if (pav->Elements() && !pav->Elements()->empty())
                                 if (auto sv = dynamic_cast<const UHDM::struct_var*>(pav->Elements()->at(0)))
                                     if (auto rts = sv->Typespec())
                                         if (auto ats = rts->Actual_typespec())
                                             if (ats->UhdmType() == uhdmstruct_typespec)
                                                 st = any_cast<const UHDM::struct_typespec*>(ats);
+                            // Typedef'd packed array (`typedef a[5:0] b`): Elements()
+                            // is empty; resolve the struct via the packed_array_typespec
+                            // Elem_typespec chain (TypedefPackedDimensions).
+                            if (!st && pav->Typespec())
+                                if (auto pts = pav->Typespec()->Actual_typespec())
+                                    if (pts->UhdmType() == uhdmpacked_array_typespec)
+                                        if (auto pat = any_cast<const UHDM::packed_array_typespec*>(pts))
+                                            if (pat->Elem_typespec())
+                                                if (auto et = pat->Elem_typespec()->Actual_typespec())
+                                                    if (et->UhdmType() == uhdmstruct_typespec)
+                                                        st = any_cast<const UHDM::struct_typespec*>(et);
+                        }
+                        // Typedef'd *unpacked* array (`typedef a b[5:0]`): `c` is an
+                        // array_var whose array_typespec flattens to the same wide
+                        // wire — resolve the struct via array_typespec Elem_typespec
+                        // (TypedefVariableDimensions).
+                        if (!st)
+                            if (auto av = dynamic_cast<const UHDM::array_var*>(bs->Actual_group()))
+                                if (av->Typespec())
+                                    if (auto ats = av->Typespec()->Actual_typespec())
+                                        if (ats->UhdmType() == uhdmarray_typespec)
+                                            if (auto at = any_cast<const UHDM::array_typespec*>(ats))
+                                                if (at->Elem_typespec())
+                                                    if (auto et = at->Elem_typespec()->Actual_typespec())
+                                                        if (et->UhdmType() == uhdmstruct_typespec)
+                                                            st = any_cast<const UHDM::struct_typespec*>(et);
                         if (st) {
                             int elem_w = get_width_from_typespec(st, inst);
                             int off = elem_idx * elem_w;

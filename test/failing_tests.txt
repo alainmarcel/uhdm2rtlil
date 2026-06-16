@@ -85,8 +85,6 @@ OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
 SignedWire
 StructOfArrayOfStructs
-TypedefPackedDimensions
-TypedefVariableDimensions
 VarPassedTo2Submodules
 # --- output-generation (true) failures (10):
 ParameterSizeOfInstance
