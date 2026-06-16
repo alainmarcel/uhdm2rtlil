@@ -8,6 +8,6 @@ module top(o);
   wire signed [31:0] o;
   (* src = "dut.sv:8.26-8.46" *)
   wire [31:0] x;
-  assign x = 32'hxxxxxxxx;
-  assign o = 32'hxxxxxxxx;
+  assign x = 32'd2863311530;
+  assign o = 32'd2863311530;
 endmodule

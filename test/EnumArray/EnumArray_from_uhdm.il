@@ -7,5 +7,6 @@ module \top
   wire width 32 output 1 signed \o
   attribute \src "dut.sv:8.26-8.46"
   wire width 32 \x
-  connect \x \o
+  connect \x 32'10101010101010101010101010101010
+  connect \o 32'10101010101010101010101010101010
 end
