@@ -87,8 +87,6 @@ SignedWire
 StructOfArrayOfStructs
 TypedefPackedDimensions
 TypedefVariableDimensions
-unary_op_not_log
-unary_op_plus
 VarPassedTo2Submodules
 # --- output-generation (true) failures (10):
 ParameterSizeOfInstance
