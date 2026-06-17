@@ -29,7 +29,6 @@ module top(o, p);
   output signed [31:0] p;
   wire signed [31:0] p;
   (* src = "dut.sv:23.31-23.45" *)
-  (* unused_bits = "1 2 3" *)
   wire [3:0] lc_clk_byp_ack;
   lc_ctrl_fsm u_lc_ctrl_fsm (
     .lc_clk_byp_ack_i({ 3'h0, lc_clk_byp_ack[0] }),
@@ -38,5 +37,5 @@ module top(o, p);
   prim_lc_sync u_prim_lc_sync_clk_byp_ack (
     .lc_en_o(lc_clk_byp_ack)
   );
-  assign p = { 31'h00000000, lc_clk_byp_ack[0] };
+  assign p = { 28'h0000000, lc_clk_byp_ack };
 endmodule

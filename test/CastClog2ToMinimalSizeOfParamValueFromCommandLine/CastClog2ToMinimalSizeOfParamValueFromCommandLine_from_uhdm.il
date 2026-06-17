@@ -7,5 +7,5 @@ module \top
   parameter \X 3
   attribute \src "dut.sv:1.23-1.24"
   wire width 32 output 1 signed \o
-  connect \o 3
+  connect \o 32'11111111111111111111111111111111
 end
