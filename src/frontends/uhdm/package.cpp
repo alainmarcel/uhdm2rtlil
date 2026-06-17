@@ -64,7 +64,6 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                 } else if (!param_obj->VpiValue().empty()) {
                     // Fallback: use VpiValue() directly (elaborated params may have resolved value here)
                     std::string val_str = std::string(param_obj->VpiValue());
-                    int int_val = parse_vpi_value_to_int(val_str);
                     // Get width from typespec if available, else default 32
                     int width = 32;
                     if (param_obj->Typespec()) {
@@ -73,7 +72,13 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                             if (ts_width > 0) width = ts_width;
                         }
                     }
-                    RTLIL::Const param_value(int_val, width);
+                    // Use the arbitrary-width parser — `parse_vpi_value_to_int`
+                    // truncates to `int` and overflows std::stoul for wide
+                    // constants (e.g. a 160-bit `logic [159:0]` package
+                    // parameter — ParameterSizeOfInstance crashed here).
+                    RTLIL::Const param_value = extract_const_from_value(val_str);
+                    if (param_value.size() != width)
+                        param_value = param_value.extract(0, width, RTLIL::State::S0);
                     package_parameter_map[full_name] = param_value;
                     log("UHDM: Package parameter %s = %s (from VpiValue)\n",
                         full_name.c_str(), param_value.as_string().c_str());
