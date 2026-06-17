@@ -510,6 +510,24 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                     if (existing.name == sig.name) return;
                 signals.push_back(sig);
             };
+            // A LOCALLY-declared loop var (`for (int i = ...)`) is
+            // loop_values-only and must NOT become a module wire — otherwise it
+            // leaks as `assign i = 1'hx` (MultipleAssignments).  Detect it (init
+            // LHS is a variable-declaration node, not a ref_obj/ref_var) so the
+            // init/inc scan below can skip it.
+            std::string local_loopvar;
+            if (for_loop->VpiForInitStmts() && !for_loop->VpiForInitStmts()->empty()) {
+                auto s0 = (*for_loop->VpiForInitStmts())[0];
+                if (s0->VpiType() == vpiAssignment) {
+                    auto ia0 = any_cast<const assignment*>(s0);
+                    if (ia0->Lhs()) {
+                        int lt = ia0->Lhs()->VpiType();
+                        if (lt != vpiRefObj && lt != vpiRefVar &&
+                            !ia0->Lhs()->VpiName().empty())
+                            local_loopvar = std::string(ia0->Lhs()->VpiName());
+                    }
+                }
+            }
             // Also scan the init and increment statements — for a
             // module-scope `integer k` used as the loop var
             // (`for (k=0; k<N; k=k+1)`), `k` is written by the init
@@ -517,15 +535,16 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
             // `$0\k` temp wire is created and the post-loop value of
             // `k` (substituted into expressions like `y = k - ...`)
             // never gets driven onto the actual wire — yosys/tests/
-            // simple/forloops.v depends on this.
-            if (for_loop->VpiForInitStmts()) {
+            // simple/forloops.v depends on this.  (Skipped for a
+            // locally-declared loop var per `local_loopvar` above.)
+            if (for_loop->VpiForInitStmts() && local_loopvar.empty()) {
                 for (auto s : *for_loop->VpiForInitStmts()) {
                     std::vector<AssignedSignal> init_signals;
                     extract_assigned_signals(s, init_signals);
                     for (auto& sig : init_signals) dedup_add(sig);
                 }
             }
-            if (for_loop->VpiForIncStmts()) {
+            if (for_loop->VpiForIncStmts() && local_loopvar.empty()) {
                 for (auto s : *for_loop->VpiForIncStmts()) {
                     std::vector<AssignedSignal> inc_signals;
                     extract_assigned_signals(s, inc_signals);

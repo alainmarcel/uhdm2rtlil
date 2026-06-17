@@ -15,10 +15,10 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 
 ### Test Suite Status
 - **Total Tests**: 649 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 97% (634/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
-- **Passing**: 396 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 238 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Known failures**: 15 (12 equiv_induct, 3 output-generation), all from the imported
+- **Success Rate**: 99% (643/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
+- **Passing**: 404 tests with formal equivalence verified between UHDM and Verilog frontends
+- **UHDM-Only Success**: 239 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Known failures**: 6 (4 equiv_induct, 2 output-generation), all from the imported
   chipsalliance/UHDM-integration-tests suite exercising UHDM frontend feature gaps /
   non-synthesizable constructs — tracked in `test/failing_tests.txt` and
   `test/imported_tests_status.txt`, fixed incrementally (break/continue, repeat/while,
@@ -27,8 +27,11 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
   returns, replicated array patterns `'{N{x}}`, `packed_array_var` net-decl initializers,
   function-local packed enum arrays; the typedef/struct cluster — typedef'd packed/unpacked
   array-of-struct field access, `struct.member[i].field`, packed-struct member port
-  connections, bit-select element width for packed-array-of-struct; and a Surelog/UHDM
-  `ExprEval` fix for constant-expression-width size casts like `$clog2(X)'(X)` — so far).
+  connections, bit-select element width for packed-array-of-struct; a Surelog/UHDM
+  `ExprEval` fix for constant-expression-width size casts like `$clog2(X)'(X)`; wide
+  (>64-bit) hex-constant parsing; interface procedural blocks and port-driven net-decl
+  inits; single-bit signed continuous-assignment sign-extension; and an always_ff shift
+  register — descending for loops, blocking-visible bit-select reads — so far).
   No pre-existing test regressed.
 
 > **Note (2026-06-14):** 349 DUTs from
