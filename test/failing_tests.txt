@@ -81,6 +81,5 @@ OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
 SignedWire
 # --- output-generation (true) failures (10):
-ParameterSizeOfInstance
 SystemFunctions
 UnionParameter

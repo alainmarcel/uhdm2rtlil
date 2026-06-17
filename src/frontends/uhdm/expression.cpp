@@ -1214,11 +1214,31 @@ RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str
         std::string bin_str = value_str.substr(4);
         return RTLIL::Const::from_string(bin_str);
     } else if (value_str.substr(0, 4) == "HEX:") {
+        // Build the constant nibble-by-nibble so arbitrarily wide values work
+        // (std::stoull caps at 64 bits and throws std::out_of_range on, e.g.,
+        // a 160-bit `logic [159:0]` package parameter — ParameterSizeOfInstance).
         std::string hex_str = value_str.substr(4);
-        unsigned long long hex_val = std::stoull(hex_str, nullptr, 16);
-        // Determine width from hex string length
         int width = hex_str.length() * 4;
-        return RTLIL::Const(hex_val, width);
+        std::vector<RTLIL::State> bits(width, RTLIL::State::S0);
+        for (size_t i = 0; i < hex_str.length(); i++) {
+            char c = hex_str[hex_str.length() - 1 - i];  // LSB nibble first
+            size_t base = i * 4;
+            if (c == 'x' || c == 'X') {
+                for (int b = 0; b < 4; b++) bits[base + b] = RTLIL::State::Sx;
+                continue;
+            }
+            if (c == 'z' || c == 'Z') {
+                for (int b = 0; b < 4; b++) bits[base + b] = RTLIL::State::Sz;
+                continue;
+            }
+            int v = 0;
+            if (c >= '0' && c <= '9') v = c - '0';
+            else if (c >= 'a' && c <= 'f') v = c - 'a' + 10;
+            else if (c >= 'A' && c <= 'F') v = c - 'A' + 10;
+            for (int b = 0; b < 4; b++)
+                bits[base + b] = (v & (1 << b)) ? RTLIL::State::S1 : RTLIL::State::S0;
+        }
+        return RTLIL::Const(bits);
     } else if (value_str.substr(0, 7) == "STRING:") {
         // Handle string constants - convert to binary representation
         std::string str_val = value_str.substr(7);
@@ -2459,19 +2479,14 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
             if (mode_debug)
                 log("    Parsed hex_str='%s', creating constant with size=%d\n", hex_str.c_str(), size);
             
-            // Create hex constant with proper bit width
-            // Convert hex string to integer, then create constant with specified size
-            try {
-                uint64_t hex_val = std::stoull(hex_str, nullptr, 16);
-                RTLIL::Const const_val(hex_val, size > 0 ? size : 32);
-                return RTLIL::SigSpec(const_val);
-            } catch (const std::exception& e) {
-                log_warning("Failed to parse hex value '%s': %s\n", hex_str.c_str(), e.what());
-                // Fallback to string parsing
-                RTLIL::Const const_val = RTLIL::Const::from_string("'h" + hex_str);
-                if (size > 0 && const_val.size() != size) {
-                    const_val = const_val.extract(0, size);
-                }
+            // Create hex constant with proper bit width.  Build via the
+            // nibble-by-nibble helper so arbitrarily wide values work (std::stoull
+            // caps at 64 bits — a 160-bit `logic [159:0]` constant overflowed it).
+            {
+                RTLIL::Const const_val = extract_const_from_value("HEX:" + hex_str);
+                int target = size > 0 ? size : const_val.size();
+                if (const_val.size() != target)
+                    const_val = const_val.extract(0, target, RTLIL::State::S0);
                 return RTLIL::SigSpec(const_val);
             }
         }

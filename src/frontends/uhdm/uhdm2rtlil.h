@@ -51,12 +51,22 @@ static inline int parse_vpi_value_to_int(const std::string& vpi_value) {
     std::string type_part = vpi_value.substr(0, colon_pos);
     std::string value_part = vpi_value.substr(colon_pos + 1);
 
-    if (type_part == "HEX")
-        return (int)std::stoul(value_part, nullptr, 16);
-    else if (type_part == "BIN")
-        return (int)std::stoul(value_part, nullptr, 2);
-    else // UINT, INT, DEC
-        return std::stoi(value_part);
+    // This helper returns an `int`, so only the low bits matter; guard against
+    // wide constants (e.g. a 160-bit `logic [159:0]` value) whose string would
+    // overflow std::stoul/stoi by keeping only the low-order digits.
+    try {
+        if (type_part == "HEX") {
+            if (value_part.size() > 8) value_part = value_part.substr(value_part.size() - 8);
+            return (int)std::stoul(value_part, nullptr, 16);
+        } else if (type_part == "BIN") {
+            if (value_part.size() > 32) value_part = value_part.substr(value_part.size() - 32);
+            return (int)std::stoul(value_part, nullptr, 2);
+        } else { // UINT, INT, DEC
+            return (int)std::stoll(value_part);
+        }
+    } catch (const std::exception&) {
+        return 0;
+    }
 }
 
 // Forward declarations
