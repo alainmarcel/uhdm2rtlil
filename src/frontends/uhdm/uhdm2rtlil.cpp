@@ -2278,6 +2278,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             wire->is_signed = true;
                             log("UHDM: struct_var '%s' VpiSigned=1, setting is_signed=true\n", var_name.c_str());
                         }
+                        // Packed struct with an aggregate initializer
+                        // (`hw2reg_wrap_t hw2reg_wrap = {c, d}`): drive the
+                        // flattened wire with the (constant) init expression.
+                        if (struct_v->Expr()) {
+                            log("UHDM: struct_var '%s' has initializer - deferring to second pass\n", var_name.c_str());
+                            vars_with_init_expr.push_back(std::make_pair(var, wire));
+                        }
                     } else if (auto union_v = dynamic_cast<const UHDM::union_var*>(var)) {
                         // Handle wiretype attribute for union variables
                         if (auto ref_ts = union_v->Typespec()) {
@@ -2532,20 +2539,22 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         }
                     }
                 }
-            } else if (var->UhdmType() == uhdmpacked_array_var) {
-                // `lc_tx_t [7:0] x = '{8{On}}` — drive the net with its
-                // (constant) array-pattern initializer.
-                if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(var)) {
-                    if (pav->Expr()) {
-                        log("UHDM: Processing initializer for packed_array_var '%s'\n", var_name.c_str());
-                        RTLIL::SigSpec init_val = import_expression(pav->Expr());
+            } else if (var->UhdmType() == uhdmpacked_array_var ||
+                       var->UhdmType() == uhdmstruct_var) {
+                // `lc_tx_t [7:0] x = '{8{On}}` (packed array) or
+                // `hw2reg_wrap_t w = {c, d}` (packed struct) — drive the
+                // flattened wire with its (constant) aggregate initializer.
+                if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                    if (v->Expr()) {
+                        log("UHDM: Processing initializer for %s\n", var_name.c_str());
+                        RTLIL::SigSpec init_val = import_expression(v->Expr());
                         if (init_val.size() > 0) {
                             if (init_val.size() < wire->width)
                                 init_val.extend_u0(wire->width, false);
                             else if (init_val.size() > wire->width)
                                 init_val = init_val.extract(0, wire->width);
                             module->connect(RTLIL::SigSpec(wire), init_val);
-                            log("UHDM: Connected packed_array_var '%s' to its initializer\n", var_name.c_str());
+                            log("UHDM: Connected '%s' to its initializer\n", var_name.c_str());
                         }
                     }
                 }

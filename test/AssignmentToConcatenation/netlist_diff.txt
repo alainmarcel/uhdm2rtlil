@@ -8,16 +8,11 @@
  module top(a, b);
  (* src = "dut.sv:1.25-1.26" *)
  output a;
-@@ -9,9 +9,8 @@
+@@ -9,7 +9,6 @@
  output b;
  wire b;
  (* src = "dut.sv:8.18-8.29" *)
 -(* wiretype = "\\hw2reg_wrap_t" *)
  wire [1:0] hw2reg_wrap;
--assign hw2reg_wrap = 2'h1;
--assign b = 1'h1;
--assign a = 1'h0;
-+assign hw2reg_wrap = 2'hx;
-+assign b = 1'hx;
-+assign a = 1'hx;
- endmodule
+ assign hw2reg_wrap = 2'h1;
+ assign b = 1'h1;
