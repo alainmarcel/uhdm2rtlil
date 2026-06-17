@@ -76,7 +76,6 @@ CastStructArray
 EnumParameterInNestedModules
 MultipleAssignments
 OutputSizeWithParameterOfInstanceInitializedByStructMember
-SignedWire
 # --- output-generation (true) failures (10):
 SystemFunctions
 UnionParameter

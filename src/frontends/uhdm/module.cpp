@@ -1207,6 +1207,11 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
             if (rhs.is_fully_const()) {
                 RTLIL::State bit_val = rhs.as_const()[0];
                 rhs = RTLIL::SigSpec(RTLIL::Const(bit_val, lhs.size()));
+            } else if (rhs.is_wire() && rhs.as_wire()->is_signed) {
+                // Non-constant single SIGNED bit: sign-extend by replicating
+                // the bit (`wire signed inp` → `xn = {inp,inp,...}`).  Without
+                // this it was zero-extended (SignedWire).
+                rhs = RTLIL::SigSpec(rhs[0], lhs.size());
             } else {
                 // For non-constant single bits, zero-extend (zeros in MSB, value in LSB)
                 rhs = {RTLIL::SigSpec(RTLIL::State::S0, lhs.size() - 1), rhs};

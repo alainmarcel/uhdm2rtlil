@@ -9,5 +9,5 @@ module top(inp, xn);
   (* src = "dut.sv:1.17-1.19" *)
   output [4:0] xn;
   wire [4:0] xn;
-  assign xn = { 4'h0, inp };
+  assign xn = { inp, inp, inp, inp, inp };
 endmodule

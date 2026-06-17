@@ -7,5 +7,5 @@ module \top
   wire input 1 signed \inp
   attribute \src "dut.sv:1.17-1.19"
   wire width 5 output 2 \xn
-  connect \xn { 4'0000 \inp }
+  connect \xn { \inp \inp \inp \inp \inp }
 end
