@@ -73,7 +73,6 @@ various/abc9.v
 # --- equiv_induct failures (29):
 2DUnpackedArray
 AssignmentToConcatenation
-CastClog2ToMinimalSizeOfParamValueFromCommandLine
 CastStructArray
 EnumParameterInNestedModules
 ExpressionInIndex
@@ -84,7 +83,6 @@ MultipleAssignments
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
 SignedWire
-VarPassedTo2Submodules
 # --- output-generation (true) failures (10):
 ParameterSizeOfInstance
 SystemFunctions

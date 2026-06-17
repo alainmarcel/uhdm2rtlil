@@ -8,15 +8,15 @@ module \lc_ctrl_fsm
   attribute \src "dut.sv:11.15-11.16"
   wire width 32 output 2 signed \o
   attribute \src "dut.sv:13.15-13.37"
-  wire width 32 signed $auto$expression.cpp:3997:import_operation$1
-  cell $pos $auto$expression.cpp:4000:import_operation$2
+  wire width 32 signed $auto$expression.cpp:4060:import_operation$1
+  cell $pos $auto$expression.cpp:4063:import_operation$2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
     connect \A \lc_clk_byp_ack_i
-    connect \Y $auto$expression.cpp:3997:import_operation$1
+    connect \Y $auto$expression.cpp:4060:import_operation$1
   end
-  connect \o $auto$expression.cpp:3997:import_operation$1
+  connect \o $auto$expression.cpp:4060:import_operation$1
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:16.1-20.25"
@@ -35,13 +35,13 @@ module \top
   attribute \src "dut.sv:23.31-23.45"
   wire width 4 \lc_clk_byp_ack
   attribute \src "dut.sv:27.15-27.38"
-  wire width 32 signed $auto$expression.cpp:3997:import_operation$3
-  cell $pos $auto$expression.cpp:4000:import_operation$4
+  wire width 32 signed $auto$expression.cpp:4060:import_operation$3
+  cell $pos $auto$expression.cpp:4063:import_operation$4
     parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
+    parameter \A_WIDTH 4
     parameter \Y_WIDTH 32
-    connect \A \lc_clk_byp_ack [0]
-    connect \Y $auto$expression.cpp:3997:import_operation$3
+    connect \A \lc_clk_byp_ack
+    connect \Y $auto$expression.cpp:4060:import_operation$3
   end
   cell \prim_lc_sync \u_prim_lc_sync_clk_byp_ack
     connect \lc_en_o \lc_clk_byp_ack
@@ -50,5 +50,5 @@ module \top
     connect \lc_clk_byp_ack_i \lc_clk_byp_ack [0]
     connect \o \o
   end
-  connect \p $auto$expression.cpp:3997:import_operation$3
+  connect \p $auto$expression.cpp:4060:import_operation$3
 end

@@ -22,7 +22,6 @@ module \top
   attribute \src "dut.sv:22.37-22.38"
   wire width 32 output 2 signed \p
   attribute \src "dut.sv:23.31-23.45"
-  attribute \unused_bits "1 2 3"
   wire width 4 \lc_clk_byp_ack
   cell \lc_ctrl_fsm \u_lc_ctrl_fsm
     connect \lc_clk_byp_ack_i { 3'000 \lc_clk_byp_ack [0] }
@@ -31,5 +30,5 @@ module \top
   cell \prim_lc_sync \u_prim_lc_sync_clk_byp_ack
     connect \lc_en_o \lc_clk_byp_ack
   end
-  connect \p { 31'0000000000000000000000000000000 \lc_clk_byp_ack [0] }
+  connect \p { 28'0000000000000000000000000000 \lc_clk_byp_ack }
 end
