@@ -15,11 +15,27 @@ module top(clk, wire_i, wire_o, register_o);
   (* src = "dut.sv:5.18-5.28" *)
   output register_o;
   wire register_o;
-  wire i;
-  (* src = "dut.sv:9.21-9.29" *)
-  wire [2:0] register;
-  assign i = 1'hx;
-  assign register = 3'hx;
-  assign register_o = 1'hx;
+  wire [1:0] register;
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:11.3-17.6" *)
+  \$_DFF_P_  \register_reg[0]  /* _0_ */ (
+    .C(clk),
+    .D(wire_i),
+    .Q(register[0])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:11.3-17.6" *)
+  \$_DFF_P_  \register_reg[1]  /* _1_ */ (
+    .C(clk),
+    .D(register[0]),
+    .Q(register[1])
+  );
+  (* \always_ff  = 32'd1 *)
+  (* src = "dut.sv:11.3-17.6" *)
+  \$_DFF_P_  register_o_reg /* _2_ */ (
+    .C(clk),
+    .D(register[1]),
+    .Q(register_o)
+  );
   assign wire_o = wire_i;
 endmodule

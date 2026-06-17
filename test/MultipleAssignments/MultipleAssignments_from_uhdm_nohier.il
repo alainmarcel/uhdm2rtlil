@@ -13,9 +13,6 @@ module \top
   wire output 4 \register_o
   attribute \src "dut.sv:9.21-9.29"
   wire width 3 \register
-  wire \i
-  attribute \src "dut.sv:11.3-17.6"
-  wire $0\i
   attribute \src "dut.sv:11.3-17.6"
   wire width 3 $0\register
   attribute \src "dut.sv:11.3-17.6"
@@ -23,12 +20,11 @@ module \top
   attribute \src "dut.sv:11.3-17.6"
   attribute \always_ff 1
   process $proc$dut.sv:11$1
-    assign $0\i \i
-    assign $0\register [2:1] \register [2:1]
+    assign $0\register [2] \register [1]
+    assign $0\register [1] \register [0]
     assign $0\register [0] \wire_i
-    assign $0\register_o \register [2]
+    assign $0\register_o $0\register [2]
     sync posedge \clk
-      update \i $0\i
       update \register $0\register
       update \register_o $0\register_o
   end

@@ -5997,6 +5997,10 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             std::string fl_var;
             int64_t fl_start = 0, fl_end = 0, fl_inc_val = 1;
             bool fl_inclusive = false;
+            // Descending loop: `for (i = HI; i >= LO; i = i-1)` (MultipleAssignments
+            // shift register).  fl_inc_val stays a positive magnitude; the
+            // direction is carried here.
+            bool fl_descending = false;
 
             // Extract init: k = 0
             // The LHS can be:
@@ -6020,9 +6024,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                         // inherit `VpiName()` from `BaseClass`.
                         fl_var = std::string(ia->Lhs()->VpiName());
 
-                    if (!fl_var.empty() && ia->Rhs() && ia->Rhs()->VpiType() == vpiConstant) {
-                        RTLIL::SigSpec s = import_constant(any_cast<const constant*>(ia->Rhs()));
-                        if (s.is_fully_const()) { fl_start = s.as_const().as_int(); fl_can_unroll = true; }
+                    // The init RHS may be a plain constant OR a constant
+                    // EXPRESSION (`i = SHIFT-1` — MultipleAssignments); evaluate
+                    // it so `i = SHIFT-1` with `localparam SHIFT=3` folds to 2.
+                    if (!fl_var.empty() && ia->Rhs()) {
+                        if (auto re = dynamic_cast<const expr*>(ia->Rhs())) {
+                            RTLIL::SigSpec s = import_expression(re);
+                            if (s.is_fully_const()) { fl_start = s.as_const().as_int(); fl_can_unroll = true; }
+                        }
                     }
                 }
             }
@@ -6043,6 +6052,8 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                 const operation* co = any_cast<const operation*>(fl_cond);
                 if (co->VpiOpType() == vpiLeOp) fl_inclusive = true;
                 else if (co->VpiOpType() == vpiLtOp) fl_inclusive = false;
+                else if (co->VpiOpType() == vpiGeOp) { fl_inclusive = true; fl_descending = true; }
+                else if (co->VpiOpType() == vpiGtOp) { fl_inclusive = false; fl_descending = true; }
                 else fl_can_unroll = false;
 
                 if (fl_can_unroll && co->Operands() && co->Operands()->size() == 2) {
@@ -6080,17 +6091,27 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
             if (fl_can_unroll && fl_inc) {
                 if (fl_inc->VpiType() == vpiOperation) {
                     const operation* io = any_cast<const operation*>(fl_inc);
-                    if (io->VpiOpType() != vpiPostIncOp) fl_can_unroll = false;
+                    // `i++` (ascending) or `i--` (descending).
+                    if (io->VpiOpType() == vpiPostIncOp || io->VpiOpType() == vpiPreIncOp)
+                        ; // fl_inc_val stays 1
+                    else if (io->VpiOpType() == vpiPostDecOp || io->VpiOpType() == vpiPreDecOp)
+                        fl_descending = true;
+                    else fl_can_unroll = false;
                 } else if (fl_inc->VpiType() == vpiAssignment) {
                     const assignment* ia = any_cast<const assignment*>(fl_inc);
                     if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
                         const operation* ro = any_cast<const operation*>(ia->Rhs());
-                        if (ro->VpiOpType() == vpiAddOp && ro->Operands() && ro->Operands()->size() == 2) {
+                        // `i = i + N` (ascending) or `i = i - N` (descending).
+                        bool is_add = ro->VpiOpType() == vpiAddOp;
+                        bool is_sub = ro->VpiOpType() == vpiSubOp;
+                        if ((is_add || is_sub) && ro->Operands() && ro->Operands()->size() == 2) {
                             const any* op1 = ro->Operands()->at(1);
                             if (op1->VpiType() == vpiConstant) {
                                 RTLIL::SigSpec s = import_constant(any_cast<const constant*>(op1));
-                                if (s.is_fully_const()) fl_inc_val = s.as_const().as_int();
-                                else fl_can_unroll = false;
+                                if (s.is_fully_const()) {
+                                    fl_inc_val = s.as_const().as_int();
+                                    if (is_sub) fl_descending = true;
+                                } else fl_can_unroll = false;
                             } else fl_can_unroll = false;
                         } else fl_can_unroll = false;
                     } else fl_can_unroll = false;
@@ -6154,6 +6175,18 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     "max_iters=%lld guard=(i %s bound[%d])\n",
                     fl_var.c_str(), (long long)max_iters,
                     fl_inclusive ? "<=" : "<", fl_bound_width);
+            } else if (fl_can_unroll && fl_descending) {
+                // Descending: `for (i = HI; i >= LO (or > LO); i -= inc)`.
+                int64_t inc = fl_inc_val == 0 ? 1 : std::llabs(fl_inc_val);
+                int64_t loop_end = fl_inclusive ? fl_end : fl_end + 1;
+                for (int64_t i = fl_start; i >= loop_end; i -= inc) {
+                    loop_values[fl_var] = (int)i;
+                    import_statement_comb(fl_body, proc);
+                }
+                int64_t final_val = loop_end - inc;
+                loop_values[fl_var] = (int)final_val;
+                log("    Comb for loop unrolled (descending): %s final=%lld\n",
+                    fl_var.c_str(), (long long)final_val);
             } else if (fl_can_unroll) {
                 int64_t loop_end = fl_inclusive ? fl_end : fl_end - 1;
                 // If the body has a `break`, the SV semantics are "first
@@ -8866,11 +8899,28 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
             if (any_mapped) {
                 proc->root_case.actions.push_back(RTLIL::SigSig(mapped, rhs));
+                // In always_ff, a same-cycle BLOCKING write to a bit/part-select
+                // must be visible to later reads of the same signal (e.g. the
+                // shift register `register[i] = register[i-1]; register_o <=
+                // register[SHIFT-1]`).  Redirect reads of `<base>` to its full
+                // `$0\<base>` next-state temp, which carries the sequential
+                // blocking state (hold-default = old value, per-bit writes
+                // overwrite).  Mirrors the full-wire path above.
+                if (in_always_ff_body_mode && uhdm_assign->VpiBlocking()) {
+                    for (const auto& ch : lhs.chunks()) {
+                        if (!ch.wire) continue;
+                        std::string bn = ch.wire->name.str();
+                        if (!bn.empty() && bn[0] == '\\') bn = bn.substr(1);
+                        if (RTLIL::Wire* tw = module->wire("$0\\" + bn))
+                            if (tw->width == ch.wire->width)
+                                ff_blocking_temps[bn] = RTLIL::SigSpec(tw);
+                    }
+                }
                 return;
             }
         }
     }
-    
+
     // If no temp wire handling needed, use original LHS
     proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
 }

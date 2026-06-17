@@ -74,7 +74,6 @@ various/abc9.v
 AssignmentToConcatenation
 CastStructArray
 EnumParameterInNestedModules
-MultipleAssignments
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 # --- output-generation (true) failures (10):
 SystemFunctions
