@@ -210,6 +210,24 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
             
+            // Build a map of interface PORT name → its parent-side High_conn
+            // value, so a net-decl initializer that reads a port (e.g.
+            // `int start_addr = x;` with `input int x` tied to `10`) resolves to
+            // the port's actual value rather than a stray undriven placeholder.
+            // The port wires themselves are connected later (Ports loop below),
+            // but the init must see the value now.
+            std::map<std::string, RTLIL::SigSpec> port_conn_map;
+            if (interface->Ports()) {
+                for (auto p : *interface->Ports()) {
+                    if (!p->High_conn()) continue;
+                    std::string pn = std::string(p->VpiName());
+                    if (pn.empty()) continue;
+                    RTLIL::SigSpec hv = import_expression(
+                        any_cast<const UHDM::expr*>(p->High_conn()));
+                    if (hv.size() > 0) port_conn_map[pn] = hv;
+                }
+            }
+
             // Create interface signals in the module
             // First try Variables
             if (interface->Variables()) {
@@ -241,7 +259,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     // everything to `X`.
                     if (auto init_expr = var->Expr()) {
                         if (auto init = dynamic_cast<const UHDM::expr*>(init_expr)) {
-                            RTLIL::SigSpec init_sig = import_expression(init);
+                            RTLIL::SigSpec init_sig = import_expression(init, &port_conn_map);
                             if (init_sig.size() > 0) {
                                 if (init_sig.size() < width)
                                     init_sig.extend_u0(width);
@@ -329,6 +347,44 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     if (mode_debug)
                         log("UHDM: Drove %s from interface cont_assign\n", full.c_str());
                 }
+            }
+
+            // Apply the interface's PROCESS bodies (`always`/`initial` that
+            // drive interface signals, e.g. `always x = 10;`).  Temporarily
+            // alias each interface signal's bare name to the parent's
+            // `\<iface>.<sig>` wire in name_map so the process import drives the
+            // per-signal wire, then restore.  Without this an interface whose
+            // output is produced by a procedural block (InterfaceAlways /
+            // InterfaceInitial) leaves `\<iface>.<sig>` undriven → parent X.
+            if (interface->Process() && !interface->Process()->empty()) {
+                std::map<std::string, RTLIL::Wire*> saved;
+                std::set<std::string> added;
+                auto alias_sig = [&](const std::string& sig_name) {
+                    if (sig_name.empty()) return;
+                    std::string full = interface_name + "." + sig_name;
+                    RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                       : module->wire(RTLIL::escape_id(full));
+                    if (!w) return;
+                    if (name_map.count(sig_name)) saved[sig_name] = name_map[sig_name];
+                    else added.insert(sig_name);
+                    name_map[sig_name] = w;
+                };
+                if (interface->Variables())
+                    for (auto v : *interface->Variables())
+                        alias_sig(std::string(v->VpiName()));
+                if (interface->Nets())
+                    for (auto n : *interface->Nets())
+                        alias_sig(std::string(n->VpiName()));
+                for (auto proc : *interface->Process()) {
+                    try {
+                        import_process(proc);
+                    } catch (const std::exception& e) {
+                        log_warning("Failed to import interface process for %s: %s\n",
+                                    interface_name.c_str(), e.what());
+                    }
+                }
+                for (auto& kv : saved) name_map[kv.first] = kv.second;
+                for (auto& n : added) name_map.erase(n);
             }
 
             // Connect the interface's port HighConns to the per-signal

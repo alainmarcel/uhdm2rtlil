@@ -10,9 +10,7 @@ module top(o);
   wire [31:0] \u_sim_sram_if.start_addr ;
   (* src = "dut.sv:1.33-1.34" *)
   wire [31:0] \u_sim_sram_if.x ;
-  wire x;
-  assign x = 1'hx;
-  assign \u_sim_sram_if.start_addr  = 32'b0000000000000000000000000000000x;
+  assign \u_sim_sram_if.start_addr  = 32'd10;
   assign \u_sim_sram_if.x  = 32'd10;
-  assign o = 32'b0000000000000000000000000000000x;
+  assign o = 32'd10;
 endmodule

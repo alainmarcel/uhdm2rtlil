@@ -76,9 +76,6 @@ AssignmentToConcatenation
 CastStructArray
 EnumParameterInNestedModules
 ExpressionInIndex
-InterfaceAlways
-InterfaceInitial
-InterfaceWithPort
 MultipleAssignments
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 PackedArray
