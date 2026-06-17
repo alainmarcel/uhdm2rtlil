@@ -8,6 +8,6 @@ module top(o);
   wire signed [31:0] o;
   (* src = "dut.sv:1.40-1.41" *)
   wire [31:0] \u_sw.x ;
-  assign \u_sw.x  = 32'hxxxxxxxx;
-  assign o = 32'hxxxxxxxx;
+  assign \u_sw.x  = 32'd10;
+  assign o = 32'd10;
 endmodule

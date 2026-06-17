@@ -9,8 +9,7 @@ module \top
   wire width 32 \u_sim_sram_if.x
   attribute \src "dut.sv:2.8-2.22"
   wire width 32 \u_sim_sram_if.start_addr
-  wire \x
-  connect \u_sim_sram_if.start_addr { 31'0000000000000000000000000000000 \x }
+  connect \u_sim_sram_if.start_addr 10
   connect \u_sim_sram_if.x 10
   connect \o \u_sim_sram_if.start_addr
 end
