@@ -12,13 +12,11 @@ end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:6.1-16.10"
 attribute \dynports 1
+attribute \blackbox 1
 module \prim_subreg_shadow
   parameter \RESVAL 5'10101
   attribute \src "dut.sv:6.38-6.39"
   wire width 32 output 1 signed \b
-  cell $paramod\prim_subreg\RESVAL=s32'00000000000000000000000000011111 \staged_reg
-    connect \a \b
-  end
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:18.1-32.10"
@@ -70,11 +68,13 @@ attribute \cells_not_processed 1
 attribute \src "dut.sv:25.4-27.34"
 attribute \dynports 1
 attribute \hdlname "prim_subreg_shadow"
-attribute \blackbox 1
 module $paramod\prim_subreg_shadow\RESVAL=s32'00000000000000000000000000011111
   parameter \RESVAL 5'11111
   attribute \src "dut.sv:6.38-6.39"
   wire width 32 output 1 signed \b
+  cell $paramod\prim_subreg\RESVAL=s32'00000000000000000000000000011111 \staged_reg
+    connect \a \b
+  end
 end
 attribute \cells_not_processed 1
 attribute \src "dut.sv:13.4-15.25"

@@ -72,6 +72,5 @@ various/abc9.v
 # incremental frontend fixes — see test/imported_tests_status.txt.
 # --- equiv_induct failures (29):
 CastStructArray
-EnumParameterInNestedModules
 # --- output-generation (true) failures (10):
 UnionParameter
