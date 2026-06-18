@@ -8,9 +8,9 @@ module top(o);
   output signed [31:0] o;
   wire signed [31:0] o;
   (* src = "dut.sv:17.32-17.36" *)
-  wire data;
+  wire [15:0] data;
   \$paramod\otp_ctrl_ecc_reg\Depth=s32'00000000000000000000000000000000  u_otp_ctrl_ecc_reg (
     .a(data)
   );
-  assign o = { 31'h00000000, data };
+  assign o = { 16'h0000, data };
 endmodule

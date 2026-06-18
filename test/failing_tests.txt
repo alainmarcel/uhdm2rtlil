@@ -73,6 +73,5 @@ various/abc9.v
 # --- equiv_induct failures (29):
 CastStructArray
 EnumParameterInNestedModules
-OutputSizeWithParameterOfInstanceInitializedByStructMember
 # --- output-generation (true) failures (10):
 UnionParameter

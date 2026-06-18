@@ -3006,7 +3006,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     //    `get_width_from_typespec` can read it as a literal range.
     if (all_const && operands.size() > 0 &&
         (!loop_values.empty() || getCurrentFunctionContext() != nullptr ||
-         !gen_scope_stack.empty() ||
+         !gen_scope_stack.empty() || force_const_fold ||
          (module && module->attributes.count(ID::dynports)))) {
         RTLIL::Const result;
         bool can_evaluate = true;
@@ -5859,6 +5859,52 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     log("    hier_path: resolved %s → %s via name_map\n",
                         full.c_str(), it->second->name.c_str());
                     return RTLIL::SigSpec(it->second);
+                }
+
+                // Struct-typed PARAMETER member access (`Info.x` where `Info` is
+                // a parameter of packed-struct type, e.g.
+                // `parameter part_info_t Info = part_info_t'(16); ... Info.x`).
+                // Parameters have no wire, so resolve the value at compile time
+                // and slice the field (OutputSizeWith...).
+                {
+                    auto base_ref = any_cast<const ref_obj*>(pe2[0]);
+                    const UHDM::parameter* param = nullptr;
+                    if (auto a = base_ref->Actual_group())
+                        if (a->UhdmType() == uhdmparameter)
+                            param = any_cast<const UHDM::parameter*>(a);
+                    if (param) {
+                        RTLIL::SigSpec pval;
+                        // Prefer the already-resolved value: param_assigns are
+                        // processed in declaration order, so a struct param
+                        // `Info` is resolved before `NumScrmblBlocks = Info.x`.
+                        RTLIL::IdString pid = RTLIL::escape_id(base);
+                        if (module && module->parameter_default_values.count(pid))
+                            pval = RTLIL::SigSpec(module->parameter_default_values.at(pid));
+                        if (pval.empty()) {
+                            std::string vs = std::string(param->VpiValue());
+                            if (!vs.empty())
+                                pval = RTLIL::SigSpec(extract_const_from_value(vs));
+                            else if (param->VpiParent() &&
+                                     param->VpiParent()->UhdmType() == uhdmparam_assign) {
+                                auto pa = any_cast<const UHDM::param_assign*>(param->VpiParent());
+                                if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs()))
+                                    pval = import_expression(re);
+                            }
+                        }
+                        const UHDM::typespec* ats = nullptr;
+                        if (param->Typespec()) ats = param->Typespec()->Actual_typespec();
+                        if (!pval.empty() && pval.is_fully_const() && ats &&
+                            (ats->UhdmType() == uhdmstruct_typespec ||
+                             ats->UhdmType() == uhdmunion_typespec)) {
+                            int off = 0, w = 0;
+                            if (calculate_struct_member_offset(ats, field, inst, off, w) &&
+                                w > 0 && off + w <= pval.size()) {
+                                log("    hier_path: struct param %s.%s -> [%d+:%d]\n",
+                                    base.c_str(), field.c_str(), off, w);
+                                return pval.extract(off, w);
+                            }
+                        }
+                    }
                 }
 
                 // Packed-struct member access (`alert_rx_i.ping_p` where
