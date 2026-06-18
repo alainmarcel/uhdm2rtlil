@@ -66,10 +66,14 @@ various/abc9.v
 
 # ---------------------------------------------------------------------------
 # Imported from chipsalliance/UHDM-integration-tests (commit 668c4c45).
-# These exercise UHDM frontend feature gaps / non-synthesizable constructs
-# (unpacked-array init, 2D function args, assignment patterns, break/continue,
-# real/string/$display, etc.).  Tracked as expected failures pending
-# incremental frontend fixes — see test/imported_tests_status.txt.
-# --- equiv_induct failures (29):
+# The feature-gap failures from this suite have been fixed incrementally; the
+# single remaining entry is NOT a UHDM bug but a Yosys-Verilog-frontend bug:
+#
+#   CastStructArray — `my_struct_array'(16'hAB)` is a size cast to a 6-bit packed
+#   array-of-struct, so the result truncates to the low 6 bits (6'h2b).  The
+#   UHDM frontend produces 6'h2b and Verilator agrees (co-sim PASSES); the Yosys
+#   Verilog frontend instead produces 6'h03 (wrong), so equiv_induct can never
+#   pass.  Kept here only because formal equivalence needs a correct reference
+#   netlist — UHDM is correct.  (verified UHDM == Verilator via co-sim.)
 CastStructArray
-# --- output-generation (true) failures (10):
+# --- (all other imported feature-gap failures fixed) ---
