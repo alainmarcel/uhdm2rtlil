@@ -214,6 +214,11 @@ struct UhdmImporter {
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
     std::set<std::string> imported_module_signatures;
+    // Maps each imported instance (module_inst) to the RTLIL module name it was
+    // imported as — including the `$paramod\...` specialization.  Used when
+    // creating a child cell so it lands in the PARENT's specialized module, not
+    // the base (EnumParameterInNestedModules: a nested parameterized instance).
+    std::map<const UHDM::module_inst*, std::string> inst_to_modname_;
 
     // Track nets driven by module instance output ports
     // These should not have the \reg attribute even if declared as reg

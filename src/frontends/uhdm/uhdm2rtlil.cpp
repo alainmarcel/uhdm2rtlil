@@ -857,7 +857,14 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
             if (parent_name.find("work@") == 0) {
                 parent_name = parent_name.substr(5);
             }
-            
+            // Prefer the parent's actual imported RTLIL name (which carries any
+            // `$paramod\...` specialization).  Falling back to the bare def name
+            // would drop the cell into the unspecialized base module, leaving the
+            // parameterized parent empty → blackbox (EnumParameterInNestedModules).
+            auto p_it = inst_to_modname_.find(parent_mod);
+            if (p_it != inst_to_modname_.end())
+                parent_name = p_it->second;
+
             RTLIL::Module* parent_rtlil_module = design->module(RTLIL::escape_id(parent_name));
             if (parent_rtlil_module) {
                 // Create the cell in the parent module
@@ -1426,7 +1433,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Update module name to include interface information if needed
     modname = build_interface_module_name(base_modname, modname, uhdm_module);
-    
+
+    // Remember this instance's RTLIL module name (with any `$paramod`
+    // specialization) so a nested child cell can target the correct parent.
+    inst_to_modname_[uhdm_module] = modname;
+
     RTLIL::IdString mod_id = RTLIL::escape_id(modname);
     
     if (mode_debug)
