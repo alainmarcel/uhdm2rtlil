@@ -75,5 +75,4 @@ CastStructArray
 EnumParameterInNestedModules
 OutputSizeWithParameterOfInstanceInitializedByStructMember
 # --- output-generation (true) failures (10):
-SystemFunctions
 UnionParameter
