@@ -9,5 +9,7 @@ module \top
   wire output 2 \b
   attribute \src "dut.sv:8.18-8.29"
   wire width 2 \hw2reg_wrap
-  connect \hw2reg_wrap { \a \b }
+  connect \hw2reg_wrap 2'01
+  connect \b 1'1
+  connect \a 1'0
 end

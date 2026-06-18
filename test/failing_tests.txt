@@ -71,7 +71,6 @@ various/abc9.v
 # real/string/$display, etc.).  Tracked as expected failures pending
 # incremental frontend fixes — see test/imported_tests_status.txt.
 # --- equiv_induct failures (29):
-AssignmentToConcatenation
 CastStructArray
 EnumParameterInNestedModules
 OutputSizeWithParameterOfInstanceInitializedByStructMember

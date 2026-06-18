@@ -11,7 +11,7 @@ module top(a, b);
   wire b;
   (* src = "dut.sv:8.18-8.29" *)
   wire [1:0] hw2reg_wrap;
-  assign hw2reg_wrap = 2'hx;
-  assign b = 1'hx;
-  assign a = 1'hx;
+  assign hw2reg_wrap = 2'h1;
+  assign b = 1'h1;
+  assign a = 1'h0;
 endmodule
