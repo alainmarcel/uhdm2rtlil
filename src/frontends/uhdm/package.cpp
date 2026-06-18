@@ -9,6 +9,7 @@
 #include <uhdm/vpi_visitor.h>
 #include <uhdm/struct_typespec.h>
 #include <uhdm/uhdm_types.h>
+#include <uhdm/param_assign.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -82,6 +83,43 @@ void UhdmImporter::import_package(const package* uhdm_package) {
                     package_parameter_map[full_name] = param_value;
                     log("UHDM: Package parameter %s = %s (from VpiValue)\n",
                         full_name.c_str(), param_value.as_string().c_str());
+                } else if (const UHDM::param_assign* pa = [&]() -> const UHDM::param_assign* {
+                               // The value can live in the package's Param_assigns
+                               // list rather than Expr()/VpiValue — e.g. a
+                               // struct/union assignment-pattern initializer
+                               // `'{default: 1}` (UnionParameter).
+                               if (uhdm_package->Param_assigns())
+                                   for (auto p : *uhdm_package->Param_assigns())
+                                       if (p->Lhs() &&
+                                           std::string(p->Lhs()->VpiName()) == param_name)
+                                           return p;
+                               return nullptr;
+                           }()) {
+                    if (pa->Rhs()) {
+                        if (auto re = dynamic_cast<const UHDM::expr*>(pa->Rhs())) {
+                            RTLIL::Module* saved_module = module;
+                            module = nullptr;
+                            RTLIL::SigSpec value_spec = import_expression(re);
+                            module = saved_module;
+                            if (value_spec.is_fully_const()) {
+                                int width = 32;
+                                if (param_obj->Typespec())
+                                    if (auto ts = param_obj->Typespec()->Actual_typespec()) {
+                                        int tw = get_width_from_typespec(ts);
+                                        if (tw > 0) width = tw;
+                                    }
+                                RTLIL::Const param_value = value_spec.as_const();
+                                if (param_value.size() != width)
+                                    param_value = param_value.extract(0, width, RTLIL::State::S0);
+                                package_parameter_map[full_name] = param_value;
+                                log("UHDM: Package parameter %s = %s (from param_assign)\n",
+                                    full_name.c_str(), param_value.as_string().c_str());
+                            } else {
+                                log_warning("UHDM: Package parameter %s param_assign Rhs not constant\n",
+                                            full_name.c_str());
+                            }
+                        }
+                    }
                 } else {
                     log_warning("UHDM: Package parameter %s has no expression\n",
                                full_name.c_str());

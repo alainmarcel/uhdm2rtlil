@@ -73,4 +73,3 @@ various/abc9.v
 # --- equiv_induct failures (29):
 CastStructArray
 # --- output-generation (true) failures (10):
-UnionParameter
