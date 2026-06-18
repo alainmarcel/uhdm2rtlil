@@ -2825,6 +2825,64 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
     }
 
     if (op_type == vpiAssignmentPatternOp) {
+        // `'{default: V}` — a tagged_pattern whose tag typespec is named
+        // "default" fills EVERY member of the target struct/union with V
+        // (UnionParameter: `flimish_giant LovingHome = '{default: 1}`).  The
+        // generic operand loop below casts each operand to `expr` and would skip
+        // the tagged_pattern, yielding 0.
+        if (uhdm_op->Operands()) {
+            const UHDM::tagged_pattern* deftp = nullptr;
+            for (auto operand : *uhdm_op->Operands()) {
+                if (operand->UhdmType() != uhdmtagged_pattern) continue;
+                auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                // The `default` tag is the tagged_pattern's typespec — a
+                // string_typespec named "default" (reached via Actual_typespec).
+                if (tp->Typespec()) {
+                    std::string tn = std::string(tp->Typespec()->VpiName());
+                    if (auto a = tp->Typespec()->Actual_typespec())
+                        if (tn.empty()) tn = std::string(a->VpiName());
+                    if (tn == "default") { deftp = tp; break; }
+                }
+            }
+            // Target struct/union typespec — on the op, else on the op's parent
+            // param_assign's Lhs parameter (the op itself carries no typespec).
+            const UHDM::typespec* ats = nullptr;
+            if (uhdm_op->Typespec()) ats = uhdm_op->Typespec()->Actual_typespec();
+            if (!ats && uhdm_op->VpiParent() &&
+                uhdm_op->VpiParent()->UhdmType() == uhdmparam_assign) {
+                auto pa = any_cast<const UHDM::param_assign*>(uhdm_op->VpiParent());
+                if (pa->Lhs())
+                    if (auto p = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
+                        if (p->Typespec()) ats = p->Typespec()->Actual_typespec();
+            }
+            const VectorOftypespec_member* members = nullptr;
+            if (ats && ats->UhdmType() == uhdmstruct_typespec)
+                members = any_cast<const UHDM::struct_typespec*>(ats)->Members();
+            else if (ats && ats->UhdmType() == uhdmunion_typespec)
+                members = any_cast<const UHDM::union_typespec*>(ats)->Members();
+            if (deftp && members && deftp->Pattern()) {
+                RTLIL::SigSpec defval =
+                    import_expression(any_cast<const expr*>(deftp->Pattern()), input_mapping);
+                RTLIL::SigSpec result;
+                // First member at MSB (concat order), matching packed layout.
+                for (int i = (int)members->size() - 1; i >= 0; i--) {
+                    auto m = (*members)[i];
+                    int mw = 0;
+                    if (auto mts = m->Typespec())
+                        if (auto a = mts->Actual_typespec())
+                            mw = get_width_from_typespec(a, inst);
+                    RTLIL::SigSpec v = defval;
+                    if (mw > 0) {
+                        if (v.size() < mw) v.extend_u0(mw);
+                        else if (v.size() > mw) v = v.extract(0, mw);
+                    }
+                    result.append(v);
+                }
+                if (result.size() > 0)
+                    return result;
+            }
+        }
+
         // Struct/array aggregate: '{field: val, field: val, ...}
         // Surelog stores the value expressions directly as operands (hier_path, ref_obj, etc.),
         // in struct field definition order (first field = MSB for packed structs).
@@ -5880,6 +5938,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         RTLIL::IdString pid = RTLIL::escape_id(base);
                         if (module && module->parameter_default_values.count(pid))
                             pval = RTLIL::SigSpec(module->parameter_default_values.at(pid));
+                        // Package parameter (`some_package::LovingHome.bunn1_t`):
+                        // its resolved value lives in package_parameter_map keyed
+                        // by the fully-qualified `pkg::name` (UnionParameter).
+                        if (pval.empty() && package_parameter_map.count(base))
+                            pval = RTLIL::SigSpec(package_parameter_map.at(base));
                         if (pval.empty()) {
                             std::string vs = std::string(param->VpiValue());
                             if (!vs.empty())
