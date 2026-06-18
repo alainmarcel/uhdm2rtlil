@@ -331,6 +331,11 @@ struct UhdmImporter {
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
+    // Set while evaluating a typespec RANGE bound (a compile-time constant
+    // context): forces import_operation to constant-fold all-const operations
+    // such as `NumScrmblBlocks-1` so get_width_from_typespec reads a literal
+    // width even outside loop/function/genscope contexts.
+    bool force_const_fold = false;
 
     // Blocking (`=`) temps assigned within the current always_ff body, mapped
     // to their `$0\<sig>` next-value temp wire.  In always_ff body mode reads

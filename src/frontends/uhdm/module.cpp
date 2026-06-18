@@ -2241,8 +2241,11 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                 logic_ts_simple->Ranges() && logic_ts_simple->Ranges()->size() == 1) {
                 auto r = (*logic_ts_simple->Ranges())[0];
                 if (r->Left_expr() && r->Right_expr()) {
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
                     RTLIL::SigSpec ls = import_expression(r->Left_expr());
                     RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                    force_const_fold = saved_fcf;
                     if (ls.is_fully_const() && rs.is_fully_const()) {
                         int range_size = std::abs(ls.as_int() - rs.as_int()) + 1;
                         log("UHDM: logic_typespec simple range width = %d\n", range_size);
