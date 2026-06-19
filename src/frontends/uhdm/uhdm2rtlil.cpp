@@ -438,7 +438,37 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     } else {
         log("UHDM: No top modules found in design\n");
     }
-    
+
+    // Resolve undefined-module stubs.  Surelog names a module that has no
+    // definition (e.g. a vendor primitive like Xilinx RAMB36E1 instantiated
+    // without its cell library) as "parent::name", and we build a partial stub
+    // module from a single instance's ports so the instances get cells.  Rewrite
+    // those cells to the BARE module name and drop the stub, leaving each
+    // instance an unresolved blackbox that a later `read_verilog -lib`
+    // (e.g. +/xilinx/cells_sim.v) can define — matching the Yosys Verilog
+    // frontend, which creates no definition for an undefined module.  Without
+    // this the cell type is `parent::RAMB36E1` (never matches the library) and
+    // the partial stub breaks hierarchy when another instance connects a port
+    // the stub didn't infer.
+    {
+        std::vector<RTLIL::Module*> stubs;
+        for (auto mod : design->modules())
+            if (mod->name.str().find("::") != std::string::npos)
+                stubs.push_back(mod);
+        for (auto stub : stubs) {
+            std::string sname = stub->name.str();              // "\bug3670::RAMB36E1"
+            std::string bare = sname.substr(sname.rfind("::") + 2);
+            RTLIL::IdString bare_id = RTLIL::escape_id(bare);
+            for (auto mod : design->modules())
+                for (auto cell : mod->cells())
+                    if (cell->type == stub->name)
+                        cell->type = bare_id;
+            log("UHDM: Resolved undefined-module stub %s -> blackbox %s\n",
+                sname.c_str(), bare.c_str());
+            design->remove(stub);
+        }
+    }
+
     // Post-process to create parameterized modules is no longer needed
     // as we handle parameterization during hierarchy traversal
     

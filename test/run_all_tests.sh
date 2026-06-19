@@ -464,6 +464,18 @@ setup_yosys_test() {
     cp "$test_file" "$abs_dir/dut.${dut_ext}"
     preprocess_test_file "$abs_dir/dut.${dut_ext}"
 
+    # Some yosys tests instantiate vendor primitives defined only in a cell
+    # library that their own .ys loads via `read_verilog -lib` (e.g.
+    # arch/xilinx/bug3670 -> `read_verilog -lib -specify +/xilinx/cells_sim.v`
+    # for RAMB36E1).  The generic flow must load the same library or synth fails
+    # on the undefined cell for BOTH frontends.  Replicate exactly those -lib
+    # lines (they use `+/...`, resolved from the yosys share dir).
+    local lib_reads=""
+    local ys_file="${test_file%.*}.ys"
+    if [ -f "$ys_file" ]; then
+        lib_reads="$(grep -E '^[[:space:]]*read_verilog[[:space:]]+-lib' "$ys_file" || true)"
+    fi
+
     # Skip-formal-use-cosim tests get a sim_config so analyze_test_result skips
     # the (too-slow) formal proof and relies on the random Verilator co-sim.
     local sfc_cycles; sfc_cycles="$(skip_formal_cosim_cycles "$rel")"
@@ -477,6 +489,7 @@ setup_yosys_test() {
 
     cat > "$abs_dir/test_verilog_read.ys" << EOF
 read_verilog -sv dut.${dut_ext}
+${lib_reads}
 write_rtlil ${test_name}_from_verilog_nohier.il
 hierarchy -auto-top
 proc
@@ -488,6 +501,7 @@ EOF
     cat > "$abs_dir/test_uhdm_read.ys" << EOF
 plugin -i $UHDM_PLUGIN
 read_uhdm slpp_all/surelog.uhdm
+${lib_reads}
 write_rtlil ${test_name}_from_uhdm_nohier.il
 hierarchy -auto-top
 proc
