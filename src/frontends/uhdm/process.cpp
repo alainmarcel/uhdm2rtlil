@@ -4498,7 +4498,16 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             
             // Get body
             body = for_loop->VpiStmt();
-            
+            // Unwrap a single-statement begin block so the meminit / shift-reg
+            // pattern matchers below (which expect a bare assignment body) also
+            // fire when the loop body is wrapped — `for (i) begin mem[i]=...; end`
+            // (arch/*/meminit.v) vs the bare `for (i) mem[i]=...` (svtypes/logic_rom).
+            if (body && (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin)) {
+                if (auto stmts = begin_block_stmts(body))
+                    if (stmts->size() == 1)
+                        body = (*stmts)[0];
+            }
+
             if (!init_stmt || !condition || !inc_stmt || !body) {
                 log_warning("For loop missing required components:\n");
                 log_warning("  init_stmt: %s\n", init_stmt ? "present" : "missing");
@@ -4891,17 +4900,29 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             any_cast<const bit_select*>(mem_assign->Lhs())->VpiName());
                         int mem_width = module->memories.at(RTLIL::escape_id(memory_name))->width;
                         int64_t loop_end = inclusive ? end_value : end_value - 1;
-                        std::map<std::string, uint64_t> loop_vars;
-                        std::vector<std::pair<int64_t, uint64_t>> rom_words;
+                        std::vector<std::pair<int64_t, RTLIL::Const>> rom_words;
                         bool all_const = (mem_assign->Rhs() != nullptr);
+                        // Evaluate each ROM word with import_expression (loop var
+                        // substituted via loop_values), the SAME path that
+                        // computes a sibling expression like meminit.v's
+                        // `expect_val = PRIME*(read_addr*2+1)`.  Using a separate
+                        // evaluator (evaluate_expression_with_vars) mis-sized
+                        // unsized literals and produced a ROM word that disagreed
+                        // with the comparison value.  Restore loop_values after.
+                        auto saved_loop_values = loop_values;
                         for (int64_t i = start_value; all_const && i <= loop_end; i += increment) {
-                            RTLIL::SigSpec rhs_value = evaluate_expression_with_vars(
-                                any_cast<const expr*>(mem_assign->Rhs()), loop_vars, loop_var_name, i);
-                            if (rhs_value.is_fully_const())
-                                rom_words.emplace_back(i, (uint64_t)rhs_value.as_const().as_int());
-                            else
+                            loop_values[loop_var_name] = (int)i;
+                            RTLIL::SigSpec rhs_value =
+                                import_expression(any_cast<const expr*>(mem_assign->Rhs()));
+                            if (rhs_value.is_fully_const()) {
+                                RTLIL::Const c = rhs_value.as_const();
+                                if (c.size() != mem_width)
+                                    c = c.extract(0, mem_width, RTLIL::State::S0);
+                                rom_words.emplace_back(i, c);
+                            } else
                                 all_const = false;
                         }
+                        loop_values = saved_loop_values;
                         if (all_const) {
                             std::string meminit_file;
                             int meminit_line = 0;
@@ -4922,10 +4943,10 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                                 cell->setParam(ID::WORDS, RTLIL::Const(1));
                                 cell->setParam(ID::PRIORITY, RTLIL::Const(12 + (int)i));
                                 cell->setPort(ID::ADDR, RTLIL::Const(i, 32));
-                                cell->setPort(ID::DATA, RTLIL::Const(mem_word, mem_width));
+                                cell->setPort(ID::DATA, mem_word);
                                 cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, mem_width));
-                                log("        Added $meminit for %s[%lld] = 0x%llx\n",
-                                    memory_name.c_str(), (long long)i, (unsigned long long)mem_word);
+                                log("        Added $meminit for %s[%lld] = %s\n",
+                                    memory_name.c_str(), (long long)i, mem_word.as_string().c_str());
                             }
                             log("        Memory initialization (single-stmt) unrolled successfully\n");
                         } else {

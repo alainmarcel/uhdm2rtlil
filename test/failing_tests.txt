@@ -47,7 +47,6 @@ verific/ext_ramnet_err.sv
 # --- memory inference (write-enable / byte-enable / SDP / init / bounds) ---
 arch/fabulous/custom_map.v
 arch/nanoxplore/meminit.v
-arch/quicklogic/qlf_k6n10f/meminit.v
 arch/xilinx/bug3670.v
 memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v

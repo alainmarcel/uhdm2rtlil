@@ -1806,28 +1806,61 @@ RTLIL::SigSpec UhdmImporter::evaluate_expression_with_vars(const expr* expr,
                 operands.push_back(evaluate_expression_with_vars(any_cast<const UHDM::expr*>(operand), vars, loop_var_name, loop_index));
             }
             
-            // Perform operation if all operands are constant
+            // Perform operation if all operands are constant.  An EMPTY operand
+            // (an unhandled sub-expression that returned no SigSpec) must count
+            // as non-const — otherwise `as_int()` reads it as 0 and silently
+            // corrupts the result (e.g. `PRIME*(i*2+1)` with `i*2+1` unhandled
+            // became `PRIME*0`).
             bool all_const = true;
             for (const auto& operand : operands) {
-                if (!operand.is_fully_const()) {
+                if (operand.empty() || !operand.is_fully_const()) {
                     all_const = false;
                     break;
                 }
             }
-            
+
             if (!all_const) {
                 return RTLIL::SigSpec();
             }
-            
+
+            // For `*`, `+`, `-` the SV self-determined result width is the max
+            // of the operand widths (LRM §11.6.1).  Truncate to that so a value
+            // assigned to a wider word zero-extends — matching how
+            // import_expression computes the same expression elsewhere (e.g. the
+            // `expect_val` wire in arch/*/meminit.v).  Without it the ROM word
+            // (full product) and the comparison value (truncated) disagree.
+            auto arith_width = [&]() -> int {
+                int w = 0;
+                for (const auto& o : operands) w = std::max(w, o.size());
+                return w > 0 ? w : 32;
+            };
+
             // Evaluate constant operations
             switch (op_type) {
                 // TODO: support all op types
                 case vpiMultOp:
                     if (operands.size() == 2) {
-                        uint64_t a = operands[0].as_const().as_int();
-                        uint64_t b = operands[1].as_const().as_int();
-                        return RTLIL::SigSpec(RTLIL::Const(a * b, 64));
+                        uint64_t a = (uint32_t)operands[0].as_const().as_int();
+                        uint64_t b = (uint32_t)operands[1].as_const().as_int();
+                        return RTLIL::SigSpec(RTLIL::Const((a * b) & 0xFFFFFFFFFFFFFFFFull,
+                                                           arith_width()));
                     }
+                    break;
+
+                case vpiAddOp:
+                    if (operands.size() == 2)
+                        return RTLIL::SigSpec(RTLIL::Const(
+                            (uint64_t)(uint32_t)operands[0].as_const().as_int() +
+                            (uint64_t)(uint32_t)operands[1].as_const().as_int(),
+                            arith_width()));
+                    break;
+
+                case vpiSubOp:
+                    if (operands.size() == 2)
+                        return RTLIL::SigSpec(RTLIL::Const(
+                            (uint64_t)(uint32_t)operands[0].as_const().as_int() -
+                            (uint64_t)(uint32_t)operands[1].as_const().as_int(),
+                            arith_width()));
                     break;
                     
                 case vpiBitXorOp: // 30
