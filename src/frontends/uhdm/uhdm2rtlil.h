@@ -718,6 +718,10 @@ struct UhdmImporter {
     RTLIL::IdString get_unique_cell_name(const std::string& base_name);
     UHDM::VectorOfany *begin_block_stmts(const any *stmt);
     void extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals);
+    // Collect the control-variable names of every `for` loop in a statement
+    // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
+    // a loop counter is not a flip-flop and has no constant async-reset value.
+    void collect_for_loop_var_names(const any* stmt, std::set<std::string>& names);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);
     // Collect base names of signals written via BLOCKING (`=`) assignments

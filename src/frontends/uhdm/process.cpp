@@ -932,6 +932,19 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // Extract assigned signals from the statement
             if (stmt) {
                 extract_assigned_signals(stmt, assigned_signals);
+                // A for-loop control variable (`for (i=0; i<N; i=i+1) mem[i]<=0`
+                // in the reset branch) is collected as an assigned signal so the
+                // comb path can drive its post-loop value, but it is NOT a
+                // flip-flop and has no constant async-reset value — drop it from
+                // the register set (yosys/tests/simple/mem_arst.v: otherwise
+                // proc errors "Async reset yields non-constant value for \i").
+                std::set<std::string> loop_vars;
+                collect_for_loop_var_names(stmt, loop_vars);
+                if (!loop_vars.empty())
+                    assigned_signals.erase(
+                        std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                            [&](const AssignedSignal& s){ return loop_vars.count(s.name) > 0; }),
+                        assigned_signals.end());
             }
 
             // Async-reset always_ff that ALSO writes a memory (issue #326):
