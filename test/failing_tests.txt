@@ -45,16 +45,23 @@ verific/ext_ramnet_err.sv
 # pre-existing UHDM-frontend gaps (mostly memory inference) now made visible;
 # to be triaged/fixed individually like the internal backlog.
 # --- memory inference (write-enable / byte-enable / SDP / init / bounds) ---
-arch/fabulous/custom_map.v
 arch/nanoxplore/meminit.v
 arch/xilinx/bug3670.v
 memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v
 simple/mem2reg_bounds_tern.v
-techmap/mem_simple_4x1_map.v
 verilog/mem_bounds.sv
-# --- other pre-existing gaps (techmap recursion, abc9 mapping) ---
+# --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
+# These define techmap MAPPING RULES, not synthesizable top designs: they use
+# the `_TECHMAP_*` magic (custom_map: `_TECHMAP_REPLACE_`) or provide a built-in
+# cell template (`module \$mem` in mem_simple_4x1_map).  Upstream they are
+# consumed by `techmap -map ...` from a driver design; read on their own they
+# reference undefined primitives / built-in cells and have no synthesizable
+# output, so the UHDM flow (read_uhdm -> synth) cannot produce a netlist.
+arch/fabulous/custom_map.v
+techmap/mem_simple_4x1_map.v
 techmap/recursive_map.v
+# --- other pre-existing gaps (abc9 mapping) ---
 various/abc9.v
 
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
