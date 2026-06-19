@@ -46,7 +46,6 @@ verific/ext_ramnet_err.sv
 # to be triaged/fixed individually like the internal backlog.
 # --- memory inference (write-enable / byte-enable / SDP / init / bounds) ---
 arch/nanoxplore/meminit.v
-arch/xilinx/bug3670.v
 
 # --- X-semantics / $countbits elaboration test (not a synthesis-equivalence
 # test) ---
