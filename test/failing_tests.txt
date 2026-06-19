@@ -46,6 +46,19 @@ verific/ext_ramnet_err.sv
 # to be triaged/fixed individually like the internal backlog.
 # --- memory inference (write-enable / byte-enable / SDP / init / bounds) ---
 arch/nanoxplore/meminit.v
+
+# --- Yosys abc9 / specify-timing test for Xilinx primitives (not a
+# synthesis-equivalence test) ---
+# bug3670 instantiates the Xilinx hard primitive RAMB36E1 with deliberately
+# missing / under-specified ports.  Its .ys is `read_verilog -lib -specify
+# +/xilinx/cells_sim.v; abc9` — it exercises abc9's handling of $setup / clk-to-q
+# specify timing on a blackbox, NOT SystemVerilog -> RTLIL conversion.  RAMB36E1
+# is undefined without cells_sim.v, so the generic read -> synth -> equiv flow
+# fails for BOTH frontends (the Yosys Verilog frontend's own `synth` errors with
+# "Module RAMB36E1 ... is not part of the design").  Not a UHDM feature gap.
+# (UHDM separately scopes an undefined-module cell as `parent::RAMB36E1` and
+# builds a partial blackbox def from one instance's ports — a distinct
+# undefined-primitive-blackbox gap, irrelevant to this abc9 test.)
 arch/xilinx/bug3670.v
 
 # --- X-semantics / $countbits elaboration test (not a synthesis-equivalence
