@@ -879,7 +879,22 @@ bool UhdmImporter::contains_complex_constructs(const any* stmt) {
     if (stmt_type == vpiFor || stmt_type == vpiForever || stmt_type == vpiWhile) {
         return true;
     }
-     
+
+    // A write to a dynamic indexed part-select (`mem[idx +: W] <= data` with a
+    // non-constant `idx`) needs the read-modify-write handling in
+    // import_statement_sync; the simple-if optimisation imports the LHS as a
+    // read and silently drops the write (memlib_wide_sdp's flat `reg [79:0]`).
+    // Treat it as complex so this block falls through to the general path.
+    if (stmt_type == vpiAssignment || stmt_type == vpiAssignStmt) {
+        const assignment* a = any_cast<const assignment*>(stmt);
+        if (a && a->Lhs() && a->Lhs()->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(a->Lhs());
+            if (ips && ips->Base_expr() &&
+                ips->Base_expr()->VpiType() != vpiConstant)
+                return true;
+        }
+    }
+
     // Note: Memory writes (bit select assignments) are now allowed in simple if patterns
     // They will be handled specially during switch statement generation
     

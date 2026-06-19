@@ -48,7 +48,6 @@ verific/ext_ramnet_err.sv
 arch/nanoxplore/meminit.v
 arch/xilinx/bug3670.v
 memlib/memlib_clock_sdp.v
-memlib/memlib_wide_sdp.v
 
 # --- X-semantics / $countbits elaboration test (not a synthesis-equivalence
 # test) ---
