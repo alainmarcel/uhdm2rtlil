@@ -999,16 +999,27 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 // Import port connections
                 if (uhdm_module->Ports()) {
                     int positional_port_idx = 0;
+                    // An UNDEFINED module (blackbox; Surelog scopes its type as
+                    // "parent::name") has no port list, so a POSITIONAL
+                    // connection must bind by index.  Surelog leaves VpiName
+                    // empty for an expression arg (`~i`) but mis-populates it
+                    // with the connected SIGNAL name for a simple-ref arg
+                    // (`unknown u(~i, w)` -> port VpiName "w"), which would emit
+                    // `.w(w)` where the Verilog frontend emits the positional
+                    // `$2` (various/abc9 abc9_test028).  Detect that (VpiName ==
+                    // the connected signal's name) and bind by index — but keep
+                    // a genuine NAMED connection like bug3670's `.DOADO(o1)`
+                    // (VpiName "DOADO" != signal "o1").
+                    bool undefined_cell = cell_type.find("::") != std::string::npos;
                     for (auto port : *uhdm_module->Ports()) {
                         std::string port_name = std::string(port->VpiName());
-                        // Blackbox cells with positional args (e.g.
-                        // `unknown u(~i, w);` in
-                        // yosys/tests/various/abc9.v abc9_test028) get
-                        // ports with empty VpiName.  Yosys's IdString
-                        // asserts on empty names — fall back to
-                        // `$<index>` like the Verilog frontend.
                         positional_port_idx++;
-                        if (port_name.empty()) {
+                        bool positional = port_name.empty();
+                        if (!positional && undefined_cell && port->High_conn() &&
+                            port->High_conn()->UhdmType() == uhdmref_obj &&
+                            std::string(port->High_conn()->VpiName()) == port_name)
+                            positional = true;
+                        if (positional) {
                             port_name = "$" + std::to_string(positional_port_idx);
                         }
                         if (port->High_conn()) {
