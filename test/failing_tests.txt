@@ -44,7 +44,16 @@ verific/ext_ramnet_err.sv
 # -only path that COUNTED these failures but did not gate the suite.  These are
 # pre-existing UHDM-frontend gaps (mostly memory inference) now made visible;
 # to be triaged/fixed individually like the internal backlog.
-# --- memory inference (write-enable / byte-enable / SDP / init / bounds) ---
+# --- Yosys-Verilog-frontend width bug (UHDM is correct) ---
+# nanoxplore/meminit initialises a 36-bit memory with `mem[i] = PRIME*(i*2+1)`
+# where PRIME and i*2+1 are 32-bit.  Per IEEE 1800 sec.11.6 the 36-bit LHS
+# context propagates into the multiplication, so the product is computed in 36
+# bits (the overflow bits 32..35 are kept): mem[1000] = 0xea41b6bf3.  UHDM
+# produces that; iverilog AND Verilator both confirm 0xea41b6bf3.  The Yosys
+# Verilog frontend instead truncates the multiply to 32 bits (0x0a41b6bf3), so
+# the two $mem init contents differ and formal equivalence cannot pass against a
+# wrong reference.  UHDM is correct — do NOT "fix" it to match.  (Same class as
+# CastStructArray below.)
 arch/nanoxplore/meminit.v
 
 # --- X-semantics / $countbits elaboration test (not a synthesis-equivalence
