@@ -724,6 +724,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from posedge\n");
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            // An edge expression triggers on its LSB (IEEE 1800);
+                            // a wider result (e.g. `CLK ^ (POL || OPT=="POS")`
+                            // mis-sized to 64 bits via a string compare in
+                            // memlib_clock_sdp) would make an invalid multi-bit
+                            // $dff clock.
+                            if (clock_sig.size() > 1) clock_sig = clock_sig.extract(0, 1);
                             current_ff_clock_sig = clock_sig; // Store for assertions
                             current_ff_edges = {{clock_sig, clock_posedge}};
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
@@ -735,6 +741,10 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             log("      Importing clock signal from negedge\n");
                             log_flush();
                             clock_sig = import_expression(any_cast<const expr*>((*op->Operands())[0]));
+                            // Edge triggers on the LSB — reduce a mis-sized
+                            // multi-bit clock expression (memlib_clock_sdp's
+                            // `negedge (CLK ^ (POL || OPT=="POS"))`).
+                            if (clock_sig.size() > 1) clock_sig = clock_sig.extract(0, 1);
                             current_ff_clock_sig = clock_sig; // Store for assertions
                             current_ff_edges = {{clock_sig, clock_posedge}};
                             log("      Clock signal imported: %s\n", log_signal(clock_sig));
