@@ -49,7 +49,20 @@ arch/nanoxplore/meminit.v
 arch/xilinx/bug3670.v
 memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v
+
+# --- X-semantics / $countbits elaboration test (not a synthesis-equivalence
+# test) ---
+# mem_bounds checks that out-of-bounds reads are X and counts the X/0/1 bits
+# with $countbits ($countbits(mem[-1], 'x) == 8, etc.).  This is a don't-care /
+# elaboration-time property: in a synthesis flow X is a DON'T-CARE, not a
+# concrete value, so neither frontend can reproduce the bit counts — the Yosys
+# Verilog frontend itself folds the X-counting asserts to `assert(1'h0)`.  UHDM
+# now returns X for the OOB reads (was a hard "Could not find wire" error), but
+# the $countbits asserts still cannot match a wrong reference, so the test is
+# not meaningful under read_uhdm -> synth -> equiv.
 verilog/mem_bounds.sv
+
+
 # --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
 # These define techmap MAPPING RULES, not synthesizable top designs: they use
 # the `_TECHMAP_*` magic (custom_map: `_TECHMAP_REPLACE_`) or provide a built-in

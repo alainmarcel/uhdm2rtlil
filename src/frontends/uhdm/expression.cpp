@@ -4895,6 +4895,11 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                     return current_comb_values.at(elem_name);
                 RTLIL::Wire* w = module->wire(RTLIL::escape_id(elem_name));
                 if (w) return RTLIL::SigSpec(w);
+                // Constant index outside the array bounds reads X — SV leaves an
+                // out-of-range access unspecified (verilog/mem_bounds.sv reads
+                // `mem[-1]` and asserts it is all-X via $countbits).
+                if (num_elems > 0 && (i < 0 || i >= num_elems))
+                    return RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
             } else {
                 // Dynamic index — build mux chain.
                 int last = num_elems - 1;
