@@ -213,6 +213,27 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
             }
         }
         signals.push_back(sig);
+    } else if (lhs_expr->VpiType() == vpiVarSelect) {
+        // `dout_array[0][1]` inside a concat LHS — a bit of an array element.
+        // For a comb-only array (expanded to per-element wires) with a constant
+        // element index, target the element wire `<base>[idx]` so the write
+        // reaches its `$0\` temp; otherwise fall back to the base name
+        // (mem2reg_test6: `{dout_array[0][1], dout_array[0][0]} = ...`).
+        auto vs = any_cast<const var_select*>(lhs_expr);
+        sig.is_part_select = true;
+        std::string base = std::string(vs->VpiName());
+        if (vs->Exprs() && !vs->Exprs()->empty()) {
+            auto e0 = (*vs->Exprs())[0];
+            if (e0 && e0->VpiType() == vpiConstant) {
+                RTLIL::SigSpec idx = import_constant(any_cast<const constant*>(e0));
+                if (idx.is_fully_const()) {
+                    std::string elem = base + "[" + std::to_string(idx.as_const().as_int()) + "]";
+                    if (module->wire(RTLIL::escape_id(elem))) sig.name = elem;
+                }
+            }
+        }
+        if (sig.name.empty()) sig.name = base;
+        signals.push_back(sig);
     } else if (lhs_expr->VpiType() == vpiHierPath) {
         auto hp = any_cast<const hier_path*>(lhs_expr);
         sig.is_part_select = false;
