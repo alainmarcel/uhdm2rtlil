@@ -7826,6 +7826,39 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         }
     }
 
+    // Dynamic indexed part-select LHS in a sync block: `mem[idx +: W] <= data`
+    // with a non-constant `idx` (memlib_wide_sdp's flat `reg [79:0] mem`).
+    // import_expression() of such an LHS returns the READ ($shiftx) value, so the
+    // generic path below would store the write into a throwaway wire and lose
+    // it.  Compute the full-width read-modify-write next value and register the
+    // whole base under this block's condition instead.
+    if (auto lhs_expr = uhdm_assign->Lhs()) {
+        if (lhs_expr->VpiType() == vpiIndexedPartSelect) {
+            auto ips = any_cast<const indexed_part_select*>(lhs_expr);
+            RTLIL::SigSpec new_val;
+            RTLIL::Wire* base_wire = nullptr;
+            if (emit_dynamic_indexed_part_select_write(
+                    ips, uhdm_assign->Rhs(), nullptr, nullptr, &new_val, &base_wire)
+                && base_wire) {
+                RTLIL::SigSpec base_lhs(base_wire);
+                RTLIL::SigSpec next;
+                if (!current_condition.empty()) {
+                    // cond ? new_val : (prior pending value, else the register)
+                    RTLIL::SigSpec else_val =
+                        pending_sync_assignments.count(base_lhs)
+                            ? pending_sync_assignments.at(base_lhs) : base_lhs;
+                    RTLIL::Wire* mux_out = module->addWire(NEW_ID, base_wire->width);
+                    module->addMux(NEW_ID, else_val, new_val, current_condition, mux_out);
+                    next = RTLIL::SigSpec(mux_out);
+                } else {
+                    next = new_val;
+                }
+                pending_sync_assignments[base_lhs] = next;
+                return;
+            }
+        }
+    }
+
     RTLIL::SigSpec lhs;
     RTLIL::SigSpec rhs;
 
@@ -8015,7 +8048,9 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
         const UHDM::indexed_part_select* ips,
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
-        RTLIL::CaseRule* case_rule) {
+        RTLIL::CaseRule* case_rule,
+        RTLIL::SigSpec* out_new_val,
+        RTLIL::Wire** out_base) {
     if (!ips) return false;
 
     // Base width / wire
@@ -8095,6 +8130,14 @@ bool UhdmImporter::emit_dynamic_indexed_part_select_write(
     RTLIL::Wire* new_val = module->addWire(NEW_ID, base_w);
     module->addOr(NEW_ID, RTLIL::SigSpec(cleared),
                   RTLIL::SigSpec(val_shifted), new_val);
+
+    // Sync caller wants the computed full-width next value back (to register it
+    // under a clock with its own condition) rather than have it driven here.
+    if (out_new_val) {
+        *out_new_val = RTLIL::SigSpec(new_val);
+        if (out_base) *out_base = base_wire;
+        return true;
+    }
 
     // Drive $0\base via the standard temp-wire path, mirroring full-wire writes
     if (proc) {

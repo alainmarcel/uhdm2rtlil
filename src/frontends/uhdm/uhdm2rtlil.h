@@ -626,7 +626,9 @@ struct UhdmImporter {
         const UHDM::indexed_part_select* ips,
         const UHDM::any* rhs_any,
         RTLIL::Process* proc,
-        RTLIL::CaseRule* case_rule);
+        RTLIL::CaseRule* case_rule,
+        RTLIL::SigSpec* out_new_val = nullptr,
+        RTLIL::Wire** out_base = nullptr);
     bool emit_dynamic_struct_field_bit_write(
         const UHDM::hier_path* hp,
         const UHDM::any* rhs_any,
