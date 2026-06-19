@@ -237,6 +237,48 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
     }
 }
 
+void UhdmImporter::collect_for_loop_var_names(const any* stmt, std::set<std::string>& names) {
+    if (!stmt) return;
+    switch (stmt->VpiType()) {
+        case vpiFor: {
+            auto for_loop = any_cast<const for_stmt*>(stmt);
+            if (for_loop->VpiForInitStmts())
+                for (auto s : *for_loop->VpiForInitStmts())
+                    if (s->VpiType() == vpiAssignment)
+                        if (auto ia = any_cast<const assignment*>(s))
+                            if (ia->Lhs() && !ia->Lhs()->VpiName().empty())
+                                names.insert(std::string(ia->Lhs()->VpiName()));
+            collect_for_loop_var_names(for_loop->VpiStmt(), names);
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin: {
+            if (auto stmts = begin_block_stmts(stmt))
+                for (auto s : *stmts) collect_for_loop_var_names(s, names);
+            break;
+        }
+        case vpiIf: {
+            auto if_st = any_cast<const if_stmt*>(stmt);
+            collect_for_loop_var_names(if_st->VpiStmt(), names);
+            break;
+        }
+        case vpiIfElse: {
+            auto ie = any_cast<const if_else*>(stmt);
+            collect_for_loop_var_names(ie->VpiStmt(), names);
+            collect_for_loop_var_names(ie->VpiElseStmt(), names);
+            break;
+        }
+        case vpiCase: {
+            auto cs = any_cast<const case_stmt*>(stmt);
+            if (cs->Case_items())
+                for (auto item : *cs->Case_items())
+                    collect_for_loop_var_names(item->Stmt(), names);
+            break;
+        }
+        default: break;
+    }
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
 

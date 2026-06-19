@@ -53,7 +53,6 @@ memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v
 simple/mem2reg_bounds_tern.v
 simple/mem2reg.v
-simple/mem_arst.v
 techmap/mem_simple_4x1_map.v
 verilog/mem_bounds.sv
 # --- other pre-existing gaps (techmap recursion, abc9 mapping) ---
