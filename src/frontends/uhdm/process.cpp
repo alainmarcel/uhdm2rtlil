@@ -9862,6 +9862,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // Get address
                             RTLIL::SigSpec addr = import_expression(bit_sel->VpiIndex());
 
+                            // Drop a write whose CONSTANT address is out of
+                            // bounds — SV makes an out-of-range array write a
+                            // no-op.  An unrolled `for (i=0;i<4) mem[i]<=...`
+                            // over a 3-entry `mem[0:2]` emits a write to mem[3]
+                            // that Yosys's Verilog frontend and Verilator both
+                            // drop (mem2reg_bounds_tern).
+                            if (addr.is_fully_const() &&
+                                module->memories.count(info.mem_id)) {
+                                RTLIL::Memory* m = module->memories.at(info.mem_id);
+                                int a = addr.as_const().as_int();
+                                if (a < m->start_offset ||
+                                    a >= m->start_offset + m->size) {
+                                    log("        Dropped out-of-bounds memory write %s[%d] (size=%d)\n",
+                                        mem_name.c_str(), a, m->size);
+                                    return;
+                                }
+                            }
+
                             // Get data; propagate memory width as context
                             // so arithmetic RHS widens to it (LRM context-
                             // determined sizing) — fixes `M[0] <= rA*rB`

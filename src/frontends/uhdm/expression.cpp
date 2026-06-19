@@ -4909,14 +4909,14 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 RTLIL::SigSpec result;
                 int start;
                 if (oob_possible) {
-                    // An out-of-range index reads 0.  SystemVerilog calls
-                    // this X (don't-care), but emitting a literal X lets
-                    // `opt` fold the fall-through mux back to an arbitrary
-                    // element; a defined 0 both matches simulator behaviour
-                    // (Verilator reads OOB as 0) and stays a valid refinement
-                    // of the Verilog frontend's X, so formal equivalence is
-                    // preserved.
-                    result = RTLIL::SigSpec(RTLIL::State::S0, elem_w);
+                    // An out-of-range index reads X — SystemVerilog leaves it
+                    // unspecified, and that is what the Yosys Verilog frontend
+                    // and Verilator do too.  Emitting a defined 0 here was
+                    // wrong: it is a concrete value that disagrees with the
+                    // other tools' unspecified result (mem2reg_bounds_tern's
+                    // OOB read), whereas X is a don't-care that any value
+                    // refines, so formal equivalence holds against either.
+                    result = RTLIL::SigSpec(RTLIL::State::Sx, elem_w);
                     start = last;  // give EVERY element an explicit idx==i mux
                 } else {
                     std::string last_name = signal_name + "[" + std::to_string(last) + "]";
