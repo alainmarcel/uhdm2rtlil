@@ -1443,7 +1443,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         element_wire = name_map[element_name];
                     if (!element_wire)
                         element_wire = module->wire(RTLIL::escape_id(element_name));
-                    if (element_wire) {
+                    // Prefer the in-flight blocking value of this element if one
+                    // was assigned earlier in the same comb block — a later RHS
+                    // read must see it, not the final wire value.  Without this a
+                    // self-referential blocking update like
+                    //   dout_array[0] = din_array[0];
+                    //   {dout_array[0][1],dout_array[0][0]} = dout_array[0][0] + ...
+                    // reads the wire being written and folds to `dout[0] ^ ...`
+                    // (mem2reg_test6).
+                    if (!in_always_ff_body_mode && current_comb_values.count(element_name)) {
+                        element_sig = current_comb_values.at(element_name);
+                    } else if (element_wire) {
                         element_sig = RTLIL::SigSpec(element_wire);
                     } else if (elem_w > 0 && base_wire) {
                         int off = array_idx * elem_w;
@@ -1477,7 +1487,16 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // If there's a second expression (part_select / bit_select), apply it
                 if (exprs->size() > 1) {
                     const expr* second_idx = (*exprs)[1];
-                    if (second_idx->VpiType() == vpiPartSelect) {
+                    if (second_idx->VpiType() == vpiConstant) {
+                        // Bit index given as a plain constant (`dout_array[0][1]`
+                        // — mem2reg_test6).  Extract that bit of the element.
+                        RTLIL::SigSpec b = import_expression(second_idx, input_mapping);
+                        if (b.is_fully_const()) {
+                            int bit_idx = b.as_const().as_int();
+                            if (bit_idx >= 0 && bit_idx < element_sig.size())
+                                result = element_sig.extract(bit_idx, 1);
+                        }
+                    } else if (second_idx->VpiType() == vpiPartSelect) {
                         const part_select* ps = any_cast<const part_select*>(second_idx);
                         RTLIL::SigSpec left_sig = import_expression(ps->Left_range(), input_mapping);
                         RTLIL::SigSpec right_sig = import_expression(ps->Right_range(), input_mapping);
