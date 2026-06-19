@@ -49,7 +49,6 @@ arch/nanoxplore/meminit.v
 arch/xilinx/bug3670.v
 memlib/memlib_clock_sdp.v
 memlib/memlib_wide_sdp.v
-simple/mem2reg_bounds_tern.v
 verilog/mem_bounds.sv
 # --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
 # These define techmap MAPPING RULES, not synthesizable top designs: they use
