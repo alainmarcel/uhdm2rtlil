@@ -66,3 +66,21 @@
 #
 # test                      symptom
 # ------------------------  -----------------------------------------------
+#
+# === Real UHDM bugs surfaced by the sound-miter sweep (two-co-sim adjudicated:
+#     UHDM-vs-RTL FAIL, Verilog-vs-RTL PASS).  PASS run_all_tests.sh today
+#     (co-sim-gated miter doesn't trigger), so not yet expected-fail. ===
+#
+# VarPassedTo2Submodules — passing a packed-array-of-enum ELEMENT to a submodule
+#   port truncates to 1 bit.  `lc_tx_t [0:0] a; ... .port(a[0])` where lc_tx_t is
+#   enum logic[3:0]: the SAME `a[0]` gives the full 4-bit element in an in-module
+#   assign (p=int'(a[0])=11) but 1 bit in the port connection (o=1, want 11).
+#   ROOT CAUSE: module.cpp port-connection import calls import_expression with a
+#   null instance scope (current_scope/current_instance both null), so
+#   import_bit_select's packed_elem_width fallback get_width(enum, null) returns
+#   1 instead of 4.  FIX DIRECTION: give the port-connection import the PARENT
+#   instance scope (uhdm_inst->VpiParent() is NOT it — needs the real parent
+#   module_inst the importer is currently processing).
+#
+# simple_memory — UHDM-vs-RTL co-sim FAIL, Verilog PASS (memory-related; not yet
+#   root-caused).
