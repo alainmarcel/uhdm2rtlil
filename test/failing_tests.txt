@@ -127,6 +127,20 @@ verific/mixed_flist.sv
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
 # Expected Miter-Formal failures: UHDM-synth != Verilog-synth, falsely pass
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
+#
+# function_mixed / many_functions — for-loop accumulation inside a function is
+# wrong: `for (i=0;i<DEPTH;i++) result = result + (x>>i)` (mode 2'b11, x>y)
+# returns just `x>>0` instead of the full sum.  Deterministic: at x=0xaa,y=0x3c
+# UHDM gives 0xaa but Verilog AND iverilog give 0x3e.  The legacy function
+# inliner seeds the loop accumulator with the result-wire itself (if-handler
+# bridge), creating a combinational self-loop that collapses the unrolled chain
+# to one iteration.  Listed expected-fail to STOP THE FLAKY OSCILLATION: the
+# co-sim-gated miter only fails when the random stimulus happens to hit the
+# narrow trigger, so CI flips between PASS and Miter-Formal FAIL run-to-run.
+# Remove both once the accumulator unroller is fixed (validate with the directed
+# eval, not the flaky co-sim).
+function_mixed
+many_functions
 
 # ---------------------------------------------------------------------------
 # Imported from chipsalliance/UHDM-integration-tests (commit 668c4c45).

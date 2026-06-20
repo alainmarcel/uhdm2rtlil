@@ -11,6 +11,13 @@
 #     SVA $check/$assert/$cover  -> the miter is INCONCLUSIVE for them.
 #   - the miter runs from -set-init-zero without asserting a design reset, so
 #     a reset-dependent design can show a FALSE NON-EQUIVALENT.
+#   - the miter compares UHDM-synth against VERILOG-synth, so it reports
+#     NON-EQUIVALENT whenever the two frontends differ -- INCLUDING when UHDM is
+#     correct and Yosys's OWN Verilog frontend is the buggy side.  Such a test
+#     still passes run_all_tests.sh (its UHDM-vs-behavioural-RTL co-sim passes),
+#     but a raw `triage_cosim.py --no-cosim` sweep wrongly flags it.  Marked
+#     `artefact` here with the adjudicating reference so it is never re-triaged
+#     as a UHDM bug.
 # An override here WINS over the miter verdict.
 #
 # Format:  <test_name>  <artefact|bug>   # reason
@@ -28,3 +35,14 @@ unbased_unsized_param  artefact   # SVA $check/$eqx; miter INCONCLUSIVE
 jeras_tcb_gpio         artefact   # interface / uhdm-only; miter INCONCLUSIVE
 
 # --- confirmed UHDM-vs-Verilog bug, miter INCONCLUSIVE (satgen cell) ---
+
+# --- Yosys-VERILOG-frontend bug; UHDM is CORRECT (NOT a UHDM bug) ---------
+# Raw miter NON-EQUIVALENT because Yosys's Verilog frontend mishandles reading
+# an interface member (`u_if.member`) — it emits o[31:1]=0.  UHDM produces the
+# right value and all of these PASS run_all_tests.sh (co-sim vs behavioural RTL).
+# Adjudicated with iverilog -g2012: UHDM matches the reference, Verilog does not.
+InterfaceVariable           artefact   # u_if.start_addr=0x12345678; iverilog==UHDM, Verilog-frontend wrong
+InterfaceParameter          artefact   # int'(start_addr='1, W=10)=1023; iverilog==UHDM
+InterfaceParameterSetValue  artefact   # W override to 16, '1 -> 0xffff; iverilog==UHDM
+iface_param_set_value       artefact   # int'(start_addr,W=16) ^ in = {0,~in}; UHDM correct
+InterfaceWithPort           artefact   # int start_addr=x(=10); Verilator co-sim==UHDM (init-reads-port; iverilog uses time-0 0)

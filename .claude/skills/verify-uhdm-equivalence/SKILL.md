@@ -190,3 +190,25 @@ and future runs don't re-triage it from scratch. Pick the file by outcome:
 
 Don't invent or rename test files from training data — only touch the four
 above, and confirm the basename matches how run_all_tests.sh reports the test.
+
+## ⚠️ The miter over-reports when the *Verilog* frontend is the buggy side
+
+A raw UHDM-synth-vs-Verilog-synth miter (`triage_cosim.py --no-cosim`, or a
+direct `for t in */; do triage_cosim … --no-cosim`) flags NON-EQUIVALENT
+whenever the two frontends differ — **including when UHDM is correct and Yosys's
+own Verilog frontend is wrong.** It is a pre-filter, NOT a verdict.
+
+Observed: the whole `Interface*` cluster (InterfaceVariable/Parameter/…) came up
+NON-EQUIVALENT in a raw `--no-cosim` sweep, and `triage_cosim`'s verdict even
+said "🐛 REAL BUG". But `run_all_tests.sh` PASSES all of them, and `iverilog`
+adjudication confirmed UHDM matches the reference (`o=0x12345678`) while the
+Yosys-Verilog frontend emitted `o[31:1]=0` — i.e. UHDM is right, the *Verilog*
+frontend mishandles interface member access. Zero UHDM bugs there.
+
+**The authoritative regression gate is `run_all_tests.sh`'s per-test verdict**
+(it uses the UHDM-synth-vs-**behavioural-RTL** Verilator co-sim, gated to the
+miter only when that co-sim diverges). When a raw `--no-cosim` miter says
+NON-EQUIVALENT, before calling it a UHDM bug you MUST confirm UHDM is the wrong
+side: either (a) `run_all_tests.sh <test>` fails, or (b) `iverilog -g2012`/
+Verilator on the behavioural source disagrees with UHDM. If the co-sim passes
+and iverilog matches UHDM, it's a Yosys-Verilog-frontend bug — leave UHDM alone.
