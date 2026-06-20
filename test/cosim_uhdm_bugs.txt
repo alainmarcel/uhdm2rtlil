@@ -19,7 +19,7 @@
 # Fix one isolated change at a time, then remove from all of the above.
 #
 # FIXED so far: blocking_temp_select, macc, subbytes, simple_memory,
-#   asym_ram_sdp_read_wider, simple/mem_arst.
+#   asym_ram_sdp_read_wider, simple/mem_arst, simple/undef_eqx_nex.
 #
 # ---------------------------------------------------------------------------
 # 2026-06 yosys --yosys sweep: triaged every cosim FAIL with triage_cosim.py
@@ -32,7 +32,6 @@
 # memories/wide_all                 miter NON-EQ.  wide memory read/write ports.
 # memories/firrtl_938               miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
 # asicworld/code_hdl_models_cam     miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
-# simple/undef_eqx_nex              ===/!== (case-equality) with x/z.
 # simple/i2c_master_tests           miter NON-EQ.
 # memlib/memlib_wren                Induct-Formal FAIL (byte/word write-enable).
 #   (Inconclusive — Verilog cosim build-fails: verific/range_case,

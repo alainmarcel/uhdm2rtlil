@@ -2472,7 +2472,18 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
                         }
                     }
                     RTLIL::SigSpec sig(const_val);
-                    sig.extend_u0(size, is_signed);
+                    // IEEE 1800 §5.7.1 value extension: a sized literal whose
+                    // most-significant specified digit is x or z is x/z-EXTENDED,
+                    // not zero-extended.  Surelog gives `32'bx` as BIN:x with
+                    // vpiSize 32 (a single `x` digit), which must become 32 bits
+                    // of x — not `0…0x` (undef_eqx_nex's `=== 32'bx`).
+                    RTLIL::State msb = sig.size() > 0
+                        ? sig[sig.size() - 1].data : RTLIL::State::S0;
+                    if (!is_signed && (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz)) {
+                        while (sig.size() < size) sig.append(RTLIL::SigBit(msb));
+                    } else {
+                        sig.extend_u0(size, is_signed);
+                    }
                     return sig;
                 } else {
                     const_val.resize(size, RTLIL::State::S0);
@@ -2773,6 +2784,27 @@ int UhdmImporter::self_determined_width(const UHDM::any* node) {
     if (auto e = dynamic_cast<const UHDM::expr*>(node))
         return import_expression(e).size();
     return 0;
+}
+
+// Width-equalise the two operands of a case-equality (=== / !==) to their max
+// width using IEEE 1800 §5.7.1 value extension: a constant whose MSB is x or z
+// is x/z-EXTENDED into the wider comparison context, not zero-extended.  Needed
+// because $eqx/$nex zero-extend the narrower operand, which would make
+// `0/0 === 32'bx` compare a 64-bit all-x (Surelog sizes the unsized `0` at 64
+// bits) against `{32'b0, 32'bx}` and wrongly return 0 (undef_eqx_nex).
+static void xz_value_extend_pair(RTLIL::SigSpec &a, RTLIL::SigSpec &b) {
+    int w = std::max(a.size(), b.size());
+    auto ext = [&](RTLIL::SigSpec &s) {
+        if (s.size() >= w) return;
+        RTLIL::State fill = RTLIL::State::S0;
+        if (s.is_fully_const() && s.size() > 0) {
+            RTLIL::State msb = s[s.size() - 1].data;
+            if (msb == RTLIL::State::Sx || msb == RTLIL::State::Sz) fill = msb;
+        }
+        while (s.size() < w) s.append(RTLIL::SigBit(fill));
+    };
+    ext(a);
+    ext(b);
 }
 
 // Import operation
@@ -3768,8 +3800,22 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             // Case equality (===) - use $eqx which properly handles X and Z values
             if (operands.size() == 2)
                 {
+                    RTLIL::SigSpec a = operands[0], b = operands[1];
+                    xz_value_extend_pair(a, b);
                     std::string cell_name = generate_cell_name(uhdm_op, "eqx");
-                    return module->Eqx(RTLIL::escape_id(cell_name), operands[0], operands[1]);
+                    return module->Eqx(RTLIL::escape_id(cell_name), a, b);
+                }
+            break;
+        case vpiCaseNeqOp:
+            // Case inequality (!==) - use $nex, the X/Z-aware counterpart of $eqx
+            // (undef_eqx_nex's `0/1 !== 32'bx`).  Without this the op was
+            // unhandled → empty RHS → the assigned bit defaulted to 0.
+            if (operands.size() == 2)
+                {
+                    RTLIL::SigSpec a = operands[0], b = operands[1];
+                    xz_value_extend_pair(a, b);
+                    std::string cell_name = generate_cell_name(uhdm_op, "nex");
+                    return module->Nex(RTLIL::escape_id(cell_name), a, b);
                 }
             break;
         case vpiNeqOp:
