@@ -66,7 +66,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] PatternStruct
 - [?] PutC
 - [?] RealValue
-- [?] Replication
+- [x] Replication — FIXED: `'{8{1}}` (vpiMultiAssignmentPatternOp) sized each element to the literal's natural 64-bit width → 512-bit value truncated to 0x01. Now resize the element to target_width/count (=1 bit for logic[7:0]) → 0xFF.
 - [?] SelectFromUnpackedInFunction
 - [?] SelectOnMemberSelectedFrom2DArray
 - [?] Shortreal

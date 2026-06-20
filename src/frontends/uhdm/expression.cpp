@@ -2992,6 +2992,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             RTLIL::SigSpec count_sig = import_expression(any_cast<const expr*>(ops[0]), input_mapping);
             int count = count_sig.is_fully_const() ? count_sig.as_const().as_int() : 0;
             RTLIL::SigSpec elem = import_expression(any_cast<const expr*>(ops[1]), input_mapping);
+            // Each replicated element occupies target_width/count bits.  Surelog
+            // sizes a bare literal `1` to its natural width (e.g. 64), so without
+            // this `'{8{1}}` into `logic [7:0]` would build a 512-bit value and
+            // truncate to 0x01 instead of 0xFF.  Resize the element to the
+            // per-element width when the target (context) width is known.
+            if (expression_context_width > 0 && count > 0 &&
+                expression_context_width % count == 0) {
+                int ew = expression_context_width / count;
+                if ((int)elem.size() > ew) elem = elem.extract(0, ew);
+                else if ((int)elem.size() < ew) elem.extend_u0(ew);
+            }
             RTLIL::SigSpec result;
             for (int i = 0; i < count; i++)
                 result.append(elem);
