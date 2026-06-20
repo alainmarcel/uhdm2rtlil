@@ -9045,6 +9045,26 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     proc->root_case.actions.push_back(RTLIL::SigSig(lhs, rhs));
 }
 
+// Remove any action that assigns exactly `target` from every switch case
+// (recursively) of `cr`.  Used when an UNCONDITIONAL assignment to `target` is
+// emitted: an earlier conditional assignment to the same signal in this case
+// scope is now dead (later-wins), and because RTLIL applies a case's actions
+// BEFORE its switches, the stale switch action would otherwise override the
+// correct unconditional one (firrtl_938: `if(we) q<=data; q<=ram[a];` — the
+// unconditional `q<=ram[a]` is the real driver, not `we ? data : ram[a]`).
+static void remove_target_from_switches(RTLIL::CaseRule* cr,
+                                        const RTLIL::SigSpec& target) {
+    for (auto sw : cr->switches) {
+        for (auto cs : sw->cases) {
+            cs->actions.erase(
+                std::remove_if(cs->actions.begin(), cs->actions.end(),
+                    [&](const RTLIL::SigSig& a){ return a.first == target; }),
+                cs->actions.end());
+            remove_target_from_switches(cs, target);
+        }
+    }
+}
+
 // Import assignment for comb context (CaseRule variant)
 void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::CaseRule* case_rule) {
     // Dynamic indexed_part_select LHS — synthesise mask/shift/or write
@@ -9264,16 +9284,22 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                 log("      Assigned to temp wire %s[%d:%d] <= [value]\n", 
                     signal_name.c_str(), offset + width - 1, offset);
             } else {
-                // Full signal assignment
+                // Full signal assignment.  An unconditional write to the whole
+                // signal makes any earlier conditional write to it (in a switch
+                // of this case) dead — drop those so the switch can't override
+                // this later-wins value (firrtl_938).
+                remove_target_from_switches(case_rule, temp_spec);
                 case_rule->actions.push_back(RTLIL::SigSig(temp_spec, rhs));
-                log("      Assigned to temp wire %s <= [value] (temp_wire=%s)\n", 
+                log("      Assigned to temp wire %s <= [value] (temp_wire=%s)\n",
                     signal_name.c_str(), temp_wire->name.c_str());
             }
             return;
         }
     }
-    
-    // Normal assignment
+
+    // Normal assignment — unconditional full-wire write supersedes any earlier
+    // conditional write to the same signal in this case scope (later-wins).
+    remove_target_from_switches(case_rule, lhs);
     case_rule->actions.push_back(RTLIL::SigSig(lhs, rhs));
 }
 
