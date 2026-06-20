@@ -724,6 +724,7 @@ struct UhdmImporter {
     // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
     // a loop counter is not a flip-flop and has no constant async-reset value.
     void collect_for_loop_var_names(const any* stmt, std::set<std::string>& names);
+    void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);
     // Collect base names of signals written via BLOCKING (`=`) assignments

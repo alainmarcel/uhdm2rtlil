@@ -18,7 +18,36 @@
 #   - listed expected-fail in failing_tests.txt (internal name + yosys paths)
 # Fix one isolated change at a time, then remove from all of the above.
 #
-# FIXED so far: blocking_temp_select, macc, subbytes, simple_memory, asym_ram_sdp_read_wider (ALL).
+# FIXED so far: blocking_temp_select, macc, subbytes, simple_memory,
+#   asym_ram_sdp_read_wider, simple/mem_arst.
+#
+# ---------------------------------------------------------------------------
+# 2026-06 yosys --yosys sweep: triaged every cosim FAIL with triage_cosim.py
+# (sound SAT-from-reset miter + both-frontends co-sim).  ~25 were ARTEFACTS
+# (miter proves UHDM == Verilog; the diff is Verilator-vs-synth).  Real
+# divergences that FALSELY pass equiv_induct, still OPEN:
+#
+# test                              symptom
+# --------------------------------  -------------------------------------------
+# memories/wide_all                 miter NON-EQ.  wide memory read/write ports.
+# memories/firrtl_938               miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
+# asicworld/code_hdl_models_cam     miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
+# simple/undef_eqx_nex              ===/!== (case-equality) with x/z.
+# simple/i2c_master_tests           miter NON-EQ.
+# memlib/memlib_wren                Induct-Formal FAIL (byte/word write-enable).
+#   (Inconclusive — Verilog cosim build-fails: verific/range_case,
+#    memlib/memlib_block_sp, memlib/memlib_block_sp_full.)
+#
+# NOT bugs (don't re-triage): simple/mem2reg_bounds_tern (OOB read -> X
+# don't-care), asicworld/..._d_latch_gates (latch; both cosims fail).
+#
+# FIXED simple/mem_arst (this entry): a `(* mem2reg *)` memory written with a
+# dynamic index inside an async-reset always_ff was expanded to per-element
+# wires but those elements got no async-reset FF (the reset clear `for(i)
+# mem[i]<=0` was lost; MEMORY_COLLECT re-gathered a reset-less $mem).  Fix:
+# the async-reset path now registers every \mem[k] element so each gets a
+# $0\mem[k] temp + async-reset FF (matches the Verilog frontend's per-element
+# mem2reg).  miter EQUIVALENT; directed read-back confirms.
 #
 # test                      symptom
 # ------------------------  -----------------------------------------------

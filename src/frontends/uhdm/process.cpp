@@ -955,6 +955,39 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         std::remove_if(assigned_signals.begin(), assigned_signals.end(),
                             [&](const AssignedSignal& s){ return loop_vars.count(s.name) > 0; }),
                         assigned_signals.end());
+
+                // A `(* mem2reg *)` memory written with a DYNAMIC index inside an
+                // async-reset always_ff (mem_arst's `Mem[Addr]<=Data` plus the
+                // reset clear `for(i) Mem[i]<=0`) is expanded to per-element
+                // wires \Mem[0..N-1], and extract_assigned_signals SKIPS the
+                // dynamic write (the comb mux path handles it).  But in the
+                // async-reset path each element needs its own async-reset FF, or
+                // the writes stay combinational and MEMORY_COLLECT re-gathers
+                // them into a $mem with NO reset (the clear is lost).  Register
+                // every element wire so the temp-wire + sync-rule machinery below
+                // gives each \Mem[k] a $0\Mem[k] temp; the reset for-loop fills
+                // case_true and emit_dynamic_unpacked_array_write fills case_false
+                // (it already targets the $0\ temps).  Mirrors how the Verilog
+                // frontend mem2regs such a memory into per-element FFs.
+                std::set<std::string> expanded_arrays;
+                collect_dynamic_expanded_array_writes(stmt, expanded_arrays, module);
+                for (const auto& base : expanded_arrays) {
+                    int n = 0;
+                    while (module->wire(RTLIL::escape_id(
+                               base + "[" + std::to_string(n) + "]"))) n++;
+                    for (int k = 0; k < n; k++) {
+                        AssignedSignal es;
+                        es.name = base + "[" + std::to_string(k) + "]";
+                        es.is_part_select = false;
+                        es.lhs_expr = nullptr;
+                        // Avoid duplicates (a constant-index write may already
+                        // have recorded the same element).
+                        bool dup = false;
+                        for (const auto& a : assigned_signals)
+                            if (a.name == es.name) { dup = true; break; }
+                        if (!dup) assigned_signals.push_back(es);
+                    }
+                }
             }
 
             // Async-reset always_ff that ALSO writes a memory (issue #326):
