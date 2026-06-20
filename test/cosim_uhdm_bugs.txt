@@ -19,7 +19,8 @@
 # Fix one isolated change at a time, then remove from all of the above.
 #
 # FIXED so far: blocking_temp_select, macc, subbytes, simple_memory,
-#   asym_ram_sdp_read_wider, simple/mem_arst, simple/undef_eqx_nex.
+#   asym_ram_sdp_read_wider, simple/mem_arst, simple/undef_eqx_nex,
+#   memories/firrtl_938.
 #
 # ---------------------------------------------------------------------------
 # 2026-06 yosys --yosys sweep: triaged every cosim FAIL with triage_cosim.py
@@ -30,22 +31,6 @@
 # test                              symptom
 # --------------------------------  -------------------------------------------
 # memories/wide_all                 miter NON-EQ.  wide memory read/write ports.
-# memories/firrtl_938               TWO bugs.  (1) FIXED: `if(we) ram[a]<=d;
-#                                   q<=d; ... q<=ram[a];` — the unconditional
-#                                   last `q<=ram[a]` is the real driver, but
-#                                   UHDM emitted `we?d:ram[a]` (an action can't
-#                                   override a later switch in RTLIL); fixed by
-#                                   dropping a signal's dead earlier conditional
-#                                   writes when an unconditional one follows.
-#                                   (2) OPEN: memory_dff infers the registered
-#                                   read as TRANSPARENT for UHDM (RD_TRANSP=1)
-#                                   but non-transparent for Verilog, so q_a reads
-#                                   the just-written value (write-first) where
-#                                   the LRM/Verilator give read-first — confirmed
-#                                   by behavioral sim (UHDM 0x40 vs 0x11).  The
-#                                   $mem params are identical pre-memory_dff;
-#                                   the UHDM read structure makes Yosys infer a
-#                                   transparency bypass.  Still NON-EQ.
 # asicworld/code_hdl_models_cam     miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
 # simple/i2c_master_tests           miter NON-EQ.
 # memlib/memlib_wren                Induct-Formal FAIL (byte/word write-enable).
