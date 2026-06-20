@@ -20,7 +20,7 @@
 #
 # FIXED so far: blocking_temp_select, macc, subbytes, simple_memory,
 #   asym_ram_sdp_read_wider, simple/mem_arst, simple/undef_eqx_nex,
-#   memories/firrtl_938.
+#   memories/firrtl_938, asicworld/code_hdl_models_cam.
 #
 # ---------------------------------------------------------------------------
 # 2026-06 yosys --yosys sweep: triaged every cosim FAIL with triage_cosim.py
@@ -31,7 +31,6 @@
 # test                              symptom
 # --------------------------------  -------------------------------------------
 # memories/wide_all                 miter NON-EQ.  wide memory read/write ports.
-# asicworld/code_hdl_models_cam     miter NON-EQ; UHDM cosim FAIL, Verilog PASS.
 # simple/i2c_master_tests           miter NON-EQ.
 # memlib/memlib_wren                Induct-Formal FAIL (byte/word write-enable).
 #   (Inconclusive — Verilog cosim build-fails: verific/range_case,

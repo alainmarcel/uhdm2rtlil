@@ -9355,6 +9355,60 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
 }
 
 // Import if_else statement for comb context
+// Base signal name behind a comb temp target (`$0\t`, `$1\t`, or `\t` → "t").
+static std::string comb_blocking_base(const RTLIL::SigSpec& target) {
+    if (!target.is_wire()) return "";
+    std::string n = target.as_wire()->name.str();
+    auto bs = n.rfind('\\');
+    if (bs != std::string::npos) return n.substr(bs + 1);
+    return "";
+}
+
+// Thread blocking values through a comb `if`: after the branches are imported,
+// make a later read of a conditionally-assigned signal in the SAME comb block
+// see `cond ? then_val : else_val` instead of the pre-if value.  Without this a
+// blocking accumulator read after the if is stale — e.g. the cam priority
+// encoder's `if (data[i] && !found) found=1; … ` where the next iteration's
+// `!found` must observe this iteration's update (and the minimal `t=0;
+// if(c) t=x; o=t+1`).  Operates on current_comb_values, which is what
+// import_ref_obj reads for a blocking scalar; the structural switch is
+// untouched.  Only top-level branch actions are threaded (a value assigned
+// inside a nested switch is left as-is, the prior behaviour).
+void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
+                                  RTLIL::CaseRule* then_case,
+                                  RTLIL::CaseRule* else_case) {
+    if (in_always_ff_body_mode) return;
+    // Last write wins within each branch.
+    std::map<std::string, RTLIL::SigSpec> then_vals, else_vals;
+    if (then_case)
+        for (auto& a : then_case->actions) {
+            std::string b = comb_blocking_base(a.first);
+            if (!b.empty()) then_vals[b] = a.second;
+        }
+    if (else_case)
+        for (auto& a : else_case->actions) {
+            std::string b = comb_blocking_base(a.first);
+            if (!b.empty()) else_vals[b] = a.second;
+        }
+    std::set<std::string> names;
+    for (auto& kv : then_vals) names.insert(kv.first);
+    for (auto& kv : else_vals) names.insert(kv.first);
+    for (const auto& nm : names) {
+        // Pre-if value: the in-flight comb value, else the registered wire.
+        RTLIL::SigSpec pre;
+        auto it = current_comb_values.find(nm);
+        if (it != current_comb_values.end()) pre = it->second;
+        else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm))) pre = RTLIL::SigSpec(w);
+        else continue;
+        RTLIL::SigSpec tv = then_vals.count(nm) ? then_vals[nm] : pre;
+        RTLIL::SigSpec ev = else_vals.count(nm) ? else_vals[nm] : pre;
+        if (tv.size() != ev.size() || tv == ev) continue;
+        RTLIL::Wire* m = module->addWire(NEW_ID, tv.size());
+        module->addMux(NEW_ID, ev, tv, cond, m);   // Y = S ? B : A = cond?tv:ev
+        current_comb_values[nm] = RTLIL::SigSpec(m);
+    }
+}
+
 void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
     log("    import_if_else_comb: Importing if_else statement\n");
 
@@ -9368,7 +9422,12 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
 
     // Get the condition
     if (auto condition = uhdm_if_else->VpiCondition()) {
-        RTLIL::SigSpec condition_sig = import_expression(condition);
+        // Read blocking scalars at their in-flight value (current_comb_values)
+        // so a condition like cam's `!found_match` observes the accumulator
+        // updated by earlier statements / loop iterations, not the registered
+        // output wire (which would be a combinational feedback loop).
+        RTLIL::SigSpec condition_sig = import_expression(
+            condition, current_comb_process ? &current_comb_values : nullptr);
 
         // Reduce multi-bit conditions to 1 bit for switch/compare matching
         if (condition_sig.size() > 1) {
@@ -9417,11 +9476,13 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
             log("    Else case has %d switches after import\n", (int)else_case->switches.size());
 
             sw->cases.push_back(else_case);
+            thread_comb_if(condition_sig, true_case, else_case);
         } else {
             // Create empty default case
             RTLIL::CaseRule* default_case = new RTLIL::CaseRule;
             add_src_attribute(default_case->attributes, uhdm_if_else);
             sw->cases.push_back(default_case);
+            thread_comb_if(condition_sig, true_case, nullptr);
         }
 
         // Add the switch to the current case
@@ -9448,7 +9509,10 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
 
     // Get the condition
     if (auto condition = uhdm_if->VpiCondition()) {
-        RTLIL::SigSpec condition_sig = import_expression(condition);
+        // See import_if_else_comb: blocking scalars resolve to their in-flight
+        // value so a condition observes earlier same-block updates.
+        RTLIL::SigSpec condition_sig = import_expression(
+            condition, current_comb_process ? &current_comb_values : nullptr);
 
         // Reduce multi-bit conditions to 1 bit for switch/compare matching
         if (condition_sig.size() > 1) {
@@ -9497,6 +9561,7 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         
         // Add the switch to the current case
         proc->root_case.switches.push_back(sw);
+        thread_comb_if(condition_sig, true_case, nullptr);
     } else {
         log_warning("If statement has no condition\n");
     }
@@ -10104,9 +10169,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             // not the registered \dec).  ff_blocking_temps is the
                             // input_mapping, whose lookup in import_ref_obj is not
                             // gated on the body-mode flag.
+                            // always_ff: in-flight blocking temps via
+                            // ff_blocking_temps.  Pure comb (inside an if branch):
+                            // in-flight blocking scalars via current_comb_values
+                            // so e.g. cam's else `found_match = found_match` reads
+                            // the threaded value, not the registered output wire.
                             RTLIL::SigSpec rhs_sig = import_expression(rhs,
                                 (in_always_ff_body_mode || in_always_ff_context)
-                                    ? &ff_blocking_temps : nullptr);
+                                    ? &ff_blocking_temps
+                                    : (current_comb_process ? &current_comb_values
+                                                            : nullptr));
                             expression_context_width = prev_ctx;
 
                             // Check if we should assign to a temp wire instead
