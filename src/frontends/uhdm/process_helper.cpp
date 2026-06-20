@@ -1212,6 +1212,72 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
     }
 }
 
+// Collect the base names of `(* mem2reg *)`-expanded arrays written with a
+// DYNAMIC (non-constant) index anywhere in the statement tree.  Such an array
+// is flattened to per-element wires \base[0..N-1] (no $memory object), so a
+// write `base[idx] <= ...` with a variable idx is the marker.  Used by the
+// async-reset always_ff path to register every element as its own FF.
+void UhdmImporter::collect_dynamic_expanded_array_writes(
+        const any* stmt, std::set<std::string>& names, RTLIL::Module* module) {
+    if (!stmt || !module) return;
+    auto record = [&](const std::string& base, const any* idx) {
+        if (base.empty()) return;
+        bool const_idx = idx && idx->VpiType() == vpiConstant;
+        if (const_idx) return;
+        // Expanded array, not a real $memory: element wire \base[0] exists.
+        if (!module->memories.count(RTLIL::escape_id(base)) &&
+            module->wire(RTLIL::escape_id(base + "[0]")))
+            names.insert(base);
+    };
+    switch (stmt->VpiType()) {
+        case vpiAssignment:
+        case vpiAssignStmt: {
+            const assignment* assign = any_cast<const assignment*>(stmt);
+            if (auto lhs = assign->Lhs()) {
+                if (lhs->VpiType() == vpiBitSelect) {
+                    const bit_select* bs = any_cast<const bit_select*>(lhs);
+                    record(std::string(bs->VpiName()), bs->VpiIndex());
+                }
+            }
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin: {
+            if (VectorOfany* stmts = begin_block_stmts(stmt))
+                for (auto s : *stmts) collect_dynamic_expanded_array_writes(s, names, module);
+            break;
+        }
+        case vpiIf: {
+            const UHDM::if_stmt* s = any_cast<const UHDM::if_stmt*>(stmt);
+            if (s->VpiStmt()) collect_dynamic_expanded_array_writes(s->VpiStmt(), names, module);
+            break;
+        }
+        case vpiIfElse: {
+            const if_else* s = any_cast<const if_else*>(stmt);
+            if (s->VpiStmt()) collect_dynamic_expanded_array_writes(s->VpiStmt(), names, module);
+            if (s->VpiElseStmt()) collect_dynamic_expanded_array_writes(s->VpiElseStmt(), names, module);
+            break;
+        }
+        case vpiCase: {
+            const case_stmt* cs = any_cast<const case_stmt*>(stmt);
+            if (cs->Case_items())
+                for (auto ci : *cs->Case_items())
+                    if (ci->Stmt()) collect_dynamic_expanded_array_writes(ci->Stmt(), names, module);
+            break;
+        }
+        case vpiFor: {
+            const for_stmt* f = any_cast<const for_stmt*>(stmt);
+            if (f->VpiStmt()) collect_dynamic_expanded_array_writes(f->VpiStmt(), names, module);
+            break;
+        }
+        case vpiRepeat: {
+            const UHDM::repeat* r = any_cast<const UHDM::repeat*>(stmt);
+            if (r->VpiStmt()) collect_dynamic_expanded_array_writes(r->VpiStmt(), names, module);
+            break;
+        }
+    }
+}
+
 // Helper: return true if the statement tree contains a for loop (at any depth).
 bool UhdmImporter::has_for_loop(const any* stmt) {
     if (!stmt) return false;
