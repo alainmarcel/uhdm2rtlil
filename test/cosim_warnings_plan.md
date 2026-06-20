@@ -33,7 +33,8 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] EnumFirstInInitial
 - [?] FunctionCallsFunctionWithIndexedPartSelectAsArgument
 - [?] FunctionOutputArgument
-- [?] FunctionParam
+- [x] FunctionParam — FIXED: unpacked-parameter-array element read in const-eval (`return X[0]`). Resolve value from module_inst Param_assigns; operands are in ascending index order.
+- [x] SelectGivenBySelectOnParameterInFunction — FIXED (same batch): param-array element + packed-local var_select (`c[idx][0]`) + function-local var initializer in const-eval + variable-as-LHS assignment.
 - [?] FunctionWireAssignmentOnDeclaration
 - [?] FunctionWithOverriddenParameter
 - [?] GenIfInside
@@ -67,7 +68,6 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] RealValue
 - [?] Replication
 - [?] SelectFromUnpackedInFunction
-- [?] SelectGivenBySelectOnParameterInFunction
 - [?] SelectOnMemberSelectedFrom2DArray
 - [?] Shortreal
 - [?] StreamOp

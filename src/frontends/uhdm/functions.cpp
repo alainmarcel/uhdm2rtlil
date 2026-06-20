@@ -14,6 +14,8 @@
 #include <uhdm/constant.h>
 #include <uhdm/ref_obj.h>
 #include <uhdm/bit_select.h>
+#include <uhdm/param_assign.h>
+#include <uhdm/module_inst.h>
 #include <uhdm/var_select.h>
 #include <uhdm/array_var.h>
 #include <uhdm/array_typespec.h>
@@ -26,6 +28,7 @@
 #include <uhdm/integer_var.h>
 #include <uhdm/ref_typespec.h>
 #include <uhdm/logic_typespec.h>
+#include <uhdm/variables.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/int_typespec.h>
 #include <uhdm/short_int_typespec.h>
@@ -161,7 +164,24 @@ RTLIL::Const UhdmImporter::evaluate_function_call(const UHDM::function* func_def
             ret_signed = typespec_is_signed(func_def->Return()->Typespec()->Actual_typespec());
     }
     local_vars[func_name] = RTLIL::Const(0, ret_width);
-    
+
+    // Seed function-local variables that carry a declaration initializer
+    // (`logic [4:0][1:0] c = 10'h100`) so the body reads the right value
+    // (SelectGivenBySelectOnParameterInFunction).
+    if (func_def->Variables()) {
+        for (auto var : *func_def->Variables()) {
+            std::string var_name = std::string(var->VpiName());
+            if (var_name == func_name || local_vars.count(var_name)) continue;
+            if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                if (v->Expr()) {
+                    RTLIL::Const init = evaluate_single_operand(v->Expr(), local_vars);
+                    if (!init.empty())
+                        local_vars[var_name] = init;
+                }
+            }
+        }
+    }
+
     // Evaluate the function body
     if (func_def->Stmt()) {
         RTLIL::Const result = evaluate_function_stmt(func_def->Stmt(), local_vars, func_name);
@@ -306,6 +326,12 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         lhs_is_array_bit = true;
                         lhs_array_bit_offset = i0.as_int() * elem_w + i1.as_int();
                     }
+                } else if (dynamic_cast<const UHDM::variables*>(assign->Lhs())) {
+                    // The LHS is the variable itself (a declaration initializer
+                    // `logic [4:0][1:0] c = 10'h100` stores the var, not a
+                    // ref_obj) — treat as a full-variable assignment so the init
+                    // value lands in local_vars (SelectGivenBySelectOnParameterInFunction).
+                    lhs_name = std::string(assign->Lhs()->VpiName());
                 }
             }
 
@@ -796,6 +822,77 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             const RTLIL::Const& target = local_vars.at(nm);
             if (idx >= 0 && idx < target.size())
                 val = RTLIL::Const(std::vector<RTLIL::State>{target[idx]});
+        } else if (bs->VpiIndex() && bs->Actual_group() &&
+                   bs->Actual_group()->VpiType() == vpiParameter) {
+            // `X[idx]` where X is a module/scope-level UNPACKED parameter array
+            // (`parameter int X[1:0] = '{0,1}`).  Not in local_vars — resolve
+            // the element from the parameter's array-literal value, mapping the
+            // index to the operand position via the parameter's range so a
+            // `[1:0]` (descending) literal `'{a,b}` gives X[1]=a, X[0]=b
+            // (FunctionParam / SelectGivenBySelectOnParameterInFunction).
+            const parameter* param = any_cast<const parameter*>(bs->Actual_group());
+            // The array-literal value lives in Expr() or — for Surelog's usual
+            // representation — in the parent param_assign's Rhs().
+            const expr* val_expr = param ? param->Expr() : nullptr;
+            // Function-local localparam: value is in the parent param_assign.
+            if (param && !val_expr && param->VpiParent() &&
+                param->VpiParent()->UhdmType() == uhdmparam_assign) {
+                auto pa = any_cast<const param_assign*>(param->VpiParent());
+                if (pa && pa->Rhs())
+                    val_expr = any_cast<const expr*>(pa->Rhs());
+            }
+            // Module/scope-level parameter: the array-literal value lives in the
+            // enclosing module_inst's Param_assigns(), keyed by the param name.
+            if (param && !val_expr && param->VpiParent() &&
+                param->VpiParent()->UhdmType() == uhdmmodule_inst) {
+                auto mod = any_cast<const module_inst*>(param->VpiParent());
+                if (mod && mod->Param_assigns()) {
+                    for (auto pa : *mod->Param_assigns()) {
+                        if (pa->Lhs() &&
+                            std::string(pa->Lhs()->VpiName()) == nm && pa->Rhs()) {
+                            val_expr = any_cast<const expr*>(pa->Rhs());
+                            break;
+                        }
+                    }
+                }
+            }
+            if (val_expr && val_expr->VpiType() == vpiOperation) {
+                const operation* arr = any_cast<const operation*>(val_expr);
+                RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
+                int idx = idx_v.as_int();
+                // Map idx → operand position via the parameter's declared range:
+                // `'{a,b}` to `[1:0]` fills X[1]=a, X[0]=b.  The range is on the
+                // parameter's Left_range/Right_range (Ranges() is empty here).
+                int left = idx, right = idx;
+                const UHDM::range* r0 = nullptr;
+                // The unpacked dimension `[1:0]` lives on the parameter's
+                // array_typespec, not on its packed Left_range/Ranges.
+                if (param->Typespec() && param->Typespec()->Actual_typespec()) {
+                    auto ats = param->Typespec()->Actual_typespec();
+                    if (ats->UhdmType() == uhdmarray_typespec) {
+                        auto at = any_cast<const UHDM::array_typespec*>(ats);
+                        if (at->Ranges() && !at->Ranges()->empty())
+                            r0 = at->Ranges()->at(0);
+                    }
+                }
+                if (!r0 && param->Ranges() && !param->Ranges()->empty())
+                    r0 = param->Ranges()->at(0);
+                if (r0 && r0->Left_expr() && r0->Right_expr()) {
+                    left = evaluate_single_operand(r0->Left_expr(), local_vars).as_int();
+                    right = evaluate_single_operand(r0->Right_expr(), local_vars).as_int();
+                } else if (param->Left_range() && param->Right_range()) {
+                    left = evaluate_single_operand(param->Left_range(), local_vars).as_int();
+                    right = evaluate_single_operand(param->Right_range(), local_vars).as_int();
+                }
+                if (arr->Operands()) {
+                    // Surelog stores assignment-pattern operands in ASCENDING
+                    // index order (operand[0] = X[low]), independent of whether
+                    // the range is declared `[1:0]` or `[0:1]`.
+                    int k = idx - std::min(left, right);
+                    if (k >= 0 && k < (int)arr->Operands()->size())
+                        val = evaluate_single_operand((*arr->Operands())[k], local_vars);
+                }
+            }
         }
     } else if (operand->VpiType() == vpiVarSelect) {
         // `state[i][j]` read on a flattened function-local array_var.
@@ -813,6 +910,39 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             const RTLIL::Const& target = local_vars.at(nm);
             if (src >= 0 && src < target.size())
                 val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+        } else if (local_vars.count(nm) && vs->Exprs() &&
+                   vs->Exprs()->size() == 2 && vs->Actual_group()) {
+            // `c[i][j]` on a PACKED function-local 2D array
+            // (`logic [4:0][1:0] c`): c[i][j] is bit (i*inner_w + j) of the flat
+            // value.  inner_w comes from the second range / Elem_typespec of the
+            // var's logic_typespec (SelectGivenBySelectOnParameterInFunction).
+            int inner_w = 0;
+            const UHDM::ref_typespec* rt = nullptr;
+            if (auto e = dynamic_cast<const UHDM::expr*>(vs->Actual_group()))
+                rt = e->Typespec();
+            const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
+            if (a && a->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(a);
+                if (lt->Ranges() && lt->Ranges()->size() >= 2) {
+                    auto ri = lt->Ranges()->at(lt->Ranges()->size() - 1);
+                    if (ri->Left_expr() && ri->Right_expr()) {
+                        int l = evaluate_single_operand(ri->Left_expr(), local_vars).as_int();
+                        int r = evaluate_single_operand(ri->Right_expr(), local_vars).as_int();
+                        inner_w = std::abs(l - r) + 1;
+                    }
+                } else if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec()) {
+                    inner_w = get_width_from_typespec(
+                        lt->Elem_typespec()->Actual_typespec(), current_instance);
+                }
+            }
+            if (inner_w > 0) {
+                RTLIL::Const i0 = evaluate_single_operand((*vs->Exprs())[0], local_vars);
+                RTLIL::Const i1 = evaluate_single_operand((*vs->Exprs())[1], local_vars);
+                int src = i0.as_int() * inner_w + i1.as_int();
+                const RTLIL::Const& target = local_vars.at(nm);
+                if (src >= 0 && src < target.size())
+                    val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+            }
         }
     } else if (operand->VpiType() == vpiPartSelect) {
         // `out[4:0]` read on a function-local var — extract the bit range from
