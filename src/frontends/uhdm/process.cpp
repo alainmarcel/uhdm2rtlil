@@ -10309,7 +10309,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             
                             if (mode_debug)
                                 log("        Case assignment: %s = %s\n", log_signal(target_sig), log_signal(rhs_sig));
-                            
+
+                            // An unconditional full-wire write supersedes any
+                            // earlier conditional write to the same signal in
+                            // this case scope (later-wins).  RTLIL applies a
+                            // case's actions before its switches, so a stale
+                            // switch action would otherwise override this — drop
+                            // it (firrtl_938: `if(we_a) q_a<=data_a;
+                            // q_a<=ram[addr_a];` → q_a is ram[addr_a], not
+                            // we_a?data_a:ram[addr_a]).
+                            if (target_sig.is_wire())
+                                remove_target_from_switches(case_rule, target_sig);
                             case_rule->actions.push_back(RTLIL::SigSig(target_sig, rhs_sig));
                             if (mode_debug)
                                 log("        Assignment added to case_rule, now has %d actions\n", (int)case_rule->actions.size());
