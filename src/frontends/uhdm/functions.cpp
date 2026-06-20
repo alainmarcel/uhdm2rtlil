@@ -281,6 +281,11 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
             int lhs_array_element_width = 0;
             bool lhs_is_array_bit = false;
             int lhs_array_bit_offset = 0;
+            // `result[i][hi:lo] = ...` on a packed multi-dim local: splice a
+            // RANGE of bits starting at lhs_range_offset.
+            bool lhs_is_range = false;
+            int lhs_range_offset = 0;
+            int lhs_range_width = 0;
 
             if (assign->Lhs()) {
                 int lhs_type = assign->Lhs()->VpiType();
@@ -325,6 +330,25 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                         int elem_w = array_local_element_widths[lhs_name];
                         lhs_is_array_bit = true;
                         lhs_array_bit_offset = i0.as_int() * elem_w + i1.as_int();
+                    } else if (array_local_element_widths.count(lhs_name) &&
+                               vs->Exprs() && vs->Exprs()->size() == 2) {
+                        // `result[i][j]` / `result[i][hi:lo]` on a packed
+                        // multi-dim local (BitSelectPartSelectInFunction).
+                        int elem_w = array_local_element_widths[lhs_name];
+                        int base = evaluate_single_operand((*vs->Exprs())[0], local_vars).as_int() * elem_w;
+                        const UHDM::any* e1 = (*vs->Exprs())[1];
+                        if (e1->VpiType() == vpiPartSelect) {
+                            auto ps = any_cast<const part_select*>(e1);
+                            int l = evaluate_single_operand(any_cast<const expr*>(ps->Left_range()), local_vars).as_int();
+                            int r = evaluate_single_operand(any_cast<const expr*>(ps->Right_range()), local_vars).as_int();
+                            lhs_is_range = true;
+                            lhs_range_offset = base + std::min(l, r);
+                            lhs_range_width = std::abs(l - r) + 1;
+                        } else {
+                            lhs_is_array_bit = true;
+                            lhs_array_bit_offset = base +
+                                evaluate_single_operand(e1, local_vars).as_int();
+                        }
                     }
                 } else if (dynamic_cast<const UHDM::variables*>(assign->Lhs())) {
                     // The LHS is the variable itself (a declaration initializer
@@ -386,6 +410,19 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                     }
                     log("    Assigned %s[%d] (element @bit %d, w=%d) = %s\n",
                         lhs_name.c_str(), bit_index, lhs_array_offset, lhs_array_element_width,
+                        rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
+                } else if (lhs_is_range) {
+                    // `result[i][hi:lo] = rhs` — splice rhs into the bit range.
+                    if (local_vars.count(lhs_name)) {
+                        RTLIL::Const& target = local_vars[lhs_name];
+                        for (int b = 0; b < lhs_range_width; b++) {
+                            int dst = lhs_range_offset + b;
+                            if (dst >= 0 && dst < target.size())
+                                target.set(dst, b < (int)rhs_value.size() ? rhs_value[b] : RTLIL::S0);
+                        }
+                    }
+                    log("    Assigned %s [%d +: %d] = %s\n", lhs_name.c_str(),
+                        lhs_range_offset, lhs_range_width,
                         rhs_value.size() > 0 ? rhs_value.as_string().c_str() : "(empty)");
                 } else if (lhs_is_array_bit) {
                     // `state[i][j] = rhs[0]` on a flattened array.
@@ -566,6 +603,33 @@ RTLIL::Const UhdmImporter::evaluate_function_stmt(const UHDM::any* stmt,
                             var_name.c_str(), elem_w, width);
                     } else {
                         width = get_width(var, current_instance);
+                        // A packed multi-dimensional local (`logic [4:0][1:0]
+                        // result`, often via a typedef) needs its inner element
+                        // width registered so element / part-select access
+                        // (`result[i]`, `result[i][hi:lo]`) slices the right
+                        // bits in const-eval (BitSelectPartSelectInFunction).
+                        if (auto v = dynamic_cast<const UHDM::variables*>(var)) {
+                            if (v->Typespec() && v->Typespec()->Actual_typespec() &&
+                                v->Typespec()->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = any_cast<const UHDM::logic_typespec*>(
+                                    v->Typespec()->Actual_typespec());
+                                int inner_w = 0;
+                                if (lt->Ranges() && lt->Ranges()->size() >= 2) {
+                                    auto ri = lt->Ranges()->at(lt->Ranges()->size() - 1);
+                                    if (ri->Left_expr() && ri->Right_expr()) {
+                                        int l = evaluate_single_operand(ri->Left_expr(), block_vars).as_int();
+                                        int r = evaluate_single_operand(ri->Right_expr(), block_vars).as_int();
+                                        inner_w = std::abs(l - r) + 1;
+                                    }
+                                } else if (lt->Elem_typespec() &&
+                                           lt->Elem_typespec()->Actual_typespec()) {
+                                    inner_w = get_width_from_typespec(
+                                        lt->Elem_typespec()->Actual_typespec(), current_instance);
+                                }
+                                if (inner_w > 1 && inner_w < width)
+                                    array_local_element_widths[var_name] = inner_w;
+                            }
+                        }
                     }
 
                     // Initialize the local variable to 0
@@ -815,6 +879,20 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
                 bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
             }
             val = RTLIL::Const(bits);
+        } else if (bs->VpiIndex() && local_vars.count(nm) &&
+                   array_local_element_widths.count(nm)) {
+            // `result[i]` on a packed multi-dim local: return the whole
+            // inner_w-bit element, not a single bit (BitSelectPartSelectInFunction).
+            RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
+            int idx = idx_v.as_int();
+            int elem_w = array_local_element_widths.at(nm);
+            const RTLIL::Const& target = local_vars.at(nm);
+            std::vector<RTLIL::State> bits;
+            for (int b = 0; b < elem_w; b++) {
+                int src = idx * elem_w + b;
+                bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
+            }
+            val = RTLIL::Const(bits);
         } else if (bs->VpiIndex() && local_vars.count(nm)) {
             // Plain bit_select on a non-array local var.
             RTLIL::Const idx_v = evaluate_single_operand(bs->VpiIndex(), local_vars);
@@ -920,6 +998,8 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             const UHDM::ref_typespec* rt = nullptr;
             if (auto e = dynamic_cast<const UHDM::expr*>(vs->Actual_group()))
                 rt = e->Typespec();
+            else if (auto io = dynamic_cast<const UHDM::io_decl*>(vs->Actual_group()))
+                rt = io->Typespec();   // function parameter (`state[0][1:0]`)
             const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
             if (a && a->UhdmType() == uhdmlogic_typespec) {
                 auto lt = any_cast<const UHDM::logic_typespec*>(a);
@@ -937,11 +1017,27 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
             }
             if (inner_w > 0) {
                 RTLIL::Const i0 = evaluate_single_operand((*vs->Exprs())[0], local_vars);
-                RTLIL::Const i1 = evaluate_single_operand((*vs->Exprs())[1], local_vars);
-                int src = i0.as_int() * inner_w + i1.as_int();
+                int base = i0.as_int() * inner_w;
                 const RTLIL::Const& target = local_vars.at(nm);
-                if (src >= 0 && src < target.size())
-                    val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+                const UHDM::any* e1 = (*vs->Exprs())[1];
+                if (e1->VpiType() == vpiPartSelect) {
+                    // `state[i][hi:lo]` — a part-select WITHIN element i.
+                    auto ps = any_cast<const part_select*>(e1);
+                    int l = evaluate_single_operand(any_cast<const expr*>(ps->Left_range()), local_vars).as_int();
+                    int r = evaluate_single_operand(any_cast<const expr*>(ps->Right_range()), local_vars).as_int();
+                    int lo = std::min(l, r), hi = std::max(l, r);
+                    std::vector<RTLIL::State> bits;
+                    for (int b = lo; b <= hi; b++) {
+                        int src = base + b;
+                        bits.push_back((src >= 0 && src < target.size()) ? target[src] : RTLIL::Sx);
+                    }
+                    val = RTLIL::Const(bits);
+                } else {
+                    RTLIL::Const i1 = evaluate_single_operand(e1, local_vars);
+                    int src = base + i1.as_int();
+                    if (src >= 0 && src < target.size())
+                        val = RTLIL::Const(std::vector<RTLIL::State>{target[src]});
+                }
             }
         }
     } else if (operand->VpiType() == vpiPartSelect) {

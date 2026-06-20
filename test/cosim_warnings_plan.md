@@ -23,7 +23,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] 2DUnpackedFunctionArgument — BUG (deeper): unpacked array passed to function; element-order vs read-offset inconsistency (a=0, want 1). iverilog REJECTS this construct; only Verilator accepts. Niche — deprioritised.
 - [?] AssignSizeOfVar
 - [?] BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule
-- [?] BitSelectPartSelectInFunction — BUG: local-var part-select assign + return in function.
+- [x] BitSelectPartSelectInFunction — FIXED: packed multi-dim local element/part-select read+write in const-eval (register inner_w; bit_select returns full element; var_select+part_select range read/write; io_decl typespec), AND a cast bug — `int'(2'b11)` self-replicated all-ones as if a fill literal; now only UNSIZED (`'1`, VpiSize==-1) literals self-replicate, sized constants zero/sign-extend.
 - [A] ConcatWidth — ARTIFACT: miter EQUIVALENT; co-sim diff is uninitialised `counter_upd` X-init.
 - [?] ConstSizes
 - [?] ContinueNested
@@ -66,7 +66,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] PatternStruct
 - [?] PutC
 - [?] RealValue
-- [?] Replication
+- [x] Replication — FIXED: `'{8{1}}` (vpiMultiAssignmentPatternOp) sized each element to the literal's natural 64-bit width → 512-bit value truncated to 0x01. Now resize the element to target_width/count (=1 bit for logic[7:0]) → 0xFF.
 - [?] SelectFromUnpackedInFunction
 - [?] SelectOnMemberSelectedFrom2DArray
 - [?] Shortreal
