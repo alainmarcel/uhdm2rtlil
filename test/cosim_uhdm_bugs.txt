@@ -30,11 +30,26 @@
 #
 # test                              symptom
 # --------------------------------  -------------------------------------------
-# memories/wide_all                 miter NON-EQ.  wide memory read/write ports.
-# simple/i2c_master_tests           miter NON-EQ.
-# memlib/memlib_wren                Induct-Formal FAIL (byte/word write-enable).
+# simple/i2c_master_tests           miter NON-EQ — a SURELOG GRAMMAR bug, not a
+#   UHDM-frontend bug.  `cnt <= #1 cnt - 16'h1` (intra-assignment delay) parses
+#   as `cnt <= #1 (-16'h1)`: the grammar rule `pound_delay_value: Pound_delay
+#   time_unit?` with `time_unit: Simple_identifier` greedily consumes the RHS's
+#   first identifier `cnt` as a bogus time unit, leaving `- 16'h1` (unary minus)
+#   = 0xffff.  Confirmed: `x <= #1 (y-1)` (parens) parses correctly; the AST
+#   Delay_control node spans `#1 cnt`.  Fix belongs in third_party/Surelog
+#   (restrict time_unit to s/ms/us/ns/ps/fs).  Listed expected-fail.
 #   (Inconclusive — Verilog cosim build-fails: verific/range_case,
 #    memlib/memlib_block_sp, memlib/memlib_block_sp_full.)
+#
+# RESOLVED memlib/memlib_wren: the byte/word write-enable RAM is now miter-
+# EQUIVALENT (UHDM == Verilog) and both Verilator co-sims pass; equiv_induct is
+# inductively incomplete on the RAM, so the test passes the suite via the
+# COSIM_EQUIV opt-in.  Not a frontend bug.
+#
+# RESOLVED memories/wide_all: was miter NON-EQ only because its `initial begin
+# mem[5]=..; mem[6]=..; mem[7]=.. end` ROM init was dropped — the same
+# individual-constant-write initial-block bug fixed for sat/ram_memory
+# (emit_initial_meminit_writes).  Now miter-EQUIVALENT; harness PASSES.
 #
 # NOT bugs (don't re-triage): simple/mem2reg_bounds_tern (OOB read -> X
 # don't-care), asicworld/..._d_latch_gates (latch; both cosims fail).

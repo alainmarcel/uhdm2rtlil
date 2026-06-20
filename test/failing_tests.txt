@@ -83,6 +83,16 @@ verilog/mem_bounds.sv
 sat/alu.v
 sat/ram_memory.v
 
+# --- Surelog grammar bug (intra-assignment delay), not a UHDM-frontend bug ---
+# simple/i2c_master_tests: `cnt <= #1 cnt - 16'h1` mis-parses as
+# `cnt <= #1 (-16'h1)`.  The grammar `pound_delay_value: Pound_delay time_unit?`
+# with `time_unit: Simple_identifier` lets the optional time-unit greedily eat
+# the RHS's first identifier (`cnt`) as a bogus unit, leaving `- 16'h1` (unary
+# minus) = 0xffff.  `x <= #1 (y-1)` (parens) parses correctly.  Fix belongs in
+# third_party/Surelog (restrict time_unit to s/ms/us/ns/ps/fs); the UHDM
+# frontend faithfully imports whatever Surelog produces.
+simple/i2c_master_tests.v
+
 
 # --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
 # These define techmap MAPPING RULES, not synthesizable top designs: they use
