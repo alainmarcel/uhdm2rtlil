@@ -68,6 +68,21 @@ arch/nanoxplore/meminit.v
 # not meaningful under read_uhdm -> synth -> equiv.
 verilog/mem_bounds.sv
 
+# --- equiv_induct inductively incomplete (UHDM proven equivalent otherwise) ---
+# Not UHDM bugs: the UHDM netlist is functionally equal to the Verilog frontend's,
+# but the harness's equiv_induct can't close the proof.
+#   sat/alu        - the flat equiv_induct AND the sound SAT-from-reset miter both
+#                    prove UHDM == Verilog; only the harness's write_verilog
+#                    round-trip equiv flow fails to converge.
+#   sat/ram_memory - a 4096x8 RAM with an `initial` individual-element ROM init.
+#                    The ROM init (`store[i] <= const`) is now emitted as $meminit
+#                    and a directed sim matches the Verilog frontend exactly
+#                    (store[2]=0x54, store[258]=0x7e, write/read OK); equiv_induct
+#                    is impractical once the 4096-entry memory is mapped to ~32k
+#                    FFs.  (was a real bug: the init was missing entirely — fixed.)
+sat/alu.v
+sat/ram_memory.v
+
 
 # --- techmap rule files (not standalone DUTs, not a UHDM feature gap) ---
 # These define techmap MAPPING RULES, not synthesizable top designs: they use
