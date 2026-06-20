@@ -124,14 +124,43 @@ python3 test_sim_equivalence.py <name>  # thorough co-sim (watch ACTIVITY)
 python3 triage_cosim.py <name> --seq 8  # sound verdict
 ```
 
-Then guard against regressions across the whole suite:
+### Regression gate — MUST be `run_all_tests.sh`, NEVER a hand-rolled equiv loop
+
 ```bash
-./run_all_tests.sh            # 297 internal tests (formal equiv each)
-./run_all_tests.sh --yosys    # 523 upstream-yosys tests
+./run_all_tests.sh            # internal tests: equiv_induct + co-sim + SOUND miter
+./run_all_tests.sh --yosys    # upstream-yosys tests
 ```
-Internal must end with 0 equivalence failures / 0 crashes; the yosys run should
-not add unexpected failures beyond the pre-existing baseline in
-`test/failing_tests.txt`.
+
+⛔ **NEVER use a `for d in */; do ./test_equivalence.sh $d; done` loop as your
+regression gate.** `test_equivalence.sh` runs `equiv_induct` ONLY — the unsound
+check from tool 3 — so such a loop silently passes designs the sound miter
+rejects, and you will ship regressions while believing the suite is green.
+
+Concrete incident (this is exactly how this trap bites): a function-path change
+passed a `test_equivalence.sh` loop on all ~649 internal tests ("1 failure"),
+so it looked clean — but `many_functions` and `function_mixed` were **NON-
+EQUIVALENT under the sound miter** and shipped as regressions. CI's
+`run_all_tests.sh` caught them as **Miter-Formal FAILED**; the local loop never
+ran the co-sim or the miter, only equiv_induct, which passed them.
+
+Why `run_all_tests.sh` is sound where the loop is not: per test it runs
+equiv_induct AND a thorough Verilator co-sim; when the co-sim diverges on a test
+listed in `sim_equiv_analyzed.txt`, it fires the **SAT-from-reset miter**
+(`triage_cosim.py --no-cosim`) and fails the test on a NON-EQUIVALENT verdict.
+
+**Pass criteria — read the final summary, not just "equivalence failures":**
+- `Induct-Formal: 0` AND **`Miter-Formal: 0`** (the Miter-Formal count is the
+  sound one — a non-zero here is a real regression even if Induct-Formal is 0),
+- `0` crashes / missing-output, and
+- no new entries beyond the `test/failing_tests.txt` baseline (yosys run).
+
+**Fast iteration without the full ~1h suite:** when you change a specific path,
+run the sound miter directly on the whole CATEGORY it touches — e.g. for a
+function-evaluation change, `for t in $(ls -d */ | grep -iE 'func|function'); do
+python3 triage_cosim.py "${t%/}" --no-cosim --seq 8; done` and grep for
+`NON-EQUIVALENT`. This calls the sound check directly (no dependence on the
+co-sim diverging) and would have flagged `many_functions` immediately. It is a
+pre-filter, **not** a substitute for the final full `run_all_tests.sh`.
 
 ## Recording the outcome — ALWAYS mark a triaged divergence
 
