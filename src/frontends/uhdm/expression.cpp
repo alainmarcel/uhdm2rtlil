@@ -4180,22 +4180,33 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     if (operand.is_fully_const()) {
                         RTLIL::Const const_val = operand.as_const();
                         if (const_val.size() < target_width) {
-                            // Special-case constants whose bits are all one
-                            // state — those represent fill literals (`'1`,
-                            // `'0`, `'x`, `'z`) that should self-replicate.
-                            bool all_x = true, all_z = true, all_0 = true, all_1 = true;
-                            for (auto bit : const_val) {
-                                if (bit != RTLIL::State::Sx) all_x = false;
-                                if (bit != RTLIL::State::Sz) all_z = false;
-                                if (bit != RTLIL::State::S0) all_0 = false;
-                                if (bit != RTLIL::State::S1) all_1 = false;
+                            // An UNSIZED fill literal (`'1`, `'0`, `'x`, `'z`,
+                            // VpiSize==-1) self-replicates its single state to
+                            // the cast width.  A regular sized constant must NOT
+                            // — `int'(2'b11)` is the value 3, not a fill, so it
+                            // zero-extends (logic is unsigned), not all-ones
+                            // (BitSelectPartSelectInFunction).
+                            bool is_fill_literal = false;
+                            if (uhdm_op->Operands() && !uhdm_op->Operands()->empty()) {
+                                if (auto c = dynamic_cast<const UHDM::constant*>(
+                                        uhdm_op->Operands()->at(0)))
+                                    is_fill_literal = (c->VpiSize() == -1);
                             }
-                            RTLIL::State fill = RTLIL::State::S0;
-                            if (all_x)      fill = RTLIL::State::Sx;
-                            else if (all_z) fill = RTLIL::State::Sz;
-                            else if (all_1) fill = RTLIL::State::S1;
-                            else if (all_0) fill = RTLIL::State::S0;
-                            else if (src_signed) fill = const_val.back();
+                            RTLIL::State fill = src_signed ? const_val.back()
+                                                           : RTLIL::State::S0;
+                            if (is_fill_literal) {
+                                bool all_x = true, all_z = true, all_0 = true, all_1 = true;
+                                for (auto bit : const_val) {
+                                    if (bit != RTLIL::State::Sx) all_x = false;
+                                    if (bit != RTLIL::State::Sz) all_z = false;
+                                    if (bit != RTLIL::State::S0) all_0 = false;
+                                    if (bit != RTLIL::State::S1) all_1 = false;
+                                }
+                                if (all_x)      fill = RTLIL::State::Sx;
+                                else if (all_z) fill = RTLIL::State::Sz;
+                                else if (all_1) fill = RTLIL::State::S1;
+                                else if (all_0) fill = RTLIL::State::S0;
+                            }
                             const_val.resize(target_width, fill);
                         } else if (const_val.size() > target_width) {
                             const_val.resize(target_width, RTLIL::State::S0);
