@@ -476,6 +476,40 @@ setup_yosys_test() {
         lib_reads="$(grep -E '^[[:space:]]*read_verilog[[:space:]]+-lib' "$ys_file" || true)"
     fi
 
+    # Multi-file design: a sibling .ys may `read_verilog` this test's file
+    # TOGETHER with others (e.g. sat/grom.ys:
+    #   `read_verilog grom_computer.v grom_cpu.v alu.v ram_memory.v`).
+    # The single-DUT flow would leave the cross-file submodules undefined.
+    # Detect such a line (mentions this file, not -lib), copy every other source
+    # file it lists into the run dir, and load them all on BOTH frontends so the
+    # design elaborates.  sibling_files = those extra files (the test file itself
+    # stays dut.<ext>); empty for the normal single-file case.
+    local test_base; test_base="$(basename "$test_file")"
+    local src_dir; src_dir="$(dirname "$test_file")"
+    local sibling_files=""
+    local ys
+    for ys in "$src_dir"/*.ys; do
+        [ -f "$ys" ] || continue
+        local line
+        line="$(grep -E 'read_verilog' "$ys" | grep -vE '\-lib' | grep -wF "$test_base" | head -1 || true)"
+        [ -n "$line" ] || continue
+        local tok
+        for tok in $line; do
+            tok="${tok%;}"
+            case "$tok" in
+                *.v|*.sv|*.vh|*.svh)
+                    [ "$tok" = "$test_base" ] && continue
+                    if [ -f "$src_dir/$tok" ]; then
+                        cp "$src_dir/$tok" "$abs_dir/$tok"
+                        preprocess_test_file "$abs_dir/$tok"
+                        sibling_files="$sibling_files $tok"
+                    fi
+                    ;;
+            esac
+        done
+        [ -n "$sibling_files" ] && break
+    done
+
     # Skip-formal-use-cosim tests get a sim_config so analyze_test_result skips
     # the (too-slow) formal proof and relies on the random Verilator co-sim.
     local sfc_cycles; sfc_cycles="$(skip_formal_cosim_cycles "$rel")"
@@ -488,7 +522,7 @@ setup_yosys_test() {
     fi
 
     cat > "$abs_dir/test_verilog_read.ys" << EOF
-read_verilog -sv dut.${dut_ext}
+read_verilog -sv dut.${dut_ext}${sibling_files}
 ${lib_reads}
 write_rtlil ${test_name}_from_verilog_nohier.il
 hierarchy -auto-top
@@ -514,7 +548,7 @@ EOF
     local rc=0
     ( cd "$abs_dir" || exit 1
       $YOSYS_BIN -s test_verilog_read.ys > verilog_path.log 2>&1 || true
-      $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}" > surelog.log 2>&1 || true
+      $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}"${sibling_files} > surelog.log 2>&1 || true
       if [ -f slpp_all/surelog.uhdm ]; then
           $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
       fi )
