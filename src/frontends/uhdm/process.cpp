@@ -7430,7 +7430,6 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                                           const std::string& context, const std::string& block_prefix,
                                           const any* process_src) {
     if (!stmt) return;
-
     switch (stmt->VpiType()) {
         case vpiBegin:
         case vpiNamedBegin: {
@@ -7602,6 +7601,31 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         func_mapping[lhs_name] = rhs;
                         log("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs));
                     }
+                }
+            }
+            break;
+        }
+        case vpiReturn: {
+            // `return <expr>` — set the function result (tracked under
+            // func_name in func_mapping) so import_func_call_comb reads it as
+            // the call's value.  Without this, functions that return via
+            // `return x` (not `func = x`) — e.g. a 2D packed-array element
+            // `return arg[0][0]` (2DFunctionArg) — left the result Sx.
+            auto rs = any_cast<const UHDM::return_stmt*>(stmt);
+            if (rs && rs->VpiCondition()) {
+                RTLIL::SigSpec rhs = import_expression(rs->VpiCondition(), &func_mapping);
+                if (!rhs.empty()) {
+                    auto it = func_mapping.find(func_name);
+                    if (it != func_mapping.end() && it->second.size() > 0 &&
+                        rhs.size() != it->second.size()) {
+                        if (rhs.size() < it->second.size())
+                            rhs.extend_u0(it->second.size());
+                        else
+                            rhs = rhs.extract(0, it->second.size());
+                    }
+                    func_mapping[func_name] = rhs;
+                    log("      inline_func_body_comb: return %s = %s\n",
+                        func_name.c_str(), log_signal(rhs));
                 }
             }
             break;
