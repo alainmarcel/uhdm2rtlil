@@ -46,3 +46,16 @@ InterfaceParameter          artefact   # int'(start_addr='1, W=10)=1023; iverilo
 InterfaceParameterSetValue  artefact   # W override to 16, '1 -> 0xffff; iverilog==UHDM
 iface_param_set_value       artefact   # int'(start_addr,W=16) ^ in = {0,~in}; UHDM correct
 InterfaceWithPort           artefact   # int start_addr=x(=10); Verilator co-sim==UHDM (init-reads-port; iverilog uses time-0 0)
+
+# --- more Yosys-VERILOG-frontend bugs; UHDM CORRECT (two-co-sim adjudicated) --
+# UHDM-vs-behavioural-RTL co-sim PASSES, Verilog-vs-RTL co-sim FAILS -> the
+# Verilog frontend is the buggy side; UHDM matches the reference.
+CastLogic              artefact   # logic'(1)=1; Verilog frontend emits x. iverilog==UHDM
+ExpressionInIndex      artefact   # struct-array elem XOR (full int); Verilog truncates to bit0
+priority_if            artefact   # PROC_DLATCH; UHDM co-sim PASS, Verilog co-sim FAIL
+logic_ops              artefact   # `input [0:7]` ascending part-select; Verilog picks wrong bits
+
+# --- miter artefacts: BOTH co-sims agree, raw miter diff is x/z or struct order ---
+genvar_loop_decl_2        artefact   # one undriven bit: UHDM '?'(z) vs Verilog 'x'
+asym_ram_sdp_write_wider  artefact   # wide-port RAM; both co-sims PASS (miter inductive/X)
+mem2reg_test1             artefact   # both co-sims fail vs RTL -> Verilator-vs-synth, not a frontend diff
