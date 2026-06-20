@@ -80,6 +80,36 @@ arch/fabulous/custom_map.v
 techmap/mem_simple_4x1_map.v
 techmap/recursive_map.v
 
+# --- multi-file / external-tool tests ---
+# setup_yosys_test now loads SIBLING source files a test's .ys reads together
+# (e.g. sat/grom.ys: `read_verilog grom_computer.v grom_cpu.v alu.v
+# ram_memory.v`), so a cross-file submodule is no longer an undefined blackbox.
+#
+#   sat/grom_computer / sat/grom_cpu - now load all four grom sources and run
+#       the FULL UHDM flow.  The sound SAT-from-reset miter proves UHDM ==
+#       Verilog (triage_cosim.py: EQUIVALENT), i.e. the UHDM netlist is CORRECT.
+#       They remain expected-fail only because equiv_induct cannot inductively
+#       prove a CPU-with-memory and the self-checking design has no co-sim-
+#       observable outputs (co-sim build/skip) — the same equiv_induct
+#       inductive-invariant limitation as the dual-clock RAMs, NOT a frontend
+#       bug.  The harness uses the bounded miter for classification only, never
+#       as a pass-gate, so there is no green path for them yet.
+#
+# These still cannot complete in the single-DUT flow (no .ys file list / external
+# tool), so they stay listed:
+#   functional/picorv32_tb  - pytest/SMT functional test (run-test.sh uses
+#       pytest), not a synth-equiv flow.  Its local `rom[0:15]` shows the memory
+#       frontend-expansion divergence tracked for simple/mem_arst.
+#   hana/test_simulation_vlib - multi-module simulation-library test
+#   rpc/design              - Yosys RPC frontend (python_inv over a unix socket)
+#   verific/mixed_flist     - Verific-only (`verific -f -sv ...flist`)
+functional/picorv32_tb.v
+sat/grom_computer.v
+sat/grom_cpu.v
+hana/test_simulation_vlib.v
+rpc/design.v
+verific/mixed_flist.sv
+
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
 # Expected Miter-Formal failures: UHDM-synth != Verilog-synth, falsely pass
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
