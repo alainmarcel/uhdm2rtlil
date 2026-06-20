@@ -1313,6 +1313,18 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     return RTLIL::SigSpec();
                 }
 
+                // A function parameter (`arg[0][0]` inside a function body) is
+                // not a module wire — it is staged in `input_mapping`.  Resolve
+                // the base wire from there first so the element extraction below
+                // slices the staged argument value instead of finding nothing
+                // and returning X (2DFunctionArg / SelectFromUnpackedInFunction).
+                RTLIL::Wire* mapped_base_wire = nullptr;
+                if (input_mapping) {
+                    auto mit = input_mapping->find(base_name);
+                    if (mit != input_mapping->end() && mit->second.is_wire())
+                        mapped_base_wire = mit->second.as_wire();
+                }
+
                 // Memory read with a (possibly dynamic) address and optional
                 // part-select: `mem[addr]` / `mem[addr][hi:lo]`.  Create a
                 // $memrd at the address and slice the requested bits — this is
@@ -1364,7 +1376,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     RTLIL::SigSpec i1 = import_expression((*exprs)[1], input_mapping);
                     if (i0.is_fully_const() && i1.is_fully_const()) {
                         RTLIL::IdString wire_id = RTLIL::escape_id(base_name);
-                        if (RTLIL::Wire* base_wire = module->wire(wire_id)) {
+                        if (RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire : module->wire(wire_id)) {
                             auto& a = base_wire->attributes;
                             auto have = [&](const char* k){
                                 return a.count(RTLIL::escape_id(k)) > 0;
@@ -1398,13 +1410,18 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // `logic [N-1:0][M-1:0] x`, `x[idx]` is an element_width-bit slice
                 // of the single packed wire `x` (element_width = base/outer or the
                 // Elem_typespec width).
-                RTLIL::Wire* base_wire = module->wire(RTLIL::escape_id(base_name));
+                RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire
+                                       : module->wire(RTLIL::escape_id(base_name));
                 int elem_w = 0;
                 if (base_wire) {
                     if (auto actual = vs->Actual_group()) {
                         const UHDM::ref_typespec* rt = nullptr;
                         if (auto e = dynamic_cast<const UHDM::expr*>(actual))
                             rt = e->Typespec();
+                        // A function parameter resolves to an io_decl (not an
+                        // expr); it carries the packed typespec too (2DFunctionArg).
+                        else if (auto io = dynamic_cast<const UHDM::io_decl*>(actual))
+                            rt = io->Typespec();
                         const UHDM::any* a = rt ? rt->Actual_typespec() : nullptr;
                         if (a && a->UhdmType() == uhdmlogic_typespec) {
                             auto lt = dynamic_cast<const UHDM::logic_typespec*>(a);

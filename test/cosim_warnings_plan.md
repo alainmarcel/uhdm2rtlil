@@ -1,0 +1,212 @@
+# Verilator sim-equiv warnings triage (189 tests)
+
+Goal: each Verilator co-sim WARNING is a divergence between the **UHDM-synth
+netlist** and the **behavioral RTL**. Triage each:
+- **BUG**  — UHDM netlist is genuinely wrong (X output, wrong constant, wrong
+  combinational/sequential value vs RTL). Fix in the frontend (or Surelog).
+- **ARTIFACT** — divergence is X-init / Verilator-vs-synth / no-output / testbench
+  only; UHDM == Verilog (miter) or matches RTL on deterministic stimulus.
+  Classify so it stops counting as a warning.
+- **KNOWN** — already diagnosed elsewhere (Verilog-frontend bug, equiv_induct
+  incomplete, external tool, build-fail).
+
+Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-classified
+· `[K]` known/external · `[?]` needs triage
+
+## Working set (in list order)
+
+- [x] 2DFunctionArg — FIXED: `inline_func_body_comb` had NO `vpiReturn` case (return value dropped → X); also `var_select` ignored `input_mapping` for function params, and `elem_w` wasn't read from an `io_decl` typespec. Added all three. a=1, co-sim PASS.
+- [x] TypedefedFunctionArgument — FIXED by the same vpiReturn/var_select fix.
+- [?] CaseInside — combinational `case() inside`; co-sim `y: rtl=2 nl=1`. likely BUG.
+- [?] 1DUnpackedArray
+- [?] 2DParameterOfInstance
+- [?] 2DUnpackedFunctionArgument — BUG (deeper): unpacked array passed to function; element-order vs read-offset inconsistency (a=0, want 1). iverilog REJECTS this construct; only Verilator accepts. Niche — deprioritised.
+- [?] AssignSizeOfVar
+- [?] BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule
+- [?] BitSelectPartSelectInFunction — BUG: local-var part-select assign + return in function.
+- [A] ConcatWidth — ARTIFACT: miter EQUIVALENT; co-sim diff is uninitialised `counter_upd` X-init.
+- [?] ConstSizes
+- [?] ContinueNested
+- [?] DotMultirange
+- [?] DotRange
+- [?] EnumBases — verilator build-fail
+- [?] EnumFirstInInitial
+- [?] FunctionCallsFunctionWithIndexedPartSelectAsArgument
+- [?] FunctionOutputArgument
+- [x] FunctionParam — FIXED: unpacked-parameter-array element read in const-eval (`return X[0]`). Resolve value from module_inst Param_assigns; operands are in ascending index order.
+- [x] SelectGivenBySelectOnParameterInFunction — FIXED (same batch): param-array element + packed-local var_select (`c[idx][0]`) + function-local var initializer in const-eval + variable-as-LHS assignment.
+- [?] FunctionWireAssignmentOnDeclaration
+- [?] FunctionWithOverriddenParameter
+- [?] GenIfInside
+- [?] GetC
+- [?] ImportFunction
+- [?] ImportedFunctionCallInModuleAndSubmodule
+- [?] IndexedPartSelectInFor
+- [?] InterfaceAsPort
+- [?] InterfaceAssign
+- [?] LargeModuleParameter
+- [?] LocalParamSelect
+- [?] LogicPackedArray
+- [?] MemoryPort
+- [?] MemorySlice
+- [?] ModuleInstantiationAndIndirectParams
+- [?] MultiAssignmentPatternOfConcat
+- [?] MultiplePrints
+- [?] NestedForLoops
+- [?] NestedPatternPassedAsPort
+- [?] OneArithShift
+- [?] OneClass
+- [?] OneInside
+- [?] OneNetModport
+- [?] OneShift
+- [?] ParameterPackedArray
+- [?] ParameterWithUnderscoreValueDividedPassedFromCommandLine
+- [?] PartSelectInFor
+- [?] PatternAssignmentOfStructParam
+- [?] PatternStruct
+- [?] PutC
+- [?] RealValue
+- [?] Replication
+- [?] SelectFromUnpackedInFunction
+- [?] SelectOnMemberSelectedFrom2DArray
+- [?] Shortreal
+- [?] StreamOp
+- [?] StreamOpImplicitSliceSize
+- [?] StringAssignConcatenation
+- [?] StringAssignment
+- [?] StringLocalParamInitByConcatenation
+- [?] StringWithBackslash
+- [?] StructInPackage
+- [?] StructLocalParam
+- [?] StructParameterInitializedWithPatternAndReferenced
+- [?] SumOfParameters
+- [?] SystemFunctions
+- [?] TaskOutputArgument
+- [?] TaskReturn
+- [?] TypedefInModule
+- [?] TypedefedFunctionArgument
+- [?] TypedefedRangedFunctionReturn
+- [?] UnsizedConstant
+- [?] UnsizedConstantParameter
+- [?] VarPassedTo2Submodules
+- [?] VoidFunction2Returns
+- [?] assignment-pattern
+- [?] case_expr_extend
+- [?] case_expr_query
+- [?] conditional_if
+- [?] const_fold_func
+- [?] counter_unbased
+- [?] fmt_always_comb
+- [?] fsm_using_always
+- [?] func_output_arg
+- [?] func_tern_hint
+- [?] function_arith
+- [?] int_types_blk1
+- [?] load_and_derive
+- [?] mem2reg_test1
+- [?] mixed_sign_ops
+- [?] mriscv_bind_sva
+- [?] param_int_types
+- [?] param_no_default
+- [?] port_sign_extend
+- [?] priority_memory
+- [?] rsp_gen_minimal
+- [?] signed_ext_case
+- [?] simple_forloops
+- [?] simple_function
+- [?] simple_generate
+- [?] simple_hierarchy
+- [?] simple_memory
+- [?] struct_param_dim
+- [?] struct_sizebits
+- [?] synthesis
+- [?] unary_op_minus
+- [?] unbased_unsized
+- [?] xor_assignment
+- [?] custom_prims
+- [K] bug3670 — undefined-module blackbox; classified earlier.
+- [K] code_hdl_models_d_latch_gates — latch, both cosims fail (NOT a bug).
+- [?] code_hdl_models_full_subtracter_gates
+- [?] code_verilog_tutorial_comment
+- [?] code_verilog_tutorial_escape_id
+- [?] code_verilog_tutorial_good_code
+- [?] code_verilog_tutorial_tri_buf
+- [?] test_unconnected_output
+- [?] syntax_err09
+- [?] always_comb_tb
+- [?] always_display
+- [?] always_full_tb
+- [?] roundtrip_tb
+- [K] picorv32 — large CPU, equiv tracked separately.
+- [?] map_cmp
+- [?] map_not
+- [K] memlib_block_sp — Verilog cosim build-fails (inconclusive).
+- [K] memlib_block_sp_full — Verilog cosim build-fails (inconclusive).
+- [?] memlib_block_tdp
+- [?] memlib_wide_sdp
+- [?] memlib_wide_sp
+- [K] wide_all — RESOLVED (miter EQUIVALENT; X-init co-sim diff).
+- [?] opt_expr_cmp
+- [?] opt_share_diff_port_widths
+- [?] opt_share_extend
+- [?] opt_share_large_pmux_cat
+- [?] opt_share_large_pmux_cat_multipart
+- [?] opt_share_large_pmux_multipart
+- [?] opt_share_large_pmux_part
+- [?] opt_share_mux_tree
+- [?] rmdead
+- [?] counters-repeat
+- [?] sizebits
+- [?] adlatch
+- [?] dlatch
+- [?] dlatchsr
+- [?] sdffce
+- [?] tb_adff
+- [?] tb_adffe
+- [?] tb_adlatch
+- [?] tb_aldff
+- [?] tb_aldffe
+- [?] tb_dff
+- [?] tb_dffe
+- [?] tb_dffsr
+- [?] tb_dlatch
+- [?] tb_dlatchsr
+- [?] tb_sdff
+- [?] tb_sdffce
+- [?] tb_sdffe
+- [?] constmuldivmod
+- [?] ifdef_1
+- [?] ifdef_2
+- [?] loops
+- [?] macro_arg_surrounding_spaces
+- [K] mem2reg_bounds_tern — OOB read→X don't-care (NOT a bug).
+- [K] mem_arst — RESOLVED earlier (async-mem2reg).
+- [?] specify
+- [?] abc9
+- [?] basic00
+- [?] basic02
+- [?] basic03
+- [?] basic04
+- [?] basic05
+- [?] extnets
+- [?] svinterface1_tb
+- [?] svinterface_at_top_tb
+- [?] svinterface_at_top_tb_wrapper
+- [?] mem_simple_4x1_tb
+- [?] recursive
+- [?] forloop_select
+- [?] forloop_select_gate
+- [?] forloop_select_nowrshmsk
+- [?] reversed
+- [?] fib_tern
+- [?] sub
+- [?] ext_ramnet_err
+- [K] range_case — Verilog cosim build-fails (inconclusive).
+- [?] genblk_wire
+
+## Notes
+- For UHDM-only tests (no `*_from_verilog_synth.v`) the co-sim vs behavioral RTL
+  is the only correctness signal — a determinate mismatch (not X-init) is a real
+  bug.
+- Triage shortcut: synth UHDM, look for `1'hx`/`'hx` in outputs ⇒ strong BUG
+  signal; otherwise re-check with deterministic (reset/zero-init) stimulus.
