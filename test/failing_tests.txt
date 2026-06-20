@@ -80,6 +80,29 @@ arch/fabulous/custom_map.v
 techmap/mem_simple_4x1_map.v
 techmap/recursive_map.v
 
+# --- multi-file / external-tool tests (not single-DUT synthesis) ---
+# The generic harness loads ONE dut.v (read_uhdm / read_verilog -sv) then
+# synth+equiv.  These tests instantiate modules defined in SIBLING source files
+# the harness does not load (so the instance is an undefined blackbox on BOTH
+# frontends), or drive an external tool the UHDM flow has no equivalent for.
+# Not UHDM bugs; they cannot complete equiv in the single-file flow.
+#   functional/picorv32_tb  - module `gold` instantiates picorv32 (picorv32.v).
+#                             (NOTE: its local `rom[0:15]` ROM also shows the
+#                             memory-frontend-expansion divergence tracked for
+#                             simple/mem_arst in cosim_uhdm_bugs.txt.)
+#   sat/grom_computer       - instantiates alu/regfile from sibling .v files
+#   sat/grom_cpu            - instantiates `alu` (alu.v)
+#   hana/test_simulation_vlib - multi-module simulation-library test
+#   rpc/design              - exercises Yosys's RPC frontend (python_inv served
+#                             by an external process over a unix socket)
+#   verific/mixed_flist     - Verific-only (`verific -f -sv ...flist`)
+functional/picorv32_tb.v
+sat/grom_computer.v
+sat/grom_cpu.v
+hana/test_simulation_vlib.v
+rpc/design.v
+verific/mixed_flist.sv
+
 # --- confirmed UHDM-frontend co-sim bugs (see cosim_uhdm_bugs.txt) ---
 # Expected Miter-Formal failures: UHDM-synth != Verilog-synth, falsely pass
 # equiv_induct.  Documented in sim_equiv_analyzed.txt; fix + remove one at a time.
