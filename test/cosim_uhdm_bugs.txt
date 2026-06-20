@@ -30,7 +30,14 @@
 #
 # test                              symptom
 # --------------------------------  -------------------------------------------
-# simple/i2c_master_tests           miter NON-EQ.
+# simple/i2c_master_tests           miter NON-EQ — a SURELOG GRAMMAR bug, not a
+#   UHDM-frontend bug.  `cnt <= #1 cnt - 16'h1` (intra-assignment delay) parses
+#   as `cnt <= #1 (-16'h1)`: the grammar rule `pound_delay_value: Pound_delay
+#   time_unit?` with `time_unit: Simple_identifier` greedily consumes the RHS's
+#   first identifier `cnt` as a bogus time unit, leaving `- 16'h1` (unary minus)
+#   = 0xffff.  Confirmed: `x <= #1 (y-1)` (parens) parses correctly; the AST
+#   Delay_control node spans `#1 cnt`.  Fix belongs in third_party/Surelog
+#   (restrict time_unit to s/ms/us/ns/ps/fs).  Listed expected-fail.
 #   (Inconclusive — Verilog cosim build-fails: verific/range_case,
 #    memlib/memlib_block_sp, memlib/memlib_block_sp_full.)
 #
