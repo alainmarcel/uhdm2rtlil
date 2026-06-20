@@ -3129,12 +3129,92 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
     }
 }
 
+// Handle an `initial` block that is purely constant ROM initialisation written
+// as INDIVIDUAL element assignments — `initial begin mem[0]<=v0; mem[5]<=v1;
+// … end` (sat/ram_memory) — by emitting one $meminit_v2 per word.  The normal
+// comb/sync import path turns these into stray writes that never reach the
+// $mem's init, so the memory reads back X.  Returns false (no init emitted) for
+// any block that contains a statement other than a constant-index, constant-
+// value write to an existing $memory, so mixed/looped/non-const initials fall
+// through to the existing strategies.
+bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
+    if (!stmt || !module) return false;
+    std::vector<std::tuple<std::string, int, RTLIL::Const>> words;  // mem, addr, val
+    std::function<bool(const any*)> scan = [&](const any* s) -> bool {
+        if (!s) return false;
+        switch (s->VpiType()) {
+            case vpiBegin:
+            case vpiNamedBegin: {
+                auto stmts = begin_block_stmts(s);
+                if (!stmts) return false;
+                for (auto sub : *stmts)
+                    if (!scan(sub)) return false;
+                return true;
+            }
+            case vpiAssignment:
+            case vpiAssignStmt: {
+                const assignment* a = any_cast<const assignment*>(s);
+                auto lhs = a->Lhs();
+                if (!lhs || lhs->VpiType() != vpiBitSelect) return false;
+                const bit_select* bs = any_cast<const bit_select*>(lhs);
+                std::string mem = std::string(bs->VpiName());
+                RTLIL::IdString mid = RTLIL::escape_id(mem);
+                if (!module->memories.count(mid)) return false;
+                auto idx = bs->VpiIndex();
+                if (!idx || idx->VpiType() != vpiConstant) return false;
+                RTLIL::SigSpec is = import_constant(any_cast<const constant*>(idx));
+                if (!is.is_fully_const()) return false;
+                auto rhs = a->Rhs();
+                auto re = rhs ? dynamic_cast<const expr*>(rhs) : nullptr;
+                if (!re) return false;
+                RTLIL::SigSpec rs = import_expression(re);
+                if (!rs.is_fully_const()) return false;
+                int w = module->memories.at(mid)->width;
+                RTLIL::Const v = rs.as_const();
+                if (v.size() != w) v = v.extract(0, w, RTLIL::State::S0);
+                words.emplace_back(mem, is.as_const().as_int(), v);
+                return true;
+            }
+            default:
+                return false;
+        }
+    };
+    if (!scan(stmt) || words.empty()) return false;
+    int prio = 0;
+    for (auto& [mem, addr, val] : words) {
+        RTLIL::IdString mid = RTLIL::escape_id(mem);
+        int w = module->memories.at(mid)->width;
+        RTLIL::Cell* cell = module->addCell(
+            stringf("$meminit$\\%s$%d", mem.c_str(), addr), ID($meminit_v2));
+        cell->setParam(ID::MEMID, RTLIL::Const("\\" + mem));
+        cell->setParam(ID::ABITS, RTLIL::Const(32));
+        cell->setParam(ID::WIDTH, RTLIL::Const(w));
+        cell->setParam(ID::WORDS, RTLIL::Const(1));
+        cell->setParam(ID::PRIORITY, RTLIL::Const(prio++));
+        cell->setPort(ID::ADDR, RTLIL::Const(addr, 32));
+        cell->setPort(ID::DATA, val);
+        cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, w));
+        log("        Added $meminit for %s[%d] = %s\n",
+            mem.c_str(), addr, val.as_string().c_str());
+    }
+    return true;
+}
+
 void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Process* yosys_proc) {
     if (mode_debug)
         log("    Importing initial block\n");
 
     // Set flag to indicate we're in an initial block
     in_initial_block = true;
+
+    // Pure constant ROM init via individual element writes (sat/ram_memory):
+    // emit $meminit cells and skip the statement strategies below.
+    if (auto stmt = uhdm_process->Stmt()) {
+        if (emit_initial_meminit_writes(stmt)) {
+            in_initial_block = false;
+            return;
+        }
+    }
 
     // Choose import strategy based on initial block content:
     // - For-loops with declarations (for (type var = ...)): interpreter
