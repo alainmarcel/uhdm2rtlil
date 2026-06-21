@@ -54,7 +54,40 @@ def find_paths(project_root: Path) -> dict[str, Path]:
     for k, p in paths.items():
         if not p.exists():
             sys.exit(f"❌ missing {k}: {p}")
+    # Optional frontend tools — only needed for --frontend sv2v / slang.  Don't
+    # fail here if absent; frontend_read_setup() reports a clear error instead.
+    paths["slang_plugin"] = project_root / "build/slang.so"
+    paths["sv2v_bin"]     = project_root / "build/frontends/sv2v/bin/sv2v"
     return paths
+
+
+def frontend_read_setup(frontend: str, paths: dict, uhdm: Path,
+                        rtl_srcs: list, test_dir: Path,
+                        lang: str) -> tuple[str, list[str]]:
+    """Return (read_lines, extra_yosys_args) for a given frontend so the same
+    synth/netlist pipeline can be driven by any of the four readers.  Only the
+    read step differs; everything downstream is shared with the UHDM path."""
+    srcs = " ".join(str(s) for s in rtl_srcs)
+    if frontend == "uhdm":
+        return f"read_uhdm {uhdm}\n", ["-m", str(paths["uhdm_plugin"])]
+    if frontend == "verilog":
+        return f"read_verilog {lang} {srcs}\n", []
+    if frontend == "slang":
+        if not paths["slang_plugin"].exists():
+            sys.exit(f"❌ slang plugin not built: {paths['slang_plugin']} "
+                     f"(run test/build_frontends.sh)")
+        return f"read_slang {srcs}\n", ["-m", str(paths["slang_plugin"])]
+    if frontend == "sv2v":
+        if not paths["sv2v_bin"].exists():
+            sys.exit(f"❌ sv2v not built: {paths['sv2v_bin']} "
+                     f"(run test/build_frontends.sh)")
+        # Reuse the workflow's converted file when present; else transpile now.
+        conv = test_dir / f"{test_dir.name}_sv2v.v"
+        if not conv.exists():
+            out = sh([str(paths["sv2v_bin"]), *[str(s) for s in rtl_srcs]])
+            conv.write_text(out)
+        return f"read_verilog {conv}\n", []
+    sys.exit(f"❌ unknown frontend: {frontend}")
 
 
 def parse_project_f(test_dir: Path) -> dict:
@@ -189,10 +222,12 @@ def detect_unpacked_array_ports(dut_path: Path,
     return result
 
 
-def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
-                     uhdm: Path, out_v: Path) -> str:
-    """Synth the UHDM, write the renamed netlist, and return the
-    *original* top module name (whatever Yosys auto-top selected)."""
+def synth_to_netlist(yosys: Path, read_lines: str, plugin_args: list,
+                     out_v: Path) -> str:
+    """Synth a design (read via the frontend-specific `read_lines`), write the
+    renamed netlist, and return the *original* top module name (whatever Yosys
+    auto-top selected).  `plugin_args` are extra `yosys` command-line args
+    (e.g. `-m <plugin.so>`) needed by the frontend's read command."""
     # `$check` cells (concurrent / immediate assertions) and `$print`
     # cells ($display) have no Verilator-compatible behavioural model,
     # and they're not the subject of the equivalence check anyway.
@@ -200,7 +235,7 @@ def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
     out_top = out_v.with_name(out_v.stem + ".orig_top.txt")
     mem_flag = out_v.with_name(out_v.stem + ".memflag.txt")
     script = (
-        f"read_uhdm {uhdm}\n"
+        f"{read_lines}"
         # Detect memories BEFORE synth expands/maps them.  Memory designs also
         # need the gate-instance (-noexpr) form: the behavioral $mem output of
         # write_verilog has read-during-write semantics that differ from the
@@ -231,7 +266,7 @@ def synth_to_netlist(yosys: Path, uhdm_plugin: Path,
         f"write_verilog -noattr {out_v}.expr\n"
         f"write_verilog -noattr -noexpr {out_v}.noexpr\n"
     )
-    sh([str(yosys), "-q", "-m", str(uhdm_plugin), "-p", script])
+    sh([str(yosys), "-q", *plugin_args, "-p", script])
     # Pick the netlist form.  An async-edge FF shows up in expression mode as
     # a sensitivity list with two or more edges, e.g.
     #   always @(posedge clk, posedge rst)
@@ -666,6 +701,10 @@ def main() -> int:
     ap.add_argument("test_name", help="test directory under test/")
     ap.add_argument("--cycles", type=int, default=200,
                     help="number of random simulation cycles (default: 200)")
+    ap.add_argument("--frontend", default="uhdm",
+                    choices=["uhdm", "verilog", "sv2v", "slang"],
+                    help="which frontend's netlist to co-sim vs the original "
+                         "RTL (default: uhdm)")
     args = ap.parse_args()
 
     script_dir = Path(__file__).resolve().parent
@@ -678,7 +717,7 @@ def main() -> int:
 
     paths = find_paths(project_root)
     uhdm = test_dir / "slpp_all/surelog.uhdm"
-    if not uhdm.exists():
+    if args.frontend == "uhdm" and not uhdm.exists():
         sys.exit(f"❌ no UHDM at {uhdm} — run the standard workflow first")
 
     project = parse_project_f(test_dir)
@@ -701,9 +740,13 @@ def main() -> int:
                 f.unlink()
     work.mkdir(exist_ok=True)
 
-    print("▶ Generating synthesized netlist from UHDM")
-    yosys_top = synth_to_netlist(paths["yosys"], paths["uhdm_plugin"],
-                                 uhdm, work / "dut_netlist.v")
+    # Language flag for the native verilog reader: -sv if any source is .sv.
+    lang = "-sv" if any(str(s).endswith(".sv") for s in rtl_srcs) else ""
+    read_lines, plugin_args = frontend_read_setup(
+        args.frontend, paths, uhdm, rtl_srcs, test_dir, lang)
+    print(f"▶ Generating synthesized netlist from {args.frontend} frontend")
+    yosys_top = synth_to_netlist(paths["yosys"], read_lines, plugin_args,
+                                 work / "dut_netlist.v")
     # Prefer the auto-top name Yosys actually selected; fall back to the
     # last-`module`-declaration heuristic when capture failed.
     # Top priority order:

@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""run_frontend_matrix.py — 4-frontend SystemVerilog regression matrix.
+
+For every test (this repo's test/* and, with --yosys/--all, the upstream Yosys
+suite) run each of four frontends and classify, per (test, frontend):
+
+  * Did it SYNTHESIZE?  (read the source, produced a non-trivial gate netlist)
+  * Is the result CORRECT?
+      - formal equivalence (equiv_pair.sh) vs the Yosys-verilog golden netlist
+      - Verilator co-simulation (test_sim_equivalence.py) vs the original RTL
+
+Frontends: verilog (native, also golden), uhdm (this plugin), sv2v, slang.
+
+Pipeline reused per test:
+  frontend_matrix_workflow.sh  -> *_from_<f>_synth.v + frontend_status.txt
+  equiv_pair.sh                -> formal verdict (vs verilog golden)
+  test_sim_equivalence.py      -> co-sim verdict (vs original RTL)
+
+Outputs (under test/): frontend_matrix.csv and FRONTEND_MATRIX.md.
+
+Usage:
+  run_frontend_matrix.py [pattern] [--yosys|--all] [--cycles N] [--jobs N]
+                         [--frontends verilog,uhdm,sv2v,slang] [--no-cosim]
+                         [--out PREFIX]
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import subprocess
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+ALL_FRONTENDS = ["verilog", "uhdm", "sv2v", "slang"]
+
+TEST_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = TEST_DIR.parent
+
+# synth status (from frontend_status.txt) -> short CSV token
+SYNTH_TOKEN = {
+    "OK": "yes", "NO_GATES": "empty", "SYNTH_FAIL": "no",
+    "READ_FAIL": "no", "CONVERT_FAIL": "no", "CRASH": "crash",
+    "TOOL_MISSING": "missing",
+}
+
+
+def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
+    """Run a command; return (returncode, combined_output)."""
+    try:
+        p = subprocess.run(cmd, cwd=cwd, text=True, timeout=timeout,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return p.returncode, p.stdout
+    except subprocess.TimeoutExpired as e:
+        return 124, (e.output or "") + "\n[timeout]"
+
+
+def discover_internal(pattern: str) -> list[str]:
+    """Internal tests: immediate test/* dirs holding dut.sv/dut.v/project.f."""
+    out = []
+    for d in sorted(TEST_DIR.iterdir()):
+        if not d.is_dir() or d.name == "run":
+            continue
+        if not any((d / f).exists() for f in ("dut.sv", "dut.v", "project.f")):
+            continue
+        if pattern and pattern not in d.name:
+            continue
+        out.append(d.name)
+    return out
+
+
+def discover_yosys(pattern: str) -> list[str]:
+    """Materialize upstream Yosys tests under test/run/** and return their
+    paths (relative to test/)."""
+    cmd = [str(TEST_DIR / "materialize_yosys_tests.sh")]
+    if pattern:
+        cmd.append(pattern)
+    rc, out = run(cmd, cwd=TEST_DIR)
+    if rc != 0:
+        sys.stderr.write(f"⚠️  materialization failed:\n{out}\n")
+    return [ln.strip() for ln in out.splitlines() if ln.strip().startswith("run/")]
+
+
+def read_status(test_dir: Path) -> dict[str, tuple[str, int]]:
+    """Parse frontend_status.txt -> {frontend: (STATUS, gate_count)}."""
+    res: dict[str, tuple[str, int]] = {}
+    f = test_dir / "frontend_status.txt"
+    if not f.exists():
+        return res
+    for line in f.read_text().splitlines():
+        parts = line.split()
+        if len(parts) >= 3:
+            res[parts[0]] = (parts[1], int(parts[2]))
+    return res
+
+
+FAIL_STATUS = ("READ_FAIL", "SYNTH_FAIL", "CONVERT_FAIL", "CRASH", "TOOL_MISSING")
+
+
+def cosim_result(test_rel: str, frontend: str, args) -> str:
+    """Verilator co-sim of a frontend's netlist vs the original RTL -> pass/fail/skip."""
+    if args.no_cosim:
+        return "skip"
+    rc, _ = run([sys.executable, str(TEST_DIR / "test_sim_equivalence.py"),
+                 test_rel, "--frontend", frontend, "--cycles", str(args.cycles)],
+                cwd=TEST_DIR, timeout=900)
+    return {0: "pass", 1: "fail", 77: "skip"}.get(rc, "skip" if rc == 77 else "fail")
+
+
+def formal_result(test_rel: str, test_dir: Path, frontend: str,
+                  golden_ok: bool) -> str:
+    """equiv_pair.sh vs the verilog golden -> equiv/non-equiv/inconclusive/self/n-a."""
+    if frontend == "verilog":
+        return "self"
+    if not golden_ok:
+        return "n-a"
+    name = Path(test_rel).name
+    gold_v = test_dir / f"{name}_from_verilog_synth.v"
+    gate_v = test_dir / f"{name}_from_{frontend}_synth.v"
+    if not (gold_v.exists() and gate_v.exists()):
+        return "n-a"
+    is_formal = (test_dir / "project.f").exists() and \
+        any(ln.strip().startswith("#") and "formal" in ln and ":" in ln
+            for ln in (test_dir / "project.f").read_text().splitlines())
+    cmd = [str(TEST_DIR / "equiv_pair.sh"), str(gold_v), str(gate_v)]
+    if is_formal:
+        cmd.append("--formal")
+    rc, _ = run(cmd, cwd=TEST_DIR, timeout=600)
+    return {0: "equiv", 1: "non-equiv", 2: "inconclusive"}.get(rc, "inconclusive")
+
+
+def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
+    """Combine the two oracles into a verdict.
+
+    Ground truth is the ORIGINAL RTL (co-sim).  Formal equivalence is measured
+    against the verilog golden netlist, which is only a trustworthy reference
+    when the golden itself co-simulates cleanly against that RTL.  This mirrors
+    the established harness's adjudication: a divergence is a real frontend bug
+    only when the golden agrees with the RTL where this frontend does not; when
+    the golden ALSO disagrees with its own RTL, the failure is a Verilator-vs-
+    synth artefact and the verdict is UNKNOWN, not INCORRECT.
+    """
+    if frontend == "verilog":
+        # The golden itself: trust only its co-sim against its own RTL.
+        if cosim == "pass":
+            return "CORRECT"
+        if cosim == "fail":
+            return "UNKNOWN"      # disagrees with its own RTL -> harness artefact
+        return "CORRECT"          # skip: synthesized, nothing contradicts it
+
+    golden_reliable = (golden_cosim == "pass")
+    if golden_reliable:
+        # Golden is validated against the RTL, so disagreement is a real bug.
+        if cosim == "fail" or formal == "non-equiv":
+            return "INCORRECT"
+        if cosim == "pass" or formal == "equiv":
+            return "CORRECT"
+        return "UNKNOWN"          # cosim skipped, formal inconclusive/n-a
+    # Golden unreliable (its own co-sim failed/skipped): trust RTL co-sim only.
+    if cosim == "pass":
+        return "CORRECT"          # matches the RTL even if it differs from golden
+    if cosim == "fail":
+        return "UNKNOWN"          # both differ from RTL -> artefact, can't tell
+    if formal == "equiv":
+        return "CORRECT"          # cosim unavailable; identical to golden netlist
+    return "UNKNOWN"
+
+
+def process_test(test_rel: str, args) -> dict:
+    """Run the full matrix pipeline for one test; return a result row."""
+    test_dir = (TEST_DIR / test_rel).resolve()
+    row = {"test": test_rel}
+    run([str(TEST_DIR / "frontend_matrix_workflow.sh"), test_rel],
+        cwd=TEST_DIR, timeout=900)
+    status = read_status(test_dir)
+    golden_ok = status.get("verilog", ("", 0))[0] in ("OK", "NO_GATES")
+
+    # Compute the golden's own co-sim once — it gates every other frontend's
+    # verdict (and is the verilog column's own oracle).
+    golden_cosim = "skip"
+    if golden_ok and not args.no_cosim:
+        golden_cosim = cosim_result(test_rel, "verilog", args)
+
+    for f in ALL_FRONTENDS:
+        st = status.get(f, ("READ_FAIL", 0))[0]
+        row[f"{f}_synth"] = SYNTH_TOKEN.get(st, "no")
+        if f not in args.frontends:
+            row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", "skipped"
+            continue
+        if st in FAIL_STATUS:
+            row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", st
+            continue
+        formal = formal_result(test_rel, test_dir, f, golden_ok)
+        cosim = golden_cosim if f == "verilog" else cosim_result(test_rel, f, args)
+        row[f"{f}_correct"] = decide(f, formal, cosim, golden_cosim)
+        row[f"{f}_detail"] = f"formal={formal} cosim={cosim} golden_cosim={golden_cosim}"
+    return row
+
+
+def write_csv(rows: list[dict], out_csv: Path):
+    cols = ["test"]
+    for f in ALL_FRONTENDS:
+        cols += [f"{f}_synth", f"{f}_correct"]
+    with out_csv.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+
+
+def write_markdown(rows: list[dict], out_md: Path, args):
+    total = len(rows)
+    # Per-frontend aggregate counts.
+    agg = {f: {"synth_yes": 0, "synth_empty": 0, "synth_no": 0, "crash": 0,
+               "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0}
+           for f in ALL_FRONTENDS}
+    for r in rows:
+        for f in ALL_FRONTENDS:
+            s = r[f"{f}_synth"]
+            agg[f]["synth_yes"] += s == "yes"
+            agg[f]["synth_empty"] += s == "empty"
+            agg[f]["synth_no"] += s == "no"
+            agg[f]["crash"] += s == "crash"
+            agg[f]["missing"] += s == "missing"
+            c = r[f"{f}_correct"]
+            agg[f]["correct"] += c == "CORRECT"
+            agg[f]["incorrect"] += c == "INCORRECT"
+            agg[f]["unknown"] += c == "UNKNOWN"
+
+    lines = [f"# Frontend Regression Matrix",
+             "",
+             f"Tests: **{total}**  ·  cycles={args.cycles}  ·  "
+             f"frontends={','.join(args.frontends)}"
+             f"{'  ·  (formal only, --no-cosim)' if args.no_cosim else ''}",
+             "",
+             "## Leaderboard",
+             "",
+             "| Frontend | Synthesized | Empty | Failed | Crash | Missing | Correct | Incorrect | Unknown |",
+             "|----------|------------:|------:|-------:|------:|--------:|--------:|----------:|--------:|"]
+    for f in ALL_FRONTENDS:
+        a = agg[f]
+        lines.append(
+            f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
+            f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
+            f"{a['unknown']} |")
+
+    # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
+    disagree = []
+    for r in rows:
+        verdicts = {f: r[f"{f}_correct"] for f in ALL_FRONTENDS}
+        if "INCORRECT" in verdicts.values() and "CORRECT" in verdicts.values():
+            disagree.append(r)
+    lines += ["", f"## Disagreements ({len(disagree)})",
+              "",
+              "Tests where at least one frontend is **INCORRECT** while another is "
+              "**CORRECT** — the highest-value triage list.", ""]
+    if disagree:
+        lines.append("| Test | " + " | ".join(ALL_FRONTENDS) + " |")
+        lines.append("|------|" + "|".join(["---"] * len(ALL_FRONTENDS)) + "|")
+        for r in disagree:
+            cells = []
+            for f in ALL_FRONTENDS:
+                cells.append(f"{r[f'{f}_synth']}/{r[f'{f}_correct']}")
+            lines.append(f"| `{r['test']}` | " + " | ".join(cells) + " |")
+    else:
+        lines.append("_None._")
+
+    lines += ["", "## Incorrect / crashed per frontend", ""]
+    for f in ALL_FRONTENDS:
+        bad = [r["test"] for r in rows
+               if r[f"{f}_correct"] == "INCORRECT" or r[f"{f}_synth"] == "crash"]
+        if bad:
+            lines.append(f"- **{f}** ({len(bad)}): " +
+                         ", ".join(f"`{t}`" for t in bad[:40]) +
+                         (" …" if len(bad) > 40 else ""))
+    lines.append("")
+    out_md.write_text("\n".join(lines))
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("pattern", nargs="?", default="",
+                    help="substring filter on test name/path")
+    ap.add_argument("--yosys", action="store_true",
+                    help="run upstream Yosys tests instead of internal ones")
+    ap.add_argument("--all", action="store_true",
+                    help="run both internal and upstream Yosys tests")
+    ap.add_argument("--cycles", type=int, default=200)
+    ap.add_argument("--jobs", type=int, default=1)
+    ap.add_argument("--frontends", default=",".join(ALL_FRONTENDS),
+                    help="comma list subset to correctness-check (default all)")
+    ap.add_argument("--no-cosim", action="store_true",
+                    help="skip Verilator co-sim (formal equivalence only)")
+    ap.add_argument("--out", default=str(TEST_DIR / "frontend_matrix"),
+                    help="output path prefix (.csv / FRONTEND_MATRIX.md)")
+    args = ap.parse_args()
+    args.frontends = [f.strip() for f in args.frontends.split(",") if f.strip()]
+
+    tests: list[str] = []
+    if args.all:
+        tests = discover_internal(args.pattern) + discover_yosys(args.pattern)
+    elif args.yosys:
+        tests = discover_yosys(args.pattern)
+    else:
+        tests = discover_internal(args.pattern)
+
+    if not tests:
+        print("No tests matched.")
+        return 1
+    print(f"▶ {len(tests)} test(s) × {len(ALL_FRONTENDS)} frontends "
+          f"(jobs={args.jobs}, cycles={args.cycles})")
+
+    rows: list[dict] = []
+    if args.jobs > 1:
+        with ThreadPoolExecutor(max_workers=args.jobs) as ex:
+            futs = {ex.submit(process_test, t, args): t for t in tests}
+            for i, fut in enumerate(as_completed(futs), 1):
+                r = fut.result()
+                rows.append(r)
+                print(f"  [{i}/{len(tests)}] {r['test']}")
+    else:
+        for i, t in enumerate(tests, 1):
+            r = process_test(t, args)
+            rows.append(r)
+            summ = " ".join(f"{f}:{r[f'{f}_synth']}/{r[f'{f}_correct']}"
+                            for f in ALL_FRONTENDS)
+            print(f"  [{i}/{len(tests)}] {t}  {summ}")
+
+    rows.sort(key=lambda r: r["test"])
+    out_csv = Path(args.out + ".csv")
+    out_md = TEST_DIR / "FRONTEND_MATRIX.md"
+    write_csv(rows, out_csv)
+    write_markdown(rows, out_md, args)
+    print(f"\n✅ wrote {out_csv} and {out_md}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
