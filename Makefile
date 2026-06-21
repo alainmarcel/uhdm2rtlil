@@ -1,5 +1,5 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test test-read-sv test-all test-yosys clean plugin install help
+.PHONY: all debug test test-read-sv test-all test-yosys frontends test-matrix clean plugin install help
 
 # Use bash as the default shell
 SHELL := /usr/bin/env bash
@@ -44,6 +44,18 @@ test-all: all
 test-yosys: all preprocess-yosys-tests
 	@echo "Running Yosys tests..."
 	@cd test && ./run_all_tests.sh --yosys
+
+# Build the two external frontends (sv2v, yosys-slang) for the 4-frontend
+# matrix.  Requires a completed `make` first (needs out/current yosys-config)
+# and Haskell Stack on PATH for sv2v.
+frontends: all
+	@echo "Building external frontends (sv2v, yosys-slang)..."
+	@cd test && ./build_frontends.sh
+
+# Run the 4-frontend regression matrix over the internal tests.
+test-matrix: all frontends
+	@echo "Running 4-frontend regression matrix..."
+	@cd test && python3 run_frontend_matrix.py
 
 # Preprocess Yosys test files to fix incompatible constructs
 preprocess-yosys-tests:
@@ -99,6 +111,8 @@ help:
 	@echo "  test       - Run internal tests only (includes test-read-sv)"
 	@echo "  test-all   - Run all tests (internal + Yosys)"
 	@echo "  test-yosys - Run Yosys tests only"
+	@echo "  frontends  - Build sv2v + yosys-slang for the 4-frontend matrix"
+	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
 	@echo "  clean      - Clean build artifacts"
 	@echo "  install    - Install the plugin"
 	@echo "  help       - Show this help message"
