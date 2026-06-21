@@ -212,6 +212,13 @@ def process_test(test_rel: str, args) -> dict:
         cosim = golden_cosim if f == "verilog" else cosim_result(test_rel, f, args)
         row[f"{f}_correct"] = decide(f, formal, cosim, golden_cosim)
         row[f"{f}_detail"] = f"formal={formal} cosim={cosim} golden_cosim={golden_cosim}"
+
+    # Bound disk: the Verilator co-sim leaves a per-test working dir (obj_dir +
+    # build artifacts) that, across 1000+ tests, can fill a CI runner's disk.
+    if args.prune:
+        import shutil
+        for junk in (test_dir / "sim_equiv",):
+            shutil.rmtree(junk, ignore_errors=True)
     return row
 
 
@@ -314,6 +321,9 @@ def main() -> int:
                     help="comma list subset to correctness-check (default all)")
     ap.add_argument("--no-cosim", action="store_true",
                     help="skip Verilator co-sim (formal equivalence only)")
+    ap.add_argument("--prune", action="store_true",
+                    help="delete each test's sim_equiv working dir after its "
+                         "verdict (bounds disk usage on CI)")
     ap.add_argument("--out", default=str(TEST_DIR / "frontend_matrix"),
                     help="output path prefix (.csv / FRONTEND_MATRIX.md)")
     args = ap.parse_args()
