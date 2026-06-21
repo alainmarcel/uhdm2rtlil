@@ -3014,6 +3014,48 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         return RTLIL::SigSpec();
     }
 
+    // `x inside {v1, v2, [lo:hi], ...}` set-membership EXPRESSION: a vpiInsideOp
+    // whose operand[0] is the test value and whose remaining operands are the
+    // set members — a plain value (`x == v`) or a vpiListOp of two values for a
+    // `[lo:hi]` range (`x >= lo && x <= hi`).  Result is the 1-bit OR of all
+    // member matches (OneInside).  (The `case (x) inside` form is handled
+    // separately in import_case_stmt_comb.)
+    if (op_type == vpiInsideOp && uhdm_op->Operands() &&
+        uhdm_op->Operands()->size() >= 2) {
+        auto& ops = *uhdm_op->Operands();
+        RTLIL::SigSpec lhs = import_expression(any_cast<const UHDM::expr*>(ops[0]), input_mapping);
+        bool sg = is_expr_signed(any_cast<const UHDM::expr*>(ops[0]));
+        auto match_eq = [&](RTLIL::SigSpec a, RTLIL::SigSpec b) {
+            int w = std::max(a.size(), b.size());
+            if (a.size() < w) a.extend_u0(w, sg);
+            if (b.size() < w) b.extend_u0(w, sg);
+            return module->Eq(NEW_ID, a, b, false);
+        };
+        RTLIL::SigSpec result;
+        for (size_t i = 1; i < ops.size(); i++) {
+            RTLIL::SigSpec cond;
+            auto lop = dynamic_cast<const UHDM::operation*>(ops[i]);
+            if (lop && lop->VpiOpType() == vpiListOp && lop->Operands() &&
+                lop->Operands()->size() == 2) {
+                RTLIL::SigSpec lo = import_expression(any_cast<const UHDM::expr*>((*lop->Operands())[0]), input_mapping);
+                RTLIL::SigSpec hi = import_expression(any_cast<const UHDM::expr*>((*lop->Operands())[1]), input_mapping);
+                int w = std::max({lhs.size(), lo.size(), hi.size()});
+                RTLIL::SigSpec lx = lhs, lox = lo, hix = hi;
+                if (lx.size() < w) lx.extend_u0(w, sg);
+                if (lox.size() < w) lox.extend_u0(w, sg);
+                if (hix.size() < w) hix.extend_u0(w, sg);
+                cond = module->And(NEW_ID,
+                    module->Ge(NEW_ID, lx, lox, sg),
+                    module->Le(NEW_ID, lx, hix, sg));
+            } else {
+                cond = match_eq(lhs, import_expression(any_cast<const UHDM::expr*>(ops[i]), input_mapping));
+            }
+            result = result.empty() ? cond : module->Or(NEW_ID, result, cond);
+        }
+        if (result.empty()) result = RTLIL::SigSpec(RTLIL::State::S0);
+        return result;
+    }
+
     // Try to reduce it first (for non-side-effect operations). We skip
     // `vpiCastOp` here: Surelog's reduceExpr folds `8'(4'(signed'(...)))`
     // into a single constant but applies plain zero-extension at the

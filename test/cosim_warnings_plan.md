@@ -56,7 +56,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] NestedPatternPassedAsPort
 - [?] OneArithShift
 - [?] OneClass
-- [?] OneInside
+- [x] OneInside — FIXED: `x inside {set}` EXPRESSION (vpiInsideOp) unhandled in import_operation -> returned empty -> `b = a[2] & (a inside {...})` folded to 0. Now build OR-of-equalities (+ range checks for [lo:hi] members).
 - [?] OneNetModport
 - [?] OneShift
 - [?] ParameterPackedArray
