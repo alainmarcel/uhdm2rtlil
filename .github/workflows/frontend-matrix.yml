@@ -1,0 +1,150 @@
+name: Frontend Matrix
+
+# 4-frontend SystemVerilog regression matrix: runs every test (internal + the
+# upstream Yosys suite) through verilog / uhdm / sv2v / slang and classifies
+# synthesize? + correct? (formal equiv vs the verilog golden AND Verilator
+# co-sim vs the original RTL).  See test/FRONTEND_MATRIX_README.md.
+#
+# This is a HEAVY sweep (hundreds of tests x 4 frontends x formal+co-sim), so it
+# is NOT wired into the per-push/PR CI.  It runs nightly (and on manual
+# workflow_dispatch).  GitHub-hosted runners give ~4 usable cores, so the matrix
+# runs with --jobs 4.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Test scope: --all (internal+Yosys), --yosys, or '' (internal only)"
+        required: false
+        default: "--all"
+      jobs:
+        description: "Parallel jobs (runner has ~4 cores)"
+        required: false
+        default: "4"
+      cycles:
+        description: "Verilator co-sim cycles per test"
+        required: false
+        default: "100"
+  schedule:
+    # Nightly at 06:00 UTC.
+    - cron: "0 6 * * *"
+
+jobs:
+  frontend-matrix:
+    runs-on: ubuntu-24.04
+    # A full --all sweep with co-sim is long; allow up to the runner max.
+    timeout-minutes: 360
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          git \
+          python3 \
+          python3-pip \
+          pkg-config \
+          libssl-dev \
+          zlib1g-dev \
+          libtcmalloc-minimal4 \
+          uuid-dev \
+          tcl-dev \
+          libffi-dev \
+          libreadline-dev \
+          bison \
+          flex \
+          libfl-dev \
+          libunwind-dev \
+          libgoogle-perftools-dev \
+          ccache \
+          help2man \
+          unzip \
+          g++-9 \
+          g++-13
+
+    - name: Cache Verilator build
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: /opt/verilator-5.048
+        key: verilator-5.048-${{ runner.os }}
+
+    - name: Build Verilator 5.048 from source
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 -b v5.048 https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        autoconf
+        ./configure --prefix=/opt/verilator-5.048
+        make -j$(nproc)
+        sudo make install
+
+    - name: Add Verilator to PATH
+      run: |
+        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
+        /opt/verilator-5.048/bin/verilator --version
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: frontend-matrix
+        max-size: 2G
+
+    - name: Install Python dependencies
+      run: pip3 install orderedmultidict
+
+    - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
+      # Match the main CI: build the project with gcc-9.
+      run: |
+        sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Build external frontends (sv2v + yosys-slang)
+      # yosys-slang needs gcc >= 11, so build the frontends with the default
+      # gcc-13 (ABI-compatible with the gcc-9-built Yosys for plugin loading).
+      # No Haskell Stack on the runner -> build_frontends.sh auto-falls back to
+      # the upstream prebuilt sv2v release binary.
+      env:
+        CC: gcc-13
+        CXX: g++-13
+      run: |
+        cd test
+        ./build_frontends.sh
+        echo "--- versions ---"; cat ../build/frontends/versions.txt || true
+
+    - name: Run 4-frontend matrix
+      run: |
+        cd test
+        python3 run_frontend_matrix.py \
+          ${{ github.event.inputs.scope || '--all' }} \
+          --jobs ${{ github.event.inputs.jobs || '4' }} \
+          --cycles ${{ github.event.inputs.cycles || '100' }}
+
+    - name: Publish report to job summary
+      if: always()
+      run: |
+        if [ -f test/FRONTEND_MATRIX.md ]; then
+          cat test/FRONTEND_MATRIX.md >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "No FRONTEND_MATRIX.md produced." >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Upload matrix report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-matrix-report
+        path: |
+          test/frontend_matrix.csv
+          test/FRONTEND_MATRIX.md
+        retention-days: 30
