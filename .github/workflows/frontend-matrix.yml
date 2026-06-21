@@ -74,6 +74,10 @@ jobs:
         key: frontend-matrix-build
         max-size: 2G
 
+    - name: Install Python dependencies
+      # Surelog/UHDM's CMake configure needs this Python package.
+      run: pip3 install orderedmultidict
+
     - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
       run: |
         sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
