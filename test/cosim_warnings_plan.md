@@ -17,7 +17,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 
 - [x] 2DFunctionArg — FIXED: `inline_func_body_comb` had NO `vpiReturn` case (return value dropped → X); also `var_select` ignored `input_mapping` for function params, and `elem_w` wasn't read from an `io_decl` typespec. Added all three. a=1, co-sim PASS.
 - [x] TypedefedFunctionArgument — FIXED by the same vpiReturn/var_select fix.
-- [?] CaseInside — combinational `case() inside`; co-sim `y: rtl=2 nl=1`. likely BUG.
+- [x] CaseInside — FIXED: `case(x) inside` with a `[lo:hi]` range item — Surelog wraps the match-set in vpiInsideOp/vpiListOp, which import_case_stmt_comb returned empty for (first item became default -> y=01 always). Now expand inside-set members into equality compares; ranges expand to individual values.
 - [?] 1DUnpackedArray
 - [?] 2DParameterOfInstance
 - [?] 2DUnpackedFunctionArgument — BUG (deeper): unpacked array passed to function; element-order vs read-offset inconsistency (a=0, want 1). iverilog REJECTS this construct; only Verilator accepts. Niche — deprioritised.
