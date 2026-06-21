@@ -10008,6 +10008,45 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
             d.stmt = case_item->Stmt();
             if (auto exprs = case_item->VpiExprs()) {
                 for (auto expr : *exprs) {
+                    // `case (x) inside`: Surelog wraps each item's match-set in a
+                    // vpiInsideOp whose operands are vpiListOp members — one with
+                    // a single value `V`, or two with a `[lo:hi]` range.  The
+                    // RTLIL switch only matches by equality, so expand the set
+                    // into individual equality compare values (CaseInside).
+                    if (expr->VpiType() == vpiOperation) {
+                        auto iop = any_cast<const UHDM::operation*>(expr);
+                        if (iop && iop->VpiOpType() == vpiInsideOp && iop->Operands()) {
+                            for (auto mem : *iop->Operands()) {
+                                auto lop = dynamic_cast<const UHDM::operation*>(mem);
+                                if (lop && lop->VpiOpType() == vpiListOp && lop->Operands()) {
+                                    auto& mo = *lop->Operands();
+                                    if (mo.size() == 1) {
+                                        RTLIL::SigSpec s = import_expression(any_cast<const UHDM::expr*>(mo[0]));
+                                        ctx_width = std::max(ctx_width, s.size());
+                                        all_signed = false;
+                                        d.exprs.push_back({s, false});
+                                    } else if (mo.size() == 2) {
+                                        RTLIL::SigSpec ls = import_expression(any_cast<const UHDM::expr*>(mo[0]));
+                                        RTLIL::SigSpec hs = import_expression(any_cast<const UHDM::expr*>(mo[1]));
+                                        if (ls.is_fully_const() && hs.is_fully_const()) {
+                                            int lo = ls.as_const().as_int();
+                                            int hi = hs.as_const().as_int();
+                                            if (lo > hi) std::swap(lo, hi);
+                                            int w = std::max(ls.size(), hs.size());
+                                            // Cap to avoid pathological expansion.
+                                            for (int v = lo; v <= hi && (v - lo) < 4096; v++) {
+                                                RTLIL::SigSpec s(RTLIL::Const(v, w));
+                                                ctx_width = std::max(ctx_width, s.size());
+                                                all_signed = false;
+                                                d.exprs.push_back({s, false});
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+                    }
                     if (auto ce = any_cast<const UHDM::expr*>(expr)) {
                         RTLIL::SigSpec sig = import_expression(ce);
                         bool sgn = is_expr_signed(ce);
