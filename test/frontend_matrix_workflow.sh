@@ -64,6 +64,13 @@ READ_FLAG="$PROJECT_LANG"          # "-sv" or ""
 FORMAL_FLAG=""
 [ "$PROJECT_FORMAL" = "1" ] && FORMAL_FLAG="-formal"
 
+# Per-frontend wall-clock cap (seconds).  Some pathological designs send a
+# frontend's synth (or Surelog) into a multi-hour spin; `timeout` bounds it and
+# kills the whole process group (-k sends KILL after a grace period) so no
+# orphaned yosys/surelog keeps burning a core.  Override via FRONTEND_TIMEOUT_S.
+TIMEOUT_S="${FRONTEND_TIMEOUT_S:-360}"
+run_capped() { timeout -k 10 "$TIMEOUT_S" "$@"; }   # exit 124 (TERM) / 137 (KILL) on timeout
+
 STATUS_FILE="frontend_status.txt"
 : > "$STATUS_FILE"
 
@@ -87,7 +94,9 @@ record_status() {
     local synth="${MODULE_NAME}_from_${f}_synth.v"
     local nohier="${MODULE_NAME}_from_${f}_nohier.il"
     local status gates=0
-    if [ "$rc" -ge 128 ]; then
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+        status="TIMEOUT"
+    elif [ "$rc" -ge 128 ]; then
         status="CRASH"
     elif [ -f "$synth" ]; then
         gates=$(gate_count "$synth")
@@ -123,7 +132,7 @@ echo "[1/4] verilog (Yosys native read_verilog)"
     echo "read_verilog $READ_FLAG $FORMAL_FLAG $PROJECT_SRCS"
     emit_tail verilog
 } > verilog_read.ys
-"$YOSYS_BIN" -s verilog_read.ys > verilog_path.log 2>&1
+run_capped "$YOSYS_BIN" -s verilog_read.ys > verilog_path.log 2>&1
 record_status verilog $?
 
 # ------------------------------------------------------------------- uhdm ----
@@ -132,9 +141,13 @@ if [ ! -f "$UHDM_PLUGIN" ]; then
     echo "uhdm TOOL_MISSING 0" >> "$STATUS_FILE"
     echo "   → uhdm: TOOL_MISSING (plugin not built)"
 else
-    "$SURELOG_BIN" -parse -nobuiltin -nocache -d vpi_ids -d uhdm \
-        $PROJECT_LANG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1 || true
-    if [ ! -f slpp_all/surelog.uhdm ]; then
+    run_capped "$SURELOG_BIN" -parse -nobuiltin -nocache -d vpi_ids -d uhdm \
+        $PROJECT_LANG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1
+    sl_rc=$?
+    if [ "$sl_rc" -eq 124 ] || [ "$sl_rc" -eq 137 ]; then
+        echo "uhdm TIMEOUT 0" >> "$STATUS_FILE"
+        echo "   → uhdm: TIMEOUT (Surelog exceeded ${TIMEOUT_S}s)"
+    elif [ ! -f slpp_all/surelog.uhdm ]; then
         echo "uhdm READ_FAIL 0" >> "$STATUS_FILE"
         echo "   → uhdm: READ_FAIL (Surelog produced no UHDM; see surelog_build.log)"
     else
@@ -142,7 +155,7 @@ else
             echo "read_uhdm $FORMAL_FLAG slpp_all/surelog.uhdm"
             emit_tail uhdm
         } > uhdm_read.ys
-        "$YOSYS_BIN" -m "$UHDM_PLUGIN" -s uhdm_read.ys > uhdm_path.log 2>&1
+        run_capped "$YOSYS_BIN" -m "$UHDM_PLUGIN" -s uhdm_read.ys > uhdm_path.log 2>&1
         record_status uhdm $?
     fi
 fi
@@ -154,12 +167,17 @@ if [ ! -x "$SV2V_BIN" ]; then
     echo "   → sv2v: TOOL_MISSING (run build_frontends.sh)"
 else
     # sv2v wants every source at once so it can resolve packages/interfaces.
-    if "$SV2V_BIN" $PROJECT_SRCS > "${MODULE_NAME}_sv2v.v" 2> sv2v_convert.log; then
+    run_capped "$SV2V_BIN" $PROJECT_SRCS > "${MODULE_NAME}_sv2v.v" 2> sv2v_convert.log
+    sv_rc=$?
+    if [ "$sv_rc" -eq 124 ] || [ "$sv_rc" -eq 137 ]; then
+        echo "sv2v TIMEOUT 0" >> "$STATUS_FILE"
+        echo "   → sv2v: TIMEOUT (sv2v exceeded ${TIMEOUT_S}s)"
+    elif [ "$sv_rc" -eq 0 ]; then
         {
             echo "read_verilog $FORMAL_FLAG ${MODULE_NAME}_sv2v.v"
             emit_tail sv2v
         } > sv2v_read.ys
-        "$YOSYS_BIN" -s sv2v_read.ys > sv2v_path.log 2>&1
+        run_capped "$YOSYS_BIN" -s sv2v_read.ys > sv2v_path.log 2>&1
         record_status sv2v $?
     else
         echo "sv2v CONVERT_FAIL 0" >> "$STATUS_FILE"
@@ -177,7 +195,7 @@ else
         echo "read_slang $PROJECT_SRCS"
         emit_tail slang
     } > slang_read.ys
-    "$YOSYS_BIN" -m "$SLANG_PLUGIN" -s slang_read.ys > slang_path.log 2>&1
+    run_capped "$YOSYS_BIN" -m "$SLANG_PLUGIN" -s slang_read.ys > slang_path.log 2>&1
     record_status slang $?
 fi
 

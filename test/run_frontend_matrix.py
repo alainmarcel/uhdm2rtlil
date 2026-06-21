@@ -27,10 +27,18 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
+import signal
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+# Per-step wall-clock cap (seconds): each frontend's synth, its formal-equiv,
+# and its co-sim are bounded so a pathological design can't spin a yosys/verilator
+# for hours.  Override via FRONTEND_TIMEOUT_S (also honored by the workflow shell).
+STEP_TIMEOUT = int(os.environ.get("FRONTEND_TIMEOUT_S", "360"))
+RC_TIMEOUT = 124
 
 ALL_FRONTENDS = ["verilog", "uhdm", "sv2v", "slang"]
 
@@ -41,23 +49,37 @@ PROJECT_ROOT = TEST_DIR.parent
 SYNTH_TOKEN = {
     "OK": "yes", "NO_GATES": "empty", "SYNTH_FAIL": "no",
     "READ_FAIL": "no", "CONVERT_FAIL": "no", "CRASH": "crash",
-    "TOOL_MISSING": "missing",
+    "TOOL_MISSING": "missing", "TIMEOUT": "timeout",
 }
 
 
 def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
-    """Run a command; return (returncode, combined_output)."""
+    """Run a command; return (returncode, combined_output).
+
+    On timeout the ENTIRE process group is killed — the children we launch are
+    shell scripts / Python that spawn yosys / surelog / verilator / cc1plus
+    grandchildren, and a plain subprocess timeout would reap only the direct
+    child, orphaning those grandchildren to burn a core for hours.  We start the
+    child in its own session (process-group leader) and SIGKILL the whole group.
+    """
     try:
-        p = subprocess.run(cmd, cwd=cwd, text=True, timeout=timeout,
-                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        return p.returncode, p.stdout
-    except subprocess.TimeoutExpired as e:
-        # On timeout, e.output can come back as bytes even with text=True
-        # (the partial read isn't always decoded), so normalize before concat.
-        out = e.output or ""
-        if isinstance(out, (bytes, bytearray)):
-            out = out.decode("utf-8", "replace")
-        return 124, out + "\n[timeout]"
+        p = subprocess.Popen(cmd, cwd=cwd, text=True, start_new_session=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as e:
+        return 1, f"[spawn-failed] {e}"
+    try:
+        out, _ = p.communicate(timeout=timeout)
+        return p.returncode, out
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            out, _ = p.communicate(timeout=15)
+        except Exception:
+            out = ""
+        return RC_TIMEOUT, (out or "") + "\n[timeout]"
 
 
 def discover_internal(pattern: str) -> list[str]:
@@ -103,13 +125,16 @@ FAIL_STATUS = ("READ_FAIL", "SYNTH_FAIL", "CONVERT_FAIL", "CRASH", "TOOL_MISSING
 
 
 def cosim_result(test_rel: str, frontend: str, args) -> str:
-    """Verilator co-sim of a frontend's netlist vs the original RTL -> pass/fail/skip."""
+    """Verilator co-sim of a frontend's netlist vs the original RTL.
+    -> pass/fail/skip/timeout."""
     if args.no_cosim:
         return "skip"
     rc, _ = run([sys.executable, str(TEST_DIR / "test_sim_equivalence.py"),
                  test_rel, "--frontend", frontend, "--cycles", str(args.cycles)],
-                cwd=TEST_DIR, timeout=900)
-    return {0: "pass", 1: "fail", 77: "skip"}.get(rc, "skip" if rc == 77 else "fail")
+                cwd=TEST_DIR, timeout=STEP_TIMEOUT)
+    if rc == RC_TIMEOUT:
+        return "timeout"
+    return {0: "pass", 1: "fail", 77: "skip"}.get(rc, "fail")
 
 
 def formal_result(test_rel: str, test_dir: Path, frontend: str,
@@ -130,7 +155,9 @@ def formal_result(test_rel: str, test_dir: Path, frontend: str,
     cmd = [str(TEST_DIR / "equiv_pair.sh"), str(gold_v), str(gate_v)]
     if is_formal:
         cmd.append("--formal")
-    rc, _ = run(cmd, cwd=TEST_DIR, timeout=600)
+    rc, _ = run(cmd, cwd=TEST_DIR, timeout=STEP_TIMEOUT)
+    if rc == RC_TIMEOUT:
+        return "timeout"
     return {0: "equiv", 1: "non-equiv", 2: "inconclusive"}.get(rc, "inconclusive")
 
 
@@ -145,6 +172,10 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     the golden ALSO disagrees with its own RTL, the failure is a Verilator-vs-
     synth artefact and the verdict is UNKNOWN, not INCORRECT.
     """
+    # A step that blew the 6-min cap is neither correct nor incorrect — give it
+    # its own category so it can't masquerade as a fail/unknown.
+    if formal == "timeout" or cosim == "timeout":
+        return "TIMEOUT"
     if frontend == "verilog":
         # The golden itself: trust only its co-sim against its own RTL.
         if cosim == "pass":
@@ -205,6 +236,9 @@ def process_test(test_rel: str, args) -> dict:
         if f not in args.frontends:
             row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", "skipped"
             continue
+        if st == "TIMEOUT":
+            row[f"{f}_correct"], row[f"{f}_detail"] = "TIMEOUT", "synth-timeout"
+            continue
         if st in FAIL_STATUS:
             row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", st
             continue
@@ -237,7 +271,8 @@ def write_markdown(rows: list[dict], out_md: Path, args):
     total = len(rows)
     # Per-frontend aggregate counts.
     agg = {f: {"synth_yes": 0, "synth_empty": 0, "synth_no": 0, "crash": 0,
-               "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0}
+               "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0,
+               "timeout": 0}
            for f in ALL_FRONTENDS}
     for r in rows:
         for f in ALL_FRONTENDS:
@@ -251,6 +286,9 @@ def write_markdown(rows: list[dict], out_md: Path, args):
             agg[f]["correct"] += c == "CORRECT"
             agg[f]["incorrect"] += c == "INCORRECT"
             agg[f]["unknown"] += c == "UNKNOWN"
+            # Timeout: synth blew the cap (synth=timeout) or a formal/co-sim step
+            # did (correct=TIMEOUT) — count each test once per frontend.
+            agg[f]["timeout"] += c == "TIMEOUT"
 
     lines = [f"# Frontend Regression Matrix",
              "",
@@ -264,14 +302,17 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "`Read + synth(const)` = read OK but folds to a constant netlist "
              "(0 gates). Both count toward Correct/Incorrect/Unknown.",
              "",
-             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown |",
-             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|"]
+             "`Timeout` = a frontend's synth, formal-equiv, or co-sim exceeded "
+             f"the {STEP_TIMEOUT // 60}-min per-step cap.",
+             "",
+             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown | Timeout |",
+             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|--------:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
         lines.append(
             f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
             f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
-            f"{a['unknown']} |")
+            f"{a['unknown']} | {a['timeout']} |")
 
     # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
     disagree = []
@@ -302,6 +343,18 @@ def write_markdown(rows: list[dict], out_md: Path, args):
             lines.append(f"- **{f}** ({len(bad)}): " +
                          ", ".join(f"`{t}`" for t in bad[:40]) +
                          (" …" if len(bad) > 40 else ""))
+
+    lines += ["", f"## Timeouts per frontend (> {STEP_TIMEOUT // 60} min)", ""]
+    any_to = False
+    for f in ALL_FRONTENDS:
+        to = [r["test"] for r in rows if r[f"{f}_correct"] == "TIMEOUT"]
+        if to:
+            any_to = True
+            lines.append(f"- **{f}** ({len(to)}): " +
+                         ", ".join(f"`{t}`" for t in to[:40]) +
+                         (" …" if len(to) > 40 else ""))
+    if not any_to:
+        lines.append("_None._")
     lines.append("")
     out_md.write_text("\n".join(lines))
 
