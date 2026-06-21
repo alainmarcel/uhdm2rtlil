@@ -5,17 +5,20 @@ name: Frontend Matrix
 # synthesize? + correct? (formal equiv vs the verilog golden AND Verilator
 # co-sim vs the original RTL).  See test/FRONTEND_MATRIX_README.md.
 #
-# This is a HEAVY sweep (1000+ tests x 4 frontends), so it is NOT wired into the
-# per-push/PR CI.  It runs nightly and on manual workflow_dispatch.
+# HEAVY sweep (1000+ tests x 4 frontends) — NOT wired into per-push/PR CI; runs
+# nightly and on manual workflow_dispatch.
 #
-# Even formal-only, 1000+ tests don't finish within a single hosted runner's
-# 6-hour limit, so the test list is SHARDED across parallel runner jobs (each
-# runs `--shard i/N`) and a final `combine` job merges the shard CSVs into one
-# report.  N = strategy.job-total (auto-synced to the matrix length below).
+# Structure: build ONCE, then fan out.
+#   * build   — compile Surelog + Yosys + plugins + frontends, upload a curated
+#               runtime tarball (so the shards don't each rebuild — the binaries
+#               are statically linked, so the tarball is self-contained).
+#   * shard   — 6-way matrix; each downloads the runtime, runs `--shard i/N` over
+#               its slice, uploads its CSV.  (1000+ tests don't fit one runner's
+#               6-hour limit, hence sharding.)
+#   * combine — merge the shard CSVs into the final report.
 #
-# Nightly is FORMAL-ONLY (--no-cosim) for reliability; full Verilator co-sim is
-# opt-in via the `cosim` dispatch input (heavier, but each shard + the per-step
-# 6-min cap + --prune keep it within a runner).
+# Nightly is FORMAL-ONLY (--no-cosim); full Verilator co-sim is opt-in via the
+# `cosim` dispatch input.
 
 on:
   workflow_dispatch:
@@ -42,20 +45,14 @@ on:
     - cron: "0 6 * * *"
 
 jobs:
-  shard:
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+  build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 350
-
+    timeout-minutes: 90
     steps:
     - name: Free up disk space
       run: |
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
                     /opt/hostedtoolcache/CodeQL || true
-        df -h /
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -70,6 +67,79 @@ jobs:
           libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
           libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
           libgoogle-perftools-dev ccache help2man unzip g++-9 g++-13
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: frontend-matrix-build
+        max-size: 2G
+
+    - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
+      run: |
+        sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
+        rm -rf build/CMakeCache.txt build/CMakeFiles/
+        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
+
+    - name: Build external frontends (sv2v + yosys-slang)
+      # sv2v: prebuilt binary (the runner's GHC rejects gcc with clang-style
+      # flags, so the source build is doomed).  slang: needs gcc >= 11 -> gcc-13.
+      run: |
+        cd test
+        SV2V_PREBUILT=1 ./build_frontends.sh sv2v
+        CC=gcc-13 CXX=g++-13 ./build_frontends.sh slang
+        echo "--- versions ---"; cat ../build/frontends/versions.txt || true
+
+    - name: Package runtime
+      # Only the run-time bits the harness invokes — statically linked, so this
+      # tarball runs on a shard runner with just the system runtime libs (apt).
+      # --dereference so build/slang.so (a symlink) becomes a real file.
+      run: |
+        tar -czhf runtime.tar.gz \
+          out/current \
+          build/uhdm2rtlil.so \
+          build/extract_clocks_resets.so \
+          build/slang.so \
+          build/frontends/sv2v/bin/sv2v \
+          build/third_party/Surelog/bin/surelog \
+          build/frontends/versions.txt
+        ls -lh runtime.tar.gz
+
+    - name: Upload runtime
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-runtime
+        path: runtime.tar.gz
+        retention-days: 1
+
+  shard:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                    /opt/hostedtoolcache/CodeQL || true
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install runtime dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential autoconf cmake git python3 python3-pip \
+          zlib1g-dev libtcmalloc-minimal4 tcl-dev libffi-dev libreadline-dev \
+          bison flex libfl-dev libunwind-dev libgoogle-perftools-dev \
+          help2man unzip
 
     - name: Cache Verilator build
       id: cache-verilator
@@ -89,40 +159,21 @@ jobs:
         sudo make install
 
     - name: Add Verilator to PATH
-      run: |
-        echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
-        /opt/verilator-5.048/bin/verilator --version
-
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: frontend-matrix-shard${{ matrix.shard }}
-        restore-keys: frontend-matrix-
-        max-size: 2G
+      run: echo "/opt/verilator-5.048/bin" >> $GITHUB_PATH
 
     - name: Install Python dependencies
       run: pip3 install orderedmultidict
 
-    - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
-      run: |
-        sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
-        sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
-        sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
-        rm -rf build/CMakeCache.txt build/CMakeFiles/
-        make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
-
-    - name: Build external frontends (sv2v + yosys-slang)
-      # sv2v: prebuilt binary (the runner's GHC rejects gcc with clang-style
-      # flags, so the source build is doomed).  slang: needs gcc >= 11 -> gcc-13.
-      run: |
-        cd test
-        SV2V_PREBUILT=1 ./build_frontends.sh sv2v
-        CC=gcc-13 CXX=g++-13 ./build_frontends.sh slang
-        echo "--- versions ---"; cat ../build/frontends/versions.txt || true
+    - name: Download + unpack runtime
+      uses: actions/download-artifact@v4
+      with:
+        name: build-runtime
+    - run: |
+        tar -xzf runtime.tar.gz
+        test -x out/current/bin/yosys && test -f build/uhdm2rtlil.so
+        echo "runtime unpacked"
 
     - name: Run shard ${{ matrix.shard }}/${{ strategy.job-total }}
-      # Formal-only unless cosim opted in.  Unbuffered (-u) for live progress;
-      # --prune bounds disk.  6-min per-step cap is built into the harness.
       run: |
         cd test
         COSIM_FLAG="--no-cosim"
