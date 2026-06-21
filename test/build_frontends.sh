@@ -78,10 +78,12 @@ sv2v_prebuilt_fallback() {
         "https://github.com/zachjs/sv2v/releases/latest/download/sv2v-Linux.zip" \
         || { echo "❌ download failed" >&2; return 1; }
     ( cd "$SV2V_DIR" && unzip -o -q "$zip" ) || { echo "❌ unzip failed" >&2; return 1; }
-    local found; found="$(find "$SV2V_DIR" -name sv2v -type f -perm -u+x 2>/dev/null | head -1)"
-    [ -z "$found" ] && found="$(find "$SV2V_DIR" -name sv2v -type f 2>/dev/null | head -1)"
+    # Find the freshly-extracted binary, ignoring the destination (bin/sv2v) so a
+    # --force re-fetch doesn't pick its own target and `cp` a file onto itself.
+    local found
+    found="$(find "$SV2V_DIR" -name sv2v -type f ! -path "$SV2V_BIN" 2>/dev/null | head -1)"
     [ -z "$found" ] && { echo "❌ no sv2v binary in release zip" >&2; return 1; }
-    cp "$found" "$SV2V_BIN"; chmod +x "$SV2V_BIN"
+    cp -f "$found" "$SV2V_BIN"; chmod +x "$SV2V_BIN"
     echo "prebuilt:$found" > "$SV2V_DIR/.sv2v_prebuilt"
     echo "✓ sv2v installed from prebuilt release: $SV2V_BIN"
 }
@@ -89,6 +91,17 @@ sv2v_prebuilt_fallback() {
 build_sv2v() {
     if [ "$FORCE" -eq 0 ] && [ -x "$SV2V_BIN" ]; then
         echo "✓ sv2v already built: $SV2V_BIN (use --force to rebuild)"
+        return 0
+    fi
+    # SV2V_PREBUILT=1 skips the Haskell/Stack source build entirely and fetches
+    # the upstream prebuilt binary.  Use this on CI, where the runner's GHC
+    # toolchain probes the C compiler with clang-style flags (`--target=...`,
+    # `-Werror`) that gcc rejects — the source build is doomed and only adds
+    # noisy errors before falling back to prebuilt anyway.
+    if [ "${SV2V_PREBUILT:-0}" = "1" ]; then
+        echo "▶ SV2V_PREBUILT=1 — skipping source build, using prebuilt sv2v"
+        mkdir -p "$SV2V_DIR"
+        sv2v_prebuilt_fallback || return 1
         return 0
     fi
     if [ ! -d "$SV2V_DIR/.git" ]; then

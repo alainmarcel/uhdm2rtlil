@@ -5,10 +5,16 @@ name: Frontend Matrix
 # synthesize? + correct? (formal equiv vs the verilog golden AND Verilator
 # co-sim vs the original RTL).  See test/FRONTEND_MATRIX_README.md.
 #
-# This is a HEAVY sweep (hundreds of tests x 4 frontends x formal+co-sim), so it
-# is NOT wired into the per-push/PR CI.  It runs nightly (and on manual
-# workflow_dispatch).  GitHub-hosted runners give ~4 usable cores, so the matrix
-# runs with --jobs 4.
+# This is a HEAVY sweep (1000+ tests x 4 frontends), so it is NOT wired into the
+# per-push/PR CI.  It runs nightly and on manual workflow_dispatch.
+#
+# GitHub-hosted runners are resource-constrained (4 vCPU, 16 GB RAM, ~14 GB disk).
+# A full --all sweep WITH Verilator co-sim exhausts the runner (it OOM/disk-fills
+# and "loses communication" partway through).  So:
+#   * the nightly runs FORMAL-ONLY (--no-cosim): synth coverage + formal
+#     equivalence vs the verilog golden for every test — fast and reliable.
+#   * full co-sim is opt-in via the `cosim` workflow_dispatch input, with reduced
+#     parallelism (--jobs 2) and per-test pruning to bound disk.
 
 on:
   workflow_dispatch:
@@ -17,10 +23,15 @@ on:
         description: "Test scope: --all (internal+Yosys), --yosys, or '' (internal only)"
         required: false
         default: "--all"
-      jobs:
-        description: "Parallel jobs (runner has ~4 cores)"
+      cosim:
+        description: "Run Verilator co-sim too (heavy; may exhaust the runner)"
+        type: boolean
         required: false
-        default: "4"
+        default: false
+      jobs:
+        description: "Parallel jobs (runner has ~4 cores; use 2 with co-sim)"
+        required: false
+        default: "2"
       cycles:
         description: "Verilator co-sim cycles per test"
         required: false
@@ -36,6 +47,15 @@ jobs:
     timeout-minutes: 360
 
     steps:
+    - name: Free up disk space
+      # The co-sim path writes per-test Verilator build dirs; the default
+      # runner image leaves only ~14 GB free.  Reclaim ~20 GB of unused
+      # toolchains so a long sweep doesn't disk-fill.
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                    /opt/hostedtoolcache/CodeQL || true
+        df -h /
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
@@ -110,25 +130,33 @@ jobs:
         make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
 
     - name: Build external frontends (sv2v + yosys-slang)
-      # yosys-slang needs gcc >= 11, so build the frontends with the default
-      # gcc-13 (ABI-compatible with the gcc-9-built Yosys for plugin loading).
-      # No Haskell Stack on the runner -> build_frontends.sh auto-falls back to
-      # the upstream prebuilt sv2v release binary.
-      env:
-        CC: gcc-13
-        CXX: g++-13
+      # sv2v: use the prebuilt release binary (SV2V_PREBUILT=1).  The runner's
+      # preinstalled GHC probes the C compiler with clang-style flags
+      # (`--target=...`, `-Werror`) that gcc rejects, so the source build is
+      # doomed and only adds noise.
+      # yosys-slang: needs gcc >= 11 -> build it with gcc-13 (ABI-compatible
+      # with the gcc-9-built Yosys for plugin loading).  Keep gcc-13 scoped to
+      # the slang build so it never touches anything else.
       run: |
         cd test
-        ./build_frontends.sh
+        SV2V_PREBUILT=1 ./build_frontends.sh sv2v
+        CC=gcc-13 CXX=g++-13 ./build_frontends.sh slang
         echo "--- versions ---"; cat ../build/frontends/versions.txt || true
 
     - name: Run 4-frontend matrix
+      # Nightly is formal-only for reliability; co-sim is opt-in.  Unbuffered
+      # (-u) so progress is visible in the live log.  --prune bounds disk.
       run: |
         cd test
-        python3 run_frontend_matrix.py \
+        COSIM_FLAG="--no-cosim"
+        if [ "${{ github.event.inputs.cosim }}" = "true" ]; then
+          COSIM_FLAG=""
+        fi
+        python3 -u run_frontend_matrix.py \
           ${{ github.event.inputs.scope || '--all' }} \
-          --jobs ${{ github.event.inputs.jobs || '4' }} \
-          --cycles ${{ github.event.inputs.cycles || '100' }}
+          --jobs ${{ github.event.inputs.jobs || '2' }} \
+          --cycles ${{ github.event.inputs.cycles || '100' }} \
+          --prune $COSIM_FLAG
 
     - name: Publish report to job summary
       if: always()
