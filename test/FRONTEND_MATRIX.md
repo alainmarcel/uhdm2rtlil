@@ -4,8 +4,10 @@ Tests: **653**  ·  cycles=100  ·  frontends=verilog,uhdm,sv2v,slang
 
 ## Leaderboard
 
-| Frontend | Synthesized | Empty | Failed | Crash | Missing | Correct | Incorrect | Unknown |
-|----------|------------:|------:|-------:|------:|--------:|--------:|----------:|--------:|
+`Read + synth(gate)` = read OK, netlist has logic gates; `Read + synth(const)` = read OK but folds to a constant netlist (0 gates). Both count toward Correct/Incorrect/Unknown.
+
+| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown |
+|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|
 | `verilog` | 198 | 213 | 242 | 0 | 0 | 365 | 0 | 46 |
 | `uhdm` | 231 | 416 | 4 | 2 | 0 | 501 | 4 | 142 |
 | `sv2v` | 205 | 364 | 83 | 1 | 0 | 492 | 1 | 76 |

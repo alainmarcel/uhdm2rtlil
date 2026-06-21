@@ -235,8 +235,12 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "",
              "## Leaderboard",
              "",
-             "| Frontend | Synthesized | Empty | Failed | Crash | Missing | Correct | Incorrect | Unknown |",
-             "|----------|------------:|------:|-------:|------:|--------:|--------:|----------:|--------:|"]
+             "`Read + synth(gate)` = read OK, netlist has logic gates; "
+             "`Read + synth(const)` = read OK but folds to a constant netlist "
+             "(0 gates). Both count toward Correct/Incorrect/Unknown.",
+             "",
+             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown |",
+             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
         lines.append(
