@@ -8,13 +8,14 @@ name: Frontend Matrix
 # This is a HEAVY sweep (1000+ tests x 4 frontends), so it is NOT wired into the
 # per-push/PR CI.  It runs nightly and on manual workflow_dispatch.
 #
-# GitHub-hosted runners are resource-constrained (4 vCPU, 16 GB RAM, ~14 GB disk).
-# A full --all sweep WITH Verilator co-sim exhausts the runner (it OOM/disk-fills
-# and "loses communication" partway through).  So:
-#   * the nightly runs FORMAL-ONLY (--no-cosim): synth coverage + formal
-#     equivalence vs the verilog golden for every test — fast and reliable.
-#   * full co-sim is opt-in via the `cosim` workflow_dispatch input, with reduced
-#     parallelism (--jobs 2) and per-test pruning to bound disk.
+# Even formal-only, 1000+ tests don't finish within a single hosted runner's
+# 6-hour limit, so the test list is SHARDED across parallel runner jobs (each
+# runs `--shard i/N`) and a final `combine` job merges the shard CSVs into one
+# report.  N = strategy.job-total (auto-synced to the matrix length below).
+#
+# Nightly is FORMAL-ONLY (--no-cosim) for reliability; full Verilator co-sim is
+# opt-in via the `cosim` dispatch input (heavier, but each shard + the per-step
+# 6-min cap + --prune keep it within a runner).
 
 on:
   workflow_dispatch:
@@ -24,14 +25,14 @@ on:
         required: false
         default: "--all"
       cosim:
-        description: "Run Verilator co-sim too (heavy; may exhaust the runner)"
+        description: "Run Verilator co-sim too (heavier)"
         type: boolean
         required: false
         default: false
       jobs:
-        description: "Parallel jobs (runner has ~4 cores; use 2 with co-sim)"
+        description: "Parallel jobs within each shard (runner has ~4 cores)"
         required: false
-        default: "2"
+        default: "4"
       cycles:
         description: "Verilator co-sim cycles per test"
         required: false
@@ -41,16 +42,16 @@ on:
     - cron: "0 6 * * *"
 
 jobs:
-  frontend-matrix:
+  shard:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     runs-on: ubuntu-24.04
-    # A full --all sweep with co-sim is long; allow up to the runner max.
-    timeout-minutes: 360
+    timeout-minutes: 350
 
     steps:
     - name: Free up disk space
-      # The co-sim path writes per-test Verilator build dirs; the default
-      # runner image leaves only ~14 GB free.  Reclaim ~20 GB of unused
-      # toolchains so a long sweep doesn't disk-fill.
       run: |
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
                     /opt/hostedtoolcache/CodeQL || true
@@ -65,29 +66,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          build-essential \
-          cmake \
-          git \
-          python3 \
-          python3-pip \
-          pkg-config \
-          libssl-dev \
-          zlib1g-dev \
-          libtcmalloc-minimal4 \
-          uuid-dev \
-          tcl-dev \
-          libffi-dev \
-          libreadline-dev \
-          bison \
-          flex \
-          libfl-dev \
-          libunwind-dev \
-          libgoogle-perftools-dev \
-          ccache \
-          help2man \
-          unzip \
-          g++-9 \
-          g++-13
+          build-essential cmake git python3 python3-pip pkg-config \
+          libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
+          libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
+          libgoogle-perftools-dev ccache help2man unzip g++-9 g++-13
 
     - name: Cache Verilator build
       id: cache-verilator
@@ -114,14 +96,14 @@ jobs:
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: frontend-matrix
+        key: frontend-matrix-shard${{ matrix.shard }}
+        restore-keys: frontend-matrix-
         max-size: 2G
 
     - name: Install Python dependencies
       run: pip3 install orderedmultidict
 
     - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
-      # Match the main CI: build the project with gcc-9.
       run: |
         sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
         sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
@@ -130,22 +112,17 @@ jobs:
         make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
 
     - name: Build external frontends (sv2v + yosys-slang)
-      # sv2v: use the prebuilt release binary (SV2V_PREBUILT=1).  The runner's
-      # preinstalled GHC probes the C compiler with clang-style flags
-      # (`--target=...`, `-Werror`) that gcc rejects, so the source build is
-      # doomed and only adds noise.
-      # yosys-slang: needs gcc >= 11 -> build it with gcc-13 (ABI-compatible
-      # with the gcc-9-built Yosys for plugin loading).  Keep gcc-13 scoped to
-      # the slang build so it never touches anything else.
+      # sv2v: prebuilt binary (the runner's GHC rejects gcc with clang-style
+      # flags, so the source build is doomed).  slang: needs gcc >= 11 -> gcc-13.
       run: |
         cd test
         SV2V_PREBUILT=1 ./build_frontends.sh sv2v
         CC=gcc-13 CXX=g++-13 ./build_frontends.sh slang
         echo "--- versions ---"; cat ../build/frontends/versions.txt || true
 
-    - name: Run 4-frontend matrix
-      # Nightly is formal-only for reliability; co-sim is opt-in.  Unbuffered
-      # (-u) so progress is visible in the live log.  --prune bounds disk.
+    - name: Run shard ${{ matrix.shard }}/${{ strategy.job-total }}
+      # Formal-only unless cosim opted in.  Unbuffered (-u) for live progress;
+      # --prune bounds disk.  6-min per-step cap is built into the harness.
       run: |
         cd test
         COSIM_FLAG="--no-cosim"
@@ -154,9 +131,41 @@ jobs:
         fi
         python3 -u run_frontend_matrix.py \
           ${{ github.event.inputs.scope || '--all' }} \
-          --jobs ${{ github.event.inputs.jobs || '2' }} \
+          --jobs ${{ github.event.inputs.jobs || '4' }} \
           --cycles ${{ github.event.inputs.cycles || '100' }} \
-          --prune $COSIM_FLAG
+          --prune $COSIM_FLAG \
+          --shard ${{ matrix.shard }}/${{ strategy.job-total }} \
+          --out frontend_matrix_shard${{ matrix.shard }}
+
+    - name: Upload shard CSV
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: matrix-shard-${{ matrix.shard }}
+        path: test/frontend_matrix_shard${{ matrix.shard }}.csv
+        retention-days: 7
+
+  combine:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download shard CSVs
+      uses: actions/download-artifact@v4
+      with:
+        pattern: matrix-shard-*
+        path: shards
+        merge-multiple: true
+
+    - name: Combine shards into the final report
+      run: |
+        cp shards/frontend_matrix_shard*.csv test/ 2>/dev/null || true
+        cd test
+        ls -la frontend_matrix_shard*.csv || { echo "no shard CSVs"; exit 1; }
+        python3 run_frontend_matrix.py --combine "frontend_matrix_shard*.csv"
 
     - name: Publish report to job summary
       if: always()
@@ -167,7 +176,7 @@ jobs:
           echo "No FRONTEND_MATRIX.md produced." >> "$GITHUB_STEP_SUMMARY"
         fi
 
-    - name: Upload matrix report
+    - name: Upload combined report
       if: always()
       uses: actions/upload-artifact@v4
       with:

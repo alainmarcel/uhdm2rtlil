@@ -379,8 +379,30 @@ def main() -> int:
                          "verdict (bounds disk usage on CI)")
     ap.add_argument("--out", default=str(TEST_DIR / "frontend_matrix"),
                     help="output path prefix (.csv / FRONTEND_MATRIX.md)")
+    ap.add_argument("--shard", default="",
+                    help="run only shard I of N (1-based, e.g. 2/4) so the test "
+                         "list can be split across parallel CI runners")
+    ap.add_argument("--combine", default="",
+                    help="combine mode: glob of shard CSVs to merge into the "
+                         "final frontend_matrix.csv + FRONTEND_MATRIX.md, then exit")
     args = ap.parse_args()
     args.frontends = [f.strip() for f in args.frontends.split(",") if f.strip()]
+
+    # --- combine mode: merge shard CSVs into the final report and exit ---------
+    if args.combine:
+        import glob
+        merged: list[dict] = []
+        seen: set = set()
+        for csv_path in sorted(glob.glob(args.combine)):
+            for r in csv.DictReader(open(csv_path)):
+                if r["test"] not in seen:
+                    seen.add(r["test"])
+                    merged.append(r)
+        merged.sort(key=lambda r: r["test"])
+        write_csv(merged, Path(args.out + ".csv"))
+        write_markdown(merged, TEST_DIR / "FRONTEND_MATRIX.md", args)
+        print(f"✅ combined {len(merged)} rows from {args.combine}")
+        return 0
 
     tests: list[str] = []
     if args.all:
@@ -389,6 +411,17 @@ def main() -> int:
         tests = discover_yosys(args.pattern)
     else:
         tests = discover_internal(args.pattern)
+
+    tests.sort()
+    # --- shard selection: keep every Nth test (strided so heavy/light tests
+    # spread evenly across shards) ---------------------------------------------
+    if args.shard:
+        si, _, sn = args.shard.partition("/")
+        si, sn = int(si), int(sn)
+        if not (1 <= si <= sn):
+            sys.exit(f"❌ bad --shard {args.shard} (expect I/N, 1<=I<=N)")
+        tests = tests[si - 1::sn]
+        print(f"▶ shard {si}/{sn}")
 
     if not tests:
         print("No tests matched.")
@@ -414,8 +447,13 @@ def main() -> int:
 
     rows.sort(key=lambda r: r["test"])
     out_csv = Path(args.out + ".csv")
-    out_md = TEST_DIR / "FRONTEND_MATRIX.md"
     write_csv(rows, out_csv)
+    # Sharded runs only emit their CSV; the combine step builds the global
+    # Markdown report from all shards.
+    if args.shard:
+        print(f"\n✅ wrote {out_csv} (shard {args.shard})")
+        return 0
+    out_md = TEST_DIR / "FRONTEND_MATRIX.md"
     write_markdown(rows, out_md, args)
     print(f"\n✅ wrote {out_csv} and {out_md}")
     return 0
