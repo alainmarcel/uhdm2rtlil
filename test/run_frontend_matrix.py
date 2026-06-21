@@ -52,7 +52,12 @@ def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return p.returncode, p.stdout
     except subprocess.TimeoutExpired as e:
-        return 124, (e.output or "") + "\n[timeout]"
+        # On timeout, e.output can come back as bytes even with text=True
+        # (the partial read isn't always decoded), so normalize before concat.
+        out = e.output or ""
+        if isinstance(out, (bytes, bytearray)):
+            out = out.decode("utf-8", "replace")
+        return 124, out + "\n[timeout]"
 
 
 def discover_internal(pattern: str) -> list[str]:
@@ -164,6 +169,19 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     if formal == "equiv":
         return "CORRECT"          # cosim unavailable; identical to golden netlist
     return "UNKNOWN"
+
+
+def safe_process(test_rel: str, args) -> dict:
+    """process_test guarded so one test's exception can't abort the sweep."""
+    try:
+        return process_test(test_rel, args)
+    except Exception as e:  # noqa: BLE001 - never let one test kill the run
+        row = {"test": test_rel}
+        for f in ALL_FRONTENDS:
+            row[f"{f}_synth"] = "no"
+            row[f"{f}_correct"] = "N/A"
+            row[f"{f}_detail"] = f"harness-error: {type(e).__name__}: {e}"
+        return row
 
 
 def process_test(test_rel: str, args) -> dict:
@@ -318,14 +336,14 @@ def main() -> int:
     rows: list[dict] = []
     if args.jobs > 1:
         with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-            futs = {ex.submit(process_test, t, args): t for t in tests}
+            futs = {ex.submit(safe_process, t, args): t for t in tests}
             for i, fut in enumerate(as_completed(futs), 1):
                 r = fut.result()
                 rows.append(r)
                 print(f"  [{i}/{len(tests)}] {r['test']}")
     else:
         for i, t in enumerate(tests, 1):
-            r = process_test(t, args)
+            r = safe_process(t, args)
             rows.append(r)
             summ = " ".join(f"{f}:{r[f'{f}_synth']}/{r[f'{f}_correct']}"
                             for f in ALL_FRONTENDS)
