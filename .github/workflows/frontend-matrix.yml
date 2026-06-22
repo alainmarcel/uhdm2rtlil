@@ -33,13 +33,15 @@ on:
         required: false
         default: false
       jobs:
-        # 2, not 4: formal-SAT (and Verilator) are memory-hungry, and 4 concurrent
-        # solves on a heavy-design cluster OOM-kill the 16 GB runner ("runner
-        # received a shutdown signal", exit 143).  Shards finish in ~6 min at 4,
-        # so there's ample time headroom to trade for memory safety.
-        description: "Parallel jobs within each shard (2 keeps memory in budget)"
+        # 1 by default: formal-SAT (and Verilator) are memory-hungry; 4 OOM-kills
+        # the 16 GB runner ("runner received a shutdown signal", exit 143), and 2
+        # STILL intermittently blows the shard timeout / gets SIGTERM'd on heavy
+        # designs (shards 2 & 5 in run 27928983694).  A single process per shard
+        # runs serially and completes cleanly (~8 min/shard, well within budget),
+        # so default to 1 for reliability; bump only if a run needs to be faster.
+        description: "Parallel jobs within each shard (1 = serial, most reliable)"
         required: false
-        default: "2"
+        default: "1"
       cycles:
         description: "Verilator co-sim cycles per test"
         required: false
@@ -190,7 +192,7 @@ jobs:
         fi
         python3 -u run_frontend_matrix.py \
           ${{ github.event.inputs.scope || '--all' }} \
-          --jobs ${{ github.event.inputs.jobs || '2' }} \
+          --jobs ${{ github.event.inputs.jobs || '1' }} \
           --cycles ${{ github.event.inputs.cycles || '100' }} \
           --prune $COSIM_FLAG \
           --shard ${{ matrix.shard }}/${{ strategy.job-total }} \
