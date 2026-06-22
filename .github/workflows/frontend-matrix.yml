@@ -220,11 +220,23 @@ jobs:
         merge-multiple: true
 
     - name: Combine shards into the final report
+      # A shard that OOM/crashes can't upload its CSV (a killed runner skips even
+      # if:always steps), so the merged report would silently be PARTIAL.  Detect
+      # missing shards and flag the run loudly instead of pretending it's complete.
       run: |
         cp shards/frontend_matrix_shard*.csv test/ 2>/dev/null || true
         cd test
-        ls -la frontend_matrix_shard*.csv || { echo "no shard CSVs"; exit 1; }
+        ls -la frontend_matrix_shard*.csv || { echo "no shard CSVs at all"; exit 1; }
+        EXPECTED=6
+        FOUND=$(ls frontend_matrix_shard*.csv 2>/dev/null | wc -l)
         python3 run_frontend_matrix.py --combine "frontend_matrix_shard*.csv"
+        echo "shards present: $FOUND / $EXPECTED" | tee -a "$GITHUB_STEP_SUMMARY"
+        if [ "$FOUND" -lt "$EXPECTED" ]; then
+          echo "::warning::PARTIAL report — only $FOUND of $EXPECTED shards produced a CSV (a shard likely OOM/crashed). Test counts are incomplete."
+          { echo "> ⚠️ **PARTIAL report**: only $FOUND of $EXPECTED shards reported."; \
+            echo "> Missing shard(s) likely OOM/crashed — test counts are incomplete."; } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
 
     - name: Publish report to job summary
       if: always()
