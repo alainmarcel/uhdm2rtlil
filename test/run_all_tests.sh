@@ -437,13 +437,9 @@ is_verilog_test() {
 
 # Normalise a copied yosys test source for the UHDM frontend (module(...) →
 # module(); strip trailing commas in port lists).
-preprocess_test_file() {
-    local file="$1"
-    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\.\.\s*)/module \1()/g' "$file"
-    sed -i 's/module\s\+\([a-zA-Z_][a-zA-Z0-9_]*\)\s*(\s*\.\s*\.\s*\.\s*)/module \1()/g' "$file"
-    sed -i 's/,[ \t]*)/)/g' "$file"
-    sed -i ':a;N;$!ba;s/,\n[ \t]*)/\n  )/g' "$file"
-}
+# Shared DUT/sibling staging (preprocess_test_file + stage_yosys_sources),
+# also used by materialize_yosys_tests.sh for the 4-frontend matrix.
+source "$SCRIPT_DIR/lib_yosys_staging.sh"
 
 # Materialise a yosys test under test/run/<rel>/ and run surelog + both
 # frontends + synth, producing the same *_from_{uhdm,verilog}{,_synth,_nohier}
@@ -459,56 +455,14 @@ setup_yosys_test() {
     local abs_dir="$RUN_DIR/${rel}"
     rm -rf "$abs_dir"; mkdir -p "$abs_dir"
 
-    local src_ext="${test_file##*.}"; local dut_ext="sv"
-    [ "$src_ext" = "v" ] && dut_ext="v"
-    cp "$test_file" "$abs_dir/dut.${dut_ext}"
-    preprocess_test_file "$abs_dir/dut.${dut_ext}"
-
-    # Some yosys tests instantiate vendor primitives defined only in a cell
-    # library that their own .ys loads via `read_verilog -lib` (e.g.
-    # arch/xilinx/bug3670 -> `read_verilog -lib -specify +/xilinx/cells_sim.v`
-    # for RAMB36E1).  The generic flow must load the same library or synth fails
-    # on the undefined cell for BOTH frontends.  Replicate exactly those -lib
-    # lines (they use `+/...`, resolved from the yosys share dir).
-    local lib_reads=""
-    local ys_file="${test_file%.*}.ys"
-    if [ -f "$ys_file" ]; then
-        lib_reads="$(grep -E '^[[:space:]]*read_verilog[[:space:]]+-lib' "$ys_file" || true)"
-    fi
-
-    # Multi-file design: a sibling .ys may `read_verilog` this test's file
-    # TOGETHER with others (e.g. sat/grom.ys:
-    #   `read_verilog grom_computer.v grom_cpu.v alu.v ram_memory.v`).
-    # The single-DUT flow would leave the cross-file submodules undefined.
-    # Detect such a line (mentions this file, not -lib), copy every other source
-    # file it lists into the run dir, and load them all on BOTH frontends so the
-    # design elaborates.  sibling_files = those extra files (the test file itself
-    # stays dut.<ext>); empty for the normal single-file case.
-    local test_base; test_base="$(basename "$test_file")"
-    local src_dir; src_dir="$(dirname "$test_file")"
-    local sibling_files=""
-    local ys
-    for ys in "$src_dir"/*.ys; do
-        [ -f "$ys" ] || continue
-        local line
-        line="$(grep -E 'read_verilog' "$ys" | grep -vE '\-lib' | grep -wF "$test_base" | head -1 || true)"
-        [ -n "$line" ] || continue
-        local tok
-        for tok in $line; do
-            tok="${tok%;}"
-            case "$tok" in
-                *.v|*.sv|*.vh|*.svh)
-                    [ "$tok" = "$test_base" ] && continue
-                    if [ -f "$src_dir/$tok" ]; then
-                        cp "$src_dir/$tok" "$abs_dir/$tok"
-                        preprocess_test_file "$abs_dir/$tok"
-                        sibling_files="$sibling_files $tok"
-                    fi
-                    ;;
-            esac
-        done
-        [ -n "$sibling_files" ] && break
-    done
+    # Stage DUT + multi-file siblings + any -lib library reads via the shared
+    # helper (the matrix's materialize_yosys_tests.sh uses the same one).
+    stage_yosys_sources "$test_file" "$abs_dir"
+    local dut_ext="$STAGE_DUT_EXT"
+    # STAGE_SIBLINGS already carries a leading space per entry, matching the
+    # ` read_verilog -sv dut.${dut_ext}${sibling_files}` template below.
+    local sibling_files="$STAGE_SIBLINGS"
+    local lib_reads="$STAGE_LIB_READS"
 
     # Skip-formal-use-cosim tests get a sim_config so analyze_test_result skips
     # the (too-slow) formal proof and relies on the random Verilator co-sim.
