@@ -282,6 +282,65 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     return "UNKNOWN"
 
 
+def load_txt_overrides() -> dict:
+    """Per-test verdict overrides distilled from `make test-all`'s adjudication
+    files (test/*.txt), keyed by test BASENAME.  These encode conclusions reached
+    with co-sim + the SAT miter + manual adjudication (iverilog, directed eval)
+    that the matrix's own per-run oracles can't always reach — so the nightly
+    classifies the SAME way `make test-all` does.
+
+    Value: {frontend: "CORRECT"|"INCORRECT"}.  Applied only to frontends that
+    actually synthesized, and never over an OOM/TIMEOUT/N-A operational state.
+    """
+    ov: dict[str, dict[str, str]] = {}
+
+    def mark(name: str, fe: str, verdict: str):
+        ov.setdefault(name, {})[fe] = verdict
+
+    # sim_equiv_classification.txt — the purpose-built override file:
+    #   `<test>  <artefact|bug>  # reason`
+    #   artefact => the UHDM-vs-Verilog divergence is NOT a UHDM bug (UHDM
+    #               correct); if the reason pins it on the Yosys VERILOG frontend,
+    #               the golden is the wrong side, so verilog is INCORRECT here.
+    #   bug      => confirmed UHDM-frontend bug (UHDM incorrect).
+    f = TEST_DIR / "sim_equiv_classification.txt"
+    if f.exists():
+        for ln in f.read_text().splitlines():
+            s = ln.strip()
+            if not s or s.startswith("#"):
+                continue
+            parts = s.split(None, 2)
+            if len(parts) < 2:
+                continue
+            name, verdict = parts[0], parts[1].lower()
+            reason = (parts[2] if len(parts) > 2 else "").lower()
+            if verdict == "bug":
+                mark(name, "uhdm", "INCORRECT")
+            elif verdict == "artefact":
+                mark(name, "uhdm", "CORRECT")
+                if "verilog" in reason and ("frontend" in reason or "wrong" in reason):
+                    mark(name, "verilog", "INCORRECT")
+
+    # cosim_uhdm_bugs.txt — confirmed UHDM bugs not (yet) in the override file.
+    # Test names are listed at the start of a comment line as `# <Name> — ...`
+    # or in the structured determinism-pass list (`Name (rtl=.. nl=..)`).
+    f = TEST_DIR / "cosim_uhdm_bugs.txt"
+    if f.exists():
+        import re
+        txt = f.read_text()
+        # `# <Name> — ...` single-test entries, and the determinism-pass grouped
+        # list `... : Name (rtl=.. nl=..), Name2 (5/0), ...` (a name immediately
+        # followed by the value notation `(rtl=` / `(<hex-or-digit>`).
+        for m in re.finditer(r"^#\s+([A-Za-z][\w]+)\s+—\s", txt, re.M):
+            mark(m.group(1), "uhdm", "INCORRECT")
+        for m in re.finditer(r"([A-Za-z][\w]{3,})\s+\((?:rtl=|[0-9a-fx]+[/ ])", txt):
+            mark(m.group(1), "uhdm", "INCORRECT")
+    return ov
+
+
+KNOWN_OVERRIDES = load_txt_overrides()
+
+
 def safe_process(test_rel: str, args) -> dict:
     """process_test guarded so one test's exception can't abort the sweep."""
     try:
@@ -336,6 +395,21 @@ def process_test(test_rel: str, args) -> dict:
         cosim = golden_cosim if f == "verilog" else cosim_result(test_rel, f, args)
         row[f"{f}_correct"] = decide(f, formal, cosim, golden_cosim)
         row[f"{f}_detail"] = f"formal={formal} cosim={cosim} golden_cosim={golden_cosim}"
+
+    # Refine UNRESOLVED verdicts with make-test-all's adjudicated conclusions
+    # (test/*.txt), which were reached with co-sim + the SAT miter + manual
+    # adjudication.  Applied ONLY where this run's own oracles couldn't decide
+    # (UNKNOWN / NO-GOLDEN) and the frontend synthesized — so a STALE entry (a
+    # since-fixed bug still listed in a .txt) can never flip a verdict the live
+    # oracles already settled as CORRECT/INCORRECT.
+    for fe, verdict in KNOWN_OVERRIDES.get(Path(test_rel).name, {}).items():
+        if fe not in args.frontends:
+            continue
+        if row.get(f"{fe}_synth") not in ("yes", "empty"):
+            continue
+        if row.get(f"{fe}_correct") in ("UNKNOWN", "NO-GOLDEN"):
+            row[f"{fe}_correct"] = verdict
+            row[f"{fe}_detail"] = row.get(f"{fe}_detail", "") + f" [txt={verdict}]"
 
     # Bound disk: the Verilator co-sim leaves a per-test working dir (obj_dir +
     # build artifacts) that, across 1000+ tests, can fill a CI runner's disk.
