@@ -1929,6 +1929,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         log("UHDM: Array_var '%s' is 1D unpacked with bit-select-only access, creating individual wires\n", array_name.c_str());
                         int array_size = 1;
                         int array_low = 0;
+                        bool array_ascending = false;  // left < right, e.g. [1:6]
                         auto first_range = (*ranges)[0];
                         // Range bounds may be `vpiConstant` (literal) or
                         // `vpiOperation` (e.g. `pt.t - 1` with `pt` a struct
@@ -1946,6 +1947,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             int right = eval_bound(first_range->Right_expr(), 0);
                             array_size = std::abs(left - right) + 1;
                             array_low = std::min(left, right);
+                            array_ascending = (left < right);
                         }
                         int element_width = 1;
                         if (array_var->Variables() && !array_var->Variables()->empty()) {
@@ -1980,28 +1982,51 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                 init_any->UhdmType() == uhdmoperation
                                     ? any_cast<const UHDM::operation*>(init_any)->VpiOpType() : -1);
                             if (auto init_op = dynamic_cast<const UHDM::operation*>(init_any)) {
+                                // Build the per-element value list from the
+                                // initializer pattern, then drive each element.
+                                std::vector<RTLIL::SigSpec> vals;
                                 if (init_op->VpiOpType() == vpiAssignmentPatternOp &&
-                                    init_op->Operands() &&
-                                    (int)init_op->Operands()->size() == array_size) {
-                                    int idx = 0;
-                                    for (auto cell_any : *init_op->Operands()) {
-                                        if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
-                                            RTLIL::SigSpec cs = import_expression(ce);
-                                            // First operand → HIGH index;
-                                            // last operand → LOW index.
-                                            int wire_i = (array_size - 1) - idx;
-                                            if (wire_i >= 0 && wire_i < array_size &&
-                                                element_wires[wire_i] &&
-                                                cs.is_fully_const()) {
-                                                if (cs.size() < element_width)
-                                                    cs.extend_u0(element_width);
-                                                else if (cs.size() > element_width)
-                                                    cs = cs.extract(0, element_width);
-                                                module->connect(
-                                                    RTLIL::SigSpec(element_wires[wire_i]), cs);
-                                            }
+                                    init_op->Operands()) {
+                                    for (auto cell_any : *init_op->Operands())
+                                        if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any))
+                                            vals.push_back(import_expression(ce));
+                                } else if (init_op->VpiOpType() == vpiMultiAssignmentPatternOp &&
+                                           init_op->Operands() &&
+                                           init_op->Operands()->size() == 2) {
+                                    // `'{N{a, b, ...}}`: operand[0] is the repeat
+                                    // count, operand[1] the element list to repeat
+                                    // (MultiAssignmentPatternOfConcat: `'{3{4,5}}`).
+                                    auto& ops = *init_op->Operands();
+                                    RTLIL::SigSpec cnt = import_expression(any_cast<const UHDM::expr*>(ops[0]));
+                                    std::vector<RTLIL::SigSpec> unit;
+                                    if (auto inner = dynamic_cast<const UHDM::operation*>(ops[1])) {
+                                        if (inner->Operands())
+                                            for (auto e : *inner->Operands())
+                                                unit.push_back(import_expression(any_cast<const UHDM::expr*>(e)));
+                                    }
+                                    if (unit.empty())
+                                        unit.push_back(import_expression(any_cast<const UHDM::expr*>(ops[1])));
+                                    if (cnt.is_fully_const())
+                                        for (int r = 0; r < cnt.as_const().as_int(); r++)
+                                            for (auto& u : unit) vals.push_back(u);
+                                }
+                                if ((int)vals.size() == array_size) {
+                                    for (int idx = 0; idx < array_size; idx++) {
+                                        RTLIL::SigSpec cs = vals[idx];
+                                        // First operand drives the index written
+                                        // first in the range: HIGH for a descending
+                                        // range (`a[1:0]`), LOW for an ascending one
+                                        // (`n[1:6]`).
+                                        int wire_i = array_ascending ? idx : (array_size - 1) - idx;
+                                        if (wire_i >= 0 && wire_i < array_size &&
+                                            element_wires[wire_i] && cs.is_fully_const()) {
+                                            if (cs.size() < element_width)
+                                                cs.extend_u0(element_width);
+                                            else if (cs.size() > element_width)
+                                                cs = cs.extract(0, element_width);
+                                            module->connect(
+                                                RTLIL::SigSpec(element_wires[wire_i]), cs);
                                         }
-                                        idx++;
                                     }
                                 }
                             }
