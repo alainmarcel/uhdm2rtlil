@@ -33,9 +33,13 @@ on:
         required: false
         default: false
       jobs:
-        description: "Parallel jobs within each shard (runner has ~4 cores)"
+        # 2, not 4: formal-SAT (and Verilator) are memory-hungry, and 4 concurrent
+        # solves on a heavy-design cluster OOM-kill the 16 GB runner ("runner
+        # received a shutdown signal", exit 143).  Shards finish in ~6 min at 4,
+        # so there's ample time headroom to trade for memory safety.
+        description: "Parallel jobs within each shard (2 keeps memory in budget)"
         required: false
-        default: "4"
+        default: "2"
       cycles:
         description: "Verilator co-sim cycles per test"
         required: false
@@ -186,7 +190,7 @@ jobs:
         fi
         python3 -u run_frontend_matrix.py \
           ${{ github.event.inputs.scope || '--all' }} \
-          --jobs ${{ github.event.inputs.jobs || '4' }} \
+          --jobs ${{ github.event.inputs.jobs || '2' }} \
           --cycles ${{ github.event.inputs.cycles || '100' }} \
           --prune $COSIM_FLAG \
           --shard ${{ matrix.shard }}/${{ strategy.job-total }} \
@@ -216,11 +220,23 @@ jobs:
         merge-multiple: true
 
     - name: Combine shards into the final report
+      # A shard that OOM/crashes can't upload its CSV (a killed runner skips even
+      # if:always steps), so the merged report would silently be PARTIAL.  Detect
+      # missing shards and flag the run loudly instead of pretending it's complete.
       run: |
         cp shards/frontend_matrix_shard*.csv test/ 2>/dev/null || true
         cd test
-        ls -la frontend_matrix_shard*.csv || { echo "no shard CSVs"; exit 1; }
+        ls -la frontend_matrix_shard*.csv || { echo "no shard CSVs at all"; exit 1; }
+        EXPECTED=6
+        FOUND=$(ls frontend_matrix_shard*.csv 2>/dev/null | wc -l)
         python3 run_frontend_matrix.py --combine "frontend_matrix_shard*.csv"
+        echo "shards present: $FOUND / $EXPECTED" | tee -a "$GITHUB_STEP_SUMMARY"
+        if [ "$FOUND" -lt "$EXPECTED" ]; then
+          echo "::warning::PARTIAL report — only $FOUND of $EXPECTED shards produced a CSV (a shard likely OOM/crashed). Test counts are incomplete."
+          { echo "> ⚠️ **PARTIAL report**: only $FOUND of $EXPECTED shards reported."; \
+            echo "> Missing shard(s) likely OOM/crashed — test counts are incomplete."; } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
 
     - name: Publish report to job summary
       if: always()
