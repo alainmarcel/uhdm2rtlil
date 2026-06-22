@@ -25,10 +25,10 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule
 - [x] BitSelectPartSelectInFunction — FIXED: packed multi-dim local element/part-select read+write in const-eval (register inner_w; bit_select returns full element; var_select+part_select range read/write; io_decl typespec), AND a cast bug — `int'(2'b11)` self-replicated all-ones as if a fill literal; now only UNSIZED (`'1`, VpiSize==-1) literals self-replicate, sized constants zero/sign-extend.
 - [A] ConcatWidth — ARTIFACT: miter EQUIVALENT; co-sim diff is uninitialised `counter_upd` X-init.
-- [?] ConstSizes
+- [A] ConstSizes — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] ContinueNested
 - [?] DotMultirange
-- [?] DotRange
+- [B] DotRange — CONFIRMED REAL UHDM BUG (UHDM-vs-RTL FAIL, Verilog PASS), but DEFERRED. `bar.l[2][1] = foo.k[2]` on packed structs is dropped entirely (no assignment emitted). A first fix (LHS hier_path var_select on a struct-field typespec_member → bit i*inner_w+j; RHS bit_select falling back to the base wire) made it produce the exact-correct `bar[15]=foo[2]` and pass co-sim, BUT regressed 6 multi-field/3D struct tests (struct_3d_packed_array, multidim_hier_path7/8, svtypes_struct_array, struct_unpacked_array_member, struct_little_endian_bit_array) because it ignores the field's OFFSET inside a multi-field struct and intercepts cases other handlers handle. Reverted. Needs offset-aware handling that only fires where existing handlers don't.
 - [?] EnumBases — verilator build-fail
 - [?] EnumFirstInInitial
 - [?] FunctionCallsFunctionWithIndexedPartSelectAsArgument
@@ -86,8 +86,8 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] TypedefInModule
 - [?] TypedefedFunctionArgument
 - [?] TypedefedRangedFunctionReturn
-- [?] UnsizedConstant
-- [?] UnsizedConstantParameter
+- [A] UnsizedConstant — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
+- [A] UnsizedConstantParameter — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] VarPassedTo2Submodules
 - [?] VoidFunction2Returns
 - [?] assignment-pattern
@@ -97,14 +97,14 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] const_fold_func
 - [?] counter_unbased
 - [?] fmt_always_comb
-- [?] fsm_using_always
+- [A] fsm_using_always — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); X-init co-sim diff; classified
 - [?] func_output_arg
 - [?] func_tern_hint
 - [?] function_arith
 - [?] int_types_blk1
 - [?] load_and_derive
 - [?] mem2reg_test1
-- [?] mixed_sign_ops
+- [A] mixed_sign_ops — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); X-init co-sim diff; classified
 - [?] mriscv_bind_sva
 - [?] param_int_types
 - [?] param_no_default
