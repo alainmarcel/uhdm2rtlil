@@ -341,6 +341,44 @@ def load_txt_overrides() -> dict:
 KNOWN_OVERRIDES = load_txt_overrides()
 
 
+def _skip_key(name: str) -> str:
+    """Normalise a test name for matching the skip .txt files / each other:
+    drop a leading `run/` and any .v/.sv/.il extension."""
+    n = name[4:] if name.startswith("run/") else name
+    import re
+    return re.sub(r"\.(v|sv|il)$", "", n)
+
+
+def _read_skip_names(fname: str) -> set:
+    """First whitespace token of each non-comment line of a make-test-all skip
+    file, normalised — so the matrix reuses the SAME lists, no new file."""
+    out: set[str] = set()
+    f = TEST_DIR / fname
+    if f.exists():
+        for ln in f.read_text().splitlines():
+            s = ln.split("#", 1)[0].strip()
+            if s:
+                out.add(_skip_key(s.split()[0]))
+    return out
+
+
+# Reuse make-test-all's own skip files (no redundant matrix-specific list).
+SKIPPED_TESTS = _read_skip_names("skipped_tests.txt")          # don't run at all
+SKIP_FORMAL_COSIM = _read_skip_names("skip_formal_cosim_tests.txt")  # synth only
+
+
+def is_non_dut(test_rel: str) -> bool:
+    """True for tests that aren't synthesizable DUTs and so are out of scope for
+    a frontend SYNTHESIS comparison: yosys error-expectation tests (run/errors/*,
+    meant to fail parsing) and testbenches (`*_tb` / `tb_*`, which simulate, not
+    synthesize).  make test-all runs these via their .ys (expect-error / sim),
+    not synth-equiv, so it never counts them as synth failures."""
+    if "/errors/" in test_rel:
+        return True
+    base = _skip_key(test_rel).rsplit("/", 1)[-1]
+    return base.endswith("_tb") or base.startswith("tb_")
+
+
 def safe_process(test_rel: str, args) -> dict:
     """process_test guarded so one test's exception can't abort the sweep."""
     try:
@@ -365,8 +403,11 @@ def process_test(test_rel: str, args) -> dict:
 
     # Compute the golden's own co-sim once — it gates every other frontend's
     # verdict (and is the verilog column's own oracle).
+    # Honour make test-all's skip_formal_cosim_tests.txt: a too-slow design (e.g.
+    # picorv32) still synthesizes but skips the formal-equiv + co-sim steps.
+    skip_fc = _skip_key(test_rel) in SKIP_FORMAL_COSIM
     golden_cosim = "skip"
-    if golden_ok and not args.no_cosim:
+    if golden_ok and not args.no_cosim and not skip_fc:
         golden_cosim = cosim_result(test_rel, "verilog", args)
 
     for f in ALL_FRONTENDS:
@@ -391,8 +432,9 @@ def process_test(test_rel: str, args) -> dict:
         if st in FAIL_STATUS:
             row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", st
             continue
-        formal = formal_result(test_rel, test_dir, f, golden_ok)
-        cosim = golden_cosim if f == "verilog" else cosim_result(test_rel, f, args)
+        formal = "n-a" if skip_fc else formal_result(test_rel, test_dir, f, golden_ok)
+        cosim = golden_cosim if f == "verilog" else \
+            ("skip" if skip_fc else cosim_result(test_rel, f, args))
         row[f"{f}_correct"] = decide(f, formal, cosim, golden_cosim)
         row[f"{f}_detail"] = f"formal={formal} cosim={cosim} golden_cosim={golden_cosim}"
 
@@ -589,6 +631,11 @@ def main() -> int:
         tests = discover_internal(args.pattern)
 
     tests.sort()
+    # Drop what make test-all also skips (its skipped_tests.txt) plus the
+    # categorically non-synthesizable tests (error-expectation tests +
+    # testbenches), so the matrix's synth column reflects real DUT failures.
+    tests = [t for t in tests
+             if _skip_key(t) not in SKIPPED_TESTS and not is_non_dut(t)]
     # --- shard selection: keep every Nth test (strided so heavy/light tests
     # spread evenly across shards) ---------------------------------------------
     if args.shard:
