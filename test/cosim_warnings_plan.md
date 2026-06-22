@@ -19,10 +19,10 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [x] TypedefedFunctionArgument — FIXED by the same vpiReturn/var_select fix.
 - [x] CaseInside — FIXED: `case(x) inside` with a `[lo:hi]` range item — Surelog wraps the match-set in vpiInsideOp/vpiListOp, which import_case_stmt_comb returned empty for (first item became default -> y=01 always). Now expand inside-set members into equality compares; ranges expand to individual values.
 - [?] 1DUnpackedArray
-- [?] 2DParameterOfInstance
-- [?] 2DUnpackedFunctionArgument — BUG (deeper): unpacked array passed to function; element-order vs read-offset inconsistency (a=0, want 1). iverilog REJECTS this construct; only Verilator accepts. Niche — deprioritised.
+- [B] 2DParameterOfInstance — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
+- [B] 2DUnpackedFunctionArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] AssignSizeOfVar
-- [?] BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule
+- [B] BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [x] BitSelectPartSelectInFunction — FIXED: packed multi-dim local element/part-select read+write in const-eval (register inner_w; bit_select returns full element; var_select+part_select range read/write; io_decl typespec), AND a cast bug — `int'(2'b11)` self-replicated all-ones as if a fill literal; now only UNSIZED (`'1`, VpiSize==-1) literals self-replicate, sized constants zero/sign-extend.
 - [A] ConcatWidth — ARTIFACT: miter EQUIVALENT; co-sim diff is uninitialised `counter_upd` X-init.
 - [A] ConstSizes — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
@@ -32,56 +32,56 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] EnumBases — verilator build-fail
 - [?] EnumFirstInInitial
 - [?] FunctionCallsFunctionWithIndexedPartSelectAsArgument
-- [?] FunctionOutputArgument
+- [B] FunctionOutputArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [x] FunctionParam — FIXED: unpacked-parameter-array element read in const-eval (`return X[0]`). Resolve value from module_inst Param_assigns; operands are in ascending index order.
 - [x] SelectGivenBySelectOnParameterInFunction — FIXED (same batch): param-array element + packed-local var_select (`c[idx][0]`) + function-local var initializer in const-eval + variable-as-LHS assignment.
 - [?] FunctionWireAssignmentOnDeclaration
 - [?] FunctionWithOverriddenParameter
 - [?] GenIfInside
-- [?] GetC
+- [B] GetC — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] ImportFunction
 - [?] ImportedFunctionCallInModuleAndSubmodule
-- [?] IndexedPartSelectInFor
+- [B] IndexedPartSelectInFor — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] InterfaceAsPort
 - [?] InterfaceAssign
 - [?] LargeModuleParameter
 - [?] LocalParamSelect
-- [?] LogicPackedArray
+- [B] LogicPackedArray — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] MemoryPort
-- [?] MemorySlice
+- [B] MemorySlice — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] ModuleInstantiationAndIndirectParams
-- [?] MultiAssignmentPatternOfConcat
+- [B] MultiAssignmentPatternOfConcat — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] MultiplePrints
 - [?] NestedForLoops
-- [?] NestedPatternPassedAsPort
+- [B] NestedPatternPassedAsPort — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] OneArithShift
 - [?] OneClass
 - [x] OneInside — FIXED: `x inside {set}` EXPRESSION (vpiInsideOp) unhandled in import_operation -> returned empty -> `b = a[2] & (a inside {...})` folded to 0. Now build OR-of-equalities (+ range checks for [lo:hi] members).
-- [?] OneNetModport
+- [B] OneNetModport — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] OneShift
-- [?] ParameterPackedArray
+- [B] ParameterPackedArray — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] ParameterWithUnderscoreValueDividedPassedFromCommandLine
 - [?] PartSelectInFor
-- [?] PatternAssignmentOfStructParam
-- [?] PatternStruct
-- [?] PutC
+- [B] PatternAssignmentOfStructParam — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
+- [B] PatternStruct — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
+- [B] PutC — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] RealValue
 - [x] Replication — FIXED: `'{8{1}}` (vpiMultiAssignmentPatternOp) sized each element to the literal's natural 64-bit width → 512-bit value truncated to 0x01. Now resize the element to target_width/count (=1 bit for logic[7:0]) → 0xFF.
-- [?] SelectFromUnpackedInFunction
+- [B] SelectFromUnpackedInFunction — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] SelectOnMemberSelectedFrom2DArray
 - [?] Shortreal
-- [?] StreamOp
-- [?] StreamOpImplicitSliceSize
+- [B] StreamOp — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
+- [B] StreamOpImplicitSliceSize — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] StringAssignConcatenation
 - [?] StringAssignment
 - [?] StringLocalParamInitByConcatenation
 - [?] StringWithBackslash
 - [?] StructInPackage
 - [?] StructLocalParam
-- [?] StructParameterInitializedWithPatternAndReferenced
+- [B] StructParameterInitializedWithPatternAndReferenced — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] SumOfParameters
 - [?] SystemFunctions
-- [?] TaskOutputArgument
+- [B] TaskOutputArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] TaskReturn
 - [?] TypedefInModule
 - [?] TypedefedFunctionArgument
@@ -89,7 +89,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [A] UnsizedConstant — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] UnsizedConstantParameter — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] VarPassedTo2Submodules
-- [?] VoidFunction2Returns
+- [B] VoidFunction2Returns — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] assignment-pattern
 - [?] case_expr_extend
 - [?] case_expr_query
@@ -110,7 +110,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] param_no_default
 - [?] port_sign_extend
 - [?] priority_memory
-- [?] rsp_gen_minimal
+- [B] rsp_gen_minimal — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] signed_ext_case
 - [?] simple_forloops
 - [?] simple_function

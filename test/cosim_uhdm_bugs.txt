@@ -84,3 +84,40 @@
 #
 # simple_memory — UHDM-vs-RTL co-sim FAIL, Verilog PASS (memory-related; not yet
 #   root-caused).
+#
+# ===========================================================================
+# DETERMINISM-PASS BACKLOG (surfaced 2026-06).  These were cosim warnings the
+# SAT miter could NOT classify (miter INCONCLUSIVE: they BUILD-FAIL in the Yosys
+# Verilog frontend AND iverilog can't parse them, so there is no reference
+# netlist).  But all are COMBINATIONAL (no clock -> no X-init), the co-sim uses a
+# fixed seed, and each shows a DETERMINATE value mismatch where the UHDM netlist
+# (nl) computes the wrong value vs the Verilator behavioural-RTL reference (rtl).
+# Combinational + deterministic + UHDM-only-wrong => confirmed UHDM-frontend bugs
+# (the UHDM netlist mis-synthesises the construct).  Fix + remove one at a time;
+# validate with a directed `eval`, not the flaky co-sim.  Grouped by feature:
+#
+#  packed-array param/logic : ParameterPackedArray (rtl=5 nl=0), LogicPackedArray (5 nl=1)
+#  assignment patterns      : PatternStruct (7d/0), MultiAssignmentPatternOfConcat (5/0),
+#                             PatternAssignmentOfStructParam (a/0), NestedPatternPassedAsPort (1/0),
+#                             StructParameterInitializedWithPatternAndReferenced (3/0)
+#  streaming {>>}/{<<}      : StreamOp (ff7f2a17/0), StreamOpImplicitSliceSize (42/0)
+#  func/task out-arg+return : FunctionOutputArgument (1/0), TaskOutputArgument (1/0),
+#                             VoidFunction2Returns (1/0), SelectFromUnpackedInFunction (4/0),
+#                             2DUnpackedFunctionArgument (1/0)
+#  selects / slices         : IndexedPartSelectInFor (89abcdef/0), MemorySlice (5/0),
+#                             2DParameterOfInstance (16c41252/1),
+#                             BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule (0/1)
+#  hier / modport / io      : EscapedIdentifiersInHierPath (d05/8ae), OneNetModport (1/0),
+#                             GetC (73/0), PutC (1/0), unbased_unsized_param (ffff..ffff/0),
+#                             rsp_gen_minimal (5c00/3400)
+#
+# NOT bugs from the same inconclusive set (recorded so they are not re-triaged):
+#  - vacuous (output never exercised; need DUT restructuring to observe):
+#      GenIfInside, ModuleInstantiationAndIndirectParams, OneShift, OneArithShift,
+#      struct_pattern_loop
+#  - sim-only / intentional-X artefacts: StringAssignment, StringAssignConcatenation,
+#      StringLocalParamInitByConcatenation, StringWithBackslash, setundef
+#  - co-sim build/synth error (investigate harness, not necessarily a bug):
+#      assignment-pattern, EnumBases, TaskReturn
+#  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
+# ===========================================================================
