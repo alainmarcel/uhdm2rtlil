@@ -84,3 +84,51 @@
 #
 # simple_memory — UHDM-vs-RTL co-sim FAIL, Verilog PASS (memory-related; not yet
 #   root-caused).
+#
+# ===========================================================================
+# DETERMINISM-PASS BACKLOG (surfaced 2026-06).  These were cosim warnings the
+# SAT miter could NOT classify (miter INCONCLUSIVE: they BUILD-FAIL in the Yosys
+# Verilog frontend AND iverilog can't parse them, so there is no reference
+# netlist).  But all are COMBINATIONAL (no clock -> no X-init), the co-sim uses a
+# fixed seed, and each shows a DETERMINATE value mismatch where the UHDM netlist
+# (nl) computes the wrong value vs the Verilator behavioural-RTL reference (rtl).
+# Combinational + deterministic + UHDM-only-wrong => confirmed UHDM-frontend bugs
+# (the UHDM netlist mis-synthesises the construct).  Fix + remove one at a time;
+# validate with a directed `eval`, not the flaky co-sim.  Grouped by feature:
+#
+#  packed-array param/logic : ParameterPackedArray (rtl=5 nl=0), LogicPackedArray (5 nl=1)
+#  assignment patterns      : PatternStruct (7d/0), MultiAssignmentPatternOfConcat (5/0),
+#                             PatternAssignmentOfStructParam (a/0), NestedPatternPassedAsPort (1/0),
+#                             StructParameterInitializedWithPatternAndReferenced (3/0)
+#  streaming {>>}/{<<}      : StreamOp (ff7f2a17/0), StreamOpImplicitSliceSize (42/0)
+#  func/task out-arg+return : FunctionOutputArgument (1/0), TaskOutputArgument (1/0),
+#                             VoidFunction2Returns (1/0), SelectFromUnpackedInFunction (4/0),
+#                             2DUnpackedFunctionArgument (1/0)
+#  selects / slices         : IndexedPartSelectInFor (89abcdef/0), MemorySlice (5/0),
+#                             2DParameterOfInstance (16c41252/1),
+#                             BitSelectOfParameterPassedToSubmoduleInGenForOfSubmodule (0/1)
+#  hier / modport / io      : EscapedIdentifiersInHierPath (d05/8ae), OneNetModport (1/0),
+#                             GetC (73/0), PutC (1/0), unbased_unsized_param (ffff..ffff/0),
+#                             rsp_gen_minimal (5c00/3400)
+#
+# NON-BUGS from the same inconclusive set — now PROCESSED (2026-06):
+#  - RESOLVED by observability restructure (co-sim now PASS, no longer warnings):
+#      OneShift, OneArithShift (1-bit ports + illegal assign-to-reg -> full-width
+#      well-formed ports); GenIfInside (matched `inside` branch made non-zero);
+#      ModuleInstantiationAndIndirectParams (expose resolved indirect param
+#      IAmConst=8 instead of `assign o='0`).
+#  - struct_pattern_loop: restructuring it for observability EXPOSED a real bug
+#      (nested pattern out=0 vs 1) — now tracked below as a confirmed bug.
+#  - ARTEFACTS classified (sim_equiv_analyzed.txt + classification override):
+#      StringAssignment/StringAssignConcatenation/StringLocalParamInitByConcatenation/
+#      StringWithBackslash (non-synth `string` ports), setundef (intentional X),
+#      EnumBases (undriven enum-decl-only), TaskReturn (procedural assign-in-task,
+#      undriven), assignment-pattern (self-checking asserts $stop Verilator).
+#  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
+# ===========================================================================
+
+# struct_pattern_loop — nested packed/unpacked array pattern assignment bug,
+#   exposed by restructuring the test for observability ('{'b0} -> '{'b1}).
+#   `bit [0:0][0:0] b [0:0]; assign b = '{'b1}; out = b[0][0][0]` gives out=0 in
+#   UHDM but 1 in the Verilator reference (rtl=1 nl=0).  Deterministic
+#   combinational bug in the nested assignment-pattern lowering.

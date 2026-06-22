@@ -6,7 +6,7 @@ module FooMod();
   localparam foo_typedef_t FooParam = '{ member: 32'haa551234 };
 endmodule
 
-module dut(output o);
+module dut(output [31:0] o);
   typedef enum bit[1:0] { enum_const_0 = 0, enum_const_1 = 1 } enum_e;
   localparam int ArrayParam [2] = '{ 4, 8 };
 
@@ -21,5 +21,7 @@ module dut(output o);
 
   FooMod foo_instance();
 
-  assign o = '0;
+  // Expose the indirectly-resolved parameter so the value is observable:
+  // IAmConst = ArrayParam[IndexParam] = ArrayParam[enum_const_1] = ArrayParam[1] = 8.
+  assign o = IAmConst;
 endmodule

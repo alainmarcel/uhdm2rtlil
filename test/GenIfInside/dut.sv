@@ -19,7 +19,7 @@ import my_pkg::*;
 );
 
   if (GetWhat inside {Get0, GetDefault}) begin : gen_zero
-    assign out = 0;
+    assign out = 42;
   end else if (GetWhat == Get1) begin : gen_one
     assign out = 1;
   end else if (GetWhat == Get2) begin : gen_two

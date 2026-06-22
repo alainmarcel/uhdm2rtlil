@@ -6,7 +6,9 @@
 // Wrapped in a synthesizable top so the output is observable.
 
 module a (output bit [0:0][0:0] b [0:0]);
-  assign b = '{'b0};
+  // non-zero pattern so the wrapped output is observable (was '{'b0} -> out=0,
+  // which the co-sim flagged as vacuous all-zero activity)
+  assign b = '{'b1};
 endmodule
 
 module top (output bit out);
