@@ -71,4 +71,3 @@ setundef                              artefact   # intentional X parameter (2'b0
 EnumBases                             artefact   # output undriven; enum/typedef declarations only
 TaskReturn                            artefact   # procedural assign-in-task + undriven output
 assignment-pattern                    artefact   # self-checking asserts $stop the Verilator sim
-struct_pattern_loop                   bug        # nested packed/unpacked pattern: out=0 vs RTL 1 (real bug)

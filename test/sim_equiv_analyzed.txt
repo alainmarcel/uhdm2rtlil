@@ -446,10 +446,6 @@ Test: setundef
     Inconclusive: Verilog frontend build-fails (no reference).  Exercises
     undef handling; UHDM co-sim is vacuous, miter cannot run.
 
-Test: struct_pattern_loop
-    Inconclusive: UHDM-only (no Verilog reference).  Vacuous (constant)
-    output; nothing to formally compare.
-
 # --- 🐛 CONFIRMED UHDM-vs-Verilog BUGS (see cosim_uhdm_bugs.txt) -----------
 # UHDM-synth diverges from BOTH the behavioral RTL and the Yosys Verilog
 # frontend (UHDM-cosim FAIL while Verilog-cosim PASS).  These FALSELY pass
@@ -503,12 +499,6 @@ Test: assignment-pattern
     any UHDM comparison (the reference RTL fails its own assert).  Incompatible
     with the synth-equivalence co-sim flow; not a UHDM-frontend comparison.
 
-Test: struct_pattern_loop
-    EXPECTED MISMATCH (real UHDM bug, tracked in cosim_uhdm_bugs.txt).  After
-    restructuring the pattern to `'{'b1}` for observability, the nested packed/
-    unpacked array pattern assignment gives out=0 where the Verilator reference
-    gives out=1 (rtl=1 nl=0).  Deterministic combinational bug; left as an
-    expected mismatch until the nested-pattern lowering is fixed.
 
 
 
