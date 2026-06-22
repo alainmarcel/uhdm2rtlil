@@ -31,6 +31,8 @@ import os
 import signal
 import subprocess
 import sys
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -39,6 +41,41 @@ from pathlib import Path
 # for hours.  Override via FRONTEND_TIMEOUT_S (also honored by the workflow shell).
 STEP_TIMEOUT = int(os.environ.get("FRONTEND_TIMEOUT_S", "360"))
 RC_TIMEOUT = 124
+RC_OOM = 125
+# Hard per-job memory cap.  A single heavy synth/formal/Verilator job (e.g. a
+# wide-RAM design like priority_memory) can exhaust the 16 GB CI runner and get
+# the WHOLE action SIGTERM'd ("runner received a shutdown signal", exit 143) —
+# losing the shard with no result and no log of which test did it.  We cap each
+# job's process-group RSS and SIGKILL it OURSELVES first, recording an `oom`
+# status, so the sweep keeps going.  Override via FRONTEND_MEM_LIMIT_MB; 0 = off.
+MEM_LIMIT_BYTES = int(os.environ.get("FRONTEND_MEM_LIMIT_MB", "12000")) * 1024 * 1024
+MEM_POLL_S = 1.0
+
+
+def _pgroup_rss_bytes(pgid: int) -> int:
+    """Total resident memory (bytes) of every process in process group `pgid`."""
+    page = os.sysconf("SC_PAGE_SIZE")
+    total = 0
+    try:
+        pids = os.listdir("/proc")
+    except OSError:
+        return 0
+    for pid in pids:
+        if not pid.isdigit():
+            continue
+        try:
+            with open(f"/proc/{pid}/stat") as fh:
+                data = fh.read()
+            # comm (field 2) is parenthesised and may contain spaces/parens —
+            # parse the fixed fields AFTER the final ')'.
+            after = data[data.rfind(")") + 2:].split()
+            if int(after[2]) != pgid:          # state, ppid, pgrp
+                continue
+            with open(f"/proc/{pid}/statm") as fh:
+                total += int(fh.read().split()[1]) * page   # field 2 = resident
+        except (OSError, ValueError, IndexError):
+            continue
+    return total
 
 ALL_FRONTENDS = ["verilog", "uhdm", "sv2v", "slang"]
 
@@ -49,7 +86,7 @@ PROJECT_ROOT = TEST_DIR.parent
 SYNTH_TOKEN = {
     "OK": "yes", "NO_GATES": "empty", "SYNTH_FAIL": "no",
     "READ_FAIL": "no", "CONVERT_FAIL": "no", "CRASH": "crash",
-    "TOOL_MISSING": "missing", "TIMEOUT": "timeout",
+    "TOOL_MISSING": "missing", "TIMEOUT": "timeout", "OOM": "oom",
 }
 
 
@@ -67,19 +104,42 @@ def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except OSError as e:
         return 1, f"[spawn-failed] {e}"
-    try:
-        out, _ = p.communicate(timeout=timeout)
-        return p.returncode, out
-    except subprocess.TimeoutExpired:
+    # Drain stdout in a thread so a chatty job can't deadlock on a full pipe
+    # while we poll its memory; meanwhile watch wall-time AND process-group RSS.
+    chunks: list[str] = []
+    reader = threading.Thread(target=lambda: chunks.extend(p.stdout), daemon=True)
+    reader.start()
+    pgid = p.pid                       # start_new_session => pgid == pid
+    deadline = (time.time() + timeout) if timeout else None
+    verdict = None                     # None=ok | RC_TIMEOUT | RC_OOM
+    while True:
         try:
-            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            p.wait(timeout=MEM_POLL_S)
+            break
+        except subprocess.TimeoutExpired:
+            pass
+        if deadline and time.time() > deadline:
+            verdict = RC_TIMEOUT
+            break
+        if MEM_LIMIT_BYTES and _pgroup_rss_bytes(pgid) > MEM_LIMIT_BYTES:
+            verdict = RC_OOM
+            break
+    if verdict is not None:
+        try:
+            os.killpg(pgid, signal.SIGKILL)
         except (ProcessLookupError, PermissionError):
             pass
         try:
-            out, _ = p.communicate(timeout=15)
+            p.wait(timeout=15)
         except Exception:
-            out = ""
-        return RC_TIMEOUT, (out or "") + "\n[timeout]"
+            pass
+    reader.join(timeout=15)
+    out = "".join(chunks)
+    if verdict == RC_TIMEOUT:
+        return RC_TIMEOUT, out + "\n[timeout]"
+    if verdict == RC_OOM:
+        return RC_OOM, out + "\n[oom]"
+    return p.returncode, out
 
 
 def discover_internal(pattern: str) -> list[str]:
@@ -134,6 +194,8 @@ def cosim_result(test_rel: str, frontend: str, args) -> str:
                 cwd=TEST_DIR, timeout=STEP_TIMEOUT)
     if rc == RC_TIMEOUT:
         return "timeout"
+    if rc == RC_OOM:
+        return "oom"
     return {0: "pass", 1: "fail", 77: "skip"}.get(rc, "fail")
 
 
@@ -158,6 +220,8 @@ def formal_result(test_rel: str, test_dir: Path, frontend: str,
     rc, _ = run(cmd, cwd=TEST_DIR, timeout=STEP_TIMEOUT)
     if rc == RC_TIMEOUT:
         return "timeout"
+    if rc == RC_OOM:
+        return "oom"
     return {0: "equiv", 1: "non-equiv", 2: "inconclusive"}.get(rc, "inconclusive")
 
 
@@ -174,6 +238,8 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     """
     # A step that blew the 6-min cap is neither correct nor incorrect — give it
     # its own category so it can't masquerade as a fail/unknown.
+    if formal == "oom" or cosim == "oom":
+        return "OOM"
     if formal == "timeout" or cosim == "timeout":
         return "TIMEOUT"
     if frontend == "verilog":
@@ -219,8 +285,8 @@ def process_test(test_rel: str, args) -> dict:
     """Run the full matrix pipeline for one test; return a result row."""
     test_dir = (TEST_DIR / test_rel).resolve()
     row = {"test": test_rel}
-    run([str(TEST_DIR / "frontend_matrix_workflow.sh"), test_rel],
-        cwd=TEST_DIR, timeout=900)
+    wf_rc, _ = run([str(TEST_DIR / "frontend_matrix_workflow.sh"), test_rel],
+                   cwd=TEST_DIR, timeout=900)
     status = read_status(test_dir)
     golden_ok = status.get("verilog", ("", 0))[0] in ("OK", "NO_GATES")
 
@@ -232,9 +298,19 @@ def process_test(test_rel: str, args) -> dict:
 
     for f in ALL_FRONTENDS:
         st = status.get(f, ("READ_FAIL", 0))[0]
+        # If the synth job hit the memory cap (or the wall-time cap) and this
+        # frontend never wrote a status, attribute it to OOM/TIMEOUT rather than
+        # a spurious READ_FAIL — the job was killed mid-flight, not broken.
+        if f not in status and wf_rc == RC_OOM:
+            st = "OOM"
+        elif f not in status and wf_rc == RC_TIMEOUT:
+            st = "TIMEOUT"
         row[f"{f}_synth"] = SYNTH_TOKEN.get(st, "no")
         if f not in args.frontends:
             row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", "skipped"
+            continue
+        if st == "OOM":
+            row[f"{f}_correct"], row[f"{f}_detail"] = "OOM", "synth-oom"
             continue
         if st == "TIMEOUT":
             row[f"{f}_correct"], row[f"{f}_detail"] = "TIMEOUT", "synth-timeout"
@@ -272,7 +348,7 @@ def write_markdown(rows: list[dict], out_md: Path, args):
     # Per-frontend aggregate counts.
     agg = {f: {"synth_yes": 0, "synth_empty": 0, "synth_no": 0, "crash": 0,
                "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0,
-               "timeout": 0}
+               "timeout": 0, "oom": 0}
            for f in ALL_FRONTENDS}
     for r in rows:
         for f in ALL_FRONTENDS:
@@ -289,6 +365,8 @@ def write_markdown(rows: list[dict], out_md: Path, args):
             # Timeout: synth blew the cap (synth=timeout) or a formal/co-sim step
             # did (correct=TIMEOUT) — count each test once per frontend.
             agg[f]["timeout"] += c == "TIMEOUT"
+            # OOM: a step exceeded the hard memory cap and was killed.
+            agg[f]["oom"] += c == "OOM"
 
     lines = [f"# Frontend Regression Matrix",
              "",
@@ -305,14 +383,14 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "`Timeout` = a frontend's synth, formal-equiv, or co-sim exceeded "
              f"the {STEP_TIMEOUT // 60}-min per-step cap.",
              "",
-             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown | Timeout |",
-             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|--------:|"]
+             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown | Timeout | OOM |",
+             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|--------:|----:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
         lines.append(
             f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
             f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
-            f"{a['unknown']} | {a['timeout']} |")
+            f"{a['unknown']} | {a['timeout']} | {a['oom']} |")
 
     # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
     disagree = []
