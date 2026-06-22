@@ -1402,6 +1402,79 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // Fully-indexed N-dim var_select `x[i0][i1]...[ik]` on a
+                // packed+unpacked array that carries no wire metadata.  Walk the
+                // array_var typespec dimensions outer->inner (unpacked
+                // array_typespec Ranges, then packed Elem_typespec/logic_typespec
+                // Ranges) and compute the flat leaf-bit offset ourselves
+                // (struct_pattern_loop: `bit [0:0][0:0] b [0:0]; b[0][0][0]`).
+                if (exprs->size() >= 3) {
+                    RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
+                                    : module->wire(RTLIL::escape_id(base_name));
+                    const UHDM::any* ats = nullptr;
+                    if (vs->Actual_group())
+                        if (auto e = dynamic_cast<const UHDM::expr*>(vs->Actual_group()))
+                            if (e->Typespec()) ats = e->Typespec()->Actual_typespec();
+                    if (bw && ats) {
+                        // The packed (inner) dims are not reachable from the
+                        // array_var typespec here (an empty array_typespec), but
+                        // the UNPACKED (outer) dims live on the array_var's
+                        // Ranges() and the wire is already flattened, so derive
+                        // the packed-element bit-width from the wire width.
+                        std::vector<std::pair<int,int>> udims; // (size, low) outer->inner
+                        bool dim_ok = true;
+                        auto add_ranges = [&](UHDM::VectorOfrange* rs){
+                            if (!rs) return;
+                            for (auto r : *rs) {
+                                RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                if (l.is_fully_const() && rr.is_fully_const()) {
+                                    int lv = l.as_const().as_int(), rv = rr.as_const().as_int();
+                                    udims.push_back({std::abs(lv - rv) + 1, std::min(lv, rv)});
+                                } else dim_ok = false;
+                            }
+                        };
+                        if (auto av = dynamic_cast<const UHDM::array_var*>(vs->Actual_group()))
+                            add_ranges(av->Ranges());
+                        size_t n_unp = udims.size();
+                        if (dim_ok && n_unp >= 1 && exprs->size() >= n_unp) {
+                            int unp_product = 1;
+                            for (auto& d : udims) unp_product *= d.first;
+                            if (unp_product > 0 && bw->width % unp_product == 0) {
+                                int packed_bits = bw->width / unp_product;
+                                bool ok = true;
+                                long unp_flat = 0;
+                                for (size_t d = 0; d < n_unp; d++) {
+                                    RTLIL::SigSpec is = import_expression((*exprs)[d], input_mapping);
+                                    if (!is.is_fully_const()) { ok = false; break; }
+                                    unp_flat = unp_flat * udims[d].first +
+                                               (is.as_const().as_int() - udims[d].second);
+                                }
+                                // Remaining indices select within the packed
+                                // element.  We don't have the packed dim sizes,
+                                // so only resolve the unambiguous single-bit case
+                                // (all remaining indices must be 0) — enough for
+                                // `bit [0:0][0:0] b [0:0]` (struct_pattern_loop).
+                                bool rem_zero = true;
+                                for (size_t d = n_unp; d < exprs->size(); d++) {
+                                    RTLIL::SigSpec is = import_expression((*exprs)[d], input_mapping);
+                                    if (!is.is_fully_const() || is.as_const().as_int() != 0)
+                                        rem_zero = false;
+                                }
+                                if (ok && rem_zero && packed_bits == 1) {
+                                    int bit_off = (int)unp_flat;
+                                    if (bit_off >= 0 && bit_off < bw->width) {
+                                        log("  vpiVarSelect: %dD %s[...] → %s[%d]\n",
+                                            (int)exprs->size(), base_name.c_str(),
+                                            bw->name.c_str(), bit_off);
+                                        return RTLIL::SigSpec(bw).extract(bit_off, 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // First expression is the array index.
                 const expr* first_idx = (*exprs)[0];
                 RTLIL::SigSpec idx_sig = import_expression(first_idx, input_mapping);
