@@ -1163,6 +1163,14 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         lhs_expr ? lhs_expr->VpiType() : -1,
         lhs_expr ? UHDM::UhdmName(lhs_expr->UhdmType()).c_str() : "null");
     RTLIL::SigSpec lhs = import_expression(lhs_expr);
+    // A single packed `struct_net` LHS (e.g. `my_struct s = '{word:125}`) is not
+    // resolved by import_expression (only the unpacked array-of-structs path
+    // above handles struct_net) — fall back to the same-named module wire so the
+    // initializer actually drives it (PatternStruct).
+    if (lhs.empty() && lhs_expr && lhs_expr->UhdmType() == uhdmstruct_net) {
+        if (RTLIL::Wire *w = module->wire(RTLIL::escape_id(std::string(lhs_expr->VpiName()))))
+            lhs = RTLIL::SigSpec(w);
+    }
     // Set context width from LHS so arithmetic operations produce correctly-sized results
     // Per Verilog semantics, LHS width propagates into RHS expression evaluation
     expression_context_width = lhs.size();
