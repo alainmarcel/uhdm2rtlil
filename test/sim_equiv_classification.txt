@@ -59,3 +59,16 @@ logic_ops              artefact   # `input [0:7]` ascending part-select; Verilog
 genvar_loop_decl_2        artefact   # one undriven bit: UHDM '?'(z) vs Verilog 'x'
 asym_ram_sdp_write_wider  artefact   # wide-port RAM; both co-sims PASS (miter inductive/X)
 mem2reg_test1             artefact   # both co-sims fail vs RTL -> Verilator-vs-synth, not a frontend diff
+
+# --- determinism-pass non-bugs: miter INCONCLUSIVE (Verilog frontend can't build) ---
+# Adjudicated by the determinism pass (combinational + fixed-seed co-sim).  See
+# sim_equiv_analyzed.txt for the per-test reasoning.
+StringAssignment                      artefact   # `string` port: non-synthesizable, sim-only
+StringAssignConcatenation             artefact   # `string` concat port: sim-only
+StringLocalParamInitByConcatenation   artefact   # `string` localparam concat: sim-only
+StringWithBackslash                   artefact   # `string` literal port: sim-only
+setundef                              artefact   # intentional X parameter (2'b0x) + assert
+EnumBases                             artefact   # output undriven; enum/typedef declarations only
+TaskReturn                            artefact   # procedural assign-in-task + undriven output
+assignment-pattern                    artefact   # self-checking asserts $stop the Verilator sim
+struct_pattern_loop                   bug        # nested packed/unpacked pattern: out=0 vs RTL 1 (real bug)

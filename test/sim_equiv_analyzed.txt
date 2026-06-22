@@ -457,5 +457,58 @@ Test: struct_pattern_loop
 # Miter-Formal failures (failing_tests.txt) so the suite stays green; fix one
 # isolated change at a time and remove from all the tracking files.
 
+# ===========================================================================
+# Determinism-pass NON-BUGS (2026-06).  From the 39 miter-INCONCLUSIVE warnings
+# (Verilog frontend can't build them, so no reference netlist), these are the
+# ones the determinism pass classified as NOT real UHDM bugs.  miter stays
+# INCONCLUSIVE -> see sim_equiv_classification.txt for the artefact/bug override.
+# ===========================================================================
+
+Test: StringAssignment
+    Artefact: `output string o` — SystemVerilog `string` is a dynamic, non-
+    synthesizable type.  The synth netlist cannot represent the string port, so
+    the co-sim vs Verilator's behavioural string handling can never match.  Not
+    a UHDM bug (the construct is sim-only).
+
+Test: StringAssignConcatenation
+    Artefact: `output string o = {NAME, "efgh"}` — string concatenation on a
+    non-synthesizable `string` port.  Sim-only; co-sim cannot compare.
+
+Test: StringLocalParamInitByConcatenation
+    Artefact: `localparam string` concatenation driving a `string` port.  Sim-
+    only, non-synthesizable.
+
+Test: StringWithBackslash
+    Artefact: `string` literal with escapes on a `string` port.  Sim-only,
+    non-synthesizable.
+
+Test: setundef
+    Artefact: intentional X — `foo #(2'b0x)` passes a parameter with an X bit
+    and asserts `o == 2'b00`.  An X-semantics / $setundef test, not a value the
+    co-sim can compare deterministically.
+
+Test: EnumBases
+    Artefact: the `output int o` is UNDRIVEN — the module is a set of enum/
+    typedef declarations with no logic, so synth optimises it to nothing
+    ("no top module" after opt).  No observable behaviour to co-sim.
+
+Test: TaskReturn
+    Artefact: tests `return` inside a task that uses procedural continuous
+    `assign x = ..` (non-standard); the output ends up undriven in synth.  No
+    deterministic synthesizable behaviour for the co-sim to compare.
+
+Test: assignment-pattern
+    Artefact: self-checking design — the DUT contains embedded `assert(j==..)`,
+    `assert(m==192'h..)` etc. that `$stop` the Verilator behavioural sim before
+    any UHDM comparison (the reference RTL fails its own assert).  Incompatible
+    with the synth-equivalence co-sim flow; not a UHDM-frontend comparison.
+
+Test: struct_pattern_loop
+    EXPECTED MISMATCH (real UHDM bug, tracked in cosim_uhdm_bugs.txt).  After
+    restructuring the pattern to `'{'b1}` for observability, the nested packed/
+    unpacked array pattern assignment gives out=0 where the Verilator reference
+    gives out=1 (rtl=1 nl=0).  Deterministic combinational bug; left as an
+    expected mismatch until the nested-pattern lowering is fixed.
+
 
 

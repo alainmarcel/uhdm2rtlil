@@ -111,13 +111,24 @@
 #                             GetC (73/0), PutC (1/0), unbased_unsized_param (ffff..ffff/0),
 #                             rsp_gen_minimal (5c00/3400)
 #
-# NOT bugs from the same inconclusive set (recorded so they are not re-triaged):
-#  - vacuous (output never exercised; need DUT restructuring to observe):
-#      GenIfInside, ModuleInstantiationAndIndirectParams, OneShift, OneArithShift,
-#      struct_pattern_loop
-#  - sim-only / intentional-X artefacts: StringAssignment, StringAssignConcatenation,
-#      StringLocalParamInitByConcatenation, StringWithBackslash, setundef
-#  - co-sim build/synth error (investigate harness, not necessarily a bug):
-#      assignment-pattern, EnumBases, TaskReturn
+# NON-BUGS from the same inconclusive set — now PROCESSED (2026-06):
+#  - RESOLVED by observability restructure (co-sim now PASS, no longer warnings):
+#      OneShift, OneArithShift (1-bit ports + illegal assign-to-reg -> full-width
+#      well-formed ports); GenIfInside (matched `inside` branch made non-zero);
+#      ModuleInstantiationAndIndirectParams (expose resolved indirect param
+#      IAmConst=8 instead of `assign o='0`).
+#  - struct_pattern_loop: restructuring it for observability EXPOSED a real bug
+#      (nested pattern out=0 vs 1) — now tracked below as a confirmed bug.
+#  - ARTEFACTS classified (sim_equiv_analyzed.txt + classification override):
+#      StringAssignment/StringAssignConcatenation/StringLocalParamInitByConcatenation/
+#      StringWithBackslash (non-synth `string` ports), setundef (intentional X),
+#      EnumBases (undriven enum-decl-only), TaskReturn (procedural assign-in-task,
+#      undriven), assignment-pattern (self-checking asserts $stop Verilator).
 #  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
 # ===========================================================================
+
+# struct_pattern_loop — nested packed/unpacked array pattern assignment bug,
+#   exposed by restructuring the test for observability ('{'b0} -> '{'b1}).
+#   `bit [0:0][0:0] b [0:0]; assign b = '{'b1}; out = b[0][0][0]` gives out=0 in
+#   UHDM but 1 in the Verilator reference (rtl=1 nl=0).  Deterministic
+#   combinational bug in the nested assignment-pattern lowering.
