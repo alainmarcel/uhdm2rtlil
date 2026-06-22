@@ -205,7 +205,11 @@ def formal_result(test_rel: str, test_dir: Path, frontend: str,
     if frontend == "verilog":
         return "self"
     if not golden_ok:
-        return "n-a"
+        # The verilog golden itself didn't synthesize, so there is no reference
+        # to formally compare against.  Distinct from "n-a": this frontend DID
+        # synthesize where verilog couldn't — `make test-all`'s "UHDM-only
+        # success".  Kept separate so it isn't lumped into UNKNOWN.
+        return "no-golden"
     name = Path(test_rel).name
     gold_v = test_dir / f"{name}_from_verilog_synth.v"
     gate_v = test_dir / f"{name}_from_{frontend}_synth.v"
@@ -249,6 +253,16 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
         if cosim == "fail":
             return "UNKNOWN"      # disagrees with its own RTL -> harness artefact
         return "CORRECT"          # skip: synthesized, nothing contradicts it
+
+    if formal == "no-golden":
+        # Synthesized where the verilog golden could not — no formal reference.
+        # Mirrors `make test-all`'s "UHDM-only success": a capability win, not a
+        # possible bug, so it gets its own bucket instead of UNKNOWN.
+        if cosim == "pass":
+            return "CORRECT"          # also matches the original RTL directly
+        if cosim == "fail":
+            return "UNKNOWN"          # differs from the RTL, and no golden -> unclear
+        return "NO-GOLDEN"            # cosim unavailable (e.g. --no-cosim)
 
     golden_reliable = (golden_cosim == "pass")
     if golden_reliable:
@@ -348,7 +362,7 @@ def write_markdown(rows: list[dict], out_md: Path, args):
     # Per-frontend aggregate counts.
     agg = {f: {"synth_yes": 0, "synth_empty": 0, "synth_no": 0, "crash": 0,
                "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0,
-               "timeout": 0, "oom": 0}
+               "no_golden": 0, "timeout": 0, "oom": 0}
            for f in ALL_FRONTENDS}
     for r in rows:
         for f in ALL_FRONTENDS:
@@ -362,6 +376,8 @@ def write_markdown(rows: list[dict], out_md: Path, args):
             agg[f]["correct"] += c == "CORRECT"
             agg[f]["incorrect"] += c == "INCORRECT"
             agg[f]["unknown"] += c == "UNKNOWN"
+            # Synthesized but no verilog golden to compare (UHDM-only success).
+            agg[f]["no_golden"] += c == "NO-GOLDEN"
             # Timeout: synth blew the cap (synth=timeout) or a formal/co-sim step
             # did (correct=TIMEOUT) — count each test once per frontend.
             agg[f]["timeout"] += c == "TIMEOUT"
@@ -383,14 +399,22 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "`Timeout` = a frontend's synth, formal-equiv, or co-sim exceeded "
              f"the {STEP_TIMEOUT // 60}-min per-step cap.",
              "",
-             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown | Timeout | OOM |",
-             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|--------:|----:|"]
+             "`No-golden` = the frontend synthesized but the verilog golden did "
+             "NOT, so there is no reference to formally compare against — this is "
+             "`make test-all`'s \"UHDM-only success\" (a capability win, not a "
+             "possible bug).  `Unknown` is reserved for genuine ambiguity "
+             "(formal non-equiv vs the golden with co-sim unavailable); a "
+             "`--no-cosim` run cannot adjudicate those, so run with co-sim to "
+             "match `make test-all`'s verdict on them.",
+             "",
+             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | No-golden | Unknown | Timeout | OOM |",
+             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|----------:|--------:|--------:|----:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
         lines.append(
             f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
             f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
-            f"{a['unknown']} | {a['timeout']} | {a['oom']} |")
+            f"{a['no_golden']} | {a['unknown']} | {a['timeout']} | {a['oom']} |")
 
     # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
     disagree = []
