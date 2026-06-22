@@ -333,6 +333,39 @@ Test: wandwor
 # frontends synthesise to equivalent netlists (SAT miter EQUIVALENT from
 # reset), so the divergence affects gold and gate identically.
 
+Test: ConcatWidth
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Co-sim diff is the uninitialised
+    `counter_upd` X-init; both frontends synthesise to equivalent netlists.
+
+Test: fsm_single_always
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  FSM with an uninitialised state
+    register: random-stimulus X-init drift vs RTL, identical on both frontends.
+
+Test: fsm_using_always
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Same FSM X-init drift; SAT miter
+    proves UHDM-synth == Verilog-synth from reset.
+
+Test: fsm_using_function
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Same FSM X-init drift (next-state
+    computed by a function); netlists proven equivalent.
+
+Test: mixed_sign_ops
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Mixed-sign arithmetic; co-sim
+    divergence is X-init / under-exercised output, not a frontend difference.
+
+Test: ConstSizes
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Co-sim diverges (X-init / low
+    activity) identically on both frontends; the SAT miter proves the UHDM-synth
+    and Verilog-synth netlists equivalent from reset.  Not a UHDM bug.
+
+Test: UnsizedConstant
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Verilator-vs-synth co-sim diff
+    only; both frontends synthesise to equivalent netlists.  Not a UHDM bug.
+
+Test: UnsizedConstantParameter
+    Artefact: miter EQUIVALENT (UHDM==Verilog).  Verilator-vs-synth co-sim diff
+    only; both frontends synthesise to equivalent netlists.  Not a UHDM bug.
+
 Test: counter_in_cpu_state
     Artefact: miter EQUIVALENT (UHDM==Verilog).  Vacuous/low-activity output
     under random stimulus; no value divergence vs the Verilog frontend.
