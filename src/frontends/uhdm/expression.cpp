@@ -4201,15 +4201,23 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     log_warning("Stream op with no operand\n");
                     return RTLIL::SigSpec();
                 }
-                // The single operand is already the flattened source
-                // value (the inner concat collapses to one SigSpec).
-                RTLIL::SigSpec src = operands[0];
-                int n = src.size();
+                // An EXPLICIT slice size `{<<8{val}}` is operand[0] (a constant)
+                // with the value in operand[1]; an IMPLICIT one `{<<{val}}` has
+                // just the value (slice = 1 bit).  The value is the inner concat,
+                // already collapsed to one SigSpec (StreamOp).
+                RTLIL::SigSpec src;
                 int slice_w = 1;
-                if (uhdm_op->Typespec()) {
-                    if (auto ats = uhdm_op->Typespec()->Actual_typespec())
-                        slice_w = std::max(1, get_width_from_typespec(ats, inst));
+                if (operands.size() >= 2) {
+                    if (operands[0].is_fully_const())
+                        slice_w = std::max(1, operands[0].as_const().as_int());
+                    src = operands[1];
+                } else {
+                    src = operands[0];
+                    if (uhdm_op->Typespec())
+                        if (auto ats = uhdm_op->Typespec()->Actual_typespec())
+                            slice_w = std::max(1, get_width_from_typespec(ats, inst));
                 }
+                int n = src.size();
                 // `{>>{val}}` with no slice size is a no-op identity;
                 // with a slice size it groups into `slice_w` chunks
                 // (still in source order — see LRM §11.4.14.2).
@@ -5464,6 +5472,33 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                     packed_elem_w = ew;
                     packed_outer_l = ls.as_int();
                     packed_outer_r = rs.as_int();
+                }
+            }
+        }
+    }
+
+    // Plain `wire [N-1:0][W-1:0]` (a logic_net, not a packed_array_var, with no
+    // packed_elem_width attribute): derive the element width from the
+    // bit_select's logic_typespec so `t[i]` extracts a W-bit slot, not a single
+    // bit (StreamOpImplicitSliceSize: `wire [3:0][7:0] t; t[0]`).
+    if (packed_elem_w <= 1 && wire && uhdm_bit->Actual_group()) {
+        const UHDM::ref_typespec* rt = nullptr;
+        if (auto e = dynamic_cast<const UHDM::expr*>(uhdm_bit->Actual_group()))
+            rt = e->Typespec();
+        if (rt && rt->Actual_typespec() &&
+            rt->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+            auto lt = any_cast<const UHDM::logic_typespec*>(rt->Actual_typespec());
+            if (lt && lt->Ranges() && lt->Ranges()->size() > 1) {
+                auto r0 = (*lt->Ranges())[0];
+                RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                RTLIL::SigSpec rs = import_expression(r0->Right_expr());
+                if (ls.is_fully_const() && rs.is_fully_const()) {
+                    int outer_size = std::abs(ls.as_int() - rs.as_int()) + 1;
+                    if (outer_size > 0 && base.size() % outer_size == 0) {
+                        packed_elem_w = base.size() / outer_size;
+                        packed_outer_l = ls.as_int();
+                        packed_outer_r = rs.as_int();
+                    }
                 }
             }
         }
