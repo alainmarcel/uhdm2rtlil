@@ -23,6 +23,8 @@
 #include <uhdm/uhdm_vpi_user.h>
 #include <uhdm/parameter.h>
 #include <uhdm/param_assign.h>
+#include <uhdm/scope.h>
+#include <uhdm/tagged_pattern.h>
 #include <uhdm/return_stmt.h>
 #include <uhdm/struct_net.h>
 #include <uhdm/uhdm_types.h>
@@ -3034,7 +3036,17 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         if (uhdm_op->Operands()) {
             std::vector<RTLIL::SigSpec> field_sigs;
             for (auto operand : *uhdm_op->Operands()) {
-                const expr* field_expr = any_cast<const expr*>(operand);
+                const expr* field_expr = nullptr;
+                // Named-field patterns (`'{a: 0, b: 1, ...}`) wrap each value in a
+                // `tagged_pattern` (not an expr), so unwrap its Pattern(); these
+                // are emitted in struct field order (PatternAssignmentOfStructParam).
+                if (operand->UhdmType() == uhdmtagged_pattern) {
+                    auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                    if (tp && tp->Pattern())
+                        field_expr = any_cast<const expr*>(tp->Pattern());
+                } else {
+                    field_expr = any_cast<const expr*>(operand);
+                }
                 if (!field_expr) continue;
                 RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
                 if (mode_debug)
@@ -4684,6 +4696,24 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                                     any_cast<const expr*>(pa->Rhs()));
                                 if (expr_val.is_fully_const()) {
                                     param_value = expr_val.as_const();
+                                }
+                            }
+                        } else if (auto scp = dynamic_cast<const UHDM::scope*>(parent)) {
+                            // PACKAGE/scope parameter (e.g. a struct param like
+                            // `parameter page_addr_t SeedInfoPageSel = '{...}`):
+                            // VpiValue/Expr are empty, the value lives in the
+                            // enclosing scope's Param_assigns() keyed by Lhs name.
+                            if (scp->Param_assigns()) {
+                                for (auto pa : *scp->Param_assigns()) {
+                                    if (pa->Lhs() &&
+                                        std::string(pa->Lhs()->VpiName()) == param_name &&
+                                        pa->Rhs()) {
+                                        RTLIL::SigSpec ev = import_expression(
+                                            any_cast<const expr*>(pa->Rhs()));
+                                        if (ev.is_fully_const())
+                                            param_value = ev.as_const();
+                                        break;
+                                    }
                                 }
                             }
                         }
