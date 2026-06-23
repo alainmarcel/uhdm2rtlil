@@ -336,6 +336,11 @@ struct UhdmImporter {
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
+    // Set by a `return` inside an inlined task/void-function body
+    // (inline_task_body_comb) so subsequent statements in the same block are
+    // skipped — `assign x=1; return; assign x=2;` must keep x=1 not x=2
+    // (VoidFunction2Returns).  Reset at each import_tf_call_comb entry.
+    bool tf_call_returned = false;
     // Set while evaluating a typespec RANGE bound (a compile-time constant
     // context): forces import_operation to constant-fold all-const operations
     // such as `NumScrmblBlocks-1` so get_width_from_typespec reads a literal

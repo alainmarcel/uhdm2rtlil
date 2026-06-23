@@ -6,6 +6,8 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <uhdm/assign_stmt.h>
+#include <uhdm/begin.h>
 #include <uhdm/func_call.h>
 #include <uhdm/sys_func_call.h>
 #include <uhdm/parameter.h>
@@ -3234,8 +3236,21 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
         has_local_vars = block_has_local_variables(stmt);
         has_for_decl = statement_has_for_declaration(stmt);
         has_scalar_ctrl_loop = statement_has_scalar_control_for_loop(stmt);
-        has_task_call = (stmt->VpiType() == vpiTaskCall ||
-                         stmt->VpiType() == vpiMethodTaskCall);
+        // A task/func call drives its output/inout args; route to the comb
+        // (inlining) path.  The call may be the top statement OR the (only)
+        // statement inside a `begin` block, and a VOID FUNCTION call is a
+        // vpiFuncCall, not vpiTaskCall (FunctionOutputArgument / TaskOutputArgument
+        // / VoidFunction2Returns: `initial begin my_pkg::assign_1(o); end`).
+        auto is_call_stmt = [](const UHDM::any* s) {
+            int t = s->VpiType();
+            return t == vpiTaskCall || t == vpiMethodTaskCall || t == vpiFuncCall;
+        };
+        has_task_call = is_call_stmt(stmt);
+        if (!has_task_call && stmt->VpiType() == vpiBegin)
+            if (auto b = any_cast<const UHDM::begin*>(stmt))
+                if (b->Stmts())
+                    for (auto s : *b->Stmts())
+                        if (is_call_stmt(s)) { has_task_call = true; break; }
         has_partial_write = statement_has_partial_write(stmt);
     }
     bool has_compound_assign = uhdm_process->Stmt() &&
@@ -6710,9 +6725,12 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
     }
 
     // Process the task body
+    bool saved_returned = tf_call_returned;
+    tf_call_returned = false;
     if (auto task_stmt = task_def->Stmt()) {
         inline_task_body_comb(task_stmt, proc, task_mapping, context, "", process_src);
     }
+    tf_call_returned = saved_returned;
 
     // Map output params to caller's variables
     for (auto& [param_name, caller_out] : output_targets) {
@@ -7008,6 +7026,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             VectorOfany* stmts = begin_block_stmts(bg);
             if (stmts) {
                 for (auto s : *stmts) {
+                    if (tf_call_returned) break;  // honour an earlier `return`
                     inline_task_body_comb(s, proc, task_mapping, context, new_prefix, process_src);
                 }
             }
@@ -7025,12 +7044,25 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
         }
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = any_cast<const assignment*>(stmt);
-            if (!assign) break;
+            // Either a procedural `assignment` (x = y) or a quasi-continuous
+            // `assign_stmt` (`assign x = y` inside a void function/task —
+            // FunctionOutputArgument/TaskOutputArgument/VoidFunction2Returns);
+            // these are distinct UHDM classes that both carry Lhs()/Rhs(), so
+            // resolve the accessors generically (the old code cast only to
+            // `assignment` and silently dropped `assign_stmt` bodies).
+            const UHDM::expr* a_lhs = nullptr;
+            const UHDM::any* a_rhs = nullptr;
+            const UHDM::any* a_src = stmt;
+            if (auto assign = any_cast<const assignment*>(stmt)) {
+                a_lhs = assign->Lhs(); a_rhs = assign->Rhs();
+            } else if (auto as = any_cast<const UHDM::assign_stmt*>(stmt)) {
+                a_lhs = as->Lhs(); a_rhs = as->Rhs();
+            } else break;
+            if (!a_lhs || !a_rhs) break;
 
             // Import RHS with task_mapping for variable resolution
             RTLIL::SigSpec rhs;
-            if (auto rhs_any = assign->Rhs()) {
+            if (auto rhs_any = a_rhs) {
                 if (auto rhs_expr = dynamic_cast<const expr*>(rhs_any)) {
                     rhs = import_expression(rhs_expr, &task_mapping);
                 }
@@ -7056,7 +7088,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             // we emit a SwitchRule instead of a single SigSig and skip the
             // normal width-match/temp-wire path below.
             bool dyn_bit_select_handled = false;
-            if (auto lhs_expr = assign->Lhs()) {
+            if (auto lhs_expr = a_lhs) {
                 int lhs_type = lhs_expr->VpiType();
                 if (lhs_type == vpiRefObj) {
                     const ref_obj* lhs_ref = any_cast<const ref_obj*>(lhs_expr);
@@ -7106,7 +7138,7 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                                 max_cases = std::min(n, 1 << idx_w);
                             RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
                             sw->signal = idx_sig;
-                            add_src_attribute(sw->attributes, assign);
+                            add_src_attribute(sw->attributes, a_src);
                             RTLIL::SigSpec rhs_bit = rhs;
                             if (rhs_bit.size() < 1) {
                                 rhs_bit = RTLIL::SigSpec(RTLIL::State::S0, 1);
@@ -7258,6 +7290,12 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
             }
             break;
         }
+        case vpiReturn:
+            // `return;` in a void task/function body — stop processing the rest
+            // of the enclosing block (VoidFunction2Returns: keep the pre-return
+            // `assign x=1`, drop the dead `assign x=2`).
+            tf_call_returned = true;
+            break;
         default:
             log_warning("Unsupported statement type %d in task body\n", stmt->VpiType());
             break;
