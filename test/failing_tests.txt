@@ -94,6 +94,23 @@ arch/fabulous/custom_map.v
 techmap/mem_simple_4x1_map.v
 techmap/recursive_map.v
 
+# --- Yosys-internal-cell netlist (not SystemVerilog) ---
+# opt_rmdff.v is `read_verilog -icells` of Yosys built-in cells ($dffe,
+# $_DFFE_PP_, $_DLATCH_*, ...) wired up directly to exercise the opt_dff pass.
+# It is not SystemVerilog, so Surelog rejects the `\$dffe`/`$_..._` cell
+# instantiations and the UHDM flow produces no netlist.  Out of scope for the
+# UHDM frontend (same class as the techmap rule files above).
+opt/opt_rmdff.v
+
+# --- REAL UHDM-frontend bug: spurious latch inference in `always @*` ---
+# loops.v (a combinational AES fragment) has incompletely-assigned regs in its
+# `always @*` blocks.  The Yosys Verilog frontend resolves these to pure
+# combinational logic (0 latches); the UHDM frontend instead infers 8
+# `$_DLATCH_N_` cells, so the netlists diverge and a SAT miter FAILS (a genuine
+# difference, not an equiv_induct artefact).  To fix in the always_comb lowering
+# (match the Verilog frontend's latch-avoidance for local/incomplete regs).
+simple/loops.v
+
 # --- multi-file / external-tool tests ---
 # setup_yosys_test now loads SIBLING source files a test's .ys reads together
 # (e.g. sat/grom.ys: `read_verilog grom_computer.v grom_cpu.v alu.v
