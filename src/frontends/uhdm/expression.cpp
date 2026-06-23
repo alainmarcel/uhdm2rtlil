@@ -1404,6 +1404,62 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // PACKED multi-dim array element: `x[i0]...[iK-1]` on a fully
+                // packed `logic [d0]...[dN-1] x` (LogicPackedArray:
+                // `logic [1:0][2:0][3:0] x; x[0][0]`).  Walk the logic_typespec
+                // Ranges to dims; after K indices the element is
+                // product(dims[K..N-1]) bits at the row-major offset
+                //   sum_k (ik-low_k) * product(dims[k+1..N-1]).
+                // Without this the K-index select collapsed to a single bit.
+                if (exprs->size() >= 2) {
+                    RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
+                                    : module->wire(RTLIL::escape_id(base_name));
+                    const UHDM::any* ts = nullptr;
+                    if (bw && vs->Actual_group())
+                        if (auto e = dynamic_cast<const UHDM::expr*>(vs->Actual_group()))
+                            if (e->Typespec()) ts = e->Typespec()->Actual_typespec();
+                    std::vector<std::pair<int,int>> pdims; // (size, low) outer->inner
+                    bool pdim_ok = true;
+                    const UHDM::any* cur = ts;
+                    while (cur && cur->UhdmType() == uhdmlogic_typespec) {
+                        auto lt = any_cast<const UHDM::logic_typespec*>(cur);
+                        if (lt->Ranges())
+                            for (auto r : *lt->Ranges()) {
+                                RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                                RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                                if (l.is_fully_const() && rr.is_fully_const())
+                                    pdims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
+                                                     std::min(l.as_const().as_int(), rr.as_const().as_int())});
+                                else pdim_ok = false;
+                            }
+                        cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                              ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+                    }
+                    size_t K = exprs->size();
+                    if (bw && pdim_ok && pdims.size() >= 2 && pdims.size() >= K) {
+                        int total = 1;
+                        for (auto& d : pdims) total *= d.first;
+                        if (total == bw->width) {
+                            int leaf_w = 1;
+                            for (size_t d = K; d < pdims.size(); d++) leaf_w *= pdims[d].first;
+                            long off = 0; bool ok = true;
+                            for (size_t k = 0; k < K; k++) {
+                                RTLIL::SigSpec is = import_expression((*exprs)[k], input_mapping);
+                                if (!is.is_fully_const()) { ok = false; break; }
+                                int inner = 1;
+                                for (size_t d = k + 1; d < pdims.size(); d++) inner *= pdims[d].first;
+                                off += (long)(is.as_const().as_int() - pdims[k].second) * inner;
+                            }
+                            if (ok && off >= 0 && off + leaf_w <= bw->width) {
+                                log("  vpiVarSelect: packed %dD %s[...] → %s[%d+:%d]\n",
+                                    (int)pdims.size(), base_name.c_str(), bw->name.c_str(),
+                                    (int)off, leaf_w);
+                                return RTLIL::SigSpec(bw).extract((int)off, leaf_w);
+                            }
+                        }
+                    }
+                }
+
                 // Fully-indexed N-dim var_select `x[i0][i1]...[ik]` on a
                 // packed+unpacked array that carries no wire metadata.  Walk the
                 // array_var typespec dimensions outer->inner (unpacked
