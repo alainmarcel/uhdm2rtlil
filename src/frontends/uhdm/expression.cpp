@@ -8349,7 +8349,23 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
     member_width = 0;
     
     // Process each part of the path
-    for (const auto& member_name : path_parts) {
+    for (const auto& raw_part : path_parts) {
+        // A part may carry packed bit/element selects (`l[2][1]`, `k[2]`).
+        // Match on the BARE member name; the indices add a within-member bit
+        // offset after the member is located (DotRange).
+        std::string member_name = raw_part;
+        std::vector<int> sel_idxs;
+        if (size_t br = raw_part.find('['); br != std::string::npos) {
+            member_name = raw_part.substr(0, br);
+            size_t p = br;
+            while (p < raw_part.size() && raw_part[p] == '[') {
+                size_t e = raw_part.find(']', p);
+                if (e == std::string::npos) break;
+                try { sel_idxs.push_back(std::stoi(raw_part.substr(p + 1, e - p - 1))); }
+                catch (...) { sel_idxs.clear(); break; }
+                p = e + 1;
+            }
+        }
         bool is_struct = current_ts && current_ts->UhdmType() == uhdmstruct_typespec;
         bool is_union = current_ts && current_ts->UhdmType() == uhdmunion_typespec;
         if (!is_struct && !is_union) {
@@ -8409,10 +8425,46 @@ bool UhdmImporter::calculate_struct_member_offset(const typespec* ts, const std:
         // Add the offset within this level to the total offset
         bit_offset += offset_in_level;
 
+        // Apply any packed bit/element selects on this member (`l[2][1]`).
+        // Walk the member's logic_typespec dims and add the row-major bit
+        // offset; the remaining (unindexed) dims give the resulting width.
+        if (!sel_idxs.empty() && found_member_ts) {
+            std::vector<std::pair<int,int>> dims; // (size, low) outer->inner
+            bool dim_ok = true;
+            const UHDM::any* cur = found_member_ts;
+            while (cur && cur->UhdmType() == uhdmlogic_typespec) {
+                auto lt = any_cast<const UHDM::logic_typespec*>(cur);
+                if (lt->Ranges())
+                    for (auto r : *lt->Ranges()) {
+                        RTLIL::SigSpec l = import_expression(r->Left_expr());
+                        RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                        if (l.is_fully_const() && rr.is_fully_const())
+                            dims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
+                                            std::min(l.as_const().as_int(), rr.as_const().as_int())});
+                        else dim_ok = false;
+                    }
+                cur = (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                      ? lt->Elem_typespec()->Actual_typespec() : nullptr;
+            }
+            if (!dim_ok || dims.size() < sel_idxs.size())
+                return false;
+            int leaf_w = 1;
+            for (size_t d = sel_idxs.size(); d < dims.size(); d++) leaf_w *= dims[d].first;
+            int within = 0;
+            for (size_t k = 0; k < sel_idxs.size(); k++) {
+                int inner = 1;
+                for (size_t d = k + 1; d < dims.size(); d++) inner *= dims[d].first;
+                within += (sel_idxs[k] - dims[k].second) * inner;
+            }
+            bit_offset += within;
+            member_width = leaf_w;
+            found_member_ts = nullptr; // sliced to a leaf — no further nesting
+        }
+
         // For the next iteration, use the member's typespec
         current_ts = found_member_ts;
     }
-    
+
     return member_width > 0;
 }
 
