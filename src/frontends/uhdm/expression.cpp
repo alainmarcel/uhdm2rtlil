@@ -4567,6 +4567,33 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     if (loop_values.count(ref_name))
         return RTLIL::SigSpec(RTLIL::Const(loop_values[ref_name], 32));
 
+    // A bare reference to a whole UNPACKED ARRAY (`logic [2:0] a [3:0]`,
+    // `int x [1:0][0:0]`) — e.g. passing it as a function argument
+    // `get_3rd(a)` / `my_func(x)` — resolves to the concatenation of its
+    // per-element wires (\a[0]..\a[N-1]), element 0 at the LSB so the callee's
+    // flattened formal lines up (mat[i] == a[i]).  Without this the bare name
+    // resolved to a 1-bit unknown wire and the callee read garbage.
+    // (SelectFromUnpackedInFunction / 2DUnpackedFunctionArgument.)
+    if (!name_map.count(ref_name) && name_map.count(ref_name + "[0]")) {
+        std::string gs = get_current_gen_scope();
+        RTLIL::SigSpec arr;
+        for (int i = 0; ; i++) {
+            std::string en = ref_name + "[" + std::to_string(i) + "]";
+            RTLIL::Wire* ew = nullptr;
+            if (!gs.empty() && name_map.count(gs + "." + en))
+                ew = name_map[gs + "." + en];
+            else if (name_map.count(en))
+                ew = name_map[en];
+            if (!ew) break;
+            arr.append(RTLIL::SigSpec(ew));
+        }
+        if (arr.size() > 0) {
+            log("    ref_obj: whole unpacked array %s -> %d-bit element concat\n",
+                ref_name.c_str(), arr.size());
+            return arr;
+        }
+    }
+
     // Check if the ref_obj has an Actual_group() that points to the real signal
     // This is used in generate blocks where ref_obj names include generate scope prefixes
     // but the Actual_group() points to the real module-level signal
@@ -5385,8 +5412,32 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                 RTLIL::SigSpec index = import_expression(uhdm_bit->VpiIndex(), input_mapping);
                 if (index.is_fully_const()) {
                     int idx = index.as_const().as_int();
-                    if (idx >= 0 && idx < it->second.size()) {
-                        return it->second.extract(idx, 1);
+                    // Unpacked-array param `logic [2:0] mat [3:0]`: `mat[i]`
+                    // selects the i-th element (W bits), not bit i.  Derive W
+                    // from the param's unpacked dimension on the bit_select's
+                    // Actual_group (SelectFromUnpackedInFunction).
+                    int elem_w = 1, outer_lo = 0;
+                    if (auto ag = uhdm_bit->Actual_group()) {
+                        UHDM::VectorOfrange* rngs = nullptr;
+                        if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rngs = lv->Ranges();
+                        else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rngs = io->Ranges();
+                        else if (auto av = dynamic_cast<const UHDM::array_var*>(ag)) rngs = av->Ranges();
+                        if (rngs && !rngs->empty()) {
+                            auto r0 = (*rngs)[0];
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec rr = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && rr.is_fully_const()) {
+                                int osz = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+                                if (osz > 0 && it->second.size() % osz == 0) {
+                                    elem_w = it->second.size() / osz;
+                                    outer_lo = std::min(l.as_const().as_int(), rr.as_const().as_int());
+                                }
+                            }
+                        }
+                    }
+                    int off = (idx - outer_lo) * elem_w;
+                    if (off >= 0 && off + elem_w <= it->second.size()) {
+                        return it->second.extract(off, elem_w);
                     }
                 }
                 // For non-constant index, we'd need to create a mux tree
