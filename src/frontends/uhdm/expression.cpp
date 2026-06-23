@@ -6428,6 +6428,99 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             log("    hier_path has no Path_elems\n");
     }
 
+    // Unpacked-array-of-struct element + SCALAR struct member: `arr[i].field`
+    // where `field` is a plain (non-array) struct member.  Path_elems =
+    // [bit_select(arr[i]), ref_obj(field)] (NestedPatternPassedAsPort:
+    // `region_attrs_i[0].phase`).  Resolves to
+    //   base_wire[ (i - outer_low)*elem_w + field_off +: field_w ].
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+        (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmbit_select &&
+        (*uhdm_hier->Path_elems())[1]->UhdmType() == uhdmref_obj) {
+        auto& pe = *uhdm_hier->Path_elems();
+        const bit_select* bs = any_cast<const bit_select*>(pe[0]);
+        std::string base_name = std::string(bs->VpiName());
+        std::string field_name = std::string(pe[1]->VpiName());
+        if (base_name != field_name && bs->VpiIndex()) {
+            RTLIL::Wire* base_wire = name_map.count(base_name)
+                ? name_map[base_name] : module->wire(RTLIL::escape_id(base_name));
+            // Find the array_typespec for `base_name`.  The bit_select's
+            // Actual_group is the array_var on a local variable, but for a
+            // flattened struct-array PORT it is null — fall back to the port/net
+            // typespec from the enclosing module instance.
+            const UHDM::array_typespec* ats = nullptr;
+            if (auto av = dynamic_cast<const UHDM::array_var*>(bs->Actual_group())) {
+                if (av->Typespec())
+                    if (auto a0 = av->Typespec()->Actual_typespec())
+                        if (a0->UhdmType() == uhdmarray_typespec)
+                            ats = any_cast<const UHDM::array_typespec*>(a0);
+            }
+            if (!ats) {
+                if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst)) {
+                    auto ts_of = [&](const UHDM::ref_typespec* rt) -> const UHDM::array_typespec* {
+                        if (rt && rt->Actual_typespec() &&
+                            rt->Actual_typespec()->UhdmType() == uhdmarray_typespec)
+                            return any_cast<const UHDM::array_typespec*>(rt->Actual_typespec());
+                        return nullptr;
+                    };
+                    if (mi->Ports())
+                        for (auto p : *mi->Ports())
+                            if (std::string(p->VpiName()) == base_name && p->Typespec())
+                                { ats = ts_of(p->Typespec()); break; }
+                    if (!ats && mi->Nets())
+                        for (auto n : *mi->Nets())
+                            if (std::string(n->VpiName()) == base_name && n->Typespec())
+                                { ats = ts_of(n->Typespec()); break; }
+                }
+            }
+            const UHDM::struct_typespec* st = nullptr;
+            int outer_low = 0;
+            if (ats) {
+                if (ats->Ranges() && !ats->Ranges()->empty()) {
+                    auto r = (*ats->Ranges())[0];
+                    RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                    RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                    if (l.is_fully_const() && rr.is_fully_const())
+                        outer_low = std::min(l.as_const().as_int(), rr.as_const().as_int());
+                }
+                if (ats->Elem_typespec())
+                    if (auto et = ats->Elem_typespec()->Actual_typespec())
+                        if (et->UhdmType() == uhdmstruct_typespec)
+                            st = any_cast<const UHDM::struct_typespec*>(et);
+            }
+            RTLIL::SigSpec idx = import_expression(bs->VpiIndex(), input_mapping);
+            if (base_wire && st && st->Members() && idx.is_fully_const()) {
+                int i_idx = idx.as_const().as_int();
+                int elem_w = 0;
+                for (auto m : *st->Members())
+                    if (auto mts = m->Typespec())
+                        if (auto a = mts->Actual_typespec())
+                            elem_w += get_width_from_typespec(a, inst);
+                // field offset from struct LSB (last member = LSB).
+                int field_off = 0, field_w = 0; bool found = false;
+                for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                    auto m = (*st->Members())[i];
+                    int mw = 0;
+                    if (auto mts = m->Typespec())
+                        if (auto a = mts->Actual_typespec())
+                            mw = get_width_from_typespec(a, inst);
+                    if (std::string(m->VpiName()) == field_name) {
+                        field_w = mw; found = true; break;
+                    }
+                    field_off += mw;
+                }
+                if (found && field_w > 0 && elem_w > 0) {
+                    int off = (i_idx - outer_low) * elem_w + field_off;
+                    if (off >= 0 && off + field_w <= base_wire->width) {
+                        log("    hier_path: %s[%d].%s → %s[%d+:%d]\n",
+                            base_name.c_str(), i_idx, field_name.c_str(),
+                            base_wire->name.c_str(), off, field_w);
+                        return RTLIL::SigSpec(base_wire).extract(off, field_w);
+                    }
+                }
+            }
+        }
+    }
+
     // Handle unpacked-array-of-struct element + array-member element access:
     // arr[i].f[j]  where `arr` is an array_var with array_typespec wrapping a
     // struct_typespec, and the struct member `f` is itself an unpacked array.
