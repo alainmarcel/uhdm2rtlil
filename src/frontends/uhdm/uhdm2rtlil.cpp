@@ -2132,6 +2132,32 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                             .at(RTLIL::escape_id("unpacked_elem_width")).as_int();
                                         int inner_sz = wire->attributes
                                             .at(RTLIL::escape_id("unpacked_inner_size")).as_int();
+                                        // Pattern row/col 0 maps to the FIRST
+                                        // declared index — the HIGHEST for a
+                                        // descending dim (`[1:0]`), the lowest
+                                        // for an ascending one — matching the
+                                        // var_select read offset.  Without this
+                                        // a descending `int x[1:0][0:0]` init put
+                                        // row 0 at the low slot but the read took
+                                        // it from the high slot
+                                        // (2DUnpackedFunctionArgument).
+                                        bool outer_asc = false, inner_asc = false;
+                                        int outer_cnt = (int)init_op->Operands()->size();
+                                        int inner_cnt = inner_sz;
+                                        if (array_var->Ranges() && array_var->Ranges()->size() >= 2) {
+                                            auto dir = [&](int di, bool& asc, int& sz) {
+                                                auto r = (*array_var->Ranges())[di];
+                                                if (!r->Left_expr() || !r->Right_expr()) return;
+                                                RTLIL::SigSpec l = import_expression(r->Left_expr());
+                                                RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                                                if (l.is_fully_const() && rr.is_fully_const()) {
+                                                    asc = l.as_const().as_int() < rr.as_const().as_int();
+                                                    sz = std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+                                                }
+                                            };
+                                            dir(0, outer_asc, outer_cnt);
+                                            dir(1, inner_asc, inner_cnt);
+                                        }
                                         if (init_op->Operands()) {
                                             int row_idx = 0;
                                             for (auto row_any : *init_op->Operands()) {
@@ -2146,7 +2172,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                                     if (auto ce = dynamic_cast<const UHDM::expr*>(cell_any)) {
                                                         RTLIL::SigSpec cs = import_expression(ce);
                                                         if (cs.is_fully_const()) {
-                                                            int off = (row_idx * inner_sz + col_idx) * elem_w;
+                                                            int eff_row = outer_asc ? row_idx : (outer_cnt - 1 - row_idx);
+                                                            int eff_col = inner_asc ? col_idx : (inner_cnt - 1 - col_idx);
+                                                            int off = (eff_row * inner_sz + eff_col) * elem_w;
                                                             if (cs.size() < elem_w) cs.extend_u0(elem_w);
                                                             else if (cs.size() > elem_w) cs = cs.extract(0, elem_w);
                                                             if (off + elem_w <= wire->width)

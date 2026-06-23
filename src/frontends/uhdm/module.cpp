@@ -1987,7 +1987,20 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             log("UHDM: Found net object\n");
             if (auto typespec = variable->Typespec()) {
                 log("UHDM: Net has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec, inst);
+                int w = get_width_from_typespec(typespec, inst);
+                // Multiply by any UNPACKED array dimensions carried on the
+                // io_decl itself (`logic [2:0] mat [3:0]` -> packed 3 * unpacked
+                // 4 = 12) so a whole-array argument flattens to the right width
+                // (SelectFromUnpackedInFunction / 2DUnpackedFunctionArgument).
+                if (variable->Ranges())
+                    for (auto r : *variable->Ranges()) {
+                        if (!r->Left_expr() || !r->Right_expr()) continue;
+                        RTLIL::SigSpec l = import_expression(r->Left_expr());
+                        RTLIL::SigSpec rr = import_expression(r->Right_expr());
+                        if (l.is_fully_const() && rr.is_fully_const())
+                            w *= std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1;
+                    }
+                return w;
             } else {
                 log("UHDM: Net has no typespec\n");
             }
