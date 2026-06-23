@@ -306,8 +306,17 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = any_cast<const assignment*>(stmt);
-            if (auto lhs = assign->Lhs()) {
+            // `assignment` (x = y) and `assign_stmt` (`assign x = y` in a
+            // task/func body — TaskOutputArgument) are distinct UHDM classes
+            // both reached by vpiAssignStmt; cast generically (the old single
+            // cast to `assignment` returned null for assign_stmt -> crash when
+            // the task-body recursion below dereferenced it).
+            const UHDM::expr* a_lhs = nullptr;
+            if (auto assign = any_cast<const assignment*>(stmt))
+                a_lhs = assign->Lhs();
+            else if (auto as = any_cast<const UHDM::assign_stmt*>(stmt))
+                a_lhs = as->Lhs();
+            if (auto lhs = a_lhs) {
                 if (auto lhs_expr = dynamic_cast<const expr*>(lhs)) {
                     AssignedSignal sig;
                     sig.lhs_expr = lhs_expr;
