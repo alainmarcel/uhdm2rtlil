@@ -14,25 +14,34 @@ This project bridges the gap between SystemVerilog source code and Yosys synthes
 This enables full SystemVerilog synthesis capability in Yosys, including advanced features not available in Yosys's built-in Verilog frontend.
 
 ### Test Suite Status
-- **Total Tests**: 649 tests covering comprehensive SystemVerilog features
-- **Success Rate**: 99% (643/649 tests functional), 0 crashes, 0 Miter-Formal (UHDM≠Verilog) failures
-- **Passing**: 404 tests with formal equivalence verified between UHDM and Verilog frontends
-- **UHDM-Only Success**: 239 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Known failures**: 6 (4 equiv_induct, 2 output-generation), all from the imported
-  chipsalliance/UHDM-integration-tests suite exercising UHDM frontend feature gaps /
-  non-synthesizable constructs — tracked in `test/failing_tests.txt` and
-  `test/imported_tests_status.txt`, fixed incrementally (break/continue, repeat/while,
-  `int` loop vars, compound assignments, function break/continue/return, part-selects,
-  the enum cluster — built-in `.first()`/`.last()`/`.num()`, `enum_const` function
-  returns, replicated array patterns `'{N{x}}`, `packed_array_var` net-decl initializers,
-  function-local packed enum arrays; the typedef/struct cluster — typedef'd packed/unpacked
-  array-of-struct field access, `struct.member[i].field`, packed-struct member port
-  connections, bit-select element width for packed-array-of-struct; a Surelog/UHDM
-  `ExprEval` fix for constant-expression-width size casts like `$clog2(X)'(X)`; wide
-  (>64-bit) hex-constant parsing; interface procedural blocks and port-driven net-decl
-  inits; single-bit signed continuous-assignment sign-extension; and an always_ff shift
-  register — descending for loops, blocking-visible bit-select reads — so far).
-  No pre-existing test regressed.
+
+Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
+upstream Yosys test suite under `third_party/yosys/tests/`):
+
+- **Total Tests**: 1176
+- **Success Rate**: 96% (1134/1176 tests functional), 1 crash, **0 Miter-Formal (UHDM≠Verilog) failures**
+- **Passing**: 832 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 302 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Equivalence failures**: 9 — all caught by `equiv_induct` (0 Miter-Formal): `CastStructArray`
+  plus 8 from the upstream Yosys suite (`arch/nanoxplore/meminit`, `sat/alu`,
+  `sat/grom_computer`, `sat/grom_cpu`, `sat/ram_memory`, `simple/loops`,
+  `verific/ext_ramnet_err`, `verilog/mem_bounds`)
+- **True failures** (no output generated): 10, all from the upstream Yosys suite
+  (`arch/fabulous/custom_map`, `functional/picorv32_tb`, `hana/test_simulation_vlib`,
+  `opt/opt_rmdff`, `rpc/design`, `svinterfaces/load_and_derive`,
+  `svinterfaces/resolve_types`, `svinterfaces/svinterface1_syn`,
+  `techmap/mem_simple_4x1_map`, `verific/mixed_flist`)
+- **Crashes**: 1 (`techmap/recursive_map`)
+- **Verilator sim-equiv warnings**: 102 (soft warnings, do not fail a test) — of which
+  66 are analyzed known-non-bug divergences, 56 are sim/synth artefacts where a SAT
+  miter proves UHDM == Verilog, and 10 remain unclassified
+
+> The **internal** SystemVerilog suite alone is **653 tests, 652 functional**
+> (only `CastStructArray`), with **0 true failures**. The figures above are the
+> combined `--all` run; the additional failures/crash all come from the imported
+> upstream Yosys suite (feature gaps / non-synthesizable constructs), tracked in
+> `test/failing_tests.txt` and `test/imported_tests_status.txt` and fixed
+> incrementally. No pre-existing internal test regressed.
 
 > **Note (2026-06-14):** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
