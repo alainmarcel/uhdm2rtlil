@@ -1414,10 +1414,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 if (exprs->size() >= 2) {
                     RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
                                     : module->wire(RTLIL::escape_id(base_name));
+                    // Typespec from the Actual_group — works for a wire-backed
+                    // expr AND for a packed-array PARAMETER with no wire (both
+                    // extend `expr`; the param branch handles ParameterPackedArray).
                     const UHDM::any* ts = nullptr;
-                    if (bw && vs->Actual_group())
+                    const UHDM::parameter* pr = nullptr;
+                    if (vs->Actual_group()) {
                         if (auto e = dynamic_cast<const UHDM::expr*>(vs->Actual_group()))
                             if (e->Typespec()) ts = e->Typespec()->Actual_typespec();
+                        pr = dynamic_cast<const UHDM::parameter*>(vs->Actual_group());
+                        if (!ts && pr && pr->Typespec()) ts = pr->Typespec()->Actual_typespec();
+                    }
                     std::vector<std::pair<int,int>> pdims; // (size, low) outer->inner
                     bool pdim_ok = true;
                     const UHDM::any* cur = ts;
@@ -1436,10 +1443,36 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                               ? lt->Elem_typespec()->Actual_typespec() : nullptr;
                     }
                     size_t K = exprs->size();
-                    if (bw && pdim_ok && pdims.size() >= 2 && pdims.size() >= K) {
+                    if (pdim_ok && pdims.size() >= 2 && pdims.size() >= K) {
                         int total = 1;
                         for (auto& d : pdims) total *= d.first;
-                        if (total == bw->width) {
+                        // Base value: the wire, or — for a parameter with no wire
+                        // — the param's constant value, sized to `total` by
+                        // importing its pattern with expression_context_width set
+                        // (ParameterPackedArray).
+                        RTLIL::SigSpec base_sig;
+                        if (bw) base_sig = RTLIL::SigSpec(bw);
+                        else if (pr) {
+                            RTLIL::SigSpec pv;
+                            RTLIL::IdString pid = RTLIL::escape_id(base_name);
+                            if (module->parameter_default_values.count(pid))
+                                pv = module->parameter_default_values.at(pid);
+                            int saved_ctx = expression_context_width;
+                            expression_context_width = total;
+                            if (!pv.is_fully_const() && pr->Expr())
+                                pv = import_expression(any_cast<const expr*>(pr->Expr()), input_mapping);
+                            if (!pv.is_fully_const())
+                                if (auto scp = dynamic_cast<const UHDM::scope*>(pr->VpiParent()))
+                                    if (scp->Param_assigns())
+                                        for (auto pa : *scp->Param_assigns())
+                                            if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == base_name && pa->Rhs()) {
+                                                pv = import_expression(any_cast<const expr*>(pa->Rhs()), input_mapping);
+                                                break;
+                                            }
+                            expression_context_width = saved_ctx;
+                            if (pv.is_fully_const()) base_sig = pv;
+                        }
+                        if (!base_sig.empty() && total == base_sig.size()) {
                             int leaf_w = 1;
                             for (size_t d = K; d < pdims.size(); d++) leaf_w *= pdims[d].first;
                             long off = 0; bool ok = true;
@@ -1450,11 +1483,10 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                                 for (size_t d = k + 1; d < pdims.size(); d++) inner *= pdims[d].first;
                                 off += (long)(is.as_const().as_int() - pdims[k].second) * inner;
                             }
-                            if (ok && off >= 0 && off + leaf_w <= bw->width) {
-                                log("  vpiVarSelect: packed %dD %s[...] → %s[%d+:%d]\n",
-                                    (int)pdims.size(), base_name.c_str(), bw->name.c_str(),
-                                    (int)off, leaf_w);
-                                return RTLIL::SigSpec(bw).extract((int)off, leaf_w);
+                            if (ok && off >= 0 && off + leaf_w <= base_sig.size()) {
+                                log("  vpiVarSelect: packed %dD %s[...] → [%d+:%d]\n",
+                                    (int)pdims.size(), base_name.c_str(), (int)off, leaf_w);
+                                return base_sig.extract((int)off, leaf_w);
                             }
                         }
                     }
@@ -3091,6 +3123,35 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         // (post-substitution path in the elaborated TopModules).
         if (uhdm_op->Operands()) {
             std::vector<RTLIL::SigSpec> field_sigs;
+            // When the target width is known (expression_context_width), every
+            // element is context/count bits — size each leaf to that and
+            // PROPAGATE the per-element width down so nested patterns size their
+            // own leaves.  A packed `logic [1:0][2:0][3:0]` pattern then folds to
+            // 24 bits, not 24*64 (ParameterPackedArray).  No context (=0) keeps
+            // the prior behaviour, so struct/other patterns are unaffected.
+            int pat_count = (int)uhdm_op->Operands()->size();
+            // Target width: the surrounding context, else the pattern's own
+            // typespec (on the op, or on the op's param_assign parent's
+            // parameter) — the latter bootstraps a packed-array PARAMETER init at
+            // module-import time, where no context is set (ParameterPackedArray).
+            int ctx_w = expression_context_width;
+            if (ctx_w == 0) {
+                const UHDM::typespec* myts = nullptr;
+                if (uhdm_op->Typespec()) myts = uhdm_op->Typespec()->Actual_typespec();
+                if (!myts && uhdm_op->VpiParent() &&
+                    uhdm_op->VpiParent()->UhdmType() == uhdmparam_assign) {
+                    auto pa = any_cast<const UHDM::param_assign*>(uhdm_op->VpiParent());
+                    if (pa->Lhs())
+                        if (auto p = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
+                            if (p->Typespec()) myts = p->Typespec()->Actual_typespec();
+                }
+                if (myts) {
+                    int w = get_width_from_typespec(myts, inst);
+                    if (w > 0) ctx_w = w;
+                }
+            }
+            int pelem_w = (ctx_w > 0 && pat_count > 0 && ctx_w % pat_count == 0)
+                          ? ctx_w / pat_count : 0;
             for (auto operand : *uhdm_op->Operands()) {
                 const expr* field_expr = nullptr;
                 // Named-field patterns (`'{a: 0, b: 1, ...}`) wrap each value in a
@@ -3104,7 +3165,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     field_expr = any_cast<const expr*>(operand);
                 }
                 if (!field_expr) continue;
+                int saved_ctx = expression_context_width;
+                if (pelem_w > 0) expression_context_width = pelem_w;
                 RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
+                expression_context_width = saved_ctx;
+                if (pelem_w > 0) {
+                    if (val.size() > pelem_w) val = val.extract(0, pelem_w);
+                    else if (val.size() < pelem_w) val.extend_u0(pelem_w);
+                }
                 if (mode_debug)
                     log("UHDM: AssignmentPatternOp field size=%d\n", val.size());
                 field_sigs.push_back(val);
