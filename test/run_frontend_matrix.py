@@ -205,7 +205,11 @@ def formal_result(test_rel: str, test_dir: Path, frontend: str,
     if frontend == "verilog":
         return "self"
     if not golden_ok:
-        return "n-a"
+        # The verilog golden itself didn't synthesize, so there is no reference
+        # to formally compare against.  Distinct from "n-a": this frontend DID
+        # synthesize where verilog couldn't — `make test-all`'s "UHDM-only
+        # success".  Kept separate so it isn't lumped into UNKNOWN.
+        return "no-golden"
     name = Path(test_rel).name
     gold_v = test_dir / f"{name}_from_verilog_synth.v"
     gate_v = test_dir / f"{name}_from_{frontend}_synth.v"
@@ -250,6 +254,16 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
             return "UNKNOWN"      # disagrees with its own RTL -> harness artefact
         return "CORRECT"          # skip: synthesized, nothing contradicts it
 
+    if formal == "no-golden":
+        # Synthesized where the verilog golden could not — no formal reference.
+        # Mirrors `make test-all`'s "UHDM-only success": a capability win, not a
+        # possible bug, so it gets its own bucket instead of UNKNOWN.
+        if cosim == "pass":
+            return "CORRECT"          # also matches the original RTL directly
+        if cosim == "fail":
+            return "UNKNOWN"          # differs from the RTL, and no golden -> unclear
+        return "NO-GOLDEN"            # cosim unavailable (e.g. --no-cosim)
+
     golden_reliable = (golden_cosim == "pass")
     if golden_reliable:
         # Golden is validated against the RTL, so disagreement is a real bug.
@@ -266,6 +280,103 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     if formal == "equiv":
         return "CORRECT"          # cosim unavailable; identical to golden netlist
     return "UNKNOWN"
+
+
+def load_txt_overrides() -> dict:
+    """Per-test verdict overrides distilled from `make test-all`'s adjudication
+    files (test/*.txt), keyed by test BASENAME.  These encode conclusions reached
+    with co-sim + the SAT miter + manual adjudication (iverilog, directed eval)
+    that the matrix's own per-run oracles can't always reach — so the nightly
+    classifies the SAME way `make test-all` does.
+
+    Value: {frontend: "CORRECT"|"INCORRECT"}.  Applied only to frontends that
+    actually synthesized, and never over an OOM/TIMEOUT/N-A operational state.
+    """
+    ov: dict[str, dict[str, str]] = {}
+
+    def mark(name: str, fe: str, verdict: str):
+        ov.setdefault(name, {})[fe] = verdict
+
+    # sim_equiv_classification.txt — the purpose-built override file:
+    #   `<test>  <artefact|bug>  # reason`
+    #   artefact => the UHDM-vs-Verilog divergence is NOT a UHDM bug (UHDM
+    #               correct); if the reason pins it on the Yosys VERILOG frontend,
+    #               the golden is the wrong side, so verilog is INCORRECT here.
+    #   bug      => confirmed UHDM-frontend bug (UHDM incorrect).
+    f = TEST_DIR / "sim_equiv_classification.txt"
+    if f.exists():
+        for ln in f.read_text().splitlines():
+            s = ln.strip()
+            if not s or s.startswith("#"):
+                continue
+            parts = s.split(None, 2)
+            if len(parts) < 2:
+                continue
+            name, verdict = parts[0], parts[1].lower()
+            reason = (parts[2] if len(parts) > 2 else "").lower()
+            if verdict == "bug":
+                mark(name, "uhdm", "INCORRECT")
+            elif verdict == "artefact":
+                mark(name, "uhdm", "CORRECT")
+                if "verilog" in reason and ("frontend" in reason or "wrong" in reason):
+                    mark(name, "verilog", "INCORRECT")
+
+    # cosim_uhdm_bugs.txt — confirmed UHDM bugs not (yet) in the override file.
+    # Test names are listed at the start of a comment line as `# <Name> — ...`
+    # or in the structured determinism-pass list (`Name (rtl=.. nl=..)`).
+    f = TEST_DIR / "cosim_uhdm_bugs.txt"
+    if f.exists():
+        import re
+        txt = f.read_text()
+        # `# <Name> — ...` single-test entries, and the determinism-pass grouped
+        # list `... : Name (rtl=.. nl=..), Name2 (5/0), ...` (a name immediately
+        # followed by the value notation `(rtl=` / `(<hex-or-digit>`).
+        for m in re.finditer(r"^#\s+([A-Za-z][\w]+)\s+—\s", txt, re.M):
+            mark(m.group(1), "uhdm", "INCORRECT")
+        for m in re.finditer(r"([A-Za-z][\w]{3,})\s+\((?:rtl=|[0-9a-fx]+[/ ])", txt):
+            mark(m.group(1), "uhdm", "INCORRECT")
+    return ov
+
+
+KNOWN_OVERRIDES = load_txt_overrides()
+
+
+def _skip_key(name: str) -> str:
+    """Normalise a test name for matching the skip .txt files / each other:
+    drop a leading `run/` and any .v/.sv/.il extension."""
+    n = name[4:] if name.startswith("run/") else name
+    import re
+    return re.sub(r"\.(v|sv|il)$", "", n)
+
+
+def _read_skip_names(fname: str) -> set:
+    """First whitespace token of each non-comment line of a make-test-all skip
+    file, normalised — so the matrix reuses the SAME lists, no new file."""
+    out: set[str] = set()
+    f = TEST_DIR / fname
+    if f.exists():
+        for ln in f.read_text().splitlines():
+            s = ln.split("#", 1)[0].strip()
+            if s:
+                out.add(_skip_key(s.split()[0]))
+    return out
+
+
+# Reuse make-test-all's own skip files (no redundant matrix-specific list).
+SKIPPED_TESTS = _read_skip_names("skipped_tests.txt")          # don't run at all
+SKIP_FORMAL_COSIM = _read_skip_names("skip_formal_cosim_tests.txt")  # synth only
+
+
+def is_non_dut(test_rel: str) -> bool:
+    """True for tests that aren't synthesizable DUTs and so are out of scope for
+    a frontend SYNTHESIS comparison: yosys error-expectation tests (run/errors/*,
+    meant to fail parsing) and testbenches (`*_tb` / `tb_*`, which simulate, not
+    synthesize).  make test-all runs these via their .ys (expect-error / sim),
+    not synth-equiv, so it never counts them as synth failures."""
+    if "/errors/" in test_rel:
+        return True
+    base = _skip_key(test_rel).rsplit("/", 1)[-1]
+    return base.endswith("_tb") or base.startswith("tb_")
 
 
 def safe_process(test_rel: str, args) -> dict:
@@ -292,8 +403,11 @@ def process_test(test_rel: str, args) -> dict:
 
     # Compute the golden's own co-sim once — it gates every other frontend's
     # verdict (and is the verilog column's own oracle).
+    # Honour make test-all's skip_formal_cosim_tests.txt: a too-slow design (e.g.
+    # picorv32) still synthesizes but skips the formal-equiv + co-sim steps.
+    skip_fc = _skip_key(test_rel) in SKIP_FORMAL_COSIM
     golden_cosim = "skip"
-    if golden_ok and not args.no_cosim:
+    if golden_ok and not args.no_cosim and not skip_fc:
         golden_cosim = cosim_result(test_rel, "verilog", args)
 
     for f in ALL_FRONTENDS:
@@ -318,10 +432,26 @@ def process_test(test_rel: str, args) -> dict:
         if st in FAIL_STATUS:
             row[f"{f}_correct"], row[f"{f}_detail"] = "N/A", st
             continue
-        formal = formal_result(test_rel, test_dir, f, golden_ok)
-        cosim = golden_cosim if f == "verilog" else cosim_result(test_rel, f, args)
+        formal = "n-a" if skip_fc else formal_result(test_rel, test_dir, f, golden_ok)
+        cosim = golden_cosim if f == "verilog" else \
+            ("skip" if skip_fc else cosim_result(test_rel, f, args))
         row[f"{f}_correct"] = decide(f, formal, cosim, golden_cosim)
         row[f"{f}_detail"] = f"formal={formal} cosim={cosim} golden_cosim={golden_cosim}"
+
+    # Refine UNRESOLVED verdicts with make-test-all's adjudicated conclusions
+    # (test/*.txt), which were reached with co-sim + the SAT miter + manual
+    # adjudication.  Applied ONLY where this run's own oracles couldn't decide
+    # (UNKNOWN / NO-GOLDEN) and the frontend synthesized — so a STALE entry (a
+    # since-fixed bug still listed in a .txt) can never flip a verdict the live
+    # oracles already settled as CORRECT/INCORRECT.
+    for fe, verdict in KNOWN_OVERRIDES.get(Path(test_rel).name, {}).items():
+        if fe not in args.frontends:
+            continue
+        if row.get(f"{fe}_synth") not in ("yes", "empty"):
+            continue
+        if row.get(f"{fe}_correct") in ("UNKNOWN", "NO-GOLDEN"):
+            row[f"{fe}_correct"] = verdict
+            row[f"{fe}_detail"] = row.get(f"{fe}_detail", "") + f" [txt={verdict}]"
 
     # Bound disk: the Verilator co-sim leaves a per-test working dir (obj_dir +
     # build artifacts) that, across 1000+ tests, can fill a CI runner's disk.
@@ -348,7 +478,7 @@ def write_markdown(rows: list[dict], out_md: Path, args):
     # Per-frontend aggregate counts.
     agg = {f: {"synth_yes": 0, "synth_empty": 0, "synth_no": 0, "crash": 0,
                "missing": 0, "correct": 0, "incorrect": 0, "unknown": 0,
-               "timeout": 0, "oom": 0}
+               "no_golden": 0, "timeout": 0, "oom": 0}
            for f in ALL_FRONTENDS}
     for r in rows:
         for f in ALL_FRONTENDS:
@@ -362,6 +492,8 @@ def write_markdown(rows: list[dict], out_md: Path, args):
             agg[f]["correct"] += c == "CORRECT"
             agg[f]["incorrect"] += c == "INCORRECT"
             agg[f]["unknown"] += c == "UNKNOWN"
+            # Synthesized but no verilog golden to compare (UHDM-only success).
+            agg[f]["no_golden"] += c == "NO-GOLDEN"
             # Timeout: synth blew the cap (synth=timeout) or a formal/co-sim step
             # did (correct=TIMEOUT) — count each test once per frontend.
             agg[f]["timeout"] += c == "TIMEOUT"
@@ -383,14 +515,22 @@ def write_markdown(rows: list[dict], out_md: Path, args):
              "`Timeout` = a frontend's synth, formal-equiv, or co-sim exceeded "
              f"the {STEP_TIMEOUT // 60}-min per-step cap.",
              "",
-             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | Unknown | Timeout | OOM |",
-             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|--------:|--------:|----:|"]
+             "`No-golden` = the frontend synthesized but the verilog golden did "
+             "NOT, so there is no reference to formally compare against — this is "
+             "`make test-all`'s \"UHDM-only success\" (a capability win, not a "
+             "possible bug).  `Unknown` is reserved for genuine ambiguity "
+             "(formal non-equiv vs the golden with co-sim unavailable); a "
+             "`--no-cosim` run cannot adjudicate those, so run with co-sim to "
+             "match `make test-all`'s verdict on them.",
+             "",
+             "| Frontend | Read + synth(gate) | Read + synth(const) | Failed | Crash | Missing | Correct | Incorrect | No-golden | Unknown | Timeout | OOM |",
+             "|----------|------------------:|--------------------:|-------:|------:|--------:|--------:|----------:|----------:|--------:|--------:|----:|"]
     for f in ALL_FRONTENDS:
         a = agg[f]
         lines.append(
             f"| `{f}` | {a['synth_yes']} | {a['synth_empty']} | {a['synth_no']} | "
             f"{a['crash']} | {a['missing']} | {a['correct']} | {a['incorrect']} | "
-            f"{a['unknown']} | {a['timeout']} | {a['oom']} |")
+            f"{a['no_golden']} | {a['unknown']} | {a['timeout']} | {a['oom']} |")
 
     # Disagreements: tests where one frontend is INCORRECT while another is CORRECT.
     disagree = []
@@ -491,6 +631,11 @@ def main() -> int:
         tests = discover_internal(args.pattern)
 
     tests.sort()
+    # Drop what make test-all also skips (its skipped_tests.txt) plus the
+    # categorically non-synthesizable tests (error-expectation tests +
+    # testbenches), so the matrix's synth column reflects real DUT failures.
+    tests = [t for t in tests
+             if _skip_key(t) not in SKIPPED_TESTS and not is_non_dut(t)]
     # --- shard selection: keep every Nth test (strided so heavy/light tests
     # spread evenly across shards) ---------------------------------------------
     if args.shard:

@@ -17,8 +17,10 @@ name: Frontend Matrix
 #               6-hour limit, hence sharding.)
 #   * combine — merge the shard CSVs into the final report.
 #
-# Nightly is FORMAL-ONLY (--no-cosim); full Verilator co-sim is opt-in via the
-# `cosim` dispatch input.
+# Nightly runs WITH the Verilator co-sim so the matrix can adjudicate verdicts
+# the same way `make test-all` does (formal-equiv alone leaves real divergences
+# as UNKNOWN).  Set the `cosim` dispatch input to false for a faster formal-only
+# run.
 
 on:
   workflow_dispatch:
@@ -28,10 +30,10 @@ on:
         required: false
         default: "--all"
       cosim:
-        description: "Run Verilator co-sim too (heavier)"
+        description: "Run Verilator co-sim (accurate classification; slower). Off = formal-only."
         type: boolean
         required: false
-        default: false
+        default: true
       jobs:
         # 1 by default: formal-SAT (and Verilator) are memory-hungry; 4 OOM-kills
         # the 16 GB runner ("runner received a shutdown signal", exit 143), and 2
@@ -186,9 +188,11 @@ jobs:
     - name: Run shard ${{ matrix.shard }}/${{ strategy.job-total }}
       run: |
         cd test
-        COSIM_FLAG="--no-cosim"
-        if [ "${{ github.event.inputs.cosim }}" = "true" ]; then
-          COSIM_FLAG=""
+        # Co-sim ON by default (incl. the nightly schedule, where the input is
+        # empty); only an explicit `cosim=false` dispatch turns it off.
+        COSIM_FLAG=""
+        if [ "${{ github.event.inputs.cosim }}" = "false" ]; then
+          COSIM_FLAG="--no-cosim"
         fi
         python3 -u run_frontend_matrix.py \
           ${{ github.event.inputs.scope || '--all' }} \
