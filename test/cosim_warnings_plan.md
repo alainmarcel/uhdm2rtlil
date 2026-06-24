@@ -61,7 +61,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [x] OneShift — RESOLVED by observability restructure (widen ports / expose param / non-zero output); co-sim now PASS.
 - [B] ParameterPackedArray — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] ParameterWithUnderscoreValueDividedPassedFromCommandLine
-- [?] PartSelectInFor
+- [x] PartSelectInFor — FIXED: struct-field var_select loop bailed when an index was a part_select (`key[0][31:0]`); now selects the contiguous bit range.
 - [B] PatternAssignmentOfStructParam — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [B] PatternStruct — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [B] PutC — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
