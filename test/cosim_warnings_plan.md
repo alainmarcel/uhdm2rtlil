@@ -27,7 +27,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [A] ConcatWidth — ARTIFACT: miter EQUIVALENT; co-sim diff is uninitialised `counter_upd` X-init.
 - [A] ConstSizes — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] ContinueNested
-- [?] DotMultirange
+- [x] DotMultirange — FIXED: read `g[i][j]` on a packed array of structs (`status_t [1:0][1:0]`). Dims live on packed_array_var.Ranges() with a struct (not logic) element, so the logic packed-multidim path missed it; added a sibling using Ranges() + struct width as the leaf. cosim PASS.
 - [B] DotRange — CONFIRMED REAL UHDM BUG (UHDM-vs-RTL FAIL, Verilog PASS), but DEFERRED. `bar.l[2][1] = foo.k[2]` on packed structs is dropped entirely (no assignment emitted). A first fix (LHS hier_path var_select on a struct-field typespec_member → bit i*inner_w+j; RHS bit_select falling back to the base wire) made it produce the exact-correct `bar[15]=foo[2]` and pass co-sim, BUT regressed 6 multi-field/3D struct tests (struct_3d_packed_array, multidim_hier_path7/8, svtypes_struct_array, struct_unpacked_array_member, struct_little_endian_bit_array) because it ignores the field's OFFSET inside a multi-field struct and intercepts cases other handlers handle. Reverted. Needs offset-aware handling that only fires where existing handlers don't.
 - [A] EnumBases — ARTEFACT (sim-only/undriven/intentional-X/self-checking); classified in sim_equiv_analyzed + classification override.
 - [?] EnumFirstInInitial

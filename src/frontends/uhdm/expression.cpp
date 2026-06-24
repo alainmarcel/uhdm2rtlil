@@ -1492,6 +1492,64 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // Packed array of (packed) STRUCTS: `status_t [1:0][1:0] g;
+                // g[i][j]` reads the (i,j) struct element.  The dims live on the
+                // packed_array_var's Ranges and the element is the struct width —
+                // neither is a logic_typespec, so the logic path above misses it
+                // (DotMultirange).
+                if (exprs->size() >= 2) {
+                    RTLIL::Wire* bw = mapped_base_wire ? mapped_base_wire
+                                    : module->wire(RTLIL::escape_id(base_name));
+                    const UHDM::packed_array_var* pav =
+                        dynamic_cast<const UHDM::packed_array_var*>(vs->Actual_group());
+                    if (!pav && bw)
+                        for (auto& kv : wire_map)
+                            if (kv.second == bw && kv.first->UhdmType() == uhdmpacked_array_var) {
+                                pav = any_cast<const UHDM::packed_array_var*>(kv.first);
+                                break;
+                            }
+                    if (bw && pav && pav->Ranges() && !pav->Ranges()->empty()) {
+                        int elem_w = 0;
+                        if (pav->Typespec() && pav->Typespec()->Actual_typespec())
+                            elem_w = get_width_from_typespec(pav->Typespec()->Actual_typespec(),
+                                                             current_instance);
+                        if (elem_w <= 0 && pav->Elements() && !pav->Elements()->empty())
+                            elem_w = get_width((*pav->Elements())[0], current_instance);
+                        std::vector<std::pair<int,int>> adims; // (size, low) outer->inner
+                        bool ok = true;
+                        for (auto r : *pav->Ranges()) {
+                            RTLIL::SigSpec l = import_expression(r->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r->Right_expr(), input_mapping);
+                            if (l.is_fully_const() && rr.is_fully_const())
+                                adims.push_back({std::abs(l.as_const().as_int() - rr.as_const().as_int()) + 1,
+                                                 std::min(l.as_const().as_int(), rr.as_const().as_int())});
+                            else ok = false;
+                        }
+                        size_t K = exprs->size();
+                        if (ok && elem_w > 0 && adims.size() >= K && adims.size() >= 1) {
+                            int total = elem_w;
+                            for (auto& d : adims) total *= d.first;
+                            if (total == bw->width) {
+                                int leaf_w = elem_w;
+                                for (size_t d = K; d < adims.size(); d++) leaf_w *= adims[d].first;
+                                long off = 0; bool cok = true;
+                                for (size_t k = 0; k < K; k++) {
+                                    RTLIL::SigSpec is = import_expression((*exprs)[k], input_mapping);
+                                    if (!is.is_fully_const()) { cok = false; break; }
+                                    int inner = elem_w;
+                                    for (size_t d = k + 1; d < adims.size(); d++) inner *= adims[d].first;
+                                    off += (long)(is.as_const().as_int() - adims[k].second) * inner;
+                                }
+                                if (cok && off >= 0 && off + leaf_w <= bw->width) {
+                                    log("  vpiVarSelect: packed struct-array %s[...] → [%d+:%d]\n",
+                                        base_name.c_str(), (int)off, leaf_w);
+                                    return RTLIL::SigSpec(bw).extract((int)off, leaf_w);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Fully-indexed N-dim var_select `x[i0][i1]...[ik]` on a
                 // packed+unpacked array that carries no wire metadata.  Walk the
                 // array_var typespec dimensions outer->inner (unpacked
