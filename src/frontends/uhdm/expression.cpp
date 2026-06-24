@@ -7695,14 +7695,50 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 int rhigh = std::max(rl, rr);
                                 int rsize = rhigh - rlow + 1;
                                 bool rasc = rl < rr;
-                                RTLIL::SigSpec idx_sig =
-                                    import_expression((*vs->Exprs())[d], input_mapping);
-                                if (!idx_sig.is_fully_const()) { ok = false; break; }
-                                int idx = idx_sig.as_const().as_int();
-                                int pos = rasc ? (rr - idx) : (idx - rr);
                                 int sub_width = slice_width / rsize;
-                                abs_start += pos * sub_width;
-                                slice_width = sub_width;
+                                auto idx_expr = (*vs->Exprs())[d];
+                                // An index that is itself a PART-SELECT (`key[0][31:0]`
+                                // — PartSelectInFor) selects a contiguous RANGE of
+                                // this dimension's elements rather than one, so its
+                                // slice keeps `count` elements at the low element's
+                                // position.
+                                if (idx_expr->UhdmType() == uhdmpart_select) {
+                                    auto ps = any_cast<const part_select*>(idx_expr);
+                                    RTLIL::SigSpec pls = import_expression(ps->Left_range(), input_mapping);
+                                    RTLIL::SigSpec prs = import_expression(ps->Right_range(), input_mapping);
+                                    if (!pls.is_fully_const() || !prs.is_fully_const()) { ok = false; break; }
+                                    int plo = std::min(pls.as_int(), prs.as_int());
+                                    int phi = std::max(pls.as_int(), prs.as_int());
+                                    int lowpos = rasc ? (rr - phi) : (plo - rr);
+                                    abs_start += lowpos * sub_width;
+                                    slice_width = (phi - plo + 1) * sub_width;
+                                } else if (idx_expr->UhdmType() == uhdmindexed_part_select) {
+                                    // `key[0][i*32 +: 32]` (the loop var `i` is
+                                    // const after unrolling) — IndexedPartSelectInFor.
+                                    auto ips = any_cast<const indexed_part_select*>(idx_expr);
+                                    RTLIL::SigSpec bs = import_expression(ips->Base_expr(), input_mapping);
+                                    RTLIL::SigSpec ws = import_expression(ips->Width_expr(), input_mapping);
+                                    if (!bs.is_fully_const() || !ws.is_fully_const()) { ok = false; break; }
+                                    int base = bs.as_int(), w = ws.as_int();
+                                    int e_lo, e_hi;
+                                    if (ips->VpiIndexedPartSelectType() == 1) {  // +:
+                                        e_lo = base; e_hi = base + w - 1;
+                                    } else {                                     // -:
+                                        e_hi = base; e_lo = base - w + 1;
+                                    }
+                                    int p1 = rasc ? (rr - e_lo) : (e_lo - rr);
+                                    int p2 = rasc ? (rr - e_hi) : (e_hi - rr);
+                                    abs_start += std::min(p1, p2) * sub_width;
+                                    slice_width = w * sub_width;
+                                } else {
+                                    RTLIL::SigSpec idx_sig =
+                                        import_expression(idx_expr, input_mapping);
+                                    if (!idx_sig.is_fully_const()) { ok = false; break; }
+                                    int idx = idx_sig.as_const().as_int();
+                                    int pos = rasc ? (rr - idx) : (idx - rr);
+                                    abs_start += pos * sub_width;
+                                    slice_width = sub_width;
+                                }
                             }
                             if (ok && abs_start >= 0 &&
                                 abs_start + slice_width <= base_wire->width) {
