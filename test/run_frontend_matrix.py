@@ -303,11 +303,17 @@ def decide(frontend: str, formal: str, cosim: str, golden_cosim: str) -> str:
     if formal == "timeout" or cosim == "timeout":
         return "TIMEOUT"
     if frontend == "verilog":
-        # The golden itself: trust only its co-sim against its own RTL.
+        # The golden itself, co-simulated against its own ORIGINAL RTL.  A
+        # failure here is the Yosys Verilog frontend disagreeing with Verilator
+        # — possibly a real Verilog-frontend bug, possibly a Verilator-vs-synth
+        # artefact (read-during-write, X-init).  Either way it is NOT silently
+        # trustworthy, so report it as INCORRECT instead of hiding it as UNKNOWN:
+        # the matrix must actually surface the verilog cosim stage so the handful
+        # that fail can be adjudicated (don't assume the golden is always right).
         if cosim == "pass":
             return "CORRECT"
         if cosim == "fail":
-            return "UNKNOWN"      # disagrees with its own RTL -> harness artefact
+            return "INCORRECT"
         return "CORRECT"          # skip: synthesized, nothing contradicts it
 
     if formal == "no-golden":
