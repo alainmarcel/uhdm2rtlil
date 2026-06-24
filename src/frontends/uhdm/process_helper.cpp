@@ -371,8 +371,48 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             sig.name = std::string(part_sel->VpiName());
                         }
 
-                        signals.push_back(sig);
-                        log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
+                        // Element-array part-select (`mem[hi:lo] <= ...` where
+                        // `mem` is an UNPACKED array split into per-element wires
+                        // \mem[0]..\mem[N-1]): register EACH selected element as
+                        // its own full-wire signal, so the always_ff lowering
+                        // gives each its own $0\ temp + sync update — the
+                        // import_part_select concat then remaps element-wise
+                        // (MemorySlice's shift `mem[N-1:1] <= mem[N-2:0]`).
+                        bool elem_array_handled = false;
+                        if (!sig.name.empty() &&
+                            (name_map.count(sig.name + "[0]") ||
+                             module->wire(RTLIL::escape_id(sig.name + "[0]")))) {
+                            int el = -1, er = -1;
+                            if (auto le = part_sel->Left_range()) {
+                                RTLIL::SigSpec s = import_expression(le);
+                                if (s.is_fully_const()) el = s.as_const().as_int();
+                            }
+                            if (auto re = part_sel->Right_range()) {
+                                RTLIL::SigSpec s = import_expression(re);
+                                if (s.is_fully_const()) er = s.as_const().as_int();
+                            }
+                            if (el >= 0 && er >= 0) {
+                                int lo = std::min(el, er), hi = std::max(el, er);
+                                for (int i = lo; i <= hi; i++) {
+                                    std::string en = sig.name + "[" + std::to_string(i) + "]";
+                                    if (name_map.count(en) ||
+                                        module->wire(RTLIL::escape_id(en))) {
+                                        AssignedSignal es;
+                                        es.name = en;
+                                        es.is_part_select = false;
+                                        es.lhs_expr = nullptr;
+                                        signals.push_back(es);
+                                    }
+                                }
+                                elem_array_handled = true;
+                                log("extract_assigned_signals: expanded element-array part-select '%s[%d:%d]'\n",
+                                    sig.name.c_str(), el, er);
+                            }
+                        }
+                        if (!elem_array_handled) {
+                            signals.push_back(sig);
+                            log("extract_assigned_signals: Found assignment to part select of '%s'\n", sig.name.c_str());
+                        }
                     } else if (lhs_expr->VpiType() == vpiBitSelect) {
                         // Handle bit selects like result[0] or memory[addr]
                         auto bit_sel = any_cast<const bit_select*>(lhs_expr);

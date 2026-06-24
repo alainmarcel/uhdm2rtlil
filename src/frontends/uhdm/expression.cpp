@@ -5157,6 +5157,51 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
                 log("      Resolved '%s' as parameter for part select (width=%d)\n",
                     base_signal_name.c_str(), base.size());
+            } else if (RTLIL::Wire* e0 =
+                           (name_map.count(base_signal_name + "[0]")
+                                ? name_map[base_signal_name + "[0]"]
+                                : module->wire(RTLIL::escape_id(base_signal_name + "[0]")))) {
+                // Element-array part-select: `mem[hi:lo]` where `mem` is an
+                // UNPACKED array split into per-element wires \mem[0]..\mem[N-1]
+                // (no flat \mem wire).  Resolve to the concatenation of the
+                // selected element wires (element `lo` at the LSB).  Both the LHS
+                // and RHS of `mem[N-1:1] <= mem[N-2:0]` take this path, so the
+                // element-wise shift lines up (MemorySlice).
+                (void)e0;
+                int el = -1, er = -1;
+                if (auto le = uhdm_part->Left_range()) {
+                    RTLIL::SigSpec s = import_expression(le, input_mapping);
+                    if (s.is_fully_const()) el = s.as_const().as_int();
+                }
+                if (auto re = uhdm_part->Right_range()) {
+                    RTLIL::SigSpec s = import_expression(re, input_mapping);
+                    if (s.is_fully_const()) er = s.as_const().as_int();
+                }
+                std::string gs = get_current_gen_scope();
+                auto elem_wire = [&](int i) -> RTLIL::Wire* {
+                    std::string en = base_signal_name + "[" + std::to_string(i) + "]";
+                    if (!gs.empty() && name_map.count(gs + "." + en)) return name_map[gs + "." + en];
+                    if (name_map.count(en)) return name_map[en];
+                    return module->wire(RTLIL::escape_id(en));
+                };
+                if (el >= 0 && er >= 0) {
+                    int lo = std::min(el, er), hi = std::max(el, er);
+                    RTLIL::SigSpec concat;
+                    bool ok = true;
+                    for (int i = lo; i <= hi; i++) {
+                        if (RTLIL::Wire* w = elem_wire(i)) concat.append(RTLIL::SigSpec(w));
+                        else { ok = false; break; }
+                    }
+                    if (ok && concat.size() > 0) {
+                        log("    part_select: element-array %s[%d:%d] → %d-bit concat\n",
+                            base_signal_name.c_str(), el, er, concat.size());
+                        return concat;
+                    }
+                }
+                std::string gen_scope = get_current_gen_scope();
+                log_warning("Base signal '%s' not found in module or generate scope %s\n",
+                    base_signal_name.c_str(), gen_scope.c_str());
+                return RTLIL::SigSpec();
             } else {
                 std::string gen_scope = get_current_gen_scope();
                 log_warning("Base signal '%s' not found in module or generate scope %s\n",
