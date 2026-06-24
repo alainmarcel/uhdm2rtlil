@@ -58,6 +58,12 @@ RC_OOM = 125
 MEM_LIMIT_BYTES = int(os.environ.get("FRONTEND_MEM_LIMIT_MB", "9000")) * 1024 * 1024
 MEM_POLL_S = 0.5
 
+# Per-test peak process-group RSS, tracked across all of a test's run() calls.
+# Thread-local so concurrent workers (--jobs>1) don't clobber each other; reset
+# per test in safe_process and reported in the per-test log line so a memory hog
+# is NAMED (even a near-miss that doesn't trip the cap), not just inferred.
+_tls = threading.local()
+
 
 def _pgroup_rss_bytes(pgid: int) -> int:
     """Total resident memory (bytes) of every process in process group `pgid`."""
@@ -128,7 +134,10 @@ def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
         if deadline and time.time() > deadline:
             verdict = RC_TIMEOUT
             break
-        if MEM_LIMIT_BYTES and _pgroup_rss_bytes(pgid) > MEM_LIMIT_BYTES:
+        rss = _pgroup_rss_bytes(pgid)
+        if rss > getattr(_tls, "peak_rss", 0):
+            _tls.peak_rss = rss
+        if MEM_LIMIT_BYTES and rss > MEM_LIMIT_BYTES:
             verdict = RC_OOM
             break
     if verdict is not None:
@@ -388,15 +397,17 @@ def is_non_dut(test_rel: str) -> bool:
 
 def safe_process(test_rel: str, args) -> dict:
     """process_test guarded so one test's exception can't abort the sweep."""
+    _tls.peak_rss = 0
     try:
-        return process_test(test_rel, args)
+        row = process_test(test_rel, args)
     except Exception as e:  # noqa: BLE001 - never let one test kill the run
         row = {"test": test_rel}
         for f in ALL_FRONTENDS:
             row[f"{f}_synth"] = "no"
             row[f"{f}_correct"] = "N/A"
             row[f"{f}_detail"] = f"harness-error: {type(e).__name__}: {e}"
-        return row
+    row["peak_rss_mb"] = int(getattr(_tls, "peak_rss", 0) / (1024 * 1024))
+    return row
 
 
 def process_test(test_rel: str, args) -> dict:
@@ -666,14 +677,20 @@ def main() -> int:
             for i, fut in enumerate(as_completed(futs), 1):
                 r = fut.result()
                 rows.append(r)
-                print(f"  [{i}/{len(tests)}] {r['test']}")
+                print(f"  [{i}/{len(tests)}] {r['test']}  "
+                      f"peakRSS={r.get('peak_rss_mb', 0)}MB", flush=True)
     else:
         for i, t in enumerate(tests, 1):
+            # Name the in-flight test BEFORE running it so that if it OOM-kills
+            # the runner (exit 143), the log's last line still names the culprit
+            # — flushed so it survives the SIGKILL.
+            print(f"  ▶ [{i}/{len(tests)}] {t} …", flush=True)
             r = safe_process(t, args)
             rows.append(r)
             summ = " ".join(f"{f}:{r[f'{f}_synth']}/{r[f'{f}_correct']}"
                             for f in ALL_FRONTENDS)
-            print(f"  [{i}/{len(tests)}] {t}  {summ}")
+            print(f"  [{i}/{len(tests)}] {t}  {summ}  "
+                  f"peakRSS={r.get('peak_rss_mb', 0)}MB", flush=True)
 
     rows.sort(key=lambda r: r["test"])
     out_csv = Path(args.out + ".csv")
