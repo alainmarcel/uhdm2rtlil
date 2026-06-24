@@ -48,8 +48,15 @@ RC_OOM = 125
 # losing the shard with no result and no log of which test did it.  We cap each
 # job's process-group RSS and SIGKILL it OURSELVES first, recording an `oom`
 # status, so the sweep keeps going.  Override via FRONTEND_MEM_LIMIT_MB; 0 = off.
-MEM_LIMIT_BYTES = int(os.environ.get("FRONTEND_MEM_LIMIT_MB", "12000")) * 1024 * 1024
-MEM_POLL_S = 1.0
+#
+# The cap is RSS-polled, so it's racy against a single fast allocation: with the
+# old 12 GB cap + 1 s poll a job could climb from <12 GB to >16 GB between two
+# polls and kill the runner before we caught it (seen on a shard-6 simple/ test).
+# Drop to 9 GB (≈5 GB headroom under the ~14 GB usable) and poll twice a second
+# so a spike has far less room/time to overshoot.  RSS (resident) is unaffected
+# by tcmalloc's large *virtual* reservations (surelog), so this stays accurate.
+MEM_LIMIT_BYTES = int(os.environ.get("FRONTEND_MEM_LIMIT_MB", "9000")) * 1024 * 1024
+MEM_POLL_S = 0.5
 
 
 def _pgroup_rss_bytes(pgid: int) -> int:
