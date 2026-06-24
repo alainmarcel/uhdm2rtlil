@@ -86,10 +86,22 @@ build-debug/Makefile:
 		cd build-debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCPU_CORES=$(CPU_CORES) -DCMAKE_C_COMPILER="$(CC)" -DCMAKE_CXX_COMPILER="$(CXX)" ..; \
 	fi
 
-# Clean build artifacts
+# Clean build artifacts.
+#
+# IMPORTANT: Yosys (and its bundled abc) build IN-TREE under third_party/yosys,
+# and the install lives in out/.  Both survive `rm -rf build`, so the old clean
+# left stale Yosys *.o behind — after a Yosys-submodule bump those link against
+# freshly-built v0.65 objects and crash at runtime (ABI mismatch, e.g.
+# `std::out_of_range: Cell::getParam()`).  A proper clean must remove them too.
 clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf build build-debug
+	@echo "Cleaning build artifacts (build dirs, out/, in-tree Yosys + abc)..."
+	rm -rf build build-debug out
+	-$(MAKE) -C third_party/yosys clean >/dev/null 2>&1 || true
+	@find third_party/yosys \( -name '*.o' -o -name '*.d' -o -name '*.a' \) -delete 2>/dev/null || true
+	rm -f third_party/yosys/yosys third_party/yosys/yosys-* \
+	      third_party/yosys/libyosys.so* third_party/yosys/abc/abc \
+	      third_party/yosys/kernel/version_*.cc
+	@echo "Clean complete. (Re-running 'make' will rebuild Yosys from scratch.)"
 
 # Install target
 install: all
@@ -113,6 +125,6 @@ help:
 	@echo "  test-yosys - Run Yosys tests only"
 	@echo "  frontends  - Build sv2v + yosys-slang for the 4-frontend matrix"
 	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
-	@echo "  clean      - Clean build artifacts"
+	@echo "  clean      - Remove ALL build artifacts (build dirs, out/, in-tree Yosys/abc objects)"
 	@echo "  install    - Install the plugin"
 	@echo "  help       - Show this help message"
