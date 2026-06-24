@@ -65,8 +65,17 @@ MEM_POLL_S = 0.5
 _tls = threading.local()
 
 
-def _pgroup_rss_bytes(pgid: int) -> int:
-    """Total resident memory (bytes) of every process in process group `pgid`."""
+def _session_rss_bytes(sid: int) -> int:
+    """Total resident memory (bytes) of every process in SESSION `sid`.
+
+    We measure by session, NOT process group: GNU `timeout` (which the workflow
+    wraps every frontend/formal/cosim step in) runs its command in a *separate
+    process group* but the SAME session, so a process-group filter misses the
+    heavy tool entirely (measured 166 MB while slang on case_large used >60 GB,
+    so the cap never fired and the runner OOM-died).  Our run() child is the
+    session leader (start_new_session=True ⇒ sid == its pid), so the session
+    captures every descendant regardless of process-group games.
+    """
     page = os.sysconf("SC_PAGE_SIZE")
     total = 0
     try:
@@ -82,13 +91,34 @@ def _pgroup_rss_bytes(pgid: int) -> int:
             # comm (field 2) is parenthesised and may contain spaces/parens —
             # parse the fixed fields AFTER the final ')'.
             after = data[data.rfind(")") + 2:].split()
-            if int(after[2]) != pgid:          # state, ppid, pgrp
+            if int(after[3]) != sid:           # state, ppid, pgrp, session
                 continue
             with open(f"/proc/{pid}/statm") as fh:
                 total += int(fh.read().split()[1]) * page   # field 2 = resident
         except (OSError, ValueError, IndexError):
             continue
     return total
+
+
+def _session_pids(sid: int) -> list[int]:
+    """PIDs of every process in session `sid` — for killing the whole tree when
+    `timeout`-spawned children sit in process groups our killpg(leader) misses."""
+    out = []
+    try:
+        pids = os.listdir("/proc")
+    except OSError:
+        return out
+    for pid in pids:
+        if not pid.isdigit():
+            continue
+        try:
+            with open(f"/proc/{pid}/stat") as fh:
+                after = fh.read().rsplit(")", 1)[1].split()
+            if int(after[3]) == sid:
+                out.append(int(pid))
+        except (OSError, ValueError, IndexError):
+            continue
+    return out
 
 ALL_FRONTENDS = ["verilog", "uhdm", "sv2v", "slang"]
 
@@ -106,11 +136,13 @@ SYNTH_TOKEN = {
 def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
     """Run a command; return (returncode, combined_output).
 
-    On timeout the ENTIRE process group is killed — the children we launch are
+    On timeout/OOM the ENTIRE session is killed — the children we launch are
     shell scripts / Python that spawn yosys / surelog / verilator / cc1plus
-    grandchildren, and a plain subprocess timeout would reap only the direct
-    child, orphaning those grandchildren to burn a core for hours.  We start the
-    child in its own session (process-group leader) and SIGKILL the whole group.
+    grandchildren (each `timeout`-wrapped command in its OWN process group), and
+    a plain subprocess kill — or even killpg(leader) — would leave those other
+    process groups running to burn a core / hog memory for hours.  We start the
+    child in its own session (session leader) and SIGKILL every PID in the
+    session, which spans all those process groups.
     """
     try:
         p = subprocess.Popen(cmd, cwd=cwd, text=True, start_new_session=True,
@@ -118,11 +150,11 @@ def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
     except OSError as e:
         return 1, f"[spawn-failed] {e}"
     # Drain stdout in a thread so a chatty job can't deadlock on a full pipe
-    # while we poll its memory; meanwhile watch wall-time AND process-group RSS.
+    # while we poll its memory; meanwhile watch wall-time AND session RSS.
     chunks: list[str] = []
     reader = threading.Thread(target=lambda: chunks.extend(p.stdout), daemon=True)
     reader.start()
-    pgid = p.pid                       # start_new_session => pgid == pid
+    sid = p.pid                        # start_new_session => sid == pid
     deadline = (time.time() + timeout) if timeout else None
     verdict = None                     # None=ok | RC_TIMEOUT | RC_OOM
     while True:
@@ -134,15 +166,23 @@ def run(cmd: list[str], cwd: Path | None = None, timeout: int | None = None):
         if deadline and time.time() > deadline:
             verdict = RC_TIMEOUT
             break
-        rss = _pgroup_rss_bytes(pgid)
+        rss = _session_rss_bytes(sid)
         if rss > getattr(_tls, "peak_rss", 0):
             _tls.peak_rss = rss
         if MEM_LIMIT_BYTES and rss > MEM_LIMIT_BYTES:
             verdict = RC_OOM
             break
     if verdict is not None:
+        # killpg(leader) only reaps the leader's own process group; the
+        # timeout-spawned tools live in sibling groups, so SIGKILL every PID in
+        # the session.
+        for kpid in _session_pids(sid):
+            try:
+                os.kill(kpid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
         try:
-            os.killpg(pgid, signal.SIGKILL)
+            os.killpg(sid, signal.SIGKILL)
         except (ProcessLookupError, PermissionError):
             pass
         try:
