@@ -5021,7 +5021,8 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             
                             log("        Shift register unrolled successfully\n");
                         }
-                    } else if (body->VpiType() == vpiAssignment &&
+                    } else if (in_initial_block &&
+                               body->VpiType() == vpiAssignment &&
                                any_cast<const assignment*>(body)->Lhs() &&
                                any_cast<const assignment*>(body)->Lhs()->VpiType() == vpiBitSelect &&
                                module->memories.count(RTLIL::escape_id(std::string(
@@ -5030,6 +5031,13 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                         // `for (i...) mem[i] = <const-of-i>` (e.g. svtypes/
                         // logic_rom).  Emit one $meminit_v2 per word instead of
                         // sync rules so the memory gets a proper init.
+                        //
+                        // Gated on in_initial_block: the SAME `for (i) mem[i] <= 0`
+                        // shape inside an `always @(posedge clk) if (rst)` is a
+                        // SYNCHRONOUS RESET (clears the RAM every reset cycle), not
+                        // a power-up initializer — emitting $meminit there makes
+                        // `rst` a no-op for the memory so it diverges from the RTL
+                        // (simple_memory).  Those fall through to the sync unroll.
                         // Two-pass: only take this path if EVERY iteration folds
                         // to a constant; otherwise fall back to the general
                         // sync unroll (e.g. non-const RHS like a function call).
