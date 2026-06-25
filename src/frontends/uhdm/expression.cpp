@@ -559,11 +559,25 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
             
-            // Check if LHS is the function name (return value)
-            if (assign->Lhs()->UhdmType() == uhdmref_obj) {
-                const ref_obj* lhs_ref = any_cast<const ref_obj*>(assign->Lhs());
-                if (lhs_ref) {
-                    std::string lhs_name = std::string(lhs_ref->VpiName());
+            // Check if LHS is the function name (return value), a parameter, or
+            // a block-local variable.  A simple named LHS is either a `ref_obj`
+            // OR — for a declaration initializer like `logic [2:0] data = in;`
+            // — the variable object itself (uhdmlogic_var etc.), which is NOT a
+            // ref_obj.  Without handling the latter, lhs_sig stays empty, no
+            // action is emitted, and the local (and any output that returns it)
+            // is left undriven — FunctionWireAssignmentOnDeclaration.
+            int lhs_utype_named = assign->Lhs()->UhdmType();
+            bool lhs_is_named = (lhs_utype_named == uhdmref_obj ||
+                                 lhs_utype_named == uhdmlogic_var ||
+                                 lhs_utype_named == uhdmint_var ||
+                                 lhs_utype_named == uhdminteger_var ||
+                                 lhs_utype_named == uhdmbit_var ||
+                                 lhs_utype_named == uhdmbyte_var ||
+                                 lhs_utype_named == uhdmenum_var ||
+                                 lhs_utype_named == uhdmstruct_var);
+            if (lhs_is_named) {
+                {
+                    std::string lhs_name = std::string(assign->Lhs()->VpiName());
                     // Check input_mapping first - this handles function params, return variable,
                     // and block-local variables that may shadow the function name
                     auto it = input_mapping.find(lhs_name);

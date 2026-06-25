@@ -131,7 +131,7 @@
 #  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
 # ===========================================================================
 
-# FunctionWireAssignmentOnDeclaration — CONFIRMED real UHDM bug (triaged 2026-06).
+# FunctionWireAssignmentOnDeclaration — FIXED (2026-06).  Was: a return-based
 #   `function automatic logic [2:0] test(logic [2:0] in); logic [2:0] data = in;
 #    return data; endfunction  assign o = test(i);`  The output `o` is left
 #   UNDRIVEN (reads 0) — the function result never connects to o.  UHDM-only test

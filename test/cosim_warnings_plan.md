@@ -35,7 +35,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [B] FunctionOutputArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [x] FunctionParam — FIXED: unpacked-parameter-array element read in const-eval (`return X[0]`). Resolve value from module_inst Param_assigns; operands are in ascending index order.
 - [x] SelectGivenBySelectOnParameterInFunction — FIXED (same batch): param-array element + packed-local var_select (`c[idx][0]`) + function-local var initializer in const-eval + variable-as-LHS assignment.
-- [B] FunctionWireAssignmentOnDeclaration — CONFIRMED real UHDM bug: a return-based function with a declaration-initialized local (`logic [2:0] data = in; return data;`) leaves the output `o` UNDRIVEN (o=0). The function result never connects to o in process_function_with_context (conflicting block-local `data` wires). See cosim_uhdm_bugs.txt.
+- [x] FunctionWireAssignmentOnDeclaration — FIXED: the assignment LHS handler in process_stmt_to_case only recognised `ref_obj`; a declaration initializer (`logic [2:0] data = in;`) has the VARIABLE object (uhdmlogic_var) as the LHS, so no action was emitted and the local (and the returned output) stayed undriven (o=0). Broadened the handler to accept variable-typed LHS. cosim PASS.
 - [?] FunctionWithOverriddenParameter
 - [x] GenIfInside — RESOLVED by observability restructure (widen ports / expose param / non-zero output); co-sim now PASS.
 - [B] GetC — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
