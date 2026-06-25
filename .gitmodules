@@ -4,13 +4,14 @@
 [submodule "third_party/yosys"]
 	path = third_party/yosys
 	url = https://github.com/alainmarcel/yosys.git
-	# Tracking a fork branch (v0.65 + one local patch) until upstream
+	# Tracking a fork branch (v0.66 + one local patch) until upstream
 	# Yosys merges the `write_verilog` signedness fix (still not upstream as of
-	# v0.65/v0.66 — the backend's dump_wire does not emit `signed`; the related
+	# v0.66 — the backend's dump_wire does not emit `signed`; the related
 	# upstream PR #5887 fixes the READ side only).  See:
 	#   - upstream PR (placeholder):     YosysHQ/yosys#TBD (write_verilog side)
-	#   - tracking branch on the fork:   v0.65-write-verilog-signed-port
+	#   - tracking branch on the fork:   v0.66-write-verilog-signed-port
 	#   - related downstream issue:      chipsalliance/synlig#2425
-	# Pinned to v0.65 (not v0.66) because yosys-slang — used by the 4-frontend
-	# matrix — supports up to v0.65 only.  When upstream merges the write-side fix
-	# and uhdm2rtlil bumps Yosys, revert this to https://github.com/YosysHQ/yosys.git.
+	# NOTE: yosys-slang (used by the 4-frontend matrix) officially lists support
+	# up to v0.65 only; the slang column may be unsupported on v0.66 until it
+	# bumps.  When upstream merges the write-side fix, revert this url to
+	# https://github.com/YosysHQ/yosys.git.
