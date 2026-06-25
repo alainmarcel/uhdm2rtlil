@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
-The Yosys submodule is pinned at **v0.65** (`third_party/yosys`, on the fork's
-`v0.65-write-verilog-signed-port` branch = v0.65 + one local write_verilog
-signedness patch). Capped at v0.65 (not v0.66) because yosys-slang — used by the
-4-frontend matrix — supports up to v0.65 only.
+The Yosys submodule is pinned at **v0.66** (`third_party/yosys`, on the fork's
+`v0.66-write-verilog-signed-port` branch = v0.66 + one local write_verilog
+signedness patch). v0.66 requires **C++20** (kernel/yosys_common.h hard-errors
+otherwise), so the plugin's `CMAKE_CXX_STANDARD` is 20. yosys-slang officially
+lists support only up to v0.65, but it builds and runs fine against v0.66 in
+practice (verified: the 4-frontend matrix's slang column synthesizes).
 
 ## Build Commands
 

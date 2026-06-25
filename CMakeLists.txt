@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 project(uhdm2rtlil VERSION 1.86)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+# Set C++ standard.  Yosys v0.66 requires C++20 (kernel/yosys_common.h hard-
+# errors otherwise), and our plugin includes Yosys headers, so build C++20 too.
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
