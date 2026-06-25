@@ -535,3 +535,30 @@ Test: MultiplePrints
     is VACUOUS (outputs all-zero every cycle, bits_ever_set=0), so the "mismatch"
     is not an observable divergence.  The print side-effects are validated by the
     synth flow, not by output comparison.
+
+Test: case_expr_extend
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: case_expr_query
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: counter_unbased
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: func_output_arg
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: func_tern_hint
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: function_arith
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_forloops
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: struct_param_dim
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: xor_assignment
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.

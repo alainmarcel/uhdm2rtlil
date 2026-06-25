@@ -142,3 +142,10 @@
 #   declaration initializer `data = in` IS present as a vpiAssignment stmt in the
 #   begin block AND `data->Expr()` is null.  Fix needs the result-wire wiring in
 #   process_function_with_context to survive (deferred — non-trivial).
+
+# EnumFirstInInitial — CONFIRMED real UHDM bug (CRASH, triaged 2026-06).
+#   `module top(output int o); typedef enum {a=1,b=2} my_enum; initial begin
+#    my_enum e; assign o = e.first(); end endmodule`  — `read_uhdm` SEGFAULTS
+#   (exit 139) during import.  The enum `.first()` method call (a method_func_call
+#   on an enum var, inside an `initial` with a procedural `assign`) null-derefs.
+#   Needs a debug-build gdb backtrace to localize; deferred.

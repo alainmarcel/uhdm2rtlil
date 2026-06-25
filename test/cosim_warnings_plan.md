@@ -30,7 +30,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [x] DotMultirange — FIXED: read `g[i][j]` on a packed array of structs (`status_t [1:0][1:0]`). Dims live on packed_array_var.Ranges() with a struct (not logic) element, so the logic packed-multidim path missed it; added a sibling using Ranges() + struct width as the leaf. cosim PASS.
 - [B] DotRange — CONFIRMED REAL UHDM BUG (UHDM-vs-RTL FAIL, Verilog PASS), but DEFERRED. `bar.l[2][1] = foo.k[2]` on packed structs is dropped entirely (no assignment emitted). A first fix (LHS hier_path var_select on a struct-field typespec_member → bit i*inner_w+j; RHS bit_select falling back to the base wire) made it produce the exact-correct `bar[15]=foo[2]` and pass co-sim, BUT regressed 6 multi-field/3D struct tests (struct_3d_packed_array, multidim_hier_path7/8, svtypes_struct_array, struct_unpacked_array_member, struct_little_endian_bit_array) because it ignores the field's OFFSET inside a multi-field struct and intercepts cases other handlers handle. Reverted. Needs offset-aware handling that only fires where existing handlers don't.
 - [A] EnumBases — ARTEFACT (sim-only/undriven/intentional-X/self-checking); classified in sim_equiv_analyzed + classification override.
-- [?] EnumFirstInInitial
+- [B] EnumFirstInInitial — CONFIRMED real UHDM bug (CRASH): `read_uhdm` SEGFAULTS (exit 139) on `module top(output int o); ... initial begin my_enum e; assign o = e.first(); end` — the enum `.first()` method call (with an `assign` inside `initial`) null-derefs during import. Needs a debug-build gdb trace. See cosim_uhdm_bugs.txt.
 - [?] FunctionCallsFunctionWithIndexedPartSelectAsArgument
 - [B] FunctionOutputArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [x] FunctionParam — FIXED: unpacked-parameter-array element read in const-eval (`return X[0]`). Resolve value from module_inst Param_assigns; operands are in ascending index order.
@@ -91,16 +91,16 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] VarPassedTo2Submodules
 - [B] VoidFunction2Returns — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [A] assignment-pattern — ARTEFACT (sim-only/undriven/intentional-X/self-checking); classified in sim_equiv_analyzed + classification override.
-- [?] case_expr_extend
-- [?] case_expr_query
+- [A] case_expr_extend — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
+- [A] case_expr_query — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] conditional_if — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
 - [A] const_fold_func — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
-- [?] counter_unbased
+- [A] counter_unbased — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] fmt_always_comb
 - [A] fsm_using_always — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); X-init co-sim diff; classified
-- [?] func_output_arg
-- [?] func_tern_hint
-- [?] function_arith
+- [A] func_output_arg — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
+- [A] func_tern_hint — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
+- [A] function_arith — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] int_types_blk1
 - [?] load_and_derive
 - [?] mem2reg_test1
@@ -112,17 +112,17 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] priority_memory
 - [B] rsp_gen_minimal — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [?] signed_ext_case
-- [?] simple_forloops
+- [A] simple_forloops — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] simple_function — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
 - [?] simple_generate
 - [?] simple_hierarchy
 - [?] simple_memory
-- [?] struct_param_dim
+- [A] struct_param_dim — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] struct_sizebits
 - [?] synthesis
 - [?] unary_op_minus
 - [?] unbased_unsized
-- [?] xor_assignment
+- [A] xor_assignment — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] custom_prims
 - [K] bug3670 — undefined-module blackbox; classified earlier.
 - [K] code_hdl_models_d_latch_gates — latch, both cosims fail (NOT a bug).
