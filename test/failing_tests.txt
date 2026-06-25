@@ -102,13 +102,17 @@ techmap/recursive_map.v
 # UHDM frontend (same class as the techmap rule files above).
 opt/opt_rmdff.v
 
-# --- REAL UHDM-frontend bug: spurious latch inference in `always @*` ---
-# loops.v (a combinational AES fragment) has incompletely-assigned regs in its
-# `always @*` blocks.  The Yosys Verilog frontend resolves these to pure
-# combinational logic (0 latches); the UHDM frontend instead infers 8
-# `$_DLATCH_N_` cells, so the netlists diverge and a SAT miter FAILS (a genuine
-# difference, not an equiv_induct artefact).  To fix in the always_comb lowering
-# (match the Verilog frontend's latch-avoidance for local/incomplete regs).
+# --- REAL UHDM-frontend bug: block-local blocking temps in `always @*` ---
+# loops.v (a combinational AES fragment) declares block-local regs inside its
+# `always @*` (`data_var`, `round_key_var`) and uses them blocking:
+#   data_var = addroundkey_data_i; round_key_var = key_i;
+#   round_data_var = round_key_var ^ data_var;
+# The UHDM frontend computes round_data_var with the WRONG operand values for
+# those block-local temps, so next_addroundkey_data_reg diverges (UHDM nl=0xf vs
+# RTL/Verilog rtl=0xb at cycle 17).  Two-co-sim adjudicated (UHDM-vs-RTL FAIL,
+# Verilog-vs-RTL PASS).  (The earlier "spurious latch" diagnosis was wrong —
+# post-synth latch count is now 0 for both frontends.)  Fix: thread the blocking
+# value of an always-@* block-local var into its later same-block reads.
 simple/loops.v
 
 # --- multi-file / external-tool tests ---
@@ -163,11 +167,18 @@ CastStructArray
 # --- (all other imported feature-gap failures fixed) ---
 
 # ---------------------------------------------------------------------------
-# Surfaced by the Yosys v0.64 -> v0.65 submodule bump: three upstream
-# memory/typedef tests whose v0.65 netlists no longer match between the UHDM and
-# Verilog frontends (v0.65 shifted memory inference / synth), so equiv_induct
-# fails.  Not internal-suite regressions; to be triaged individually like the
-# rest of the memory backlog.
-memlib/memlib_wren.v
-memories/amber23_sram_byte_en.v
+# Surfaced by the Yosys v0.64 -> v0.65 bump.  TRIAGED:
+#   memlib/memlib_wren and memories/amber23_sram_byte_en are NOT bugs — both the
+#   UHDM AND the Verilog Verilator co-sims pass; equiv_induct is just inductively
+#   incomplete on these byte/word-enable RAMs.  They already opt into
+#   cosim_equiv_tests.txt and now pass that way.  (They only appeared to "fail"
+#   the v0.65 sweep because a STALE extract_clocks_resets.so plugin — rebuilt
+#   only `make uhdm2rtlil`, not the whole tree — broke the co-sim build, so the
+#   COSIM_EQUIV opt-in could not trigger.  A full `make` rebuilds the plugin.)
+#   Removed from this list.
+#
+# svtypes/array_assign — a no-port `module top;` assertion/elaboration test
+# ($bits + unpacked-array assignment-pattern asserts).  No observable I/O, so
+# the Verilator co-sim is N/A and equiv_induct has nothing meaningful to prove;
+# it reports an Induct-Formal failure.  Kept here (cannot be cosim-adjudicated).
 svtypes/array_assign.sv

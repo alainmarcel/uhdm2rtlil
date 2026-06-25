@@ -82,8 +82,12 @@
 #   instance scope (uhdm_inst->VpiParent() is NOT it — needs the real parent
 #   module_inst the importer is currently processing).
 #
-# simple_memory — UHDM-vs-RTL co-sim FAIL, Verilog PASS (memory-related; not yet
-#   root-caused).
+# simple_memory — FIXED.  Root cause: the synchronous-reset for-loop
+#   `always @(posedge clk) if (rst) for (i) memory[i] <= 0` was converted to
+#   $meminit (power-up init) instead of clocked writes, so `rst` no longer
+#   cleared the RAM at run time and the UHDM netlist diverged from the RTL
+#   (equiv_induct false-passed; the sound co-sim caught it).  The meminit path
+#   is now gated on in_initial_block.
 #
 # ===========================================================================
 # DETERMINISM-PASS BACKLOG (surfaced 2026-06).  These were cosim warnings the
