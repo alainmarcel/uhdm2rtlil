@@ -153,7 +153,7 @@
 #   null-derefed — added `if (!a) return false;`.  RESIDUAL: o reads 0 not 1;
 #   the interpreter path does not drive the continuous assign / enum .first().
 
-# TypedefedRangedFunctionReturn — ROOT-CAUSED: SURELOG bug, not UHDM frontend (2026-06).
+# TypedefedRangedFunctionReturn — FIXED in UHDM ExprEval::size() (2026-06). Was a Surelog/UHDM bug:
 #   `module top(output logic [31:0] a, b); typedef logic [31:0] word;
 #    function automatic word[1:0] get_2_abcd(); return {32'hABCD,32'hABCD};
 #    endfunction  assign {a,b} = get_2_abcd();`  The packed-array-of-typedef
