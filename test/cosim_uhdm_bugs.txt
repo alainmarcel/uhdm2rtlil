@@ -143,9 +143,12 @@
 #   begin block AND `data->Expr()` is null.  Fix needs the result-wire wiring in
 #   process_function_with_context to survive (deferred — non-trivial).
 
-# EnumFirstInInitial — CONFIRMED real UHDM bug (CRASH, triaged 2026-06).
+# EnumFirstInInitial — CRASH FIXED (2026-06); residual functional bug.  Was:
 #   `module top(output int o); typedef enum {a=1,b=2} my_enum; initial begin
 #    my_enum e; assign o = e.first(); end endmodule`  — `read_uhdm` SEGFAULTS
 #   (exit 139) during import.  The enum `.first()` method call (a method_func_call
 #   on an enum var, inside an `initial` with a procedural `assign`) null-derefs.
-#   Needs a debug-build gdb backtrace to localize; deferred.
+#   FIXED the crash: emit_initial_meminit_writes cast `s` to `assignment*`
+#   but the stmt is an `assign_stmt`, so the cast returned null and `a->Lhs()`
+#   null-derefed — added `if (!a) return false;`.  RESIDUAL: o reads 0 not 1;
+#   the interpreter path does not drive the continuous assign / enum .first().
