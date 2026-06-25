@@ -2,9 +2,14 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 project(uhdm2rtlil VERSION 1.86)
 
-# Set C++ standard.  Yosys v0.66 requires C++20 (kernel/yosys_common.h hard-
-# errors otherwise), and our plugin includes Yosys headers, so build C++20 too.
-set(CMAKE_CXX_STANDARD 20)
+# Set C++ standard.  Keep the TREE at C++17: third_party/Surelog (and its
+# bundled antlr4) is added below via add_subdirectory and does NOT build under
+# C++20 here — antlr4's toolchain rejects `-std=c++20`.  Yosys v0.66 itself
+# requires C++20, but only OUR plugin includes Yosys headers, so C++20 is
+# scoped to the `uhdm2rtlil` target (see set_target_properties below); the
+# extract_clocks_resets plugin is built via `yosys-config --build`, which
+# supplies Yosys's own C++20 flags.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -121,6 +126,10 @@ target_compile_definitions(uhdm2rtlil PRIVATE
 set_target_properties(uhdm2rtlil PROPERTIES
     PREFIX ""
     SUFFIX ".so"
+    # Yosys v0.66 headers hard-require C++20; scope it to this target only so
+    # the C++17 Surelog/antlr4 subtree keeps building.
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
 )
 
 # Link additional system libraries needed for the plugin
