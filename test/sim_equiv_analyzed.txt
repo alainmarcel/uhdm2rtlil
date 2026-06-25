@@ -502,3 +502,36 @@ Test: assignment-pattern
 
 
 
+
+Test: 1DUnpackedArray
+    Artefact: SAT miter proves UHDM == Verilog (bounded from reset) and both
+    Verilator co-sims (UHDM-vs-RTL, Verilog-vs-RTL) PASS.  Any residual co-sim
+    warning is Verilator-vs-synth noise, not a frontend divergence.
+
+Test: AssignSizeOfVar
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); the co-sim diff is a
+    Verilator-vs-synth X-init artefact, not a frontend bug.
+
+Test: SystemFunctions
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: const_fold_func
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_function
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: ContinueNested
+    Artefact: UHDM-only test (the Yosys Verilog frontend build-fails, so there is
+    no miter reference), but the UHDM-vs-RTL Verilator co-sim PASSES — the UHDM
+    netlist matches the behavioural RTL exactly.  Not a divergence.
+
+Test: conditional_if
+    Artefact: the co-sim is SKIPPED (no observable output / not Verilator-
+    buildable), so there is no RTL-vs-netlist divergence to report.
+
+Test: MultiplePrints
+    Artefact: a `$display`/`$write` test with no registered outputs — the co-sim
+    is VACUOUS (outputs all-zero every cycle, bits_ever_set=0), so the "mismatch"
+    is not an observable divergence.  The print side-effects are validated by the
+    synth flow, not by output comparison.

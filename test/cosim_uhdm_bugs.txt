@@ -130,3 +130,15 @@
 #      undriven), assignment-pattern (self-checking asserts $stop Verilator).
 #  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
 # ===========================================================================
+
+# FunctionWireAssignmentOnDeclaration — CONFIRMED real UHDM bug (triaged 2026-06).
+#   `function automatic logic [2:0] test(logic [2:0] in); logic [2:0] data = in;
+#    return data; endfunction  assign o = test(i);`  The output `o` is left
+#   UNDRIVEN (reads 0) — the function result never connects to o.  UHDM-only test
+#   (Yosys Verilog frontend build-fails), deterministic o=0 vs RTL => real bug.
+#   Routed through process_function_with_context/process_stmt_to_case: the begin
+#   block's local `data` is mapped to a `$blk_data` wire, but a SEPARATE `.data`
+#   wire is created and driven Sx, and after `opt` nothing drives `o`.  The
+#   declaration initializer `data = in` IS present as a vpiAssignment stmt in the
+#   begin block AND `data->Expr()` is null.  Fix needs the result-wire wiring in
+#   process_function_with_context to survive (deferred — non-trivial).
