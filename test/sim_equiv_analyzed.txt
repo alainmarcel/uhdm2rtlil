@@ -562,3 +562,35 @@ Test: struct_param_dim
 
 Test: xor_assignment
     Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: int_types_blk1
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: load_and_derive
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: param_int_types
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: port_sign_extend
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: signed_ext_case
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_generate
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: unary_op_minus
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: NestedForLoops
+    Artefact: UHDM-only test (Yosys Verilog frontend build-fails, no miter
+    reference), but the UHDM-vs-RTL Verilator co-sim PASSES (200 cycles) — the
+    UHDM netlist matches the behavioural RTL exactly.
+
+Test: SumOfParameters
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: param_no_default
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).

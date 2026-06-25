@@ -52,7 +52,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [x] ModuleInstantiationAndIndirectParams — RESOLVED by observability restructure (widen ports / expose param / non-zero output); co-sim now PASS.
 - [B] MultiAssignmentPatternOfConcat — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [A] MultiplePrints — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
-- [?] NestedForLoops
+- [A] NestedForLoops — ARTEFACT (UHDM-only; UHDM-vs-RTL co-sim PASS, Verilog build-fails); sim_equiv_analyzed.txt
 - [B] NestedPatternPassedAsPort — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [x] OneArithShift — RESOLVED by observability restructure (widen ports / expose param / non-zero output); co-sim now PASS.
 - [?] OneClass
@@ -79,7 +79,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [?] StructInPackage
 - [?] StructLocalParam
 - [B] StructParameterInitializedWithPatternAndReferenced — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
-- [?] SumOfParameters
+- [A] SumOfParameters — ARTEFACT (UHDM-only; UHDM-vs-RTL co-sim PASS, Verilog build-fails); sim_equiv_analyzed.txt
 - [A] SystemFunctions — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
 - [B] TaskOutputArgument — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
 - [A] TaskReturn — ARTEFACT (sim-only/undriven/intentional-X/self-checking); classified in sim_equiv_analyzed + classification override.
@@ -101,26 +101,26 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [A] func_output_arg — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] func_tern_hint — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] function_arith — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
-- [?] int_types_blk1
-- [?] load_and_derive
+- [A] int_types_blk1 — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
+- [A] load_and_derive — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [?] mem2reg_test1
 - [A] mixed_sign_ops — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); X-init co-sim diff; classified
 - [?] mriscv_bind_sva
-- [?] param_int_types
-- [?] param_no_default
-- [?] port_sign_extend
+- [A] param_int_types — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
+- [A] param_no_default — ARTEFACT (UHDM-only; UHDM-vs-RTL co-sim PASS, Verilog build-fails); sim_equiv_analyzed.txt
+- [A] port_sign_extend — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [?] priority_memory
 - [B] rsp_gen_minimal — CONFIRMED real UHDM bug (determinism pass): combinational, deterministic co-sim mismatch (UHDM netlist computes wrong value vs Verilator RTL). See cosim_uhdm_bugs.txt.
-- [?] signed_ext_case
+- [A] signed_ext_case — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [A] simple_forloops — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] simple_function — ARTEFACT (miter EQUIVALENT or UHDM-vs-RTL PASS / vacuous / skip); classified in sim_equiv_analyzed.txt
-- [?] simple_generate
+- [A] simple_generate — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [?] simple_hierarchy
 - [?] simple_memory
 - [A] struct_param_dim — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] struct_sizebits
 - [?] synthesis
-- [?] unary_op_minus
+- [A] unary_op_minus — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [?] unbased_unsized
 - [A] xor_assignment — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] custom_prims
