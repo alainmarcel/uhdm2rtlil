@@ -594,3 +594,30 @@ Test: SumOfParameters
 
 Test: param_no_default
     Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: TypedefInModule
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: mem2reg_test1
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: struct_sizebits
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: unbased_unsized
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_hierarchy
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: StructInPackage
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: StructLocalParam
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: TypedefedFunctionArgument
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: ImportFunction
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
