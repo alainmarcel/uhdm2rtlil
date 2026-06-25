@@ -74,7 +74,7 @@ jobs:
           build-essential cmake git python3 python3-pip pkg-config \
           libssl-dev zlib1g-dev libtcmalloc-minimal4 uuid-dev tcl-dev \
           libffi-dev libreadline-dev bison flex libfl-dev libunwind-dev \
-          libgoogle-perftools-dev ccache help2man unzip g++-9 g++-13
+          libgoogle-perftools-dev ccache help2man unzip g++-11 g++-13
 
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
@@ -88,9 +88,10 @@ jobs:
 
     - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
       run: |
-        sudo ln -sf /usr/bin/g++-9 /usr/bin/g++
-        sudo ln -sf /usr/bin/gcc-9 /usr/bin/gcc
-        sudo ln -sf /usr/bin/gcov-9 /usr/bin/gcov
+        # Yosys v0.66 requires C++20; g++-9 only offers -std=c++2a -> use g++-11.
+        sudo ln -sf /usr/bin/g++-11 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-11 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-11 /usr/bin/gcov
         rm -rf build/CMakeCache.txt build/CMakeFiles/
         make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
 
