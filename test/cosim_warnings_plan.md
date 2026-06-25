@@ -85,7 +85,7 @@ Status key: `[ ]` todo · `[B]` bug-fixing · `[x]` fixed · `[A]` artifact-clas
 - [A] TaskReturn — ARTEFACT (sim-only/undriven/intentional-X/self-checking); classified in sim_equiv_analyzed + classification override.
 - [A] TypedefInModule — ARTEFACT (SAT miter EQUIVALENT, UHDM==Verilog); sim_equiv_analyzed.txt
 - [A] TypedefedFunctionArgument — ARTEFACT (UHDM-only; UHDM-vs-RTL co-sim PASS); sim_equiv_analyzed.txt
-- [B] TypedefedRangedFunctionReturn — CONFIRMED real UHDM bug: `function automatic word[1:0] get_2_abcd(); return {32'hABCD,32'hABCD}; endfunction  assign {a,b}=get_2_abcd();` — the packed-array-of-typedef return type `word[1:0]` (=64-bit) is sized as 32-bit, truncating the return so the upper half `a`=0 (rtl=0xABCD nl=0x0). Function return-width for packed-array typedef returns. See cosim_uhdm_bugs.txt.
+- [B] TypedefedRangedFunctionReturn — ROOT-CAUSED to a SURELOG elaboration bug (NOT the UHDM frontend): `function automatic word[1:0] get_2_abcd(); return {32'hABCD,32'hABCD};` const-folds in the ELABORATED model to a `constant` with vpiSize:2 (should be 64) — Surelog mis-sizes the packed-array-of-typedef return `word[1:0]` as the outer range [1:0]=2 instead of 2*32. The UHDM frontend correctly imports the (wrong 2-bit) constant Surelog gives it (verified: import_expression never even sees the func_call — the elaborated RHS is already a 2-bit constant). Fix belongs in Surelog's function-return const-eval. See cosim_uhdm_bugs.txt.
 - [A] UnsizedConstant — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [A] UnsizedConstantParameter — ARTEFACT (miter EQUIVALENT, UHDM==Verilog); classified in sim_equiv_analyzed.txt
 - [?] VarPassedTo2Submodules
