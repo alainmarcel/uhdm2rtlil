@@ -321,6 +321,12 @@ struct UhdmImporter {
     // Current combinational process pointer (non-null during import_always_comb statement processing)
     RTLIL::Process* current_comb_process = nullptr;
 
+    // Struct typespec of the function return value currently being inlined, so
+    // process_stmt_to_case can map `funcname.field = ...` (a hier_path LHS) to
+    // the right slice of the result wire.  Set by generate_function_process
+    // around its process_stmt_to_case call; null for non-struct returns.
+    const UHDM::struct_typespec* current_func_return_struct_ts = nullptr;
+
     // Tracks descending priority for $print/$check cells (like genrtlil.cc's last_effect_priority)
     int last_effect_priority = 0;
     

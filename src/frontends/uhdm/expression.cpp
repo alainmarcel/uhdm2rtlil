@@ -765,8 +765,64 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                     }
                 }
+            } else if (assign->Lhs()->UhdmType() == uhdmhier_path) {
+                // Struct-field write to the return value or a local struct var:
+                // `funcname.field = ...` / `localvar.field = ...`.  The LHS is a
+                // hier_path [ref_obj(base), ref_obj(field)].  Map it to the base
+                // SigSpec's field slice so the field write is captured — a
+                // struct-returning function (rp32 dec32) otherwise stays 0.
+                const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
+                auto pe = hp ? hp->Path_elems() : nullptr;
+                if (pe && pe->size() == 2) {
+                    std::string base_name = std::string((*pe)[0]->VpiName());
+                    std::string field_name = std::string((*pe)[1]->VpiName());
+                    // Base signal: a mapped local/param, or the return wire.
+                    RTLIL::SigSpec base_sig;
+                    auto bit = input_mapping.find(base_name);
+                    if (bit != input_mapping.end())
+                        base_sig = bit->second;
+                    else if (base_name == func_name)
+                        base_sig = result_wire;
+                    // Struct typespec: the return struct for the function name,
+                    // otherwise the base variable's own typespec.
+                    const UHDM::struct_typespec* st = nullptr;
+                    if (base_name == func_name)
+                        st = current_func_return_struct_ts;
+                    if (!st)
+                        if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0]))
+                            if (auto bts = bref->Typespec())
+                                if (auto a = bts->Actual_typespec())
+                                    if (a->UhdmType() == uhdmstruct_typespec)
+                                        st = any_cast<const UHDM::struct_typespec*>(a);
+                    if (!base_sig.empty() && st && st->Members()) {
+                        // LSB-first iteration: the struct's last member is the LSB.
+                        int field_off = 0, field_w = 0;
+                        bool found = false;
+                        for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                            auto m = (*st->Members())[i];
+                            int mw = 0;
+                            if (auto mts = m->Typespec())
+                                if (auto a = mts->Actual_typespec())
+                                    mw = get_width_from_typespec(a, current_instance);
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_w = mw;
+                                found = true;
+                                break;
+                            }
+                            field_off += mw;
+                        }
+                        if (found && field_w > 0 &&
+                            field_off + field_w <= base_sig.size()) {
+                            lhs_sig = base_sig.extract(field_off, field_w);
+                            if (mode_debug)
+                                log("UHDM: struct-field return %s.%s -> [%d+:%d]\n",
+                                    base_name.c_str(), field_name.c_str(),
+                                    field_off, field_w);
+                        }
+                    }
+                }
             }
-            
+
             // Add the assignment action
             if (lhs_sig.size() > 0) {
                 // Truncate or extend RHS to match LHS width
@@ -5160,6 +5216,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             int bw = w ? w->width : 32;
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
             log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
+        } else if (input_mapping && input_mapping->count(base_signal_name)) {
+            // Function-inline (legacy) path: a part-select of a function param
+            // or local (e.g. op[6:2] in rp32's dec32) — the base signal lives in
+            // input_mapping, not as a module wire.  Without this it resolves to
+            // the wrong wire / 0 (bit-selects and full refs already work).
+            base = input_mapping->at(base_signal_name);
+            log("      PartSelect: base '%s' from input_mapping (width=%d)\n",
+                base_signal_name.c_str(), base.size());
         } else {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
