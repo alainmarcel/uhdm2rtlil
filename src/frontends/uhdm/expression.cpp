@@ -6295,6 +6295,91 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // General packed union/struct member chain of depth >= 4:
+    // `base.m1.m2...field` where each level is a struct or union member
+    // (rp32 dec32: `op.r.opcode.opc` — union -> struct -> struct -> enum field,
+    // on the param `op`).  Resolve the base via name_map/input_mapping and walk
+    // the typespec chain, accumulating the bit offset (union members share bits
+    // so contribute 0; struct members add the offset of the members below them,
+    // LSB-first).  Depth 3 stays on the dedicated handler below.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 4) {
+        auto& pec = *uhdm_hier->Path_elems();
+        bool all_ref = true;
+        for (auto e : pec)
+            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+        if (all_ref) {
+            auto base_ref = any_cast<const ref_obj*>(pec[0]);
+            std::string base_name = std::string(base_ref->VpiName());
+            RTLIL::SigSpec base_sig;
+            if (name_map.count(base_name))
+                base_sig = RTLIL::SigSpec(name_map[base_name]);
+            else if (input_mapping && input_mapping->count(base_name))
+                base_sig = input_mapping->at(base_name);
+
+            // Base typespec (union or struct).
+            const UHDM::typespec* cur_ts = nullptr;
+            const UHDM::ref_typespec* rts = nullptr;
+            if (auto a = base_ref->Actual_group()) {
+                if (a->UhdmType() == uhdmlogic_net)
+                    rts = any_cast<const UHDM::logic_net*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmlogic_var)
+                    rts = any_cast<const UHDM::logic_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmstruct_var)
+                    rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmunion_var)
+                    rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmio_decl)
+                    rts = any_cast<const UHDM::io_decl*>(a)->Typespec();
+            }
+            if (!rts) rts = base_ref->Typespec();
+            if (rts) cur_ts = rts->Actual_typespec();
+
+            if (!base_sig.empty() && cur_ts) {
+                int off = 0, field_w = 0;
+                bool ok = true;
+                for (size_t lvl = 1; lvl < pec.size() && ok; lvl++) {
+                    std::string mname =
+                        std::string(any_cast<const ref_obj*>(pec[lvl])->VpiName());
+                    const UHDM::VectorOftypespec_member* members = nullptr;
+                    bool is_struct = false;
+                    if (cur_ts->UhdmType() == uhdmstruct_typespec) {
+                        members = any_cast<const UHDM::struct_typespec*>(cur_ts)->Members();
+                        is_struct = true;
+                    } else if (cur_ts->UhdmType() == uhdmunion_typespec) {
+                        members = any_cast<const UHDM::union_typespec*>(cur_ts)->Members();
+                    }
+                    if (!members) { ok = false; break; }
+                    int moff = 0, mw = 0;
+                    const UHDM::typespec* mts = nullptr;
+                    bool found = false;
+                    for (int i = (int)members->size() - 1; i >= 0; i--) {
+                        auto m = (*members)[i];
+                        int w = 0;
+                        const UHDM::typespec* ts2 = nullptr;
+                        if (auto mt = m->Typespec())
+                            if (auto a2 = mt->Actual_typespec()) {
+                                ts2 = a2;
+                                w = get_width_from_typespec(a2, inst);
+                            }
+                        if (std::string(m->VpiName()) == mname) {
+                            mw = w; mts = ts2; found = true; break;
+                        }
+                        if (is_struct) moff += w;
+                    }
+                    if (!found) { ok = false; break; }
+                    off += moff;
+                    field_w = mw;
+                    cur_ts = mts;
+                }
+                if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
+                    log("    hier_path: packed member chain %s.* -> [%d+:%d]\n",
+                        base_name.c_str(), off, field_w);
+                    return base_sig.extract(off, field_w);
+                }
+            }
+        }
+    }
+
     // Packed-union-of-structs field access: `dec.r.rd` where `dec` is
     // a `union packed` whose `r` member is a `struct packed`.  All
     // union members occupy the same bits, so level 2 (the union
