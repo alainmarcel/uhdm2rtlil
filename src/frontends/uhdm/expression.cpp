@@ -6320,11 +6320,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 
             RTLIL::Wire* base_wire = name_map.count(base_name)
                 ? name_map[base_name] : nullptr;
+            // Function-inline (legacy) path: the base may be a param/local in
+            // input_mapping rather than a module wire (rp32 dec32: op.r.rd).
+            RTLIL::SigSpec base_sig;
+            if (base_wire) base_sig = RTLIL::SigSpec(base_wire);
+            else if (input_mapping && input_mapping->count(base_name))
+                base_sig = input_mapping->at(base_name);
 
             // Chase the base ref's typespec to the union_typespec; pick
             // the matching member; chase that to its struct_typespec.
             const UHDM::union_typespec* ut = nullptr;
-            if (base_wire) {
+            if (!base_sig.empty()) {
                 auto base_ref = any_cast<const ref_obj*>(pe3[0]);
                 const UHDM::ref_typespec* rts = nullptr;
                 if (auto a = base_ref->Actual_group()) {
@@ -6336,7 +6342,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
                     else if (a->UhdmType() == uhdmunion_var)
                         rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                    else if (a->UhdmType() == uhdmio_decl)
+                        rts = any_cast<const UHDM::io_decl*>(a)->Typespec();
                 }
+                if (!rts) rts = base_ref->Typespec();
                 if (rts && rts->Actual_typespec() &&
                     rts->Actual_typespec()->UhdmType() == uhdmunion_typespec)
                     ut = any_cast<const UHDM::union_typespec*>(rts->Actual_typespec());
@@ -6356,7 +6365,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
 
-            if (base_wire && st && st->Members()) {
+            if (!base_sig.empty() && st && st->Members()) {
                 // Find the field; LSB-first iteration accumulates the
                 // offset (struct's last member is the LSB).
                 int field_off = 0, field_w = 0;
@@ -6375,12 +6384,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     field_off += mw;
                 }
                 if (found && field_w > 0 &&
-                    field_off + field_w <= base_wire->width) {
-                    log("    hier_path: union+struct %s.%s.%s -> %s[%d+:%d]\n",
+                    field_off + field_w <= base_sig.size()) {
+                    log("    hier_path: union+struct %s.%s.%s -> [%d+:%d]\n",
                         base_name.c_str(), union_member.c_str(),
-                        field_name.c_str(), base_wire->name.c_str(),
-                        field_off, field_w);
-                    return RTLIL::SigSpec(base_wire).extract(field_off, field_w);
+                        field_name.c_str(), field_off, field_w);
+                    return base_sig.extract(field_off, field_w);
                 }
             }
         }
