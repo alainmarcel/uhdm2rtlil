@@ -18,11 +18,11 @@ compat fixes in test/rp32/.
 | module       | uhdm synth | verilator co-sim | notes |
 |--------------|-----------|------------------|-------|
 | r5p_bru      | ✅        | ✅ PASS          | branch unit — clean |
-| r5p_alu      | ✅        | ⚠ mismatch       | `dec` is a 306-bit decoded-instruction struct port; random bits = mostly INVALID instructions, RTL emits default while netlist computes from operands (README X-prop caveat) — needs constrained-valid stimulus |
-| r5p_wbu      | ✅        | ⚠ mismatch       | same struct-port stimulus issue (`dec` port) |
+| r5p_alu      | ✅        | ✅ PASS          | **FIXED** — driven through dec32 (wrap.sv) for valid stimulus. The real bug was the struct-returning decoder `dec32` synthesising to 0 (ADD gave rd=5 not 8); fixed in 4 steps (struct-field returns, union/struct member reads of params, N-level member chains, `$signed`/nested-call param args). Residual co-sim diff is the design's intentional `'x` don't-cares for non-ALU opcodes (sim_equiv_analyzed.txt). |
+| r5p_wbu      | ✅        | ✅ PASS          | **FIXED** by the dec32 fix (uses the decoder's union-member reads). |
 | r5p_gpr_1r1w | ✅        | ✅ PASS          | **FIXED** — was a real bug: the `logic [XLEN-1:0] gpr [0:2**AW-1]` register file is in a generate `else` branch, and the gen-scope variable import created a 1-bit wire instead of a memory (both dims dropped). Now creates an RTLIL memory; cosim PASSES. Regression guard: test/gpr_genscope_repro. |
 | r5p_csr      | ✅        | ⏭ skip           | co-sim not applicable (investigate observability) |
-| r5p_mdu      | ✅        | ⏭ skip           | multiply/divide — co-sim skip (investigate) |
+| r5p_mdu      | ✅        | ✅ PASS          | now passes (dec32 fix resolved its co-sim warning) |
 | r5p_mouse    | ❌        | —                | full CPU core; uhdm synth fails — instantiates submodules not in the file list (belongs to the complete-design phase) |
 
 ## Skipped by the generator (need the complete design / external deps)
