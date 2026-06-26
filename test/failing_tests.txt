@@ -182,3 +182,12 @@ CastStructArray
 # the Verilator co-sim is N/A and equiv_induct has nothing meaningful to prove;
 # it reports an Induct-Formal failure.  Kept here (cannot be cosim-adjudicated).
 svtypes/array_assign.sv
+
+# ---------------------------------------------------------------------------
+# Imported rp32 RISC-V core (see test/rp32_STATUS.md).  r5p_mouse is the full
+# CPU core: it instantiates submodules that are NOT in its per-module project.f
+# (the generator wires up package deps, not module-instantiation deps), so the
+# UHDM flow has undefined blackboxes and produces no top netlist.  Belongs to
+# the complete-design phase (TCB submodule + cores + SoC tops), not the per-
+# module sweep — listed here until the full design is wired up.
+rp32_r5p_mouse
