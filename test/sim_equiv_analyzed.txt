@@ -535,3 +535,89 @@ Test: MultiplePrints
     is VACUOUS (outputs all-zero every cycle, bits_ever_set=0), so the "mismatch"
     is not an observable divergence.  The print side-effects are validated by the
     synth flow, not by output comparison.
+
+Test: case_expr_extend
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: case_expr_query
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: counter_unbased
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: func_output_arg
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: func_tern_hint
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: function_arith
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_forloops
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: struct_param_dim
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: xor_assignment
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: int_types_blk1
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: load_and_derive
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: param_int_types
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: port_sign_extend
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: signed_ext_case
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_generate
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: unary_op_minus
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: NestedForLoops
+    Artefact: UHDM-only test (Yosys Verilog frontend build-fails, no miter
+    reference), but the UHDM-vs-RTL Verilator co-sim PASSES (200 cycles) — the
+    UHDM netlist matches the behavioural RTL exactly.
+
+Test: SumOfParameters
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: param_no_default
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: TypedefInModule
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: mem2reg_test1
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: struct_sizebits
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: unbased_unsized
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: simple_hierarchy
+    Artefact: SAT miter EQUIVALENT (UHDM == Verilog); Verilator-vs-synth diff.
+
+Test: StructInPackage
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: StructLocalParam
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: TypedefedFunctionArgument
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).
+
+Test: ImportFunction
+    Artefact: UHDM-only test; UHDM-vs-RTL co-sim PASSES (matches RTL exactly).

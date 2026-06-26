@@ -131,7 +131,7 @@
 #  - DotRange: confirmed bug, tracked above (LHS struct-field var_select dropped).
 # ===========================================================================
 
-# FunctionWireAssignmentOnDeclaration — CONFIRMED real UHDM bug (triaged 2026-06).
+# FunctionWireAssignmentOnDeclaration — FIXED (2026-06).  Was: a return-based
 #   `function automatic logic [2:0] test(logic [2:0] in); logic [2:0] data = in;
 #    return data; endfunction  assign o = test(i);`  The output `o` is left
 #   UNDRIVEN (reads 0) — the function result never connects to o.  UHDM-only test
@@ -142,3 +142,27 @@
 #   declaration initializer `data = in` IS present as a vpiAssignment stmt in the
 #   begin block AND `data->Expr()` is null.  Fix needs the result-wire wiring in
 #   process_function_with_context to survive (deferred — non-trivial).
+
+# EnumFirstInInitial — CRASH FIXED (2026-06); residual functional bug.  Was:
+#   `module top(output int o); typedef enum {a=1,b=2} my_enum; initial begin
+#    my_enum e; assign o = e.first(); end endmodule`  — `read_uhdm` SEGFAULTS
+#   (exit 139) during import.  The enum `.first()` method call (a method_func_call
+#   on an enum var, inside an `initial` with a procedural `assign`) null-derefs.
+#   FIXED the crash: emit_initial_meminit_writes cast `s` to `assignment*`
+#   but the stmt is an `assign_stmt`, so the cast returned null and `a->Lhs()`
+#   null-derefed — added `if (!a) return false;`.  RESIDUAL: o reads 0 not 1;
+#   the interpreter path does not drive the continuous assign / enum .first().
+
+# TypedefedRangedFunctionReturn — FIXED in UHDM ExprEval::size() (2026-06). Was a Surelog/UHDM bug:
+#   `module top(output logic [31:0] a, b); typedef logic [31:0] word;
+#    function automatic word[1:0] get_2_abcd(); return {32'hABCD,32'hABCD};
+#    endfunction  assign {a,b} = get_2_abcd();`  The packed-array-of-typedef
+#   return type `word[1:0]` is 2*32 = 64-bit, but it is sized as 32-bit, so the
+#   64-bit return is truncated and the upper half `a` reads 0 (rtl=0xABCD,
+#   nl=0x0).  UHDM-only (Verilog frontend build-fails), deterministic => real
+#   ROOT CAUSE: in the ELABORATED (TopModules) model Surelog const-folds the
+#   call to a `constant` with vpiSize:2 (should be 64) — it sizes the packed-
+#   array-of-typedef return `word[1:0]` as the outer range [1:0]=2 instead of
+#   2*32.  The UHDM frontend never even sees the func_call (verified by probing
+#   import_expression: only the pre-folded 2-bit constant arrives).  Fix belongs
+#   in Surelog`s function-return const-evaluation; deferred (Surelog change).

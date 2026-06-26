@@ -3155,7 +3155,13 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
             }
             case vpiAssignment:
             case vpiAssignStmt: {
+                // This case fires for BOTH `assignment` (procedural `mem[i]=v`)
+                // and `assign_stmt` (a continuous `assign` inside `initial`, e.g.
+                // `assign o = e.first();`).  any_cast to the wrong class returns
+                // null, so guard before dereferencing — a continuous assign is
+                // not a ROM-init write, so bail out (EnumFirstInInitial crash).
                 const assignment* a = any_cast<const assignment*>(s);
+                if (!a) return false;
                 auto lhs = a->Lhs();
                 if (!lhs || lhs->VpiType() != vpiBitSelect) return false;
                 const bit_select* bs = any_cast<const bit_select*>(lhs);
