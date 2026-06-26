@@ -2497,6 +2497,23 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             // Variables can be logic_var or other types, we need to handle them
             // For now, create a wire for each variable
             std::string var_name = std::string(var->VpiName());
+
+            // Generate-scope array variable that is a memory — e.g. a register
+            // file `logic [XLEN-1:0] gpr [0:2**AW-1]` inside a generate `else`
+            // branch (rp32 r5p_gpr_1r1w).  The module-level path creates an
+            // RTLIL memory via create_memory_from_array; the gen-scope path must
+            // too, otherwise the whole array collapses to a 1-bit wire and every
+            // read returns ~0.  Registered under the bare name so the always_ff
+            // memory-write scan and the bit-select read (which use the bare
+            // signal name) resolve to it.
+            if (var->UhdmType() == uhdmarray_var) {
+                if (auto av = any_cast<const UHDM::array_var*>(var)) {
+                    if (is_memory_array(av)) {
+                        create_memory_from_array(av);
+                        continue;
+                    }
+                }
+            }
             std::string full_gen_path = get_current_gen_scope();
             std::string hierarchical_name = full_gen_path + "." + var_name;
             int width = get_width(var, current_instance);

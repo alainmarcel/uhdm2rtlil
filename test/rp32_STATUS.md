@@ -20,7 +20,7 @@ compat fixes in test/rp32/.
 | r5p_bru      | ✅        | ✅ PASS          | branch unit — clean |
 | r5p_alu      | ✅        | ⚠ mismatch       | `dec` is a 306-bit decoded-instruction struct port; random bits = mostly INVALID instructions, RTL emits default while netlist computes from operands (README X-prop caveat) — needs constrained-valid stimulus |
 | r5p_wbu      | ✅        | ⚠ mismatch       | same struct-port stimulus issue (`dec` port) |
-| r5p_gpr_1r1w | ✅        | ❌ mismatch       | **REAL bug candidate**: register file, FLAT ports (valid stimulus); `d_rs` read-data reads 0 in the UHDM netlist where RTL reads back the written word — the async-read register-file inference is mis-synthesised. To triage/fix. |
+| r5p_gpr_1r1w | ✅        | ✅ PASS          | **FIXED** — was a real bug: the `logic [XLEN-1:0] gpr [0:2**AW-1]` register file is in a generate `else` branch, and the gen-scope variable import created a 1-bit wire instead of a memory (both dims dropped). Now creates an RTLIL memory; cosim PASSES. Regression guard: test/gpr_genscope_repro. |
 | r5p_csr      | ✅        | ⏭ skip           | co-sim not applicable (investigate observability) |
 | r5p_mdu      | ✅        | ⏭ skip           | multiply/divide — co-sim skip (investigate) |
 | r5p_mouse    | ❌        | —                | full CPU core; uhdm synth fails — instantiates submodules not in the file list (belongs to the complete-design phase) |
