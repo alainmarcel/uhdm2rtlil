@@ -636,3 +636,22 @@ Test: rp32_r5p_alu
     "X propagation is not simulated well, so I had to run regression tests with
     mapping X separately to 0 and 1".  Verilog frontend can't synthesize the SV
     packages, so no UHDM-vs-Verilog miter is possible (uhdm-only).
+
+Test: rp32_r5p_wbu
+    CONFIRMED ARTIFACT (not a UHDM bug) — design don't-cares.  r5p_wbu takes the
+    decoded-instruction struct `dec` as a port; this test drives a random 32-bit
+    instruction through dec32() (wrap.sv) so `dec` is always valid.  r5p_wbu's
+    registered outputs (wen/adr/dat) are the GPR write-back selected by dec.opc;
+    for non-write-back instructions wen=0 and dat is a don't-care, so the RTL
+    output is X (Verilator maps X->0) while the synthesized netlist fills it with
+    a concrete value.  Same class as rp32_r5p_alu (and the README X-prop note).
+    uhdm-only (Verilog frontend can't synthesize the SV packages).
+
+Test: rp32_r5p_mdu
+    CONFIRMED ARTIFACT (not a UHDM bug) — design don't-cares.  r5p_mdu takes the
+    decoded-instruction struct `ctl` as a port and only drives `rd` for M-extension
+    (mul/div/rem) opcodes; for every other instruction `rd` is a don't-care, so
+    the random-`ctl` co-sim mismatches on X (RTL) vs a concrete netlist value.
+    Same class as rp32_r5p_alu/r5p_wbu.  (A dec32 wrapper makes the synthesized
+    netlist keep a parameterized $paramod\r5p_mdu that Verilator can't read, so
+    this one stays bare.)  uhdm-only.
