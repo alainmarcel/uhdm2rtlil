@@ -33,10 +33,12 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   `opt/opt_rmdff`, `rpc/design`, `svinterfaces/load_and_derive`,
   `svinterfaces/resolve_types`, `techmap/mem_simple_4x1_map`, `verific/mixed_flist`)
 - **Crashes**: 1 (`techmap/recursive_map`)
-- **Verilator sim-equiv warnings**: 95 (undocumented divergences — now hard errors
-  unless documented in `test/sim_equiv_analyzed.txt`), plus **69 analyzed** known
+- **Verilator sim-equiv warnings**: 93 (undocumented divergences — now hard errors
+  unless documented in `test/sim_equiv_analyzed.txt`), plus **71 analyzed** known
   non-bug divergences — of which 57 are sim/synth artefacts where a SAT miter
-  proves UHDM == Verilog, and 12 remain unclassified
+  proves UHDM == Verilog, and the rest are uhdm-only don't-care divergences (e.g.
+  `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend can't synthesize the SV so no
+  miter is possible)
 
 > The **internal** SystemVerilog suite alone is **665 tests, 663 functional**,
 > with `CastStructArray` (a Yosys-Verilog-frontend bug, not UHDM) the only
