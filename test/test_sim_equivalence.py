@@ -99,7 +99,7 @@ def parse_project_f(test_dir: Path) -> dict:
     `dut.sv` / `dut.v`.  Mirrors the bash project_files.sh helper used
     by the workflow / equivalence scripts so the three pipelines see
     the same file list."""
-    out: dict = {"srcs": [], "top": "", "mode": ""}
+    out: dict = {"srcs": [], "top": "", "mode": "", "verilator": []}
     pf = test_dir / "project.f"
     if pf.exists():
         for raw in pf.read_text().splitlines():
@@ -115,6 +115,10 @@ def parse_project_f(test_dir: Path) -> dict:
                     val = val.strip()
                     if key in ("top", "mode"):
                         out[key] = val
+                    elif key == "verilator":
+                        # Per-test extra Verilator flags (e.g. `-Wno-...` or
+                        # `+define+FOO`) for imported designs that need them.
+                        out["verilator"] += val.split()
                 continue
             out["srcs"].append(test_dir / line)
     if not out["srcs"]:
@@ -668,11 +672,16 @@ def emit_wrapper_and_tb(dut_path: Path,
 
 
 def run_verilator(work: Path, paths: dict[str, Path],
-                  rtl_srcs: list[Path]) -> tuple[int, str]:
+                  rtl_srcs: list[Path],
+                  extra_flags: list[str] | None = None) -> tuple[int, str]:
     cmd = [
         "verilator", "--cc", "--exe", "--build", "-j", "4",
         "-Wno-fatal", "-Wno-WIDTH", "-Wno-UNUSED", "-Wno-UNOPTFLAT",
         "-Wno-CASEINCOMPLETE", "-Wno-MULTIDRIVEN",
+        # Imported third-party RTL sometimes uses non-unique enum values
+        # (e.g. rp32's riscv_isa_pkg RV*GC aliases) — illegal-strict SV that
+        # Surelog/slang tolerate; relax it so the co-sim can build the design.
+        "-Wno-ENUMVALUE",
         # `--timing` lets Verilator parse SVA constructs (`##N`, `|=>`,
         # `until`, ...) and event controls that are otherwise rejected
         # with NEEDTIMINGOPT.  Required for the SV-side simulation of
@@ -683,6 +692,7 @@ def run_verilator(work: Path, paths: dict[str, Path],
         # simlib.v has higher-level primitives (and a `tran` that older
         # Verilator can't parse) — synth doesn't emit those, so skip.
         str(paths["simcells"]),
+        *(extra_flags or []),
         *[str(p) for p in rtl_srcs],
         "wrapper.sv", "dut_netlist.v", "tb.sv",
         "tb_main.cpp",
@@ -772,7 +782,8 @@ def main() -> int:
                         unpacked=unpacked, cycles=args.cycles)
 
     print("▶ Running Verilator co-sim")
-    rc, out = run_verilator(work, paths, rtl_srcs)
+    rc, out = run_verilator(work, paths, rtl_srcs,
+                            extra_flags=project.get("verilator") or [])
     # Trim Verilator noise so the PASS/FAIL line is easy to find
     for line in out.splitlines()[-15:]:
         print(line)
