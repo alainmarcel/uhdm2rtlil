@@ -1942,7 +1942,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 std::vector<RTLIL::SigSpec> args;
                 if (func_call->Tf_call_args()) {
                     for (auto arg : *func_call->Tf_call_args()) {
-                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        // Pass input_mapping so args resolve function params/locals
+                        // in the inline path (rp32 imm_i_f: `$signed(op.imm_11_0)`).
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg), input_mapping);
                         log_debug("UHDM: sys_func_call %s argument size: %d\n", func_name.c_str(), arg_sig.size());
                         if (arg_sig.size() == 0) {
                             log_warning("Empty argument in sys_func_call %s\n", func_name.c_str());
@@ -6295,19 +6297,28 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
-    // General packed union/struct member chain of depth >= 4:
-    // `base.m1.m2...field` where each level is a struct or union member
-    // (rp32 dec32: `op.r.opcode.opc` — union -> struct -> struct -> enum field,
-    // on the param `op`).  Resolve the base via name_map/input_mapping and walk
-    // the typespec chain, accumulating the bit offset (union members share bits
-    // so contribute 0; struct members add the offset of the members below them,
-    // LSB-first).  Depth 3 stays on the dedicated handler below.
-    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 4) {
+    // General packed union/struct member chain `base.m1.m2...field` where each
+    // level is a struct or union member (rp32 dec32: `op.r.opcode.opc` — union
+    // -> struct -> struct -> enum field; and imm_i_f's `op.imm_11_0` — a simple
+    // struct member — both on the param `op`).  Resolve the base via
+    // name_map/input_mapping and walk the typespec chain, accumulating the bit
+    // offset (union members share bits so contribute 0; struct members add the
+    // offset of the members below them, LSB-first).  Only fires when every level
+    // is a plain member ref AND the base resolves to a struct/union — otherwise
+    // it falls through to the dedicated handlers below.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
         auto& pec = *uhdm_hier->Path_elems();
         bool all_ref = true;
         for (auto e : pec)
             if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
-        if (all_ref) {
+        bool base_in_im = all_ref && input_mapping &&
+            input_mapping->count(
+                std::string(any_cast<const ref_obj*>(pec[0])->VpiName()));
+        // Fire for any deep (>=4) member chain, OR for a param/local base
+        // (input_mapping) at any depth >=2 — the function-inline path's simple
+        // `op.imm_11_0` member reads.  For shallow module-wire bases the
+        // dedicated handlers below stay in charge.
+        if (all_ref && (pec.size() >= 4 || base_in_im)) {
             auto base_ref = any_cast<const ref_obj*>(pec[0]);
             std::string base_name = std::string(base_ref->VpiName());
             RTLIL::SigSpec base_sig;
