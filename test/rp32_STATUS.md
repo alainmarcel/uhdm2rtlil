@@ -31,13 +31,18 @@ compat fixes in test/rp32/.
 |--------|-----------|------------------|-------|
 | r5p_mouse_soc_simple_top | ✅ | ✅ PASS | **the complete Mouse SoC** — r5p_mouse core + internal memory (`$readmemh mem_if.mem`) + simple GPIO/UART, self-contained (no external TCB).  Synthesises via UHDM and the co-sim PASSES (the deterministic boot program in memory keeps the core out of the standalone-core's random-X divergence).  `mem_if.vh` is only used under `YOSYS_SLANG`; the UHDM path uses a plain memory array.  The Mouse core uses memory-mapped registers (very slow), so a longer run is needed to exercise GPIO writes; the bus/memory/uart paths are verified. |
 
-## Skipped by the generator (need the complete design / external deps)
+## Hierarchical cores (need the external TCB submodule)
 
-- `tcb_lite_pkg` consumers: r5p_lsu, r5p_degu, r5p_degu_soc_top, r5p_mouse_soc_top
-  (need the external TCB submodule).
-- `riscv_csr_pkg` consumers: r5p_hamster, r5p_degu (package name not present in the
-  design — needs investigation; possibly an alias/conditional).
-- Vendor variants (`__xilinx_xpm`, `__gowin_*`) and SoC/FPGA tops.
+| core | uhdm synth | verilator co-sim | notes |
+|------|-----------|------------------|-------|
+| r5p_degu | ✅ | ⏭ N/A | **the hierarchical Degu core** — uses the external TCB bus **interface** (`tcb_lite_if.man`) + 6 r5p submodules (alu/bru/mdu/lsu/wbu/gpr_2r1w). The TCB `tcb_lite_pkg` + `tcb_lite_if` are imported into `test/rp32/tcb/` (from jeras/TCB). Synthesises via UHDM after fixing an interface-port duplicate-cell crash. CSR is disabled (`ENABLE_CSR` undefined; the `import riscv_csr_pkg` is commented out — the generator's riscv_csr_pkg "dep" was a false match on that comment). Co-sim N/A: the harness's wrapper generator can't express SV interface ports. |
+
+## Skipped by the generator (need external deps / complete design)
+
+- `riscv_csr_pkg` consumers (r5p_hamster, r5p_degu) — a **false positive**: it is a
+  *commented-out* import guarded by `\`ifdef ENABLE_CSR`; CSR-less builds don't need it.
+- Vendor variants (`__xilinx_xpm`, `__gowin_*`) and the remaining SoC/FPGA tops
+  (r5p_degu_soc_*, r5p_hamster_soc_*).
 
 ## Next
 

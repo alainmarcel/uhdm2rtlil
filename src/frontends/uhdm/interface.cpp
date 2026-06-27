@@ -495,8 +495,18 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
                 
                 RTLIL::IdString cell_name = "\\" + interface_name;
-                module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
-                log("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
+                // For an interface PORT (e.g. `tcb_lite_if.man tcb_ifu` on
+                // rp32 r5p_degu), the interface's signals are already created
+                // as wires and the port itself may exist as a wire/cell, so an
+                // interface-instance cell of the same name would collide
+                // (rtlil count_id assert).  Only add the representative cell
+                // when nothing with that name exists yet.
+                if (!module->wire(cell_name) && !module->cell(cell_name)) {
+                    module->addCell(cell_name, RTLIL::escape_id(param_interface_type));
+                    log("UHDM: Created interface cell %s of type %s\n", interface_name.c_str(), param_interface_type.c_str());
+                } else {
+                    log("UHDM: Interface '%s' already represented (wire/cell exists) — skipping instance cell\n", interface_name.c_str());
+                }
             }
             
         }
