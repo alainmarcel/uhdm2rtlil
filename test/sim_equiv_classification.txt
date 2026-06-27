@@ -71,3 +71,4 @@ setundef                              artefact   # intentional X parameter (2'b0
 EnumBases                             artefact   # output undriven; enum/typedef declarations only
 TaskReturn                            artefact   # procedural assign-in-task + undriven output
 assignment-pattern                    artefact   # self-checking asserts $stop the Verilator sim
+rp32_r5p_mouse        artefact   # reset-dependent CPU core; miter runs without asserting rst -> false NON-EQ; co-sim X-prop adjudicated (verilog netlist diverges from Verilator the same way)

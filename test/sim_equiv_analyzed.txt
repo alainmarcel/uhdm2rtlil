@@ -655,3 +655,16 @@ Test: rp32_r5p_mdu
     Same class as rp32_r5p_alu/r5p_wbu.  (A dec32 wrapper makes the synthesized
     netlist keep a parameterized $paramod\r5p_mdu that Verilator can't read, so
     this one stays bare.)  uhdm-only.
+
+Test: rp32_r5p_mouse
+    CONFIRMED ARTIFACT (not a UHDM bug) — Verilator X-propagation on a flat
+    RISC-V CPU core.  The co-sim matches for ~191 cycles, then the Verilator RTL
+    goes idle (all tcb_* outputs = 0) at cycle ~192 while the synthesized netlist
+    keeps fetching.  Adjudicated: the Yosys-VERILOG-frontend netlist diverges
+    from the same Verilator RTL at the SAME cycle 192 (rtl=0, netlist active), so
+    the divergence is Verilator's poor X-propagation (the upstream README's
+    documented caveat: "X propagation is not simulated well ... map X to 0 and 1
+    separately"), affecting both frontends equally — not a UHDM bug.  The module
+    SYNTHESISES cleanly via UHDM (after the DEC:x and for-loop-in-function fixes).
+    The UHDM-vs-Verilog formal equiv is a separate reset-dependent false-positive
+    (see sim_equiv_classification.txt) and is tracked in failing_tests.txt.
