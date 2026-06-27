@@ -58,8 +58,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     // Get port width
     int width = get_width(uhdm_port, current_instance);
     
-    // Check if this is an interface port
-    if (width == -1) {
+    // Check if this is an interface port.  get_width returns -1 for a single
+    // interface port and a more-negative value for an ARRAY of interface ports
+    // (e.g. -2 for `myif.man m [2-1:0]`); both must create a 1-bit placeholder,
+    // never a negative-width wire.  The per-element signals (m[0].vld, ...) are
+    // created separately, so the placeholder only holds the port-list slot.
+    if (width < 0) {
         log("UHDM: Port '%s' is an interface type, creating placeholder\n", portname.c_str());
         // For interface ports, create a special wire that won't be used for connections
         // but serves as a placeholder for the port list
@@ -77,7 +81,16 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
             if (ref_typespec && ref_typespec->Actual_typespec()) {
                 typespec = ref_typespec->Actual_typespec();
             }
-            
+            // An ARRAY of interface ports (`myif.man m [N]`) carries an
+            // array_typespec wrapping the per-element interface (modport)
+            // typespec.  Unwrap it so the interface handling below runs; the
+            // array dimension is taken from the port width (-N) further down.
+            if (typespec && typespec->UhdmType() == uhdmarray_typespec) {
+                auto at = any_cast<const UHDM::array_typespec*>(typespec);
+                if (at->Elem_typespec() && at->Elem_typespec()->Actual_typespec())
+                    typespec = at->Elem_typespec()->Actual_typespec();
+            }
+
             // Get interface type name
             if (typespec && typespec->UhdmType() == uhdminterface_typespec) {
                 const UHDM::interface_typespec* iface_ts = any_cast<const UHDM::interface_typespec*>(typespec);
@@ -191,6 +204,26 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     mp->VpiParent()->UhdmType() == uhdminterface_inst)
                     iface_inst = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
 
+                // For an ARRAY of interface ports (`myif.man m [N]`), Surelog's
+                // Low_conn does not resolve to the modport / interface_inst the
+                // way a single interface port does.  Fall back to locating any
+                // elaborated instance of this interface type in the design (for
+                // field widths) and its named modport (for field directions), so
+                // the per-element field ports below can still be created.
+                if ((!mp || !iface_inst) && !interface_type.empty() &&
+                    uhdm_design && uhdm_design->AllInterfaces()) {
+                    for (auto ii : *uhdm_design->AllInterfaces()) {
+                        std::string dn = std::string(ii->VpiDefName());
+                        if (dn.find("work@") == 0) dn = dn.substr(5);
+                        if (dn != interface_type) continue;
+                        if (!iface_inst) iface_inst = ii;
+                        if (!mp && !modport_name.empty() && ii->Modports())
+                            for (auto m : *ii->Modports())
+                                if (std::string(m->VpiName()) == modport_name) { mp = m; break; }
+                        if (iface_inst && (mp || modport_name.empty())) break;
+                    }
+                }
+
                 // AllModules has the unelaborated interface_inst (default
                 // parameter values).  Swap in the elaborated form's port
                 // iface_inst so per-signal widths reflect the parent's
@@ -271,10 +304,18 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 };
 
                 if (mp && mp->Io_decls() && iface_inst) {
+                  // An ARRAY of interface ports (`myif.man m [N]`) reports a
+                  // width of -N (-1 is a single interface); create the modport
+                  // field wires for EACH element as "m[e].<sig>" so a whole-array
+                  // connection `.m(arr)` can bind "m[e].<sig>" to "arr[e].<sig>".
+                  int n_elem = (width < -1) ? -width : 1;
+                  for (int e = 0; e < n_elem; e++) {
+                    std::string elem_prefix = (width < -1)
+                        ? portname + "[" + std::to_string(e) + "]" : portname;
                     for (auto io : *mp->Io_decls()) {
                         std::string sig_name = std::string(io->VpiName());
                         if (sig_name.empty()) continue;
-                        std::string full_name = portname + "." + sig_name;
+                        std::string full_name = elem_prefix + "." + sig_name;
                         if (name_map.count(full_name)) continue;
                         // Find the matching net/variable in the interface
                         // so we can sample its real width and source loc.
@@ -308,6 +349,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             log("UHDM: Created modport signal wire '%s' (width=%d, dir=%d)\n",
                                 full_name.c_str(), sig_w, io->VpiDirection());
                     }
+                  }
                 } else if (iface_inst) {
                     // No modport — full interface port; mirror every signal
                     // in the interface.
