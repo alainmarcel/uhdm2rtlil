@@ -185,9 +185,17 @@ svtypes/array_assign.sv
 
 # ---------------------------------------------------------------------------
 # Imported rp32 RISC-V core (see test/rp32_STATUS.md).  r5p_mouse is the full
-# CPU core: it instantiates submodules that are NOT in its per-module project.f
-# (the generator wires up package deps, not module-instantiation deps), so the
-# UHDM flow has undefined blackboxes and produces no top netlist.  Belongs to
-# the complete-design phase (TCB submodule + cores + SoC tops), not the per-
-# module sweep — listed here until the full design is wired up.
+# (flat, single-file) CPU core.  It now SYNTHESISES cleanly via UHDM — the
+# earlier "no output" was NOT submodules (it has none) but two frontend gaps,
+# now fixed: a `DEC:x` decimal-x constant that crashed import_constant, and a
+# for-loop in a function body (`bitrev`) that the comb SSA inliner dropped.
+#
+# It stays listed because it can't be cleanly equiv'd/co-sim'd: it is an
+# X-/reset-dependent CPU core.  The Verilator RTL stalls on X at cycle ~192
+# (rtl=0) while BOTH the UHDM and the Yosys-Verilog synthesised netlists keep
+# running — i.e. the divergence is Verilator's X-propagation (the upstream
+# README's documented caveat), affecting both frontends equally, not a UHDM
+# bug.  The UHDM-vs-Verilog equiv is itself a reset-dependent false-positive
+# (the miter/equiv_induct runs without asserting the design reset, so the two
+# frontends' differing don't-care fills look non-equivalent).
 rp32_r5p_mouse

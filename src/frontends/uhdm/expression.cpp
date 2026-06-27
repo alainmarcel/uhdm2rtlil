@@ -2557,8 +2557,16 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 }
 
                 // If we're in a combinational always block, inline the function
-                // instead of creating a separate process (avoids feedback loops)
-                if (current_comb_process) {
+                // instead of creating a separate process (avoids feedback loops).
+                // EXCEPT functions whose body has a for loop: the SSA inliner
+                // (inline_func_body_comb) doesn't unroll loops or handle a
+                // bit-select LHS on the function name, so a body like
+                // `for (i) bitrev[i] = val[XLEN-1-i]` (rp32 r5p_mouse) is dropped.
+                // Route those to process_function_with_context, whose
+                // process_stmt_to_case unrolls the loop and writes the result
+                // bit-selects.
+                if (current_comb_process && func_def->Stmt() &&
+                    !has_for_loop(func_def->Stmt())) {
                     log("UHDM: Inlining function %s into combinational process\n", func_name.c_str());
                     return import_func_call_comb(fc, current_comb_process);
                 }
@@ -2832,10 +2840,17 @@ RTLIL::SigSpec UhdmImporter::import_constant(const constant* uhdm_const) {
         }
         case vpiDecConst: {
             std::string dec_str = value.substr(4);
+            int width = (size > 0) ? size : 32;
+            // A decimal constant can be all-x / all-z — an unsized `'x` / `'z`
+            // literal that Surelog stored as DEC:x / DEC:z (rp32 r5p_mouse has
+            // one).  stoll would throw on the letter, so map it to an X/Z const.
+            if (dec_str.find_first_of("xX") != std::string::npos)
+                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sx, width));
+            if (dec_str.find_first_of("zZ") != std::string::npos)
+                return RTLIL::SigSpec(RTLIL::Const(RTLIL::State::Sz, width));
             try {
                 // Use stoll to handle larger integers
                 long long int_val = std::stoll(dec_str);
-                int width = (size > 0) ? size : 32;
                 return RTLIL::SigSpec(RTLIL::Const(int_val, width));
             } catch (const std::exception& e) {
                 log_error("Failed to parse decimal constant: value='%s', substr='%s', error=%s\n",
