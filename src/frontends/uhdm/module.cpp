@@ -1651,7 +1651,39 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         continue;
                     }
                 }
-                
+
+                // Interface-ARRAY element connection: `.b(arr[0])`.  Surelog
+                // elaborates an interface array (`myif arr [N]`) into per-element
+                // interface instances named "arr[0]","arr[1]".  The High_conn is
+                // a bit_select on the array base; expand the selected element's
+                // signals into individual connections (b.vld -> arr[0].vld, ...),
+                // exactly like the single-interface ref_obj case above.
+                if (high_conn->UhdmType() == uhdmbit_select) {
+                    const bit_select* bs = any_cast<const bit_select*>(high_conn);
+                    std::string base = std::string(bs->VpiName());
+                    int idx = -1;
+                    if (bs->VpiIndex()) {
+                        RTLIL::SigSpec is = import_expression(bs->VpiIndex());
+                        if (is.is_fully_const()) idx = is.as_const().as_int();
+                    }
+                    if (idx >= 0) {
+                        std::string elem = base + "[" + std::to_string(idx) + "]";
+                        auto it = iface_inst_vars_.find(elem);
+                        if (it != iface_inst_vars_.end()) {
+                            log("    Port %s connected to interface-array element %s\n",
+                                port_name.c_str(), elem.c_str());
+                            for (auto &var_name : it->second) {
+                                std::string full_signal_name = elem + "." + var_name;
+                                std::string port_signal_name = port_name + "." + var_name;
+                                if (name_map.count(full_signal_name))
+                                    cell->setPort(RTLIL::escape_id(port_signal_name),
+                                                  name_map[full_signal_name]);
+                            }
+                            continue;
+                        }
+                    }
+                }
+
                 // Try to handle as expression directly
                 RTLIL::SigSpec actual_sig;
                 try {
