@@ -210,17 +210,24 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                 // elaborated instance of this interface type in the design (for
                 // field widths) and its named modport (for field directions), so
                 // the per-element field ports below can still be created.
-                if ((!mp || !iface_inst) && !interface_type.empty() &&
+                auto has_signals = [](const UHDM::interface_inst* ii) {
+                    return ii && ((ii->Nets() && !ii->Nets()->empty()) ||
+                                  (ii->Variables() && !ii->Variables()->empty()));
+                };
+                if ((!mp || !has_signals(iface_inst)) && !interface_type.empty() &&
                     uhdm_design && uhdm_design->AllInterfaces()) {
                     for (auto ii : *uhdm_design->AllInterfaces()) {
                         std::string dn = std::string(ii->VpiDefName());
                         if (dn.find("work@") == 0) dn = dn.substr(5);
                         if (dn != interface_type) continue;
-                        if (!iface_inst) iface_inst = ii;
+                        // Prefer an instance that actually carries its signals
+                        // (so per-field WIDTHS resolve — a stub from Low_conn /
+                        // mp->VpiParent has none, which sized struct buses to 1).
+                        if (!iface_inst || (!has_signals(iface_inst) && has_signals(ii)))
+                            iface_inst = ii;
                         if (!mp && !modport_name.empty() && ii->Modports())
                             for (auto m : *ii->Modports())
                                 if (std::string(m->VpiName()) == modport_name) { mp = m; break; }
-                        if (iface_inst && (mp || modport_name.empty())) break;
                     }
                 }
 
@@ -286,7 +293,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             if (auto r = find(t)) { elab = r; break; }
                         eii = eii_from(elab);
                     }
-                    if (eii) iface_inst = eii;
+                    // Don't swap a signal-carrying iface_inst for a signal-less
+                    // stub: for an ARRAY interface port the elaborated High_conn
+                    // is the whole array, whose representative interface_inst has
+                    // no per-element signal nets (which sized struct buses to 1).
+                    if (eii && (has_signals(eii) || !has_signals(iface_inst)))
+                        iface_inst = eii;
                 }
 
                 // When the interface signal's typespec refers to an
