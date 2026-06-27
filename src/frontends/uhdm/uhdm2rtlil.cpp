@@ -1071,6 +1071,50 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     continue;
                                 }
                             }
+                            // Interface-ARRAY element: `.b(arr[0])`.  Surelog
+                            // elaborates `myif arr [N]` into per-element interface
+                            // instances named "arr[0]","arr[1]" whose signals are
+                            // "arr[0].<field>".  The High_conn is a bit_select on
+                            // the array base; pair the target's `<port>.<field>`
+                            // wires with the element's `arr[<idx>].<field>`.
+                            if (tgt_mod && port->High_conn()->UhdmType() == uhdmbit_select) {
+                                const bit_select* bs = any_cast<const bit_select*>(port->High_conn());
+                                std::string base = std::string(bs->VpiName());
+                                int idx = -1;
+                                if (bs->VpiIndex()) {
+                                    RTLIL::SigSpec is = import_expression(bs->VpiIndex());
+                                    if (is.is_fully_const()) idx = is.as_const().as_int();
+                                }
+                                std::string src_name = (idx >= 0)
+                                    ? base + "[" + std::to_string(idx) + "]" : std::string();
+                                std::string tgt_prefix = "\\" + port_name + ".";
+                                std::vector<std::string> field_names;
+                                if (!src_name.empty())
+                                    for (auto& w : tgt_mod->wires_) {
+                                        std::string wn = w.first.str();
+                                        if (wn.compare(0, tgt_prefix.size(), tgt_prefix) == 0)
+                                            field_names.push_back(wn.substr(tgt_prefix.size()));
+                                    }
+                                if (!field_names.empty()) {
+                                    for (const auto& f : field_names) {
+                                        std::string src_full = src_name + "." + f;
+                                        std::string dst_port = port_name + "." + f;
+                                        RTLIL::Wire* src_w = nullptr;
+                                        if (name_map.count(src_full))
+                                            src_w = name_map[src_full];
+                                        if (!src_w)
+                                            src_w = parent_rtlil_module->wire(
+                                                RTLIL::escape_id(src_full));
+                                        if (src_w) {
+                                            cell->setPort(RTLIL::escape_id(dst_port),
+                                                          RTLIL::SigSpec(src_w));
+                                            log("UHDM: Connected interface-array element %s -> %s\n",
+                                                src_full.c_str(), dst_port.c_str());
+                                        }
+                                    }
+                                    continue;
+                                }
+                            }
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
                             RTLIL::SigSpec conn = import_expression(high_conn);
 

@@ -210,7 +210,12 @@ struct UhdmImporter {
     std::map<const any*, RTLIL::SigBit> net_map;
     std::map<const any*, RTLIL::Wire*> wire_map;
     std::map<std::string, RTLIL::Wire*> name_map;
-    
+    // Per interface-instance name (incl. array index, e.g. "arr[0]") -> the
+    // ordered list of its signal names ("vld","dat",...).  Populated when
+    // interface instances are imported; used to expand an interface-array
+    // element connection (`.b(arr[0])`) into individual signal connections.
+    std::map<std::string, std::vector<std::string>> iface_inst_vars_;
+
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
     std::set<std::string> imported_module_signatures;

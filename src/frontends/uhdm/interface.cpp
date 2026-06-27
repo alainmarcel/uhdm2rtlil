@@ -249,6 +249,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
+                    iface_inst_vars_[interface_name].push_back(var_name);
 
                     // Net-decl-assign initializer in the elaborated
                     // interface (`logic [W-1:0] start_addr = '1`) lives
@@ -289,6 +290,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* wire = create_wire(full_name, width);
                     add_src_attribute(wire->attributes, net);
                     name_map[full_name] = wire;
+                    iface_inst_vars_[interface_name].push_back(net_name);
                 }
             }
 
