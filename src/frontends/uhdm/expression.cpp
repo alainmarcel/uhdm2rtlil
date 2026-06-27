@@ -765,8 +765,64 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                         }
                     }
                 }
+            } else if (assign->Lhs()->UhdmType() == uhdmhier_path) {
+                // Struct-field write to the return value or a local struct var:
+                // `funcname.field = ...` / `localvar.field = ...`.  The LHS is a
+                // hier_path [ref_obj(base), ref_obj(field)].  Map it to the base
+                // SigSpec's field slice so the field write is captured — a
+                // struct-returning function (rp32 dec32) otherwise stays 0.
+                const hier_path* hp = any_cast<const hier_path*>(assign->Lhs());
+                auto pe = hp ? hp->Path_elems() : nullptr;
+                if (pe && pe->size() == 2) {
+                    std::string base_name = std::string((*pe)[0]->VpiName());
+                    std::string field_name = std::string((*pe)[1]->VpiName());
+                    // Base signal: a mapped local/param, or the return wire.
+                    RTLIL::SigSpec base_sig;
+                    auto bit = input_mapping.find(base_name);
+                    if (bit != input_mapping.end())
+                        base_sig = bit->second;
+                    else if (base_name == func_name)
+                        base_sig = result_wire;
+                    // Struct typespec: the return struct for the function name,
+                    // otherwise the base variable's own typespec.
+                    const UHDM::struct_typespec* st = nullptr;
+                    if (base_name == func_name)
+                        st = current_func_return_struct_ts;
+                    if (!st)
+                        if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0]))
+                            if (auto bts = bref->Typespec())
+                                if (auto a = bts->Actual_typespec())
+                                    if (a->UhdmType() == uhdmstruct_typespec)
+                                        st = any_cast<const UHDM::struct_typespec*>(a);
+                    if (!base_sig.empty() && st && st->Members()) {
+                        // LSB-first iteration: the struct's last member is the LSB.
+                        int field_off = 0, field_w = 0;
+                        bool found = false;
+                        for (int i = (int)st->Members()->size() - 1; i >= 0; i--) {
+                            auto m = (*st->Members())[i];
+                            int mw = 0;
+                            if (auto mts = m->Typespec())
+                                if (auto a = mts->Actual_typespec())
+                                    mw = get_width_from_typespec(a, current_instance);
+                            if (std::string(m->VpiName()) == field_name) {
+                                field_w = mw;
+                                found = true;
+                                break;
+                            }
+                            field_off += mw;
+                        }
+                        if (found && field_w > 0 &&
+                            field_off + field_w <= base_sig.size()) {
+                            lhs_sig = base_sig.extract(field_off, field_w);
+                            if (mode_debug)
+                                log("UHDM: struct-field return %s.%s -> [%d+:%d]\n",
+                                    base_name.c_str(), field_name.c_str(),
+                                    field_off, field_w);
+                        }
+                    }
+                }
             }
-            
+
             // Add the assignment action
             if (lhs_sig.size() > 0) {
                 // Truncate or extend RHS to match LHS width
@@ -1886,7 +1942,9 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 std::vector<RTLIL::SigSpec> args;
                 if (func_call->Tf_call_args()) {
                     for (auto arg : *func_call->Tf_call_args()) {
-                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg));
+                        // Pass input_mapping so args resolve function params/locals
+                        // in the inline path (rp32 imm_i_f: `$signed(op.imm_11_0)`).
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg), input_mapping);
                         log_debug("UHDM: sys_func_call %s argument size: %d\n", func_name.c_str(), arg_sig.size());
                         if (arg_sig.size() == 0) {
                             log_warning("Empty argument in sys_func_call %s\n", func_name.c_str());
@@ -5160,6 +5218,14 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             int bw = w ? w->width : 32;
             base = RTLIL::SigSpec(RTLIL::Const(lv, bw));
             log("      PartSelect: substituting loop var '%s' = %d\n", base_signal_name.c_str(), lv);
+        } else if (input_mapping && input_mapping->count(base_signal_name)) {
+            // Function-inline (legacy) path: a part-select of a function param
+            // or local (e.g. op[6:2] in rp32's dec32) — the base signal lives in
+            // input_mapping, not as a module wire.  Without this it resolves to
+            // the wrong wire / 0 (bit-selects and full refs already work).
+            base = input_mapping->at(base_signal_name);
+            log("      PartSelect: base '%s' from input_mapping (width=%d)\n",
+                base_signal_name.c_str(), base.size());
         } else {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
@@ -6231,6 +6297,100 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // General packed union/struct member chain `base.m1.m2...field` where each
+    // level is a struct or union member (rp32 dec32: `op.r.opcode.opc` — union
+    // -> struct -> struct -> enum field; and imm_i_f's `op.imm_11_0` — a simple
+    // struct member — both on the param `op`).  Resolve the base via
+    // name_map/input_mapping and walk the typespec chain, accumulating the bit
+    // offset (union members share bits so contribute 0; struct members add the
+    // offset of the members below them, LSB-first).  Only fires when every level
+    // is a plain member ref AND the base resolves to a struct/union — otherwise
+    // it falls through to the dedicated handlers below.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        auto& pec = *uhdm_hier->Path_elems();
+        bool all_ref = true;
+        for (auto e : pec)
+            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+        bool base_in_im = all_ref && input_mapping &&
+            input_mapping->count(
+                std::string(any_cast<const ref_obj*>(pec[0])->VpiName()));
+        // Fire for any deep (>=4) member chain, OR for a param/local base
+        // (input_mapping) at any depth >=2 — the function-inline path's simple
+        // `op.imm_11_0` member reads.  For shallow module-wire bases the
+        // dedicated handlers below stay in charge.
+        if (all_ref && (pec.size() >= 4 || base_in_im)) {
+            auto base_ref = any_cast<const ref_obj*>(pec[0]);
+            std::string base_name = std::string(base_ref->VpiName());
+            RTLIL::SigSpec base_sig;
+            if (name_map.count(base_name))
+                base_sig = RTLIL::SigSpec(name_map[base_name]);
+            else if (input_mapping && input_mapping->count(base_name))
+                base_sig = input_mapping->at(base_name);
+
+            // Base typespec (union or struct).
+            const UHDM::typespec* cur_ts = nullptr;
+            const UHDM::ref_typespec* rts = nullptr;
+            if (auto a = base_ref->Actual_group()) {
+                if (a->UhdmType() == uhdmlogic_net)
+                    rts = any_cast<const UHDM::logic_net*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmlogic_var)
+                    rts = any_cast<const UHDM::logic_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmstruct_var)
+                    rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmunion_var)
+                    rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                else if (a->UhdmType() == uhdmio_decl)
+                    rts = any_cast<const UHDM::io_decl*>(a)->Typespec();
+            }
+            if (!rts) rts = base_ref->Typespec();
+            if (rts) cur_ts = rts->Actual_typespec();
+
+            if (!base_sig.empty() && cur_ts) {
+                int off = 0, field_w = 0;
+                bool ok = true;
+                for (size_t lvl = 1; lvl < pec.size() && ok; lvl++) {
+                    std::string mname =
+                        std::string(any_cast<const ref_obj*>(pec[lvl])->VpiName());
+                    const UHDM::VectorOftypespec_member* members = nullptr;
+                    bool is_struct = false;
+                    if (cur_ts->UhdmType() == uhdmstruct_typespec) {
+                        members = any_cast<const UHDM::struct_typespec*>(cur_ts)->Members();
+                        is_struct = true;
+                    } else if (cur_ts->UhdmType() == uhdmunion_typespec) {
+                        members = any_cast<const UHDM::union_typespec*>(cur_ts)->Members();
+                    }
+                    if (!members) { ok = false; break; }
+                    int moff = 0, mw = 0;
+                    const UHDM::typespec* mts = nullptr;
+                    bool found = false;
+                    for (int i = (int)members->size() - 1; i >= 0; i--) {
+                        auto m = (*members)[i];
+                        int w = 0;
+                        const UHDM::typespec* ts2 = nullptr;
+                        if (auto mt = m->Typespec())
+                            if (auto a2 = mt->Actual_typespec()) {
+                                ts2 = a2;
+                                w = get_width_from_typespec(a2, inst);
+                            }
+                        if (std::string(m->VpiName()) == mname) {
+                            mw = w; mts = ts2; found = true; break;
+                        }
+                        if (is_struct) moff += w;
+                    }
+                    if (!found) { ok = false; break; }
+                    off += moff;
+                    field_w = mw;
+                    cur_ts = mts;
+                }
+                if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
+                    log("    hier_path: packed member chain %s.* -> [%d+:%d]\n",
+                        base_name.c_str(), off, field_w);
+                    return base_sig.extract(off, field_w);
+                }
+            }
+        }
+    }
+
     // Packed-union-of-structs field access: `dec.r.rd` where `dec` is
     // a `union packed` whose `r` member is a `struct packed`.  All
     // union members occupy the same bits, so level 2 (the union
@@ -6256,11 +6416,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
 
             RTLIL::Wire* base_wire = name_map.count(base_name)
                 ? name_map[base_name] : nullptr;
+            // Function-inline (legacy) path: the base may be a param/local in
+            // input_mapping rather than a module wire (rp32 dec32: op.r.rd).
+            RTLIL::SigSpec base_sig;
+            if (base_wire) base_sig = RTLIL::SigSpec(base_wire);
+            else if (input_mapping && input_mapping->count(base_name))
+                base_sig = input_mapping->at(base_name);
 
             // Chase the base ref's typespec to the union_typespec; pick
             // the matching member; chase that to its struct_typespec.
             const UHDM::union_typespec* ut = nullptr;
-            if (base_wire) {
+            if (!base_sig.empty()) {
                 auto base_ref = any_cast<const ref_obj*>(pe3[0]);
                 const UHDM::ref_typespec* rts = nullptr;
                 if (auto a = base_ref->Actual_group()) {
@@ -6272,7 +6438,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         rts = any_cast<const UHDM::struct_var*>(a)->Typespec();
                     else if (a->UhdmType() == uhdmunion_var)
                         rts = any_cast<const UHDM::union_var*>(a)->Typespec();
+                    else if (a->UhdmType() == uhdmio_decl)
+                        rts = any_cast<const UHDM::io_decl*>(a)->Typespec();
                 }
+                if (!rts) rts = base_ref->Typespec();
                 if (rts && rts->Actual_typespec() &&
                     rts->Actual_typespec()->UhdmType() == uhdmunion_typespec)
                     ut = any_cast<const UHDM::union_typespec*>(rts->Actual_typespec());
@@ -6292,7 +6461,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
 
-            if (base_wire && st && st->Members()) {
+            if (!base_sig.empty() && st && st->Members()) {
                 // Find the field; LSB-first iteration accumulates the
                 // offset (struct's last member is the LSB).
                 int field_off = 0, field_w = 0;
@@ -6311,12 +6480,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     field_off += mw;
                 }
                 if (found && field_w > 0 &&
-                    field_off + field_w <= base_wire->width) {
-                    log("    hier_path: union+struct %s.%s.%s -> %s[%d+:%d]\n",
+                    field_off + field_w <= base_sig.size()) {
+                    log("    hier_path: union+struct %s.%s.%s -> [%d+:%d]\n",
                         base_name.c_str(), union_member.c_str(),
-                        field_name.c_str(), base_wire->name.c_str(),
-                        field_off, field_w);
-                    return RTLIL::SigSpec(base_wire).extract(field_off, field_w);
+                        field_name.c_str(), field_off, field_w);
+                    return base_sig.extract(field_off, field_w);
                 }
             }
         }

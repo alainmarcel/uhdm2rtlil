@@ -1660,8 +1660,20 @@ RTLIL::Process* UhdmImporter::generate_function_process(const function* func_def
         log("UHDM: Function has no statement body!\n");
     }
     
+    // Expose the return struct typespec so process_stmt_to_case can map
+    // `funcname.field = ...` (hier_path LHS) writes to the right result slice
+    // (a struct-returning function like rp32's dec32 otherwise stays 0).
+    const UHDM::struct_typespec* saved_ret_struct = current_func_return_struct_ts;
+    current_func_return_struct_ts = nullptr;
+    if (func_def->Return() && func_def->Return()->Typespec() &&
+        func_def->Return()->Typespec()->Actual_typespec() &&
+        func_def->Return()->Typespec()->Actual_typespec()->UhdmType() == uhdmstruct_typespec) {
+        current_func_return_struct_ts = any_cast<const UHDM::struct_typespec*>(
+            func_def->Return()->Typespec()->Actual_typespec());
+    }
     process_stmt_to_case(func_def->Stmt(), root_case, temp_result1_wire, input_mapping, func_name, func_temp_counter, func_call_id, local_var_widths);
-    
+    current_func_return_struct_ts = saved_ret_struct;
+
     // Create nosync wires for the function context (these get set to 'x)
     std::string result_wire_name = stringf("\\%s.$result", func_call_id.c_str());
     
