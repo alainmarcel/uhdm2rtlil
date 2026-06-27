@@ -215,6 +215,10 @@ struct UhdmImporter {
     // interface instances are imported; used to expand an interface-array
     // element connection (`.b(arr[0])`) into individual signal connections.
     std::map<std::string, std::vector<std::string>> iface_inst_vars_;
+    // Interface signal wire name ("s.req") -> its packed struct/union typespec,
+    // recorded when the interface port's field wires are created so a struct
+    // field access (`s.req.adr`) in import_hier_path can slice the member.
+    std::map<std::string, const UHDM::typespec*> iface_signal_struct_ts_;
 
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
