@@ -31,11 +31,12 @@ compat fixes in test/rp32/.
 |--------|-----------|------------------|-------|
 | r5p_mouse_soc_simple_top | ✅ | ✅ PASS | **the complete Mouse SoC** — r5p_mouse core + internal memory (`$readmemh mem_if.mem`) + simple GPIO/UART, self-contained (no external TCB).  Synthesises via UHDM and the co-sim PASSES (the deterministic boot program in memory keeps the core out of the standalone-core's random-X divergence).  `mem_if.vh` is only used under `YOSYS_SLANG`; the UHDM path uses a plain memory array.  The Mouse core uses memory-mapped registers (very slow), so a longer run is needed to exercise GPIO writes; the bus/memory/uart paths are verified. |
 
-## Hierarchical cores (need the external TCB submodule)
+## Hierarchical cores
 
 | core | uhdm synth | verilator co-sim | notes |
 |------|-----------|------------------|-------|
 | r5p_degu | ✅ | ⏭ N/A | **the hierarchical Degu core** — uses the external TCB bus **interface** (`tcb_lite_if.man`) + 6 r5p submodules (alu/bru/mdu/lsu/wbu/gpr_2r1w). The TCB `tcb_lite_pkg` + `tcb_lite_if` are imported into `test/rp32/tcb/` (from jeras/TCB). Synthesises via UHDM after fixing an interface-port duplicate-cell crash. CSR is disabled (`ENABLE_CSR` undefined; the `import riscv_csr_pkg` is commented out — the generator's riscv_csr_pkg "dep" was a false match on that comment). Co-sim N/A: the harness's wrapper generator can't express SV interface ports. |
+| r5p_hamster | ✅ | ⏭ N/A | **the hierarchical Hamster core** — a custom bus (no TCB) + the `r5p_gpr_1r1w` register-file submodule. Synthesises via UHDM after fixing a `$paramod` naming bug: the gpr instance's cell type carried an empty string param (`\CHIP=""`) that the module-def name dropped, so the instance was a blackbox and synth picked the standalone gpr as top. Co-sim N/A: Verilator can't compile the source (`r5p_hamster.sv:575` — `{32{idu_buf.alu.fn7[5]}}`, a replicate of a nested struct-field bit-select, VOIDDTYPE), which UHDM handles. |
 
 ## Skipped by the generator (need external deps / complete design)
 
@@ -43,6 +44,8 @@ compat fixes in test/rp32/.
   *commented-out* import guarded by `\`ifdef ENABLE_CSR`; CSR-less builds don't need it.
 - Vendor variants (`__xilinx_xpm`, `__gowin_*`) and the remaining SoC/FPGA tops
   (r5p_degu_soc_*, r5p_hamster_soc_*).
+
+All three r5p cores (Mouse, Degu, Hamster) now synthesise via UHDM.
 
 ## Next
 
