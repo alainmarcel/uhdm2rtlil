@@ -930,7 +930,14 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
 
                                 // Convert to Yosys format
                                 if (is_string) {
-                                    cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
+                                    // Skip empty string params (e.g. CHIP=""):
+                                    // import_module's name builder guards on a
+                                    // non-empty value and drops them, so a cell
+                                    // type that kept `\CHIP=""` would not match
+                                    // the module definition (blackbox → wrong
+                                    // synth top, e.g. rp32 r5p_hamster's gpr).
+                                    if (!value_to_use.empty())
+                                        cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
                                 } else {
                                     cell_type += "\\" + param_name + "=s32'";
                                     // Strip type prefix and determine base

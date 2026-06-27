@@ -1455,7 +1455,20 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                         val_str = val_str.substr(colon_pos + 1);
                     }
 
-                    if (!val_str.empty() && value_type != "STRING") {
+                    if (value_type == "STRING") {
+                        // Include non-empty string params (matching
+                        // import_module's `\name="val"`), but SKIP empty ones
+                        // (e.g. CHIP=""): the canonical module-def name omits an
+                        // empty string param, so including it here made the
+                        // instance cell type (e.g. r5p_hamster's `gpr`) differ
+                        // from the module definition by a trailing `\CHIP=""`,
+                        // turning the cell into a blackbox so synth picked the
+                        // wrong top.  Keep both namings identical.
+                        if (!val_str.empty()) {
+                            param_string += "\\" + param_name + "=\"" + val_str + "\"";
+                            has_params = true;
+                        }
+                    } else if (!val_str.empty()) {
                         param_string += "\\" + param_name + "=s32'";
                         // Determine numeric base from type prefix
                         int base = 10;
