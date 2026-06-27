@@ -25,6 +25,12 @@ compat fixes in test/rp32/.
 | r5p_mdu      | ✅        | ✅ PASS          | `rd` is a don't-care except for M-extension opcodes; random-`ctl` divergence documented in sim_equiv_analyzed.txt (kept bare — a dec32 wrapper makes the netlist keep a `$paramod` Verilator can't read). |
 | r5p_mouse    | ✅        | ⚠ X-dependent    | **now synthesises** (flat single-file CPU core — the earlier "submodules" diagnosis was wrong). Fixed two frontend gaps: a `DEC:x` decimal-x constant crash and a for-loop in a function body (`bitrev`) dropped by the comb SSA inliner. Can't be cleanly co-sim'd/equiv'd: Verilator stalls on X at cycle ~192 while BOTH the UHDM and Verilog netlists keep running (README X-prop caveat — not a UHDM bug); equiv is a reset-dependent false-positive. Listed in failing_tests.txt with that analysis. |
 
+## Complete design (SoC)
+
+| design | uhdm synth | verilator co-sim | notes |
+|--------|-----------|------------------|-------|
+| r5p_mouse_soc_simple_top | ✅ | ✅ PASS | **the complete Mouse SoC** — r5p_mouse core + internal memory (`$readmemh mem_if.mem`) + simple GPIO/UART, self-contained (no external TCB).  Synthesises via UHDM and the co-sim PASSES (the deterministic boot program in memory keeps the core out of the standalone-core's random-X divergence).  `mem_if.vh` is only used under `YOSYS_SLANG`; the UHDM path uses a plain memory array.  The Mouse core uses memory-mapped registers (very slow), so a longer run is needed to exercise GPIO writes; the bus/memory/uart paths are verified. |
+
 ## Skipped by the generator (need the complete design / external deps)
 
 - `tcb_lite_pkg` consumers: r5p_lsu, r5p_degu, r5p_degu_soc_top, r5p_mouse_soc_top
