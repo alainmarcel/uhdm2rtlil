@@ -1041,6 +1041,38 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // and `cell->setPort(port_name, empty)` drops the
                             // connection entirely.
                             RTLIL::Module* tgt_mod = design->module(cell->type);
+                            // Whole interface-ARRAY connection: `.m(arr)` wires the
+                            // entire array to a target with an array of interface
+                            // ports (`m[N]`).  Surelog names the source elements
+                            // "arr[0]","arr[1]" and the target's flattened wires
+                            // "m[0].<field>"; pair them element-by-element.
+                            if (tgt_mod && port->High_conn()->UhdmType() == uhdmref_obj) {
+                                const ref_obj* aref = any_cast<const ref_obj*>(port->High_conn());
+                                std::string src_base = std::string(aref->VpiName());
+                                if (iface_inst_vars_.count(src_base + "[0]")) {
+                                    bool any = false;
+                                    for (int i = 0; iface_inst_vars_.count(
+                                             src_base + "[" + std::to_string(i) + "]"); i++) {
+                                        std::string elem = src_base + "[" + std::to_string(i) + "]";
+                                        for (auto &f : iface_inst_vars_[elem]) {
+                                            std::string src_full = elem + "." + f;
+                                            std::string dst_port = port_name + "[" +
+                                                std::to_string(i) + "]." + f;
+                                            RTLIL::Wire* src_w = name_map.count(src_full)
+                                                ? name_map[src_full]
+                                                : parent_rtlil_module->wire(
+                                                      RTLIL::escape_id(src_full));
+                                            if (src_w) {
+                                                cell->setPort(RTLIL::escape_id(dst_port),
+                                                              RTLIL::SigSpec(src_w));
+                                                any = true;
+                                            }
+                                        }
+                                    }
+                                    if (any) { log("UHDM: Connected whole interface array %s -> port %s[]\n",
+                                                   src_base.c_str(), port_name.c_str()); continue; }
+                                }
+                            }
                             if (tgt_mod && port->High_conn()->UhdmType() == uhdmref_obj) {
                                 const ref_obj* href = any_cast<const ref_obj*>(port->High_conn());
                                 std::string src_name = std::string(href->VpiName());
@@ -3913,15 +3945,21 @@ void UhdmImporter::expand_interfaces() {
                     port_name = port_name.substr(1);
                 }
                 
-                // Find all interface signal wires (bus.a, bus.b, bus.c)
+                // Find all interface signal wires (bus.a, bus.b, bus.c).
+                // For an ARRAY of interface ports the elements are named
+                // "m[0].<field>","m[1].<field>", so also match the "<port>["
+                // prefix (not just "<port>.").
                 std::vector<RTLIL::Wire*> signal_wires;
                 std::string prefix = port_name + ".";
                 std::string escaped_prefix = "\\" + port_name + ".";
-                
+                std::string arr_prefix = port_name + "[";
+                std::string escaped_arr_prefix = "\\" + port_name + "[";
+
                 for (auto wire : module->wires()) {
                     std::string wire_name = wire->name.str();
                     // Check both escaped and unescaped versions
-                    if (wire_name.find(prefix) == 0 || wire_name.find(escaped_prefix) == 0) {
+                    if (wire_name.find(prefix) == 0 || wire_name.find(escaped_prefix) == 0 ||
+                        wire_name.find(arr_prefix) == 0 || wire_name.find(escaped_arr_prefix) == 0) {
                         signal_wires.push_back(wire);
                         log("UHDM: Found interface signal wire %s\n", wire_name.c_str());
                     }
