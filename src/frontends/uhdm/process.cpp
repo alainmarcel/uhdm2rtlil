@@ -1044,6 +1044,21 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 }
             }
 
+            // A signal declared INSIDE a generate block (`begin : g ... logic
+            // rr_ptr; always_ff ... rr_ptr <= ...`) is stored as the wire
+            // "<gen_scope>.rr_ptr", but extract_assigned_signals records the bare
+            // ref name "rr_ptr".  Resolve each to its actual wire so the
+            // async-reset register temp-wire / sync-rule path below finds it
+            // (issue #441 — else "Signal rr_ptr not found in module").
+            {
+                std::string gs = get_current_gen_scope();
+                if (!gs.empty())
+                    for (auto& sig : assigned_signals)
+                        if (!module->wire(RTLIL::escape_id(sig.name)) &&
+                            module->wire(RTLIL::escape_id(gs + "." + sig.name)))
+                            sig.name = gs + "." + sig.name;
+            }
+
             // Create ONE temp wire per unique signal (not per assignment)
             std::set<std::string> processed_signals;
             for (const auto& sig : assigned_signals) {
@@ -9027,6 +9042,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             }
         }
 
+        // A generate-scope-local signal's LHS ref carries the bare name
+        // ("rr_ptr") but its temp wire is keyed by "<gen_scope>.rr_ptr" (the
+        // wire name).  Resolve it so the body write is redirected to the temp
+        // wire (issue #441 — else the FF body assigns the real wire directly and
+        // the sync update overwrites it with the stale temp value).
+        if (!signal_name.empty() && !current_signal_temp_wires.count(signal_name)) {
+            std::string gs = get_current_gen_scope();
+            if (!gs.empty() && current_signal_temp_wires.count(gs + "." + signal_name))
+                signal_name = gs + "." + signal_name;
+        }
+
         // If we have a temp wire for this signal, assign to it
         log("      Looking for signal '%s' in temp wires map (map size=%zu)\n",
             signal_name.c_str(), current_signal_temp_wires.size());
@@ -9373,6 +9399,17 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             } else if (!full_name.empty()) {
                 signal_name = full_name;
             }
+        }
+
+        // A generate-scope-local signal's LHS ref carries the bare name
+        // ("rr_ptr") but its temp wire is keyed by "<gen_scope>.rr_ptr" (the
+        // wire name).  Resolve it so the body write is redirected to the temp
+        // wire (issue #441 — else the FF body assigns the real wire directly and
+        // the sync update overwrites it with the stale temp value).
+        if (!signal_name.empty() && !current_signal_temp_wires.count(signal_name)) {
+            std::string gs = get_current_gen_scope();
+            if (!gs.empty() && current_signal_temp_wires.count(gs + "." + signal_name))
+                signal_name = gs + "." + signal_name;
         }
 
         // If we have a temp wire for this signal, assign to it
@@ -10481,6 +10518,19 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     }
                                 }
 
+                                // A generate-scope-local signal's LHS ref name is
+                                // bare ("rr_ptr") but its temp wire is keyed by the
+                                // full wire name "<gen_scope>.rr_ptr".  Resolve so
+                                // the FF body write retargets the temp wire (#441 —
+                                // else it writes the real wire and the sync update
+                                // overwrites it with the stale temp value).
+                                if (!signal_name.empty() &&
+                                    !current_signal_temp_wires.count(signal_name)) {
+                                    std::string gs = get_current_gen_scope();
+                                    if (!gs.empty() &&
+                                        current_signal_temp_wires.count(gs + "." + signal_name))
+                                        signal_name = gs + "." + signal_name;
+                                }
                                 // If we have a temp wire for this signal, use it
                                 if (!signal_name.empty() && current_signal_temp_wires.count(signal_name)) {
                                     RTLIL::Wire* temp_wire = current_signal_temp_wires[signal_name];
