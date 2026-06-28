@@ -311,6 +311,35 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     const UHDM::scope* ctx = iface_inst
                         ? static_cast<const UHDM::scope*>(iface_inst)
                         : static_cast<const UHDM::scope*>(current_instance);
+                    // Unpacked-array interface signal (`logic d [0:1]`, like
+                    // tcb_lite_if's `trn_dly [0:DLY]`): get_width yields only the
+                    // element width for an array_var, so flatten the modport field
+                    // to element_count * element_width (matching the interface
+                    // instance signal) so `d[i]` accesses connect through.
+                    if (obj && obj->UhdmType() == uhdmarray_var) {
+                        auto av = any_cast<const UHDM::array_var*>(obj);
+                        int n_elem = 1;
+                        if (av->Ranges())
+                            for (auto r : *av->Ranges()) {
+                                int l = 0, rr = 0;
+                                if (r->Left_expr()) {
+                                    auto s = import_expression(r->Left_expr());
+                                    if (s.is_fully_const()) l = s.as_const().as_int();
+                                }
+                                if (r->Right_expr()) {
+                                    auto s = import_expression(r->Right_expr());
+                                    if (s.is_fully_const()) rr = s.as_const().as_int();
+                                }
+                                n_elem *= std::abs(l - rr) + 1;
+                            }
+                        int elem_w = 1;
+                        if (av->Variables() && !av->Variables()->empty()) {
+                            int ew = get_width(const_cast<UHDM::any*>(
+                                static_cast<const UHDM::any*>(av->Variables()->at(0))), ctx);
+                            if (ew > 0) elem_w = ew;
+                        }
+                        if (n_elem * elem_w > 0) return n_elem * elem_w;
+                    }
                     int sw = get_width(const_cast<UHDM::any*>(obj), ctx);
                     return (sw > 0) ? sw : 1;
                 };

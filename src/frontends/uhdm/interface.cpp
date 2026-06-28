@@ -272,6 +272,35 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     // no usable typespec.
                     int width = get_width(var, current_instance);
                     if (width <= 0) width = interface_width;
+                    // Unpacked-array interface signal (`logic d [0:1]`, like
+                    // tcb_lite_if's `trn_dly [0:DLY]`): get_width returns just the
+                    // element width for an array_var, so flatten to
+                    // element_count * element_width so `d[i]` accesses resolve as
+                    // bit/part-selects on a packed wire (else d is 1-bit and the
+                    // internal assigns / reads of d[i>0] are undriven).
+                    if (var->UhdmType() == uhdmarray_var) {
+                        auto av = any_cast<const UHDM::array_var*>(var);
+                        int n_elem = 1;
+                        if (av->Ranges())
+                            for (auto r : *av->Ranges()) {
+                                int l = 0, rr = 0;
+                                if (r->Left_expr()) {
+                                    auto s = import_expression(r->Left_expr());
+                                    if (s.is_fully_const()) l = s.as_const().as_int();
+                                }
+                                if (r->Right_expr()) {
+                                    auto s = import_expression(r->Right_expr());
+                                    if (s.is_fully_const()) rr = s.as_const().as_int();
+                                }
+                                n_elem *= std::abs(l - rr) + 1;
+                            }
+                        int elem_w = 1;
+                        if (av->Variables() && !av->Variables()->empty()) {
+                            elem_w = get_width(av->Variables()->at(0), current_instance);
+                            if (elem_w <= 0) elem_w = 1;
+                        }
+                        if (n_elem * elem_w > 0) width = n_elem * elem_w;
+                    }
 
                     if (mode_debug)
                         log("UHDM: Creating interface signal from Variables: %s (width=%d)\n", full_name.c_str(), width);
@@ -362,22 +391,41 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             if (interface->Cont_assigns()) {
                 for (auto ca : *interface->Cont_assigns()) {
                     if (!ca->Lhs() || !ca->Rhs()) continue;
-                    if (ca->Lhs()->VpiType() != vpiRefObj) continue;
-                    auto lref = any_cast<const UHDM::ref_obj*>(ca->Lhs());
-                    std::string sig = std::string(lref->VpiName());
+                    // The LHS is usually a simple ref (`assign trn = ...`), but an
+                    // unpacked-array signal element (`assign trn_dly[0] = trn;`)
+                    // is a bit_select — resolve it to a 1-bit slice of the
+                    // flattened wire so the internal assign drives it.
+                    std::string sig;
+                    int bit_idx = -1;
+                    if (ca->Lhs()->VpiType() == vpiRefObj) {
+                        sig = std::string(any_cast<const UHDM::ref_obj*>(ca->Lhs())->VpiName());
+                    } else if (ca->Lhs()->VpiType() == vpiBitSelect) {
+                        auto bs = any_cast<const UHDM::bit_select*>(ca->Lhs());
+                        sig = std::string(bs->VpiName());
+                        if (bs->VpiIndex()) {
+                            auto is = import_expression(bs->VpiIndex(), &iface_sig_map);
+                            if (is.is_fully_const()) bit_idx = is.as_const().as_int();
+                        }
+                        if (bit_idx < 0) continue;
+                    } else {
+                        continue;
+                    }
                     if (sig.empty()) continue;
                     std::string full = interface_name + "." + sig;
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full] : nullptr;
                     if (!lw) lw = module->wire(RTLIL::escape_id(full));
                     if (!lw) continue;
+                    RTLIL::SigSpec lhs = (bit_idx >= 0 && bit_idx < lw->width)
+                        ? RTLIL::SigSpec(lw, bit_idx, 1) : RTLIL::SigSpec(lw);
+                    if (bit_idx >= lw->width) continue;
                     RTLIL::SigSpec rhs = import_expression(ca->Rhs(),
                                                           &iface_sig_map);
                     if (rhs.size() == 0) continue;
-                    if (rhs.size() < lw->width)
-                        rhs.extend_u0(lw->width, lw->is_signed);
-                    else if (rhs.size() > lw->width)
-                        rhs = rhs.extract(0, lw->width);
-                    module->connect(RTLIL::SigSpec(lw), rhs);
+                    if (rhs.size() < lhs.size())
+                        rhs.extend_u0(lhs.size(), lw->is_signed);
+                    else if (rhs.size() > lhs.size())
+                        rhs = rhs.extract(0, lhs.size());
+                    module->connect(lhs, rhs);
                     if (mode_debug)
                         log("UHDM: Drove %s from interface cont_assign\n", full.c_str());
                 }
