@@ -350,6 +350,33 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         if (width_obj) add_src_attribute(sw->attributes, width_obj);
+                        // Record a packed struct/union typespec for this interface
+                        // signal so a field access (`s.req.adr`) can slice the
+                        // member later in import_hier_path.  The local iface_inst's
+                        // net is often a `struct_net` (no typespec accessor); the
+                        // design-level interface instance carries it as a logic_net
+                        // WITH the struct_typespec, so search AllInterfaces.
+                        if (!interface_type.empty() && uhdm_design &&
+                            uhdm_design->AllInterfaces() &&
+                            !iface_signal_struct_ts_.count(full_name)) {
+                            for (auto ii : *uhdm_design->AllInterfaces()) {
+                                std::string dn = std::string(ii->VpiDefName());
+                                if (dn.find("work@") == 0) dn = dn.substr(5);
+                                if (dn != interface_type || !ii->Nets()) continue;
+                                for (auto n : *ii->Nets()) {
+                                    if (std::string(n->VpiName()) != sig_name) continue;
+                                    if (n->UhdmType() != uhdmlogic_net) continue;
+                                    auto rt = any_cast<const UHDM::logic_net*>(n)->Typespec();
+                                    if (rt && rt->Actual_typespec()) {
+                                        auto ats = rt->Actual_typespec();
+                                        if (ats->UhdmType() == uhdmstruct_typespec ||
+                                            ats->UhdmType() == uhdmunion_typespec)
+                                            iface_signal_struct_ts_[full_name] = ats;
+                                    }
+                                }
+                                if (iface_signal_struct_ts_.count(full_name)) break;
+                            }
+                        }
                         // Remember the modport's direction for this
                         // signal so `expand_interfaces` can promote
                         // it to an input/output (rather than blanket

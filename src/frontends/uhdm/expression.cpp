@@ -6312,6 +6312,73 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Interface-signal struct member: `s.req.adr` where "s" is an interface PORT,
+    // "s.req" is the flattened interface signal wire (a packed struct), and the
+    // remaining elements ("adr", ...) are struct members.  The interface flattens
+    // `req` to a wire named "s.req"; the general handler below keys off the bare
+    // base ("s", here only a 1-bit placeholder), so resolve the "<iface>.<sig>"
+    // join as the base and walk the struct members from the signal's typespec.
+    // Detect by name_map carrying the 2-element join (a plain union path like
+    // `dec.r.rd` has no "dec.r" wire, so this stays specific to interfaces).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3) {
+        auto& pe = *uhdm_hier->Path_elems();
+        bool all_ref = true;
+        for (auto e : pe)
+            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
+        if (all_ref) {
+            std::string iface = std::string(any_cast<const ref_obj*>(pe[0])->VpiName());
+            std::string sig   = std::string(any_cast<const ref_obj*>(pe[1])->VpiName());
+            std::string wname = iface + "." + sig;          // "s.req"
+            if (name_map.count(wname) && iface_signal_struct_ts_.count(wname)) {
+                RTLIL::SigSpec base_sig = RTLIL::SigSpec(name_map[wname]);
+                // The path element pe[1] carries no typespec/Actual_group, so use
+                // the struct/union typespec recorded when the field wire was made.
+                const UHDM::typespec* cur_ts = iface_signal_struct_ts_[wname];
+                if (cur_ts) {
+                    int off = 0, field_w = 0;
+                    bool ok = true;
+                    for (size_t lvl = 2; lvl < pe.size() && ok; lvl++) {
+                        std::string mname =
+                            std::string(any_cast<const ref_obj*>(pe[lvl])->VpiName());
+                        const UHDM::VectorOftypespec_member* members = nullptr;
+                        bool is_struct = false;
+                        if (cur_ts->UhdmType() == uhdmstruct_typespec) {
+                            members = any_cast<const UHDM::struct_typespec*>(cur_ts)->Members();
+                            is_struct = true;
+                        } else if (cur_ts->UhdmType() == uhdmunion_typespec) {
+                            members = any_cast<const UHDM::union_typespec*>(cur_ts)->Members();
+                        }
+                        if (!members) { ok = false; break; }
+                        int moff = 0, mw = 0;
+                        const UHDM::typespec* mts = nullptr;
+                        bool found = false;
+                        for (int i = (int)members->size() - 1; i >= 0; i--) {
+                            auto m = (*members)[i];
+                            int w = 0;
+                            const UHDM::typespec* ts2 = nullptr;
+                            if (auto mt = m->Typespec())
+                                if (auto a2 = mt->Actual_typespec()) {
+                                    ts2 = a2;
+                                    w = get_width_from_typespec(a2, inst);
+                                }
+                            if (std::string(m->VpiName()) == mname) {
+                                mw = w; mts = ts2; found = true; break;
+                            }
+                            if (is_struct) moff += w;
+                        }
+                        if (!found) { ok = false; break; }
+                        off += moff; field_w = mw; cur_ts = mts;
+                    }
+                    if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
+                        log("    hier_path: interface signal struct member %s.* -> [%d+:%d]\n",
+                            wname.c_str(), off, field_w);
+                        return base_sig.extract(off, field_w);
+                    }
+                }
+            }
+        }
+    }
+
     // General packed union/struct member chain `base.m1.m2...field` where each
     // level is a struct or union member (rp32 dec32: `op.r.opcode.opc` — union
     // -> struct -> struct -> enum field; and imm_i_f's `op.imm_11_0` — a simple
