@@ -3130,6 +3130,29 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     log("UHDM: Finished importing interface instances\n");
     log_flush();
     
+    // Pre-create the implicit nets that are the LHS of module-level continuous
+    // assigns, BEFORE importing generate scopes (which happens next, but the
+    // actual continuous-assign import runs after).  Otherwise a reference to
+    // such an implicit net inside a generate-scope always block resolves to a
+    // disconnected gen-scope-local copy (e.g. `gen.INTERNAL1`) instead of the
+    // parent module net, leaving the driven register's input floating (#437).
+    if (uhdm_module->Cont_assigns()) {
+        for (auto ca : *uhdm_module->Cont_assigns()) {
+            auto lhs = ca->Lhs();
+            if (!lhs || lhs->UhdmType() != uhdmref_obj) continue;
+            std::string lname = std::string(any_cast<const ref_obj*>(lhs)->VpiName());
+            if (lname.empty() || name_map.count(lname) ||
+                module->wire(RTLIL::escape_id(lname)))
+                continue;
+            int w = get_width(lhs, uhdm_module);
+            if (w <= 0) w = 1;
+            RTLIL::Wire* iw = module->addWire(RTLIL::escape_id(lname), w);
+            name_map[lname] = iw;
+            log("UHDM: Pre-created implicit cont-assign net '%s' (width=%d) for "
+                "generate-scope visibility\n", lname.c_str(), w);
+        }
+    }
+
     // Import generate scopes (generate blocks)
     log("UHDM: About to import generate scopes for module %s\n", log_id(module->name));
     log_flush();
