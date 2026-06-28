@@ -1013,8 +1013,8 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     (attr_name == "anyconst" || attr_name == "anyseq" ||
                      attr_name == "allconst" || attr_name == "allseq"))
                     continue;
-                // Set the attribute to 1 (standard practice for boolean attributes like keep)
-                w->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                // Set the attribute value using import_attribute_value
+                w->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
                 if (mode_debug)
                     log("UHDM: Added attribute '%s' to net '%s'\n", attr_name.c_str(), netname.c_str());
             }
@@ -1710,6 +1710,17 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
     
     // Add source attribute to cell
     add_src_attribute(cell->attributes, uhdm_inst);
+    
+    // Import user attributes
+    if (uhdm_inst->Attributes()) {
+        for (auto attr : *uhdm_inst->Attributes()) {
+            std::string attr_name = std::string(attr->VpiName());
+            if (attr_name.empty()) continue;
+            cell->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
+            if (mode_debug)
+                log("UHDM: Added attribute '%s' to cell '%s'\n", attr_name.c_str(), inst_name.c_str());
+        }
+    }
     
     // Import port connections
     if (uhdm_inst->Ports()) {

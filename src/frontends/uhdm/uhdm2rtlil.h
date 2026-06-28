@@ -767,6 +767,7 @@ struct UhdmImporter {
 
     // Helper to extract RTLIL::Const from UHDM Value string
     static RTLIL::Const extract_const_from_value(const std::string& value_str);
+    static RTLIL::Const import_attribute_value(const UHDM::attribute* attr);
     RTLIL::SigSpec extract_function_return_value(const UHDM::any* stmt, const std::string& func_name, int width);
     
     // Process function body and generate process blocks
