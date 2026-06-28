@@ -1263,6 +1263,40 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
     }
 }
 
+// Helper function to import an attribute value as RTLIL::Const
+RTLIL::Const UhdmImporter::import_attribute_value(const UHDM::attribute* attr) {
+    if (!attr) {
+        return RTLIL::Const(1);
+    }
+    std::string val_str = std::string(attr->VpiValue());
+    if (val_str.empty()) {
+        return RTLIL::Const(1);
+    }
+    if (val_str.substr(0, 7) == "STRING:") {
+        return RTLIL::Const(val_str.substr(7));
+    }
+    if (val_str.substr(0, 4) == "INT:") {
+        return RTLIL::Const(std::stoi(val_str.substr(4)));
+    }
+    if (val_str.substr(0, 5) == "UINT:") {
+        return RTLIL::Const(std::stoull(val_str.substr(5)));
+    }
+    if (val_str.substr(0, 5) == "REAL:") {
+        return RTLIL::Const(val_str.substr(5));
+    }
+    if (val_str.substr(0, 4) == "BIN:") {
+        return RTLIL::Const::from_string(val_str.substr(4));
+    }
+    if (val_str.substr(0, 4) == "HEX:") {
+        return extract_const_from_value(val_str);
+    }
+    try {
+        return RTLIL::Const(std::stoi(val_str));
+    } catch (...) {
+        return RTLIL::Const(val_str);
+    }
+}
+
 // Helper function to extract RTLIL::Const from UHDM Value string
 RTLIL::Const UhdmImporter::extract_const_from_value(const std::string& value_str) {
     if (value_str.empty()) {

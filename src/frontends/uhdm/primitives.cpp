@@ -197,6 +197,17 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
     log("UHDM: Gate '%s' has %d outputs and %d inputs\n", 
         inst_name.c_str(), (int)outputs.size(), (int)inputs.size());
     
+    // Import gate attributes helper
+    auto import_gate_attributes = [&](RTLIL::Cell* cell, const UHDM::gate* gate_obj) {
+        if (gate_obj && gate_obj->Attributes()) {
+            for (auto attr : *gate_obj->Attributes()) {
+                std::string attr_name = std::string(attr->VpiName());
+                if (attr_name.empty()) continue;
+                cell->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
+            }
+        }
+    };
+
     // For primitives with multiple outputs (buf, not), create separate cells
     if (outputs.size() > 1) {
         // Create a cell for each output
@@ -205,6 +216,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
                 inst_name + "_" + std::to_string(i) : inst_name;
             RTLIL::Cell* cell = module->addCell(get_unique_cell_name(cell_name), cell_type);
             add_src_attribute(cell->attributes, uhdm_gate);
+            import_gate_attributes(cell, uhdm_gate);
             
             // Connect this output
             cell->setPort(ID::Y, outputs[i]);
@@ -224,6 +236,7 @@ void UhdmImporter::import_gate(const gate* uhdm_gate, const std::string& instanc
         // Single output - standard case
         RTLIL::Cell* cell = module->addCell(get_unique_cell_name(inst_name), cell_type);
         add_src_attribute(cell->attributes, uhdm_gate);
+        import_gate_attributes(cell, uhdm_gate);
         
         // Connect output
         cell->setPort(ID::Y, outputs[0]);
@@ -463,6 +476,15 @@ void UhdmImporter::import_gate_array_element(const gate* gate_template, const st
     // Create the cell
     RTLIL::Cell* cell = module->addCell(get_unique_cell_name(instance_name), cell_type);
     add_src_attribute(cell->attributes, gate_template);
+    
+    // Import user attributes
+    if (gate_template->Attributes()) {
+        for (auto attr : *gate_template->Attributes()) {
+            std::string attr_name = std::string(attr->VpiName());
+            if (attr_name.empty()) continue;
+            cell->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
+        }
+    }
     
     // Process terminals - first is output, rest are inputs
     auto terms = *gate_template->Prim_terms();

@@ -2320,8 +2320,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     (attr_name == "anyconst" || attr_name == "anyseq" ||
                                      attr_name == "allconst" || attr_name == "allseq"))
                                     continue;
-                                // Set the attribute to 1 (standard practice for boolean attributes like keep)
-                                wire->attributes[RTLIL::escape_id(attr_name)] = RTLIL::Const(1);
+                                // Set the attribute value using import_attribute_value
+                                wire->attributes[RTLIL::escape_id(attr_name)] = import_attribute_value(attr);
                                 if (mode_debug)
                                     log("UHDM: Added attribute '%s' to variable '%s'\n", attr_name.c_str(), var_name.c_str());
                             }
@@ -3538,7 +3538,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                           aval.find(":1") != std::string::npos ||
                           aval == "1";
             module->attributes[RTLIL::escape_id(aname)] =
-                RTLIL::Const(is_set ? 1 : 0, 1);
+                import_attribute_value(attr);
             if (aname == "blackbox" && is_set) is_blackbox = true;
         }
     }
