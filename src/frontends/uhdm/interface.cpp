@@ -179,7 +179,37 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
         for (auto interface : *source->Interfaces()) {
             std::string interface_name = std::string(interface->VpiName());
             log("UHDM: Processing interface instance: %s\n", interface_name.c_str());
-            log_flush();      
+            log_flush();
+            // Record the packed struct/union typespec of an interface signal
+            // (e.g. "arr[0].req") so a field access `arr[0].req.adr` can slice
+            // the member later.  The design-level interface instance carries the
+            // signal as a logic_net WITH the struct_typespec (the local element's
+            // net is often a typespec-less struct_net), so search AllInterfaces.
+            std::string iface_def = std::string(interface->VpiDefName());
+            if (iface_def.find("work@") == 0) iface_def = iface_def.substr(5);
+            auto record_struct_ts = [&](const std::string& wire_name,
+                                        const std::string& sig_name) {
+                if (iface_signal_struct_ts_.count(wire_name) || !uhdm_design ||
+                    !uhdm_design->AllInterfaces())
+                    return;
+                for (auto ii : *uhdm_design->AllInterfaces()) {
+                    std::string dn = std::string(ii->VpiDefName());
+                    if (dn.find("work@") == 0) dn = dn.substr(5);
+                    if (dn != iface_def || !ii->Nets()) continue;
+                    for (auto n : *ii->Nets()) {
+                        if (std::string(n->VpiName()) != sig_name) continue;
+                        if (n->UhdmType() != uhdmlogic_net) continue;
+                        auto rt = any_cast<const UHDM::logic_net*>(n)->Typespec();
+                        if (rt && rt->Actual_typespec()) {
+                            auto ats = rt->Actual_typespec();
+                            if (ats->UhdmType() == uhdmstruct_typespec ||
+                                ats->UhdmType() == uhdmunion_typespec)
+                                iface_signal_struct_ts_[wire_name] = ats;
+                        }
+                    }
+                    if (iface_signal_struct_ts_.count(wire_name)) break;
+                }
+            };
             // Get WIDTH parameter value - check module parameter first, then interface instance
             int interface_width = 8; // default
             
@@ -250,6 +280,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     add_src_attribute(wire->attributes, var);
                     name_map[full_name] = wire;
                     iface_inst_vars_[interface_name].push_back(var_name);
+                    record_struct_ts(full_name, var_name);
 
                     // Net-decl-assign initializer in the elaborated
                     // interface (`logic [W-1:0] start_addr = '1`) lives
@@ -291,6 +322,7 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     add_src_attribute(wire->attributes, net);
                     name_map[full_name] = wire;
                     iface_inst_vars_[interface_name].push_back(net_name);
+                    record_struct_ts(full_name, net_name);
                 }
             }
 

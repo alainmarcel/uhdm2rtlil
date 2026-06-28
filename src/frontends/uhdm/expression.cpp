@@ -6312,23 +6312,40 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
-    // Interface-signal struct member: `s.req.adr` where "s" is an interface PORT,
-    // "s.req" is the flattened interface signal wire (a packed struct), and the
-    // remaining elements ("adr", ...) are struct members.  The interface flattens
-    // `req` to a wire named "s.req"; the general handler below keys off the bare
-    // base ("s", here only a 1-bit placeholder), so resolve the "<iface>.<sig>"
-    // join as the base and walk the struct members from the signal's typespec.
-    // Detect by name_map carrying the 2-element join (a plain union path like
-    // `dec.r.rd` has no "dec.r" wire, so this stays specific to interfaces).
+    // Interface-signal struct member: `s.req.adr` (single port) or
+    // `arr[0].req.adr` (array element) — "s"/"arr[0]" is an interface, "<>.req"
+    // is the flattened interface signal wire (a packed struct), and the remaining
+    // elements ("adr", ...) are struct members.  The interface flattens `req` to
+    // a wire named "<iface>.req"; the general handler below keys off the bare
+    // base (a 1-bit placeholder), so resolve the "<iface>.<sig>" join as the base
+    // and walk the struct members from the recorded signal typespec.  Detect by
+    // name_map carrying the 2-element join (a plain union path like `dec.r.rd`
+    // has no "dec.r" wire, so this stays specific to interfaces).
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3) {
         auto& pe = *uhdm_hier->Path_elems();
-        bool all_ref = true;
-        for (auto e : pe)
-            if (e->UhdmType() != uhdmref_obj) { all_ref = false; break; }
-        if (all_ref) {
-            std::string iface = std::string(any_cast<const ref_obj*>(pe[0])->VpiName());
+        // pe[0] may be a ref_obj (single port "s") OR a bit_select (array element
+        // "arr[0]"); pe[1..] must be plain member refs.
+        bool rest_ref = true;
+        for (size_t i = 1; i < pe.size(); i++)
+            if (pe[i]->UhdmType() != uhdmref_obj) { rest_ref = false; break; }
+        std::string base;
+        if (rest_ref) {
+            if (pe[0]->UhdmType() == uhdmref_obj) {
+                base = std::string(any_cast<const ref_obj*>(pe[0])->VpiName());
+            } else if (pe[0]->UhdmType() == uhdmbit_select) {
+                auto bs = any_cast<const bit_select*>(pe[0]);
+                std::string bn = std::string(bs->VpiName());
+                int idx = -1;
+                if (bs->VpiIndex()) {
+                    RTLIL::SigSpec is = import_expression(bs->VpiIndex());
+                    if (is.is_fully_const()) idx = is.as_const().as_int();
+                }
+                if (idx >= 0) base = bn + "[" + std::to_string(idx) + "]";
+            }
+        }
+        if (!base.empty()) {
             std::string sig   = std::string(any_cast<const ref_obj*>(pe[1])->VpiName());
-            std::string wname = iface + "." + sig;          // "s.req"
+            std::string wname = base + "." + sig;          // "s.req" / "arr[0].req"
             if (name_map.count(wname) && iface_signal_struct_ts_.count(wname)) {
                 RTLIL::SigSpec base_sig = RTLIL::SigSpec(name_map[wname]);
                 // The path element pe[1] carries no typespec/Actual_group, so use
