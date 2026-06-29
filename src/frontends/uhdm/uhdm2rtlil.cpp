@@ -577,6 +577,107 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     log_flush();
 }
 
+// Within a struct value `val` (an assignment-pattern operation), return the
+// value of member `field` when the operands are tagged_patterns (`'{DAT:16,
+// ...}` — each carries its field name on Typespec()->Actual_typespec()).  The
+// ELABORATED form usually flattens to positional constants instead, handled via
+// the struct typespec by the caller; this only covers the by-name case.
+static const expr* find_tagged_field(const expr* val, const std::string& field) {
+    if (!val || val->UhdmType() != uhdmoperation) return nullptr;
+    auto op = any_cast<const operation*>(val);
+    if (op->VpiOpType() != vpiAssignmentPatternOp || !op->Operands()) return nullptr;
+    for (auto operand : *op->Operands()) {
+        if (operand->UhdmType() != uhdmtagged_pattern) continue;
+        auto tp = any_cast<const tagged_pattern*>(operand);
+        std::string fname;
+        if (auto rt = tp->Typespec())
+            if (auto at = rt->Actual_typespec())
+                fname = std::string(at->VpiName());
+        if (fname == field)
+            return dynamic_cast<const expr*>(tp->Pattern());
+    }
+    return nullptr;
+}
+
+// Index of member `field` in a struct typespec (= its assignment-pattern operand
+// position, declaration order); -1 if absent.  *member_ts gets the member's own
+// typespec for descending into nested structs.
+static int struct_member_index(const typespec* ts, const std::string& field,
+                               const typespec** member_ts) {
+    if (!ts || ts->UhdmType() != uhdmstruct_typespec) return -1;
+    auto st = any_cast<const struct_typespec*>(ts);
+    if (!st->Members()) return -1;
+    int i = 0;
+    for (auto m : *st->Members()) {
+        if (std::string(m->VpiName()) == field) {
+            if (member_ts && m->Typespec())
+                *member_ts = m->Typespec()->Actual_typespec();
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+
+// Evaluate an interface struct-PARAMETER field referenced in a child instance's
+// parameter value — e.g. tcb_dev_gpio's `.SYS_DAT(sub.CFG.BUS.DAT)` where `sub`
+// is the parent module's interface port, `CFG` the interface's struct parameter
+// and `BUS.DAT` a (possibly nested) field.  Surelog leaves the param_assign RHS
+// as an unevaluated hier_path, so walk: parent port -> connected interface_inst
+// -> its `CFG` param value (an assignment-pattern operation whose operands are,
+// in the elaborated form, POSITIONAL constants in struct-declaration order) ->
+// the named field chain (mapped to operand indices via the struct typespec).
+// Returns the value as a decimal string, or "" on failure.
+std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
+                                          const module_inst* child_inst) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 3 || !child_inst)
+        return "";
+    auto& pe = *hp->Path_elems();
+    std::string base  = std::string(pe[0]->VpiName());   // "sub"
+    std::string pname = std::string(pe[1]->VpiName());   // "CFG"
+    auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent());
+    if (!parent || !parent->Ports()) return "";
+    const interface_inst* iface = nullptr;
+    for (auto p : *parent->Ports()) {
+        if (std::string(p->VpiName()) != base) continue;
+        if (auto hc = p->High_conn())
+            if (hc->UhdmType() == uhdmref_obj)
+                if (auto a = any_cast<const ref_obj*>(hc)->Actual_group())
+                    if (a->UhdmType() == uhdminterface_inst)
+                        iface = any_cast<const interface_inst*>(a);
+        break;
+    }
+    if (!iface || !iface->Param_assigns()) return "";
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    for (auto pa : *iface->Param_assigns()) {
+        auto lhs = dynamic_cast<const parameter*>(pa->Lhs());
+        if (!lhs || std::string(lhs->VpiName()) != pname) continue;
+        val = dynamic_cast<const expr*>(pa->Rhs());
+        if (auto rt = lhs->Typespec()) cur_ts = rt->Actual_typespec();
+        break;
+    }
+    // Walk the field path (pe[2..]).  At each level the value is an assignment-
+    // pattern operation; resolve the field by name (tagged_pattern) or by
+    // struct-member index (positional, the elaborated form).
+    for (size_t i = 2; i < pe.size() && val; i++) {
+        std::string field = std::string(pe[i]->VpiName());
+        const typespec* next_ts = nullptr;
+        const expr* next = find_tagged_field(val, field);
+        int idx = struct_member_index(cur_ts, field, &next_ts);
+        if (!next && val->UhdmType() == uhdmoperation && idx >= 0) {
+            auto op = any_cast<const operation*>(val);
+            if (op->Operands() && idx < (int)op->Operands()->size())
+                next = dynamic_cast<const expr*>((*op->Operands())[idx]);
+        }
+        val = next;
+        cur_ts = next_ts;
+    }
+    if (auto c = dynamic_cast<const constant*>(val))
+        return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
+    return "";
+}
+
 // Recursively import module hierarchy starting from a module instance
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
@@ -724,6 +825,20 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         
                         param_signature += val_str;
                         log("UHDM: Added parameter %s=%s to signature\n", param_name.c_str(), val_str.c_str());
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmhier_path) {
+                        // Non-constant RHS that's an interface struct-parameter
+                        // field (`sub.CFG.BUS.DAT`).  Surelog leaves it as an
+                        // unevaluated hier_path, so the constant path above
+                        // appends nothing -> an EMPTY param value, which makes the
+                        // child mis-specialise or its def never get produced
+                        // (degu SoC's tcb_dev_gpio SYS_DAT).  Resolve it through
+                        // the connected interface instance's parameter value.
+                        std::string val_str = eval_iface_param_field(
+                            any_cast<const hier_path*>(param_assign->Rhs()),
+                            uhdm_module);
+                        param_signature += val_str;
+                        log("UHDM: Added hier_path parameter %s=%s to signature\n",
+                            param_name.c_str(), val_str.c_str());
                     }
                 }
             }
@@ -1559,6 +1674,25 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                                     // Use zero as default
                                     param_string += "00000000000000000000000000000000";
                                 }
+                            }
+                        }
+                    } else if (param_assign->Rhs()->UhdmType() == uhdmhier_path) {
+                        // Interface struct-parameter field (`sub.CFG.BUS.DAT`):
+                        // resolve it so the DEFINITION name matches the cell type
+                        // built by import_module_hierarchy — else the def stays the
+                        // base module and the specialized cell is an unresolved
+                        // reference (degu SoC's tcb_dev_gpio SYS_DAT).
+                        std::string v = eval_iface_param_field(
+                            any_cast<const hier_path*>(param_assign->Rhs()),
+                            uhdm_module);
+                        if (!v.empty()) {
+                            param_string += "\\" + param_name + "=s32'";
+                            try {
+                                int val = std::stoi(v);
+                                for (int i = 31; i >= 0; i--)
+                                    param_string += ((val >> i) & 1) ? "1" : "0";
+                            } catch (const std::exception&) {
+                                param_string += "00000000000000000000000000000000";
                             }
                         }
                     }
