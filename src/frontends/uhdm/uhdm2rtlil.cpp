@@ -4022,6 +4022,20 @@ void UhdmImporter::expand_interfaces() {
                     if (signal_wire->attributes.count(dir_id)) {
                         dir = signal_wire->attributes.at(dir_id).as_int();
                         signal_wire->attributes.erase(dir_id);
+                    } else {
+                        // Array element `<port>[i].<field>`: the modport direction
+                        // wasn't stamped on the wire (it's created by the
+                        // interface-instance import).  Inherit it from the
+                        // per-field map recorded (module:port:field) by import_port.
+                        std::string n = signal_wire->name.str();
+                        if (!n.empty() && n[0] == '\\') n = n.substr(1);
+                        size_t dot = n.rfind('.');
+                        if (dot != std::string::npos) {
+                            std::string key = module->name.str() + ":" + port_name +
+                                              ":" + n.substr(dot + 1);
+                            auto it = modport_field_dir_.find(key);
+                            if (it != modport_field_dir_.end()) dir = it->second;
+                        }
                     }
                     if (dir == 1) {            // vpiInput
                         signal_wire->port_input = true;
