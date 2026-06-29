@@ -6710,6 +6710,42 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Interface-ARRAY element plain-field access (`man[i].vld` where `man` is an
+    // array-of-modports port `man[N-1:0]` and `vld` is a plain interface signal).
+    // Path_elems = [bit_select(man[i]), ref_obj(vld)] — the MIRROR of the
+    // `bus.field[bits]` case below.  import_port created the per-element wire
+    // `\man[i].vld`; resolve directly to it.  Without this the generic walker
+    // builds a spurious instance-prefixed `\drv.man[i].vld` that does not match
+    // the port wire, so the demultiplexer's `assign man[i].vld = ...` (in a
+    // genvar loop) never drives tcb_per[i].vld and the degu SoC's peripheral bus
+    // is dead.  Works for both reads and the assign LHS.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& pe_af = *uhdm_hier->Path_elems();
+        if (pe_af[0]->UhdmType() == uhdmbit_select &&
+            pe_af[1]->UhdmType() == uhdmref_obj) {
+            auto bs = any_cast<const bit_select*>(pe_af[0]);
+            std::string base_name = std::string(bs->VpiName());
+            std::string field_name =
+                std::string(any_cast<const ref_obj*>(pe_af[1])->VpiName());
+            int idx = -1;
+            if (bs->VpiIndex()) {
+                RTLIL::SigSpec is = import_expression(bs->VpiIndex(), input_mapping);
+                if (is.is_fully_const()) idx = is.as_const().as_int();
+            }
+            if (idx >= 0 && !field_name.empty()) {
+                std::string wname =
+                    base_name + "[" + std::to_string(idx) + "]." + field_name;
+                RTLIL::Wire* w = name_map.count(wname) ? name_map[wname]
+                    : module->wire(RTLIL::escape_id(wname));
+                if (w) {
+                    log("    hier_path: interface-array element field %s -> wire %s\n",
+                        wname.c_str(), w->name.c_str());
+                    return RTLIL::SigSpec(w);
+                }
+            }
+        }
+    }
+
     // Interface-port signal bit/part-select access (e.g. `bus.adr[3:0]`
     // where `bus` is a `tcb_if.sub` modport port and `adr` is one of the
     // interface's signals).  Path_elems = [ref_obj(bus),
