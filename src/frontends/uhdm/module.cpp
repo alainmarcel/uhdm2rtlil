@@ -2812,6 +2812,29 @@ void UhdmImporter::import_gen_scope(const gen_scope* uhdm_scope) {
             log("UHDM: Importing module instance '%s' of type '%s' in generate scope\n",
                 std::string(mod_inst->VpiName()).c_str(), std::string(mod_inst->VpiDefName()).c_str());
             import_instance(mod_inst);
+            // import_instance -> import_module imports the instance's OWN body but
+            // NOT its child instantiations (that recursion lives only in
+            // import_module_hierarchy).  For a generate-scope-nested parameterized
+            // module that left the paramod body EMPTY — e.g. degu SoC's
+            // gen_gpio.gpio (tcb_lite_dev_gpio paramod) never instantiated its
+            // tcb_dev_gpio child, so gpio_o was undriven.  Recurse into the
+            // elaborated instance's children so their cells are created in the
+            // paramod body — but ONLY for children whose cell is actually MISSING,
+            // so submodules already imported through the normal path aren't
+            // double-instantiated (which produced duplicate cells -> cosim
+            // mismatch on the *InGenScope* / *PassedToSubmodule* tests).
+            if (mod_inst->Modules()) {
+                RTLIL::Module* inst_mod = nullptr;
+                auto mn = inst_to_modname_.find(mod_inst);
+                if (mn != inst_to_modname_.end())
+                    inst_mod = design->module(RTLIL::escape_id(mn->second));
+                for (auto child : *mod_inst->Modules()) {
+                    if (inst_mod && inst_mod->cell(
+                            RTLIL::escape_id(std::string(child->VpiName()))))
+                        continue;  // already instantiated
+                    import_module_hierarchy(child, true);
+                }
+            }
         }
     }
     
