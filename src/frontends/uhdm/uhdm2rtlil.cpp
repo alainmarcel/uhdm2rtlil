@@ -938,9 +938,19 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     // synth top, e.g. rp32 r5p_hamster's gpr).
                                     if (!value_to_use.empty())
                                         cell_type += "\\" + param_name + "=\"" + value_to_use + "\"";
-                                } else {
+                                } else if (!value_to_use.empty()) {
+                                    // Skip EMPTY-value params: the module-def name
+                                    // builder (import_module) drops them (its
+                                    // `if (!val_str.empty())` guard), so a type
+                                    // param that didn't elaborate (e.g. `isa_t ISA`,
+                                    // `CFG` -> "") kept in the cell type would not
+                                    // match the def -> the cell is a blackbox, never
+                                    // flattened, so the core's outputs (degu SoC's
+                                    // tcb_ifu.vld) never reach the parent.  A
+                                    // non-empty but non-integer value (e.g. a large
+                                    // hex IFU_MSK, or 'X') is kept as 32 zeros,
+                                    // matching the def builder's own fallback.
                                     cell_type += "\\" + param_name + "=s32'";
-                                    // Strip type prefix and determine base
                                     int base = 10;
                                     size_t colon_pos = value_to_use.find(':');
                                     if (colon_pos != std::string::npos) {
@@ -949,14 +959,12 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                         if (prefix == "BIN") base = 2;
                                         else if (prefix == "HEX") base = 16;
                                     }
-                                    // Pad value to 32 bits
                                     try {
                                         int val = std::stoi(value_to_use, nullptr, base);
                                         for (int i = 31; i >= 0; i--) {
                                             cell_type += ((val >> i) & 1) ? "1" : "0";
                                         }
                                     } catch (const std::exception& e) {
-                                        log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n", value_to_use.c_str(), e.what());
                                         cell_type += "00000000000000000000000000000000";
                                     }
                                 }
@@ -1073,16 +1081,23 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                                    src_base.c_str(), port_name.c_str()); continue; }
                                 }
                             }
-                            if (tgt_mod && port->High_conn()->UhdmType() == uhdmref_obj) {
+                            if (port->High_conn()->UhdmType() == uhdmref_obj) {
                                 const ref_obj* href = any_cast<const ref_obj*>(port->High_conn());
                                 std::string src_name = std::string(href->VpiName());
-                                std::string tgt_prefix = "\\" + port_name + ".";
                                 std::vector<std::string> field_names;
-                                for (auto& w : tgt_mod->wires_) {
-                                    std::string wn = w.first.str();
-                                    if (wn.compare(0, tgt_prefix.size(), tgt_prefix) == 0)
-                                        field_names.push_back(wn.substr(tgt_prefix.size()));
+                                if (tgt_mod) {
+                                    std::string tgt_prefix = "\\" + port_name + ".";
+                                    for (auto& w : tgt_mod->wires_) {
+                                        std::string wn = w.first.str();
+                                        if (wn.compare(0, tgt_prefix.size(), tgt_prefix) == 0)
+                                            field_names.push_back(wn.substr(tgt_prefix.size()));
+                                    }
                                 }
+                                // tgt_mod is null when a complex core is imported on
+                                // demand AFTER this connection (degu SoC): fall back
+                                // to the SOURCE interface instance's recorded fields.
+                                if (field_names.empty() && iface_inst_vars_.count(src_name))
+                                    field_names = iface_inst_vars_[src_name];
                                 if (!field_names.empty() && !src_name.empty()) {
                                     for (const auto& f : field_names) {
                                         std::string src_full = src_name + "." + f;
