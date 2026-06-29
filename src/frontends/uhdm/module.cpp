@@ -343,7 +343,29 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     int sw = get_width(const_cast<UHDM::any*>(obj), ctx);
                     return (sw > 0) ? sw : 1;
                 };
-
+                // For an ARRAY modport port the interface TYPE name often doesn't
+                // resolve (interface_type empty), so the AllInterfaces search far
+                // above is skipped and `mp` stays null — and the iface_inst found
+                // by the elaborated swap is a modport-less stub.  Resolve the named
+                // modport from the interface DEFINITION in AllInterfaces (matched by
+                // the stub's def name) so the per-field modport DIRECTIONS get
+                // recorded below (degu SoC demux's `man[IFN-1:0]`: `man[i].vld` must
+                // be output, not the port's blanket input, or the demux can't drive
+                // tcb_per[i].vld).
+                if (!mp && !modport_name.empty() && iface_inst &&
+                    uhdm_design && uhdm_design->AllInterfaces()) {
+                    std::string want_def = std::string(iface_inst->VpiDefName());
+                    for (auto ii : *uhdm_design->AllInterfaces()) {
+                        if (!want_def.empty() &&
+                            std::string(ii->VpiDefName()) != want_def) continue;
+                        if (ii->Modports())
+                            for (auto m : *ii->Modports())
+                                if (std::string(m->VpiName()) == modport_name) {
+                                    mp = m; break;
+                                }
+                        if (mp) break;
+                    }
+                }
                 if (mp && mp->Io_decls() && iface_inst) {
                   // An ARRAY of interface ports (`myif.man m [N]`) reports a
                   // width of -N (-1 is a single interface); create the modport
@@ -356,6 +378,14 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     for (auto io : *mp->Io_decls()) {
                         std::string sig_name = std::string(io->VpiName());
                         if (sig_name.empty()) continue;
+                        // Record the per-field modport direction unconditionally
+                        // (keyed by base port + field) so expand_interfaces can
+                        // give the ARRAY elements `portname[i].sig` the right
+                        // direction — even when this scalar wire already exists
+                        // (created by the interface-instance import) and the
+                        // creation below is skipped.
+                        modport_field_dir_[module->name.str() + ":" + portname +
+                                           ":" + sig_name] = io->VpiDirection();
                         std::string full_name = elem_prefix + "." + sig_name;
                         if (name_map.count(full_name)) continue;
                         // Find the matching net/variable in the interface

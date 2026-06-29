@@ -220,6 +220,14 @@ struct UhdmImporter {
     // field access (`s.req.adr`) in import_hier_path can slice the member.
     std::map<std::string, const UHDM::typespec*> iface_signal_struct_ts_;
 
+    // Per-field modport direction for a modport port, keyed
+    // "module:port:field" -> VpiDirection (1=in,2=out,3=inout).  Recorded by
+    // import_port's modport field loop; read by expand_interfaces so the ARRAY
+    // elements `port[i].field` (created by the interface-instance import without a
+    // modport direction, and expanded in a different iteration) inherit the right
+    // per-signal direction.
+    std::map<std::string, int> modport_field_dir_;
+
     // Track module instances to avoid duplicates
     // Key: module_name + parameter signature
     std::set<std::string> imported_module_signatures;
