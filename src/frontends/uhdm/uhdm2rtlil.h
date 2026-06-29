@@ -535,6 +535,10 @@ struct UhdmImporter {
     void import_ref_module(const UHDM::ref_module* ref_mod);
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
+    // Evaluate an interface struct-PARAMETER field (`sub.CFG.BUS.DAT`) used as a
+    // child instance's parameter value; "" on failure.  See uhdm2rtlil.cpp.
+    std::string eval_iface_param_field(const UHDM::hier_path* hp,
+                                       const UHDM::module_inst* child_inst);
     
     // Package support
     void import_package(const UHDM::package* uhdm_package);

@@ -1468,16 +1468,43 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
     
     // Try to cast to parameter object
     if (auto param_obj = dynamic_cast<const UHDM::parameter*>(uhdm_param)) {
+        // The value is usually on Expr(), but for an OVERRIDDEN parameter it can
+        // live on the enclosing instance's param_assign RHS instead (e.g.
+        // tcb_dev_gpio's SYS_DAT = sub.CFG.BUS.DAT, whose parameter Expr() is
+        // null) — fall back to it so the value isn't lost as X.
+        const UHDM::expr* expr = param_obj->Expr();
+        if (!expr && current_instance && current_instance->Param_assigns())
+            for (auto pa : *current_instance->Param_assigns())
+                if (auto l = dynamic_cast<const UHDM::parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == param_name) {
+                        expr = dynamic_cast<const UHDM::expr*>(pa->Rhs());
+                        break;
+                    }
         // Check if parameter has an expression (its value)
-        if (auto expr = param_obj->Expr()) {
+        if (expr) {
             RTLIL::SigSpec value_spec = import_expression(expr);
-            if (value_spec.is_fully_const()) {
+            // import_expression of an interface struct-parameter field hier_path
+            // yields a fully-X constant (is_fully_const() is TRUE for X), so test
+            // is_fully_def() and resolve via the interface instead.
+            std::string iface_val;
+            if (!value_spec.is_fully_def() && expr->UhdmType() == uhdmhier_path)
+                iface_val = eval_iface_param_field(
+                    any_cast<const UHDM::hier_path*>(expr), current_instance);
+            if (!iface_val.empty()) {
+                // Interface struct-parameter field (`sub.CFG.BUS.DAT`): resolve so
+                // the specialized def's body uses the right value (not X), matching
+                // the $paramod name (degu SoC tcb_dev_gpio SYS_DAT).
+                param_value = RTLIL::Const(std::stoi(iface_val), 32);
+                has_value = true;
+                log("UHDM: Parameter '%s' = %s (interface param field)\n",
+                    param_name.c_str(), iface_val.c_str());
+            } else if (value_spec.is_fully_const()) {
                 param_value = value_spec.as_const();
                 has_value = true;
-                log("UHDM: Parameter '%s' has value: %s\n", param_name.c_str(), 
+                log("UHDM: Parameter '%s' has value: %s\n", param_name.c_str(),
                     param_value.as_string().c_str());
             } else {
-                log_warning("UHDM: Parameter '%s' has non-constant value, defaulting to 0\n", 
+                log_warning("UHDM: Parameter '%s' has non-constant value, defaulting to 0\n",
                            param_name.c_str());
                 param_value = RTLIL::Const(0, 32);
                 has_value = true;
