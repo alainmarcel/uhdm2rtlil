@@ -2112,6 +2112,43 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
         // Check if it's a port and try to get typespec
         if (auto port = dynamic_cast<const UHDM::port*>(uhdm_obj)) {
             log("UHDM: Found port object\n");
+            // An ARRAY of interface ports (`myif.man m [N]`): the array
+            // dimension is NOT in the port typespec (which resolves to a single
+            // interface_typespec) — it lives on the Low_conn's interface_array.
+            // Return -N so import_port creates per-element wires m[0..N-1].<sig>
+            // for EVERY modport signal (degu SoC demux's man[IFN]; else req/rsp/
+            // clk/rst come out scalar \man.req and mismatch the per-element
+            // connections, aborting the hierarchical netlist).
+            if (auto lc = port->Low_conn()) {
+                if (lc->UhdmType() == uhdmref_obj) {
+                    auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group();
+                    if (a && a->UhdmType() == uhdminterface_array) {
+                        auto ia = any_cast<const UHDM::interface_array*>(a);
+                        int n = 0;
+                        if (ia->Instances()) n = (int)ia->Instances()->size();
+                        if (n < 1 && ia->Ranges()) {
+                            n = 1;
+                            for (auto r : *ia->Ranges()) {
+                                int l = 0, rr = 0;
+                                if (r->Left_expr()) {
+                                    auto s = import_expression(r->Left_expr());
+                                    if (s.is_fully_const()) l = s.as_const().as_int();
+                                }
+                                if (r->Right_expr()) {
+                                    auto s = import_expression(r->Right_expr());
+                                    if (s.is_fully_const()) rr = s.as_const().as_int();
+                                }
+                                n *= std::abs(l - rr) + 1;
+                            }
+                        }
+                        if (n >= 1) {
+                            log("UHDM: interface-array port '%s', %d element(s) -> width %d\n",
+                                std::string(port->VpiName()).c_str(), n, -n);
+                            return -n;
+                        }
+                    }
+                }
+            }
             if (auto typespec = port->Typespec()) {
                 log("UHDM: Port has typespec, calling get_width_from_typespec\n");
                 return get_width_from_typespec(typespec, inst);
@@ -2299,7 +2336,41 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
             // They represent a bundle of signals
             return -1;  // Special value to indicate interface type
         }
-        
+
+        // An ARRAY of interface ports (`myif.man m [N]`): the typespec is an
+        // array_typespec wrapping an interface_typespec.  Return -N so
+        // import_port creates per-element wires m[0..N-1].<sig> for EVERY
+        // modport signal.  Without this the array isn't detected (-1 single
+        // interface) and req/rsp/clk/rst are created SCALAR (\man.req), which
+        // mismatches the per-element connections (degu SoC demux's man[IFN]).
+        if (typespec->UhdmType() == uhdmarray_typespec) {
+            auto at = any_cast<const UHDM::array_typespec*>(typespec);
+            bool elem_is_iface = false;
+            if (at->Elem_typespec() && at->Elem_typespec()->Actual_typespec())
+                elem_is_iface = at->Elem_typespec()->Actual_typespec()->UhdmType()
+                                == uhdminterface_typespec;
+            if (elem_is_iface) {
+                int n = 1;
+                if (at->Ranges()) {
+                    for (auto r : *at->Ranges()) {
+                        int l = 0, rr = 0;
+                        if (r->Left_expr()) {
+                            auto s = import_expression(r->Left_expr());
+                            if (s.is_fully_const()) l = s.as_const().as_int();
+                        }
+                        if (r->Right_expr()) {
+                            auto s = import_expression(r->Right_expr());
+                            if (s.is_fully_const()) rr = s.as_const().as_int();
+                        }
+                        n *= std::abs(l - rr) + 1;
+                    }
+                }
+                if (n < 1) n = 1;
+                log("UHDM: interface-array typespec, %d element(s) -> width %d\n", n, -n);
+                return -n;
+            }
+        }
+
         // Check if this is an enum typespec - need to get the base type
         if (typespec->UhdmType() == uhdmenum_typespec) {
             log("UHDM: Found enum_typespec, getting base type\n");
