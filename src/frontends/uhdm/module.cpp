@@ -1487,9 +1487,16 @@ void UhdmImporter::import_parameter(const any* uhdm_param) {
             // yields a fully-X constant (is_fully_const() is TRUE for X), so test
             // is_fully_def() and resolve via the interface instead.
             std::string iface_val;
-            if (!value_spec.is_fully_def() && expr->UhdmType() == uhdmhier_path)
-                iface_val = eval_iface_param_field(
-                    any_cast<const UHDM::hier_path*>(expr), current_instance);
+            if (!value_spec.is_fully_def() && expr->UhdmType() == uhdmhier_path) {
+                // Prefer the parameter's own Surelog-resolved VpiValue (e.g.
+                // SYS_DAT -> "UINT:32"); fall back to walking the interface.
+                std::string vv = std::string(param_obj->VpiValue());
+                if (!vv.empty())
+                    iface_val = std::to_string(parse_vpi_value_to_int(vv));
+                else
+                    iface_val = eval_iface_param_field(
+                        any_cast<const UHDM::hier_path*>(expr), current_instance);
+            }
             if (!iface_val.empty()) {
                 // Interface struct-parameter field (`sub.CFG.BUS.DAT`): resolve so
                 // the specialized def's body uses the right value (not X), matching
