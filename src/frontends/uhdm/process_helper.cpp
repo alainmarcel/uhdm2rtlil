@@ -328,10 +328,31 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         extract_lhs_signals(lhs_expr, signals);
                     } else if (lhs_expr->VpiType() == vpiRefObj) {
                         auto ref = any_cast<const ref_obj*>(lhs_expr);
-                        sig.name = std::string(ref->VpiName());
-                        sig.is_part_select = false;
-                        signals.push_back(sig);
-                        log("extract_assigned_signals: Found assignment to '%s' (ref_obj)\n", ref->VpiName().data());
+                        std::string nm = std::string(ref->VpiName());
+                        // Whole-array write to an UNPACKED array (`arr <=
+                        // '{default:'0}`): `arr` is not a wire — it was
+                        // materialised as per-element registers \arr[0..N-1].
+                        // Expand to per-element so the async-ff temp-wire path
+                        // finds them (tcb_dev_gpio_cdc; else "Signal arr not
+                        // found in module").  lhs_expr stays the whole-array LHS.
+                        if (!module->wire(RTLIL::escape_id(nm)) &&
+                            module->wire(RTLIL::escape_id(nm + "[0]"))) {
+                            for (int i = 0; module->wire(RTLIL::escape_id(
+                                     nm + "[" + std::to_string(i) + "]")); i++) {
+                                AssignedSignal es;
+                                es.name = nm + "[" + std::to_string(i) + "]";
+                                es.lhs_expr = lhs_expr;
+                                es.is_part_select = false;
+                                signals.push_back(es);
+                            }
+                            log("extract_assigned_signals: expanded whole unpacked "
+                                "array '%s' to per-element\n", nm.c_str());
+                        } else {
+                            sig.name = nm;
+                            sig.is_part_select = false;
+                            signals.push_back(sig);
+                            log("extract_assigned_signals: Found assignment to '%s' (ref_obj)\n", ref->VpiName().data());
+                        }
                     } else if (lhs_expr->VpiType() == vpiNetBit) {
                         auto net_bit = any_cast<const UHDM::net_bit*>(lhs_expr);
                         sig.name = std::string(net_bit->VpiName());
@@ -391,6 +412,20 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 RTLIL::SigSpec s = import_expression(re);
                                 if (s.is_fully_const()) er = s.as_const().as_int();
                             }
+                            // A range bound that's a module-parameter expression
+                            // (`arr[CDC-1:1]`, CDC a param) doesn't const-fold in
+                            // this context.  CDC-1 is the array's TOP index, so
+                            // fall back to the element-wire count for an
+                            // unresolved bound (tcb_dev_gpio_cdc's shift).
+                            if (el < 0 || er < 0) {
+                                int n = 0;
+                                while (module->wire(RTLIL::escape_id(
+                                           sig.name + "[" + std::to_string(n) + "]"))) n++;
+                                if (n > 0) {
+                                    if (el < 0) el = n - 1;
+                                    if (er < 0) er = n - 1;
+                                }
+                            }
                             if (el >= 0 && er >= 0) {
                                 int lo = std::min(el, er), hi = std::max(el, er);
                                 for (int i = lo; i <= hi; i++) {
@@ -445,6 +480,17 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     log("extract_assigned_signals: Skipping dynamic write to expanded array '%s'\n",
                                         sig.name.c_str());
                                     break;
+                                }
+                            } else if (module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
+                                // Constant bit-select of an UNPACKED array
+                                // (`arr[0] <= ...`): the element is its OWN wire
+                                // \arr[0] — name the signal after it (a full wire),
+                                // not `\arr` which isn't a wire and trips "Signal
+                                // arr not found" (tcb_dev_gpio_cdc).
+                                RTLIL::SigSpec is = import_expression(idx);
+                                if (is.is_fully_const()) {
+                                    sig.name += "[" + std::to_string(is.as_const().as_int()) + "]";
+                                    sig.is_part_select = false;
                                 }
                             }
                         }

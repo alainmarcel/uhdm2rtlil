@@ -10439,6 +10439,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     if (!bs->VpiName().empty()) {
                                         signal_name = std::string(bs->VpiName());
                                         is_partial = true;
+                                        // Constant bit-select of an UNPACKED array
+                                        // (`arr[0] <= ...`, per-element wires):
+                                        // target the element wire \arr[0] so its
+                                        // $0\arr[0] temp is found (tcb_dev_gpio_cdc).
+                                        auto bidx = bs->VpiIndex();
+                                        if (bidx && bidx->VpiType() == vpiConstant &&
+                                            module->wire(RTLIL::escape_id(signal_name + "[0]"))) {
+                                            RTLIL::SigSpec is = import_expression(bidx);
+                                            if (is.is_fully_const()) {
+                                                signal_name += "[" +
+                                                    std::to_string(is.as_const().as_int()) + "]";
+                                                is_partial = false;
+                                            }
+                                        }
                                     }
                                 } else if (lhs->VpiType() == vpiPartSelect) {
                                     const part_select* ps = any_cast<const part_select*>(lhs);
@@ -10554,6 +10568,35 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                     if (mode_debug)
                                         log("        Using temp wire %s for signal %s in async reset context (partial=%d)\n",
                                             temp_wire->name.c_str(), signal_name.c_str(), is_partial ? 1 : 0);
+                                }
+                                // UNPACKED-array whole-array / slice writes: the
+                                // LHS lowered to a concat of per-element wires
+                                // ({\arr[1] \arr[0]} for `arr <= '{default:'0}`,
+                                // or \arr[i] for the slice-shift), which the
+                                // single-signal remap above can't retarget.  Remap
+                                // EACH chunk on a per-element wire \arr[i] to its
+                                // own $0\arr[i] temp so the sync update carries it
+                                // (tcb_dev_gpio_cdc; else the write hits \arr[i]
+                                // directly and the sync overwrites it -> 0).
+                                {
+                                    RTLIL::SigSpec mapped;
+                                    bool any = false;
+                                    for (const auto& ch : target_sig.chunks()) {
+                                        std::string wn;
+                                        if (ch.wire) {
+                                            wn = ch.wire->name.str();
+                                            if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                                        }
+                                        auto it = current_signal_temp_wires.find(wn);
+                                        if (ch.wire && it != current_signal_temp_wires.end() &&
+                                            ch.wire != it->second) {
+                                            mapped.append(RTLIL::SigChunk(it->second, ch.offset, ch.width));
+                                            any = true;
+                                        } else {
+                                            mapped.append(ch);
+                                        }
+                                    }
+                                    if (any) target_sig = mapped;
                                 }
                             } else if (!current_temp_wires.empty()) {
                                 // Check if this exact LHS expression has a temp wire
