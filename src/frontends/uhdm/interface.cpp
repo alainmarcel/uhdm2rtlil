@@ -187,28 +187,34 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             // net is often a typespec-less struct_net), so search AllInterfaces.
             std::string iface_def = std::string(interface->VpiDefName());
             if (iface_def.find("work@") == 0) iface_def = iface_def.substr(5);
+            // Record the packed-struct/union typespec for an interface signal
+            // and RETURN it (so the caller can size the wire to the struct
+            // width, not the 1-bit default).  Handles logic_net AND struct_net
+            // (the `net` base carries Typespec()).
             auto record_struct_ts = [&](const std::string& wire_name,
-                                        const std::string& sig_name) {
-                if (iface_signal_struct_ts_.count(wire_name) || !uhdm_design ||
-                    !uhdm_design->AllInterfaces())
-                    return;
+                                        const std::string& sig_name)
+                    -> const UHDM::typespec* {
+                if (iface_signal_struct_ts_.count(wire_name))
+                    return iface_signal_struct_ts_[wire_name];
+                if (!uhdm_design || !uhdm_design->AllInterfaces())
+                    return nullptr;
                 for (auto ii : *uhdm_design->AllInterfaces()) {
                     std::string dn = std::string(ii->VpiDefName());
                     if (dn.find("work@") == 0) dn = dn.substr(5);
                     if (dn != iface_def || !ii->Nets()) continue;
                     for (auto n : *ii->Nets()) {
                         if (std::string(n->VpiName()) != sig_name) continue;
-                        if (n->UhdmType() != uhdmlogic_net) continue;
-                        auto rt = any_cast<const UHDM::logic_net*>(n)->Typespec();
-                        if (rt && rt->Actual_typespec()) {
-                            auto ats = rt->Actual_typespec();
-                            if (ats->UhdmType() == uhdmstruct_typespec ||
-                                ats->UhdmType() == uhdmunion_typespec)
-                                iface_signal_struct_ts_[wire_name] = ats;
-                        }
+                        auto net_n = dynamic_cast<const UHDM::net*>(n);
+                        if (!net_n || !net_n->Typespec()) continue;
+                        auto ats = net_n->Typespec()->Actual_typespec();
+                        if (ats && (ats->UhdmType() == uhdmstruct_typespec ||
+                                    ats->UhdmType() == uhdmunion_typespec))
+                            iface_signal_struct_ts_[wire_name] = ats;
                     }
                     if (iface_signal_struct_ts_.count(wire_name)) break;
                 }
+                return iface_signal_struct_ts_.count(wire_name)
+                    ? iface_signal_struct_ts_[wire_name] : nullptr;
             };
             // Get WIDTH parameter value - check module parameter first, then interface instance
             int interface_width = 8; // default
@@ -336,13 +342,28 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
             // Then try Nets
-            else if (interface->Nets()) {
+            // NOT `else if`: an interface can have signals in BOTH Variables()
+            // (e.g. `logic vld`) and Nets() (e.g. a `struct_net req`); with an
+            // else-if the struct nets were skipped, so `\<iface>.req` never
+            // existed and `s.req.<field>` couldn't resolve.  Run both; the dup
+            // guard skips anything the Variables loop already made.
+            if (interface->Nets()) {
                 for (auto net : *interface->Nets()) {
                     std::string net_name = std::string(net->VpiName());
                     std::string full_name = interface_name + "." + net_name;
+                    if (name_map.count(full_name)) continue;
 
                     int width = get_width(net, current_instance);
                     if (width <= 0) width = interface_width;
+                    // A packed-STRUCT signal (`req`) is wider than the 1-bit
+                    // default get_width gives the typespec-less local net — size
+                    // it from the struct typespec (also records it for the
+                    // field-slice handler).
+                    const UHDM::typespec* sts = record_struct_ts(full_name, net_name);
+                    if (sts) {
+                        int w = get_width_from_typespec(sts, current_instance);
+                        if (w > 0) width = w;
+                    }
 
                     if (mode_debug)
                         log("UHDM: Creating interface signal from Nets: %s (width=%d)\n", full_name.c_str(), width);
@@ -351,7 +372,6 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     add_src_attribute(wire->attributes, net);
                     name_map[full_name] = wire;
                     iface_inst_vars_[interface_name].push_back(net_name);
-                    record_struct_ts(full_name, net_name);
                 }
             }
 
