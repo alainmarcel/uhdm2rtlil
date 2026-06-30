@@ -215,6 +215,11 @@ struct UhdmImporter {
     // interface instances are imported; used to expand an interface-array
     // element connection (`.b(arr[0])`) into individual signal connections.
     std::map<std::string, std::vector<std::string>> iface_inst_vars_;
+    // Cross-module reference (XMR) reads `u_processor.internal_ready` recorded
+    // during cont_assign import (when the child cell doesn't exist yet) as
+    // (parent module, instance name, signal name); resolved at the end of
+    // import_design once every cell exists (github #450).
+    std::vector<std::tuple<RTLIL::Module*, std::string, std::string>> pending_xmr_reads_;
     // Interface signal wire name ("s.req") -> its packed struct/union typespec,
     // recorded when the interface port's field wires are created so a struct
     // field access (`s.req.adr`) in import_hier_path can slice the member.
@@ -531,6 +536,9 @@ struct UhdmImporter {
     void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
     void import_process(const UHDM::process_stmt* uhdm_process);
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
+    // XMR read resolution: expose `sig` as an output port of `cell`'s child
+    // module and wire it to the parent's `\<inst>.<sig>` reader (github #450).
+    void resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const std::string& sig);
     void import_instance(const UHDM::module_inst* uhdm_inst);
     void import_ref_module(const UHDM::ref_module* ref_mod);
     void create_parameterized_modules();

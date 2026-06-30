@@ -6217,6 +6217,30 @@ RTLIL::SigSpec UhdmImporter::import_concat(const operation* uhdm_concat, const U
     return result;
 }
 
+// XMR read resolution (github #450): expose the child signal `sig` as an OUTPUT
+// PORT of `cell`'s module and wire it to the parent's `\<inst>.<sig>` reader.
+// This makes the source survive `opt` (a port is kept) and flatten connect it
+// to the reader — matching what slang produces for `monitor_flag =
+// u_processor.internal_ready`.
+void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const std::string& sig) {
+    if (!mod || !cell || sig.empty()) return;
+    RTLIL::Module* child = design->module(cell->type);
+    if (!child) return;
+    RTLIL::Wire* cw = child->wire(RTLIL::escape_id(sig));
+    if (!cw) return;
+    if (!cw->port_output && !cw->port_input) {
+        cw->port_output = true;
+        child->fixup_ports();
+    }
+    std::string inst = cell->name.str();
+    if (!inst.empty() && inst[0] == '\\') inst = inst.substr(1);
+    std::string pn = inst + "." + sig;
+    RTLIL::Wire* pw = mod->wire(RTLIL::escape_id(pn));
+    if (!pw) pw = mod->addWire(RTLIL::escape_id(pn), cw->width);
+    if (!cell->hasPort(RTLIL::escape_id(sig)))
+        cell->setPort(RTLIL::escape_id(sig), pw);
+}
+
 // Import hierarchical path (e.g., bus.a, interface.signal)
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
@@ -6235,6 +6259,60 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+    // Cross-module reference (XMR) READ: `u_processor.internal_ready` where
+    // `u_processor` is a child INSTANCE in this module and `internal_ready` is
+    // an INTERNAL signal of it (github #450).  Yosys can't resolve this through
+    // the normal synth flow: the source is opt'd away (unused WITHIN the child)
+    // and a plain parent wire collides with the flattened name.  Resolve it the
+    // way slang does — expose the child signal as an OUTPUT PORT and wire the
+    // cell through — so the source survives opt and drives the reader after
+    // flatten.  Only fires when the first element is genuinely a cell instance
+    // (interface-port `sub.clk` and struct-field `s.f` reads fall through: their
+    // base is a wire/port, not a cell).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2) {
+        auto& xpe = *uhdm_hier->Path_elems();
+        if (xpe[0]->UhdmType() == uhdmref_obj &&
+            xpe[1]->UhdmType() == uhdmref_obj) {
+            std::string inst = std::string(any_cast<const ref_obj*>(xpe[0])->VpiName());
+            std::string sig  = std::string(any_cast<const ref_obj*>(xpe[1])->VpiName());
+            RTLIL::Cell* xcell = inst.empty() ? nullptr
+                               : module->cell(RTLIL::escape_id(inst));
+            RTLIL::Module* xchild = xcell ? design->module(xcell->type) : nullptr;
+            if (xchild && !sig.empty()) {
+                if (xchild->wire(RTLIL::escape_id(sig))) {
+                    resolve_xmr_read(module, xcell, sig);
+                    log("    XMR read %s.%s: exposed child output port\n",
+                        inst.c_str(), sig.c_str());
+                    return RTLIL::SigSpec(module->wire(RTLIL::escape_id(inst + "." + sig)));
+                }
+            } else if (!xcell && !inst.empty() && !sig.empty() &&
+                       !module->wire(RTLIL::escape_id(inst)) &&
+                       any_cast<const ref_obj*>(xpe[0])->Actual_group() &&
+                       any_cast<const ref_obj*>(xpe[0])->Actual_group()->UhdmType()
+                           == uhdmmodule_inst) {
+                // The cell doesn't exist yet — cont_assigns are imported BEFORE
+                // instances.  The first element resolves to a MODULE INSTANCE
+                // (not a parameter `CFG.field`, struct, or interface — those
+                // resolve elsewhere), so this is a genuine XMR.
+                // Record it + create the reader wire now and RETURN it (rather
+                // than falling through, which would leave a spurious same-named
+                // signal in this module); resolve the child port + drive the
+                // reader at the end of import_design once every cell exists.
+                pending_xmr_reads_.push_back({module, inst, sig});
+                int xw = 1;
+                if (auto ag = any_cast<const ref_obj*>(xpe[1])->Actual_group()) {
+                    int w = get_width(ag, current_instance);
+                    if (w > 0) xw = w;
+                }
+                std::string pn = inst + "." + sig;
+                RTLIL::Wire* pw = module->wire(RTLIL::escape_id(pn));
+                if (!pw) pw = module->addWire(RTLIL::escape_id(pn), xw);
+                log("    XMR read %s.%s: deferred (cell not yet created, width=%d)\n",
+                    inst.c_str(), sig.c_str(), xw);
+                return RTLIL::SigSpec(pw);
+            }
+        }
+    }
 
     // Hierarchical function call: `module_scope_func_top.incr(10)`.
     // Surelog represents this as a hier_path whose last Path_elem is a
