@@ -6824,6 +6824,77 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
     }
 
+    // Interface-ARRAY element STRUCT-FIELD access (`man[i].req.lck` where `man`
+    // is an array-of-modports port, `req` is a packed-struct interface signal,
+    // and `lck` is one of its fields).  Path_elems = [bit_select(man[i]),
+    // ref_obj(req), ref_obj(lck)].  import_port created `\man[idx].req` (the
+    // whole struct); resolve `man[idx].req` to that wire and slice the field via
+    // its struct typespec.  Covers the demultiplexer's `assign man[i].req.<field>
+    // = ...` (genvar i folds per gen_req[i]) AND constant reads `m[0].req.<f>`;
+    // without it both hit the generic fallback's "Could not resolve struct
+    // member access" and stay X (degu SoC bus fabric request routing).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 3) {
+        auto& pe_sf = *uhdm_hier->Path_elems();
+        if (pe_sf[0]->UhdmType() == uhdmbit_select &&
+            pe_sf[1]->UhdmType() == uhdmref_obj &&
+            pe_sf[2]->UhdmType() == uhdmref_obj) {
+            auto bs = any_cast<const bit_select*>(pe_sf[0]);
+            std::string base  = std::string(bs->VpiName());
+            std::string sig   = std::string(any_cast<const ref_obj*>(pe_sf[1])->VpiName());
+            std::string field = std::string(any_cast<const ref_obj*>(pe_sf[2])->VpiName());
+            int idx = -1;
+            if (bs->VpiIndex()) {
+                RTLIL::SigSpec is = import_expression(bs->VpiIndex(), input_mapping);
+                if (is.is_fully_const()) idx = is.as_const().as_int();
+            }
+            if (idx >= 0 && !sig.empty() && !field.empty()) {
+                std::string wname = base + "[" + std::to_string(idx) + "]." + sig;
+                RTLIL::Wire* w = name_map.count(wname) ? name_map[wname]
+                    : module->wire(RTLIL::escape_id(wname));
+                const UHDM::typespec* ts = nullptr;
+                if (iface_signal_struct_ts_.count(wname))
+                    ts = iface_signal_struct_ts_[wname];
+                // Interface-ARRAY ports often don't resolve interface_type, so
+                // the struct typespec wasn't recorded — get it from the `req`
+                // ref_obj path element directly (its own typespec, else its
+                // Actual_group net's typespec).
+                if (!ts) {
+                    auto rref = any_cast<const ref_obj*>(pe_sf[1]);
+                    if (rref->Typespec() && rref->Typespec()->Actual_typespec())
+                        ts = rref->Typespec()->Actual_typespec();
+                    if (!ts && rref->Actual_group()) {
+                        if (auto nn = dynamic_cast<const UHDM::net*>(rref->Actual_group()))
+                            if (nn->Typespec()) ts = nn->Typespec()->Actual_typespec();
+                    }
+                }
+                if (w && !ts) {
+                    // Fall back to the wire's own UHDM struct typespec.
+                    for (auto& pr : wire_map) {
+                        if (pr.second != w) continue;
+                        const UHDM::ref_typespec* rt = nullptr;
+                        if (auto ln = dynamic_cast<const UHDM::logic_net*>(pr.first)) rt = ln->Typespec();
+                        else if (auto no = dynamic_cast<const UHDM::net*>(pr.first)) rt = no->Typespec();
+                        if (rt) ts = rt->Actual_typespec();
+                        break;
+                    }
+                }
+                if (w && ts) {
+                    int off = 0, mw = 0;
+                    if (calculate_struct_member_offset(ts, field, inst, off, mw)) {
+                        if (off + mw <= w->width) {
+                            log("    hier_path: iface-array struct field %s.%s -> \\%s[%d +: %d]\n",
+                                wname.c_str(), field.c_str(), wname.c_str(), off, mw);
+                            return RTLIL::SigSpec(w, off, mw);
+                        }
+                        log_warning("UHDM: iface-array struct slice %s.%s out of bounds "
+                                    "(off=%d w=%d, wire \\%s width=%d)\n",
+                                    wname.c_str(), field.c_str(), off, mw, wname.c_str(), w->width);
+                    }
+                }
+            }
+        }
+    }
+
     // Interface-port signal bit/part-select access (e.g. `bus.adr[3:0]`
     // where `bus` is a `tcb_if.sub` modport port and `adr` is one of the
     // interface's signals).  Path_elems = [ref_obj(bus),

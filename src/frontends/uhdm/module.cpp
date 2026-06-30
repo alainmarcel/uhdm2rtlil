@@ -405,7 +405,64 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 }
                             }
                         }
+                        // Sample the struct typespec from the design-level
+                        // interface (the local iface_inst's struct_net usually
+                        // lacks a typespec) so a STRUCT signal (e.g. `req`) gets
+                        // its real width — not the 1-bit default — and the
+                        // field-slice handler can resolve `man[i].req.<field>`.
+                        const UHDM::typespec* found_struct_ts = nullptr;
+                        // The matched net's own typespec (net base carries it for
+                        // logic_net AND struct_net) works even when interface_type
+                        // didn't resolve, as for array modport ports.
+                        if (auto net_w = dynamic_cast<const UHDM::net*>(width_obj)) {
+                            if (auto wrt = net_w->Typespec())
+                                if (auto ats = wrt->Actual_typespec())
+                                    if (ats->UhdmType() == uhdmstruct_typespec ||
+                                        ats->UhdmType() == uhdmunion_typespec)
+                                        found_struct_ts = ats;
+                        }
+                        // Else the modport io_decl's own typespec.
+                        if (!found_struct_ts)
+                        if (auto io_rt = io->Typespec()) {
+                            if (auto ats = io_rt->Actual_typespec())
+                                if (ats->UhdmType() == uhdmstruct_typespec ||
+                                    ats->UhdmType() == uhdmunion_typespec)
+                                    found_struct_ts = ats;
+                        }
+                        // Match by interface_type, or fall back to the iface_inst's
+                        // own def name (array modport ports often leave
+                        // interface_type empty, and the first/stub creation pass
+                        // has a null width_obj — without this `\man[i].req` stays
+                        // 1-bit and the field slices overflow).
+                        std::string search_def = interface_type;
+                        if (search_def.empty() && iface_inst) {
+                            search_def = std::string(iface_inst->VpiDefName());
+                            if (search_def.find("work@") == 0) search_def = search_def.substr(5);
+                        }
+                        if (!found_struct_ts && !search_def.empty() && uhdm_design &&
+                            uhdm_design->AllInterfaces()) {
+                            for (auto ii : *uhdm_design->AllInterfaces()) {
+                                std::string dn = std::string(ii->VpiDefName());
+                                if (dn.find("work@") == 0) dn = dn.substr(5);
+                                if (dn != search_def || !ii->Nets()) continue;
+                                for (auto n : *ii->Nets()) {
+                                    if (std::string(n->VpiName()) != sig_name) continue;
+                                    auto net_n = dynamic_cast<const UHDM::net*>(n);
+                                    if (!net_n || !net_n->Typespec()) continue;
+                                    auto ats = net_n->Typespec()->Actual_typespec();
+                                    if (ats && (ats->UhdmType() == uhdmstruct_typespec ||
+                                                ats->UhdmType() == uhdmunion_typespec))
+                                        found_struct_ts = ats;
+                                }
+                                if (found_struct_ts) break;
+                            }
+                        }
                         int sig_w = width_obj ? compute_signal_width(width_obj) : 1;
+                        if (found_struct_ts) {
+                            int sw_ts = get_width_from_typespec(found_struct_ts, current_instance);
+                            if (sw_ts > 0) sig_w = sw_ts;
+                            iface_signal_struct_ts_[full_name] = found_struct_ts;
+                        }
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         if (width_obj) add_src_attribute(sw->attributes, width_obj);
@@ -424,8 +481,12 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                 if (dn != interface_type || !ii->Nets()) continue;
                                 for (auto n : *ii->Nets()) {
                                     if (std::string(n->VpiName()) != sig_name) continue;
-                                    if (n->UhdmType() != uhdmlogic_net) continue;
-                                    auto rt = any_cast<const UHDM::logic_net*>(n)->Typespec();
+                                    // The struct signal may be a logic_net OR a
+                                    // struct_net (e.g. `req` of type req_t); the
+                                    // `net` base carries Typespec() for both.
+                                    auto net_n = dynamic_cast<const UHDM::net*>(n);
+                                    if (!net_n) continue;
+                                    auto rt = net_n->Typespec();
                                     if (rt && rt->Actual_typespec()) {
                                         auto ats = rt->Actual_typespec();
                                         if (ats->UhdmType() == uhdmstruct_typespec ||
