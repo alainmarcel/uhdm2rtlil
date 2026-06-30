@@ -546,9 +546,22 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
         }
     }
     
+    // Resolve deferred cross-module reference (XMR) reads now that every cell
+    // exists (cont_assigns were imported before instances).  github #450.
+    for (auto& xr : pending_xmr_reads_) {
+        RTLIL::Module* mod = std::get<0>(xr);
+        const std::string& inst = std::get<1>(xr);
+        const std::string& sig = std::get<2>(xr);
+        if (RTLIL::Cell* cell = mod->cell(RTLIL::escape_id(inst))) {
+            resolve_xmr_read(mod, cell, sig);
+            log("UHDM: resolved deferred XMR read %s.%s\n", inst.c_str(), sig.c_str());
+        }
+    }
+    pending_xmr_reads_.clear();
+
     log("UHDM: Finished import_design\n");
     log_flush();
-    
+
     // Debug: Log all created wires and memories
     log("UHDM: Final debug - listing all created objects\n");
     log_flush();
