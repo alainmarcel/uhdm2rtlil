@@ -519,6 +519,17 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         }
                     }
                     if (!lw) continue;
+                    // Record this interface PORT signal (clk/rst) so the
+                    // per-field connection of an interface-array element
+                    // (`.sub(tcb_per[0])`) also wires sub.clk/sub.rst — the
+                    // Variables/Nets loops only recorded the data signals, so
+                    // without this the degu SoC's cdc/uart leaf clk/rst stay
+                    // undriven.
+                    {
+                        auto& iv = iface_inst_vars_[interface_name];
+                        if (std::find(iv.begin(), iv.end(), port_name) == iv.end())
+                            iv.push_back(port_name);
+                    }
                     RTLIL::SigSpec lo(lw);
                     int w = std::min(hi.size(), lo.size());
                     if (hi.size() > w) hi = hi.extract(0, w);

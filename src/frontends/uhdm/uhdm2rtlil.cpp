@@ -1280,6 +1280,36 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
                             RTLIL::SigSpec conn = import_expression(high_conn);
 
+                            // Interface-signal connection (`.clk(sub.clk)`):
+                            // Surelog resolves the High_conn through the interface
+                            // to the TOP-LEVEL net (e.g. dut.clk), which isn't a
+                            // local wire here — import_port made the local wire
+                            // "\<ifaceport>.<sig>" (\sub.clk).  When the net didn't
+                            // resolve, match it to that interface-signal wire by
+                            // leaf name so the child's clk/rst get driven (degu
+                            // SoC tcb_dev_gpio / cdc).
+                            if (conn.empty() &&
+                                high_conn->UhdmType() == uhdmlogic_net) {
+                                std::string suffix =
+                                    "." + std::string(high_conn->VpiName());
+                                RTLIL::Wire* found = nullptr;
+                                int nmatch = 0;
+                                for (auto w : module->wires()) {
+                                    std::string wn = w->name.str();
+                                    if (wn.size() > suffix.size() + 1 &&
+                                        wn[0] == '\\' &&
+                                        wn.compare(wn.size() - suffix.size(),
+                                                   suffix.size(), suffix) == 0) {
+                                        found = w; nmatch++;
+                                    }
+                                }
+                                if (found && nmatch == 1) {
+                                    conn = RTLIL::SigSpec(found);
+                                    log("UHDM: interface-signal port %s -> %s\n",
+                                        port_name.c_str(), found->name.c_str());
+                                }
+                            }
+
                             // For signed constants connected to wider ports, create a signed
                             // intermediate wire so the hierarchy pass will sign-extend them.
                             // Unsigned constants are left as-is (hierarchy zero-extends).
