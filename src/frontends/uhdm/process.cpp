@@ -6,6 +6,8 @@
  */
 
 #include "uhdm2rtlil.h"
+#include <fstream>
+#include <sstream>
 #include <uhdm/assign_stmt.h>
 #include <uhdm/begin.h>
 #include <uhdm/func_call.h>
@@ -3154,6 +3156,200 @@ void UhdmImporter::create_block_local_wires(const UHDM::any* stmt) {
 // any block that contains a statement other than a constant-index, constant-
 // value write to an existing $memory, so mixed/looped/non-const initials fall
 // through to the existing strategies.
+// Handle `initial $readmemh("file", mem);` (or $readmemb) — read the hex/bin
+// file at import time and bake its words into the memory as $meminit_v2 cells,
+// so the synthesized netlist carries the same ROM the RTL loads via $readmem at
+// sim time.  Handles the SoC form `initial if (FNM!="") $readmemh(FNM, mem);`
+// too (scans through begin/if).  Returns true if a readmem was handled.
+bool UhdmImporter::emit_initial_readmem(const any* stmt) {
+    if (!stmt || !module) return false;
+
+    // Resolve a string argument (direct constant or a ref to a string parameter).
+    auto resolve_str = [&](const any* a) -> std::string {
+        if (!a) return "";
+        if (a->VpiType() == vpiConstant) {
+            std::string v = std::string(any_cast<const constant*>(a)->VpiValue());
+            if (v.rfind("STRING:", 0) == 0) return v.substr(7);
+        }
+        if (a->VpiType() == vpiRefObj) {
+            auto r = any_cast<const ref_obj*>(a);
+            if (auto act = r->Actual_group())
+                if (act->UhdmType() == uhdmparameter) {
+                    auto p = any_cast<const parameter*>(act);
+                    std::string v = std::string(p->VpiValue());
+                    if (v.rfind("STRING:", 0) == 0 && v.size() > 7) return v.substr(7);
+                    // Paramod string parameter: Surelog leaves VpiValue empty but
+                    // encodes the value in the specialized module name, e.g.
+                    // `$paramod\\r5p_soc_memory\\FNM="mem_if.mem"\\SIZ=...`.
+                    std::string key = std::string(p->VpiName()) + "=\"";
+                    std::string mn = module->name.str();
+                    auto pos = mn.find(key);
+                    if (pos != std::string::npos) {
+                        pos += key.size();
+                        auto end = mn.find('"', pos);
+                        if (end != std::string::npos) return mn.substr(pos, end - pos);
+                    }
+                }
+        }
+        return "";
+    };
+
+    bool handled = false;
+    std::function<void(const any*)> scan = [&](const any* s) {
+        if (!s || handled) return;
+        switch (s->VpiType()) {
+            case vpiBegin:
+            case vpiNamedBegin: {
+                if (auto b = any_cast<const UHDM::begin*>(s))
+                    if (b->Stmts())
+                        for (auto sub : *b->Stmts()) scan(sub);
+                return;
+            }
+            case vpiIf:
+            case vpiIfElse: {
+                // `if (FNM!="") $readmemh(...)` — scan both arms; a bad path
+                // just won't find a resolvable file and is skipped.
+                if (auto ie = any_cast<const UHDM::if_else*>(s)) {
+                    scan(ie->VpiStmt());
+                    scan(ie->VpiElseStmt());
+                } else if (auto i = any_cast<const UHDM::if_stmt*>(s)) {
+                    scan(i->VpiStmt());
+                }
+                return;
+            }
+            case vpiSysFuncCall:
+            case vpiSysTaskCall: {
+                auto fc = any_cast<const sys_func_call*>(s);
+                if (!fc) return;
+                std::string nm = std::string(fc->VpiName());
+                bool is_bin = (nm == "$readmemb");
+                if (nm != "$readmemh" && !is_bin) return;
+                auto args = fc->Tf_call_args();
+                if (!args || args->size() < 2) return;
+
+                std::string fname = resolve_str((*args)[0]);
+                if (fname.empty()) return;
+                std::string memname;
+                if ((*args)[1]->VpiType() == vpiRefObj)
+                    memname = std::string(any_cast<const ref_obj*>((*args)[1])->VpiName());
+                if (memname.empty()) return;
+                RTLIL::IdString mid = RTLIL::escape_id(memname);
+                if (!module->memories.count(mid)) return;
+                int width = module->memories.at(mid)->width;
+                int msize = module->memories.at(mid)->size;
+
+                // Resolve the file: as given (cwd-relative / absolute), else next
+                // to the source file that contains the $readmem call.
+                std::vector<std::string> tries = {fname};
+                std::string srcf = std::string(fc->VpiFile());
+                auto slash = srcf.find_last_of('/');
+                if (slash != std::string::npos)
+                    tries.push_back(srcf.substr(0, slash + 1) + fname);
+                std::ifstream in;
+                for (auto& p : tries) { in.open(p); if (in.is_open()) break; }
+                if (!in.is_open()) {
+                    log_warning("$readmem: could not open '%s' for memory %s\n",
+                                fname.c_str(), memname.c_str());
+                    return;
+                }
+
+                // Optional start/finish address args.
+                int addr = 0;
+                if (args->size() >= 3) {
+                    RTLIL::SigSpec s2 = import_expression(
+                        any_cast<const expr*>((*args)[2]));
+                    if (s2.is_fully_const()) addr = s2.as_const().as_int();
+                }
+
+                // Parse tokens: hex/bin words, `@ADDR` directives, `//`+`/* */`
+                // comments.  Fill a sparse addr->word map.
+                std::map<int, RTLIL::Const> memmap;
+                std::stringstream buf;
+                buf << in.rdbuf();
+                std::string text = buf.str();
+                // strip /* */ block comments
+                for (size_t i = 0; i + 1 < text.size();) {
+                    if (text[i] == '/' && text[i + 1] == '*') {
+                        size_t e = text.find("*/", i + 2);
+                        text.replace(i, (e == std::string::npos ? text.size() : e + 2) - i,
+                                     std::string((e == std::string::npos ? text.size() : e + 2) - i, ' '));
+                    } else i++;
+                }
+                std::istringstream ts(text);
+                std::string tok;
+                while (ts >> tok) {
+                    if (tok.rfind("//", 0) == 0) { std::getline(ts, tok); continue; }
+                    if (tok[0] == '@') {
+                        addr = (int)strtol(tok.c_str() + 1, nullptr, 16);
+                        continue;
+                    }
+                    if (addr < 0 || addr >= msize) { addr++; continue; }
+                    std::vector<RTLIL::State> wbits(width, RTLIL::State::Sx);
+                    // Parse each digit LSB-first into the word bits.
+                    int nbits_per = is_bin ? 1 : 4;
+                    int bitpos = 0;
+                    for (int di = (int)tok.size() - 1; di >= 0 && bitpos < width; di--) {
+                        char c = tok[di];
+                        if (c == '_') continue;
+                        int dv;
+                        if (c >= '0' && c <= '9') dv = c - '0';
+                        else if (c >= 'a' && c <= 'f') dv = 10 + c - 'a';
+                        else if (c >= 'A' && c <= 'F') dv = 10 + c - 'A';
+                        else if (c == 'x' || c == 'X') dv = -1;
+                        else if (c == 'z' || c == 'Z') dv = -2;
+                        else continue;
+                        for (int b = 0; b < nbits_per && bitpos < width; b++, bitpos++) {
+                            if (dv == -1) wbits[bitpos] = RTLIL::State::Sx;
+                            else if (dv == -2) wbits[bitpos] = RTLIL::State::Sz;
+                            else wbits[bitpos] = ((dv >> b) & 1) ? RTLIL::State::S1 : RTLIL::State::S0;
+                        }
+                    }
+                    memmap[addr++] = RTLIL::Const(wbits);
+                }
+                if (memmap.empty()) return;
+
+                // Emit one $meminit_v2 per contiguous run of addresses.
+                int prio = 0;
+                auto it = memmap.begin();
+                while (it != memmap.end()) {
+                    int start = it->first;
+                    std::vector<RTLIL::State> bits;
+                    int expect = start;
+                    auto run = it;
+                    while (run != memmap.end() && run->first == expect) {
+                        for (int b = 0; b < width; b++)
+                            bits.push_back(b < (int)run->second.size()
+                                               ? run->second[b] : RTLIL::State::S0);
+                        expect++; ++run;
+                    }
+                    int nwords = expect - start;
+                    RTLIL::Cell* cell = module->addCell(
+                        stringf("$meminit$\\%s$%d", memname.c_str(), start),
+                        ID($meminit_v2));
+                    cell->setParam(ID::MEMID, RTLIL::Const("\\" + memname));
+                    cell->setParam(ID::ABITS, RTLIL::Const(32));
+                    cell->setParam(ID::WIDTH, RTLIL::Const(width));
+                    cell->setParam(ID::WORDS, RTLIL::Const(nwords));
+                    cell->setParam(ID::PRIORITY, RTLIL::Const(prio++));
+                    cell->setPort(ID::ADDR, RTLIL::Const(start, 32));
+                    cell->setPort(ID::DATA, RTLIL::Const(bits));
+                    cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, width));
+                    it = run;
+                }
+                log("        $readmem%s: initialised memory %s from '%s' (%d words)\n",
+                    is_bin ? "b" : "h", memname.c_str(), fname.c_str(),
+                    (int)memmap.size());
+                handled = true;
+                return;
+            }
+            default:
+                return;
+        }
+    };
+    scan(stmt);
+    return handled;
+}
+
 bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
     if (!stmt || !module) return false;
     std::vector<std::tuple<std::string, int, RTLIL::Const>> words;  // mem, addr, val
@@ -3229,6 +3425,15 @@ void UhdmImporter::import_initial(const process_stmt* uhdm_process, RTLIL::Proce
 
     // Set flag to indicate we're in an initial block
     in_initial_block = true;
+
+    // `initial $readmemh("file", mem);` — bake the file's words into the memory
+    // as $meminit and skip the statement strategies below.
+    if (auto stmt = uhdm_process->Stmt()) {
+        if (emit_initial_readmem(stmt)) {
+            in_initial_block = false;
+            return;
+        }
+    }
 
     // Pure constant ROM init via individual element writes (sat/ram_memory):
     // emit $meminit cells and skip the statement strategies below.

@@ -618,7 +618,8 @@ struct UhdmImporter {
     void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
     void thread_comb_if(RTLIL::SigSpec cond, RTLIL::CaseRule* then_case, RTLIL::CaseRule* else_case);
     bool emit_initial_meminit_writes(const UHDM::any* stmt);
-    
+    bool emit_initial_readmem(const UHDM::any* stmt);
+
     // Loop variable substitution helpers
     void import_statement_with_loop_vars(const UHDM::any* uhdm_stmt, RTLIL::SyncRule* sync, bool is_reset,
                                          std::map<std::string, int64_t>& var_substitutions);
