@@ -270,11 +270,19 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     // Modules absent from this set (orphans without a top, like a stand-alone
     // techmap library file) need ref_module materialisation in import_module().
     this->hierarchy_reachable_modules.clear();
+    // Map each module DEFINITION name to a representative ELABORATED instance.
+    // AllModules drops the unpacked dimension of a memory array (represents
+    // `logic [W:0] mem [0:N]` as a scalar logic_net), so a submodule imported
+    // from AllModules loses its memories; the elaborated instance carries the
+    // correct array_var.  Used below to import such modules from the elaborated
+    // form instead.
+    std::map<std::string, const module_inst*> elab_inst_by_def;
     if (uhdm_design->TopModules()) {
         std::function<void(const module_inst*)> walk = [&](const module_inst* m) {
             if (!m) return;
             std::string nm = std::string(m->VpiDefName());
             if (nm.find("work@") == 0) nm = nm.substr(5);
+            elab_inst_by_def.emplace(nm, m);  // first-seen elaborated instance
             if (!hierarchy_reachable_modules.insert(nm).second) return; // already visited
             if (m->Modules()) {
                 for (auto child : *m->Modules()) walk(child);
@@ -421,7 +429,26 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                 log("UHDM: Skipping %s from AllModules (has gen_stmts; will import from elaborated form)\n", mod_name.c_str());
                 continue;
             }
-            import_module(module_def);
+            // AllModules represents an unpacked memory array as a scalar net
+            // (the [0:N] dimension is dropped) — so a submodule memory collapses
+            // to a wire and its dynamic accesses become $shiftx.  The elaborated
+            // instance carries the correct array_var; when the def is missing an
+            // array_var that its elaborated instance has, import that instead.
+            auto has_array_var = [](const module_inst* m) -> bool {
+                if (m && m->Variables())
+                    for (auto v : *m->Variables())
+                        if (v->UhdmType() == uhdmarray_var) return true;
+                return false;
+            };
+            const module_inst* to_import = module_def;
+            auto eit = elab_inst_by_def.find(mod_name);
+            if (eit != elab_inst_by_def.end() && has_array_var(eit->second) &&
+                !has_array_var(module_def)) {
+                log("UHDM: Importing %s from elaborated instance (has memory array_var lost in AllModules)\n",
+                    mod_name.c_str());
+                to_import = eit->second;
+            }
+            import_module(to_import);
         }
     }
     
