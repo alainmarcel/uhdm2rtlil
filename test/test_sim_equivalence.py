@@ -750,6 +750,14 @@ def main() -> int:
                 f.unlink()
     work.mkdir(exist_ok=True)
 
+    # Copy $readmem data files (*.mem/*.vmem/*.hex) into the Verilator work dir
+    # so the RTL side loads the same ROM the UHDM netlist baked in via $meminit
+    # (Verilator's $readmemh resolves the relative path from its run cwd = work).
+    import shutil as _sh
+    for pat in ("*.mem", "*.vmem", "*.hex"):
+        for f in test_dir.glob(pat):
+            _sh.copyfile(f, work / f.name)
+
     # Language flag for the native verilog reader: -sv if any source is .sv.
     lang = "-sv" if any(str(s).endswith(".sv") for s in rtl_srcs) else ""
     read_lines, plugin_args = frontend_read_setup(
