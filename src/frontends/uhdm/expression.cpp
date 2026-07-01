@@ -6259,6 +6259,23 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     
     log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
         std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+
+    // Nested interface struct-parameter field: `s.CFG.BUS.DAT` where `s` is a
+    // modport port and `CFG` is a (nested struct) parameter on the connected
+    // interface.  eval_iface_param_field walks the field chain to a constant.
+    // Needed for a memory width `logic [s.CFG.BUS.DAT-1:0] mem [...]` (the degu
+    // SoC's r5p_soc_memory) — resolving it via the bare 2-element param handler
+    // below would stop at `CFG` (the whole struct) and never reach `.BUS.DAT`.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3 &&
+        current_instance) {
+        std::string v = eval_iface_param_field(uhdm_hier, current_instance);
+        if (!v.empty()) {
+            int iv = atoi(v.c_str());
+            log("    hier_path: %s -> %d via interface struct parameter\n",
+                path_name.c_str(), iv);
+            return RTLIL::SigSpec(RTLIL::Const(iv, 32));
+        }
+    }
     // Cross-module reference (XMR) READ: `u_processor.internal_ready` where
     // `u_processor` is a child INSTANCE in this module and `internal_ready` is
     // an INTERNAL signal of it (github #450).  Yosys can't resolve this through

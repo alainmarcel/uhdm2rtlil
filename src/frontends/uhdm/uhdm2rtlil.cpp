@@ -675,28 +675,94 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
     auto& pe = *hp->Path_elems();
     std::string base  = std::string(pe[0]->VpiName());   // "sub"
     std::string pname = std::string(pe[1]->VpiName());   // "CFG"
-    auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent());
-    if (!parent || !parent->Ports()) return "";
     const interface_inst* iface = nullptr;
-    for (auto p : *parent->Ports()) {
-        if (std::string(p->VpiName()) != base) continue;
-        if (auto hc = p->High_conn())
-            if (hc->UhdmType() == uhdmref_obj)
-                if (auto a = any_cast<const ref_obj*>(hc)->Actual_group())
-                    if (a->UhdmType() == uhdminterface_inst)
-                        iface = any_cast<const interface_inst*>(a);
-        break;
+    // Prefer the base ref_obj's own binding: a modport port `s` resolves via
+    // Actual_group -> modport -> parent interface_inst (works when the interface
+    // is a local instance, not a parent port — e.g. a memory width
+    // `logic [s.CFG.BUS.DAT-1:0] mem`).
+    if (auto bref = dynamic_cast<const ref_obj*>(pe[0])) {
+        auto a = bref->Actual_group();
+        if (a) {
+            if (a->UhdmType() == uhdminterface_inst)
+                iface = any_cast<const interface_inst*>(a);
+            else if (a->UhdmType() == uhdmmodport) {
+                auto mp = any_cast<const modport*>(a);
+                if (mp && mp->VpiParent() &&
+                    mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                    iface = any_cast<const interface_inst*>(mp->VpiParent());
+            }
+        }
     }
-    if (!iface || !iface->Param_assigns()) return "";
+    // Fallback: the parent module's port `<base>` connected to an interface.
+    if (!iface) {
+        auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent());
+        if (parent && parent->Ports())
+            for (auto p : *parent->Ports()) {
+                if (std::string(p->VpiName()) != base) continue;
+                if (auto hc = p->High_conn())
+                    if (hc->UhdmType() == uhdmref_obj)
+                        if (auto a = any_cast<const ref_obj*>(hc)->Actual_group())
+                            if (a->UhdmType() == uhdminterface_inst)
+                                iface = any_cast<const interface_inst*>(a);
+                break;
+            }
+    }
+    // The interface copy reachable from the ref_obj often lacks parameter data
+    // (empty Param_assigns/Parameters).  Find the elaborated interface instance
+    // in the parent module that actually carries `pname`.
+    auto has_param = [&](const interface_inst* ii) -> bool {
+        if (!ii) return false;
+        if (ii->Param_assigns())
+            for (auto pa : *ii->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == pname) return true;
+        if (ii->Parameters())
+            for (auto p : *ii->Parameters())
+                if (std::string(p->VpiName()) == pname) return true;
+        return false;
+    };
+    if (!has_param(iface))
+        if (auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent()))
+            if (parent->Interfaces())
+                for (auto ii : *parent->Interfaces())
+                    if (has_param(ii)) { iface = ii; break; }
+    if (!iface) return "";
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
-    for (auto pa : *iface->Param_assigns()) {
-        auto lhs = dynamic_cast<const parameter*>(pa->Lhs());
-        if (!lhs || std::string(lhs->VpiName()) != pname) continue;
-        val = dynamic_cast<const expr*>(pa->Rhs());
-        if (auto rt = lhs->Typespec()) cur_ts = rt->Actual_typespec();
-        break;
-    }
+    // Explicit override (elaborated value) in Param_assigns.
+    if (iface->Param_assigns())
+        for (auto pa : *iface->Param_assigns()) {
+            auto lhs = dynamic_cast<const parameter*>(pa->Lhs());
+            if (!lhs || std::string(lhs->VpiName()) != pname) continue;
+            val = dynamic_cast<const expr*>(pa->Rhs());
+            if (auto rt = lhs->Typespec()) cur_ts = rt->Actual_typespec();
+            break;
+        }
+    // Otherwise the parameter's own default value (Expr / assignment pattern).
+    if (!val && iface->Parameters())
+        for (auto p : *iface->Parameters()) {
+            if (std::string(p->VpiName()) != pname) continue;
+            auto par = dynamic_cast<const parameter*>(p);
+            if (!par) break;
+            val = par->Expr();
+            if (auto rt = par->Typespec()) cur_ts = rt->Actual_typespec();
+            break;
+        }
+    // If the interface copy reachable from the ref_obj lacks the parameter
+    // value (its Parameters()/Param_assigns() are empty), bind directly to the
+    // CFG element (pe[1]) whose Actual_group is the parameter object.
+    if (!val && pe.size() >= 2)
+        if (auto cref = dynamic_cast<const ref_obj*>(pe[1]))
+            if (auto ca = cref->Actual_group())
+                if (ca->UhdmType() == uhdmparameter) {
+                    auto par = any_cast<const parameter*>(ca);
+                    val = par->Expr();
+                    if (auto rt = par->Typespec()) cur_ts = rt->Actual_typespec();
+                    if (!val && par->VpiParent() &&
+                        par->VpiParent()->UhdmType() == uhdmparam_assign)
+                        val = dynamic_cast<const expr*>(
+                            any_cast<const param_assign*>(par->VpiParent())->Rhs());
+                }
     // Walk the field path (pe[2..]).  At each level the value is an assignment-
     // pattern operation; resolve the field by name (tagged_pattern) or by
     // struct-member index (positional, the elaborated form).
