@@ -486,6 +486,11 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
     int width = 1; // Default bit width
     int size = 1;  // Default array size
     int start_offset = 0;
+    // Memory dimensions may be interface struct-parameter expressions
+    // (`SIZ/(sub.CFG.BUS.DAT/8)`, `sub.CFG.BUS.DAT-1`); force constant folding
+    // so those operations collapse to constants during range evaluation.
+    bool mem_fcf_save = force_const_fold;
+    force_const_fold = true;
     
     // Get unpacked dimension (array size) from array_net ranges
     if (uhdm_array->Ranges() && !uhdm_array->Ranges()->empty()) {
@@ -523,8 +528,14 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     auto range = (*logic_typespec->Ranges())[0];
                     if (range->Left_expr() && range->Right_expr()) {
+                        // The packed width may be an interface struct-parameter
+                        // expression like `s.CFG.BUS.DAT-1`; force constant folding
+                        // so the `-1` operation collapses to a constant.
+                        bool saved_fcf = force_const_fold;
+                        force_const_fold = true;
                         RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                         RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        force_const_fold = saved_fcf;
                         
                         if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
                             int left = left_spec.as_int();
@@ -566,6 +577,7 @@ void UhdmImporter::create_memory_from_array(const array_net* uhdm_array) {
                 width, size, start_offset);
     }
 
+    force_const_fold = mem_fcf_save;
     // Create RTLIL memory object
     RTLIL::IdString mem_id = RTLIL::escape_id(array_name);
     RTLIL::Memory *memory = new RTLIL::Memory;
@@ -597,6 +609,11 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     int width = 1; // Default bit width
     int size = 1;  // Default array size
     int start_offset = 0;
+    // Memory dimensions may be interface struct-parameter expressions
+    // (`SIZ/(sub.CFG.BUS.DAT/8)`, `sub.CFG.BUS.DAT-1`); force constant folding
+    // so those operations collapse to constants during range evaluation.
+    bool mem_fcf_save = force_const_fold;
+    force_const_fold = true;
     
     // Get unpacked dimension (array size) from array_var ranges
     if (uhdm_array->Ranges() && !uhdm_array->Ranges()->empty()) {
@@ -636,8 +653,14 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                 if (logic_typespec->Ranges() && !logic_typespec->Ranges()->empty()) {
                     auto range = (*logic_typespec->Ranges())[0];
                     if (range->Left_expr() && range->Right_expr()) {
+                        // The packed width may be an interface struct-parameter
+                        // expression like `s.CFG.BUS.DAT-1`; force constant folding
+                        // so the `-1` operation collapses to a constant.
+                        bool saved_fcf = force_const_fold;
+                        force_const_fold = true;
                         RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                         RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                        force_const_fold = saved_fcf;
                         
                         if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
                             int left = left_spec.as_int();
@@ -679,6 +702,7 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
                 width, size, start_offset);
     }
 
+    force_const_fold = mem_fcf_save;
     // Create RTLIL memory object
     RTLIL::IdString mem_id = RTLIL::escape_id(array_name);
     RTLIL::Memory *memory = new RTLIL::Memory;
