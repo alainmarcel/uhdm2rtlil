@@ -726,6 +726,19 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
             if (parent->Interfaces())
                 for (auto ii : *parent->Interfaces())
                     if (has_param(ii)) { iface = ii; break; }
+    // Multi-level (SoC -> wrapper -> device): the elaborated interface copy
+    // reachable from here may lack the parameter, and the connected instance
+    // lives further up the hierarchy (the parent only has a modport PORT, not an
+    // interface instance).  Fall back to the interface DEFINITION in
+    // AllInterfaces, which carries the parameter with its default value.
+    if (iface && !has_param(iface) && uhdm_design && uhdm_design->AllInterfaces()) {
+        std::string dn = std::string(iface->VpiDefName());
+        for (auto ii : *uhdm_design->AllInterfaces())
+            if (std::string(ii->VpiDefName()) == dn && has_param(ii)) {
+                iface = ii;
+                break;
+            }
+    }
     if (!iface) return "";
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
