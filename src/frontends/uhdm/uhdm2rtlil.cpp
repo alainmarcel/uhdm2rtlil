@@ -1290,6 +1290,52 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     continue;
                                 }
                             }
+                            // Interface MODPORT connection: `.s(s.sub)`.  Surelog
+                            // represents the actual as a hier_path <iface>.<modport>,
+                            // which — unlike the whole-interface ref_obj case above —
+                            // resolves through import_expression to 1'x, leaving the
+                            // child's flattened `<port>.<field>` ports undriven (so a
+                            // memory/logic indexed by an interface signal reads X).
+                            // Pair the target's `<port>.<field>` ports with the source
+                            // interface's `<iface>.<field>` signals, exactly like the
+                            // whole-interface ref_obj case.
+                            if (port->High_conn()->UhdmType() == uhdmhier_path) {
+                                const hier_path* hp =
+                                    any_cast<const hier_path*>(port->High_conn());
+                                std::string src_name;
+                                if (hp && hp->Path_elems() && !hp->Path_elems()->empty())
+                                    src_name = std::string((*hp->Path_elems())[0]->VpiName());
+                                std::vector<std::string> field_names;
+                                if (tgt_mod && !src_name.empty()) {
+                                    std::string tgt_prefix = "\\" + port_name + ".";
+                                    for (auto& w : tgt_mod->wires_) {
+                                        std::string wn = w.first.str();
+                                        if (wn.compare(0, tgt_prefix.size(), tgt_prefix) == 0)
+                                            field_names.push_back(wn.substr(tgt_prefix.size()));
+                                    }
+                                }
+                                if (field_names.empty() && iface_inst_vars_.count(src_name))
+                                    field_names = iface_inst_vars_[src_name];
+                                if (!field_names.empty() && !src_name.empty()) {
+                                    for (const auto& f : field_names) {
+                                        std::string src_full = src_name + "." + f;
+                                        std::string dst_port = port_name + "." + f;
+                                        RTLIL::Wire* src_w = nullptr;
+                                        if (name_map.count(src_full))
+                                            src_w = name_map[src_full];
+                                        if (!src_w && parent_rtlil_module)
+                                            src_w = parent_rtlil_module->wire(
+                                                RTLIL::escape_id(src_full));
+                                        if (src_w) {
+                                            cell->setPort(RTLIL::escape_id(dst_port),
+                                                          RTLIL::SigSpec(src_w));
+                                            log("UHDM: Connected interface modport port %s to wire %s\n",
+                                                dst_port.c_str(), src_full.c_str());
+                                        }
+                                    }
+                                    continue;
+                                }
+                            }
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
                             RTLIL::SigSpec conn = import_expression(high_conn);
 
