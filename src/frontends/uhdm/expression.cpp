@@ -6276,6 +6276,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
     }
+    // `CFG.BUS.DAT` where the base is a struct-typed PARAMETER directly (Surelog
+    // inlines `sub.CFG.BUS.DAT` into a device paramod's port ranges, substituting
+    // the interface's `CFG` parameter for `sub.CFG`).  Resolves without needing
+    // current_instance, so it also fixes port-width evaluation where the width
+    // helper runs with no instance context (degu SoC tcb_dev_gpio sys_wdt/sys_rdt).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        std::string v = eval_param_struct_field(uhdm_hier);
+        if (!v.empty()) {
+            int iv = atoi(v.c_str());
+            log("    hier_path: %s -> %d via struct parameter field\n",
+                path_name.c_str(), iv);
+            return RTLIL::SigSpec(RTLIL::Const(iv, 32));
+        }
+    }
     // Cross-module reference (XMR) READ: `u_processor.internal_ready` where
     // `u_processor` is a child INSTANCE in this module and `internal_ready` is
     // an INTERNAL signal of it (github #450).  Yosys can't resolve this through

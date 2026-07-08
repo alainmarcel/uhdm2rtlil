@@ -797,6 +797,115 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
     return "";
 }
 
+// Resolve `CFG.BUS.DAT` where the base element (pe[0]) is a struct-typed
+// PARAMETER.  In a specialized device paramod (degu SoC tcb_dev_gpio), Surelog
+// inlines the `.SYS_DAT(sub.CFG.BUS.DAT)` override into the port ranges but
+// substitutes `sub.CFG` with the connected interface's `CFG` parameter directly,
+// so the elaborated range reads `[CFG.BUS.DAT-1:0]`.  Resolves via pe[0]'s own
+// Actual_group (no current_instance needed).  "" on failure.
+std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2) return "";
+    auto& pe = *hp->Path_elems();
+    auto bref = dynamic_cast<const ref_obj*>(pe[0]);
+    if (!bref) return "";
+    auto a = bref->Actual_group();
+    if (!a) return "";
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    // The base's typespec is the struct type (e.g. tcb_lite_cfg_t) — needed for
+    // positional field resolution via struct_member_index.
+    if (auto bts = bref->Typespec()) cur_ts = bts->Actual_typespec();
+    if (a->UhdmType() == uhdmparameter) {
+        auto par = any_cast<const parameter*>(a);
+        val = par->Expr();
+        if (!cur_ts) if (auto rt = par->Typespec()) cur_ts = rt->Actual_typespec();
+        if (!val && par->VpiParent() &&
+            par->VpiParent()->UhdmType() == uhdmparam_assign)
+            val = dynamic_cast<const expr*>(
+                any_cast<const param_assign*>(par->VpiParent())->Rhs());
+    } else if (a->UhdmType() == uhdmoperation || a->UhdmType() == uhdmconstant) {
+        // Surelog often binds `CFG` directly to its assignment-pattern VALUE.
+        val = dynamic_cast<const expr*>(a);
+        if (!cur_ts) if (auto ts = val->Typespec()) cur_ts = ts->Actual_typespec();
+    }
+    if (!val) return "";
+    // Walk pe[1..] as struct field selectors (same as eval_iface_param_field).
+    for (size_t i = 1; i < pe.size() && val; i++) {
+        std::string field = std::string(pe[i]->VpiName());
+        const typespec* next_ts = nullptr;
+        const expr* next = find_tagged_field(val, field);
+        int idx = struct_member_index(cur_ts, field, &next_ts);
+        if (!next && val->UhdmType() == uhdmoperation && idx >= 0) {
+            auto op = any_cast<const operation*>(val);
+            if (op->Operands() && idx < (int)op->Operands()->size())
+                next = dynamic_cast<const expr*>((*op->Operands())[idx]);
+        }
+        val = next;
+        cur_ts = next_ts;
+    }
+    if (auto c = dynamic_cast<const constant*>(val))
+        return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
+    return "";
+}
+
+// Width of a port from the AllModules DEFINITION's typespec.  The elaborated
+// instance's port range may carry an unbound reference (a stripped
+// `[CFG.BUS.DAT-1:0]`) that collapses to width 1; the definition's range instead
+// refers to the module's own parameter (`[SYS_DAT-1:0]`), which import_expression
+// resolves via the current RTLIL module's parameter_default_values (set from the
+// resolved override).  <=0 on failure.
+int UhdmImporter::width_from_def_port(const std::string& def_name,
+                                      const std::string& port_name,
+                                      const UHDM::scope* inst) {
+    if (!uhdm_design || !uhdm_design->AllModules()) return 0;
+    for (auto m : *uhdm_design->AllModules()) {
+        if (std::string(m->VpiDefName()) != def_name) continue;
+        if (!m->Ports()) return 0;
+        for (auto p : *m->Ports()) {
+            if (std::string(p->VpiName()) != port_name) continue;
+            auto ts = p->Typespec();
+            if (!ts || !ts->Actual_typespec()) return 0;
+            // Only trust the definition width when its range is driven by a
+            // parameter we've actually resolved (present in the module's
+            // parameter_default_values) — otherwise import_expression would fall
+            // back to the definition's DEFAULT and could wrongly inflate a
+            // genuinely narrow port.
+            auto at = ts->Actual_typespec();
+            if (at->UhdmType() != uhdmlogic_typespec) return 0;
+            auto lts = any_cast<const UHDM::logic_typespec*>(at);
+            if (!lts->Ranges() || lts->Ranges()->empty()) return 0;
+            bool param_driven = false;
+            for (auto r : *lts->Ranges()) {
+                if ((r->Left_expr()  && expr_uses_resolved_param(r->Left_expr())) ||
+                    (r->Right_expr() && expr_uses_resolved_param(r->Right_expr())))
+                    { param_driven = true; break; }
+            }
+            if (!param_driven) return 0;
+            return get_width_from_typespec(ts, inst);
+        }
+        return 0;
+    }
+    return 0;
+}
+
+// True if `e` references (possibly nested in an operation) a ref_obj whose name
+// is a parameter present in the current RTLIL module's parameter_default_values.
+bool UhdmImporter::expr_uses_resolved_param(const any* e) {
+    if (!e) return false;
+    if (e->UhdmType() == uhdmref_obj) {
+        std::string n = std::string(any_cast<const ref_obj*>(e)->VpiName());
+        return !n.empty() &&
+               module->parameter_default_values.count(RTLIL::escape_id(n)) > 0;
+    }
+    if (e->UhdmType() == uhdmoperation) {
+        auto op = any_cast<const operation*>(e);
+        if (op->Operands())
+            for (auto o : *op->Operands())
+                if (expr_uses_resolved_param(o)) return true;
+    }
+    return false;
+}
+
 // Recursively import module hierarchy starting from a module instance
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
@@ -1773,7 +1882,6 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Set current instance context for expression evaluation
     const module_inst* saved_instance = current_instance;
     current_instance = uhdm_module;
-    
     // For module instances, we want the definition name, not the instance name
     std::string base_modname;
     if (uhdm_module->VpiDefName().data()) {
@@ -1972,9 +2080,28 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     log("UHDM: Processing parameter assignment for '%s'\n", param_name.c_str());
 
                     // Get the assigned value
-                    RTLIL::SigSpec value_spec = import_expression(any_cast<const expr*>(param_assign->Rhs()));
-                    if (value_spec.is_fully_const()) {
-                        RTLIL::Const param_value = value_spec.as_const();
+                    auto rhs_expr = any_cast<const expr*>(param_assign->Rhs());
+                    RTLIL::SigSpec value_spec = import_expression(rhs_expr);
+                    RTLIL::Const param_value;
+                    bool have_value = false;
+                    // A hier_path override like `.SYS_DAT(sub.CFG.BUS.DAT)` may evaluate
+                    // to X in the paramod-definition context (the interface is not
+                    // reachable here) — resolve it via the interface struct-field
+                    // evaluator, and never clobber the value already resolved by the
+                    // Parameters() pass with an X (degu SoC tcb_dev_gpio SYS_DAT).
+                    if (!value_spec.is_fully_def() && rhs_expr &&
+                        rhs_expr->UhdmType() == uhdmhier_path) {
+                        std::string iv = eval_iface_param_field(
+                            any_cast<const UHDM::hier_path*>(rhs_expr), current_instance);
+                        if (!iv.empty()) {
+                            param_value = RTLIL::Const(std::stoi(iv), 32);
+                            have_value = true;
+                        }
+                    } else if (value_spec.is_fully_const()) {
+                        param_value = value_spec.as_const();
+                        have_value = true;
+                    }
+                    if (have_value) {
                         // Override the parameter value
                         RTLIL::IdString param_id = RTLIL::escape_id(param_name);
                         // Only make non-localparam parameters externally visible
@@ -1986,10 +2113,10 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             module->avail_parameters(param_id);
                         }
                         module->parameter_default_values[param_id] = param_value;
-                        log("UHDM: Updated parameter '%s' to value %s\n", 
+                        log("UHDM: Updated parameter '%s' to value %s\n",
                             param_name.c_str(), param_value.as_string().c_str());
                     } else {
-                        log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n", 
+                        log_warning("UHDM: Parameter assignment for '%s' has non-constant value\n",
                                    param_name.c_str());
                     }
                 }

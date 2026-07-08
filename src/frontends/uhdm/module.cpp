@@ -574,8 +574,16 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     if (!is_packed_multidim) {
                         auto range = (*logic_typespec->Ranges())[0];
                         if (range->Left_expr() && range->Right_expr()) {
+                            // Force constant folding so a range built from a
+                            // resolved struct-parameter field folds to a constant
+                            // (e.g. `[CFG.BUS.DAT-1:0]` -> [31:0] in the degu SoC
+                            // tcb_dev_gpio paramod).  Without this the `-1` becomes
+                            // a $sub cell and the width silently defaults.
+                            bool saved_fcf = force_const_fold;
+                            force_const_fold = true;
                             RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                             RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                            force_const_fold = saved_fcf;
 
                             if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
                                 left = left_spec.as_int();
@@ -982,8 +990,16 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
                     if (!is_packed_multidim) {
                         auto range = (*logic_typespec->Ranges())[0];
                         if (range->Left_expr() && range->Right_expr()) {
+                            // Force constant folding so a range built from a
+                            // resolved struct-parameter field folds to a constant
+                            // (e.g. `[CFG.BUS.DAT-1:0]` -> [31:0] in the degu SoC
+                            // tcb_dev_gpio paramod).  Without this the `-1` becomes
+                            // a $sub cell and the width silently defaults.
+                            bool saved_fcf = force_const_fold;
+                            force_const_fold = true;
                             RTLIL::SigSpec left_spec = import_expression(range->Left_expr());
                             RTLIL::SigSpec right_spec = import_expression(range->Right_expr());
+                            force_const_fold = saved_fcf;
 
                             if (left_spec.is_fully_const() && right_spec.is_fully_const()) {
                                 left = left_spec.as_int();
@@ -2212,7 +2228,29 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             }
             if (auto typespec = port->Typespec()) {
                 log("UHDM: Port has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec, inst);
+                int w = get_width_from_typespec(typespec, inst);
+                // The elaborated port typespec range can carry an UNBOUND reference
+                // that neither the frontend nor Surelog's ExprEval can resolve
+                // (e.g. a stripped `[CFG.BUS.DAT-1:0]` in a specialized device
+                // paramod, degu SoC tcb_dev_gpio sys_wdt/sys_rdt), silently
+                // collapsing to 1.  Retry with the AllModules DEFINITION's port
+                // typespec, whose range refers to the module's OWN parameter
+                // (`[SYS_DAT-1:0]`).  width_from_def_port only trusts that range
+                // when it is driven by a parameter present in the RTLIL module's
+                // parameter_default_values (so it can only RECOVER a lost width via
+                // a resolved parameter, never inflate a genuine scalar).
+                // w == 0/1 only — never the interface sentinel (-1), whose port is
+                // a signal bundle, not a bit-vector.
+                if (w >= 0 && w <= 1 && inst) {
+                    int wd = width_from_def_port(std::string(inst->VpiDefName()),
+                                                 std::string(port->VpiName()), inst);
+                    if (wd > w) {
+                        log("UHDM: Port '%s' width recovered from definition typespec: %d\n",
+                            std::string(port->VpiName()).c_str(), wd);
+                        return wd;
+                    }
+                }
+                return w;
             } else {
                 log("UHDM: Port has no typespec\n");
             }

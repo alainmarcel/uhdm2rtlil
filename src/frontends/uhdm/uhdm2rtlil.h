@@ -547,7 +547,21 @@ struct UhdmImporter {
     // child instance's parameter value; "" on failure.  See uhdm2rtlil.cpp.
     std::string eval_iface_param_field(const UHDM::hier_path* hp,
                                        const UHDM::module_inst* child_inst);
-    
+    // Resolve `CFG.BUS.DAT` where the base is a struct-typed PARAMETER (Surelog
+    // substitutes `sub.CFG` -> the interface's `CFG` parameter directly in an
+    // elaborated port range like `[CFG.BUS.DAT-1:0]`); "" on failure.
+    std::string eval_param_struct_field(const UHDM::hier_path* hp);
+    // Width of a port from the AllModules DEFINITION's typespec (whose range
+    // refers to the module's own parameter, resolvable via the RTLIL module's
+    // parameter_default_values); <=0 if not found or not parameter-driven.
+    int width_from_def_port(const std::string& def_name,
+                            const std::string& port_name,
+                            const UHDM::scope* inst);
+    // True if `e` references (possibly nested in an operation) a ref_obj whose
+    // name is a parameter present in the current RTLIL module's
+    // parameter_default_values — i.e. a width we have actually resolved.
+    bool expr_uses_resolved_param(const UHDM::any* e);
+
     // Package support
     void import_package(const UHDM::package* uhdm_package);
     
