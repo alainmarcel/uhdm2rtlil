@@ -827,6 +827,14 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
         // Surelog often binds `CFG` directly to its assignment-pattern VALUE.
         val = dynamic_cast<const expr*>(a);
         if (!cur_ts) if (auto ts = val->Typespec()) cur_ts = ts->Actual_typespec();
+        // The value operation carries no typespec of its own; recover the struct
+        // typespec (e.g. cfg_t) from the owning param_assign's parameter so the
+        // positional field walk (struct_member_index) can resolve `.BUS.ADR`.
+        if (!cur_ts && a->VpiParent() &&
+            a->VpiParent()->UhdmType() == uhdmparam_assign)
+            if (auto lhs = dynamic_cast<const parameter*>(
+                    any_cast<const param_assign*>(a->VpiParent())->Lhs()))
+                if (auto rt = lhs->Typespec()) cur_ts = rt->Actual_typespec();
     }
     if (!val) return "";
     // Walk pe[1..] as struct field selectors (same as eval_iface_param_field).
