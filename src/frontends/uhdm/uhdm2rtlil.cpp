@@ -670,11 +670,12 @@ static int struct_member_index(const typespec* ts, const std::string& field,
 // Returns the value as a decimal string, or "" on failure.
 std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
                                           const module_inst* child_inst) {
-    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 3 || !child_inst)
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2 || !child_inst)
         return "";
     auto& pe = *hp->Path_elems();
     std::string base  = std::string(pe[0]->VpiName());   // "sub"
-    std::string pname = std::string(pe[1]->VpiName());   // "CFG"
+    std::string pname = std::string(pe[1]->VpiName());   // "CFG" (or a scalar
+                                                         // localparam like "OFF")
     const interface_inst* iface = nullptr;
     // Prefer the base ref_obj's own binding: a modport port `s` resolves via
     // Actual_group -> modport -> parent interface_inst (works when the interface
@@ -693,17 +694,60 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
             }
         }
     }
+    // Fallback: the child instance's own modport port `<base>` — its High_conn
+    // is the interface connection (`.sub(s.sub)`) in the parent instantiation.
+    // Resolves via a ref_obj (Actual_group -> interface/modport) or a hier_path
+    // (`s.sub` -> Path_elems[0] -> interface).
+    auto iface_from_conn = [&](const any* hc) -> const interface_inst* {
+        if (!hc) return nullptr;
+        const ref_obj* r = nullptr;
+        if (hc->UhdmType() == uhdmref_obj)
+            r = any_cast<const ref_obj*>(hc);
+        else if (hc->UhdmType() == uhdmhier_path) {
+            auto pel = any_cast<const hier_path*>(hc)->Path_elems();
+            if (pel && !pel->empty())
+                r = dynamic_cast<const ref_obj*>((*pel)[0]);
+        }
+        if (!r) return nullptr;
+        auto a = r->Actual_group();
+        if (!a) return nullptr;
+        if (a->UhdmType() == uhdminterface_inst)
+            return any_cast<const interface_inst*>(a);
+        if (a->UhdmType() == uhdmmodport) {
+            auto mp = any_cast<const modport*>(a);
+            if (mp && mp->VpiParent() &&
+                mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                return any_cast<const interface_inst*>(mp->VpiParent());
+        }
+        return nullptr;
+    };
+    if (!iface && child_inst->Ports())
+        for (auto p : *child_inst->Ports()) {
+            if (std::string(p->VpiName()) != base) continue;
+            iface = iface_from_conn(p->High_conn());
+            // A modport port's High_conn is often null; its Low_conn is the
+            // modport whose parent is the interface (definition) instance.
+            if (!iface) {
+                const any* lc = p->Low_conn();
+                if (lc && lc->UhdmType() == uhdmref_obj)
+                    if (auto a = any_cast<const ref_obj*>(lc)->Actual_group())
+                        lc = a;
+                if (lc && lc->UhdmType() == uhdmmodport) {
+                    auto mp = any_cast<const modport*>(lc);
+                    if (mp && mp->VpiParent() &&
+                        mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                        iface = any_cast<const interface_inst*>(mp->VpiParent());
+                }
+            }
+            break;
+        }
     // Fallback: the parent module's port `<base>` connected to an interface.
     if (!iface) {
         auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent());
         if (parent && parent->Ports())
             for (auto p : *parent->Ports()) {
                 if (std::string(p->VpiName()) != base) continue;
-                if (auto hc = p->High_conn())
-                    if (hc->UhdmType() == uhdmref_obj)
-                        if (auto a = any_cast<const ref_obj*>(hc)->Actual_group())
-                            if (a->UhdmType() == uhdminterface_inst)
-                                iface = any_cast<const interface_inst*>(a);
+                iface = iface_from_conn(p->High_conn());
                 break;
             }
     }
@@ -792,9 +836,148 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
         val = next;
         cur_ts = next_ts;
     }
+    // A COMPUTED scalar interface localparam (`sub.OFF` where
+    // OFF = $clog2(CFG.BUS.DAT/8)) leaves `val` as a non-constant expression;
+    // Surelog stores neither its value nor BYT's in the elaborated model, so
+    // ExprEval can't fold it.  Recursively evaluate the localparam chain in the
+    // interface scope (degu SoC r5p_soc_memory `sub.CFG_BUS_OFF`).
+    if (val && val->UhdmType() != uhdmconstant && pe.size() == 2) {
+        long out;
+        if (eval_iface_local_const(iface, val, out))
+            return std::to_string(out);
+    }
     if (auto c = dynamic_cast<const constant*>(val))
         return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
     return "";
+}
+
+// Recursively fold a scalar interface-localparam value expression (see header).
+bool UhdmImporter::eval_iface_local_const(const interface_inst* iface,
+                                          const UHDM::any* ve, long& out) {
+    if (!ve || !iface) return false;
+    switch (ve->UhdmType()) {
+    case uhdmconstant:
+        out = parse_vpi_value_to_int(
+            std::string(any_cast<const constant*>(ve)->VpiValue()));
+        return true;
+    case uhdmref_obj: {
+        // Reference to another interface localparam (e.g. BYT inside OFF).
+        std::string nm = std::string(any_cast<const ref_obj*>(ve)->VpiName());
+        const expr* pv = nullptr;
+        if (iface->Parameters())
+            for (auto p : *iface->Parameters())
+                if (std::string(p->VpiName()) == nm) {
+                    if (auto par = dynamic_cast<const parameter*>(p)) {
+                        pv = par->Expr();
+                        if (!pv && par->VpiParent() &&
+                            par->VpiParent()->UhdmType() == uhdmparam_assign)
+                            pv = dynamic_cast<const expr*>(
+                                any_cast<const param_assign*>(
+                                    par->VpiParent())->Rhs());
+                    }
+                    break;
+                }
+        if (!pv && iface->Param_assigns())
+            for (auto pa : *iface->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == nm) {
+                        pv = dynamic_cast<const expr*>(pa->Rhs());
+                        break;
+                    }
+        return pv ? eval_iface_local_const(iface, pv, out) : false;
+    }
+    case uhdmhier_path: {
+        // `CFG.BUS.DAT` struct-field access.  First try the base-Actual-group
+        // resolver (works when CFG is bound); otherwise resolve the base struct
+        // parameter directly from the interface scope and walk the fields.
+        auto hp = any_cast<const hier_path*>(ve);
+        std::string s = eval_param_struct_field(hp);
+        if (!s.empty()) { out = std::stol(s); return true; }
+        auto pel = hp->Path_elems();
+        if (!pel || pel->size() < 2) return false;
+        std::string bnm = std::string((*pel)[0]->VpiName());
+        const expr* v2 = nullptr;
+        const typespec* ts2 = nullptr;
+        if (iface->Param_assigns())
+            for (auto pa : *iface->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == bnm) {
+                        v2 = dynamic_cast<const expr*>(pa->Rhs());
+                        if (auto rt = l->Typespec()) ts2 = rt->Actual_typespec();
+                        break;
+                    }
+        if (!v2 && iface->Parameters())
+            for (auto p : *iface->Parameters())
+                if (std::string(p->VpiName()) == bnm) {
+                    if (auto par = dynamic_cast<const parameter*>(p)) {
+                        v2 = par->Expr();
+                        if (auto rt = par->Typespec())
+                            ts2 = rt->Actual_typespec();
+                    }
+                    break;
+                }
+        if (!v2) return false;
+        for (size_t i = 1; i < pel->size() && v2; i++) {
+            std::string field = std::string((*pel)[i]->VpiName());
+            const typespec* nts = nullptr;
+            const expr* next = find_tagged_field(v2, field);
+            int idx = struct_member_index(ts2, field, &nts);
+            if (!next && v2->UhdmType() == uhdmoperation && idx >= 0) {
+                auto op = any_cast<const operation*>(v2);
+                if (op->Operands() && idx < (int)op->Operands()->size())
+                    next = dynamic_cast<const expr*>((*op->Operands())[idx]);
+            }
+            v2 = next;
+            ts2 = nts;
+        }
+        return v2 ? eval_iface_local_const(iface, v2, out) : false;
+    }
+    case uhdmoperation: {
+        auto op = any_cast<const operation*>(ve);
+        auto ops = op->Operands();
+        if (!ops || ops->empty()) return false;
+        long a = 0;
+        if (!eval_iface_local_const(iface, (*ops)[0], a)) return false;
+        int t = op->VpiOpType();
+        if (ops->size() == 1) {
+            switch (t) {
+            case vpiMinusOp: out = -a; return true;
+            case vpiPlusOp:  out = a;  return true;
+            default: return false;
+            }
+        }
+        long b = 0;
+        if (!eval_iface_local_const(iface, (*ops)[1], b)) return false;
+        switch (t) {
+        case vpiAddOp:    out = a + b; return true;
+        case vpiSubOp:    out = a - b; return true;
+        case vpiMultOp:   out = a * b; return true;
+        case vpiDivOp:    if (!b) return false; out = a / b; return true;
+        case vpiModOp:    if (!b) return false; out = a % b; return true;
+        case vpiLShiftOp: out = a << b; return true;
+        case vpiRShiftOp: out = a >> b; return true;
+        default: return false;
+        }
+    }
+    case uhdmsys_func_call: {
+        auto sf = any_cast<const sys_func_call*>(ve);
+        std::string nm = std::string(sf->VpiName());
+        auto args = sf->Tf_call_args();
+        if (!args || args->empty()) return false;
+        long a = 0;
+        if (!eval_iface_local_const(iface, (*args)[0], a)) return false;
+        if (nm == "$clog2") {
+            if (a <= 1) { out = 0; return true; }
+            long r = 0, v = a - 1;
+            while (v > 0) { v >>= 1; r++; }
+            out = r;
+            return true;
+        }
+        return false;
+    }
+    default:
+        return false;
+    }
 }
 
 // Resolve `CFG.BUS.DAT` where the base element (pe[0]) is a struct-typed
