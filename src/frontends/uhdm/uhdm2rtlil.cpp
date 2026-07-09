@@ -1514,7 +1514,26 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                             // Pair the target's `<port>.<field>` ports with the source
                             // interface's `<iface>.<field>` signals, exactly like the
                             // whole-interface ref_obj case.
-                            if (port->High_conn()->UhdmType() == uhdmhier_path) {
+                            // Only treat a hier_path actual as a WHOLE-modport
+                            // connection (`.s(s.sub)`, pairing per-field) when the
+                            // TARGET port is itself an interface port.  Interface
+                            // ports are a 1-bit placeholder wire carrying the
+                            // `is_interface` attribute (or have no plain wire at
+                            // all); a PLAIN vector port fed an interface struct
+                            // MEMBER (`.sys_wdt(sub.req.wdt)`, degu SoC) has a real
+                            // non-interface wire — fall through to import_expression
+                            // so the member slice is resolved (else the field-
+                            // pairing fallback would wrongly wire `sys_wdt.<field>`).
+                            RTLIL::Wire* tgt_pw =
+                                tgt_mod ? tgt_mod->wire(RTLIL::escape_id(port_name))
+                                        : nullptr;
+                            bool tgt_is_iface_port =
+                                tgt_mod &&
+                                (!tgt_pw ||
+                                 tgt_pw->attributes.count(
+                                     RTLIL::escape_id("is_interface")));
+                            if (tgt_is_iface_port &&
+                                port->High_conn()->UhdmType() == uhdmhier_path) {
                                 const hier_path* hp =
                                     any_cast<const hier_path*>(port->High_conn());
                                 std::string src_name;
