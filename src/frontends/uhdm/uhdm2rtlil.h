@@ -557,6 +557,13 @@ struct UhdmImporter {
     int width_from_def_port(const std::string& def_name,
                             const std::string& port_name,
                             const UHDM::scope* inst);
+    // Same, for a module-local VARIABLE (Surelog substitutes an override
+    // hier_path into the elaborated var range, e.g. `[CFG_LSU.BUS.ADR-1:0]`, which
+    // references a parent-scope param that can't resolve here; the definition's
+    // range `[ADR-1:0]` refers to the module's own parameter instead).
+    int width_from_def_var(const std::string& def_name,
+                           const std::string& var_name,
+                           const UHDM::scope* inst);
     // True if `e` references (possibly nested in an operation) a ref_obj whose
     // name is a parameter present in the current RTLIL module's
     // parameter_default_values — i.e. a width we have actually resolved.

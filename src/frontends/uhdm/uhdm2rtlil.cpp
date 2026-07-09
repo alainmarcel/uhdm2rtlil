@@ -823,6 +823,28 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
             par->VpiParent()->UhdmType() == uhdmparam_assign)
             val = dynamic_cast<const expr*>(
                 any_cast<const param_assign*>(par->VpiParent())->Rhs());
+        // A (local)param declared in a module carries no Expr of its own; its
+        // assignment-pattern value lives in the owning module_inst's
+        // Param_assigns (degu SoC `localparam CFG_LSU = '{...}` referenced from a
+        // child's substituted `[CFG_LSU.BUS.ADR-1:0]` range).  Only accept an
+        // ASSIGNMENT-PATTERN Rhs — a cast like `part_info_t'(16)` is not walkable
+        // by the positional field walk and must fall through to the generic
+        // handler (OutputSizeWithParameterOfInstanceInitializedByStructMember).
+        if (!val && par->VpiParent() &&
+            par->VpiParent()->UhdmType() == uhdmmodule_inst) {
+            auto owner = any_cast<const module_inst*>(par->VpiParent());
+            if (owner->Param_assigns())
+                for (auto pa : *owner->Param_assigns())
+                    if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                        if (std::string(l->VpiName()) == std::string(par->VpiName())) {
+                            auto rhs = dynamic_cast<const expr*>(pa->Rhs());
+                            if (rhs && rhs->UhdmType() == uhdmoperation &&
+                                any_cast<const operation*>(rhs)->VpiOpType() ==
+                                    vpiAssignmentPatternOp)
+                                val = rhs;
+                            break;
+                        }
+        }
     } else if (a->UhdmType() == uhdmoperation || a->UhdmType() == uhdmconstant) {
         // Surelog often binds `CFG` directly to its assignment-pattern VALUE.
         val = dynamic_cast<const expr*>(a);
@@ -890,6 +912,41 @@ int UhdmImporter::width_from_def_port(const std::string& def_name,
             }
             if (!param_driven) return 0;
             return get_width_from_typespec(ts, inst);
+        }
+        return 0;
+    }
+    return 0;
+}
+
+// Width of a module-local VARIABLE from the AllModules DEFINITION's typespec.
+// The elaborated instance's var range may carry a substituted override hier_path
+// (`[CFG_LSU.BUS.ADR-1:0]`) whose base is a parent-scope param unresolvable here;
+// the definition's range refers to the module's own parameter (`[ADR-1:0]`),
+// resolvable via parameter_default_values.  <=0 if not found / not param-driven.
+int UhdmImporter::width_from_def_var(const std::string& def_name,
+                                     const std::string& var_name,
+                                     const UHDM::scope* inst) {
+    if (!uhdm_design || !uhdm_design->AllModules()) return 0;
+    for (auto m : *uhdm_design->AllModules()) {
+        if (std::string(m->VpiDefName()) != def_name) continue;
+        if (!m->Variables()) return 0;
+        for (auto v : *m->Variables()) {
+            if (std::string(v->VpiName()) != var_name) continue;
+            auto ts = v->Typespec();
+            if (!ts || !ts->Actual_typespec()) return 0;
+            auto at = ts->Actual_typespec();
+            if (at->UhdmType() != uhdmlogic_typespec) return 0;
+            auto lts = any_cast<const UHDM::logic_typespec*>(at);
+            if (!lts->Ranges() || lts->Ranges()->empty()) return 0;
+            bool param_driven = false;
+            for (auto r : *lts->Ranges()) {
+                if ((r->Left_expr()  && expr_uses_resolved_param(r->Left_expr())) ||
+                    (r->Right_expr() && expr_uses_resolved_param(r->Right_expr())))
+                    { param_driven = true; break; }
+            }
+            if (!param_driven) return 0;
+            int rw = get_width_from_typespec(ts, inst);
+            return rw;
         }
         return 0;
     }

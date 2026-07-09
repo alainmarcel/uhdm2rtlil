@@ -2343,7 +2343,21 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             log("UHDM: Found net object\n");
             if (auto typespec = variable->Typespec()) {
                 log("UHDM: Net has typespec, calling get_width_from_typespec\n");
-                return get_width_from_typespec(typespec, inst);
+                int w = get_width_from_typespec(typespec, inst);
+                // The elaborated var range may carry a substituted override
+                // hier_path (`[CFG_LSU.BUS.ADR-1:0]`, degu SoC tcb_lite_lib_decoder
+                // `adr`) that references a parent-scope param unresolvable here and
+                // collapses to 1.  Recover from the AllModules DEFINITION var
+                // typespec, whose range refers to the module's own parameter.
+                if (w >= 0 && w <= 1) {
+                    if (auto mi = dynamic_cast<const UHDM::module_inst*>(inst)) {
+                        int wd = width_from_def_var(std::string(mi->VpiDefName()),
+                                                    std::string(variable->VpiName()),
+                                                    inst);
+                        if (wd > w) return wd;
+                    }
+                }
+                return w;
             } else {
                 log("UHDM: Net has no typespec\n");
             }
