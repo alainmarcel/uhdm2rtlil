@@ -8879,7 +8879,127 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         }
         }  // End of single-level struct member handling
     }
-    
+
+    // Nested struct-field access ending in a PART-SELECT with computed bounds:
+    //   sub.req.adr[ADR-1 : sub.CFG_BUS_OFF]   (degu SoC r5p_soc_memory address),
+    //   sub.req.byteena[off +: n]              (indexed form).
+    // Path_elems: one or more plain struct-member ref_objs, then a
+    // part_select / indexed_part_select.  The size()==3 handler above only fires
+    // when an array bit_select precedes the select; here every element before it
+    // is a plain ref_obj, so the slice would otherwise fall through to the
+    // "could not resolve" fallback and collapse to X.  The bounds may be
+    // non-constant expressions (a $clog2 module localparam, an interface
+    // localparam) that import_expression folds.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
+        auto& pe = *uhdm_hier->Path_elems();
+        bool is_ps  = pe.back()->UhdmType() == uhdmpart_select;
+        bool is_ips = pe.back()->UhdmType() == uhdmindexed_part_select;
+        if (is_ps || is_ips) {
+            bool all_refs = true;
+            std::vector<std::string> names;
+            for (size_t i = 0; i + 1 < pe.size(); i++) {
+                if (pe[i]->UhdmType() != uhdmref_obj) { all_refs = false; break; }
+                names.push_back(std::string(pe[i]->VpiName()));
+            }
+            const part_select* ps = is_ps ? any_cast<const part_select*>(pe.back()) : nullptr;
+            const indexed_part_select* ips = is_ips ? any_cast<const indexed_part_select*>(pe.back()) : nullptr;
+            bool have_ranges = is_ps ? (ps->Left_range() && ps->Right_range())
+                                     : (ips->Base_expr() && ips->Width_expr());
+            if (all_refs && have_ranges) {
+                names.push_back(std::string(pe.back()->VpiName()));  // sliced field
+                // Longest-prefix flattened wire: an interface struct signal
+                // flattens to e.g. `sub.req`; the trailing names index into its
+                // struct type.
+                RTLIL::Wire* base_wire = nullptr;
+                size_t split = 0;
+                for (size_t k = names.size(); k >= 1; k--) {
+                    std::string cand;
+                    for (size_t j = 0; j < k; j++) { if (j) cand += "."; cand += names[j]; }
+                    if (name_map.count(cand)) { base_wire = name_map[cand]; split = k; break; }
+                    if (k == 1) break;
+                }
+                if (base_wire) {
+                    int field_offset = 0, field_width = base_wire->width;
+                    bool off_ok = true;
+                    if (split < names.size()) {
+                        // Resolve the remaining member path against base_wire's
+                        // struct typespec.  Prefer wire_map; the flattened
+                        // interface signal is often absent there, so fall back to
+                        // the last consumed ref_obj's own typespec (the struct
+                        // type of e.g. `sub.req`).
+                        const typespec* ts = nullptr;
+                        for (auto& kv : wire_map) {
+                            if (kv.second != base_wire) continue;
+                            const ref_typespec* rts = nullptr;
+                            if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))   rts = ln->Typespec();
+                            else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))  rts = lv->Typespec();
+                            else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
+                            else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+                            if (rts) ts = rts->Actual_typespec();
+                            if (ts) break;
+                        }
+                        if (!ts && split >= 1) {
+                            if (auto lastref = dynamic_cast<const ref_obj*>(pe[split-1])) {
+                                if (auto rt = lastref->Typespec()) ts = rt->Actual_typespec();
+                                if (!ts) if (auto ag = lastref->Actual_group()) {
+                                    const ref_typespec* rts = nullptr;
+                                    if (auto ln = dynamic_cast<const UHDM::logic_net*>(ag))   rts = ln->Typespec();
+                                    else if (auto sn = dynamic_cast<const UHDM::struct_net*>(ag)) rts = sn->Typespec();
+                                    else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag))  rts = lv->Typespec();
+                                    else if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rts = sv->Typespec();
+                                    if (rts) ts = rts->Actual_typespec();
+                                }
+                            }
+                        }
+                        std::string remaining;
+                        for (size_t j = split; j < names.size(); j++) {
+                            if (!remaining.empty()) remaining += ".";
+                            remaining += names[j];
+                        }
+                        off_ok = ts && calculate_struct_member_offset(
+                                           ts, remaining, inst, field_offset, field_width);
+                    }
+                    // Field range is treated as 0-based (LSB at bit 0).  Compute
+                    // the slice's LSB position and length for either select form.
+                    int lsb = 0, len = 0;
+                    bool bounds_ok = false;
+                    if (is_ps) {
+                        RTLIL::SigSpec ls = import_expression(ps->Left_range(), input_mapping);
+                        RTLIL::SigSpec rs = import_expression(ps->Right_range(), input_mapping);
+                        if (ls.is_fully_const() && rs.is_fully_const()) {
+                            int l = ls.as_int(), r = rs.as_int();
+                            lsb = std::min(l, r);
+                            len = std::abs(l - r) + 1;
+                            bounds_ok = true;
+                        }
+                    } else {
+                        RTLIL::SigSpec bs = import_expression(ips->Base_expr(), input_mapping);
+                        RTLIL::SigSpec ws = import_expression(ips->Width_expr(), input_mapping);
+                        if (bs.is_fully_const() && ws.is_fully_const()) {
+                            int base = bs.as_int(), w = ws.as_int();
+                            // vpiPosIndexed `[base +: w]` -> [base + w-1 : base];
+                            // otherwise `[base -: w]` -> [base : base - w + 1].
+                            lsb = (ips->VpiIndexedPartSelectType() == vpiPosIndexed)
+                                      ? base : base - w + 1;
+                            len = w;
+                            bounds_ok = true;
+                        }
+                    }
+                    if (off_ok && bounds_ok && len > 0) {
+                        int abs_start = field_offset + lsb;
+                        if (abs_start >= 0 && abs_start + len <= base_wire->width) {
+                            if (mode_debug)
+                                log("    Nested struct-field part-select: %s → "
+                                    "%s[%d+:%d]\n", path_name.c_str(),
+                                    base_wire->name.c_str(), abs_start, len);
+                            return RTLIL::SigSpec(base_wire).extract(abs_start, len);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Use ExprEval to decode the hierarchical path to get the member
     ExprEval eval;
     bool invalidValue = false;
