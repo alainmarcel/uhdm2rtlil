@@ -547,6 +547,12 @@ struct UhdmImporter {
     // child instance's parameter value; "" on failure.  See uhdm2rtlil.cpp.
     std::string eval_iface_param_field(const UHDM::hier_path* hp,
                                        const UHDM::module_inst* child_inst);
+    // Recursively fold a scalar interface-localparam value expression to an int
+    // in the interface-instance scope.  Handles the TCB-Lite localparam chain
+    // (`BYT = CFG.BUS.DAT/8`, `OFF = $clog2(BYT)`): constants, refs to other
+    // interface localparams, `CFG.x.y` struct fields, arithmetic and $clog2.
+    bool eval_iface_local_const(const UHDM::interface_inst* iface,
+                                const UHDM::any* ve, long& out);
     // Resolve `CFG.BUS.DAT` where the base is a struct-typed PARAMETER (Surelog
     // substitutes `sub.CFG` -> the interface's `CFG` parameter directly in an
     // elaborated port range like `[CFG.BUS.DAT-1:0]`); "" on failure.

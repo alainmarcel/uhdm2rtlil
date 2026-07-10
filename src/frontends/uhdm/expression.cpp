@@ -6266,7 +6266,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     // Needed for a memory width `logic [s.CFG.BUS.DAT-1:0] mem [...]` (the degu
     // SoC's r5p_soc_memory) — resolving it via the bare 2-element param handler
     // below would stop at `CFG` (the whole struct) and never reach `.BUS.DAT`.
-    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 3 &&
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
         current_instance) {
         std::string v = eval_iface_param_field(uhdm_hier, current_instance);
         if (!v.empty()) {
