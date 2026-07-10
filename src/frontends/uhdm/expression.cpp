@@ -2103,6 +2103,17 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 } else if (func_name == "$unsigned" && args.size() == 1) {
                     // $unsigned just returns the argument with unsigned interpretation
                     return args[0];
+                } else if (func_name == "$clog2" && args.size() == 1 &&
+                           args[0].is_fully_const()) {
+                    // $clog2(n) = ceil(log2(n)) = smallest k with 2^k >= n (0 for
+                    // n <= 1).  Needed inline in a part-select bound like
+                    // `sub.req_dly[DLY].adr[$clog2(sub.CFG_BUS_BYT)-1:0]`
+                    // (tcb_lite_lib_logsize2byteena) where the argument is an
+                    // interface localparam that resolves to a constant.
+                    uint64_t n = (uint64_t)args[0].as_const().as_int();
+                    int r = 0;
+                    if (n > 1) { uint64_t v = n - 1; while (v) { v >>= 1; r++; } }
+                    return RTLIL::SigSpec(RTLIL::Const(r, 32));
                 } else if (func_name == "$floor" && args.size() == 1) {
                     // $floor for integer arguments is identity (integer division already truncates)
                     return args[0];
@@ -4933,6 +4944,21 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             return RTLIL::SigSpec(enum_value);
         }
         
+        // A COMPUTED interface localparam referenced by bare name: Surelog
+        // substitutes `sub.CFG_BUS_BYT` -> `CFG_BUS_BYT` and binds the ref
+        // directly to its value OPERATION (e.g. `CFG.BUS.DAT/8`).  Fold it via
+        // import_expression — its `CFG.BUS.DAT` operand routes through
+        // eval_param_struct_field (base CFG's own Actual_group is the interface's
+        // struct parameter).  Needed for the tcb_lite_lib_logsize2byteena
+        // `$clog2(sub.CFG_BUS_BYT)` part-select bound.
+        if (actual->UhdmType() == uhdmoperation) {
+            bool saved_fcf = force_const_fold;
+            force_const_fold = true;
+            RTLIL::SigSpec v = import_expression(any_cast<const expr*>(actual), input_mapping);
+            force_const_fold = saved_fcf;
+            if (v.is_fully_const()) return v;
+        }
+
         if (actual->VpiType() == vpiParameter) {
             const parameter* param = any_cast<const parameter*>(actual);
             std::string param_name = std::string(param->VpiName());
@@ -8881,35 +8907,45 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     }
 
     // Nested struct-field access ending in a PART-SELECT with computed bounds:
-    //   sub.req.adr[ADR-1 : sub.CFG_BUS_OFF]   (degu SoC r5p_soc_memory address),
-    //   sub.req.byteena[off +: n]              (indexed form).
-    // Path_elems: one or more plain struct-member ref_objs, then a
+    //   sub.req.adr[ADR-1 : sub.CFG_BUS_OFF]          (r5p_soc_memory address),
+    //   sub.req.byteena[off +: n]                     (indexed form),
+    //   sub.req_dly[DLY].adr[$clog2(BYT)-1:0]         (array-indexed element;
+    //                                                  tcb_lite_lib_logsize2byteena).
+    // Path_elems: struct-member ref_objs and/or array bit_selects, then a
     // part_select / indexed_part_select.  The size()==3 handler above only fires
-    // when an array bit_select precedes the select; here every element before it
-    // is a plain ref_obj, so the slice would otherwise fall through to the
-    // "could not resolve" fallback and collapse to X.  The bounds may be
-    // non-constant expressions (a $clog2 module localparam, an interface
-    // localparam) that import_expression folds.
+    // for a LOCAL struct wire whose base name is a plain wire; here the base is an
+    // interface signal flattened to e.g. `sub.req_dly`, so the slice would
+    // otherwise fall through to the "could not resolve" fallback and collapse to
+    // X.  The bounds may be non-constant expressions (a $clog2 module localparam,
+    // an interface localparam) that import_expression folds.
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2) {
         auto& pe = *uhdm_hier->Path_elems();
         bool is_ps  = pe.back()->UhdmType() == uhdmpart_select;
         bool is_ips = pe.back()->UhdmType() == uhdmindexed_part_select;
         if (is_ps || is_ips) {
-            bool all_refs = true;
+            bool ok_segs = true;
             std::vector<std::string> names;
+            std::vector<const UHDM::expr*> seg_idx;  // array index per segment
             for (size_t i = 0; i + 1 < pe.size(); i++) {
-                if (pe[i]->UhdmType() != uhdmref_obj) { all_refs = false; break; }
-                names.push_back(std::string(pe[i]->VpiName()));
+                if (pe[i]->UhdmType() == uhdmref_obj) {
+                    names.push_back(std::string(pe[i]->VpiName()));
+                    seg_idx.push_back(nullptr);
+                } else if (pe[i]->UhdmType() == uhdmbit_select) {
+                    auto bs = any_cast<const bit_select*>(pe[i]);
+                    names.push_back(std::string(bs->VpiName()));
+                    seg_idx.push_back(bs->VpiIndex());
+                } else { ok_segs = false; break; }
             }
             const part_select* ps = is_ps ? any_cast<const part_select*>(pe.back()) : nullptr;
             const indexed_part_select* ips = is_ips ? any_cast<const indexed_part_select*>(pe.back()) : nullptr;
             bool have_ranges = is_ps ? (ps->Left_range() && ps->Right_range())
                                      : (ips->Base_expr() && ips->Width_expr());
-            if (all_refs && have_ranges) {
+            if (ok_segs && have_ranges) {
                 names.push_back(std::string(pe.back()->VpiName()));  // sliced field
+                seg_idx.push_back(nullptr);
                 // Longest-prefix flattened wire: an interface struct signal
-                // flattens to e.g. `sub.req`; the trailing names index into its
-                // struct type.
+                // flattens to e.g. `sub.req_dly`; the trailing names index into
+                // its element struct type.
                 RTLIL::Wire* base_wire = nullptr;
                 size_t split = 0;
                 for (size_t k = names.size(); k >= 1; k--) {
@@ -8919,38 +8955,42 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     if (k == 1) break;
                 }
                 if (base_wire) {
-                    int field_offset = 0, field_width = base_wire->width;
                     bool off_ok = true;
-                    if (split < names.size()) {
-                        // Resolve the remaining member path against base_wire's
-                        // struct typespec.  Prefer wire_map; the flattened
-                        // interface signal is often absent there, so fall back to
-                        // the last consumed ref_obj's own typespec (the struct
-                        // type of e.g. `sub.req`).
-                        const typespec* ts = nullptr;
-                        for (auto& kv : wire_map) {
-                            if (kv.second != base_wire) continue;
-                            const ref_typespec* rts = nullptr;
-                            if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))   rts = ln->Typespec();
-                            else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))  rts = lv->Typespec();
-                            else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
-                            else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
-                            if (rts) ts = rts->Actual_typespec();
-                            if (ts) break;
-                        }
-                        if (!ts && split >= 1) {
-                            if (auto lastref = dynamic_cast<const ref_obj*>(pe[split-1])) {
-                                if (auto rt = lastref->Typespec()) ts = rt->Actual_typespec();
-                                if (!ts) if (auto ag = lastref->Actual_group()) {
-                                    const ref_typespec* rts = nullptr;
-                                    if (auto ln = dynamic_cast<const UHDM::logic_net*>(ag))   rts = ln->Typespec();
-                                    else if (auto sn = dynamic_cast<const UHDM::struct_net*>(ag)) rts = sn->Typespec();
-                                    else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag))  rts = lv->Typespec();
-                                    else if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rts = sv->Typespec();
-                                    if (rts) ts = rts->Actual_typespec();
-                                }
+                    // Element struct typespec of base_wire (needed for the field
+                    // walk AND the array-element stride).  Prefer wire_map; the
+                    // flattened interface signal is often absent there, so fall
+                    // back to the last consumed segment's own typespec.
+                    const typespec* ts = nullptr;
+                    for (auto& kv : wire_map) {
+                        if (kv.second != base_wire) continue;
+                        const ref_typespec* rts = nullptr;
+                        if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))   rts = ln->Typespec();
+                        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(kv.first))  rts = lv->Typespec();
+                        else if (auto sv = dynamic_cast<const UHDM::struct_var*>(kv.first)) rts = sv->Typespec();
+                        else if (auto sn = dynamic_cast<const UHDM::struct_net*>(kv.first)) rts = sn->Typespec();
+                        if (rts) ts = rts->Actual_typespec();
+                        if (ts) break;
+                    }
+                    if (!ts && split >= 1) {
+                        if (auto e = dynamic_cast<const expr*>(pe[split-1]))
+                            if (auto rt = e->Typespec()) ts = rt->Actual_typespec();
+                        if (!ts) {
+                            const any* ag = nullptr;
+                            if (auto lr = dynamic_cast<const ref_obj*>(pe[split-1])) ag = lr->Actual_group();
+                            else if (auto bsel = dynamic_cast<const bit_select*>(pe[split-1])) ag = bsel->Actual_group();
+                            if (ag) {
+                                const ref_typespec* rts = nullptr;
+                                if (auto ln = dynamic_cast<const UHDM::logic_net*>(ag))   rts = ln->Typespec();
+                                else if (auto sn = dynamic_cast<const UHDM::struct_net*>(ag)) rts = sn->Typespec();
+                                else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag))  rts = lv->Typespec();
+                                else if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rts = sv->Typespec();
+                                if (rts) ts = rts->Actual_typespec();
                             }
                         }
+                    }
+                    // Field offset within the element struct.
+                    int field_offset = 0, field_width = base_wire->width;
+                    if (split < names.size()) {
                         std::string remaining;
                         for (size_t j = split; j < names.size(); j++) {
                             if (!remaining.empty()) remaining += ".";
@@ -8958,6 +8998,19 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         }
                         off_ok = ts && calculate_struct_member_offset(
                                            ts, remaining, inst, field_offset, field_width);
+                    }
+                    // Array-element offset from any bit_select in the matched
+                    // prefix (`sub.req_dly[DLY]`).  Stride = the element struct
+                    // width; for the collapsed 1-element interface array this is
+                    // the whole base wire and any index resolves to offset 0.
+                    int elem_off = 0;
+                    int elem_w = ts ? get_width_from_typespec(const_cast<typespec*>(ts), inst) : 0;
+                    if (elem_w <= 0) elem_w = base_wire->width;
+                    for (size_t i = 0; i < split && off_ok; i++) {
+                        if (!seg_idx[i]) continue;
+                        RTLIL::SigSpec ix = import_expression(seg_idx[i], input_mapping);
+                        if (!ix.is_fully_const()) { off_ok = false; break; }
+                        elem_off += ix.as_const().as_int() * elem_w;
                     }
                     // Field range is treated as 0-based (LSB at bit 0).  Compute
                     // the slice's LSB position and length for either select form.
@@ -8986,7 +9039,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         }
                     }
                     if (off_ok && bounds_ok && len > 0) {
-                        int abs_start = field_offset + lsb;
+                        int abs_start = elem_off + field_offset + lsb;
                         if (abs_start >= 0 && abs_start + len <= base_wire->width) {
                             if (mode_debug)
                                 log("    Nested struct-field part-select: %s → "
