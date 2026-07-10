@@ -823,6 +823,39 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
 
+            // Compound assignment (`x |= y`, `x += y`, ...): UHDM encodes the
+            // operator on the assignment's VpiOpType (a binary op, not the plain
+            // vpiAssignmentOp) and stores only `y` as the RHS.  Combine with the
+            // LHS's current value so that unrolled-loop accumulation
+            // (`encode |= v[i] ? ... : '0`) chains across iterations instead of
+            // each iteration overwriting the previous one.
+            if (lhs_sig.size() > 0 && !skip_assignment) {
+                // The accumulator's current value is the most recent action
+                // targeting this exact LHS (the pre-loop initializer or the
+                // previous iteration's result); fall back to the wire itself.
+                RTLIL::SigSpec acc = lhs_sig;
+                for (const auto& act : case_rule->actions)
+                    if (act.first == lhs_sig) acc = act.second;
+                if (acc.size() < rhs_sig.size()) acc.extend_u0(rhs_sig.size());
+                else if (acc.size() > rhs_sig.size()) rhs_sig.extend_u0(acc.size());
+                RTLIL::SigSpec c;
+                bool did = true;
+                switch (assign->VpiOpType()) {
+                case vpiBitOrOp:  c = module->Or (NEW_ID, acc, rhs_sig); break;
+                case vpiBitAndOp: c = module->And(NEW_ID, acc, rhs_sig); break;
+                case vpiBitXorOp: c = module->Xor(NEW_ID, acc, rhs_sig); break;
+                case vpiAddOp:    c = module->Add(NEW_ID, acc, rhs_sig); break;
+                case vpiSubOp:    c = module->Sub(NEW_ID, acc, rhs_sig); break;
+                case vpiMultOp:   c = module->Mul(NEW_ID, acc, rhs_sig); break;
+                case vpiDivOp:    c = module->Div(NEW_ID, acc, rhs_sig); break;
+                case vpiModOp:    c = module->Mod(NEW_ID, acc, rhs_sig); break;
+                case vpiLShiftOp: c = module->Shl(NEW_ID, acc, rhs_sig); break;
+                case vpiRShiftOp: c = module->Shr(NEW_ID, acc, rhs_sig); break;
+                default: did = false;
+                }
+                if (did) rhs_sig = c;
+            }
+
             // Add the assignment action
             if (lhs_sig.size() > 0) {
                 // Truncate or extend RHS to match LHS width
@@ -894,14 +927,11 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 if (init_stmt->UhdmType() == uhdmassignment) {
                     const assignment* init_assign = any_cast<const assignment*>(init_stmt);
                     if (init_assign->Lhs()) {
-                        // Handle both ref_obj and ref_var (integer variables use ref_var)
-                        if (init_assign->Lhs()->UhdmType() == uhdmref_obj) {
-                            const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
-                            loop_var_name = ref->VpiName();
-                        } else if (init_assign->Lhs()->UhdmType() == uhdmref_var) {
-                            const ref_var* ref = any_cast<const ref_var*>(init_assign->Lhs());
-                            loop_var_name = ref->VpiName();
-                        }
+                        // A locally-declared loop var (`for (int i=0; ...)`) has
+                        // the variable DECLARATION itself as the init Lhs (an
+                        // int_var/integer_var/logic_var), not a ref_obj/ref_var.
+                        // Any of these carries the name via VpiName().
+                        loop_var_name = init_assign->Lhs()->VpiName();
                         
                         if (!loop_var_name.empty() && init_assign->Rhs() && init_assign->Rhs()->UhdmType() == uhdmconstant) {
                             const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
