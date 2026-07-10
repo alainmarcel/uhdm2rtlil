@@ -9003,6 +9003,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     // prefix (`sub.req_dly[DLY]`).  Stride = the element struct
                     // width; for the collapsed 1-element interface array this is
                     // the whole base wire and any index resolves to offset 0.
+                    // Index and bound sub-expressions may be computed
+                    // (`$clog2(sub.CFG_BUS_BYT)-1`); force constant folding so the
+                    // arithmetic reduces to a literal instead of emitting cells.
+                    bool saved_fcf = force_const_fold;
+                    force_const_fold = true;
                     int elem_off = 0;
                     int elem_w = ts ? get_width_from_typespec(const_cast<typespec*>(ts), inst) : 0;
                     if (elem_w <= 0) elem_w = base_wire->width;
@@ -9038,6 +9043,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             bounds_ok = true;
                         }
                     }
+                    force_const_fold = saved_fcf;
                     if (off_ok && bounds_ok && len > 0) {
                         int abs_start = elem_off + field_offset + lsb;
                         if (abs_start >= 0 && abs_start + len <= base_wire->width) {
