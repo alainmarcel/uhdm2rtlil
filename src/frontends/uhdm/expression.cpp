@@ -27,6 +27,9 @@
 #include <uhdm/tagged_pattern.h>
 #include <uhdm/return_stmt.h>
 #include <uhdm/struct_net.h>
+#include <uhdm/modport.h>
+#include <uhdm/array_typespec.h>
+#include <uhdm/module_inst.h>
 #include <uhdm/uhdm_types.h>
 #include <uhdm/integer_typespec.h>
 #include <uhdm/int_typespec.h>
@@ -8922,8 +8925,10 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         auto& pe = *uhdm_hier->Path_elems();
         bool is_ps  = pe.back()->UhdmType() == uhdmpart_select;
         bool is_ips = pe.back()->UhdmType() == uhdmindexed_part_select;
-        if (is_ps || is_ips) {
+        bool last_ref = pe.back()->UhdmType() == uhdmref_obj;
+        if (is_ps || is_ips || last_ref) {
             bool ok_segs = true;
+            bool has_bit_select = false;
             std::vector<std::string> names;
             std::vector<const UHDM::expr*> seg_idx;  // array index per segment
             for (size_t i = 0; i + 1 < pe.size(); i++) {
@@ -8931,15 +8936,22 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     names.push_back(std::string(pe[i]->VpiName()));
                     seg_idx.push_back(nullptr);
                 } else if (pe[i]->UhdmType() == uhdmbit_select) {
+                    has_bit_select = true;
                     auto bs = any_cast<const bit_select*>(pe[i]);
                     names.push_back(std::string(bs->VpiName()));
                     seg_idx.push_back(bs->VpiIndex());
                 } else { ok_segs = false; break; }
             }
+            // Whole-field read of an array element (`sub.req_dly[DLY].siz`) — the
+            // last element is a plain field ref_obj, not a select.  Only fire when
+            // an array bit_select is present, so plain member accesses handled by
+            // other paths (e.g. `sub.req.adr`) are left untouched.
+            bool is_whole = last_ref && has_bit_select;
             const part_select* ps = is_ps ? any_cast<const part_select*>(pe.back()) : nullptr;
             const indexed_part_select* ips = is_ips ? any_cast<const indexed_part_select*>(pe.back()) : nullptr;
             bool have_ranges = is_ps ? (ps->Left_range() && ps->Right_range())
-                                     : (ips->Base_expr() && ips->Width_expr());
+                             : is_ips ? (ips->Base_expr() && ips->Width_expr())
+                             : is_whole;
             if (ok_segs && have_ranges) {
                 names.push_back(std::string(pe.back()->VpiName()));  // sliced field
                 seg_idx.push_back(nullptr);
@@ -8988,6 +9000,59 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             }
                         }
                     }
+                    // A flattened interface ARRAY signal (`sub.req_dly`) is absent
+                    // from wire_map and its bit_select/field refs carry no
+                    // typespec.  Resolve the element struct type from the
+                    // interface itself: modport port names[0] -> interface_inst ->
+                    // net names[split-1] -> (array_typespec Elem_typespec ->)
+                    // struct_typespec.  (tcb_lite_lib_logsize2byteena reads
+                    // `sub.req_dly[DLY].siz` / `.ndn` this way.)
+                    if (!ts && has_bit_select && split >= 2) {
+                        const interface_inst* iface = nullptr;
+                        if (auto mi = dynamic_cast<const module_inst*>(inst))
+                            if (mi->Ports())
+                                for (auto p : *mi->Ports()) {
+                                    if (std::string(p->VpiName()) != names[0]) continue;
+                                    const any* lc = p->Low_conn();
+                                    if (lc && lc->UhdmType() == uhdmref_obj)
+                                        if (auto a = any_cast<const ref_obj*>(lc)->Actual_group()) lc = a;
+                                    if (lc && lc->UhdmType() == uhdmmodport) {
+                                        auto mp = any_cast<const modport*>(lc);
+                                        if (mp && mp->VpiParent() &&
+                                            mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                                            iface = any_cast<const interface_inst*>(mp->VpiParent());
+                                    }
+                                    break;
+                                }
+                        auto net_struct_ts = [&](const interface_inst* ii) -> const typespec* {
+                            if (!ii || !ii->Nets()) return nullptr;
+                            for (auto n : *ii->Nets()) {
+                                if (std::string(n->VpiName()) != names[split-1]) continue;
+                                const ref_typespec* rts = nullptr;
+                                if (auto ln = dynamic_cast<const UHDM::logic_net*>(n)) rts = ln->Typespec();
+                                else if (auto sn = dynamic_cast<const UHDM::struct_net*>(n)) rts = sn->Typespec();
+                                if (!rts) return nullptr;
+                                const typespec* a = rts->Actual_typespec();
+                                if (a && a->UhdmType() == uhdmarray_typespec)
+                                    if (auto et = any_cast<const UHDM::array_typespec*>(a)->Elem_typespec())
+                                        a = et->Actual_typespec();
+                                return a;
+                            }
+                            return nullptr;
+                        };
+                        ts = net_struct_ts(iface);
+                        // The elaborated interface copy may carry an array_net
+                        // without the struct typespec; fall back to the definition
+                        // in AllInterfaces, which keeps the element struct type.
+                        if (!ts && iface && uhdm_design && uhdm_design->AllInterfaces()) {
+                            std::string dn = std::string(iface->VpiDefName());
+                            for (auto ii : *uhdm_design->AllInterfaces())
+                                if (std::string(ii->VpiDefName()) == dn) {
+                                    ts = net_struct_ts(ii);
+                                    if (ts) break;
+                                }
+                        }
+                    }
                     // Field offset within the element struct.
                     int field_offset = 0, field_width = base_wire->width;
                     if (split < names.size()) {
@@ -9018,7 +9083,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         elem_off += ix.as_const().as_int() * elem_w;
                     }
                     // Field range is treated as 0-based (LSB at bit 0).  Compute
-                    // the slice's LSB position and length for either select form.
+                    // the slice's LSB position and length for each form.
                     int lsb = 0, len = 0;
                     bool bounds_ok = false;
                     if (is_ps) {
@@ -9030,7 +9095,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             len = std::abs(l - r) + 1;
                             bounds_ok = true;
                         }
-                    } else {
+                    } else if (is_ips) {
                         RTLIL::SigSpec bs = import_expression(ips->Base_expr(), input_mapping);
                         RTLIL::SigSpec ws = import_expression(ips->Width_expr(), input_mapping);
                         if (bs.is_fully_const() && ws.is_fully_const()) {
@@ -9042,6 +9107,11 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             len = w;
                             bounds_ok = true;
                         }
+                    } else {
+                        // Whole-field read: the entire field.
+                        lsb = 0;
+                        len = field_width;
+                        bounds_ok = true;
                     }
                     force_const_fold = saved_fcf;
                     if (off_ok && bounds_ok && len > 0) {
