@@ -343,6 +343,35 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                     int sw = get_width(const_cast<UHDM::any*>(obj), ctx);
                     return (sw > 0) ? sw : 1;
                 };
+                // An interface UNPACKED-ARRAY signal (`req_t req_dly [0:CFG.HSK.DLY]`
+                // in tcb_lite_if) is elaborated as an `array_net` under the interface
+                // INSTANCE, carrying the dimension in its Range and the element type
+                // in Nets()[0].  The interface DEFINITION, however, collapses it to a
+                // bare element-width `logic_net` (dimension dropped) — and that is
+                // what Nets()/the struct-typespec search below sample, sizing the
+                // flattened wire to ONE element.  Reads of `req_dly[DLY]` (DLY>=1)
+                // then fall out of bounds and resolve to X (degu SoC fetch response:
+                // tcb_lite_lib_logsize2byteena `sub.req_dly[DLY].adr/.siz/.ndn`).
+                // Recover the element COUNT from the elaborated instance's
+                // Array_nets() so the caller can multiply the element width.
+                auto iface_array_count = [&](const std::string& sig) -> int {
+                    if (!iface_inst || !iface_inst->Array_nets()) return 1;
+                    for (auto an : *iface_inst->Array_nets()) {
+                        if (std::string(an->VpiName()) != sig) continue;
+                        int total = 1;
+                        if (an->Ranges())
+                            for (auto r : *an->Ranges()) {
+                                if (!r->Left_expr() || !r->Right_expr()) return 1;
+                                RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                if (ls.is_fully_const() && rs.is_fully_const())
+                                    total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                else return 1;
+                            }
+                        return total > 0 ? total : 1;
+                    }
+                    return 1;
+                };
                 // For an ARRAY modport port the interface TYPE name often doesn't
                 // resolve (interface_type empty), so the AllInterfaces search far
                 // above is skipped and `mp` stays null — and the iface_inst found
@@ -463,6 +492,9 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                             if (sw_ts > 0) sig_w = sw_ts;
                             iface_signal_struct_ts_[full_name] = found_struct_ts;
                         }
+                        // Restore the unpacked-array dimension the interface
+                        // definition dropped (element width * element count).
+                        sig_w *= iface_array_count(sig_name);
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         if (width_obj) add_src_attribute(sw->attributes, width_obj);
@@ -516,7 +548,7 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                                        const std::string& sig_name) {
                         std::string full_name = portname + "." + sig_name;
                         if (name_map.count(full_name)) return;
-                        int sig_w = compute_signal_width(obj);
+                        int sig_w = compute_signal_width(obj) * iface_array_count(sig_name);
                         RTLIL::Wire* sw = module->addWire(
                             RTLIL::escape_id(full_name), sig_w);
                         add_src_attribute(sw->attributes, obj);
