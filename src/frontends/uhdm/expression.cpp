@@ -6335,6 +6335,18 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
     }
+    // Bare `CFG.HSK.DLY` — an interface's own struct parameter substituted into a
+    // signal width without a modport prefix (tcb_lite_if `[CFG.HSK.DLY-1:0]`).
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
+        current_instance) {
+        std::string v = eval_bare_iface_param_field(uhdm_hier, current_instance);
+        if (!v.empty()) {
+            int iv = atoi(v.c_str());
+            log("    hier_path: %s -> %d via bare interface struct parameter\n",
+                path_name.c_str(), iv);
+            return RTLIL::SigSpec(RTLIL::Const(iv, 32));
+        }
+    }
     // `CFG.BUS.DAT` where the base is a struct-typed PARAMETER directly (Surelog
     // inlines `sub.CFG.BUS.DAT` into a device paramod's port ranges, substituting
     // the interface's `CFG` parameter for `sub.CFG`).  Resolves without needing
