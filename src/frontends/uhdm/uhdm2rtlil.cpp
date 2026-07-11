@@ -851,6 +851,109 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
     return "";
 }
 
+// BARE `CFG.HSK.DLY` — see header.  Surelog substitutes an interface's own struct
+// parameter into a signal width (`logic [CFG.HSK.DLY-1:0] ...` in tcb_lite_if)
+// WITHOUT a modport prefix, and leaves pe[0]=`CFG`'s Actual_group null.  Find the
+// interface via any of child_inst's interface ports and walk the field chain.
+std::string UhdmImporter::eval_bare_iface_param_field(const hier_path* hp,
+                                          const module_inst* child_inst) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2 || !child_inst)
+        return "";
+    auto& pe = *hp->Path_elems();
+    std::string pname = std::string(pe[0]->VpiName());   // "CFG"
+    // pe[0] must NOT be one of child_inst's ports — otherwise this is the modport
+    // form (`sub.CFG.BUS.DAT`) handled by eval_iface_param_field.
+    if (child_inst->Ports())
+        for (auto p : *child_inst->Ports())
+            if (std::string(p->VpiName()) == pname) return "";
+    auto has_param = [&](const interface_inst* ii) -> bool {
+        if (!ii) return false;
+        if (ii->Param_assigns())
+            for (auto pa : *ii->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == pname) return true;
+        if (ii->Parameters())
+            for (auto p : *ii->Parameters())
+                if (std::string(p->VpiName()) == pname) return true;
+        return false;
+    };
+    auto iface_of_port = [&](const port* p) -> const interface_inst* {
+        const any* lc = p->Low_conn();
+        if (lc && lc->UhdmType() == uhdmref_obj)
+            if (auto a = any_cast<const ref_obj*>(lc)->Actual_group()) lc = a;
+        if (lc && lc->UhdmType() == uhdmmodport) {
+            auto mp = any_cast<const modport*>(lc);
+            if (mp && mp->VpiParent() &&
+                mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                return any_cast<const interface_inst*>(mp->VpiParent());
+        }
+        if (lc && lc->UhdmType() == uhdminterface_inst)
+            return any_cast<const interface_inst*>(lc);
+        return nullptr;
+    };
+    const interface_inst* iface = nullptr;
+    if (child_inst->Ports())
+        for (auto p : *child_inst->Ports()) {
+            auto ii = iface_of_port(p);
+            if (has_param(ii)) { iface = ii; break; }
+        }
+    if (!iface)
+        if (auto parent = dynamic_cast<const module_inst*>(child_inst->VpiParent())) {
+            if (parent->Interfaces())
+                for (auto ii : *parent->Interfaces())
+                    if (has_param(ii)) { iface = ii; break; }
+        }
+    // Elaborated interface copy may lack the parameter; fall back to the
+    // definition in AllInterfaces.
+    if (iface && !has_param(iface) && uhdm_design && uhdm_design->AllInterfaces()) {
+        std::string dn = std::string(iface->VpiDefName());
+        for (auto ii : *uhdm_design->AllInterfaces())
+            if (std::string(ii->VpiDefName()) == dn && has_param(ii)) { iface = ii; break; }
+    }
+    if (!iface) return "";
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    if (iface->Param_assigns())
+        for (auto pa : *iface->Param_assigns()) {
+            auto l = dynamic_cast<const parameter*>(pa->Lhs());
+            if (!l || std::string(l->VpiName()) != pname) continue;
+            val = dynamic_cast<const expr*>(pa->Rhs());
+            if (auto rt = l->Typespec()) cur_ts = rt->Actual_typespec();
+            break;
+        }
+    if (!val && iface->Parameters())
+        for (auto p : *iface->Parameters()) {
+            if (std::string(p->VpiName()) != pname) continue;
+            if (auto par = dynamic_cast<const parameter*>(p)) {
+                val = par->Expr();
+                if (auto rt = par->Typespec()) cur_ts = rt->Actual_typespec();
+            }
+            break;
+        }
+    if (!val) return "";
+    // Walk the field path pe[1..] (HSK.DLY).
+    for (size_t i = 1; i < pe.size() && val; i++) {
+        std::string field = std::string(pe[i]->VpiName());
+        const typespec* next_ts = nullptr;
+        const expr* next = find_tagged_field(val, field);
+        int idx = struct_member_index(cur_ts, field, &next_ts);
+        if (!next && val->UhdmType() == uhdmoperation && idx >= 0) {
+            auto op = any_cast<const operation*>(val);
+            if (op->Operands() && idx < (int)op->Operands()->size())
+                next = dynamic_cast<const expr*>((*op->Operands())[idx]);
+        }
+        val = next;
+        cur_ts = next_ts;
+    }
+    if (val && val->UhdmType() != uhdmconstant) {
+        long out;
+        if (eval_iface_local_const(iface, val, out)) return std::to_string(out);
+    }
+    if (auto c = dynamic_cast<const constant*>(val))
+        return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
+    return "";
+}
+
 // Recursively fold a scalar interface-localparam value expression (see header).
 bool UhdmImporter::eval_iface_local_const(const interface_inst* iface,
                                           const UHDM::any* ve, long& out) {
