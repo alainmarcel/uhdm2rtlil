@@ -8926,7 +8926,8 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         bool is_ps  = pe.back()->UhdmType() == uhdmpart_select;
         bool is_ips = pe.back()->UhdmType() == uhdmindexed_part_select;
         bool last_ref = pe.back()->UhdmType() == uhdmref_obj;
-        if (is_ps || is_ips || last_ref) {
+        bool is_bitsel = pe.back()->UhdmType() == uhdmbit_select;
+        if (is_ps || is_ips || last_ref || is_bitsel) {
             bool ok_segs = true;
             bool has_bit_select = false;
             std::vector<std::string> names;
@@ -8947,10 +8948,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             // an array bit_select is present, so plain member accesses handled by
             // other paths (e.g. `sub.req.adr`) are left untouched.
             bool is_whole = last_ref && has_bit_select;
+            // Bit-select of a struct FIELD (`sub.req.byt[N]`): the last element is
+            // a bit_select whose base is a vector field (not an array element).
+            const bit_select* fbs = is_bitsel ? any_cast<const bit_select*>(pe.back()) : nullptr;
             const part_select* ps = is_ps ? any_cast<const part_select*>(pe.back()) : nullptr;
             const indexed_part_select* ips = is_ips ? any_cast<const indexed_part_select*>(pe.back()) : nullptr;
             bool have_ranges = is_ps ? (ps->Left_range() && ps->Right_range())
                              : is_ips ? (ips->Base_expr() && ips->Width_expr())
+                             : is_bitsel ? (fbs->VpiIndex() != nullptr)
                              : is_whole;
             if (ok_segs && have_ranges) {
                 names.push_back(std::string(pe.back()->VpiName()));  // sliced field
@@ -9007,7 +9012,7 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     // net names[split-1] -> (array_typespec Elem_typespec ->)
                     // struct_typespec.  (tcb_lite_lib_logsize2byteena reads
                     // `sub.req_dly[DLY].siz` / `.ndn` this way.)
-                    if (!ts && has_bit_select && split >= 2) {
+                    if (!ts && split >= 2) {
                         const interface_inst* iface = nullptr;
                         if (auto mi = dynamic_cast<const module_inst*>(inst))
                             if (mi->Ports())
@@ -9105,6 +9110,18 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                             lsb = (ips->VpiIndexedPartSelectType() == vpiPosIndexed)
                                       ? base : base - w + 1;
                             len = w;
+                            bounds_ok = true;
+                        }
+                    } else if (is_bitsel) {
+                        // Bit-select of a vector struct field: one bit at the
+                        // field-relative index.  Only valid when the bit_select's
+                        // base is a struct FIELD (a remaining member after the base
+                        // wire) — a bare array-element bit_select (`sub.req_dly[0]`)
+                        // has no remaining field and is left to other handlers.
+                        RTLIL::SigSpec ix = import_expression(fbs->VpiIndex(), input_mapping);
+                        if (split < names.size() && ix.is_fully_const()) {
+                            lsb = ix.as_const().as_int();
+                            len = 1;
                             bounds_ok = true;
                         }
                     } else {
