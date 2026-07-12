@@ -8978,20 +8978,27 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 // its element struct type.
                 RTLIL::Wire* base_wire = nullptr;
                 size_t split = 0;
+                std::string base_prefix;
                 for (size_t k = names.size(); k >= 1; k--) {
                     std::string cand;
                     for (size_t j = 0; j < k; j++) { if (j) cand += "."; cand += names[j]; }
-                    if (name_map.count(cand)) { base_wire = name_map[cand]; split = k; break; }
+                    if (name_map.count(cand)) { base_wire = name_map[cand]; split = k; base_prefix = cand; break; }
                     if (k == 1) break;
                 }
                 if (base_wire) {
                     bool off_ok = true;
                     // Element struct typespec of base_wire (needed for the field
-                    // walk AND the array-element stride).  Prefer wire_map; the
-                    // flattened interface signal is often absent there, so fall
-                    // back to the last consumed segment's own typespec.
+                    // walk AND the array-element stride).  Authoritative source:
+                    // the struct/union typespec recorded for this interface signal
+                    // during modport flattening (module.cpp import_port) — the
+                    // generic fallbacks below can otherwise pick a stale/foreign
+                    // typespec (e.g. a union) for an interface struct signal like
+                    // `tcb_ifu.rsp`.
                     const typespec* ts = nullptr;
+                    if (!base_prefix.empty() && iface_signal_struct_ts_.count(base_prefix))
+                        ts = iface_signal_struct_ts_[base_prefix];
                     for (auto& kv : wire_map) {
+                        if (ts) break;
                         if (kv.second != base_wire) continue;
                         const ref_typespec* rts = nullptr;
                         if (auto ln = dynamic_cast<const UHDM::logic_net*>(kv.first))   rts = ln->Typespec();
