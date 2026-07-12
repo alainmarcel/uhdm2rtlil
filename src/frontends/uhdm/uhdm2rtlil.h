@@ -547,6 +547,23 @@ struct UhdmImporter {
     // child instance's parameter value; "" on failure.  See uhdm2rtlil.cpp.
     std::string eval_iface_param_field(const UHDM::hier_path* hp,
                                        const UHDM::module_inst* child_inst);
+    // Shared core of the above: resolve the interface + walk the CFG field path,
+    // returning the resolved interface, the field value expr and its typespec.
+    bool resolve_iface_param(const UHDM::hier_path* hp,
+                             const UHDM::module_inst* child_inst,
+                             const UHDM::interface_inst*& iface_out,
+                             const UHDM::expr*& val_out,
+                             const UHDM::typespec*& ts_out);
+    // WHOLE-STRUCT interface parameter field (`man.CFG.BUS`, `man.CFG`): build a
+    // constant SigSpec from the struct's field values (used by the interface
+    // parameter-consistency assertions).  Empty SigSpec if not a resolvable
+    // struct.
+    RTLIL::SigSpec eval_iface_param_struct(const UHDM::hier_path* hp,
+                                           const UHDM::module_inst* child_inst);
+    // Recursively flatten a struct-parameter value expr (an assignment pattern)
+    // to a constant SigSpec using its typespec (first member at MSB).
+    RTLIL::SigSpec struct_param_to_sig(const UHDM::expr* val,
+                                       const UHDM::typespec* ts);
     // BARE form `CFG.HSK.DLY` — an interface's own struct parameter substituted
     // into a signal width WITHOUT a modport prefix (pe[0] IS the parameter, not a
     // port).  Finds the interface via any of child_inst's interface ports; ""

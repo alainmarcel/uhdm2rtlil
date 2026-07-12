@@ -6335,6 +6335,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 path_name.c_str(), iv);
             return RTLIL::SigSpec(RTLIL::Const(iv, 32));
         }
+        // WHOLE-STRUCT form (`man.CFG.BUS`, `man.CFG`): the field is a struct,
+        // not a scalar — build a constant SigSpec from its members.  Used by the
+        // interface parameter-consistency assertions
+        // (`assert (man.CFG.BUS == sub.CFG.BUS)` in the TCB register/demux).
+        RTLIL::SigSpec ss = eval_iface_param_struct(uhdm_hier, current_instance);
+        if (ss.size() > 0) {
+            if (mode_debug)
+                log("    hier_path: %s -> %d-bit interface struct parameter\n",
+                    path_name.c_str(), ss.size());
+            return ss;
+        }
     }
     // Bare `CFG.HSK.DLY` — an interface's own struct parameter substituted into a
     // signal width without a modport prefix (tcb_lite_if `[CFG.HSK.DLY-1:0]`).
