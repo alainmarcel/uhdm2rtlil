@@ -9250,7 +9250,6 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         // This is a struct member reference but we couldn't resolve it above
         // Try to calculate the offset dynamically from the struct typespec
         std::string struct_name = path_name.substr(0, path_name.find('.'));
-        
         if (name_map.count(struct_name)) {
             RTLIL::Wire* struct_wire = name_map[struct_name];
             
@@ -9263,9 +9262,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 }
             }
             
+            const ref_typespec* ref_ts = nullptr;
             if (struct_uhdm_obj) {
                 // Get the typespec
-                const ref_typespec* ref_ts = nullptr;
                 if (auto logic_net = dynamic_cast<const UHDM::logic_net*>(struct_uhdm_obj)) {
                     ref_ts = logic_net->Typespec();
                 } else if (auto net_obj = dynamic_cast<const UHDM::net*>(struct_uhdm_obj)) {
@@ -9277,21 +9276,35 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 } else if (auto union_var_obj = dynamic_cast<const UHDM::union_var*>(struct_uhdm_obj)) {
                     ref_ts = union_var_obj->Typespec();
                 }
-                
-                if (ref_ts && ref_ts->Actual_typespec()) {
-                    const typespec* ts = ref_ts->Actual_typespec();
-                    
-                    // Calculate bit offset for struct member access
-                    std::string remaining_path = path_name.substr(struct_name.length() + 1);
-                    int bit_offset = 0;
-                    int member_width = 0;
-                    
-                    if (calculate_struct_member_offset(ts, remaining_path, inst, bit_offset, member_width)) {
-                        if (mode_debug)
-                            log("    Calculated struct member '%s' offset=%d, width=%d\n", 
-                                path_name.c_str(), bit_offset, member_width);
-                        return RTLIL::SigSpec(struct_wire, bit_offset, member_width);
+            }
+            const typespec* ts = (ref_ts && ref_ts->Actual_typespec())
+                                     ? ref_ts->Actual_typespec() : nullptr;
+            // Fallback for a LOCAL struct variable absent from wire_map (its
+            // wire exists in name_map but the UHDM object was not recorded):
+            // read the typespec from the base ref_obj's Actual_group (the
+            // variable's own declaration).  A local `dec_t idu_dec` reading
+            // `idu_dec.gpr.rs1` (degu core decode) resolves this way.
+            if (!ts && uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
+                if (auto r = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                    if (auto ag = r->Actual_group()) {
+                        const ref_typespec* rt = nullptr;
+                        if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rt = sv->Typespec();
+                        else if (auto uv = dynamic_cast<const UHDM::union_var*>(ag)) rt = uv->Typespec();
+                        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rt = lv->Typespec();
+                        else if (auto n = dynamic_cast<const UHDM::net*>(ag)) rt = n->Typespec();
+                        if (rt) ts = rt->Actual_typespec();
                     }
+            }
+            if (ts) {
+                // Calculate bit offset for struct member access
+                std::string remaining_path = path_name.substr(struct_name.length() + 1);
+                int bit_offset = 0;
+                int member_width = 0;
+                if (calculate_struct_member_offset(ts, remaining_path, inst, bit_offset, member_width)) {
+                    if (mode_debug)
+                        log("    Calculated struct member '%s' offset=%d, width=%d\n",
+                            path_name.c_str(), bit_offset, member_width);
+                    return RTLIL::SigSpec(struct_wire, bit_offset, member_width);
                 }
             }
         }
