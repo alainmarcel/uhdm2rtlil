@@ -364,6 +364,30 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                         int w = get_width_from_typespec(sts, current_instance);
                         if (w > 0) width = w;
                     }
+                    // Surelog collapses an interface UNPACKED-array net
+                    // (`req_t req_dly [0:CFG.HSK.DLY]`) to a bare element-width
+                    // `logic_net` in Nets(), keeping the dimension only on the
+                    // elaborated instance's `array_net`.  Multiply by the element
+                    // count so this per-instance wire matches the child module's
+                    // flattened port width (module.cpp iface_array_count) — else the
+                    // hierarchy pass truncates 150->75 and drops the delayed element
+                    // (degu SoC tcb_ifu.req_dly / fetch response).
+                    if (interface->Array_nets())
+                        for (auto an : *interface->Array_nets()) {
+                            if (std::string(an->VpiName()) != net_name) continue;
+                            int total = 1;
+                            if (an->Ranges())
+                                for (auto r : *an->Ranges()) {
+                                    if (!r->Left_expr() || !r->Right_expr()) { total = 1; break; }
+                                    RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                                    RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                                    if (ls.is_fully_const() && rs.is_fully_const())
+                                        total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                                    else { total = 1; break; }
+                                }
+                            if (total > 1) width *= total;
+                            break;
+                        }
 
                     if (mode_debug)
                         log("UHDM: Creating interface signal from Nets: %s (width=%d)\n", full_name.c_str(), width);

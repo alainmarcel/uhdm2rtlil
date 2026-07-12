@@ -6316,8 +6316,9 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         path_name = std::string(full_name_view);
     }
     
-    log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
-        std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
+    if (mode_debug)
+        log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
+            std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
 
     // Nested interface struct-parameter field: `s.CFG.BUS.DAT` where `s` is a
     // modport port and `CFG` is a (nested struct) parameter on the connected
