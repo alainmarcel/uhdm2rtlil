@@ -807,18 +807,59 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
                     }
         return nullptr;
     };
-    if (child_inst->Ports())
-        for (auto p : *child_inst->Ports()) {
+    // When child_inst is the AllModules DEFINITION (its `base` port carries no
+    // High_conn), the import is the standalone def pass with no connection to
+    // resolve — it emits a spurious "could not resolve" even though the
+    // elaborated instance import (which builds the netlist) succeeds.  Find an
+    // elaborated instance of the same def in the design and use ITS connection.
+    // A non-paramod module shares one CFG across all instances, so any
+    // elaborated copy's connection is representative (degu SoC gpio/uart/error
+    // peripheral device defs).
+    const module_inst* eff_inst = child_inst;
+    {
+        bool has_hc = false;
+        if (child_inst->Ports())
+            for (auto p : *child_inst->Ports())
+                if (std::string(p->VpiName()) == base) { has_hc = p->High_conn() != nullptr; break; }
+        if (!has_hc && uhdm_design && uhdm_design->TopModules()) {
+            std::string def = std::string(child_inst->VpiDefName());
+            std::function<const module_inst*(const any*)> find_elab =
+                [&](const any* s) -> const module_inst* {
+                if (!s) return nullptr;
+                const std::vector<module_inst*>* mods = nullptr;
+                const std::vector<gen_scope_array*>* gsa = nullptr;
+                if (s->UhdmType() == uhdmmodule_inst) {
+                    auto m = any_cast<const module_inst*>(s);
+                    if (std::string(m->VpiDefName()) == def && m != child_inst && m->Ports())
+                        for (auto p : *m->Ports())
+                            if (std::string(p->VpiName()) == base && p->High_conn())
+                                return m;
+                    mods = m->Modules(); gsa = m->Gen_scope_arrays();
+                } else if (s->UhdmType() == uhdmgen_scope) {
+                    auto g = any_cast<const gen_scope*>(s);
+                    mods = g->Modules(); gsa = g->Gen_scope_arrays();
+                }
+                if (mods) for (auto c : *mods) if (auto r = find_elab(c)) return r;
+                if (gsa) for (auto ga : *gsa) if (ga->Gen_scopes())
+                    for (auto gs : *ga->Gen_scopes()) if (auto r = find_elab(gs)) return r;
+                return nullptr;
+            };
+            for (auto t : *uhdm_design->TopModules())
+                if (auto r = find_elab(t)) { eff_inst = r; break; }
+        }
+    }
+    if (eff_inst->Ports())
+        for (auto p : *eff_inst->Ports()) {
             if (std::string(p->VpiName()) != base) continue;
             const any* hc = p->High_conn();
             bool is_arr_elem = hc && hc->UhdmType() == uhdmbit_select;
-            // For an interface-ARRAY-ELEMENT connection (`.sub(arr[0])`) the
-            // pe[0] modport-parent port copy is a value-less / DEFAULT stub, so
-            // the bit_select High_conn (the actual connected element) is
-            // authoritative and preferred even if the stub carries a (wrong)
-            // default.  For a plain connection only re-resolve when we found no
-            // value at all.
-            if (!is_arr_elem && param_value(iface)) break;
+            // The parent-side High_conn is the ACTUAL connected interface
+            // instance and is authoritative for the parameter override; the
+            // pe[0] modport-parent port copy is often a value-less / DEFAULT
+            // stub (always for an interface-ARRAY-ELEMENT connection
+            // `.sub(arr[0])`, and sometimes for a plain `.s(bus)` whose override
+            // wasn't propagated onto the copy).  Prefer the connected instance
+            // whenever it actually carries a value for the parameter.
             const any* a = nullptr;
             if (is_arr_elem)
                 a = any_cast<const bit_select*>(hc)->Actual_group();
