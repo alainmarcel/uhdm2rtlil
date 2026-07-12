@@ -783,6 +783,59 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
                 break;
             }
     }
+    // The interface copy reached above may declare `pname` but carry no VALUE
+    // (its Param_assigns is empty and the Parameter has no Expr) — this happens
+    // for an interface-ARRAY-element connection (`.sub(tcb_lsd[0])`), whose port
+    // copy is a value-less stub.  The actual valued instance is the connected
+    // array element, reachable via the child port's bit_select High_conn.
+    auto param_value = [&](const interface_inst* ii) -> const expr* {
+        if (!ii) return nullptr;
+        if (ii->Param_assigns())
+            for (auto pa : *ii->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == pname)
+                        if (auto r = dynamic_cast<const expr*>(pa->Rhs())) return r;
+        if (ii->Parameters())
+            for (auto p : *ii->Parameters())
+                if (std::string(p->VpiName()) == pname)
+                    if (auto par = dynamic_cast<const parameter*>(p)) {
+                        if (par->Expr()) return par->Expr();
+                        if (par->VpiParent() &&
+                            par->VpiParent()->UhdmType() == uhdmparam_assign)
+                            return dynamic_cast<const expr*>(
+                                any_cast<const param_assign*>(par->VpiParent())->Rhs());
+                    }
+        return nullptr;
+    };
+    if (child_inst->Ports())
+        for (auto p : *child_inst->Ports()) {
+            if (std::string(p->VpiName()) != base) continue;
+            const any* hc = p->High_conn();
+            bool is_arr_elem = hc && hc->UhdmType() == uhdmbit_select;
+            // For an interface-ARRAY-ELEMENT connection (`.sub(arr[0])`) the
+            // pe[0] modport-parent port copy is a value-less / DEFAULT stub, so
+            // the bit_select High_conn (the actual connected element) is
+            // authoritative and preferred even if the stub carries a (wrong)
+            // default.  For a plain connection only re-resolve when we found no
+            // value at all.
+            if (!is_arr_elem && param_value(iface)) break;
+            const any* a = nullptr;
+            if (is_arr_elem)
+                a = any_cast<const bit_select*>(hc)->Actual_group();
+            else if (hc && hc->UhdmType() == uhdmref_obj)
+                a = any_cast<const ref_obj*>(hc)->Actual_group();
+            const interface_inst* conn = nullptr;
+            if (a && a->UhdmType() == uhdminterface_inst)
+                conn = any_cast<const interface_inst*>(a);
+            else if (a && a->UhdmType() == uhdmmodport) {
+                auto mp2 = any_cast<const modport*>(a);
+                if (mp2 && mp2->VpiParent() &&
+                    mp2->VpiParent()->UhdmType() == uhdminterface_inst)
+                    conn = any_cast<const interface_inst*>(mp2->VpiParent());
+            }
+            if (param_value(conn)) iface = conn;
+            break;
+        }
     if (!iface) return "";
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
