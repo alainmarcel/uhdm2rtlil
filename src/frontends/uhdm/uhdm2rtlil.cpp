@@ -668,10 +668,13 @@ static int struct_member_index(const typespec* ts, const std::string& field,
 // in the elaborated form, POSITIONAL constants in struct-declaration order) ->
 // the named field chain (mapped to operand indices via the struct typespec).
 // Returns the value as a decimal string, or "" on failure.
-std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
-                                          const module_inst* child_inst) {
+bool UhdmImporter::resolve_iface_param(const hier_path* hp,
+                                          const module_inst* child_inst,
+                                          const interface_inst*& iface_out,
+                                          const expr*& val_out,
+                                          const typespec*& ts_out) {
     if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2 || !child_inst)
-        return "";
+        return false;
     auto& pe = *hp->Path_elems();
     std::string base  = std::string(pe[0]->VpiName());   // "sub"
     std::string pname = std::string(pe[1]->VpiName());   // "CFG" (or a scalar
@@ -877,7 +880,7 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
             if (param_value(conn)) iface = conn;
             break;
         }
-    if (!iface) return "";
+    if (!iface) return false;
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
     // Explicit override (elaborated value) in Param_assigns.
@@ -930,12 +933,25 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
         val = next;
         cur_ts = next_ts;
     }
+    iface_out = iface;
+    val_out = val;
+    ts_out = cur_ts;
+    return val != nullptr;
+}
+
+// Scalar int value of an interface struct-parameter field ("" on failure).
+std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
+                                          const module_inst* child_inst) {
+    const interface_inst* iface = nullptr;
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    if (!resolve_iface_param(hp, child_inst, iface, val, cur_ts)) return "";
     // A COMPUTED scalar interface localparam (`sub.OFF` where
     // OFF = $clog2(CFG.BUS.DAT/8)) leaves `val` as a non-constant expression;
     // Surelog stores neither its value nor BYT's in the elaborated model, so
     // ExprEval can't fold it.  Recursively evaluate the localparam chain in the
     // interface scope (degu SoC r5p_soc_memory `sub.CFG_BUS_OFF`).
-    if (val && val->UhdmType() != uhdmconstant && pe.size() == 2) {
+    if (val && val->UhdmType() != uhdmconstant && hp->Path_elems()->size() == 2) {
         long out;
         if (eval_iface_local_const(iface, val, out))
             return std::to_string(out);
@@ -943,6 +959,55 @@ std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
     if (auto c = dynamic_cast<const constant*>(val))
         return std::to_string(parse_vpi_value_to_int(std::string(c->VpiValue())));
     return "";
+}
+
+// Recursively flatten a struct-parameter value expr (an assignment pattern) to
+// a constant SigSpec using its typespec.  Packed layout: the first struct
+// member is the MSB.  Empty SigSpec if any member cannot be resolved.
+RTLIL::SigSpec UhdmImporter::struct_param_to_sig(const expr* val,
+                                                 const typespec* ts) {
+    if (!val || !ts) return RTLIL::SigSpec();
+    if (ts->UhdmType() == uhdmstruct_typespec) {
+        auto st = any_cast<const struct_typespec*>(ts);
+        if (!st->Members()) return RTLIL::SigSpec();
+        RTLIL::SigSpec sig;  // accumulated (earlier/higher members) at the MSB
+        for (auto m : *st->Members()) {
+            std::string mname = std::string(m->VpiName());
+            const typespec* mts = (m->Typespec() && m->Typespec()->Actual_typespec())
+                                      ? m->Typespec()->Actual_typespec() : nullptr;
+            const expr* mval = find_tagged_field(val, mname);
+            if (!mval && val->UhdmType() == uhdmoperation) {
+                int idx = struct_member_index(ts, mname, nullptr);
+                auto op = any_cast<const operation*>(val);
+                if (idx >= 0 && op->Operands() && idx < (int)op->Operands()->size())
+                    mval = dynamic_cast<const expr*>((*op->Operands())[idx]);
+            }
+            RTLIL::SigSpec msig = struct_param_to_sig(mval, mts);
+            if (msig.empty()) return RTLIL::SigSpec();
+            sig = {sig, msig};
+        }
+        return sig;
+    }
+    // Scalar member: the constant value sized to the member width.
+    int w = get_width_from_typespec(const_cast<typespec*>(ts), current_instance);
+    if (w <= 0) w = 32;
+    if (auto c = dynamic_cast<const constant*>(val))
+        return RTLIL::SigSpec(
+            RTLIL::Const(parse_vpi_value_to_int(std::string(c->VpiValue())), w));
+    return RTLIL::SigSpec();
+}
+
+// Whole-struct interface parameter field (`man.CFG.BUS`, `man.CFG`): a constant
+// SigSpec built from the struct's field values.  Used by the interface
+// parameter-consistency assertions (`assert (man.CFG.BUS == sub.CFG.BUS)`).
+RTLIL::SigSpec UhdmImporter::eval_iface_param_struct(const hier_path* hp,
+                                          const module_inst* child_inst) {
+    const interface_inst* iface = nullptr;
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    if (!resolve_iface_param(hp, child_inst, iface, val, cur_ts)) return RTLIL::SigSpec();
+    if (!cur_ts || cur_ts->UhdmType() != uhdmstruct_typespec) return RTLIL::SigSpec();
+    return struct_param_to_sig(val, cur_ts);
 }
 
 // BARE `CFG.HSK.DLY` — see header.  Surelog substitutes an interface's own struct
