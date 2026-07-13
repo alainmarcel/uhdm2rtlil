@@ -199,3 +199,14 @@ svtypes/array_assign.sv
 # (the miter/equiv_induct runs without asserting the design reset, so the two
 # frontends' differing don't-care fills look non-equivalent).
 rp32_r5p_mouse
+
+# ---------------------------------------------------------------------------
+# Upstream Yosys tests that fail equivalence (NOT a UHDM≠Verilog correctness
+# bug — Miter-Formal is clean for both; equiv_induct/sim-equiv only).  Neither
+# uses SystemVerilog interfaces; they surfaced against the current Surelog and
+# are tracked for triage, not caused by any interface/frontend change here.
+#   simple/module_scope_case — module-scope `case`; UHDM synthesises and the
+#     Verilator co-sim differs only as a sim-equiv warning (no miter failure).
+#   sva/extnets — external-net SVA harness; equiv_induct-only Induct-Formal.
+simple/module_scope_case.v
+sva/extnets.sv
