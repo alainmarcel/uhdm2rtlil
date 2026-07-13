@@ -524,7 +524,38 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
             // each scope's nets/vars as `\<iface>.<scope>.<var>` wires and drive
             // interface array elements via the same manual cont_assign/process
             // handling used for the interface body above.
+            // Guard: the generate scope drives/reads interface array elements
+            // (`req_dly[i]`).  Surelog sometimes leaves an unpacked-array
+            // interface signal only in Array_nets()/Array_vars() with no scalar
+            // Nets() entry, so the main signal loop above never materialized a
+            // flattened `\<iface>.<sig>` wire for it — importing the scope body
+            // would then reference a non-existent wire and hard-abort the whole
+            // read.  Only import when every array signal has a wire; otherwise
+            // skip gracefully (the struct-array delay line — e.g. the degu SoC
+            // tcb_ifu req_dly — remains a further gap, but the read is safe).
+            bool iface_gs_sigs_ok = true;
+            {
+                auto have_wire = [&](const std::string& nm) {
+                    if (nm.empty()) return;
+                    std::string full = interface_name + "." + nm;
+                    if (!(name_map.count(full) ||
+                          module->wire(RTLIL::escape_id(full))))
+                        iface_gs_sigs_ok = false;
+                };
+                if (interface->Array_nets())
+                    for (auto n : *interface->Array_nets())
+                        have_wire(std::string(n->VpiName()));
+                if (interface->Array_vars())
+                    for (auto v : *interface->Array_vars())
+                        have_wire(std::string(v->VpiName()));
+            }
             if (interface->Gen_scope_arrays() &&
+                !interface->Gen_scope_arrays()->empty() && !iface_gs_sigs_ok) {
+                log_warning("UHDM: interface %s generate scope references an "
+                            "unmaterialized array signal; skipping gen-scope "
+                            "import (struct-array delay line not yet supported)\n",
+                            interface_name.c_str());
+            } else if (interface->Gen_scope_arrays() &&
                 !interface->Gen_scope_arrays()->empty()) {
                 // Alias the interface's own signals by their bare name so scope
                 // bodies resolve `dly`, `din`, ... to `\<iface>.<sig>`.  Kept
@@ -547,6 +578,16 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 if (interface->Nets())
                     for (auto n : *interface->Nets())
                         if_alias(std::string(n->VpiName()));
+                // Unpacked-array interface signals (`req_t req_dly [0:DLY]`)
+                // land in Array_nets()/Array_vars(), not Nets()/Variables() —
+                // alias them too so a scope body's `req_dly[i-1]` resolves to the
+                // flattened `\<iface>.req_dly` wire instead of hard-erroring.
+                if (interface->Array_nets())
+                    for (auto n : *interface->Array_nets())
+                        if_alias(std::string(n->VpiName()));
+                if (interface->Array_vars())
+                    for (auto v : *interface->Array_vars())
+                        if_alias(std::string(v->VpiName()));
 
                 std::function<void(const UHDM::gen_scope*)>
                     imp_scope = [&](const UHDM::gen_scope* gs) {
