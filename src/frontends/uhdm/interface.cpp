@@ -7,6 +7,8 @@
 
 #include "uhdm2rtlil.h"
 #include <functional>
+#include <uhdm/gen_scope_array.h>
+#include <uhdm/gen_scope.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -511,6 +513,176 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
                 for (auto& kv : saved) name_map[kv.first] = kv.second;
                 for (auto& n : added) name_map.erase(n);
+            }
+
+            // Import the interface's GENERATE scopes (e.g. a `generate for`
+            // delay line that drives interface array elements from local regs —
+            // the jeras/rp32 tcb_lite_if handshake/request delay line).  The
+            // frontend flattens interface signals as `\<iface>.<sig>`, so we
+            // can't reuse the generic import_gen_scope (its cont_assign/process
+            // resolution doesn't know the `<iface>.` prefix).  Instead import
+            // each scope's nets/vars as `\<iface>.<scope>.<var>` wires and drive
+            // interface array elements via the same manual cont_assign/process
+            // handling used for the interface body above.
+            if (interface->Gen_scope_arrays() &&
+                !interface->Gen_scope_arrays()->empty()) {
+                // Alias the interface's own signals by their bare name so scope
+                // bodies resolve `dly`, `din`, ... to `\<iface>.<sig>`.  Kept
+                // active for the whole gen-scope import, restored afterwards.
+                std::map<std::string, RTLIL::Wire*> if_saved;
+                std::set<std::string> if_added;
+                auto if_alias = [&](const std::string& sig_name) {
+                    if (sig_name.empty()) return;
+                    std::string full = interface_name + "." + sig_name;
+                    RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                       : module->wire(RTLIL::escape_id(full));
+                    if (!w) return;
+                    if (name_map.count(sig_name)) if_saved[sig_name] = name_map[sig_name];
+                    else if_added.insert(sig_name);
+                    name_map[sig_name] = w;
+                };
+                if (interface->Variables())
+                    for (auto v : *interface->Variables())
+                        if_alias(std::string(v->VpiName()));
+                if (interface->Nets())
+                    for (auto n : *interface->Nets())
+                        if_alias(std::string(n->VpiName()));
+
+                std::function<void(const UHDM::gen_scope*)>
+                    imp_scope = [&](const UHDM::gen_scope* gs) {
+                    // Push this scope's name so get_current_gen_scope() yields the
+                    // hierarchical prefix (e.g. "intf.dstage[1]") — the process
+                    // import relies on it to remap a bare LHS (`tmp`) to its
+                    // gen-scope wire.  Seeded with the interface name below.  A
+                    // gen_scope's VpiName is usually empty (the indexed name is on
+                    // the array); fall back to the last component of VpiFullName,
+                    // as import_gen_scope does.
+                    std::string scope_nm = std::string(gs->VpiName());
+                    if (scope_nm.empty()) {
+                        std::string fn = std::string(gs->VpiFullName());
+                        size_t d = fn.rfind('.');
+                        scope_nm = (d != std::string::npos) ? fn.substr(d + 1) : fn;
+                    }
+                    gen_scope_stack.push_back(scope_nm);
+                    std::string scope_prefix = get_current_gen_scope();
+                    // Create the scope's local nets/vars as `\<scope_prefix>.<var>`
+                    // wires, and alias their bare name to that wire (restored per
+                    // scope so a sibling scope's identically-named local doesn't
+                    // leak).
+                    std::map<std::string, RTLIL::Wire*> saved_nm;
+                    std::set<std::string> added_nm;
+                    std::map<std::string, RTLIL::SigSpec> saved_sm;
+                    std::set<std::string> added_sm;
+                    auto local_alias = [&](const std::string& bare,
+                                           RTLIL::Wire* w) {
+                        if (bare.empty() || !w) return;
+                        if (name_map.count(bare)) saved_nm[bare] = name_map[bare];
+                        else added_nm.insert(bare);
+                        name_map[bare] = w;
+                        if (iface_sig_map.count(bare)) saved_sm[bare] = iface_sig_map[bare];
+                        else added_sm.insert(bare);
+                        iface_sig_map[bare] = RTLIL::SigSpec(w);
+                    };
+                    auto scope_wire = [&](const UHDM::any* obj,
+                                          const std::string& var_name,
+                                          int width) -> RTLIL::Wire* {
+                        std::string full = scope_prefix + "." + var_name;
+                        RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                           : module->wire(RTLIL::escape_id(full));
+                        if (!w) w = create_wire(full, width > 0 ? width : 1);
+                        name_map[full] = w;
+                        wire_map[obj] = w;
+                        local_alias(var_name, w);
+                        return w;
+                    };
+                    if (gs->Nets())
+                        for (auto n : *gs->Nets())
+                            scope_wire(n, std::string(n->VpiName()),
+                                       get_width(n, current_instance));
+                    if (gs->Variables())
+                        for (auto v : *gs->Variables())
+                            scope_wire(v, std::string(v->VpiName()),
+                                       get_width(v, current_instance));
+
+                    // Continuous assigns: LHS may target an interface array
+                    // element (`dly[i]`) or a scope-local; resolve accordingly.
+                    if (gs->Cont_assigns()) {
+                        for (auto ca : *gs->Cont_assigns()) {
+                            if (!ca->Lhs() || !ca->Rhs()) continue;
+                            std::string sig;
+                            int bit_idx = -1;
+                            if (ca->Lhs()->VpiType() == vpiRefObj) {
+                                sig = std::string(any_cast<const UHDM::ref_obj*>(ca->Lhs())->VpiName());
+                            } else if (ca->Lhs()->VpiType() == vpiBitSelect) {
+                                auto bs = any_cast<const UHDM::bit_select*>(ca->Lhs());
+                                sig = std::string(bs->VpiName());
+                                if (bs->VpiIndex()) {
+                                    auto is = import_expression(bs->VpiIndex(), &iface_sig_map);
+                                    if (is.is_fully_const()) bit_idx = is.as_const().as_int();
+                                }
+                                if (bit_idx < 0) continue;
+                            } else {
+                                continue;
+                            }
+                            if (sig.empty()) continue;
+                            // Prefer a scope-local wire, else an interface signal.
+                            std::string local_full = scope_prefix + "." + sig;
+                            std::string iface_full = interface_name + "." + sig;
+                            RTLIL::Wire* lw = name_map.count(local_full) ? name_map[local_full]
+                                              : (name_map.count(iface_full) ? name_map[iface_full]
+                                                 : module->wire(RTLIL::escape_id(iface_full)));
+                            if (!lw) continue;
+                            if (bit_idx >= lw->width) continue;
+                            RTLIL::SigSpec lhs = (bit_idx >= 0)
+                                ? RTLIL::SigSpec(lw, bit_idx, 1) : RTLIL::SigSpec(lw);
+                            RTLIL::SigSpec rhs = import_expression(ca->Rhs(), &iface_sig_map);
+                            if (rhs.size() == 0) continue;
+                            if (rhs.size() < lhs.size())
+                                rhs.extend_u0(lhs.size(), lw->is_signed);
+                            else if (rhs.size() > lhs.size())
+                                rhs = rhs.extract(0, lhs.size());
+                            module->connect(lhs, rhs);
+                        }
+                    }
+
+                    // Processes (the always_ff delay).  Signal refs resolve via
+                    // wire_map (scope-locals) and the bare-name aliases above.
+                    if (gs->Process())
+                        for (auto proc : *gs->Process()) {
+                            try {
+                                import_process(proc);
+                            } catch (const std::exception& e) {
+                                log_warning("Failed to import interface gen-scope "
+                                            "process for %s: %s\n",
+                                            scope_prefix.c_str(), e.what());
+                            }
+                        }
+
+                    // Nested generate scopes.
+                    if (gs->Gen_scope_arrays())
+                        for (auto ga : *gs->Gen_scope_arrays())
+                            if (ga->Gen_scopes())
+                                for (auto ns : *ga->Gen_scopes())
+                                    imp_scope(ns);
+
+                    for (auto& kv : saved_nm) name_map[kv.first] = kv.second;
+                    for (auto& n : added_nm) name_map.erase(n);
+                    for (auto& kv : saved_sm) iface_sig_map[kv.first] = kv.second;
+                    for (auto& n : added_sm) iface_sig_map.erase(n);
+                    gen_scope_stack.pop_back();
+                };
+
+                // Seed the scope stack with the interface instance name so
+                // scope wires become `\<iface>.<scope>.<var>`.
+                gen_scope_stack.push_back(interface_name);
+                for (auto ga : *interface->Gen_scope_arrays())
+                    if (ga->Gen_scopes())
+                        for (auto gs : *ga->Gen_scopes())
+                            imp_scope(gs);
+                gen_scope_stack.pop_back();
+
+                for (auto& kv : if_saved) name_map[kv.first] = kv.second;
+                for (auto& n : if_added) name_map.erase(n);
             }
 
             // Connect the interface's port HighConns to the per-signal
