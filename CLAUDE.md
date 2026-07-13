@@ -323,6 +323,87 @@ For loops inside `always` blocks are compile-time unrolled using `loop_values`:
 - Fix in `uhdm2rtlil.cpp` `import_module`: after importing processes, iterate `Assertions()`, cast to `assert_stmt`, evaluate the property expression via `import_expression`, and create a `$check` cell with `FLAVOR="assert"`, `EN=1'h1`, `TRG_WIDTH=0`
 - Include `<uhdm/assert_stmt.h>` and `<uhdm/property_spec.h>` (added to `uhdm2rtlil.h`)
 
+## Debugging X-Propagation in Large Designs (the rp32 SoC)
+
+When a big design (the degu SoC) reads cleanly but its outputs (`gpio_o`) sit at
+X or never toggle, it is almost always **one undriven net (X) that fans out**.
+Find that net with a mix of structural inspection and simulation — do NOT guess.
+General rule: **reproduce the X in the smallest possible DUT first** (that is why
+the interface delay-line gap was reproduced in `test/iface_gen_delay` before
+touching the SoC), then confirm on the SoC.
+
+### 1. Structural — find undriven nets directly (fastest, do this first)
+
+```bash
+cd test/rp32_r5p_degu_soc_top
+../../out/current/bin/yosys -m ../../build/uhdm2rtlil.so -p '
+  read_uhdm slpp_all/surelog.uhdm
+  hierarchy -check -top r5p_degu_soc_top
+  write_rtlil top_hier.il      # pre-flatten: keeps \iface.sig names readable
+  flatten; opt_clean
+  check                        # reports "found N problems": undriven + multidriven wires
+  write_rtlil top_flat.il'
+grep -nE "1'x|connect .* [0-9]+'x" top_hier.il | head   # explicit X drivers
+```
+
+- `check` prints every **undriven** and **multi-driven** wire — the undriven one
+  feeding your dead output is the smoking gun.
+- Grep the *hierarchical* IL for `connect \sig 1'x` (or an all-`x` const): an
+  interface array element left at `1'x` (e.g. `\tcb_ifu.req_dly [75] 1'x`) means
+  a driver (a gen-scope assign / always_ff) was never imported.
+- Compare a good vs bad net's fan-in: a wire that appears only on the LHS of a
+  `connect ... 1'x` and never as a cell output is undriven.
+
+### 2. Backward-slice the driver cone from a known-bad net
+
+```
+# inside yosys, after flatten:
+select -set bad w:*tcb_ifu*rsp*rdt*        # the X output
+select @bad %ci*                            # its full fan-in cone
+select @bad %ci*  %a  -list                 # list the cone's wires/cells
+dump  @bad %ci2                             # 2 levels of driver logic
+```
+
+`%ci` = fan-in cone (one hop), `%ci*` = transitive. Walk outward until you reach
+the first wire with **no driving cell** — that is where the missing logic is.
+
+### 3. Simulate to see WHEN / WHICH register goes X (yosys `sim`)
+
+```
+read_uhdm ...; hierarchy -top r5p_degu_soc_top; proc; opt
+sim -clock clk -reset rst -rstlen 8 -n 400 -vcd soc_sim.vcd -w soc_sim
+```
+
+- Open `soc_sim.vcd` in gtkwave; sort by first-X transition time. The earliest
+  register that latches X (whose D input traces back to an undriven net) is the
+  root, not the many downstream signals it poisons.
+- For a self-checking run add `-assert`; `sim` halts at the first failed `$check`.
+
+### 4. Verilator co-sim + VCD (RTL vs UHDM-netlist divergence)
+
+The harness `test/test_sim_equivalence.py <test> --cycles N` builds
+`test/<test>/sim_equiv/` with the **original RTL** (`wrapper.sv`) and the
+**UHDM-synth netlist** (`dut_netlist.v`) side-by-side under `tb.sv` + random
+stimulus, and prints the first mismatching cycle + signal to `sim_equiv.log`.
+
+- To capture waveforms, run verilator with `--trace` (add to `run_verilator`'s
+  flag list) and `$dumpfile/$dumpvars` in `tb.sv`, then diff the RTL-side vs
+  netlist-side signal in gtkwave: the signal that is X on the **netlist** side
+  but defined on the **RTL** side localizes the frontend gap (a dropped driver);
+  X on both sides is usually a Verilator X-pessimism artefact, not a UHDM bug.
+- **Adjudicate real-vs-artefact** with the SAT-from-reset miter
+  (`test/triage_cosim.py`, or the `verify-uhdm-equivalence` skill): if the miter
+  proves UHDM == Verilog, the co-sim X is a sim artefact; if NON-EQUIVALENT, it
+  is a genuine dropped/incorrect driver to fix in the frontend.
+
+### 5. Localize to a submodule / interface signal
+
+SoC X almost always traces to one interface signal or submodule port. Once
+step 1–2 name it (e.g. `tcb_ifu.req_dly[DLY]` undriven), read just that subtree
+(`uhdm-dump slpp_all/surelog.uhdm | grep -A… <signal>`) to see whether Surelog
+even emitted the driver, then build a minimal DUT reproducing it before fixing
+the importer. `uhdm_path.log` in the test dir is the textual UHDM tree for that.
+
 ## Code Style
 
 - Use RTLIL types consistently (`RTLIL::SigSpec`, `RTLIL::Wire`, etc.)
