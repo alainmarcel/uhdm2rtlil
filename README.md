@@ -41,7 +41,7 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend can't synthesize the SV so no
   miter is possible)
 
-> The **internal** SystemVerilog suite alone is **722 tests, 0 true failures,
+> The **internal** SystemVerilog suite alone is **723 tests, 0 true failures,
 > 0 crashes** — the only equivalence failures are `CastStructArray` (a
 > Yosys-Verilog-frontend bug, not UHDM) and `rp32_r5p_mouse` (the rp32 core,
 > reset/X-dependent so not cleanly equiv-able), both Miter-Formal clean. The
