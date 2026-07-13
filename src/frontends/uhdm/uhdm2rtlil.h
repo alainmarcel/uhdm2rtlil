@@ -224,6 +224,10 @@ struct UhdmImporter {
     // recorded when the interface port's field wires are created so a struct
     // field access (`s.req.adr`) in import_hier_path can slice the member.
     std::map<std::string, const UHDM::typespec*> iface_signal_struct_ts_;
+    // Flattened interface unpacked-ARRAY signal wire name ("intf.req_dly") ->
+    // per-element width, recorded when the array wire is materialized so an
+    // element bit-select `req_dly[i]` extracts elem_w bits (not 1).
+    std::map<std::string, int> iface_array_elem_width_;
 
     // Per-field modport direction for a modport port, keyed
     // "module:port:field" -> VpiDirection (1=in,2=out,3=inout).  Recorded by

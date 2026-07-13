@@ -401,6 +401,69 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
 
+            // Materialize a flattened wire for an UNPACKED-ARRAY interface
+            // signal that Surelog left ONLY in Array_nets() (a packed-struct
+            // unpacked array like `req_t req_dly [0:DLY]`, whose element type has
+            // no scalar Nets() entry for the loop above to widen).  Without this
+            // the whole `\<iface>.req_dly` wire is missing and the delay-line
+            // generate scope can't drive it — the degu SoC tcb_ifu req_dly/
+            // trn_dly delay line.  Width = element_width * element_count; the
+            // element struct typespec is recorded so `req_dly[i]` slices resolve.
+            if (interface->Array_nets()) {
+                for (auto an : *interface->Array_nets()) {
+                    std::string an_name = std::string(an->VpiName());
+                    std::string full_name = interface_name + "." + an_name;
+                    if (an_name.empty() || name_map.count(full_name)) continue;
+                    if (module->wire(RTLIL::escape_id(full_name))) {
+                        name_map[full_name] = module->wire(RTLIL::escape_id(full_name));
+                        continue;
+                    }
+                    // element count from the array ranges
+                    int count = 1;
+                    if (an->Ranges())
+                        for (auto r : *an->Ranges()) {
+                            if (!r->Left_expr() || !r->Right_expr()) { count = 1; break; }
+                            RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                            if (ls.is_fully_const() && rs.is_fully_const())
+                                count *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                            else { count = 1; break; }
+                        }
+                    // element width from the array's element net (struct/logic)
+                    int elem_w = 1;
+                    const UHDM::typespec* elem_ts = nullptr;
+                    if (an->Nets() && !an->Nets()->empty()) {
+                        auto en = an->Nets()->at(0);
+                        int w = get_width(en, current_instance);
+                        if (w > 0) elem_w = w;
+                        if (auto net_n = dynamic_cast<const UHDM::net*>(en))
+                            if (net_n->Typespec())
+                                elem_ts = net_n->Typespec()->Actual_typespec();
+                    }
+                    if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                    elem_ts->UhdmType() == uhdmunion_typespec)) {
+                        int w = get_width_from_typespec(elem_ts, current_instance);
+                        if (w > 0) elem_w = w;
+                    }
+                    int total_w = elem_w * (count > 0 ? count : 1);
+                    RTLIL::Wire* aw = create_wire(full_name, total_w);
+                    add_src_attribute(aw->attributes, an);
+                    name_map[full_name] = aw;
+                    iface_inst_vars_[interface_name].push_back(an_name);
+                    // Record the ELEMENT struct typespec + element width so a
+                    // `req_dly[i]` element bit-select extracts elem_w bits (not 1)
+                    // and a `req_dly[i].field` slice can resolve the member.
+                    if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                    elem_ts->UhdmType() == uhdmunion_typespec))
+                        iface_signal_struct_ts_[full_name] = elem_ts;
+                    iface_array_elem_width_[full_name] = elem_w;
+                    if (mode_debug)
+                        log("UHDM: Materialized interface array signal %s "
+                            "(elem_w=%d count=%d total=%d)\n",
+                            full_name.c_str(), elem_w, count, total_w);
+                }
+            }
+
             // Build a mapping from the interface's raw signal names
             // (`vld`, `rdy`, `trn`, ...) to their per-instance wires
             // (`\<iface>.vld`, etc.).  Used as `input_mapping` for
@@ -461,9 +524,19 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full] : nullptr;
                     if (!lw) lw = module->wire(RTLIL::escape_id(full));
                     if (!lw) continue;
-                    RTLIL::SigSpec lhs = (bit_idx >= 0 && bit_idx < lw->width)
-                        ? RTLIL::SigSpec(lw, bit_idx, 1) : RTLIL::SigSpec(lw);
-                    if (bit_idx >= lw->width) continue;
+                    // An unpacked-array element (`dly[0] = din`) writes an
+                    // element-width slice (`req_t` = elem_w bits), not 1 bit.
+                    int elem_w = 1;
+                    if (iface_array_elem_width_.count(full))
+                        elem_w = iface_array_elem_width_[full];
+                    RTLIL::SigSpec lhs;
+                    if (bit_idx >= 0) {
+                        int off = bit_idx * elem_w;
+                        if (off + elem_w > lw->width) continue;
+                        lhs = RTLIL::SigSpec(lw, off, elem_w);
+                    } else {
+                        lhs = RTLIL::SigSpec(lw);
+                    }
                     RTLIL::SigSpec rhs = import_expression(ca->Rhs(),
                                                           &iface_sig_map);
                     if (rhs.size() == 0) continue;
@@ -669,13 +742,24 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                             // Prefer a scope-local wire, else an interface signal.
                             std::string local_full = scope_prefix + "." + sig;
                             std::string iface_full = interface_name + "." + sig;
+                            bool is_iface_sig = !name_map.count(local_full);
                             RTLIL::Wire* lw = name_map.count(local_full) ? name_map[local_full]
                                               : (name_map.count(iface_full) ? name_map[iface_full]
                                                  : module->wire(RTLIL::escape_id(iface_full)));
                             if (!lw) continue;
-                            if (bit_idx >= lw->width) continue;
-                            RTLIL::SigSpec lhs = (bit_idx >= 0)
-                                ? RTLIL::SigSpec(lw, bit_idx, 1) : RTLIL::SigSpec(lw);
+                            // `dly[i] = tmp` writes an element-width slice of the
+                            // interface array (`req_t` = elem_w bits), not 1 bit.
+                            int elem_w = 1;
+                            if (is_iface_sig && iface_array_elem_width_.count(iface_full))
+                                elem_w = iface_array_elem_width_[iface_full];
+                            RTLIL::SigSpec lhs;
+                            if (bit_idx >= 0) {
+                                int off = bit_idx * elem_w;
+                                if (off + elem_w > lw->width) continue;
+                                lhs = RTLIL::SigSpec(lw, off, elem_w);
+                            } else {
+                                lhs = RTLIL::SigSpec(lw);
+                            }
                             RTLIL::SigSpec rhs = import_expression(ca->Rhs(), &iface_sig_map);
                             if (rhs.size() == 0) continue;
                             if (rhs.size() < lhs.size())
