@@ -1560,18 +1560,26 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 // Create temporary wires for regular assigned signals
                 std::map<std::string, RTLIL::Wire*> temp_wires;
                 for (const auto& sig_name : assigned_signals) {
+                    // A struct wire (`man.req`) written by several field/slice
+                    // assignments in the same process appears multiple times in
+                    // assigned_signals (each `man.req.<field>[…]` maps to the
+                    // struct via longest-prefix).  Create ONE temp per signal.
+                    if (temp_wires.count(sig_name)) continue;
                     // Create temp wire name matching Verilog frontend format
                     std::string temp_name = "$0\\" + sig_name;
-                    
+
                     // Get the original wire
                     RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
                     if (!orig_wire) continue;
-                    
+
                     // Add the array notation
                     temp_name = stringf("$0\\%s[%d:0]", sig_name.c_str(), orig_wire->width - 1);
-                    
-                    // Create the temp wire
-                    RTLIL::Wire* temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+
+                    // Reuse an existing temp (created by another process for the
+                    // same signal) instead of asserting on a duplicate name.
+                    RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(temp_name));
+                    if (!temp_wire)
+                        temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
                     // Add source attribute from the process
                     if (uhdm_process) {
                         add_src_attribute(temp_wire->attributes, uhdm_process);

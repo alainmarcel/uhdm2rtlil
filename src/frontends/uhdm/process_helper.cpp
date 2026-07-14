@@ -238,6 +238,17 @@ void UhdmImporter::extract_lhs_signals(const expr* lhs_expr, std::vector<Assigne
         auto hp = any_cast<const hier_path*>(lhs_expr);
         sig.is_part_select = false;
         std::string full_name = std::string(hp->VpiName());
+        // A hier_path LHS may carry a trailing part-select whose index is an
+        // expression, e.g. `sub.req.wdt[i*8+:8]` (an unrolled byte loop in the
+        // degu SoC tcb register/logsize modules).  VpiName then contains the raw
+        // `[i * 8+:8]` text — spaces and all — which is NOT a legal RTLIL
+        // identifier, so escape_id() below would abort.  Strip the part-select
+        // to the base signal name (`sub.req.wdt`) and mark it a part-select; the
+        // slice itself is resolved later when the assignment RHS/LHS is imported.
+        if (size_t br = full_name.find('['); br != std::string::npos) {
+            full_name = full_name.substr(0, br);
+            sig.is_part_select = true;
+        }
         std::string base;
         size_t dot_pos = full_name.find('.');
         if (dot_pos != std::string::npos)
@@ -521,6 +532,33 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         auto hp = any_cast<const hier_path*>(lhs_expr);
                         sig.is_part_select = false;
                         std::string full_name = std::string(hp->VpiName());
+                        // Strip a trailing part-select whose index is an
+                        // expression, `sub.req.wdt[i*8+:8]` — VpiName carries the
+                        // raw `[i * 8+:8]` text (spaces/operators) which is not a
+                        // legal RTLIL identifier, so escape_id() below would abort
+                        // (degu SoC tcb register/logsize unrolled byte loops).
+                        if (size_t br = full_name.find('['); br != std::string::npos) {
+                            full_name = full_name.substr(0, br);
+                            sig.is_part_select = true;
+                            // The struct FIELD (`man.req.wdt`) is not itself a
+                            // flattened wire — only the struct (`man.req`) is.
+                            // Report the longest dotted prefix that IS a real
+                            // (non-interface) wire so every byte-loop iteration
+                            // shares one `$0\man.req` temp instead of colliding on
+                            // the interface-port base `man`.
+                            std::string cand = full_name;
+                            while (true) {
+                                RTLIL::Wire* w = module->wire(RTLIL::escape_id(cand));
+                                if (w && !w->attributes.count(
+                                             RTLIL::escape_id("is_interface"))) {
+                                    full_name = cand;
+                                    break;
+                                }
+                                size_t d = cand.rfind('.');
+                                if (d == std::string::npos) break;
+                                cand = cand.substr(0, d);
+                            }
+                        }
                         std::string base;
                         size_t dot_pos = full_name.find('.');
                         if (dot_pos != std::string::npos)
