@@ -5914,6 +5914,19 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
         }
     }
 
+    // Flattened interface unpacked-ARRAY signal (`req_t req_dly [0:DLY]`,
+    // materialized as one wide wire in import_interface_instances): `req_dly[i]`
+    // selects the i-th element (elem_w bits, 0-based), not bit i.
+    if (packed_elem_w <= 1 && wire) {
+        auto ew = iface_array_elem_width_.find(RTLIL::unescape_id(wire->name));
+        if (ew != iface_array_elem_width_.end() && ew->second > 1 &&
+            base.size() % ew->second == 0) {
+            packed_elem_w = ew->second;
+            packed_outer_l = 0;
+            packed_outer_r = 0;  // 0-based; slot = idx
+        }
+    }
+
     if (index.is_fully_const()) {
         int idx = index.as_const().as_int();
         if (mode_debug)

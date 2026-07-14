@@ -18,36 +18,38 @@ This enables full SystemVerilog synthesis capability in Yosys, including advance
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1190
-- **Success Rate**: 96% (1147/1190 tests functional), 1 crash, **0 Miter-Formal (UHDM≠Verilog) failures**
-- **Passing**: 840 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 307 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Equivalence failures**: 10 — all caught by `equiv_induct` (0 Miter-Formal): `CastStructArray`
-  plus 9 from the upstream Yosys suite (`arch/nanoxplore/meminit`, `sat/alu`,
-  `sat/grom_computer`, `sat/grom_cpu`, `sat/ram_memory`, `simple/loops`,
-  `svtypes/array_assign`, `verific/ext_ramnet_err`, `verilog/mem_bounds`)
-- **True failures** (no output generated): 10 — `rp32_r5p_mouse` (the rp32 CPU core,
-  pending the complete-design phase: it instantiates submodules not in its
-  per-module file list) plus 9 from the upstream Yosys suite
+- **Total Tests**: 1247
+- **Success Rate**: 96% (1203/1247 tests functional), 1 crash, **0 Miter-Formal (UHDM≠Verilog) failures**
+- **Passing**: 853 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 350 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Equivalence failures**: 13 — all caught by `equiv_induct` (0 Miter-Formal): `CastStructArray`
+  and `rp32_r5p_mouse` (see notes below) plus 11 from the upstream Yosys suite
+  (`arch/nanoxplore/meminit`, `sat/alu`, `sat/grom_computer`, `sat/grom_cpu`,
+  `sat/ram_memory`, `simple/loops`, `simple/module_scope_case`, `sva/extnets`,
+  `svtypes/array_assign`, `verific/ext_ramnet_err`, `verilog/mem_bounds`).
+  The exact internal set varies run-to-run (seq-equiv induction is inductively
+  incomplete on some designs); the count and the 0 Miter-Formal are stable.
+- **True failures** (no output generated): 9 — all from the upstream Yosys suite
   (`arch/fabulous/custom_map`, `functional/picorv32_tb`, `hana/test_simulation_vlib`,
   `opt/opt_rmdff`, `rpc/design`, `svinterfaces/load_and_derive`,
   `svinterfaces/resolve_types`, `techmap/mem_simple_4x1_map`, `verific/mixed_flist`)
 - **Crashes**: 1 (`techmap/recursive_map`)
-- **Verilator sim-equiv warnings**: 93 (undocumented divergences — now hard errors
+- **Verilator sim-equiv warnings**: 98 (undocumented divergences — now hard errors
   unless documented in `test/sim_equiv_analyzed.txt`), plus **71 analyzed** known
   non-bug divergences — of which 57 are sim/synth artefacts where a SAT miter
   proves UHDM == Verilog, and the rest are uhdm-only don't-care divergences (e.g.
   `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend can't synthesize the SV so no
   miter is possible)
 
-> The **internal** SystemVerilog suite alone is **665 tests, 663 functional**,
-> with `CastStructArray` (a Yosys-Verilog-frontend bug, not UHDM) the only
-> equivalence failure and `rp32_r5p_mouse` the only true failure (the rp32 core,
-> tracked for the complete-design phase). The figures above are the combined
-> `--all` run; the remaining failures/crash come from the imported upstream Yosys
-> suite (feature gaps / non-synthesizable constructs), tracked in
-> `test/failing_tests.txt` and `test/imported_tests_status.txt` and fixed
-> incrementally. No pre-existing internal test regressed.
+> The **internal** SystemVerilog suite alone is **723 tests, 0 true failures,
+> 0 crashes** — the only equivalence failures are `CastStructArray` (a
+> Yosys-Verilog-frontend bug, not UHDM) and `rp32_r5p_mouse` (the rp32 core,
+> reset/X-dependent so not cleanly equiv-able), both Miter-Formal clean. The
+> figures above are the combined `--all` run; the remaining failures/crash come
+> from the imported upstream Yosys suite (feature gaps / non-synthesizable
+> constructs), tracked in `test/failing_tests.txt` and
+> `test/imported_tests_status.txt` and fixed incrementally. No pre-existing
+> internal test regressed.
 
 > **Note (2026-06-14):** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)

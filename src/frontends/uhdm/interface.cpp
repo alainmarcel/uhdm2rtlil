@@ -7,6 +7,8 @@
 
 #include "uhdm2rtlil.h"
 #include <functional>
+#include <uhdm/gen_scope_array.h>
+#include <uhdm/gen_scope.h>
 
 YOSYS_NAMESPACE_BEGIN
 
@@ -399,6 +401,69 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
             }
 
+            // Materialize a flattened wire for an UNPACKED-ARRAY interface
+            // signal that Surelog left ONLY in Array_nets() (a packed-struct
+            // unpacked array like `req_t req_dly [0:DLY]`, whose element type has
+            // no scalar Nets() entry for the loop above to widen).  Without this
+            // the whole `\<iface>.req_dly` wire is missing and the delay-line
+            // generate scope can't drive it — the degu SoC tcb_ifu req_dly/
+            // trn_dly delay line.  Width = element_width * element_count; the
+            // element struct typespec is recorded so `req_dly[i]` slices resolve.
+            if (interface->Array_nets()) {
+                for (auto an : *interface->Array_nets()) {
+                    std::string an_name = std::string(an->VpiName());
+                    std::string full_name = interface_name + "." + an_name;
+                    if (an_name.empty() || name_map.count(full_name)) continue;
+                    if (module->wire(RTLIL::escape_id(full_name))) {
+                        name_map[full_name] = module->wire(RTLIL::escape_id(full_name));
+                        continue;
+                    }
+                    // element count from the array ranges
+                    int count = 1;
+                    if (an->Ranges())
+                        for (auto r : *an->Ranges()) {
+                            if (!r->Left_expr() || !r->Right_expr()) { count = 1; break; }
+                            RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                            RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                            if (ls.is_fully_const() && rs.is_fully_const())
+                                count *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                            else { count = 1; break; }
+                        }
+                    // element width from the array's element net (struct/logic)
+                    int elem_w = 1;
+                    const UHDM::typespec* elem_ts = nullptr;
+                    if (an->Nets() && !an->Nets()->empty()) {
+                        auto en = an->Nets()->at(0);
+                        int w = get_width(en, current_instance);
+                        if (w > 0) elem_w = w;
+                        if (auto net_n = dynamic_cast<const UHDM::net*>(en))
+                            if (net_n->Typespec())
+                                elem_ts = net_n->Typespec()->Actual_typespec();
+                    }
+                    if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                    elem_ts->UhdmType() == uhdmunion_typespec)) {
+                        int w = get_width_from_typespec(elem_ts, current_instance);
+                        if (w > 0) elem_w = w;
+                    }
+                    int total_w = elem_w * (count > 0 ? count : 1);
+                    RTLIL::Wire* aw = create_wire(full_name, total_w);
+                    add_src_attribute(aw->attributes, an);
+                    name_map[full_name] = aw;
+                    iface_inst_vars_[interface_name].push_back(an_name);
+                    // Record the ELEMENT struct typespec + element width so a
+                    // `req_dly[i]` element bit-select extracts elem_w bits (not 1)
+                    // and a `req_dly[i].field` slice can resolve the member.
+                    if (elem_ts && (elem_ts->UhdmType() == uhdmstruct_typespec ||
+                                    elem_ts->UhdmType() == uhdmunion_typespec))
+                        iface_signal_struct_ts_[full_name] = elem_ts;
+                    iface_array_elem_width_[full_name] = elem_w;
+                    if (mode_debug)
+                        log("UHDM: Materialized interface array signal %s "
+                            "(elem_w=%d count=%d total=%d)\n",
+                            full_name.c_str(), elem_w, count, total_w);
+                }
+            }
+
             // Build a mapping from the interface's raw signal names
             // (`vld`, `rdy`, `trn`, ...) to their per-instance wires
             // (`\<iface>.vld`, etc.).  Used as `input_mapping` for
@@ -459,9 +524,19 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                     RTLIL::Wire* lw = name_map.count(full) ? name_map[full] : nullptr;
                     if (!lw) lw = module->wire(RTLIL::escape_id(full));
                     if (!lw) continue;
-                    RTLIL::SigSpec lhs = (bit_idx >= 0 && bit_idx < lw->width)
-                        ? RTLIL::SigSpec(lw, bit_idx, 1) : RTLIL::SigSpec(lw);
-                    if (bit_idx >= lw->width) continue;
+                    // An unpacked-array element (`dly[0] = din`) writes an
+                    // element-width slice (`req_t` = elem_w bits), not 1 bit.
+                    int elem_w = 1;
+                    if (iface_array_elem_width_.count(full))
+                        elem_w = iface_array_elem_width_[full];
+                    RTLIL::SigSpec lhs;
+                    if (bit_idx >= 0) {
+                        int off = bit_idx * elem_w;
+                        if (off + elem_w > lw->width) continue;
+                        lhs = RTLIL::SigSpec(lw, off, elem_w);
+                    } else {
+                        lhs = RTLIL::SigSpec(lw);
+                    }
                     RTLIL::SigSpec rhs = import_expression(ca->Rhs(),
                                                           &iface_sig_map);
                     if (rhs.size() == 0) continue;
@@ -511,6 +586,228 @@ void UhdmImporter::import_interface_instances(const UHDM::module_inst* uhdm_modu
                 }
                 for (auto& kv : saved) name_map[kv.first] = kv.second;
                 for (auto& n : added) name_map.erase(n);
+            }
+
+            // Import the interface's GENERATE scopes (e.g. a `generate for`
+            // delay line that drives interface array elements from local regs —
+            // the jeras/rp32 tcb_lite_if handshake/request delay line).  The
+            // frontend flattens interface signals as `\<iface>.<sig>`, so we
+            // can't reuse the generic import_gen_scope (its cont_assign/process
+            // resolution doesn't know the `<iface>.` prefix).  Instead import
+            // each scope's nets/vars as `\<iface>.<scope>.<var>` wires and drive
+            // interface array elements via the same manual cont_assign/process
+            // handling used for the interface body above.
+            // Guard: the generate scope drives/reads interface array elements
+            // (`req_dly[i]`).  Surelog sometimes leaves an unpacked-array
+            // interface signal only in Array_nets()/Array_vars() with no scalar
+            // Nets() entry, so the main signal loop above never materialized a
+            // flattened `\<iface>.<sig>` wire for it — importing the scope body
+            // would then reference a non-existent wire and hard-abort the whole
+            // read.  Only import when every array signal has a wire; otherwise
+            // skip gracefully (the struct-array delay line — e.g. the degu SoC
+            // tcb_ifu req_dly — remains a further gap, but the read is safe).
+            bool iface_gs_sigs_ok = true;
+            {
+                auto have_wire = [&](const std::string& nm) {
+                    if (nm.empty()) return;
+                    std::string full = interface_name + "." + nm;
+                    if (!(name_map.count(full) ||
+                          module->wire(RTLIL::escape_id(full))))
+                        iface_gs_sigs_ok = false;
+                };
+                if (interface->Array_nets())
+                    for (auto n : *interface->Array_nets())
+                        have_wire(std::string(n->VpiName()));
+                if (interface->Array_vars())
+                    for (auto v : *interface->Array_vars())
+                        have_wire(std::string(v->VpiName()));
+            }
+            if (interface->Gen_scope_arrays() &&
+                !interface->Gen_scope_arrays()->empty() && !iface_gs_sigs_ok) {
+                log_warning("UHDM: interface %s generate scope references an "
+                            "unmaterialized array signal; skipping gen-scope "
+                            "import (struct-array delay line not yet supported)\n",
+                            interface_name.c_str());
+            } else if (interface->Gen_scope_arrays() &&
+                !interface->Gen_scope_arrays()->empty()) {
+                // Alias the interface's own signals by their bare name so scope
+                // bodies resolve `dly`, `din`, ... to `\<iface>.<sig>`.  Kept
+                // active for the whole gen-scope import, restored afterwards.
+                std::map<std::string, RTLIL::Wire*> if_saved;
+                std::set<std::string> if_added;
+                auto if_alias = [&](const std::string& sig_name) {
+                    if (sig_name.empty()) return;
+                    std::string full = interface_name + "." + sig_name;
+                    RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                       : module->wire(RTLIL::escape_id(full));
+                    if (!w) return;
+                    if (name_map.count(sig_name)) if_saved[sig_name] = name_map[sig_name];
+                    else if_added.insert(sig_name);
+                    name_map[sig_name] = w;
+                };
+                if (interface->Variables())
+                    for (auto v : *interface->Variables())
+                        if_alias(std::string(v->VpiName()));
+                if (interface->Nets())
+                    for (auto n : *interface->Nets())
+                        if_alias(std::string(n->VpiName()));
+                // Unpacked-array interface signals (`req_t req_dly [0:DLY]`)
+                // land in Array_nets()/Array_vars(), not Nets()/Variables() —
+                // alias them too so a scope body's `req_dly[i-1]` resolves to the
+                // flattened `\<iface>.req_dly` wire instead of hard-erroring.
+                if (interface->Array_nets())
+                    for (auto n : *interface->Array_nets())
+                        if_alias(std::string(n->VpiName()));
+                if (interface->Array_vars())
+                    for (auto v : *interface->Array_vars())
+                        if_alias(std::string(v->VpiName()));
+
+                std::function<void(const UHDM::gen_scope*)>
+                    imp_scope = [&](const UHDM::gen_scope* gs) {
+                    // Push this scope's name so get_current_gen_scope() yields the
+                    // hierarchical prefix (e.g. "intf.dstage[1]") — the process
+                    // import relies on it to remap a bare LHS (`tmp`) to its
+                    // gen-scope wire.  Seeded with the interface name below.  A
+                    // gen_scope's VpiName is usually empty (the indexed name is on
+                    // the array); fall back to the last component of VpiFullName,
+                    // as import_gen_scope does.
+                    std::string scope_nm = std::string(gs->VpiName());
+                    if (scope_nm.empty()) {
+                        std::string fn = std::string(gs->VpiFullName());
+                        size_t d = fn.rfind('.');
+                        scope_nm = (d != std::string::npos) ? fn.substr(d + 1) : fn;
+                    }
+                    gen_scope_stack.push_back(scope_nm);
+                    std::string scope_prefix = get_current_gen_scope();
+                    // Create the scope's local nets/vars as `\<scope_prefix>.<var>`
+                    // wires, and alias their bare name to that wire (restored per
+                    // scope so a sibling scope's identically-named local doesn't
+                    // leak).
+                    std::map<std::string, RTLIL::Wire*> saved_nm;
+                    std::set<std::string> added_nm;
+                    std::map<std::string, RTLIL::SigSpec> saved_sm;
+                    std::set<std::string> added_sm;
+                    auto local_alias = [&](const std::string& bare,
+                                           RTLIL::Wire* w) {
+                        if (bare.empty() || !w) return;
+                        if (name_map.count(bare)) saved_nm[bare] = name_map[bare];
+                        else added_nm.insert(bare);
+                        name_map[bare] = w;
+                        if (iface_sig_map.count(bare)) saved_sm[bare] = iface_sig_map[bare];
+                        else added_sm.insert(bare);
+                        iface_sig_map[bare] = RTLIL::SigSpec(w);
+                    };
+                    auto scope_wire = [&](const UHDM::any* obj,
+                                          const std::string& var_name,
+                                          int width) -> RTLIL::Wire* {
+                        std::string full = scope_prefix + "." + var_name;
+                        RTLIL::Wire* w = name_map.count(full) ? name_map[full]
+                                           : module->wire(RTLIL::escape_id(full));
+                        if (!w) w = create_wire(full, width > 0 ? width : 1);
+                        name_map[full] = w;
+                        wire_map[obj] = w;
+                        local_alias(var_name, w);
+                        return w;
+                    };
+                    if (gs->Nets())
+                        for (auto n : *gs->Nets())
+                            scope_wire(n, std::string(n->VpiName()),
+                                       get_width(n, current_instance));
+                    if (gs->Variables())
+                        for (auto v : *gs->Variables())
+                            scope_wire(v, std::string(v->VpiName()),
+                                       get_width(v, current_instance));
+
+                    // Continuous assigns: LHS may target an interface array
+                    // element (`dly[i]`) or a scope-local; resolve accordingly.
+                    if (gs->Cont_assigns()) {
+                        for (auto ca : *gs->Cont_assigns()) {
+                            if (!ca->Lhs() || !ca->Rhs()) continue;
+                            std::string sig;
+                            int bit_idx = -1;
+                            if (ca->Lhs()->VpiType() == vpiRefObj) {
+                                sig = std::string(any_cast<const UHDM::ref_obj*>(ca->Lhs())->VpiName());
+                            } else if (ca->Lhs()->VpiType() == vpiBitSelect) {
+                                auto bs = any_cast<const UHDM::bit_select*>(ca->Lhs());
+                                sig = std::string(bs->VpiName());
+                                if (bs->VpiIndex()) {
+                                    auto is = import_expression(bs->VpiIndex(), &iface_sig_map);
+                                    if (is.is_fully_const()) bit_idx = is.as_const().as_int();
+                                }
+                                if (bit_idx < 0) continue;
+                            } else {
+                                continue;
+                            }
+                            if (sig.empty()) continue;
+                            // Prefer a scope-local wire, else an interface signal.
+                            std::string local_full = scope_prefix + "." + sig;
+                            std::string iface_full = interface_name + "." + sig;
+                            bool is_iface_sig = !name_map.count(local_full);
+                            RTLIL::Wire* lw = name_map.count(local_full) ? name_map[local_full]
+                                              : (name_map.count(iface_full) ? name_map[iface_full]
+                                                 : module->wire(RTLIL::escape_id(iface_full)));
+                            if (!lw) continue;
+                            // `dly[i] = tmp` writes an element-width slice of the
+                            // interface array (`req_t` = elem_w bits), not 1 bit.
+                            int elem_w = 1;
+                            if (is_iface_sig && iface_array_elem_width_.count(iface_full))
+                                elem_w = iface_array_elem_width_[iface_full];
+                            RTLIL::SigSpec lhs;
+                            if (bit_idx >= 0) {
+                                int off = bit_idx * elem_w;
+                                if (off + elem_w > lw->width) continue;
+                                lhs = RTLIL::SigSpec(lw, off, elem_w);
+                            } else {
+                                lhs = RTLIL::SigSpec(lw);
+                            }
+                            RTLIL::SigSpec rhs = import_expression(ca->Rhs(), &iface_sig_map);
+                            if (rhs.size() == 0) continue;
+                            if (rhs.size() < lhs.size())
+                                rhs.extend_u0(lhs.size(), lw->is_signed);
+                            else if (rhs.size() > lhs.size())
+                                rhs = rhs.extract(0, lhs.size());
+                            module->connect(lhs, rhs);
+                        }
+                    }
+
+                    // Processes (the always_ff delay).  Signal refs resolve via
+                    // wire_map (scope-locals) and the bare-name aliases above.
+                    if (gs->Process())
+                        for (auto proc : *gs->Process()) {
+                            try {
+                                import_process(proc);
+                            } catch (const std::exception& e) {
+                                log_warning("Failed to import interface gen-scope "
+                                            "process for %s: %s\n",
+                                            scope_prefix.c_str(), e.what());
+                            }
+                        }
+
+                    // Nested generate scopes.
+                    if (gs->Gen_scope_arrays())
+                        for (auto ga : *gs->Gen_scope_arrays())
+                            if (ga->Gen_scopes())
+                                for (auto ns : *ga->Gen_scopes())
+                                    imp_scope(ns);
+
+                    for (auto& kv : saved_nm) name_map[kv.first] = kv.second;
+                    for (auto& n : added_nm) name_map.erase(n);
+                    for (auto& kv : saved_sm) iface_sig_map[kv.first] = kv.second;
+                    for (auto& n : added_sm) iface_sig_map.erase(n);
+                    gen_scope_stack.pop_back();
+                };
+
+                // Seed the scope stack with the interface instance name so
+                // scope wires become `\<iface>.<scope>.<var>`.
+                gen_scope_stack.push_back(interface_name);
+                for (auto ga : *interface->Gen_scope_arrays())
+                    if (ga->Gen_scopes())
+                        for (auto gs : *ga->Gen_scopes())
+                            imp_scope(gs);
+                gen_scope_stack.pop_back();
+
+                for (auto& kv : if_saved) name_map[kv.first] = kv.second;
+                for (auto& n : if_added) name_map.erase(n);
             }
 
             // Connect the interface's port HighConns to the per-signal
