@@ -578,10 +578,45 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                 RTLIL::escape_id("is_interface"));
                         bool full_is_wire = !full_name.empty() &&
                             module->wire(RTLIL::escape_id(full_name)) != nullptr;
-                        if (full_is_wire && !base_is_wire)
+                        if (full_is_wire && !base_is_wire) {
                             sig.name = full_name;
-                        else
+                        } else if (base_is_wire) {
                             sig.name = base;
+                        } else {
+                            // Neither the full path (`sub.rsp.rdt`) nor the first
+                            // component (`sub`, an interface-INSTANCE placeholder)
+                            // is a real wire: this is a struct-field write on a
+                            // flattened interface signal, whose wire is an interior
+                            // prefix (`sub.rsp`) with the field a slice of it.  Find
+                            // the longest dotted prefix that IS a real (non-
+                            // interface) wire and mark it a part-select, so the
+                            // always_ff temp-wire + sync-rule setup registers
+                            // `$0\sub.rsp`.  Without this the register is tracked
+                            // under `sub` (no such wire): no `$0\` temp, an EMPTY
+                            // sync rule, and the registered read
+                            // `sub.rsp.rdt <= mem[adr]` collapses to a combinational
+                            // read — breaking DLY=1 pipelines (rp32 SoC
+                            // r5p_soc_memory: the fetched instruction arrived one
+                            // cycle early and never byte-aligned back to the CPU).
+                            std::string chosen, probe = full_name;
+                            while (!probe.empty()) {
+                                RTLIL::Wire* w = module->wire(RTLIL::escape_id(probe));
+                                if (w && !w->attributes.count(
+                                             RTLIL::escape_id("is_interface"))) {
+                                    chosen = probe; break;
+                                }
+                                size_t d = probe.rfind('.');
+                                if (d == std::string::npos) break;
+                                probe = probe.substr(0, d);
+                            }
+                            if (!chosen.empty()) {
+                                if (chosen.size() < full_name.size())
+                                    sig.is_part_select = true;
+                                sig.name = chosen;
+                            } else {
+                                sig.name = base;
+                            }
+                        }
 
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to hier_path of '%s' (using '%s')\n",
