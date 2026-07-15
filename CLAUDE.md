@@ -370,10 +370,20 @@ the first wire with **no driving cell** — that is where the missing logic is.
 ### 3. Simulate to see WHEN / WHICH register goes X (yosys `sim`)
 
 ```
-read_uhdm ...; hierarchy -top r5p_degu_soc_top; proc; opt
+read_uhdm ...; hierarchy -top r5p_degu_soc_top
+proc; flatten; memory_collect
+delete t:$check t:$print t:$assert; opt_clean
 sim -clock clk -reset rst -rstlen 8 -n 400 -vcd soc_sim.vcd -w soc_sim
 ```
 
+- **Do NOT use `memory -nomap` / `opt_mem` when the design has an initialized
+  ROM** (imem `$readmemh`): `opt_mem` trims a read-only memory to its "used"
+  width (imem 32→27 bits) and MANGLES the `$meminit` (0x800200B7 → 0x400102D),
+  so the fetched instruction reads as garbage/X. Use plain `memory_collect`,
+  which keeps `WIDTH 32` and the correct `INIT`. Verify: the imem `$mem_v2`
+  must show `WIDTH 32` and `INIT` low-32 = `0x800200B7`.
+- **`flatten` is required for `sim` to apply the memory init** to a combinational
+  `$memrd` — without it the read returns 0/X even with a correct `$meminit`.
 - Open `soc_sim.vcd` in gtkwave; sort by first-X transition time. The earliest
   register that latches X (whose D input traces back to an undriven net) is the
   root, not the many downstream signals it poisons.

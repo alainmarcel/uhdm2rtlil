@@ -5334,7 +5334,45 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
             base = input_mapping->at(base_signal_name);
             log("      PartSelect: base '%s' from input_mapping (width=%d)\n",
                 base_signal_name.c_str(), base.size());
-        } else {
+        } else if (uhdm_part->Actual_group() &&
+                   uhdm_part->Actual_group()->VpiType() == vpiParameter) {
+            // A part-select whose BASE is a parameter — most importantly a
+            // generate-scope genvar, which the elaborated model represents as a
+            // per-scope `parameter` (e.g. genblk1[0].i).  part_select extends
+            // ref_obj, so it carries Actual_group() -> that parameter, exactly
+            // like the bare ref import_ref_obj resolves.  Without this the base
+            // "i" finds no `\i` wire and collapses to 0, so `sig[expr | i[1:0]]`
+            // silently drops the genvar term.  This is the rp32
+            // tcb_lite_lib_logsize2byteena read-data byte-remux
+            // (man_rdt[(~prefix_or(i[OFF-1:0]) & rsp_off) | i[OFF-1:0]]): every
+            // byte read man_rdt[0] instead of man_rdt[i], so the fetched
+            // instruction never reached the CPU.
+            const parameter* p = any_cast<const parameter*>(uhdm_part->Actual_group());
+            // Prefer the module's ELABORATED parameter value (command-line /
+            // instance override) over the UHDM parameter's raw VpiValue, which
+            // for a parameterized module is the unelaborated default — same rule
+            // as import_ref_obj.  Only fall back to VpiValue for a gen-scope
+            // genvar (not a module parameter, so absent from the map).
+            RTLIL::IdString p_id = RTLIL::escape_id(std::string(p->VpiName()));
+            if (module->parameter_default_values.count(p_id)) {
+                base = RTLIL::SigSpec(module->parameter_default_values.at(p_id));
+                log("      PartSelect: base '%s' from module parameter (width=%d)\n",
+                    base_signal_name.c_str(), base.size());
+            } else {
+                std::string vs = std::string(p->VpiValue());
+                int bw = 32;
+                if (p->Typespec() && p->Typespec()->Actual_typespec()) {
+                    int tw = get_width_from_typespec(p->Typespec()->Actual_typespec(),
+                                                     current_instance);
+                    if (tw > 0) bw = tw;
+                }
+                if (!vs.empty())
+                    base = RTLIL::SigSpec(RTLIL::Const(parse_vpi_value_to_int(vs), bw));
+                log("      PartSelect: base '%s' from genvar/parameter = %s (width=%d)\n",
+                    base_signal_name.c_str(), vs.c_str(), bw);
+            }
+        }
+        if (base.empty()) {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
             base = RTLIL::SigSpec(wire);
