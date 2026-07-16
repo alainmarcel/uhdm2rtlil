@@ -717,6 +717,60 @@ void UhdmImporter::create_memory_from_array(const array_var* uhdm_array) {
     // Add memory to module
     module->memories[mem_id] = memory;
 
+    // Declaration initializer `mem [..] = '{default: '0}` — emit a $meminit_v2
+    // so every word starts at the default value.  Without it the memory is X at
+    // reset: rp32's r5p_gpr register file relies on this to keep x0 (never
+    // written) reading 0, else the whole datapath goes X.  Handles the common
+    // all-words-equal `'{default: V}` form (a per-word list would need
+    // per-element evaluation).
+    if (auto init_expr = uhdm_array->Expr()) {
+        if (init_expr->UhdmType() == uhdmoperation) {
+            auto op = any_cast<const UHDM::operation*>(init_expr);
+            if (op && op->VpiOpType() == vpiAssignmentPatternOp && op->Operands()) {
+                const UHDM::expr* defpat = nullptr;
+                for (auto operand : *op->Operands()) {
+                    if (operand->UhdmType() != uhdmtagged_pattern) continue;
+                    auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
+                    if (!tp || !tp->Typespec()) continue;
+                    std::string tn = std::string(tp->Typespec()->VpiName());
+                    if (auto a = tp->Typespec()->Actual_typespec())
+                        if (tn.empty()) tn = std::string(a->VpiName());
+                    if (tn == "default" && tp->Pattern()) {
+                        defpat = any_cast<const UHDM::expr*>(tp->Pattern());
+                        break;
+                    }
+                }
+                if (defpat) {
+                    int saved_ctx = expression_context_width;
+                    expression_context_width = width;
+                    RTLIL::SigSpec dv = import_expression(defpat);
+                    expression_context_width = saved_ctx;
+                    if (dv.is_fully_const() && width > 0 && size > 0) {
+                        std::vector<RTLIL::State> word = dv.as_const().to_bits();
+                        word.resize(width, RTLIL::State::S0);
+                        std::vector<RTLIL::State> data;
+                        data.reserve((size_t)size * width);
+                        for (int i = 0; i < size; i++)
+                            data.insert(data.end(), word.begin(), word.end());
+                        RTLIL::Cell* cell = module->addCell(
+                            stringf("$meminit$\\%s$0", array_name.c_str()),
+                            ID($meminit_v2));
+                        cell->setParam(ID::MEMID, RTLIL::Const(mem_id.str()));
+                        cell->setParam(ID::ABITS, RTLIL::Const(32));
+                        cell->setParam(ID::WIDTH, RTLIL::Const(width));
+                        cell->setParam(ID::WORDS, RTLIL::Const(size));
+                        cell->setParam(ID::PRIORITY, RTLIL::Const(0));
+                        cell->setPort(ID::ADDR, RTLIL::Const(start_offset, 32));
+                        cell->setPort(ID::DATA, RTLIL::Const(data));
+                        cell->setPort(ID::EN, RTLIL::Const(RTLIL::State::S1, width));
+                        log("    Added $meminit for %s: %d words = default\n",
+                            array_name.c_str(), size);
+                    }
+                }
+            }
+        }
+    }
+
     if (mode_debug)
         log("    Created RTLIL memory %s: width=%d, size=%d, start_offset=%d\n",
             array_name.c_str(), width, size, start_offset);
