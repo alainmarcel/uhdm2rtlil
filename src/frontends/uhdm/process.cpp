@@ -10246,6 +10246,27 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
                 collect_blocking_assigned_names(case_item->Stmt(), blocking_names);
     }
 
+    // Signals that an EXPLICIT `default:` clause already assigns must NOT be
+    // X-defaulted — doing so would append `sig = 'x` after the user's value and
+    // override it (RTLIL applies later actions last).  The full_case X-default
+    // is only for the IMPLICIT default of a `unique`/`priority` case with NO
+    // default clause.  A case_item with no match expressions IS the default
+    // clause.  Without this, `unique case (opc) ... default: ifu_pcn = ifu_pcs`
+    // (rp32 r5p_degu next-PC) drove ifu_pcn to X for every unlisted opcode
+    // (e.g. LUI) — the PC collapsed and the CPU never advanced.
+    std::set<std::string> default_assigned;
+    if (auto case_items = uhdm_case->Case_items()) {
+        for (auto case_item : *case_items) {
+            if (case_item->VpiExprs() && !case_item->VpiExprs()->empty())
+                continue;  // a matched item, not the default
+            if (auto s = case_item->Stmt()) {
+                std::vector<AssignedSignal> ds;
+                extract_assigned_signals(s, ds);
+                for (auto& d : ds) default_assigned.insert(d.name);
+            }
+        }
+    }
+
     std::vector<AssignedSignal> body_signals;
     if (auto case_items = uhdm_case->Case_items()) {
         for (auto case_item : *case_items)
@@ -10255,6 +10276,8 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
     std::set<std::string> seen_keys;
     for (const auto& sig : body_signals) {
         if (!sig.lhs_expr) continue;
+        // Keep the user's explicit default value for this signal.
+        if (default_assigned.count(sig.name)) continue;
         // FF (non-blocking) signals hold; only blocking temps get X'd.
         if (in_always_ff_context && !blocking_names.count(sig.name)) continue;
         RTLIL::SigSpec lhs = import_expression(sig.lhs_expr);
