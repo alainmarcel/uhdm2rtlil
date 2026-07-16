@@ -3210,6 +3210,7 @@ int UhdmImporter::self_determined_width(const UHDM::any* node) {
             }
             // Comparisons, logical, reductions: 1 bit.
             case vpiEqOp: case vpiNeqOp: case vpiLtOp: case vpiLeOp:
+            case vpiWildEqOp: case vpiWildNeqOp:
             case vpiGtOp: case vpiGeOp: case vpiLogAndOp: case vpiLogOrOp:
             case vpiNotOp: case vpiUnaryAndOp: case vpiUnaryNandOp:
             case vpiUnaryOrOp: case vpiUnaryNorOp: case vpiUnaryXorOp:
@@ -3576,6 +3577,7 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         if (ctx_unsigned_entry || !is_expr_signed(uhdm_op))
             expression_context_unsigned = true;
     } else if (op_type == vpiEqOp || op_type == vpiNeqOp ||
+               op_type == vpiWildEqOp || op_type == vpiWildNeqOp ||
                op_type == vpiLtOp || op_type == vpiLeOp ||
                op_type == vpiGtOp || op_type == vpiGeOp) {
         // A comparison's RESULT is unsigned 1-bit, but its operands are sized
@@ -4356,6 +4358,40 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     xz_value_extend_pair(a, b);
                     std::string cell_name = generate_cell_name(uhdm_op, "nex");
                     return module->Nex(RTLIL::escape_id(cell_name), a, b);
+                }
+            break;
+        case vpiWildEqOp:
+        case vpiWildNeqOp:
+            // Wildcard equality `==?` / `!=?`: bits where the RHS pattern is x/z
+            // are DON'T-CARE (unlike `===`/$eqx, which require an exact x match).
+            // The pattern is normally a constant literal (rp32
+            // tcb_lite_lib_decoder `adr ==? DAM[i]`, DAM carries x wildcards).
+            // Build a care-mask from the constant RHS (1 where it is 0/1) and
+            // compare only those bits: (a & mask) == (b_with_x_as_0).  Without
+            // this the op was unsupported → 0, so no address ever matched and
+            // every peripheral store was misrouted to data memory.
+            if (operands.size() == 2)
+                {
+                    RTLIL::SigSpec a = operands[0], b = operands[1];
+                    xz_value_extend_pair(a, b);
+                    RTLIL::SigSpec res;
+                    if (b.is_fully_const()) {
+                        std::vector<RTLIL::State> mask, bdef;
+                        for (auto bit : b.as_const().to_bits()) {
+                            bool care = (bit == RTLIL::State::S0 ||
+                                         bit == RTLIL::State::S1);
+                            mask.push_back(care ? RTLIL::State::S1 : RTLIL::State::S0);
+                            bdef.push_back(care ? bit : RTLIL::State::S0);
+                        }
+                        RTLIL::SigSpec am = module->And(NEW_ID, a, RTLIL::Const(mask));
+                        res = module->Eq(NEW_ID, am, RTLIL::Const(bdef));
+                    } else {
+                        // Non-constant pattern: no compile-time wildcards.
+                        res = module->Eq(NEW_ID, a, b);
+                    }
+                    if (op_type == vpiWildNeqOp)
+                        res = module->Not(NEW_ID, res);
+                    return res;
                 }
             break;
         case vpiNeqOp:
