@@ -527,7 +527,45 @@ void UhdmImporter::process_stmt_to_case(const any* stmt, RTLIL::CaseRule* case_r
                 }
             }
             RTLIL::SigSpec lhs_sig;
-            RTLIL::SigSpec rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
+            RTLIL::SigSpec rhs_sig;
+            // Size the RHS to the LHS *field* width for a struct-field write
+            // (`decode.gpr = '{...}`).  Otherwise the surrounding function-call
+            // context (the WHOLE return struct — e.g. rp32's 306-bit dec_t)
+            // leaks in as the target width, and an assignment-pattern RHS
+            // (`'{'1,'0,'0}`) sizes each unsized fill literal to
+            // context/field_count bits instead of one field, so every field
+            // collapses to the same value (dec.gpr became 000/111 not 100/011,
+            // breaking the GPR write-enable so no register was ever written).
+            {
+                int fw = 0;
+                if (assign->Lhs()->UhdmType() == uhdmhier_path) {
+                    auto hp = any_cast<const hier_path*>(assign->Lhs());
+                    auto pe = hp ? hp->Path_elems() : nullptr;
+                    if (pe && pe->size() == 2) {
+                        std::string bn = std::string((*pe)[0]->VpiName());
+                        std::string fn = std::string((*pe)[1]->VpiName());
+                        const UHDM::struct_typespec* st = nullptr;
+                        if (bn == func_name)
+                            st = current_func_return_struct_ts;
+                        if (!st)
+                            if (auto bref = dynamic_cast<const UHDM::ref_obj*>((*pe)[0]))
+                                if (auto bts = bref->Typespec())
+                                    if (auto a = bts->Actual_typespec())
+                                        if (a->UhdmType() == uhdmstruct_typespec)
+                                            st = any_cast<const UHDM::struct_typespec*>(a);
+                        if (st && st->Members())
+                            for (auto m : *st->Members())
+                                if (std::string(m->VpiName()) == fn)
+                                    if (auto mts = m->Typespec())
+                                        if (auto a = mts->Actual_typespec())
+                                            fw = get_width_from_typespec(a, current_instance);
+                    }
+                }
+                int saved_ctx = expression_context_width;
+                if (fw > 0) expression_context_width = fw;
+                rhs_sig = import_expression(any_cast<const expr*>(assign->Rhs()), &input_mapping);
+                expression_context_width = saved_ctx;
+            }
 
             // For accumulative assignments in loops, we need special handling
             // The issue is that result = result + expr creates conflicting assignments
