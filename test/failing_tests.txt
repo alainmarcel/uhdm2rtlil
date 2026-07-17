@@ -186,19 +186,18 @@ struct_little_endian_bit_array
 svtypes_struct_array
 
 # --- Yosys v0.67 upstream check_mem / memories additions ---
-# check_mem/init.sv (a 2D unpacked array `logic m [3:2][2:0]` read via a dynamic
-#   index) was a REAL UHDM bug — fixed in the frontend (var_select element-width
-#   scaling), so it is NOT listed here.
+# check_mem/init.sv (dynamic read of a 2D unpacked array) and check_mem/non_zero.sv
+#   (registered 1D unpacked array written in a `for (int i=1;i<=3;i++)` always_ff)
+#   were REAL UHDM bugs — both fixed in the frontend, so NOT listed here.
 # check_mem/sub_addr — miter proves UHDM == Verilog (equiv_induct incompleteness,
 #   not a real diff).
 check_mem/sub_addr.sv
-# check_mem/non_zero, check_mem/power_of_two — genuine UHDM feature gap (TODO):
-#   a for-loop over a REGISTERED unpacked array with a `<=` bound
-#   (`for (i=1;i<=3;i++) my_array[i] <= in_data[i]`) hits the "Cannot unroll for
-#   loop - complex pattern" bailout, so the array read/write collapses to X.
-#   Distinct from the check_mem/init read bug; listed here until the loop-unroller
-#   handles registered-unpacked-array element writes.
-check_mem/non_zero.sv
+# check_mem/power_of_two — remaining genuine UHDM feature gap (TODO): a 2D unpacked
+#   array (`logic m [1:0][5:0]`) written in a NESTED always_ff for-loop via a
+#   two-index var_select (`m[i][j] <= …`).  The memwr-unroll path currently
+#   recognizes a single bit_select `m[<loop_var>]`, not a nested var_select, so the
+#   write is dropped.  Listed until the memwr path handles multi-index unpacked
+#   element writes.
 check_mem/power_of_two.sv
 # memories/wide_all — NOT a UHDM bug: Yosys v0.67's `synth` SEGFAULTS on this
 #   asymmetric wide-port memory for BOTH frontends (read_verilog crashes too).
