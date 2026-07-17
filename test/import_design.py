@@ -84,6 +84,7 @@ def main() -> int:
     ap.add_argument("--prefix", required=True, help="test-name prefix, e.g. rp32")
     ap.add_argument("--test-root", default="test", help="where to write <prefix>_<mod>/ dirs")
     ap.add_argument("--define", action="append", default=[], help="surelog +define passed to every test")
+    ap.add_argument("--incdir", action="append", default=[], help="+incdir path (relative to test/) added to every test")
     ap.add_argument("--verilator", default="", help="per-test '# verilator:' flags")
     ap.add_argument("--mode", default="", help="project.f '# mode:' (e.g. uhdm-only)")
     ap.add_argument("--skip-glob", action="append", default=[], help="glob of files to skip as module sources")
@@ -111,7 +112,11 @@ def main() -> int:
         if missing:
             skipped.append((mod, f"external pkgs: {','.join(sorted(missing))}"))
             continue
-        test_dir = test_root / f"{args.prefix}_{mod}"
+        # Don't double-prefix when the module already starts with the prefix
+        # (Ibex modules are all `ibex_*`, so `ibex_alu` stays `ibex_alu`, not
+        # `ibex_ibex_alu`; rp32's `r5p_alu` still becomes `rp32_r5p_alu`).
+        test_name = mod if mod.startswith(args.prefix + "_") else f"{args.prefix}_{mod}"
+        test_dir = test_root / test_name
         # project.f paths are relative to the test dir.
         srcs = pkg_files + [mfile]
         lines = [
@@ -121,8 +126,16 @@ def main() -> int:
         ]
         if args.mode:
             lines.append(f"# mode: {args.mode}")
-        for d in args.define:
-            lines.append(f"# surelog: -D{d}")
+        # Combine all -D defines and +incdir paths into ONE `# surelog:` line —
+        # project_files.sh keeps only the LAST such directive, so several lines
+        # would clobber each other.  incdir paths are relative to the test dir
+        # (../<path>), matching the source-file convention below.
+        # Use Surelog's -I<dir> for include dirs (its `+incdir+` handling mis-parses
+        # a relative `../`-path here, treating it as a source file).
+        sl_flags = [f"-D{d}" for d in args.define] + \
+                   [f"-I../{i}" for i in args.incdir]
+        if sl_flags:
+            lines.append(f"# surelog: {' '.join(sl_flags)}")
         if args.verilator:
             lines.append(f"# verilator: {args.verilator}")
         lines.append("")
