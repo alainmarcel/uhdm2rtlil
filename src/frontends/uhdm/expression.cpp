@@ -7310,16 +7310,49 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                 RTLIL::SigSpec rs = import_expression(ps->Right_range(), input_mapping);
                 expression_context_width = saved_ctx;
                 bool okoff = calculate_struct_member_offset(ats, field, inst, off, w);
+                // A packed-ARRAY member (`logic4 [2:0] vector3x4`, element width
+                // 4) indexes the part-select in ELEMENT units, so scale the
+                // offset/width by the element width and by the array's declared
+                // low bound.  A plain vector member (`logic [2:0] fn3`) has no
+                // Elem_typespec → element width 1 (plain bit indices), which
+                // reduces to the previous behaviour.
+                int elem_w = 1, decl_low = 0;
+                if (ats->UhdmType() == uhdmstruct_typespec) {
+                    auto st = any_cast<const UHDM::struct_typespec*>(ats);
+                    if (st->Members())
+                        for (auto m : *st->Members()) {
+                            if (std::string(m->VpiName()) != field) continue;
+                            const UHDM::typespec* mat = nullptr;
+                            if (auto mts = m->Typespec()) mat = mts->Actual_typespec();
+                            if (mat && mat->UhdmType() == uhdmlogic_typespec) {
+                                auto lt = any_cast<const UHDM::logic_typespec*>(mat);
+                                if (lt->Ranges() && !lt->Ranges()->empty()) {
+                                    auto r0 = (*lt->Ranges())[0];
+                                    RTLIL::SigSpec rl = import_expression(r0->Left_expr(), input_mapping);
+                                    RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
+                                    if (rl.is_fully_const() && rr.is_fully_const())
+                                        decl_low = std::min(rl.as_const().as_int(),
+                                                            rr.as_const().as_int());
+                                }
+                                if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                                    elem_w = get_width_from_typespec(
+                                        lt->Elem_typespec()->Actual_typespec(), inst);
+                            }
+                            break;
+                        }
+                }
+                if (elem_w < 1) elem_w = 1;
                 if (okoff &&
                     w > 0 && ls.is_fully_const() && rs.is_fully_const()) {
                     int l = ls.as_const().as_int(), r = rs.as_const().as_int();
-                    int lo = std::min(l, r), sw = std::abs(l - r) + 1;
-                    if (lo >= 0 && lo + sw <= w &&
-                        off + lo + sw <= base_wire->width) {
-                        log("    hier_path: packed-struct %s.%s[%d:%d] -> %s[%d+:%d]\n",
-                            base.c_str(), field.c_str(), l, r,
-                            base_wire->name.c_str(), off + lo, sw);
-                        return RTLIL::SigSpec(base_wire).extract(off + lo, sw);
+                    int lo = std::min(l, r), cnt = std::abs(l - r) + 1;
+                    int bit_lo = (lo - decl_low) * elem_w, sw = cnt * elem_w;
+                    if (bit_lo >= 0 && bit_lo + sw <= w &&
+                        off + bit_lo + sw <= base_wire->width) {
+                        log("    hier_path: packed-struct %s.%s[%d:%d] (elem_w=%d) -> %s[%d+:%d]\n",
+                            base.c_str(), field.c_str(), l, r, elem_w,
+                            base_wire->name.c_str(), off + bit_lo, sw);
+                        return RTLIL::SigSpec(base_wire).extract(off + bit_lo, sw);
                     }
                 }
             }

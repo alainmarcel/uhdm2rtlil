@@ -164,6 +164,19 @@ verific/mixed_flist.sv
 #   pass.  Kept here only because formal equivalence needs a correct reference
 #   netlist — UHDM is correct.  (verified UHDM == Verilator via co-sim.)
 CastStructArray
+
+# --- Yosys v0.67 equiv_induct incompleteness on packed struct-arrays (NOT UHDM
+# bugs) ---
+# The v0.67 bump made equiv_induct inductively weaker on three packed
+# struct-array designs: it can no longer close the proof, but the sound
+# SAT-from-reset miter proves UHDM == Verilog (triage_cosim.py: EQUIVALENT), so
+# the netlists are functionally identical — 0 Miter-Formal escapes.  Same class
+# as sat/alu and the dual-clock RAMs below.  (The genuine struct-array bug the
+# v0.67 reference exposed, multidim_hier_path8, was fixed in the frontend, not
+# listed here.)
+struct_array_indexed_write
+struct_little_endian_bit_array
+svtypes_struct_array
 # --- (all other imported feature-gap failures fixed) ---
 
 # ---------------------------------------------------------------------------
