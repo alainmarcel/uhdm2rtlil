@@ -144,15 +144,20 @@ build_slang() {
         # Make sure the slang submodule is present on a reused checkout.
         git -C "$SLANG_DIR" submodule update --init --recursive || true
     fi
-    # yosys-slang's Makefile locates yosys-config as "$(YOSYS_PREFIX)yosys-config",
-    # so we must pass YOSYS_PREFIX (the bin DIR, trailing slash) — NOT YOSYS_CONFIG.
-    # Without it, cmake picks up a system yosys-config (e.g. /usr/local v0.38) and
-    # the build fails against the older RTLIL::Const API.  Wipe any stale cmake
-    # cache from a previous mis-detected configure first.
+    # Upstream (now "sv-elab") retired the Makefile wrapper — its `make` target
+    # is empty in current master, so `make YOSYS_PREFIX=…` dies with
+    # "make: *** No targets.  Stop.".  Drive CMake directly instead (the old
+    # Makefile only wrapped these two commands anyway, so this works for both the
+    # old and new checkouts).  -DYOSYS_CONFIG must point at OUR pinned Yosys's
+    # yosys-config; without it CMake picks up a stray system yosys-config
+    # (e.g. /usr/local v0.38) and the build fails against the older RTLIL API.
+    # Wipe any stale cmake cache from a previous mis-detected configure first.
     local yosys_bindir; yosys_bindir="$(dirname "$YOSYS_CONFIG")/"
     echo "▶ Building yosys-slang against ${yosys_bindir}yosys-config …"
     rm -rf "$SLANG_DIR/build"
-    ( cd "$SLANG_DIR" && make -j"$NPROC" YOSYS_PREFIX="$yosys_bindir" ) \
+    ( cd "$SLANG_DIR" \
+        && cmake -B build -DYOSYS_CONFIG="${yosys_bindir}yosys-config" . \
+        && make -C build -j"$NPROC" ) \
         || { echo "❌ yosys-slang build failed" >&2; return 1; }
     if [ ! -f "$SLANG_SO" ]; then
         echo "❌ slang.so not produced at $SLANG_SO" >&2; return 1
