@@ -508,6 +508,25 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
 
                         signals.push_back(sig);
                         log("extract_assigned_signals: Found assignment to bit select of '%s'\n", sig.name.c_str());
+                    } else if (lhs_expr->VpiType() == vpiVarSelect) {
+                        // Multi-index element write on a flattened array
+                        // (`my_array[i][j] <= …` on `logic m [1:0][5:0]`).  Report
+                        // the BASE wire as a PARTIAL write so the always_ff
+                        // lowering allocates one `$0\<base>` temp and a sync
+                        // update, and map_to_temp_wire remaps the per-bit write to
+                        // it.  Without this the multi-index write stayed
+                        // combinational in root_case with an EMPTY sync — the
+                        // register was lost entirely (check_mem/power_of_two).
+                        auto vsel = any_cast<const var_select*>(lhs_expr);
+                        std::string nm = std::string(vsel->VpiName());
+                        // A per-element-wire array (\arr[0]..) isn't covered by a
+                        // single base temp; leave those to the dynamic-write path.
+                        if (!nm.empty() && module->wire(RTLIL::escape_id(nm))) {
+                            sig.name = nm;
+                            sig.is_part_select = true;
+                            signals.push_back(sig);
+                            log("extract_assigned_signals: Found assignment to var select of '%s'\n", nm.c_str());
+                        }
                     } else if (lhs_expr->VpiType() == vpiHierPath) {
                         // Two distinct shapes share this VPI type:
                         //   1. Struct-field write — `internal_bus.field`
