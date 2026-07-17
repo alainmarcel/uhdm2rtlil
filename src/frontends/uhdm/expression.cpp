@@ -1808,7 +1808,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // Elem_typespec width).
                 RTLIL::Wire* base_wire = mapped_base_wire ? mapped_base_wire
                                        : module->wire(RTLIL::escape_id(base_name));
-                int elem_w = 0;
+                int elem_w = 0, array_low = 0;
                 if (base_wire) {
                     if (auto actual = vs->Actual_group()) {
                         const UHDM::ref_typespec* rt = nullptr;
@@ -1842,6 +1842,32 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     }
                 }
 
+                // Unpacked array (array_var): the packed logic_typespec path
+                // above leaves elem_w=0.  Derive the FIRST unpacked dimension's
+                // stride (element width) and low bound from the array_var Ranges
+                // so a DYNAMIC index resolves to a $shiftx into the flattened
+                // wire.  For `logic m [3:2][2:0]` (bw=6): outer dim size 2 →
+                // elem_w=3, array_low=2; `m[sel][i]` = bit (sel-2)*3 + i (the
+                // trailing const index selects within the elem_w-bit element
+                // below).  Without this a dynamic index returned empty → 0
+                // (check_mem/init,non_zero,power_of_two).
+                if (elem_w == 0 && base_wire) {
+                    if (auto av = dynamic_cast<const UHDM::array_var*>(vs->Actual_group())) {
+                        if (av->Ranges() && !av->Ranges()->empty()) {
+                            auto r0 = (*av->Ranges())[0];
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr(), input_mapping);
+                            RTLIL::SigSpec rr = import_expression(r0->Right_expr(), input_mapping);
+                            if (l.is_fully_const() && rr.is_fully_const()) {
+                                int lv = l.as_const().as_int(), rv = rr.as_const().as_int();
+                                int outer = std::abs(lv - rv) + 1;
+                                if (outer > 0 && base_wire->width % outer == 0) {
+                                    elem_w = base_wire->width / outer;
+                                    array_low = std::min(lv, rv);
+                                }
+                            }
+                        }
+                    }
+                }
                 // `element_sig` = value of `base[idx]`.
                 RTLIL::SigSpec element_sig;
                 if (idx_sig.is_fully_const()) {
@@ -1869,7 +1895,7 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     } else if (element_wire) {
                         element_sig = RTLIL::SigSpec(element_wire);
                     } else if (elem_w > 0 && base_wire) {
-                        int off = array_idx * elem_w;
+                        int off = (array_idx - array_low) * elem_w;
                         if (off >= 0 && off + elem_w <= base_wire->width)
                             element_sig = RTLIL::SigSpec(base_wire).extract(off, elem_w);
                     }
@@ -1878,14 +1904,19 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         return RTLIL::SigSpec();
                     }
                 } else if (elem_w > 0 && base_wire) {
-                    // Dynamic packed index — element = (base >> idx*elem_w)[elem_w]
+                    // Dynamic index — element = (base >> (idx-low)*elem_w)[elem_w]
                     // via $shiftx.  `opt` const-folds it when the index is
                     // effectively constant (PartSelectOfPartSelectedBitSelect:
                     // `iccm[iccm_addr[0:0]][5:0]`, the index is a const-driven
-                    // wire slice).
+                    // wire slice).  `low` accounts for a non-zero-based unpacked
+                    // dimension (`m [3:2][2:0]`).
                     RTLIL::SigSpec shift_amt = idx_sig;
+                    shift_amt.extend_u0(32, false);
+                    if (array_low != 0)
+                        shift_amt = module->Sub(NEW_ID, shift_amt,
+                                                RTLIL::Const(array_low, 32), false);
                     if (elem_w > 1)
-                        shift_amt = module->Mul(NEW_ID, idx_sig,
+                        shift_amt = module->Mul(NEW_ID, shift_amt,
                                                 RTLIL::Const(elem_w, 32), false);
                     RTLIL::Wire* ew = module->addWire(NEW_ID, elem_w);
                     module->addShiftx(NEW_ID, RTLIL::SigSpec(base_wire), shift_amt, ew);
@@ -1934,6 +1965,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                         RTLIL::SigSpec bit_sig = bs->VpiIndex()
                             ? import_expression(any_cast<const expr*>(bs->VpiIndex()), input_mapping)
                             : RTLIL::SigSpec();
+                        if (bit_sig.is_fully_const()) {
+                            int bit_idx = bit_sig.as_const().as_int();
+                            if (bit_idx >= 0 && bit_idx < element_sig.size())
+                                result = element_sig.extract(bit_idx, 1);
+                        } else if (!bit_sig.empty()) {
+                            RTLIL::Wire* y = module->addWire(NEW_ID, 1);
+                            module->addShiftx(NEW_ID, element_sig, bit_sig, y);
+                            result = RTLIL::SigSpec(y);
+                        }
+                    } else {
+                        // Generic second index EXPRESSION (not wrapped in a
+                        // bit_select/part_select node) — e.g. an unrolled loop
+                        // variable `m[sel][i]` (check_mem/init).  Import it: a
+                        // constant selects that bit of the element, a dynamic
+                        // value → $shiftx.  Without this the whole element leaked
+                        // through and got truncated to bit 0.
+                        RTLIL::SigSpec bit_sig = import_expression(second_idx, input_mapping);
                         if (bit_sig.is_fully_const()) {
                             int bit_idx = bit_sig.as_const().as_int();
                             if (bit_idx >= 0 && bit_idx < element_sig.size())
