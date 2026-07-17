@@ -63,6 +63,35 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
 > `test/imported_tests_status.txt` and fixed incrementally. No pre-existing
 > internal test regressed.
 
+### SystemVerilog Frontend Comparison
+
+The 4-frontend regression matrix (`make test-matrix`, run nightly) synthesizes
+every test's SystemVerilog through **four** frontends and ranks them by how much
+SV each handles **correctly**. Every netlist is verified either by **formal
+equivalence** — Yosys `equiv_induct` plus a sound SAT-from-reset miter, against
+the Yosys Verilog-frontend golden — **and/or** by **high-activity randomized
+Verilator co-simulation** against the original RTL. A result counts as *Correct*
+only when one of those checks proves it equivalent; *SV-only* means the frontend
+synthesized SystemVerilog that the native Verilog frontend cannot even read (no
+golden to compare against, so it is verified against the RTL by co-simulation).
+
+Ranked by total tests handled correctly (1237-test matrix):
+
+| Rank | Frontend | Verified correct | SV-only (no golden) | **Total correct** | Incorrect | Failed to read |
+|-----:|----------|-----------------:|--------------------:|------------------:|----------:|---------------:|
+| 🥇 1 | **`uhdm`** (this project) | 814 | 293 | **1107 (89%)** | 25 | 37 |
+| 🥈 2 | `sv2v` | 768 | 237 | 1005 (81%) | 0 | 175 |
+| 🥉 3 | `slang` (Yosys sv-elab) | 640 | 243 | 883 (71%) | 0 | 242 |
+| 4 | `verilog` (Yosys native, the golden) | 852 | — | 852 (69%) | 9 | 375 |
+
+The UHDM frontend handles the most SystemVerilog — **1107 of 1237** tests verified
+correct, including **293 designs the native Verilog frontend cannot read at all**.
+Its 25 `Incorrect` are the known triage backlog (tracked in
+`test/failing_tests.txt`); `sv2v` and `slang` report 0 incorrect but read far
+less SV (175 / 242 outright read failures, vs UHDM's 37). `verilog` is the golden
+reference, so it has no *SV-only* column and its ceiling is the SV subset it can
+parse.
+
 > **Note (2026-06-14):** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
 > were imported as `test/<Name>/dut.sv` (harnesses excluded). Of the 316 observable ones,

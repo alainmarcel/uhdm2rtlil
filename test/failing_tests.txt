@@ -91,6 +91,13 @@ sat/ram_memory.v
 # reference undefined primitives / built-in cells and have no synthesizable
 # output, so the UHDM flow (read_uhdm -> synth) cannot produce a netlist.
 arch/fabulous/custom_map.v
+# arith/ff/io/regfile_map are the same class: `_TECHMAP_REPLACE_` /
+# `techmap_celltype` rule files that instantiate undefined FaBuLoUs primitives
+# (LUTFF, IO_1_bidirectional_frame_config_pass, …), no synthesizable top.
+arch/fabulous/arith_map.v
+arch/fabulous/ff_map.v
+arch/fabulous/io_map.v
+arch/fabulous/regfile_map.v
 techmap/mem_simple_4x1_map.v
 techmap/recursive_map.v
 
@@ -177,6 +184,25 @@ CastStructArray
 struct_array_indexed_write
 struct_little_endian_bit_array
 svtypes_struct_array
+
+# --- Yosys v0.67 upstream check_mem / memories additions ---
+# check_mem/init.sv (a 2D unpacked array `logic m [3:2][2:0]` read via a dynamic
+#   index) was a REAL UHDM bug — fixed in the frontend (var_select element-width
+#   scaling), so it is NOT listed here.
+# check_mem/sub_addr — miter proves UHDM == Verilog (equiv_induct incompleteness,
+#   not a real diff).
+check_mem/sub_addr.sv
+# check_mem/non_zero, check_mem/power_of_two — genuine UHDM feature gap (TODO):
+#   a for-loop over a REGISTERED unpacked array with a `<=` bound
+#   (`for (i=1;i<=3;i++) my_array[i] <= in_data[i]`) hits the "Cannot unroll for
+#   loop - complex pattern" bailout, so the array read/write collapses to X.
+#   Distinct from the check_mem/init read bug; listed here until the loop-unroller
+#   handles registered-unpacked-array element writes.
+check_mem/non_zero.sv
+check_mem/power_of_two.sv
+# memories/wide_all — NOT a UHDM bug: Yosys v0.67's `synth` SEGFAULTS on this
+#   asymmetric wide-port memory for BOTH frontends (read_verilog crashes too).
+memories/wide_all.v
 # --- (all other imported feature-gap failures fixed) ---
 
 # ---------------------------------------------------------------------------
