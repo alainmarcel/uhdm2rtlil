@@ -1,9 +1,9 @@
 # Test Case Catalog
 
-> Current Test Cases (232 total — 187 passing equivalence, 45 UHDM-only, 0 known failures)
->
-> Full annotated list of the internal SystemVerilog test cases, extracted from
-> the main [README](../README.md).
+> Annotated catalog of the internal SystemVerilog test cases, extracted from the
+> main [README](../README.md). For current pass/fail counts see the README's
+> [Test Suite Status](../README.md#test-suite-status) — this file is the per-test
+> *catalog*, not a live scoreboard.
 
 #### Sequential Logic - Flip-Flops & Registers
 - **flipflop** - D flip-flop (tests basic sequential logic)

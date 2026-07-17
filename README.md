@@ -117,13 +117,36 @@ Ranked by total tests handled correctly (1237-test matrix):
 | 🥉 3 | `slang` (Yosys sv-elab) | 640 | 243 | 883 (71%) | 0 | 242 |
 | 4 | `verilog` (Yosys native, the golden) | 852 | — | 852 (69%) | 9 | 375 |
 
-The UHDM frontend handles the most SystemVerilog — **1107 of 1237** tests verified
-correct, including **293 designs the native Verilog frontend cannot read at all**.
-Its 25 `Incorrect` are the known triage backlog (tracked in
-`test/failing_tests.txt`); `sv2v` and `slang` report 0 incorrect but read far
-less SV (175 / 242 outright read failures, vs UHDM's 37). `verilog` is the golden
-reference, so it has no *SV-only* column and its ceiling is the SV subset it can
-parse.
+On this corpus the UHDM frontend converts the most SystemVerilog — **1107 of
+1237** tests verified correct, including **293 designs the native Verilog frontend
+cannot read at all**.
+
+**How to read this table honestly:**
+
+- **It is a self-run benchmark on a largely self-authored corpus.** The matrix is
+  mostly this project's own test suite (plus imported Yosys and
+  chipsalliance/UHDM-integration tests), and many tests were added specifically to
+  exercise constructs this frontend targets. The ranking is real but it is *not* a
+  neutral third-party comparison — a tool graded on the set its authors curated is
+  playing at home. Read "#1 by ~18 points" in that light.
+- **The benchmark rewards breadth over conservatism.** `sv2v` and `slang` report
+  **0 incorrect** results here; `uhdm`'s **25** are a real (tracked) triage backlog
+  in `test/failing_tests.txt`. The README's ranking metric (total handled) favors
+  reading more SV, but "accepts less yet is never wrong on what it accepts" is a
+  legitimate — sometimes preferable — posture, and it's the one `sv2v`/`slang` show
+  on this corpus. Their higher "Failed to read" counts (175 / 242 vs 37) reflect
+  that trade-off, not a defect.
+- **Coverage ≠ ecosystem fit.** `slang`/sv-elab is the frontend that has been
+  **upstreamed into Yosys itself**, ships in the OSS CAD Suite, and is used by
+  OpenROAD — adoption, integration, and maintenance advantages a nightly coverage
+  count does not capture. If your criterion is *maximum SV coverage through the
+  Surelog/UHDM path today*, this table favors `uhdm`; if it is *what is maintained
+  and integrated for production*, sv-elab has the stronger case. Both can be true.
+
+`verilog` is the golden reference, so it has no *SV-only* column and its ceiling is
+the SV subset it can parse. Numbers are from one nightly run and drift between runs
+(seq-equiv induction is inductively incomplete on some designs) — treat any single
+figure as approximate.
 
 > **Note (2026-06-14):** 349 DUTs from
 > [chipsalliance/UHDM-integration-tests](https://github.com/chipsalliance/UHDM-integration-tests)
@@ -444,9 +467,12 @@ cat test/failing_tests.txt
 - This allows CI to pass while acknowledging known issues
 - New unexpected failures will cause the test suite to fail
 
-**Current Status:**
-- 253 of 253 tests are passing or working as expected (208 equiv + 45 UHDM-only)
-- 0 tests in `failing_tests.txt` (no known failures)
+**Current Status:** see the authoritative figures under
+[Verification Methodology → Test Suite Status](#test-suite-status). In short: the
+internal SystemVerilog suite passes with 0 true failures / 0 crashes, and
+`failing_tests.txt` documents the known expected-fail cases from the imported
+upstream-Yosys suite (feature gaps, non-DUT techmap files, and equiv_induct
+incompleteness that the SAT miter proves equivalent) — it is **not** empty.
 
 ### Important Test Workflow Note
 
@@ -499,10 +525,11 @@ uhdm2rtlil/
 
 ## Test Results
 
-The UHDM frontend test suite includes **253 test cases**:
-- **45 UHDM-only tests** - Demonstrate superior SystemVerilog support (struct/package/SVA features that the Yosys Verilog frontend doesn't accept)
-- **208 passing tests** - Validated by formal equivalence checking between UHDM and Verilog frontends
-- **0 known failures** - All tests pass; `failing_tests.txt` is empty
+The authoritative, up-to-date figures live in one place —
+[Verification Methodology → Test Suite Status](#test-suite-status) and the
+[SystemVerilog Frontend Comparison](#systemverilog-frontend-comparison) leaderboard
+— to avoid the numeric drift that comes from repeating counts in several sections.
+Any single figure is from one nightly run and is approximate.
 
 ## Recent Improvements
 
