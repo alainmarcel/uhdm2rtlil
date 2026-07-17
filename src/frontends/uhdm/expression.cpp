@@ -4997,6 +4997,15 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // Check if the ref_obj has an Actual_group() that points to a parameter or enum constant
     if (uhdm_ref->Actual_group()) {
         const any* actual = uhdm_ref->Actual_group();
+
+        // A ref bound directly to a folded CONSTANT: Surelog pre-evaluates
+        // computed interface localparams (e.g. `CFG_BUS_SIZ = $clog2(...)` ->
+        // UINT:2) and binds the bare-name ref straight to that constant.  Return
+        // it so range bounds like `[CFG_BUS_SIZ-1:0]` fold and struct fields get
+        // their true width (else the field collapses to 1 bit).
+        if (actual->UhdmType() == uhdmconstant) {
+            return import_constant(any_cast<const constant*>(actual));
+        }
         
         // Check for enum constant
         if (actual->UhdmType() == uhdmenum_const) {
@@ -5163,8 +5172,19 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
                         if (parent && parent->UhdmType() == uhdmparam_assign) {
                             const param_assign* pa = any_cast<const param_assign*>(parent);
                             if (pa && pa->Rhs()) {
+                                // A COMPUTED interface localparam (e.g.
+                                // `localparam CFG_BUS_SIZ = $clog2($clog2(CFG.BUS.DAT/8)+1)`)
+                                // has its value expression chained through the OWNING
+                                // interface's other localparams and its CFG struct
+                                // parameter.  Force-fold so the whole $clog2 chain
+                                // (recursing through this same param_assign path and
+                                // routing `CFG.BUS.*` accesses through
+                                // eval_iface_param_field) collapses to a constant width.
+                                bool saved_fcf = force_const_fold;
+                                force_const_fold = true;
                                 RTLIL::SigSpec expr_val = import_expression(
                                     any_cast<const expr*>(pa->Rhs()));
+                                force_const_fold = saved_fcf;
                                 if (expr_val.is_fully_const()) {
                                     param_value = expr_val.as_const();
                                 }
@@ -7218,6 +7238,88 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                                 full.c_str(), l, r, full.c_str(), lo, w);
                             return RTLIL::SigSpec(sig_wire).extract(lo, w);
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // Packed-struct member PART-SELECT (`dec.fn3[1:0]` where `dec` is a
+    // packed-struct net/var flattened to one wire and `fn3` is a member).
+    // Path_elems = [ref_obj(base), part_select(field[hi:lo])].  Resolve the
+    // member's offset from the base's struct typespec, then apply the
+    // field-local part-select on top.  Without this the generic walker below
+    // collapses `field[hi:lo]` to a single bit inside a module that HAS an
+    // interface port (there the field ref resolves its typespec via the
+    // interface's struct copy) — truncating rp32 r5p_lsu's
+    // `tcb.req.siz = dec.fn3[1:0]` to 1 bit so a word store wrote only 1 byte.
+    if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() == 2 &&
+        (*uhdm_hier->Path_elems())[0]->UhdmType() == uhdmref_obj &&
+        (*uhdm_hier->Path_elems())[1]->UhdmType() == uhdmpart_select) {
+        auto& pe = *uhdm_hier->Path_elems();
+        std::string base = std::string(any_cast<const ref_obj*>(pe[0])->VpiName());
+        const part_select* ps = any_cast<const part_select*>(pe[1]);
+        std::string field = ps ? std::string(ps->VpiName()) : std::string();
+        RTLIL::Wire* base_wire = name_map.count(base) ? name_map[base]
+                                  : module->wire(RTLIL::escape_id(base));        // Only a genuine packed-struct base (not an interface signal, handled
+        // above) with an in-module wire and constant field-local ranges.
+        if (base_wire && !field.empty() && !name_map.count(base + "." + field) &&
+            ps->Left_range() && ps->Right_range()) {
+            const UHDM::ref_typespec* rts = nullptr;
+            // The base ref_obj's Actual_group() is often null for a port; use
+            // the ref_obj's own Typespec (it names the packed-struct type).
+            auto bref = any_cast<const ref_obj*>(pe[0]);
+            if (bref->Typespec()) rts = bref->Typespec();
+            if (!rts) {
+                if (auto a = bref->Actual_group()) {
+                    if (auto v = dynamic_cast<const UHDM::variables*>(a)) rts = v->Typespec();
+                    else if (auto n = dynamic_cast<const UHDM::net*>(a)) rts = n->Typespec();
+                }
+            }
+            // Inside a module that has an INTERFACE port, Surelog leaves the base
+            // ref_obj's typespec/Actual_group null.  Recover the packed-struct
+            // type by name from the module's Nets/Variables (rp32 r5p_lsu's
+            // `dec` port + interface tcb port).
+            if (!rts) {
+                auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance);
+                if (mi) {
+                    if (mi->Variables())
+                        for (auto v : *mi->Variables())
+                            if (std::string(v->VpiName()) == base && v->Typespec())
+                                { rts = v->Typespec(); break; }
+                    if (!rts && mi->Nets())
+                        for (auto n : *mi->Nets())
+                            if (auto nn = dynamic_cast<const UHDM::net*>(n))
+                                if (std::string(nn->VpiName()) == base && nn->Typespec())
+                                    { rts = nn->Typespec(); break; }
+                    if (!rts && mi->Ports())
+                        for (auto pp : *mi->Ports())
+                            if (std::string(pp->VpiName()) == base) {
+                                if (pp->Typespec()) rts = pp->Typespec();
+                                break;
+                            }
+                }
+            }            if (rts && rts->Actual_typespec() &&
+                (rts->Actual_typespec()->UhdmType() == uhdmstruct_typespec ||
+                 rts->Actual_typespec()->UhdmType() == uhdmunion_typespec)) {
+                auto ats = rts->Actual_typespec();
+                int off = 0, w = 0;
+                int saved_ctx = expression_context_width;
+                expression_context_width = 0;
+                RTLIL::SigSpec ls = import_expression(ps->Left_range(), input_mapping);
+                RTLIL::SigSpec rs = import_expression(ps->Right_range(), input_mapping);
+                expression_context_width = saved_ctx;
+                bool okoff = calculate_struct_member_offset(ats, field, inst, off, w);
+                if (okoff &&
+                    w > 0 && ls.is_fully_const() && rs.is_fully_const()) {
+                    int l = ls.as_const().as_int(), r = rs.as_const().as_int();
+                    int lo = std::min(l, r), sw = std::abs(l - r) + 1;
+                    if (lo >= 0 && lo + sw <= w &&
+                        off + lo + sw <= base_wire->width) {
+                        log("    hier_path: packed-struct %s.%s[%d:%d] -> %s[%d+:%d]\n",
+                            base.c_str(), field.c_str(), l, r,
+                            base_wire->name.c_str(), off + lo, sw);
+                        return RTLIL::SigSpec(base_wire).extract(off + lo, sw);
                     }
                 }
             }
