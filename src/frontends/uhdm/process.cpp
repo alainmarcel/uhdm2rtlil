@@ -5049,29 +5049,28 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             int64_t increment = 1;
             bool inclusive = false;
             
-            // Extract initialization: i = start_value
-            // Handle both locally-declared loop vars (vpiRefVar) and module-level vars (vpiRefObj)
+            // Extract initialization: i = start_value.  The loop variable may be
+            // a reference (vpiRefVar / vpiRefObj) OR an inline declaration node —
+            // `for (int i = …)` gives a vpiIntVar LHS, `integer` a vpiIntegerVar,
+            // etc.  All expose VpiName(), so take it directly (gated on a bare
+            // constant RHS) rather than enumerate every variable type.  Without
+            // this the sync path (memory writes in an always_ff for loop) could
+            // not unroll `for (int i = 1; i <= 3; i++) mem[i] <= …` and dropped
+            // the write entirely (check_mem/non_zero, power_of_two).
             if (init_stmt->VpiType() == vpiAssignment) {
                 const assignment* init_assign = any_cast<const assignment*>(init_stmt);
-                if (init_assign->Lhs() &&
-                    (init_assign->Lhs()->VpiType() == vpiRefVar ||
-                     init_assign->Lhs()->VpiType() == vpiRefObj)) {
-                    if (init_assign->Lhs()->VpiType() == vpiRefVar) {
-                        const ref_var* ref = any_cast<const ref_var*>(init_assign->Lhs());
-                        loop_var_name = std::string(ref->VpiName());
-                    } else {
-                        const ref_obj* ref = any_cast<const ref_obj*>(init_assign->Lhs());
-                        loop_var_name = std::string(ref->VpiName());
-                    }
-
-                    if (init_assign->Rhs() && init_assign->Rhs()->VpiType() == vpiConstant) {
-                        const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
-                        RTLIL::SigSpec init_spec = import_constant(const_val);
-                        if (init_spec.is_fully_const()) {
-                            start_value = init_spec.as_const().as_int();
-                            can_unroll = true;
-                            log("        Loop init: %s = %lld\n", loop_var_name.c_str(), (long long)start_value);
-                        }
+                std::string init_name =
+                    init_assign->Lhs() ? std::string(init_assign->Lhs()->VpiName())
+                                       : std::string();
+                if (!init_name.empty() && init_assign->Rhs() &&
+                    init_assign->Rhs()->VpiType() == vpiConstant) {
+                    const constant* const_val = any_cast<const constant*>(init_assign->Rhs());
+                    RTLIL::SigSpec init_spec = import_constant(const_val);
+                    if (init_spec.is_fully_const()) {
+                        loop_var_name = init_name;
+                        start_value = init_spec.as_const().as_int();
+                        can_unroll = true;
+                        log("        Loop init: %s = %lld\n", loop_var_name.c_str(), (long long)start_value);
                     }
                 }
             }
@@ -5230,7 +5229,26 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                 // computed/port-dependent address — e.g.
                 // asym_ram_sdp_write_wider's `RAM[addrA*RATIO+i] <= diA[…]` — is
                 // already handled correctly by the begin-block path, so leave it.
+                // True for a single `mem[<loop_var>] <= …` assignment.
+                auto is_mem_write_by_loop_var = [&](const any* x) -> bool {
+                    if (!x || x->VpiType() != vpiAssignment) return false;
+                    auto a = any_cast<const assignment*>(x);
+                    if (!a->Lhs() || a->Lhs()->VpiType() != vpiBitSelect) return false;
+                    auto bsl = any_cast<const bit_select*>(a->Lhs());
+                    if (!module->memories.count(
+                            RTLIL::escape_id(std::string(bsl->VpiName()))))
+                        return false;
+                    auto idx = bsl->VpiIndex();
+                    std::string idx_name =
+                        idx ? std::string(idx->VpiName()) : std::string();
+                    return idx_name == loop_var_name;
+                };
                 auto mem_writes_indexed_by_loop_var = [&](const any* blk) -> bool {
+                    // A single-statement begin block is unwrapped to the bare
+                    // assignment before we get here (check_mem/non_zero), so accept
+                    // that shape directly too.
+                    if (blk && blk->VpiType() == vpiAssignment)
+                        return is_mem_write_by_loop_var(blk);
                     auto* stmts = (blk->VpiType() == vpiBegin ||
                                    blk->VpiType() == vpiNamedBegin)
                                       ? begin_block_stmts(blk) : nullptr;
@@ -5246,15 +5264,20 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
                             continue;
                         any_mem = true;
                         auto idx = bsl->VpiIndex();
-                        if (!idx || idx->VpiType() != vpiRefObj ||
-                            std::string(any_cast<const ref_obj*>(idx)->VpiName())
-                                != loop_var_name)
+                        // The index may be a vpiRefObj (module-level `integer k`)
+                        // or a vpiRefVar (locally-declared `for (int i …)`); both
+                        // expose VpiName().  A computed index (operation) has an
+                        // empty name → deferred to the begin-block path.
+                        std::string idx_name =
+                            idx ? std::string(idx->VpiName()) : std::string();
+                        if (idx_name != loop_var_name)
                             return false;  // computed address → defer
                     }
                     return any_mem;
                 };
                 if (!in_initial_block &&
-                    (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin) &&
+                    (body->VpiType() == vpiBegin || body->VpiType() == vpiNamedBegin ||
+                     body->VpiType() == vpiAssignment) &&
                     mem_writes_indexed_by_loop_var(body)) {
                     {
                         int64_t loop_end = inclusive ? end_value : end_value - 1;
@@ -9221,19 +9244,50 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
                     if (loop_values.count(iname))
                         idx_sig = RTLIL::Const(loop_values[iname], 32);
                 }
+                // A packed multi-dim array element `out_data[i]` on
+                // `logic [3:1][2:0]` is a 3-bit ELEMENT at `(i-low)*elem_w`, not
+                // bit i.  Derive the element width + low bound from the base's
+                // typespec; a scalar bit-array (`reg q[N]` / `reg [N-1:0] q`)
+                // resolves to elem_w=1, low=0 → the original per-bit behaviour.
+                int elem_w = 1, arr_low = 0;
+                if (auto a = bs->Actual_group()) {
+                    const UHDM::ref_typespec* rts = nullptr;
+                    if (auto e = dynamic_cast<const UHDM::expr*>(a)) rts = e->Typespec();
+                    if (rts && rts->Actual_typespec() &&
+                        rts->Actual_typespec()->UhdmType() == uhdmlogic_typespec) {
+                        auto lt = any_cast<const UHDM::logic_typespec*>(rts->Actual_typespec());
+                        if (lt->Elem_typespec() && lt->Elem_typespec()->Actual_typespec())
+                            elem_w = get_width_from_typespec(
+                                lt->Elem_typespec()->Actual_typespec(), current_instance);
+                        if (lt->Ranges() && !lt->Ranges()->empty()) {
+                            auto r0 = (*lt->Ranges())[0];
+                            RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                            RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                            if (l.is_fully_const() && r.is_fully_const()) {
+                                int lv = l.as_const().as_int(), rv = r.as_const().as_int();
+                                arr_low = std::min(lv, rv);
+                                int outer = std::abs(lv - rv) + 1;
+                                if (elem_w == 1 && outer > 0 && w->width % outer == 0)
+                                    elem_w = w->width / outer;
+                            }
+                        }
+                    }
+                }
+                if (elem_w < 1) elem_w = 1;
                 // NB: an empty SigSpec reports is_fully_const()==true, so the
                 // size check is essential — without it a non-loop-var (empty
                 // idx_sig) index would wrongly resolve to bit 0 (initval's
                 // `asdf[3] <= bar[3]` collapsed onto asdf[0]).
                 if (idx_sig.size() > 0 && idx_sig.is_fully_const()) {
                     int idx = idx_sig.as_const().as_int();
-                    if (idx >= 0 && idx < w->width) {
-                        RTLIL::SigSpec lhs_bit(w, idx, 1);
+                    int off = (idx - arr_low) * elem_w;
+                    if (off >= 0 && off + elem_w <= w->width) {
+                        RTLIL::SigSpec lhs_bit(w, off, elem_w);
                         RTLIL::SigSpec rhs_bit;
                         if (auto rhs_any = uhdm_assign->Rhs())
                             if (auto rhs_e = dynamic_cast<const expr*>(rhs_any))
                                 rhs_bit = import_expression(rhs_e, comb_read_map());
-                        // emit_comb_assign truncates the RHS to the 1-bit LHS.
+                        // emit_comb_assign sizes the RHS to the elem_w-bit LHS.
                         emit_comb_assign(lhs_bit, rhs_bit, proc);
                         return;
                     }
