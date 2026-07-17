@@ -66,6 +66,21 @@ else()
     # it OFF (-DUHDM2RTLIL_ENABLE_SLANG=OFF) on hosts with an older toolchain.
     option(UHDM2RTLIL_ENABLE_SLANG
            "Build the sv-elab (read_slang) frontend into the vendored Yosys" ON)
+    # Forward the toolchain THIS project was configured with to the nested Yosys
+    # build.  Critically, when the top build uses ccache it configures a plain
+    # CMAKE_CXX_COMPILER=g++ plus CMAKE_CXX_COMPILER_LAUNCHER=ccache; passing
+    # those through (instead of letting yosys's cmake pick up a `CXX="ccache g++"`
+    # from the environment) keeps the compiler yosys-config embeds CLEAN — a bare
+    # `g++`, not `ccache g++`.  Otherwise `yosys-config --build` (used for the
+    # extract_clocks_resets plugin) invokes `ccache g++ …` such that a compiler
+    # flag is parsed by ccache itself → "ccache: invalid option -- 't'".
+    set(YOSYS_TOOLCHAIN_ARGS "")
+    foreach(v CMAKE_C_COMPILER CMAKE_CXX_COMPILER
+              CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER)
+      if(${v})
+        list(APPEND YOSYS_TOOLCHAIN_ARGS -D${v}=${${v}})
+      endif()
+    endforeach()
     add_custom_target(yosys DEPENDS ${INSTALL_DIR}/bin/yosys)
     add_custom_command(
       OUTPUT ${INSTALL_DIR}/bin/yosys
@@ -74,6 +89,7 @@ else()
               -DCMAKE_BUILD_TYPE=Release
               -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
               -DYOSYS_ENABLE_SLANG=${UHDM2RTLIL_ENABLE_SLANG}
+              ${YOSYS_TOOLCHAIN_ARGS}
       COMMAND ${CMAKE_COMMAND} --build ${YOSYS_BUILD_DIR} --parallel ${YOSYS_NPROC}
       COMMAND ${CMAKE_COMMAND} --install ${YOSYS_BUILD_DIR}
       WORKING_DIRECTORY "${YOSYS_SRC_DIR}"
