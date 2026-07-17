@@ -6,12 +6,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Yosys frontend that converts SystemVerilog to RTLIL (Register Transfer Level Intermediate Language) via UHDM (Universal Hardware Data Model). The workflow is: SystemVerilog → Surelog → UHDM → UHDM Frontend → RTLIL → Yosys synthesis.
 
-The Yosys submodule is pinned at **v0.66** (`third_party/yosys`, on the fork's
-`v0.66-write-verilog-signed-port` branch = v0.66 + one local write_verilog
-signedness patch). v0.66 requires **C++20** (kernel/yosys_common.h hard-errors
-otherwise), so the plugin's `CMAKE_CXX_STANDARD` is 20. yosys-slang officially
-lists support only up to v0.65, but it builds and runs fine against v0.66 in
-practice (verified: the 4-frontend matrix's slang column synthesizes).
+The Yosys submodule is pinned at **upstream YosysHQ tag v0.67**
+(`third_party/yosys`; the old `write_verilog signed` fork patch is now upstream,
+so no fork is needed). v0.67 requires **C++20** (kernel/yosys_common.h
+hard-errors otherwise), so the plugin's `CMAKE_CXX_STANDARD` is 20.
+
+**v0.67 is CMake-only** — the top-level Makefile is gone.  Our CMakeLists builds
+Yosys via `cmake -B third_party/yosys/build … && cmake --build … && cmake
+--install` (was `make CONFIG=gcc PREFIX=… install`), installing the yosys binary
++ yosys-config into `out/current/`.  The build passes
+`-DYOSYS_ENABLE_SLANG=ON` (toggle: `-DUHDM2RTLIL_ENABLE_SLANG=OFF`) so the
+vendored **sv-elab** SystemVerilog frontend is compiled into the yosys binary as
+the built-in `read_slang` command — this replaces the standalone
+povik/yosys-slang plugin as the 4-frontend matrix's `slang` column.  Building
+slang compiles the bundled MikePopoloski/slang library, which needs **gcc ≥ 11**
+and **CMake in the [3.28, 3.31] range**: ≥ 3.28 is required by slang, but CMake
+**4.x cannot be used** because Surelog/UHDM's bundled capnproto still declares
+`cmake_minimum_required(VERSION < 3.5)`, which CMake 4 rejects.  ubuntu-24.04's
+default cmake 3.28 satisfies both; on ubuntu-22.04 (cmake 3.22) install a 3.28–
+3.31 build (e.g. `pip install 'cmake==3.31.6'`, which lands in `~/.local/bin` on
+PATH) or build with `-DUHDM2RTLIL_ENABLE_SLANG=OFF`.  NOTE the top-level project
+must be *configured* with that cmake, because the vendored-Yosys build reuses the
+same `CMAKE_COMMAND` for its nested `cmake -B third_party/yosys/build`.  The
+matrix's default / golden frontend remains Yosys-native `read_verilog`.
 
 ## Build Commands
 

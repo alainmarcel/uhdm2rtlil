@@ -45,11 +45,11 @@ test-yosys: all preprocess-yosys-tests
 	@echo "Running Yosys tests..."
 	@cd test && ./run_all_tests.sh --yosys
 
-# Build the two external frontends (sv2v, yosys-slang) for the 4-frontend
-# matrix.  Requires a completed `make` first (needs out/current yosys-config)
-# and Haskell Stack on PATH for sv2v.
+# Build the external frontend(s) for the 4-frontend matrix.  Only sv2v is
+# external now — slang (read_slang / sv-elab) is built into the yosys binary
+# via YOSYS_ENABLE_SLANG=ON.  Requires Haskell Stack on PATH for sv2v.
 frontends: all
-	@echo "Building external frontends (sv2v, yosys-slang)..."
+	@echo "Building external frontends (sv2v)..."
 	@cd test && ./build_frontends.sh
 
 # Run the 4-frontend regression matrix over the internal tests.
@@ -88,19 +88,15 @@ build-debug/Makefile:
 
 # Clean build artifacts.
 #
-# IMPORTANT: Yosys (and its bundled abc) build IN-TREE under third_party/yosys,
-# and the install lives in out/.  Both survive `rm -rf build`, so the old clean
-# left stale Yosys *.o behind — after a Yosys-submodule bump those link against
-# freshly-built v0.65 objects and crash at runtime (ABI mismatch, e.g.
-# `std::out_of_range: Cell::getParam()`).  A proper clean must remove them too.
+# IMPORTANT: Yosys v0.67 builds out-of-tree under third_party/yosys/build/ (its
+# own CMake build dir) and installs into out/.  Both survive `rm -rf build`, so
+# a proper clean must remove the Yosys CMake build dir too — otherwise a stale
+# build links against objects from a previous submodule pin and crashes at
+# runtime (ABI mismatch, e.g. `std::out_of_range: Cell::getParam()`).
 clean:
-	@echo "Cleaning build artifacts (build dirs, out/, in-tree Yosys + abc)..."
+	@echo "Cleaning build artifacts (build dirs, out/, Yosys CMake build)..."
 	rm -rf build build-debug out
-	-$(MAKE) -C third_party/yosys clean >/dev/null 2>&1 || true
-	@find third_party/yosys \( -name '*.o' -o -name '*.d' -o -name '*.a' \) -delete 2>/dev/null || true
-	rm -f third_party/yosys/yosys third_party/yosys/yosys-* \
-	      third_party/yosys/libyosys.so* third_party/yosys/abc/abc \
-	      third_party/yosys/kernel/version_*.cc
+	rm -rf third_party/yosys/build
 	@echo "Clean complete. (Re-running 'make' will rebuild Yosys from scratch.)"
 
 # Install target
@@ -123,7 +119,7 @@ help:
 	@echo "  test       - Run internal tests only (includes test-read-sv)"
 	@echo "  test-all   - Run all tests (internal + Yosys)"
 	@echo "  test-yosys - Run Yosys tests only"
-	@echo "  frontends  - Build sv2v + yosys-slang for the 4-frontend matrix"
+	@echo "  frontends  - Build sv2v for the 4-frontend matrix (slang is built into yosys)"
 	@echo "  test-matrix - Run the 4-frontend regression matrix (internal tests)"
 	@echo "  clean      - Remove ALL build artifacts (build dirs, out/, in-tree Yosys/abc objects)"
 	@echo "  install    - Install the plugin"
