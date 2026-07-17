@@ -97,6 +97,10 @@ build_sv2v() {
         echo "▶ SV2V_PREBUILT=1 — skipping source build, using prebuilt sv2v"
         mkdir -p "$SV2V_DIR"
         sv2v_prebuilt_fallback || return 1
+        # Still record a version line so build/frontends/versions.txt exists (the
+        # matrix's "Package runtime" step tars it).  Previously the now-removed
+        # slang build created this file; the prebuilt sv2v path did not.
+        record_version sv2v "$SV2V_DIR"
         return 0
     fi
     if [ ! -d "$SV2V_DIR/.git" ]; then
