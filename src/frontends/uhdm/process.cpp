@@ -7870,7 +7870,15 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     else
                         wire_name += "." + var_name;
 
-                    RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+                    // A FUNCTION-LEVEL variable (no block prefix) was already given
+                    // its wire by the Variables() loop in import_func_call_comb; a
+                    // body-scan declaration of the same var (`logic [4:0] rlist;`
+                    // then `rlist = …` in cm_rlist_init) would otherwise re-add the
+                    // identical `context.rlist` name and abort (count_id assert).
+                    // Reuse the existing wire in that case.
+                    RTLIL::Wire* block_wire = module->wire(RTLIL::escape_id(wire_name));
+                    if (!block_wire)
+                        block_wire = module->addWire(RTLIL::escape_id(wire_name), width);
                     add_src_attribute(block_wire->attributes, var);
 
                     std::string temp_name = stringf("$0\\%s[%d:0]$%d", wire_name.c_str(), width - 1, incr_autoidx());
