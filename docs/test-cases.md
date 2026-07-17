@@ -181,3 +181,31 @@
 - **rotate** - Barrel shift rotation (from Amber23 ARM core) with nested generate loops (5 levels x 32 bits), bit-select assignments in `always @*` blocks, and `wrap()` function for circular indexing
 - **wandwor** - `wand` and `wor` net types with multi-driver resolution via AND/OR logic, module instance port connections, and multi-bit variants
 - **fmt_always_comb** - `$display` system task in combinational `always @*` block with conditional enable (`if (y & (y == (a & b))) $display(a, b, y)`); generates `$print` RTLIL cell with TRG_WIDTH=0 (no clock triggers), EN wire controlled by the `if` condition; `reg a = 0`/`reg b = 0` net declaration initializers produce `\init` wire attributes; formally equivalent to Yosys Verilog frontend
+
+## UHDM-only Verified Tests (Verilator co-simulation)
+
+The original UHDM-only verification (random-constraint Verilator co-sim: the original `dut.sv`
+(RTL) and the UHDM-frontend's post-`synth -auto-top` gate-level netlist instantiated side-by-side
+in a testbench with shared clocks/resets and randomized inputs, outputs compared cycle by cycle):
+  - `nested_struct` - Complex nested structures
+  - `simple_instance_array` - Instance array support
+  - `simple_package` - Package support
+  - `unique_case` - Unique case statement support
+  - `gen_struct_access` - Packed array of structs with field access in generate blocks
+  - `setundef` - `2'b0x` (X bits) passed as a parameter override; ported from `third_party/yosys/tests/various/setundef.sv`
+  - `param_no_default` - Module parameters without default values (`parameter w`, `parameter byte y`); ported from `third_party/yosys/tests/verilog/param_no_default.sv`
+  - `unbased_unsized_param` - Fill literals (`'0`/`'1`/`'x`/`'z`) passed as `set_param #('0)` parameter values plus `localparam` assignments; ported from `third_party/yosys/tests/verilog/unbased_unsized.sv`
+  - `sva_basic00` - SVA `assert property ( disable iff (reset) antecedent |=> consequent )` with non-overlapping implication; ported from `third_party/yosys/tests/sva/basic00.sv`
+  - `sva_basic01` - SVA labeled property assertions (`a_rw: assert property (...)`); ported from `third_party/yosys/tests/sva/basic01.sv`
+  - `sva_basic02` - SVA assertions placed via `bind` from a separate properties module; ported from `third_party/yosys/tests/sva/basic02.sv`
+  - `sva_basic03` - SVA `$past()` system function in implication assertions; ported from `third_party/yosys/tests/sva/basic03.sv`
+  - `sva_counter` - SVA `default clocking` / `default disable iff`, `$past`, sequence repetition `up [*2]`, parameterised property `down_n(n)`; ported from `third_party/yosys/tests/sva/counter.sv`
+  - `sva_not` - SVA `not (ping ##1 !pong [*maxdelay])` with sequence repetition; ported from `third_party/yosys/tests/sva/sva_not.sv`
+  - `sva_throughout` - SVA `throughout` operator (`a |=> b throughout (c ##1 d)`); ported from `third_party/yosys/tests/sva/sva_throughout.sv`
+  - `sva_range` - SVA `##[*]` consecutive repetition and `until`; ported from `third_party/yosys/tests/sva/sva_range.sv`
+  - `sva_value_change_changed` - SVA `$changed()` value-change function; ported from `third_party/yosys/tests/sva/sva_value_change_changed.sv`
+  - `sva_value_change_changed_wide` - SVA `$changed()` over multi-bit values, with bit-decomposition equality assertion; ported from `third_party/yosys/tests/sva/sva_value_change_changed_wide.sv`
+  - `sva_value_change_rose` - SVA `$rose()` value-change function; ported from `third_party/yosys/tests/sva/sva_value_change_rose.sv`
+  - `sva_value_change_sim` - SVA `$rose`/`$fell`/`$stable` system functions with explicit `@(posedge clk)` clocking, plus an FSM-driven assertion sequence; ported from `third_party/yosys/tests/sva/sva_value_change_sim.sv`
+  - `struct_pattern_loop` - Multi-dim packed-then-unpacked output port (`output bit [0:0][0:0] b [0:0]`) assigned with an unpacked-array pattern (`'{'b0}`); regression test for an upstream "ABC combinational loop" report on the same construct (which the Yosys Verilog frontend doesn't parse)
+  - `hier_undriven_port` - Inner module declares a 3-bit output but doesn't drive it; outer module connects `.a1(b2)` where `b2` is an implicit 1-bit net also driven by `assign b2 = 'b0;`. Regression test for the synlig hierarchy-pass error "Output port ... is connected to constants"
