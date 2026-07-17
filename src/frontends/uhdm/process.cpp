@@ -1572,14 +1572,26 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
                     if (!orig_wire) continue;
 
-                    // Add the array notation
+                    // Add the array notation.  If another process already
+                    // created a `$0\<sig>` temp, bump the index ($1\, $2\, …)
+                    // instead of REUSING it — two always_ff blocks that register
+                    // different SLICES of the same wide signal each need their
+                    // own temp, or they both drive one shared temp (each
+                    // root_case inits it to the current value) → conflicting
+                    // drivers → X.  Matches the comb-style path and the
+                    // documented dup-index behaviour (multi_ff_slice /
+                    // tcb_lite_lib_register_request).
                     temp_name = stringf("$0\\%s[%d:0]", sig_name.c_str(), orig_wire->width - 1);
-
-                    // Reuse an existing temp (created by another process for the
-                    // same signal) instead of asserting on a duplicate name.
-                    RTLIL::Wire* temp_wire = module->wire(RTLIL::escape_id(temp_name));
-                    if (!temp_wire)
-                        temp_wire = module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
+                    {
+                        int dup_idx = 0;
+                        while (module->wire(RTLIL::escape_id(temp_name))) {
+                            dup_idx++;
+                            temp_name = stringf("$%d\\%s[%d:0]", dup_idx,
+                                                sig_name.c_str(), orig_wire->width - 1);
+                        }
+                    }
+                    RTLIL::Wire* temp_wire =
+                        module->addWire(RTLIL::escape_id(temp_name), orig_wire->width);
                     // Add source attribute from the process
                     if (uhdm_process) {
                         add_src_attribute(temp_wire->attributes, uhdm_process);
@@ -1677,11 +1689,53 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                 RTLIL::SyncRule* sync = new RTLIL::SyncRule;
                 sync->type = clock_posedge ? RTLIL::STp : RTLIL::STn;
                 sync->signal = clock_sig;
-                
+
+                // Which base-wire bits does this process actually write?  The
+                // temp is full-width (for hold-default coverage), but the sync
+                // must drive ONLY the written bits.  Multiple always_ff blocks
+                // that each register a different field of the same wide
+                // interface signal (rp32 tcb_lite_lib_register_request: one
+                // block registers req.adr/wen/.., another req.wdt) would
+                // otherwise each emit a full-width $dff on the shared wire →
+                // conflicting drivers that stall `sim`.
+                std::map<std::string, std::set<int>> if_written_bits;
+                {
+                    std::vector<AssignedSignal> asig;
+                    if (simple_if_stmt)
+                        extract_assigned_signals(simple_if_stmt, asig);
+                    for (const auto& s : asig) {
+                        if (!s.lhs_expr) continue;
+                        RTLIL::SigSpec ls = import_expression(s.lhs_expr);
+                        for (const auto& ch : ls.chunks())
+                            if (ch.wire) {
+                                std::string wn = ch.wire->name.str();
+                                if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                                for (int b = 0; b < ch.width; b++)
+                                    if_written_bits[wn].insert(ch.offset + b);
+                            }
+                    }
+                }
+
                 // Add single update for each signal
                 for (const auto& [sig_name, temp_wire] : temp_wires) {
                     RTLIL::Wire* orig_wire = module->wire(RTLIL::escape_id(sig_name));
-                    if (orig_wire) {
+                    if (!orig_wire) continue;
+                    auto wb = if_written_bits.find(sig_name);
+                    if (wb != if_written_bits.end() &&
+                        (int)wb->second.size() < orig_wire->width &&
+                        (int)temp_wire->width == orig_wire->width) {
+                        RTLIL::SigSpec l, r;
+                        int n = orig_wire->width, i = 0;
+                        while (i < n) {
+                            if (!wb->second.count(i)) { i++; continue; }
+                            int j = i;
+                            while (j < n && wb->second.count(j)) j++;
+                            l.append(RTLIL::SigSpec(orig_wire).extract(i, j - i));
+                            r.append(RTLIL::SigSpec(temp_wire).extract(i, j - i));
+                            i = j;
+                        }
+                        sync->actions.push_back(RTLIL::SigSig(l, r));
+                    } else {
                         sync->actions.push_back(RTLIL::SigSig(
                             RTLIL::SigSpec(orig_wire), RTLIL::SigSpec(temp_wire)));
                     }
@@ -2241,6 +2295,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     for (const auto& sig : assigned_signals)
                         base_slice_count_ff[sig.name]++;
 
+                    // Base-wire bits this process actually writes, per dedup_key.
+                    // The sync rule below drives ONLY these bits — even when the
+                    // temp/hold-default was widened to the full base wire (for
+                    // hier-path / multi-slice coverage).  Multiple always_ff
+                    // blocks that each register a DIFFERENT field of the same
+                    // wide interface signal (rp32 tcb_lite_lib_register_request:
+                    // one block registers req.adr/wen/.., another req.wdt) would
+                    // otherwise each emit a full-width $dff on the shared wire →
+                    // conflicting drivers that stall `sim`.
+                    std::map<std::string, std::set<int>> written_bits_ff;
+
                     for (const auto& sig : assigned_signals) {
                         RTLIL::SigSpec lhs_spec;
                         if (sig.lhs_expr) {
@@ -2290,6 +2355,12 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         } else {
                             dedup_key = sig.name;
                         }
+
+                        // Record which base-wire bits this assignment writes.
+                        for (const auto& ch : lhs_spec.chunks())
+                            if (ch.wire)
+                                for (int b = 0; b < ch.width; b++)
+                                    written_bits_ff[dedup_key].insert(ch.offset + b);
 
                         if (signal_temp_wires.count(dedup_key)) {
                             temp_wires_map[sig.lhs_expr] = signal_temp_wires[dedup_key];
@@ -2369,8 +2440,34 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     sync->signal = clock_sig;
 
                     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
-                        if (signal_specs.count(sig_name)) {
-                            RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+                        if (!signal_specs.count(sig_name)) continue;
+                        RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
+                        // When the spec was widened to the full base wire (for
+                        // hold-default coverage) but only some bits are actually
+                        // written, drive ONLY the written bits — otherwise this
+                        // block's $dff also holds the bits another always_ff
+                        // block registers, producing conflicting full-width
+                        // drivers on the shared wire.  The full-width temp shares
+                        // the base wire's bit layout, so bit b maps to temp[b].
+                        auto wb = written_bits_ff.find(sig_name);
+                        if (lhs_spec.is_wire() &&
+                            (int)temp_wire->width == lhs_spec.size() &&
+                            wb != written_bits_ff.end() &&
+                            (int)wb->second.size() < lhs_spec.size()) {
+                            RTLIL::SigSpec l, r;
+                            int n = lhs_spec.size(), i = 0;
+                            while (i < n) {
+                                if (!wb->second.count(i)) { i++; continue; }
+                                int j = i;
+                                while (j < n && wb->second.count(j)) j++;
+                                l.append(lhs_spec.extract(i, j - i));
+                                r.append(RTLIL::SigSpec(temp_wire).extract(i, j - i));
+                                i = j;
+                            }
+                            sync->actions.push_back(RTLIL::SigSig(l, r));
+                            log("    Added sync update (written bits only): %s <= %s\n",
+                                log_signal(l), temp_wire->name.c_str());
+                        } else {
                             sync->actions.push_back(
                                 RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire)));
                             log("    Added sync update: %s <= %s\n",
