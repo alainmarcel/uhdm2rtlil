@@ -69,17 +69,18 @@ jobs:
         echo "PATH after: /opt/verilator-5.048/bin:$PATH"
         /opt/verilator-5.048/bin/verilator --version
 
-    - name: Setup GCC-11
+    - name: Setup GCC-13
       shell: bash
       run: |
-        # Yosys v0.66 hard-requires C++20: its build passes `-std=c++20`, which
-        # g++-9 rejects ("unrecognized ... did you mean -std=c++2a").  Use g++-11
-        # (the locally-validated toolchain) so Yosys builds; Surelog/antlr4 still
-        # build at C++17 and the uhdm2rtlil plugin at C++20.
-        sudo apt install -y g++-11
-        sudo ln -sf /usr/bin/g++-11 /usr/bin/g++
-        sudo ln -sf /usr/bin/gcc-11 /usr/bin/gcc
-        sudo ln -sf /usr/bin/gcov-11 /usr/bin/gcov
+        # Yosys v0.67 hard-requires C++20, and with YOSYS_ENABLE_SLANG=ON the
+        # build compiles the bundled MikePopoloski/slang library (needs gcc >= 11).
+        # Use the runner's default gcc-13 for the whole build; Surelog/antlr4 still
+        # build at C++17 and the uhdm2rtlil plugin at C++20.  (ubuntu-24.04's apt
+        # cmake is 3.28.x — new enough for slang, old enough for capnproto.)
+        sudo apt install -y g++-13
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
     
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2

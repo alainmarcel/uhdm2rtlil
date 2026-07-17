@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
 #
-# build_frontends.sh — clone + build the two external SystemVerilog frontends
+# build_frontends.sh — clone + build the external SystemVerilog frontend(s)
 # used by the 4-frontend regression matrix (run_frontend_matrix.py):
 #
-#   * sv2v        (https://github.com/zachjs/sv2v)        — SV → Verilog transpiler
-#   * yosys-slang (https://github.com/povik/yosys-slang)  — slang-based Yosys plugin
+#   * sv2v (https://github.com/zachjs/sv2v)  — SV → Verilog transpiler
 #
-# Both are cloned and built under build/frontends/.  The script is idempotent:
-# an already-built tool is skipped unless --force is given.  yosys-slang is
-# built against THIS repo's Yosys (out/current/bin/yosys-config), so a normal
-# `make` must have completed first.
+# The matrix's `slang` column no longer needs building here: Yosys v0.67 vendors
+# the sv-elab frontend (`read_slang`) directly in the binary, built via
+# YOSYS_ENABLE_SLANG=ON in the top-level CMake build.  `slang`/`all` are accepted
+# for backward compatibility but only build sv2v.
+#
+# sv2v is cloned and built under build/frontends/.  The script is idempotent:
+# an already-built tool is skipped unless --force is given.
 #
 # Outputs:
-#   build/frontends/sv2v/bin/sv2v                     — sv2v binary
-#   build/frontends/yosys-slang/build/slang.so        — slang plugin
-#   build/slang.so                                    — stable symlink to the above
-#   build/frontends/versions.txt                      — cloned commit of each tool
+#   build/frontends/sv2v/bin/sv2v    — sv2v binary
+#   build/frontends/versions.txt     — cloned commit of each tool
 #
 # Host prerequisites:
-#   sv2v        : Haskell Stack   (https://get.haskellstack.org/)
-#   yosys-slang : gcc >= 11 or clang >= 17, cmake
+#   sv2v : Haskell Stack   (https://get.haskellstack.org/)
 #
 # Usage: test/build_frontends.sh [--force] [sv2v|slang|all]
 
@@ -32,12 +31,8 @@ YOSYS_CONFIG="$PROJECT_ROOT/out/current/bin/yosys-config"
 VERSIONS_FILE="$FRONTENDS_DIR/versions.txt"
 
 SV2V_REPO="https://github.com/zachjs/sv2v"
-SLANG_REPO="https://github.com/povik/yosys-slang"
 SV2V_DIR="$FRONTENDS_DIR/sv2v"
-SLANG_DIR="$FRONTENDS_DIR/yosys-slang"
 SV2V_BIN="$SV2V_DIR/bin/sv2v"
-SLANG_SO="$SLANG_DIR/build/slang.so"
-SLANG_LINK="$PROJECT_ROOT/build/slang.so"
 
 FORCE=0
 WHAT="all"
@@ -125,46 +120,12 @@ build_sv2v() {
     record_version sv2v "$SV2V_DIR"
 }
 
+# The slang frontend is now built into the yosys binary (YOSYS_ENABLE_SLANG=ON
+# in the top-level CMake build), so there is nothing to build here.  Kept as a
+# no-op so `build_frontends.sh slang` / `all` still succeed.
 build_slang() {
-    if [ "$FORCE" -eq 0 ] && [ -f "$SLANG_SO" ]; then
-        echo "✓ yosys-slang already built: $SLANG_SO (use --force to rebuild)"
-        ln -sf "$SLANG_SO" "$SLANG_LINK"
-        return 0
-    fi
-    if [ ! -x "$YOSYS_CONFIG" ]; then
-        echo "❌ yosys-config not found at $YOSYS_CONFIG" >&2
-        echo "   Run the normal repo build first:  make -j$NPROC" >&2
-        return 1
-    fi
-    if [ ! -d "$SLANG_DIR/.git" ]; then
-        echo "▶ Cloning yosys-slang (recursive: pulls slang submodule) → $SLANG_DIR"
-        rm -rf "$SLANG_DIR"
-        git clone --recursive "$SLANG_REPO" "$SLANG_DIR" || return 1
-    else
-        # Make sure the slang submodule is present on a reused checkout.
-        git -C "$SLANG_DIR" submodule update --init --recursive || true
-    fi
-    # Upstream (now "sv-elab") retired the Makefile wrapper — its `make` target
-    # is empty in current master, so `make YOSYS_PREFIX=…` dies with
-    # "make: *** No targets.  Stop.".  Drive CMake directly instead (the old
-    # Makefile only wrapped these two commands anyway, so this works for both the
-    # old and new checkouts).  -DYOSYS_CONFIG must point at OUR pinned Yosys's
-    # yosys-config; without it CMake picks up a stray system yosys-config
-    # (e.g. /usr/local v0.38) and the build fails against the older RTLIL API.
-    # Wipe any stale cmake cache from a previous mis-detected configure first.
-    local yosys_bindir; yosys_bindir="$(dirname "$YOSYS_CONFIG")/"
-    echo "▶ Building yosys-slang against ${yosys_bindir}yosys-config …"
-    rm -rf "$SLANG_DIR/build"
-    ( cd "$SLANG_DIR" \
-        && cmake -B build -DYOSYS_CONFIG="${yosys_bindir}yosys-config" . \
-        && make -C build -j"$NPROC" ) \
-        || { echo "❌ yosys-slang build failed" >&2; return 1; }
-    if [ ! -f "$SLANG_SO" ]; then
-        echo "❌ slang.so not produced at $SLANG_SO" >&2; return 1
-    fi
-    ln -sf "$SLANG_SO" "$SLANG_LINK"
-    record_version yosys-slang "$SLANG_DIR"
-    echo "✓ yosys-slang built: $SLANG_SO  (linked → $SLANG_LINK)"
+    echo "✓ slang: built into yosys (read_slang, sv-elab) — nothing to build here"
+    return 0
 }
 
 RC=0

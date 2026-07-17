@@ -56,7 +56,9 @@ def find_paths(project_root: Path) -> dict[str, Path]:
             sys.exit(f"❌ missing {k}: {p}")
     # Optional frontend tools — only needed for --frontend sv2v / slang.  Don't
     # fail here if absent; frontend_read_setup() reports a clear error instead.
-    paths["slang_plugin"] = project_root / "build/slang.so"
+    # slang (read_slang / sv-elab) is built into the yosys binary now, so there
+    # is no separate plugin path.
+    paths["yosys_bin"]    = project_root / "out/current/bin/yosys"
     paths["sv2v_bin"]     = project_root / "build/frontends/sv2v/bin/sv2v"
     return paths
 
@@ -73,10 +75,8 @@ def frontend_read_setup(frontend: str, paths: dict, uhdm: Path,
     if frontend == "verilog":
         return f"read_verilog {lang} {srcs}\n", []
     if frontend == "slang":
-        if not paths["slang_plugin"].exists():
-            sys.exit(f"❌ slang plugin not built: {paths['slang_plugin']} "
-                     f"(run test/build_frontends.sh)")
-        return f"read_slang {srcs}\n", ["-m", str(paths["slang_plugin"])]
+        # read_slang is built into yosys (YOSYS_ENABLE_SLANG=ON); no plugin.
+        return f"read_slang {srcs}\n", []
     if frontend == "sv2v":
         if not paths["sv2v_bin"].exists():
             sys.exit(f"❌ sv2v not built: {paths['sv2v_bin']} "

@@ -3,7 +3,7 @@
 	url = https://github.com/chipsalliance/Surelog.git
 [submodule "third_party/yosys"]
 	path = third_party/yosys
-	url = https://github.com/alainmarcel/yosys.git
+	url = https://github.com/YosysHQ/yosys.git
 	# Tracking a fork branch (v0.66 + one local patch) until upstream
 	# Yosys merges the `write_verilog` signedness fix (still not upstream as of
 	# v0.66 — the backend's dump_wire does not emit `signed`; the related

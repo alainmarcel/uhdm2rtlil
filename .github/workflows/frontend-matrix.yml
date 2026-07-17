@@ -88,32 +88,33 @@ jobs:
 
     - name: Build project (Surelog + Yosys + uhdm2rtlil plugin)
       run: |
-        # Yosys v0.66 requires C++20; g++-9 only offers -std=c++2a -> use g++-11.
-        sudo ln -sf /usr/bin/g++-11 /usr/bin/g++
-        sudo ln -sf /usr/bin/gcc-11 /usr/bin/gcc
-        sudo ln -sf /usr/bin/gcov-11 /usr/bin/gcov
+        # Yosys v0.67 requires C++20 and, with YOSYS_ENABLE_SLANG=ON, compiles the
+        # bundled slang library (needs gcc >= 11 and CMake >= 3.28 — both provided
+        # by ubuntu-24.04's default gcc-13 / cmake 3.28).  Use gcc-13 throughout.
+        sudo ln -sf /usr/bin/g++-13 /usr/bin/g++
+        sudo ln -sf /usr/bin/gcc-13 /usr/bin/gcc
+        sudo ln -sf /usr/bin/gcov-13 /usr/bin/gcov
         rm -rf build/CMakeCache.txt build/CMakeFiles/
         make -j4 CC="ccache gcc" CXX="ccache g++" CPU_CORES=4
 
-    - name: Build external frontends (sv2v + yosys-slang)
+    - name: Build external frontends (sv2v)
       # sv2v: prebuilt binary (the runner's GHC rejects gcc with clang-style
-      # flags, so the source build is doomed).  slang: needs gcc >= 11 -> gcc-13.
+      # flags, so the source build is doomed).  slang is now built into the yosys
+      # binary (read_slang / sv-elab), so nothing extra to build here.
       run: |
         cd test
         SV2V_PREBUILT=1 ./build_frontends.sh sv2v
-        CC=gcc-13 CXX=g++-13 ./build_frontends.sh slang
         echo "--- versions ---"; cat ../build/frontends/versions.txt || true
 
     - name: Package runtime
       # Only the run-time bits the harness invokes — statically linked, so this
       # tarball runs on a shard runner with just the system runtime libs (apt).
-      # --dereference so build/slang.so (a symlink) becomes a real file.
+      # slang lives inside out/current/bin/yosys now (read_slang built in).
       run: |
         tar -czhf runtime.tar.gz \
           out/current \
           build/uhdm2rtlil.so \
           build/extract_clocks_resets.so \
-          build/slang.so \
           build/frontends/sv2v/bin/sv2v \
           build/third_party/Surelog/bin/surelog \
           build/frontends/versions.txt

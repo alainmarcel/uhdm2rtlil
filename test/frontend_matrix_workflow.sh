@@ -6,7 +6,7 @@
 #   verilog : Yosys native      read_verilog            (also the golden ref)
 #   uhdm    : this plugin        Surelog -> read_uhdm
 #   sv2v    : zachjs/sv2v        sv2v src... -> read_verilog
-#   slang   : povik/yosys-slang  read_slang src...
+#   slang   : built-in read_slang (sv-elab, YOSYS_ENABLE_SLANG)  read_slang src...
 #
 # Only the *read* step differs between frontends; the synthesis tail
 #   hierarchy -check -auto-top; proc; opt; synth -auto-top; write_verilog -noexpr
@@ -54,7 +54,6 @@ MODULE_NAME=$(basename "$(pwd)")
 SURELOG_BIN="$PROJECT_ROOT/build/third_party/Surelog/bin/surelog"
 YOSYS_BIN="$PROJECT_ROOT/out/current/bin/yosys"
 UHDM_PLUGIN="$PROJECT_ROOT/build/uhdm2rtlil.so"
-SLANG_PLUGIN="$PROJECT_ROOT/build/slang.so"
 SV2V_BIN="$PROJECT_ROOT/build/frontends/sv2v/bin/sv2v"
 
 # Resolve the file list / language flags the same way every other harness does.
@@ -186,16 +185,19 @@ else
 fi
 
 # ------------------------------------------------------------------ slang ----
-echo "[4/4] slang (yosys-slang read_slang)"
-if [ ! -f "$SLANG_PLUGIN" ]; then
+# Yosys v0.67 vendors the sv-elab SystemVerilog frontend directly in the binary
+# (built with YOSYS_ENABLE_SLANG=ON), so `read_slang` is a built-in command —
+# no external plugin is loaded (replaces the old standalone povik/yosys-slang).
+echo "[4/4] slang (built-in read_slang / sv-elab)"
+if ! "$YOSYS_BIN" -p "help read_slang" 2>&1 | grep -q "read_slang"; then
     echo "slang TOOL_MISSING 0" >> "$STATUS_FILE"
-    echo "   → slang: TOOL_MISSING (run build_frontends.sh)"
+    echo "   → slang: TOOL_MISSING (yosys built without YOSYS_ENABLE_SLANG)"
 else
     {
         echo "read_slang $PROJECT_SRCS"
         emit_tail slang
     } > slang_read.ys
-    run_capped "$YOSYS_BIN" -m "$SLANG_PLUGIN" -s slang_read.ys > slang_path.log 2>&1
+    run_capped "$YOSYS_BIN" -s slang_read.ys > slang_path.log 2>&1
     record_status slang $?
 fi
 
