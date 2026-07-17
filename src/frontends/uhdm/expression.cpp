@@ -5834,6 +5834,30 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
                                             elem_w = total / outer_size;
                                     }
                                 }
+                            } else if (ats->UhdmType() == uhdmarray_typespec) {
+                                // UNPACKED array parameter: `logic [W-1:0] DAM
+                                // [N-1:0]`.  `DAM[i]` selects a whole W-bit
+                                // ELEMENT, not a single bit.  The array_typespec's
+                                // Range is the unpacked dimension (N elements);
+                                // the element width is total/N.  Without this
+                                // elem_w stays 1 and `DAM[i]` returns a single x
+                                // bit — collapsing an x-wildcard address-decode
+                                // mask to all-x so `adr ==? DAM[i]` folds to 1 for
+                                // every address (rp32 tcb_lite_lib_decoder DAM).
+                                auto arr = dynamic_cast<const UHDM::array_typespec*>(ats);
+                                if (arr && arr->Ranges() && !arr->Ranges()->empty()) {
+                                    packed_multidim = true;
+                                    auto r0 = (*arr->Ranges())[0];
+                                    RTLIL::SigSpec ls = import_expression(r0->Left_expr());
+                                    RTLIL::SigSpec rs2 = import_expression(r0->Right_expr());
+                                    if (ls.is_fully_const() && rs2.is_fully_const()) {
+                                        int l = ls.as_int(), r = rs2.as_int();
+                                        int arr_size = std::abs(l - r) + 1;
+                                        outer_low = std::min(l, r);
+                                        if (arr_size > 0 && total % arr_size == 0)
+                                            elem_w = total / arr_size;
+                                    }
+                                }
                             }
                         }
                     }
