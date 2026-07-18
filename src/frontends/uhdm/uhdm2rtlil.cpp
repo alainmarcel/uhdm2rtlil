@@ -2620,8 +2620,19 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     // Parameters() pass with an X (degu SoC tcb_dev_gpio SYS_DAT).
                     if (!value_spec.is_fully_def() && rhs_expr &&
                         rhs_expr->UhdmType() == uhdmhier_path) {
-                        std::string iv = eval_iface_param_field(
-                            any_cast<const UHDM::hier_path*>(rhs_expr), current_instance);
+                        auto hpath = any_cast<const UHDM::hier_path*>(rhs_expr);
+                        std::string iv = eval_iface_param_field(hpath, current_instance);
+                        // `.SYS_DAT(sub.CFG.BUS.DAT)` references an interface port
+                        // (`sub`) of the PARENT, not reachable from this child
+                        // paramod.  Retry in the parent instance, which has `sub`
+                        // connected (degu/Mouse full SoC tcb_dev_gpio/uart SYS_DAT).
+                        // `.SYS_DAT(sub.CFG.BUS.DAT)` references an interface port
+                        // of the PARENT, not reachable from this child paramod;
+                        // retry in the parent instance, which has `sub` connected.
+                        if (iv.empty())
+                            if (auto parent = dynamic_cast<const module_inst*>(
+                                    uhdm_module->VpiParent()))
+                                iv = eval_iface_param_field(hpath, parent);
                         if (!iv.empty()) {
                             param_value = RTLIL::Const(std::stoi(iv), 32);
                             have_value = true;
