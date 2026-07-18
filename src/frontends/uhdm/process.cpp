@@ -7830,6 +7830,35 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                                           const std::string& context, const std::string& block_prefix,
                                           const any* process_src) {
     if (!stmt) return;
+
+    // Process one branch of an if/case in SSA form: snapshot func_mapping,
+    // recursively import the branch (which mutates func_mapping for any
+    // assignment / return it contains), capture the resulting map, then
+    // restore func_mapping to the pre-branch state.  The caller muxes the
+    // per-variable results by the branch condition.  This keeps the pure
+    // value-based (current_comb_values-style) model — a variable read inside a
+    // later condition sees the in-flight value, never the driven wire — so a
+    // read-modify-write local like cm_rlist_init's `rlist` (`rlist={0,x}; if
+    // (rlist==15) rlist=16; return rlist`) does NOT form a combinational loop.
+    auto process_branch = [&](const any* branch_stmt,
+                              std::map<std::string, RTLIL::SigSpec>& out_map) {
+        std::map<std::string, RTLIL::SigSpec> snap = func_mapping;
+        if (branch_stmt)
+            inline_func_body_comb(branch_stmt, proc, func_mapping, func_name,
+                                  context, block_prefix, process_src);
+        out_map = func_mapping;
+        func_mapping = snap;
+    };
+    // Width-safe conditional select: cond ? t : e (zero-extended to equal width).
+    auto mux_val = [&](RTLIL::SigSpec e, RTLIL::SigSpec t,
+                       RTLIL::SigSpec cond) -> RTLIL::SigSpec {
+        int w = std::max(e.size(), t.size());
+        if (e.size() < w) e.extend_u0(w);
+        if (t.size() < w) t.extend_u0(w);
+        if (w == 0) return e;
+        return module->Mux(NEW_ID, e, t, cond);
+    };
+
     switch (stmt->VpiType()) {
         case vpiBegin:
         case vpiNamedBegin: {
@@ -8038,24 +8067,102 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
             }
             break;
         }
-        case vpiIf: {
-            auto if_st = any_cast<const if_stmt*>(stmt);
-            if (if_st) {
-                import_if_stmt_comb(if_st, proc);
-            }
-            break;
-        }
+        case vpiIf:
         case vpiIfElse: {
-            auto ie = any_cast<const UHDM::if_else*>(stmt);
-            if (ie) {
-                import_if_else_comb(ie, proc);
+            // SSA if / if-else: evaluate the condition against the in-flight
+            // func_mapping, process each branch from a snapshot, then mux every
+            // variable the branches changed by the condition.  This replaces the
+            // old delegation to import_if_stmt_comb/import_if_else_comb, which
+            // built a process switch that neither resolved function-local refs
+            // through func_mapping nor captured a branch's return/local updates
+            // (Ibex ibex_compressed_decoder cm_rlist_init).
+            const UHDM::expr* cond_expr = nullptr;
+            const any* then_stmt = nullptr;
+            const any* else_stmt = nullptr;
+            if (stmt->VpiType() == vpiIf) {
+                auto if_st = any_cast<const if_stmt*>(stmt);
+                if (if_st) { cond_expr = if_st->VpiCondition(); then_stmt = if_st->VpiStmt(); }
+            } else {
+                auto ie = any_cast<const UHDM::if_else*>(stmt);
+                if (ie) { cond_expr = ie->VpiCondition(); then_stmt = ie->VpiStmt(); else_stmt = ie->VpiElseStmt(); }
+            }
+            RTLIL::SigSpec cond = import_expression(cond_expr, &func_mapping);
+            if (cond.size() > 1)
+                cond = module->ReduceBool(NEW_ID, cond);
+            // Constant condition: take the live branch directly (no mux), which
+            // also prunes dead code that could reference undefined signals.
+            if (cond.is_fully_const()) {
+                const any* live = cond.as_bool() ? then_stmt : else_stmt;
+                if (live)
+                    inline_func_body_comb(live, proc, func_mapping, func_name, context, block_prefix, process_src);
+                break;
+            }
+            std::map<std::string, RTLIL::SigSpec> snap = func_mapping;
+            std::map<std::string, RTLIL::SigSpec> then_map, else_map;
+            process_branch(then_stmt, then_map);
+            process_branch(else_stmt, else_map);
+            // Mux every key that either branch changed relative to the snapshot.
+            std::set<std::string> keys;
+            for (auto& [k, v] : then_map) if (!snap.count(k) || snap[k] != v) keys.insert(k);
+            for (auto& [k, v] : else_map) if (!snap.count(k) || snap[k] != v) keys.insert(k);
+            for (const auto& k : keys) {
+                RTLIL::SigSpec t = then_map.count(k) ? then_map[k] : (snap.count(k) ? snap[k] : RTLIL::SigSpec());
+                RTLIL::SigSpec e = else_map.count(k) ? else_map[k] : (snap.count(k) ? snap[k] : RTLIL::SigSpec());
+                func_mapping[k] = mux_val(e, t, cond);
             }
             break;
         }
         case vpiCase: {
+            // SSA case: same value-based model as the if handler above — build a
+            // priority mux chain over the case items (first match wins), muxing
+            // every variable an item body changed.  Captures per-item `return`s
+            // (Ibex cm_rlist_top_reg / cm_stack_adj_base `unique case (rlist)`).
             auto case_st = any_cast<const case_stmt*>(stmt);
-            if (case_st) {
-                import_case_stmt_comb(case_st, proc);
+            if (!case_st || !case_st->VpiCondition()) break;
+            RTLIL::SigSpec sel = import_expression(case_st->VpiCondition(), &func_mapping);
+            std::map<std::string, RTLIL::SigSpec> snap = func_mapping;
+
+            struct Arm { RTLIL::SigSpec match; std::map<std::string, RTLIL::SigSpec> map; bool is_default; };
+            std::vector<Arm> arms;
+            std::set<std::string> keys;
+            if (auto items = case_st->Case_items()) {
+                for (auto item : *items) {
+                    auto ci = any_cast<const case_item*>(item);
+                    if (!ci) continue;
+                    Arm arm;
+                    arm.is_default = (!ci->VpiExprs() || ci->VpiExprs()->empty());
+                    // Build match = OR of (sel == cmpval) over this item's labels.
+                    if (!arm.is_default && ci->VpiExprs()) {
+                        for (auto e : *ci->VpiExprs()) {
+                            RTLIL::SigSpec cmp = import_expression(any_cast<const expr*>(e), &func_mapping);
+                            int w = std::max(sel.size(), cmp.size());
+                            RTLIL::SigSpec s2 = sel, c2 = cmp;
+                            if (s2.size() < w) s2.extend_u0(w);
+                            if (c2.size() < w) c2.extend_u0(w);
+                            RTLIL::SigSpec eq = module->Eq(NEW_ID, s2, c2);
+                            arm.match = arm.match.empty() ? eq : module->Or(NEW_ID, arm.match, eq);
+                        }
+                    }
+                    process_branch(ci->Stmt(), arm.map);
+                    for (auto& [k, v] : arm.map)
+                        if (!snap.count(k) || snap[k] != v) keys.insert(k);
+                    arms.push_back(std::move(arm));
+                }
+            }
+            for (const auto& k : keys) {
+                // Base value: the default arm's result if present, else unchanged.
+                RTLIL::SigSpec base = snap.count(k) ? snap[k] : RTLIL::SigSpec();
+                for (auto& arm : arms)
+                    if (arm.is_default && arm.map.count(k))
+                        base = arm.map[k];
+                RTLIL::SigSpec val = base;
+                // Fold non-default arms in reverse so the FIRST match wins.
+                for (auto it = arms.rbegin(); it != arms.rend(); ++it) {
+                    if (it->is_default || it->match.empty()) continue;
+                    RTLIL::SigSpec arm_val = it->map.count(k) ? it->map[k] : (snap.count(k) ? snap[k] : RTLIL::SigSpec());
+                    val = mux_val(val, arm_val, it->match);
+                }
+                func_mapping[k] = val;
             }
             break;
         }
