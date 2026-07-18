@@ -2640,13 +2640,23 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                     ret_width = get_width(func_def->Return(), width_inst);
                 }
 
-                // Collect arguments first
+                // Collect arguments first.  Resolve them against the in-flight
+                // blocking values (current_comb_values) when we're inlining into
+                // a combinational process and there's no nested-call input_mapping
+                // — an argument may be a blocking temp assigned earlier in the same
+                // always_comb (Ibex ibex_compressed_decoder: `cm_rlist_d =
+                // cm_rlist_init(...)` then `cm_push_store_reg(.rlist(cm_rlist_d))`).
+                // Reading the module wire instead would both violate the
+                // read-after-write blocking semantics and form a combinational
+                // loop (the wire is still being driven by this very process).
+                const std::map<std::string, RTLIL::SigSpec>* arg_mapping =
+                    input_mapping ? input_mapping
+                                  : (current_comb_process ? &current_comb_values : nullptr);
                 std::vector<RTLIL::SigSpec> args;
                 std::vector<std::string> arg_names;
                 if (fc->Tf_call_args()) {
                     for (auto arg : *fc->Tf_call_args()) {
-                        // Pass input_mapping to resolve nested function parameters
-                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg), input_mapping);
+                        RTLIL::SigSpec arg_sig = import_expression(any_cast<const expr*>(arg), arg_mapping);
                         args.push_back(arg_sig);
                     }
                 }
@@ -2729,7 +2739,32 @@ RTLIL::SigSpec UhdmImporter::import_expression(const expr* uhdm_expr, const std:
                 // Route those to process_function_with_context, whose
                 // process_stmt_to_case unrolls the loop and writes the result
                 // bit-selects.
-                if (current_comb_process && func_def->Stmt() &&
+                // A NESTED call (input_mapping set — we're already inside a
+                // function body being inlined) must NOT use import_func_call_comb:
+                // it imports its arguments against current_comb_values, not the
+                // caller's input_mapping, so an argument that is the caller's own
+                // local/parameter (Ibex cm_stack_adj_word's `cm_stack_adj(
+                // .rlist(rlist), …)`, rlist being a 4-bit formal) resolves to a
+                // stray 1-bit module wire.  process_function_with_context threads
+                // input_mapping into the argument import.
+                // Conditional control flow (if / case) IS handled by the SSA
+                // inliner (inline_func_body_comb builds branch-muxes over
+                // func_mapping and captures per-branch returns), so it stays here.
+                // A top-level always_comb call passes &current_comb_values as
+                // input_mapping (so `!input_mapping` is NOT how you detect
+                // top-level).  A genuinely NESTED call — imported from within
+                // another function body being inlined — passes that function's
+                // local func_mapping instead.  import_func_call_comb imports its
+                // arguments against current_comb_values, so it's only correct for
+                // the top-level case; a nested call whose argument is the
+                // caller's own local/parameter (Ibex cm_stack_adj_word's
+                // `cm_stack_adj(.rlist(rlist), …)`) would resolve rlist to a
+                // stray 1-bit wire.  Route nested calls to
+                // process_function_with_context, which receives the already-
+                // imported args (resolved against the caller's mapping above).
+                bool top_level_call =
+                    (input_mapping == nullptr || input_mapping == &current_comb_values);
+                if (current_comb_process && func_def->Stmt() && top_level_call &&
                     !has_for_loop(func_def->Stmt())) {
                     log("UHDM: Inlining function %s into combinational process\n", func_name.c_str());
                     return import_func_call_comb(fc, current_comb_process);
