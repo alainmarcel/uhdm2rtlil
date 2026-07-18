@@ -6576,6 +6576,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
             std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
 
+    // Primary path: fold an interface-port parameter member (`sub.CFG.HSK.DLY`,
+    // `sub.CFG.BUS.DAT`) to a constant directly from the hier_path's
+    // Actual_group chain — Surelog binds the `CFG` element to the interface
+    // `parameter` object, so its struct value can be indexed by the trailing
+    // field chain.  This is robust regardless of where the interface instance
+    // sits in the hierarchy (an array element, a parent's port), replacing the
+    // fragile name/parent-chain search below.
+    if (auto fs = fold_iface_param_via_chain(uhdm_hier); fs.size() > 0) {
+        if (mode_debug)
+            log("    hier_path: %s -> %d-bit constant via Actual_group chain\n",
+                path_name.c_str(), fs.size());
+        return fs;
+    }
+
     // Nested interface struct-parameter field: `s.CFG.BUS.DAT` where `s` is a
     // modport port and `CFG` is a (nested struct) parameter on the connected
     // interface.  eval_iface_param_field walks the field chain to a constant.
@@ -6585,6 +6599,21 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
         current_instance) {
         std::string v = eval_iface_param_field(uhdm_hier, current_instance);
+        // Surelog inlines a PARENT interface ref (`sub.CFG.BUS.DAT`) into a CHILD
+        // paramod's port ranges — tcb_dev_gpio/uart get `[sub.CFG.BUS.DAT-1:0]`
+        // via `.SYS_DAT(sub.CFG.BUS.DAT)`, but `sub` is the parent
+        // (tcb_lite_dev_gpio) interface port, not visible in the child.  Walk up
+        // the instance-parent chain so the interface connection is reachable.
+        for (const UHDM::any* p = current_instance->VpiParent();
+             v.empty() && p; p = p->VpiParent()) {
+            if (auto pm = dynamic_cast<const module_inst*>(p)) {
+                v = eval_iface_param_field(uhdm_hier, pm);
+                if (!v.empty())
+                    log("    hier_path: %s -> %s via parent %s interface param\n",
+                        path_name.c_str(), v.c_str(),
+                        std::string(pm->VpiName()).c_str());
+            }
+        }
         if (!v.empty()) {
             int iv = atoi(v.c_str());
             log("    hier_path: %s -> %d via interface struct parameter\n",
@@ -6608,6 +6637,14 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
     if (uhdm_hier->Path_elems() && uhdm_hier->Path_elems()->size() >= 2 &&
         current_instance) {
         std::string v = eval_bare_iface_param_field(uhdm_hier, current_instance);
+        // Walk up instance parents too (bare `CFG.HSK.DLY` inlined from an
+        // interface array bound into a child that only reaches the interface
+        // through a parent's port).
+        for (const UHDM::any* p = current_instance->VpiParent();
+             v.empty() && p; p = p->VpiParent()) {
+            if (auto pm = dynamic_cast<const module_inst*>(p))
+                v = eval_bare_iface_param_field(uhdm_hier, pm);
+        }
         if (!v.empty()) {
             int iv = atoi(v.c_str());
             log("    hier_path: %s -> %d via bare interface struct parameter\n",

@@ -547,6 +547,12 @@ struct UhdmImporter {
     void import_ref_module(const UHDM::ref_module* ref_mod);
     void create_parameterized_modules();
     void import_parameter(const UHDM::any* uhdm_param);
+    // Fold an interface-port parameter member (`sub.CFG.HSK.DLY`) to a constant
+    // by walking the hier_path's Actual_group chain — the element named after
+    // the interface parameter (`CFG`) is bound directly to the `parameter`
+    // object, so its struct value can be indexed by the trailing field chain
+    // without locating the interface instance by name.  Empty on failure.
+    RTLIL::SigSpec fold_iface_param_via_chain(const UHDM::hier_path* hp);
     // Evaluate an interface struct-PARAMETER field (`sub.CFG.BUS.DAT`) used as a
     // child instance's parameter value; "" on failure.  See uhdm2rtlil.cpp.
     std::string eval_iface_param_field(const UHDM::hier_path* hp,
