@@ -1080,10 +1080,25 @@ bool UhdmImporter::contains_complex_constructs(const any* stmt) {
                 ips->Base_expr()->VpiType() != vpiConstant)
                 return true;
         }
+        // Partial (byte-enable) memory write `mem[addr][hi:lo] <= data`, a
+        // var_select LHS on a $memory.  The simple-if optimisation imports the
+        // LHS as a read-modify and silently DROPS the write (WR_PORTS=0), so the
+        // memory keeps its init and the write never lands — rp32's byte-enabled
+        // SoC RAM `if (byt[i]) mem[a][8*i+:8] <= wdt[..]`.  Treat it as complex
+        // so the block falls through to the general memory-write path, which
+        // drives the per-bit write-enable slice via import_statement_comb.
+        if (a && a->Lhs() && a->Lhs()->VpiType() == vpiVarSelect) {
+            auto vs = any_cast<const var_select*>(a->Lhs());
+            if (vs && module &&
+                module->memories.count(RTLIL::escape_id(std::string(vs->VpiName()))))
+                return true;
+        }
     }
 
-    // Note: Memory writes (bit select assignments) are now allowed in simple if patterns
-    // They will be handled specially during switch statement generation
+    // Note: whole-word memory writes (bit_select LHS, `mem[addr] <= data`) are
+    // still allowed in simple if patterns; they are handled specially during
+    // switch statement generation.  Only partial (var_select) writes fall out
+    // above.
     
     // Check for begin blocks (both regular and named)
     if (stmt_type == vpiBegin || stmt_type == vpiNamedBegin) {
