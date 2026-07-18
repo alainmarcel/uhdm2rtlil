@@ -940,6 +940,57 @@ bool UhdmImporter::resolve_iface_param(const hier_path* hp,
 }
 
 // Scalar int value of an interface struct-parameter field ("" on failure).
+RTLIL::SigSpec UhdmImporter::fold_iface_param_via_chain(const hier_path* hp) {
+    if (!hp || !hp->Path_elems() || hp->Path_elems()->size() < 2)
+        return RTLIL::SigSpec();
+    auto& pe = *hp->Path_elems();
+    // Find the element bound (by Surelog) directly to the interface `parameter`
+    // (`CFG` in `sub.CFG.HSK.DLY`) and take its struct value + typespec.
+    const expr* val = nullptr;
+    const typespec* cur_ts = nullptr;
+    size_t pidx = 0;
+    for (size_t i = 0; i < pe.size(); i++) {
+        auto r = dynamic_cast<const ref_obj*>(pe[i]);
+        if (!r) continue;
+        auto a = r->Actual_group();
+        if (!a || a->UhdmType() != uhdmparameter) continue;
+        auto par = any_cast<const parameter*>(a);
+        val = par->Expr();
+        if (auto rt = par->Typespec()) cur_ts = rt->Actual_typespec();
+        // A localparam with the value on its param_assign parent rather than Expr.
+        if (!val && par->VpiParent() &&
+            par->VpiParent()->UhdmType() == uhdmparam_assign)
+            val = dynamic_cast<const expr*>(
+                any_cast<const param_assign*>(par->VpiParent())->Rhs());
+        pidx = i;
+        break;
+    }
+    if (!val) return RTLIL::SigSpec();
+    // Index the trailing field chain (`.HSK.DLY`) into the struct value —
+    // by tagged name, else positionally via the struct typespec.
+    for (size_t i = pidx + 1; i < pe.size() && val; i++) {
+        std::string field = std::string(pe[i]->VpiName());
+        const typespec* next_ts = nullptr;
+        const expr* next = find_tagged_field(val, field);
+        int idx = struct_member_index(cur_ts, field, &next_ts);
+        if (!next && val->UhdmType() == uhdmoperation && idx >= 0) {
+            auto op = any_cast<const operation*>(val);
+            if (op->Operands() && idx < (int)op->Operands()->size())
+                next = dynamic_cast<const expr*>((*op->Operands())[idx]);
+        }
+        val = next;
+        cur_ts = next_ts;
+    }
+    if (auto c = dynamic_cast<const constant*>(val)) {
+        int w = cur_ts ? get_width_from_typespec(const_cast<typespec*>(cur_ts),
+                                                 current_instance) : 32;
+        if (w <= 0) w = 32;
+        return RTLIL::SigSpec(RTLIL::Const(
+            parse_vpi_value_to_int(std::string(c->VpiValue())), w));
+    }
+    return RTLIL::SigSpec();
+}
+
 std::string UhdmImporter::eval_iface_param_field(const hier_path* hp,
                                           const module_inst* child_inst) {
     const interface_inst* iface = nullptr;

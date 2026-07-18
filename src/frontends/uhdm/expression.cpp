@@ -6576,6 +6576,20 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         log("    hier_path: VpiName='%s', VpiFullName='%s', using='%s'\n",
             std::string(name_view).c_str(), std::string(full_name_view).c_str(), path_name.c_str());
 
+    // Primary path: fold an interface-port parameter member (`sub.CFG.HSK.DLY`,
+    // `sub.CFG.BUS.DAT`) to a constant directly from the hier_path's
+    // Actual_group chain — Surelog binds the `CFG` element to the interface
+    // `parameter` object, so its struct value can be indexed by the trailing
+    // field chain.  This is robust regardless of where the interface instance
+    // sits in the hierarchy (an array element, a parent's port), replacing the
+    // fragile name/parent-chain search below.
+    if (auto fs = fold_iface_param_via_chain(uhdm_hier); fs.size() > 0) {
+        if (mode_debug)
+            log("    hier_path: %s -> %d-bit constant via Actual_group chain\n",
+                path_name.c_str(), fs.size());
+        return fs;
+    }
+
     // Nested interface struct-parameter field: `s.CFG.BUS.DAT` where `s` is a
     // modport port and `CFG` is a (nested struct) parameter on the connected
     // interface.  eval_iface_param_field walks the field chain to a constant.

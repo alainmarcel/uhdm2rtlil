@@ -51,44 +51,43 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1276
-- **Success Rate**: 95% (1218/1276 tests functional), 2 crashes, **0 Miter-Formal
+- **Total Tests**: 1304
+- **Success Rate**: 96% (1246/1304 tests functional), 1 crash, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 856 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 362 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
-- **Equivalence failures**: 22 — all caught by `equiv_induct` (0 Miter-Formal
-  escapes): internal `CastStructArray`, `rp32_r5p_mouse`, and four struct-array
-  tests exposed by the Yosys v0.67 bump (`multidim_hier_path8`,
-  `struct_array_indexed_write`, `struct_little_endian_bit_array`,
-  `svtypes_struct_array`); plus 16 from the upstream Yosys suite
-  (`arch/nanoxplore/meminit`, `check_mem/{init,non_zero,power_of_two,sub_addr}`,
+- **Passing**: 864 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 382 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Equivalence failures**: 19 — all caught by `equiv_induct` (0 Miter-Formal
+  escapes): internal `CastStructArray`, `ibex_register_file_fpga`, `rp32_r5p_mouse`,
+  and three packed struct-array tests (`struct_array_indexed_write`,
+  `struct_little_endian_bit_array`, `svtypes_struct_array`); plus 13 from the
+  upstream Yosys suite (`arch/nanoxplore/meminit`, `check_mem/sub_addr`,
   `sat/{alu,grom_computer,grom_cpu,ram_memory}`, `simple/{loops,module_scope_case}`,
   `sva/extnets`, `svtypes/{array_assign,struct_array}`, `verific/ext_ramnet_err`,
   `verilog/mem_bounds`).  The exact set varies run-to-run (seq-equiv induction is
-  inductively incomplete on some designs).  NOTE `multidim_hier_path8` is a
-  *genuine* UHDM≠Verilog bug (a range part-select of a packed struct-array field,
-  `s.arr[hi:lo]`, zeroes the high output bits) that v0.67's now-correct
-  `read_verilog` reference exposed — caught by `equiv_induct`, not an escape.
-- **True failures** (no output generated): 13 — all from the upstream Yosys suite
-  (`arch/fabulous/{arith,custom,ff,io,regfile}_map`, `functional/picorv32_tb`,
-  `hana/test_simulation_vlib`, `opt/opt_rmdff`, `rpc/design`,
-  `svinterfaces/{load_and_derive,resolve_types}`, `techmap/mem_simple_4x1_map`,
-  `verific/mixed_flist`)
-- **Crashes**: 2 (`memories/wide_all`, `techmap/recursive_map`)
-- **Verilator sim-equiv warnings**: 100 (undocumented divergences — now hard errors
+  inductively incomplete on some designs).
+- **True failures** (no output generated): 17 — three imported Ibex modules whose
+  advanced SV the frontend does not yet fully read (`ibex_core`,
+  `ibex_cs_registers`, `ibex_icache`); the other 14 are all from the upstream
+  Yosys suite (`arch/fabulous/{arith,custom,ff,io,regfile}_map`,
+  `functional/picorv32_tb`, `hana/test_simulation_vlib`, `memories/wide_all`,
+  `opt/opt_rmdff`, `rpc/design`, `svinterfaces/{load_and_derive,resolve_types}`,
+  `techmap/mem_simple_4x1_map`, `verific/mixed_flist`)
+- **Crashes**: 1 (`techmap/recursive_map`)
+- **Verilator sim-equiv warnings**: 102 (undocumented divergences — now hard errors
   unless documented in `test/sim_equiv_analyzed.txt`), plus **72 analyzed** known
   non-bug divergences — of which 58 are sim/synth artefacts where a SAT miter
   proves UHDM == Verilog, and the rest are uhdm-only don't-care divergences (e.g.
   `rp32_r5p_alu/wbu/mdu`, where the Verilog frontend can't synthesize the SV so no
   miter is possible)
 
-> The **internal** SystemVerilog suite alone is **723 tests, 0 true failures,
-> 0 crashes** — equivalence failures are `CastStructArray` (a
-> Yosys-Verilog-frontend bug, not UHDM), `rp32_r5p_mouse` (the rp32 core,
-> reset/X-dependent so not cleanly equiv-able), and four packed struct-array
-> tests newly exposed by the Yosys v0.67 bump (`multidim_hier_path8` — a genuine
-> UHDM `s.arr[hi:lo]` bug — plus `struct_array_indexed_write`,
-> `struct_little_endian_bit_array`, `svtypes_struct_array`, which a SAT miter
+> The **internal** SystemVerilog suite alone is **762 tests, 0 crashes** — the
+> only true failures are three imported Ibex modules whose advanced SV the
+> frontend does not yet fully read (`ibex_core`, `ibex_cs_registers`,
+> `ibex_icache`).  Equivalence failures are `CastStructArray` (a
+> Yosys-Verilog-frontend bug, not UHDM), `ibex_register_file_fpga` and
+> `rp32_r5p_mouse` (reset/X-dependent, not cleanly equiv-able), and three packed
+> struct-array tests (`struct_array_indexed_write`,
+> `struct_little_endian_bit_array`, `svtypes_struct_array`) that a SAT miter
 > proves UHDM == Verilog, i.e. `equiv_induct` incompleteness, not real diffs). The
 > figures above are the combined `--all` run; the remaining failures/crash come
 > from the imported upstream Yosys suite (feature gaps / non-synthesizable
