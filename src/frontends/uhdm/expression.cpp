@@ -5101,7 +5101,11 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             // over the base module's VpiValue (which may be the unelaborated default)
             RTLIL::Const param_value;
             RTLIL::IdString p_id = RTLIL::escape_id(param_name);
-            if (module->parameter_default_values.count(p_id)) {
+            // `module` is null when importing a PACKAGE parameter's value
+            // expression (no RTLIL module context) — guard the lookup, else a
+            // package parameter that references another parameter segfaults
+            // (ibex_tracer_pkg).
+            if (module && module->parameter_default_values.count(p_id)) {
                 param_value = module->parameter_default_values.at(p_id);
                 if (mode_debug)
                     log("UHDM: Using module parameter %s value %s (overrides base VpiValue)\n",
