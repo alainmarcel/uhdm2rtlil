@@ -9974,6 +9974,83 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
     }
 }
 
+// Thread blocking values through a comb `case`: the N-way analogue of
+// thread_comb_if.  After a case's arms are imported into `sw`, a later read of
+// a signal written in the arms (in the SAME comb block) must see the
+// case-selected value, not the pre-case default — e.g. rp32's r5p_mouse
+// `case(dec_opc) … bus_adr = …; endcase  ifu_pcn = bus_adr;`, where without
+// this ifu_pcn keeps the top-of-block `bus_adr = 'x` default, the PC latches 0
+// and the core never advances.  Only full-wire top-level arm writes are
+// threaded (a signal written inside a nested switch was already threaded when
+// that inner case was imported).  The mux tree mirrors the switch's
+// first-match-wins priority so an intermediate read stays consistent with the
+// structural `sw` that drives the real wire.  Bails on wildcard (casez/casex)
+// compares, which an `$eq` cannot model.
+void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
+                                    RTLIL::SwitchRule* sw) {
+    if (in_always_ff_body_mode) return;
+    if (!sw || case_sig.empty()) return;
+
+    // Wildcard compares (casez/casex) can't be modelled by an equality mux.
+    for (auto* c : sw->cases)
+        for (auto& cmp : c->compare)
+            if (!cmp.is_fully_def() || cmp.size() != case_sig.size())
+                return;
+
+    // Per arm, the last full-wire blocking write for each base name.
+    std::vector<std::map<std::string, RTLIL::SigSpec>> arm_vals(sw->cases.size());
+    std::set<std::string> names;
+    for (size_t i = 0; i < sw->cases.size(); i++)
+        for (auto& act : sw->cases[i]->actions) {
+            std::string b = comb_blocking_base(act.first);
+            if (!b.empty()) { arm_vals[i][b] = act.second; names.insert(b); }
+        }
+    if (names.empty()) return;
+
+    for (const auto& nm : names) {
+        // Pre-case value: the in-flight comb value, else the registered wire.
+        RTLIL::SigSpec pre;
+        auto it = current_comb_values.find(nm);
+        if (it != current_comb_values.end()) pre = it->second;
+        else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm)))
+            pre = RTLIL::SigSpec(w);
+        else continue;
+
+        // An arm that does not write nm falls through to the pre-case value.
+        // Skip the signal entirely on any width mismatch (partial/odd writes).
+        auto arm_value = [&](size_t i) -> RTLIL::SigSpec {
+            auto vit = arm_vals[i].find(nm);
+            return vit != arm_vals[i].end() ? vit->second : pre;
+        };
+        bool width_ok = true;
+        for (size_t i = 0; i < sw->cases.size(); i++)
+            if (arm_value(i).size() != pre.size()) { width_ok = false; break; }
+        if (!width_ok) continue;
+
+        // Start from the default arm (empty compare), else pre.
+        RTLIL::SigSpec result = pre;
+        for (size_t i = 0; i < sw->cases.size(); i++)
+            if (sw->cases[i]->compare.empty())
+                result = arm_value(i);
+
+        // Fold the matched arms in reverse so the FIRST arm wins (priority).
+        for (size_t k = sw->cases.size(); k-- > 0; ) {
+            RTLIL::CaseRule* c = sw->cases[k];
+            if (c->compare.empty()) continue;   // default handled above
+            RTLIL::SigSpec sel;
+            for (auto& cmp : c->compare) {
+                RTLIL::SigSpec eq = module->Eq(NEW_ID, case_sig, cmp);
+                sel = sel.empty() ? eq : module->Or(NEW_ID, sel, eq);
+            }
+            if (sel.empty()) continue;
+            result = module->Mux(NEW_ID, result, arm_value(k), sel); // sel?arm:result
+        }
+
+        if (result != pre)
+            current_comb_values[nm] = result;
+    }
+}
+
 void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc) {
     log("    import_if_else_comb: Importing if_else statement\n");
 
@@ -10587,6 +10664,10 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
     if (has_full_case_attr)
         emit_full_case_default(uhdm_case, sw);
+
+    // Make a later same-block read of an arm-written signal see the
+    // case-selected value (not the pre-case default).
+    thread_comb_case(case_sig, sw);
 
     proc->root_case.switches.push_back(sw);
 
@@ -11354,6 +11435,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
             if (has_full_case_attr)
                 emit_full_case_default(uhdm_case, sw);
+
+            // Make a later same-block read of an arm-written signal (e.g. the
+            // r5p_mouse `ifu_pcn = bus_adr;` after `case(dec_opc)`) see the
+            // case-selected value, not the pre-case default.
+            thread_comb_case(case_expr, sw);
 
             // Add the switch to the current case rule
             case_rule->switches.push_back(sw);
