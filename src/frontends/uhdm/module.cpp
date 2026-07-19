@@ -2714,6 +2714,17 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
                     RTLIL::SigSpec rs = import_expression(r->Right_expr());
                     force_const_fold = saved_fcf;
                     if (ls.is_fully_const() && rs.is_fully_const()) {
+                        // A `[size-1:0]` range with size==0 collapses to `[-1:0]`
+                        // (a negative MSB).  Real packed bit indices are never
+                        // negative, so a negative bound means an intended
+                        // zero-width field (e.g. `logic [CFG.BUS.CTL-1:0] ctl`
+                        // with CTL==0) — elide it instead of the bogus
+                        // abs()-derived width of 2.
+                        if (ls.as_int() < 0 || rs.as_int() < 0) {
+                            log("UHDM: logic_typespec simple range is empty "
+                                "([%d:%d]) -> width 0\n", ls.as_int(), rs.as_int());
+                            return 0;
+                        }
                         int range_size = std::abs(ls.as_int() - rs.as_int()) + 1;
                         log("UHDM: logic_typespec simple range width = %d\n", range_size);
                         return range_size;
