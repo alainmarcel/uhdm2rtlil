@@ -3610,6 +3610,63 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
         return result;
     }
 
+    // A TYPED named assignment pattern `T'{field: val, ...}` is emitted by
+    // Surelog as a cast (vpiCastOp) wrapping a CONCAT whose operands alternate
+    // (member-name ref_obj, value): the field-name keys leak in as unresolved
+    // refs — producing undriven phantom wires + "unknown signal" warnings — and
+    // the values are otherwise dropped (rp32 hamster/degu NOP = `op32_i_t'{...}`
+    // collapses to 0).  Detect this shape (each odd operand is a ref_obj naming
+    // a member of the cast's struct type) and build the struct value from the
+    // VALUE operands in member order, matching the non-cast `'{...}` path.
+    if (op_type == vpiCastOp && uhdm_op->Operands() &&
+        uhdm_op->Operands()->size() == 1) {
+        const struct_typespec* sts = nullptr;
+        if (auto rt = uhdm_op->Typespec())
+            if (auto at = rt->Actual_typespec())
+                if (at->UhdmType() == uhdmstruct_typespec)
+                    sts = any_cast<const struct_typespec*>(at);
+        auto inner = dynamic_cast<const UHDM::operation*>((*uhdm_op->Operands())[0]);
+        if (sts && sts->Members() && inner &&
+            inner->VpiOpType() == vpiConcatOp && inner->Operands() &&
+            inner->Operands()->size() == sts->Members()->size() * 2) {
+            auto& iops = *inner->Operands();
+            auto& mems = *sts->Members();
+            std::map<std::string, const UHDM::expr*> field_val;
+            bool tagged = true;
+            for (size_t i = 0; i < iops.size() && tagged; i += 2) {
+                auto key = dynamic_cast<const ref_obj*>(iops[i]);
+                auto val = dynamic_cast<const UHDM::expr*>(iops[i + 1]);
+                if (!key || !val) { tagged = false; break; }
+                std::string kn = std::string(key->VpiName());
+                bool is_member = false;
+                for (auto m : mems)
+                    if (std::string(m->VpiName()) == kn) { is_member = true; break; }
+                if (!is_member) { tagged = false; break; }
+                field_val[kn] = val;
+            }
+            if (tagged && field_val.size() == mems.size()) {
+                // Concat the per-field values in member order (first member =
+                // MSB), each sized to its member width.
+                RTLIL::SigSpec result;
+                for (int i = (int)mems.size() - 1; i >= 0; i--) {
+                    std::string mn = std::string(mems[i]->VpiName());
+                    int mw = 0;
+                    if (auto mt = mems[i]->Typespec())
+                        if (auto ma = mt->Actual_typespec())
+                            mw = get_width_from_typespec(
+                                const_cast<UHDM::typespec*>(ma), inst);
+                    RTLIL::SigSpec v = import_expression(field_val[mn], input_mapping);
+                    if (mw > 0) {
+                        if (v.size() < mw) v.extend_u0(mw);
+                        else if (v.size() > mw) v = v.extract(0, mw);
+                    }
+                    result.append(v);
+                }
+                return result;
+            }
+        }
+    }
+
     // Try to reduce it first (for non-side-effect operations). We skip
     // `vpiCastOp` here: Surelog's reduceExpr folds `8'(4'(signed'(...)))`
     // into a single constant but applies plain zero-extension at the
