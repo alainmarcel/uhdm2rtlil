@@ -6905,6 +6905,17 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (!found) { ok = false; break; }
                         off += moff; field_w = mw; cur_ts = mts;
                     }
+                    // A member resolved to zero width (`sub.req.ctl` with
+                    // CFG.BUS.CTL==0, `sub.rsp.sts` with STS==0) is a legitimate
+                    // empty field — return an empty SigSpec so the enclosing
+                    // no-op assignment (`man.req.ctl = sub.req.ctl`) drops out
+                    // silently instead of falling through to the "Could not
+                    // resolve struct member" warning.
+                    if (ok && field_w == 0 && off <= base_sig.size()) {
+                        log("    hier_path: interface signal struct member %s.* -> zero-width field\n",
+                            wname.c_str());
+                        return RTLIL::SigSpec();
+                    }
                     if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
                         log("    hier_path: interface signal struct member %s.* -> [%d+:%d]\n",
                             wname.c_str(), off, field_w);
