@@ -1452,13 +1452,14 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
         log("    RHS constant: %s\n", rhs.as_const().as_string().c_str());
     }
     
-    // Debug: Check for empty signals
+    // A zero-width LHS is a no-op assignment — e.g. `man.req.ctl = sub.req.ctl`
+    // where the struct field has width 0 (CFG.BUS.CTL==0) or `sub.rsp.sts = '0`
+    // with STS==0.  There is nothing to drive; skip it silently instead of
+    // falling through to the connect logic (which throws on the empty vector).
     if (lhs.size() == 0) {
-        log_warning("Empty LHS in continuous assignment (generate scope: %s)\n", current_gen_scope.c_str());
-        if (lhs_expr) {
-            log_warning("  LHS expr type: %s (VpiType=%d)\n", 
-                UHDM::UhdmName(lhs_expr->UhdmType()).c_str(), lhs_expr->VpiType());
-        }
+        if (mode_debug)
+            log("    Zero-width LHS in continuous assignment (no-op) — skipping\n");
+        return;
     }
     if (rhs.size() == 0) {
         log_warning("Empty RHS in continuous assignment (generate scope: %s)\n", current_gen_scope.c_str());
@@ -1466,7 +1467,7 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
             log_warning("  RHS expr type: %s\n", UHDM::UhdmName(rhs_expr->UhdmType()).c_str());
         }
     }
-    
+
     // Handle size mismatch
     if (lhs.size() != rhs.size()) {
         if (rhs.size() == 1) {
