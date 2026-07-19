@@ -233,6 +233,51 @@ extern "C" const char *yosys_plugin_version() {
 
 YOSYS_NAMESPACE_BEGIN
 
+// Encode a UHDM parameter value (VpiValue digits, `value_type` is the "BIN" /
+// "HEX" / "" prefix) as the 32 binary chars that follow `s32'` in a $paramod
+// cell-type name.  A `logic P = 'x` default arrives as BIN:X, which std::stoi
+// cannot parse — the old call sites logged a spurious warning and fell back to
+// all-zero, silently turning a don't-care into 0 (and giving two different
+// x-defaulted params the same, colliding cell type).  Preserve x/z states
+// instead, LSB-aligned and zero-padded, so the name is well-formed and the
+// instance/definition encodings stay consistent.
+static std::string encode_param_bits32(const std::string& value_type,
+                                       const std::string& val_str) {
+    int base = 10;
+    if (value_type == "BIN") base = 2;
+    else if (value_type == "HEX") base = 16;
+    // Clean-integer fast path.
+    try {
+        long v = std::stol(val_str, nullptr, base);
+        std::string s(32, '0');
+        for (int i = 0; i < 32; i++) if ((v >> i) & 1) s[31 - i] = '1';
+        return s;
+    } catch (...) {}
+    // The value carries x/z bits.  Expand LSB-first, preserving x/z.
+    std::string lsb;
+    for (auto it = val_str.rbegin(); it != val_str.rend(); ++it) {
+        char c = (char)std::tolower((unsigned char)*it);
+        if (base == 2) {
+            if (c == '?') c = 'x';
+            if (c=='0'||c=='1'||c=='x'||c=='z') lsb += c;
+            else return std::string(32, '0');
+        } else if (base == 16) {
+            if (c=='x'||c=='?') { lsb += "xxxx"; continue; }
+            if (c=='z')         { lsb += "zzzz"; continue; }
+            int d;
+            if (c>='0'&&c<='9') d = c-'0';
+            else if (c>='a'&&c<='f') d = 10 + c-'a';
+            else return std::string(32, '0');
+            for (int i = 0; i < 4; i++) lsb += ((d>>i)&1) ? '1' : '0';
+        } else {
+            return std::string(32, '0');
+        }
+    }
+    std::string s(32, '0');
+    for (size_t i = 0; i < lsb.size() && i < 32; i++) s[31 - i] = lsb[i];
+    return s;
+}
+
 // UhdmImporter constructor
 UhdmImporter::UhdmImporter(RTLIL::Design *design, bool keep_names, bool debug) :
     design(design), module(nullptr), mode_keep_names(keep_names), mode_debug(debug) {
@@ -359,18 +404,9 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                                         // Handle string parameters
                                         param_module_name += "\\" + param_name + "=\"" + val_str + "\"";
                                     } else {
-                                        // Handle numeric parameters
-                                        try {
-                                            int param_value = std::stoi(val_str);
-                                            param_module_name += "\\" + param_name + "=s32'";
-                                            for (int i = 31; i >= 0; i--) {
-                                                param_module_name += ((param_value >> i) & 1) ? "1" : "0";
-                                            }
-                                        } catch (const std::exception& e) {
-                                            log_warning("Failed to convert parameter value '%s' to integer: %s\n", 
-                                                       val_str.c_str(), e.what());
-                                            param_module_name += "\\" + param_name + "=s32'00000000000000000000000000000000";
-                                        }
+                                        // Handle numeric parameters (x/z-safe)
+                                        param_module_name += "\\" + param_name + "=s32'"
+                                            + encode_param_bits32(value_type, val_str);
                                     }
                                 }
                             }
@@ -1724,20 +1760,10 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 else if (prefix == "HEX") base = 16;
                             }
 
-                            // Convert to Yosys format
-                            yosys_modname += "\\" + param_name + "=s32'";
-                            // Pad value to 32 bits
-                            try {
-                                int val = std::stoi(param_value, nullptr, base);
-                                for (int i = 31; i >= 0; i--) {
-                                    yosys_modname += ((val >> i) & 1) ? "1" : "0";
-                                }
-                            } catch (const std::exception& e) {
-                                log_warning("UHDM: Failed to parse parameter value '%s' as integer: %s\n",
-                                           param_value.c_str(), e.what());
-                                // Use zero as default
-                                yosys_modname += "00000000000000000000000000000000";
-                            }
+                            // Convert to Yosys format (x/z-safe)
+                            yosys_modname += "\\" + param_name + "=s32'"
+                                + encode_param_bits32(base == 2 ? "BIN" : base == 16 ? "HEX" : "",
+                                                      param_value);
                         }
                     }
                     pos = eq_pos;
@@ -1854,23 +1880,14 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     // non-empty but non-integer value (e.g. a large
                                     // hex IFU_MSK, or 'X') is kept as 32 zeros,
                                     // matching the def builder's own fallback.
-                                    cell_type += "\\" + param_name + "=s32'";
-                                    int base = 10;
+                                    std::string prefix;
                                     size_t colon_pos = value_to_use.find(':');
                                     if (colon_pos != std::string::npos) {
-                                        std::string prefix = value_to_use.substr(0, colon_pos);
+                                        prefix = value_to_use.substr(0, colon_pos);
                                         value_to_use = value_to_use.substr(colon_pos + 1);
-                                        if (prefix == "BIN") base = 2;
-                                        else if (prefix == "HEX") base = 16;
                                     }
-                                    try {
-                                        int val = std::stoi(value_to_use, nullptr, base);
-                                        for (int i = 31; i >= 0; i--) {
-                                            cell_type += ((val >> i) & 1) ? "1" : "0";
-                                        }
-                                    } catch (const std::exception& e) {
-                                        cell_type += "00000000000000000000000000000000";
-                                    }
+                                    cell_type += "\\" + param_name + "=s32'"
+                                        + encode_param_bits32(prefix, value_to_use);
                                 }
                             }
                             pos = eq_pos;
@@ -2540,23 +2557,9 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             } else {
                                 // Handle numeric parameters
                                 // Convert to Yosys format
-                                param_string += "\\" + param_name + "=s32'";
-                                // Determine numeric base from type prefix
-                                int base = 10;
-                                if (value_type == "BIN") base = 2;
-                                else if (value_type == "HEX") base = 16;
-                                // Pad value to 32 bits
-                                try {
-                                    int val = std::stoi(val_str, nullptr, base);
-                                    for (int i = 31; i >= 0; i--) {
-                                        param_string += ((val >> i) & 1) ? "1" : "0";
-                                    }
-                                } catch (const std::exception& e) {
-                                    log_warning("Failed to convert parameter value '%s' to integer: %s\n",
-                                               val_str.c_str(), e.what());
-                                    // Use zero as default
-                                    param_string += "00000000000000000000000000000000";
-                                }
+                                // Pad value to 32 bits (x/z-safe)
+                                param_string += "\\" + param_name + "=s32'"
+                                    + encode_param_bits32(value_type, val_str);
                             }
                         }
                     } else if (param_assign->Rhs()->UhdmType() == uhdmhier_path) {
@@ -2569,14 +2572,8 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                             any_cast<const hier_path*>(param_assign->Rhs()),
                             uhdm_module);
                         if (!v.empty()) {
-                            param_string += "\\" + param_name + "=s32'";
-                            try {
-                                int val = std::stoi(v);
-                                for (int i = 31; i >= 0; i--)
-                                    param_string += ((val >> i) & 1) ? "1" : "0";
-                            } catch (const std::exception&) {
-                                param_string += "00000000000000000000000000000000";
-                            }
+                            param_string += "\\" + param_name + "=s32'"
+                                + encode_param_bits32("", v);
                         }
                     }
                 }
