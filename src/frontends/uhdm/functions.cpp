@@ -1059,6 +1059,54 @@ RTLIL::Const UhdmImporter::evaluate_single_operand(const any* operand,
                 bits.push_back((b >= 0 && b < target.size()) ? target[b] : RTLIL::S0);
             val = RTLIL::Const(bits);
         }
+    } else if (operand->VpiType() == vpiHierPath) {
+        // Struct-member read of a local variable in a compile-time expression:
+        // `op.imm_11_0` where `op` is a function argument bound in local_vars
+        // (RISC-V decoder immediate functions).  Extract the member bits from
+        // the base struct constant using the base variable's struct typespec.
+        const hier_path* hp = any_cast<const hier_path*>(operand);
+        if (hp && hp->Path_elems() && hp->Path_elems()->size() >= 2) {
+            auto& pe = *hp->Path_elems();
+            std::string base = std::string(pe[0]->VpiName());
+            if (local_vars.count(base)) {
+                const typespec* ts = nullptr;
+                if (auto r0 = dynamic_cast<const ref_obj*>(pe[0]))
+                    if (auto ag = r0->Actual_group()) {
+                        const ref_typespec* rt = nullptr;
+                        if (auto sv = dynamic_cast<const UHDM::struct_var*>(ag)) rt = sv->Typespec();
+                        else if (auto lv = dynamic_cast<const UHDM::logic_var*>(ag)) rt = lv->Typespec();
+                        else if (auto io = dynamic_cast<const UHDM::io_decl*>(ag)) rt = io->Typespec();
+                        if (rt) ts = rt->Actual_typespec();
+                    }
+                std::string mpath;
+                for (size_t i = 1; i < pe.size(); i++) {
+                    if (i > 1) mpath += ".";
+                    mpath += std::string(pe[i]->VpiName());
+                }
+                int off = 0, w = 0;
+                if (ts && calculate_struct_member_offset(ts, mpath, nullptr, off, w) && w > 0) {
+                    const RTLIL::Const& bc = local_vars.at(base);
+                    std::vector<RTLIL::State> bits;
+                    for (int b = 0; b < w; b++)
+                        bits.push_back((off + b >= 0 && off + b < bc.size())
+                                           ? bc[off + b] : RTLIL::State::S0);
+                    val = RTLIL::Const(bits);
+                }
+            }
+        }
+    } else if (operand->VpiType() == vpiSysFuncCall) {
+        // `$signed(x)` / `$unsigned(x)` in a compile-time expression: evaluate
+        // the argument and tag the result's signedness so an enclosing cast or
+        // extension sign- vs zero-extends correctly (RISC-V decoder immediate
+        // functions: `imm_t'($signed({op.imm_11_0}))`).
+        const sys_func_call* sfc = any_cast<const sys_func_call*>(operand);
+        std::string fn = sfc ? std::string(sfc->VpiName()) : "";
+        if ((fn == "$signed" || fn == "$unsigned") && sfc->Tf_call_args() &&
+            !sfc->Tf_call_args()->empty()) {
+            val = evaluate_single_operand((*sfc->Tf_call_args())[0], local_vars);
+            if (fn == "$signed") val.flags |= RTLIL::CONST_FLAG_SIGNED;
+            else                 val.flags &= ~RTLIL::CONST_FLAG_SIGNED;
+        }
     }
     return val;
 }
@@ -1276,11 +1324,48 @@ RTLIL::Const UhdmImporter::evaluate_operation_const(const operation* op,
             }
             break;
 
+        case vpiCastOp: {  // T'(expr) — resize the folded operand to the cast width
+            if (operand_values.empty()) break;
+            RTLIL::Const cv = operand_values[0];
+            int target_width = 0;
+            const typespec* ts = nullptr;
+            if (auto rt = op->Typespec()) ts = rt->Actual_typespec();
+            if (ts) {
+                // Literal / parameterized size cast `N'(...)` / `WIDTH'(...)`:
+                // Surelog stores the width as the integer_typespec's VpiValue.
+                if (ts->VpiType() == vpiIntegerTypespec) {
+                    auto its = any_cast<const integer_typespec*>(ts);
+                    RTLIL::Const wc = extract_const_from_value(std::string(its->VpiValue()));
+                    if (wc.size() > 0) target_width = wc.as_int();
+                } else if (ts->VpiType() == vpiIntTypespec) {
+                    auto its = any_cast<const int_typespec*>(ts);
+                    if (its && !its->VpiName().empty()) {
+                        RTLIL::Const wc = extract_const_from_value(std::string(its->VpiValue()));
+                        if (wc.size() > 0) target_width = wc.as_int();
+                    }
+                }
+                if (target_width <= 0)
+                    target_width = get_width_from_typespec(const_cast<typespec*>(ts), nullptr);
+            }
+            if (target_width <= 0) return cv;   // unknown width: pass value through
+            // Extension sign comes from the OPERAND expression ($signed/$unsigned
+            // /signed typedef), matching the elaborated-path cast handler.
+            bool src_signed = (cv.flags & RTLIL::CONST_FLAG_SIGNED) != 0;
+            if (op->Operands() && !op->Operands()->empty())
+                if (auto se = any_cast<const expr*>(op->Operands()->at(0)))
+                    src_signed = is_expr_signed(se) || src_signed;
+            RTLIL::State fill = (src_signed && cv.size() > 0)
+                                    ? cv.back() : RTLIL::State::S0;
+            cv.resize(target_width, fill);
+            if (ts && is_typespec_signed(ts)) cv.flags |= RTLIL::CONST_FLAG_SIGNED;
+            return cv;
+        }
+
         default:
             log_warning("Unsupported operation type %d in compile-time evaluation\n", op_type);
             break;
     }
-    
+
     return RTLIL::Const();
 }
 
