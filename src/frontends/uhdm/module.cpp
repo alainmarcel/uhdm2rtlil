@@ -263,17 +263,28 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
                         for (auto ep : *mi->Ports()) {
                             if (std::string(ep->VpiName()) != portname) continue;
                             auto hc = ep->High_conn();
-                            if (hc && hc->UhdmType() == uhdmref_obj) {
-                                auto r2 = any_cast<const ref_obj*>(hc);
-                                if (auto ag = r2->Actual_group()) {
-                                    if (ag->UhdmType() == uhdminterface_inst)
-                                        return any_cast<const UHDM::interface_inst*>(ag);
-                                    if (ag->UhdmType() == uhdmmodport) {
-                                        auto emp = any_cast<const UHDM::modport*>(ag);
-                                        if (emp && emp->VpiParent() &&
-                                            emp->VpiParent()->UhdmType() == uhdminterface_inst)
-                                            return any_cast<const UHDM::interface_inst*>(emp->VpiParent());
-                                    }
+                            // High_conn is a `ref_obj` for a plain interface port
+                            // (`.sub(bus)`), but a `bit_select` for an interface-
+                            // ARRAY element connection (`.sub(intf[0])`).  Both
+                            // carry the connected interface instance in their
+                            // Actual_group — for the array element this is the
+                            // specific element (`top.intf[0]`), which uniquely
+                            // holds THIS element's parameter values (the array's
+                            // `#(CFG)` override), unlike the signal-/value-less
+                            // stub the fallbacks pick.  rp32 SoC `.sub(tcb_dmx[0])`.
+                            const UHDM::any* ag = nullptr;
+                            if (hc && hc->UhdmType() == uhdmref_obj)
+                                ag = any_cast<const ref_obj*>(hc)->Actual_group();
+                            else if (hc && hc->UhdmType() == uhdmbit_select)
+                                ag = any_cast<const UHDM::bit_select*>(hc)->Actual_group();
+                            if (ag) {
+                                if (ag->UhdmType() == uhdminterface_inst)
+                                    return any_cast<const UHDM::interface_inst*>(ag);
+                                if (ag->UhdmType() == uhdmmodport) {
+                                    auto emp = any_cast<const UHDM::modport*>(ag);
+                                    if (emp && emp->VpiParent() &&
+                                        emp->VpiParent()->UhdmType() == uhdminterface_inst)
+                                        return any_cast<const UHDM::interface_inst*>(emp->VpiParent());
                                 }
                             }
                             break;
