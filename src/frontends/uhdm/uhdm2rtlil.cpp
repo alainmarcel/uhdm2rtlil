@@ -241,8 +241,8 @@ YOSYS_NAMESPACE_BEGIN
 // x-defaulted params the same, colliding cell type).  Preserve x/z states
 // instead, LSB-aligned and zero-padded, so the name is well-formed and the
 // instance/definition encodings stay consistent.
-static std::string encode_param_bits32(const std::string& value_type,
-                                       const std::string& val_str) {
+std::string UhdmImporter::encode_param_bits32(const std::string& value_type,
+                                              const std::string& val_str) {
     int base = 10;
     if (value_type == "BIN") base = 2;
     else if (value_type == "HEX") base = 16;

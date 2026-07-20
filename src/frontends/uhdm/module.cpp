@@ -1764,19 +1764,12 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
                             has_params = true;
                         }
                     } else if (!val_str.empty()) {
-                        param_string += "\\" + param_name + "=s32'";
-                        // Determine numeric base from type prefix
-                        int base = 10;
-                        if (value_type == "BIN") base = 2;
-                        else if (value_type == "HEX") base = 16;
-                        try {
-                            int val = std::stoi(val_str, nullptr, base);
-                            for (int i = 31; i >= 0; i--) {
-                                param_string += ((val >> i) & 1) ? "1" : "0";
-                            }
-                        } catch (const std::exception& e) {
-                            param_string += "00000000000000000000000000000000";
-                        }
+                        // Use the shared 64-bit-safe, x/z-preserving encoder so a
+                        // `'1` fill default (BIN:111..1 = 2^32-1) matches the
+                        // module-definition name instead of overflowing stoi and
+                        // collapsing to zeros (rp32 gpio SYS_IRQ='1 -> blackbox).
+                        param_string += "\\" + param_name + "=s32'"
+                            + encode_param_bits32(value_type, val_str);
                         has_params = true;
                     }
                 }
