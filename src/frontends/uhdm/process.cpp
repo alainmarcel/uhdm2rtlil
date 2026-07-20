@@ -2687,6 +2687,26 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     // Clear current_comb_values for tracking signal values during processing
     current_comb_values.clear();
 
+    // Which base-wire bits does this comb process actually write?  When several
+    // struct FIELDS of one interface signal are assigned in an always_comb
+    // (rp32 r5p_lsu drives only `tcb.req.wen`/`.ren`) they collapse onto the
+    // base wire, but the STa update must drive ONLY those bits — the other
+    // fields (`tcb.req.lck`/`.ctl`/`.adr`/...) are driven by continuous assigns,
+    // and a full-width update would conflict with them ("Drivers conflicting
+    // with a constant 1'0 driver").
+    std::map<std::string, std::set<int>> comb_written_bits;
+    for (const auto& s : assigned_signals) {
+        if (!s.lhs_expr) continue;
+        RTLIL::SigSpec ls = import_expression(s.lhs_expr);
+        for (const auto& ch : ls.chunks())
+            if (ch.wire) {
+                std::string wn = ch.wire->name.str();
+                if (!wn.empty() && wn[0] == '\\') wn = wn.substr(1);
+                for (int b = 0; b < ch.width; b++)
+                    comb_written_bits[wn].insert(ch.offset + b);
+            }
+    }
+
     // Create sync always rule BEFORE statement import so task/function handlers can add entries
     RTLIL::SyncRule* sync_always = new RTLIL::SyncRule();
     sync_always->type = RTLIL::SyncType::STa;
@@ -2695,10 +2715,33 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
     for (const auto& [sig_name, temp_wire] : signal_temp_wires) {
         if (signal_specs.count(sig_name)) {
             RTLIL::SigSpec lhs_spec = signal_specs[sig_name];
-            sync_always->actions.push_back(
-                RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
-            );
-            log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
+            RTLIL::Wire* base_w = lhs_spec.is_wire() ? lhs_spec.as_wire() : nullptr;
+            auto wb = base_w ? comb_written_bits.find(sig_name)
+                             : comb_written_bits.end();
+            if (base_w && wb != comb_written_bits.end() &&
+                (int)wb->second.size() < base_w->width &&
+                (int)temp_wire->width == base_w->width) {
+                // Partially-written base wire: drive only the written bit runs.
+                RTLIL::SigSpec l, r;
+                int n = base_w->width, i = 0;
+                while (i < n) {
+                    if (!wb->second.count(i)) { i++; continue; }
+                    int j = i;
+                    while (j < n && wb->second.count(j)) j++;
+                    l.append(RTLIL::SigSpec(base_w).extract(i, j - i));
+                    r.append(RTLIL::SigSpec(temp_wire).extract(i, j - i));
+                    i = j;
+                }
+                sync_always->actions.push_back(RTLIL::SigSig(l, r));
+                log("    Added partial update: %s <= %s (%d/%d bits)\n",
+                    sig_name.c_str(), temp_wire->name.c_str(),
+                    (int)wb->second.size(), base_w->width);
+            } else {
+                sync_always->actions.push_back(
+                    RTLIL::SigSig(lhs_spec, RTLIL::SigSpec(temp_wire))
+                );
+                log("    Added update: %s <= %s\n", log_signal(lhs_spec), temp_wire->name.c_str());
+            }
         }
     }
 
