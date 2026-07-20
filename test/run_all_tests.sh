@@ -11,6 +11,17 @@ set +e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Per-step wall-clock cap (seconds).  A pathological design can spin a single
+# yosys/verilator/surelog step for a very long time and hang `make test` /
+# `make test-all`; bound every heavy per-test step at 15 minutes — the same
+# defense the 4-frontend matrix (run_frontend_matrix.py, STEP_TIMEOUT) already
+# has.  SIGTERM at the cap, SIGKILL 10 s later; a timed-out step returns
+# 124 (137 if it needed the KILL), which the callers already treat as a failure
+# so the sweep keeps going.  Override via STEP_TIMEOUT_S.
+STEP_TIMEOUT_S="${STEP_TIMEOUT_S:-900}"
+run_step() { timeout -k 10 "${STEP_TIMEOUT_S}" "$@"; }
+step_timed_out() { [ "$1" -eq 124 ] || [ "$1" -eq 137 ]; }
+
 # Yosys-test (third_party/yosys/tests) discovery + setup paths.  These tests
 # are treated as read-only and materialised under test/run/<path>/ where they
 # then go through the SAME per-test analysis as the internal tests.
@@ -199,8 +210,9 @@ run_sim_equivalence_softwarn() {
         return 0  # silently skip if the optional tooling isn't built
     fi
     local log="$test_dir/sim_equiv.log"
-    "$script" "$test_dir" --cycles "$cycles" >"$log" 2>&1
+    run_step "$script" "$test_dir" --cycles "$cycles" >"$log" 2>&1
     local rc=$?
+    step_timed_out "$rc" && echo "    ⏱  Verilator co-sim TIMED OUT after ${STEP_TIMEOUT_S}s (killed)"
     if [ $rc -eq 0 ] && grep -q '^PASS:' "$log"; then
         echo "    ✅ Verilator co-sim PASSED"
         SIM_EQUIV_COSIM_PASSED=1
@@ -501,10 +513,10 @@ EOF
 
     local rc=0
     ( cd "$abs_dir" || exit 1
-      $YOSYS_BIN -s test_verilog_read.ys > verilog_path.log 2>&1 || true
-      $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}"${sibling_files} > surelog.log 2>&1 || true
+      run_step $YOSYS_BIN -s test_verilog_read.ys > verilog_path.log 2>&1 || true
+      run_step $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}"${sibling_files} > surelog.log 2>&1 || true
       if [ -f slpp_all/surelog.uhdm ]; then
-          $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
+          run_step $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
       fi )
     rc=$?
     return $rc
@@ -707,7 +719,7 @@ analyze_test_result() {
         if [ "$skip_formal" = "1" ]; then
             echo "    ⏭  Formal equivalence SKIPPED (sim_config: SKIP_FORMAL=1)"
         elif [ -x "./test_equivalence.sh" ]; then
-            if ./test_equivalence.sh "$test_dir" >/dev/null 2>&1; then
+            if run_step ./test_equivalence.sh "$test_dir" >/dev/null 2>&1; then
                 echo "    ✅ Induct-Formal equivalence check PASSED (equiv_induct)"
                 equiv_passed=true
             else
@@ -827,9 +839,12 @@ if [ "$RUN_LOCAL" = true ] && [ ${#TEST_DIRS[@]} -gt 0 ]; then
     start_time=$(date +%s.%N)
     TEST_START_TIMES["$test_dir"]=$start_time
     
-    # Run the test and capture result (don't log verbose output)
-    ./test_uhdm_workflow.sh "$test_dir" >/dev/null 2>&1
+    # Run the test and capture result (don't log verbose output), bounded by the
+    # per-step wall-clock cap so a runaway yosys/verilator can't hang the sweep.
+    run_step ./test_uhdm_workflow.sh "$test_dir" >/dev/null 2>&1
     exit_code=$?
+    step_timed_out "$exit_code" && \
+        echo "   ⏱  test TIMED OUT after ${STEP_TIMEOUT_S}s (killed)"
     
     # Record end time and calculate duration
     end_time=$(date +%s.%N)

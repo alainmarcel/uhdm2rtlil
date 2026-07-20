@@ -5504,6 +5504,70 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             wire_name.c_str(), gen_scope.c_str());
     }
     
+    // Unbound reference to an interface localparam (`CFG_BUS_BYT = CFG.BUS.DAT/8`,
+    // `CFG_BUS_SIZ = $clog2($clog2(CFG_BUS_BYT)+1)`): the ref lives in the
+    // interface's shared req_t typespec (`logic [CFG_BUS_SIZ-1:0] siz`) and
+    // carries no Actual_group, so it isn't caught by the Actual_group->parameter
+    // path above.  When a module reaches the interface only through a modport
+    // PORT (r5p_degu with `tcb_lite_if.man tcb_lsu`, synthesised standalone) the
+    // name resolves to nothing and becomes an undriven wire.  Surelog now
+    // exposes the interface's elaborated param_assigns on the interface_inst
+    // (NetlistElaboration elab_interface_); search the interface instance(s)
+    // reachable from the current scope for a same-named parameter and fold it.
+    if (current_instance) {
+        std::vector<const UHDM::interface_inst*> ifaces;
+        if (auto ii = dynamic_cast<const UHDM::interface_inst*>(current_instance))
+            ifaces.push_back(ii);
+        if (auto mi = dynamic_cast<const UHDM::module_inst*>(current_instance)) {
+            if (mi->Interfaces())
+                for (auto ii : *mi->Interfaces()) ifaces.push_back(ii);
+            // A modport PORT exposes its interface via the port's Low_conn (the
+            // modport, whose parent is the interface instance); no High_conn
+            // exists when the module is synthesised standalone.
+            if (mi->Ports())
+                for (auto p : *mi->Ports()) {
+                    const UHDM::any* lc = p->Low_conn();
+                    if (lc && lc->UhdmType() == uhdmref_obj)
+                        if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group())
+                            lc = a;
+                    const UHDM::interface_inst* ii = nullptr;
+                    if (lc && lc->UhdmType() == uhdminterface_inst)
+                        ii = any_cast<const UHDM::interface_inst*>(lc);
+                    else if (lc && lc->UhdmType() == uhdmmodport) {
+                        auto mp = any_cast<const UHDM::modport*>(lc);
+                        if (mp && mp->VpiParent() &&
+                            mp->VpiParent()->UhdmType() == uhdminterface_inst)
+                            ii = any_cast<const UHDM::interface_inst*>(mp->VpiParent());
+                    }
+                    if (ii) ifaces.push_back(ii);
+                }
+        }
+        for (auto ii : ifaces) {
+            // Only trust a Surelog-FOLDED constant here.  When the interface's
+            // CFG default is itself unresolved at interface-elaboration time
+            // (a package localparam struct like `TCB_LITE_CFG_DEF`), Surelog
+            // leaves the localparam Rhs as the raw `CFG.BUS.DAT/8` expression;
+            // folding that here would hit the unresolved `CFG.BUS.DAT` and
+            // silently yield a wrong 0 — worse than the honest undriven wire.
+            const UHDM::constant* rc = nullptr;
+            if (ii->Param_assigns())
+                for (auto pa : *ii->Param_assigns())
+                    if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == ref_name)
+                        if (auto r = pa->Rhs())
+                            if (r->UhdmType() == uhdmconstant) {
+                                rc = any_cast<const UHDM::constant*>(r); break;
+                            }
+            if (rc) {
+                RTLIL::SigSpec v = import_constant(rc);
+                if (v.is_fully_const()) {
+                    log("    ref_obj: interface localparam %s -> %d\n",
+                        ref_name.c_str(), v.as_const().as_int());
+                    return v;
+                }
+            }
+        }
+    }
+
     log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
     RTLIL::SigSpec wire_sig = create_wire(wire_name, 1);
     
