@@ -5514,6 +5514,7 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
     // exposes the interface's elaborated param_assigns on the interface_inst
     // (NetlistElaboration elab_interface_); search the interface instance(s)
     // reachable from the current scope for a same-named parameter and fold it.
+    bool ref_is_iface_localparam = false;
     if (current_instance) {
         std::vector<const UHDM::interface_inst*> ifaces;
         if (auto ii = dynamic_cast<const UHDM::interface_inst*>(current_instance))
@@ -5552,11 +5553,17 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
             const UHDM::constant* rc = nullptr;
             if (ii->Param_assigns())
                 for (auto pa : *ii->Param_assigns())
-                    if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == ref_name)
+                    if (pa->Lhs() && std::string(pa->Lhs()->VpiName()) == ref_name) {
+                        // A same-named interface localparam exists: this ref is a
+                        // compile-time interface constant (`CFG_BUS_SIZ`), not a
+                        // signal — record that even when its Rhs is a non-folded
+                        // expression, so the fall-through warning can be silenced.
+                        ref_is_iface_localparam = true;
                         if (auto r = pa->Rhs())
                             if (r->UhdmType() == uhdmconstant) {
                                 rc = any_cast<const UHDM::constant*>(r); break;
                             }
+                    }
             if (rc) {
                 RTLIL::SigSpec v = import_constant(rc);
                 if (v.is_fully_const()) {
@@ -5568,7 +5575,17 @@ RTLIL::SigSpec UhdmImporter::import_ref_obj(const ref_obj* uhdm_ref, const UHDM:
         }
     }
 
-    log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
+    // An interface localparam whose Rhs Surelog left as a non-folded expression
+    // (`CFG_BUS_SIZ = $clog2(...)`) is resolved as a constant width through the
+    // typespec path elsewhere; don't cry "unknown signal" for it (rp32 degu
+    // submodules reaching the interface only through a bare port placeholder).
+    if (ref_is_iface_localparam) {
+        if (mode_debug)
+            log("    ref_obj '%s' is an interface localparam (constant width via "
+                "typespec); not a signal\n", ref_name.c_str());
+    } else {
+        log_warning("Reference to unknown signal: %s\n", ref_name.c_str());
+    }
     RTLIL::SigSpec wire_sig = create_wire(wire_name, 1);
     
     // Add to name_map with both hierarchical and simple names for future lookups
@@ -9860,8 +9877,29 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
             }
         }
         
-        // Log a warning and return an unconnected signal
-        log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
+        // If the base of this hier_path binds to a `parameter` (an interface /
+        // struct config parameter such as `CFG.BUS.ADR`), this is NOT an
+        // unresolved signal: it is a compile-time constant whose scalar width is
+        // resolved through the typespec path.  When a submodule takes the
+        // interface as a bare port placeholder (rp32 r5p_lsu/r5p_bru/...), the
+        // value-folding helpers can't reach the interface scope, but the width
+        // is still correct — so downgrade this false "unresolved" alarm to a
+        // debug log.  A genuine signal struct-access failure still warns.
+        bool base_is_param = false;
+        if (uhdm_hier->Path_elems() && !uhdm_hier->Path_elems()->empty()) {
+            if (auto r0 = dynamic_cast<const ref_obj*>((*uhdm_hier->Path_elems())[0]))
+                if (auto a0 = r0->Actual_group())
+                    base_is_param = (a0->UhdmType() == uhdmparameter);
+        }
+        if (base_is_param) {
+            if (mode_debug)
+                log("    hier_path '%s' is an interface/struct parameter field; "
+                    "width=%d resolved via typespec (constant, no signal)\n",
+                    path_name.c_str(), width);
+        } else {
+            // Log a warning and return an unconnected signal
+            log_warning("UHDM: Could not resolve struct member access '%s'\n", path_name.c_str());
+        }
         return RTLIL::SigSpec(RTLIL::State::Sx, width);
     }
     
