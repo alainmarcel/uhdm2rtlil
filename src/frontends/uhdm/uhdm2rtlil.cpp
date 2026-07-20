@@ -2148,6 +2148,17 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                     continue;
                                 }
                             }
+                            // An explicitly EMPTY named port connection
+                            // (`.tcb_xen()`) is a `vpiNullOp` operation: leave the
+                            // port unconnected rather than importing the null op
+                            // (which warns "Unsupported operation type: 36").
+                            // rp32 SoC: r5p_mouse's unused `tcb_xen` output.
+                            if (port->High_conn()->UhdmType() == uhdmoperation &&
+                                any_cast<const operation*>(port->High_conn())->VpiOpType() == vpiNullOp) {
+                                log("UHDM: Port %s has an empty connection (.%s()); leaving unconnected\n",
+                                    port_name.c_str(), port_name.c_str());
+                                continue;
+                            }
                             const expr* high_conn = any_cast<const expr*>(port->High_conn());
                             RTLIL::SigSpec conn = import_expression(high_conn);
 
