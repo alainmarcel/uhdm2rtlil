@@ -916,6 +916,14 @@ struct UhdmImporter {
                                          std::vector<int>& slice_offsets,
                                          std::vector<int>& slice_widths);
     
+    // Encode a UHDM parameter value (type prefix + digits) as the 32 binary
+    // chars after `s32'` in a $paramod cell-type name.  Uses std::stol (64-bit)
+    // and preserves x/z, so a 32-bit all-ones value (`'1` -> BIN:111..1 = 2^32-1)
+    // and don't-cares survive — std::stoi would overflow/throw and fall back to
+    // zeros, making the instance cell type differ from the module definition.
+    std::string encode_param_bits32(const std::string& value_type,
+                                    const std::string& val_str);
+
     // Width extraction helpers
     int get_width_from_typespec(const UHDM::any* typespec, const UHDM::scope* inst = nullptr);
     bool calculate_struct_member_offset(const UHDM::typespec* ts, const std::string& member_path, 
