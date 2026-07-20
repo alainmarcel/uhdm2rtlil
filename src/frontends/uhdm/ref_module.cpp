@@ -119,7 +119,19 @@ void UhdmImporter::import_ref_module(const ref_module* ref_mod) {
                         log("    Skipping interface port connection: %s (hier_path type)\n", port_name.c_str());
                     continue;
                 }
-                
+
+                // An explicitly EMPTY named port connection (`.tcb_xen()`) is a
+                // `vpiNullOp` operation: leave the port unconnected rather than
+                // importing the null op (which warns "Unsupported operation
+                // type: 36").  rp32 SoC r5p_mouse `.tcb_xen()` unused output.
+                if (port->High_conn()->UhdmType() == uhdmoperation &&
+                    any_cast<const UHDM::operation*>(port->High_conn())->VpiOpType() == vpiNullOp) {
+                    if (mode_debug)
+                        log("    Port %s has an empty connection (.%s()); leaving unconnected\n",
+                            port_name.c_str(), port_name.c_str());
+                    continue;
+                }
+
                 RTLIL::SigSpec actual_sig = import_expression(any_cast<const expr*>(port->High_conn()));
                 cell->setPort(RTLIL::escape_id(port_name), actual_sig);
                 

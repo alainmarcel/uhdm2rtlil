@@ -1921,7 +1921,20 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             if (port->High_conn()) {
                 const any* high_conn = port->High_conn();
                 log("    Port %s has High_conn of type %s\n", port_name.c_str(), UhdmName(high_conn->UhdmType()).c_str());
-                
+
+                // An explicitly EMPTY named port connection (`.tcb_xen()`) is
+                // encoded by Surelog as a `vpiNullOp` operation.  It means "leave
+                // this port unconnected" — there is no signal to import, so skip
+                // it (passing the null op to import_expression would warn
+                // "Unsupported operation type: 36").  rp32 SoC: `r5p_mouse`'s
+                // unused `tcb_xen` execute-enable output is tied off this way.
+                if (high_conn->UhdmType() == uhdmoperation &&
+                    any_cast<const operation*>(high_conn)->VpiOpType() == vpiNullOp) {
+                    log("    Port %s has an empty connection (.%s()); leaving unconnected\n",
+                        port_name.c_str(), port_name.c_str());
+                    continue;
+                }
+
                 // Check if this is an interface connection
                 if (high_conn->UhdmType() == uhdmref_obj) {
                     const ref_obj* ref = any_cast<const ref_obj*>(high_conn);
