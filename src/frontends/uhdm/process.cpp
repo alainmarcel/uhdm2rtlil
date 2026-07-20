@@ -2119,9 +2119,25 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                     std::map<const UHDM::expr*, RTLIL::Wire*> ff_reg_temp_map;
                     std::map<std::string, RTLIL::Wire*> ff_reg_temps;
                     std::map<std::string, RTLIL::SigSpec> ff_reg_specs;
+                    // Base-wire bits each registered signal actually writes.  A
+                    // struct FIELD write (`sub.rsp.rdt <= mem[adr]`) only touches
+                    // a slice; sibling fields (`sub.rsp.sts='0`, `.err`) are
+                    // driven by continuous assigns, so the clocked update must
+                    // drive ONLY the written bits — a full-width `\sub.rsp <=
+                    // $0\sub.rsp` conflicts with those constant drivers
+                    // (rp32 r5p_soc_memory / degu soc: memory-write always_ff).
+                    std::map<std::string, std::set<int>> ff_reg_written;
                     for (const auto& sig : ff_reg_signals) {
                         if (module->memories.count(RTLIL::escape_id(sig.name)))
                             continue;  // memory write — handled above
+                        if (sig.lhs_expr) {
+                            RTLIL::SigSpec ls = import_expression(sig.lhs_expr);
+                            RTLIL::IdString bw = RTLIL::escape_id(sig.name);
+                            for (const auto& ch : ls.chunks())
+                                if (ch.wire && ch.wire->name == bw)
+                                    for (int b = 0; b < ch.width; b++)
+                                        ff_reg_written[sig.name].insert(ch.offset + b);
+                        }
                         if (ff_reg_temps.count(sig.name)) {
                             if (sig.lhs_expr)
                                 ff_reg_temp_map[sig.lhs_expr] = ff_reg_temps[sig.name];
@@ -2192,10 +2208,32 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
 
                     // Latch the registered non-memory signals on the clock
                     // edge: \sig <= $0\sig (mirrors the normal always_ff path).
+                    // Restrict to the actually-written bits so a partial struct-
+                    // field register doesn't re-drive continuously-assigned
+                    // sibling fields of the same wide interface signal.
                     for (const auto& [sig_name, temp_wire] : ff_reg_temps) {
-                        sync->actions.push_back(
-                            RTLIL::SigSig(ff_reg_specs[sig_name], RTLIL::SigSpec(temp_wire)));
-                        log("      Added sync update for registered signal %s\n", sig_name.c_str());
+                        RTLIL::SigSpec lhs = ff_reg_specs[sig_name];
+                        auto wb = ff_reg_written.find(sig_name);
+                        if (lhs.is_wire() && (int)temp_wire->width == lhs.size() &&
+                            wb != ff_reg_written.end() &&
+                            (int)wb->second.size() < lhs.size()) {
+                            RTLIL::SigSpec l, r;
+                            int n = lhs.size(), i = 0;
+                            while (i < n) {
+                                if (!wb->second.count(i)) { i++; continue; }
+                                int j = i;
+                                while (j < n && wb->second.count(j)) j++;
+                                l.append(lhs.extract(i, j - i));
+                                r.append(RTLIL::SigSpec(temp_wire).extract(i, j - i));
+                                i = j;
+                            }
+                            sync->actions.push_back(RTLIL::SigSig(l, r));
+                            log("      Added sync update (written bits only) for %s\n", sig_name.c_str());
+                        } else {
+                            sync->actions.push_back(
+                                RTLIL::SigSig(lhs, RTLIL::SigSpec(temp_wire)));
+                            log("      Added sync update for registered signal %s\n", sig_name.c_str());
+                        }
                     }
 
                     yosys_proc->syncs.push_back(sync);
