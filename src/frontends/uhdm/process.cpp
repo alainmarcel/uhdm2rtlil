@@ -1491,10 +1491,17 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                         RTLIL::IdString mem_id = RTLIL::escape_id(mem_name);
                         RTLIL::Memory* mem = module->memories.at(mem_id);
                         
-                        // Create temp wires for memory write signals
-                        std::string addr_wire_name = stringf("$memwr$\\%s$addr", mem_name.c_str());
-                        std::string data_wire_name = stringf("$memwr$\\%s$data", mem_name.c_str());
-                        std::string en_wire_name = stringf("$memwr$\\%s$en", mem_name.c_str());
+                        // Create temp wires for memory write signals.  The
+                        // unique `$%d` suffix (incr_autoidx, as every other
+                        // memwr-wire site uses) is REQUIRED: the same array can
+                        // be written from several always blocks — ibex_icache's
+                        // `fill_addr_q[fb]` is written by NUM_FB per-feedback-
+                        // buffer always_ff blocks — and without it the second
+                        // block re-adds `$memwr$\fill_addr_q$addr` and aborts
+                        // Module::add (count_id == 0).
+                        std::string addr_wire_name = stringf("$memwr$\\%s$addr$%d", mem_name.c_str(), incr_autoidx());
+                        std::string data_wire_name = stringf("$memwr$\\%s$data$%d", mem_name.c_str(), incr_autoidx());
+                        std::string en_wire_name = stringf("$memwr$\\%s$en$%d", mem_name.c_str(), incr_autoidx());
                         
                         // Calculate address width from memory size
                         int addr_width = 1;
