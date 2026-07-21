@@ -10352,6 +10352,22 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         if (mode_debug)
             log("    If condition: %s\n", log_signal(condition_sig));
 
+        // Compile-time-constant condition (typically a for-loop-unrolled guard
+        // such as `if (i >= MHPMCOUNTER_BASE)`): fold it and import only the
+        // taken branch.  A false guard's then-branch must NOT be imported at all
+        // — it can reference an out-of-range select that is unreachable by
+        // construction (ibex_cs_registers `mhpmevent[i][i-MHPMCOUNTER_BASE]` for
+        // i < MHPMCOUNTER_BASE, whose bit index goes negative and aborts
+        // SigSpec::extract).
+        if (condition_sig.is_fully_const()) {
+            if (condition_sig.as_const().as_bool()) {
+                if (auto then_stmt = uhdm_if->VpiStmt())
+                    import_statement_comb(then_stmt, proc);
+            }
+            current_if_qualifier = saved_qualifier;
+            return;
+        }
+
         // Create a switch statement for the if
         RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
         sw->signal = condition_sig;
