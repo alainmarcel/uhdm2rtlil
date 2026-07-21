@@ -9365,10 +9365,23 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             RTLIL::IdString mem_id_check = RTLIL::escape_id(bs_name);
             RTLIL::Wire* first_elem = !module->memories.count(mem_id_check)
                 ? module->wire(RTLIL::escape_id(bs_name + "[0]")) : nullptr;
-            if (first_elem && bs->VpiIndex() && bs->VpiIndex()->VpiType() != vpiConstant) {
+            // The index is only *truly* dynamic if it does not resolve to a
+            // constant.  Inside an unrolled for-loop the index is a `ref_obj`
+            // (VpiType != vpiConstant) but resolves to a constant via
+            // loop_values — checking the raw node type alone would wrongly take
+            // the per-element mux path and emit `\arr[i] = mux(\arr[i], rhs,
+            // addr==i)`, a self-referential combinational loop (Ibex
+            // gen_mhpmevent's `for(i) mhpmevent[i]='0`).  Resolve the index and
+            // only treat it as dynamic when it is not fully constant.
+            RTLIL::SigSpec resolved_idx;
+            bool idx_is_dynamic = false;
+            if (first_elem && bs->VpiIndex()) {
+                resolved_idx = import_expression(bs->VpiIndex(), comb_read_map());
+                idx_is_dynamic = !resolved_idx.is_fully_const();
+            }
+            if (first_elem && bs->VpiIndex() && idx_is_dynamic) {
                 // Dynamic write to expanded array
-                RTLIL::SigSpec dyn_addr = import_expression(bs->VpiIndex(),
-                    comb_read_map());
+                RTLIL::SigSpec dyn_addr = resolved_idx;
 
                 RTLIL::SigSpec dyn_rhs;
                 if (auto rhs_any = uhdm_assign->Rhs()) {
