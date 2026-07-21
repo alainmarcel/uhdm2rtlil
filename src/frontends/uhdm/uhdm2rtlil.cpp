@@ -149,6 +149,13 @@ struct ReadSVPass : public Pass {
         // verbatim, except for the few plugin-only options we consume here.
         std::vector<std::string> sl_args;
         sl_args.push_back("surelog");
+        // This is a SYNTHESIS front end: define the `SYNTHESIS` macro so that
+        // `\`ifndef SYNTHESIS` sim-only regions (assertions, functional-coverage
+        // `DV_FCOV_*`, `$display`, testbench hooks) are excluded — the same as
+        // any synthesis tool.  Fixes e.g. Ibex's `ibex_core` which unconditionally
+        // `\`include "dv_fcov_macros.svh"` and uses `DV_FCOV_SIGNAL` under
+        // `\`ifndef SYNTHESIS`.
+        sl_args.push_back("-DSYNTHESIS");
         for (size_t i = 1; i < args.size(); i++) {
             if (args[i] == "-uhdm_debug") { debug = true; continue; }
             if (args[i] == "-formal")     { formal = true; continue; }

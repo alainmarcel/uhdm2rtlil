@@ -87,9 +87,12 @@ rm -rf slpp_all
 # but still emit a usable UHDM file; we therefore allow a non-zero
 # Surelog exit and only fail when the UHDM file is missing.
 echo "2. Generating UHDM with Surelog..."
-echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS"
+# -DSYNTHESIS: this is a synthesis flow, so exclude `ifndef SYNTHESIS` sim-only
+# regions (assertions, DV functional-coverage, $display) — matches the in-process
+# read_sv path in the uhdm2rtlil plugin.
+echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS"
 echo "   Logging to: surelog_build.log"
-$SURELOG_BIN -parse -nobuiltin -nocache -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1 || true
+$SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1 || true
 
 # Check if UHDM file was generated
 if [ ! -f "$UHDM_FILE" ]; then

@@ -14,6 +14,14 @@ Layout (mirrors the upstream tree, flattened per dependency group):
                     implementations from `vendor/lowrisc_ip/ip/prim_generic/rtl/`
                     (`prim_buf`, `prim_flop`, `prim_clock_gating`, `prim_ram_1p`,
                     …), which define the plain `prim_*` module names.
+- `dv/`           — `dv_fcov_macros.svh` from
+                    `vendor/lowrisc_ip/dv/sv/dv_utils/`.  Several Ibex modules
+                    (`ibex_core`, `ibex_id_stage`, `ibex_pmp`, …) unconditionally
+                    `` `include "dv_fcov_macros.svh" `` for functional-coverage
+                    macros.  The file no-ops those macros for synthesis (its own
+                    `` `ifdef SYNTHESIS `` → `DV_FCOV_DISABLE`); the frontend
+                    defines `SYNTHESIS`, so the coverage regions are excluded.
+                    Used via `-I../ibex/dv`.
 
 ## Per-module tests
 
@@ -21,7 +29,7 @@ Generated with the reusable `test/import_design.py`:
 
 ```
 python3 test/import_design.py --design test/ibex --prefix ibex \
-    --incdir ibex/prim --incdir ibex/rtl \
+    --incdir ibex/prim --incdir ibex/rtl --incdir ibex/dv \
     --skip-glob '*/prim/*' --skip-glob '*/prim_generic/*'
 ```
 
