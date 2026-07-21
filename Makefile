@@ -1,5 +1,5 @@
 # Top-level Makefile for uhdm2rtlil
-.PHONY: all debug test test-read-sv test-all test-yosys frontends test-matrix clean plugin install help
+.PHONY: all debug test test-read-sv test-all test-cores test-yosys frontends test-matrix clean plugin install help
 
 # Use bash as the default shell
 SHELL := /usr/bin/env bash
@@ -39,6 +39,11 @@ test: all test-read-sv
 test-all: all
 	@echo "Running all tests (internal + Yosys)..."
 	@cd test && ./run_all_tests.sh --all
+
+# Test cores target - runs only the rp32 and Ibex core IP tests
+test-cores: all
+	@echo "Running core IP tests (rp32 + Ibex)..."
+	@cd test && ./run_all_tests.sh --cores
 
 # Test Yosys target - runs only Yosys tests
 test-yosys: all preprocess-yosys-tests

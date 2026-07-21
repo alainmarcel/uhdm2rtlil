@@ -47,6 +47,7 @@ declare -A TEST_START_TIMES
 RUN_LOCAL=true
 RUN_YOSYS=false
 SPECIFIC_TEST=""
+CORES_ONLY=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -61,12 +62,18 @@ while [[ $# -gt 0 ]]; do
             RUN_YOSYS=true
             shift
             ;;
+        --cores)
+            # Run only the CPU-core IP tests: rp32 (RISC-V SoC) and Ibex.
+            CORES_ONLY=true
+            shift
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS] [TEST_PATTERN]"
             echo ""
             echo "Options:"
             echo "  --yosys       Run only Yosys tests from third_party/yosys/tests/"
             echo "  --all         Run both local tests and Yosys tests"
+            echo "  --cores       Run only the rp32 and Ibex core IP tests"
             echo "  --help, -h    Show this help message"
             echo ""
             echo "Arguments:"
@@ -78,6 +85,7 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --yosys            # Run all Yosys tests"
             echo "  $0 --yosys simple     # Run Yosys tests matching 'simple'"
             echo "  $0 --all              # Run all local and Yosys tests"
+            echo "  $0 --cores            # Run only rp32 + Ibex core IP tests"
             exit 0
             ;;
         *)
@@ -337,9 +345,17 @@ if [ "$RUN_LOCAL" = true ]; then
                 # Remove trailing slash from directory name
                 TEST_NAME="${dir%/}"
                 # Skip the run directory (used for Yosys tests)
-                if [ "$TEST_NAME" != "run" ]; then
-                    TEST_DIRS+=("$TEST_NAME")
+                if [ "$TEST_NAME" = "run" ]; then
+                    continue
                 fi
+                # --cores: keep only the rp32 and Ibex core IP tests.
+                if [ "$CORES_ONLY" = true ]; then
+                    case "$TEST_NAME" in
+                        rp32*|ibex*) ;;
+                        *) continue ;;
+                    esac
+                fi
+                TEST_DIRS+=("$TEST_NAME")
             fi
         done
     fi
