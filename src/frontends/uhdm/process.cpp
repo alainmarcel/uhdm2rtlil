@@ -1901,7 +1901,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                             );
                                             log("        Assignment: %s = %s\n", 
                                                 register_temp_wires[sig_name]->name.c_str(), 
-                                                log_signal(rhs));
+                                                log_signal(rhs).c_str());
                                         }
                                     } else if (assign->Lhs() && assign->Lhs()->VpiType() == vpiBitSelect) {
                                         // Array element assignment like M[0] <= rA * rB
@@ -1929,7 +1929,7 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                                 );
                                                 log("        Assignment: %s = %s\n", 
                                                     register_temp_wires[elem_name]->name.c_str(), 
-                                                    log_signal(rhs));
+                                                    log_signal(rhs).c_str());
                                             }
                                         }
                                     }
@@ -8192,7 +8192,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
             // Update func_mapping with the new value (key for cell chaining)
             if (!lhs_name.empty() && func_mapping.count(lhs_name)) {
                 func_mapping[lhs_name] = rhs;
-                log("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs));
+                log("      inline_func_body_comb: %s = %s (tracked in func_mapping)\n", lhs_name.c_str(), log_signal(rhs).c_str());
             } else if (!lhs_name.empty()) {
                 // Module signal - assign to $0\ temp wire and update tracking
                 RTLIL::Wire* target = module->wire(RTLIL::escape_id(lhs_name));
@@ -8209,7 +8209,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                         proc->root_case.actions.push_back(RTLIL::SigSig(RTLIL::SigSpec(temp_wire), rhs));
                         current_comb_values[lhs_name] = rhs;
                         func_mapping[lhs_name] = rhs;
-                        log("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs));
+                        log("      inline_func_body_comb: module signal %s = %s\n", lhs_name.c_str(), log_signal(rhs).c_str());
                     }
                 }
             }
@@ -8235,7 +8235,7 @@ void UhdmImporter::inline_func_body_comb(const any* stmt, RTLIL::Process* proc,
                     }
                     func_mapping[func_name] = rhs;
                     log("      inline_func_body_comb: return %s = %s\n",
-                        func_name.c_str(), log_signal(rhs));
+                        func_name.c_str(), log_signal(rhs).c_str());
                 }
             }
             break;
@@ -8786,7 +8786,7 @@ void UhdmImporter::import_assignment_sync(const assignment* uhdm_assign, RTLIL::
         // Store unconditional assignment
         pending_sync_assignments[lhs] = rhs;
         log("            Stored unconditional assignment: %s <= %s\n", 
-            log_signal(lhs), log_signal(rhs));
+            log_signal(lhs), log_signal(rhs).c_str());
         log_flush();
     }
     
@@ -9976,7 +9976,12 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
             // the upper bits (carry/borrow) get zero-padded.
             int prev_ctx = expression_context_width;
             expression_context_width = lhs.size();
-            rhs = import_expression(rhs_expr);
+            // Read blocking values at their in-flight value so a write-then-read
+            // in the SAME comb branch sees the earlier update (Ibex
+            // ibex_compressed_decoder `x_d = init; … x_d -= 1`).  Without
+            // comb_read_map() the RHS reads the final \x_d net, which the mux
+            // tree then drives — a combinational loop.
+            rhs = import_expression(rhs_expr, comb_read_map());
             expression_context_width = prev_ctx;
         } else {
             log_warning("Assignment RHS is not an expression (type=%d)\n", rhs_any->VpiType());
@@ -10159,6 +10164,18 @@ void UhdmImporter::import_assignment_comb(const assignment* uhdm_assign, RTLIL::
     // conditional write to the same signal in this case scope (later-wins).
     remove_target_from_switches(case_rule, lhs);
     case_rule->actions.push_back(RTLIL::SigSig(lhs, rhs));
+    // Track the in-flight blocking value so a later read in the SAME comb branch
+    // (a nested if-condition or RHS) observes this write instead of the final
+    // wire net — the write-then-read within a branch that a top-level Process*
+    // assignment already threads.  Restricted to full single-wire LHS writes in
+    // always_comb (not ff body mode, where registers keep their prior value).
+    if (current_comb_process && !in_always_ff_body_mode &&
+        lhs.is_wire()) {
+        std::string nm = lhs.as_wire()->name.str();
+        if (!nm.empty() && nm[0] == '\\') {
+            current_comb_values[nm.substr(1)] = rhs;
+        }
+    }
 }
 
 // Import if statement for sync context
@@ -11198,6 +11215,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                                             : nullptr));
                             expression_context_width = prev_ctx;
 
+                            // Compound assignment (`x -= 1`, `x += y`, …):
+                            // combine the LHS's in-flight value with the RHS.
+                            // This inline case-statement path (unlike
+                            // import_assignment_comb) did not apply the operator,
+                            // so `cm_rlist_d -= 1` collapsed to `cm_rlist_d = 1`
+                            // (Ibex ibex_compressed_decoder decoded the wrong
+                            // register list).
+                            {
+                                int cop = assign->VpiOpType();
+                                if (cop != vpiRhs && cop != 0) {
+                                    RTLIL::SigSpec cur = lhs_sig;
+                                    if (lhs && lhs->VpiType() == vpiRefObj) {
+                                        std::string cn(any_cast<const ref_obj*>(lhs)->VpiName());
+                                        auto* rm = comb_read_map();
+                                        if (rm && rm->count(cn)) cur = rm->at(cn);
+                                    }
+                                    rhs_sig = create_compound_op_cell(cop, cur, rhs_sig, assign);
+                                }
+                            }
+
                             // Check if we should assign to a temp wire instead
                             RTLIL::SigSpec target_sig = lhs_sig;
                             
@@ -11485,6 +11522,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                         ff_blocking_temps[bn] = RTLIL::SigSpec(t0);
                                 }
                             }
+                            // In always_comb, track the in-flight blocking value
+                            // for a full single-wire write so a later read in the
+                            // SAME branch (a nested if-condition or RHS) observes
+                            // this write instead of the final wire net — the
+                            // write-then-read that forms a combinational loop
+                            // otherwise (Ibex ibex_compressed_decoder cm_rlist_d:
+                            // `cm_rlist_d = cm_rlist_init(..); if (cm_rlist_d<=3)…
+                            // else cm_rlist_d -= 1`).
+                            if (current_comb_process && !in_always_ff_body_mode &&
+                                    !in_always_ff_context && lhs_sig.is_wire()) {
+                                std::string bn = lhs_sig.as_wire()->name.str();
+                                if (!bn.empty() && bn[0] == '\\')
+                                    current_comb_values[bn.substr(1)] = rhs_sig;
+                            }
                         }
                     }
                 }
@@ -11770,7 +11821,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
             // Get the condition
             if (auto condition = if_stmt->VpiCondition()) {
-                RTLIL::SigSpec condition_sig = import_expression(condition);
+                // Thread in-flight blocking values so a nested condition sees
+                // earlier same-branch writes (write-then-read); otherwise the
+                // condition reads the final wire net and forms a comb loop.
+                RTLIL::SigSpec condition_sig =
+                    import_expression(condition, comb_read_map());
 
                 // Reduce multi-bit conditions to 1 bit for switch/compare matching
                 if (condition_sig.size() > 1) {
@@ -11796,12 +11851,17 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
                 add_src_attribute(true_case->attributes, if_stmt);
 
+                // Save/restore current_comb_values so the branch's blocking
+                // writes don't leak past the if (see if_else case).
+                auto saved_ccv = current_comb_values;
+
                 // Import then statement
                 if (auto then_stmt = if_stmt->VpiStmt()) {
                     if (mode_debug)
                         log("        Importing then statement in case\n");
                     import_statement_comb(then_stmt, true_case);
                 }
+                current_comb_values = saved_ccv;
 
                 sw->cases.push_back(true_case);
 
@@ -11827,7 +11887,11 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
             // Get the condition
             if (auto condition = if_else_stmt->VpiCondition()) {
-                RTLIL::SigSpec condition_sig = import_expression(condition);
+                // Thread in-flight blocking values so a nested condition sees
+                // earlier same-branch writes (write-then-read); otherwise it
+                // reads the final wire net and forms a comb loop.
+                RTLIL::SigSpec condition_sig =
+                    import_expression(condition, comb_read_map());
 
                 // Reduce multi-bit conditions to 1 bit for switch/compare matching
                 if (condition_sig.size() > 1) {
@@ -11853,6 +11917,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 true_case->compare.push_back(RTLIL::SigSpec(RTLIL::State::S1));
                 add_src_attribute(true_case->attributes, if_else_stmt);
 
+                // Blocking writes inside a branch update current_comb_values so
+                // later reads in the SAME branch see them, but that value must
+                // NOT leak into the sibling branch or past the if.  Save it,
+                // let each branch mutate a private copy, and restore — otherwise
+                // `if (…) x = 0; else x -= 1;` computes the else as `0 - 1`
+                // (the then-branch's value) instead of the pre-if value.
+                auto saved_ccv = current_comb_values;
+
                 // Import then statement
                 if (auto then_stmt = if_else_stmt->VpiStmt()) {
                     if (mode_debug)
@@ -11861,6 +11933,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 }
 
                 sw->cases.push_back(true_case);
+                current_comb_values = saved_ccv;
 
                 // Handle else branch
                 if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
@@ -11872,6 +11945,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                         log("        Importing else statement in case (type=%s)\n",
                             UhdmName(else_stmt->UhdmType()).c_str());
                     import_statement_comb(else_stmt, else_case);
+                    current_comb_values = saved_ccv;
 
                     sw->cases.push_back(else_case);
                 } else {
