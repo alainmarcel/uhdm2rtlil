@@ -3587,6 +3587,91 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
                 words.emplace_back(mem, is.as_const().as_int(), v);
                 return true;
             }
+            case vpiFor: {
+                // `initial for (int k = 0; k < N; k++) mem[k] = <const>;` — a
+                // power-up memory initializer written as a loop (Ibex
+                // ibex_register_file_fpga: `mem[k] = WordZeroVal`).  The inline
+                // `int k` declaration routes the block to the interpreter path,
+                // which does not emit $meminit, so the memory powers up X while
+                // the Verilog frontend initializes it (32 $meminit words).
+                // Unroll here — every iteration must fold to a constant — and
+                // let the caller emit one $meminit_v2 per word.
+                const for_stmt* fl = any_cast<const for_stmt*>(s);
+                if (!fl || !fl->VpiForInitStmts() ||
+                    fl->VpiForInitStmts()->size() != 1)
+                    return false;
+                const assignment* ia =
+                    any_cast<const assignment*>((*fl->VpiForInitStmts())[0]);
+                if (!ia || !ia->Lhs() || !ia->Rhs()) return false;
+                std::string lv = std::string(ia->Lhs()->VpiName());
+                const expr* starte = dynamic_cast<const expr*>(ia->Rhs());
+                const expr* conde = dynamic_cast<const expr*>(fl->VpiCondition());
+                const any* inc = (fl->VpiForIncStmts() &&
+                                  !fl->VpiForIncStmts()->empty())
+                                     ? (*fl->VpiForIncStmts())[0] : nullptr;
+                if (lv.empty() || !starte || !conde || !inc) return false;
+                // Increment amount: `k++` (vpiPostIncOp) or `k = k + N`.
+                int64_t inc_amt = 0;
+                if (inc->VpiType() == vpiOperation) {
+                    auto io = any_cast<const operation*>(inc);
+                    if (io && io->VpiOpType() == vpiPostIncOp) inc_amt = 1;
+                    else return false;
+                } else if (inc->VpiType() == vpiAssignment) {
+                    auto ina = any_cast<const assignment*>(inc);
+                    auto re = ina && ina->Rhs()
+                                  ? dynamic_cast<const expr*>(ina->Rhs()) : nullptr;
+                    if (!re) return false;
+                    loop_values[lv] = 0;
+                    RTLIL::SigSpec z = import_expression(re);
+                    loop_values[lv] = 1;
+                    RTLIL::SigSpec o = import_expression(re);
+                    loop_values.erase(lv);
+                    if (!z.is_fully_const() || !o.is_fully_const()) return false;
+                    inc_amt = o.as_const().as_int() - z.as_const().as_int();
+                } else return false;
+                if (inc_amt == 0) return false;
+                // Body must be a single `mem[k] = <expr>` assignment.
+                const any* body = fl->VpiStmt();
+                if (body && (body->VpiType() == vpiBegin ||
+                             body->VpiType() == vpiNamedBegin))
+                    if (auto st = begin_block_stmts(body))
+                        if (st->size() == 1) body = (*st)[0];
+                const assignment* ba =
+                    body ? any_cast<const assignment*>(body) : nullptr;
+                if (!ba || !ba->Lhs() ||
+                    ba->Lhs()->VpiType() != vpiBitSelect || !ba->Rhs())
+                    return false;
+                const bit_select* bs = any_cast<const bit_select*>(ba->Lhs());
+                std::string mem = std::string(bs->VpiName());
+                RTLIL::IdString mid = RTLIL::escape_id(mem);
+                if (!module->memories.count(mid)) return false;
+                int w = module->memories.at(mid)->width;
+                const expr* idxe = dynamic_cast<const expr*>(bs->VpiIndex());
+                const expr* rhse = dynamic_cast<const expr*>(ba->Rhs());
+                if (!idxe || !rhse) return false;
+                auto saved_lv = loop_values;
+                RTLIL::SigSpec sv = import_expression(starte);
+                if (!sv.is_fully_const()) { loop_values = saved_lv; return false; }
+                int64_t k = sv.as_const().as_int();
+                bool ok = true;
+                for (int guard = 0; guard < (1 << 20); guard++) {
+                    loop_values[lv] = (int)k;
+                    RTLIL::SigSpec cc = import_expression(conde);
+                    if (!cc.is_fully_const()) { ok = false; break; }
+                    if (cc.as_const().as_int() == 0) break;  // condition false
+                    RTLIL::SigSpec is = import_expression(idxe);
+                    RTLIL::SigSpec rs = import_expression(rhse);
+                    if (!is.is_fully_const() || !rs.is_fully_const()) {
+                        ok = false; break;
+                    }
+                    RTLIL::Const v = rs.as_const();
+                    if (v.size() != w) v = v.extract(0, w, RTLIL::State::S0);
+                    words.emplace_back(mem, is.as_const().as_int(), v);
+                    k += inc_amt;
+                }
+                loop_values = saved_lv;
+                return ok;
+            }
             default:
                 return false;
         }
