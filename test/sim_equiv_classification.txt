@@ -72,3 +72,4 @@ EnumBases                             artefact   # output undriven; enum/typedef
 TaskReturn                            artefact   # procedural assign-in-task + undriven output
 assignment-pattern                    artefact   # self-checking asserts $stop the Verilator sim
 rp32_r5p_mouse        artefact   # reset-dependent CPU core; miter runs without asserting rst -> false NON-EQ; co-sim X-prop adjudicated (verilog netlist diverges from Verilator the same way)
+ibex_register_file_fpga  artefact   # FPGA regfile; Verilator co-sim PASSES (0 mismatches), equiv_induct false NON-EQ on reset-dependent state (same class as rp32_r5p_mouse)
