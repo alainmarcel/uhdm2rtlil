@@ -483,7 +483,23 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                         // Skip it here so we don't create a temp wire for the whole array.
                         if (!sig.name.empty()) {
                             auto idx = bit_sel->VpiIndex();
-                            bool is_const_idx = idx && idx->VpiType() == vpiConstant;
+                            // Resolve the index rather than testing the raw node
+                            // type: a genvar / gen-scope index (`arr[i]` in a
+                            // genvar-unrolled always_ff) is a ref_obj, not a
+                            // vpiConstant, yet folds to a constant element.
+                            // Treating it as a dynamic write would skip the
+                            // element entirely, so the FF is never created and
+                            // the register collapses to combinational logic
+                            // (Ibex ibex_id_stage `for (genvar i) imd_val_q[i]
+                            // <= '0` — imd_val_q lost its flop).
+                            RTLIL::SigSpec is;
+                            bool is_const_idx = false;
+                            if (idx) {
+                                if (auto e = dynamic_cast<const expr*>(idx)) {
+                                    is = import_expression(e);
+                                    is_const_idx = is.is_fully_const();
+                                }
+                            }
                             if (!is_const_idx) {
                                 RTLIL::IdString mem_id = RTLIL::escape_id(sig.name);
                                 if (!module->memories.count(mem_id) &&
@@ -493,16 +509,13 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     break;
                                 }
                             } else if (module->wire(RTLIL::escape_id(sig.name + "[0]"))) {
-                                // Constant bit-select of an UNPACKED array
+                                // Constant/genvar bit-select of an UNPACKED array
                                 // (`arr[0] <= ...`): the element is its OWN wire
                                 // \arr[0] — name the signal after it (a full wire),
                                 // not `\arr` which isn't a wire and trips "Signal
                                 // arr not found" (tcb_dev_gpio_cdc).
-                                RTLIL::SigSpec is = import_expression(idx);
-                                if (is.is_fully_const()) {
-                                    sig.name += "[" + std::to_string(is.as_const().as_int()) + "]";
-                                    sig.is_part_select = false;
-                                }
+                                sig.name += "[" + std::to_string(is.as_const().as_int()) + "]";
+                                sig.is_part_select = false;
                             }
                         }
 
