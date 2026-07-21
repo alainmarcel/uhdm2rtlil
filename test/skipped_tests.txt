@@ -29,11 +29,3 @@ various/shregmap.v        # `module $__SHREG_DFF_P_` and `module $__XILINX_SHREG
 # via test/rand_const/dut.sv.
 various/rand_const.sv     # `rand` modifier at module scope (non-LRM)
 
-# Full Mouse SoC — the UHDM frontend reads and FUNCTIONALLY simulates it (boots
-# the boot program and drives GPIO correctly; see soc_functional_sim.sh), but
-# the standard `synth -auto-top` path asserts `chunk_.wire->module == mod`
-# (kernel/rtlil.cc) on a cross-module wire reference specific to this top.  That
-# is a separate, still-open synth-path bug; skipped from the standard equivalence
-# suite so it doesn't crash the run, while remaining available for functional
-# simulation (./soc_functional_sim.sh rp32_r5p_mouse_soc_top).
-rp32_r5p_mouse_soc_top    # functional-sim only; synth -auto-top asserts (open bug)

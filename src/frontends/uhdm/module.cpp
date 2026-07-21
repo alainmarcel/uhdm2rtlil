@@ -1322,6 +1322,20 @@ void UhdmImporter::import_net(const net* uhdm_net, const UHDM::instance* inst) {
 }
 
 // Import a continuous assignment
+// A continuous assignment's connect must land in the module that OWNS the LHS
+// wire.  Returns that module when all LHS wire chunks share a single owner that
+// differs from `fallback` (this->module); otherwise returns `fallback`.
+static RTLIL::Module* connect_target_module(RTLIL::Module* fallback,
+                                            const RTLIL::SigSpec& lhs) {
+    RTLIL::Module* owner = nullptr;
+    for (auto &ch : lhs.chunks()) {
+        if (!ch.wire) continue;
+        if (owner == nullptr) owner = ch.wire->module;
+        else if (owner != ch.wire->module) return fallback;  // mixed owners → don't redirect
+    }
+    return (owner && owner != fallback) ? owner : fallback;
+}
+
 void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     if (mode_debug)
         log("  Importing continuous assignment\n");
@@ -1564,8 +1578,20 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
                 log("  Created continuous assignment for net declaration with non-constant expression\n");
         }
     } else {
-        // Regular continuous assignment
-        module->connect(lhs, rhs);
+        // Regular continuous assignment.
+        //
+        // A continuous assignment must drive a wire in ITS OWN module.  Surelog's
+        // elaborated model can attach a parent module's `assign` to a deeply
+        // nested child instance's Cont_assigns() (rp32 SoC: the SoC top's
+        // `assign tcb_cpu.req.lck/ndn = 1'b0` tie-offs surface in the
+        // tcb_dev_uart_des `rx_des` instance).  The LHS then resolves — via the
+        // global name_map — to the parent's wire (`\tcb_cpu.req`, owned by
+        // r5p_mouse_soc_top), and connecting it into the child module produces a
+        // cross-module SigChunk that aborts write_rtlil ("chunk_.wire->module ==
+        // mod") and leaves the parent's bits undriven.  Route the connect to the
+        // module that actually owns the LHS wire.
+        RTLIL::Module* tgt = connect_target_module(module, lhs);
+        tgt->connect(lhs, rhs);
     }
 }
 
