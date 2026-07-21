@@ -1424,7 +1424,22 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
     if (!stmt || !module) return;
     auto record = [&](const std::string& base, const any* idx) {
         if (base.empty()) return;
-        bool const_idx = idx && idx->VpiType() == vpiConstant;
+        // The write is only *dynamic* if the index does not resolve to a
+        // constant.  A genvar-unrolled write `arr[i] <= …` has `i` as a
+        // ref_obj (VpiType != vpiConstant) that nonetheless resolves to a
+        // constant element via the gen-scope — checking the raw node type
+        // alone wrongly flags it as dynamic and registers the WHOLE array in
+        // every unrolled process, so each element gets conflicting async-reset
+        // values (Ibex ibex_id_stage's `for (genvar i) imd_val_q[i] <= '0`
+        // -> proc_arst "async reset yields non-constant value").
+        bool const_idx = false;
+        if (idx) {
+            if (idx->VpiType() == vpiConstant) const_idx = true;
+            else if (auto e = dynamic_cast<const expr*>(idx)) {
+                RTLIL::SigSpec s = import_expression(e);
+                if (s.is_fully_const()) const_idx = true;
+            }
+        }
         if (const_idx) return;
         // Expanded array, not a real $memory: element wire \base[0] exists.
         if (!module->memories.count(RTLIL::escape_id(base)) &&
