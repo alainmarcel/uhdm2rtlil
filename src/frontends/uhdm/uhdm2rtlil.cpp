@@ -2799,7 +2799,7 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Such arrays must NOT be created as $memory objects; instead they get individual
     // element wires so that write-then-read semantics work correctly in the same block.
     comb_only_arrays.clear();
-    if (uhdm_module->Process()) {
+    {
         // Collect which array names are touched by clocked vs combinational always blocks.
         std::set<std::string> clocked_access;
         std::set<std::string> any_access;
@@ -2816,12 +2816,40 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 if (bs) collect_array_accesses(bs->VpiIndex(), out);
                 return;
             }
+            if (stmt->VpiType() == vpiVarSelect) {
+                auto vs = any_cast<const var_select*>(stmt);
+                if (vs && !vs->VpiName().empty())
+                    out.insert(std::string(vs->VpiName()));
+                if (vs && vs->Exprs())
+                    for (auto e : *vs->Exprs()) collect_array_accesses(e, out);
+                return;
+            }
             // Recurse into child nodes that may contain statements/expressions
             auto recurse = [&](const any* n) { collect_array_accesses(n, out); };
             switch (stmt->VpiType()) {
-                case vpiBegin: case vpiNamedBegin: {
+                case vpiBegin: {
+                    // named_begin is NOT a subclass of begin (both derive from
+                    // scope), so vpiBegin and vpiNamedBegin need distinct casts.
                     auto b = any_cast<const begin*>(stmt);
                     if (b && b->Stmts()) for (auto s : *b->Stmts()) recurse(s);
+                    break;
+                }
+                case vpiNamedBegin: {
+                    auto b = any_cast<const named_begin*>(stmt);
+                    if (b && b->Stmts()) for (auto s : *b->Stmts()) recurse(s);
+                    break;
+                }
+                case vpiCase: {
+                    auto cs = any_cast<const case_stmt*>(stmt);
+                    if (cs) {
+                        recurse(cs->VpiCondition());
+                        if (cs->Case_items())
+                            for (auto it : *cs->Case_items()) {
+                                if (it->VpiExprs())
+                                    for (auto e : *it->VpiExprs()) recurse(e);
+                                recurse(it->Stmt());
+                            }
+                    }
                     break;
                 }
                 case vpiAssignment: case vpiAssignStmt: {
@@ -2844,6 +2872,11 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     if (ec) recurse(ec->Stmt());
                     break;
                 }
+                case vpiFor: {
+                    auto fs = any_cast<const for_stmt*>(stmt);
+                    if (fs) recurse(fs->VpiStmt());
+                    break;
+                }
                 case vpiOperation: {
                     auto op = any_cast<const operation*>(stmt);
                     if (op && op->Operands()) for (auto o : *op->Operands()) recurse(o);
@@ -2853,7 +2886,36 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
             }
         };
 
-        for (auto proc : *uhdm_module->Process()) {
+        // Gather all always blocks: module-level Process() PLUS every always
+        // block nested inside generate scopes (gen_scope_array -> gen_scope ->
+        // Process(), recursively).  Ibex's gen_mhpmevent writes `mhpmevent`
+        // from a combinational always INSIDE a generate for-loop, so scanning
+        // only module->Process() would miss it and the array would wrongly be
+        // inferred as a $mem.
+        std::vector<const process_stmt*> all_procs;
+        std::function<void(const module_inst*)> collect_procs_mod;
+        std::function<void(const gen_scope*)> collect_procs_gs;
+        collect_procs_gs = [&](const gen_scope* gs) {
+            if (!gs) return;
+            if (gs->Process())
+                for (auto p : *gs->Process()) all_procs.push_back(p);
+            if (gs->Gen_scope_arrays())
+                for (auto gsa : *gs->Gen_scope_arrays())
+                    if (gsa->Gen_scopes())
+                        for (auto inner : *gsa->Gen_scopes()) collect_procs_gs(inner);
+        };
+        collect_procs_mod = [&](const module_inst* m) {
+            if (!m) return;
+            if (m->Process())
+                for (auto p : *m->Process()) all_procs.push_back(p);
+            if (m->Gen_scope_arrays())
+                for (auto gsa : *m->Gen_scope_arrays())
+                    if (gsa->Gen_scopes())
+                        for (auto gs : *gsa->Gen_scopes()) collect_procs_gs(gs);
+        };
+        collect_procs_mod(uhdm_module);
+
+        for (auto proc : all_procs) {
             if (proc->VpiType() != vpiAlways) continue;
             auto always_obj = any_cast<const always*>(proc);
             if (!always_obj) continue;
@@ -3039,21 +3101,23 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         // Get the first unpacked dimension (array size)
                         auto first_range = (*ranges)[0];
                         int array_size = 4;  // Default
-                        if (first_range->Left_expr() && first_range->Right_expr()) {
-                            // Get constants from expressions
-                            if (first_range->Left_expr()->VpiType() == vpiConstant &&
-                                first_range->Right_expr()->VpiType() == vpiConstant) {
-                                const constant* left_const = any_cast<const constant*>(first_range->Left_expr());
-                                const constant* right_const = any_cast<const constant*>(first_range->Right_expr());
-                                // Get the integer values using helper function
-                                std::string left_str(left_const->VpiValue());
-                                std::string right_str(right_const->VpiValue());
-                                RTLIL::Const left_const_val = extract_const_from_value(left_str);
-                                RTLIL::Const right_const_val = extract_const_from_value(right_str);
-                                int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;
-                                int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
-                                array_size = std::abs(left - right) + 1;
+                        // Range bounds may be a literal `vpiConstant` OR an
+                        // expression (e.g. `[0 : 32-1]` where the right bound is
+                        // a `vpiOperation` 32-1).  Fold either through
+                        // import_expression so `logic [..] a [32]` is sized 32,
+                        // not the fallback 4 (Ibex mhpmevent[32]).
+                        auto eval_bound = [&](const any* node, int dflt) -> int {
+                            if (!node) return dflt;
+                            if (auto e = dynamic_cast<const expr*>(node)) {
+                                RTLIL::SigSpec s = import_expression(e);
+                                if (s.is_fully_const()) return s.as_const().as_int();
                             }
+                            return dflt;
+                        };
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            int left = eval_bound(first_range->Left_expr(), 3);
+                            int right = eval_bound(first_range->Right_expr(), 0);
+                            array_size = std::abs(left - right) + 1;
                         }
                         
                         // Get the packed width from the underlying variable
@@ -4031,21 +4095,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     int array_size = 4; // Default for cases like M[3:0]
                     if (array->Ranges() && !array->Ranges()->empty()) {
                         auto first_range = (*array->Ranges())[0];
-                        if (first_range->Left_expr() && first_range->Right_expr()) {
-                            // Get constants from expressions
-                            if (first_range->Left_expr()->VpiType() == vpiConstant &&
-                                first_range->Right_expr()->VpiType() == vpiConstant) {
-                                const constant* left_const = any_cast<const constant*>(first_range->Left_expr());
-                                const constant* right_const = any_cast<const constant*>(first_range->Right_expr());
-                                // Get the integer values using helper function
-                                std::string left_str(left_const->VpiValue());
-                                std::string right_str(right_const->VpiValue());
-                                RTLIL::Const left_const_val = extract_const_from_value(left_str);
-                                RTLIL::Const right_const_val = extract_const_from_value(right_str);
-                                int left = left_const_val.size() > 0 ? left_const_val.as_int() : 3;
-                                int right = right_const_val.size() > 0 ? right_const_val.as_int() : 0;
-                                array_size = std::abs(left - right) + 1;
+                        // Bounds may be literal constants or expressions
+                        // (e.g. `[0 : N-1]`); fold either via import_expression.
+                        auto eval_bound = [&](const any* node, int dflt) -> int {
+                            if (!node) return dflt;
+                            if (auto e = dynamic_cast<const expr*>(node)) {
+                                RTLIL::SigSpec s = import_expression(e);
+                                if (s.is_fully_const()) return s.as_const().as_int();
                             }
+                            return dflt;
+                        };
+                        if (first_range->Left_expr() && first_range->Right_expr()) {
+                            int left = eval_bound(first_range->Left_expr(), 3);
+                            int right = eval_bound(first_range->Right_expr(), 0);
+                            array_size = std::abs(left - right) + 1;
                         }
                     }
                     
