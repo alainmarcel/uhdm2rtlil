@@ -7088,11 +7088,16 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
         if (all_ref && (pec.size() >= 4 || base_in_im)) {
             auto base_ref = any_cast<const ref_obj*>(pec[0]);
             std::string base_name = std::string(base_ref->VpiName());
+            // Prefer the in-flight blocking value (input_mapping /
+            // current_comb_values) over the module wire: a struct-field read
+            // `s.f` after an earlier same-block write to `s` must see the
+            // written value, not the final \s net (which the read then drives —
+            // a combinational loop; Ibex ibex_cs_registers mstatus_d.mpp).
             RTLIL::SigSpec base_sig;
-            if (name_map.count(base_name))
-                base_sig = RTLIL::SigSpec(name_map[base_name]);
-            else if (input_mapping && input_mapping->count(base_name))
+            if (input_mapping && input_mapping->count(base_name))
                 base_sig = input_mapping->at(base_name);
+            else if (name_map.count(base_name))
+                base_sig = RTLIL::SigSpec(name_map[base_name]);
 
             // Base typespec (union or struct).
             const UHDM::typespec* cur_ts = nullptr;
@@ -7150,8 +7155,6 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     cur_ts = mts;
                 }
                 if (ok && field_w > 0 && off + field_w <= base_sig.size()) {
-                    log("    hier_path: packed member chain %s.* -> [%d+:%d]\n",
-                        base_name.c_str(), off, field_w);
                     return base_sig.extract(off, field_w);
                 }
             }
