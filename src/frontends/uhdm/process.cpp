@@ -7235,7 +7235,9 @@ void UhdmImporter::import_tf_call_comb(const UHDM::tf_call* tc,
             if (task_mapping.count(var_name)) continue;
 
             std::string wire_name = context + "." + var_name;
-            RTLIL::Wire* task_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+            RTLIL::IdString tw_id = RTLIL::escape_id(wire_name);
+            RTLIL::Wire* task_wire = module->wire(tw_id);
+            if (!task_wire) task_wire = module->addWire(tw_id, width);
             task_wire->attributes[ID::nosync] = RTLIL::Const(1);
             if (var) add_src_attribute(task_wire->attributes, var);
 
@@ -7537,7 +7539,13 @@ void UhdmImporter::inline_task_body_comb(const any* stmt, RTLIL::Process* proc,
                     else
                         wire_name += "." + var_name;
 
-                    RTLIL::Wire* block_wire = module->addWire(RTLIL::escape_id(wire_name), width);
+                    // Surelog may list a function-local variable in BOTH the
+                    // function's Variables() (created by the caller) AND the
+                    // body begin-block's Variables() — reuse the existing wire
+                    // rather than re-adding it (which asserts on the dup name).
+                    RTLIL::IdString bw_id = RTLIL::escape_id(wire_name);
+                    RTLIL::Wire* block_wire = module->wire(bw_id);
+                    if (!block_wire) block_wire = module->addWire(bw_id, width);
                     if (var) add_src_attribute(block_wire->attributes, var);
 
                     std::string temp_name = stringf("$0\\%s[%d:0]$%d", wire_name.c_str(), width - 1, incr_autoidx());
