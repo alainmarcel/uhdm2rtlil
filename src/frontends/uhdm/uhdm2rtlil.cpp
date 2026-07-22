@@ -463,6 +463,23 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
                 log("UHDM: Skipping top module %s from AllModules (will import from hierarchy)\n", mod_name.c_str());
                 continue;
             }
+            // Skip modules that are never instantiated in the elaborated top
+            // hierarchy.  These are dead in this configuration (e.g. an
+            // OpenPiton/L15 cache adapter in an AXI build, or a
+            // `//pragma translate_off` tracer), and importing their DEFINITION
+            // with default parameters (a width param left 0 -> `[-1:3]`
+            // part-selects, etc.) produces invalid RTLIL / crashes, even though
+            // the module is not part of the synthesized design.  Only applied
+            // when an elaborated hierarchy exists (a standalone module read with
+            // no TopModules still imports every definition).
+            if (!hierarchy_reachable_modules.empty() &&
+                hierarchy_reachable_modules.find(mod_name) ==
+                    hierarchy_reachable_modules.end()) {
+                log("UHDM: Skipping %s from AllModules (not instantiated in top "
+                    "hierarchy)\n",
+                    mod_name.c_str());
+                continue;
+            }
             // Skip modules that contain source-level generate statements
             // (vpiGenStmt). The AllModules form has the un-elaborated gen_region,
             // so cont_assigns like `assign bar[0].a = A;` reference generate-scope
