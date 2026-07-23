@@ -3830,7 +3830,14 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                 break;
             case vpiLShiftOp:
                 if (operands.size() == 2) {
-                    result = RTLIL::const_shl(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                    // NB: RTLIL::const_shl passes result_len straight to
+                    // extend_u0() (unlike const_shr, which guards it with
+                    // max(result_len, size)), so a result_len of -1 becomes
+                    // resize((size_t)-1) and throws std::vector::_M_fill_insert.
+                    // Pass the self-determined Verilog width (left operand size)
+                    // instead of -1; the caller applies any wider context.
+                    result = RTLIL::const_shl(operands[0].as_const(), operands[1].as_const(),
+                                              false, false, operands[0].size());
                 }
                 break;
             case vpiRShiftOp:
@@ -9937,6 +9944,33 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                     base_is_param = (a0->UhdmType() == uhdmparameter);
         }
         if (base_is_param) {
+            // A struct-typed parameter FIELD used in an expression
+            // (`Cfg.XLEN_ALIGN_BYTES` as a shift amount / replication count in
+            // CVA6 wt_dcache_wbuffer): Surelog leaves the hier_path unfolded and
+            // the struct-member path above only resolves its WIDTH.  Reduce the
+            // whole hier_path to its constant VALUE via ExprEval — the same
+            // evaluator that already resolves `Cfg.XLEN` for port widths.
+            // Without this the field returns an all-X constant whose as_int()
+            // feeds const_shl a garbage width -> std::vector::_M_fill_insert.
+            {
+                ExprEval eval;
+                bool invalidValue = false;
+                if (expr* res = eval.reduceExpr(
+                        const_cast<hier_path*>(uhdm_hier), invalidValue,
+                        current_instance ? (const any*)current_instance : (const any*)inst,
+                        uhdm_hier->VpiParent(), true)) {
+                    if (!invalidValue && res->UhdmType() == uhdmconstant) {
+                        RTLIL::SigSpec cv =
+                            import_constant(any_cast<const constant*>(res));
+                        if (cv.is_fully_const() && cv.is_fully_def()) {
+                            if (mode_debug)
+                                log("    hier_path '%s' folded to constant %s via ExprEval\n",
+                                    path_name.c_str(), cv.as_const().as_string().c_str());
+                            return cv;
+                        }
+                    }
+                }
+            }
             if (mode_debug)
                 log("    hier_path '%s' is an interface/struct parameter field; "
                     "width=%d resolved via typespec (constant, no signal)\n",
