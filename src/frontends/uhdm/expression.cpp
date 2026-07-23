@@ -6698,7 +6698,16 @@ void UhdmImporter::resolve_xmr_read(RTLIL::Module* mod, RTLIL::Cell* cell, const
 RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const scope* inst, const std::map<std::string, RTLIL::SigSpec>* input_mapping) {
     if (mode_debug)
         log("    Importing hier_path\n");
-    
+
+    // Guard: import_hier_path dereferences `module` (e.g. module->cell()) while
+    // resolving cell/instance references.  type_param_signature() computes port
+    // widths via get_width()->import_expression() BEFORE the RTLIL module is
+    // created, so `module` can be null here — bail out safely instead of
+    // crashing (CVA6 axi_shim ports have a cast in their range that reaches
+    // this path during name computation).
+    if (!module)
+        return RTLIL::SigSpec();
+
     // Get the full path name first
     std::string path_name;
     std::string_view name_view = uhdm_hier->VpiName();
