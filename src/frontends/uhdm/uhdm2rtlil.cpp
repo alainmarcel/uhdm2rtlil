@@ -2513,13 +2513,18 @@ void UhdmImporter::create_parameterized_modules() {
 std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
     if (!uhdm_module || !uhdm_module->Parameters()) return "";
     bool has_type_param = false;
-    for (auto p : *uhdm_module->Parameters()) {
+    for (auto p : *uhdm_module->Parameters())
         if (p && p->UhdmType() == uhdmtype_parameter) { has_type_param = true; break; }
-    }
     if (!has_type_param) return "";
     // Distinguish type bindings by the instance's resolved port widths (a
-    // `parameter type` changes them, e.g. a 134-bit struct vs default 1-bit
+    // `parameter type` changes them, e.g. a struct vs the default 1-bit
     // logic).  Two instances with identical port widths share one module.
+    // NOTE: get_width() may need to evaluate a port's range via
+    // import_expression, but this runs before `this->module` is created — the
+    // null-module guard at the top of import_hier_path keeps that safe (a
+    // range that can't be sized here just yields a stable approximate width,
+    // which still distinguishes bindings; struct ports are member-summed
+    // without hitting import_expression at all).
     std::string sig = "$typaram";
     if (uhdm_module->Ports()) {
         for (auto port : *uhdm_module->Ports()) {
