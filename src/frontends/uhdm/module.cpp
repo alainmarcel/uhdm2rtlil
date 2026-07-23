@@ -2302,6 +2302,30 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                     }
                 }
             }
+            // A `parameter type` port's OWN typespec is the generic default
+            // (`logic`, 1 bit), but the elaborated instance carries the real
+            // signal — a `struct_var` (or packed array) — as the port's
+            // Low_conn actual.  Prefer that so a struct-typed parameter port
+            // (e.g. CVA6 perf_counters `bp_resolve_t resolved_branch_i`) gets
+            // its full width instead of collapsing to 1 bit.
+            if (auto lc = port->Low_conn()) {
+                if (lc->UhdmType() == uhdmref_obj) {
+                    if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
+                        UHDM::UHDM_OBJECT_TYPE at = a->UhdmType();
+                        if (a != uhdm_obj &&
+                            (at == uhdmstruct_var || at == uhdmpacked_array_var ||
+                             at == uhdmarray_var || at == uhdmunion_var)) {
+                            int aw = get_width(a, inst);
+                            if (aw > 1) {
+                                log("UHDM: Port '%s' width from Low_conn %s: %d\n",
+                                    std::string(port->VpiName()).c_str(),
+                                    UHDM::UhdmName(at).c_str(), aw);
+                                return aw;
+                            }
+                        }
+                    }
+                }
+            }
             if (auto typespec = port->Typespec()) {
                 log("UHDM: Port has typespec, calling get_width_from_typespec\n");
                 int w = get_width_from_typespec(typespec, inst);

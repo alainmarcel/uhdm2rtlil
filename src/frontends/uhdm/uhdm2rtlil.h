@@ -615,9 +615,16 @@ struct UhdmImporter {
     void import_interface(const UHDM::interface_inst* uhdm_interface);
     void import_interface_instances(const UHDM::module_inst* uhdm_module);
     bool module_has_interface_ports(const UHDM::module_inst* uhdm_module);
-    std::string build_interface_module_name(const std::string& base_name, 
+    std::string build_interface_module_name(const std::string& base_name,
                                           const std::string& param_signature,
                                           const UHDM::module_inst* uhdm_module);
+    // A module instantiated with a `parameter type` keeps the same DefName as
+    // its generic definition, but its elaborated ports differ (e.g. a struct
+    // port vs the default `logic`).  Returns a signature (empty if the instance
+    // has no type parameters) derived from the instance's resolved port widths,
+    // so each distinct type binding imports a separately-named module — like
+    // Surelog's `$paramod` for value parameters.
+    std::string type_param_signature(const UHDM::module_inst* uhdm_module);
     void create_interface_module_with_width(const std::string& interface_name, int width);
     void expand_interfaces();
     void import_generate_scopes(const UHDM::module_inst* uhdm_module);
