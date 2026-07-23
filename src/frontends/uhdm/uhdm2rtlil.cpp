@@ -1856,6 +1856,9 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 
                 // Generate parameterized module name
                 std::string cell_type = module_name;
+                // A `parameter type` instance is imported under a uniquified
+                // name (its specialized struct ports); point the cell at it.
+                std::string cell_tsig = type_param_signature(uhdm_module);
                 if (!param_signature.empty() && param_signature != module_name) {
                     // Extract just the parameter part
                     size_t param_start = param_signature.find('$');
@@ -1920,7 +1923,10 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                         }
                     }
                 }
-                
+                // Match the uniquified name import_module gave a type-parameter
+                // instance (appended after any value-parameter $paramod part).
+                cell_type += cell_tsig;
+
                 log("UHDM: Creating cell %s of type %s in parent %s\n",
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
 
@@ -2504,6 +2510,26 @@ void UhdmImporter::create_parameterized_modules() {
 }
 
 // Import a single module
+std::string UhdmImporter::type_param_signature(const module_inst* uhdm_module) {
+    if (!uhdm_module || !uhdm_module->Parameters()) return "";
+    bool has_type_param = false;
+    for (auto p : *uhdm_module->Parameters()) {
+        if (p && p->UhdmType() == uhdmtype_parameter) { has_type_param = true; break; }
+    }
+    if (!has_type_param) return "";
+    // Distinguish type bindings by the instance's resolved port widths (a
+    // `parameter type` changes them, e.g. a 134-bit struct vs default 1-bit
+    // logic).  Two instances with identical port widths share one module.
+    std::string sig = "$typaram";
+    if (uhdm_module->Ports()) {
+        for (auto port : *uhdm_module->Ports()) {
+            int w = get_width(port, uhdm_module);
+            sig += "_" + std::to_string(w);
+        }
+    }
+    return sig;
+}
+
 void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // Null check
     if (!uhdm_module) {
@@ -2621,6 +2647,12 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     
     // Update module name to include interface information if needed
     modname = build_interface_module_name(base_modname, modname, uhdm_module);
+
+    // A `parameter type` instance shares its generic DefName but has
+    // specialized (e.g. struct) port types — append a per-type-binding
+    // signature so it imports as its own module with the elaborated ports,
+    // instead of colliding with the 1-bit generic definition.
+    modname += type_param_signature(uhdm_module);
 
     // Remember this instance's RTLIL module name (with any `$paramod`
     // specialization) so a nested child cell can target the correct parent.

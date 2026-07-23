@@ -9866,6 +9866,39 @@ RTLIL::SigSpec UhdmImporter::import_hier_path(const hier_path* uhdm_hier, const 
                         if (rt) ts = rt->Actual_typespec();
                     }
             }
+            // A `parameter type` struct port (e.g. CVA6 perf_counters
+            // `bp_resolve_t resolved_branch_i`): the port/net typespec is the
+            // generic default (`logic`), but the elaborated instance carries a
+            // `struct_var`/`union_var` of the SAME name with the real struct
+            // type.  Look it up by name so the member offset resolves.
+            auto is_struct_ts = [](const typespec* t) {
+                return t && (t->UhdmType() == uhdmstruct_typespec ||
+                             t->UhdmType() == uhdmunion_typespec);
+            };
+            auto struct_var_ts = [](const any* a) -> const typespec* {
+                const ref_typespec* rt = nullptr;
+                if (auto sv = dynamic_cast<const UHDM::struct_var*>(a)) rt = sv->Typespec();
+                else if (auto uv = dynamic_cast<const UHDM::union_var*>(a)) rt = uv->Typespec();
+                return rt ? rt->Actual_typespec() : nullptr;
+            };
+            if (!is_struct_ts(ts) && current_instance) {
+                // Local struct_var of the same name (elaborated instance).
+                if (current_instance->Variables())
+                    for (auto v : *current_instance->Variables())
+                        if (std::string(v->VpiName()) == struct_name)
+                            if (auto t = struct_var_ts(v)) { ts = t; break; }
+                // `parameter type` struct PORT: its typespec is the generic
+                // default, but the port's Low_conn actual is the real
+                // struct_var (CVA6 perf_counters bp_resolve_t).
+                if (!is_struct_ts(ts) && current_instance->Ports())
+                    for (auto p : *current_instance->Ports()) {
+                        if (std::string(p->VpiName()) != struct_name) continue;
+                        if (auto lc = p->Low_conn())
+                            if (lc->UhdmType() == uhdmref_obj)
+                                if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group())
+                                    if (auto t = struct_var_ts(a)) { ts = t; break; }
+                    }
+            }
             if (ts) {
                 // Calculate bit offset for struct member access
                 std::string remaining_path = path_name.substr(struct_name.length() + 1);

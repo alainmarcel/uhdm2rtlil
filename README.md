@@ -51,11 +51,11 @@ report **0 Miter-Formal escapes** — no real UHDM≠Verilog difference slips th
 Run via `make test-all --all` (the internal SystemVerilog suite **plus** the
 upstream Yosys test suite under `third_party/yosys/tests/`):
 
-- **Total Tests**: 1316
-- **Success Rate**: 95% (1262/1316 tests functional), 2 crashes, **0 Miter-Formal
+- **Total Tests**: 1317
+- **Success Rate**: 95% (1264/1317 tests functional), 2 crashes, **0 Miter-Formal
   escapes** (no UHDM≠Verilog diff slips past `equiv_induct`)
-- **Passing**: 874 tests with formal equivalence verified between the UHDM and Verilog frontends
-- **UHDM-Only Success**: 388 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
+- **Passing**: 875 tests with formal equivalence verified between the UHDM and Verilog frontends
+- **UHDM-Only Success**: 389 tests verified end-to-end against Verilator (the UHDM frontend handles SystemVerilog the Verilog frontend can't, so formal equivalence isn't possible — see below)
 - **Equivalence failures**: 17 — all caught by `equiv_induct` (0 Miter-Formal
   escapes): internal `CastStructArray`, `rp32_r5p_mouse`, and three packed
   struct-array tests (`struct_array_indexed_write`,
@@ -65,15 +65,15 @@ upstream Yosys test suite under `third_party/yosys/tests/`):
   `sva/extnets`, `svtypes/{array_assign,struct_array}`, `verific/ext_ramnet_err`,
   `verilog/mem_bounds`).  The exact set varies run-to-run (seq-equiv induction is
   inductively incomplete on some designs).
-- **True failures** (no output generated): 14 — **all** from the upstream Yosys
-  suite (`arch/fabulous/{arith,custom,ff,io,regfile}_map`, `functional/picorv32`,
+- **True failures** (no output generated): 13 — **all** from the upstream Yosys
+  suite (`arch/fabulous/{arith,custom,ff,io,regfile}_map`,
   `functional/picorv32_tb`, `hana/test_simulation_vlib`, `opt/opt_rmdff`,
   `rpc/design`, `svinterfaces/{load_and_derive,resolve_types}`,
   `techmap/mem_simple_4x1_map`, `verific/mixed_flist`).  Every internal test —
   including the full Ibex core (`ibex_core`, `ibex_cs_registers`, `ibex_icache`,
   `ibex_top`) — now reads and produces output.
 - **Crashes**: 2 (`memories/wide_all`, `techmap/recursive_map` — both upstream Yosys)
-- **Verilator sim-equiv warnings**: 108 (undocumented divergences — now hard errors
+- **Verilator sim-equiv warnings**: 110 (undocumented divergences — now hard errors
   unless documented in `test/sim_equiv_analyzed.txt`), plus **72 analyzed** known
   non-bug divergences — of which 58 are sim/synth artefacts where a SAT miter
   proves UHDM == Verilog, and the rest are uhdm-only don't-care divergences (e.g.
