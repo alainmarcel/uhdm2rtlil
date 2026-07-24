@@ -5698,6 +5698,12 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                     base_signal_name.c_str(), vs.c_str(), bw);
             }
         }
+        if (base.empty() && input_mapping && input_mapping->count(base_signal_name)) {
+            // Function argument sliced inside the function body (`data[hi:lo]`
+            // in repData64) — the base is the call argument in input_mapping,
+            // not a module wire.
+            base = input_mapping->at(base_signal_name);
+        }
         if (base.empty()) {
         RTLIL::Wire* wire = find_wire_in_scope(base_signal_name, "part select");
         if (wire) {
@@ -6553,6 +6559,13 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
     // Look up the wire in the current module
     RTLIL::SigSpec base;
     if (!base_signal_name.empty()) {
+        // A function argument (`repData64(input logic [..] data, ...)` used as
+        // `data[offset*8+:16]`): the base is passed via input_mapping, not a
+        // module wire (CVA6 wt_dcache_wbuffer repData64 — else "Base signal
+        // 'data' not found").  Prefer it so the slice reads the call argument.
+        if (input_mapping && input_mapping->count(base_signal_name)) {
+            base = input_mapping->at(base_signal_name);
+        } else
         // If this is a for-loop variable, substitute its current constant value
         if (loop_values.count(base_signal_name)) {
             int lv = loop_values.at(base_signal_name);
