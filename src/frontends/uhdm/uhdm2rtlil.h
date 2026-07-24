@@ -539,6 +539,9 @@ struct UhdmImporter {
     void import_port(const UHDM::port* uhdm_port, int positional_idx = 0);
     void import_net(const UHDM::net* uhdm_net, const UHDM::instance* inst = nullptr);
     void import_process(const UHDM::process_stmt* uhdm_process);
+    // Design-wide final pass: size-match every process action's RHS to its LHS
+    // so an unresolved-signal short/empty RHS can't crash yosys proc_prune.
+    void finalize_process_action_widths();
     void import_continuous_assign(const UHDM::cont_assign* uhdm_assign);
     // XMR read resolution: expose `sig` as an output port of `cell`'s child
     // module and wire it to the parent's `\<inst>.<sig>` reader (github #450).
