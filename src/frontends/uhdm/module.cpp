@@ -700,6 +700,45 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
     // Add source attribute
     add_src_attribute(w->attributes, uhdm_port);
 
+    // A packed-array-of-struct PORT (`fu_data_t [NrALUs-1:0] fu_data_i`)
+    // presents with an EMPTY-Ranges logic_typespec (the outer dim isn't there
+    // for a type-param struct element), so the logic_typespec metadata block
+    // below can't tag it.  Its packed_array_var is reachable via the port's
+    // Low_conn ref_obj — use it to set the packed-element metadata so
+    // import_bit_select element-indexes `port[i]` as element i.  Without this
+    // CVA6 alu_wrapper `.fu_data_i(fu_data_i[0])` wired a single bit instead of
+    // the 207-bit element, resizing the alu port from 1 at flatten.
+    if (auto lc = uhdm_port->Low_conn()) {
+        if (lc->UhdmType() == uhdmref_obj) {
+            auto ag = any_cast<const UHDM::ref_obj*>(lc)->Actual_group();
+            if (ag && ag->UhdmType() == uhdmpacked_array_var) {
+                auto pav = any_cast<const UHDM::packed_array_var*>(ag);
+                int outer_l = -1, outer_r = -1;
+                if (pav->Ranges() && !pav->Ranges()->empty()) {
+                    auto r0 = (*pav->Ranges())[0];
+                    if (r0->Left_expr() && r0->Right_expr()) {
+                        RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                        RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                        if (l.is_fully_const() && r.is_fully_const()) {
+                            outer_l = l.as_int();
+                            outer_r = r.as_int();
+                        }
+                    }
+                }
+                int elem_w = 0;
+                if (pav->Elements() && !pav->Elements()->empty())
+                    elem_w = get_width((*pav->Elements())[0], current_instance);
+                if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
+                    w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
+                    w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
+                    w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);
+                    log("UHDM: Port '%s' packed_array_var (Low_conn): elem_width=%d outer=[%d:%d]\n",
+                        portname.c_str(), elem_w, outer_l, outer_r);
+                }
+            }
+        }
+    }
+
     // If we recovered unpacked dims from Array_nets above, also create per-
     // element wires `\name[0..N-1]` and connect them to slices of the flat
     // port wire so `import_bit_select` resolves `name[i]` as a full element.

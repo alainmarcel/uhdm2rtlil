@@ -185,6 +185,17 @@ struct_array_indexed_write
 struct_little_endian_bit_array
 svtypes_struct_array
 
+# --- read_verilog mis-sizes a packed array of a struct (NOT a UHDM bug) ---
+# The Yosys read_verilog reference lowers `struct_t [N:0] arr` to a SINGLE
+# element (it sizes `my_t [1:0]` = 96 bits, not 192, and lowers `arr[0]` to a
+# 1-bit `\arr[0]` select), so the reference netlist is wrong and the SAT equiv
+# reports spurious unproven cells.  UHDM sizes it correctly (N * struct) and
+# element-indexes `arr[i]` — VERIFIED equal to slang via a sound from-reset SAT
+# miter (SUCCESS).  These are the reproducers for the CVA6 alu_wrapper
+# `fu_data_i[0]` packed-array element-select fixes.
+packed_array_elem_select
+packed_array_struct_port_sel
+
 # --- Yosys v0.67 upstream check_mem / memories additions ---
 # check_mem/init.sv (dynamic read of a 2D unpacked array), check_mem/non_zero.sv
 #   (registered 1D unpacked array written in a `for (int i=1;i<=3;i++)` always_ff),
