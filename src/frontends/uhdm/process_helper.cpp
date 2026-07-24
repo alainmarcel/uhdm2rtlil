@@ -597,6 +597,7 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                             base = full_name.substr(0, dot_pos);
                         else
                             base = full_name;
+                        bool hp_expanded = false;
 
                         // Interface ports have a 1-bit `\<port>`
                         // placeholder wire (set in `import_port` with
@@ -646,13 +647,39 @@ void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<Assigne
                                     sig.is_part_select = true;
                                 sig.name = chosen;
                             } else {
-                                sig.name = base;
+                                // Per-element unpacked array (`bht_q[i][j] <= …`
+                                // where `bht_q` was materialised as per-element
+                                // wires \bht_q[0..N-1]): the base isn't a wire
+                                // but its elements are.  Register each element so
+                                // the async-ff temp-wire path finds them (CVA6
+                                // bht.sv bht_q; else "Signal bht_q not found").
+                                // Mirrors the whole-array ref_obj expansion above.
+                                if (!module->wire(RTLIL::escape_id(base)) &&
+                                    module->wire(RTLIL::escape_id(base + "[0]"))) {
+                                    for (int i = 0; module->wire(RTLIL::escape_id(
+                                             base + "[" + std::to_string(i) + "]"));
+                                         i++) {
+                                        AssignedSignal es;
+                                        es.name = base + "[" + std::to_string(i) + "]";
+                                        es.lhs_expr = sig.lhs_expr;
+                                        es.is_part_select = false;
+                                        signals.push_back(es);
+                                    }
+                                    log("extract_assigned_signals: expanded hier_path "
+                                        "unpacked array '%s' to per-element\n",
+                                        base.c_str());
+                                    hp_expanded = true;
+                                } else {
+                                    sig.name = base;
+                                }
                             }
                         }
 
-                        signals.push_back(sig);
-                        log("extract_assigned_signals: Found assignment to hier_path of '%s' (using '%s')\n",
-                            full_name.c_str(), sig.name.c_str());
+                        if (!hp_expanded) {
+                            signals.push_back(sig);
+                            log("extract_assigned_signals: Found assignment to hier_path of '%s' (using '%s')\n",
+                                full_name.c_str(), sig.name.c_str());
+                        }
                     }
                 }
             }
