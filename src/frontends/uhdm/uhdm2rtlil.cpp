@@ -492,19 +492,25 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
             // AllModules represents an unpacked memory array as a scalar net
             // (the [0:N] dimension is dropped) — so a submodule memory collapses
             // to a wire and its dynamic accesses become $shiftx.  The elaborated
-            // instance carries the correct array_var; when the def is missing an
-            // array_var that its elaborated instance has, import that instead.
-            auto has_array_var = [](const module_inst* m) -> bool {
-                if (m && m->Variables())
+            // instance carries the correct array_var / array_net; when the def
+            // is missing an unpacked array that its elaborated instance has,
+            // import that instead.  Covers both an `array_var` (in Variables())
+            // and an `array_net` (in Array_nets()) — the CVA6 `bht` submodule's
+            // `bht_q[NR_ROWS][INSTR_PER_FETCH]` is an array_net.
+            auto has_unpacked_array = [](const module_inst* m) -> bool {
+                if (!m) return false;
+                if (m->Variables())
                     for (auto v : *m->Variables())
                         if (v->UhdmType() == uhdmarray_var) return true;
+                if (m->Array_nets() && !m->Array_nets()->empty())
+                    return true;
                 return false;
             };
             const module_inst* to_import = module_def;
             auto eit = elab_inst_by_def.find(mod_name);
-            if (eit != elab_inst_by_def.end() && has_array_var(eit->second) &&
-                !has_array_var(module_def)) {
-                log("UHDM: Importing %s from elaborated instance (has memory array_var lost in AllModules)\n",
+            if (eit != elab_inst_by_def.end() && has_unpacked_array(eit->second) &&
+                !has_unpacked_array(module_def)) {
+                log("UHDM: Importing %s from elaborated instance (has memory array lost in AllModules)\n",
                     mod_name.c_str());
                 to_import = eit->second;
             }
