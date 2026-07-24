@@ -405,6 +405,7 @@ void UhdmImporter::import_process(const process_stmt* uhdm_process) {
                 RTLIL::SigSig(*it, RTLIL::State::S0));
         }
     }
+
 }
 
 // Split an action list so that later actions overriding earlier writes take
@@ -499,6 +500,49 @@ static void normalize_overlapping_writes(RTLIL::CaseRule* case_rule)
             normalize_overlapping_writes(sub_case);
         }
     }
+}
+
+// Ensure every action's RHS is exactly as wide as its LHS.  The importer can
+// produce a SHORTER (even empty) RHS when a sub-expression fails to resolve —
+// e.g. an unpacked-array element/part-select of a signal it can't find
+// (`cl_rdata[i][off +: W]`, `events[i]`) returns an empty SigSpec.  A
+// `SigSig(non-empty lhs, empty rhs)` is a malformed process action that later
+// makes yosys `proc_prune` dereference `rhs[i]` out of range and abort
+// (std::out_of_range) — this crashed `proc` on the full CVA6 design.  Pad a
+// short RHS with X (an unresolved read is undefined) and truncate a long one.
+// Applied recursively into nested switches/cases.
+static void match_action_rhs_width(RTLIL::CaseRule* case_rule)
+{
+    if (!case_rule) return;
+    for (auto& act : case_rule->actions) {
+        int lw = act.first.size();
+        int rw = act.second.size();
+        if (rw < lw)
+            act.second.append(RTLIL::SigSpec(RTLIL::State::Sx, lw - rw));
+        else if (rw > lw)
+            act.second = act.second.extract(0, lw);
+    }
+    for (auto* sw : case_rule->switches)
+        for (auto* sub_case : sw->cases)
+            match_action_rhs_width(sub_case);
+}
+
+// Apply match_action_rhs_width to EVERY process (root_case + sync rules) in
+// EVERY module — a design-wide final pass, so no process-creating path is
+// missed.  Called at the end of import_design.
+void UhdmImporter::finalize_process_action_widths()
+{
+    for (auto* mod : design->modules())
+        for (auto& pit : mod->processes) {
+            RTLIL::Process* p = pit.second;
+            match_action_rhs_width(&p->root_case);
+            for (auto& sync : p->syncs)
+                for (auto& act : sync->actions) {
+                    int lw = act.first.size(), rw = act.second.size();
+                    if (rw < lw) act.second.append(RTLIL::SigSpec(RTLIL::State::Sx, lw - rw));
+                    else if (rw > lw) act.second = act.second.extract(0, lw);
+                }
+        }
 }
 
 // --- SSA cv-threading for "simple" always_ff bodies -----------------------

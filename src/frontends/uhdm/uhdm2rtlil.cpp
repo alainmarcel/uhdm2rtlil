@@ -652,6 +652,14 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     }
     pending_xmr_reads_.clear();
 
+    // Final safety pass: every process action's RHS must be exactly as wide as
+    // its LHS, or yosys `proc_prune` dereferences rhs[i] out of range and
+    // aborts.  An unresolved sub-expression can leave a short/empty RHS, and
+    // processes are built by several paths (always/initial + continuous-assign,
+    // function-inline, and initializer helpers) — do it once here over EVERY
+    // process in the design so no creator is missed.
+    finalize_process_action_widths();
+
     log("UHDM: Finished import_design\n");
     log_flush();
 

@@ -6589,7 +6589,18 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                     std::string gen_scope = get_current_gen_scope();
                     log_warning("Base signal '%s' not found in module or generate scope %s\n",
                         base_signal_name.c_str(), gen_scope.c_str());
-                    return RTLIL::SigSpec();
+                    // Return a correctly-SIZED undef (the slice width is known
+                    // from Width_expr), not an empty SigSpec.  An empty RHS
+                    // assigned to a wire produces a malformed process action
+                    // (lhs non-empty, rhs empty) that later crashes yosys
+                    // `proc_prune` (rhs[i] out_of_range) on the full CVA6 design.
+                    int uw = 1;
+                    if (uhdm_indexed->Width_expr()) {
+                        RTLIL::SigSpec ws = import_expression(uhdm_indexed->Width_expr(), input_mapping);
+                        if (ws.is_fully_const() && ws.as_const().as_int() > 0)
+                            uw = ws.as_const().as_int();
+                    }
+                    return RTLIL::SigSpec(RTLIL::State::Sx, uw);
                 }
             }
         }
