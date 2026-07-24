@@ -15,6 +15,7 @@
 #include <uhdm/uhdm_types.h>
 #include <uhdm/union_typespec.h>
 #include <uhdm/packed_array_typespec.h>
+#include <uhdm/packed_array_net.h>
 #include <uhdm/ExprEval.h>
 #include <uhdm/func_call.h>
 #include <uhdm/function.h>
@@ -2356,6 +2357,36 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
             }
         }
         
+        // A packed array of a struct/type-param net (`struct_t [N:0] sig`)
+        // elaborates to a packed_array_net whose base Typespec() is null and
+        // whose dims live on Ranges()/Elements() — width = element_width *
+        // product(ranges), same as packed_array_var.  Without this such a net
+        // collapsed to a 1-bit wire (CVA6 cva6.sv:418
+        // `fetch_entry_t [NrIssuePorts-1:0] fetch_entry_if_id`, :660
+        // `dcache_req_i_t [2:0] dcache_req_ports_ex_cache`), so the connected
+        // submodule port (id_stage.fetch_entry_i = 366 bits) was resized from
+        // 1 bit at flatten, corrupting the connection.  Checked BEFORE the
+        // generic net branch (which returns 1 on the null typespec).
+        if (auto pan = dynamic_cast<const UHDM::packed_array_net*>(uhdm_obj)) {
+            int range_total = 1;
+            if (pan->Ranges()) {
+                for (auto r : *pan->Ranges()) {
+                    if (r->Left_expr() && r->Right_expr()) {
+                        RTLIL::SigSpec ls = import_expression(r->Left_expr());
+                        RTLIL::SigSpec rs = import_expression(r->Right_expr());
+                        if (ls.is_fully_const() && rs.is_fully_const())
+                            range_total *= std::abs(ls.as_int() - rs.as_int()) + 1;
+                    }
+                }
+            }
+            int elem_width = 1;
+            if (pan->Elements() && !pan->Elements()->empty())
+                elem_width = get_width((*pan->Elements())[0], inst);
+            log("UHDM: packed_array_net width = %d * %d = %d\n",
+                elem_width, range_total, elem_width * range_total);
+            return elem_width * range_total;
+        }
+
         // Check if it's a net and try to get typespec
         if (auto net = dynamic_cast<const UHDM::net*>(uhdm_obj)) {
             log("UHDM: Found net object\n");
