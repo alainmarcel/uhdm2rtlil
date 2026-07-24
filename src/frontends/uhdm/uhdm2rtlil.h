@@ -687,7 +687,9 @@ struct UhdmImporter {
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
     void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
     void thread_comb_if(RTLIL::SigSpec cond, RTLIL::CaseRule* then_case, RTLIL::CaseRule* else_case);
-    void thread_comb_case(const RTLIL::SigSpec& case_sig, RTLIL::SwitchRule* sw);
+    void thread_comb_case(const RTLIL::SigSpec& case_sig, RTLIL::SwitchRule* sw,
+                          const std::map<std::string, RTLIL::SigSpec>& pre_ccv,
+                          const std::vector<std::map<std::string, RTLIL::SigSpec>>& arm_ccv);
     bool emit_initial_meminit_writes(const UHDM::any* stmt);
     bool emit_initial_readmem(const UHDM::any* stmt);
 

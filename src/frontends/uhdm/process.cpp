@@ -10442,14 +10442,26 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
 // case-selected value, not the pre-case default — e.g. rp32's r5p_mouse
 // `case(dec_opc) … bus_adr = …; endcase  ifu_pcn = bus_adr;`, where without
 // this ifu_pcn keeps the top-of-block `bus_adr = 'x` default, the PC latches 0
-// and the core never advances.  Only full-wire top-level arm writes are
-// threaded (a signal written inside a nested switch was already threaded when
-// that inner case was imported).  The mux tree mirrors the switch's
-// first-match-wins priority so an intermediate read stays consistent with the
-// structural `sw` that drives the real wire.  Bails on wildcard (casez/casex)
-// compares, which an `$eq` cannot model.
+// and the core never advances.
+//
+// `pre_ccv` is a snapshot of current_comb_values taken BEFORE any arm was
+// imported (an arm that does not write a signal falls through to this value),
+// and `arm_ccv[i]` is a snapshot taken AFTER importing arm i's body starting
+// from `pre_ccv` — so it captures a signal written anywhere in the arm,
+// INCLUDING inside a nested if/case (those nested writes were threaded into
+// current_comb_values as the arm was imported).  Reading the post-case value
+// from the live current_comb_values instead (the old behaviour) was wrong: by
+// the time this runs it holds only the LAST arm's writes, so a signal written
+// in a nested construct of one arm leaked its value to every other arm — e.g.
+// CVA6 compressed_decoder's `if (illegal_instr_o) instr_o = instr_i;` read a
+// threaded `illegal_instr_o` that was stuck at the default arm's `= 1`, so
+// EVERY compressed instruction was flagged illegal and passed through undecoded.
+// The mux tree mirrors the switch's first-match-wins priority.  Bails on
+// wildcard (casez/casex) compares, which an `$eq` cannot model.
 void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
-                                    RTLIL::SwitchRule* sw) {
+                                    RTLIL::SwitchRule* sw,
+                                    const std::map<std::string, RTLIL::SigSpec>& pre_ccv,
+                                    const std::vector<std::map<std::string, RTLIL::SigSpec>>& arm_ccv) {
     if (in_always_ff_body_mode) return;
     if (!sw || case_sig.empty()) return;
 
@@ -10459,30 +10471,36 @@ void UhdmImporter::thread_comb_case(const RTLIL::SigSpec& case_sig,
             if (!cmp.is_fully_def() || cmp.size() != case_sig.size())
                 return;
 
-    // Per arm, the last full-wire blocking write for each base name.
-    std::vector<std::map<std::string, RTLIL::SigSpec>> arm_vals(sw->cases.size());
+    // The pre-case value for a base name: its pre_ccv snapshot, else the
+    // registered wire.
+    auto pre_value = [&](const std::string& nm) -> RTLIL::SigSpec {
+        auto it = pre_ccv.find(nm);
+        if (it != pre_ccv.end()) return it->second;
+        if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm)))
+            return RTLIL::SigSpec(w);
+        return RTLIL::SigSpec();
+    };
+
+    // Every base name whose value changed from pre in at least one arm.
     std::set<std::string> names;
-    for (size_t i = 0; i < sw->cases.size(); i++)
-        for (auto& act : sw->cases[i]->actions) {
-            std::string b = comb_blocking_base(act.first);
-            if (!b.empty()) { arm_vals[i][b] = act.second; names.insert(b); }
+    for (const auto& arm : arm_ccv)
+        for (const auto& kv : arm) {
+            RTLIL::SigSpec pre = pre_value(kv.first);
+            if (!pre.empty() && kv.second != pre) names.insert(kv.first);
         }
     if (names.empty()) return;
 
     for (const auto& nm : names) {
-        // Pre-case value: the in-flight comb value, else the registered wire.
-        RTLIL::SigSpec pre;
-        auto it = current_comb_values.find(nm);
-        if (it != current_comb_values.end()) pre = it->second;
-        else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm)))
-            pre = RTLIL::SigSpec(w);
-        else continue;
+        RTLIL::SigSpec pre = pre_value(nm);
+        if (pre.empty()) continue;
 
-        // An arm that does not write nm falls through to the pre-case value.
-        // Skip the signal entirely on any width mismatch (partial/odd writes).
+        // Post-arm value of nm (captured incl. nested if/case), else pre.
         auto arm_value = [&](size_t i) -> RTLIL::SigSpec {
-            auto vit = arm_vals[i].find(nm);
-            return vit != arm_vals[i].end() ? vit->second : pre;
+            if (i < arm_ccv.size()) {
+                auto vit = arm_ccv[i].find(nm);
+                if (vit != arm_ccv[i].end()) return vit->second;
+            }
+            return pre;   // arms beyond arm_ccv (e.g. emit_full_case_default) hold
         };
         bool width_ok = true;
         for (size_t i = 0; i < sw->cases.size(); i++)
@@ -11114,7 +11132,16 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
 
     bool has_full_case_attr = apply_case_qualifier_attrs(uhdm_case, sw);
 
+    // Snapshot the pre-case blocking values, and capture each arm's post-body
+    // values (started from the snapshot) so thread_comb_case sees the true
+    // per-arm value — including signals written inside nested if/case — rather
+    // than the polluted live current_comb_values.  Arms are independent (SV):
+    // each starts from pre_ccv, not the previous arm's writes.
+    std::map<std::string, RTLIL::SigSpec> pre_ccv = current_comb_values;
+    std::vector<std::map<std::string, RTLIL::SigSpec>> arm_ccv;
+
     if (!items.empty()) {
+        arm_ccv.reserve(items.size());
         for (auto& d : items) {
             // Extend each case-item compare value to context width
             for (auto& [sig, sgn] : d.exprs) {
@@ -11126,9 +11153,11 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
                 if (mode_debug)
                     log("      Case value: %s (width=%d)\n", log_signal(sig), sig.size());
             }
-            // Import the body
+            // Import the body from the pre-case state, then capture the result.
+            current_comb_values = pre_ccv;
             if (d.stmt)
                 import_statement_comb(d.stmt, d.rule);
+            arm_ccv.push_back(current_comb_values);
             sw->cases.push_back(d.rule);
         }
     } else {
@@ -11140,12 +11169,15 @@ void UhdmImporter::import_case_stmt_comb(const case_stmt* uhdm_case, RTLIL::Proc
         sw->cases.push_back(default_case);
     }
 
+    // Reset to the pre-case state; thread_comb_case rebuilds the merged value.
+    current_comb_values = pre_ccv;
+
     if (has_full_case_attr)
         emit_full_case_default(uhdm_case, sw);
 
     // Make a later same-block read of an arm-written signal see the
     // case-selected value (not the pre-case default).
-    thread_comb_case(case_sig, sw);
+    thread_comb_case(case_sig, sw, pre_ccv, arm_ccv);
 
     proc->root_case.switches.push_back(sw);
 
@@ -11928,6 +11960,14 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             bool has_full_case_attr =
                 apply_case_qualifier_attrs(uhdm_case, sw);
 
+            // Snapshot pre-case blocking values; capture each arm's post-body
+            // state (started from the snapshot) so thread_comb_case sees the
+            // true per-arm value incl. nested if/case writes (see the primary
+            // call site for the CVA6 compressed_decoder failure this fixes).
+            std::map<std::string, RTLIL::SigSpec> pre_ccv = current_comb_values;
+            std::vector<std::map<std::string, RTLIL::SigSpec>> arm_ccv;
+            arm_ccv.reserve(ci_data.size());
+
             // Pass 2: emit case items with properly extended compare values
             for (auto& d : ci_data) {
                 for (auto& [sig, sgn] : d.exprs) {
@@ -11938,12 +11978,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     d.rule->compare.push_back(sig);
                     log("        Case item expression: %s\n", log_signal(sig));
                 }
+                current_comb_values = pre_ccv;
                 if (d.stmt) {
                     log("        Importing case item body (type=%d)\n", d.stmt->VpiType());
                     import_statement_comb(d.stmt, d.rule);
                 }
+                arm_ccv.push_back(current_comb_values);
                 sw->cases.push_back(d.rule);
             }
+
+            current_comb_values = pre_ccv;
 
             if (has_full_case_attr)
                 emit_full_case_default(uhdm_case, sw);
@@ -11951,7 +11995,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
             // Make a later same-block read of an arm-written signal (e.g. the
             // r5p_mouse `ifu_pcn = bus_adr;` after `case(dec_opc)`) see the
             // case-selected value, not the pre-case default.
-            thread_comb_case(case_expr, sw);
+            thread_comb_case(case_expr, sw, pre_ccv, arm_ccv);
 
             // Add the switch to the current case rule
             case_rule->switches.push_back(sw);
@@ -12024,6 +12068,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
                 // Add the switch to the current case
                 case_rule->switches.push_back(sw);
+
+                // Thread the conditional blocking write into current_comb_values
+                // so a later read (in this arm, or captured for an enclosing
+                // case's thread_comb_case) sees `cond ? then_value : pre` — the
+                // Process-overload path already does this, but this CaseRule
+                // path only save/restored and dropped it, so a signal set only
+                // under a nested `if` in a case arm (CVA6 compressed_decoder's
+                // `if (instr_i[12:5]==0) illegal_instr_o = 1'b1;`) reverted to
+                // its pre value and the later `if (illegal) …` never saw it.
+                thread_comb_if(condition_sig, true_case, nullptr);
             }
             current_if_qualifier = saved_qualifier;
             break;
@@ -12088,8 +12142,9 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 current_comb_values = saved_ccv;
 
                 // Handle else branch
+                RTLIL::CaseRule* else_case = nullptr;
                 if (auto else_stmt = if_else_stmt->VpiElseStmt()) {
-                    RTLIL::CaseRule* else_case = new RTLIL::CaseRule;
+                    else_case = new RTLIL::CaseRule;
                     // Empty compare means default case
                     add_src_attribute(else_case->attributes, if_else_stmt);
 
@@ -12109,11 +12164,15 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
 
                 // Add the switch to the current case
                 case_rule->switches.push_back(sw);
+
+                // Thread both branches' blocking writes so a later read sees
+                // `cond ? then_value : else_value` (see the vpiIf case above).
+                thread_comb_if(condition_sig, true_case, else_case);
             }
             current_if_qualifier = saved_qualifier;
             break;
         }
-        
+
         case vpiImmediateAssert: {
             log("        Processing immediate assert in case context - converting to $check cell\n");
 
