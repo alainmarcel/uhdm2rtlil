@@ -687,7 +687,9 @@ struct UhdmImporter {
     void import_while_stmt(const UHDM::while_stmt* uhdm_while, RTLIL::Process* proc);
     void import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL::Process* proc);
     void thread_comb_if(RTLIL::SigSpec cond, RTLIL::CaseRule* then_case, RTLIL::CaseRule* else_case);
-    void thread_comb_case(const RTLIL::SigSpec& case_sig, RTLIL::SwitchRule* sw);
+    void thread_comb_case(const RTLIL::SigSpec& case_sig, RTLIL::SwitchRule* sw,
+                          const std::map<std::string, RTLIL::SigSpec>& pre_ccv,
+                          const std::vector<std::map<std::string, RTLIL::SigSpec>>& arm_ccv);
     bool emit_initial_meminit_writes(const UHDM::any* stmt);
     bool emit_initial_readmem(const UHDM::any* stmt);
 
@@ -838,6 +840,14 @@ struct UhdmImporter {
     // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
     // a loop counter is not a flip-flop and has no constant async-reset value.
     void collect_for_loop_var_names(const any* stmt, std::set<std::string>& names);
+    // Collect names of signals with at least one LIVE (not statically
+    // dead-guarded by a const-false/true `if`) assignment.  A register assigned
+    // ONLY in dead branches must not become an (async-reset) FF.
+    void collect_live_assigned_signals(const UHDM::any* stmt, bool live,
+                                       std::set<std::string>& out);
+    // Evaluate an `if` condition to a compile-time constant WITHOUT creating
+    // cells: 0 (false), 1 (true), or -1 (not a resolvable constant).
+    int const_cond_value(const UHDM::any* cond);
     void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);
