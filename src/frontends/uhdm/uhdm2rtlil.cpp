@@ -1531,6 +1531,20 @@ bool UhdmImporter::expr_uses_resolved_param(const any* e) {
 void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool create_instances) {
     if (!uhdm_module) return;
 
+    // Save/restore the current RTLIL `module`.  This function mutates `module`
+    // (looking up this instance's module, recursing into child instances) but
+    // its main path never restores it — so after importing a PARENT's child
+    // instances, the parent's own remaining body (e.g. cva6's top-level
+    // `gen_no_accelerator` continuous assigns, processed after its children)
+    // would run against a stale/null `module` (a `design->module()` miss
+    // leaves it null) and crash in import_ref_obj.  Restoring it on every exit
+    // keeps `module` pointing at the caller's module across child imports.
+    RTLIL::Module* hier_saved_module = module;
+    struct ModuleRestorer {
+        UhdmImporter* self; RTLIL::Module* saved;
+        ~ModuleRestorer() { self->module = saved; }
+    } _module_restorer{this, hier_saved_module};
+
     // Get module name
     std::string module_name = std::string(uhdm_module->VpiDefName());
     if (module_name.find("work@") == 0) {
