@@ -2676,8 +2676,13 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
     // A `parameter type` instance shares its generic DefName but has
     // specialized (e.g. struct) port types — append a per-type-binding
     // signature so it imports as its own module with the elaborated ports,
-    // instead of colliding with the 1-bit generic definition.
-    modname += type_param_signature(uhdm_module);
+    // instead of colliding with the 1-bit generic definition.  NOT for a
+    // top-level module: it is the sole instance of its def (nothing to
+    // collide with) and must keep its plain name so `hierarchy -top <name>`
+    // finds it (CVA6's top `cva6` has type params — else it imports as
+    // `cva6$typaram_...` and `hierarchy -top cva6` fails "Module not found").
+    if (!is_top_level)
+        modname += type_param_signature(uhdm_module);
 
     // Remember this instance's RTLIL module name (with any `$paramod`
     // specialization) so a nested child cell can target the correct parent.
