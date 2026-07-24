@@ -2287,6 +2287,37 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                                 }
                             }
 
+                            // A child port connection that is a full-width part
+                            // select `base[EXPR-1:0]` whose range EXPR is a
+                            // struct-parameter field the frontend can't fold
+                            // (CVA6 `.boot_addr_i(boot_addr_i[CVA6Cfg.VLEN-1:0])`,
+                            // CVA6Cfg computed by build_config()) resolves to
+                            // `base[0]` — 1 bit.  When the base wire AND the child
+                            // port are both wider and the select starts at bit 0,
+                            // the intended connection is the base's low port-width
+                            // bits.  Reconstruct it so the port isn't wired 1-bit
+                            // and silently zero-extended at flatten (which drops
+                            // base[hi:1]).  Guard is tight: only a single-chunk,
+                            // offset-0 connection NARROWER than the port on a
+                            // wide-enough base — a shape a legitimate connection
+                            // never has (that would be an SV width mismatch).
+                            if (high_conn->UhdmType() == uhdmpart_select &&
+                                conn.is_chunk() && !conn.empty()) {
+                                RTLIL::Module* tgt = design->module(cell->type);
+                                RTLIL::Wire* pw = tgt ?
+                                    tgt->wire(RTLIL::escape_id(port_name)) : nullptr;
+                                RTLIL::SigChunk ch = conn.as_chunk();
+                                if (pw && ch.wire && ch.offset == 0 &&
+                                    conn.size() < pw->width &&
+                                    ch.wire->width >= pw->width) {
+                                    conn = RTLIL::SigSpec(ch.wire, 0, pw->width);
+                                    log("UHDM: port %s part-select under-resolved "
+                                        "(%d bits); using base %s[%d:0]\n",
+                                        port_name.c_str(), ch.width,
+                                        ch.wire->name.c_str(), pw->width - 1);
+                                }
+                            }
+
                             // For signed constants connected to wider ports, create a signed
                             // intermediate wire so the hierarchy pass will sign-extend them.
                             // Unsigned constants are left as-is (hierarchy zero-extends).
