@@ -5709,6 +5709,13 @@ RTLIL::SigSpec UhdmImporter::import_part_select(const part_select* uhdm_part, co
                 base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
                 log("      Resolved '%s' as parameter for part select (width=%d)\n",
                     base_signal_name.c_str(), base.size());
+            } else if (package_parameter_map.count(base_signal_name)) {
+                // A package localparam sliced directly, e.g. CVA6 csr_regfile
+                // `ariane_pkg::SMODE_STATUS_WRITE_MASK[CVA6Cfg.XLEN-1:0]` — the
+                // base is a compile-time package constant, not a signal.
+                base = RTLIL::SigSpec(package_parameter_map.at(base_signal_name));
+                log("      Resolved '%s' as package parameter for part select (width=%d)\n",
+                    base_signal_name.c_str(), base.size());
             } else if (RTLIL::Wire* e0 =
                            (name_map.count(base_signal_name + "[0]")
                                 ? name_map[base_signal_name + "[0]"]
@@ -6561,6 +6568,10 @@ RTLIL::SigSpec UhdmImporter::import_indexed_part_select(const indexed_part_selec
                 RTLIL::IdString param_id = RTLIL::escape_id(base_signal_name);
                 if (module->parameter_default_values.count(param_id)) {
                     base = RTLIL::SigSpec(module->parameter_default_values.at(param_id));
+                } else if (package_parameter_map.count(base_signal_name)) {
+                    // Package localparam sliced with a dynamic/indexed range,
+                    // e.g. `ariane_pkg::SMODE_STATUS_WRITE_MASK[XLEN-1:0]`.
+                    base = RTLIL::SigSpec(package_parameter_map.at(base_signal_name));
                 } else {
                     std::string gen_scope = get_current_gen_scope();
                     log_warning("Base signal '%s' not found in module or generate scope %s\n",
