@@ -527,6 +527,42 @@ static void match_action_rhs_width(RTLIL::CaseRule* case_rule)
             match_action_rhs_width(sub_case);
 }
 
+// Ensure every switch's case-compare values are exactly as wide as the switch
+// selector signal.  RTLIL::Module::check() (rtlil.cc:2697) asserts
+// `switch.signal.size() == compare.size()` for every compare in every case; a
+// mismatch aborts write_rtlil / any pass that runs check().  The importer can
+// leave a stale width when a case selector or an item expression resolves to an
+// unexpected width (e.g. an unresolved struct-member/XMR case selector).  Match
+// each compare to the selector width (zero-extend short, truncate long).
+// Returns the number of mismatches fixed (for one-time diagnostics).
+static int match_switch_compare_widths(RTLIL::CaseRule* case_rule,
+                                       const std::string& modname, bool debug)
+{
+    if (!case_rule) return 0;
+    int fixed = 0;
+    for (auto* sw : case_rule->switches) {
+        int sw_w = sw->signal.size();
+        for (auto* sub_case : sw->cases) {
+            for (auto& cmp : sub_case->compare) {
+                if (cmp.size() != sw_w) {
+                    if (debug)
+                        log("Warning: UHDM: switch/compare width mismatch in %s: "
+                            "selector %s (w=%d) vs compare %s (w=%d) — reconciling\n",
+                            modname.c_str(), log_signal(sw->signal), sw_w,
+                            log_signal(cmp), cmp.size());
+                    if (cmp.size() < sw_w)
+                        cmp.extend_u0(sw_w, false);
+                    else
+                        cmp = cmp.extract(0, sw_w);
+                    fixed++;
+                }
+            }
+            fixed += match_switch_compare_widths(sub_case, modname, debug);
+        }
+    }
+    return fixed;
+}
+
 // Apply match_action_rhs_width to EVERY process (root_case + sync rules) in
 // EVERY module — a design-wide final pass, so no process-creating path is
 // missed.  Called at the end of import_design.
@@ -536,6 +572,7 @@ void UhdmImporter::finalize_process_action_widths()
         for (auto& pit : mod->processes) {
             RTLIL::Process* p = pit.second;
             match_action_rhs_width(&p->root_case);
+            match_switch_compare_widths(&p->root_case, mod->name.str(), mode_debug);
             for (auto& sync : p->syncs)
                 for (auto& act : sync->actions) {
                     int lw = act.first.size(), rw = act.second.size();
