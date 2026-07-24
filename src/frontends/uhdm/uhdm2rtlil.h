@@ -838,6 +838,14 @@ struct UhdmImporter {
     // (e.g. `for (i=...)`) so they can be excluded from a register/reset set —
     // a loop counter is not a flip-flop and has no constant async-reset value.
     void collect_for_loop_var_names(const any* stmt, std::set<std::string>& names);
+    // Collect names of signals with at least one LIVE (not statically
+    // dead-guarded by a const-false/true `if`) assignment.  A register assigned
+    // ONLY in dead branches must not become an (async-reset) FF.
+    void collect_live_assigned_signals(const UHDM::any* stmt, bool live,
+                                       std::set<std::string>& out);
+    // Evaluate an `if` condition to a compile-time constant WITHOUT creating
+    // cells: 0 (false), 1 (true), or -1 (not a resolvable constant).
+    int const_cond_value(const UHDM::any* cond);
     void collect_dynamic_expanded_array_writes(const any* stmt, std::set<std::string>& names, RTLIL::Module* module);
     void extract_lhs_signals(const UHDM::expr* lhs_expr, std::vector<AssignedSignal>& signals);
     void extract_assigned_signal_names(const any* stmt, std::set<std::string>& signal_names);

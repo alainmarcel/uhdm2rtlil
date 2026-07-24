@@ -311,6 +311,81 @@ void UhdmImporter::collect_for_loop_var_names(const any* stmt, std::set<std::str
     }
 }
 
+int UhdmImporter::const_cond_value(const any* cond) {
+    if (!cond) return -1;
+    // Constant literal (`if (1'b0)`).
+    if (cond->VpiType() == vpiConstant) {
+        RTLIL::SigSpec s = import_constant(any_cast<const constant*>(cond));
+        if (s.is_fully_const())
+            return s.as_const().is_fully_zero() ? 0 : 1;
+        return -1;
+    }
+    // Parameter reference (`if (FPGA_ALTERA)`), resolved without creating cells.
+    if (cond->VpiType() == vpiRefObj) {
+        auto r = any_cast<const ref_obj*>(cond);
+        if (auto act = r->Actual_group())
+            if (act->UhdmType() == uhdmparameter) {
+                std::string v = std::string(any_cast<const parameter*>(act)->VpiValue());
+                if (!v.empty())
+                    return parse_vpi_value_to_int(v) == 0 ? 0 : 1;
+            }
+        std::string nm = std::string(r->VpiName());
+        RTLIL::IdString pid = RTLIL::escape_id(nm);
+        if (module && module->parameter_default_values.count(pid))
+            return module->parameter_default_values.at(pid).is_fully_zero() ? 0 : 1;
+    }
+    return -1;
+}
+
+void UhdmImporter::collect_live_assigned_signals(const any* stmt, bool live,
+                                                 std::set<std::string>& out) {
+    if (!stmt) return;
+    switch (stmt->VpiType()) {
+        case vpiAssignment: {
+            if (!live) break;
+            auto a = any_cast<const assignment*>(stmt);
+            if (a->Lhs() && !a->Lhs()->VpiName().empty())
+                out.insert(std::string(a->Lhs()->VpiName()));
+            break;
+        }
+        case vpiBegin:
+        case vpiNamedBegin:
+            if (auto stmts = begin_block_stmts(stmt))
+                for (auto s : *stmts) collect_live_assigned_signals(s, live, out);
+            break;
+        case vpiIf: {
+            auto ist = any_cast<const if_stmt*>(stmt);
+            bool tk = live;
+            if (live && const_cond_value(ist->VpiCondition()) == 0) tk = false;
+            collect_live_assigned_signals(ist->VpiStmt(), tk, out);
+            break;
+        }
+        case vpiIfElse: {
+            auto ie = any_cast<const if_else*>(stmt);
+            bool tk = live, ek = live;
+            if (live) {
+                int c = const_cond_value(ie->VpiCondition());
+                if (c == 0) tk = false;
+                else if (c == 1) ek = false;
+            }
+            collect_live_assigned_signals(ie->VpiStmt(), tk, out);
+            collect_live_assigned_signals(ie->VpiElseStmt(), ek, out);
+            break;
+        }
+        case vpiFor:
+            collect_live_assigned_signals(any_cast<const for_stmt*>(stmt)->VpiStmt(), live, out);
+            break;
+        case vpiCase: {
+            auto cs = any_cast<const case_stmt*>(stmt);
+            if (cs->Case_items())
+                for (auto item : *cs->Case_items())
+                    collect_live_assigned_signals(item->Stmt(), live, out);
+            break;
+        }
+        default: break;
+    }
+}
+
 void UhdmImporter::extract_assigned_signals(const any* stmt, std::vector<AssignedSignal>& signals) {
     if (!stmt) return;
 

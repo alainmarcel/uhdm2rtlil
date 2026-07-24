@@ -1019,6 +1019,25 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                             [&](const AssignedSignal& s){ return loop_vars.count(s.name) > 0; }),
                         assigned_signals.end());
 
+                // Drop registers that are assigned ONLY under a compile-time
+                // FALSE guard (`if (FPGA_ALTERA) data_ft_q <= …` with
+                // FPGA_ALTERA=0, all branches) — they are never really assigned,
+                // so making them async-reset FFs gives a non-constant (self)
+                // reset value that `proc` rejects ("Async reset yields
+                // non-constant value 32'mmm..m", CVA6 cva6_fifo_v3).  Match slang
+                // and leave them undriven.  Only prune when we found at least one
+                // live assignment somewhere (empty set => couldn't fold guards,
+                // so keep everything to stay conservative).
+                std::set<std::string> live_signals;
+                collect_live_assigned_signals(stmt, true, live_signals);
+                if (!live_signals.empty())
+                    assigned_signals.erase(
+                        std::remove_if(assigned_signals.begin(), assigned_signals.end(),
+                            [&](const AssignedSignal& s){
+                                return live_signals.count(s.name) == 0;
+                            }),
+                        assigned_signals.end());
+
                 // A `(* mem2reg *)` memory written with a DYNAMIC index inside an
                 // async-reset always_ff (mem_arst's `Mem[Addr]<=Data` plus the
                 // reset clear `for(i) Mem[i]<=0`) is expanded to per-element
