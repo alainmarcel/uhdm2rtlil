@@ -3585,7 +3585,39 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                     wire_map[var] = wire;
                     name_map[var_name] = wire;
                     add_src_attribute(wire->attributes, var);
-                    
+
+                    // A packed array of a struct / type-param (`struct_t [N:0]
+                    // arr`) is elaborated as a packed_array_var and its flat wire
+                    // is created here.  Tag it with packed-element metadata so
+                    // import_bit_select resolves `arr[i]` as ELEMENT i
+                    // (struct-width bits), not bit i.  Without this CVA6
+                    // alu_wrapper `.fu_data_i(fu_data_i[0])` (fu_data_t
+                    // [NrALUs-1:0]) wired bit 0 (1 bit) instead of element 0.
+                    if (auto pav = dynamic_cast<const UHDM::packed_array_var*>(var)) {
+                        int outer_l = -1, outer_r = -1;
+                        if (pav->Ranges() && !pav->Ranges()->empty()) {
+                            auto r0 = (*pav->Ranges())[0];
+                            if (r0->Left_expr() && r0->Right_expr()) {
+                                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                                if (l.is_fully_const() && r.is_fully_const()) {
+                                    outer_l = l.as_int();
+                                    outer_r = r.as_int();
+                                }
+                            }
+                        }
+                        int elem_w = 0;
+                        if (pav->Elements() && !pav->Elements()->empty())
+                            elem_w = get_width((*pav->Elements())[0], uhdm_module);
+                        if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
+                            wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
+                            wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
+                            wire->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(outer_r);
+                            log("UHDM: packed_array_var '%s' elem_width=%d outer=[%d:%d]\n",
+                                var_name.c_str(), elem_w, outer_l, outer_r);
+                        }
+                    }
+
                     // Import attributes (e.g., (* keep *), (* anyconst *))
                     if (auto variables = any_cast<const UHDM::variables*>(var)) {
                         if (variables->Attributes()) {
