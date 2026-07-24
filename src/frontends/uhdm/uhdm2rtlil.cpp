@@ -1955,6 +1955,43 @@ void UhdmImporter::import_module_hierarchy(const module_inst* uhdm_module, bool 
                 // instance (appended after any value-parameter $paramod part).
                 cell_type += cell_tsig;
 
+                // The cell_type built above can diverge from the ACTUAL imported
+                // module name: type_param_signature() sizes the ports with
+                // get_width() at CELL-creation time (this instance's module isn't
+                // `this->module` yet, so a param-dependent range only resolves to
+                // an APPROXIMATE width), while import_module() named the module
+                // from the RESOLVED widths.  The mismatch (e.g. CVA6 frontend cell
+                // `$paramod\frontend$typaram_…_8_…_42_74` vs module
+                // `\frontend$typaram_…_134_…_365_366`) turns EVERY type-param'd
+                // child into a blackbox, so `flatten`/`synth -top cva6` yields an
+                // empty netlist.  `module` (resolved at ~line 1841) IS the module
+                // this instance points at, so when the computed type has no
+                // matching module, use the resolved module's real name — this
+                // makes the cell link so the hierarchy actually flattens.
+                if (!design->module(RTLIL::escape_id(cell_type))) {
+                    // Candidate real names, in priority order: the name
+                    // import_module recorded for THIS elaborated instance, then
+                    // the module `module` resolved to.
+                    std::vector<std::string> candidates;
+                    auto tm_it = inst_to_modname_.find(uhdm_module);
+                    if (tm_it != inst_to_modname_.end())
+                        candidates.push_back(tm_it->second);
+                    if (module)
+                        candidates.push_back(module->name.str());
+                    for (auto real : candidates) {
+                        if (!real.empty() && real[0] == '\\')
+                            real = real.substr(1);
+                        if (!real.empty() &&
+                            design->module(RTLIL::escape_id(real))) {
+                            log("UHDM: cell_type %s has no module; using resolved "
+                                "module name %s instead\n", cell_type.c_str(),
+                                real.c_str());
+                            cell_type = real;
+                            break;
+                        }
+                    }
+                }
+
                 log("UHDM: Creating cell %s of type %s in parent %s\n",
                     inst_name.c_str(), cell_type.c_str(), parent_name.c_str());
 
