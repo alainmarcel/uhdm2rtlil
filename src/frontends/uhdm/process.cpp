@@ -1052,13 +1052,33 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
             // ref name "rr_ptr".  Resolve each to its actual wire so the
             // async-reset register temp-wire / sync-rule path below finds it
             // (issue #441 — else "Signal rr_ptr not found in module").
+            //
+            // The declaration may live in the CURRENT generate scope, in any
+            // ANCESTOR scope, or at module level, while the always_ff sits in a
+            // deeper nested scope.  CVA6 rr_arb_tree: `rr_q` is declared in
+            // `gen_arbiter` but its always_ff `p_rr_regs` is in the nested
+            // `gen_arbiter.gen_int_rr` — so walk the scope path from the
+            // innermost prefix outward and use the first matching wire (SV
+            // scoping: the innermost declaration wins).
             {
                 std::string gs = get_current_gen_scope();
                 if (!gs.empty())
-                    for (auto& sig : assigned_signals)
-                        if (!module->wire(RTLIL::escape_id(sig.name)) &&
-                            module->wire(RTLIL::escape_id(gs + "." + sig.name)))
-                            sig.name = gs + "." + sig.name;
+                    for (auto& sig : assigned_signals) {
+                        if (module->wire(RTLIL::escape_id(sig.name)))
+                            continue;  // already a module-level wire
+                        std::string prefix = gs;
+                        while (!prefix.empty()) {
+                            std::string cand = prefix + "." + sig.name;
+                            if (module->wire(RTLIL::escape_id(cand))) {
+                                sig.name = cand;
+                                break;
+                            }
+                            size_t dot = prefix.rfind('.');
+                            if (dot == std::string::npos)
+                                break;
+                            prefix = prefix.substr(0, dot);
+                        }
+                    }
             }
 
             // Create ONE temp wire per unique signal (not per assignment)
