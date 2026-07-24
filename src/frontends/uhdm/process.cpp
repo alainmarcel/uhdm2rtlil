@@ -10964,6 +10964,21 @@ void UhdmImporter::emit_full_case_default(const case_stmt* uhdm_case, RTLIL::Swi
     for (auto c : sw->cases) {
         if (c->compare.empty()) { default_case = c; break; }
     }
+    // An EXPLICIT `default:` clause makes the case fully covered: every value
+    // is handled, and a signal NOT assigned by the default arm must HOLD its
+    // pre-case value (the block-level default), NOT be forced to X.  The
+    // full_case X-default is ONLY the don't-care fill for the IMPLICIT default
+    // of a `unique`/`priority` case that has no default clause.  X-ing a
+    // held-through signal here is wrong: CVA6 compressed_decoder's outer
+    // `unique case (instr_i[1:0]) … default: is_compressed_o = 1'b0;` leaves
+    // instr_o at its block default `instr_o = instr_i`, but X-ing it made every
+    // UNCOMPRESSED instruction decode to X (masked before only by a buggy
+    // always-true trailing `if (illegal)`).  So in always_comb skip the
+    // X-default entirely when the user wrote a default clause.  always_ff still
+    // needs it for its blocking temps (picorv32 cpu_state unreachable-state
+    // fill), so only the comb path returns early.
+    if (default_case && !in_always_ff_context)
+        return;
     if (!default_case) {
         default_case = new RTLIL::CaseRule;
         sw->cases.push_back(default_case);
