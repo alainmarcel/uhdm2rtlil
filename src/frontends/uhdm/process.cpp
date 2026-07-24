@@ -2601,6 +2601,15 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 actual_stmt = event_ctrl->Stmt();
             }
         }
+        // Promote begin-block-local variables (`always_comb begin automatic
+        // satp_t vsatp; … end`) to module wires with their real width BEFORE
+        // the assigned-signal scan tries to resolve them — otherwise a
+        // block-local struct var falls back to a width-1 "unknown signal" wire
+        // and a member slice (`vsatp.asid`, off 44 +: 16) overflows it,
+        // tripping the RTLIL chunk-width assert (CVA6 csr_regfile).  The
+        // always_ff path already does this.
+        block_local_promoted.clear();
+        create_block_local_wires(actual_stmt);
         extract_assigned_signals(actual_stmt, assigned_signals);
     }
     
