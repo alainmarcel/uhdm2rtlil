@@ -174,6 +174,21 @@ static RTLIL::Cell* build_check_cell(UhdmImporter* self,
                                      const std::string& flavor,
                                      RTLIL::Wire*& enable_wire) {
     RTLIL::SigSpec condition = self->import_expression(expr);
+    // $check's A port is a 1-bit boolean.  import_expression can yield a wider
+    // value — e.g. a plain struct-parameter field used directly as the
+    // condition (`assert (Cfg.AxiIdWidth)`) that Surelog/ExprEval folds to a
+    // multi-bit constant.  Coerce to 1 bit (true = non-zero), matching the
+    // Verilog frontend's boolean coercion, else the $check cell fails RTLIL's
+    // port-width check (CVA6 axi_shim `initial assert`).
+    if (condition.size() != 1) {
+        if (condition.is_fully_const())
+            condition = condition.as_const().as_bool()
+                            ? RTLIL::State::S1 : RTLIL::State::S0;
+        else if (condition.size() == 0)
+            condition = RTLIL::State::S1;
+        else
+            condition = self->module->ReduceBool(NEW_ID, condition);
+    }
 
     enable_wire = self->module->addWire(NEW_ID);
     enable_wire->width = 1;
