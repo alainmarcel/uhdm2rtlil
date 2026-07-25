@@ -1362,15 +1362,15 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
                                 in_always_ff_context = true;
                                 current_ff_clock_sig = clock_sig;
                                 log("      Setting always_ff context for async reset: clock_sig.empty()=%d\n", clock_sig.empty() ? 1 : 0);
-                                
+
                                 import_statement_comb(then_stmt, case_true);
-                                
+
                                 // Clear context
                                 current_signal_temp_wires.clear();
                             }
                             
                             sw->switches[0]->cases.push_back(case_true);
-                            
+
                             // Case for false (else)
                             RTLIL::CaseRule* case_false = new RTLIL::CaseRule;
                             std::string else_src = if_else_stmt->VpiElseStmt() ? get_src_attribute(if_else_stmt->VpiElseStmt()) : "";
@@ -10348,13 +10348,31 @@ void UhdmImporter::import_if_stmt_sync(const UHDM::if_stmt* uhdm_if, RTLIL::Sync
     if (auto condition_expr = uhdm_if->VpiCondition()) {
         condition = import_expression(condition_expr);
 
-        // Reduce multi-bit conditions to 1 bit (mux select must be 1 bit)
+        // Reduce multi-bit conditions to 1 bit (mux select must be 1 bit).
+        // A CONSTANT multi-bit condition must reduce to a constant bit, not a
+        // $reduce_bool cell — otherwise a compile-time-false struct-param guard
+        // (`Cfg.RVH` resolved to N'0) becomes a runtime wire and defeats the
+        // const-fold below.
         if (condition.size() > 1) {
-            condition = module->ReduceBool(NEW_ID, condition);
+            if (condition.is_fully_const())
+                condition = condition.as_const().as_bool()
+                                ? RTLIL::SigSpec(RTLIL::State::S1)
+                                : RTLIL::SigSpec(RTLIL::State::S0);
+            else
+                condition = module->ReduceBool(NEW_ID, condition);
         }
 
         if (mode_debug)
             log("    If statement condition: %s\n", log_signal(condition));
+
+        // Compile-time-constant guard: import only the taken branch.
+        if (condition.is_fully_const()) {
+            if (condition.as_const().as_bool()) {
+                if (auto then_stmt = uhdm_if->VpiStmt())
+                    import_statement_sync(then_stmt, sync, is_reset);
+            }
+            return;
+        }
     }
 
     // For memory writes, we'll use the condition as the enable signal
@@ -12045,13 +12063,42 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                 RTLIL::SigSpec condition_sig =
                     import_expression(condition, comb_read_map());
 
-                // Reduce multi-bit conditions to 1 bit for switch/compare matching
+                // Reduce multi-bit conditions to 1 bit for switch/compare matching.
+                // A CONSTANT multi-bit condition must reduce to a constant bit, not
+                // a $reduce_bool CELL — otherwise a compile-time-false struct-param
+                // guard (e.g. `Cfg.RVH` resolved to 32'0 by eval_param_struct_field)
+                // becomes a non-constant wire and defeats the const-fold below,
+                // leaving a conditional async reset that `proc` rejects.
                 if (condition_sig.size() > 1) {
-                    condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+                    if (condition_sig.is_fully_const())
+                        condition_sig = condition_sig.as_const().as_bool()
+                                            ? RTLIL::SigSpec(RTLIL::State::S1)
+                                            : RTLIL::SigSpec(RTLIL::State::S0);
+                    else
+                        condition_sig = module->ReduceBool(NEW_ID, condition_sig);
                 }
 
                 if (mode_debug)
                     log("        If condition in case: %s\n", log_signal(condition_sig));
+
+                // Compile-time-constant condition: fold it and import only the
+                // taken branch (mirrors the Process-overload path at
+                // import_if_stmt_comb).  Critical for async-reset always_ff whose
+                // reset assignment is guarded by a compile-time-false struct-param
+                // field, e.g. CVA6 cva6_ptw.sv `if (CVA6Cfg.RVH) gpaddr_q <= '0`
+                // with RVH==0: without folding, `gpaddr_q` gets a *conditional*
+                // (non-constant) reset value and `proc`/PROC_ARST aborts with
+                // "Async reset yields non-constant value N'mmm..m".  Folding drops
+                // the dead reset assignment so the reg becomes a plain clocked DFF
+                // with no async reset (matches read_verilog / slang).
+                if (condition_sig.is_fully_const()) {
+                    if (condition_sig.as_const().as_bool()) {
+                        if (auto then_stmt = if_stmt->VpiStmt())
+                            import_statement_comb(then_stmt, case_rule);
+                    }
+                    current_if_qualifier = saved_qualifier;
+                    break;
+                }
 
                 // Create a switch statement for the if
                 RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
