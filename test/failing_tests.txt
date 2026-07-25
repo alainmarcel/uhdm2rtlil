@@ -214,6 +214,16 @@ struct_member_cfg_width
 # logic_var/enum_var when the port typespec collapsed to <=1.
 param_type_logic_width
 
+# --- `parameter type` module instantiated inside a generate block ---
+# Native read_verilog cannot parse `parameter type T` (SV type params), so there
+# is no Verilog reference; the UHDM output is VERIFIED equal to slang via a sound
+# SAT miter (SUCCESS).  Reproducer for the CVA6 id_stage `genblk3[0].decoder_i`
+# hierarchy-link fix: import_instance (the generate-scope cell path) omitted the
+# per-type-binding $typaram signature, so the cell referenced bare `\leaf` while
+# the module was imported as `\leaf$typaram_...` -> unresolved blackbox that
+# `hierarchy -check` rejects.
+gen_scope_typaram
+
 # --- Yosys v0.67 upstream check_mem / memories additions ---
 # check_mem/init.sv (dynamic read of a 2D unpacked array), check_mem/non_zero.sv
 #   (registered 1D unpacked array written in a `for (int i=1;i<=3;i++)` always_ff),
