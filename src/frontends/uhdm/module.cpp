@@ -2762,8 +2762,10 @@ int UhdmImporter::get_width_from_typespec(const UHDM::any* typespec, const UHDM:
         
         // For ref_typespec without Actual, don't call ExprEval::size as it may crash
         if (typespec->UhdmType() == uhdmref_typespec) {
-            UHDM::decompile(typespec);
-            log("UHDM: ref_typespec without actual - defaulting to width 32 (int)\n");
+            if (mode_debug) {
+                UHDM::decompile(typespec);
+                log("UHDM: ref_typespec without actual - defaulting to width 32 (int)\n");
+            }
             return 32;
         }
 
