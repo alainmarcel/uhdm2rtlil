@@ -3761,7 +3761,8 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
                                   !fl->VpiForIncStmts()->empty())
                                      ? (*fl->VpiForIncStmts())[0] : nullptr;
                 if (lv.empty() || !starte || !conde || !inc) return false;
-                // Increment amount: `k++` (vpiPostIncOp) or `k = k + N`.
+                // Increment amount: `k++` (vpiPostIncOp), `k = k + N`, or the
+                // compound form `k += N` (operator on the assignment node).
                 int64_t inc_amt = 0;
                 if (inc->VpiType() == vpiOperation) {
                     auto io = any_cast<const operation*>(inc);
@@ -3772,13 +3773,22 @@ bool UhdmImporter::emit_initial_meminit_writes(const any* stmt) {
                     auto re = ina && ina->Rhs()
                                   ? dynamic_cast<const expr*>(ina->Rhs()) : nullptr;
                     if (!re) return false;
-                    loop_values[lv] = 0;
-                    RTLIL::SigSpec z = import_expression(re);
-                    loop_values[lv] = 1;
-                    RTLIL::SigSpec o = import_expression(re);
-                    loop_values.erase(lv);
-                    if (!z.is_fully_const() || !o.is_fully_const()) return false;
-                    inc_amt = o.as_const().as_int() - z.as_const().as_int();
+                    int ina_op = ina->VpiOpType();
+                    if (ina_op == vpiAddOp || ina_op == vpiSubOp) {
+                        // Compound `k += N` / `k -= N`: Rhs is the bare amount.
+                        RTLIL::SigSpec s = import_expression(re);
+                        if (!s.is_fully_const()) return false;
+                        inc_amt = s.as_const().as_int();
+                        if (ina_op == vpiSubOp) inc_amt = -inc_amt;
+                    } else {
+                        loop_values[lv] = 0;
+                        RTLIL::SigSpec z = import_expression(re);
+                        loop_values[lv] = 1;
+                        RTLIL::SigSpec o = import_expression(re);
+                        loop_values.erase(lv);
+                        if (!z.is_fully_const() || !o.is_fully_const()) return false;
+                        inc_amt = o.as_const().as_int() - z.as_const().as_int();
+                    }
                 } else return false;
                 if (inc_amt == 0) return false;
                 // Body must be a single `mem[k] = <expr>` assignment.
@@ -5496,7 +5506,19 @@ void UhdmImporter::import_statement_sync(const any* uhdm_stmt, RTLIL::SyncRule* 
             } else if (can_unroll && inc_stmt->VpiType() == vpiAssignment) {
                 // Handle i = i + N form
                 const assignment* inc_assign = any_cast<const assignment*>(inc_stmt);
-                if (inc_assign && inc_assign->Rhs() && inc_assign->Rhs()->VpiType() == vpiOperation) {
+                // Compound `i += N`: arithmetic op on the assignment node itself
+                // (VpiOpType == vpiAddOp/vpiSubOp), Rhs is the bare amount.  Plain
+                // `i = i + N` uses vpiAssignmentOp (82) with an operation Rhs.
+                int inc_op_type = inc_assign ? inc_assign->VpiOpType() : 0;
+                if (inc_assign && (inc_op_type == vpiAddOp || inc_op_type == vpiSubOp)) {
+                    if (auto re = dynamic_cast<const expr*>(inc_assign->Rhs())) {
+                        RTLIL::SigSpec s = import_expression(re);
+                        if (s.is_fully_const()) {
+                            increment = s.as_const().as_int();
+                            if (inc_op_type == vpiSubOp) increment = -increment;
+                        } else can_unroll = false;
+                    } else can_unroll = false;
+                } else if (inc_assign && inc_assign->Rhs() && inc_assign->Rhs()->VpiType() == vpiOperation) {
                     const operation* rhs_op = any_cast<const operation*>(inc_assign->Rhs());
                     if (rhs_op->VpiOpType() == vpiAddOp && rhs_op->Operands() && rhs_op->Operands()->size() == 2) {
                         auto ops = rhs_op->Operands();
@@ -6957,7 +6979,20 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::Process* p
                     else fl_can_unroll = false;
                 } else if (fl_inc->VpiType() == vpiAssignment) {
                     const assignment* ia = any_cast<const assignment*>(fl_inc);
-                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
+                    // Compound assignment `i += N` / `i -= N`: the arithmetic
+                    // operator lives on the *assignment* node (VpiOpType ==
+                    // vpiAddOp/vpiSubOp) and the Rhs is the bare amount.  A plain
+                    // `i = i + N` uses vpiAssignmentOp (82) with an operation Rhs.
+                    int ia_op = ia->VpiOpType();
+                    if (ia_op == vpiAddOp || ia_op == vpiSubOp) {
+                        if (auto re = dynamic_cast<const expr*>(ia->Rhs())) {
+                            RTLIL::SigSpec s = import_expression(re);
+                            if (s.is_fully_const()) {
+                                fl_inc_val = s.as_const().as_int();
+                                if (ia_op == vpiSubOp) fl_descending = true;
+                            } else fl_can_unroll = false;
+                        } else fl_can_unroll = false;
+                    } else if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
                         const operation* ro = any_cast<const operation*>(ia->Rhs());
                         // `i = i + N` (ascending) or `i = i - N` (descending).
                         bool is_add = ro->VpiOpType() == vpiAddOp;
@@ -10446,18 +10481,28 @@ void UhdmImporter::thread_comb_if(RTLIL::SigSpec cond,
     for (auto& kv : then_vals) names.insert(kv.first);
     for (auto& kv : else_vals) names.insert(kv.first);
     for (const auto& nm : names) {
-        // Pre-if value: the in-flight comb value, else the registered wire.
+        // A block-local temp is written under its PRIVATE scoped name
+        // (`$unnamed_block$N.en`, what comb_blocking_base returns) but READ under
+        // its bare name (`en`).  Thread the merged value under the bare alias too,
+        // and look up the pre-if value under it — otherwise a reduction accumulator
+        // reads the stale init `en` every iteration (CVA6 plru_replacement).
+        std::string alias = nm;
+        if (auto ai = comb_value_aliases.find(nm); ai != comb_value_aliases.end())
+            alias = ai->second;
         RTLIL::SigSpec pre;
-        auto it = current_comb_values.find(nm);
-        if (it != current_comb_values.end()) pre = it->second;
+        if (auto it = current_comb_values.find(alias); it != current_comb_values.end())
+            pre = it->second;
+        else if (auto it2 = current_comb_values.find(nm); it2 != current_comb_values.end())
+            pre = it2->second;
         else if (RTLIL::Wire* w = module->wire(RTLIL::escape_id(nm))) pre = RTLIL::SigSpec(w);
         else continue;
         RTLIL::SigSpec tv = then_vals.count(nm) ? then_vals[nm] : pre;
         RTLIL::SigSpec ev = else_vals.count(nm) ? else_vals[nm] : pre;
         if (tv.size() != ev.size() || tv == ev) continue;
         RTLIL::Wire* m = module->addWire(NEW_ID, tv.size());
-        module->addMux(NEW_ID, ev, tv, cond, m);   // Y = S ? B : A = cond?tv:ev
+        module->addMux(NEW_ID, ev, tv, cond, m);
         current_comb_values[nm] = RTLIL::SigSpec(m);
+        if (alias != nm) current_comb_values[alias] = RTLIL::SigSpec(m);
     }
 }
 
@@ -11950,7 +11995,16 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                     if (ot != vpiPostIncOp && ot != vpiPreIncOp) ok = false;
                 } else if (fl_inc->VpiType() == vpiAssignment) {
                     auto ia = any_cast<const assignment*>(fl_inc);
-                    if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
+                    // Compound `i += N`: operator on the assignment (VpiOpType ==
+                    // vpiAddOp/vpiSubOp), Rhs is the amount.  Plain `i = i + N`
+                    // uses vpiAssignmentOp (82) with an operation Rhs.
+                    int ia_op = ia->VpiOpType();
+                    if (ia_op == vpiAddOp || ia_op == vpiSubOp) {
+                        if (auto re = dynamic_cast<const expr*>(ia->Rhs())) {
+                            RTLIL::SigSpec s = import_expression(re);
+                            if (s.is_fully_const()) fl_inc_val = s.as_const().as_int(); else ok = false;
+                        } else ok = false;
+                    } else if (ia->Rhs() && ia->Rhs()->VpiType() == vpiOperation) {
                         auto ro = any_cast<const operation*>(ia->Rhs());
                         if (ro->VpiOpType() == vpiAddOp && ro->Operands() && ro->Operands()->size() == 2) {
                             RTLIL::SigSpec s = import_expression(any_cast<const expr*>(ro->Operands()->at(1)));
