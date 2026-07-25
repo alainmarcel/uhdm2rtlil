@@ -1393,24 +1393,33 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
             par->VpiParent()->UhdmType() == uhdmparam_assign)
             val = dynamic_cast<const expr*>(
                 any_cast<const param_assign*>(par->VpiParent())->Rhs());
-        // A (local)param declared in a module carries no Expr of its own; its
-        // assignment-pattern value lives in the owning module_inst's
-        // Param_assigns (degu SoC `localparam CFG_LSU = '{...}` referenced from a
-        // child's substituted `[CFG_LSU.BUS.ADR-1:0]` range).  Only accept an
-        // ASSIGNMENT-PATTERN Rhs — a cast like `part_info_t'(16)` is not walkable
-        // by the positional field walk and must fall through to the generic
-        // handler (OutputSizeWithParameterOfInstanceInitializedByStructMember).
-        if (!val && par->VpiParent() &&
-            par->VpiParent()->UhdmType() == uhdmmodule_inst) {
-            auto owner = any_cast<const module_inst*>(par->VpiParent());
-            if (owner->Param_assigns())
+        // A (local)param declared in a scope carries no Expr of its own; its
+        // value lives in the owning scope's Param_assigns as a SIBLING
+        // param_assign.  The owning scope may be a module_inst (degu SoC
+        // `localparam CFG_LSU = '{...}` referenced from a child's substituted
+        // `[CFG_LSU.BUS.ADR-1:0]` range) OR a package (`localparam cfg_t CFG =
+        // build_config()`).  Accept an ASSIGNMENT-PATTERN Rhs (positional field
+        // walk below) or a struct_var (a function-computed struct value
+        // elaborates to a struct_var whose typespec members carry the resolved
+        // field constants — read just below).  A cast like `part_info_t'(16)` is
+        // not walkable and must fall through to the generic handler
+        // (OutputSizeWithParameterOfInstanceInitializedByStructMember).
+        if (!val && par->VpiParent()) {
+            auto owner = dynamic_cast<const scope*>(par->VpiParent());
+            if (owner && owner->Param_assigns())
                 for (auto pa : *owner->Param_assigns())
                     if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
                         if (std::string(l->VpiName()) == std::string(par->VpiName())) {
                             auto rhs = dynamic_cast<const expr*>(pa->Rhs());
-                            if (rhs && rhs->UhdmType() == uhdmoperation &&
+                            // Accept an ASSIGNMENT-PATTERN (positional walk below)
+                            // or a struct_var — a function-computed struct value
+                            // (`CFG = build_config(...)`) elaborates to a
+                            // struct_var whose typespec members carry the
+                            // resolved field constants (handled just below).
+                            if (rhs && ((rhs->UhdmType() == uhdmoperation &&
                                 any_cast<const operation*>(rhs)->VpiOpType() ==
-                                    vpiAssignmentPatternOp)
+                                    vpiAssignmentPatternOp) ||
+                                rhs->UhdmType() == uhdmstruct_var))
                                 val = rhs;
                             break;
                         }
@@ -1429,6 +1438,32 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
                 if (auto rt = lhs->Typespec()) cur_ts = rt->Actual_typespec();
     }
     if (!val) return "";
+    // A parameter bound to a function-computed struct value (CVA6
+    // `CFG = build_config(...)`) elaborates to a struct_var whose struct_typespec
+    // MEMBERS carry the resolved field values as constants (typespec_member
+    // vpiExpr).  Read the requested field's constant directly — no need to
+    // re-evaluate the producing function.  Handles a single field selector
+    // `CFG.FIELD` (the common CVA6Cfg.XLEN / .TRANS_ID_BITS shape).
+    if (pe.size() == 2) {
+        const typespec* sts = nullptr;
+        if (auto ts = val->Typespec()) sts = ts->Actual_typespec();
+        if (!sts) sts = cur_ts;
+        if (sts && sts->UhdmType() == uhdmstruct_typespec) {
+            auto st = any_cast<const struct_typespec*>(sts);
+            if (st->Members()) {
+                std::string field = std::string(pe[1]->VpiName());
+                for (auto m : *st->Members())
+                    if (std::string(m->VpiName()) == field) {
+                        const expr* mv = m->Actual_value();
+                        if (!mv) mv = m->Default_value();
+                        if (auto c = dynamic_cast<const constant*>(mv))
+                            return std::to_string(parse_vpi_value_to_int(
+                                std::string(c->VpiValue())));
+                        break;
+                    }
+            }
+        }
+    }
     // Walk pe[1..] as struct field selectors (same as eval_iface_param_field).
     for (size_t i = 1; i < pe.size() && val; i++) {
         std::string field = std::string(pe[i]->VpiName());

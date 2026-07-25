@@ -3497,26 +3497,56 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
             }
             int pelem_w = (ctx_w > 0 && pat_count > 0 && ctx_w % pat_count == 0)
                           ? ctx_w / pat_count : 0;
+            // For a STRUCT target the fields have (possibly) UNEQUAL widths, so
+            // the ctx/count assumption is wrong — resolve each field's real width
+            // from the struct typespec instead.  Prefer the op's own typespec,
+            // then the threaded LHS context typespec.
+            const UHDM::struct_typespec* struct_ts = nullptr;
+            {
+                const UHDM::typespec* cand = nullptr;
+                if (uhdm_op->Typespec()) cand = uhdm_op->Typespec()->Actual_typespec();
+                if ((!cand || cand->UhdmType() != uhdmstruct_typespec) &&
+                    expression_context_typespec &&
+                    expression_context_typespec->UhdmType() == uhdmstruct_typespec)
+                    cand = expression_context_typespec;
+                if (cand && cand->UhdmType() == uhdmstruct_typespec)
+                    struct_ts = any_cast<const UHDM::struct_typespec*>(cand);
+            }
             for (auto operand : *uhdm_op->Operands()) {
                 const expr* field_expr = nullptr;
                 // Named-field patterns (`'{a: 0, b: 1, ...}`) wrap each value in a
                 // `tagged_pattern` (not an expr), so unwrap its Pattern(); these
                 // are emitted in struct field order (PatternAssignmentOfStructParam).
+                // The tagged_pattern's typespec (a string_typespec) names the
+                // target field — use it to look up that field's exact width.
+                int field_w = pelem_w;
                 if (operand->UhdmType() == uhdmtagged_pattern) {
                     auto tp = any_cast<const UHDM::tagged_pattern*>(operand);
                     if (tp && tp->Pattern())
                         field_expr = any_cast<const expr*>(tp->Pattern());
+                    if (struct_ts && struct_ts->Members() && tp && tp->Typespec()) {
+                        if (auto tag = tp->Typespec()->Actual_typespec()) {
+                            std::string fname = std::string(tag->VpiName());
+                            for (auto m : *struct_ts->Members())
+                                if (std::string(m->VpiName()) == fname) {
+                                    if (auto mt = m->Typespec())
+                                        if (auto at = mt->Actual_typespec())
+                                            field_w = get_width_from_typespec(at, inst);
+                                    break;
+                                }
+                        }
+                    }
                 } else {
                     field_expr = any_cast<const expr*>(operand);
                 }
                 if (!field_expr) continue;
                 int saved_ctx = expression_context_width;
-                if (pelem_w > 0) expression_context_width = pelem_w;
+                if (field_w > 0) expression_context_width = field_w;
                 RTLIL::SigSpec val = import_expression(field_expr, input_mapping);
                 expression_context_width = saved_ctx;
-                if (pelem_w > 0) {
-                    if (val.size() > pelem_w) val = val.extract(0, pelem_w);
-                    else if (val.size() < pelem_w) val.extend_u0(pelem_w);
+                if (field_w > 0) {
+                    if (val.size() > field_w) val = val.extract(0, field_w);
+                    else if (val.size() < field_w) val.extend_u0(field_w);
                 }
                 if (mode_debug)
                     log("UHDM: AssignmentPatternOp field size=%d\n", val.size());

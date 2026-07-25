@@ -1488,7 +1488,28 @@ void UhdmImporter::import_continuous_assign(const cont_assign* uhdm_assign) {
     // Set context width from LHS so arithmetic operations produce correctly-sized results
     // Per Verilog semantics, LHS width propagates into RHS expression evaluation
     expression_context_width = lhs.size();
+    // Also thread the LHS struct/array typespec so a struct assignment pattern
+    // sizes each field by its real (possibly unequal) member width.
+    const UHDM::typespec* saved_ctx_ts = expression_context_typespec;
+    if (lhs_expr) {
+        const UHDM::ref_typespec* lrts = nullptr;
+        if (auto a = lhs_expr->UhdmType() == uhdmref_obj
+                         ? any_cast<const ref_obj*>(lhs_expr)->Actual_group()
+                         : nullptr) {
+            if (a->UhdmType() == uhdmlogic_net)
+                lrts = any_cast<const logic_net*>(a)->Typespec();
+            else if (a->UhdmType() == uhdmlogic_var)
+                lrts = any_cast<const logic_var*>(a)->Typespec();
+            else if (a->UhdmType() == uhdmstruct_net)
+                lrts = any_cast<const struct_net*>(a)->Typespec();
+            else if (a->UhdmType() == uhdmstruct_var)
+                lrts = any_cast<const struct_var*>(a)->Typespec();
+        }
+        if (!lrts) lrts = lhs_expr->Typespec();
+        if (lrts) expression_context_typespec = lrts->Actual_typespec();
+    }
     RTLIL::SigSpec rhs = import_expression(rhs_expr);
+    expression_context_typespec = saved_ctx_ts;
     expression_context_width = 0;
     
     log("  Continuous assignment: LHS size=%d, RHS size=%d, is_net_decl=%d\n", 

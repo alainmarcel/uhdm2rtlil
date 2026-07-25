@@ -196,6 +196,14 @@ svtypes_struct_array
 packed_array_elem_select
 packed_array_struct_port_sel
 
+# --- `parameter type` struct with function-computed CVA6Cfg.FIELD widths ---
+# Native read_verilog cannot parse `parameter type fu_data_t` (SV type params),
+# so there is no Verilog reference; the UHDM output is VERIFIED equal to slang
+# via a sound from-reset SAT miter (SUCCESS).  Reproducer for the CVA6
+# `fu_data_i.operand_a` struct-member port-width fix (build_config() struct
+# param → member widths resolved from the elaborated typespec's member exprs).
+struct_member_cfg_width
+
 # --- Yosys v0.67 upstream check_mem / memories additions ---
 # check_mem/init.sv (dynamic read of a 2D unpacked array), check_mem/non_zero.sv
 #   (registered 1D unpacked array written in a `for (int i=1;i<=3;i++)` always_ff),

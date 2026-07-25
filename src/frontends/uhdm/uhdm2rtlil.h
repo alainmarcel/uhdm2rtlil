@@ -309,6 +309,12 @@ struct UhdmImporter {
     // Used to propagate LHS width into arithmetic operations per Verilog semantics
     int expression_context_width = 0;
 
+    // Context TYPESPEC for expression evaluation — the LHS's struct/array
+    // typespec, threaded so a struct assignment pattern (`'{a: x, b: y}`) can
+    // size each field to its actual (possibly UNEQUAL) member width instead of
+    // assuming ctx_width/field_count.  Null when unknown.
+    const UHDM::typespec* expression_context_typespec = nullptr;
+
     // Context signedness (LRM §11.8.1): an unsigned context-determined operator
     // forces every operand — including a signed sub-expression — to be treated
     // as unsigned (zero-extended).  e.g. in `(a+b) + 3'd0` the unsigned `3'd0`
