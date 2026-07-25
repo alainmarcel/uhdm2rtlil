@@ -696,6 +696,54 @@ void UhdmImporter::import_design(UHDM::design* uhdm_design) {
     }
     log("UHDM: End of debug listing\n");
     log_flush();
+
+    // Consistency check: every SigSpec in a module's connections, cells and
+    // processes must only reference wires OWNED by that module.  A cross-module
+    // reference is always an importer bug — it produces structurally invalid
+    // RTLIL and otherwise surfaces only as an opaque `chunk_.wire->module ==
+    // mod` assert deep in write_rtlil.  Catch it here with an actionable message
+    // (which module, which wire, and which module actually owns it) and fail
+    // hard, so such leaks — e.g. a stale current_comb_values entry threaded into
+    // another module's mux — are diagnosed at their source.
+    int foreign = 0;
+    for (auto mod : design->modules()) {
+        auto chk = [&](const RTLIL::SigSpec &s, const std::string &where) {
+            for (auto &c : s.chunks())
+                if (c.wire && c.wire->module != mod) {
+                    foreign++;
+                    log_warning("UHDM: cross-module wire reference in module %s at "
+                                "%s: wire %s is owned by %s.\n",
+                                log_id(mod->name), where.c_str(), log_id(c.wire->name),
+                                c.wire->module ? log_id(c.wire->module->name) : "<null>");
+                }
+        };
+        for (auto cell : mod->cells())
+            for (auto &conn : cell->connections())
+                chk(conn.second, "cell " + std::string(log_id(cell->name)) + "." +
+                                 std::string(log_id(conn.first)));
+        for (auto &c : mod->connections()) { chk(c.first, "connect-lhs"); chk(c.second, "connect-rhs"); }
+        for (auto &pp : mod->processes) {
+            RTLIL::Process *proc = pp.second;
+            std::function<void(RTLIL::CaseRule*)> scan_case = [&](RTLIL::CaseRule *cs) {
+                for (auto &a : cs->actions) { chk(a.first, "process-action-lhs"); chk(a.second, "process-action-rhs"); }
+                for (auto sw : cs->switches) {
+                    chk(sw->signal, "process-switch-sig");
+                    for (auto sc : sw->cases) {
+                        for (auto &cmp : sc->compare) chk(cmp, "process-case-compare");
+                        scan_case(sc);
+                    }
+                }
+            };
+            scan_case(&proc->root_case);
+            for (auto sync : proc->syncs) {
+                chk(sync->signal, "process-sync-sig");
+                for (auto &a : sync->actions) { chk(a.first, "process-sync-lhs"); chk(a.second, "process-sync-rhs"); }
+            }
+        }
+    }
+    if (foreign)
+        log_error("UHDM: import produced %d cross-module wire reference(s) "
+                  "(see warnings above) — this is an importer bug.\n", foreign);
 }
 
 // Within a struct value `val` (an assignment-pattern operation), return the

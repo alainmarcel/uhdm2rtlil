@@ -735,7 +735,14 @@ void UhdmImporter::import_always_ff(const process_stmt* uhdm_process, RTLIL::Pro
     
     // Clear pending assignments from any previous process
     pending_sync_assignments.clear();
-    
+    // Also clear the blocking-value map: a multi-async-reset / SR-FF body is
+    // imported via import_statement_comb, which calls thread_comb_if — that reads
+    // current_comb_values[nm] as the pre-branch value.  A stale entry left by a
+    // PREVIOUS process (even in another module — e.g. dffsr2_sub's `q`) would make
+    // dffa4's mux reference a foreign wire, tripping write_rtlil's
+    // chunk_.wire->module assert.  Start every always_ff with a clean map.
+    current_comb_values.clear();
+
     // Set the always_ff attribute
     log("      Setting always_ff attribute\n");
     log_flush();
