@@ -3719,6 +3719,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         int elem_w = 0;
                         if (pav->Elements() && !pav->Elements()->empty())
                             elem_w = get_width((*pav->Elements())[0], uhdm_module);
+                        // get_width on a TYPE-PARAMETER element (`addr_t` =
+                        // logic[W-1:0], CVA6 tc_sram r_addr_q) can fail and return
+                        // 1, especially for a single-element array `addr_t [0:0]`.
+                        // The flat wire already has the correct TOTAL width, so
+                        // recover the element width as total/outer_size — otherwise
+                        // `arr[i]` collapses to a 1-bit select and a reset loop
+                        // `for(i) arr[i] <= '0` leaves all but bit 0 unreset
+                        // (proc aborts "Async reset yields non-constant W'mmm..0").
+                        if (elem_w <= 1 && outer_l >= 0 && outer_r >= 0) {
+                            int outer_size = abs(outer_l - outer_r) + 1;
+                            if (outer_size > 0 && wire->width > 0 &&
+                                wire->width % outer_size == 0)
+                                elem_w = wire->width / outer_size;
+                        }
                         if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);
