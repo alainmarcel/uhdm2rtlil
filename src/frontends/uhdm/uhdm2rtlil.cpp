@@ -156,6 +156,13 @@ struct ReadSVPass : public Pass {
         // `\`include "dv_fcov_macros.svh"` and uses `DV_FCOV_SIGNAL` under
         // `\`ifndef SYNTHESIS`.
         sl_args.push_back("-DSYNTHESIS");
+        // Strip `// synthesis|synopsys|pragma translate_off`..`translate_on`
+        // simulation-only regions from the synthesizable model.
+        // `-filterprotected` (unlike `-synth`) removes ONLY those pragma-guarded
+        // regions and keeps $display/assertions/etc.  Without it a design's
+        // sim-only body — e.g. CVA6 tc_sram_wrapper's `tc_sram` model — is
+        // elaborated and corrupts the surrounding synthesizable ports.
+        sl_args.push_back("-filterprotected");
         for (size_t i = 1; i < args.size(); i++) {
             if (args[i] == "-uhdm_debug") { debug = true; continue; }
             if (args[i] == "-formal")     { formal = true; continue; }

@@ -530,7 +530,7 @@ EOF
     local rc=0
     ( cd "$abs_dir" || exit 1
       run_step $YOSYS_BIN -s test_verilog_read.ys > verilog_path.log 2>&1 || true
-      run_step $SURELOG_BIN -parse -nobuiltin -nocache -d uhdm "dut.${dut_ext}"${sibling_files} > surelog.log 2>&1 || true
+      run_step $SURELOG_BIN -parse -nobuiltin -nocache -filterprotected -d uhdm "dut.${dut_ext}"${sibling_files} > surelog.log 2>&1 || true
       if [ -f slpp_all/surelog.uhdm ]; then
           run_step $YOSYS_BIN -s test_uhdm_read.ys > uhdm_path.log 2>&1
       fi )

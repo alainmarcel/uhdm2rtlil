@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 SURELOG=/home/alain/uhdm2rtlil/build/third_party/Surelog/bin/surelog
 
 rm -rf slpp_all
-$SURELOG -parse -nobuiltin \
+$SURELOG -parse -nobuiltin -filterprotected \
     ./ALU/ALU.v \
     ./DECO_INSTR/DECO_INSTR.v \
     ./FSM/FSM.v \

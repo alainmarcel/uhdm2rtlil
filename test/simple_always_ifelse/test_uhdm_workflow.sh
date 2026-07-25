@@ -14,7 +14,7 @@ rm -rf slpp_all obj_dir *.il *.v *.log *.txt
 
 # Run Surelog to generate UHDM
 echo "Running Surelog..."
-${SURELOG} -parse -sverilog -nopython -nobuiltin -nonote -noinfo -timescale 1ns/1ns -elabuhdm dut.sv -d uhdmstats > surelog_build.log 2>&1
+${SURELOG} -parse -sverilog -nopython -nobuiltin -nonote -noinfo -filterprotected -timescale 1ns/1ns -elabuhdm dut.sv -d uhdmstats > surelog_build.log 2>&1
 
 # Create Yosys script for UHDM read
 cat > test_uhdm_read.ys << EOF
