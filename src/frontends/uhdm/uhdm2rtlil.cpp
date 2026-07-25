@@ -97,8 +97,10 @@ struct ReadUHDMPass : public Frontend {
             delete elaboratorContext;
         }
 
-        vpi_show_ids(true);
-        visit_designs({vpi_design}, std::cout);
+        if (debug) {
+            vpi_show_ids(true);
+            visit_designs({vpi_design}, std::cout);
+        }
 
         if (!uhdm_design->AllModules())
             log_error("No modules found in UHDM design.\n");

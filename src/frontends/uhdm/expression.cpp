@@ -3858,6 +3858,18 @@ RTLIL::SigSpec UhdmImporter::import_operation(const operation* uhdm_op, const UH
                     result = RTLIL::const_mod(operands[0].as_const(), operands[1].as_const(), false, false, 32);
                 }
                 break;
+            case vpiPowerOp:
+                if (operands.size() == 2) {
+                    // `base ** exp` with constant operands (e.g. the genvar
+                    // `2 ** level` index arithmetic in lzc.sv's generate loops)
+                    // MUST fold to a constant here — otherwise it falls through
+                    // to the vpiPowerOp handler below and emits a runtime $pow
+                    // cell.  In CVA6 this produced ~4700 spurious $pow cells (the
+                    // reference slang netlist has zero).  Self-determined width;
+                    // the caller applies any wider assignment context.
+                    result = RTLIL::const_pow(operands[0].as_const(), operands[1].as_const(), false, false, -1);
+                }
+                break;
             case vpiLShiftOp:
                 if (operands.size() == 2) {
                     // NB: RTLIL::const_shl passes result_len straight to
