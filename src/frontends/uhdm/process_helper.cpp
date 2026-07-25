@@ -334,6 +334,18 @@ int UhdmImporter::const_cond_value(const any* cond) {
         if (module && module->parameter_default_values.count(pid))
             return module->parameter_default_values.at(pid).is_fully_zero() ? 0 : 1;
     }
+    // Struct-parameter FIELD guard (`if (CVA6Cfg.RVH)`): a hier_path whose base
+    // is a struct-typed parameter.  eval_param_struct_field resolves the field to
+    // a constant so a register assigned ONLY under a compile-time-false field
+    // guard (CVA6 cva6_ptw.sv gpaddr_q under `if (CVA6Cfg.RVH)` with RVH==0, in
+    // BOTH the reset and clocked branches) is recognized as dead and dropped —
+    // otherwise it becomes an async-reset FF with a non-constant reset value that
+    // proc/PROC_ARST rejects.
+    if (cond->UhdmType() == uhdmhier_path) {
+        std::string v = eval_param_struct_field(any_cast<const hier_path*>(cond));
+        if (!v.empty())
+            return atoi(v.c_str()) == 0 ? 0 : 1;
+    }
     return -1;
 }
 

@@ -1436,6 +1436,24 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
     auto bref = dynamic_cast<const ref_obj*>(pe[0]);
     if (!bref) return "";
     auto a = bref->Actual_group();
+    // A ref to a struct-typed MODULE PARAMETER that is re-passed down several
+    // paramod levels (CVA6 `CVA6Cfg` at cva6->…->cva6_mmu/decoder) can have a
+    // NULL Actual_group — Surelog leaves the deep ref unlinked.  Recover the
+    // parameter by NAME from the module instance currently being imported: its
+    // Parameters()/Param_assigns() carry the resolved struct value.  Without this
+    // `CVA6Cfg.RVH` (== 0) never folds and a reset guarded by it yields a
+    // non-constant async reset (cva6_ptw.sv gpaddr_q).
+    if (!a && current_instance) {
+        std::string bname = std::string(bref->VpiName());
+        if (current_instance->Parameters())
+            for (auto p : *current_instance->Parameters())
+                if (std::string(p->VpiName()) == bname &&
+                    p->UhdmType() == uhdmparameter) { a = p; break; }
+        if (!a && current_instance->Param_assigns())
+            for (auto pa : *current_instance->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == bname) { a = l; break; }
+    }
     if (!a) return "";
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
@@ -3701,6 +3719,20 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                         int elem_w = 0;
                         if (pav->Elements() && !pav->Elements()->empty())
                             elem_w = get_width((*pav->Elements())[0], uhdm_module);
+                        // get_width on a TYPE-PARAMETER element (`addr_t` =
+                        // logic[W-1:0], CVA6 tc_sram r_addr_q) can fail and return
+                        // 1, especially for a single-element array `addr_t [0:0]`.
+                        // The flat wire already has the correct TOTAL width, so
+                        // recover the element width as total/outer_size — otherwise
+                        // `arr[i]` collapses to a 1-bit select and a reset loop
+                        // `for(i) arr[i] <= '0` leaves all but bit 0 unreset
+                        // (proc aborts "Async reset yields non-constant W'mmm..0").
+                        if (elem_w <= 1 && outer_l >= 0 && outer_r >= 0) {
+                            int outer_size = abs(outer_l - outer_r) + 1;
+                            if (outer_size > 0 && wire->width > 0 &&
+                                wire->width % outer_size == 0)
+                                elem_w = wire->width / outer_size;
+                        }
                         if (elem_w > 1 && outer_l >= 0 && outer_r >= 0) {
                             wire->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(elem_w);
                             wire->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(outer_l);

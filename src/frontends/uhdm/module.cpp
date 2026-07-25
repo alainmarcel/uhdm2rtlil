@@ -867,6 +867,46 @@ void UhdmImporter::import_port(const port* uhdm_port, int positional_idx) {
         }
     }
 
+    // Type-parameter packed-array port (`addr_t [N-1:0]`, addr_t a `parameter
+    // type`): the port typespec is not a plain logic/array typespec so
+    // packed_elem_width was not set above, and get_width on the type-param
+    // element returns 1 — so `d_i[i]` would read a single bit.  Recover the
+    // element width from the Low_conn packed_array_var's OUTER range and the flat
+    // wire width (total/outer_size).  CVA6 tc_sram addr_i/rdata_o (addr_t/data_t
+    // [NumPorts-1:0]); without this the SRAM read/write address is 1-bit.
+    if (w && w->width > 1 &&
+        !w->attributes.count(RTLIL::escape_id("packed_elem_width"))) {
+        const UHDM::packed_array_var* pav = nullptr;
+        if (auto lc = uhdm_port->Low_conn())
+            if (lc->UhdmType() == uhdmref_obj)
+                if (auto ag = any_cast<const UHDM::ref_obj*>(lc)->Actual_group())
+                    if (ag->UhdmType() == uhdmpacked_array_var)
+                        pav = any_cast<const UHDM::packed_array_var*>(ag);
+        if (pav && pav->Ranges() && !pav->Ranges()->empty()) {
+            auto r0 = (*pav->Ranges())[0];
+            int ol = -1, orr = -1;
+            if (r0->Left_expr() && r0->Right_expr()) {
+                RTLIL::SigSpec l = import_expression(r0->Left_expr());
+                RTLIL::SigSpec r = import_expression(r0->Right_expr());
+                if (l.is_fully_const() && r.is_fully_const()) {
+                    ol = l.as_int();
+                    orr = r.as_int();
+                }
+            }
+            if (ol >= 0 && orr >= 0) {
+                int osz = std::abs(ol - orr) + 1;
+                if (osz > 0 && w->width % osz == 0 && w->width / osz > 1) {
+                    int ew = w->width / osz;
+                    w->attributes[RTLIL::escape_id("packed_elem_width")] = RTLIL::Const(ew);
+                    w->attributes[RTLIL::escape_id("packed_outer_left")] = RTLIL::Const(ol);
+                    w->attributes[RTLIL::escape_id("packed_outer_right")] = RTLIL::Const(orr);
+                    log("UHDM: Port '%s' type-param packed array: elem_w=%d outer=[%d:%d]\n",
+                        portname.c_str(), ew, ol, orr);
+                }
+            }
+        }
+    }
+
     // Check if port is signed
     if (auto ref_typespec = uhdm_port->Typespec()) {
         // Check if typespec indicates signed
