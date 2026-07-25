@@ -2403,6 +2403,34 @@ int UhdmImporter::get_width(const any* uhdm_obj, const UHDM::scope* inst) {
                 // w == 0/1 only — never the interface sentinel (-1), whose port is
                 // a signal bundle, not a bit-vector.
                 if (w >= 0 && w <= 1 && inst) {
+                    // A `parameter type` port bound to a computed-width logic
+                    // vector (CVA6 load_store_unit `shift_reg
+                    // #(.dtype(logic [$bits(...)-1:0]))`) leaves the PORT typespec
+                    // at the generic default `logic` (1 bit), while the elaborated
+                    // port VARIABLE (logic_var/enum_var/bit_var) carries the
+                    // resolved range on its own typespec.  Recover from it — but
+                    // only when the port typespec itself collapsed to <=1, so a
+                    // genuinely wider port typespec (the packed-array `reg8_t[0:3]`
+                    // case, where the NET typespec is the narrower element) is
+                    // never overridden.
+                    if (auto lc = port->Low_conn()) {
+                        if (lc->UhdmType() == uhdmref_obj) {
+                            if (auto a = any_cast<const UHDM::ref_obj*>(lc)->Actual_group()) {
+                                UHDM::UHDM_OBJECT_TYPE at = a->UhdmType();
+                                if (a != uhdm_obj &&
+                                    (at == uhdmlogic_var || at == uhdmenum_var ||
+                                     at == uhdmbit_var)) {
+                                    int aw = get_width(a, inst);
+                                    if (aw > 1) {
+                                        log("UHDM: Port '%s' width from Low_conn %s var: %d\n",
+                                            std::string(port->VpiName()).c_str(),
+                                            UHDM::UhdmName(at).c_str(), aw);
+                                        return aw;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     int wd = width_from_def_port(std::string(inst->VpiDefName()),
                                                  std::string(port->VpiName()), inst);
                     if (wd > w) {
