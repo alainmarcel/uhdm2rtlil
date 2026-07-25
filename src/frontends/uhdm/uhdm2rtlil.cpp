@@ -3347,7 +3347,15 @@ void UhdmImporter::import_module(const module_inst* uhdm_module) {
                 // be $memory objects: they need individual element wires so that
                 // write-then-read semantics within the same always @* block work correctly.
                 bool is_comb_only = comb_only_arrays.count(array_name) > 0;
-                bool should_be_memory = is_mem && !has_const_only && !is_comb_only;
+                // An array referenced AS A WHOLE (`mem_n = mem_q`, `mem_q <=
+                // mem_n`) cannot be a $memory — a $mem has no wire to read/write
+                // in one go, so the whole-array access collapses to a bogus 1-bit
+                // signal and the memory ends up with no write port (reads 0).
+                // Force such arrays to per-element registers (like the comb-only
+                // path), which support both whole-array copy AND dynamic-index
+                // access.  CVA6 cva6_fifo_v3 `mem_n`/`mem_q`.
+                bool whole_accessed_var = whole_array_accessed_names.count(array_name) > 0;
+                bool should_be_memory = is_mem && !has_const_only && !is_comb_only && !whole_accessed_var;
 
                 if (should_be_memory) {
                     log("UHDM: Array_var '%s' detected as memory array (has dynamic indexing)\n", array_name.c_str());

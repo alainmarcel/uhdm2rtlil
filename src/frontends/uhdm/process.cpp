@@ -2766,20 +2766,41 @@ void UhdmImporter::import_always_comb(const process_stmt* uhdm_process, RTLIL::P
                 if (module->memories.count(mem_id)) continue;
             }
         }
-        // Import the LHS expression to get its SigSpec
+        // Import the LHS expression to get its SigSpec.
+        // A whole-array write (`arr = arr2`) is expanded by
+        // extract_assigned_signals into per-element sigs (arr[0], arr[1], …)
+        // that ALL keep the whole-array ref_obj as lhs_expr — so
+        // import_expression() returns the full element concat (e.g. 128b) for
+        // every element instead of the individual 32b element.  That yields ONE
+        // oversized `$0\arr[0]` temp shared by all elements, which then conflicts
+        // with the per-element `\arr[k]` wires the dynamic-write path drives —
+        // a malformed process that segfaults proc_dlatch (CVA6 cva6_fifo_v3
+        // mem_n).  When sig names a concrete element wire and its lhs_expr is the
+        // BASE-array ref_obj (name differs), use the element wire directly.
         RTLIL::SigSpec lhs_spec;
-        if (sig.lhs_expr) {
-            lhs_spec = import_expression(sig.lhs_expr);
-        } else {
-            // Signal extracted from a for-loop with dynamic index (lhs_expr is null).
-            // Use the full wire width so we can create a proper temp wire for it.
-            RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
-            if (!wire) {
-                log_warning("import_always_comb: cannot find wire '%s' for for-loop signal\n",
-                            sig.name.c_str());
-                continue;
+        bool used_element_wire = false;
+        if (sig.lhs_expr && !sig.is_part_select &&
+            sig.lhs_expr->VpiType() == vpiRefObj &&
+            std::string(sig.lhs_expr->VpiName()) != sig.name) {
+            if (RTLIL::Wire* elem_w = module->wire(RTLIL::escape_id(sig.name))) {
+                lhs_spec = RTLIL::SigSpec(elem_w);
+                used_element_wire = true;
             }
-            lhs_spec = RTLIL::SigSpec(wire);
+        }
+        if (!used_element_wire) {
+            if (sig.lhs_expr) {
+                lhs_spec = import_expression(sig.lhs_expr);
+            } else {
+                // Signal extracted from a for-loop with dynamic index (lhs_expr is null).
+                // Use the full wire width so we can create a proper temp wire for it.
+                RTLIL::Wire* wire = module->wire(RTLIL::escape_id(sig.name));
+                if (!wire) {
+                    log_warning("import_always_comb: cannot find wire '%s' for for-loop signal\n",
+                                sig.name.c_str());
+                    continue;
+                }
+                lhs_spec = RTLIL::SigSpec(wire);
+            }
         }
         lhs_specs[sig.lhs_expr] = lhs_spec;
 
