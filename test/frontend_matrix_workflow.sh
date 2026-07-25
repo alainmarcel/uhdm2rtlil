@@ -140,7 +140,7 @@ if [ ! -f "$UHDM_PLUGIN" ]; then
     echo "uhdm TOOL_MISSING 0" >> "$STATUS_FILE"
     echo "   → uhdm: TOOL_MISSING (plugin not built)"
 else
-    run_capped "$SURELOG_BIN" -parse -nobuiltin -nocache -d vpi_ids -d uhdm \
+    run_capped "$SURELOG_BIN" -parse -nobuiltin -nocache -filterprotected -d vpi_ids -d uhdm \
         $PROJECT_LANG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1
     sl_rc=$?
     if [ "$sl_rc" -eq 124 ] || [ "$sl_rc" -eq 137 ]; then

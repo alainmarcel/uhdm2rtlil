@@ -90,9 +90,13 @@ echo "2. Generating UHDM with Surelog..."
 # -DSYNTHESIS: this is a synthesis flow, so exclude `ifndef SYNTHESIS` sim-only
 # regions (assertions, DV functional-coverage, $display) — matches the in-process
 # read_sv path in the uhdm2rtlil plugin.
-echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS"
+# -filterprotected: strip `// synthesis|synopsys|pragma translate_off`..`_on`
+# simulation-only regions (CVA6 tc_sram_wrapper's tc_sram model corrupts the
+# wrapper's port typespecs otherwise).  Unlike -synth this does NOT run the
+# non-synthesizable-object filter, so $display/assertions are kept.
+echo "   Command: $SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -filterprotected -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS"
 echo "   Logging to: surelog_build.log"
-$SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1 || true
+$SURELOG_BIN -parse -nobuiltin -nocache -DSYNTHESIS -filterprotected -d vpi_ids -d uhdm $SURELOG_LANG_FLAG $PROJECT_SURELOG_FLAGS $PROJECT_SRCS > surelog_build.log 2>&1 || true
 
 # Check if UHDM file was generated
 if [ ! -f "$UHDM_FILE" ]; then
