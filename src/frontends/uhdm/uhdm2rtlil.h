@@ -398,6 +398,15 @@ struct UhdmImporter {
     // Track current process context for assertions
     bool in_always_ff_context = false;
 
+    // Set while importing a bit/part-select that is a WRITE TARGET (LHS) whose
+    // index we want to fold via current_comb_values.  import_bit_select then
+    // resolves the INDEX through the read-map (so `arr[idx]` with a block-local
+    // constant idx becomes a static slice) but keeps the BASE as the target wire
+    // — it must NOT redirect the base to its in-flight blocking VALUE (that redirect
+    // is only correct for a RHS read; on an LHS it would make the write target a
+    // constant and drop the write).
+    bool comb_lhs_keep_base = false;
+
     // When true, suppress current_comb_values read/write so that
     // always_ff body processing uses original register values (NB semantics)
     bool in_always_ff_body_mode = false;
