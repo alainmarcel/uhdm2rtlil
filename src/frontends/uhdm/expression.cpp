@@ -6254,7 +6254,7 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     // always_ff blocking-temp redirect (see import_ref_obj/import_part_select):
     // a bit-select of a blocking temp assigned earlier this cycle (e.g.
     // `CF <= tmp[8]`) reads the in-flight `$0\tmp`, not the registered `\tmp`.
-    if (in_always_ff_body_mode) {
+    if (in_always_ff_body_mode && !comb_lhs_keep_base) {
         auto bt = ff_blocking_temps.find(signal_name);
         if (bt != ff_blocking_temps.end() && bt->second.size() == base.size())
             base = bt->second;
@@ -6262,7 +6262,9 @@ RTLIL::SigSpec UhdmImporter::import_bit_select(const bit_select* uhdm_bit, const
     // SSA always_ff (ff_simple_eval) / always_comb thread same-cycle blocking
     // values through input_mapping; a bit-select of such a value must read the
     // in-flight value too (mirrors import_ref_obj; PR #291 missed bit-selects).
-    if (input_mapping && !signal_name.empty()) {
+    // Skipped for a WRITE TARGET (comb_lhs_keep_base): the base must stay the wire
+    // so `arr[idx]` writes the wire slice, not a constant bit of its value.
+    if (input_mapping && !signal_name.empty() && !comb_lhs_keep_base) {
         auto im = input_mapping->find(signal_name);
         if (im != input_mapping->end() && im->second.size() == base.size())
             base = im->second;

@@ -11409,7 +11409,24 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                             bool rhs_is_fill = false;
                             RTLIL::State rhs_fill_state =
                                 detect_fill_const_state(rhs, rhs_is_fill);
-                            RTLIL::SigSpec lhs_sig = import_expression(lhs);
+                            // For a bit/part-select LHS (`arr[idx]`) thread the
+                            // in-flight blocking values so the INDEX folds against a
+                            // block-local temp assigned a constant loop-var expression
+                            // earlier in this branch — else the write is a dynamic
+                            // $shiftx.  Safe: the base stays the target wire
+                            // (import_bit_select's value-shortcut needs a function
+                            // context, absent here).  NOT for a full-wire LHS, where
+                            // import_ref_obj would return the temp's VALUE.
+                            int llt_ = lhs->VpiType();
+                            const std::map<std::string, RTLIL::SigSpec>* lhs_map_ =
+                                (llt_ == vpiBitSelect || llt_ == vpiPartSelect ||
+                                 llt_ == vpiIndexedPartSelect)
+                                    ? comb_read_map() : nullptr;
+                            // Fold the index but keep the base wire as the write
+                            // target (see comb_lhs_keep_base).
+                            comb_lhs_keep_base = (lhs_map_ != nullptr);
+                            RTLIL::SigSpec lhs_sig = import_expression(lhs, lhs_map_);
+                            comb_lhs_keep_base = false;
                             // Propagate LHS width as context so arithmetic ops
                             // widen to it (SV context-determined sizing).
                             int prev_ctx = expression_context_width;
@@ -11759,6 +11776,26 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
                                 std::string bn = lhs_sig.as_wire()->name.str();
                                 if (!bn.empty() && bn[0] == '\\')
                                     current_comb_values[bn.substr(1)] = rhs_sig;
+                                // A block-local `automatic` temp has a PRIVATE
+                                // ($-prefixed) SCOPED wire name (`$unnamed_block$N.idx`)
+                                // — the `\`-strip above skips it — while reads use the
+                                // bare name (`idx`).  Record under the bare alias so a
+                                // constant loop-var expression (`idx = (2**lvl)-1`) folds
+                                // and a later `arr[idx]` becomes a STATIC bit-write
+                                // instead of a dynamic $shiftx (CVA6 cva6_tlb
+                                // plru_replacement: 16 conflicting dynamic writes ->
+                                // opt_muxtree multi-driver abort).
+                                // Only for a CONSTANT value (the loop-var index
+                                // expression) — recording a runtime block-local
+                                // (e.g. an `en &= …` accumulator) under its bare
+                                // alias would collide with the existing per-arm
+                                // blocking-value threading and corrupt it.
+                                if (rhs_sig.is_fully_const()) {
+                                    std::string sn = (bn[0] == '\\') ? bn.substr(1) : bn;
+                                    auto ai = comb_value_aliases.find(sn);
+                                    if (ai != comb_value_aliases.end())
+                                        current_comb_values[ai->second] = rhs_sig;
+                                }
                             }
                         }
                     }
