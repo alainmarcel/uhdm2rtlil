@@ -42,6 +42,33 @@ YOSYS_NAMESPACE_BEGIN
 
 using namespace UHDM;
 
+// Cast a statement that a case-label assumes is a `vpiAssignment` to `assignment*`.
+//
+// IMPORTANT: `vpiAssignment` (UHDM class `assignment`) and `vpiAssignStmt` (UHDM
+// class `assign_stmt`) are DISTINCT, `final` UHDM classes with DIFFERENT member
+// layouts — `assignment` additionally carries `vpiOpType_`/`vpiBlocking_`/delay/
+// event members, so `Lhs()`/`Rhs()` sit at different offsets, and `assign_stmt`
+// has NO `VpiBlocking()`/`VpiOpType()` at all.  `UHDM::any_cast` is RTTI-checked,
+// so `any_cast<const assignment*>(assign_stmt)` returns `nullptr`; any code that
+// shares a single `case vpiAssignment: case vpiAssignStmt:` and then dereferences
+// the `assignment*` will CRASH (or silently drop the statement) on an
+// `assign_stmt`.  Such sites must be given proper per-type handling (see the
+// correct pattern at process.cpp:7740 / process_helper.cpp:406, which dispatch to
+// `assign_stmt` explicitly).  Until a given site is converted, route its cast
+// through this helper so we FAIL LOUDLY with an actionable message instead of
+// crashing or corrupting memory.
+static inline const UHDM::assignment* require_assignment(const UHDM::any* s,
+                                                         const char* ctx) {
+    if (auto a = any_cast<const UHDM::assignment*>(s)) return a;
+    log_error("UHDM: %s: statement is a %s, not a vpiAssignment(assignment). This "
+              "code path shares one case for vpiAssignment/vpiAssignStmt but only "
+              "handles `assignment`; `assign_stmt` is a different UHDM class (no "
+              "VpiBlocking/VpiOpType, different layout) and needs its own handling. "
+              "Please add per-type handling here.\n",
+              ctx, s ? UHDM::UhdmName(s->UhdmType()).c_str() : "<null>");
+    return nullptr;  // unreachable: log_error() aborts
+}
+
 // Parse VpiValue format strings ("HEX:BB", "BIN:1010", "UINT:42", etc.) to integer
 static inline int parse_vpi_value_to_int(const std::string& vpi_value) {
     size_t colon_pos = vpi_value.find(':');

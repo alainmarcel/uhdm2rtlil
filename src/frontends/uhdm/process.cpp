@@ -11243,7 +11243,7 @@ void UhdmImporter::import_statement_comb(const any* uhdm_stmt, RTLIL::CaseRule* 
     switch (stmt_type) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = any_cast<const assignment*>(uhdm_stmt);
+            auto assign = require_assignment(uhdm_stmt, "import_statement_comb(CaseRule*)");
 
             // Dynamic indexed_part_select LHS (e.g. `dword[8*sel +:8] =
             // vect`) — when the index expression isn't constant we
