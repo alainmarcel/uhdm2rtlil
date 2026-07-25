@@ -1283,7 +1283,7 @@ void UhdmImporter::collect_blocking_assigned_names(const any* stmt, std::set<std
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            const assignment* assign = any_cast<const assignment*>(stmt);
+            const assignment* assign = require_assignment(stmt, "collect_blocking_assigned_names");
             if (assign->VpiBlocking()) {
                 std::vector<AssignedSignal> sigs;
                 extract_assigned_signals(stmt, sigs);
@@ -1411,7 +1411,7 @@ void UhdmImporter::collect_memory_write_lhs(const any* stmt,
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            const assignment* assign = any_cast<const assignment*>(stmt);
+            const assignment* assign = require_assignment(stmt, "collect_memory_write_lhs");
             if (is_memory_write(assign, module)) {
                 if (auto lhs = assign->Lhs()) {
                     if (lhs->VpiType() == vpiBitSelect) {
@@ -1471,7 +1471,7 @@ void UhdmImporter::scan_for_memory_writes(const any* stmt, std::set<std::string>
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            const assignment* assign = any_cast<const assignment*>(stmt);
+            const assignment* assign = require_assignment(stmt, "scan_for_memory_writes");
             if (is_memory_write(assign, module)) {
                 if (auto lhs = assign->Lhs()) {
                     if (lhs->VpiType() == vpiBitSelect) {
@@ -1576,7 +1576,7 @@ void UhdmImporter::collect_dynamic_expanded_array_writes(
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            const assignment* assign = any_cast<const assignment*>(stmt);
+            const assignment* assign = require_assignment(stmt, "collect_dynamic_expanded_array_writes");
             if (auto lhs = assign->Lhs()) {
                 if (lhs->VpiType() == vpiBitSelect) {
                     const bit_select* bs = any_cast<const bit_select*>(lhs);
@@ -1723,7 +1723,7 @@ const assignment* UhdmImporter::find_assignment_for_lhs(const any* stmt, const e
     switch (stmt->VpiType()) {
         case vpiAssignment:
         case vpiAssignStmt: {
-            auto assign = any_cast<const assignment*>(stmt);
+            auto assign = require_assignment(stmt, "find_assignment_for_lhs");
             if (assign->Lhs() == lhs_expr) {
                 return assign;
             }
