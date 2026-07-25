@@ -1436,6 +1436,24 @@ std::string UhdmImporter::eval_param_struct_field(const hier_path* hp) {
     auto bref = dynamic_cast<const ref_obj*>(pe[0]);
     if (!bref) return "";
     auto a = bref->Actual_group();
+    // A ref to a struct-typed MODULE PARAMETER that is re-passed down several
+    // paramod levels (CVA6 `CVA6Cfg` at cva6->…->cva6_mmu/decoder) can have a
+    // NULL Actual_group — Surelog leaves the deep ref unlinked.  Recover the
+    // parameter by NAME from the module instance currently being imported: its
+    // Parameters()/Param_assigns() carry the resolved struct value.  Without this
+    // `CVA6Cfg.RVH` (== 0) never folds and a reset guarded by it yields a
+    // non-constant async reset (cva6_ptw.sv gpaddr_q).
+    if (!a && current_instance) {
+        std::string bname = std::string(bref->VpiName());
+        if (current_instance->Parameters())
+            for (auto p : *current_instance->Parameters())
+                if (std::string(p->VpiName()) == bname &&
+                    p->UhdmType() == uhdmparameter) { a = p; break; }
+        if (!a && current_instance->Param_assigns())
+            for (auto pa : *current_instance->Param_assigns())
+                if (auto l = dynamic_cast<const parameter*>(pa->Lhs()))
+                    if (std::string(l->VpiName()) == bname) { a = l; break; }
+    }
     if (!a) return "";
     const expr* val = nullptr;
     const typespec* cur_ts = nullptr;
