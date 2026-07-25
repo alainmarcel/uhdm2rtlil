@@ -1866,7 +1866,18 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
             module_name = "$paramod\\" + base_module_name + param_string;
         }
     }
-    
+
+    // A `parameter type` instance is imported by import_module under a uniquified
+    // name (base + any $paramod value-params + a per-type-binding signature from
+    // the resolved port widths).  import_instance builds only the value-param
+    // part, so WITHOUT this the cell would reference the bare `\decoder` while
+    // import_module registered the module as `\decoder$typaram_...`, leaving the
+    // cell an unresolved blackbox that `hierarchy -check` rejects (CVA6
+    // id_stage's genblk3[0].decoder_i).  Append the same signature here so the
+    // cell type matches; the authoritative name is re-read from inst_to_modname_
+    // after import (the widths computed here can be approximate).
+    module_name += type_param_signature(uhdm_inst);
+
     // Check if the module definition has interface ports
     // We need to look at the module being instantiated to see if it uses interfaces
     bool has_interface_ports = false;
@@ -1970,6 +1981,21 @@ void UhdmImporter::import_instance(const module_inst* uhdm_inst) {
         }
     }
     
+    // import_module records the exact RTLIL name it created for THIS elaborated
+    // instance (with any $paramod / $typaram specialization).  Prefer it: the
+    // type_param_signature computed above can diverge from the real one because
+    // a param-dependent port range only resolves to an approximate width at
+    // cell-creation time (this instance's module isn't `this->module` yet).
+    // Without this the cell would blackbox on the width mismatch, same failure
+    // as the missing-signature case.
+    {
+        auto it = inst_to_modname_.find(uhdm_inst);
+        if (it != inst_to_modname_.end()) {
+            RTLIL::IdString real_id = RTLIL::escape_id(it->second);
+            if (design->module(real_id)) module_id = real_id;
+        }
+    }
+
     log("UHDM: Creating cell '%s' of type '%s'\n", inst_name.c_str(), module_id.c_str());
     RTLIL::Cell* cell = module->addCell(new_id(inst_name), module_id);
     
