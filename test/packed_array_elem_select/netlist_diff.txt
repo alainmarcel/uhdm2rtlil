@@ -1,0 +1,35 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -169,8 +169,8 @@
+ );
+ assign o[63:32] = data_i[63:32];
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:8.1-18.10" *)
++(* top =  1  *)
+ module packed_array_elem_select(a0, a1, o);
+ (* src = "dut.sv:9.25-9.27" *)
+ input [95:0] a0;
+@@ -181,15 +181,15 @@
+ (* src = "dut.sv:11.25-11.26" *)
+ output [63:0] o;
+ wire [63:0] o;
++(* packed_elem_width = 32'd96 *)
++(* packed_outer_left = 32'd1 *)
++(* packed_outer_right = 32'd0 *)
+ (* src = "dut.sv:14.16-14.19" *)
+-(* unused_bits = "1" *)
+-(* wiretype = "\\my_t" *)
+-wire [95:0] arr;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:17.11-17.37" *)
++(* unused_bits = "96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191" *)
++wire [191:0] arr;
+ child c (
+-.data_i({ 95'h000000000000000000000000, a0[0] }),
++.data_i(a0),
+ .o(o)
+ );
+-assign arr = { 94'hxxxxxxxxxxxxxxxxxxxxxxxx, a1[0], a0[0] };
++assign arr = { a1, a0 };
+ endmodule

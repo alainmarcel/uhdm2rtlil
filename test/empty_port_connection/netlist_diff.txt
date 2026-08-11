@@ -1,0 +1,21 @@
+--- verilog_synth
++++ uhdm_synth
+@@ -233,8 +233,8 @@
+ .Y(sum[0])
+ );
+ endmodule
+-(* top =  1  *)
+ (* src = "dut.sv:24.1-35.10" *)
++(* top =  1  *)
+ module empty_port_connection(a, b, y);
+ (* src = "dut.sv:25.22-25.23" *)
+ input [7:0] a;
+@@ -245,8 +245,6 @@
+ (* src = "dut.sv:27.22-27.23" *)
+ output [7:0] y;
+ wire [7:0] y;
+-(* module_not_derived = 32'd1 *)
+-(* src = "dut.sv:29.20-34.4" *)
+ adder_with_carry u_add (
+ .a(a),
+ .b(b),
