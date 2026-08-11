@@ -10689,13 +10689,34 @@ void UhdmImporter::import_if_else_comb(const UHDM::if_else* uhdm_if_else, RTLIL:
         RTLIL::SigSpec condition_sig = import_expression(
             condition, current_comb_process ? &current_comb_values : nullptr);
 
-        // Reduce multi-bit conditions to 1 bit for switch/compare matching
+        // Reduce multi-bit conditions to 1 bit for switch/compare matching.
+        // A CONSTANT multi-bit condition must reduce to a constant BIT, not a
+        // $reduce_bool cell (same as import_if_stmt_comb / the sync paths).
         if (condition_sig.size() > 1) {
-            condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+            if (condition_sig.is_fully_const())
+                condition_sig = condition_sig.as_const().as_bool()
+                                    ? RTLIL::SigSpec(RTLIL::State::S1)
+                                    : RTLIL::SigSpec(RTLIL::State::S0);
+            else
+                condition_sig = module->ReduceBool(NEW_ID, condition_sig);
         }
 
         if (mode_debug)
             log("    If_else condition: %s\n", log_signal(condition_sig));
+
+        // Compile-time-constant condition: import only the TAKEN branch
+        // (mirrors import_if_stmt_comb and the CaseRule vpiIf path) — a
+        // false struct-param guard's branch must not leave conditional
+        // structure behind.
+        if (condition_sig.is_fully_const()) {
+            const any* taken = condition_sig.as_const().as_bool()
+                                   ? uhdm_if_else->VpiStmt()
+                                   : uhdm_if_else->VpiElseStmt();
+            if (taken)
+                import_statement_comb(taken, proc);
+            current_if_qualifier = saved_qualifier;
+            return;
+        }
 
         // Create a switch statement for the if
         RTLIL::SwitchRule* sw = new RTLIL::SwitchRule;
@@ -10783,9 +10804,19 @@ void UhdmImporter::import_if_stmt_comb(const UHDM::if_stmt* uhdm_if, RTLIL::Proc
         RTLIL::SigSpec condition_sig = import_expression(
             condition, current_comb_process ? &current_comb_values : nullptr);
 
-        // Reduce multi-bit conditions to 1 bit for switch/compare matching
+        // Reduce multi-bit conditions to 1 bit for switch/compare matching.
+        // A CONSTANT multi-bit condition must reduce to a constant BIT, not a
+        // $reduce_bool cell (same as the sync/CaseRule paths, #572) — else a
+        // folded struct-param guard (`if (CVA6Cfg.RVS)` == 32'1 in
+        // csr_regfile's S-CSR default block) becomes a runtime wire, the
+        // defaults turn conditional, and every S-CSR `_d` slice latches.
         if (condition_sig.size() > 1) {
-            condition_sig = module->ReduceBool(NEW_ID, condition_sig);
+            if (condition_sig.is_fully_const())
+                condition_sig = condition_sig.as_const().as_bool()
+                                    ? RTLIL::SigSpec(RTLIL::State::S1)
+                                    : RTLIL::SigSpec(RTLIL::State::S0);
+            else
+                condition_sig = module->ReduceBool(NEW_ID, condition_sig);
         }
 
         if (mode_debug)
